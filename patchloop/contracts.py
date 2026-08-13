@@ -79,6 +79,15 @@ AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID = (
     "dev-validation-ac-fixed-bundle-readiness-20260808-r2"
 )
 AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID = "dev-validation-ac-fixed-bundle-readiness-20260813-r3"
+AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID = (
+    "dev-validation-ac-fixed-bundle-readiness-20260814-r4"
+)
+AC_FIXED_BUNDLE_LEGACY_COST_EXPERIMENT_IDS = frozenset(
+    {
+        AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
+    }
+)
 AC_FIXED_BUNDLE_EXPERIMENT_IDS = frozenset(
     {
         AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
@@ -88,9 +97,14 @@ AC_FIXED_BUNDLE_EXPERIMENT_IDS = frozenset(
 )
 AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS = frozenset(
     {
-        AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
-        AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
+        *AC_FIXED_BUNDLE_LEGACY_COST_EXPERIMENT_IDS,
     }
+)
+AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS = frozenset(
+    {*AC_FIXED_BUNDLE_EXPERIMENT_IDS, AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID}
+)
+AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS = frozenset(
+    {*AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS, AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID}
 )
 AC_FIXED_BUNDLE_POLICY_VERSION = "fixed-d110-bundle-v1"
 AC_FIXED_BUNDLE_D110_INDEX_VERSION = (
@@ -871,7 +885,7 @@ class ExperimentRunContext(StrictModel):
     def bind_campaign_cost_context(self) -> ExperimentRunContext:
         if self.experiment_id in {
             CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
-            *AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
+            *AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
         }:
             if self.campaign_cost_control_hash is None:
                 raise ValueError(
@@ -1298,6 +1312,45 @@ class Budget(StrictModel):
     max_tool_calls: int | None = Field(default=50, ge=1)
     max_total_tokens: int = Field(default=80_000, ge=1)
     wall_clock_timeout_seconds: int = Field(default=900, ge=1)
+    token_budget_schema_version: Literal["cumulative-split-v1"] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    max_cumulative_input_tokens: int | None = Field(
+        default=None,
+        ge=1,
+        exclude_if=lambda value: value is None,
+    )
+    max_cumulative_output_tokens: int | None = Field(
+        default=None,
+        ge=1,
+        exclude_if=lambda value: value is None,
+    )
+
+    @model_validator(mode="after")
+    def validate_token_budget_schema(self) -> Budget:
+        split_values = (
+            self.max_cumulative_input_tokens,
+            self.max_cumulative_output_tokens,
+        )
+        if self.token_budget_schema_version is None:
+            if any(value is not None for value in split_values):
+                raise ValueError(
+                    "cumulative input/output limits require token_budget_schema_version"
+                )
+            return self
+        if any(value is None for value in split_values):
+            raise ValueError(
+                "cumulative-split-v1 requires both cumulative input and output limits"
+            )
+        input_limit = self.max_cumulative_input_tokens
+        output_limit = self.max_cumulative_output_tokens
+        assert input_limit is not None and output_limit is not None
+        if input_limit > self.max_total_tokens or output_limit > self.max_total_tokens:
+            raise ValueError("each cumulative split limit must not exceed the aggregate limit")
+        if self.max_total_tokens > input_limit + output_limit:
+            raise ValueError("aggregate token limit exceeds the sum of its split limits")
+        return self
 
 
 class ModelConfig(StrictModel):
@@ -1827,7 +1880,7 @@ class RunManifest(StrictModel):
         )
         ac_fixed_bundle_readiness = bool(
             self.experiment is not None
-            and self.experiment.experiment_id in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+            and self.experiment.experiment_id in AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS
             and self.experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS
             and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
             and self.experiment.schedule_seed == 20260723
@@ -1855,9 +1908,26 @@ class RunManifest(StrictModel):
             and self.model.max_output_tokens == 25_000
             and self.tool_schema_version == "v2"
             and self.context_policy_version == "phase-evidence-v5"
-            and self.budget.max_model_calls is None
-            and self.budget.max_tool_calls is None
-            and self.budget.max_total_tokens == 3_000_000
+            and (
+                (
+                    self.experiment.experiment_id
+                    != AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    and self.budget.max_model_calls is None
+                    and self.budget.max_tool_calls is None
+                    and self.budget.max_total_tokens == 3_000_000
+                    and self.budget.token_budget_schema_version is None
+                )
+                or (
+                    self.experiment.experiment_id
+                    == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    and self.budget.max_model_calls == 180
+                    and self.budget.max_tool_calls == 300
+                    and self.budget.max_total_tokens == 3_350_000
+                    and self.budget.token_budget_schema_version == "cumulative-split-v1"
+                    and self.budget.max_cumulative_input_tokens == 3_000_000
+                    and self.budget.max_cumulative_output_tokens == 350_000
+                )
+            )
             and self.budget.wall_clock_timeout_seconds == 3_600
             and self.memory.max_context_tokens == 2_000
             and (

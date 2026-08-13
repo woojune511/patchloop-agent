@@ -10,8 +10,9 @@ from typing import Any
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
-    AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
-    AC_FIXED_BUNDLE_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
@@ -96,6 +97,15 @@ _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET = Budget(
     max_tool_calls=None,
     max_total_tokens=3_000_000,
     wall_clock_timeout_seconds=3_600,
+)
+_GPT54_MINI_AC_SPLIT_TOKEN_BUDGET = Budget(
+    max_model_calls=180,
+    max_tool_calls=300,
+    max_total_tokens=3_350_000,
+    wall_clock_timeout_seconds=3_600,
+    token_budget_schema_version="cumulative-split-v1",
+    max_cumulative_input_tokens=3_000_000,
+    max_cumulative_output_tokens=350_000,
 )
 _GPT54_MINI_COMPLETION_BUDGET = Budget(
     max_model_calls=40,
@@ -304,6 +314,8 @@ _HISTORICAL_MINI_200K_CAMPAIGN_EXPERIMENT_IDS = frozenset(
 _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA = "model-generation-block-v1"
 _COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v2"
 _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v3"
+_CUMULATIVE_SPLIT_GENERATION_BLOCK_SCHEMA = "model-generation-block-v4"
+_CUMULATIVE_SPLIT_TOKEN_BUDGET_SCHEMA = "cumulative-split-v1"
 _COUNTER_GENERATION_BLOCK_REASONS = frozenset(
     {
         "model_call_budget_exhausted",
@@ -506,9 +518,15 @@ def _ac_fixed_bundle_readiness_manifest_matches(manifest: RunManifest) -> bool:
         if condition == MemoryCondition.NO_MEMORY
         else (D110_INDEX_VERSION, D110_INDEX_CONTENT_HASH)
     )
+    expected_budget = (
+        _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
+        if experiment is not None
+        and experiment.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        else _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+    )
     return bool(
         experiment is not None
-        and experiment.experiment_id in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+        and experiment.experiment_id in AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS
         and experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS
         and experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
         and experiment.schedule_seed == 20260723
@@ -524,7 +542,7 @@ def _ac_fixed_bundle_readiness_manifest_matches(manifest: RunManifest) -> bool:
         and manifest.model.max_output_tokens == 25_000
         and manifest.tool_schema_version == "v2"
         and manifest.context_policy_version == "phase-evidence-v5"
-        and manifest.budget == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+        and manifest.budget == expected_budget
         and condition in {MemoryCondition.NO_MEMORY, MemoryCondition.STRUCTURED}
         and manifest.memory_policy_version == FIXED_BUNDLE_POLICY_VERSION
         and manifest.memory.max_context_tokens == 2_000
@@ -1054,7 +1072,7 @@ def _execution_plan_matches(
                 and evaluator_contract is not None
                 and evaluator_contract.evaluator_source_hash
                 == evaluator_v2_qualification.get("evaluator_source_hash")
-                and parsed_suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+                and parsed_suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
                 and _is_ac_fixed_bundle_readiness_profile(parsed_suite)
                 and evaluator_v2_qualification.get("base_suite_matches") is True
                 and evaluator_v2_qualification.get("base_suite_hash") == base_suite_hash
@@ -1893,9 +1911,14 @@ def _generic_baseline_runtime_contract_evidence(
     if ac_fixed_bundle:
         from patchloop.evals.runner import (
             AC_FIXED_BUNDLE_COST_POLICY,
+            AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY,
             _ac_fixed_bundle_descriptor,
         )
 
+        split_budget_campaign = (
+            manifest.experiment.experiment_id
+            == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        )
         expected.update(
             {
                 "experiment_id": manifest.experiment.experiment_id,
@@ -1904,7 +1927,8 @@ def _generic_baseline_runtime_contract_evidence(
                 "execution_hash": manifest.experiment.execution_hash,
                 **(
                     {"campaign_cost_control_hash": (manifest.experiment.campaign_cost_control_hash)}
-                    if manifest.experiment.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+                    if manifest.experiment.experiment_id
+                    in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
                     else {}
                 ),
                 "schedule_seed": manifest.experiment.schedule_seed,
@@ -1917,14 +1941,22 @@ def _generic_baseline_runtime_contract_evidence(
                 "reasoning_mode": "standard",
                 "service_tier": "default",
                 "max_output_tokens": 25_000,
-                "budget": _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET.model_dump(mode="json"),
+                "budget": (
+                    _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
+                    if split_budget_campaign
+                    else _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+                ).model_dump(mode="json"),
                 "memory_max_context_tokens": 2_000,
                 "memory_condition": manifest.memory.condition.value,
                 "memory_policy_version": FIXED_BUNDLE_POLICY_VERSION,
                 "memory_index_version": manifest.memory.index_version,
                 "memory_index_hash": manifest.memory.index_hash,
                 "fixed_bundle": _ac_fixed_bundle_descriptor(),
-                "full_schedule_cost_policy": AC_FIXED_BUNDLE_COST_POLICY,
+                "full_schedule_cost_policy": (
+                    AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+                    if split_budget_campaign
+                    else AC_FIXED_BUNDLE_COST_POLICY
+                ),
                 "call_guard_policy": _WORKFLOW_COMPLETION_CALL_GUARD_POLICY,
             }
         )
@@ -7252,6 +7284,8 @@ def _budget_usage_before(events, sequence: int) -> dict[str, int] | None:
         "model_calls": 0,
         "tool_calls": 0,
         "wall_clock_ms": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
         "total_tokens": 0,
     }
     for event in events:
@@ -7271,6 +7305,8 @@ def _budget_usage_before(events, sequence: int) -> dict[str, int] | None:
             ):
                 return None
             usage["model_calls"] += 1
+            usage["input_tokens"] += input_tokens
+            usage["output_tokens"] += output_tokens
             usage["total_tokens"] += input_tokens + output_tokens
             usage["wall_clock_ms"] += duration_ms
         elif event.type == EventType.TOOL_CALLED:
@@ -7281,6 +7317,157 @@ def _budget_usage_before(events, sequence: int) -> dict[str, int] | None:
                 return None
             usage["wall_clock_ms"] += duration_ms
     return usage
+
+
+def _cumulative_split_generation_block_payload_valid(
+    *,
+    manifest: RunManifest,
+    events,
+    blocked_event,
+) -> bool:
+    """Recompute every v4 split-token field from the durable event prefix."""
+
+    payload = blocked_event.payload
+    budget = manifest.budget
+    input_limit = budget.max_cumulative_input_tokens
+    output_limit = budget.max_cumulative_output_tokens
+    usage = _budget_usage_before(events, blocked_event.sequence)
+    expected_fields = {
+        "schema_version",
+        "token_budget_schema_version",
+        "reason_code",
+        "error_code",
+        "generation_started",
+        "request_artifact_id",
+        "request_artifact_path",
+        "request_artifact_hash",
+        "request_body_hash",
+        "requested_input_tokens",
+        "max_output_tokens",
+        "input_token_count_calls",
+        "retry_context_present",
+        "retry_candidate_content_hash",
+        "input_tokens_used",
+        "output_tokens_used",
+        "total_tokens_used",
+        "max_cumulative_input_tokens",
+        "max_cumulative_output_tokens",
+        "max_total_tokens",
+        "remaining_input_tokens",
+        "remaining_output_tokens",
+        "remaining_total_tokens",
+        "exceeded_dimensions",
+        "binding_dimension",
+    }
+    nonnegative_integer_fields = {
+        "requested_input_tokens",
+        "input_token_count_calls",
+        "input_tokens_used",
+        "output_tokens_used",
+        "total_tokens_used",
+        "remaining_input_tokens",
+        "remaining_output_tokens",
+        "remaining_total_tokens",
+    }
+    positive_integer_fields = {
+        "max_output_tokens",
+        "max_cumulative_input_tokens",
+        "max_cumulative_output_tokens",
+        "max_total_tokens",
+    }
+    if (
+        payload.get("schema_version") != _CUMULATIVE_SPLIT_GENERATION_BLOCK_SCHEMA
+        or payload.get("token_budget_schema_version")
+        != _CUMULATIVE_SPLIT_TOKEN_BUDGET_SCHEMA
+        or budget.token_budget_schema_version
+        != _CUMULATIVE_SPLIT_TOKEN_BUDGET_SCHEMA
+        or input_limit is None
+        or output_limit is None
+        or blocked_event.actor != "budget-guard"
+        or usage is None
+        or set(payload) != expected_fields
+        or any(
+            type(payload.get(field)) is not int or payload[field] < 0
+            for field in nonnegative_integer_fields
+        )
+        or any(
+            type(payload.get(field)) is not int or payload[field] < 1
+            for field in positive_integer_fields
+        )
+    ):
+        return False
+
+    input_used = usage["input_tokens"]
+    output_used = usage["output_tokens"]
+    total_used = usage["total_tokens"]
+    requested_input = payload["requested_input_tokens"]
+    requested_output = payload["max_output_tokens"]
+    if input_used > input_limit or output_used > output_limit:
+        return False
+    if total_used > budget.max_total_tokens:
+        return False
+
+    exceeded_dimensions = [
+        dimension
+        for dimension, exceeded in (
+            ("input_tokens", input_used + requested_input > input_limit),
+            ("output_tokens", output_used + requested_output > output_limit),
+            (
+                "total_tokens",
+                total_used + requested_input + requested_output
+                > budget.max_total_tokens,
+            ),
+        )
+        if exceeded
+    ]
+    return bool(
+        exceeded_dimensions
+        and payload.get("reason_code") == "exact_request_budget_exceeded"
+        and payload.get("error_code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
+        and payload.get("generation_started") is False
+        and payload.get("input_token_count_calls") == 1
+        and payload.get("input_tokens_used") == input_used
+        and payload.get("output_tokens_used") == output_used
+        and payload.get("total_tokens_used") == total_used
+        and total_used == input_used + output_used
+        and payload.get("max_cumulative_input_tokens") == input_limit
+        and payload.get("max_cumulative_output_tokens") == output_limit
+        and payload.get("max_total_tokens") == budget.max_total_tokens
+        and payload.get("remaining_input_tokens") == input_limit - input_used
+        and payload.get("remaining_output_tokens") == output_limit - output_used
+        and payload.get("remaining_total_tokens")
+        == budget.max_total_tokens - total_used
+        and payload.get("exceeded_dimensions") == exceeded_dimensions
+        and payload.get("binding_dimension") == exceeded_dimensions[0]
+    )
+
+
+def _cumulative_split_generation_block_valid(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    events,
+    context_event,
+    blocked_event,
+    expected_retry_candidate_hash: str | None,
+) -> bool:
+    """Validate a v4 exact-request block against independent split counters."""
+
+    return bool(
+        _generation_block_common_valid(
+            root=root,
+            manifest=manifest,
+            events=events,
+            context_event=context_event,
+            blocked_event=blocked_event,
+            expected_retry_candidate_hash=expected_retry_candidate_hash,
+        )
+        and _cumulative_split_generation_block_payload_valid(
+            manifest=manifest,
+            events=events,
+            blocked_event=blocked_event,
+        )
+    )
 
 
 def _counter_generation_block_valid(
@@ -7507,6 +7694,15 @@ def _model_generation_block_valid(
 ) -> bool:
     """Dispatch validation without reinterpreting historical unversioned blocks."""
 
+    if blocked_event.payload.get("schema_version") == _CUMULATIVE_SPLIT_GENERATION_BLOCK_SCHEMA:
+        return _cumulative_split_generation_block_valid(
+            root=root,
+            manifest=manifest,
+            events=events,
+            context_event=context_event,
+            blocked_event=blocked_event,
+            expected_retry_candidate_hash=expected_retry_candidate_hash,
+        )
     if blocked_event.payload.get("schema_version") == _COUNTER_GENERATION_BLOCK_SCHEMA:
         return _counter_generation_block_valid(
             root=root,
@@ -11003,7 +11199,7 @@ def qualify_run(
         and experiment.experiment_id
         in {
             CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
-            *AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
+            *AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
         }
     )
     if full_schedule_cost_campaign:
@@ -11018,7 +11214,12 @@ def qualify_run(
         )
         ac_cost_campaign = bool(
             experiment is not None
-            and experiment.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+            and experiment.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
+        )
+        split_budget_campaign = bool(
+            experiment is not None
+            and experiment.experiment_id
+            == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
         )
         expected_control_schema = (
             "ac-fixed-bundle-full-schedule-cost-control-evidence-v1"
@@ -11026,13 +11227,32 @@ def qualify_run(
             else _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA
         )
         expected_policy_schema = (
-            "ac-fixed-bundle-full-schedule-reserve-v1"
+            "ac-fixed-bundle-split-token-full-schedule-reserve-v1"
+            if split_budget_campaign
+            else "ac-fixed-bundle-full-schedule-reserve-v1"
             if ac_cost_campaign
             else _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA
         )
         expected_count = 4 if ac_cost_campaign else 12
-        expected_full_reserve = 54_450_000_000 if ac_cost_campaign else 163_350_000_000
-        expected_hard_cap = 55_000_000_000 if ac_cost_campaign else 164_000_000_000
+        expected_per_run_reserve = (
+            3_825_000_000
+            if split_budget_campaign
+            else 13_612_500_000
+        )
+        expected_full_reserve = (
+            15_300_000_000
+            if split_budget_campaign
+            else 54_450_000_000
+            if ac_cost_campaign
+            else 163_350_000_000
+        )
+        expected_hard_cap = (
+            18_000_000_000
+            if split_budget_campaign
+            else 55_000_000_000
+            if ac_cost_campaign
+            else 164_000_000_000
+        )
         add(
             "campaign_full_schedule_cost_contract",
             bool(
@@ -11048,7 +11268,7 @@ def qualify_run(
                 and len(schedule_row_ids) == expected_count
                 and experiment.schedule_row_id in schedule_row_ids
                 and isinstance(policy, dict)
-                and policy.get("per_run_reserve_nanos") == 13_612_500_000
+                and policy.get("per_run_reserve_nanos") == expected_per_run_reserve
                 and policy.get("full_schedule_reserve_nanos") == expected_full_reserve
                 and policy.get("hard_cap_nanos") == expected_hard_cap
                 and policy.get("cost_censoring_allowed") is False
@@ -11599,6 +11819,7 @@ def qualify_run(
             _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA,
             _COUNTER_GENERATION_BLOCK_SCHEMA,
             _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA,
+            _CUMULATIVE_SPLIT_GENERATION_BLOCK_SCHEMA,
         }
         for event in generation_blocked_events
     )

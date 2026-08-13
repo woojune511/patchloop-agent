@@ -46,17 +46,17 @@ from patchloop.verifier.runtime_evidence import (
     evaluator_v2_runtime_tuple_hash,
 )
 
-SCHEMA_VERSION = "evaluator-v2-ac-source-qualification-v5"
-QUALIFICATION_ID = "dev-validation-ac-fixed-bundle-evaluator-v2-20260813-r5"
+SCHEMA_VERSION = "evaluator-v2-ac-source-qualification-v6"
+QUALIFICATION_ID = "dev-validation-ac-fixed-bundle-evaluator-v2-20260814-r6"
 STATUS = "OFFLINE_SOURCE_QUALIFIED_LIVE_CLOSED"
 
-PLAN_PATH = Path("experiments/ac-structured-pilot-v6.plan.yaml")
-BASE_SUITE_PATH = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-r3.yaml")
+PLAN_PATH = Path("experiments/ac-structured-pilot-v7.plan.yaml")
+BASE_SUITE_PATH = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r4.yaml")
 FAST_PREDECESSOR_SUITE_PATH = Path(
-    "experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml"
+    "experiments/dev-validation-ac-fixed-bundle-readiness-20260813-r3.yaml"
 )
 OUTPUT_PATH = Path(
-    "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r5.json"
+    "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r6.json"
 )
 
 TASK_PATHS = (
@@ -81,8 +81,12 @@ SOURCE_PATHS = tuple(
             Path("patchloop/util.py"),
             Path("patchloop/repository.py"),
             Path("patchloop/agent/runner.py"),
+            Path("patchloop/agent/context.py"),
+            Path("patchloop/agent/investigation.py"),
             Path("patchloop/agent/tools.py"),
+            Path("patchloop/evals/budget.py"),
             Path("patchloop/evals/evaluator_v2_source_qualification.py"),
+            Path("patchloop/evals/policy_replay.py"),
             Path("patchloop/evals/qualification.py"),
             Path("patchloop/evals/report.py"),
             Path("patchloop/evals/runner.py"),
@@ -107,12 +111,17 @@ VALIDATION_PATHS = tuple(
             Path("tests/test_ac_campaign_finalization.py"),
             Path("tests/test_ac_fixed_bundle_cost_completion.py"),
             Path("tests/test_ac_row_start_consumption.py"),
+            Path("tests/test_agent_runtime.py"),
+            Path("tests/test_budget_diagnostics.py"),
             Path("tests/test_documentation_structure.py"),
             Path("tests/test_evaluator_v2_contracts.py"),
             Path("tests/test_evaluator_v2_source_qualification.py"),
             Path("tests/test_fast_preflight.py"),
             Path("tests/test_report.py"),
             Path("tests/test_sandbox.py"),
+            Path("tests/test_split_token_qualification.py"),
+            Path("tests/test_split_token_suite.py"),
+            Path("tests/test_trace_qualification.py"),
         ),
         key=lambda item: item.as_posix(),
     )
@@ -137,7 +146,12 @@ _EXPECTED_RUNTIME = {
     "service_tier": "default",
     "transport_max_retries": 0,
     "max_output_tokens": 25_000,
-    "max_total_tokens": 3_000_000,
+    "token_budget_schema_version": "cumulative-split-v1",
+    "max_model_calls": 180,
+    "max_tool_calls": 300,
+    "max_cumulative_input_tokens": 3_000_000,
+    "max_cumulative_output_tokens": 350_000,
+    "max_total_tokens": 3_350_000,
     "wall_clock_timeout_seconds": 3_600,
     "tool_schema_version": "v2",
     "context_policy_version": "phase-evidence-v5",
@@ -186,6 +200,11 @@ def _qualified_runtime_tuple_hash() -> str:
         context_policy_version=_EXPECTED_RUNTIME["context_policy_version"],
         memory_policy_version=_EXPECTED_RUNTIME["memory_policy_version"],
         sandbox_backend=_EXPECTED_RUNTIME["sandbox_backend"],
+        token_budget_schema_version=_EXPECTED_RUNTIME["token_budget_schema_version"],
+        max_model_calls=_EXPECTED_RUNTIME["max_model_calls"],
+        max_tool_calls=_EXPECTED_RUNTIME["max_tool_calls"],
+        max_cumulative_input_tokens=_EXPECTED_RUNTIME["max_cumulative_input_tokens"],
+        max_cumulative_output_tokens=_EXPECTED_RUNTIME["max_cumulative_output_tokens"],
     )
 
 
@@ -517,10 +536,11 @@ def _load_plan(root: Path) -> dict[str, Any]:
     }
     _require(set(value) == expected_keys, "evaluator-v2 successor plan fields differ")
     _require(
-        value["schema_version"] == "ac-structured-pilot-plan-v6"
-        and value["plan_id"] == "ac-structured-dev-validation-evaluator-v2-successor-20260813-v5"
+        value["schema_version"] == "ac-structured-pilot-plan-v7"
+        and value["plan_id"]
+        == "ac-structured-dev-validation-evaluator-v2-split-budget-20260814-v6"
         and value["status"] == "offline-evaluator-v2-source-qualification"
-        and value["predecessor_plan"] == "experiments/ac-structured-pilot-v5.plan.yaml"
+        and value["predecessor_plan"] == "experiments/ac-structured-pilot-v6.plan.yaml"
         and value["base_suite"] == BASE_SUITE_PATH.as_posix(),
         "evaluator-v2 successor plan identity differs",
     )
@@ -568,9 +588,11 @@ def _load_plan(root: Path) -> dict[str, Any]:
 def _load_base_suite(root: Path) -> tuple[Any, str]:
     from patchloop.contracts import (
         AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
-        AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
     )
     from patchloop.evals.runner import (
+        AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY,
+        GPT54_MINI_AC_SPLIT_TOKEN_BUDGET,
         _is_ac_fixed_bundle_readiness_profile,
         _suite_hash,
         load_suite,
@@ -584,16 +606,30 @@ def _load_base_suite(root: Path) -> tuple[Any, str]:
         raise EvaluatorV2SourceQualificationError("predecessor A/C suite is unavailable") from exc
     suite_payload = suite.model_dump(mode="json")
     predecessor_payload = predecessor.model_dump(mode="json")
-    suite_payload["experiment_id"] = predecessor_payload.get("experiment_id")
+    for field in (
+        "experiment_id",
+        "budget",
+        "campaign_cost_policy",
+        "estimated_cost_usd",
+        "cost_limit_usd",
+    ):
+        suite_payload.pop(field, None)
+        predecessor_payload.pop(field, None)
     _require(
-        suite.experiment_id == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
-        and predecessor.experiment_id == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+        suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        and predecessor.experiment_id == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
         and suite_payload == predecessor_payload
+        and suite.budget == GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
+        and suite.campaign_cost_policy is not None
+        and suite.campaign_cost_policy.model_dump(mode="json")
+        == AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+        and suite.estimated_cost_usd == 15.3
+        and suite.cost_limit_usd == 18.0
         and _is_ac_fixed_bundle_readiness_profile(suite)
         and suite.live_cost_approved is False
         and suite.approved_execution_hash is None
         and suite.pricing_verified_at == datetime(2026, 8, 13, 12, 5, 26, tzinfo=UTC),
-        "base A/C suite is not the exact fresh-pricing fast source",
+        "base A/C suite is not the exact split-token successor source",
     )
     return suite, _suite_hash(suite)
 
@@ -883,7 +919,7 @@ def validate_evaluator_v2_ac_paid_authority(
 ):
     """Bind a paid v2 manifest and authority to the exact qualified artifact."""
 
-    from patchloop.contracts import AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+    from patchloop.contracts import AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
     from patchloop.verifier.receipt import (
         EvaluatorV2QualificationAuthority,
         validate_evaluator_v2_manifest_authority,
@@ -934,7 +970,7 @@ def validate_evaluator_v2_ac_paid_authority(
     )
     _require(
         manifest.schema_version == "run-manifest-v2"
-        and experiment.experiment_id == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+        and experiment.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
         and experiment.suite_hash == payload.successor_suite.content_hash
         and checked.suite_hash == payload.successor_suite.content_hash
         and checked.source_qualification_hash == payload.content_hash

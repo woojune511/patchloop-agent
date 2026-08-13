@@ -133,26 +133,40 @@ def evaluator_v2_runtime_tuple_hash(
     context_policy_version: str,
     memory_policy_version: str,
     sandbox_backend: str,
+    token_budget_schema_version: str | None = None,
+    max_model_calls: int | None = None,
+    max_tool_calls: int | None = None,
+    max_cumulative_input_tokens: int | None = None,
+    max_cumulative_output_tokens: int | None = None,
 ) -> str:
     """Hash the condition-neutral evaluator-v2 runtime projection."""
 
-    return sha256_json(
-        {
-            "provider": provider,
-            "model_id": model_id,
-            "reasoning_effort": reasoning_effort,
-            "reasoning_mode": reasoning_mode,
-            "service_tier": service_tier,
-            "transport_max_retries": transport_max_retries,
-            "max_output_tokens": max_output_tokens,
-            "max_total_tokens": max_total_tokens,
-            "wall_clock_timeout_seconds": wall_clock_timeout_seconds,
-            "tool_schema_version": tool_schema_version,
-            "context_policy_version": context_policy_version,
-            "memory_policy_version": memory_policy_version,
-            "sandbox_backend": sandbox_backend,
-        }
-    )
+    payload = {
+        "provider": provider,
+        "model_id": model_id,
+        "reasoning_effort": reasoning_effort,
+        "reasoning_mode": reasoning_mode,
+        "service_tier": service_tier,
+        "transport_max_retries": transport_max_retries,
+        "max_output_tokens": max_output_tokens,
+        "max_total_tokens": max_total_tokens,
+        "wall_clock_timeout_seconds": wall_clock_timeout_seconds,
+        "tool_schema_version": tool_schema_version,
+        "context_policy_version": context_policy_version,
+        "memory_policy_version": memory_policy_version,
+        "sandbox_backend": sandbox_backend,
+    }
+    if token_budget_schema_version is not None:
+        payload.update(
+            {
+                "token_budget_schema_version": token_budget_schema_version,
+                "max_model_calls": max_model_calls,
+                "max_tool_calls": max_tool_calls,
+                "max_cumulative_input_tokens": max_cumulative_input_tokens,
+                "max_cumulative_output_tokens": max_cumulative_output_tokens,
+            }
+        )
+    return sha256_json(payload)
 
 
 def evaluator_v2_manifest_runtime_tuple_hash(manifest: RunManifest) -> str:
@@ -173,6 +187,11 @@ def evaluator_v2_manifest_runtime_tuple_hash(manifest: RunManifest) -> str:
         context_policy_version=checked.context_policy_version,
         memory_policy_version=checked.memory_policy_version,
         sandbox_backend=checked.sandbox_backend,
+        token_budget_schema_version=checked.budget.token_budget_schema_version,
+        max_model_calls=checked.budget.max_model_calls,
+        max_tool_calls=checked.budget.max_tool_calls,
+        max_cumulative_input_tokens=checked.budget.max_cumulative_input_tokens,
+        max_cumulative_output_tokens=checked.budget.max_cumulative_output_tokens,
     )
 
 

@@ -44,8 +44,9 @@ from patchloop.agent.tools import (
 )
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
-    AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
-    AC_FIXED_BUNDLE_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
@@ -129,6 +130,13 @@ _EVALUATION_RECEIPT_SCHEMA = "evaluation-receipt-v1"
 _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA = "model-generation-block-v1"
 _COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v2"
 _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v3"
+_SPLIT_TOKEN_GENERATION_BLOCK_SCHEMA = "model-generation-block-v4"
+_SPLIT_TOKEN_BUDGET_SCHEMA = "cumulative-split-v1"
+_SPLIT_TOKEN_DIMENSION_ORDER = (
+    "input_tokens",
+    "output_tokens",
+    "total_tokens",
+)
 _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA = (
     "condition-neutral-comparison-runtime-evidence-v1"
 )
@@ -150,6 +158,9 @@ _AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_CONTROL_SCHEMA = (
     "ac-fixed-bundle-full-schedule-cost-control-evidence-v1"
 )
 _AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_POLICY_SCHEMA = "ac-fixed-bundle-full-schedule-reserve-v1"
+_AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY_SCHEMA = (
+    "ac-fixed-bundle-split-token-full-schedule-reserve-v1"
+)
 _CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER = {
     ("pyfakefs-makedirs-parent-traversal", 1): 1,
     ("pyfakefs-makedirs-parent-traversal", 2): 2,
@@ -930,7 +941,7 @@ class AgentRunner:
             in {
                 CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
                 CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
-                *AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
+                *AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
             }
         ):
             if (
@@ -1059,7 +1070,7 @@ class AgentRunner:
         )
         return bool(
             experiment is not None
-            and experiment.experiment_id in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+            and experiment.experiment_id in AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS
             and experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS
             and experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
             and experiment.schedule_seed == 20260723
@@ -1075,9 +1086,25 @@ class AgentRunner:
             and manifest.model.service_tier == "default"
             and manifest.model.transport_max_retries == 0
             and manifest.model.max_output_tokens == 25_000
-            and manifest.budget.max_model_calls is None
-            and manifest.budget.max_tool_calls is None
-            and manifest.budget.max_total_tokens == 3_000_000
+            and (
+                (
+                    experiment.experiment_id != AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    and manifest.budget.max_model_calls is None
+                    and manifest.budget.max_tool_calls is None
+                    and manifest.budget.max_total_tokens == 3_000_000
+                    and manifest.budget.token_budget_schema_version is None
+                )
+                or (
+                    experiment.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    and manifest.budget.max_model_calls == 180
+                    and manifest.budget.max_tool_calls == 300
+                    and manifest.budget.max_total_tokens == 3_350_000
+                    and manifest.budget.token_budget_schema_version
+                    == _SPLIT_TOKEN_BUDGET_SCHEMA
+                    and manifest.budget.max_cumulative_input_tokens == 3_000_000
+                    and manifest.budget.max_cumulative_output_tokens == 350_000
+                )
+            )
             and manifest.budget.wall_clock_timeout_seconds == 3_600
             and manifest.memory.condition in {MemoryCondition.NO_MEMORY, MemoryCondition.STRUCTURED}
             and manifest.memory_policy_version == FIXED_BUNDLE_POLICY_VERSION
@@ -1092,7 +1119,7 @@ class AgentRunner:
         return bool(
             AgentRunner._is_ac_fixed_bundle_readiness_manifest(manifest)
             and manifest.experiment is not None
-            and manifest.experiment.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+            and manifest.experiment.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
             and _valid_sha256_identity(manifest.experiment.campaign_cost_control_hash)
         )
 
@@ -1179,7 +1206,12 @@ class AgentRunner:
             else _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA
         )
         expected_policy_schema = (
-            _AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_POLICY_SCHEMA
+            (
+                _AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY_SCHEMA
+                if manifest.experiment.experiment_id
+                == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                else _AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_POLICY_SCHEMA
+            )
             if ac_cost_profile
             else _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA
         )
@@ -2618,10 +2650,24 @@ class AgentRunner:
                 model_started = time.monotonic()
                 if isinstance(adapter, OpenAIResponsesAdapter):
                     requested_input_tokens = adapter.count_input_tokens(request_body)
+                    split_budget_evidence = self._split_token_request_budget_evidence(
+                        manifest,
+                        usage,
+                        requested_input_tokens=requested_input_tokens,
+                    )
                     remaining_tokens = (
                         manifest.budget.max_total_tokens - usage.input_tokens - usage.output_tokens
                     )
-                    if requested_input_tokens + manifest.model.max_output_tokens > remaining_tokens:
+                    legacy_budget_exceeded = bool(
+                        split_budget_evidence is None
+                        and requested_input_tokens + manifest.model.max_output_tokens
+                        > remaining_tokens
+                    )
+                    split_budget_exceeded = bool(
+                        split_budget_evidence is not None
+                        and split_budget_evidence["exceeded_dimensions"]
+                    )
+                    if legacy_budget_exceeded or split_budget_exceeded:
                         if manifest.context_policy_version in {
                             "phase-evidence-v3",
                             "phase-evidence-v4",
@@ -2644,6 +2690,9 @@ class AgentRunner:
                                 requested_input_tokens=requested_input_tokens,
                                 remaining_tokens=remaining_tokens,
                                 input_token_count_calls=1,
+                                split_budget_evidence=(
+                                    split_budget_evidence if split_budget_exceeded else None
+                                ),
                             )
                         raise ContractError(
                             "remaining token budget cannot fund the exact input "
@@ -3814,6 +3863,7 @@ class AgentRunner:
         if ac_fixed_bundle:
             from patchloop.evals.runner import (
                 AC_FIXED_BUNDLE_COST_POLICY,
+                AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY,
                 _ac_fixed_bundle_descriptor,
             )
 
@@ -3825,7 +3875,8 @@ class AgentRunner:
                 "execution_hash": manifest.experiment.execution_hash,
                 **(
                     {"campaign_cost_control_hash": (manifest.experiment.campaign_cost_control_hash)}
-                    if manifest.experiment.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+                    if manifest.experiment.experiment_id
+                    in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
                     else {}
                 ),
                 "schedule_seed": manifest.experiment.schedule_seed,
@@ -3846,7 +3897,12 @@ class AgentRunner:
                 "memory_index_version": manifest.memory.index_version,
                 "memory_index_hash": manifest.memory.index_hash,
                 "fixed_bundle": _ac_fixed_bundle_descriptor(),
-                "full_schedule_cost_policy": AC_FIXED_BUNDLE_COST_POLICY,
+                "full_schedule_cost_policy": (
+                    AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+                    if manifest.experiment.experiment_id
+                    == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    else AC_FIXED_BUNDLE_COST_POLICY
+                ),
                 "system_prompt": system_prompt,
                 "tools": tool_schemas,
                 "tool_schema_version": manifest.tool_schema_version,
@@ -5299,6 +5355,7 @@ class AgentRunner:
         requested_input_tokens: int | None = None,
         remaining_tokens: int | None = None,
         input_token_count_calls: int = 0,
+        split_budget_evidence: dict[str, Any] | None = None,
     ) -> None:
         retry_evidence = built_context.evidence.get("rejected_mutation_retry")
         retry_present = bool(
@@ -5325,7 +5382,12 @@ class AgentRunner:
             ),
         }
         if reason_code == "exact_request_budget_exceeded":
-            payload["schema_version"] = _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA
+            if split_budget_evidence is None:
+                payload["schema_version"] = _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA
+            else:
+                payload.pop("remaining_tokens")
+                payload.update(split_budget_evidence)
+                payload["schema_version"] = _SPLIT_TOKEN_GENERATION_BLOCK_SCHEMA
         elif reason_code in _COUNTER_GENERATION_BLOCK_REASONS:
             optional_call_limits = bool(
                 manifest.budget.max_model_calls is None or manifest.budget.max_tool_calls is None
@@ -5370,6 +5432,59 @@ class AgentRunner:
             message = f"model generation blocked: {reason_code}"
         raise ModelGenerationBudgetError(message, details=payload)
 
+    @staticmethod
+    def _split_token_request_budget_evidence(
+        manifest: RunManifest,
+        usage: Usage,
+        *,
+        requested_input_tokens: int,
+    ) -> dict[str, Any] | None:
+        """Project one exact request against the versioned cumulative split limits."""
+
+        budget = manifest.budget
+        if budget.token_budget_schema_version != _SPLIT_TOKEN_BUDGET_SCHEMA:
+            return None
+        input_limit = budget.max_cumulative_input_tokens
+        output_limit = budget.max_cumulative_output_tokens
+        if input_limit is None or output_limit is None:
+            raise ContractError("cumulative-split-v1 token limits are incomplete")
+
+        input_used = usage.input_tokens
+        output_used = usage.output_tokens
+        total_used = input_used + output_used
+        remaining_input = input_limit - input_used
+        remaining_output = output_limit - output_used
+        remaining_total = budget.max_total_tokens - total_used
+        exceeded = {
+            "input_tokens": requested_input_tokens > remaining_input,
+            "output_tokens": manifest.model.max_output_tokens > remaining_output,
+            "total_tokens": (
+                requested_input_tokens + manifest.model.max_output_tokens
+                > remaining_total
+            ),
+        }
+        exceeded_dimensions = [
+            dimension
+            for dimension in _SPLIT_TOKEN_DIMENSION_ORDER
+            if exceeded[dimension]
+        ]
+        return {
+            "token_budget_schema_version": budget.token_budget_schema_version,
+            "binding_dimension": (
+                exceeded_dimensions[0] if exceeded_dimensions else None
+            ),
+            "exceeded_dimensions": exceeded_dimensions,
+            "input_tokens_used": input_used,
+            "output_tokens_used": output_used,
+            "total_tokens_used": total_used,
+            "max_cumulative_input_tokens": input_limit,
+            "max_cumulative_output_tokens": output_limit,
+            "max_total_tokens": budget.max_total_tokens,
+            "remaining_input_tokens": remaining_input,
+            "remaining_output_tokens": remaining_output,
+            "remaining_total_tokens": remaining_total,
+        }
+
     def _assert_budget(self, manifest: RunManifest, usage: Usage) -> None:
         if (
             manifest.budget.max_model_calls is not None
@@ -5383,6 +5498,14 @@ class AgentRunner:
             raise ContractError("tool call budget exhausted")
         if usage.input_tokens + usage.output_tokens >= manifest.budget.max_total_tokens:
             raise ContractError("token budget exhausted")
+        if (
+            manifest.budget.token_budget_schema_version == _SPLIT_TOKEN_BUDGET_SCHEMA
+            and (
+                usage.input_tokens >= manifest.budget.max_cumulative_input_tokens
+                or usage.output_tokens >= manifest.budget.max_cumulative_output_tokens
+            )
+        ):
+            raise ContractError("split token budget exhausted")
         if usage.wall_clock_ms >= manifest.budget.wall_clock_timeout_seconds * 1000:
             raise ContractError("wall clock budget exhausted")
 
@@ -5395,6 +5518,14 @@ class AgentRunner:
             raise ContractError("model call budget exceeded")
         if usage.input_tokens + usage.output_tokens > manifest.budget.max_total_tokens:
             raise ContractError("token budget exceeded")
+        if (
+            manifest.budget.token_budget_schema_version == _SPLIT_TOKEN_BUDGET_SCHEMA
+            and (
+                usage.input_tokens > manifest.budget.max_cumulative_input_tokens
+                or usage.output_tokens > manifest.budget.max_cumulative_output_tokens
+            )
+        ):
+            raise ContractError("split token budget exceeded")
         if usage.wall_clock_ms > manifest.budget.wall_clock_timeout_seconds * 1000:
             raise ContractError("wall clock budget exceeded")
 

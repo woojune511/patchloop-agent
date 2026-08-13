@@ -1590,6 +1590,165 @@ def test_live_runner_refuses_generation_that_cannot_fit_remaining_token_budget(
     assert terminal_check["passed"] is True
 
 
+def test_live_runner_projects_exact_request_against_split_token_budget(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class CountingOnlyResponses:
+        def __init__(self) -> None:
+            self.input_tokens = SimpleNamespace(count=self.count)
+            self.create_called = False
+
+        @staticmethod
+        def count(**_kwargs):
+            return SimpleNamespace(input_tokens=10)
+
+        def create(self, **_kwargs):
+            self.create_called = True
+            raise AssertionError("generation must not start past a cumulative split limit")
+
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    package = load_task_package(Path(TASK).parent)
+    execution_hash = "sha256:" + ("c" * 64)
+    manifest = build_manifest(
+        package,
+        run_id="run_split_live_token_budget",
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        max_output_tokens=20,
+        budget=Budget(
+            max_total_tokens=55,
+            token_budget_schema_version="cumulative-split-v1",
+            max_cumulative_input_tokens=5,
+            max_cumulative_output_tokens=50,
+        ),
+        experiment_context=ExperimentRunContext(
+            experiment_id="split-live-token-budget-test",
+            purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+            suite_hash="sha256:" + ("a" * 64),
+            execution_hash=execution_hash,
+            schedule_seed=20260723,
+            schedule_order=1,
+            schedule_row_id="sha256:" + ("b" * 64),
+            repetition=1,
+        ),
+    )
+    responses = CountingOnlyResponses()
+    adapter = OpenAIResponsesAdapter(
+        manifest.model,
+        client=SimpleNamespace(responses=responses),
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(runner, "_model_adapter", lambda *_: adapter)
+    _write_approved_execution_plan(tmp_path / "runtime", execution_hash)
+
+    result = runner.start(
+        TASK,
+        model="openai",
+        manifest=manifest,
+        live_authorization=issue_live_execution_authorization(
+            execution_hash,
+            root=tmp_path / "runtime",
+        ),
+    )
+
+    blocked = next(
+        event
+        for event in runner.state.list_events(manifest.run_id)
+        if event.type == EventType.MODEL_GENERATION_BLOCKED
+    )
+    assert responses.create_called is False
+    assert result["usage"]["model_calls"] == 0
+    assert blocked.payload == {
+        "schema_version": "model-generation-block-v4",
+        "token_budget_schema_version": "cumulative-split-v1",
+        "reason_code": "exact_request_budget_exceeded",
+        "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+        "generation_started": False,
+        "request_artifact_id": blocked.payload["request_artifact_id"],
+        "request_artifact_path": blocked.payload["request_artifact_path"],
+        "request_artifact_hash": blocked.payload["request_artifact_hash"],
+        "request_body_hash": blocked.payload["request_body_hash"],
+        "requested_input_tokens": 10,
+        "max_output_tokens": 20,
+        "input_token_count_calls": 1,
+        "retry_context_present": False,
+        "retry_candidate_content_hash": None,
+        "binding_dimension": "input_tokens",
+        "exceeded_dimensions": ["input_tokens"],
+        "input_tokens_used": 0,
+        "output_tokens_used": 0,
+        "total_tokens_used": 0,
+        "max_cumulative_input_tokens": 5,
+        "max_cumulative_output_tokens": 50,
+        "max_total_tokens": 55,
+        "remaining_input_tokens": 5,
+        "remaining_output_tokens": 50,
+        "remaining_total_tokens": 55,
+    }
+    assert result["terminal_error"]["details"] == blocked.payload
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    checks = {check["check_id"]: check for check in qualification["checks"]}
+    assert checks["prompt_token_integrity"]["passed"] is True
+    assert (
+        checks["prompt_token_integrity"]["details"][
+            "terminal_generation_block_schema_version"
+        ]
+        == "model-generation-block-v4"
+    )
+    assert checks["terminal_result_integrity"]["passed"] is True
+
+
+@pytest.mark.parametrize(
+    ("usage", "requested_input_tokens", "exceeded_dimensions", "binding_dimension"),
+    [
+        (Usage(input_tokens=100, output_tokens=100), 100, [], None),
+        (Usage(input_tokens=2_999_995, output_tokens=100), 10, ["input_tokens"], "input_tokens"),
+        (Usage(input_tokens=100, output_tokens=349_990), 100, ["output_tokens"], "output_tokens"),
+        (
+            Usage(input_tokens=2_999_995, output_tokens=349_990),
+            10,
+            ["input_tokens", "output_tokens", "total_tokens"],
+            "input_tokens",
+        ),
+    ],
+)
+def test_split_token_request_projection_has_stable_dimension_order(
+    usage: Usage,
+    requested_input_tokens: int,
+    exceeded_dimensions: list[str],
+    binding_dimension: str | None,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        budget=Budget(
+            max_model_calls=180,
+            max_tool_calls=300,
+            max_total_tokens=3_350_000,
+            wall_clock_timeout_seconds=3_600,
+            token_budget_schema_version="cumulative-split-v1",
+            max_cumulative_input_tokens=3_000_000,
+            max_cumulative_output_tokens=350_000,
+        ),
+        max_output_tokens=25_000,
+    )
+
+    evidence = AgentRunner._split_token_request_budget_evidence(
+        manifest,
+        usage,
+        requested_input_tokens=requested_input_tokens,
+    )
+
+    assert evidence is not None
+    assert evidence["exceeded_dimensions"] == exceeded_dimensions
+    assert evidence["binding_dimension"] == binding_dimension
+
+
 def test_live_v3_retry_request_contains_exact_rejected_patch_context(
     tmp_path,
     monkeypatch,

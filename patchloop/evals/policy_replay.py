@@ -33,6 +33,8 @@ PHASE_ORDER = {
 }
 DEFAULT_MIN_AFFECTED_TASKS = 3
 DEFAULT_MIN_SAVINGS_PPM = 200_000
+_CUMULATIVE_SPLIT_GENERATION_BLOCK_SCHEMA = "model-generation-block-v4"
+_CUMULATIVE_SPLIT_TOKEN_BUDGET_SCHEMA = "cumulative-split-v1"
 
 
 class PolicyReplayError(ValueError):
@@ -290,6 +292,131 @@ def _rejection_fingerprint(event: RunEvent, *, worktree_diff_hash: str) -> str:
     )
 
 
+def _cumulative_split_generation_block_projection(
+    payload: dict[str, object],
+) -> dict[str, object]:
+    """Validate and project the public arithmetic of a v4 token block."""
+
+    if (
+        payload.get("token_budget_schema_version")
+        != _CUMULATIVE_SPLIT_TOKEN_BUDGET_SCHEMA
+        or payload.get("reason_code") != "exact_request_budget_exceeded"
+        or payload.get("error_code") != "MODEL_GENERATION_BUDGET_EXCEEDED"
+        or payload.get("generation_started") is not False
+    ):
+        raise PolicyReplayError(
+            "ModelGenerationBlocked v4 common fields are invalid"
+        )
+    integer_fields = (
+        "requested_input_tokens",
+        "max_output_tokens",
+        "input_tokens_used",
+        "output_tokens_used",
+        "total_tokens_used",
+        "max_cumulative_input_tokens",
+        "max_cumulative_output_tokens",
+        "max_total_tokens",
+        "remaining_input_tokens",
+        "remaining_output_tokens",
+        "remaining_total_tokens",
+    )
+    values = {
+        field: _strict_int(
+            payload.get(field),
+            label=f"ModelGenerationBlocked.{field}",
+            minimum=(1 if field.startswith("max_") else 0),
+        )
+        for field in integer_fields
+    }
+    input_token_count_calls = _strict_int(
+        payload.get("input_token_count_calls"),
+        label="ModelGenerationBlocked.input_token_count_calls",
+    )
+    if input_token_count_calls != 1:
+        raise PolicyReplayError(
+            "ModelGenerationBlocked.input_token_count_calls must equal 1"
+        )
+    if values["total_tokens_used"] != (
+        values["input_tokens_used"] + values["output_tokens_used"]
+    ):
+        raise PolicyReplayError(
+            "ModelGenerationBlocked.total_tokens_used must equal split usage"
+        )
+    if not (
+        values["max_cumulative_input_tokens"] <= values["max_total_tokens"]
+        and values["max_cumulative_output_tokens"] <= values["max_total_tokens"]
+        and values["max_total_tokens"]
+        <= values["max_cumulative_input_tokens"]
+        + values["max_cumulative_output_tokens"]
+    ):
+        raise PolicyReplayError(
+            "ModelGenerationBlocked split token limits are inconsistent"
+        )
+    for dimension in ("input", "output", "total"):
+        limit_field = (
+            f"max_cumulative_{dimension}_tokens"
+            if dimension != "total"
+            else "max_total_tokens"
+        )
+        used_field = f"{dimension}_tokens_used"
+        remaining_field = f"remaining_{dimension}_tokens"
+        if values[remaining_field] != values[limit_field] - values[used_field]:
+            raise PolicyReplayError(
+                f"ModelGenerationBlocked.{remaining_field} is inconsistent"
+            )
+
+    expected_exceeded = [
+        dimension
+        for dimension, exceeded in (
+            (
+                "input_tokens",
+                values["input_tokens_used"] + values["requested_input_tokens"]
+                > values["max_cumulative_input_tokens"],
+            ),
+            (
+                "output_tokens",
+                values["output_tokens_used"] + values["max_output_tokens"]
+                > values["max_cumulative_output_tokens"],
+            ),
+            (
+                "total_tokens",
+                values["total_tokens_used"]
+                + values["requested_input_tokens"]
+                + values["max_output_tokens"]
+                > values["max_total_tokens"],
+            ),
+        )
+        if exceeded
+    ]
+    exceeded = payload.get("exceeded_dimensions")
+    binding = payload.get("binding_dimension")
+    if not expected_exceeded or exceeded != expected_exceeded:
+        raise PolicyReplayError(
+            "ModelGenerationBlocked.exceeded_dimensions is inconsistent"
+        )
+    if binding != expected_exceeded[0]:
+        raise PolicyReplayError(
+            "ModelGenerationBlocked.binding_dimension is inconsistent"
+        )
+    return {
+        "schema_version": _CUMULATIVE_SPLIT_GENERATION_BLOCK_SCHEMA,
+        "token_budget_schema_version": _CUMULATIVE_SPLIT_TOKEN_BUDGET_SCHEMA,
+        "error_code": _strict_string(
+            payload.get("error_code"),
+            label="ModelGenerationBlocked.error_code",
+        ),
+        "reason_code": _strict_string(
+            payload.get("reason_code"),
+            label="ModelGenerationBlocked.reason_code",
+        ),
+        "generation_started": payload["generation_started"],
+        "input_token_count_calls": input_token_count_calls,
+        **values,
+        "exceeded_dimensions": expected_exceeded,
+        "binding_dimension": binding,
+    }
+
+
 def _safe_projection_payload(
     event: RunEvent,
     *,
@@ -367,6 +494,8 @@ def _safe_projection_payload(
             raise PolicyReplayError(
                 "ModelGenerationBlocked.generation_started must be a boolean"
             )
+        if payload.get("schema_version") == _CUMULATIVE_SPLIT_GENERATION_BLOCK_SCHEMA:
+            return _cumulative_split_generation_block_projection(payload)
         return {
             "error_code": _strict_string(
                 payload.get("error_code"),

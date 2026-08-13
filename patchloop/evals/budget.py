@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.contracts import (
-    AC_FIXED_BUNDLE_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
@@ -69,20 +70,38 @@ def _ac_fixed_bundle_readiness_profile(
     experiment = manifest.experiment
     return bool(
         experiment is not None
-        and experiment.experiment_id in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+        and experiment.experiment_id in AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS
         and experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS
         and experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
         and experiment.schedule_seed == 20260723
         and experiment.repetition == 1
         and experiment.schedule_order
         == _AC_FIXED_BUNDLE_ROW_ORDER.get((manifest.task_id, manifest.memory.condition))
-        and limits
-        == {
-            "model_calls": None,
-            "tool_calls": None,
-            "total_tokens": 3_000_000,
-            "wall_clock_ms": 3_600_000,
-        }
+        and (
+            (
+                experiment.experiment_id != AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                and limits
+                == {
+                    "model_calls": None,
+                    "tool_calls": None,
+                    "total_tokens": 3_000_000,
+                    "wall_clock_ms": 3_600_000,
+                }
+            )
+            or (
+                experiment.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                and limits
+                == {
+                    "model_calls": 180,
+                    "tool_calls": 300,
+                    "total_tokens": 3_350_000,
+                    "wall_clock_ms": 3_600_000,
+                }
+                and manifest.budget.token_budget_schema_version == "cumulative-split-v1"
+                and manifest.budget.max_cumulative_input_tokens == 3_000_000
+                and manifest.budget.max_cumulative_output_tokens == 350_000
+            )
+        )
     )
 
 
@@ -416,6 +435,58 @@ def _exact_request_diagnostic(
     sequence: int | None,
     max_total_tokens: int,
 ) -> dict[str, Any]:
+    if payload.get("schema_version") == "model-generation-block-v4":
+        requested = _required_nonnegative_int(
+            payload.get("requested_input_tokens"),
+            label="ModelGenerationBlocked.requested_input_tokens",
+        )
+        allowance = _required_nonnegative_int(
+            payload.get("max_output_tokens"),
+            label="ModelGenerationBlocked.max_output_tokens",
+        )
+        remaining_total = _required_nonnegative_int(
+            payload.get("remaining_total_tokens"),
+            label="ModelGenerationBlocked.remaining_total_tokens",
+        )
+        input_used = _required_nonnegative_int(
+            payload.get("input_tokens_used"),
+            label="ModelGenerationBlocked.input_tokens_used",
+        )
+        output_used = _required_nonnegative_int(
+            payload.get("output_tokens_used"),
+            label="ModelGenerationBlocked.output_tokens_used",
+        )
+        remaining_input = _required_nonnegative_int(
+            payload.get("remaining_input_tokens"),
+            label="ModelGenerationBlocked.remaining_input_tokens",
+        )
+        remaining_output = _required_nonnegative_int(
+            payload.get("remaining_output_tokens"),
+            label="ModelGenerationBlocked.remaining_output_tokens",
+        )
+        return {
+            "blocked": True,
+            "sequence": sequence,
+            "requested_input_tokens": requested,
+            "max_output_tokens": allowance,
+            "required_tokens": requested + allowance,
+            "remaining_tokens": remaining_total,
+            "deficit_tokens": max(0, requested + allowance - remaining_total),
+            "minimum_total_budget_same_prefix": input_used + output_used + requested + allowance,
+            "binding_dimension": payload.get("binding_dimension"),
+            "exceeded_dimensions": payload.get("exceeded_dimensions"),
+            "remaining_input_tokens": remaining_input,
+            "remaining_output_tokens": remaining_output,
+            "remaining_total_tokens": remaining_total,
+            "input_deficit_tokens": max(0, requested - remaining_input),
+            "output_deficit_tokens": max(0, allowance - remaining_output),
+            "aggregate_deficit_tokens": max(
+                0,
+                requested + allowance - remaining_total,
+            ),
+            "minimum_input_budget_same_prefix": input_used + requested,
+            "minimum_output_budget_same_prefix": output_used + allowance,
+        }
     requested = _required_nonnegative_int(
         payload.get("requested_input_tokens"),
         label="ModelGenerationBlocked.requested_input_tokens",
@@ -559,7 +630,7 @@ def calculate_budget_pressure(
     )
     claims_ac_fixed_bundle_identity = bool(
         isinstance(experiment_payload, Mapping)
-        and experiment_payload.get("experiment_id") in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+        and experiment_payload.get("experiment_id") in AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS
     )
     exact_manifest: RunManifest | None = None
     if (
@@ -590,8 +661,7 @@ def calculate_budget_pressure(
                 ) from exc
             if claims_ac_fixed_bundle_identity:
                 raise ValueError(
-                    "the A/C fixed-bundle identity requires its exact four-row "
-                    "3M/3600 runtime tuple"
+                    "the A/C fixed-bundle identity requires its exact versioned runtime tuple"
                 ) from exc
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
@@ -628,7 +698,7 @@ def calculate_budget_pressure(
         )
     if claims_ac_fixed_bundle_identity and not ac_fixed_bundle:
         raise ValueError(
-            "the A/C fixed-bundle identity requires its exact four-row 3M/3600 runtime tuple"
+            "the A/C fixed-bundle identity requires its exact versioned runtime tuple"
         )
     if claims_budget_readiness_probe_identity and (
         exact_manifest is None
@@ -840,7 +910,12 @@ def calculate_budget_pressure(
         "configured_limits": limits,
         "observed_usage": usage,
         "headroom": headroom,
-        "binding_dimension": _binding_dimension(terminal_reason),
+        "binding_dimension": (
+            exact_payload.get("binding_dimension")
+            if isinstance(exact_payload, Mapping)
+            and exact_payload.get("schema_version") == "model-generation-block-v4"
+            else _binding_dimension(terminal_reason)
+        ),
         "binding_reason": terminal_reason,
         "blocked_tool_count": len(blocked_tools),
         "blocked_tool_counts_by_reason": dict(sorted(reasons.items())),

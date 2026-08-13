@@ -17,6 +17,7 @@ from patchloop.agent import model as agent_model
 from patchloop.agent import runner as agent_runner
 from patchloop.contracts import (
     AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
     Budget,
     DatasetRole,
     ExperimentPurpose,
@@ -105,28 +106,41 @@ def _build(output: Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
     return summary, payload, raw
 
 
-def test_r5_source_surfaces_do_not_replace_r4_artifact() -> None:
-    r4 = REPOSITORY / (
+def test_r6_source_surfaces_do_not_replace_r5_artifact() -> None:
+    r5 = REPOSITORY / (
         "reports/live-pilot/artifacts/"
-        "evaluator-v2-ac-successor-offline-source-qualification-r4.json"
+        "evaluator-v2-ac-successor-offline-source-qualification-r5.json"
     )
 
-    assert source_q.SCHEMA_VERSION == "evaluator-v2-ac-source-qualification-v5"
-    assert source_q.QUALIFICATION_ID.endswith("-r5")
-    assert source_q.PLAN_PATH.as_posix() == "experiments/ac-structured-pilot-v6.plan.yaml"
-    assert source_q.OUTPUT_PATH.name.endswith("qualification-r5.json")
-    assert r4.is_file()
-    assert r4 != REPOSITORY / source_q.OUTPUT_PATH
+    assert source_q.SCHEMA_VERSION == "evaluator-v2-ac-source-qualification-v6"
+    assert source_q.QUALIFICATION_ID.endswith("-r6")
+    assert source_q.PLAN_PATH.as_posix() == "experiments/ac-structured-pilot-v7.plan.yaml"
+    assert source_q.OUTPUT_PATH.name.endswith("qualification-r6.json")
+    assert r5.is_file()
+    assert len(r5.read_bytes()) == 13_831
+    assert sha256_bytes(r5.read_bytes()) == (
+        "sha256:63e89065a018c7f929a2cf05ca94c5950d65cb8e21cb2a12992adc567f1c3bbf"
+    )
+    assert r5 != REPOSITORY / source_q.OUTPUT_PATH
 
 
-def test_r3_suite_changes_only_fast_predecessor_experiment_identity() -> None:
+def test_r4_suite_changes_only_versioned_budget_and_cost_contract() -> None:
     successor = eval_runner.load_suite(source_q.BASE_SUITE_PATH).model_dump(mode="json")
     predecessor = eval_runner.load_suite(source_q.FAST_PREDECESSOR_SUITE_PATH).model_dump(
         mode="json"
     )
 
-    assert successor["experiment_id"] == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
-    successor["experiment_id"] = predecessor["experiment_id"]
+    assert successor["experiment_id"] == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+    assert predecessor["experiment_id"] == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+    for field in (
+        "experiment_id",
+        "budget",
+        "campaign_cost_policy",
+        "estimated_cost_usd",
+        "cost_limit_usd",
+    ):
+        successor.pop(field)
+        predecessor.pop(field)
     assert successor == predecessor
 
 
@@ -191,7 +205,7 @@ def test_successor_suite_is_new_and_preserves_exact_ac_treatment(
     assert payload["base_suite"]["path"] == source_q.BASE_SUITE_PATH.as_posix()
     assert (
         eval_runner.load_suite(source_q.BASE_SUITE_PATH).experiment_id
-        == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+        == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
     )
     assert (
         eval_runner.load_suite(source_q.BASE_SUITE_PATH).pricing_verified_at.isoformat()
@@ -283,7 +297,7 @@ def test_ac_runner_binds_qualified_v2_manifest(
     monkeypatch.setattr(runtime_module, "git_commit", lambda: "a" * 40)
     monkeypatch.setattr(runtime_module, "version", lambda _package: "offline-test-sdk")
     context = ExperimentRunContext(
-        experiment_id=AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
+        experiment_id=AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
         purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS,
         suite_hash=summary["successor_suite_hash"],
         execution_hash="sha256:" + "1" * 64,
@@ -303,10 +317,13 @@ def test_ac_runner_binds_qualified_v2_manifest(
         memory_policy_version="fixed-d110-bundle-v1",
         sandbox_backend="docker",
         budget=Budget(
-            max_model_calls=None,
-            max_tool_calls=None,
-            max_total_tokens=3_000_000,
+            max_model_calls=180,
+            max_tool_calls=300,
+            max_total_tokens=3_350_000,
             wall_clock_timeout_seconds=3_600,
+            token_budget_schema_version="cumulative-split-v1",
+            max_cumulative_input_tokens=3_000_000,
+            max_cumulative_output_tokens=350_000,
         ),
         agent_image_digest=package.environment.image_digest,
         evaluator_image_digest=package.environment.image_digest,

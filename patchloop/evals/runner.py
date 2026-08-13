@@ -47,10 +47,12 @@ from patchloop.agent.tools import (
     TOOL_SCHEMAS_V6,
 )
 from patchloop.contracts import (
+    AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
-    AC_FIXED_BUNDLE_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
@@ -347,6 +349,15 @@ GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET = Budget(
     max_tool_calls=None,
     max_total_tokens=3_000_000,
     wall_clock_timeout_seconds=3_600,
+)
+GPT54_MINI_AC_SPLIT_TOKEN_BUDGET = Budget(
+    max_model_calls=180,
+    max_tool_calls=300,
+    max_total_tokens=3_350_000,
+    wall_clock_timeout_seconds=3_600,
+    token_budget_schema_version="cumulative-split-v1",
+    max_cumulative_input_tokens=3_000_000,
+    max_cumulative_output_tokens=350_000,
 )
 GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET = Budget(
     max_model_calls=None,
@@ -666,6 +677,35 @@ AC_FIXED_BUNDLE_COST_POLICY = {
     "completion_guaranteed": False,
     "invoice_or_free_tier_claimed": False,
 }
+AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY = {
+    "schema_version": "ac-fixed-bundle-split-token-full-schedule-reserve-v1",
+    "accounting_scope": "campaign-local",
+    "accounting_basis": "split-token-ceiling-standard-list-price",
+    "scheduled_run_count": 4,
+    "max_cumulative_input_tokens": 3_000_000,
+    "max_cumulative_output_tokens": 350_000,
+    "aggregate_token_ceiling": 3_350_000,
+    "input_reserve_rate_per_million_usd": 0.75,
+    "output_reserve_rate_per_million_usd": 4.5,
+    "per_run_reserve_usd": 3.825,
+    "full_schedule_reserve_usd": 15.3,
+    "hard_cap_usd": 18.0,
+    "hard_cap_slack_usd": 2.7,
+    "money_scale": "nano-usd",
+    "per_run_reserve_nanos": 3_825_000_000,
+    "full_schedule_reserve_nanos": 15_300_000_000,
+    "hard_cap_nanos": 18_000_000_000,
+    "reservation_mode": "row-bound-full-schedule-up-front",
+    "initial_reservation_boundary": "before-first-provider-call",
+    "row_reserve_count": 4,
+    "cost_censoring_allowed": False,
+    "not_started_due_to_cost_allowed": False,
+    "automatic_retry_or_replacement_allowed": False,
+    "settlement_basis": "durable-token-derived-standard-list-price",
+    "live_resume_policy": "disabled",
+    "completion_guaranteed": False,
+    "invoice_or_free_tier_claimed": False,
+}
 CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY = {
     "schema_version": CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA,
     "accounting_scope": "campaign-local",
@@ -829,16 +869,24 @@ def _is_ac_fixed_bundle_readiness_profile(
     cost_policy_payload = (
         cost_policy.model_dump(mode="json") if isinstance(cost_policy, BaseModel) else None
     )
-    exact_cost_profile = bool(
+    legacy_cost_profile = bool(
         (experiment_id == AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID and cost_policy_payload is None)
         or (
             experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
             and cost_policy_payload == AC_FIXED_BUNDLE_COST_POLICY
         )
     )
+    split_budget_profile = bool(
+        experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        and getattr(suite, "budget", None) == GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
+        and cost_policy_payload == AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+        and getattr(suite, "estimated_cost_usd", None) == 15.3
+        and getattr(suite, "cost_limit_usd", None) == 18.0
+    )
+    exact_cost_profile = legacy_cost_profile or split_budget_profile
     exact = bool(
         getattr(suite, "schema_version", None) == "experiment-v2"
-        and experiment_id in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+        and experiment_id in AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS
         and getattr(suite, "purpose", None) == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS
         and [_normalized_task_path(task) for task in getattr(suite, "tasks", [])]
         == AC_FIXED_BUNDLE_TASKS_ORDERED
@@ -853,7 +901,13 @@ def _is_ac_fixed_bundle_readiness_profile(
         and getattr(suite, "reasoning_effort", None) == "medium"
         and getattr(suite, "reasoning_mode", None) == "standard"
         and getattr(suite, "service_tier", None) == "default"
-        and getattr(suite, "budget", None) == GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+        and (
+            (
+                experiment_id != AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                and getattr(suite, "budget", None) == GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+            )
+            or split_budget_profile
+        )
         and getattr(suite, "max_output_tokens", None) == CAMPAIGN_MAX_OUTPUT_TOKENS
         and getattr(suite, "memory_token_budget", None) == 2_000
         and getattr(suite, "pilot_run_id", None) is None
@@ -861,8 +915,13 @@ def _is_ac_fixed_bundle_readiness_profile(
         and exact_cost_profile
         and getattr(suite, "live_cost_approved", None) is False
         and getattr(suite, "approved_execution_hash", None) is None
-        and getattr(suite, "estimated_cost_usd", None) == 54.45
-        and getattr(suite, "cost_limit_usd", None) == 55.0
+        and (
+            split_budget_profile
+            or (
+                getattr(suite, "estimated_cost_usd", None) == 54.45
+                and getattr(suite, "cost_limit_usd", None) == 55.0
+            )
+        )
     )
     return bool(
         exact and (not require_transport or getattr(suite, "transport_max_retries", None) == 0)
@@ -875,10 +934,15 @@ def _has_hash_bound_runtime(suite: Any) -> bool:
         or _is_frozen_comparison_runtime_profile(suite)
         or _is_condition_neutral_runtime_v2_profile(suite)
         or (
-            suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+            suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
             and _is_ac_fixed_bundle_readiness_profile(suite)
             and suite.campaign_cost_policy is not None
-            and suite.campaign_cost_policy.model_dump(mode="json") == AC_FIXED_BUNDLE_COST_POLICY
+            and suite.campaign_cost_policy.model_dump(mode="json")
+            == (
+                AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+                if suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                else AC_FIXED_BUNDLE_COST_POLICY
+            )
         )
     )
 
@@ -1184,7 +1248,11 @@ def _experiment_runtime_contract(
             "memory_conditions": [condition.value for condition in suite.conditions],
             "explicit_schedule": [row.model_dump(mode="json") for row in (suite.schedule or [])],
             "fixed_bundle": _ac_fixed_bundle_descriptor(),
-            "full_schedule_cost_policy": AC_FIXED_BUNDLE_COST_POLICY,
+            "full_schedule_cost_policy": (
+                AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+                if suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                else AC_FIXED_BUNDLE_COST_POLICY
+            ),
             "tool_schema_version": "v2",
             "context_policy_version": "phase-evidence-v5",
             "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
@@ -1319,10 +1387,15 @@ def _is_full_schedule_cost_cap_suite(suite: ExperimentSuite) -> bool:
             == CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY
         )
         or (
-            suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+            suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
             and _is_ac_fixed_bundle_readiness_profile(suite)
             and suite.campaign_cost_policy is not None
-            and suite.campaign_cost_policy.model_dump(mode="json") == AC_FIXED_BUNDLE_COST_POLICY
+            and suite.campaign_cost_policy.model_dump(mode="json")
+            == (
+                AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+                if suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                else AC_FIXED_BUNDLE_COST_POLICY
+            )
         )
     )
 
@@ -1339,12 +1412,20 @@ def _full_schedule_cost_policy(suite: ExperimentSuite) -> dict[str, Any] | None:
     ):
         return CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY
     if (
-        suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+        suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
         and _is_ac_fixed_bundle_readiness_profile(suite)
         and suite.campaign_cost_policy is not None
         and suite.campaign_cost_policy.model_dump(mode="json") == AC_FIXED_BUNDLE_COST_POLICY
     ):
         return AC_FIXED_BUNDLE_COST_POLICY
+    if (
+        suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        and _is_ac_fixed_bundle_readiness_profile(suite)
+        and suite.campaign_cost_policy is not None
+        and suite.campaign_cost_policy.model_dump(mode="json")
+        == AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+    ):
+        return AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
     return None
 
 
@@ -1415,7 +1496,7 @@ def _d097_fixed_cost_nanos(usage: Usage) -> int:
 def _full_schedule_usage_profile(experiment_id: str) -> tuple[str, str]:
     if experiment_id == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID:
         return D097_DURABLE_USAGE_EVIDENCE_SCHEMA, D097_FIXED_PRICING_SCHEMA
-    if experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS:
+    if experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
         return (
             AC_FIXED_BUNDLE_DURABLE_USAGE_EVIDENCE_SCHEMA,
             AC_FIXED_BUNDLE_FIXED_PRICING_SCHEMA,
@@ -1849,6 +1930,14 @@ def _campaign_cost_control(
     if _is_full_schedule_cost_cap_suite(suite):
         policy = _full_schedule_cost_policy(suite)
         assert policy is not None
+        per_run_reserve_usd = policy.get(
+            "per_run_reserve_usd",
+            policy.get("per_run_worst_rate_reserve_usd"),
+        )
+        full_schedule_reserve_usd = policy.get(
+            "full_schedule_reserve_usd",
+            policy.get("full_schedule_worst_rate_reserve_usd"),
+        )
         if not (
             _is_sha256_identity(schedule_hash)
             and isinstance(schedule_row_ids, list)
@@ -1856,11 +1945,11 @@ def _campaign_cost_control(
             and len(set(schedule_row_ids)) == schedule_size
             and all(_is_sha256_identity(row_id) for row_id in schedule_row_ids)
             and schedule_size == policy["scheduled_run_count"]
-            and suite.estimated_cost_usd == policy["full_schedule_worst_rate_reserve_usd"]
+            and suite.estimated_cost_usd == full_schedule_reserve_usd
             and suite.cost_limit_usd == policy["hard_cap_usd"]
-            and pricing.get("per_run_cost_reserve_usd") == policy["per_run_worst_rate_reserve_usd"]
+            and pricing.get("per_run_cost_reserve_usd") == per_run_reserve_usd
             and pricing.get("budget_upper_bound_usd")
-            == policy["full_schedule_worst_rate_reserve_usd"]
+            == full_schedule_reserve_usd
             and _usd_to_nanos(pricing["per_run_cost_reserve_usd"])
             == policy["per_run_reserve_nanos"]
             and _usd_to_nanos(pricing["budget_upper_bound_usd"])
@@ -1881,7 +1970,11 @@ def _campaign_cost_control(
             "row_bound_reservations": True,
             "deterministic_settlement_required": True,
             "row_cost_censoring_allowed": False,
-            "full_schedule_worst_rate_reserve_usd": pricing["budget_upper_bound_usd"],
+            **(
+                {"full_schedule_reserve_usd": pricing["budget_upper_bound_usd"]}
+                if suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                else {"full_schedule_worst_rate_reserve_usd": pricing["budget_upper_bound_usd"]}
+            ),
             "full_schedule_reserve_nanos": policy["full_schedule_reserve_nanos"],
             "per_run_reserve_nanos": policy["per_run_reserve_nanos"],
             "hard_cap_nanos": policy["hard_cap_nanos"],
@@ -1891,7 +1984,7 @@ def _campaign_cost_control(
         return {
             "schema_version": (
                 AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_CONTROL_SCHEMA
-                if suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+                if suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
                 else CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA
             ),
             "descriptor": descriptor,
@@ -1969,13 +2062,38 @@ def _pricing_contract(
     configured_prices = [
         getattr(suite, field) for field in PRICE_FIELDS if getattr(suite, field) is not None
     ]
-    per_run_cost_reserve = (
-        (suite.budget.max_total_tokens + suite.max_output_tokens)
-        * max(configured_prices)
-        / 1_000_000
-        if configured_prices
-        else 0.0
-    )
+    if suite.budget.token_budget_schema_version == "cumulative-split-v1":
+        input_prices = [
+            price
+            for price in (
+                suite.input_price_per_million_usd,
+                suite.cached_input_price_per_million_usd,
+                suite.cache_write_input_price_per_million_usd,
+            )
+            if price is not None
+        ]
+        if not input_prices or suite.output_price_per_million_usd is None:
+            per_run_cost_reserve = 0.0
+        else:
+            assert suite.budget.max_cumulative_input_tokens is not None
+            assert suite.budget.max_cumulative_output_tokens is not None
+            per_run_cost_reserve = float(
+                (
+                    Decimal(suite.budget.max_cumulative_input_tokens)
+                    * Decimal(str(max(input_prices)))
+                    + Decimal(suite.budget.max_cumulative_output_tokens)
+                    * Decimal(str(suite.output_price_per_million_usd))
+                )
+                / Decimal(1_000_000)
+            )
+    else:
+        per_run_cost_reserve = (
+            (suite.budget.max_total_tokens + suite.max_output_tokens)
+            * max(configured_prices)
+            / 1_000_000
+            if configured_prices
+            else 0.0
+        )
     budget_upper_bound = schedule_size * per_run_cost_reserve
     if _has_hash_bound_runtime(suite):
         # Keep the approval-facing currency values stable instead of exposing
@@ -2216,6 +2334,40 @@ class ACFixedBundleFullScheduleCostPolicy(BaseModel):
     invoice_or_free_tier_claimed: Literal[False]
 
 
+class ACFixedBundleSplitTokenCostPolicy(BaseModel):
+    """Exact four-row price-aware reserve for the split-token successor."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: Literal["ac-fixed-bundle-split-token-full-schedule-reserve-v1"]
+    accounting_scope: Literal["campaign-local"]
+    accounting_basis: Literal["split-token-ceiling-standard-list-price"]
+    scheduled_run_count: Literal[4]
+    max_cumulative_input_tokens: Literal[3_000_000]
+    max_cumulative_output_tokens: Literal[350_000]
+    aggregate_token_ceiling: Literal[3_350_000]
+    input_reserve_rate_per_million_usd: Literal[0.75]
+    output_reserve_rate_per_million_usd: Literal[4.5]
+    per_run_reserve_usd: Literal[3.825]
+    full_schedule_reserve_usd: Literal[15.3]
+    hard_cap_usd: Literal[18.0]
+    hard_cap_slack_usd: Literal[2.7]
+    money_scale: Literal["nano-usd"]
+    per_run_reserve_nanos: Literal[3_825_000_000]
+    full_schedule_reserve_nanos: Literal[15_300_000_000]
+    hard_cap_nanos: Literal[18_000_000_000]
+    reservation_mode: Literal["row-bound-full-schedule-up-front"]
+    initial_reservation_boundary: Literal["before-first-provider-call"]
+    row_reserve_count: Literal[4]
+    cost_censoring_allowed: Literal[False]
+    not_started_due_to_cost_allowed: Literal[False]
+    automatic_retry_or_replacement_allowed: Literal[False]
+    settlement_basis: Literal["durable-token-derived-standard-list-price"]
+    live_resume_policy: Literal["disabled"]
+    completion_guaranteed: Literal[False]
+    invoice_or_free_tier_claimed: Literal[False]
+
+
 class ExperimentScheduleRow(BaseModel):
     """One author-ordered row for a narrowly pre-registered suite."""
 
@@ -2275,7 +2427,11 @@ class ExperimentSuite(BaseModel):
     )
     diagnostic: ExperimentDiagnostic | None = None
     campaign_cost_policy: (
-        CampaignCostPolicy | FullScheduleCostPolicy | ACFixedBundleFullScheduleCostPolicy | None
+        CampaignCostPolicy
+        | FullScheduleCostPolicy
+        | ACFixedBundleFullScheduleCostPolicy
+        | ACFixedBundleSplitTokenCostPolicy
+        | None
     ) = Field(
         default=None,
         exclude_if=lambda value: value is None,
@@ -2440,11 +2596,16 @@ class ExperimentSuite(BaseModel):
                     "the D-097 no-memory source requires its exact full-schedule "
                     "non-censoring cost policy and no embedded live authority"
                 )
-        elif self.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS:
+        elif self.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
+            expected_ac_cost_policy = (
+                AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+                if self.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                else AC_FIXED_BUNDLE_COST_POLICY
+            )
             if (
                 not ac_fixed_bundle_profile
                 or self.campaign_cost_policy is None
-                or self.campaign_cost_policy.model_dump(mode="json") != AC_FIXED_BUNDLE_COST_POLICY
+                or self.campaign_cost_policy.model_dump(mode="json") != expected_ac_cost_policy
                 or self.live_cost_approved is not False
                 or self.approved_execution_hash is not None
             ):
@@ -2628,11 +2789,26 @@ class ExperimentSuite(BaseModel):
                     "fixed D-110 policy, and full-schedule source cap"
                 )
             self._require_live_defaults(
-                cost_limit=55.0,
-                budget=GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET,
+                cost_limit=(
+                    18.0
+                    if self.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    else 55.0
+                ),
+                budget=(
+                    GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
+                    if self.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    else GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+                ),
             )
-            if self.estimated_cost_usd != 54.45:
-                raise ValueError("A/C readiness requires estimated_cost_usd=54.45")
+            expected_ac_cost = (
+                15.3
+                if self.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                else 54.45
+            )
+            if self.estimated_cost_usd != expected_ac_cost:
+                raise ValueError(
+                    f"A/C readiness requires estimated_cost_usd={expected_ac_cost:g}"
+                )
         elif self.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
             normalized_tasks = {_normalized_task_path(task) for task in self.tasks}
             completion_panel = self.experiment_id not in SINGLE_TASK_LIVE_EXPERIMENT_IDS
@@ -3460,8 +3636,12 @@ def _full_schedule_cost_journal_evidence(
         expected_policy = CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY
         expected_purpose = ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY.value
         qualification_schema = "campaign-full-schedule-cost-qualification-v1"
-    elif experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS:
-        expected_policy = AC_FIXED_BUNDLE_COST_POLICY
+    elif experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
+        expected_policy = (
+            AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+            if experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+            else AC_FIXED_BUNDLE_COST_POLICY
+        )
         expected_purpose = ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS.value
         qualification_schema = "ac-fixed-bundle-full-schedule-cost-qualification-v1"
     else:
@@ -3469,7 +3649,7 @@ def _full_schedule_cost_journal_evidence(
     expected_count = expected_policy["scheduled_run_count"]
     expected_control_schema = (
         AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_CONTROL_SCHEMA
-        if experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+        if experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
         else CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA
     )
     if not (
@@ -3597,7 +3777,7 @@ def _full_schedule_cost_journal_evidence(
         payload = event.get("payload")
         if not isinstance(payload, dict):
             raise ContractError("D-097 campaign cost journal payload must be an object")
-        if experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS and (
+        if experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS and (
             event_type not in ac_payload_keys or set(payload) != ac_payload_keys[event_type]
         ):
             raise ContractError("A/C full-schedule event payload fields differ")
@@ -3703,7 +3883,7 @@ def _full_schedule_cost_journal_evidence(
                 and payload.get("usage_reconciliation_passed") is True
             )
             unavailable_terminal = bool(
-                experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+                experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
                 and base_terminal_valid
                 and evidence is None
                 and payload.get("usage_evidence_hash") is None
@@ -3770,7 +3950,7 @@ def _full_schedule_cost_journal_evidence(
                 raise ContractError("A/C unavailable settlement has no active row")
             expected_row = expected_schedule[next_row_index]
             if not (
-                experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+                experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
                 and active_terminal_seen
                 and active_evidence is None
                 and payload.get("schedule_row_id") == active_row_id
@@ -3834,7 +4014,9 @@ def _full_schedule_cost_journal_evidence(
     )
     qualification = {
         "schema_version": qualification_schema,
-        "passed": (fully_settled if experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS else True),
+        "passed": (
+            fully_settled if experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS else True
+        ),
         "fully_settled": fully_settled,
         "campaign_cost_control_hash": control_hash,
         "schedule_hash": schedule_hash,
@@ -3844,7 +4026,7 @@ def _full_schedule_cost_journal_evidence(
         "not_started_runs": len(not_started_rows),
         **(
             {"unsettled_runs": len(unsettled_rows)}
-            if experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+            if experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
             else {}
         ),
         "accrued_cost_nanos": accrued_nanos,
@@ -4829,7 +5011,7 @@ def _validated_ac_evaluator_v2_source_qualification(
     """Load the hash-only evaluator-v2 gate for the executable A/C suite."""
 
     if not (
-        suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+        suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
         and _is_ac_fixed_bundle_readiness_profile(suite)
     ):
         return None
@@ -5434,7 +5616,7 @@ def preflight_suite(
                 "the historical R1 source remains execution-blocked because it "
                 "does not embed the exact full-schedule cost policy",
             )
-        elif suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS and not isinstance(
+        elif suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS and not isinstance(
             campaign_cost_control, dict
         ):
             _block(
@@ -5610,7 +5792,11 @@ def _assert_manifest_matches_preflight(
             "memory_conditions": [condition.value for condition in suite.conditions],
             "explicit_schedule": [row.model_dump(mode="json") for row in (suite.schedule or [])],
             "fixed_bundle": _ac_fixed_bundle_descriptor(),
-            "full_schedule_cost_policy": AC_FIXED_BUNDLE_COST_POLICY,
+            "full_schedule_cost_policy": (
+                AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
+                if suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                else AC_FIXED_BUNDLE_COST_POLICY
+            ),
             "tool_schema_version": manifest.tool_schema_version,
             "context_policy_version": manifest.context_policy_version,
             "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
@@ -5991,11 +6177,11 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw_checks, list):
         raw_checks = []
     if payload.get("experiment_id") in {
-        *AC_FIXED_BUNDLE_EXPERIMENT_IDS,
+        *AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
         CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
         CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
     }:
-        if payload.get("experiment_id") in AC_FIXED_BUNDLE_EXPERIMENT_IDS:
+        if payload.get("experiment_id") in AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS:
             summary["memory_condition"] = payload.get("memory_condition")
         summary["source_evidence_hash"] = payload.get("source_evidence_hash")
         summary["usage_reconciliation"] = _qualification_gate_check_projection(
@@ -6007,7 +6193,7 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
             "persisted_result",
         )
     if payload.get("experiment_id") in {
-        *AC_FIXED_BUNDLE_EXPERIMENT_IDS,
+        *AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
         GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
         CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
     }:
@@ -6027,7 +6213,7 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
                     "campaign_full_schedule_cost_contract",
                 ]
             )
-        if payload.get("experiment_id") in AC_FIXED_BUNDLE_EXPERIMENT_IDS:
+        if payload.get("experiment_id") in AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS:
             readiness_check_ids.extend(
                 [
                     "approved_execution_plan",
@@ -6036,7 +6222,7 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
                     "pricing_start_freshness",
                 ]
             )
-            if payload.get("experiment_id") in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS:
+            if payload.get("experiment_id") in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
                 readiness_check_ids.append("campaign_full_schedule_cost_contract")
         summary["readiness_checks"] = {
             check_id: _qualification_gate_check_projection(
@@ -6110,7 +6296,7 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
             and payload.get("experiment_id") in GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         )
         or comparison_no_memory_observability
-        or payload.get("experiment_id") in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+        or payload.get("experiment_id") in AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS
     ):
         check_id = call_guard_check_id
         summary["gate_checks"] = {
@@ -6474,7 +6660,7 @@ def _qualify_terminal_run(
     if payload.get("experiment_id") in {
         GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
         CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
-        *AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
+        *AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
     }:
         persisted = load_trace_qualification(run_id, root=run_root)
         recomputed = qualify_run(
@@ -7114,10 +7300,20 @@ def _ac_fixed_bundle_completion_gate(
 ) -> dict[str, Any]:
     """Admit only the exact four-row official-evaluator A/C readiness matrix."""
 
-    if expected_experiment_id not in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS:
+    if expected_experiment_id not in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
         raise ContractError("unregistered A/C completion experiment identity")
 
     expected_runs = 4
+    expected_full_schedule_reserve_nanos = (
+        15_300_000_000
+        if expected_experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        else 54_450_000_000
+    )
+    expected_hard_cap_nanos = (
+        18_000_000_000
+        if expected_experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        else 55_000_000_000
+    )
     expected_rows = expected_schedule if isinstance(expected_schedule, list) else []
     expected_by_id = {
         row.get("schedule_row_id"): row
@@ -7315,10 +7511,13 @@ def _ac_fixed_bundle_completion_gate(
         and cost.get("schedule_hash") == expected_schedule_hash
         and valid_sha256(expected_campaign_cost_control_hash)
         and cost.get("campaign_cost_control_hash") == expected_campaign_cost_control_hash
-        and cost.get("full_schedule_reserve_nanos") == 54_450_000_000
-        and cost.get("hard_cap_nanos") == 55_000_000_000
+        and cost.get("full_schedule_reserve_nanos")
+        == expected_full_schedule_reserve_nanos
+        and cost.get("hard_cap_nanos") == expected_hard_cap_nanos
         and type(cost.get("accrued_cost_nanos")) is int
-        and 0 <= cost.get("accrued_cost_nanos", -1) <= 54_450_000_000
+        and 0
+        <= cost.get("accrued_cost_nanos", -1)
+        <= expected_full_schedule_reserve_nanos
         and cost.get("live_resume_supported") is False
     )
     terminal_runs = sum(row.get("attempt_status") == "terminal" for row in rows)
@@ -7381,7 +7580,7 @@ def _completion_gate(
     """Separate runtime completion from task success for the high-budget panel."""
 
     if (
-        suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+        suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
         and _is_ac_fixed_bundle_readiness_profile(suite)
     ):
         return _ac_fixed_bundle_completion_gate(
@@ -8313,7 +8512,7 @@ def _ac_finalization_paths(
 ) -> tuple[Path, Path, Path, Path]:
     if not _is_sha256_identity(execution_hash):
         raise ContractError("A/C finalization requires an exact SHA-256 execution hash")
-    if experiment_id not in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS:
+    if experiment_id not in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
         raise ContractError("A/C finalization requires a registered cost experiment identity")
     selected_root = root.resolve()
     digest = execution_hash.removeprefix("sha256:")
@@ -8350,7 +8549,7 @@ def _load_ac_finalization_plan(
         raise ContractError("A/C finalization execution plan is invalid") from exc
     approval = plan.get("approval") if isinstance(plan, dict) else None
     experiment_id = plan.get("experiment_id") if isinstance(plan, dict) else None
-    if experiment_id not in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS:
+    if experiment_id not in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
         raise ContractError("persisted plan has an unregistered A/C experiment identity")
     (
         expected_plan_path,
@@ -8370,7 +8569,7 @@ def _load_ac_finalization_plan(
     if not (
         isinstance(plan, dict)
         and plan.get("schema_version") == "experiment-execution-plan-v1"
-        and plan.get("experiment_id") in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+        and plan.get("experiment_id") in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
         and suite.experiment_id == experiment_id
         and plan.get("purpose") == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS.value
         and plan.get("execution_hash") == execution_hash
@@ -8878,7 +9077,7 @@ def _load_ac_evaluator_v2_runtime_authorities(
     if qualification.get("base_suite_matches") is not True:
         raise ContractError("evaluator-v2 qualification does not bind this suite source")
     if not (
-        suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+        suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
         and _is_ac_fixed_bundle_readiness_profile(suite)
     ):
         raise ContractError("evaluator-v2 qualification is attached to another suite")
@@ -9634,7 +9833,7 @@ def evaluate_suite(
             )
         elif (
             full_schedule_cost_enabled
-            and suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+            and suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
         ):
             journal_sequence += 1
             journal_hash = _append_campaign_event(
@@ -9787,7 +9986,7 @@ def evaluate_suite(
     output.parent.mkdir(parents=True, exist_ok=True)
     encoded_record = json.dumps(record, indent=2, ensure_ascii=False)
     result_hash = sha256_bytes(encoded_record.encode("utf-8"))
-    if suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS:
+    if suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
         return _finalize_ac_campaign_result(
             record,
             journal_sequence=journal_sequence,
