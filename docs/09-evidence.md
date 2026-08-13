@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V25 order-stable activation -- state-bound, approval required
+## V25 order-stable activation -- approval-bound, immediate run required
 
 Source/tree `ea383759c57f60e5b33e6f5a2f65e1bb07d65532`/`5453a178c3e9a6ff3325c2d18431acbd661af0a4`
 is the exact five-addition child of `88f21e545298d1af0061bb2a125078fba975c8ad`. Contract
@@ -18,8 +18,12 @@ launched no workload or observation. Exact statement hash
 `sha256:8e1fa54988e36319b01a557a7db5ff7ec7ddfeeb24d3d0bc8ef813546ccd7771` created self-attested state
 `ncpstate_ac6bba89eaa69ecfda433cc0775bff2308e0e95eea1ac3baa2bc47368531dae2` at
 `f31786fef57210925c798c093b2c0a7d07bc5c33`; its file is
-`sha256:c7be41df33d99329a70679b3ddb7eb0a454025bd6449db43cb789aadf9f0933a` (919 bytes). It is nonreusable,
-records zero observation and grants no execution. Approval, attempt and terminal are absent; separate approval is next.
+`sha256:c7be41df33d99329a70679b3ddb7eb0a454025bd6449db43cb789aadf9f0933a` (919 bytes). Approval statement
+`sha256:5561747e7b2567b14998be9023ef225b6500dc75f1a4a5c10c863da2a28fd238` created nonreusable approval
+`ncpapproval_eb438ff9b25f404a88e93d3e6462a4d7c70331b94d3c9e617ec802d98f896919` at
+`fafa811cd85f182e907482cb4ad50f46c7835f9f`; its file is
+`sha256:3e6059120fca918a11939c9bd945cd1614554670bc18181bf7bc5ce8e327cff1` (1,499 bytes). It records zero
+observation and `attempt_started=false`; authorization, attempt and terminal are absent. Immediate run text is next.
 
 ## V24 projection -- immutable predecessor
 

@@ -36,7 +36,7 @@ work.
   READY. Its state, approval and attempt cannot be reused; any correction requires a new versioned successor.
 - V23 consumed `diagnostic_result_invalid` with incomplete/unknown accounting and cannot retry. V24's order-stable,
   value-free projection is not exact v23-cause proof. V25 qualifies the lifecycle/two-hop wrapper and now binds one
-  self-attested non-executable state; separate exact approval must precede immediate run text.
+  self-attested state and nonreusable future-attempt approval. Separate exact immediate run text is still required.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

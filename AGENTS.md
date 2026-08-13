@@ -52,11 +52,10 @@
   accounting and no retry; `docs/09-evidence.md` owns its exact tuple.
 - V22 is projection-only. V23 consumed `ERROR(child_checker_error/diagnostic_result_invalid)` after Docker and both
   frames passed; accounting is incomplete/unknown and retry is closed. `docs/09-evidence.md` owns exact tuples.
-- V24 is the immutable projection-only correction. V25 source `ea383759c57f60e5b33e6f5a2f65e1bb07d65532`, contract
-  `ncpcontract_c87b73d0a559f1585c4c40a495d1d5718ac89cd72aae935320023b7f4bbbca1f` and qualification
-  `sha256:d24b7a9849e0c632c05ef09ad9e9f7886bdf121a8b168d55e7040e8c2c732ff8` are source-qualified. State
-  `ncpstate_ac6bba89eaa69ecfda433cc0775bff2308e0e95eea1ac3baa2bc47368531dae2` is self-attested/non-executable;
-  the next gate is separate exact approval. No attempt is open.
+- V24 is projection-only. V25 contract `ncpcontract_c87b73d0a559f1585c4c40a495d1d5718ac89cd72aae935320023b7f4bbbca1f`
+  is source-qualified; state `ncpstate_ac6bba89eaa69ecfda433cc0775bff2308e0e95eea1ac3baa2bc47368531dae2`
+  and approval `ncpapproval_eb438ff9b25f404a88e93d3e6462a4d7c70331b94d3c9e617ec802d98f896919` are bound.
+  No attempt is open; the next gate is the exact immediate-run statement.
 
 ## Required reading
 

@@ -109,8 +109,8 @@ outer result transport. V20's exact state/approval started one append-only ledge
 
 V23 consumed one append-only `ERROR(child_checker_error/diagnostic_result_invalid)` attempt and cannot retry. V24
 validates the legacy mapping before sorting and emits only a typed value-free summary. V25 binds that projection to
-fresh state/approval/run schemas and a two-hop channel. Its exact self-attested state is now bound but non-executable;
-separate exact approval is the next gate.
+fresh state/approval/run schemas and a two-hop channel. State and nonreusable future-attempt approval are bound, but
+`attempt_started=false`; the exact immediate-run statement is the next gate.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

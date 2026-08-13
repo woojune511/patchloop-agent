@@ -46,14 +46,14 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 `docs/09-evidence.md`; none is readiness evidence.
 
 V24 corrects mapping order with a value-free summary. V25 binds it to fresh state/approval/run schemas and a two-hop
-channel. Its exact self-attested v25 state is bound without observation; separate approval is next.
+channel. Its exact state and nonreusable approval are bound without observation; immediate run text is next.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
 Status: v3/v5/v7/v12/v13/v14/v16/v18/v20/v23 consumed; none can retry.
 
 V23 preserves a consumed incomplete/unknown `diagnostic_result_invalid` terminal. V24/V25 source qualifications are
-not attempts. State exists but is non-executable; separate exact approval and immediate run text are still required.
+not attempts. State/approval exist, but `attempt_started=false`; separate exact immediate run text is still required.
 No readiness, memory, cost or A/C authority exists.
 
 ## Work item 5 — execution candidate and cost gate
