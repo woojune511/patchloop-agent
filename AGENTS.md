@@ -54,11 +54,12 @@
   consumed lifecycle `5cc6b96`. Docker passed 8 reads and the outer pipe returned a nonempty result at code 0, but
   the supervisor envelope was invalid. Terminal is `ERROR(child_checker_error/supervised_output_invalid)` with
   incomplete/unknown accounting and no retry; raw output is absent and no narrower cause is established.
-- V22 source `454627d0eaa38b30e3795e3b9f1fb29546ca115d`, contract
-  `ncpcontract_721423c64d9cf0d5f1d4c0e25c7d5e3a25daa1b2b8081e221bc8e73b82367ccd` and qualification
-  `sha256:497e2f72e3850cb6f60b59af768bafe6342b266ab82f7ea15c6576a22b483d42` are source-qualified/
-  activation-closed. V22 is projection-only; its fixed mock is transport evidence, not readiness. A versioned V23
-  activation wrapper, fresh state and exact approval are required.
+- V22 remains the immutable projection-only predecessor. V23 source/tree
+  `733ddc3cc74928f1011c58455fad6b151bfd25ad`/`8b2de30d46c2ac6eda7a45d6d9c6351624a60f75`, contract
+  `ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a` and qualification
+  `sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26` are source-qualified/state-required.
+  Qualification launched no diagnostic/mock/live process and created no lifecycle evidence. No state, approval or
+  attempt exists; fresh exact state is the next gate.
 
 ## Required reading
 

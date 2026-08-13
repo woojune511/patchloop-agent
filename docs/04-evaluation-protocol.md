@@ -106,9 +106,9 @@ Docker READY, leaving incomplete/unknown accounting. V19 changes only the outer 
 exact qualification with separate state/approval/run gates. V20 consumed one ERROR after Docker READY; the invalid
 supervisor envelope leaves accounting incomplete/unknown, grants no readiness and cannot retry.
 
-V22 binds V21 framing to strict projection of already-observed typed child data. It has no live callback or lifecycle;
-qualification runs no diagnostic/mock workload, and the local fixed mock proves neither process-wide absence nor
-readiness. A versioned V23 activation wrapper, fresh state and exact approval must precede an attempt.
+V22 remains a strict projection-only predecessor. V23 lifecycle-gates its typed two-hop live roles, but its source
+qualification runs no diagnostic/mock/live workload and proves neither process-wide absence nor readiness. Fresh exact
+state, separate exact approval and a later exact immediate-run statement must precede an attempt.
 
 ## 7. Run-completion gate
 

@@ -41,9 +41,9 @@ Historical milestone-by-milestone limitations are archived at
   accounting remains incomplete/unknown. V19 changes only the outer result channel. V20 binds that qualified source
   behind separate gates, but consumed an invalid supervisor envelope after the outer pipe returned. Raw output is
   absent; the cause and whole-workload activity remain unknown, and v20 cannot retry or establish SDK readiness.
-- V22 strictly projects typed child data over V21 framing but performs no live observation. Its fixed mock proves
-  neither v20's cause, process-wide absence nor SDK readiness. A V23 activation wrapper, fresh state and exact
-  approval remain required; source qualification alone grants no memory/cost/A/C authority.
+- V22 strictly projects typed child data over V21 framing. V23 adds a lifecycle-gated live adapter, but only its source
+  is qualified: no state, approval, attempt or observation exists. It proves neither v20's cause, process-wide absence
+  nor SDK readiness. Source qualification alone grants no Docker/network, memory, cost or A/C authority.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v20 are immutable; v20 is consumed ERROR and v22 is source-qualified/activation-closed.
+Status: v1-v20 are immutable; v20 is consumed ERROR, V22 is predecessor and V23 is source-qualified/state-required.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -45,17 +45,17 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 `SYSTEMROOT`/Windows 10106. V10/V11's non-proof state/approval were consumed by v12. Exact tuples live in
 `docs/09-evidence.md`; none is readiness evidence.
 
-V22 strictly projects typed child data over V21 framing without a live callback. Qualification ran no diagnostic/mock
-workload; the local fixed mock is transport evidence only.
+V22 strictly projects typed child data over V21 framing. V23 adds lifecycle-gated live roles and fail-closed two-hop
+accounting; qualification ran no diagnostic/mock/live workload and created no lifecycle artifact.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12/v13/v14/v16/v18/v20 consumed; v22 has no attempt and no attempt is open.
+Status: v3/v5/v7/v12/v13/v14/v16/v18/v20 consumed; V23 has no state or attempt and no attempt is open.
 
 V20 passed Docker's 8 reads and its outer pipe returned nonempty at code 0, but the supervisor envelope remained
-invalid. It consumed `ERROR(supervised_output_invalid)` with incomplete/unknown accounting and no retry. Another
-attempt requires a versioned V23 activation wrapper, fresh state and exact approval. V22 authorizes no live observation,
-lifecycle, readiness, memory result, cost or A/C execution.
+invalid. It consumed `ERROR(supervised_output_invalid)` with incomplete/unknown accounting and no retry. V23 is the
+qualified successor, but another attempt still requires fresh exact state, separate exact approval and a later exact
+run statement. Source qualification authorizes no live observation, readiness, memory result, cost or A/C execution.
 
 ## Work item 5 — execution candidate and cost gate
 

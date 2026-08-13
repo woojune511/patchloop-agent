@@ -3,7 +3,21 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V22 typed diagnostic channel -- source-qualified only
+## V23 typed diagnostic activation -- source-qualified, state absent
+
+Source/tree `733ddc3cc74928f1011c58455fad6b151bfd25ad`/`8b2de30d46c2ac6eda7a45d6d9c6351624a60f75`
+is the exact five-addition child of `77eb86bf7049a468ade4176cd2eafb15b0f2c6e0`. Contract
+`ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a` is file
+`sha256:b362ba003973e1b44d910b426c876f415a02d1c7354689358d0f6dbf010765b7` (4,530 bytes). Sole-artifact
+qualification commit `f1c469d60280b67b40a852863ddf36d94f0d6b8e` records content/file
+`sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26`/
+`sha256:32a8c74166daf84d20cda8317d434481135a93056e063800bb553efd2f7ae2f4` (14,099 bytes).
+
+V23 binds V22 typed projection to append-only lifecycle gates and two inherited result pipes. Qualification launched
+no diagnostic/mock/live process and made no external observation. State, approval, attempt, `ACTION_STARTED` and
+terminal are absent; fresh exact state is next and is not execution authority.
+
+## V22 typed diagnostic channel -- immutable predecessor
 
 Source/tree `454627d0eaa38b30e3795e3b9f1fb29546ca115d`/`65fbfcf2e92e6766b20d5aca38fb4c14d6c1fa3f`
 is the exact five-addition child of `e763a2ed4fbb14659fcba88eb2c7411ab25eec0c`. Contract
@@ -13,9 +27,8 @@ qualification commit `f8857597a5858ff78faedee190b3e33b449fe2db` records content/
 `sha256:497e2f72e3850cb6f60b59af768bafe6342b266ab82f7ea15c6576a22b483d42`/
 `sha256:271197e7f0ef42544a4c6de6db0d47607b6a8b8a8b3c83268ad909bd6ebca8ef` (12,513 bytes).
 
-V22 rejects callback execution and type coercion, preserving inner incomplete/unknown accounting. Qualification
-launched no diagnostic/mock workload; local Git provenance subprocesses and fixed-mock tests are not readiness.
-No lifecycle/live authority exists; V23 activation, fresh state and exact approval are required. D-142 is not that gate.
+V22 rejects callback execution and type coercion, preserving inner incomplete/unknown accounting. Its fixed mock and
+qualification remain transport/source evidence only; V23 does not rewrite them. D-142 is not the current gate.
 
 ## V20 dual-pipe activation — consumed ERROR
 

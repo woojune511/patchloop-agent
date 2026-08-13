@@ -107,10 +107,10 @@ a stdlib supervisor; V18 nevertheless consumed a no-envelope outer result after 
 outer result transport. V20's exact state/approval started one append-only ledger, then consumed
 `ERROR(supervised_output_invalid)` with incomplete/unknown accounting. It cannot retry; a correction needs a new version.
 
-V22 binds V21 framing to a strict projection-only typed-child contract. It rejects coercion, preserves inner unknown
-accounting and exposes no live callback or lifecycle. Qualification revalidates source/Git provenance without a
-diagnostic/mock workload; local fixed-mock tests are not readiness. V23 activation, fresh state and exact approval
-are required.
+V22 is the immutable strict projection-only typed-child predecessor. V23 binds its live roles to an append-only
+authorization/attempt/`ACTION_STARTED`/terminal lifecycle, rejects generic state/approval/run text and preserves
+two-hop incomplete/unknown accounting. Source qualification launched no diagnostic/mock/live process. Fresh exact
+state, separate approval and a later immediate-run statement are required; no lifecycle artifact exists.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

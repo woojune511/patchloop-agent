@@ -60,9 +60,14 @@ V22 validation rechecks committed source and recorded V21 evidence without a dia
 uv run --offline --frozen python scripts/build_envelope_diagnostic_activation_successor.py --validate-source
 ```
 
-Local Git provenance subprocesses may run. The qualification launches no diagnostic/mock workload; fixed-mock tests
-prove neither process-wide absence nor readiness. A versioned V23 activation wrapper, fresh state and exact approval
-are required.
+V23 validation binds the lifecycle wrapper to exact V22 source evidence without a diagnostic/mock/live workload:
+
+```powershell
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_typed_diagnostic_activation_successor.py --validate-source
+```
+
+Local Git provenance subprocesses may run. These qualifications prove neither process-wide absence nor readiness.
+V23 still requires fresh exact state, separate approval and an immediate-run statement.
 
 ## Audit the sealed D-142 source
 
@@ -85,5 +90,5 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 
 ## Live execution
 
-There is no supported live A/C, D-142, v18/v20 retry or v22 activation command. Validate read-only, then stop: no
-attempt, candidate or cost gate is open.
+There is no supported live A/C, D-142, v18/v20 retry or currently authorized V23 attempt. Validate read-only, then
+stop: no state, approval, attempt, candidate or cost gate is open.
