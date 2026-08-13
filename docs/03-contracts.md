@@ -107,9 +107,10 @@ a stdlib supervisor; V18 nevertheless consumed a no-envelope outer result after 
 outer result transport. V20's exact state/approval started one append-only ledger, then consumed
 `ERROR(supervised_output_invalid)` with incomplete/unknown accounting. It cannot retry; a correction needs a new version.
 
-V22 is the projection-only predecessor. V23 binds live roles to an append-only lifecycle and preserves unknown
-accounting. Qualification launched no workload. State/approval bind the source without observation; only exact
-immediate-run authority can create an attempt.
+V22 is the projection-only predecessor. V23 bound its live roles to one append-only attempt. Docker and both typed
+frames passed, but strict child validation returned `diagnostic_result_invalid`; the terminal is
+`ERROR(child_checker_error)` with incomplete/unknown accounting. It cannot retry, and correction requires a new
+versioned contract/source/qualification before any new state or execution authority.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

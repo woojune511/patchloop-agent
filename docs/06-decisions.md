@@ -34,9 +34,9 @@ work.
   anonymous result pipe. V18 later passed Docker but consumed a no-envelope supervisor ERROR with incomplete/unknown
   accounting. V20 later corrected the outer transport, but consumed the same supervisor-envelope class after Docker
   READY. Its state, approval and attempt cannot be reused; any correction requires a new versioned successor.
-- V22 is the immutable projection-only typed channel. V23 is its source-qualified lifecycle wrapper, not a v20 retry
-  or readiness result. Qualification ran no workload; state and approval bind the source with observation 0. The next
-  gate is separate exact immediate-run authority.
+- V22 is the immutable projection-only typed channel. V23 consumed one exact-approved lifecycle: transport was valid,
+  strict child validation returned `diagnostic_result_invalid`, and terminal accounting is incomplete/unknown. It is
+  not readiness evidence and cannot retry; only a new versioned correction may precede any new state/run gate.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

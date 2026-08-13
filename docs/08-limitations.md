@@ -36,14 +36,11 @@ Historical milestone-by-milestone limitations are archived at
   `official=false`.
 - V3/v5/v7/v12/v13/v14 attempts are consumed and prove neither current readiness nor hidden failure cause; exact
   observations and accounting limits remain in `docs/09-evidence.md`. Environment changes reopen none.
-- V12/V14/V16/V18 consumed checker-error attempts after Docker passed; V13 stopped Docker-not-ready. No failed
-  lifecycle can retry or establish SDK readiness or a narrower cause. V18's supervisor returned no envelope, so its
-  accounting remains incomplete/unknown. V19 changes only the outer result channel. V20 binds that qualified source
-  behind separate gates, but consumed an invalid supervisor envelope after the outer pipe returned. Raw output is
-  absent; the cause and whole-workload activity remain unknown, and v20 cannot retry or establish SDK readiness.
-- V22 strictly projects typed child data over V21 framing. V23 adds a lifecycle-gated live adapter and a self-attested
-  state plus approval, but no attempt or observation. They prove neither current Docker/`.env` facts, v20's cause,
-  process-wide absence nor SDK readiness, and grant no Docker/network, memory, cost or A/C authority.
+- V12-V20 are consumed failures and cannot retry or establish SDK readiness. Several retain incomplete/unknown
+  accounting; `docs/09-evidence.md` owns their exact observations and limits.
+- V22 strictly projects typed child data over V21 framing. V23's one attempt proved Docker reads and typed transport,
+  not a valid SDK diagnostic: strict validation returned `diagnostic_result_invalid`. Accounting is incomplete/unknown;
+  network/provider counts are unknown, and the consumed terminal grants no retry, memory, cost or A/C authority.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

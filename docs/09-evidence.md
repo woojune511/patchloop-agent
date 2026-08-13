@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V23 typed diagnostic activation -- approved, attempt absent
+## V23 typed diagnostic activation -- consumed ERROR
 
 Source/tree `733ddc3cc74928f1011c58455fad6b151bfd25ad`/`8b2de30d46c2ac6eda7a45d6d9c6351624a60f75`
 is the exact five-addition child of `77eb86bf7049a468ade4176cd2eafb15b0f2c6e0`. Contract
@@ -20,8 +20,22 @@ Qualification launched no diagnostic/mock/live process. State commit `93cc1c260d
 non-proof. Approval commit `5a8e11fc320409d59005763be359a457e5ea119f` adds only
 `ncpapproval_40be479a1d430f6353e872597109a581f806c136f48dac2d7982576fa4544637`; content/file
 `sha256:40be479a1d430f6353e872597109a581f806c136f48dac2d7982576fa4544637`/
-`sha256:08b6920e83fcf236b73312f9ef53ef40301594e6d2aca240a3857fe0776e35b8` (1,486 bytes). It starts no attempt;
-run authorization, attempt, `ACTION_STARTED`, observation and terminal are absent.
+`sha256:08b6920e83fcf236b73312f9ef53ef40301594e6d2aca240a3857fe0776e35b8` (1,486 bytes).
+
+Evidence commit `26e9562` adds exactly four lifecycle artifacts. Authorization
+`ncprunauthorization_b73eebd60137a7e5e25332f50aee08d7cd02df8b5db9044fbb022b0aa42c9ca3`, attempt
+`ncpattempt_c9ee0c8c0fe8f282e164e505f64d8f8d99561035173965ea9c9768d04ba31765`, `ACTION_STARTED`
+`ncpstarted_cba147a0d487c20cc61ef81aff6d586741c417ea18c9338f3a6cd6539081051d` and terminal
+`ncpterminal_376d5f2278445847db1b0a122d844606623bf04271baea46ecf3fa3fe8d0d004` have file SHA/bytes respectively
+`sha256:260266575ff0445084b1b2eed15fb2c6d79c6c01aff7f3853298a371ea5de5f4`/990,
+`sha256:16ee83121240b564205d2e874238d16289701d71204ae1735598c903ecb4a84a`/686,
+`sha256:db6297b773c4f67c4a8892603c3ab922f10afabed538fd704ccae770975401cd`/521 and
+`sha256:1be21372e64dd33357d7d176c9b79b88a82d5bf047481bb7e312559bcaa76237`/18,273.
+
+Docker passed 8 read-only calls; parent-to-supervisor and supervisor-to-worker each launched once, returned code 0
+and produced valid typed frames. The worker result was `diagnostic_result_invalid`, yielding
+`ERROR(child_checker_error)` with incomplete/unknown accounting. Raw output, exception metadata and credential
+value/hash/length returns are 0; network/provider counts are unknown. Retry/resume is false.
 
 ## V22 typed diagnostic channel -- immutable predecessor
 

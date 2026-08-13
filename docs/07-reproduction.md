@@ -64,10 +64,12 @@ V23 validation binds the lifecycle wrapper to exact V22 source evidence without 
 
 ```powershell
 & .\.venv\Scripts\python.exe -E -s -B scripts/build_typed_diagnostic_activation_successor.py --validate-source
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_typed_diagnostic_activation_successor.py --validate-terminal
 ```
 
 Local Git provenance subprocesses may run. These qualifications prove neither process-wide absence nor readiness.
-V23 state is non-proof and approval starts nothing; an exact immediate-run statement remains required.
+Terminal validation is read-only. V23 is consumed `ERROR(child_checker_error/diagnostic_result_invalid)` and cannot
+retry; validation grants no successor authority.
 
 ## Audit the sealed D-142 source
 
@@ -90,5 +92,5 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 
 ## Live execution
 
-There is no supported live A/C, D-142, v18/v20 retry or currently authorized V23 attempt. Validate read-only, then
-stop: state/approval grant no run, and attempt, candidate and cost remain absent.
+There is no supported live A/C, D-142 or v18/v20/v23 retry. Validate read-only, then stop: the next correction needs
+a new versioned source and qualification; successor execution, candidate and cost remain unauthorized.

@@ -30,11 +30,10 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - D-110 froze three entries; D-112/D-115 left selective scoring unready. No memory-effect claim exists.
 - D-121/D-129-D-141 remain immutable; D-142 stays source-qualified/unactivated and deferred.
 - Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
-- V3-v18 are immutable. V19 corrects only the outer result transport; its v20 activation wrapper is
-  consumed `ERROR(supervised_output_invalid)` with incomplete/unknown accounting, not readiness evidence.
-- V23 is a source-qualified activation wrapper over V22's strict typed channel. A self-attested, non-proof state is
-  recorded and approval is bound, both with no observation or attempt. Immediate-run, Docker/network, provider,
-  candidate, cost and paid authority remain closed.
+- V3-v20 are immutable consumed predecessors; v20 ended `ERROR(supervised_output_invalid)`.
+- V23 consumed one exact-approved attempt. Docker and both typed frames passed, but strict child validation returned
+  `diagnostic_result_invalid`; the terminal is `ERROR(child_checker_error)` with incomplete/unknown accounting and
+  no retry. It is not readiness evidence; successor execution, candidate, cost and paid authority remain closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

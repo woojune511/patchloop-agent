@@ -100,15 +100,13 @@ cannot qualify changed evaluator bytes. Evaluator v2 therefore requires new sour
 the A-null/C-exact-three treatment itself remains unchanged.
 
 Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed aggregation and receipt-gated
-persistence/qualification; raw results remain unofficial. V12/V14/V16/V18 consumed checker-error lifecycles and
-V13 stopped Docker-not-ready; none can retry or establish readiness. V18's supervisor returned no envelope after
-Docker READY, leaving incomplete/unknown accounting. V19 changes only the outer result transport. V20 wraps its
-exact qualification with separate state/approval/run gates. V20 consumed one ERROR after Docker READY; the invalid
-supervisor envelope leaves accounting incomplete/unknown, grants no readiness and cannot retry.
+persistence/qualification; raw results remain unofficial. V12-V20 are consumed, cannot retry and establish no
+readiness; exact observations and limits remain in `docs/09-evidence.md`.
 
-V22 remains a strict projection-only predecessor. V23 lifecycle-gates its typed two-hop live roles, but its source
-qualification runs no workload and proves neither process-wide absence nor readiness. State and approval exist with
-observation 0; a separate exact immediate-run statement must precede an attempt.
+V22 remains a strict projection-only predecessor. V23 consumed one exact-approved attempt: Docker and both typed
+frames passed, while strict child validation returned `diagnostic_result_invalid`. Its
+`ERROR(child_checker_error)` terminal has incomplete/unknown accounting and no retry, proves no readiness and
+requires a new versioned correction before any successor state or run.
 
 ## 7. Run-completion gate
 

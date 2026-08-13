@@ -48,19 +48,13 @@
   retry. V8-v11 are immutable offline/source/state/approval predecessors and cannot be reused; exact tuples are in
   `docs/09-evidence.md`.
 - V13/V14/V16/V18 are consumed Docker/preflight failures with no retry; `docs/09-evidence.md` owns their exact tuples.
-- V20 source `304da8e9e4fe0d730c184944006e4c76970c12f0`, contract
-  `ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102` and qualification
-  `sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b` led through exact state/approval to
-  consumed lifecycle `5cc6b96`. Docker passed 8 reads and the outer pipe returned a nonempty result at code 0, but
-  the supervisor envelope was invalid. Terminal is `ERROR(child_checker_error/supervised_output_invalid)` with
-  incomplete/unknown accounting and no retry; raw output is absent and no narrower cause is established.
-- V22 remains the immutable projection-only predecessor. V23 source/tree
-  `733ddc3cc74928f1011c58455fad6b151bfd25ad`/`8b2de30d46c2ac6eda7a45d6d9c6351624a60f75`, contract
-  `ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a` and qualification
-  `sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26` are source-qualified. Self-attested state
-  `ncpstate_c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d` records the reported Docker/`.env`
-  facts with observation 0. Approval `ncpapproval_40be479a1d430f6353e872597109a581f806c136f48dac2d7982576fa4544637`
-  is bound but starts nothing. Attempt/terminal are absent; exact immediate-run authority is next.
+- V20 is a consumed `ERROR(child_checker_error/supervised_output_invalid)` predecessor with incomplete/unknown
+  accounting and no retry; `docs/09-evidence.md` owns its exact tuple.
+- V22 is the immutable projection-only predecessor. Qualified V23 contract
+  `ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a` consumed one exact-approved
+  attempt. Docker passed 8 reads and both typed frames, but the worker returned `diagnostic_result_invalid`.
+  Terminal is `ERROR(child_checker_error)` with incomplete/unknown accounting and no retry. Raw/exception/credential
+  metadata returns are 0; network/provider counts are unknown. `docs/09-evidence.md` owns exact IDs and hashes.
 
 ## Required reading
 
