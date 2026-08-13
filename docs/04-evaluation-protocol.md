@@ -105,8 +105,8 @@ readiness; exact observations and limits remain in `docs/09-evidence.md`.
 
 V23 consumed `ERROR(child_checker_error/diagnostic_result_invalid)` and cannot retry. V24 qualifies the order-stable,
 value-free summary correction; its fixture does not identify the exact discarded v23 input. V25 qualifies the
-lifecycle wrapper and typed two-hop summary channel only. It has no state, attempt or observation; fresh exact
-state/approval/run gates remain mandatory and none proves readiness.
+lifecycle wrapper and typed two-hop summary channel only. Its self-attested state grants no observation; separate
+exact approval/run gates remain mandatory and none proves readiness.
 
 ## 7. Run-completion gate
 

@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v24 are immutable; v25 lifecycle source is qualified and state-required.
+Status: v1-v24 are immutable; v25 lifecycle source is qualified and state-bound.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -46,15 +46,15 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 `docs/09-evidence.md`; none is readiness evidence.
 
 V24 corrects mapping order with a value-free summary. V25 binds it to fresh state/approval/run schemas and a two-hop
-channel. Qualification created no lifecycle/runtime evidence; only an exact self-attested v25 state may come next.
+channel. Its exact self-attested v25 state is bound without observation; separate approval is next.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
 Status: v3/v5/v7/v12/v13/v14/v16/v18/v20/v23 consumed; none can retry.
 
 V23 preserves a consumed incomplete/unknown `diagnostic_result_invalid` terminal. V24/V25 source qualifications are
-not attempts. No state exists; after exact state binding, a separate exact approval and immediate run statement are
-still required. No readiness, memory, cost or A/C authority exists.
+not attempts. State exists but is non-executable; separate exact approval and immediate run text are still required.
+No readiness, memory, cost or A/C authority exists.
 
 ## Work item 5 — execution candidate and cost gate
 

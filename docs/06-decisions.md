@@ -35,8 +35,8 @@ work.
   accounting. V20 later corrected the outer transport, but consumed the same supervisor-envelope class after Docker
   READY. Its state, approval and attempt cannot be reused; any correction requires a new versioned successor.
 - V23 consumed `diagnostic_result_invalid` with incomplete/unknown accounting and cannot retry. V24's order-stable,
-  value-free projection is not exact v23-cause proof. V25 source-qualifies the lifecycle/two-hop wrapper without
-  state or observation; an exact self-attested state must precede separate approval and immediate run text.
+  value-free projection is not exact v23-cause proof. V25 qualifies the lifecycle/two-hop wrapper and now binds one
+  self-attested non-executable state; separate exact approval must precede immediate run text.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

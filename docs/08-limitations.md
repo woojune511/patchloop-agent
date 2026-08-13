@@ -43,7 +43,7 @@ Historical milestone-by-milestone limitations are archived at
   network/provider counts are unknown, and the consumed terminal grants no retry, memory, cost or A/C authority.
 - V24's representative fixture reproduces mapping-order rejection, not the exact discarded v23 input. V25 binds its
   value-free summary to lifecycle schemas and a typed channel, but qualification ran no workload and proves neither
-  live process success nor SDK/Docker readiness. No state, approval, attempt, result or retry authority exists.
+  live process success nor SDK/Docker readiness. Its self-attested state grants no approval, attempt or result.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

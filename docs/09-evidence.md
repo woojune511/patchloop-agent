@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V25 order-stable activation -- source-qualified, state required
+## V25 order-stable activation -- state-bound, approval required
 
 Source/tree `ea383759c57f60e5b33e6f5a2f65e1bb07d65532`/`5453a178c3e9a6ff3325c2d18431acbd661af0a4`
 is the exact five-addition child of `88f21e545298d1af0061bb2a125078fba975c8ad`. Contract
@@ -13,9 +13,13 @@ Sole-artifact qualification commit `dcd29dcea1f2e15dbe1f3806980b585868acdc87` re
 `sha256:d24b7a9849e0c632c05ef09ad9e9f7886bdf121a8b168d55e7040e8c2c732ff8`/
 `sha256:ae45aa92945eb0e46d66a1debbcc6bedcdc2fcb223dc52b8644c1eb75a75b0b3` (19,403 bytes).
 
-V25 binds v24's direct pre-canonical validation and value-free summary to fresh lifecycle schemas and two typed
-frames. Qualification launched no diagnostic/mock/live process, made no external observation and created no state,
-approval, attempt or terminal. The next gate is a fresh exact v25 state statement, which is non-proof and non-executable.
+V25 binds v24's pre-canonical validation/value-free summary to lifecycle schemas and two typed frames. Qualification
+launched no workload or observation. Exact statement hash
+`sha256:8e1fa54988e36319b01a557a7db5ff7ec7ddfeeb24d3d0bc8ef813546ccd7771` created self-attested state
+`ncpstate_ac6bba89eaa69ecfda433cc0775bff2308e0e95eea1ac3baa2bc47368531dae2` at
+`f31786fef57210925c798c093b2c0a7d07bc5c33`; its file is
+`sha256:c7be41df33d99329a70679b3ddb7eb0a454025bd6449db43cb789aadf9f0933a` (919 bytes). It is nonreusable,
+records zero observation and grants no execution. Approval, attempt and terminal are absent; separate approval is next.
 
 ## V24 projection -- immutable predecessor
 

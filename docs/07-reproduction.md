@@ -101,5 +101,5 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 
 ## Live execution
 
-There is no supported live A/C, D-142 or consumed-attempt retry. Validate read-only, then stop: v25 has no state or
-approval. Its exact state statement is the next gate; execution, candidate and cost remain unauthorized.
+There is no supported live A/C, D-142 or consumed-attempt retry. V25 has a non-executable state but no approval; its
+exact separate approval is the next gate. Execution, candidate and cost remain unauthorized.

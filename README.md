@@ -32,7 +32,7 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
 - V3-v20 are immutable consumed predecessors; v20 ended `ERROR(supervised_output_invalid)`.
 - V23 consumed `ERROR(child_checker_error/diagnostic_result_invalid)` with incomplete/unknown accounting and no retry.
-  V24 corrects projection order; V25 source-qualifies its lifecycle wrapper but has no state, approval or attempt.
+  V24 corrects projection order; V25 qualifies its wrapper and has a self-attested state but no approval or attempt.
   Neither is readiness evidence, and execution, candidate, cost and paid authority remain closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.

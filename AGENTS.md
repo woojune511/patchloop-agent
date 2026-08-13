@@ -54,9 +54,9 @@
   frames passed; accounting is incomplete/unknown and retry is closed. `docs/09-evidence.md` owns exact tuples.
 - V24 is the immutable projection-only correction. V25 source `ea383759c57f60e5b33e6f5a2f65e1bb07d65532`, contract
   `ncpcontract_c87b73d0a559f1585c4c40a495d1d5718ac89cd72aae935320023b7f4bbbca1f` and qualification
-  `sha256:d24b7a9849e0c632c05ef09ad9e9f7886bdf121a8b168d55e7040e8c2c732ff8` are source-qualified/state-required.
-  Qualification launched no diagnostic/mock/live process and created no lifecycle artifact. The next gate is an
-  exact v25 state statement; it grants no execution authority.
+  `sha256:d24b7a9849e0c632c05ef09ad9e9f7886bdf121a8b168d55e7040e8c2c732ff8` are source-qualified. State
+  `ncpstate_ac6bba89eaa69ecfda433cc0775bff2308e0e95eea1ac3baa2bc47368531dae2` is self-attested/non-executable;
+  the next gate is separate exact approval. No attempt is open.
 
 ## Required reading
 
