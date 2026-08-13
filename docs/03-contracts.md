@@ -107,9 +107,9 @@ a stdlib supervisor; V18 nevertheless consumed a no-envelope outer result after 
 outer result transport. V20's exact state/approval started one append-only ledger, then consumed
 `ERROR(supervised_output_invalid)` with incomplete/unknown accounting. It cannot retry; a correction needs a new version.
 
-V22 is the immutable projection-only predecessor. V23 binds live roles to an append-only lifecycle, rejects generic
-state/approval/run text and preserves two-hop unknown accounting. Qualification launched no workload. A nonreusable,
-self-attested state binds the source without observation; approval, run authority and terminal remain absent.
+V22 is the projection-only predecessor. V23 binds live roles to an append-only lifecycle and preserves unknown
+accounting. Qualification launched no workload. State/approval bind the source without observation; only exact
+immediate-run authority can create an attempt.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

@@ -42,8 +42,8 @@ Historical milestone-by-milestone limitations are archived at
   behind separate gates, but consumed an invalid supervisor envelope after the outer pipe returned. Raw output is
   absent; the cause and whole-workload activity remain unknown, and v20 cannot retry or establish SDK readiness.
 - V22 strictly projects typed child data over V21 framing. V23 adds a lifecycle-gated live adapter and a self-attested
-  state, but no approval, attempt or observation exists. The state proves neither current Docker/`.env` facts, v20's
-  cause, process-wide absence nor SDK readiness, and grants no Docker/network, memory, cost or A/C authority.
+  state plus approval, but no attempt or observation. They prove neither current Docker/`.env` facts, v20's cause,
+  process-wide absence nor SDK readiness, and grant no Docker/network, memory, cost or A/C authority.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

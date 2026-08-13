@@ -107,9 +107,8 @@ exact qualification with separate state/approval/run gates. V20 consumed one ERR
 supervisor envelope leaves accounting incomplete/unknown, grants no readiness and cannot retry.
 
 V22 remains a strict projection-only predecessor. V23 lifecycle-gates its typed two-hop live roles, but its source
-qualification runs no diagnostic/mock/live workload and proves neither process-wide absence nor readiness. A
-self-attested state exists with observation 0; separate exact approval and a later exact immediate-run statement must
-precede an attempt.
+qualification runs no workload and proves neither process-wide absence nor readiness. State and approval exist with
+observation 0; a separate exact immediate-run statement must precede an attempt.
 
 ## 7. Run-completion gate
 

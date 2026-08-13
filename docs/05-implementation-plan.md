@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v20 are immutable; v20 is consumed ERROR, V22 is predecessor and V23 is source-qualified/approval-required.
+Status: v1-v20 are immutable; v20 is consumed ERROR, V22 is predecessor and V23 is run-approval-required.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -50,12 +50,12 @@ accounting; qualification ran no diagnostic/mock/live workload and created no li
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12/v13/v14/v16/v18/v20 consumed; V23 state exists, approval/attempt do not, and no attempt is open.
+Status: v3/v5/v7/v12/v13/v14/v16/v18/v20 consumed; V23 state/approval exist, attempt does not.
 
 V20 passed Docker's 8 reads and its outer pipe returned nonempty at code 0, but the supervisor envelope remained
 invalid. It consumed `ERROR(supervised_output_invalid)` with incomplete/unknown accounting and no retry. V23 is the
-qualified successor. Its self-attested state grants no execution; another attempt still requires separate exact
-approval and a later exact run statement. No readiness, memory result, cost or A/C authority exists.
+qualified successor. State and approval start nothing; an exact immediate-run statement is still required. No
+readiness, memory result, cost or A/C authority exists.
 
 ## Work item 5 — execution candidate and cost gate
 

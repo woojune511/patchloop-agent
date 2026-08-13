@@ -33,8 +33,8 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - V3-v18 are immutable. V19 corrects only the outer result transport; its v20 activation wrapper is
   consumed `ERROR(supervised_output_invalid)` with incomplete/unknown accounting, not readiness evidence.
 - V23 is a source-qualified activation wrapper over V22's strict typed channel. A self-attested, non-proof state is
-  recorded with no observation or execution authority; approval and attempt remain absent, and Docker/network,
-  provider, candidate, cost and paid authority remain closed.
+  recorded and approval is bound, both with no observation or attempt. Immediate-run, Docker/network, provider,
+  candidate, cost and paid authority remain closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

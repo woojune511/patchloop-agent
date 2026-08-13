@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V23 typed diagnostic activation -- source-qualified, approval absent
+## V23 typed diagnostic activation -- approved, attempt absent
 
 Source/tree `733ddc3cc74928f1011c58455fad6b151bfd25ad`/`8b2de30d46c2ac6eda7a45d6d9c6351624a60f75`
 is the exact five-addition child of `77eb86bf7049a468ade4176cd2eafb15b0f2c6e0`. Contract
@@ -17,7 +17,11 @@ Qualification launched no diagnostic/mock/live process. State commit `93cc1c260d
 `ncpstate_c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d`; content/file
 `sha256:c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d`/
 `sha256:1c03262f461e8f56e7dbf91bed49e3a7b5387c1082ff032734b2bfe18ae0a9ad` (919 bytes). It is self-attested
-non-proof with observation 0 and no execution authority. Approval, attempt, `ACTION_STARTED` and terminal are absent.
+non-proof. Approval commit `5a8e11fc320409d59005763be359a457e5ea119f` adds only
+`ncpapproval_40be479a1d430f6353e872597109a581f806c136f48dac2d7982576fa4544637`; content/file
+`sha256:40be479a1d430f6353e872597109a581f806c136f48dac2d7982576fa4544637`/
+`sha256:08b6920e83fcf236b73312f9ef53ef40301594e6d2aca240a3857fe0776e35b8` (1,486 bytes). It starts no attempt;
+run authorization, attempt, `ACTION_STARTED`, observation and terminal are absent.
 
 ## V22 typed diagnostic channel -- immutable predecessor
 
