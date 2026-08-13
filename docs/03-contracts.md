@@ -24,9 +24,9 @@ Held-out task content may not be used to tune prompt, memory, score policy or se
 `ExperimentSuite` binds purpose, ordered rows, runtime tuple, budget, pricing, dataset and execution hash.
 Current A/C sources are:
 
-- `ac-structured-pilot-v11.plan.yaml`: R10-qualified contract-hardened split-budget design;
-- `dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml`: offline-qualified Moto/Babel A/C successor with
-  no no-call candidate, paid approval or run; R7/R9 and its old candidate are superseded unexecuted;
+- `ac-structured-pilot-v11.plan.yaml`: R10-qualified contract-hardened split-budget design used by sealed R8;
+- `dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml`: consumed Moto/Babel A/C suite whose four rows all
+  resolved, evaluator-v2 receipt-qualified and cost-settled; R7/R9 remains superseded unexecuted;
 - R6/R8 and R5/R7: immutable post-evaluator qualification failures; R4/R6-qualification: immutable
   provider-before-dispatch `$0` terminal;
   R3/R5-source-qualification: immutable partial live predecessor.
@@ -129,6 +129,11 @@ paid call.
 Completion requires each exact row once, qualified trace, durable settlement, official evaluation and
 resolved/SCRR/verdict consistency. Missing, duplicate, retried, replaced or confounded rows are inconclusive.
 
+For evaluator v2, the completion envelope must accept the producer's exact `trace-qualification-v2` schema. R8's
+immutable result used the stale v1 envelope and therefore retains a false raw `inconclusive` projection. The
+append-only R8 R4 evidence index binds that result and records the corrected offline projection; it never rewrites
+the terminal result or creates execution authority.
+
 D-124/D-125 cover settlement and local idempotent publication. R3 exercised two settlements and sealed publication,
 not global/cross-clone, actual-kill or power-loss guarantees.
 
@@ -138,10 +143,10 @@ Preparation, execution receipt, journal and completion gate remain distinct evid
 reusable source/configuration and new attempt IDs. One paid campaign approval binds the exact execution hash, schedule,
 runtime and cap rather than requiring per-row prose. Historical schemas remain under `reports/`.
 
-R3/R4 indices are `reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260813-r3-evidence.json` and
-`reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r4-evidence.json`; neither identity nor approval
-can be reused. R10 qualifies R8 offline. Its R3-informed diagnostic limits are not held-out-safe or a memory-effect
-result; no R8 candidate exists, and any future candidate requires a fresh exact-hash/`$18` approval.
+R3, R4 and R8 indices are under `reports/live-pilot/`; no identity or approval can be reused. R10 qualified the exact
+executed R8 source. R8 is consumed, and current correction source has no paid authority. Its R3-informed diagnostic
+limits and complete development matrix are not held-out-safe or a memory-effect result; any future execution needs a
+new suite/source qualification, exact candidate and approval.
 
 D-126-D-141 never reopen. D-142 remains source-qualified, unactivated and deferred; documentation creates no receipt,
 attempt, marker or terminal. Exact tuples remain in `docs/09-evidence.md`.

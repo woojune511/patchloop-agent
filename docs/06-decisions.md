@@ -5,10 +5,10 @@ The full decision ledger through D-121 is archived at
 
 ## Effective decisions
 
-Completed order: evaluator correctness v2 -> successor A/C offline qualification -> supported local preflight ->
-execution candidate -> one campaign approval -> four-run A/C readiness. R3 through R6 were inconclusive. Current order:
-R8/R10 offline source qualification -> bounded no-call preflight -> full-panel candidate -> exact `$18` approval ->
-fresh four-row readiness execution -> valid complete-matrix gate -> held-out A/C -> B/D.
+Completed order: evaluator correctness v2 -> successor A/C qualification -> local preflight -> exact campaign approval ->
+four-run development A/C readiness. R3 through R6 were inconclusive; R8 completed the matrix. Current
+order: preserve/correct R8 evidence -> preregister held-out A/C without tuning -> separately authorize any future
+held-out execution -> B/D only after their own frozen contracts.
 
 ### 2026-08-14 — preserve R3-R6 and correct runtime evidence before a fresh panel
 
@@ -22,11 +22,15 @@ fresh four-row readiness execution -> valid complete-matrix gate -> held-out A/C
 - R6's exact approval was consumed once. Moto A resolved and passed evaluator v2, but runtime evidence recorded the
   legacy call-guard policy; the other rows did not start and cost settled at `$0.169596`.
 - R7/R9 and its no-call candidate are superseded unexecuted after API-free contract audits.
-- R10 offline-qualifies contract-hardened R8 while R6/R8 and earlier predecessors remain immutable.
+- R10 qualified the exact contract-hardened R8 execution source while R6/R8 and earlier predecessors remain
+  immutable.
 - R8 keeps A-null/C-exact-three with equal limits: 3M input, 350k output, 3.35M aggregate, 25k/response, 180 model,
   300 tool and 3,600 seconds; full-price reserve is `$3.825`/row, `$15.30`/panel and `$18` cap.
-- Those R3-informed thresholds are not held-out-safe or a completion/benefit claim. R8 has no candidate; next is a
-  clean bounded no-call preflight and then a new exact-hash/`$18` approval.
+- R8 candidate `sha256:60c67908...cff9e` consumed one exact approval, completed all four qualified rows and settled
+  `$0.3664215`. Its immutable raw result used a stale v1 qualification-envelope check; the append-only correction
+  records the complete v2 matrix without rewriting runtime evidence.
+- Both A and C resolved twice. Lower C token/cost observations are descriptive development results only; no causal,
+  held-out, retrieval or general memory-effect claim follows. R8 cannot rerun.
 
 ### 2026-08-13 — fast-track attempts, not one-use configurations
 

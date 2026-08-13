@@ -69,7 +69,7 @@ def test_agent_required_reading_does_not_require_archive() -> None:
     assert "docs/archive/" not in required
 
 
-def test_current_docs_bind_the_four_run_plan_without_live_authority() -> None:
+def test_current_docs_bind_the_consumed_four_run_result_without_new_live_authority() -> None:
     status = Path("docs/current-status.md").read_text(encoding="utf-8")
     protocol = Path("docs/04-evaluation-protocol.md").read_text(encoding="utf-8")
     plan = Path("experiments/ac-structured-pilot.plan.yaml").read_text(encoding="utf-8")
@@ -77,6 +77,9 @@ def test_current_docs_bind_the_four_run_plan_without_live_authority() -> None:
     assert "four-run A/C readiness" in status
     assert "Moto #7208" in protocol
     assert "Babel #1042" in protocol
+    assert "candidate `sha256:60c67908...cff9e`" in status
+    assert "All four Moto A/C + Babel C/A rows resolved" in status
+    assert "No paid, held-out or B/D execution is currently authorized" in status
     assert "expected_runs: 4" in plan
     assert "provider_execution_authorized: false" in plan
     assert "runtime_memory_injection_authorized: false" in plan
@@ -89,19 +92,17 @@ def test_current_roadmap_defers_d142_and_uses_the_fast_track() -> None:
     assert "source-qualified only, unactivated" in status
     assert "planning disposition is now **deferred**" in status
     assert "D-142 and the V25 one-use" in status
-    assert "offline successor-only integration path" in status
-    assert "successor A/C offline qualification" in status
+    assert "R8 is the first complete receipt-qualified four-row" in status
     assert "Reusable no-call preflight" in status
     assert "per-attempt approval prose" in status
 
     ordered_stages = (
         "evaluator correctness v2",
-        "successor A/C offline qualification",
-        "supported local preflight",
-        "execution candidate",
-        "one campaign approval",
-        "four-run A/C readiness",
-        "held-out A/C",
+        "successor A/C qualification",
+        "local preflight",
+        "exact campaign approval",
+        "four-run development A/C readiness",
+        "preregister held-out A/C",
         "B/D",
     )
     positions = [decisions.index(stage) for stage in ordered_stages]

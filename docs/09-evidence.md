@@ -1,88 +1,77 @@
 # Evidence index
 
-Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
+Machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## R10 contract-hardening successor (offline-qualified)
+## R8 complete development-readiness matrix
 
-R8/v11/R10 preserves the R7 schedule, treatment, budget and cost tuple while adding API-free strict scalar,
-duplicate-key, paid import-closure, runtime evidence and completion/journal checks. R7/R9 and candidate
-`sha256:8b962b80...bf6c` are immutable but superseded unexecuted. No R8 preflight, candidate, provider, evaluator,
-Docker or agent run has occurred.
+Candidate `sha256:60c679083ad7b995918e2ba5de79843be8b03ce0511b67eb859da437f16cff9e` bound source
+commit `a4f00f8565c840588b120d91e730427bb51166b5`, Moto A/C + Babel C/A, `$15.30` reserve and `$18` cap. Its one
+approval produced four resolved, evaluator-v2 receipt-qualified, trace-qualified and cost-settled rows with all
+hidden/regression/scope/safety verdicts PASS; no row retried or was replaced. Total cost was `$0.3664215`.
 
-Artifact `reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r10.json` has
-content/file `sha256:66bd54bc...a88b25`/`sha256:09b0d966...6d18b` (20,843 bytes), binding evaluator source
-`sha256:6c6594b4...12bcb1`, successor/base suites `sha256:0c42c3a5...7d71f2`/`sha256:924e21e5...d52e77`.
-Two offline builder invocations preserved bytes/mtime and recorded zero provider/evaluator/Docker/agent calls and
-`execution_authorized=false`.
+The immutable final/prepared result is `sha256:8dbcb60a...cc2878` (138,156 bytes); journal is
+`sha256:f05dc041...0446a` (15 events, 21,654 bytes). The raw completion adapter accepted only
+`trace-qualification-v1` and therefore misclassified four valid `trace-qualification-v2` rows as unclassified,
+storing `passed=false`, `official_evaluator_runs=0` and `task_failures=-4`.
 
-## R9 runtime-evidence correction and superseded R7 candidate
+Final portable strict index
+`reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r8-evidence-r4.json` has content/file
+`sha256:0ef31d2b...aade83`/`sha256:5035421a...b7c62c` (19,557 bytes). It binds plan, hash-chained journal,
+prepared/final result, durable results, qualifications and receipts. Offline recomputation yields 4 official v2
+runs, 4 successes, 0 failures and 0 unclassified without rewriting runtime evidence or making any
+provider/evaluator/Docker/agent call. Earlier correction indices remain append-only predecessors.
 
-R9 (content/file `sha256:aeb41b81...f366`/`sha256:6d59aaae...eb22`) recorded zero provider, evaluator, Docker
-and agent calls. Its R7 candidate `sha256:8b962b80...bf6c` also made no runtime call and created no paid authority;
-contract hardening superseded it before execution.
+| Task | A tokens/cost | C tokens/cost | C minus A |
+| --- | ---: | ---: | ---: |
+| Moto | 121,601 / `$0.1086345` | 83,604 / `$0.07001175` | -37,997 / `-$0.03862275` |
+| Babel | 108,534 / `$0.115158` | 72,493 / `$0.07261725` | -36,041 / `-$0.04254075` |
 
-## R6 sealed runtime-evidence qualification failure
+Both conditions resolved both tasks. These two one-repetition development pairs authorize descriptive analysis only;
+memory-effect, retrieval, held-out, core and B/D authority are false. R8 is consumed.
 
-The approved R6 candidate `sha256:c800f36b...e5d61` is sealed `inconclusive`. Moto A/no-memory run
-`run_7c835a6aa5c2411f` resolved with hidden/regression/scope/safety PASS and an authenticated evaluator-v2 receipt,
-but runtime evidence recorded `model-tool-observability-only-v1` while qualification required
-`model-tool-bounded-enforcement-v1`. Its failed raw checks were `ac_fixed_runtime_contract` and
-`bounded_call_guard_contract`; no model/tool budget or tail block occurred. The row used 144,240 input plus 13,648
-output tokens, 14 model calls, 15 tool calls and `$0.169596`. Moto C and Babel C/A were not started.
+## R10 source qualification and R9 predecessor
 
-Checked-in index `reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r6-evidence.json` has
-content/file `sha256:241f4218...12a6`/`sha256:b84a2783...59d7` (7,218 bytes). It binds journal
-`sha256:c733655c...e327`, final result `sha256:2379bcab...f7f`, qualification `sha256:a3bfd90b...8d4c`, runtime
-contract evidence `sha256:62b05190...880e` and receipt `sha256:027e2d03...39d0`. R6 is consumed and cannot retry,
-resume, repair or transfer approval to R7.
+R10/v11/R8 preserved R7 schedule, treatment, budget and cost while adding strict scalar, duplicate-key, paid
+import-closure and evidence checks. Artifact
+`reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r10.json` has content/file
+`sha256:66bd54bc...a88b25`/`sha256:09b0d966...6d18b` (20,843 bytes), evaluator source
+`sha256:6c6594b4...12bcb1` and successor/base suite `sha256:0c42c3a5...7d71f2`/`sha256:924e21e5...d52e77`.
+It qualified the executed bytes; post-run correction source needs a new identity before future execution.
 
-## R5 sealed post-evaluator qualification failure
+R9 content/file `sha256:aeb41b81...f366`/`sha256:6d59aaae...eb22` and R7 candidate
+`sha256:8b962b80...bf6c` recorded zero provider/evaluator/Docker/agent calls. R7 is superseded unexecuted.
 
-The approved R5 candidate `sha256:b8d156c6...a1627` is sealed `inconclusive`. Moto A/no-memory run
-`run_2007cde54b464938` resolved with hidden/regression/scope/safety PASS and an authenticated evaluator-v2 receipt,
-but post-evaluator qualification incorrectly required the legacy null-call/aggregate-only profile. Its only failed
-raw checks were `disabled_call_guard_contract` and `frozen_model_contract`; there were no model/tool budget or tail
-blocks. The row used 173,193 input plus 14,031 output tokens, 16 model calls, 21 tool calls and `$0.19303425`.
-Moto C and Babel C/A were not started after `QualificationFailureHalt`.
+## Sealed R6, R5 and R4 attempts
 
-Checked-in index `reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r5-evidence.json` has
-content/file `sha256:01775e68...655`/`sha256:fa49986e...832c` (6,605 bytes). It binds journal
-`sha256:4ea90b63...9c7d` (9 events), prepared/final result `sha256:1edd9e78...f9f` (44,710 bytes), trace
-qualification `sha256:07b49db7...b18` and receipt `sha256:85a344ee...f22d`. R5 is consumed and cannot retry,
-resume, repair or transfer approval to R6.
+- R6 candidate `sha256:c800f36b...e5d61`: Moto A `run_7c835a6aa5c2411f` resolved and passed evaluator v2,
+  but runtime evidence wrote `model-tool-observability-only-v1` instead of required
+  `model-tool-bounded-enforcement-v1`; Babel and Moto C did not start. Usage was 144,240 input + 13,648 output,
+  14 model/15 tool calls and `$0.169596`. Index content/file is
+  `sha256:241f4218...12a6`/`sha256:b84a2783...59d7` (7,218 bytes).
+- R5 candidate `sha256:b8d156c6...a1627`: Moto A `run_2007cde54b464938` resolved and passed evaluator v2,
+  but qualification required legacy null-call/aggregate-only limits; remaining rows did not start. Usage was
+  173,193 input + 14,031 output, 16 model/21 tool calls and `$0.19303425`. Index content/file is
+  `sha256:01775e68...655`/`sha256:fa49986e...832c` (6,605 bytes).
+- R4 candidate `sha256:be4ea2e4...8d7124`: paid-plan revalidation selected the legacy budget, so Moto A
+  terminated before provider dispatch at `$0` and three rows did not start. Its index is
+  `reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r4-evidence.json`.
 
-## R4 sealed provider-before-dispatch terminal and R6 predecessor
+All are sealed `inconclusive`; none may retry, resume, repair or transfer approval.
 
-R6 qualification is the immutable source gate for R4. Candidate `sha256:be4ea2e4...8d7124` consumed its approval,
-then sealed `inconclusive` before provider dispatch because paid-plan revalidation selected the legacy budget; cost
-was `$0` and three rows did not start. Index
-`reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r4-evidence.json` binds the exact source,
-plan, journal and result hashes. R4 cannot retry, resume or transfer approval.
+## R3 readiness predecessor
 
-## R5 qualification and R3 sealed readiness attempt
+Index `reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260813-r3-evidence.json` binds execution
+`sha256:c6506a33...374a2a`, journal `sha256:cff6c0e7...4f69` and result `sha256:d94b0a29...edecf`. Moto A resolved
+with typed v2 safety and cost `$0.10254975`; Moto C ended before evaluator at 2,963,919/3,000,000 tokens and
+`$3.374763`; Babel C/A did not start. Total settled cost was `$3.47731275`. The matrix is `inconclusive`, with no
+retry/replacement, held-out A/C or B/D activity.
 
-The checked-in runtime index is
-`reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260813-r3-evidence.json`. It binds execution
-`sha256:c6506a33...374a2a`, schedule `sha256:bae5cd50...dd83`, cost control `sha256:d161820f...dc15`, external
-journal `sha256:cff6c0e7...4f69` and result `sha256:d94b0a29...edecf`; raw artifacts remain under `.patchloop`.
+## Compact historical index
 
-R3 is canonically `SEALED`/`inconclusive`: Moto A/no-memory resolved with all four verdicts and typed safety PASS,
-receipt `sha256:14e16e95...8418`, and `$0.10254975`; Moto C/structured ended `agent_failure` before evaluator at
-2,963,919/3,000,000 tokens and `$3.374763`; Babel C/A were not started. Total settled cost is `$3.47731275`.
-No retry/replacement, held-out A/C or B/D ran. Complete-matrix analysis and memory-effect authority are false.
-
-The preceding R2 attempt is separately sealed at `$0`; R3 neither repairs nor replaces it.
-
-## Historical V/D predecessors — compact index
-
-- V23 passed Docker and both typed frames, then `diagnostic_result_invalid` produced `ERROR(child_checker_error)`;
-  accounting is unknown and retry/resume is false.
-- V24 is an offline fixture for v22 order loss, not the discarded V23 input. V25 is an unused superseded gate.
-  V3-V22 exact errors, source-only corrections and observation limits remain in `reports/`; none is current authority.
+- V23 passed Docker and both typed frames, then ended `ERROR(child_checker_error/diagnostic_result_invalid)`;
+  V24 is an offline order-loss fixture and V25 an unused superseded gate.
 - D-142 gate `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` is source-qualified,
-  unactivated and deferred after 170/170 mocked tests. D-141 and D-129-D-140 are consumed; D-121 is deferred.
-- Evaluator-v2 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6` is a predecessor. Current R10/R8, superseded R9/R7 and sealed
-  R6/R5/R3 supersede its no-live-result boundary without changing historical bytes.
-
-Exact tuples remain canonical in `reports/`, Git and the D-121 archive; predecessors cannot retry or backfill.
+  unactivated and deferred after 170/170 mocked tests. D-129-D-141 are consumed.
+- Evaluator-v2 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6` is a predecessor. Exact historical tuples
+  remain in `reports/`, Git and the D-121 archive and cannot be backfilled.

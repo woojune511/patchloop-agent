@@ -13,6 +13,7 @@ from patchloop.evals.runner import (  # noqa: PLC2701
     _is_ac_fixed_bundle_readiness_profile,
     _pricing_contract,
     _suite_hash,
+    _validated_ac_evaluator_v2_source_qualification,
     load_suite,
 )
 from patchloop.verifier.runtime_evidence import evaluator_v2_runtime_tuple_hash
@@ -132,14 +133,15 @@ def test_r7_preserves_r6_semantics_but_is_now_superseded() -> None:
     assert _suite_hash(r7) != _suite_hash(r6)
 
 
-def test_r8_preserves_unexecuted_r7_semantics_with_new_identity() -> None:
+def test_r8_preserves_r7_semantics_and_is_now_consumed() -> None:
     r7 = load_suite(R7_SUITE)
     r8 = load_suite(R8_SUITE)
     r7_payload = r7.model_dump(mode="json")
     r8_payload = r8.model_dump(mode="json")
 
     assert r7.experiment_id in SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS
-    assert r8.experiment_id not in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert r8.experiment_id in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert _validated_ac_evaluator_v2_source_qualification(r8) is None
     r7_payload.pop("experiment_id")
     r8_payload.pop("experiment_id")
     assert r8_payload == r7_payload

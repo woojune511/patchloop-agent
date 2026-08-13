@@ -35,11 +35,11 @@ from patchloop.contracts import (
 )
 from patchloop.dataset import load_dataset_manifest
 from patchloop.errors import ContractError
+from patchloop.evals import evaluator_v2_source_qualification as source_q
 from patchloop.evals import qualification
 from patchloop.evals import runner as eval_runner
 from patchloop.evals.evaluator_v2_source_qualification import (
     validate_evaluator_v2_ac_paid_authority,
-    validate_evaluator_v2_ac_source_qualification,
 )
 from patchloop.runtime import build_manifest
 from patchloop.sandbox import DockerSandbox
@@ -96,7 +96,7 @@ def r8_approved_chain(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> tuple[Path, eval_runner.ExperimentSuite, dict[str, Any], dict[str, Any], dict[str, Any]]:
-    """Produce an approved-shape R8 plan while making external access impossible."""
+    """Replay the sealed pre-execution R8 chain with external access impossible."""
 
     run_root = tmp_path / "runtime"
     monkeypatch.setenv("OPENAI_API_KEY", OFFLINE_SECRET)
@@ -153,7 +153,35 @@ def r8_approved_chain(
     monkeypatch.setattr(DockerSandbox, "__init__", _forbidden("DockerSandbox construction"))
 
     suite = eval_runner.load_suite(R8_SUITE)
-    qualification_summary = validate_evaluator_v2_ac_source_qualification()
+    qualification_raw = (source_q._repo_root(None) / source_q.OUTPUT_PATH).read_bytes()
+    qualification_payload = source_q.EvaluatorV2ACSourceQualification.model_validate_json(
+        qualification_raw
+    )
+    assert qualification_raw == source_q._canonical_bytes(qualification_payload)
+    qualification_summary = source_q._summary(qualification_payload, qualification_raw)
+    monkeypatch.setattr(
+        source_q,
+        "_load_validated",
+        lambda _root: (qualification_payload, qualification_raw),
+    )
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS - {suite.experiment_id},
+    )
+    monkeypatch.setattr(
+        eval_runner,
+        "_validated_ac_evaluator_v2_source_qualification",
+        lambda selected: {
+            "source_qualification_hash": qualification_summary["source_qualification_hash"],
+            "evaluator_source_hash": qualification_summary["evaluator_source_hash"],
+            "successor_suite_hash": qualification_summary["successor_suite_hash"],
+            "base_suite_hash": qualification_summary["base_suite_hash"],
+            "base_suite_matches": (
+                eval_runner._suite_hash(selected) == qualification_summary["base_suite_hash"]
+            ),
+        },
+    )
     candidate = eval_runner.preflight_suite(R8_SUITE)
     assert (
         candidate["evaluator_v2_qualification"]["source_qualification_hash"]

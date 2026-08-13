@@ -532,6 +532,12 @@ def test_r8_split_budget_paid_plan_round_trips_through_qualification_revalidatio
     from patchloop.evals import qualification as qualification_module
 
     _r1, _r2 = ac_preflights
+    historical_ids = eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        historical_ids - {AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID},
+    )
     r8_binding = {
         **EVALUATOR_V2_SOURCE_QUALIFICATION,
         "successor_suite_hash": "sha256:" + "e" * 64,
@@ -574,6 +580,10 @@ def test_r8_split_budget_paid_plan_round_trips_through_qualification_revalidatio
         plan=legacy_budget_plan,
         manifest=manifest,
     )
+
+    monkeypatch.setattr(eval_runner, "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS", historical_ids)
+    consumed = eval_runner.preflight_suite(R8_SUITE)
+    assert "HISTORICAL_SUITE_IMMUTABLE" in {blocker["code"] for blocker in consumed["blockers"]}
 
 
 def test_paid_boundary_revalidates_the_source_qualified_v2_authority(
@@ -1368,6 +1378,7 @@ def test_ac_completion_gate_rejects_untyped_v2_receipt_projection(
         source_hash = result["evaluator_contract"]["evaluator_source_hash"]
         row["qualification"].update(
             {
+                "schema_version": "trace-qualification-v2",
                 "evaluator_version": "v2",
                 "evaluator_v2_receipt_hash": "sha256:" + "b" * 64,
                 "evaluator_v2_receipt_file_hash": "sha256:" + "c" * 64,
@@ -1410,6 +1421,12 @@ def test_r8_completion_gate_accepts_bounded_call_guard_matrix(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _r1, _r2 = ac_preflights
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - {AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID},
+    )
     r8_binding = {
         **EVALUATOR_V2_SOURCE_QUALIFICATION,
         "successor_suite_hash": "sha256:" + "e" * 64,
@@ -1443,6 +1460,7 @@ def test_r8_completion_gate_accepts_bounded_call_guard_matrix(
         source_hash = result["evaluator_contract"]["evaluator_source_hash"]
         row["qualification"].update(
             {
+                "schema_version": "trace-qualification-v2",
                 "evaluator_version": "v2",
                 "evaluator_v2_receipt_hash": "sha256:" + "b" * 64,
                 "evaluator_v2_receipt_file_hash": "sha256:" + "c" * 64,
@@ -1464,6 +1482,22 @@ def test_r8_completion_gate_accepts_bounded_call_guard_matrix(
     assert gate["passed"] is True
     assert gate["analysis_ready"] is True
     assert gate["official_evaluator_runs"] == 4
+    assert gate["task_successes"] == 0
+    assert gate["task_failures"] == 4
+
+    stale_qualification_schema = copy.deepcopy(rows)
+    stale_qualification_schema[0]["qualification"]["schema_version"] = "trace-qualification-v1"
+    stale_schema_gate = eval_runner._ac_fixed_bundle_completion_gate(
+        stale_qualification_schema,
+        expected_experiment_id=AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
+        expected_execution_hash=approved["execution_hash"],
+        expected_schedule=approved["schedule"],
+        expected_campaign_cost_control_hash=approved["campaign_cost_control"]["content_hash"],
+        campaign_cost_qualification=cost,
+    )
+    assert stale_schema_gate["passed"] is False
+    assert stale_schema_gate["official_evaluator_runs"] == 3
+    assert stale_schema_gate["task_failures"] == 3
 
     downgraded = copy.deepcopy(rows)
     for row in downgraded:

@@ -29,8 +29,8 @@ plan, four rows and unchanged A-null/C-exact-three treatment. R7/R9 is supersede
 
 ## Work item 3 — reusable fast preflight
 
-Status: implemented; the old R7 candidate is superseded. R8 requires a new bounded no-call preflight after a clean
-commit and has no candidate yet.
+Status: implemented and exercised for R8. Its exact candidate was used once and is now consumed; R7 remains
+superseded unexecuted.
 
 The supported command validates source identities, loads only secret presence, performs bounded Docker/SDK no-call
 checks, retries transient pre-provider failures at most three times and emits a candidate only if all gates pass.
@@ -38,34 +38,36 @@ Attempt summaries remain immutable; the command makes no provider/evaluator/agen
 
 ## Work item 4 — one campaign approval
 
-Status: completed for R3 through R6; all four exact approvals are consumed.
+Status: completed for R3 through R8; all five exact approvals are consumed.
 
 R3 bound `$54.45` reserve/`$55` cap. R4 bound `$15.30` reserve/`$18` cap and sealed provider-before-dispatch at
 `$0`; R5 and R6 used the same reserve/cap and sealed after one evaluated row failed qualification at `$0.19303425`
-and `$0.169596`, respectively. Their approvals cannot transfer. A separate approval must bind a future R8 exact
-candidate hash, R10, `$15.30` reserve and `$18` cap.
+and `$0.169596`, respectively. R8 used the same reserve/cap, completed four rows at `$0.3664215` and is consumed.
+No approval transfers to another suite or campaign.
 
 ## Work item 5 — four-run A/C readiness
 
-Status: attempted as sealed R3 through R6; all complete-matrix gates failed and dispositions are `inconclusive`.
+Status: complete for the R8 development-readiness matrix after append-only completion-projection correction.
 
 R3 Moto A resolved; Moto C hit 3M before submission and its secondary binding mismatch halted Babel. R4 then failed
 capability revalidation before provider dispatch at `$0`. R5 Moto A resolved and passed evaluator v2, but legacy
 terminal-qualification assumptions rejected the row and halted the rest. R6 Moto A also resolved, but runtime evidence
-serialized the legacy call-guard policy and failed terminal qualification. Rows never retry or replace; another attempt
-is a disclosed full panel. Output remains descriptive, not causal or held-out.
+serialized the legacy call-guard policy and failed terminal qualification. R8 completed all four exact rows; its raw
+result's stale v1 completion envelope misclassified v2 qualifications, and the R3 correction index recomputes the
+matrix without rewriting it. Output remains descriptive, not causal or held-out.
 
 ## Work item 5a — contract-hardening successor and fresh panel
 
-Status: R10/R8 offline implementation and source qualification; no R8 candidate, approval or run.
+Status: completed and consumed as R10/R8 plus append-only R8 completion correction.
 
 R8 preserves the runtime-evidence fix and hardens types/evidence bindings while keeping equal A/C limits: 3M input, 350k output, 3.35M aggregate,
 25k/response, 180 model, 300 tool and 3,600 seconds; reserve is `$3.825`/row, `$15.30`/panel, `$18` cap. This
-R3-informed diagnostic is not held-out-safe or a benefit claim. Next: clean no-call candidate, then fresh exact-hash/`$18` approval.
+R3-informed diagnostic is not held-out-safe or a benefit claim. Both conditions resolved both tasks; observed success
+delta is zero, while structured used fewer tokens and list-price cost in both pairs. No rerun is authorized.
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: planned target only.
+Status: next design task only; no held-out execution authority.
 
 After valid readiness, freeze task identities, repetitions, metrics, exclusions, analysis and stop rules before
 viewing held-out outcomes. The target is 12 tasks × A/C × at least two repetitions = at least 48 rows. Moto/Babel

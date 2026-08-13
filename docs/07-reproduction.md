@@ -13,13 +13,14 @@ uv sync --offline --frozen --extra dev
   tests/test_ac_fixed_bundle_cost_completion.py `
   tests/test_documentation_structure.py
 & .\.venv\Scripts\python.exe -E -s -B `
-  scripts/build_evaluator_v2_ac_source_qualification.py
+  scripts/build_r8_runtime_evidence.py
 ```
 
-These are offline-only; the builder verifies R10/v11/R8 while preserving R9/R7 and earlier evidence, but grants no preflight, runtime or
-paid authority.
+These are offline-only. The R8 evidence builder validates the checked-in correction index and immutable R10 binding;
+when local `.patchloop` originals exist, it also rechecks the complete external chain. Current source intentionally
+differs from consumed R10, so do not regenerate R10. The builder never reruns a row or grants runtime/paid authority.
 
-## Build a future execution candidate
+## Historical R8 command — do not run
 
 The root `.env` must contain only `OPENAI_API_KEY`. Preflight checks presence, local Git/SDK and read-only Docker/image
 state without printing/exporting the value or making container, network, provider, evaluator or agent calls.
@@ -31,30 +32,30 @@ state without printing/exporting the value or making container, network, provide
   --max-attempts 3
 ```
 
-Only transient pre-provider failures retry. A pass emits a candidate, not paid readiness. The prior R7 candidate
-`sha256:8b962b80...bf6c` is superseded and must not be used. R8 currently has no candidate; run this command only
-after the R10 artifact is final, source is committed and the execution worktree is clean.
+This was the bounded no-call form used before R8. R8 is now consumed and preflight returns
+`HISTORICAL_SUITE_IMMUTABLE`; the command is retained only for audit and must not be used to create another attempt.
+The prior R7 candidate `sha256:8b962b80...bf6c` is also superseded.
 
-## Paid execution boundary
+## Historical paid R8 form — do not run
 
-R3 through R6 are sealed and their approvals consumed. R9/R10 creates no paid authority. One new approval must bind a
-future exact R8 hash, Moto A/C + Babel C/A schedule, `$15.30` reserve and `$18` cap before this form may be instantiated:
+R3 through R8 are sealed and their approvals consumed. This is the form used for R8 candidate
+`sha256:60c67908...cff9e`; it is preserved for audit only and must never be instantiated again:
 
 ```powershell
 & .\.venv\Scripts\patchloop.exe evaluate `
   --suite experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml `
   --env-file .env `
   --approve-live-cost `
-  --approved-execution-hash sha256:<exact-candidate-hash>
+  --approved-execution-hash sha256:60c679083ad7b995918e2ba5de79843be8b03ce0511b67eb859da437f16cff9e
 ```
 
-This is the provider boundary. Rows never retry/replace and all must qualify or the panel is inconclusive. R8's equal
-A/C limits are 3M input, 350k output, 3.35M aggregate, 25k/response, 180 model, 300 tool and 3,600 seconds. They are
-R3-informed diagnostics, not held-out-safe or completion-guaranteed; approval grants no held-out or B/D authority.
+That provider boundary was crossed once. R8's equal limits were 3M input, 350k output, 3.35M aggregate,
+25k/response, 180 model, 300 tool and 3,600 seconds. The complete development matrix grants no held-out or B/D
+authority. Any future provider campaign needs a new suite/source qualification, candidate and approval.
 
-## Verify the sealed R3-R6 evidence
+## Verify the sealed R3-R8 evidence
 
-Use the checked-in R3-R6 evidence indices read-only; never evaluate, finalize, recover or resume these identities.
+Use the checked-in R3-R8 evidence indices read-only; never evaluate, finalize, recover or resume these identities.
 Raw state stays under `.patchloop`.
 
 ## Static checks

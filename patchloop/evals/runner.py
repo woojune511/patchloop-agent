@@ -236,6 +236,7 @@ CONSUMED_AC_FIXED_BUNDLE_EXPERIMENT_IDS = frozenset(
         AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
     }
 )
 HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
@@ -5254,6 +5255,8 @@ def _validated_ac_evaluator_v2_source_qualification(
 ) -> dict[str, Any] | None:
     """Load the hash-only evaluator-v2 gate for the executable A/C suite."""
 
+    if suite.experiment_id in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS:
+        return None
     if not (
         suite.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
         and _is_ac_fixed_bundle_readiness_profile(suite)
@@ -7548,7 +7551,8 @@ def _exact_ac_qualification_envelope(qualification: dict[str, Any]) -> bool:
         "trace_features",
         "read_only_recomputation",
     }
-    if qualification.get("evaluator_version") == "v2":
+    evaluator_v2 = qualification.get("evaluator_version") == "v2"
+    if evaluator_v2:
         expected_keys.update(
             {
                 "evaluator_version",
@@ -7562,7 +7566,8 @@ def _exact_ac_qualification_envelope(qualification: dict[str, Any]) -> bool:
         )
     return bool(
         set(qualification) == expected_keys
-        and qualification.get("schema_version") == "trace-qualification-v1"
+        and qualification.get("schema_version")
+        == ("trace-qualification-v2" if evaluator_v2 else "trace-qualification-v1")
     )
 
 
@@ -7722,6 +7727,7 @@ def _ac_fixed_bundle_completion_gate(
         )
 
     official_rows: list[str] = []
+    official_outcomes: list[str] = []
     unclassified_rows: list[str] = []
     required_row_fields = {
         "order",
@@ -7827,6 +7833,7 @@ def _ac_fixed_bundle_completion_gate(
         )
         if official:
             official_rows.append(identity)
+            official_outcomes.append(outcome)
         else:
             unclassified_rows.append(identity)
 
@@ -7902,9 +7909,8 @@ def _ac_fixed_bundle_completion_gate(
         isinstance(row.get("qualification"), dict) and row["qualification"].get("qualified") is True
         for row in rows
     )
-    task_successes = sum(
-        (row.get("result") or {}).get("outcome_kind") == "resolved" for row in rows
-    )
+    task_successes = sum(outcome == "resolved" for outcome in official_outcomes)
+    task_failures = sum(outcome == "task_failure" for outcome in official_outcomes)
     passed = bool(
         schedule_binding_passed
         and execution_binding_passed
@@ -7936,7 +7942,7 @@ def _ac_fixed_bundle_completion_gate(
         "execution_binding_passed": execution_binding_passed,
         "cost_settlement_passed": cost_settlement_passed,
         "task_successes": task_successes,
-        "task_failures": len(official_rows) - task_successes,
+        "task_failures": task_failures,
         "task_success_required": False,
         "memory_effect_claim_authorized": False,
         "retrieval_quality_claim_authorized": False,

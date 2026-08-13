@@ -72,8 +72,8 @@ material only after submission and runs in a separate workspace/container. Targe
 conjunction of hidden acceptance, regression, scope and safety.
 
 Evaluator-v1 safety is unconditional. V2 keeps raw results unofficial but promotes authenticated evidence through
-durable-prefix/CAS validation, receipt and qualification. R3 Moto A exercised that path live and passed all four
-verdicts; R3 Moto C failed before submission, so its evaluator remained `NOT_RUN`.
+durable-prefix/CAS validation, receipt and qualification. R8 exercised that path for all four rows and passed every
+verdict; its append-only correction fixes only the stale completion projection.
 
 Visible checks and agent self-review are feedback; neither can replace hidden evaluation.
 
@@ -90,11 +90,8 @@ Three generalized entries have approved D-105 text and a D-110 frozen index; ret
 It verifies D-105/D-110 assets, assembles only the three texts in frozen order, renders A as null and C as the exact
 3,528-byte bundle, and binds delivery through existing request/context evidence without retrieval events.
 
-It loads no embedding model or scorer. R8 binds the current contract-hardened four-row evaluator-v2 source. R3 exercised A
-and C on Moto, but C could not fund the exact next request within the 3M ceiling before submission. R5 later resolved
-and evaluated Moto A, but post-evaluator qualification failed and halted the other rows. R6 repeated that resolved
-Moto A path and exposed a runtime-evidence policy mismatch. These sealed partial panels
-are runtime evidence, not analyzable memory comparisons.
+It loads no embedding model or scorer. R8 completed both A/C task pairs under the contract-hardened evaluator-v2
+source. The result is descriptive development readiness, not retrieval or held-out memory-effect evidence.
 
 ### Deferred paths
 

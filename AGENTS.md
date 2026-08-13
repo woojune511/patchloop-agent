@@ -54,11 +54,11 @@
   legacy call-guard policy and terminal qualification rejected it; the other three rows did not start. R6 sealed
   `inconclusive` at `$0.169596`, is consumed, and cannot retry or transfer approval.
 - R7/R9 and candidate `sha256:8b962b80...bf6c` are superseded unexecuted after offline contract audits. R10
-  qualifies contract-hardened R8 only; R8 has no no-call candidate, approval or run. The next authority edge is a
-  committed, clean R8 bounded no-call preflight, followed by a fresh exact-candidate approval.
-- Exact R10/R9/R6/R5/R4/R3 evidence tuples are owned by `docs/09-evidence.md`. R3 is `inconclusive`: Moto A is
-  receipt-qualified, Moto C is a pre-evaluator `agent_failure`, and Babel C/A are not started. There is no
-  memory-benefit evidence.
+  qualified the exact R8 execution source. Candidate `sha256:60c67908...cff9e` consumed one exact `$15.30`/`$18`
+  approval; all four rows resolved, evaluator-v2 receipt-qualified and settled at `$0.3664215`. The immutable raw
+  result has a stale v1/v2 completion projection; the append-only R8 R4 index records the corrected complete matrix.
+- Exact R10/R9/R8/R6/R5/R4/R3 evidence tuples are owned by `docs/09-evidence.md`. R8 is descriptive development
+  readiness only; no causal, held-out, retrieval or general memory-benefit claim follows.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
 - V1-V25 artifacts are immutable historical evidence. V23 reached Docker and both frames before
@@ -68,9 +68,9 @@
   is required only for schema, evaluator, security-boundary or treatment changes—not for another attempt.
 - Local no-call preflight may make at most three pre-provider attempts without state/approval/exact-prose ceremony.
   Paid/provider execution still requires one approval binding the exact four-row hash and hard cost cap.
-- R3 through R6 executions are sealed and cannot resume or overwrite; all approvals are consumed. A future paid
-  run requires a new R8 candidate and separate four-row `$15.30` reserve/`$18` cap approval. No provider execution
-  is currently authorized.
+- R3 through R8 executions are sealed and cannot resume or overwrite; all approvals are consumed. A future paid run
+  requires a new suite/source qualification, exact candidate and separate approval. No provider execution is
+  currently authorized.
 
 ## Required reading
 

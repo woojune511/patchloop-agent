@@ -18,8 +18,8 @@ Historical milestone-by-milestone limitations are archived at
 - D-110 freezes storage, not selective-retrieval authority. Existing embedding/ranking behavior is outside the
   exact fixed-bundle C treatment and lacks blind independent calibration.
 - R4 exercised only the paid capability boundary and stopped before provider dispatch at `$0`. R5 and R6 reached
-  provider and evaluator for one no-memory row each, but terminal qualification failed afterward; R10/R8 remains offline/no-call
-  evidence. None shows that the increased aggregate/output headroom changes memory effect or complete-panel behavior.
+  provider/evaluator for one no-memory row each but failed terminal qualification. R8 completed four qualified rows,
+  showing exact-panel workflow readiness but not that its increased headroom caused success or improved memory effect.
 
 ## Four-run A/C readiness
 
@@ -28,8 +28,10 @@ Historical milestone-by-milestone limitations are archived at
 - R3 is a sealed four-row result container but only two rows became terminal. Its Moto A success and Moto C
   pre-evaluator budget failure do not form an analyzable pair.
 - R8's 3M/350k/3.35M token and 180/300 call limits are R3-informed diagnostics, not held-out-safe or convergent.
-  Its `$3.825`/row, `$15.30`/panel and `$18` cap are approval ceilings, not invoices or completion predictions. An
-  R8 no-call candidate does not yet exist; no paid approval or run exists. R3-R6 approvals are consumed and cannot transfer.
+  Its `$3.825`/row, `$15.30`/panel and `$18` cap were approval ceilings, not invoices or completion predictions;
+  actual cost was `$0.3664215`. R8 is consumed and cannot transfer approval.
+- Both conditions succeeded on two development tasks with one repetition. Structured used fewer tokens/cost in both,
+  but there is no variance estimate, causal attribution, held-out validation or population memory-benefit claim.
 
 ## Evaluator-v1 correctness gap
 
@@ -54,7 +56,8 @@ Historical milestone-by-milestone limitations are archived at
   R5 exercised that correction successfully, then exposed a terminal-qualification defect that still expected null
   call caps and an aggregate-only budget. R6 exercised that correction, then exposed a runtime-evidence serializer
   still recording the legacy call-guard policy. R7/R9 corrected that defect but was superseded unexecuted; R10/R8
-  adds strict contract and evidence binding. No R8 provider execution has exercised the fixes.
+  exercised the contract-hardened path successfully. Its raw completion adapter then exposed a v1/v2 qualification
+  schema mismatch; the append-only correction fixes future projection without rewriting the immutable result.
 
 ## D-132 through D-142 external boundary
 
@@ -62,8 +65,8 @@ Historical milestone-by-milestone limitations are archived at
 - D-142 is source-qualified, unactivated and deferred. Its mocked tests made no external observation or runtime
   artifact and cannot qualify evaluator-v2/R8 bytes.
 - Repository-local gates do not prove authenticated identity, global/cross-clone exclusion or long-term environment
-  stability. R10 offline qualification and the reusable preflight contract still have no provider/evaluator/agent or
-  paid authority.
+  stability. R10's execution authority is consumed; the post-run correction and reusable preflight contract grant no
+  new provider/evaluator/agent or paid authority.
 
 ## Isolation, identity and operations
 

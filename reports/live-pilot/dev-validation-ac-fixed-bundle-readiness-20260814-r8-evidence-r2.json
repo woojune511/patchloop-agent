@@ -1,0 +1,467 @@
+{
+  "schema_version": "ac-fixed-bundle-runtime-evidence-index-v3",
+  "recorded_at": "2026-08-13T22:27:49.660961Z",
+  "experiment_id": "dev-validation-ac-fixed-bundle-readiness-20260814-r8",
+  "evidence_scope": "append-only R8 live result index and offline completion-gate correction",
+  "execution_source_commit": "a4f00f8565c840588b120d91e730427bb51166b5",
+  "source_qualification": {
+    "path": "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r10.json",
+    "file_sha256": "sha256:09b0d96673db714497cc07c9ac5fb5b2ea52e877a6ab69663b566c440cc6d18b",
+    "file_bytes": 20843,
+    "qualification_hash": "sha256:66bd54bcce94e69297d3045ad1a50f7e5266f9ea6c6b0ba305179f93d0a88b25",
+    "evaluator_source_hash": "sha256:6c6594b4121a30ecf634a94c0ac39a0218cff25de85ef445123b7b710212bcb1",
+    "successor_suite_hash": "sha256:0c42c3a587e9127c908bf13906ee6a101e2ccc4f8e5caa1186c418eaa77d71f2"
+  },
+  "predecessor_correction_index": {
+    "path": "reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r8-evidence.json",
+    "file_sha256": "sha256:ccda1c05b1943154ac7503924730b739c6c9d1c0ce7a9b1932bbc5c98d4db408",
+    "file_bytes": 17331,
+    "content_hash": "sha256:bd18ddf6309c0877749a7b75cb43dcf5877feed78528f9578598e597bec473d9",
+    "disposition": "superseded-before-final-validation-after-bound-test-source-changed",
+    "runtime_evidence_changed": false
+  },
+  "campaign": {
+    "execution_hash": "sha256:60c679083ad7b995918e2ba5de79843be8b03ce0511b67eb859da437f16cff9e",
+    "schedule_hash": "sha256:26026929c2992473b00ce58af760481d7406509f592b8d7674cb7ac6fa4a9a6d",
+    "cost_control_hash": "sha256:50d9b7c93a01012df0751fbb63299fa0d080dc78536550524fd92c581a341d0e",
+    "full_schedule_reserve_nanos": 15300000000,
+    "hard_cap_nanos": 18000000000,
+    "accrued_cost_nanos": 366421500,
+    "actual_model_cost_usd": 0.3664215,
+    "state": "SEALED",
+    "raw_disposition": "inconclusive",
+    "corrected_disposition": "complete-readiness-matrix",
+    "expected_runs": 4,
+    "terminal_runs": 4,
+    "qualified_runs": 4,
+    "receipt_qualified_evaluator_v2_runs": 4,
+    "cost_settled_runs": 4,
+    "not_started_runs": 0,
+    "retry_or_replacement_performed": false
+  },
+  "completion_correction": {
+    "kind": "offline-read-only-completion-projection-correction",
+    "direct_cause": "the immutable producer emitted trace-qualification-v2 while the completion envelope accepted only trace-qualification-v1",
+    "producer_schema_version": "trace-qualification-v2",
+    "original_consumer_schema_version": "trace-qualification-v1",
+    "affected_run_ids": [
+      "run_5a3113600554429e",
+      "run_69f76b4948af4d9d",
+      "run_d10f4197b45342d5",
+      "run_cc33bef38c8a42d0"
+    ],
+    "original_completion_gate": {
+      "schema_version": "ac-fixed-bundle-readiness-complete-matrix-gate-v1",
+      "gate_id": "d123-ac-fixed-bundle-readiness-complete-matrix",
+      "passed": false,
+      "analysis_ready": false,
+      "disposition": "inconclusive",
+      "expected_runs": 4,
+      "terminal_runs": 4,
+      "qualified_runs": 4,
+      "official_evaluator_runs": 0,
+      "official_evaluator_run_ids": [],
+      "unclassified_runs": 4,
+      "unclassified_run_ids": [
+        "run_5a3113600554429e",
+        "run_69f76b4948af4d9d",
+        "run_d10f4197b45342d5",
+        "run_cc33bef38c8a42d0"
+      ],
+      "cost_settled_runs": 4,
+      "not_started_runs": 0,
+      "infrastructure_errors": 0,
+      "qualification_errors": 0,
+      "diagnostic_errors": 0,
+      "schedule_binding_passed": true,
+      "execution_binding_passed": true,
+      "cost_settlement_passed": true,
+      "task_successes": 4,
+      "task_failures": -4,
+      "task_success_required": false,
+      "memory_effect_claim_authorized": false,
+      "retrieval_quality_claim_authorized": false,
+      "heldout_generalization_claim_authorized": false,
+      "core_campaign_unlocked": false
+    },
+    "corrected_completion_gate": {
+      "schema_version": "ac-fixed-bundle-readiness-complete-matrix-gate-v1",
+      "gate_id": "d123-ac-fixed-bundle-readiness-complete-matrix",
+      "passed": true,
+      "analysis_ready": true,
+      "disposition": "complete-readiness-matrix",
+      "expected_runs": 4,
+      "terminal_runs": 4,
+      "qualified_runs": 4,
+      "official_evaluator_runs": 4,
+      "official_evaluator_run_ids": [
+        "run_5a3113600554429e",
+        "run_69f76b4948af4d9d",
+        "run_d10f4197b45342d5",
+        "run_cc33bef38c8a42d0"
+      ],
+      "unclassified_runs": 0,
+      "unclassified_run_ids": [],
+      "cost_settled_runs": 4,
+      "not_started_runs": 0,
+      "infrastructure_errors": 0,
+      "qualification_errors": 0,
+      "diagnostic_errors": 0,
+      "schedule_binding_passed": true,
+      "execution_binding_passed": true,
+      "cost_settlement_passed": true,
+      "task_successes": 4,
+      "task_failures": 0,
+      "task_success_required": false,
+      "memory_effect_claim_authorized": false,
+      "retrieval_quality_claim_authorized": false,
+      "heldout_generalization_claim_authorized": false,
+      "core_campaign_unlocked": false
+    },
+    "original_result_rewritten": false,
+    "provider_or_evaluator_reexecution_performed": false
+  },
+  "external_artifacts": {
+    "execution_plan": {
+      "path": ".patchloop/experiments/plans/60c679083ad7b995918e2ba5de79843be8b03ce0511b67eb859da437f16cff9e.json",
+      "file_sha256": "sha256:4181bacd01b4bcedbe650edc7063588623a3313e3eef3b884865f196af9532c5",
+      "file_bytes": 20386,
+      "artifact_hash": "sha256:efb712fbfd62764567d736f6e7aeef89732ec19384ee13ea8cfc29425847358b"
+    },
+    "journal": {
+      "path": ".patchloop/experiments/journals/dev-validation-ac-fixed-bundle-readiness-20260814-r8.jsonl",
+      "file_sha256": "sha256:f05dc041ea2196f790d7df3985d0731c0dfd2878f0c273f6e4811d81cdc0446a",
+      "file_bytes": 21654,
+      "event_count": 15,
+      "last_event_hash": "sha256:73f17d9ceab7963e8826095ab785b9668edb80267392361cccab91c3b1d950a2"
+    },
+    "prepared_result": {
+      "path": ".patchloop/experiments/finalization/60c679083ad7b995918e2ba5de79843be8b03ce0511b67eb859da437f16cff9e/result.prepared.json",
+      "file_sha256": "sha256:8dbcb60a8a7f2937b00f7729561755cd9ef9b023d84ce64be4a0230ec5cc2878",
+      "file_bytes": 138156
+    },
+    "final_result": {
+      "path": ".patchloop/experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r8.json",
+      "file_sha256": "sha256:8dbcb60a8a7f2937b00f7729561755cd9ef9b023d84ce64be4a0230ec5cc2878",
+      "file_bytes": 138156,
+      "same_bytes_as_prepared_result": true
+    }
+  },
+  "journal_event_counts": {
+    "CampaignCompleted": 1,
+    "CampaignStarted": 1,
+    "FullScheduleCostReserved": 1,
+    "RunCostSettled": 4,
+    "RunStarted": 4,
+    "RunTerminal": 4
+  },
+  "rows": [
+    {
+      "order": 1,
+      "task_id": "moto-query-scanned-count",
+      "condition": "no_memory",
+      "run_id": "run_5a3113600554429e",
+      "outcome_kind": "resolved",
+      "verdicts": {
+        "hidden_tests": "pass",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass"
+      },
+      "trace_qualified": true,
+      "evaluation_reached": true,
+      "evaluator_v2_runtime_authenticated": true,
+      "evaluator_v2_completion_eligible": true,
+      "usage": {
+        "input_tokens": 116952,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4649,
+        "reasoning_output_tokens": 3636,
+        "model_cost_usd": 0.1086345,
+        "model_calls": 12,
+        "input_token_count_calls": 12,
+        "tool_calls": 17,
+        "wall_clock_ms": 102383
+      },
+      "result": {
+        "path": ".patchloop/artifacts/runs/run_5a3113600554429e/result.json",
+        "file_sha256": "sha256:5ec2223c6958146004b4006c23dd19df361dae75f0114cecec90f1a013167d9a",
+        "file_bytes": 19519,
+        "persisted_result_hash": "sha256:5ec2223c6958146004b4006c23dd19df361dae75f0114cecec90f1a013167d9a"
+      },
+      "qualification": {
+        "path": ".patchloop/qualifications/run_5a3113600554429e.json",
+        "file_sha256": "sha256:b70e39eaa5a48ce9999874d3a00ab7b6f4d91b2bbd8aac8faa9f36f35e5d0fac",
+        "file_bytes": 14312,
+        "schema_version": "trace-qualification-v2",
+        "qualification_hash": "sha256:ffb06a90e0812e07c2431166ab7c64aac14366e8e0efdffd1cf207538e79538a",
+        "source_evidence_hash": "sha256:68aae6f12589a2200b213eac2ccfc9f7fbfc842167a7231ebecc34df00b1ac27"
+      },
+      "evaluation_receipt": {
+        "path": ".patchloop/artifacts/runs/run_5a3113600554429e/evaluation-receipt.json",
+        "file_sha256": "sha256:229dd09c89222b25c4f3343b8d86a5838389c894b9cf160a74e903fb322405d6",
+        "file_bytes": 1991,
+        "receipt_hash": "sha256:faa96dd0d460f25f74a3e1a4f08d3562122b6f83c3ee7e43a701716223048ee3"
+      },
+      "usage_evidence": {
+        "content_hash": "sha256:b314d769a34a9f99f4a020d69fd6baff4ccd9e20c72041b5e630701706a586a0",
+        "persisted_result_hash": "sha256:5ec2223c6958146004b4006c23dd19df361dae75f0114cecec90f1a013167d9a",
+        "token_derived_cost_nanos": 108634500
+      }
+    },
+    {
+      "order": 2,
+      "task_id": "moto-query-scanned-count",
+      "condition": "structured",
+      "run_id": "run_69f76b4948af4d9d",
+      "outcome_kind": "resolved",
+      "verdicts": {
+        "hidden_tests": "pass",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass"
+      },
+      "trace_qualified": true,
+      "evaluation_reached": true,
+      "evaluator_v2_runtime_authenticated": true,
+      "evaluator_v2_completion_eligible": true,
+      "usage": {
+        "input_tokens": 81655,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1949,
+        "reasoning_output_tokens": 1420,
+        "model_cost_usd": 0.07001175,
+        "model_calls": 9,
+        "input_token_count_calls": 9,
+        "tool_calls": 11,
+        "wall_clock_ms": 68721
+      },
+      "result": {
+        "path": ".patchloop/artifacts/runs/run_69f76b4948af4d9d/result.json",
+        "file_sha256": "sha256:b96a894d8c583380b06e8068c448a39d4493e1534201238410356597cd35c187",
+        "file_bytes": 19516,
+        "persisted_result_hash": "sha256:b96a894d8c583380b06e8068c448a39d4493e1534201238410356597cd35c187"
+      },
+      "qualification": {
+        "path": ".patchloop/qualifications/run_69f76b4948af4d9d.json",
+        "file_sha256": "sha256:3743ec9769ed7e7d5aa652258c39ce589ed4fcef987052c76eac72db5826da46",
+        "file_bytes": 13940,
+        "schema_version": "trace-qualification-v2",
+        "qualification_hash": "sha256:a6f41cc85253db42a6e45cea4d2ad7ad964190901aebf304500a20d02efbeb9d",
+        "source_evidence_hash": "sha256:69bf37cd116a62c88380c830ad147aac1aa7d480d716718c68c495b47b6048cd"
+      },
+      "evaluation_receipt": {
+        "path": ".patchloop/artifacts/runs/run_69f76b4948af4d9d/evaluation-receipt.json",
+        "file_sha256": "sha256:465f20d4e36bbec417f94713933fbaedaa508cdf4d7a9dd9bbb4aab40f943cfa",
+        "file_bytes": 1991,
+        "receipt_hash": "sha256:e969999657c7e5bea2bb8b6c7942e9bcf86bcb687265767cfd7e86be2c37263a"
+      },
+      "usage_evidence": {
+        "content_hash": "sha256:8e9d7957735616d0977705a99e4e9f6311c0544a0173243b2023f51e32ce1a57",
+        "persisted_result_hash": "sha256:b96a894d8c583380b06e8068c448a39d4493e1534201238410356597cd35c187",
+        "token_derived_cost_nanos": 70011750
+      }
+    },
+    {
+      "order": 3,
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "condition": "structured",
+      "run_id": "run_d10f4197b45342d5",
+      "outcome_kind": "resolved",
+      "verdicts": {
+        "hidden_tests": "pass",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass"
+      },
+      "trace_qualified": true,
+      "evaluation_reached": true,
+      "evaluator_v2_runtime_authenticated": true,
+      "evaluator_v2_completion_eligible": true,
+      "usage": {
+        "input_tokens": 67627,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4866,
+        "reasoning_output_tokens": 4385,
+        "model_cost_usd": 0.07261725,
+        "model_calls": 8,
+        "input_token_count_calls": 8,
+        "tool_calls": 8,
+        "wall_clock_ms": 45209
+      },
+      "result": {
+        "path": ".patchloop/artifacts/runs/run_d10f4197b45342d5/result.json",
+        "file_sha256": "sha256:3432e5252b09e655174cab25daa2bfc954d68cb518f2dbdce218a4d14b40db9f",
+        "file_bytes": 19555,
+        "persisted_result_hash": "sha256:3432e5252b09e655174cab25daa2bfc954d68cb518f2dbdce218a4d14b40db9f"
+      },
+      "qualification": {
+        "path": ".patchloop/qualifications/run_d10f4197b45342d5.json",
+        "file_sha256": "sha256:960c2dd0634e9216b9034506361c9656f946a24246fc9144efbfe7d960417254",
+        "file_bytes": 13821,
+        "schema_version": "trace-qualification-v2",
+        "qualification_hash": "sha256:f163ef6a1f5f8b3a2654ad0677a823a4bd22943aa5a4b04b8b0a72e274fe77c1",
+        "source_evidence_hash": "sha256:cd46d993a440c6dd295f51de7fc08a4f498cd52c71a0006e75fb8fa1b1f5aa30"
+      },
+      "evaluation_receipt": {
+        "path": ".patchloop/artifacts/runs/run_d10f4197b45342d5/evaluation-receipt.json",
+        "file_sha256": "sha256:fe82068379787d3ed219728b915c46db7bfaf2fcc3c9962b14506210cf02aa8f",
+        "file_bytes": 1990,
+        "receipt_hash": "sha256:9baa4e529128bd085227f8d80ecf32ce155d354e0d3b0a9d674042056e76a5b5"
+      },
+      "usage_evidence": {
+        "content_hash": "sha256:b2e5ebd587f9c9a0c010281b76d8170ee004c62a18848ce8a5f242b1d040eb4c",
+        "persisted_result_hash": "sha256:3432e5252b09e655174cab25daa2bfc954d68cb518f2dbdce218a4d14b40db9f",
+        "token_derived_cost_nanos": 72617250
+      }
+    },
+    {
+      "order": 4,
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "condition": "no_memory",
+      "run_id": "run_cc33bef38c8a42d0",
+      "outcome_kind": "resolved",
+      "verdicts": {
+        "hidden_tests": "pass",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass"
+      },
+      "trace_qualified": true,
+      "evaluation_reached": true,
+      "evaluator_v2_runtime_authenticated": true,
+      "evaluator_v2_completion_eligible": true,
+      "usage": {
+        "input_tokens": 99532,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 9002,
+        "reasoning_output_tokens": 8199,
+        "model_cost_usd": 0.115158,
+        "model_calls": 12,
+        "input_token_count_calls": 12,
+        "tool_calls": 15,
+        "wall_clock_ms": 72849
+      },
+      "result": {
+        "path": ".patchloop/artifacts/runs/run_cc33bef38c8a42d0/result.json",
+        "file_sha256": "sha256:c35baf01a27fb5ecb1eb4de94d2d57b4d15a300ad8c347086524e84b997181c7",
+        "file_bytes": 19555,
+        "persisted_result_hash": "sha256:c35baf01a27fb5ecb1eb4de94d2d57b4d15a300ad8c347086524e84b997181c7"
+      },
+      "qualification": {
+        "path": ".patchloop/qualifications/run_cc33bef38c8a42d0.json",
+        "file_sha256": "sha256:e5e0e6e601455b376d6cf14b79fa58f063d8ffd260c54709466ac738b6bc1d2a",
+        "file_bytes": 14211,
+        "schema_version": "trace-qualification-v2",
+        "qualification_hash": "sha256:9a51e3ac6f4e20e354ac149495c1b0c52ce72286015bbb5160d4987c4c7a3276",
+        "source_evidence_hash": "sha256:a2e2c82e6e2fe490ca4e6242afe750706b2f230783735d0b2bd5e763f463e65d"
+      },
+      "evaluation_receipt": {
+        "path": ".patchloop/artifacts/runs/run_cc33bef38c8a42d0/evaluation-receipt.json",
+        "file_sha256": "sha256:a2bc320c60cc29094330b9b2287c8596f003f6d3993a6d9674832b7332b06eb5",
+        "file_bytes": 1990,
+        "receipt_hash": "sha256:07487f85e54b118db990122f67b3c41fa385f47e90f912acbb08bb9e1fa1b473"
+      },
+      "usage_evidence": {
+        "content_hash": "sha256:c49035f3c6398d087e6ffdb66b9c4af401b105db03caf2ea80c54d3aeb8f1921",
+        "persisted_result_hash": "sha256:c35baf01a27fb5ecb1eb4de94d2d57b4d15a300ad8c347086524e84b997181c7",
+        "token_derived_cost_nanos": 115158000
+      }
+    }
+  ],
+  "descriptive_paired_analysis": {
+    "analysis_unit": "two development-validation task pairs with one repetition",
+    "pairs": [
+      {
+        "task_id": "moto-query-scanned-count",
+        "no_memory": {
+          "run_id": "run_5a3113600554429e",
+          "resolved": true,
+          "total_tokens": 121601,
+          "model_cost_nanos": 108634500
+        },
+        "structured": {
+          "run_id": "run_69f76b4948af4d9d",
+          "resolved": true,
+          "total_tokens": 83604,
+          "model_cost_nanos": 70011750
+        },
+        "structured_minus_no_memory": {
+          "resolved_delta": 0,
+          "total_tokens": -37997,
+          "model_cost_nanos": -38622750
+        }
+      },
+      {
+        "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+        "no_memory": {
+          "run_id": "run_cc33bef38c8a42d0",
+          "resolved": true,
+          "total_tokens": 108534,
+          "model_cost_nanos": 115158000
+        },
+        "structured": {
+          "run_id": "run_d10f4197b45342d5",
+          "resolved": true,
+          "total_tokens": 72493,
+          "model_cost_nanos": 72617250
+        },
+        "structured_minus_no_memory": {
+          "resolved_delta": 0,
+          "total_tokens": -36041,
+          "model_cost_nanos": -42540750
+        }
+      }
+    ],
+    "success_delta_observed": 0,
+    "inferential_memory_effect_claim_authorized": false
+  },
+  "correction_source_bindings": [
+    {
+      "path": "patchloop/evals/runner.py",
+      "file_sha256": "sha256:c08ed7ff62a75fe196a59469d80a472d9b76d7baf38ffd579dd55d9316c4e5e3",
+      "file_bytes": 448922
+    },
+    {
+      "path": "patchloop/evals/r8_completion_correction.py",
+      "file_sha256": "sha256:60a12bad19ff645c85759401428b0cf943e73e95da7d659321b7cd27444d6a3e",
+      "file_bytes": 24875
+    },
+    {
+      "path": "scripts/build_r8_runtime_evidence.py",
+      "file_sha256": "sha256:a8c7d775ff79effa869b26978002c39d7561f0971c85e6e42fbc826e5e4b5eaa",
+      "file_bytes": 346
+    },
+    {
+      "path": "tests/test_ac_fixed_bundle_cost_completion.py",
+      "file_sha256": "sha256:8227f221d484b1bc7da38586fc01aa4323bbe3f3a069041d7787d38e0e482a23",
+      "file_bytes": 81932
+    },
+    {
+      "path": "tests/test_r8_completion_correction.py",
+      "file_sha256": "sha256:62bb0eeeb21e1d33bd6028027ceb804426e6d9e6b4e591ea7c0a3580f28827fa",
+      "file_bytes": 4472
+    }
+  ],
+  "claim_authority": {
+    "development_readiness_matrix_complete": true,
+    "descriptive_paired_analysis_ready": true,
+    "memory_effect_claim_authorized": false,
+    "retrieval_quality_claim_authorized": false,
+    "heldout_generalization_claim_authorized": false,
+    "core_campaign_authorized": false
+  },
+  "correction_runtime_boundary": {
+    "provider_calls_made": 0,
+    "evaluator_calls_made": 0,
+    "docker_calls_made": 0,
+    "agent_runs_made": 0,
+    "added_model_cost_usd": 0,
+    "paid_execution_authorized": false
+  },
+  "content_hash": "sha256:85e479ee07b262cd72ee74d1eba709ed854d60184c2b736009d18a0add772e50"
+}

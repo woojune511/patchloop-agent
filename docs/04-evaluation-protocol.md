@@ -15,8 +15,8 @@ Immediate readiness question:
 > Can an exact fixed structured bundle be delivered through the full workflow without leakage, ambiguity or
 > process failure when compared contemporaneously with no memory?
 
-The readiness result is not the long-term answer. R3 through R6 are immutable inconclusive attempts; R10 qualifies
-contract-hardened R8 offline, not as a result. R7/R9 is superseded unexecuted.
+The readiness result is not the long-term answer. R3 through R6 are immutable inconclusive attempts; R8 completed
+the exact four-row development-readiness matrix under its R10-qualified source. R7/R9 is superseded unexecuted.
 
 ## 2. Dataset roles
 
@@ -40,7 +40,7 @@ held-out result.
 | --- | --- | --- |
 | A | `no_memory` | Implemented baseline condition |
 | B | `raw_trace` | Deferred; portable selection/redaction contract incomplete |
-| C | `structured` | Exact-three delivered live on Moto, but that row failed before agent submission and evaluation |
+| C | `structured` | Exact-three delivered through resolved, qualified Moto and Babel runs in R8 |
 | D | `selective_structured` | Deferred; applicability calibration and score policy incomplete |
 
 For this readiness panel, C means all three approved generic rules in frozen D-110 `group_provenance`
@@ -49,7 +49,7 @@ embedding retrieval or threshold selection.
 
 ## 4. Four-run readiness matrix
 
-The offline-qualified v11 plan binds unexecuted R8; v10/R9/R7, v9/R8/R6, v8/R7/R5, v7/R6-qualification/R4 and
+The v11 plan binds sealed, consumed R8; v10/R9/R7, v9/R8/R6, v8/R7/R5, v7/R6-qualification/R4 and
 v6/R5-qualification/R3 remain immutable predecessors.
 
 | Order | Task | Condition |
@@ -99,11 +99,9 @@ D-122 predecessor evidence and current D-125 offline tests prove:
 D-108's +702 tokens cover one request shape. R3 live C delivery consumed 2,963,919 tokens before submission and says
 nothing about task effect. `docs/09-evidence.md` owns exact observations.
 
-R10 binds R8 source/plan/suite/split-budget/bounded-call and strict machine-contract identities while preserving A-null/C-exact-three. The qualification itself
-creates no preflight, approval or runtime artifact; D-142 cannot qualify these bytes.
-
-R8 has no no-call candidate. The R7 candidate `sha256:8b962b80...bf6c` is superseded and cannot transfer. A future
-R8 candidate still requires a separate exact-hash approval binding `$15.30` reserve and `$18` cap. Raw v2 remains unofficial.
+R10 bound R8 source/plan/suite/split-budget/bounded-call and strict machine-contract identities while preserving
+A-null/C-exact-three. Candidate `sha256:60c67908...cff9e` then received one exact approval and is consumed. Raw v2
+results remain `official=false`; receipt qualification supplies completion eligibility.
 
 ## 7. Run-completion gate
 
@@ -121,9 +119,9 @@ R3 failed this gate at Moto C and left Babel unstarted. R4 sealed before provide
 paid-plan capability revalidation selected the legacy budget. R5 Moto A then resolved through evaluator v2, but a
 legacy null-call/aggregate-only terminal qualification rejected it and halted the other three rows. No row may be
 replaced. R6 Moto A then resolved and passed evaluator v2, but its runtime evidence recorded the legacy call-guard
-policy and qualification halted the other rows. R8 is the fresh offline-qualified panel with no candidate, approval
-or run. Global/cross-clone
-and kill/power-loss durability remain unverified.
+policy and qualification halted the other rows. R8 then produced four resolved, qualified and settled rows. Its raw
+completion adapter misclassified the valid v2 qualification envelope; append-only offline correction records the
+complete matrix without rewriting the result. Global/cross-clone and kill/power-loss durability remain unverified.
 
 ## 8. Metrics
 
