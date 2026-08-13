@@ -79,20 +79,22 @@ AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID = (
     "dev-validation-ac-fixed-bundle-readiness-20260808-r2"
 )
 AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID = "dev-validation-ac-fixed-bundle-readiness-20260813-r3"
-AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID = (
-    "dev-validation-ac-fixed-bundle-readiness-20260814-r4"
-)
+AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID = "dev-validation-ac-fixed-bundle-readiness-20260814-r4"
 AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID = (
     "dev-validation-ac-fixed-bundle-readiness-20260814-r5"
 )
 AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID = (
     "dev-validation-ac-fixed-bundle-readiness-20260814-r6"
 )
+AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID = (
+    "dev-validation-ac-fixed-bundle-readiness-20260814-r7"
+)
 AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS = frozenset(
     {
         AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
     }
 )
 AC_FIXED_BUNDLE_LEGACY_COST_EXPERIMENT_IDS = frozenset(
@@ -1353,9 +1355,7 @@ class Budget(StrictModel):
                 )
             return self
         if any(value is None for value in split_values):
-            raise ValueError(
-                "cumulative-split-v1 requires both cumulative input and output limits"
-            )
+            raise ValueError("cumulative-split-v1 requires both cumulative input and output limits")
         input_limit = self.max_cumulative_input_tokens
         output_limit = self.max_cumulative_output_tokens
         assert input_limit is not None and output_limit is not None
@@ -1923,16 +1923,14 @@ class RunManifest(StrictModel):
             and self.context_policy_version == "phase-evidence-v5"
             and (
                 (
-                    self.experiment.experiment_id
-                    not in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                    self.experiment.experiment_id not in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                     and self.budget.max_model_calls is None
                     and self.budget.max_tool_calls is None
                     and self.budget.max_total_tokens == 3_000_000
                     and self.budget.token_budget_schema_version is None
                 )
                 or (
-                    self.experiment.experiment_id
-                    in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                    self.experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                     and self.budget.max_model_calls == 180
                     and self.budget.max_tool_calls == 300
                     and self.budget.max_total_tokens == 3_350_000

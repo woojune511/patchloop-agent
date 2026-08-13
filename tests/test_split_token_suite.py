@@ -21,6 +21,7 @@ R3_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20
 R4_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r4.yaml"
 R5_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r5.yaml"
 R6_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r6.yaml"
+R7_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r7.yaml"
 
 
 def test_legacy_budget_serialization_and_r3_hash_are_unchanged() -> None:
@@ -40,21 +41,24 @@ def test_legacy_budget_serialization_and_r3_hash_are_unchanged() -> None:
     assert _suite_hash(r3) == (
         "sha256:72b31401ece7a1edd14ac36285041744fa4f1f86fff7f1fb03f5240bd407a57a"
     )
-    assert evaluator_v2_runtime_tuple_hash(
-        provider="openai",
-        model_id="gpt-5.4-mini-2026-03-17",
-        reasoning_effort="medium",
-        reasoning_mode="standard",
-        service_tier="default",
-        transport_max_retries=0,
-        max_output_tokens=25_000,
-        max_total_tokens=3_000_000,
-        wall_clock_timeout_seconds=3_600,
-        tool_schema_version="v2",
-        context_policy_version="phase-evidence-v5",
-        memory_policy_version="fixed-d110-bundle-v1",
-        sandbox_backend="docker",
-    ) == "sha256:d2195cdce2ab55a23e4dd186d57cb5fb3222ecc40bd190458d2b64c6df438265"
+    assert (
+        evaluator_v2_runtime_tuple_hash(
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            reasoning_effort="medium",
+            reasoning_mode="standard",
+            service_tier="default",
+            transport_max_retries=0,
+            max_output_tokens=25_000,
+            max_total_tokens=3_000_000,
+            wall_clock_timeout_seconds=3_600,
+            tool_schema_version="v2",
+            context_policy_version="phase-evidence-v5",
+            memory_policy_version="fixed-d110-bundle-v1",
+            sandbox_backend="docker",
+        )
+        == "sha256:d2195cdce2ab55a23e4dd186d57cb5fb3222ecc40bd190458d2b64c6df438265"
+    )
 
 
 @pytest.mark.parametrize(
@@ -96,19 +100,34 @@ def test_r4_uses_one_exact_split_budget_for_all_ac_rows() -> None:
     assert _suite_hash(suite) != _suite_hash(load_suite(R3_SUITE))
 
 
-def test_r6_preserves_r5_semantics_but_r5_is_consumed() -> None:
+def test_r6_preserves_r5_semantics_and_both_are_consumed() -> None:
     r5 = load_suite(R5_SUITE)
     r6 = load_suite(R6_SUITE)
     r5_payload = r5.model_dump(mode="json")
     r6_payload = r6.model_dump(mode="json")
 
     assert r5.experiment_id in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
-    assert r6.experiment_id not in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert r6.experiment_id in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
     assert r5.experiment_id != r6.experiment_id
     r5_payload.pop("experiment_id")
     r6_payload.pop("experiment_id")
     assert r6_payload == r5_payload
     assert _suite_hash(r6) != _suite_hash(r5)
+
+
+def test_r7_preserves_r6_semantics_but_r6_is_consumed() -> None:
+    r6 = load_suite(R6_SUITE)
+    r7 = load_suite(R7_SUITE)
+    r6_payload = r6.model_dump(mode="json")
+    r7_payload = r7.model_dump(mode="json")
+
+    assert r6.experiment_id in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert r7.experiment_id not in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert r6.experiment_id != r7.experiment_id
+    r6_payload.pop("experiment_id")
+    r7_payload.pop("experiment_id")
+    assert r7_payload == r6_payload
+    assert _suite_hash(r7) != _suite_hash(r6)
 
 
 def test_r4_price_aware_reserve_matches_split_ceilings() -> None:

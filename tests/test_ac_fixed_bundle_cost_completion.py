@@ -14,8 +14,9 @@ from patchloop.agent.runner import LiveExecutionAuthorization, _load_live_execut
 from patchloop.contracts import (
     AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
-    AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS,
     DatasetRole,
     ExperimentRunContext,
     Usage,
@@ -27,7 +28,7 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_text
 R1_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r1.yaml")
 R2_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml")
 R3_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-r3.yaml")
-R6_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r6.yaml")
+R7_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r7.yaml")
 SOURCE_COMMIT = "a" * 40
 R2_BASE_SUITE_HASH = eval_runner._suite_hash(eval_runner.load_suite(R2_SUITE))
 EVALUATOR_V2_SOURCE_QUALIFICATION = {
@@ -284,7 +285,7 @@ def _completion_rows(
 ) -> list[dict[str, Any]]:
     call_guard_check_id = (
         "bounded_call_guard_contract"
-        if experiment_id == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
+        if experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         else "disabled_call_guard_contract"
     )
     checks = {
@@ -502,39 +503,39 @@ def test_r3_paid_plan_uses_a_fresh_identity_and_matches_qualified_manifest(
     )
 
 
-def test_r6_split_budget_paid_plan_round_trips_through_qualification_revalidation(
+def test_r7_split_budget_paid_plan_round_trips_through_qualification_revalidation(
     ac_preflights: tuple[dict[str, Any], dict[str, Any]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from patchloop.evals import qualification as qualification_module
 
     _r1, _r2 = ac_preflights
-    r6_binding = {
+    r7_binding = {
         **EVALUATOR_V2_SOURCE_QUALIFICATION,
         "successor_suite_hash": "sha256:" + "e" * 64,
-        "base_suite_hash": eval_runner._suite_hash(eval_runner.load_suite(R6_SUITE)),
+        "base_suite_hash": eval_runner._suite_hash(eval_runner.load_suite(R7_SUITE)),
     }
     monkeypatch.setattr(
         eval_runner,
         "_validated_ac_evaluator_v2_source_qualification",
         lambda suite: (
-            dict(r6_binding)
-            if suite.experiment_id == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
+            dict(r7_binding)
+            if suite.experiment_id == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
             else None
         ),
     )
-    candidate = eval_runner.preflight_suite(R6_SUITE)
+    candidate = eval_runner.preflight_suite(R7_SUITE)
     approved = eval_runner.preflight_suite(
-        R6_SUITE,
+        R7_SUITE,
         approve_live_cost=True,
         approved_execution_hash=candidate["execution_hash"],
     )
     plan = {**approved, "schema_version": "experiment-execution-plan-v1"}
-    v1_manifest = _paid_boundary_manifest(approved, row_index=0, suite_path=R6_SUITE)
+    v1_manifest = _paid_boundary_manifest(approved, row_index=0, suite_path=R7_SUITE)
     manifest = _bind_paid_boundary_manifest_v2(v1_manifest, approved)
 
     assert approved["ready"] is True
-    assert approved["experiment_id"] == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
+    assert approved["experiment_id"] == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
     assert approved["runtime_contract"]["budget"] == (
         eval_runner.GPT54_MINI_AC_SPLIT_TOKEN_BUDGET.model_dump(mode="json")
     )
@@ -1269,29 +1270,29 @@ def test_ac_completion_gate_accepts_qualified_v2_receipts_without_mutating_raw_o
     assert failed["official_evaluator_runs"] == 3
 
 
-def test_r6_completion_gate_accepts_bounded_call_guard_v2_matrix(
+def test_r7_completion_gate_accepts_bounded_call_guard_v2_matrix(
     ac_preflights: tuple[dict[str, Any], dict[str, Any]],
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _r1, _r2 = ac_preflights
-    r6_binding = {
+    r7_binding = {
         **EVALUATOR_V2_SOURCE_QUALIFICATION,
         "successor_suite_hash": "sha256:" + "e" * 64,
-        "base_suite_hash": eval_runner._suite_hash(eval_runner.load_suite(R6_SUITE)),
+        "base_suite_hash": eval_runner._suite_hash(eval_runner.load_suite(R7_SUITE)),
     }
     monkeypatch.setattr(
         eval_runner,
         "_validated_ac_evaluator_v2_source_qualification",
         lambda suite: (
-            dict(r6_binding)
-            if suite.experiment_id == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
+            dict(r7_binding)
+            if suite.experiment_id == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
             else None
         ),
     )
-    candidate = eval_runner.preflight_suite(R6_SUITE)
+    candidate = eval_runner.preflight_suite(R7_SUITE)
     approved = eval_runner.preflight_suite(
-        R6_SUITE,
+        R7_SUITE,
         approve_live_cost=True,
         approved_execution_hash=candidate["execution_hash"],
     )
@@ -1299,7 +1300,7 @@ def test_r6_completion_gate_accepts_bounded_call_guard_v2_matrix(
     rows = _completion_rows(
         approved,
         all_failures=True,
-        experiment_id=AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
+        experiment_id=AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
     )
     for index, row in enumerate(rows, start=1):
         source_hash = "sha256:" + f"{index + 8:x}" * 64
@@ -1310,9 +1311,7 @@ def test_r6_completion_gate_accepts_bounded_call_guard_v2_matrix(
                 "evaluator_contract": {"evaluator_source_hash": source_hash},
                 "safety_evidence_bundle_hash": "sha256:" + "a" * 64,
                 "safety_evidence": [{"control": control} for control in range(4)],
-                "verifier_results": [
-                    {"check_type": "safety", "state": "pass"} for _ in range(4)
-                ],
+                "verifier_results": [{"check_type": "safety", "state": "pass"} for _ in range(4)],
             }
         )
         row["qualification"].update(
@@ -1329,7 +1328,7 @@ def test_r6_completion_gate_accepts_bounded_call_guard_v2_matrix(
 
     gate = eval_runner._ac_fixed_bundle_completion_gate(
         rows,
-        expected_experiment_id=AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
+        expected_experiment_id=AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
         expected_execution_hash=approved["execution_hash"],
         expected_schedule=approved["schedule"],
         expected_campaign_cost_control_hash=approved["campaign_cost_control"]["content_hash"],
@@ -1392,7 +1391,7 @@ def test_r2_terminal_projection_includes_cost_contract_but_r1_does_not() -> None
     assert "campaign_full_schedule_cost_contract" not in r1["readiness_checks"]
 
 
-def test_r6_terminal_projection_uses_bounded_call_guard_contract() -> None:
+def test_r7_terminal_projection_uses_bounded_call_guard_contract() -> None:
     check_ids = {
         "submission_lifecycle",
         "prompt_token_integrity",
@@ -1406,12 +1405,9 @@ def test_r6_terminal_projection_uses_bounded_call_guard_contract() -> None:
         "campaign_full_schedule_cost_contract",
     }
     payload = {
-        "experiment_id": AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
+        "experiment_id": AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
         "memory_condition": "no_memory",
-        "checks": [
-            {"check_id": check_id, "passed": True, "details": {}}
-            for check_id in check_ids
-        ],
+        "checks": [{"check_id": check_id, "passed": True, "details": {}} for check_id in check_ids],
     }
 
     summary = eval_runner._terminal_qualification_summary(payload)

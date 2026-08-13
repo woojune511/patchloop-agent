@@ -1099,8 +1099,7 @@ class AgentRunner:
                     and manifest.budget.max_model_calls == 180
                     and manifest.budget.max_tool_calls == 300
                     and manifest.budget.max_total_tokens == 3_350_000
-                    and manifest.budget.token_budget_schema_version
-                    == _SPLIT_TOKEN_BUDGET_SCHEMA
+                    and manifest.budget.token_budget_schema_version == _SPLIT_TOKEN_BUDGET_SCHEMA
                     and manifest.budget.max_cumulative_input_tokens == 3_000_000
                     and manifest.budget.max_cumulative_output_tokens == 350_000
                 )
@@ -1208,8 +1207,7 @@ class AgentRunner:
         expected_policy_schema = (
             (
                 _AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY_SCHEMA
-                if manifest.experiment.experiment_id
-                in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                if manifest.experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else _AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_POLICY_SCHEMA
             )
             if ac_cost_profile
@@ -3863,6 +3861,7 @@ class AgentRunner:
         if ac_fixed_bundle:
             from patchloop.evals.runner import (
                 AC_FIXED_BUNDLE_COST_POLICY,
+                AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY,
                 AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY,
                 _ac_fixed_bundle_descriptor,
             )
@@ -3875,8 +3874,7 @@ class AgentRunner:
                 "execution_hash": manifest.experiment.execution_hash,
                 **(
                     {"campaign_cost_control_hash": (manifest.experiment.campaign_cost_control_hash)}
-                    if manifest.experiment.experiment_id
-                    in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
+                    if manifest.experiment.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
                     else {}
                 ),
                 "schedule_seed": manifest.experiment.schedule_seed,
@@ -3907,7 +3905,12 @@ class AgentRunner:
                 "tools": tool_schemas,
                 "tool_schema_version": manifest.tool_schema_version,
                 "context_policy_version": manifest.context_policy_version,
-                "call_guard_policy": _CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY,
+                "call_guard_policy": (
+                    AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY
+                    if manifest.experiment.experiment_id
+                    in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                    else _CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY
+                ),
             }
         if condition_neutral_v2:
             from patchloop.evals.runner import (
@@ -5459,20 +5462,15 @@ class AgentRunner:
             "input_tokens": requested_input_tokens > remaining_input,
             "output_tokens": manifest.model.max_output_tokens > remaining_output,
             "total_tokens": (
-                requested_input_tokens + manifest.model.max_output_tokens
-                > remaining_total
+                requested_input_tokens + manifest.model.max_output_tokens > remaining_total
             ),
         }
         exceeded_dimensions = [
-            dimension
-            for dimension in _SPLIT_TOKEN_DIMENSION_ORDER
-            if exceeded[dimension]
+            dimension for dimension in _SPLIT_TOKEN_DIMENSION_ORDER if exceeded[dimension]
         ]
         return {
             "token_budget_schema_version": budget.token_budget_schema_version,
-            "binding_dimension": (
-                exceeded_dimensions[0] if exceeded_dimensions else None
-            ),
+            "binding_dimension": (exceeded_dimensions[0] if exceeded_dimensions else None),
             "exceeded_dimensions": exceeded_dimensions,
             "input_tokens_used": input_used,
             "output_tokens_used": output_used,
@@ -5498,12 +5496,9 @@ class AgentRunner:
             raise ContractError("tool call budget exhausted")
         if usage.input_tokens + usage.output_tokens >= manifest.budget.max_total_tokens:
             raise ContractError("token budget exhausted")
-        if (
-            manifest.budget.token_budget_schema_version == _SPLIT_TOKEN_BUDGET_SCHEMA
-            and (
-                usage.input_tokens >= manifest.budget.max_cumulative_input_tokens
-                or usage.output_tokens >= manifest.budget.max_cumulative_output_tokens
-            )
+        if manifest.budget.token_budget_schema_version == _SPLIT_TOKEN_BUDGET_SCHEMA and (
+            usage.input_tokens >= manifest.budget.max_cumulative_input_tokens
+            or usage.output_tokens >= manifest.budget.max_cumulative_output_tokens
         ):
             raise ContractError("split token budget exhausted")
         if usage.wall_clock_ms >= manifest.budget.wall_clock_timeout_seconds * 1000:
@@ -5518,12 +5513,9 @@ class AgentRunner:
             raise ContractError("model call budget exceeded")
         if usage.input_tokens + usage.output_tokens > manifest.budget.max_total_tokens:
             raise ContractError("token budget exceeded")
-        if (
-            manifest.budget.token_budget_schema_version == _SPLIT_TOKEN_BUDGET_SCHEMA
-            and (
-                usage.input_tokens > manifest.budget.max_cumulative_input_tokens
-                or usage.output_tokens > manifest.budget.max_cumulative_output_tokens
-            )
+        if manifest.budget.token_budget_schema_version == _SPLIT_TOKEN_BUDGET_SCHEMA and (
+            usage.input_tokens > manifest.budget.max_cumulative_input_tokens
+            or usage.output_tokens > manifest.budget.max_cumulative_output_tokens
         ):
             raise ContractError("split token budget exceeded")
         if usage.wall_clock_ms > manifest.budget.wall_clock_timeout_seconds * 1000:

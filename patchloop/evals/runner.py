@@ -52,6 +52,7 @@ from patchloop.contracts import (
     AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS,
@@ -222,6 +223,7 @@ CONSUMED_AC_FIXED_BUNDLE_EXPERIMENT_IDS = frozenset(
     {
         AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
     }
 )
 HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
@@ -1962,8 +1964,7 @@ def _campaign_cost_control(
             and suite.estimated_cost_usd == full_schedule_reserve_usd
             and suite.cost_limit_usd == policy["hard_cap_usd"]
             and pricing.get("per_run_cost_reserve_usd") == per_run_reserve_usd
-            and pricing.get("budget_upper_bound_usd")
-            == full_schedule_reserve_usd
+            and pricing.get("budget_upper_bound_usd") == full_schedule_reserve_usd
             and _usd_to_nanos(pricing["per_run_cost_reserve_usd"])
             == policy["per_run_reserve_nanos"]
             and _usd_to_nanos(pricing["budget_upper_bound_usd"])
@@ -2815,14 +2816,10 @@ class ExperimentSuite(BaseModel):
                 ),
             )
             expected_ac_cost = (
-                15.3
-                if self.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
-                else 54.45
+                15.3 if self.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS else 54.45
             )
             if self.estimated_cost_usd != expected_ac_cost:
-                raise ValueError(
-                    f"A/C readiness requires estimated_cost_usd={expected_ac_cost:g}"
-                )
+                raise ValueError(f"A/C readiness requires estimated_cost_usd={expected_ac_cost:g}")
         elif self.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
             normalized_tasks = {_normalized_task_path(task) for task in self.tasks}
             completion_panel = self.experiment_id not in SINGLE_TASK_LIVE_EXPERIMENT_IDS
@@ -7537,13 +7534,10 @@ def _ac_fixed_bundle_completion_gate(
         and cost.get("schedule_hash") == expected_schedule_hash
         and valid_sha256(expected_campaign_cost_control_hash)
         and cost.get("campaign_cost_control_hash") == expected_campaign_cost_control_hash
-        and cost.get("full_schedule_reserve_nanos")
-        == expected_full_schedule_reserve_nanos
+        and cost.get("full_schedule_reserve_nanos") == expected_full_schedule_reserve_nanos
         and cost.get("hard_cap_nanos") == expected_hard_cap_nanos
         and type(cost.get("accrued_cost_nanos")) is int
-        and 0
-        <= cost.get("accrued_cost_nanos", -1)
-        <= expected_full_schedule_reserve_nanos
+        and 0 <= cost.get("accrued_cost_nanos", -1) <= expected_full_schedule_reserve_nanos
         and cost.get("live_resume_supported") is False
     )
     terminal_runs = sum(row.get("attempt_status") == "terminal" for row in rows)

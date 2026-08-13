@@ -16,8 +16,8 @@ from patchloop import runtime as runtime_module
 from patchloop.agent import model as agent_model
 from patchloop.agent import runner as agent_runner
 from patchloop.contracts import (
-    AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
     Budget,
     DatasetRole,
     ExperimentPurpose,
@@ -106,32 +106,32 @@ def _build(output: Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
     return summary, payload, raw
 
 
-def test_r8_source_surfaces_do_not_replace_r7_artifact() -> None:
-    r7 = REPOSITORY / (
+def test_r9_source_surfaces_do_not_replace_r8_artifact() -> None:
+    r8 = REPOSITORY / (
         "reports/live-pilot/artifacts/"
-        "evaluator-v2-ac-successor-offline-source-qualification-r7.json"
+        "evaluator-v2-ac-successor-offline-source-qualification-r8.json"
     )
 
-    assert source_q.SCHEMA_VERSION == "evaluator-v2-ac-source-qualification-v8"
-    assert source_q.QUALIFICATION_ID.endswith("-r8")
-    assert source_q.PLAN_PATH.as_posix() == "experiments/ac-structured-pilot-v9.plan.yaml"
-    assert source_q.OUTPUT_PATH.name.endswith("qualification-r8.json")
-    assert r7.is_file()
-    assert len(r7.read_bytes()) == 16_151
-    assert sha256_bytes(r7.read_bytes()) == (
-        "sha256:851e1f19066fb7ad6bb87502d5c53732c3f13d459e4a78574635152408e9014b"
+    assert source_q.SCHEMA_VERSION == "evaluator-v2-ac-source-qualification-v9"
+    assert source_q.QUALIFICATION_ID.endswith("-r9")
+    assert source_q.PLAN_PATH.as_posix() == "experiments/ac-structured-pilot-v10.plan.yaml"
+    assert source_q.OUTPUT_PATH.name.endswith("qualification-r9.json")
+    assert r8.is_file()
+    assert len(r8.read_bytes()) == 16_151
+    assert sha256_bytes(r8.read_bytes()) == (
+        "sha256:5e8026c3b114b09cf88b9c34b36ab831d85ce5dbe25d7c47059bb54186d682ec"
     )
-    assert r7 != REPOSITORY / source_q.OUTPUT_PATH
+    assert r8 != REPOSITORY / source_q.OUTPUT_PATH
 
 
-def test_r6_suite_changes_only_the_qualification_corrected_identity() -> None:
+def test_r7_suite_changes_only_the_runtime_evidence_corrected_identity() -> None:
     successor = eval_runner.load_suite(source_q.BASE_SUITE_PATH).model_dump(mode="json")
     predecessor = eval_runner.load_suite(source_q.FAST_PREDECESSOR_SUITE_PATH).model_dump(
         mode="json"
     )
 
-    assert successor["experiment_id"] == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
-    assert predecessor["experiment_id"] == AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID
+    assert successor["experiment_id"] == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
+    assert predecessor["experiment_id"] == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
     for field in ("experiment_id",):
         successor.pop(field)
         predecessor.pop(field)
@@ -199,7 +199,7 @@ def test_successor_suite_is_new_and_preserves_exact_ac_treatment(
     assert payload["base_suite"]["path"] == source_q.BASE_SUITE_PATH.as_posix()
     assert (
         eval_runner.load_suite(source_q.BASE_SUITE_PATH).experiment_id
-        == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
+        == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
     )
     assert (
         eval_runner.load_suite(source_q.BASE_SUITE_PATH).pricing_verified_at.isoformat()
@@ -291,7 +291,7 @@ def test_ac_runner_binds_qualified_v2_manifest(
     monkeypatch.setattr(runtime_module, "git_commit", lambda: "a" * 40)
     monkeypatch.setattr(runtime_module, "version", lambda _package: "offline-test-sdk")
     context = ExperimentRunContext(
-        experiment_id=AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
+        experiment_id=AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
         purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS,
         suite_hash=summary["successor_suite_hash"],
         execution_hash="sha256:" + "1" * 64,
@@ -344,6 +344,15 @@ def test_ac_runner_binds_qualified_v2_manifest(
     assert bound.evaluator_contract is not None
     assert bound.evaluator_contract.evaluator_source_hash == summary["evaluator_source_hash"]
     assert bound.evaluator_contract.contract_hash == authority.runtime.safety_contract.content_hash
+    system_prompt, tool_schemas = agent_runner.AgentRunner._runtime_contract(bound)
+    runtime_evidence = agent_runner.AgentRunner._generic_baseline_runtime_evidence_document(
+        manifest=bound,
+        system_prompt=system_prompt,
+        tool_schemas=tool_schemas,
+    )
+    assert runtime_evidence["call_guard_policy"] == (
+        eval_runner.AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY
+    )
     assert (
         source_q.validate_evaluator_v2_ac_paid_authority(
             bound,
