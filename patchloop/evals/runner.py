@@ -49,6 +49,7 @@ from patchloop.agent.tools import (
 from patchloop.contracts import (
     AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
@@ -218,7 +219,10 @@ CONSUMED_CONDITION_NEUTRAL_BASELINE_EXPERIMENT_IDS = frozenset(
     {CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID}
 )
 CONSUMED_AC_FIXED_BUNDLE_EXPERIMENT_IDS = frozenset(
-    {AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID}
+    {
+        AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
+    }
 )
 HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
     HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
@@ -547,6 +551,7 @@ GENERIC_HIGH_HEADROOM_READINESS_GATE_SCHEMA = "generic-high-headroom-readiness-g
 GENERIC_HIGH_HEADROOM_READINESS_GATE_ID = "d094-generic-high-headroom-readiness"
 WORKFLOW_COMPLETION_RUNTIME_CONTRACT_SCHEMA = "workflow-completion-runtime-contract-v1"
 WORKFLOW_COMPLETION_CALL_GUARD_POLICY = "model-tool-observability-only-v1"
+AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY = "model-tool-bounded-enforcement-v1"
 GENERIC_BASELINE_OBSERVABILITY_CALL_GUARD_POLICY = WORKFLOW_COMPLETION_CALL_GUARD_POLICY
 CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA = (
     "condition-neutral-comparison-runtime-contract-v1"
@@ -1262,7 +1267,11 @@ def _experiment_runtime_contract(
             "context_policy_version": "phase-evidence-v5",
             "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
             "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
-            "call_guard_policy": CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY,
+            "call_guard_policy": (
+                AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY
+                if suite.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                else CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY
+            ),
             "harness_git_commit": harness_git_commit,
         }
     if _is_condition_neutral_runtime_v2_profile(suite):
@@ -5806,7 +5815,11 @@ def _assert_manifest_matches_preflight(
             "context_policy_version": manifest.context_policy_version,
             "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
             "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
-            "call_guard_policy": CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY,
+            "call_guard_policy": (
+                AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY
+                if suite.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                else CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY
+            ),
             "harness_git_commit": manifest.harness_git_commit,
         }
     elif (
@@ -6181,6 +6194,11 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
     raw_checks = payload.get("checks")
     if not isinstance(raw_checks, list):
         raw_checks = []
+    call_guard_check_id = (
+        "bounded_call_guard_contract"
+        if payload.get("experiment_id") in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+        else "disabled_call_guard_contract"
+    )
     if payload.get("experiment_id") in {
         *AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
         CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
@@ -6207,7 +6225,7 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
             "prompt_token_integrity",
             "usage_reconciliation",
             "persisted_result",
-            "disabled_call_guard_contract",
+            call_guard_check_id,
         ]
         if payload.get("experiment_id") == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID:
             readiness_check_ids.extend(
@@ -6239,7 +6257,7 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
         call_guard_matches = [
             check
             for check in raw_checks
-            if isinstance(check, dict) and check.get("check_id") == "disabled_call_guard_contract"
+            if isinstance(check, dict) and check.get("check_id") == call_guard_check_id
         ]
         call_guard_details = (
             call_guard_matches[0].get("details")
@@ -6270,7 +6288,6 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
             ),
             "event_sequences": sorted(set(block_sequences)),
         }
-    call_guard_check_id = "disabled_call_guard_contract"
     comparison_no_memory_observability = bool(
         (
             payload.get("purpose") == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY.value
@@ -7336,7 +7353,11 @@ def _ac_fixed_bundle_completion_gate(
         "prompt_token_integrity",
         "usage_reconciliation",
         "persisted_result",
-        "disabled_call_guard_contract",
+        (
+            "bounded_call_guard_contract"
+            if expected_experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+            else "disabled_call_guard_contract"
+        ),
         "approved_execution_plan",
         "ac_fixed_runtime_contract",
         "fixed_memory_delivery_integrity",

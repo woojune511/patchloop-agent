@@ -20,6 +20,7 @@ REPOSITORY = Path(__file__).resolve().parents[1]
 R3_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260813-r3.yaml"
 R4_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r4.yaml"
 R5_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r5.yaml"
+R6_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r6.yaml"
 
 
 def test_legacy_budget_serialization_and_r3_hash_are_unchanged() -> None:
@@ -95,19 +96,19 @@ def test_r4_uses_one_exact_split_budget_for_all_ac_rows() -> None:
     assert _suite_hash(suite) != _suite_hash(load_suite(R3_SUITE))
 
 
-def test_r5_preserves_r4_semantics_but_r4_is_consumed() -> None:
-    r4 = load_suite(R4_SUITE)
+def test_r6_preserves_r5_semantics_but_r5_is_consumed() -> None:
     r5 = load_suite(R5_SUITE)
-    r4_payload = r4.model_dump(mode="json")
+    r6 = load_suite(R6_SUITE)
     r5_payload = r5.model_dump(mode="json")
+    r6_payload = r6.model_dump(mode="json")
 
-    assert r4.experiment_id in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
-    assert r5.experiment_id not in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
-    assert r4.experiment_id != r5.experiment_id
-    r4_payload.pop("experiment_id")
+    assert r5.experiment_id in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert r6.experiment_id not in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert r5.experiment_id != r6.experiment_id
     r5_payload.pop("experiment_id")
-    assert r5_payload == r4_payload
-    assert _suite_hash(r5) != _suite_hash(r4)
+    r6_payload.pop("experiment_id")
+    assert r6_payload == r5_payload
+    assert _suite_hash(r6) != _suite_hash(r5)
 
 
 def test_r4_price_aware_reserve_matches_split_ceilings() -> None:

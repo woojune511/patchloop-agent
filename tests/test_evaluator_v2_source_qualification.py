@@ -17,7 +17,7 @@ from patchloop.agent import model as agent_model
 from patchloop.agent import runner as agent_runner
 from patchloop.contracts import (
     AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
-    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
     Budget,
     DatasetRole,
     ExperimentPurpose,
@@ -106,32 +106,32 @@ def _build(output: Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
     return summary, payload, raw
 
 
-def test_r7_source_surfaces_do_not_replace_r6_artifact() -> None:
-    r6 = REPOSITORY / (
+def test_r8_source_surfaces_do_not_replace_r7_artifact() -> None:
+    r7 = REPOSITORY / (
         "reports/live-pilot/artifacts/"
-        "evaluator-v2-ac-successor-offline-source-qualification-r6.json"
+        "evaluator-v2-ac-successor-offline-source-qualification-r7.json"
     )
 
-    assert source_q.SCHEMA_VERSION == "evaluator-v2-ac-source-qualification-v7"
-    assert source_q.QUALIFICATION_ID.endswith("-r7")
-    assert source_q.PLAN_PATH.as_posix() == "experiments/ac-structured-pilot-v8.plan.yaml"
-    assert source_q.OUTPUT_PATH.name.endswith("qualification-r7.json")
-    assert r6.is_file()
-    assert len(r6.read_bytes()) == 15_479
-    assert sha256_bytes(r6.read_bytes()) == (
-        "sha256:99d16f89ca7510df2e33d3b6a9911e3ecaf4b0963a5d1d5f89e37eab0bea5c0a"
+    assert source_q.SCHEMA_VERSION == "evaluator-v2-ac-source-qualification-v8"
+    assert source_q.QUALIFICATION_ID.endswith("-r8")
+    assert source_q.PLAN_PATH.as_posix() == "experiments/ac-structured-pilot-v9.plan.yaml"
+    assert source_q.OUTPUT_PATH.name.endswith("qualification-r8.json")
+    assert r7.is_file()
+    assert len(r7.read_bytes()) == 16_151
+    assert sha256_bytes(r7.read_bytes()) == (
+        "sha256:851e1f19066fb7ad6bb87502d5c53732c3f13d459e4a78574635152408e9014b"
     )
-    assert r6 != REPOSITORY / source_q.OUTPUT_PATH
+    assert r7 != REPOSITORY / source_q.OUTPUT_PATH
 
 
-def test_r5_suite_changes_only_the_capability_corrected_identity() -> None:
+def test_r6_suite_changes_only_the_qualification_corrected_identity() -> None:
     successor = eval_runner.load_suite(source_q.BASE_SUITE_PATH).model_dump(mode="json")
     predecessor = eval_runner.load_suite(source_q.FAST_PREDECESSOR_SUITE_PATH).model_dump(
         mode="json"
     )
 
-    assert successor["experiment_id"] == AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID
-    assert predecessor["experiment_id"] == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+    assert successor["experiment_id"] == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
+    assert predecessor["experiment_id"] == AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID
     for field in ("experiment_id",):
         successor.pop(field)
         predecessor.pop(field)
@@ -199,7 +199,7 @@ def test_successor_suite_is_new_and_preserves_exact_ac_treatment(
     assert payload["base_suite"]["path"] == source_q.BASE_SUITE_PATH.as_posix()
     assert (
         eval_runner.load_suite(source_q.BASE_SUITE_PATH).experiment_id
-        == AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID
+        == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
     )
     assert (
         eval_runner.load_suite(source_q.BASE_SUITE_PATH).pricing_verified_at.isoformat()
@@ -291,7 +291,7 @@ def test_ac_runner_binds_qualified_v2_manifest(
     monkeypatch.setattr(runtime_module, "git_commit", lambda: "a" * 40)
     monkeypatch.setattr(runtime_module, "version", lambda _package: "offline-test-sdk")
     context = ExperimentRunContext(
-        experiment_id=AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
+        experiment_id=AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
         purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS,
         suite_hash=summary["successor_suite_hash"],
         execution_hash="sha256:" + "1" * 64,

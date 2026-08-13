@@ -193,6 +193,7 @@ _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID = {
     ),
 }
 _WORKFLOW_COMPLETION_CALL_GUARD_POLICY = "model-tool-observability-only-v1"
+_AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY = "model-tool-bounded-enforcement-v1"
 _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID = "generic-baseline-readiness-v2v5-20260803-r3"
 _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS = frozenset(
     {
@@ -1299,6 +1300,13 @@ def _execution_plan_matches(
             and expected_runtime_contract.get("system_prompt_hash") == sha256_text(SYSTEM_PROMPT_V3)
             and expected_runtime_contract.get("tool_schema_hash")
             == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
+            and expected_runtime_contract.get("call_guard_policy")
+            == (
+                _AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY
+                if manifest.experiment.experiment_id
+                in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                else _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+            )
         )
         or (
             _condition_neutral_runtime_v2_manifest_matches(manifest)
@@ -1962,7 +1970,11 @@ def _generic_baseline_runtime_contract_evidence(
                     if split_budget_campaign
                     else AC_FIXED_BUNDLE_COST_POLICY
                 ),
-                "call_guard_policy": _WORKFLOW_COMPLETION_CALL_GUARD_POLICY,
+                "call_guard_policy": (
+                    _AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY
+                    if split_budget_campaign
+                    else _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+                ),
             }
         )
     elif condition_neutral_v2:
@@ -10405,8 +10417,14 @@ def qualify_run(
                 )
             ):
                 admission_tail_failures.append(event.sequence)
+        split_budget_call_guard = bool(
+            ac_fixed_bundle
+            and experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+        )
         expected_observability_budget = (
-            _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+            _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
+            if split_budget_call_guard
+            else _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
             if condition_neutral_v2 or ac_fixed_bundle
             else _GPT54_MINI_FROZEN_COMPARISON_BUDGET
             if condition_neutral_comparison
@@ -10426,8 +10444,17 @@ def qualify_run(
         call_guard_contract_ok = bool(
             exact_observability_profile
             and manifest.budget == expected_observability_budget
-            and manifest.budget.max_model_calls is None
-            and manifest.budget.max_tool_calls is None
+            and (
+                (
+                    manifest.budget.max_model_calls == 180
+                    and manifest.budget.max_tool_calls == 300
+                )
+                if split_budget_call_guard
+                else (
+                    manifest.budget.max_model_calls is None
+                    and manifest.budget.max_tool_calls is None
+                )
+            )
             and generic_runtime_ok
             and any(event.type == EventType.CONTEXT_BUILT for event in events)
             and not forbidden_generation_blocks
@@ -10436,9 +10463,17 @@ def qualify_run(
             and not admission_tail_failures
         )
         add(
-            "disabled_call_guard_contract",
+            (
+                "bounded_call_guard_contract"
+                if split_budget_call_guard
+                else "disabled_call_guard_contract"
+            ),
             call_guard_contract_ok,
-            policy_version=_WORKFLOW_COMPLETION_CALL_GUARD_POLICY,
+            policy_version=(
+                _AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY
+                if split_budget_call_guard
+                else _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+            ),
             model_call_limit=manifest.budget.max_model_calls,
             tool_call_limit=manifest.budget.max_tool_calls,
             forbidden_generation_block_sequences=(forbidden_generation_blocks),
@@ -11031,7 +11066,13 @@ def qualify_run(
             )
             or (
                 _ac_fixed_bundle_readiness_manifest_matches(manifest)
-                and manifest.budget == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+                and manifest.budget
+                == (
+                    _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
+                    if manifest.experiment.experiment_id
+                    in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                    else _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+                )
                 and manifest.model.transport_max_retries == 0
             )
             or (
@@ -12302,7 +12343,13 @@ def qualify_run(
         )
         trace_check_ids.add("pricing_start_freshness")
         if manifest.memory.condition == MemoryCondition.NO_MEMORY or ac_fixed_bundle:
-            trace_check_ids.add("disabled_call_guard_contract")
+            trace_check_ids.add(
+                "bounded_call_guard_contract"
+                if ac_fixed_bundle
+                and experiment is not None
+                and experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                else "disabled_call_guard_contract"
+            )
     if accrued_cap_campaign:
         trace_check_ids.add("campaign_spend_cap_contract")
     if full_schedule_cost_campaign:

@@ -1,0 +1,79 @@
+# Qualification-corrected successor of the sealed R5 terminal. Task, schedule,
+# treatment, split-token budget, bounded call limits, and cost contracts are
+# unchanged. This source carries no execution approval.
+schema_version: experiment-v2
+experiment_id: dev-validation-ac-fixed-bundle-readiness-20260814-r6
+purpose: development-validation-ac-readiness
+tasks:
+  - tasks/dev-validation/moto-query-scanned-count/public.yaml
+  - tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml
+conditions:
+  - no_memory
+  - structured
+repetitions: 1
+schedule:
+  - {order: 1, task: tasks/dev-validation/moto-query-scanned-count/public.yaml, condition: no_memory, repetition: 1}
+  - {order: 2, task: tasks/dev-validation/moto-query-scanned-count/public.yaml, condition: structured, repetition: 1}
+  - {order: 3, task: tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml, condition: structured, repetition: 1}
+  - {order: 4, task: tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml, condition: no_memory, repetition: 1}
+memory_policy_version: fixed-d110-bundle-v1
+model: openai
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+transport_max_retries: 0
+max_output_tokens: 25000
+budget:
+  max_model_calls: 180
+  max_tool_calls: 300
+  max_total_tokens: 3350000
+  wall_clock_timeout_seconds: 3600
+  token_budget_schema_version: cumulative-split-v1
+  max_cumulative_input_tokens: 3000000
+  max_cumulative_output_tokens: 350000
+seed: 20260723
+pilot_run_id: null
+campaign_cost_policy:
+  schema_version: ac-fixed-bundle-split-token-full-schedule-reserve-v1
+  accounting_scope: campaign-local
+  accounting_basis: split-token-ceiling-standard-list-price
+  scheduled_run_count: 4
+  max_cumulative_input_tokens: 3000000
+  max_cumulative_output_tokens: 350000
+  aggregate_token_ceiling: 3350000
+  input_reserve_rate_per_million_usd: 0.75
+  output_reserve_rate_per_million_usd: 4.5
+  per_run_reserve_usd: 3.825
+  full_schedule_reserve_usd: 15.3
+  hard_cap_usd: 18.0
+  hard_cap_slack_usd: 2.7
+  money_scale: nano-usd
+  per_run_reserve_nanos: 3825000000
+  full_schedule_reserve_nanos: 15300000000
+  hard_cap_nanos: 18000000000
+  reservation_mode: row-bound-full-schedule-up-front
+  initial_reservation_boundary: before-first-provider-call
+  row_reserve_count: 4
+  cost_censoring_allowed: false
+  not_started_due_to_cost_allowed: false
+  automatic_retry_or_replacement_allowed: false
+  settlement_basis: durable-token-derived-standard-list-price
+  live_resume_policy: disabled
+  completion_guaranteed: false
+  invoice_or_free_tier_claimed: false
+live_cost_approved: false
+approved_execution_hash: null
+estimated_cost_usd: 15.3
+cost_limit_usd: 18.0
+pricing_verified_at: 2026-08-13T12:05:26Z
+pricing_source_url: https://developers.openai.com/api/docs/pricing
+input_price_per_million_usd: 0.75
+cached_input_price_per_million_usd: 0.075
+cache_write_input_price_per_million_usd: null
+output_price_per_million_usd: 4.5
+retrieval_threshold: 0.72
+memory_token_budget: 2000
+embedding_model: sentence-transformers/all-MiniLM-L6-v2
+embedding_revision: PIN_AT_FREEZE
+dataset_manifest_hash: sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786
