@@ -41,6 +41,9 @@ Historical milestone-by-milestone limitations are archived at
 - V22 strictly projects typed child data over V21 framing. V23's one attempt proved Docker reads and typed transport,
   not a valid SDK diagnostic: strict validation returned `diagnostic_result_invalid`. Accounting is incomplete/unknown;
   network/provider counts are unknown, and the consumed terminal grants no retry, memory, cost or A/C authority.
+- V24 reproduces a legacy mapping-order rejection with a representative SDK-observation fixture and corrects it with
+  pre-canonical validation plus a value-free summary. Because v23 discarded its invalid child, this does not prove
+  the exact v23 cause. V24 has no live/lifecycle entrypoint and is not readiness evidence.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

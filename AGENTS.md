@@ -50,11 +50,12 @@
 - V13/V14/V16/V18 are consumed Docker/preflight failures with no retry; `docs/09-evidence.md` owns their exact tuples.
 - V20 is a consumed `ERROR(child_checker_error/supervised_output_invalid)` predecessor with incomplete/unknown
   accounting and no retry; `docs/09-evidence.md` owns its exact tuple.
-- V22 is the immutable projection-only predecessor. Qualified V23 contract
-  `ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a` consumed one exact-approved
-  attempt. Docker passed 8 reads and both typed frames, but the worker returned `diagnostic_result_invalid`.
-  Terminal is `ERROR(child_checker_error)` with incomplete/unknown accounting and no retry. Raw/exception/credential
-  metadata returns are 0; network/provider counts are unknown. `docs/09-evidence.md` owns exact IDs and hashes.
+- V22 is projection-only. V23 consumed `ERROR(child_checker_error/diagnostic_result_invalid)` after Docker and both
+  frames passed; accounting is incomplete/unknown and retry is closed. `docs/09-evidence.md` owns exact tuples.
+- V24 contract `ncpcontract_f6fe2bdf24727ab0ba7b32bc86f4678bd253bd4e4652b8eb83acce7660952ed1` and qualification
+  `sha256:79423fd51f0b951e8b4c7565396d6f4e49447604fb33acee894a9c0644a5bcb6` are source-qualified only. It validates
+  before sorting and emits a value-free summary, but has no live/lifecycle entrypoint. The fixture is not exact
+  v23-cause proof; a v25 activation wrapper is next.
 
 ## Required reading
 

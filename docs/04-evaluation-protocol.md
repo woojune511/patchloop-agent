@@ -106,7 +106,8 @@ readiness; exact observations and limits remain in `docs/09-evidence.md`.
 V22 remains a strict projection-only predecessor. V23 consumed one exact-approved attempt: Docker and both typed
 frames passed, while strict child validation returned `diagnostic_result_invalid`. Its
 `ERROR(child_checker_error)` terminal has incomplete/unknown accounting and no retry, proves no readiness and
-requires a new versioned correction before any successor state or run.
+requires a new version. V24 qualifies an order-stable, value-free summary projection only. Its fixture reproduction
+does not identify the exact discarded v23 input, and activation still requires a v25 wrapper plus fresh gates.
 
 ## 7. Run-completion gate
 

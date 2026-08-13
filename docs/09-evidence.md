@@ -3,34 +3,35 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## V24 order-stable typed diagnostic -- source-qualified only
+
+Source/tree `870558afecc3c1ebbefd04b9acc78e138fc5d632`/`6a2fc91416b17f24ae9bf794dc9b75968b5bd380`
+is the exact five-addition child of `8b7d92ab72a1815dfdd0a0804f8247106a1f5131`. Contract
+`ncpcontract_f6fe2bdf24727ab0ba7b32bc86f4678bd253bd4e4652b8eb83acce7660952ed1` has file
+`sha256:0f3822a34ed29857e77c246d1150f54ea44113770541cf64f7b938d0f8fad0ca` (4,624 bytes).
+Sole-artifact qualification commit `545d14d653d952464fb25287a53bb59b624785b0` records content/file
+`sha256:79423fd51f0b951e8b4c7565396d6f4e49447604fb33acee894a9c0644a5bcb6`/
+`sha256:20e0eb9f12003bc8c8f62e615386d224919d267fbf18b61a7d0b17741715c3f5` (17,599 bytes).
+
+The checked-in fixture reproduces v22's canonical-sort rejection for a valid SDK-observation child; v24 validates
+before sorting and frames a value-free summary. It does not reveal the discarded v23 input or prove exact causality.
+Qualification launched no diagnostic/mock/live process, made no external observation and created no lifecycle.
+Activation requires a new v25 wrapper.
+
 ## V23 typed diagnostic activation -- consumed ERROR
 
-Source/tree `733ddc3cc74928f1011c58455fad6b151bfd25ad`/`8b2de30d46c2ac6eda7a45d6d9c6351624a60f75`
-is the exact five-addition child of `77eb86bf7049a468ade4176cd2eafb15b0f2c6e0`. Contract
-`ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a` is file
-`sha256:b362ba003973e1b44d910b426c876f415a02d1c7354689358d0f6dbf010765b7` (4,530 bytes). Sole-artifact
-qualification commit `f1c469d60280b67b40a852863ddf36d94f0d6b8e` records content/file
-`sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26`/
-`sha256:32a8c74166daf84d20cda8317d434481135a93056e063800bb553efd2f7ae2f4` (14,099 bytes).
+Source/contract/qualification are `733ddc3cc74928f1011c58455fad6b151bfd25ad`,
+`ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a` and
+`sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26`.
 
-Qualification launched no diagnostic/mock/live process. State commit `93cc1c260de6f854b0d45cd556eb3ff324103a61` adds only
-`ncpstate_c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d`; content/file
-`sha256:c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d`/
-`sha256:1c03262f461e8f56e7dbf91bed49e3a7b5387c1082ff032734b2bfe18ae0a9ad` (919 bytes). It is self-attested
-non-proof. Approval commit `5a8e11fc320409d59005763be359a457e5ea119f` adds only
-`ncpapproval_40be479a1d430f6353e872597109a581f806c136f48dac2d7982576fa4544637`; content/file
-`sha256:40be479a1d430f6353e872597109a581f806c136f48dac2d7982576fa4544637`/
-`sha256:08b6920e83fcf236b73312f9ef53ef40301594e6d2aca240a3857fe0776e35b8` (1,486 bytes).
-
-Evidence commit `26e9562` adds exactly four lifecycle artifacts. Authorization
+State/approval are `ncpstate_c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d`/
+`ncpapproval_40be479a1d430f6353e872597109a581f806c136f48dac2d7982576fa4544637`. Evidence commit `26e9562` adds
+exactly four lifecycle artifacts. Authorization
 `ncprunauthorization_b73eebd60137a7e5e25332f50aee08d7cd02df8b5db9044fbb022b0aa42c9ca3`, attempt
 `ncpattempt_c9ee0c8c0fe8f282e164e505f64d8f8d99561035173965ea9c9768d04ba31765`, `ACTION_STARTED`
 `ncpstarted_cba147a0d487c20cc61ef81aff6d586741c417ea18c9338f3a6cd6539081051d` and terminal
-`ncpterminal_376d5f2278445847db1b0a122d844606623bf04271baea46ecf3fa3fe8d0d004` have file SHA/bytes respectively
-`sha256:260266575ff0445084b1b2eed15fb2c6d79c6c01aff7f3853298a371ea5de5f4`/990,
-`sha256:16ee83121240b564205d2e874238d16289701d71204ae1735598c903ecb4a84a`/686,
-`sha256:db6297b773c4f67c4a8892603c3ab922f10afabed538fd704ccae770975401cd`/521 and
-`sha256:1be21372e64dd33357d7d176c9b79b88a82d5bf047481bb7e312559bcaa76237`/18,273.
+`ncpterminal_376d5f2278445847db1b0a122d844606623bf04271baea46ecf3fa3fe8d0d004`; the terminal file is
+`sha256:1be21372e64dd33357d7d176c9b79b88a82d5bf047481bb7e312559bcaa76237` (18,273 bytes).
 
 Docker passed 8 read-only calls; parent-to-supervisor and supervisor-to-worker each launched once, returned code 0
 and produced valid typed frames. The worker result was `diagnostic_result_invalid`, yielding
@@ -39,30 +40,17 @@ value/hash/length returns are 0; network/provider counts are unknown. Retry/resu
 
 ## V22 typed diagnostic channel -- immutable predecessor
 
-Source/tree `454627d0eaa38b30e3795e3b9f1fb29546ca115d`/`65fbfcf2e92e6766b20d5aca38fb4c14d6c1fa3f`
-is the exact five-addition child of `e763a2ed4fbb14659fcba88eb2c7411ab25eec0c`. Contract
-`ncpcontract_721423c64d9cf0d5f1d4c0e25c7d5e3a25daa1b2b8081e221bc8e73b82367ccd` is file
-`sha256:7909868309b4073574a13b94ffc9694bd111a1758090e4d0f26e2f9a64e794d4` (6,672 bytes). Sole-artifact
-qualification commit `f8857597a5858ff78faedee190b3e33b449fe2db` records content/file
-`sha256:497e2f72e3850cb6f60b59af768bafe6342b266ab82f7ea15c6576a22b483d42`/
-`sha256:271197e7f0ef42544a4c6de6db0d47607b6a8b8a8b3c83268ad909bd6ebca8ef` (12,513 bytes).
-
-V22 rejects callback execution and type coercion, preserving inner incomplete/unknown accounting. Its fixed mock and
-qualification remain transport/source evidence only; V23 does not rewrite them. D-142 is not the current gate.
+Source/contract/qualification are `454627d0eaa38b30e3795e3b9f1fb29546ca115d`,
+`ncpcontract_721423c64d9cf0d5f1d4c0e25c7d5e3a25daa1b2b8081e221bc8e73b82367ccd` and
+`sha256:497e2f72e3850cb6f60b59af768bafe6342b266ab82f7ea15c6576a22b483d42`. V22 rejects callbacks/type coercion;
+its mock/qualification are source evidence only. D-142 is not the current gate.
 
 ## V20 dual-pipe activation — consumed ERROR
 
-Source/tree `304da8e9e4fe0d730c184944006e4c76970c12f0`/`0f43651ed75142c48b29b42664dbf90b22a37291`
-is the exact four-addition child of `05e2b19`. Contract
-`ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102` has qualification
-`sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b`. State
-`ncpstate_7931e548e99c34ba36b334bab032d7359701929cbb6866d8b713bc2c94b9d17b` and approval
-`ncpapproval_4dc5670957a304fcbf4178479059a61217a528d008a5f4d70603269e11c0c49f` led to lifecycle `5cc6b96`.
-Attempt `ncpattempt_ceb920acc4c49d71dfaf196f890f2d7ddb37b48b2c3cbad2d43892ecb2e2ab6a` ended at terminal
-`ncpterminal_d528eb39f0e367fe8b38b81ae3a3ddbd627d9c9cefe6a84e8874523b7e488897`; terminal file
-`sha256:6ddeabb4fb8f6632887382c9a5f9f1bf4f16dd721873d75af439b4b2e2c2c60b`, 22,558 bytes. Docker passed 8 reads;
-the outer pipe returned nonempty at code 0 but the supervisor envelope was invalid. Recorded forbidden counts are 0,
-raw output is absent, accounting is incomplete/unknown, outcome is `ERROR(child_checker_error)` and retry is false.
+Contract/qualification `ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102`/
+`sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b` led to consumed terminal
+`ncpterminal_d528eb39f0e367fe8b38b81ae3a3ddbd627d9c9cefe6a84e8874523b7e488897`. Docker passed 8 reads, but the
+supervisor envelope was invalid; accounting is incomplete/unknown and retry is false.
 
 ## V12-V18 framed predecessors — compact index
 

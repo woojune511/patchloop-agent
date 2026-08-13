@@ -110,7 +110,8 @@ outer result transport. V20's exact state/approval started one append-only ledge
 V22 is the projection-only predecessor. V23 bound its live roles to one append-only attempt. Docker and both typed
 frames passed, but strict child validation returned `diagnostic_result_invalid`; the terminal is
 `ERROR(child_checker_error)` with incomplete/unknown accounting. It cannot retry, and correction requires a new
-versioned contract/source/qualification before any new state or execution authority.
+version. V24 is that source-qualified, activation-closed correction: it validates the legacy mapping before sorting
+and frames only a typed summary. It creates no result or authority; a v25 lifecycle wrapper is required.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

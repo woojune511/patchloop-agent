@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v23 are immutable; v23 consumed one ERROR and needs a new versioned correction.
+Status: v1-v23 are immutable; v24 correction source is qualified and activation-closed.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -45,8 +45,8 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 `SYSTEMROOT`/Windows 10106. V10/V11's non-proof state/approval were consumed by v12. Exact tuples live in
 `docs/09-evidence.md`; none is readiness evidence.
 
-V22 strictly projects typed child data over V21 framing. V23 added lifecycle gates and consumed one attempt; any
-diagnostic-result correction must use a new contract/source/qualification before new state or approval.
+V24 corrects the reproducible mapping-order defect by validating before canonical sorting and emitting a value-free
+summary. It has no live or lifecycle entrypoint; implement/qualify a v25 activation wrapper before new state/approval.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
@@ -54,7 +54,8 @@ Status: v3/v5/v7/v12/v13/v14/v16/v18/v20/v23 consumed; none can retry.
 
 V23 passed Docker's 8 reads and both typed frames at return code 0, then rejected the worker's
 `diagnostic_result_invalid`. Its `ERROR(child_checker_error)` terminal preserves incomplete/unknown accounting and
-closes retry. Next implement and qualify a new versioned correction; no readiness, memory, cost or A/C authority exists.
+closes retry. V24 source qualification is not an attempt. V25 wrapper, fresh gates and a new exact approval are still
+required; no readiness, memory, cost or A/C authority exists.
 
 ## Work item 5 — execution candidate and cost gate
 

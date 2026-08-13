@@ -33,7 +33,8 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - V3-v20 are immutable consumed predecessors; v20 ended `ERROR(supervised_output_invalid)`.
 - V23 consumed one exact-approved attempt. Docker and both typed frames passed, but strict child validation returned
   `diagnostic_result_invalid`; the terminal is `ERROR(child_checker_error)` with incomplete/unknown accounting and
-  no retry. It is not readiness evidence; successor execution, candidate, cost and paid authority remain closed.
+  no retry. V24 is a source-qualified, activation-closed order-stable projection; it is not readiness evidence and
+  successor execution, candidate, cost and paid authority remain closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

@@ -36,7 +36,8 @@ work.
   READY. Its state, approval and attempt cannot be reused; any correction requires a new versioned successor.
 - V22 is the immutable projection-only typed channel. V23 consumed one exact-approved lifecycle: transport was valid,
   strict child validation returned `diagnostic_result_invalid`, and terminal accounting is incomplete/unknown. It is
-  not readiness evidence and cannot retry; only a new versioned correction may precede any new state/run gate.
+  not readiness evidence and cannot retry. V24 source-qualifies an order-stable, value-free summary projection; its
+  offline reproduction is not exact v23-cause proof. A separate v25 wrapper must precede any new state/run gate.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 
