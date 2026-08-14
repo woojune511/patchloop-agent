@@ -30,6 +30,7 @@ from patchloop.evals.heldout_ac_contracts import HELDOUT_AC_SUITE_ID
 from patchloop.evals.heldout_ac_execution import (
     HeldoutACExecutionCandidate,
     heldout_ac_campaign_identity_hash,
+    heldout_ac_candidate_token_limits,
 )
 from patchloop.evals.heldout_ac_persisted_adapter import (
     HeldoutACAuthenticatedPersistedEvidence,
@@ -240,14 +241,17 @@ def heldout_ac_manifest_matches_candidate(
         "cache_write_input_price_per_million_usd": 0.75,
         "output_price_per_million_usd": 4.5,
     }
+    max_input_tokens, max_output_tokens, max_total_tokens = heldout_ac_candidate_token_limits(
+        candidate
+    )
     expected_budget = {
         "max_model_calls": 240,
         "max_tool_calls": 400,
-        "max_total_tokens": 4_500_000,
+        "max_total_tokens": max_total_tokens,
         "wall_clock_timeout_seconds": 3_600,
         "token_budget_schema_version": "cumulative-split-v1",
-        "max_cumulative_input_tokens": 4_000_000,
-        "max_cumulative_output_tokens": 500_000,
+        "max_cumulative_input_tokens": max_input_tokens,
+        "max_cumulative_output_tokens": max_output_tokens,
     }
     return bool(
         manifest.schema_version == "run-manifest-v2"
@@ -290,6 +294,9 @@ def heldout_ac_manifest_matches_candidate(
 def heldout_ac_runtime_contract(candidate: HeldoutACExecutionCandidate) -> dict[str, Any]:
     """Build the exact secret-free runtime contract embedded in an approved plan."""
 
+    max_input_tokens, max_output_tokens, max_total_tokens = heldout_ac_candidate_token_limits(
+        candidate
+    )
     return {
         "schema_version": RUNTIME_CONTRACT_SCHEMA_VERSION,
         "suite_id": candidate.suite_id,
@@ -311,11 +318,11 @@ def heldout_ac_runtime_contract(candidate: HeldoutACExecutionCandidate) -> dict[
         "budget": {
             "max_model_calls": 240,
             "max_tool_calls": 400,
-            "max_total_tokens": 4_500_000,
+            "max_total_tokens": max_total_tokens,
             "wall_clock_timeout_seconds": 3_600,
             "token_budget_schema_version": "cumulative-split-v1",
-            "max_cumulative_input_tokens": 4_000_000,
-            "max_cumulative_output_tokens": 500_000,
+            "max_cumulative_input_tokens": max_input_tokens,
+            "max_cumulative_output_tokens": max_output_tokens,
         },
         "memory_conditions": ["no_memory", "structured"],
         "memory_policy_version": FIXED_BUNDLE_POLICY_VERSION,
@@ -371,7 +378,7 @@ def _parse_plan_candidate(plan: Mapping[str, Any]) -> HeldoutACExecutionCandidat
         candidate = HeldoutACExecutionCandidate.model_validate_json(json.dumps(raw))
     except ValidationError as exc:
         raise ContractError("held-out approved candidate is invalid") from exc
-    if not _exact_typed_equal(raw, candidate.model_dump(mode="json")):
+    if not _exact_typed_equal(raw, candidate.model_dump(mode="json", exclude_none=True)):
         raise ContractError("held-out approved candidate uses a coercive shape")
     return candidate
 
@@ -454,15 +461,21 @@ def validate_heldout_ac_dispatch_plan(
         else None
     )
     expected_ledger_body = {
-        "schema_version": "heldout-ac-paid-campaign-one-use-v1",
+        "schema_version": (
+            "heldout-ac-paid-campaign-one-use-v1"
+            if candidate.schema_version == "heldout-ac-execution-candidate-v1"
+            else "heldout-ac-paid-campaign-one-use-v2"
+        ),
         "campaign_identity_hash": campaign_identity,
         "execution_hash": candidate.execution_hash,
         "suite_content_hash": candidate.suite_content_hash,
         "source_qualification_hash": (candidate.source_qualification.source_qualification_hash),
         "base_schedule_hash": candidate.base_schedule_hash,
         "scheduled_run_count": 48,
-        "full_schedule_reserve_nanos": 252_000_000_000,
-        "hard_cap_nanos": 275_000_000_000,
+        "full_schedule_reserve_nanos": (
+            candidate.campaign_cost_control.full_schedule_reserve_nanos
+        ),
+        "hard_cap_nanos": candidate.campaign_cost_control.hard_cap_nanos,
         "claimed_at": ledger.get("claimed_at") if isinstance(ledger, dict) else None,
     }
     canonical_ledger = (
@@ -505,9 +518,10 @@ def validate_heldout_ac_dispatch_plan(
         and type(approval.get("scheduled_run_count")) is int
         and approval.get("scheduled_run_count") == 48
         and type(approval.get("full_schedule_reserve_nanos")) is int
-        and approval.get("full_schedule_reserve_nanos") == 252_000_000_000
+        and approval.get("full_schedule_reserve_nanos")
+        == candidate.campaign_cost_control.full_schedule_reserve_nanos
         and type(approval.get("hard_cap_nanos")) is int
-        and approval.get("hard_cap_nanos") == 275_000_000_000
+        and approval.get("hard_cap_nanos") == candidate.campaign_cost_control.hard_cap_nanos
         and plan.get("journal_path") == str(expected_journal)
         and plan.get("result_path") == str(expected_result)
         and plan.get("campaign_identity_hash") == campaign_identity
@@ -727,9 +741,11 @@ def validate_heldout_ac_reservation_journal_prefix(
         "schedule_hash": candidate.schedule_hash,
         "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
         "reserved_runs": 48,
-        "per_run_reserve_nanos": 5_250_000_000,
-        "full_schedule_reserve_nanos": 252_000_000_000,
-        "hard_cap_nanos": 275_000_000_000,
+        "per_run_reserve_nanos": candidate.campaign_cost_control.per_run_reserve_nanos,
+        "full_schedule_reserve_nanos": (
+            candidate.campaign_cost_control.full_schedule_reserve_nanos
+        ),
+        "hard_cap_nanos": candidate.campaign_cost_control.hard_cap_nanos,
         "cost_censoring_allowed": False,
     }
     if not (

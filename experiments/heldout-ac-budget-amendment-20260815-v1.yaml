@@ -1,0 +1,139 @@
+# Append-only operational amendment for the unexecuted successor campaign.
+# It narrows equal A/C token and cost ceilings using development evidence only.
+# It grants no task access, candidate, approval, reservation, or execution authority.
+schema_version: heldout-ac-budget-amendment-v1
+amendment_id: core-ac-fixed-bundle-heldout-budget-20260815-v1
+status: execution-closed
+created_date: "2026-08-15"
+
+base_suite:
+  path: experiments/heldout-ac-suite-20260814-v1.yaml
+  suite_id: core-ac-fixed-bundle-heldout-20260814-v1
+  content_hash: sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa
+  file_bytes: 13348
+  file_sha256: sha256:27157e26881cc277a9026e51d22a6f21fbf5bbb8f6c1c09eaa89aec607e52534
+
+change_control:
+  reason: user-cost-exposure-reduction-before-successor-approval
+  threshold_selection_source: development-evidence-only
+  heldout_task_specs_opened_for_threshold_selection: false
+  heldout_outcomes_used_for_threshold_selection: false
+  r11_outcomes_used_for_threshold_selection: false
+  task_panel_changed: false
+  schedule_changed: false
+  treatment_changed: false
+  prompt_model_tool_or_evaluator_changed: false
+  repetitions_changed: false
+  only_changed_dimensions: [token-budget-ceilings, derived-cost-reserve-and-hard-cap]
+
+development_evidence:
+  files:
+    - path: reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260813-r3-evidence.json
+      file_bytes: 8242
+      file_sha256: sha256:4c22a16c7fa9f3c7cbc58cac56a8aead3b060ee4c1a8613a822f8a0df3c2d240
+      role: like-for-like-development-runtime
+    - path: reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r5-evidence.json
+      file_bytes: 6605
+      file_sha256: sha256:fa49986ed7693c65024a167fda6042fbbdb5cce3c38494d412018d1ee545832c
+      role: like-for-like-development-runtime
+    - path: reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r6-evidence.json
+      file_bytes: 7218
+      file_sha256: sha256:b84a27830f5bbc3d3f18235c542de5def0594d57ba00d5babc9daa865c1d59d7
+      role: like-for-like-development-runtime
+    - path: reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r8-evidence-r4.json
+      file_bytes: 19557
+      file_sha256: sha256:5035421a63d58fededab133b77c72e23ee4ad6d380a37c8d1157ce7480b7c62c
+      role: like-for-like-development-runtime
+    - path: reports/live-pilot/dev-no-memory-saturation-v8-pilot-20260801-r1.json
+      file_bytes: 7183
+      file_sha256: sha256:33e67095c8a3d5c8c056ded6f144c5165676aa177e260348e623923b5fbaae78
+      role: secondary-development-stress
+    - path: reports/live-pilot/dev-no-memory-review-evidence-v9-pilot-20260801-r1.json
+      file_bytes: 7661
+      file_sha256: sha256:1cbb4e33ab33b50eb21be10a4999af608a2524de35fec9a252270bee726b554b
+      role: secondary-development-stress
+    - path: reports/live-pilot/dev-no-memory-coverage-review-v10-pilot-20260802-r1.json
+      file_bytes: 9634
+      file_sha256: sha256:9cf3009542674f260e4128b4c10736b50a5b9d685d7155b63a007aa16f2692ff
+      role: secondary-development-stress
+  observations:
+    - {label: r3-moto-a, class: like-for-like-non-tail, input_tokens: null, output_tokens: null, total_tokens: 122103, cost_nanos: 102549750}
+    - {label: r3-moto-c-runaway, class: like-for-like-runaway-tail, input_tokens: null, output_tokens: null, total_tokens: 2963919, cost_nanos: 3374763000}
+    - {label: r5-moto-a, class: like-for-like-non-tail, input_tokens: 173193, output_tokens: 14031, total_tokens: 187224, cost_nanos: 193034250}
+    - {label: r6-moto-a, class: like-for-like-non-tail, input_tokens: 144240, output_tokens: 13648, total_tokens: 157888, cost_nanos: 169596000}
+    - {label: r8-moto-a, class: like-for-like-non-tail, input_tokens: 116952, output_tokens: 4649, total_tokens: 121601, cost_nanos: 108634500}
+    - {label: r8-moto-c, class: like-for-like-non-tail, input_tokens: 81655, output_tokens: 1949, total_tokens: 83604, cost_nanos: 70011750}
+    - {label: r8-babel-c, class: like-for-like-non-tail, input_tokens: 67627, output_tokens: 4866, total_tokens: 72493, cost_nanos: 72617250}
+    - {label: r8-babel-a, class: like-for-like-non-tail, input_tokens: 99532, output_tokens: 9002, total_tokens: 108534, cost_nanos: 115158000}
+    - {label: v8-development-stress, class: secondary-development-stress, input_tokens: 618370, output_tokens: 41003, total_tokens: 659373, cost_nanos: 614076600}
+    - {label: v9-development-stress, class: secondary-development-stress, input_tokens: 332204, output_tokens: 12550, total_tokens: 344754, cost_nanos: 288002400}
+    - {label: v10-development-stress, class: secondary-development-stress, input_tokens: 611450, output_tokens: 56103, total_tokens: 667553, cost_nanos: 671307000}
+  summary:
+    like_for_like_observation_count: 8
+    like_for_like_non_tail_count: 7
+    like_for_like_non_tail_max_total_tokens: 187224
+    like_for_like_non_tail_max_cost_nanos: 193034250
+    like_for_like_non_tail_mean_cost_nanos_numerator: 831601500
+    like_for_like_non_tail_mean_cost_nanos_denominator: 7
+    runaway_tail_total_tokens: 2963919
+    runaway_tail_cost_nanos: 3374763000
+    secondary_stress_count: 3
+    secondary_stress_max_input_tokens: 618370
+    secondary_stress_max_output_tokens: 56103
+    secondary_stress_max_total_tokens: 667553
+    secondary_stress_max_cost_nanos: 671307000
+
+runtime_override:
+  token_budget_schema_version: cumulative-split-v1
+  max_cumulative_input_tokens: 1000000
+  max_cumulative_output_tokens: 100000
+  max_total_tokens: 1100000
+  max_output_tokens_per_response: 25000
+  max_model_calls: 240
+  max_tool_calls: 400
+  wall_clock_timeout_seconds: 3600
+  applies_identically_to_conditions: [no_memory, structured]
+  budget_exhaustion_is_task_failure: true
+  automatic_retry_replacement_or_resume: false
+
+cost_override:
+  schema_version: heldout-ac-cost-bounded-full-schedule-reserve-v1
+  input_reserve_rate_per_million_usd: 0.75
+  output_reserve_rate_per_million_usd: 4.5
+  cache_discount_assumed: false
+  scheduled_run_count: 48
+  per_run_reserve_usd: 1.2
+  full_schedule_reserve_usd: 57.6
+  hard_cap_usd: 60.0
+  hard_cap_slack_usd: 2.4
+  per_run_reserve_nanos: 1200000000
+  full_schedule_reserve_nanos: 57600000000
+  hard_cap_nanos: 60000000000
+  hard_cap_slack_nanos: 2400000000
+  reservation_mode: row-bound-full-schedule-up-front
+  cost_censoring_allowed: false
+  not_started_due_to_cost_allowed: false
+
+interpretation:
+  threshold_is_invoice_prediction: false
+  threshold_guarantees_completion: false
+  development_observations_are_independent_samples: false
+  future_result_is_directly_poolable_with_r11: false
+  complete_48_row_matrix_still_required_for_primary_analysis: true
+  partial_matrix_is_diagnostic_only: true
+
+authority:
+  heldout_task_or_outcome_access_authorized: false
+  docker_sdk_credential_or_network_observation_authorized: false
+  provider_evaluator_or_agent_execution_authorized: false
+  candidate_creation_authorized: false
+  approval_reservation_or_spend_authorized: false
+  official_analysis_or_claim_authorized: false
+  provider_calls_made: 0
+  evaluator_calls_made: 0
+  agent_runs_made: 0
+  docker_calls_made: 0
+  sdk_calls_made: 0
+  added_model_cost_usd: 0.0
+
+content_hash: sha256:9df732d5bf8d5c754ea47084e5dbf9c490f78882bcc9fbc6b0c5d2e2b8bf220d

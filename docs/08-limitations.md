@@ -39,6 +39,9 @@ reached evaluation after a control-contract collision. There is no complete A/C 
 claim. Settled `$0.15699525` and total observed-started `$0.41801625` are accounting observations, not an invoice or
 performance estimate.
 
+The development-only `$57.60`/`$60` envelope may censor long trajectories; budget terminals score zero. It excludes
+R11 outcomes/task content, predicts neither completion nor invoices, and does not make future results poolable with R11.
+
 ## Evaluator-v1 correctness gap
 
 - `EvaluationEngine` assigns safety a literal PASS; it does not bind an executed independent safety result.

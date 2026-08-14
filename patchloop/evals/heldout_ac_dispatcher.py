@@ -53,6 +53,7 @@ from patchloop.evals.heldout_ac_execution import (
     HeldoutACExecutionCandidate,
     build_heldout_ac_run_manifest,
     heldout_ac_campaign_identity_hash,
+    heldout_ac_candidate_token_limits,
     materialize_heldout_ac_runtime_task_authority,
 )
 from patchloop.evals.heldout_ac_live_contract import (
@@ -415,11 +416,11 @@ class HeldoutACCampaignResult(HeldoutACFrozenModel):
     expected_runs: Literal[48]
     terminal_settled_runs: int = Field(ge=0, le=48)
     not_started_runs: int = Field(ge=0, le=48)
-    settled_model_cost_nanos: int = Field(ge=0, le=252_000_000_000)
+    settled_model_cost_nanos: int = Field(ge=0, le=275_000_000_000)
     unsettled_dispatched_runs: int = Field(ge=0, le=1)
     cost_accounting_complete: bool
-    full_schedule_reserve_nanos: Literal[252_000_000_000]
-    hard_cap_nanos: Literal[275_000_000_000]
+    full_schedule_reserve_nanos: int = Field(gt=0)
+    hard_cap_nanos: int = Field(gt=0)
     settled_rows: tuple[HeldoutACSettledCampaignRow, ...]
     confound: HeldoutACCampaignConfound | None
     not_started_rows: tuple[HeldoutACNotStartedRow, ...]
@@ -442,6 +443,11 @@ class HeldoutACCampaignResult(HeldoutACFrozenModel):
             raise ValueError("held-out settled run count differs")
         if self.not_started_runs != len(self.not_started_rows):
             raise ValueError("held-out not-started run count differs")
+        if (self.full_schedule_reserve_nanos, self.hard_cap_nanos) not in {
+            (252_000_000_000, 275_000_000_000),
+            (57_600_000_000, 60_000_000_000),
+        }:
+            raise ValueError("held-out result cost boundary differs")
         if self.settled_model_cost_nanos != sum(
             row.authenticated_row.usage_evidence.token_derived_cost_nanos
             for row in self.settled_rows
@@ -660,15 +666,21 @@ def _claim_paid_campaign_identity(
             "held-out paid campaign identity was already consumed by this source and schedule"
         )
     body = {
-        "schema_version": "heldout-ac-paid-campaign-one-use-v1",
+        "schema_version": (
+            "heldout-ac-paid-campaign-one-use-v1"
+            if candidate.schema_version == "heldout-ac-execution-candidate-v1"
+            else "heldout-ac-paid-campaign-one-use-v2"
+        ),
         "campaign_identity_hash": identity,
         "execution_hash": candidate.execution_hash,
         "suite_content_hash": candidate.suite_content_hash,
         "source_qualification_hash": (candidate.source_qualification.source_qualification_hash),
         "base_schedule_hash": candidate.base_schedule_hash,
         "scheduled_run_count": 48,
-        "full_schedule_reserve_nanos": 252_000_000_000,
-        "hard_cap_nanos": 275_000_000_000,
+        "full_schedule_reserve_nanos": (
+            candidate.campaign_cost_control.full_schedule_reserve_nanos
+        ),
+        "hard_cap_nanos": candidate.campaign_cost_control.hard_cap_nanos,
         "claimed_at": _utc_text(claimed_at),
     }
     payload = {**body, "content_hash": sha256_json(body)}
@@ -756,7 +768,7 @@ def prepare_heldout_ac_approved_plan(
         "ready": True,
         "blockers": [],
         "suite": suite.model_dump(mode="json"),
-        "candidate": parsed.model_dump(mode="json"),
+        "candidate": parsed.model_dump(mode="json", exclude_none=True),
         "execution_hash": parsed.execution_hash,
         "schedule_hash": parsed.schedule_hash,
         "runtime_contract": heldout_ac_runtime_contract(parsed),
@@ -766,8 +778,10 @@ def prepare_heldout_ac_approved_plan(
             "invocation_approved_execution_hash": parsed.execution_hash,
             "matches_execution_hash": True,
             "scheduled_run_count": 48,
-            "full_schedule_reserve_nanos": 252_000_000_000,
-            "hard_cap_nanos": 275_000_000_000,
+            "full_schedule_reserve_nanos": (
+                parsed.campaign_cost_control.full_schedule_reserve_nanos
+            ),
+            "hard_cap_nanos": parsed.campaign_cost_control.hard_cap_nanos,
         },
         "journal_path": str(journal_path),
         "result_path": str(result_path),
@@ -859,9 +873,11 @@ def _create_journal(
             "schedule_hash": candidate.schedule_hash,
             "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
             "reserved_runs": 48,
-            "per_run_reserve_nanos": 5_250_000_000,
-            "full_schedule_reserve_nanos": 252_000_000_000,
-            "hard_cap_nanos": 275_000_000_000,
+            "per_run_reserve_nanos": candidate.campaign_cost_control.per_run_reserve_nanos,
+            "full_schedule_reserve_nanos": (
+                candidate.campaign_cost_control.full_schedule_reserve_nanos
+            ),
+            "hard_cap_nanos": candidate.campaign_cost_control.hard_cap_nanos,
             "cost_censoring_allowed": False,
         },
         previous_event_hash=started["event_hash"],
@@ -1883,22 +1899,33 @@ def _validate_settlement_limits(
     row: HeldoutACAuthenticatedPersistedRow,
     *,
     accrued_before: int,
+    candidate: HeldoutACExecutionCandidate | None = None,
 ) -> int:
     usage = row.usage_evidence.usage
     cost = row.usage_evidence.token_derived_cost_nanos
+    if candidate is None:
+        max_input_tokens, max_output_tokens, max_total_tokens = 4_000_000, 500_000, 4_500_000
+        per_run_reserve_nanos = 5_250_000_000
+        full_schedule_reserve_nanos = 252_000_000_000
+    else:
+        max_input_tokens, max_output_tokens, max_total_tokens = heldout_ac_candidate_token_limits(
+            candidate
+        )
+        per_run_reserve_nanos = candidate.campaign_cost_control.per_run_reserve_nanos
+        full_schedule_reserve_nanos = candidate.campaign_cost_control.full_schedule_reserve_nanos
     within_runtime = (
-        usage.input_tokens <= 4_000_000
-        and usage.output_tokens <= 500_000
-        and usage.input_tokens + usage.output_tokens <= 4_500_000
+        usage.input_tokens <= max_input_tokens
+        and usage.output_tokens <= max_output_tokens
+        and usage.input_tokens + usage.output_tokens <= max_total_tokens
         and usage.model_calls <= 240
         and usage.tool_calls <= 400
-        and cost <= 5_250_000_000
+        and cost <= per_run_reserve_nanos
     )
     if not within_runtime:
         raise HeldoutACDispatcherError(
             "held-out authenticated usage exceeds the frozen per-row boundary"
         )
-    if accrued_before + cost > 252_000_000_000:
+    if accrued_before + cost > full_schedule_reserve_nanos:
         raise HeldoutACDispatcherError("held-out settled cost exceeds the full-schedule reserve")
     return cost
 
@@ -2126,6 +2153,10 @@ def _prepared_result(
                     candidate.source_qualification.source_qualification_hash
                 ),
                 rows=typed_rows,
+                full_schedule_reserve_nanos=(
+                    candidate.campaign_cost_control.full_schedule_reserve_nanos
+                ),
+                hard_cap_nanos=candidate.campaign_cost_control.hard_cap_nanos,
             )
             official = analyze_authenticated_heldout_ac_completion(completion)
             projection = completion.outcome_projection
@@ -2143,6 +2174,10 @@ def _prepared_result(
                 rows=typed_rows,
                 completion=completion,
                 official_envelope=official,
+                full_schedule_reserve_nanos=(
+                    candidate.campaign_cost_control.full_schedule_reserve_nanos
+                ),
+                hard_cap_nanos=candidate.campaign_cost_control.hard_cap_nanos,
             )
             projection = completion.outcome_projection
             analysis = official.analysis
@@ -2192,8 +2227,10 @@ def _prepared_result(
         "settled_model_cost_nanos": settled_cost,
         "unsettled_dispatched_runs": unsettled,
         "cost_accounting_complete": accounting_complete if is_v2 else unsettled == 0,
-        "full_schedule_reserve_nanos": 252_000_000_000,
-        "hard_cap_nanos": 275_000_000_000,
+        "full_schedule_reserve_nanos": (
+            candidate.campaign_cost_control.full_schedule_reserve_nanos
+        ),
+        "hard_cap_nanos": candidate.campaign_cost_control.hard_cap_nanos,
         "settled_rows": [row.model_dump(mode="json") for row in settled],
         "confound": confound.model_dump(mode="json") if confound is not None else None,
         "not_started_rows": [row.model_dump(mode="json") for row in not_started],
@@ -2432,9 +2469,11 @@ def validate_heldout_ac_campaign_result(
         "schedule_hash": candidate.schedule_hash,
         "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
         "reserved_runs": 48,
-        "per_run_reserve_nanos": 5_250_000_000,
-        "full_schedule_reserve_nanos": 252_000_000_000,
-        "hard_cap_nanos": 275_000_000_000,
+        "per_run_reserve_nanos": candidate.campaign_cost_control.per_run_reserve_nanos,
+        "full_schedule_reserve_nanos": (
+            candidate.campaign_cost_control.full_schedule_reserve_nanos
+        ),
+        "hard_cap_nanos": candidate.campaign_cost_control.hard_cap_nanos,
         "cost_censoring_allowed": False,
     }
     if not (
@@ -2973,6 +3012,7 @@ def run_heldout_ac_campaign(
                 cost = _validate_settlement_limits(
                     authenticated,
                     accrued_before=accrued_before,
+                    candidate=candidate,
                 )
                 row_path = (
                     run_root

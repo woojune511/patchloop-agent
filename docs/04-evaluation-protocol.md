@@ -129,7 +129,8 @@ Held-out R7 first sealed 0 settled/1 unsettled/47 not-started after CRLF/LF qual
 Settled cost was `$0.15699525`; total observed started cost was `$0.41801625`. One Loguru task failure and the Dagster
 evaluator-control collision prevent analysis.
 
-Current contract R7, binding R8, materialization R4, execution R5 and preflight/dispatcher R13 source-qualify the
-corrected path without a candidate or runtime call. R13 binds semantic one-use campaign identity, atomic journal/cost
-settlement, opaque marker controls, typed confounds and authenticated 48-row completion. Further execution remains
-separately gated by a fresh clean preflight and exact approval.
+Development-only evidence keeps the design but sets equal A/C to 1M/100k/1.1M tokens and `$57.60`/`$60`. R11 outcomes
+and held-out task content were excluded; budget terminals score zero, rows never retry and results do not pool with R11.
+
+Contract R8 → binding R9 → materialization R5 → execution R6 → preflight R14 source-qualifies the lower-cost path.
+Further execution requires a fresh clean preflight and separate exact approval.

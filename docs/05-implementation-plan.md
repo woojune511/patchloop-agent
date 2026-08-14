@@ -69,10 +69,10 @@ delta is zero, while structured used fewer tokens and list-price cost in both pa
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: held-out R7 and R11 live campaigns are immutable inconclusive; corrected successor is offline-qualified as
-contract R7, binding R8, materialization R4, execution R5 and preflight/dispatcher R13.
+Status: R7/R11 are immutable inconclusive; R8 → R9 → R5 → R6 → R14 offline-qualifies the lower-cost successor.
 
-The record freezes 12 tasks × A/C × two repetitions = 48 rows, complete-panel analysis and `$252`/`$275` planning cost.
+The preregistration freezes 12 tasks × A/C × two repetitions = 48 rows and historical `$252`/`$275` planning cost.
+Development-only evidence preserves the design but sets 1M/100k/1.1M and `$57.60`/`$60`, excluding R11/task content.
 R7 consumed candidate `sha256:2f51935b...b2afa` and stopped at 0 settled/1 unsettled/47 not-started. R11 consumed
 candidate `sha256:f48a0de...a6b0`; it stopped at 2 settled/1 observed-unsettled/45 not-started with `$0.15699525`
 settled and `$0.41801625` total observed started cost. Its correction index preserves historical `CONTRACT_ERROR` and
@@ -80,9 +80,8 @@ attributes the Dagster stop post-runtime to `EVALUATOR_CONTROL_CONTRACT_COLLISIO
 
 The successor implements opaque marker controls, trust-domain separation, typed confounds, durable pre-qualification
 cost observation, atomic terminal/cost journal settlement, canonical paths, complete pre-journal plan validation and
-non-authorizing persisted replay. R12 and intermediate seals remain invalidated predecessors. Next: commit R13-bound
-source, run one fresh append-only no-call preflight, then seek a new exact 48-row approval; current candidate/provider
-authority is 0.
+non-authorizing persisted replay. Next: commit R14, run a fresh append-only no-call preflight, then require a separate
+exact 48-row `$57.60`/`$60` approval; current candidate/provider authority is 0.
 
 ## Work item 7 — B/D and the full comparison
 

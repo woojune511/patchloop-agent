@@ -21,7 +21,7 @@ from patchloop.util import sha256_bytes, sha256_json
 from patchloop.verifier import core as verifier_core
 
 ROOT = Path(__file__).resolve().parents[1]
-SEALED_R7_PATH = ROOT / source_q.R7_PATH
+SEALED_R8_PATH = ROOT / source_q.R8_PATH
 
 
 def _forbidden(label: str):
@@ -54,16 +54,16 @@ def isolated_output(monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
             output.unlink()
 
 
-def test_r8_identity_is_source_only_and_materialization_closed() -> None:
-    assert source_q.SCHEMA_VERSION == "heldout-ac-binding-adapter-source-qualification-v6"
-    assert source_q.QUALIFICATION_ID.endswith("20260815-r8")
+def test_r9_identity_is_source_only_and_materialization_closed() -> None:
+    assert source_q.SCHEMA_VERSION == "heldout-ac-binding-adapter-source-qualification-v7"
+    assert source_q.QUALIFICATION_ID.endswith("20260815-r9")
     assert source_q.STATUS.endswith("RUNTIME_MATERIALIZATION_CLOSED")
     assert source_q.NEXT_GATE == (
         "authorized-task-package-materialization-and-fresh-pricing-before-candidate"
     )
 
 
-def test_r8_builder_is_append_only_idempotent_and_zero_authority(
+def test_r9_builder_is_append_only_idempotent_and_zero_authority(
     isolated_output: Path,
 ) -> None:
     first = source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
@@ -76,27 +76,27 @@ def test_r8_builder_is_append_only_idempotent_and_zero_authority(
     assert first == validated == replay
     assert isolated_output.read_bytes() == raw
     assert isolated_output.stat().st_mtime_ns == first_mtime
-    assert first["contract_source_qualification_hash"] == (source_q.R7_CONTRACT_CONTENT_HASH)
+    assert first["contract_source_qualification_hash"] == (source_q.R8_CONTRACT_CONTENT_HASH)
     assert payload["contract_source_qualification"] == {
-        "path": source_q.R7_CONTRACT_PATH.as_posix(),
-        "file_bytes": source_q.R7_CONTRACT_FILE_BYTES,
-        "file_sha256": source_q.R7_CONTRACT_FILE_SHA256,
+        "path": source_q.R8_CONTRACT_PATH.as_posix(),
+        "file_bytes": source_q.R8_CONTRACT_FILE_BYTES,
+        "file_sha256": source_q.R8_CONTRACT_FILE_SHA256,
     }
     assert payload["predecessor"] == {
-        "path": source_q.R7_PATH.as_posix(),
-        "file_bytes": source_q.R7_FILE_BYTES,
-        "file_sha256": source_q.R7_FILE_SHA256,
-        "source_qualification_hash": source_q.R7_CONTENT_HASH,
-        "source_hash": source_q.R7_SOURCE_HASH,
+        "path": source_q.R8_PATH.as_posix(),
+        "file_bytes": source_q.R8_FILE_BYTES,
+        "file_sha256": source_q.R8_FILE_SHA256,
+        "source_qualification_hash": source_q.R8_CONTENT_HASH,
+        "source_hash": source_q.R8_SOURCE_HASH,
         "contract_source_qualification_hash": (
-            "sha256:01b16ddfe83524e539fcc5624f74fa2f6922a9266f1095b1a6b992cdfd4c8fcf"
+            "sha256:27cfb3d91c326c1e767a6e63580941d48e14a7872783db39dbdacdd075f08ea5"
         ),
         "original_status": source_q.STATUS,
-        "disposition": "invalidated-by-formatting-and-contract-source-successor",
-        "invalidation_reason": "post-r7-formatting-and-contract-module-scope-boundary",
+        "disposition": "invalidated-by-development-budget-amendment-contract-successor",
+        "invalidation_reason": "post-r8-development-budget-amendment-contract-successor",
         "current_source_replay_valid": False,
     }
-    assert payload["projection"]["r7_contract_source_replay_valid"] is True
+    assert payload["projection"]["r8_contract_source_replay_valid"] is True
     assert payload["projection"]["full_trace_qualification_v2_projection_present"] is True
     assert payload["projection"]["typed_completion_adapter_source_qualified"] is True
     assert payload["projection"]["official_analysis_type_gate_source_qualified"] is True
@@ -113,22 +113,22 @@ def test_r8_builder_is_append_only_idempotent_and_zero_authority(
     )
 
 
-def test_sealed_r7_artifact_bytes_and_closed_authority_are_preserved() -> None:
-    raw = SEALED_R7_PATH.read_bytes()
+def test_sealed_r8_artifact_bytes_and_closed_authority_are_preserved() -> None:
+    raw = SEALED_R8_PATH.read_bytes()
     payload = json.loads(raw)
 
-    assert len(raw) == 5_697
+    assert len(raw) == 5_674
     assert sha256_bytes(raw) == (
-        "sha256:9e9629570eae6fb2aaaeddd4be7f139a8cc0fc539f6a86cbfd5e8bf01ad76a0f"
+        "sha256:4fa0dc9629a7fa2030c1af4f3831ecc169330360c6f0813d5778517723c39b13"
     )
     assert payload["content_hash"] == (
-        "sha256:d1c8049f80e11b70e37895f6eca2ad7a56c74d890229f33ff2ec31d52e627b1b"
+        "sha256:ac75004d98f647dbedf00819b93b40e85119c4c1deb244080f42c59dda48918c"
     )
-    assert payload["schema_version"] == "heldout-ac-binding-adapter-source-qualification-v5"
-    assert payload["qualification_id"].endswith("20260815-r7")
+    assert payload["schema_version"] == "heldout-ac-binding-adapter-source-qualification-v6"
+    assert payload["qualification_id"].endswith("20260815-r8")
     projection = payload["projection"]
     assert projection["metadata_task_count"] == 12
-    assert projection["r6_contract_source_replay_valid"] is True
+    assert projection["r7_contract_source_replay_valid"] is True
     assert projection["task_evaluator_materializer_source_present"] is True
     assert projection["persisted_adapter_source_present"] is True
     assert projection["invokes_evaluator_v2_receipt_revalidation"] is True

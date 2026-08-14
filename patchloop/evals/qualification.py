@@ -10531,6 +10531,26 @@ def qualify_run(
         )
         heldout_call_guard = heldout_ac
         bounded_call_guard = split_budget_call_guard or heldout_call_guard
+        heldout_allowed_budgets = (
+            Budget(
+                max_model_calls=240,
+                max_tool_calls=400,
+                max_total_tokens=4_500_000,
+                wall_clock_timeout_seconds=3_600,
+                token_budget_schema_version="cumulative-split-v1",
+                max_cumulative_input_tokens=4_000_000,
+                max_cumulative_output_tokens=500_000,
+            ),
+            Budget(
+                max_model_calls=240,
+                max_tool_calls=400,
+                max_total_tokens=1_100_000,
+                wall_clock_timeout_seconds=3_600,
+                token_budget_schema_version="cumulative-split-v1",
+                max_cumulative_input_tokens=1_000_000,
+                max_cumulative_output_tokens=100_000,
+            ),
+        )
         admission_tail_failures = []
         for event in events:
             if event.type != EventType.TOOL_ADMISSION_BLOCKED:
@@ -10542,16 +10562,8 @@ def qualify_run(
             ):
                 admission_tail_failures.append(event.sequence)
         expected_observability_budget = (
-            Budget(
-                max_model_calls=240,
-                max_tool_calls=400,
-                max_total_tokens=4_500_000,
-                wall_clock_timeout_seconds=3_600,
-                token_budget_schema_version="cumulative-split-v1",
-                max_cumulative_input_tokens=4_000_000,
-                max_cumulative_output_tokens=500_000,
-            )
-            if heldout_call_guard
+            manifest.budget
+            if heldout_call_guard and manifest.budget in heldout_allowed_budgets
             else _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
             if split_budget_call_guard
             else _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
@@ -11210,16 +11222,7 @@ def qualify_run(
             )
             or (
                 heldout_ac
-                and manifest.budget
-                == Budget(
-                    max_model_calls=240,
-                    max_tool_calls=400,
-                    max_total_tokens=4_500_000,
-                    wall_clock_timeout_seconds=3_600,
-                    token_budget_schema_version="cumulative-split-v1",
-                    max_cumulative_input_tokens=4_000_000,
-                    max_cumulative_output_tokens=500_000,
-                )
+                and manifest.budget in heldout_allowed_budgets
                 and manifest.model.transport_max_retries == 0
             )
             or (
@@ -11416,8 +11419,10 @@ def qualify_run(
                 and experiment.campaign_cost_control_hash == parsed_cost_control.content_hash
                 and parsed_cost_control.execution_hash == experiment.execution_hash
                 and parsed_cost_control.scheduled_run_count == 48
-                and parsed_cost_control.full_schedule_reserve_nanos == 252_000_000_000
-                and parsed_cost_control.hard_cap_nanos == 275_000_000_000
+                and parsed_cost_control.full_schedule_reserve_nanos
+                == parsed_cost_control.per_run_reserve_nanos * 48
+                and parsed_cost_control.hard_cap_nanos
+                > parsed_cost_control.full_schedule_reserve_nanos
                 and parsed_cost_control.cost_censoring_allowed is False
                 and parsed_cost_control.live_resume_supported is False
             ),

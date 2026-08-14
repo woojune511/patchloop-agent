@@ -18,8 +18,8 @@ correction fixes its stale v1/v2 completion projection without rewriting runtime
 The 48-row held-out A/C design has a metadata-only suite. R7 sealed after one unsettled row. R11 candidate
 `sha256:f48a0de...a6b0` then consumed its `$252`/`$275` approval and sealed 2 settled/1 observed-unsettled/45
 not-started: settled cost was `$0.15699525`, total observed-started cost was `$0.41801625`, and no complete matrix or
-memory claim follows. Current contract R7 → binding R8 → materialization R4 → execution R5 → preflight/dispatcher R13
-is source-qualified only; it created no candidate or runtime authority. `docs/current-status.md` owns the exact state.
+memory claim follows. Development-only evidence lowers a future equal-A/C campaign to 1M/100k/1.1M and `$57.60`/`$60`.
+Contract R8 → binding R9 → materialization R5 → execution R6 → preflight R14 remains zero-authority.
 
 ## Implemented product path
 

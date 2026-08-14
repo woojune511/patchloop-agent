@@ -26,10 +26,11 @@ Current A/C sources are:
 
 - `heldout-ac-preregistration-20260814-v1.yaml`: standalone, execution-closed 48-row task-cluster design;
 - `heldout-ac-suite-20260814-v1.yaml` and its plan: strict metadata-only 48-row contracts outside `ExperimentSuite`;
-- held-out contract R7, binding R8, materialization R4, execution R5 and preflight/dispatcher R13 are the current
-  zero-authority source chain. R4 binds 12 evaluator-side packages with opaque check identities and retains R1 prices
-  without another GET. R13 binds the candidate producer, semantic one-use campaign identity, canonical paths, atomic
-  journal/cost settlement, typed sidecars, persisted-v2 replay and exact `$252`/`$275` paid boundary;
+- `heldout-ac-budget-amendment-20260815-v1.yaml`: development-evidence-only equal-A/C override to
+  1M input/100k output/1.1M aggregate and `$57.60`/`$60`; it grants no candidate or execution authority;
+- held-out contract R8, binding R9, materialization R5, execution R6 and preflight/dispatcher R14 are the current
+  zero-authority chain. R5 reuses R4's 12 opaque task bindings without reopening task packages and retains R1 prices
+  without another GET. R14 binds atomic cost/replay contracts and the amended paid boundary;
 - `ac-structured-pilot-v11.plan.yaml`: R10-qualified contract-hardened split-budget design used by sealed R8;
 - `dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml`: consumed Moto/Babel A/C suite whose four rows all
   resolved, evaluator-v2 receipt-qualified and cost-settled; R7/R9 remains superseded unexecuted;
@@ -122,5 +123,5 @@ bytes but cannot mint official analysis authority. Exact historical caps and lim
 
 Preparation, execution receipt, journal and completion remain distinct. Full path/price/result/qualification/receipt
 bytes are replayed, and the semantic paid-campaign identity excludes transient readiness observations so a timestamp
-cannot reopen a consumed plan. R11 is immutable inconclusive; current R13 created no candidate or authority. Future
+cannot reopen a consumed plan. R11 is immutable inconclusive; current R14 created no candidate or authority. Future
 execution needs a clean committed source, fresh no-call candidate and separate exact approval.

@@ -21,8 +21,9 @@ four-run development A/C readiness -> preregister held-out A/C -> separately aut
 - Paid campaign identity excludes transient readiness observations and is one-use. A complete plan is validated before
   journal creation; terminal/cost evidence is atomic, started usage precedes qualification, and typed codes—not error
   prose—select confound phase.
-- Contract R7, binding R8, materialization R4, execution R5 and preflight/dispatcher R13 are source qualification only.
-  They create no candidate, approval, observation, call or spend.
+- Development-only evidence sets equal A/C to 1M/100k/1.1M and `$57.60`/`$60`; R11 outcomes/task content are excluded,
+  budget terminals score zero, rows never retry and results do not pool with R11.
+- Contract R8 → binding R9 → materialization R5 → execution R6 → preflight R14 is zero-authority.
 
 ### 2026-08-14 — isolate held-out contracts from historical execution
 

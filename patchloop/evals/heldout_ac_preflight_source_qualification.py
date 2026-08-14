@@ -1,9 +1,9 @@
 """Successor source gate for the held-out preflight and paid dispatcher.
 
-R2 through R12 remain immutable.  R13 binds the append-only R11 campaign
-correction index and the closed lifecycle/replay contracts required before a
-fresh candidate can exist.  It grants no observation, candidate, approval,
-execution, or spend authority.
+R2 through R13 remain immutable.  R14 binds the development-evidence budget
+amendment, the append-only R11 campaign correction index, and the closed
+lifecycle/replay contracts required before a lower-cost candidate can exist.
+It grants no observation, candidate, approval, execution, or spend authority.
 """
 
 from __future__ import annotations
@@ -35,12 +35,13 @@ from patchloop.evals.heldout_ac_r11_campaign_evidence import (
 from patchloop.runtime import repository_root
 from patchloop.util import sha256_bytes, sha256_json
 
-SCHEMA_VERSION = "heldout-ac-preflight-dispatch-source-qualification-v12"
-QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260815-r13"
+SCHEMA_VERSION = "heldout-ac-preflight-dispatch-source-qualification-v13"
+QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260815-r14"
 STATUS = "OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"
 OUTPUT_PATH = Path(
-    "reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r13.json"
+    "reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r14.json"
 )
+R13_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r13.json")
 R12_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r12.json")
 R11_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r11.json")
 R10_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r10.json")
@@ -75,6 +76,7 @@ VALIDATION_PATHS = (
     Path("scripts/run_heldout_ac_campaign.py"),
     Path("tests/test_evaluator_v2_contracts.py"),
     Path("tests/test_heldout_ac_binding_source_qualification.py"),
+    Path("tests/test_heldout_ac_budget_amendment.py"),
     Path("tests/test_heldout_ac_completion.py"),
     Path("tests/test_heldout_ac_execution.py"),
     Path("tests/test_heldout_ac_execution_source_qualification.py"),
@@ -102,13 +104,13 @@ class FileBinding(HeldoutACFrozenModel):
     file_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
-class R12Binding(FileBinding):
-    path: Literal["reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r12.json"]
+class R13Binding(FileBinding):
+    path: Literal["reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r13.json"]
     source_qualification_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     evaluator_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    original_qualification_id: Literal["core-ac-fixed-bundle-heldout-preflight-source-20260815-r12"]
+    original_qualification_id: Literal["core-ac-fixed-bundle-heldout-preflight-source-20260815-r13"]
     original_status: Literal["OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"]
-    successor_reason: Literal["align-current-loader-gate-validation-expectation"]
+    successor_reason: Literal["development-evidence-budget-amendment-successor"]
 
 
 class R11CampaignEvidenceBinding(FileBinding):
@@ -126,7 +128,7 @@ class PreflightProjection(HeldoutACFrozenModel):
         "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa"
     ]
     scheduled_rows: Literal[48]
-    r12_predecessor_bytes_preserved: Literal[True]
+    r13_predecessor_bytes_preserved: Literal[True]
     r11_campaign_correction_index_bound: Literal[True]
     git_commit_tree_and_execution_clean_observation_present: Literal[True]
     digest_pinned_docker_image_observation_present: Literal[True]
@@ -185,7 +187,7 @@ class HeldoutACPreflightSourceQualification(HeldoutACFrozenModel):
     qualification_id: Literal[QUALIFICATION_ID]
     status: Literal[STATUS]
     recorded_at: datetime
-    predecessor: R12Binding
+    predecessor: R13Binding
     campaign_predecessor: R11CampaignEvidenceBinding
     source_entrypoints: tuple[str, ...] = Field(min_length=2, max_length=2)
     import_closure: tuple[str, ...] = Field(min_length=1)
@@ -238,46 +240,46 @@ def _binding(root: Path, relative: Path) -> FileBinding:
     )
 
 
-def _r12_binding(root: Path) -> R12Binding:
-    selected = (root / R12_PATH).resolve()
+def _r13_binding(root: Path) -> R13Binding:
+    selected = (root / R13_PATH).resolve()
     if not selected.is_relative_to(root) or selected.is_symlink() or not selected.is_file():
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R12 source qualification predecessor is unavailable"
+            "held-out R13 source qualification predecessor is unavailable"
         )
     try:
         raw = selected.read_bytes()
         payload = json.loads(raw)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R12 source qualification predecessor is invalid"
+            "held-out R13 source qualification predecessor is invalid"
         ) from exc
     exact = (
-        len(raw) == 21_550
+        len(raw) == 21_539
         and sha256_bytes(raw)
-        == "sha256:21d38740e1c69c60204bf234f4a75502cf4b0fe549780914cb8e2789db9cb9f9"
+        == "sha256:f55cf62163b68f0a5d1d890a58b54dfa31f60ed90ac0da466bfe9b08e35b922f"
         and isinstance(payload, dict)
         and payload.get("qualification_id")
-        == "core-ac-fixed-bundle-heldout-preflight-source-20260815-r12"
+        == "core-ac-fixed-bundle-heldout-preflight-source-20260815-r13"
         and payload.get("status")
         == "OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"
         and payload.get("content_hash")
-        == "sha256:cc9a0a8ffbf516310db04577dcbabbfe79e53ff43c2307cdaa5a200749ab7b4a"
+        == "sha256:5bbb8e77d88684d1a67f7f40d5436d01d9ab1a0f6e286385e1e47959485eab61"
         and payload.get("evaluator_source_hash")
-        == "sha256:d6219fb057d7ba7a7052182e4ae7954506ab877e9d9856365c5898a5c88c921d"
+        == "sha256:103b13f61031cde96a74f6af09f86a5f3d4a550af3664d0279f1a9cdafcc8671"
     )
     if not exact:
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R12 source qualification predecessor bytes differ"
+            "held-out R13 source qualification predecessor bytes differ"
         )
-    return R12Binding(
-        path=R12_PATH.as_posix(),
+    return R13Binding(
+        path=R13_PATH.as_posix(),
         file_bytes=len(raw),
         file_sha256=sha256_bytes(raw),
         source_qualification_hash=str(payload["content_hash"]),
         evaluator_source_hash=str(payload["evaluator_source_hash"]),
         original_qualification_id=str(payload["qualification_id"]),
         original_status=str(payload["status"]),
-        successor_reason="align-current-loader-gate-validation-expectation",
+        successor_reason="development-evidence-budget-amendment-successor",
     )
 
 
@@ -333,7 +335,7 @@ def _build_candidate(
     *,
     recorded_at: datetime,
 ) -> HeldoutACPreflightSourceQualification:
-    predecessor = _r12_binding(root)
+    predecessor = _r13_binding(root)
     campaign_predecessor = _r11_campaign_evidence_binding(root)
     closure = _paid_path_import_closure(root, entrypoints=SOURCE_ENTRYPOINTS)
     source_paths = tuple(sorted({*closure, *SOURCE_EXTRAS}, key=lambda item: item.as_posix()))
@@ -360,7 +362,7 @@ def _build_candidate(
                 "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa"
             ),
             "scheduled_rows": 48,
-            "r12_predecessor_bytes_preserved": True,
+            "r13_predecessor_bytes_preserved": True,
             "r11_campaign_correction_index_bound": True,
             "git_commit_tree_and_execution_clean_observation_present": True,
             "digest_pinned_docker_image_observation_present": True,
@@ -547,6 +549,7 @@ __all__ = [
     "R11_CAMPAIGN_EVIDENCE_PATH",
     "R11_PATH",
     "R12_PATH",
+    "R13_PATH",
     "SCHEMA_VERSION",
     "SOURCE_ENTRYPOINTS",
     "SOURCE_EXTRAS",

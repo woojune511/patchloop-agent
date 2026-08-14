@@ -21,6 +21,7 @@ from patchloop.evals.heldout_ac_preflight_source_qualification import (
     R11_CAMPAIGN_EVIDENCE_PATH,
     R11_PATH,
     R12_PATH,
+    R13_PATH,
     SOURCE_ENTRYPOINTS,
     STATUS,
     _build_candidate,
@@ -40,6 +41,8 @@ def test_offline_candidate_binds_preflight_closure_without_observation() -> None
     )
 
     assert payload.status == STATUS
+    assert payload.schema_version == "heldout-ac-preflight-dispatch-source-qualification-v13"
+    assert payload.qualification_id.endswith("20260815-r14")
     assert payload.source_entrypoints == tuple(item.as_posix() for item in SOURCE_ENTRYPOINTS)
     assert "patchloop/agent/runner.py" in payload.import_closure
     assert "patchloop/evals/heldout_ac_preflight.py" in payload.import_closure
@@ -47,7 +50,7 @@ def test_offline_candidate_binds_preflight_closure_without_observation() -> None
         payload.import_closure
     )
     assert payload.projection.scheduled_rows == 48
-    assert payload.projection.r12_predecessor_bytes_preserved is True
+    assert payload.projection.r13_predecessor_bytes_preserved is True
     assert payload.projection.r11_campaign_correction_index_bound is True
     assert payload.projection.append_only_48_row_dispatcher_bound is True
     assert payload.projection.one_use_campaign_identity_ignores_observed_at is True
@@ -170,6 +173,14 @@ def test_r12_predecessor_bytes_are_preserved() -> None:
     assert len(selected.read_bytes()) == 21_550
     assert sha256_bytes(selected.read_bytes()) == (
         "sha256:21d38740e1c69c60204bf234f4a75502cf4b0fe549780914cb8e2789db9cb9f9"
+    )
+
+
+def test_r13_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R13_PATH
+    assert len(selected.read_bytes()) == 21_539
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:f55cf62163b68f0a5d1d890a58b54dfa31f60ed90ac0da466bfe9b08e35b922f"
     )
 
 

@@ -27,6 +27,14 @@ from patchloop.evals.heldout_ac_analysis import (
     TypedAgentTerminalOutcome,
     analyze_heldout_ac,
 )
+from patchloop.evals.heldout_ac_budget_amendment import (
+    FULL_SCHEDULE_RESERVE_NANOS,
+    HARD_CAP_NANOS,
+    MAX_CUMULATIVE_INPUT_TOKENS,
+    MAX_CUMULATIVE_OUTPUT_TOKENS,
+    MAX_TOTAL_TOKENS,
+    PER_RUN_RESERVE_NANOS,
+)
 from patchloop.evals.heldout_ac_contracts import HELDOUT_AC_SUITE_ID, HeldoutACSuite
 from patchloop.util import sha256_json
 
@@ -139,11 +147,11 @@ class HeldoutACDurableUsage(_StrictFrozenModel):
             raise ValueError("cached and cache-write input exceed total input")
         if self.reasoning_output_tokens > self.output_tokens:
             raise ValueError("reasoning output exceeds total output")
-        if self.input_tokens > 4_000_000:
+        if self.input_tokens > MAX_CUMULATIVE_INPUT_TOKENS:
             raise ValueError("held-out cumulative input ceiling exceeded")
-        if self.output_tokens > 500_000:
+        if self.output_tokens > MAX_CUMULATIVE_OUTPUT_TOKENS:
             raise ValueError("held-out cumulative output ceiling exceeded")
-        if self.input_tokens + self.output_tokens > 4_500_000:
+        if self.input_tokens + self.output_tokens > MAX_TOTAL_TOKENS:
             raise ValueError("held-out aggregate token ceiling exceeded")
         if self.model_calls > 240 or self.tool_calls > 400:
             raise ValueError("held-out model or tool call ceiling exceeded")
@@ -206,7 +214,7 @@ class HeldoutACCompletionRow(_StrictFrozenModel):
 
 
 class HeldoutACFullScheduleCostQualification(_StrictFrozenModel):
-    schema_version: Literal["heldout-ac-full-schedule-cost-qualification-v1"]
+    schema_version: Literal["heldout-ac-full-schedule-cost-qualification-v2"]
     passed: Literal[True]
     fully_settled: Literal[True]
     full_schedule_reserved: Literal[True]
@@ -215,9 +223,9 @@ class HeldoutACFullScheduleCostQualification(_StrictFrozenModel):
     not_started_runs: Literal[0]
     unsettled_runs: Literal[0]
     cost_censoring_events: Literal[0]
-    accrued_cost_nanos: int = Field(ge=0, le=252_000_000_000)
-    full_schedule_reserve_nanos: Literal[252_000_000_000]
-    hard_cap_nanos: Literal[275_000_000_000]
+    accrued_cost_nanos: int = Field(ge=0, le=FULL_SCHEDULE_RESERVE_NANOS)
+    full_schedule_reserve_nanos: Literal[FULL_SCHEDULE_RESERVE_NANOS]
+    hard_cap_nanos: Literal[HARD_CAP_NANOS]
     schedule_hash: str = Field(pattern=_SHA256_PATTERN)
     campaign_cost_control_hash: str = Field(pattern=_SHA256_PATTERN)
     live_resume_supported: Literal[False]
@@ -411,9 +419,9 @@ class HeldoutACAuthenticatedCompletionProjection(_StrictFrozenModel):
     typed_agent_terminal_runs: int = Field(ge=0, le=48)
     task_successes: int = Field(ge=0, le=48)
     task_failures: int = Field(ge=0, le=48)
-    accrued_cost_nanos: int = Field(ge=0, le=252_000_000_000)
-    full_schedule_reserve_nanos: Literal[252_000_000_000] = 252_000_000_000
-    hard_cap_nanos: Literal[275_000_000_000] = 275_000_000_000
+    accrued_cost_nanos: int = Field(ge=0, le=FULL_SCHEDULE_RESERVE_NANOS)
+    full_schedule_reserve_nanos: int = Field(gt=0)
+    hard_cap_nanos: int = Field(gt=0)
     authenticated_row_hashes: tuple[str, ...] = Field(min_length=48, max_length=48)
     outcome_projection: HeldoutACOutcomeProjection
     memory_benefit_claim_authorized: Literal[False] = False
@@ -423,6 +431,11 @@ class HeldoutACAuthenticatedCompletionProjection(_StrictFrozenModel):
 
     @model_validator(mode="after")
     def validate_authenticated_completion(self) -> HeldoutACAuthenticatedCompletionProjection:
+        if (self.full_schedule_reserve_nanos, self.hard_cap_nanos) not in {
+            (252_000_000_000, 275_000_000_000),
+            (FULL_SCHEDULE_RESERVE_NANOS, HARD_CAP_NANOS),
+        }:
+            raise ValueError("authenticated completion cost boundary differs")
         if len(set(self.authenticated_row_hashes)) != 48:
             raise ValueError("authenticated completion row identities are not unique")
         rows = self.outcome_projection.rows
@@ -786,20 +799,34 @@ def heldout_ac_campaign_cost_control_hash(
     suite: HeldoutACSuite,
     execution_hash: str,
     schedule_hash: str,
+    per_run_reserve_nanos: int = PER_RUN_RESERVE_NANOS,
+    full_schedule_reserve_nanos: int = FULL_SCHEDULE_RESERVE_NANOS,
+    hard_cap_nanos: int = HARD_CAP_NANOS,
 ) -> str:
     """Recompute the only acceptable full-schedule cost-control identity."""
 
+    cost_tuple = (
+        per_run_reserve_nanos,
+        full_schedule_reserve_nanos,
+        hard_cap_nanos,
+    )
+    if cost_tuple == (5_250_000_000, 252_000_000_000, 275_000_000_000):
+        schema_version = "heldout-ac-full-schedule-cost-control-v1"
+    elif cost_tuple == (PER_RUN_RESERVE_NANOS, FULL_SCHEDULE_RESERVE_NANOS, HARD_CAP_NANOS):
+        schema_version = "heldout-ac-full-schedule-cost-control-v2"
+    else:
+        raise HeldoutACCompletionError("held-out campaign cost-control values differ")
     return sha256_json(
         {
-            "schema_version": "heldout-ac-full-schedule-cost-control-v1",
+            "schema_version": schema_version,
             "suite_id": suite.suite_id,
             "suite_content_hash": suite.content_hash,
             "execution_hash": execution_hash,
             "schedule_hash": schedule_hash,
             "scheduled_run_count": 48,
-            "per_run_reserve_nanos": 5_250_000_000,
-            "full_schedule_reserve_nanos": 252_000_000_000,
-            "hard_cap_nanos": 275_000_000_000,
+            "per_run_reserve_nanos": per_run_reserve_nanos,
+            "full_schedule_reserve_nanos": full_schedule_reserve_nanos,
+            "hard_cap_nanos": hard_cap_nanos,
             "cost_censoring_allowed": False,
             "live_resume_supported": False,
         }
@@ -1291,6 +1318,8 @@ def _project_authenticated_heldout_ac_completion_without_capability(
     evaluator_source_hash: str,
     evaluator_source_qualification_hash: str,
     rows: Sequence[Any],
+    full_schedule_reserve_nanos: int = FULL_SCHEDULE_RESERVE_NANOS,
+    hard_cap_nanos: int = HARD_CAP_NANOS,
 ) -> HeldoutACAuthenticatedCompletionProjection:
     """Recompute the typed completion DTO without issuing runtime authority."""
 
@@ -1311,6 +1340,11 @@ def _project_authenticated_heldout_ac_completion_without_capability(
         )
     if len({row.content_hash for row in rows}) != 48 or len({row.row.run_id for row in rows}) != 48:
         raise HeldoutACCompletionError("authenticated completion row identities are not unique")
+    if (full_schedule_reserve_nanos, hard_cap_nanos) not in {
+        (252_000_000_000, 275_000_000_000),
+        (FULL_SCHEDULE_RESERVE_NANOS, HARD_CAP_NANOS),
+    }:
+        raise HeldoutACCompletionError("authenticated completion cost boundary differs")
     projected_rows: list[HeldoutACOutcomeRow] = []
     for evidence, expected in zip(rows, suite.schedule, strict=True):
         authenticated = evidence.row
@@ -1465,8 +1499,8 @@ def _project_authenticated_heldout_ac_completion_without_capability(
         "accrued_cost_nanos": sum(
             evidence.row.usage_evidence.token_derived_cost_nanos for evidence in rows
         ),
-        "full_schedule_reserve_nanos": 252_000_000_000,
-        "hard_cap_nanos": 275_000_000_000,
+        "full_schedule_reserve_nanos": full_schedule_reserve_nanos,
+        "hard_cap_nanos": hard_cap_nanos,
         "authenticated_row_hashes": tuple(row.content_hash for row in rows),
         "outcome_projection": projection.model_dump(mode="json"),
         "memory_benefit_claim_authorized": False,
@@ -1486,6 +1520,8 @@ def project_authenticated_heldout_ac_completion(
     evaluator_source_hash: str,
     evaluator_source_qualification_hash: str,
     rows: Sequence[Any],
+    full_schedule_reserve_nanos: int = FULL_SCHEDULE_RESERVE_NANOS,
+    hard_cap_nanos: int = HARD_CAP_NANOS,
 ) -> HeldoutACAuthenticatedCompletionProjection:
     """Build an official completion only from 48 runtime-issued row capabilities."""
 
@@ -1511,6 +1547,8 @@ def project_authenticated_heldout_ac_completion(
         evaluator_source_hash=evaluator_source_hash,
         evaluator_source_qualification_hash=evaluator_source_qualification_hash,
         rows=rows,
+        full_schedule_reserve_nanos=full_schedule_reserve_nanos,
+        hard_cap_nanos=hard_cap_nanos,
     )
     return _issue_authenticated_completion_capability(completion)
 
@@ -1571,6 +1609,8 @@ def validate_persisted_heldout_ac_completion_replay(
     rows: Sequence[Any],
     completion: HeldoutACAuthenticatedCompletionProjection,
     official_envelope: HeldoutACOfficialAnalysisEnvelope,
+    full_schedule_reserve_nanos: int = FULL_SCHEDULE_RESERVE_NANOS,
+    hard_cap_nanos: int = HARD_CAP_NANOS,
 ) -> None:
     """Recompute persisted completion/envelope DTOs without issuing authority.
 
@@ -1614,6 +1654,8 @@ def validate_persisted_heldout_ac_completion_replay(
         evaluator_source_hash=evaluator_source_hash,
         evaluator_source_qualification_hash=evaluator_source_qualification_hash,
         rows=reparsed_rows,
+        full_schedule_reserve_nanos=full_schedule_reserve_nanos,
+        hard_cap_nanos=hard_cap_nanos,
     )
     expected_envelope = _build_official_analysis_envelope_without_capability(expected_completion)
     if expected_completion.model_dump(mode="json") != reparsed_completion.model_dump(mode="json"):

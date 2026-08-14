@@ -37,9 +37,9 @@ The successor uses opaque controls, agent-visible leakage evidence, durable pre-
 pre-journal plan validation and timestamp-independent paid identity. Persisted DTOs remain unofficial; only
 runtime-authenticated non-serialized provenance can reach the 48-row analysis gate.
 
-Current zero-authority source chain is contract R7, binding R8, task/pricing materialization R4, execution R5 and
-preflight/dispatcher R13. R12 and intermediate seals remain immutable invalidated predecessors. R13 created no
-candidate, approval, journal, result or external observation.
+Development-only evidence lowers equal A/C to 1M/100k/1.1M tokens, `$1.20`/row and `$57.60`/`$60`; held-out outcomes
+and task content were excluded, and results cannot pool directly with R11. Contract R8 → binding R9 → materialization
+R5 → execution R6 → preflight R14 remains zero-authority.
 
 ## Evidence, retry and authority
 
@@ -54,4 +54,4 @@ lifecycle are historical, not current gates. No paid, held-out or B/D execution 
 
 Commit the source-qualified successor, then run one fresh read-only no-call preflight with a new append-only output on
 execution-clean source. A READY result would create a secret-free candidate only. Provider execution remains closed
-until a separate approval binds that exact new hash, all 48 rows, the `$252` full-schedule reserve and `$275` hard cap.
+until a separate approval binds that exact new hash, all 48 rows, the `$57.60` reserve and `$60` hard cap.

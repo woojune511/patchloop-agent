@@ -25,9 +25,9 @@ uv sync --offline --frozen --extra dev
 & .\.venv\Scripts\python.exe -E -s -B scripts/build_heldout_ac_preflight_source_qualification.py
 ```
 
-These are offline-only. The builders validate the checked-in contract R7, binding R8, materialization R4, execution R5
-and preflight/dispatcher R13 chain. They preserve R12 and all earlier seals, never rerun a row and grant no
-runtime/paid authority. R13 binds the immutable R11 correction index and creates no candidate, plan or journal.
+These are offline-only. The builders validate the checked-in budget amendment, contract R8, binding R9,
+materialization R5, execution R6 and preflight/dispatcher R14 chain. They preserve all earlier seals, never rerun a row
+and grant no runtime/paid authority. R14 creates no candidate, plan or journal.
 
 ## Current held-out no-call preflight
 
@@ -41,14 +41,14 @@ neither exports/prints the key nor calls a provider/evaluator/agent and always l
   --output .patchloop/heldout-ac-preflight-<fresh-id>.json
 ```
 
-A successful result is only a secret-free candidate for the fixed 48 rows and `$252`/`$275`; it cannot dispatch the
-campaign. Do not run this form until the R13-bound source is committed and clean. Any later source change requires a
+A successful result is only a secret-free candidate for the fixed 48 rows and `$57.60`/`$60`; it cannot dispatch the
+campaign. Do not run this form until the R14-bound source is committed and clean. Any later source change requires a
 successor qualification and candidate.
 
 ## Future held-out paid form — closed until exact approval
 
 After a fresh READY preflight is saved to `candidate.json`, a separate user approval must name its exact execution
-hash, 48 rows, `$252` reserve and `$275` cap. Only then is this form valid:
+hash, 48 rows, `$57.60` reserve and `$60` cap. Only then is this form valid:
 
 ```powershell
 & .\.venv\Scripts\python.exe -E -s -B scripts/run_heldout_ac_campaign.py `
@@ -58,7 +58,7 @@ hash, 48 rows, `$252` reserve and `$275` cap. Only then is this form valid:
   --approved-execution-hash sha256:<exact-new-candidate>
 ```
 
-Do not run it now. Held-out R7 and R11 and both approvals are consumed; current R13 has no candidate or approval.
+Do not run it now. Held-out R7 and R11 and both approvals are consumed; current R14 has no candidate or approval.
 Rows and semantic paid-campaign identity are one-use, with no retry, replacement or resume.
 
 ## Historical commands

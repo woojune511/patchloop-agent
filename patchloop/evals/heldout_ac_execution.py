@@ -1,7 +1,7 @@
 """No-call activation contract for the preregistered held-out A/C panel.
 
 This module deliberately stops before campaign state or provider dispatch.  It
-binds the sealed 48-row suite, the evaluator-side R4 materialization, a fresh
+binds the sealed 48-row suite, the evaluator-side R5 materialization, a fresh
 source qualification and read-only local readiness into one execution hash.
 It also owns the only supported expansion from an explicitly supplied runtime
 secret to a task-bound evaluator-v2 authority.  Secret bytes are never returned
@@ -36,6 +36,16 @@ from patchloop.errors import ContractError
 from patchloop.evals.evaluator_v2_source_qualification import (
     evaluator_v2_task_private_markers,
 )
+from patchloop.evals.heldout_ac_budget_amendment import (
+    FULL_SCHEDULE_RESERVE_NANOS,
+    HARD_CAP_NANOS,
+    MAX_CUMULATIVE_INPUT_TOKENS,
+    MAX_CUMULATIVE_OUTPUT_TOKENS,
+    MAX_TOTAL_TOKENS,
+    PER_RUN_RESERVE_NANOS,
+    HeldoutACBudgetAmendmentBinding,
+    heldout_ac_budget_amendment_binding,
+)
 from patchloop.evals.heldout_ac_contracts import (
     HELDOUT_AC_SUITE_ID,
     HeldoutACFrozenModel,
@@ -63,20 +73,20 @@ from patchloop.verifier.runtime_evidence import (
 
 SUITE_PATH = Path("experiments/heldout-ac-suite-20260814-v1.yaml")
 MATERIALIZATION_PATH = Path(
-    "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r4.json"
+    "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r5.json"
 )
-MATERIALIZATION_FILE_BYTES = 52_056
+MATERIALIZATION_FILE_BYTES = 53_234
 MATERIALIZATION_FILE_SHA256 = (
-    "sha256:37c5cb805e137e55f5b0a11b3a3235dc0514aa2a77938abfc6d74695113d5380"
+    "sha256:34186e94134bffceaa05f893c24f9cdf5e1981e4e13c8b37de541ba49a5d6e17"
 )
 MATERIALIZATION_CONTENT_HASH = (
-    "sha256:7c6ecc31b471da83cf46ddb5a3fb687008e4a6648ae55485d0109e0d6114af58"
+    "sha256:a7d6347c13368c60b65933041cfc33748fdb780549fa0ad9d358fcfcf4843f60"
 )
 MATERIALIZATION_TASK_BINDINGS_HASH = (
     "sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f"
 )
 MATERIALIZATION_PRICING_HASH = (
-    "sha256:03e9cde4d6d04a09995da669d7e3aea26fda31310615640508f6bd0a9c2cbd34"
+    "sha256:83bb15d171564f32d0ca6df24f733a957032e144bbd0dfed49071e1b205a27e9"
 )
 
 _SHA256_PATTERN = r"^sha256:[0-9a-f]{64}$"
@@ -188,21 +198,35 @@ class HeldoutACExecutionScheduleRow(HeldoutACFrozenModel):
 
 
 class HeldoutACCampaignCostControl(HeldoutACFrozenModel):
-    schema_version: Literal["heldout-ac-full-schedule-cost-control-v1"]
+    schema_version: Literal[
+        "heldout-ac-full-schedule-cost-control-v1",
+        "heldout-ac-full-schedule-cost-control-v2",
+    ]
     suite_id: Literal[HELDOUT_AC_SUITE_ID]
     suite_content_hash: str = Field(pattern=_SHA256_PATTERN)
     execution_hash: str = Field(pattern=_SHA256_PATTERN)
     schedule_hash: str = Field(pattern=_SHA256_PATTERN)
     scheduled_run_count: Literal[48]
-    per_run_reserve_nanos: Literal[5_250_000_000]
-    full_schedule_reserve_nanos: Literal[252_000_000_000]
-    hard_cap_nanos: Literal[275_000_000_000]
+    per_run_reserve_nanos: int = Field(gt=0)
+    full_schedule_reserve_nanos: int = Field(gt=0)
+    hard_cap_nanos: int = Field(gt=0)
     cost_censoring_allowed: Literal[False]
     live_resume_supported: Literal[False]
     content_hash: str = Field(pattern=_SHA256_PATTERN)
 
     @model_validator(mode="after")
     def validate_content_hash(self) -> HeldoutACCampaignCostControl:
+        expected_costs = (
+            (5_250_000_000, 252_000_000_000, 275_000_000_000)
+            if self.schema_version == "heldout-ac-full-schedule-cost-control-v1"
+            else (PER_RUN_RESERVE_NANOS, FULL_SCHEDULE_RESERVE_NANOS, HARD_CAP_NANOS)
+        )
+        if (
+            self.per_run_reserve_nanos,
+            self.full_schedule_reserve_nanos,
+            self.hard_cap_nanos,
+        ) != expected_costs:
+            raise ValueError("held-out campaign cost control values differ")
         expected = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
         if self.content_hash != expected:
             raise ValueError("held-out campaign cost control hash differs")
@@ -210,14 +234,18 @@ class HeldoutACCampaignCostControl(HeldoutACFrozenModel):
 
 
 class HeldoutACExecutionCandidate(HeldoutACFrozenModel):
-    schema_version: Literal["heldout-ac-execution-candidate-v1"]
+    schema_version: Literal[
+        "heldout-ac-execution-candidate-v1",
+        "heldout-ac-execution-candidate-v2",
+    ]
     status: Literal["NO_CALL_CANDIDATE_READY_EXECUTION_NOT_AUTHORIZED"]
     suite_id: Literal[HELDOUT_AC_SUITE_ID]
     suite_content_hash: str = Field(pattern=_SHA256_PATTERN)
     dataset_manifest_hash: str = Field(pattern=_SHA256_PATTERN)
     materialization: HeldoutACFileBinding
-    task_bindings_hash: Literal[MATERIALIZATION_TASK_BINDINGS_HASH]
-    pricing_binding_hash: Literal[MATERIALIZATION_PRICING_HASH]
+    task_bindings_hash: str = Field(pattern=_SHA256_PATTERN)
+    pricing_binding_hash: str = Field(pattern=_SHA256_PATTERN)
+    budget_amendment: HeldoutACBudgetAmendmentBinding | None = None
     source_qualification: HeldoutACSourceQualificationBinding
     runtime_tuple_hash: str = Field(pattern=_SHA256_PATTERN)
     base_schedule_hash: str = Field(pattern=_SHA256_PATTERN)
@@ -226,8 +254,8 @@ class HeldoutACExecutionCandidate(HeldoutACFrozenModel):
     schedule: tuple[HeldoutACExecutionScheduleRow, ...] = Field(min_length=48, max_length=48)
     schedule_hash: str = Field(pattern=_SHA256_PATTERN)
     campaign_cost_control: HeldoutACCampaignCostControl
-    full_schedule_reserve_usd: Literal[252.0]
-    hard_cap_usd: Literal[275.0]
+    full_schedule_reserve_usd: float = Field(gt=0)
+    hard_cap_usd: float = Field(gt=0)
     exact_paid_approval_present: Literal[False]
     provider_execution_authorized: Literal[False]
     evaluator_execution_authorized: Literal[False]
@@ -236,6 +264,29 @@ class HeldoutACExecutionCandidate(HeldoutACFrozenModel):
 
     @model_validator(mode="after")
     def validate_candidate(self) -> HeldoutACExecutionCandidate:
+        if self.schema_version == "heldout-ac-execution-candidate-v1":
+            if self.budget_amendment is not None or (
+                self.full_schedule_reserve_usd,
+                self.hard_cap_usd,
+                self.campaign_cost_control.schema_version,
+            ) != (252.0, 275.0, "heldout-ac-full-schedule-cost-control-v1"):
+                raise ValueError("held-out historical candidate budget binding differs")
+        elif (
+            self.budget_amendment is None
+            or self.task_bindings_hash != MATERIALIZATION_TASK_BINDINGS_HASH
+            or self.pricing_binding_hash != MATERIALIZATION_PRICING_HASH
+            or self.materialization.path != MATERIALIZATION_PATH.as_posix()
+            or self.materialization.file_bytes != MATERIALIZATION_FILE_BYTES
+            or self.materialization.file_sha256 != MATERIALIZATION_FILE_SHA256
+            or self.materialization.content_hash != MATERIALIZATION_CONTENT_HASH
+            or (
+                self.full_schedule_reserve_usd,
+                self.hard_cap_usd,
+                self.campaign_cost_control.schema_version,
+            )
+            != (57.6, 60.0, "heldout-ac-full-schedule-cost-control-v2")
+        ):
+            raise ValueError("held-out cost-bounded candidate binding differs")
         if len(self.schedule) != 48 or tuple(row.order for row in self.schedule) != tuple(
             range(1, 49)
         ):
@@ -281,7 +332,7 @@ def _read_materialization(root: Path) -> tuple[HeldoutACTaskPricingMaterializati
         raw = selected.read_bytes()
         payload = HeldoutACTaskPricingMaterialization.model_validate_json(raw)
     except (OSError, ValidationError) as exc:
-        raise HeldoutACExecutionError("held-out R4 materialization is invalid") from exc
+        raise HeldoutACExecutionError("held-out R5 materialization is invalid") from exc
     if (
         len(raw) != MATERIALIZATION_FILE_BYTES
         or sha256_bytes(raw) != MATERIALIZATION_FILE_SHA256
@@ -290,7 +341,7 @@ def _read_materialization(root: Path) -> tuple[HeldoutACTaskPricingMaterializati
         or payload.pricing.content_hash != MATERIALIZATION_PRICING_HASH
         or raw != (payload.model_dump_json(indent=2) + "\n").encode("utf-8")
     ):
-        raise HeldoutACExecutionError("held-out R4 materialization bytes drifted")
+        raise HeldoutACExecutionError("held-out R5 materialization bytes drifted")
     return payload, raw
 
 
@@ -304,7 +355,7 @@ def _runtime_tuple_hash(suite: HeldoutACSuite) -> str:
         service_tier=runtime.service_tier,
         transport_max_retries=runtime.transport_max_retries,
         max_output_tokens=runtime.max_output_tokens,
-        max_total_tokens=runtime.max_total_tokens,
+        max_total_tokens=MAX_TOTAL_TOKENS,
         wall_clock_timeout_seconds=runtime.wall_clock_timeout_seconds,
         tool_schema_version=runtime.tool_schema_version,
         context_policy_version=runtime.context_policy_version,
@@ -313,8 +364,8 @@ def _runtime_tuple_hash(suite: HeldoutACSuite) -> str:
         token_budget_schema_version=runtime.token_budget_schema_version,
         max_model_calls=runtime.max_model_calls,
         max_tool_calls=runtime.max_tool_calls,
-        max_cumulative_input_tokens=runtime.max_cumulative_input_tokens,
-        max_cumulative_output_tokens=runtime.max_cumulative_output_tokens,
+        max_cumulative_input_tokens=MAX_CUMULATIVE_INPUT_TOKENS,
+        max_cumulative_output_tokens=MAX_CUMULATIVE_OUTPUT_TOKENS,
     )
 
 
@@ -323,8 +374,12 @@ def _base_schedule_hash(suite: HeldoutACSuite) -> str:
 
 
 def _execution_projection(candidate: HeldoutACExecutionCandidate) -> dict[str, Any]:
-    return {
-        "schema_version": "heldout-ac-execution-v1",
+    projection = {
+        "schema_version": (
+            "heldout-ac-execution-v1"
+            if candidate.schema_version == "heldout-ac-execution-candidate-v1"
+            else "heldout-ac-execution-v2"
+        ),
         "suite_id": candidate.suite_id,
         "suite_content_hash": candidate.suite_content_hash,
         "dataset_manifest_hash": candidate.dataset_manifest_hash,
@@ -336,6 +391,11 @@ def _execution_projection(candidate: HeldoutACExecutionCandidate) -> dict[str, A
         "base_schedule_hash": candidate.base_schedule_hash,
         "readiness": candidate.readiness.model_dump(mode="json"),
     }
+    if candidate.schema_version == "heldout-ac-execution-candidate-v2":
+        if candidate.budget_amendment is None:  # pragma: no cover - model invariant
+            raise ValueError("held-out cost-bounded candidate amendment is absent")
+        projection["budget_amendment"] = candidate.budget_amendment.model_dump(mode="json")
+    return projection
 
 
 def heldout_ac_campaign_identity_hash(candidate: HeldoutACExecutionCandidate) -> str:
@@ -346,24 +406,48 @@ def heldout_ac_campaign_identity_hash(candidate: HeldoutACExecutionCandidate) ->
     same qualified source, suite, runtime and base schedule.
     """
 
-    checked = HeldoutACExecutionCandidate.model_validate_json(candidate.model_dump_json())
-    return sha256_json(
-        {
-            "schema_version": "heldout-ac-paid-campaign-identity-v1",
-            "suite_id": checked.suite_id,
-            "suite_content_hash": checked.suite_content_hash,
-            "dataset_manifest_hash": checked.dataset_manifest_hash,
-            "materialization_content_hash": checked.materialization.content_hash,
-            "task_bindings_hash": checked.task_bindings_hash,
-            "pricing_binding_hash": checked.pricing_binding_hash,
-            "source_qualification_hash": (checked.source_qualification.source_qualification_hash),
-            "evaluator_source_hash": checked.source_qualification.evaluator_source_hash,
-            "runtime_tuple_hash": checked.runtime_tuple_hash,
-            "base_schedule_hash": checked.base_schedule_hash,
-            "scheduled_run_count": 48,
-            "full_schedule_reserve_nanos": 252_000_000_000,
-            "hard_cap_nanos": 275_000_000_000,
-        }
+    checked = HeldoutACExecutionCandidate.model_validate(
+        candidate.model_dump(mode="python", exclude_none=True)
+    )
+    body = {
+        "schema_version": (
+            "heldout-ac-paid-campaign-identity-v1"
+            if checked.schema_version == "heldout-ac-execution-candidate-v1"
+            else "heldout-ac-paid-campaign-identity-v2"
+        ),
+        "suite_id": checked.suite_id,
+        "suite_content_hash": checked.suite_content_hash,
+        "dataset_manifest_hash": checked.dataset_manifest_hash,
+        "materialization_content_hash": checked.materialization.content_hash,
+        "task_bindings_hash": checked.task_bindings_hash,
+        "pricing_binding_hash": checked.pricing_binding_hash,
+        "source_qualification_hash": (checked.source_qualification.source_qualification_hash),
+        "evaluator_source_hash": checked.source_qualification.evaluator_source_hash,
+        "runtime_tuple_hash": checked.runtime_tuple_hash,
+        "base_schedule_hash": checked.base_schedule_hash,
+        "scheduled_run_count": 48,
+        "full_schedule_reserve_nanos": (checked.campaign_cost_control.full_schedule_reserve_nanos),
+        "hard_cap_nanos": checked.campaign_cost_control.hard_cap_nanos,
+    }
+    if checked.budget_amendment is not None:
+        body["budget_amendment_content_hash"] = checked.budget_amendment.content_hash
+    return sha256_json(body)
+
+
+def heldout_ac_candidate_token_limits(
+    candidate: HeldoutACExecutionCandidate,
+) -> tuple[int, int, int]:
+    """Return the schema-bound input, output, and aggregate token ceilings."""
+
+    checked = HeldoutACExecutionCandidate.model_validate(
+        candidate.model_dump(mode="python", exclude_none=True)
+    )
+    if checked.schema_version == "heldout-ac-execution-candidate-v1":
+        return 4_000_000, 500_000, 4_500_000
+    return (
+        MAX_CUMULATIVE_INPUT_TOKENS,
+        MAX_CUMULATIVE_OUTPUT_TOKENS,
+        MAX_TOTAL_TOKENS,
     )
 
 
@@ -492,6 +576,7 @@ def build_heldout_ac_execution_candidate(
 
     root = _root(repository)
     suite = load_heldout_ac_suite(SUITE_PATH, repository=root)
+    budget_amendment = heldout_ac_budget_amendment_binding(repository=root)
     materialization, _ = _read_materialization(root)
     _manifest, dataset_manifest_hash, _path = load_dataset_manifest(
         root / suite.dataset.manifest_path
@@ -543,7 +628,7 @@ def build_heldout_ac_execution_candidate(
         )
 
     provisional = HeldoutACExecutionCandidate.model_construct(
-        schema_version="heldout-ac-execution-candidate-v1",
+        schema_version="heldout-ac-execution-candidate-v2",
         status="NO_CALL_CANDIDATE_READY_EXECUTION_NOT_AUTHORIZED",
         suite_id=suite.suite_id,
         suite_content_hash=suite.content_hash,
@@ -551,6 +636,7 @@ def build_heldout_ac_execution_candidate(
         materialization=_materialization_binding(materialization),
         task_bindings_hash=materialization.task_bindings_hash,
         pricing_binding_hash=materialization.pricing.content_hash,
+        budget_amendment=budget_amendment,
         source_qualification=source_qualification,
         runtime_tuple_hash=_runtime_tuple_hash(suite),
         base_schedule_hash=_base_schedule_hash(suite),
@@ -586,20 +672,20 @@ def build_heldout_ac_execution_candidate(
     )
     schedule_hash = sha256_json(_runtime_schedule_projection(schedule))
     cost_body = {
-        "schema_version": "heldout-ac-full-schedule-cost-control-v1",
+        "schema_version": "heldout-ac-full-schedule-cost-control-v2",
         "suite_id": suite.suite_id,
         "suite_content_hash": suite.content_hash,
         "execution_hash": execution_hash,
         "schedule_hash": schedule_hash,
         "scheduled_run_count": 48,
-        "per_run_reserve_nanos": 5_250_000_000,
-        "full_schedule_reserve_nanos": 252_000_000_000,
-        "hard_cap_nanos": 275_000_000_000,
+        "per_run_reserve_nanos": PER_RUN_RESERVE_NANOS,
+        "full_schedule_reserve_nanos": FULL_SCHEDULE_RESERVE_NANOS,
+        "hard_cap_nanos": HARD_CAP_NANOS,
         "cost_censoring_allowed": False,
         "live_resume_supported": False,
     }
     return HeldoutACExecutionCandidate(
-        schema_version="heldout-ac-execution-candidate-v1",
+        schema_version="heldout-ac-execution-candidate-v2",
         status="NO_CALL_CANDIDATE_READY_EXECUTION_NOT_AUTHORIZED",
         suite_id=suite.suite_id,
         suite_content_hash=suite.content_hash,
@@ -607,6 +693,7 @@ def build_heldout_ac_execution_candidate(
         materialization=_materialization_binding(materialization),
         task_bindings_hash=materialization.task_bindings_hash,
         pricing_binding_hash=materialization.pricing.content_hash,
+        budget_amendment=budget_amendment,
         source_qualification=source_qualification,
         runtime_tuple_hash=_runtime_tuple_hash(suite),
         base_schedule_hash=_base_schedule_hash(suite),
@@ -617,8 +704,8 @@ def build_heldout_ac_execution_candidate(
         campaign_cost_control=HeldoutACCampaignCostControl(
             **cost_body, content_hash=sha256_json(cost_body)
         ),
-        full_schedule_reserve_usd=252.0,
-        hard_cap_usd=275.0,
+        full_schedule_reserve_usd=57.6,
+        hard_cap_usd=60.0,
         exact_paid_approval_present=False,
         provider_execution_authorized=False,
         evaluator_execution_authorized=False,
@@ -750,11 +837,11 @@ def build_heldout_ac_run_manifest(
         budget=Budget(
             max_model_calls=240,
             max_tool_calls=400,
-            max_total_tokens=4_500_000,
+            max_total_tokens=MAX_TOTAL_TOKENS,
             wall_clock_timeout_seconds=3_600,
             token_budget_schema_version="cumulative-split-v1",
-            max_cumulative_input_tokens=4_000_000,
-            max_cumulative_output_tokens=500_000,
+            max_cumulative_input_tokens=MAX_CUMULATIVE_INPUT_TOKENS,
+            max_cumulative_output_tokens=MAX_CUMULATIVE_OUTPUT_TOKENS,
         ),
         sandbox_backend="docker",
         agent_image_digest=row.evaluator_image_digest,
@@ -784,7 +871,7 @@ def build_heldout_ac_run_manifest(
 def candidate_json(candidate: HeldoutACExecutionCandidate) -> str:
     """Return the public, secret-free candidate representation."""
 
-    return candidate.model_dump_json(indent=2) + "\n"
+    return candidate.model_dump_json(indent=2, exclude_none=True) + "\n"
 
 
 __all__ = [
@@ -805,6 +892,7 @@ __all__ = [
     "build_heldout_ac_run_manifest",
     "candidate_json",
     "encode_heldout_ac_runtime_secret",
+    "heldout_ac_candidate_token_limits",
     "heldout_ac_campaign_identity_hash",
     "materialize_heldout_ac_runtime_task_authority",
 ]

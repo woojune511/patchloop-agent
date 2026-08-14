@@ -12,27 +12,25 @@ Machine artifacts under `reports/` are authoritative. Historical narrative is ar
   `sha256:27157e26881cc277a9026e51d22a6f21fbf5bbb8f6c1c09eaa89aec607e52534` (13,348 bytes). Plan: content
   `sha256:b2058c48de3f2b4d13df872d7fd19a325c3a76ffb5ef24974310409100cb8885`; file
   `sha256:901f898d7f6f81b00e8840160b3efde2cc4fb7d8f4625c6188ea7235de264695` (2,466 bytes).
-- Historical contract/binding/materialization/execution/preflight seals remain append-only. Current contract R7 has
-  content/file `sha256:27cfb3d91c326c1e767a6e63580941d48e14a7872783db39dbdacdd075f08ea5`/
-  `sha256:fec1c4ea12fdd8399f989ad9b0dba02a22071604eb8fc431f821ae5900ed36fa` (20,544 bytes), source
-  `sha256:cb478787f0845324b305c6208bc70ab29c81dc739c84eb03c0c757fbe2f05dbf`.
-- Binding R8 content/file is `sha256:ac75004d98f647dbedf00819b93b40e85119c4c1deb244080f42c59dda48918c`/
-  `sha256:4fa0dc9629a7fa2030c1af4f3831ecc169330360c6f0813d5778517723c39b13` (5,674 bytes); source
-  `sha256:20eb314516985fd6aa8e7f1970fd754bb3c839607f5b73b55f526b305662118c`.
-- Materialization R4 content/file is `sha256:7c6ecc31b471da83cf46ddb5a3fb687008e4a6648ae55485d0109e0d6114af58`/
-  `sha256:37c5cb805e137e55f5b0a11b3a3235dc0514aa2a77938abfc6d74695113d5380` (52,056 bytes); source/task bindings
-  `sha256:010b8c1fd2d46c58a56976fd1ce750f4640e54a8d38758beecbe3c75e896b888`/
-  `sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f`. It retains R1's sole public price GET and
-  `$0.75`/`$0.075`/`$4.50` prices; added GET count is zero.
-- Execution R5 content/file is `sha256:b2d6307f9e94f4324faf3d11ade14845c8f8d22c645a694bb729f2e13d7e9b2e`/
-  `sha256:e396b4e121c53f7aca27dad3283c035aaa077265f1c0065bed6c9124e5a05fcf` (16,921 bytes); evaluator source
-  `sha256:2037b16643a44c5e2434d5147d6ebeb04bca5f65402d9ca8f37373694ab66c84`.
-- Current preflight/dispatcher R13 content/file is
-  `sha256:5bbb8e77d88684d1a67f7f40d5436d01d9ab1a0f6e286385e1e47959485eab61`/
-  `sha256:f55cf62163b68f0a5d1d890a58b54dfa31f60ed90ac0da466bfe9b08e35b922f` (21,539 bytes); evaluator source/validation
-  `sha256:103b13f61031cde96a74f6af09f86a5f3d4a550af3664d0279f1a9cdafcc8671`/
-  `sha256:7e544db90de1bbff5acca45e8aaec6e9b1e18a34b05a4f388bdffa4503149698`. R12 and intermediate seals are preserved
-  invalidated predecessors. R13 made no observation, candidate, plan, journal, call or spend.
+- Budget amendment content/file is `sha256:9df732d5bf8d5c754ea47084e5dbf9c490f78882bcc9fbc6b0c5d2e2b8bf220d`/
+  `sha256:a2532b466c55659c72e6602a37a6a6114ad42d90c5fd78502ad976f9384f9e53` (7,248 bytes). It binds development
+  evidence only, equal 1M/100k/1.1M token limits and `$57.60`/`$60`, with all runtime authority false.
+- Contract R8 content/file/source is `sha256:77de0d1519cfc7032bda023bf1f1cca86449533fe3a1be39887d5784fc2d013b`/
+  `sha256:014085aea45b31c40d53a3c83483ca79585ec1ca105631a53b9c8e64ff465432` (21,501 bytes)/
+  `sha256:218e5a2fc36aaff18474a66297f0c1a8f3fa66cb8526a893dec41829962557b8`.
+- Binding R9 content/file/source is `sha256:a26bb59cb5b16d6d3a94676b195b3fb36a21e974216088780c90c92aaac2bd2b`/
+  `sha256:6b1597d3b0f4202aeadaa424b67e06ec6e37ff7abfd8fd62f4af23208f3aaf68` (5,683 bytes)/
+  `sha256:04eeab81a9a8130dbe5624068317ee3d68711465d18e3e8032ffbeb92e3fdcf6`.
+- Materialization R5 content/file/source is `sha256:a7d6347c13368c60b65933041cfc33748fdb780549fa0ad9d358fcfcf4843f60`/
+  `sha256:34186e94134bffceaa05f893c24f9cdf5e1981e4e13c8b37de541ba49a5d6e17` (53,234 bytes)/
+  `sha256:c265e6f6e6484ea514d418fceacbd448c6db0972c7fdb4c21c770da8f56380cf`; task bindings remain
+  `sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f`, added task opens/price GETs are zero.
+- Execution R6 content/file/evaluator source is `sha256:375727d1c32c93105afb1875da0fadedb9dcb05bdfa17b088aade293bee72c1a`/
+  `sha256:380c4ed66f1df3b7e80db490144ac7c1674de59229e6d72084b0e145b2b92232` (17,212 bytes)/
+  `sha256:965aef5aa3da61dcfbb11b7cc4e1f5ccfd3f0d83c450986f028ed812a6e1653b`.
+- Preflight/dispatcher R14 content/file/evaluator source is `sha256:d71f0ad53cadb2957e1870cc40291a4979d0eed93321a0d082233408c03aed5c`/
+  `sha256:259407d7c30113096844541b01f93ea18e78c5dd0d471c261311657acd7135a3` (21,984 bytes)/
+  `sha256:f9660226185d33726bc3585381d0606234e6231faf5d9a9f62b79b44b67c20fd`. It made no observation, candidate, call or spend.
 
 ## R7 held-out live inconclusive campaign
 

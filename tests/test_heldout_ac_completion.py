@@ -251,7 +251,7 @@ def _completion_input() -> tuple[Any, dict[str, Any]]:
     ]
     schedule_hash = sha256_json(runtime_schedule)
     cost_body = {
-        "schema_version": "heldout-ac-full-schedule-cost-qualification-v1",
+        "schema_version": "heldout-ac-full-schedule-cost-qualification-v2",
         "passed": True,
         "fully_settled": True,
         "full_schedule_reserved": True,
@@ -261,8 +261,8 @@ def _completion_input() -> tuple[Any, dict[str, Any]]:
         "unsettled_runs": 0,
         "cost_censoring_events": 0,
         "accrued_cost_nanos": sum(row["settlement"]["token_derived_cost_nanos"] for row in rows),
-        "full_schedule_reserve_nanos": 252_000_000_000,
-        "hard_cap_nanos": 275_000_000_000,
+        "full_schedule_reserve_nanos": 57_600_000_000,
+        "hard_cap_nanos": 60_000_000_000,
         "schedule_hash": schedule_hash,
         "campaign_cost_control_hash": completion.heldout_ac_campaign_cost_control_hash(
             suite=suite,
@@ -679,8 +679,8 @@ def test_authenticated_completion_is_the_only_official_analysis_path(
     assert projected.accrued_cost_nanos == sum(
         row.row.usage_evidence.token_derived_cost_nanos for row in rows
     )
-    assert projected.full_schedule_reserve_nanos == 252_000_000_000
-    assert projected.hard_cap_nanos == 275_000_000_000
+    assert projected.full_schedule_reserve_nanos == 57_600_000_000
+    assert projected.hard_cap_nanos == 60_000_000_000
     assert envelope.official is True
     assert envelope.analysis.eligible_rows == 48
     assert envelope.suite_content_hash == suite.content_hash

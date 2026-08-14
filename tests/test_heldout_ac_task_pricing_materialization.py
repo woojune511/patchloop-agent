@@ -7,30 +7,20 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from patchloop.agent.tools import TOOL_SCHEMAS_V2
-from patchloop.evals.evaluator_v2_source_qualification import (
-    evaluator_v2_task_private_markers,
-)
-from patchloop.evals.heldout_ac_task_evaluator import (
-    load_heldout_ac_task_evaluator_plan,
-)
+from patchloop.evals import heldout_ac_task_pricing_materialization as materialization
 from patchloop.evals.heldout_ac_task_pricing_materialization import (
     OUTPUT_PATH,
     PLAN_HASH,
     PRICING_HASH,
-    R3_FILE_BYTES,
-    R3_FILE_SHA256,
-    R3_PATH,
+    R4_FILE_BYTES,
+    R4_FILE_SHA256,
+    R4_PATH,
     HeldoutACTaskPricingMaterialization,
     _build_candidate,
-    _contract_template_hash,
-    _materialize_task_template,
     run_heldout_ac_task_pricing_materialization,
     validate_heldout_ac_task_pricing_materialization,
 )
-from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes, sha256_json
-from patchloop.verifier.runtime_evidence import build_evaluator_safety_contract_v2
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,16 +32,16 @@ def _candidate() -> HeldoutACTaskPricingMaterialization:
     )
 
 
-def test_offline_candidate_materializes_exact_12_templates_and_pricing() -> None:
+def test_offline_candidate_reuses_exact_12_templates_and_amends_pricing() -> None:
     candidate = _candidate()
 
-    assert candidate.schema_version == "heldout-ac-task-pricing-materialization-v4"
-    assert candidate.materialization_id.endswith("20260815-r4")
+    assert candidate.schema_version == "heldout-ac-task-pricing-materialization-v5"
+    assert candidate.materialization_id.endswith("20260815-r5")
     assert candidate.binding_source_predecessor.path.endswith(
-        "heldout-ac-binding-adapter-source-qualification-r8.json"
+        "heldout-ac-binding-adapter-source-qualification-r9.json"
     )
     assert candidate.materialization_predecessor.disposition == (
-        "invalidated-by-formatting-and-binding-source-r8-successor"
+        "invalidated-by-development-budget-amendment-successor"
     )
     assert len(candidate.task_bindings) == 12
     assert len({item.task.task_id for item in candidate.task_bindings}) == 12
@@ -69,16 +59,22 @@ def test_offline_candidate_materializes_exact_12_templates_and_pricing() -> None
         "cache_write_input": 750,
         "output": 4_500,
     }
-    assert candidate.pricing.per_run_reserve_nanos == 5_250_000_000
-    assert candidate.pricing.full_schedule_reserve_nanos == 252_000_000_000
-    assert candidate.pricing.hard_cap_nanos == 275_000_000_000
+    assert candidate.pricing.max_cumulative_input_tokens_per_run == 1_000_000
+    assert candidate.pricing.max_cumulative_output_tokens_per_run == 100_000
+    assert candidate.pricing.per_run_reserve_nanos == 1_200_000_000
+    assert candidate.pricing.full_schedule_reserve_nanos == 57_600_000_000
+    assert candidate.pricing.hard_cap_nanos == 60_000_000_000
     assert candidate.authority.provider_calls_made == 0
     assert candidate.authority.execution_candidate_authorized is False
     assert candidate.authority.predecessor_official_pricing_public_get_requests == 1
     assert candidate.authority.added_official_pricing_public_get_requests == 0
     assert candidate.pricing.content_hash == PRICING_HASH
-    r3 = json.loads((ROOT / R3_PATH).read_bytes())
-    assert candidate.pricing.model_dump(mode="json") == r3["pricing"]
+    assert candidate.authority.added_distinct_task_packages_materialized == 0
+    assert candidate.authority.added_task_evaluator_templates_materialized == 0
+    r4 = json.loads((ROOT / R4_PATH).read_bytes())
+    assert [item.model_dump(mode="json") for item in candidate.task_bindings] == r4["task_bindings"]
+    assert candidate.pricing.official_capture == r4["pricing"]["official_capture"]
+    assert candidate.pricing.official_capture_hash == r4["pricing"]["official_capture_hash"]
 
 
 def test_retained_r1_pricing_reuse_makes_no_added_public_get(
@@ -87,7 +83,7 @@ def test_retained_r1_pricing_reuse_makes_no_added_public_get(
     import patchloop.evals.d136_fixed_pricing_capture as pricing_capture
 
     def unexpected_get(*_args: object, **_kwargs: object) -> object:
-        raise AssertionError("R4 materialization must not make a pricing GET")
+        raise AssertionError("R5 materialization must not make a pricing GET")
 
     monkeypatch.setattr(pricing_capture, "capture_official_pricing_evidence", unexpected_get)
     candidate = _candidate()
@@ -96,34 +92,17 @@ def test_retained_r1_pricing_reuse_makes_no_added_public_get(
     assert candidate.authority.added_official_pricing_public_get_requests == 0
 
 
-def test_materialized_record_serializes_no_private_marker_value() -> None:
+def test_cost_only_successor_never_reopens_a_task_package(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def unexpected_task_open(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("R5 cost-only successor must not reopen held-out task packages")
+
+    monkeypatch.setattr(materialization, "load_task_package", unexpected_task_open)
     candidate = _candidate()
-    serialized = candidate.model_dump_json()
-    plan = load_heldout_ac_task_evaluator_plan(repository=ROOT)
 
-    for selected in plan.tasks:
-        package = load_task_package(ROOT / selected.task_path)
-        for marker in evaluator_v2_task_private_markers(package):
-            assert marker.decode("utf-8") not in serialized
-
-
-def test_template_hash_is_invariant_to_future_run_secret_expansion() -> None:
-    plan = load_heldout_ac_task_evaluator_plan(repository=ROOT)
-    selected = plan.tasks[0]
-    package = load_task_package(ROOT / selected.task_path)
-    template = _materialize_task_template(root=ROOT, plan=plan, expected=selected)
-    private_markers = evaluator_v2_task_private_markers(package)
-    expanded = build_evaluator_safety_contract_v2(
-        package=package,
-        tool_schemas=TOOL_SCHEMAS_V2,
-        private_markers=tuple(sorted((*private_markers, b"future-runtime-secret-marker"))),
-        contract_id=f"heldout_ac_evaluator_v2_{selected.task_id.replace('-', '_')}",
-    )
-
-    assert expanded.content_hash != template.baseline_private_contract_hash
-    assert (
-        _contract_template_hash(expanded) == template.run_secret_independent_contract_template_hash
-    )
+    assert len(candidate.task_bindings) == 12
+    assert candidate.authority.evaluator_side_task_package_access_authorized is False
 
 
 def test_rehashed_pricing_or_task_projection_drift_fails_closed() -> None:
@@ -159,11 +138,11 @@ def test_rehashed_pricing_or_task_projection_drift_fails_closed() -> None:
         HeldoutACTaskPricingMaterialization.model_validate_json(json.dumps(task_drift))
 
 
-def test_r3_is_byte_preserved_and_checked_in_r4_is_idempotent() -> None:
-    sealed_r3 = ROOT / R3_PATH
-    r3_raw = sealed_r3.read_bytes()
-    assert len(r3_raw) == R3_FILE_BYTES
-    assert sha256_bytes(r3_raw) == R3_FILE_SHA256
+def test_r4_is_byte_preserved_and_checked_in_r5_is_idempotent() -> None:
+    sealed_r4 = ROOT / R4_PATH
+    r4_raw = sealed_r4.read_bytes()
+    assert len(r4_raw) == R4_FILE_BYTES
+    assert sha256_bytes(r4_raw) == R4_FILE_SHA256
 
     selected = ROOT / OUTPUT_PATH
     before = selected.read_bytes()
@@ -175,4 +154,4 @@ def test_r3_is_byte_preserved_and_checked_in_r4_is_idempotent() -> None:
     assert validated["added_pricing_public_get_requests"] == 0
     assert selected.read_bytes() == before
     assert selected.stat().st_mtime_ns == before_mtime
-    assert sealed_r3.read_bytes() == r3_raw
+    assert sealed_r4.read_bytes() == r4_raw

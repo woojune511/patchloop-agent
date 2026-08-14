@@ -180,7 +180,9 @@ def preflight_heldout_ac(
         "execution_candidate_ready": candidate is not None,
         "ready": False,
         "blockers": blockers,
-        "candidate": candidate.model_dump(mode="json") if candidate is not None else None,
+        "candidate": (
+            candidate.model_dump(mode="json", exclude_none=True) if candidate is not None else None
+        ),
         "execution_hash": candidate.execution_hash if candidate is not None else None,
         "environment": {
             "git": git,
@@ -194,8 +196,10 @@ def preflight_heldout_ac(
             },
         },
         "source_qualification_hash": source_binding.source_qualification_hash,
-        "full_schedule_reserve_usd": 252.0,
-        "hard_cap_usd": 275.0,
+        "full_schedule_reserve_usd": (
+            candidate.full_schedule_reserve_usd if candidate is not None else 57.6
+        ),
+        "hard_cap_usd": candidate.hard_cap_usd if candidate is not None else 60.0,
         "paid_approval_present": False,
         "provider_calls_made": 0,
         "evaluator_calls_made": 0,

@@ -23,9 +23,9 @@
   `$252`/`$275` approval and sealed 2 settled/1 observed-unsettled/45 not-started; costs were `$0.15699525` settled and
   `$0.41801625` total observed-started. Successor attribution is `EVALUATOR_CONTROL_CONTRACT_COLLISION`, with zero
   agent-visible marker matches. No complete analysis or memory claim follows.
-- Current zero-authority chain is contract R7, binding R8, materialization R4, execution R5 and
-  preflight/dispatcher R13. R12/intermediate seals are invalidated predecessors; R13 created no candidate, observation,
-  call, approval or spend.
+- Development-only evidence lowers equal A/C to 1M/100k/1.1M tokens and `$57.60`/`$60`; R11 outcomes and held-out
+  task content were excluded. Contract R8 → binding R9 → materialization R5 → execution R6 → preflight R14 remains
+  zero-authority: no candidate, observation, approval or spend.
 - Local no-call preflight permits at most three transient pre-provider attempts. Paid campaign identity ignores
   readiness timestamps and is one-use by semantic source/suite/schedule; a future run needs committed qualified source,
   fresh clean candidate and separate exact approval. No provider execution is currently authorized.

@@ -89,8 +89,10 @@ def test_candidate_binds_exact_48_rows_without_live_authority() -> None:
     assert candidate.status == "NO_CALL_CANDIDATE_READY_EXECUTION_NOT_AUTHORIZED"
     assert len(candidate.schedule) == 48
     assert candidate.source_qualification.source_qualification_hash == QUALIFICATION_HASH
-    assert candidate.full_schedule_reserve_usd == 252.0
-    assert candidate.hard_cap_usd == 275.0
+    assert candidate.schema_version == "heldout-ac-execution-candidate-v2"
+    assert candidate.budget_amendment is not None
+    assert candidate.full_schedule_reserve_usd == 57.6
+    assert candidate.hard_cap_usd == 60.0
     assert candidate.exact_paid_approval_present is False
     assert candidate.provider_execution_authorized is False
     assert candidate.cost_reservation_or_spend_authorized is False
@@ -198,7 +200,9 @@ def test_runtime_secret_expansion_matches_r4_template_and_builds_manifest() -> N
     assert manifest.experiment.execution_hash == candidate.execution_hash
     assert manifest.experiment.schedule_row_id == row.schedule_row_id
     assert manifest.memory.condition.value == row.condition
-    assert manifest.budget.max_cumulative_input_tokens == 4_000_000
+    assert manifest.budget.max_cumulative_input_tokens == 1_000_000
+    assert manifest.budget.max_cumulative_output_tokens == 100_000
+    assert manifest.budget.max_total_tokens == 1_100_000
     assert (
         validate_evaluator_v2_manifest_authority(
             manifest,

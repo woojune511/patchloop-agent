@@ -1,13 +1,13 @@
 """Append-only source gate for held-out task/evaluator and persisted adapters.
 
-R8 binds the metadata-only 12-task plan and the source that can later
+R9 binds the metadata-only 12-task plan and the source that can later
 materialize evaluator-v2 contracts and authenticate durable row evidence.  It
 does not open task packages, materialize a task contract, authenticate a run,
 refresh pricing, create a candidate, or authorize execution.
 
-R7 remains byte-preserved as the zero-authority predecessor invalidated by the
-formatting and contract-closure boundary advances.  R8 consumes the current R7
-contract-source qualification.
+R8 remains byte-preserved as the zero-authority predecessor invalidated by the
+budget-amendment source advance.  R9 consumes the current R8 contract-source
+qualification.
 """
 
 from __future__ import annotations
@@ -25,25 +25,25 @@ from patchloop.evals.heldout_ac_contracts import HeldoutACFrozenModel
 from patchloop.runtime import repository_root
 from patchloop.util import safe_relative_path, sha256_bytes, sha256_json
 
-SCHEMA_VERSION = "heldout-ac-binding-adapter-source-qualification-v6"
-QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-binding-adapter-20260815-r8"
+SCHEMA_VERSION = "heldout-ac-binding-adapter-source-qualification-v7"
+QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-binding-adapter-20260815-r9"
 STATUS = "OFFLINE_BINDING_ADAPTER_SOURCE_QUALIFIED_RUNTIME_MATERIALIZATION_CLOSED"
 OUTPUT_PATH = Path(
+    "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r9.json"
+)
+R8_PATH = Path(
     "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r8.json"
 )
-R7_PATH = Path(
-    "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r7.json"
+R8_CONTENT_HASH = "sha256:ac75004d98f647dbedf00819b93b40e85119c4c1deb244080f42c59dda48918c"
+R8_SOURCE_HASH = "sha256:20eb314516985fd6aa8e7f1970fd754bb3c839607f5b73b55f526b305662118c"
+R8_FILE_SHA256 = "sha256:4fa0dc9629a7fa2030c1af4f3831ecc169330360c6f0813d5778517723c39b13"
+R8_FILE_BYTES = 5_674
+R8_CONTRACT_PATH = Path(
+    "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r8.json"
 )
-R7_CONTENT_HASH = "sha256:d1c8049f80e11b70e37895f6eca2ad7a56c74d890229f33ff2ec31d52e627b1b"
-R7_SOURCE_HASH = "sha256:520d82d044edf8761a34946aca76eee4255cea10738bed138b46ac70a3644574"
-R7_FILE_SHA256 = "sha256:9e9629570eae6fb2aaaeddd4be7f139a8cc0fc539f6a86cbfd5e8bf01ad76a0f"
-R7_FILE_BYTES = 5_697
-R7_CONTRACT_PATH = Path(
-    "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r7.json"
-)
-R7_CONTRACT_CONTENT_HASH = "sha256:27cfb3d91c326c1e767a6e63580941d48e14a7872783db39dbdacdd075f08ea5"
-R7_CONTRACT_FILE_SHA256 = "sha256:fec1c4ea12fdd8399f989ad9b0dba02a22071604eb8fc431f821ae5900ed36fa"
-R7_CONTRACT_FILE_BYTES = 20_544
+R8_CONTRACT_CONTENT_HASH = "sha256:77de0d1519cfc7032bda023bf1f1cca86449533fe3a1be39887d5784fc2d013b"
+R8_CONTRACT_FILE_SHA256 = "sha256:014085aea45b31c40d53a3c83483ca79585ec1ca105631a53b9c8e64ff465432"
+R8_CONTRACT_FILE_BYTES = 21_501
 NEXT_GATE = "authorized-task-package-materialization-and-fresh-pricing-before-candidate"
 
 SOURCE_PATHS = tuple(
@@ -84,22 +84,22 @@ class FileBinding(HeldoutACFrozenModel):
         return safe_relative_path(value, field_name="held-out binding source path")
 
 
-class R7Predecessor(FileBinding):
+class R8Predecessor(FileBinding):
     path: Literal[
-        "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r7.json"
+        "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r8.json"
     ]
-    file_bytes: Literal[R7_FILE_BYTES]
-    file_sha256: Literal[R7_FILE_SHA256]
-    source_qualification_hash: Literal[R7_CONTENT_HASH]
-    source_hash: Literal[R7_SOURCE_HASH]
+    file_bytes: Literal[R8_FILE_BYTES]
+    file_sha256: Literal[R8_FILE_SHA256]
+    source_qualification_hash: Literal[R8_CONTENT_HASH]
+    source_hash: Literal[R8_SOURCE_HASH]
     contract_source_qualification_hash: Literal[
-        "sha256:01b16ddfe83524e539fcc5624f74fa2f6922a9266f1095b1a6b992cdfd4c8fcf"
+        "sha256:27cfb3d91c326c1e767a6e63580941d48e14a7872783db39dbdacdd075f08ea5"
     ]
     original_status: Literal[
         "OFFLINE_BINDING_ADAPTER_SOURCE_QUALIFIED_RUNTIME_MATERIALIZATION_CLOSED"
     ]
-    disposition: Literal["invalidated-by-formatting-and-contract-source-successor"]
-    invalidation_reason: Literal["post-r7-formatting-and-contract-module-scope-boundary"]
+    disposition: Literal["invalidated-by-development-budget-amendment-contract-successor"]
+    invalidation_reason: Literal["post-r8-development-budget-amendment-contract-successor"]
     current_source_replay_valid: Literal[False]
 
 
@@ -108,7 +108,7 @@ class BindingProjection(HeldoutACFrozenModel):
     same_repo_task_count: Literal[6]
     cross_repo_task_count: Literal[6]
     task_evaluator_plan_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    r7_contract_source_replay_valid: Literal[True]
+    r8_contract_source_replay_valid: Literal[True]
     metadata_task_bindings_present: Literal[True]
     task_package_files_opened: Literal[False]
     private_task_files_opened: Literal[False]
@@ -157,9 +157,9 @@ class HeldoutACBindingSourceQualification(HeldoutACFrozenModel):
     qualification_id: Literal[QUALIFICATION_ID] = QUALIFICATION_ID
     status: Literal[STATUS] = STATUS
     recorded_at: datetime
-    predecessor: R7Predecessor
+    predecessor: R8Predecessor
     contract_source_qualification: FileBinding
-    contract_source_qualification_hash: Literal[R7_CONTRACT_CONTENT_HASH]
+    contract_source_qualification_hash: Literal[R8_CONTRACT_CONTENT_HASH]
     suite_content_hash: Literal[
         "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa"
     ]
@@ -184,9 +184,9 @@ class HeldoutACBindingSourceQualification(HeldoutACFrozenModel):
         if validation_paths != tuple(item.as_posix() for item in VALIDATION_PATHS):
             raise ValueError("held-out binding validation inventory differs")
         if (
-            self.contract_source_qualification.path != R7_CONTRACT_PATH.as_posix()
-            or self.contract_source_qualification.file_bytes != R7_CONTRACT_FILE_BYTES
-            or self.contract_source_qualification.file_sha256 != R7_CONTRACT_FILE_SHA256
+            self.contract_source_qualification.path != R8_CONTRACT_PATH.as_posix()
+            or self.contract_source_qualification.file_bytes != R8_CONTRACT_FILE_BYTES
+            or self.contract_source_qualification.file_sha256 != R8_CONTRACT_FILE_SHA256
         ):
             raise ValueError("held-out contract source qualification binding differs")
         if self.source_hash != sha256_json(
@@ -217,24 +217,24 @@ def _binding(root: Path, relative: Path) -> FileBinding:
     return FileBinding(path=relative.as_posix(), file_bytes=len(raw), file_sha256=sha256_bytes(raw))
 
 
-def _r7_predecessor(root: Path) -> R7Predecessor:
-    raw = (root / R7_PATH).read_bytes()
+def _r8_predecessor(root: Path) -> R8Predecessor:
+    raw = (root / R8_PATH).read_bytes()
     try:
         payload = json.loads(raw)
     except (UnicodeDecodeError, ValueError) as exc:
         raise HeldoutACBindingSourceQualificationError(
-            "held-out R7 predecessor is invalid"
+            "held-out R8 predecessor is invalid"
         ) from exc
     if (
-        len(raw) != R7_FILE_BYTES
-        or sha256_bytes(raw) != R7_FILE_SHA256
+        len(raw) != R8_FILE_BYTES
+        or sha256_bytes(raw) != R8_FILE_SHA256
         or not isinstance(payload, dict)
-        or payload.get("content_hash") != R7_CONTENT_HASH
-        or payload.get("source_hash") != R7_SOURCE_HASH
+        or payload.get("content_hash") != R8_CONTENT_HASH
+        or payload.get("source_hash") != R8_SOURCE_HASH
         or payload.get("contract_source_qualification_hash")
-        != "sha256:01b16ddfe83524e539fcc5624f74fa2f6922a9266f1095b1a6b992cdfd4c8fcf"
+        != "sha256:27cfb3d91c326c1e767a6e63580941d48e14a7872783db39dbdacdd075f08ea5"
         or payload.get("status") != STATUS
-        or (payload.get("projection") or {}).get("r6_contract_source_replay_valid") is not True
+        or (payload.get("projection") or {}).get("r7_contract_source_replay_valid") is not True
         or not isinstance(payload.get("authority"), dict)
         or not all(
             value is False
@@ -250,17 +250,17 @@ def _r7_predecessor(root: Path) -> R7Predecessor:
             for item in (*payload.get("source_files", ()), *payload.get("validation_files", ()))
         )
     ):
-        raise HeldoutACBindingSourceQualificationError("held-out R7 predecessor drifted")
-    return R7Predecessor(
-        path=R7_PATH.as_posix(),
+        raise HeldoutACBindingSourceQualificationError("held-out R8 predecessor drifted")
+    return R8Predecessor(
+        path=R8_PATH.as_posix(),
         file_bytes=len(raw),
         file_sha256=sha256_bytes(raw),
         source_qualification_hash=payload["content_hash"],
         source_hash=payload["source_hash"],
         contract_source_qualification_hash=payload["contract_source_qualification_hash"],
         original_status=payload["status"],
-        disposition="invalidated-by-formatting-and-contract-source-successor",
-        invalidation_reason="post-r7-formatting-and-contract-module-scope-boundary",
+        disposition="invalidated-by-development-budget-amendment-contract-successor",
+        invalidation_reason="post-r8-development-budget-amendment-contract-successor",
         current_source_replay_valid=False,
     )
 
@@ -273,10 +273,10 @@ def _build_candidate(root: Path, *, recorded_at: datetime) -> HeldoutACBindingSo
         load_heldout_ac_task_evaluator_plan,
     )
 
-    predecessor = _r7_predecessor(root)
-    r7_summary = validate_heldout_ac_source_qualification(repository=root)
-    if r7_summary.get("source_qualification_hash") != R7_CONTRACT_CONTENT_HASH:
-        raise HeldoutACBindingSourceQualificationError("held-out R7 contract source replay differs")
+    predecessor = _r8_predecessor(root)
+    r8_summary = validate_heldout_ac_source_qualification(repository=root)
+    if r8_summary.get("source_qualification_hash") != R8_CONTRACT_CONTENT_HASH:
+        raise HeldoutACBindingSourceQualificationError("held-out R8 contract source replay differs")
     plan = load_heldout_ac_task_evaluator_plan(repository=root)
     source_files = tuple(_binding(root, item) for item in SOURCE_PATHS)
     validation_files = tuple(_binding(root, item) for item in VALIDATION_PATHS)
@@ -285,7 +285,7 @@ def _build_candidate(root: Path, *, recorded_at: datetime) -> HeldoutACBindingSo
         same_repo_task_count=sum(item.role == "core-same-repo" for item in plan.tasks),
         cross_repo_task_count=sum(item.role == "core-cross-repo" for item in plan.tasks),
         task_evaluator_plan_content_hash=plan.content_hash,
-        r7_contract_source_replay_valid=True,
+        r8_contract_source_replay_valid=True,
         metadata_task_bindings_present=True,
         task_package_files_opened=False,
         private_task_files_opened=False,
@@ -312,8 +312,8 @@ def _build_candidate(root: Path, *, recorded_at: datetime) -> HeldoutACBindingSo
         "status": STATUS,
         "recorded_at": recorded_at.isoformat().replace("+00:00", "Z"),
         "predecessor": predecessor.model_dump(mode="json"),
-        "contract_source_qualification": _binding(root, R7_CONTRACT_PATH).model_dump(mode="json"),
-        "contract_source_qualification_hash": R7_CONTRACT_CONTENT_HASH,
+        "contract_source_qualification": _binding(root, R8_CONTRACT_PATH).model_dump(mode="json"),
+        "contract_source_qualification_hash": R8_CONTRACT_CONTENT_HASH,
         "suite_content_hash": plan.suite_content_hash,
         "dataset_manifest_file_sha256": plan.dataset_manifest_file_sha256,
         "source_files": [item.model_dump(mode="json") for item in source_files],
@@ -330,8 +330,8 @@ def _build_candidate(root: Path, *, recorded_at: datetime) -> HeldoutACBindingSo
         status=STATUS,
         recorded_at=recorded_at,
         predecessor=predecessor,
-        contract_source_qualification=_binding(root, R7_CONTRACT_PATH),
-        contract_source_qualification_hash=R7_CONTRACT_CONTENT_HASH,
+        contract_source_qualification=_binding(root, R8_CONTRACT_PATH),
+        contract_source_qualification_hash=R8_CONTRACT_CONTENT_HASH,
         suite_content_hash=plan.suite_content_hash,
         dataset_manifest_file_sha256=plan.dataset_manifest_file_sha256,
         source_files=source_files,
@@ -433,15 +433,15 @@ __all__ = [
     "NEXT_GATE",
     "OUTPUT_PATH",
     "QUALIFICATION_ID",
-    "R7_CONTENT_HASH",
-    "R7_CONTRACT_CONTENT_HASH",
-    "R7_CONTRACT_FILE_BYTES",
-    "R7_CONTRACT_FILE_SHA256",
-    "R7_CONTRACT_PATH",
-    "R7_FILE_BYTES",
-    "R7_FILE_SHA256",
-    "R7_PATH",
-    "R7_SOURCE_HASH",
+    "R8_CONTENT_HASH",
+    "R8_CONTRACT_CONTENT_HASH",
+    "R8_CONTRACT_FILE_BYTES",
+    "R8_CONTRACT_FILE_SHA256",
+    "R8_CONTRACT_PATH",
+    "R8_FILE_BYTES",
+    "R8_FILE_SHA256",
+    "R8_PATH",
+    "R8_SOURCE_HASH",
     "SCHEMA_VERSION",
     "SOURCE_PATHS",
     "STATUS",
