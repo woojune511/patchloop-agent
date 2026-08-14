@@ -50,13 +50,13 @@ predecessors; materialization R1 records 12 opaque run-secret-independent templa
 `$0.75`/`$0.075`/`$4.50` prices. One clean no-call at commit `391c4e2b581bde0b184e42e7fb7d8ee7fe9a542b`
 found SDK 2.47.0 and key presence but no Docker daemon. Its source identity is now superseded.
 
-Held-out preflight/dispatcher R7 independently binds the current candidate producer, exact paid-plan boundary,
-append-only 48-row journal, one-use row consumption, persisted evaluator-v2 authentication, complete/inconclusive
-finalization, replay and preregistered analysis unlock. Pre-row guard failure now seals a zero-cost inconclusive result
-and consumes the plan. R3-R6 are predecessors; R7 created no candidate, plan, journal, result, approval or call.
+Held-out R7 candidate `sha256:2f51935b...b2afa` consumed its 48-row `$252`/`$275` approval. Loguru/structured
+resolved with four PASS verdicts (44,009 input, 7,388 output; `$0.06625275` token-derived cost), but 393 CRLF
+qualification lines failed LF authentication. The sealed result is 0 settled/1 unsettled/47 not-started, with no
+analysis or retry. R11 qualifies canonical UTF-8/LF production; R8-R10 are zero-authority pre-seal predecessors.
 
 ## Next gate
 
-Commit the R7-qualified successor, then run one fresh read-only no-call preflight on execution-clean source. A READY
+Commit the R11-qualified successor, then run one fresh read-only no-call preflight on execution-clean source. A READY
 result would create a new secret-free candidate only. Provider execution remains closed until a separate approval
 binds that exact new hash, all 48 rows, the `$252` full-schedule reserve and `$275` hard cap.

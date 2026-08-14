@@ -11,8 +11,9 @@ four-run development A/C readiness -> preregister held-out A/C -> separately aut
 ### 2026-08-14 — isolate held-out contracts from historical execution
 
 - The 48-row suite uses dedicated strict models and a metadata-only loader, not `ExperimentSuite` or the live runner.
-- Historical completion fixtures remain unofficial. Official held-out analysis may be produced only by the R7
+- Historical completion fixtures remain unofficial. Official held-out analysis may be produced only by the current
   dispatcher after 48 exact persisted-v2 authenticated and settled rows; any confound seals the matrix inconclusive.
+- R7 sealed after CRLF/LF qualification-byte drift; its resolved row is diagnostic only. R11 needs fresh gates.
 - R1 is the pre-seal-race predecessor; R2 binds fixture source. R5 binds the 12-task metadata plan and hardened
   materializer/authenticator while replaying R2. R3/R4 preserve pre-hardening/pre-format source.
 - Materialization R1 records 12 opaque evaluator templates and one fresh public pricing GET. It deliberately excludes

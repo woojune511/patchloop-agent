@@ -122,7 +122,6 @@ neither is design-based or a population confidence claim. Eligible evaluator FAI
 infrastructure confounds are inconclusive. Refreshed prices preserve `$252`/`$275`; execution/unblinding remain closed.
 
 Contract R2, binding R5 and execution/preflight R1/R2 are immutable predecessors. Materialization R1 records opaque
-templates and one price capture without outcomes/private values. Current preflight/dispatcher R7 source-qualifies the
-approval-gated dispatcher: 48 append-only one-use rows, persisted evaluator-v2/qualification/usage authentication,
-full-schedule settlement, post-run replay, stop-on-confound sealing and analysis only after the complete matrix. It created
-no candidate, plan, journal, authenticated row, approval or call; execution/unblinding remain closed.
+templates and one price capture without outcomes/private values. Current preflight/dispatcher R11 source-qualifies the
+approval-gated 48-row dispatcher and complete-matrix analysis. R7 sealed 0 settled/1 unsettled/47 not-started after
+CRLF/LF qualification-byte drift. R11 created no candidate, approval or call; execution remains separately gated.

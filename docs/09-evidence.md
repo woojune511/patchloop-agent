@@ -49,15 +49,25 @@ Machine artifacts under `reports/` are authoritative. Historical narrative is ar
   file `sha256:10ccf88e9255c6ae0a0d8246ca8f2d478137bac03b7ffd7e6f59d23b938e942b` (18,413 bytes); source
   `sha256:69edd395dc19b80be0ce9dd17995530b77d261a0ff6eda8544a6ba058f377566`; validation
   `sha256:7564f76f74a1c1907a08216a2bb4577a6ec3ab5ed24457a70e308cd906e59c75`.
-- Current preflight/dispatcher R7: content `sha256:8491c1a6faf1e3affa961853705e06eb2b7afbe04d440e33d36cbe66757a003c`;
-  file `sha256:d4bf85b1d0e26bc9a6f2bdc9fb809ab6ca04020d6cf9f766ba194b56773581c7` (18,414 bytes); source
-  `sha256:47dd2bc2895bae8e1fcb3fe277beb727e917f4b1d99cb5f78ef599f4696ed8f0`; validation
-  `sha256:ff34096453b79307bf59a95d2bedc83ffc811da61c700ee1628cc0aeb52ee1d2`.
+- R7 content/file `sha256:8491c1a6...a003c`/`sha256:d4bf85b1...581c7`; R8 zero-authority pre-seal
+  content/file `sha256:b64b3c83...3aab`/`sha256:296716c8...e7fd3` (19,351 bytes).
+- R9/R10 zero-authority predecessors content/file: `sha256:dafac691...223a9`/`sha256:e72c619c...5854` and
+  `sha256:89477de2...7922`/`sha256:7b338220...6f21`.
+- Current R11 content/file `sha256:13e3124c7f0ca0b3ed7afca68ea0f523f2eea4dc4c358cef37db29ac53d0b22b`/
+  `sha256:45b21684520968903ab57afc7a4e0d9f4e66022ad0752140d24b988ba0df747f` (19,359 bytes); source/validation
+  `sha256:50b615250f566cd0cb580ab8f16a000d2c23105d10d5c6c9b9f36e0a2ff9ce3a`/
+  `sha256:7de1872c84752f92d57598275e7c512f99eedd84f58ee811d625decdf030d72c`. R11 made no runtime call or artifact.
 
-Materialization R1 opened package/private/reference inputs for hashes and serialized no private value/outcome.
-Source-qualification R7 only read source/validation files. It created 0 candidates, approved
-plans, journals, results, authenticated rows, provider/evaluator/agent/Docker/SDK calls, reservation, spend or official
-analysis. A fresh committed no-call observation and exact paid approval remain separate future gates.
+## R7 held-out live inconclusive campaign
+
+Candidate `sha256:2f51935b...b2afa` at commit `f6a1bda` consumed one 48-row `$252`/`$275` approval. Row 1
+(Loguru/structured) resolved with four PASS verdicts; usage was 44,009 input, 7,388 output, 6 model/6 tool calls and
+`$0.06625275` token-derived but unsettled cost. Its qualified trace used 393 CRLFs (12,868 bytes,
+`sha256:06819ea6...f95`) while the adapter required LF bytes (12,475 bytes, `sha256:91a3fbd1...fee5`), sealing
+0 settled/1 unsettled/47 not-started and no analysis. Journal/final file hashes are `sha256:8e196881...7472`/
+`sha256:70657e66...8e04`. The checked-in index content/file is
+`sha256:0a421d5baf26abd6fa1092dd6c2c6a5f064950be53ba9a2a3f5fd93b7e639157`/
+`sha256:dd50a53a1c19e1214a575c3b37b82400b8961bf9a38e72f39a2aa87b3390b906` (7,854 bytes); it is not an A/C result.
 
 ## R8 complete development-readiness matrix
 

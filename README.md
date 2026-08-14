@@ -20,8 +20,8 @@ unexecuted after offline contract audits. R10 qualified the exact R8 source. R8 
 correction fixes its stale v1/v2 completion projection without rewriting runtime evidence.
 The 48-row held-out A/C design has a metadata-only suite and immutable offline predecessors. Materialization R1 froze
 12 run-secret-independent evaluator templates and refreshed prices without serializing private values or outcomes.
-Current preflight/dispatcher R7 source-qualifies the no-call producer, persisted replay and approval-gated dispatcher;
-it created no candidate, plan, journal, approval or execution.
+Held-out R7 candidate `sha256:2f51935b...b2afa` consumed its `$252`/`$275` approval. Row 1 resolved with four PASS
+verdicts, but CRLF qualification bytes failed LF authentication; 47 rows were not started. R11 qualifies the fix.
 `docs/current-status.md` owns the exact tuple and next gate.
 
 ## Implemented product path
@@ -48,8 +48,7 @@ it created no candidate, plan, journal, approval or execution.
   and 3,600 seconds. Its price-aware reserve is `$3.825`/row, `$15.30`/panel and `$18` hard cap.
 - Those thresholds come from one observed R3 development row: they are neither held-out-safe nor a completion claim.
   R8 candidate `sha256:60c67908...cff9e` and all R3-R8 approvals are consumed; no identity may resume. Held-out A/C
-  is preregistered for 48 rows; templates, pricing, no-call and dispatcher source are bound. Checked-in artifacts
-  contain no current candidate or held-out result, and execution/unblinding, B/D and approval remain closed.
+  R7 campaign is inconclusive; there is no current candidate, approval, B/D authority or official held-out analysis.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

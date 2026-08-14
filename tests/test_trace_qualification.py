@@ -2953,6 +2953,12 @@ def test_live_memory_development_failure_is_qualified_and_eligible(tmp_path) -> 
     run_id, _, failure_id = _terminal_trace(tmp_path)
 
     qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+    qualification_path = tmp_path / "qualifications" / f"{run_id}.json"
+    expected_qualification_bytes = json.dumps(
+        qualification, indent=2, sort_keys=True, ensure_ascii=False
+    ).encode("utf-8")
+    assert qualification_path.read_bytes() == expected_qualification_bytes
+    assert b"\r\n" not in expected_qualification_bytes
 
     assert qualification["schema_version"] == "trace-qualification-v2"
     assert qualification["model_id"] == "gpt-5.4-mini-2026-03-17"

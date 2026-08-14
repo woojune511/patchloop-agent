@@ -21,9 +21,8 @@ uv sync --offline --frozen --extra dev
 These are offline-only. The R8 evidence builder validates the checked-in correction index and immutable R10 binding;
 when local `.patchloop` originals exist, it also rechecks the complete external chain. Current source intentionally
 differs from consumed R10, so do not regenerate R10. The builder never reruns a row or grants runtime/paid authority.
-The held-out builder replays current preflight/dispatcher R7 and preserves R6/R5/R4/R3/R2 bytes. Historical contract R2,
-binding R5 and execution-contract R1 intentionally differ from current source; do not invoke their old builders as a
-current gate. Preflight R7 reads source/validation files only and creates no observation, candidate, plan or journal.
+The held-out builder replays R11 and preserves R10-R2. Old builders are not current gates; R11 qualification makes no
+runtime observation, candidate, plan or journal.
 
 ## Current held-out no-call preflight
 
@@ -51,8 +50,8 @@ hash, 48 rows, `$252` reserve and `$275` cap. Only then is this form valid:
   --approved-execution-hash sha256:<exact-new-candidate>
 ```
 
-Do not run it now. R7 is source qualification only and there is no current candidate or approval. A started row is
-consumed once; a confound seals the remainder `not_started`, and no retry, replacement or resume path exists.
+Do not run it now. R7 and its approval are consumed after a first-row byte confound; R11 has no candidate or approval.
+Rows are one-use, with no retry, replacement or resume.
 
 ## Historical R8 command — do not run
 

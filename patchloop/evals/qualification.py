@@ -12755,7 +12755,7 @@ def qualify_run(
         return payload
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    encoded = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False)
+    encoded = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False).encode("utf-8")
     if path.exists():
         existing = load_trace_qualification(run_id, root=run_root)
         if _normalized_qualification_semantics(existing) != _normalized_qualification_semantics(
@@ -12764,5 +12764,5 @@ def qualify_run(
             raise ContractError(f"trace qualification is immutable: {run_id}")
         return existing
     else:
-        path.write_text(encoded, encoding="utf-8")
+        path.write_bytes(encoded)
     return payload

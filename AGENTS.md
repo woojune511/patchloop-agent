@@ -37,10 +37,9 @@
   result has a stale v1/v2 completion projection; the append-only R8 R4 index records the corrected complete matrix.
 - Exact R10/R9/R8/R6/R5/R4/R3 evidence tuples are owned by `docs/09-evidence.md`. R8 is descriptive development
   readiness only; no causal, held-out, retrieval or general memory-benefit claim follows.
-- Held-out A/C is preregistered for 48 rows. Contract R2, binding R5 and execution/preflight R1/R2 are immutable
-  predecessors; materialization R1 stores 12 opaque templates and prices. Current preflight/dispatcher R7 binds the
-  candidate producer, exact paid plan, append-only dispatcher, persisted-v2 authentication/replay and final analysis
-  gate. R3-R6 are zero-authority pre-activation predecessors. Candidate, approval, call, spend and execution are 0.
+- Held-out R7 candidate `sha256:2f51935b...b2afa` consumed its 48-row `$252`/`$275` approval. Row 1 resolved with
+  four PASS verdicts, but CRLF qualification bytes failed LF authentication; 0 settled/1 unsettled/47 not-started
+  makes the matrix inconclusive. R11 qualifies the byte fix; there is no current candidate, approval or execution.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
 - V1-V25 artifacts are immutable historical evidence. V23 reached Docker and both frames before

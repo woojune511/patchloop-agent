@@ -41,7 +41,7 @@ RUNTIME_CONTRACT_SCHEMA_VERSION = "heldout-ac-runtime-contract-v1"
 RUNTIME_EVIDENCE_SCHEMA_VERSION = "heldout-ac-runtime-evidence-v1"
 JOURNAL_SCHEMA_VERSION = "heldout-ac-campaign-journal-event-v1"
 CALL_GUARD_POLICY_VERSION = "heldout-ac-bounded-call-guard-v1"
-DISPATCH_SOURCE_QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260814-r7"
+DISPATCH_SOURCE_QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260814-r11"
 
 _SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _RUN_ID_RE = re.compile(r"^run_[A-Za-z0-9_-]+$")

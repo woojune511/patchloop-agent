@@ -13,6 +13,11 @@ from patchloop.evals.heldout_ac_preflight_source_qualification import (
     R4_PATH,
     R5_PATH,
     R6_PATH,
+    R7_CAMPAIGN_EVIDENCE_PATH,
+    R7_PATH,
+    R8_PATH,
+    R9_PATH,
+    R10_PATH,
     SOURCE_ENTRYPOINTS,
     STATUS,
     _build_candidate,
@@ -39,7 +44,7 @@ def test_offline_candidate_binds_preflight_closure_without_observation() -> None
         payload.import_closure
     )
     assert payload.projection.scheduled_rows == 48
-    assert payload.projection.r6_predecessor_bytes_preserved is True
+    assert payload.projection.r10_predecessor_bytes_preserved is True
     assert payload.projection.append_only_48_row_dispatcher_bound is True
     assert payload.projection.persisted_v2_authentication_bound is True
     assert payload.projection.persisted_campaign_replay_validator_bound is True
@@ -90,6 +95,46 @@ def test_r6_predecessor_bytes_are_preserved() -> None:
     assert len(selected.read_bytes()) == 18_413
     assert sha256_bytes(selected.read_bytes()) == (
         "sha256:10ccf88e9255c6ae0a0d8246ca8f2d478137bac03b7ffd7e6f59d23b938e942b"
+    )
+
+
+def test_r7_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R7_PATH
+    assert len(selected.read_bytes()) == 18_414
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:d4bf85b1d0e26bc9a6f2bdc9fb809ab6ca04020d6cf9f766ba194b56773581c7"
+    )
+
+
+def test_r7_campaign_evidence_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R7_CAMPAIGN_EVIDENCE_PATH
+    assert len(selected.read_bytes()) == 7_854
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:dd50a53a1c19e1214a575c3b37b82400b8961bf9a38e72f39a2aa87b3390b906"
+    )
+
+
+def test_r8_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R8_PATH
+    assert len(selected.read_bytes()) == 19_351
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:296716c801a627e05d45755f0cf6f164f1296c91c5084715f59b3d1f446e7fd3"
+    )
+
+
+def test_r9_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R9_PATH
+    assert len(selected.read_bytes()) == 19_353
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:e72c619c0ec0272694f7a9edf1dadb39b9b4fcffa0ebedcf17dcc4ba3e355854"
+    )
+
+
+def test_r10_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R10_PATH
+    assert len(selected.read_bytes()) == 19_353
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:7b3382208d57f14ba5929d405464c49bb81137bac56043583764889b73d96f21"
     )
 
 

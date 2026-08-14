@@ -1,9 +1,9 @@
 """Successor source gate for the held-out preflight and paid dispatcher.
 
-R2 through R6 remain immutable.  R7 binds the exact no-call candidate
-producer, the separately approved append-only 48-row dispatcher, and its
-persisted campaign replay validator; it grants no observation, candidate,
-approval, execution, or spend authority.
+R2 through R10 remain immutable.  R11 preserves the consumed R7 campaign and
+binds canonical LF qualification-byte production before another candidate can
+exist.  It grants no observation, candidate, approval, execution, or spend
+authority.
 """
 
 from __future__ import annotations
@@ -26,10 +26,19 @@ from patchloop.evals.heldout_ac_execution import (
 from patchloop.runtime import repository_root
 from patchloop.util import sha256_bytes, sha256_json
 
-SCHEMA_VERSION = "heldout-ac-preflight-dispatch-source-qualification-v6"
-QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260814-r7"
+SCHEMA_VERSION = "heldout-ac-preflight-dispatch-source-qualification-v10"
+QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260814-r11"
 STATUS = "OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"
-OUTPUT_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r7.json")
+OUTPUT_PATH = Path(
+    "reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r11.json"
+)
+R10_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r10.json")
+R9_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r9.json")
+R8_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r8.json")
+R7_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r7.json")
+R7_CAMPAIGN_EVIDENCE_PATH = Path(
+    "reports/heldout-ac/artifacts/heldout-ac-r7-campaign-inconclusive-r1.json"
+)
 R6_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r6.json")
 R5_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r5.json")
 R4_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r4.json")
@@ -58,6 +67,8 @@ VALIDATION_PATHS = (
     Path("tests/test_heldout_ac_dispatcher.py"),
     Path("tests/test_heldout_ac_persisted_adapter.py"),
     Path("tests/test_heldout_ac_analysis.py"),
+    Path("tests/test_heldout_ac_r7_runtime_evidence_index.py"),
+    Path("tests/test_trace_qualification.py"),
 )
 
 
@@ -71,13 +82,23 @@ class FileBinding(HeldoutACFrozenModel):
     file_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
-class R6Binding(FileBinding):
-    path: Literal["reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r6.json"]
+class R10Binding(FileBinding):
+    path: Literal["reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r10.json"]
     source_qualification_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     evaluator_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    original_qualification_id: Literal["core-ac-fixed-bundle-heldout-preflight-source-20260814-r6"]
+    original_qualification_id: Literal["core-ac-fixed-bundle-heldout-preflight-source-20260814-r10"]
     original_status: Literal["OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"]
-    successor_reason: Literal["pre-row-guard-failure-consumption-sealed-before-activation"]
+    successor_reason: Literal["pre-seal-paid-path-source-inventory-closure-hardening"]
+
+
+class R7CampaignEvidenceBinding(FileBinding):
+    path: Literal["reports/heldout-ac/artifacts/heldout-ac-r7-campaign-inconclusive-r1.json"]
+    evidence_id: Literal["core-ac-fixed-bundle-heldout-r7-live-inconclusive-20260814-r1"]
+    content_hash: Literal["sha256:0a421d5baf26abd6fa1092dd6c2c6a5f064950be53ba9a2a3f5fd93b7e639157"]
+    execution_hash: Literal[
+        "sha256:2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa"
+    ]
+    disposition: Literal["inconclusive-matrix"]
 
 
 class PreflightProjection(HeldoutACFrozenModel):
@@ -85,7 +106,7 @@ class PreflightProjection(HeldoutACFrozenModel):
         "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa"
     ]
     scheduled_rows: Literal[48]
-    r6_predecessor_bytes_preserved: Literal[True]
+    r10_predecessor_bytes_preserved: Literal[True]
     git_commit_tree_and_execution_clean_observation_present: Literal[True]
     digest_pinned_docker_image_observation_present: Literal[True]
     sdk_version_observation_present: Literal[True]
@@ -135,7 +156,8 @@ class HeldoutACPreflightSourceQualification(HeldoutACFrozenModel):
     qualification_id: Literal[QUALIFICATION_ID]
     status: Literal[STATUS]
     recorded_at: datetime
-    predecessor: R6Binding
+    predecessor: R10Binding
+    campaign_predecessor: R7CampaignEvidenceBinding
     source_entrypoints: tuple[str, ...] = Field(min_length=2, max_length=2)
     import_closure: tuple[str, ...] = Field(min_length=1)
     import_closure_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
@@ -187,46 +209,87 @@ def _binding(root: Path, relative: Path) -> FileBinding:
     )
 
 
-def _r6_binding(root: Path) -> R6Binding:
-    selected = (root / R6_PATH).resolve()
+def _r10_binding(root: Path) -> R10Binding:
+    selected = (root / R10_PATH).resolve()
     if not selected.is_relative_to(root) or selected.is_symlink() or not selected.is_file():
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R6 source qualification predecessor is unavailable"
+            "held-out R10 source qualification predecessor is unavailable"
         )
     try:
         raw = selected.read_bytes()
         payload = json.loads(raw)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R6 source qualification predecessor is invalid"
+            "held-out R10 source qualification predecessor is invalid"
         ) from exc
     exact = (
-        len(raw) == 18_413
+        len(raw) == 19_353
         and sha256_bytes(raw)
-        == "sha256:10ccf88e9255c6ae0a0d8246ca8f2d478137bac03b7ffd7e6f59d23b938e942b"
+        == "sha256:7b3382208d57f14ba5929d405464c49bb81137bac56043583764889b73d96f21"
         and isinstance(payload, dict)
         and payload.get("qualification_id")
-        == "core-ac-fixed-bundle-heldout-preflight-source-20260814-r6"
+        == "core-ac-fixed-bundle-heldout-preflight-source-20260814-r10"
         and payload.get("status")
         == "OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"
         and payload.get("content_hash")
-        == "sha256:6a5cf10d8818954e15c17e25f8c4bea8d8bac722c01de2cf4d21c2880d3ae3be"
+        == "sha256:89477de2bcea8ac605995697d962f87ce2f5d784d9e34fad92f7a5794c267922"
         and payload.get("evaluator_source_hash")
-        == "sha256:69edd395dc19b80be0ce9dd17995530b77d261a0ff6eda8544a6ba058f377566"
+        == "sha256:9f0d060b3f59dff0f184641227838ddc6eccadcae4bab09f1c6dcf0b44482a0d"
     )
     if not exact:
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R6 source qualification predecessor bytes differ"
+            "held-out R10 source qualification predecessor bytes differ"
         )
-    return R6Binding(
-        path=R6_PATH.as_posix(),
+    return R10Binding(
+        path=R10_PATH.as_posix(),
         file_bytes=len(raw),
         file_sha256=sha256_bytes(raw),
         source_qualification_hash=str(payload["content_hash"]),
         evaluator_source_hash=str(payload["evaluator_source_hash"]),
         original_qualification_id=str(payload["qualification_id"]),
         original_status=str(payload["status"]),
-        successor_reason="pre-row-guard-failure-consumption-sealed-before-activation",
+        successor_reason="pre-seal-paid-path-source-inventory-closure-hardening",
+    )
+
+
+def _r7_campaign_evidence_binding(root: Path) -> R7CampaignEvidenceBinding:
+    selected = (root / R7_CAMPAIGN_EVIDENCE_PATH).resolve()
+    if not selected.is_relative_to(root) or selected.is_symlink() or not selected.is_file():
+        raise HeldoutACPreflightSourceQualificationError(
+            "held-out R7 campaign evidence predecessor is unavailable"
+        )
+    try:
+        raw = selected.read_bytes()
+        payload = json.loads(raw)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HeldoutACPreflightSourceQualificationError(
+            "held-out R7 campaign evidence predecessor is invalid"
+        ) from exc
+    exact = (
+        len(raw) == 7_854
+        and sha256_bytes(raw)
+        == "sha256:dd50a53a1c19e1214a575c3b37b82400b8961bf9a38e72f39a2aa87b3390b906"
+        and isinstance(payload, dict)
+        and payload.get("evidence_id")
+        == "core-ac-fixed-bundle-heldout-r7-live-inconclusive-20260814-r1"
+        and payload.get("content_hash")
+        == "sha256:0a421d5baf26abd6fa1092dd6c2c6a5f064950be53ba9a2a3f5fd93b7e639157"
+        and payload.get("approval", {}).get("execution_hash")
+        == "sha256:2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa"
+        and payload.get("campaign_summary", {}).get("disposition") == "inconclusive-matrix"
+    )
+    if not exact:
+        raise HeldoutACPreflightSourceQualificationError(
+            "held-out R7 campaign evidence predecessor bytes differ"
+        )
+    return R7CampaignEvidenceBinding(
+        path=R7_CAMPAIGN_EVIDENCE_PATH.as_posix(),
+        file_bytes=len(raw),
+        file_sha256=sha256_bytes(raw),
+        evidence_id=str(payload["evidence_id"]),
+        content_hash=str(payload["content_hash"]),
+        execution_hash=str(payload["approval"]["execution_hash"]),
+        disposition=str(payload["campaign_summary"]["disposition"]),
     )
 
 
@@ -235,7 +298,8 @@ def _build_candidate(
     *,
     recorded_at: datetime,
 ) -> HeldoutACPreflightSourceQualification:
-    predecessor = _r6_binding(root)
+    predecessor = _r10_binding(root)
+    campaign_predecessor = _r7_campaign_evidence_binding(root)
     closure = _paid_path_import_closure(root, entrypoints=SOURCE_ENTRYPOINTS)
     source_paths = tuple(sorted({*closure, *SOURCE_EXTRAS}, key=lambda item: item.as_posix()))
     source_files = tuple(_binding(root, item) for item in source_paths)
@@ -248,6 +312,7 @@ def _build_candidate(
         "status": STATUS,
         "recorded_at": recorded_at,
         "predecessor": predecessor.model_dump(mode="json"),
+        "campaign_predecessor": campaign_predecessor.model_dump(mode="json"),
         "source_entrypoints": tuple(item.as_posix() for item in SOURCE_ENTRYPOINTS),
         "import_closure": tuple(item.as_posix() for item in closure),
         "import_closure_hash": sha256_json([item.as_posix() for item in closure]),
@@ -260,7 +325,7 @@ def _build_candidate(
                 "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa"
             ),
             "scheduled_rows": 48,
-            "r6_predecessor_bytes_preserved": True,
+            "r10_predecessor_bytes_preserved": True,
             "git_commit_tree_and_execution_clean_observation_present": True,
             "digest_pinned_docker_image_observation_present": True,
             "sdk_version_observation_present": True,
@@ -349,6 +414,7 @@ def _summary(
         "source_qualification_hash": payload.content_hash,
         "evaluator_source_hash": payload.evaluator_source_hash,
         "predecessor_source_qualification_hash": (payload.predecessor.source_qualification_hash),
+        "predecessor_campaign_evidence_hash": payload.campaign_predecessor.content_hash,
         "file_bytes": len(raw),
         "file_sha256": sha256_bytes(raw),
         "execution_candidate_created": False,
@@ -429,6 +495,11 @@ __all__ = [
     "R4_PATH",
     "R5_PATH",
     "R6_PATH",
+    "R7_PATH",
+    "R7_CAMPAIGN_EVIDENCE_PATH",
+    "R8_PATH",
+    "R9_PATH",
+    "R10_PATH",
     "SCHEMA_VERSION",
     "SOURCE_ENTRYPOINTS",
     "SOURCE_EXTRAS",

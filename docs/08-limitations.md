@@ -33,10 +33,8 @@ Historical milestone-by-milestone limitations are archived at
 - Both conditions succeeded on two development tasks with one repetition. Structured used fewer tokens/cost in both,
   but there is no variance estimate, causal attribution, held-out validation or population memory-benefit claim.
 
-The unexecuted 48-row design grants no authority; 12 high-risk clusters cannot establish broad generalization.
-Materialization R1 validates 12 packages and prices, but stores only opaque templates. R7 source-qualifies the
-dispatcher, persisted authenticator and replay validator; it is not a runtime observation. No row is authenticated and candidate,
-approval and official analysis are absent, so this is not held-out outcome evidence.
+R7 ran one structured row: it resolved, but CRLF qualification bytes failed LF authentication before settlement; 47
+rows were not started. There is no A/C contrast, official analysis or memory claim. R11 grants no runtime authority.
 
 ## Evaluator-v1 correctness gap
 

@@ -1,0 +1,160 @@
+{
+  "schema_version": "heldout-ac-campaign-evidence-index-v1",
+  "evidence_id": "core-ac-fixed-bundle-heldout-r7-live-inconclusive-20260814-r1",
+  "status": "LIVE_CAMPAIGN_INCONCLUSIVE_QUALIFICATION_BYTES_NONCANONICAL",
+  "recorded_at": "2026-08-14T12:41:58.038560Z",
+  "source": {
+    "git_commit": "f6a1bdaaea24b66901e6db20a24ba7789a469da5",
+    "git_tree": "86e36354b2aaadb99c23c28822509a33f722e4c4",
+    "suite_id": "core-ac-fixed-bundle-heldout-20260814-v1",
+    "suite_content_hash": "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa",
+    "source_qualification_id": "core-ac-fixed-bundle-heldout-preflight-source-20260814-r7",
+    "source_qualification_hash": "sha256:8491c1a6faf1e3affa961853705e06eb2b7afbe04d440e33d36cbe66757a003c",
+    "evaluator_source_hash": "sha256:47dd2bc2895bae8e1fcb3fe277beb727e917f4b1d99cb5f78ef599f4696ed8f0"
+  },
+  "approval": {
+    "execution_hash": "sha256:2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa",
+    "scheduled_rows": 48,
+    "full_schedule_reserve_nanos": 252000000000,
+    "hard_cap_nanos": 275000000000,
+    "approval_consumed": true,
+    "retry_replacement_or_resume_authorized": false
+  },
+  "runtime_files": {
+    "candidate": {
+      "path": ".patchloop/heldout-ac-candidate-2f51935b.json",
+      "file_bytes": 58354,
+      "file_sha256": "sha256:113ed9ac3487032f4d34fac799ac0b7361ac048081f011002df1dc8ed77ca410"
+    },
+    "execution_plan": {
+      "path": ".patchloop/experiments/plans/2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa.json",
+      "file_bytes": 82468,
+      "file_sha256": "sha256:ab3cf4d4093992aed56ad377080a7b1ad32981646affd6d1ec07821a3855a207"
+    },
+    "journal": {
+      "path": ".patchloop/experiments/journals/2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa.jsonl",
+      "file_bytes": 45884,
+      "file_sha256": "sha256:8e1968814691b597c7a04f746699ab690dba40dcb7b319e52d9c30642e937472",
+      "campaign_completed_event_hash": "sha256:2c13f66b27e9ad07dcc91f470a5b166f116963259586a0f158a11182ac324a4c"
+    },
+    "prepared_result": {
+      "path": ".patchloop/experiments/heldout-ac/2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa.prepared.json",
+      "file_bytes": 24607,
+      "file_sha256": "sha256:0efb9fb24dc025f1ea60e1be1f55c7a8a111f34c3d16335aab4fe70e27b4eed2",
+      "content_hash": "sha256:405267deaf8f4f5fedc668c9d94aeaed552d40c7cf7291cd10487b3d73d41f0f"
+    },
+    "final_result": {
+      "path": ".patchloop/experiments/heldout-ac/2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa.json",
+      "file_bytes": 25224,
+      "file_sha256": "sha256:70657e66a2117c310f1626d1d7c993e020cf77fcd7b860962c2e43c68e368e04",
+      "content_hash": "sha256:0c810c442e4cafcf5f14013ed9dbf3b2fce79c48b09618cbe9239d1e15ea3bc3"
+    }
+  },
+  "campaign_summary": {
+    "disposition": "inconclusive-matrix",
+    "expected_runs": 48,
+    "dispatched_runs": 1,
+    "terminal_settled_runs": 0,
+    "not_started_runs": 47,
+    "unsettled_dispatched_runs": 1,
+    "settled_model_cost_nanos": 0,
+    "cost_accounting_complete": false,
+    "analysis_ready": false,
+    "official_heldout_analysis": false,
+    "memory_benefit_claim_authorized": false,
+    "broad_generalization_claim_authorized": false
+  },
+  "confound": {
+    "order": 1,
+    "schedule_row_id": "sha256:53def294861421bd38ac46eb44c23947ed60437dc0eb37463e26553627209fd0",
+    "task_id": "loguru-post-2038-local-timezone-fallback",
+    "role": "core-same-repo",
+    "condition": "structured",
+    "repetition": 1,
+    "run_id": "run_heldout_d576e1cb42104760",
+    "trigger": "qualification-or-completion-contract-mismatch",
+    "phase": "qualification",
+    "exception_type": "ContractError",
+    "run_started_event_written": true,
+    "secret_or_exception_message_persisted": false,
+    "content_hash": "sha256:846a22863e98716d70219e0a6165fd361ecd1b5812036879b9b84097a669b1d4"
+  },
+  "observed_row": {
+    "run_result": {
+      "path": ".patchloop/artifacts/runs/run_heldout_d576e1cb42104760/result.json",
+      "file_bytes": 19643,
+      "file_sha256": "sha256:56d1936f8e88bb7e66b333b4f476f8f4b3c90c7b69a55f2d226f94904e256a0b",
+      "schema_version": "run-result-v2",
+      "agent_submission_status": "completed",
+      "evaluation_status": "completed",
+      "outcome_kind": "resolved",
+      "raw_official": false,
+      "scope_compliant_success": true,
+      "hidden_tests": "pass",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    },
+    "evaluation_receipt": {
+      "path": ".patchloop/artifacts/runs/run_heldout_d576e1cb42104760/evaluation-receipt.json",
+      "file_bytes": 1998,
+      "file_sha256": "sha256:93c178f56f48997274d52e87298ab0d1b4cf64b91e176d41576ea735904e3d1e",
+      "content_hash": "sha256:4c71389b8044454a3d0da2744e3a062864377ea29cdde45fc70e0d4588ea4f91"
+    },
+    "safety_evidence_bundle": {
+      "path": ".patchloop/artifacts/runs/run_heldout_d576e1cb42104760/safety-evidence-bundle.json",
+      "file_bytes": 9574,
+      "file_sha256": "sha256:819709f7d86b6b6adc4bc7f75d021445fa2e90bad217e5c103abef6c94c12227",
+      "content_hash": "sha256:ee0bb6d18c4e2c3dd2ee686be8283918537d7fc8bfca500daf6e3da644fe9bb4"
+    },
+    "trace_qualification": {
+      "path": ".patchloop/qualifications/run_heldout_d576e1cb42104760.json",
+      "file_bytes": 12868,
+      "file_sha256": "sha256:06819ea61cb526f7845060f5d6500d4af0185f3db2db899697a52938dbd45f95",
+      "schema_version": "trace-qualification-v2",
+      "qualified": true,
+      "trace_integrity_passed": true,
+      "evaluator_v2_completion_eligible": true,
+      "qualification_hash": "sha256:501272e36ed8e66c6d8da2221fc31e9c4ce2c6abda4a5ef8f4c444d45cbad169",
+      "source_evidence_hash": "sha256:727c3db418e74ade875bfa546a813155d97d414f6e1844a9db123dc54499f5f2"
+    },
+    "usage_evidence": {
+      "path": ".patchloop/experiments/heldout-ac/rows/2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa/01-run_heldout_d576e1cb42104760-usage.json",
+      "file_bytes": 1266,
+      "file_sha256": "sha256:0523ec279ea72b9ed4fb42272dacb2ab3902bf9df38c2a9aa2da0674a7b105c6",
+      "content_hash": "sha256:85b5d0b65c18fe90604e40b2bb358c30a9a83d484c6258e8c62f5656f5e52bec",
+      "input_tokens": 44009,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 7388,
+      "reasoning_output_tokens": 6862,
+      "model_calls": 6,
+      "tool_calls": 6,
+      "wall_clock_ms": 60688,
+      "token_derived_cost_nanos": 66252750,
+      "campaign_settled": false
+    }
+  },
+  "failure_attribution": {
+    "direct_cause": "trace-qualification-producer-consumer-canonical-byte-mismatch",
+    "producer": "patchloop/evals/qualification.py persisted json.dumps output through Path.write_text",
+    "consumer": "patchloop/evals/heldout_ac_persisted_adapter.py required UTF-8 LF canonical JSON bytes",
+    "platform_observation": "Windows text-mode newline translation produced CRLF bytes",
+    "persisted_crlf_count": 393,
+    "persisted_qualification_bytes": 12868,
+    "lf_canonical_qualification_bytes": 12475,
+    "lf_canonical_qualification_sha256": "sha256:91a3fbd17a0881049086459f9b6c367a2f048cd65846aec0a76afa6f5e11fee5",
+    "first_byte_difference_offset": 1,
+    "semantic_qualification_succeeded": true,
+    "task_or_memory_effect_failure": false
+  },
+  "authority": {
+    "r7_campaign_is_immutable_and_consumed": true,
+    "retry_replacement_or_resume_performed": false,
+    "future_provider_evaluator_or_agent_execution_authorized": false,
+    "future_cost_reservation_or_spend_authorized": false,
+    "official_analysis_or_claim_authorized": false
+  },
+  "next_gate": "fix-canonical-qualification-byte-production-then-source-qualify-a-fresh-successor",
+  "content_hash": "sha256:0a421d5baf26abd6fa1092dd6c2c6a5f064950be53ba9a2a3f5fd93b7e639157"
+}

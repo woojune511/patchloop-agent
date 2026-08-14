@@ -67,14 +67,13 @@ delta is zero, while structured used fewer tokens and list-price cost in both pa
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: authoritative dispatcher and successor no-call source are offline-qualified; execution remains closed.
+Status: R7 live campaign sealed inconclusive after row 1; corrected successor source is offline-qualified as R11.
 
 The record freezes 12 tasks × A/C × two repetitions = 48 rows, complete-panel analysis and `$252`/`$275` planning cost.
 The non-`ExperimentSuite` fixture surfaces remain historical. Materialization R1 stores no private value/outcome and
-preserves `$252`/`$275`. Preflight/dispatcher R7 binds the current candidate, manifest, marker expansion, exact
-approval plan, append-only journal, persisted-v2 authentication/replay and complete/inconclusive analysis boundary.
-R3-R6 are preserved pre-activation predecessors. Next: commit, fresh read-only preflight, then—only for its
-exact candidate—a separate 48-row `$252`/`$275` approval. Candidate, approval, runtime call and spend are currently 0.
+preserves `$252`/`$275`. R7 consumed candidate `sha256:2f51935b...b2afa`; its first row resolved but CRLF
+qualification bytes failed LF authentication, sealing 47 rows not-started and no analysis. R11 binds the fix. Next:
+commit, fresh no-call preflight, then a new exact 48-row approval; current candidate/provider authority is 0.
 
 ## Work item 7 — B/D and the full comparison
 
