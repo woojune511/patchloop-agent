@@ -1,0 +1,101 @@
+{
+  "schema_version": "heldout-ac-binding-adapter-source-qualification-v3",
+  "qualification_id": "core-ac-fixed-bundle-heldout-binding-adapter-20260814-r5",
+  "status": "OFFLINE_BINDING_ADAPTER_SOURCE_QUALIFIED_RUNTIME_MATERIALIZATION_CLOSED",
+  "recorded_at": "2026-08-14T09:21:57.614661Z",
+  "predecessor": {
+    "path": "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r4.json",
+    "file_bytes": 4666,
+    "file_sha256": "sha256:d2aeffece5c5b4dbeb44848a71b9667b3321b574ae72653d6fa86e0113f9eb17",
+    "source_qualification_hash": "sha256:4d44fdcc2639ca2daf71933428cb87adb2fbbfc13a7dc3293354d5eadd8171cc",
+    "original_status": "OFFLINE_BINDING_ADAPTER_SOURCE_QUALIFIED_RUNTIME_MATERIALIZATION_CLOSED",
+    "disposition": "superseded-by-final-format-conformance",
+    "current_source_replay_valid": false,
+    "r3_source_qualification_hash": "sha256:7c8c1c57422a2bf52ddd20e53b473c2dfe3afb5d34ee86b8f58efa8a9f138ea9",
+    "r2_source_qualification_hash": "sha256:0277225b0992b8e0562b21f5f8c2f8dcc4921017bea03b5087c4f6dd0e860172"
+  },
+  "suite_content_hash": "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa",
+  "dataset_manifest_file_sha256": "sha256:e8cf14ca9dabebcc03c3522e400dfcb79606541e9b11e59f49510ea5c40bebed",
+  "source_files": [
+    {
+      "path": "patchloop/evals/heldout_ac_binding_source_qualification.py",
+      "file_bytes": 17477,
+      "file_sha256": "sha256:655c383b87e3510be4605d1c4df661eddae978a052cfc0d4f4e755c96951a9c5"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_persisted_adapter.py",
+      "file_bytes": 18085,
+      "file_sha256": "sha256:4431052a43371788c835af01992a5c79d2cf51bf23a4b86698573ed9fbcf2c7a"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_task_evaluator.py",
+      "file_bytes": 13898,
+      "file_sha256": "sha256:131d62692d825c8f217c25200c18e0e5e05bfa14d99918964e092322df7ab488"
+    }
+  ],
+  "source_hash": "sha256:caa95f52567001f68aacdcf3d2cd6bd9006ebbe9d1166c17dc076932c185b279",
+  "validation_files": [
+    {
+      "path": "scripts/build_heldout_ac_binding_source_qualification.py",
+      "file_bytes": 401,
+      "file_sha256": "sha256:99a0a4b1edc7eb6079ae64515f1ff2fc8f5110bc9541e0be5e96d20e3ad7ff20"
+    },
+    {
+      "path": "tests/test_heldout_ac_binding_source_qualification.py",
+      "file_bytes": 6626,
+      "file_sha256": "sha256:073047f9e3bacf72bf988efd9ef639fb70c2284d065b6636014766d517c15bad"
+    },
+    {
+      "path": "tests/test_heldout_ac_persisted_adapter.py",
+      "file_bytes": 13358,
+      "file_sha256": "sha256:80496f70b7030db7c9d932019fc1277ad0ebd96d3fb37f3f993e75968abd03cc"
+    },
+    {
+      "path": "tests/test_heldout_ac_task_evaluator.py",
+      "file_bytes": 7697,
+      "file_sha256": "sha256:79c81e2e849a394fe0d2399fcb82774bbef1cb402bf21f3b31811185afb9bed3"
+    }
+  ],
+  "validation_hash": "sha256:90772e4e228beb1551f891ae2a0f255ffc08772bcc7cde738d08ba5ceebd9201",
+  "projection": {
+    "metadata_task_count": 12,
+    "same_repo_task_count": 6,
+    "cross_repo_task_count": 6,
+    "task_evaluator_plan_content_hash": "sha256:34edbad3f5a31f5d7e16ed2358905c195372a0d1f420c0ac03bd3be6a68668a8",
+    "r2_contract_source_replay_valid": true,
+    "metadata_task_bindings_present": true,
+    "task_package_files_opened": false,
+    "private_task_files_opened": false,
+    "task_evaluator_contract_materializations": 0,
+    "task_evaluator_materializer_source_present": true,
+    "persisted_adapter_source_present": true,
+    "invokes_evaluator_v2_receipt_revalidation": true,
+    "invokes_read_only_trace_recomputation": true,
+    "authenticated_persisted_rows": 0,
+    "authoritative_complete_matrix_present": false,
+    "official_analysis_present": false
+  },
+  "authority": {
+    "heldout_task_package_access_authorized": false,
+    "heldout_private_content_access_authorized": false,
+    "task_evaluator_contract_materialization_authorized": false,
+    "persisted_runtime_evidence_access_authorized": false,
+    "pricing_refresh_authorized": false,
+    "docker_sdk_or_credential_observation_authorized": false,
+    "provider_evaluator_or_agent_execution_authorized": false,
+    "execution_candidate_authorized": false,
+    "approval_reservation_or_spend_authorized": false,
+    "official_analysis_or_claim_authorized": false,
+    "task_packages_opened": 0,
+    "task_evaluator_contracts_materialized": 0,
+    "persisted_rows_authenticated": 0,
+    "provider_calls_made": 0,
+    "evaluator_calls_made": 0,
+    "agent_runs_made": 0,
+    "docker_calls_made": 0,
+    "sdk_calls_made": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "next_gate": "authorized-task-package-materialization-and-fresh-pricing-before-candidate",
+  "content_hash": "sha256:c1dc0d53f5df3cbd8c37cdc453fea738a803177add7a49d6e267b186192d5f59"
+}

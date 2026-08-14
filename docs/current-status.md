@@ -45,14 +45,12 @@ three transient pre-provider attempts without state artifacts or per-attempt app
 historical consumed set. Its candidate, plan and approval cannot run again. R10 binds the executed bytes, not the
 completion-corrected current source. No paid, held-out or B/D execution is currently authorized.
 
-The held-out 48-row suite and offline plan now have dedicated strict contracts outside `ExperimentSuite` and the
-live runner. R2 source qualification binds those contracts, the complete/inconclusive fixture projections and the
-deterministic preregistered analysis. These surfaces remain `offline-untrusted-contract-fixture`, `official=false`
-and `analysis_ready=false`: task/evaluator binding, persisted-evidence authentication and an authoritative completion
-adapter do not exist yet. R1 is preserved as a zero-authority predecessor invalidated by a pre-seal source race.
+The held-out suite stays outside `ExperimentSuite` and the live runner. R2 binds fixture/analysis contracts; current R5
+replays them and binds 12 metadata tasks plus hardened evaluator-v2 materialization and persisted-row authentication.
+R3/R4 are pre-hardening/pre-format predecessors. Private opens/materializations, authenticated rows and analyses are zero.
 
 ## Next gate
 
-Work item 6 has an offline source-qualified contract layer; execution and unblinding remain closed. Next: build and
-qualify the dedicated task/evaluator plus persisted-evidence adapter, refresh pricing, then produce a no-call exact
-candidate. Any 48-row provider execution still requires a separate approval for that future hash and cap.
+Work item 6 now has R5 source-qualified binding/adapter code, but runtime materialization and unblinding remain closed.
+Next: separately authorize and materialize the exact 12 task/evaluator bindings, refresh pricing, then produce a no-call
+candidate. Any 48-row provider execution still needs separate approval for that future hash and cap.

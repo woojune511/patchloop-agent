@@ -163,8 +163,8 @@ It specifies deterministic 100,000-sample percentile stability and an assumption
 neither is design-based or a population confidence claim. Eligible evaluator FAIL and typed agent terminals score zero;
 infrastructure confounds are inconclusive. `$252`/`$275` need fresh pricing; execution/unblinding remain closed.
 
-The R2 offline source gate implements the strict suite, both complete and inconclusive contract fixtures, the primary
-equal-task estimator, 6/6 role strata, four verdict distributions, directional flips, resource deltas and
-cost-per-success. It does not authenticate persisted runtime evidence and cannot make an official analysis. A
-pre-reservation cost failure is represented as 0 reserved/48 not started; a post-reservation stop retains the full
-48-row reservation. Task/evaluator qualification and the authoritative persisted-evidence adapter are the next gate.
+R2 implements the strict suite, complete/inconclusive fixtures and deterministic analysis. Current R5 replays R2's
+source closure and binds the 12 metadata tasks plus hardened evaluator-v2 materialization and receipt/trace-replayed
+persisted-row authentication; it opened no private task and authenticated no row. R3/R4 preserve pre-hardening and
+pre-format source. Pre-reservation failure remains 0 reserved/48 not started; post-reservation keeps 48. Exact
+task/evaluator materialization and fresh pricing are next, before any candidate.

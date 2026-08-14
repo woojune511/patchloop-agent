@@ -49,10 +49,9 @@
   result has a stale v1/v2 completion projection; the append-only R8 R4 index records the corrected complete matrix.
 - Exact R10/R9/R8/R6/R5/R4/R3 evidence tuples are owned by `docs/09-evidence.md`. R8 is descriptive development
   readiness only; no causal, held-out, retrieval or general memory-benefit claim follows.
-- Held-out A/C is preregistered for 48 rows. R2 source-qualifies only the dedicated offline suite,
-  complete/inconclusive contract fixtures and deterministic analysis; task/evaluator binding, authoritative persisted
-  adapter, execution/unblinding, pricing refresh, candidate, approval and spend remain closed. R1 is an immutable
-  zero-authority predecessor invalidated by a pre-seal source race.
+- Held-out A/C is preregistered for 48 rows. R2 qualifies offline contracts; current R5 binds the 12-task metadata plan
+  and hardened future materializer/authenticator source. Private bindings/authenticated rows are 0 and execution
+  authority is closed. R3/R4 are pre-hardening/pre-format predecessors; R1 is the pre-seal-race predecessor.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
 - V1-V25 artifacts are immutable historical evidence. V23 reached Docker and both frames before

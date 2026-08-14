@@ -15,10 +15,10 @@ order: preserve/correct R8 evidence -> preregister held-out A/C (complete, execu
 - The 48-row suite uses dedicated strict models and a metadata-only loader, not `ExperimentSuite` or the live runner.
 - Completion and analysis code is source-qualified only as an offline-untrusted fixture/preview. It cannot authenticate
   runtime files, claim official analysis or create candidate/approval/spend authority.
-- R1 was materialized during a source-extraction race and is preserved byte-for-byte as an invalidated predecessor.
-  R2 binds the settled source and validates R1 immutability; neither artifact authorizes a call.
-- The next semantic gate is a dedicated task/evaluator qualifier and authoritative persisted-evidence adapter, then
-  refreshed pricing and a new exact candidate. Existing R8 authority cannot transfer.
+- R1 is the pre-seal-race predecessor; R2 binds fixture source. Current R5 binds the 12-task metadata plan and hardened
+  materializer/authenticator while replaying R2. R3/R4 preserve pre-hardening/pre-format source. All authorize zero calls.
+- Actual private task/evaluator materialization and fresh pricing precede any new exact candidate. Existing R8 authority
+  cannot transfer.
 
 ### 2026-08-14 — preserve R3-R6 and correct runtime evidence before a fresh panel
 

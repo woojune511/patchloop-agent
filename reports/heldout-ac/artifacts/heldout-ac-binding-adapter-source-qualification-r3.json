@@ -1,0 +1,96 @@
+{
+  "schema_version": "heldout-ac-binding-adapter-source-qualification-v1",
+  "qualification_id": "core-ac-fixed-bundle-heldout-binding-adapter-20260814-r3",
+  "status": "OFFLINE_BINDING_ADAPTER_SOURCE_QUALIFIED_RUNTIME_MATERIALIZATION_CLOSED",
+  "recorded_at": "2026-08-14T09:00:02.024447Z",
+  "predecessor": {
+    "path": "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r2.json",
+    "file_bytes": 20052,
+    "file_sha256": "sha256:5f5406858603d918f296ca7b4a7bf2d62426c99a5915481964ed41f91c6b961c",
+    "source_qualification_hash": "sha256:0277225b0992b8e0562b21f5f8c2f8dcc4921017bea03b5087c4f6dd0e860172",
+    "status": "OFFLINE_CONTRACT_SOURCE_QUALIFIED_TASK_EVALUATOR_BINDING_CLOSED"
+  },
+  "suite_content_hash": "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa",
+  "dataset_manifest_file_sha256": "sha256:e8cf14ca9dabebcc03c3522e400dfcb79606541e9b11e59f49510ea5c40bebed",
+  "source_files": [
+    {
+      "path": "patchloop/evals/heldout_ac_binding_source_qualification.py",
+      "file_bytes": 15368,
+      "file_sha256": "sha256:5d9628ce287aaba93cba6012fd459e7c66d489b38193507077691d9cb527374a"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_persisted_adapter.py",
+      "file_bytes": 16895,
+      "file_sha256": "sha256:97fbb378c9e377d5dca91ea4b4e4444458423042419c9c7c4fe43a23f2066263"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_task_evaluator.py",
+      "file_bytes": 12529,
+      "file_sha256": "sha256:257a223e852034e75e90b1643f2680d893ac4c7370e4d33403074df187860d02"
+    }
+  ],
+  "source_hash": "sha256:52aa1e1989bd3adc12cb39d883eeff34e2d6b5f96e6bf2823a2de0073a7400a8",
+  "validation_files": [
+    {
+      "path": "scripts/build_heldout_ac_binding_source_qualification.py",
+      "file_bytes": 401,
+      "file_sha256": "sha256:99a0a4b1edc7eb6079ae64515f1ff2fc8f5110bc9541e0be5e96d20e3ad7ff20"
+    },
+    {
+      "path": "tests/test_heldout_ac_binding_source_qualification.py",
+      "file_bytes": 6367,
+      "file_sha256": "sha256:63b52c0b5ac16e58de6510c900f3a7919f8ed9aa304712b081888cafd277d556"
+    },
+    {
+      "path": "tests/test_heldout_ac_persisted_adapter.py",
+      "file_bytes": 10576,
+      "file_sha256": "sha256:688a5b8f91c00e0886cdd23721da41333e996d88c8c69b92126b929b1891f282"
+    },
+    {
+      "path": "tests/test_heldout_ac_task_evaluator.py",
+      "file_bytes": 5619,
+      "file_sha256": "sha256:2db7fd2a428cdb24b07098aef9b7ac23663d64f11378b057c18f25cfe0507717"
+    }
+  ],
+  "validation_hash": "sha256:a1e28e013827742d1f7bcfbb19bb5069d6677d55e1a019ac40237da7751ae448",
+  "projection": {
+    "metadata_task_count": 12,
+    "same_repo_task_count": 6,
+    "cross_repo_task_count": 6,
+    "task_evaluator_plan_content_hash": "sha256:34edbad3f5a31f5d7e16ed2358905c195372a0d1f420c0ac03bd3be6a68668a8",
+    "metadata_task_bindings_present": true,
+    "task_package_files_opened": false,
+    "private_task_files_opened": false,
+    "task_evaluator_contract_materializations": 0,
+    "task_evaluator_materializer_source_present": true,
+    "persisted_adapter_source_present": true,
+    "invokes_evaluator_v2_receipt_revalidation": true,
+    "invokes_read_only_trace_recomputation": true,
+    "authenticated_persisted_rows": 0,
+    "authoritative_complete_matrix_present": false,
+    "official_analysis_present": false
+  },
+  "authority": {
+    "heldout_task_package_access_authorized": false,
+    "heldout_private_content_access_authorized": false,
+    "task_evaluator_contract_materialization_authorized": false,
+    "persisted_runtime_evidence_access_authorized": false,
+    "pricing_refresh_authorized": false,
+    "docker_sdk_or_credential_observation_authorized": false,
+    "provider_evaluator_or_agent_execution_authorized": false,
+    "execution_candidate_authorized": false,
+    "approval_reservation_or_spend_authorized": false,
+    "official_analysis_or_claim_authorized": false,
+    "task_packages_opened": 0,
+    "task_evaluator_contracts_materialized": 0,
+    "persisted_rows_authenticated": 0,
+    "provider_calls_made": 0,
+    "evaluator_calls_made": 0,
+    "agent_runs_made": 0,
+    "docker_calls_made": 0,
+    "sdk_calls_made": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "next_gate": "authorized-task-package-materialization-and-fresh-pricing-before-candidate",
+  "content_hash": "sha256:7c8c1c57422a2bf52ddd20e53b473c2dfe3afb5d34ee86b8f58efa8a9f138ea9"
+}

@@ -5,25 +5,26 @@ Machine artifacts under `reports/` are authoritative. Historical narrative is ar
 
 ## Held-out A/C preregistration
 
-`heldout-ac-preregistration-20260814-v1.yaml` freezes a 48-row complete-panel design and `$252`/`$275` planning cost,
-but authorizes nothing. Content hash is `sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74`;
-file hash is `sha256:f6d9d015329823f3f888aac5f15296b2ddefda9e45b5d5501b8d94587bb11d8f` (31,338 bytes).
+- Preregistration: content `sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74`;
+  file `sha256:f6d9d015329823f3f888aac5f15296b2ddefda9e45b5d5501b8d94587bb11d8f` (31,338 bytes). It freezes
+  48 rows and `$252`/`$275` planning cost but grants no authority.
+- Suite: content `sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa`; file
+  `sha256:27157e26881cc277a9026e51d22a6f21fbf5bbb8f6c1c09eaa89aec607e52534` (13,348 bytes). Plan: content
+  `sha256:b2058c48de3f2b4d13df872d7fd19a325c3a76ffb5ef24974310409100cb8885`; file
+  `sha256:901f898d7f6f81b00e8840160b3efde2cc4fb7d8f4625c6188ea7235de264695` (2,466 bytes).
+- Contract R1 predecessor: content `sha256:f024e04fd3a01b98f8fb469f2f0d0a11f4faf8372ed57cc7986e163bdecc5042`;
+  file `sha256:1c42aecbbe4c9e3f39215658fb3ffba87930f94385b526c13287a0d09448fa22` (18,750 bytes). Current R2:
+  content `sha256:0277225b0992b8e0562b21f5f8c2f8dcc4921017bea03b5087c4f6dd0e860172`; file
+  `sha256:5f5406858603d918f296ca7b4a7bf2d62426c99a5915481964ed41f91c6b961c` (20,052 bytes); source
+  `sha256:a61ad810d2d3de4a13c19c7dfd307dc5b64a1a8409b0de1f0858389ba866889c`.
+- Binding R3/R4 preserve pre-hardening/pre-format source; R5 owns R4's exact predecessor tuple. Current R5: content
+  `sha256:c1dc0d53f5df3cbd8c37cdc453fea738a803177add7a49d6e267b186192d5f59`; file
+  `sha256:809981c460c9d28e0dbc17e179260e20eb48641489973cac669b6de72282094c` (4,759 bytes); source
+  `sha256:caa95f52567001f68aacdcf3d2cd6bd9006ebbe9d1166c17dc076932c185b279`; plan
+  `sha256:34edbad3f5a31f5d7e16ed2358905c195372a0d1f420c0ac03bd3be6a68668a8`.
 
-The metadata-only suite has content hash `sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa`
-and file hash `sha256:27157e26881cc277a9026e51d22a6f21fbf5bbb8f6c1c09eaa89aec607e52534`
-(13,348 bytes). Its offline plan has content hash
-`sha256:b2058c48de3f2b4d13df872d7fd19a325c3a76ffb5ef24974310409100cb8885` and file hash
-`sha256:901f898d7f6f81b00e8840160b3efde2cc4fb7d8f4625c6188ea7235de264695` (2,466 bytes).
-
-Held-out contract source R1 is preserved as a pre-seal-race-invalidated predecessor: content
-`sha256:f024e04fd3a01b98f8fb469f2f0d0a11f4faf8372ed57cc7986e163bdecc5042`, file
-`sha256:1c42aecbbe4c9e3f39215658fb3ffba87930f94385b526c13287a0d09448fa22` (18,750 bytes). Current R2
-`core-ac-fixed-bundle-heldout-contract-source-qualification-20260814-r2` has content
-`sha256:0277225b0992b8e0562b21f5f8c2f8dcc4921017bea03b5087c4f6dd0e860172`, file
-`sha256:5f5406858603d918f296ca7b4a7bf2d62426c99a5915481964ed41f91c6b961c` (20,052 bytes), and
-contract-source hash `sha256:a61ad810d2d3de4a13c19c7dfd307dc5b64a1a8409b0de1f0858389ba866889c`.
-It records zero task/evaluator/persisted-adapter bindings and zero provider/evaluator/agent/Docker/SDK calls or cost;
-official analysis, candidate, approval, execution and claims remain unauthorized.
+Held-out gates record zero private opens, materialized/authenticated rows, calls and cost; analysis/execution remain
+closed.
 
 ## R8 complete development-readiness matrix
 

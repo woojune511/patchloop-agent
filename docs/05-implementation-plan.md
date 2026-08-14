@@ -67,13 +67,12 @@ delta is zero, while structured used fewer tokens and list-price cost in both pa
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: offline contract source-qualified as held-out R2; execution and unblinding remain closed.
+Status: offline contract/binding-adapter source-qualified through held-out R5; execution and unblinding remain closed.
 
 The record freezes 12 tasks × A/C × two repetitions = 48 rows, complete-panel analysis and `$252`/`$275` planning cost.
-The dedicated suite is not an `ExperimentSuite`; its completion and analysis surfaces are explicitly unofficial
-contract fixtures. R2 binds their exact source and tests while task/evaluator binding, authoritative persisted
-evidence, refreshed pricing, candidate, approval and spend remain absent. Implement and qualify those missing
-producer/adapter bindings before any no-call candidate.
+The non-`ExperimentSuite` completion/analysis surfaces remain unofficial fixtures. R2 binds them; R5 replays R2 and
+binds 12 opaque tasks plus hardened future materializer/authenticator source. R3/R4 are superseded and actual rows remain
+zero. Authorize materialization and refresh pricing before a candidate; approval and spend remain absent.
 
 ## Work item 7 — B/D and the full comparison
 

@@ -20,9 +20,9 @@ through evaluator v2 but failed distinct post-evaluator qualification contracts,
 start. R7/R9 was superseded unexecuted after offline contract audits found type and evidence-binding gaps. R10 now
 qualified the exact contract-hardened R8 execution source. R8 completed all four rows at `$0.3664215`; an append-only
 correction fixes its stale v1/v2 completion projection without rewriting runtime evidence.
-The 48-row held-out A/C design now has a dedicated metadata-only suite and R2 offline contract-source qualification.
-Its completion/analysis surfaces remain unofficial fixtures; task/evaluator binding, persisted-evidence authentication,
-pricing refresh, candidate, approval and execution are still closed.
+The 48-row held-out A/C design has a metadata-only suite plus current R2/R5 source gates. R5 binds all 12 metadata and
+hardened future materializer/authenticator source; R3/R4 are superseded. Private materializations/authenticated rows are
+zero, and pricing, candidate, approval and execution are closed.
 `docs/current-status.md` owns the exact tuple and next gate.
 
 ## Implemented product path

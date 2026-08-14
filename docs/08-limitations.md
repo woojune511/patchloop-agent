@@ -33,9 +33,10 @@ Historical milestone-by-milestone limitations are archived at
 - Both conditions succeeded on two development tasks with one repetition. Structured used fewer tokens/cost in both,
   but there is no variance estimate, causal attribution, held-out validation or population memory-benefit claim.
 
-The unexecuted 48-row design grants no authority; 12 high-risk clusters cannot establish broad generalization. R2
-qualifies only metadata contracts and deterministic fixture analysis. It has no task/evaluator binding, authenticated
-persisted-evidence adapter, refreshed pricing, candidate or official analysis, and therefore is not held-out evidence.
+The unexecuted 48-row design grants no authority; 12 high-risk clusters cannot establish broad generalization. R5 adds
+metadata bindings and hardened future materializer/authenticator source, not 12 private task contracts or authenticated
+rows. R3/R4 are superseded predecessors. Pricing, candidate and official analysis are absent, so this is not
+held-out outcome evidence.
 
 ## Evaluator-v1 correctness gap
 
