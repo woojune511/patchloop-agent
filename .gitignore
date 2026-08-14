@@ -5,6 +5,7 @@
 # Repository-local test and audit scratch directories.
 /tmp*/
 /.tmp-*/
+/.pytest-tmp-*/
 /row-claim-debug-*/
 /rcd-*/
 __pycache__/

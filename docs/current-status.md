@@ -15,10 +15,8 @@ result and journal remain unchanged. Append-only index
 offline corrected projection: 4 official receipt-qualified v2 runs, 4 successes, 0 failures and 0 unclassified.
 Correction activity was zero provider/evaluator/Docker/agent calls and `$0` added cost.
 
-R3 through R6 remain sealed `inconclusive` predecessors: R3 stopped after Moto C exhausted its aggregate token
-budget; R4 failed split-budget paid-plan binding before provider dispatch; R5 and R6 each resolved/evaluated Moto A
-but failed successive terminal-qualification contracts. R7/R9 is superseded unexecuted. None may retry, resume or
-transfer approval. Exact tuples are in `docs/09-evidence.md`.
+R3-R6 remain sealed `inconclusive`; R7/R9 is superseded unexecuted. None may retry, resume or transfer approval.
+Their exact budget/plan/qualification/runtime failures and costs are in `docs/09-evidence.md`.
 
 D-142 remains **source-qualified only, unactivated**; its planning disposition is now **deferred**. D-142 and the V25 one-use
 lifecycle are historical, not current gates.
@@ -47,7 +45,14 @@ three transient pre-provider attempts without state artifacts or per-attempt app
 historical consumed set. Its candidate, plan and approval cannot run again. R10 binds the executed bytes, not the
 completion-corrected current source. No paid, held-out or B/D execution is currently authorized.
 
+The held-out 48-row suite and offline plan now have dedicated strict contracts outside `ExperimentSuite` and the
+live runner. R2 source qualification binds those contracts, the complete/inconclusive fixture projections and the
+deterministic preregistered analysis. These surfaces remain `offline-untrusted-contract-fixture`, `official=false`
+and `analysis_ready=false`: task/evaluator binding, persisted-evidence authentication and an authoritative completion
+adapter do not exist yet. R1 is preserved as a zero-authority predecessor invalidated by a pre-seal source race.
+
 ## Next gate
 
-Work item 6 freezes a 48-row scheduled-row complete-panel design; execution and unblinding remain closed. Next: offline
-qualification, refreshed pricing, an exact candidate and separate approval.
+Work item 6 has an offline source-qualified contract layer; execution and unblinding remain closed. Next: build and
+qualify the dedicated task/evaluator plus persisted-evidence adapter, refresh pricing, then produce a no-call exact
+candidate. Any 48-row provider execution still requires a separate approval for that future hash and cap.

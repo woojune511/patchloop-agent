@@ -41,25 +41,18 @@
   결속한다. Daemon/image/container는 미검증이고 runtime/approval/external observation/mutation은 0이다.
 - Selective retrieval과 held-out/B/D authority는 닫혀 있다. Fixed C injection은 R3 Moto C에서 live로
   실행됐지만 제출 전 exact-request token-budget guard로 evaluator에 도달하지 않았다.
-- R4 candidate `sha256:be4ea2e4e17a1354895c9122cd33180837cf29aa3922df4caeaafb46a08d7124`
-  received exact approval once and sealed `inconclusive` before provider dispatch at `$0`. Paid-plan revalidation
-  compared its split budget with the legacy aggregate-only budget; Moto A terminated with `ContractError` and the
-  other three rows were not started. R4 and its R6 qualification are immutable and cannot retry or transfer approval.
-- R5 candidate `sha256:b8d156c6deeb3749b7a42f327fcfc7f5467a498b1ec0afaae4b19797b62a1627`
-  received exact approval once. Moto A/no-memory resolved and passed evaluator v2, but terminal qualification still
-  required the legacy null-call/aggregate-only profile; the other three rows did not start. R5 sealed `inconclusive`
-  at `$0.19303425`, is consumed, and cannot retry or transfer approval.
-- R6 candidate `sha256:c800f36bb133f5e0731e86a2b19870d40b26f54976780a001319c2a7b08e5d61`
-  received exact approval once. Moto A/no-memory resolved and passed evaluator v2, but runtime evidence recorded the
-  legacy call-guard policy and terminal qualification rejected it; the other three rows did not start. R6 sealed
-  `inconclusive` at `$0.169596`, is consumed, and cannot retry or transfer approval.
+- R3-R6 are sealed `inconclusive` predecessors whose successive budget/plan/qualification/runtime-binding failures
+  are indexed in `docs/09-evidence.md`; no row, approval or configuration may retry, resume or transfer authority.
 - R7/R9 and candidate `sha256:8b962b80...bf6c` are superseded unexecuted after offline contract audits. R10
   qualified the exact R8 execution source. Candidate `sha256:60c67908...cff9e` consumed one exact `$15.30`/`$18`
   approval; all four rows resolved, evaluator-v2 receipt-qualified and settled at `$0.3664215`. The immutable raw
   result has a stale v1/v2 completion projection; the append-only R8 R4 index records the corrected complete matrix.
 - Exact R10/R9/R8/R6/R5/R4/R3 evidence tuples are owned by `docs/09-evidence.md`. R8 is descriptive development
   readiness only; no causal, held-out, retrieval or general memory-benefit claim follows.
-- Held-out A/C is preregistered for 48 rows; execution/unblinding and candidate/approval remain closed.
+- Held-out A/C is preregistered for 48 rows. R2 source-qualifies only the dedicated offline suite,
+  complete/inconclusive contract fixtures and deterministic analysis; task/evaluator binding, authoritative persisted
+  adapter, execution/unblinding, pricing refresh, candidate, approval and spend remain closed. R1 is an immutable
+  zero-authority predecessor invalidated by a pre-seal source race.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
 - V1-V25 artifacts are immutable historical evidence. V23 reached Docker and both frames before

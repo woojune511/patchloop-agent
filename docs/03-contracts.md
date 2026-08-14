@@ -25,6 +25,10 @@ Held-out task content may not be used to tune prompt, memory, score policy or se
 Current A/C sources are:
 
 - `heldout-ac-preregistration-20260814-v1.yaml`: standalone, execution-closed 48-row task-cluster design;
+- `heldout-ac-suite-20260814-v1.yaml` and its plan: strict metadata-only 48-row contracts that are not
+  `ExperimentSuite` and have no live-runner route;
+- held-out contract source qualification R2: validates suite, complete/inconclusive fixture projections and the
+  deterministic analysis while keeping task/evaluator, persisted adapter, candidate, approval and spend closed;
 - `ac-structured-pilot-v11.plan.yaml`: R10-qualified contract-hardened split-budget design used by sealed R8;
 - `dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml`: consumed Moto/Babel A/C suite whose four rows all
   resolved, evaluator-v2 receipt-qualified and cost-settled; R7/R9 remains superseded unexecuted;
@@ -36,6 +40,9 @@ R1/R2 plans, suites and runtime seals remain immutable predecessors.
 
 An accepted plan/suite grants no provider, evaluator, Docker, runtime-memory or cost authority.
 
+Held-out fixtures never impersonate runtime schemas and always emit `official=false`, `analysis_ready=false`.
+Authoritative use needs a new qualified binding to durable result/qualification/receipt/usage bytes and candidate.
+
 ## 4. Run manifest
 
 Every run binds task/source/image, prompt/tool/policy, model/service/transport, memory, limits, fault/schedule
@@ -46,9 +53,7 @@ must bind the D-110 index and `fixed-d110-bundle-v1`. The manifest/preflight mat
 `latest_frozen_index` serialization, suite tamper, wrong profile, source drift or schedule drift. Both
 conditions retain the identical runtime tuple and resource ceilings.
 
-R8's `cumulative-split-v1` limits are 3M input, 350k output, 3.35M aggregate, 25k per response, 180 model calls, 300
-tool calls and 3,600 seconds; reasoning counts as output and each dimension fails closed. R3 retains its historical
-3M aggregate/25k response/3,600-second tuple and null call caps.
+Exact R3/R8 runtime and budget tuples are immutable in `docs/09-evidence.md`.
 
 ## 5. Event and checkpoint contracts
 
@@ -110,44 +115,19 @@ Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 `ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial.
 V5-V25 retain their exact historical observations in `docs/09-evidence.md`.
 
-The active fast-track contract records each attempt under a new identity while allowing unchanged preflight source
-and configuration to be reused. It permits at most three no-call attempts, never records credential values and emits
-no provider/evaluator/agent call. A new version is required only when machine-visible semantics change.
-
-R3 retains one receipt-qualified Moto A success, Moto C pre-evaluator budget/binding failure and two not-started
-Babel rows. Incomplete matrices are diagnostic only.
+Fast preflight permits at most three no-call attempts with new attempt IDs; semantic changes require a new version.
+Incomplete matrices, including R3, are diagnostic only.
 
 ## 10. Cost and completion gates
 
-R3 keeps D-123's $13.6125/row, $54.45/panel and $55 cap. R8 reserves 3M input at $0.75/M plus 350k output at $4.50/M:
-`$3.825`/row, `$15.30`/panel, `$18` cap and `$2.70` slack. It assumes no cache discount and guarantees no invoice or
-completion outcome.
-
-Before any provider call the journal records campaign/reserve events; each row records start, terminal and
-settled-or-inconclusive events. Usage is repriced in integer nano-USD and prior settlements reload before another
-paid call.
-
-Completion requires each exact row once, qualified trace, durable settlement, official evaluation and
-resolved/SCRR/verdict consistency. Missing, duplicate, retried, replaced or confounded rows are inconclusive.
-
-For evaluator v2, the completion envelope must accept the producer's exact `trace-qualification-v2` schema. R8's
-immutable result used the stale v1 envelope and therefore retains a false raw `inconclusive` projection. The
-append-only R8 R4 evidence index binds that result and records the corrected offline projection; it never rewrites
-the terminal result or creates execution authority.
-
-D-124/D-125 cover settlement and local idempotent publication. R3 exercised two settlements and sealed publication,
-not global/cross-clone, actual-kill or power-loss guarantees.
+Cost is reserved before provider dispatch, settled from durable usage in integer nano-USD and reloaded before the
+next paid row. Completion requires every exact row once, qualified trace, settlement and evaluator/verdict
+consistency; missing, duplicate, retried, replaced or confounded rows are inconclusive. R8's immutable v1/v2 adapter
+mismatch is corrected only by its append-only index. Exact historical caps and local durability limits are in
+`docs/09-evidence.md`.
 
 ## 11. Evidence gates
 
-Preparation, execution receipt, journal and completion gate remain distinct evidence. Local no-call preflight uses a
-reusable source/configuration and new attempt IDs. One paid campaign approval binds the exact execution hash, schedule,
-runtime and cap rather than requiring per-row prose. Historical schemas remain under `reports/`.
-
-R3, R4 and R8 indices are under `reports/live-pilot/`; no identity or approval can be reused. R10 qualified the exact
-executed R8 source. R8 is consumed, and current correction source has no paid authority. Its R3-informed diagnostic
-limits and complete development matrix are not held-out-safe or a memory-effect result; any future execution needs a
-new suite/source qualification, exact candidate and approval.
-
-D-126-D-141 never reopen. D-142 remains source-qualified, unactivated and deferred; documentation creates no receipt,
-attempt, marker or terminal. Exact tuples remain in `docs/09-evidence.md`.
+Preparation, execution receipt, journal and completion remain distinct. No historical identity or approval can be
+reused; future execution needs a new qualified suite/source, exact candidate and approval. D-126-D-141 never reopen,
+D-142 remains source-qualified/unactivated/deferred, and exact tuples remain in `docs/09-evidence.md`.

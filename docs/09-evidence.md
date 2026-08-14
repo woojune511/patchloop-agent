@@ -9,6 +9,22 @@ Machine artifacts under `reports/` are authoritative. Historical narrative is ar
 but authorizes nothing. Content hash is `sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74`;
 file hash is `sha256:f6d9d015329823f3f888aac5f15296b2ddefda9e45b5d5501b8d94587bb11d8f` (31,338 bytes).
 
+The metadata-only suite has content hash `sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa`
+and file hash `sha256:27157e26881cc277a9026e51d22a6f21fbf5bbb8f6c1c09eaa89aec607e52534`
+(13,348 bytes). Its offline plan has content hash
+`sha256:b2058c48de3f2b4d13df872d7fd19a325c3a76ffb5ef24974310409100cb8885` and file hash
+`sha256:901f898d7f6f81b00e8840160b3efde2cc4fb7d8f4625c6188ea7235de264695` (2,466 bytes).
+
+Held-out contract source R1 is preserved as a pre-seal-race-invalidated predecessor: content
+`sha256:f024e04fd3a01b98f8fb469f2f0d0a11f4faf8372ed57cc7986e163bdecc5042`, file
+`sha256:1c42aecbbe4c9e3f39215658fb3ffba87930f94385b526c13287a0d09448fa22` (18,750 bytes). Current R2
+`core-ac-fixed-bundle-heldout-contract-source-qualification-20260814-r2` has content
+`sha256:0277225b0992b8e0562b21f5f8c2f8dcc4921017bea03b5087c4f6dd0e860172`, file
+`sha256:5f5406858603d918f296ca7b4a7bf2d62426c99a5915481964ed41f91c6b961c` (20,052 bytes), and
+contract-source hash `sha256:a61ad810d2d3de4a13c19c7dfd307dc5b64a1a8409b0de1f0858389ba866889c`.
+It records zero task/evaluator/persisted-adapter bindings and zero provider/evaluator/agent/Docker/SDK calls or cost;
+official analysis, candidate, approval, execution and claims remain unauthorized.
+
 ## R8 complete development-readiness matrix
 
 Candidate `sha256:60c679083ad7b995918e2ba5de79843be8b03ce0511b67eb859da437f16cff9e` bound source

@@ -1,0 +1,213 @@
+# Metadata-only suite derived from the sealed held-out A/C preregistration.
+# This file is not an ExperimentSuite and cannot be passed to the live runner.
+schema_version: heldout-ac-suite-v1
+suite_id: core-ac-fixed-bundle-heldout-20260814-v1
+status: execution-closed
+created_date: "2026-08-14"
+
+preregistration:
+  path: experiments/heldout-ac-preregistration-20260814-v1.yaml
+  preregistration_id: core-ac-fixed-bundle-heldout-20260814-v1
+  content_hash: sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74
+  file_bytes: 31338
+  file_sha256: sha256:f6d9d015329823f3f888aac5f15296b2ddefda9e45b5d5501b8d94587bb11d8f
+  section_hashes:
+    dataset: sha256:effac6a9e9a26b21db52e6377a078746819d95dfd6607e7db11ca5bc8dcbdfc2
+    treatment: sha256:f3a7256fe2201d0d43c4739c973a180ba0fd4d5bfe5de4f472b21589068982b3
+    schedule_design: sha256:52f58401c3626e5d788719ff0932f3f2a2abf1dd1cb092570ad0be461ff68a72
+    schedule: sha256:e999650448975f7382d69734ff52fa8c95d912bdb01dbdf82e17d8098d3f6206
+    runtime: sha256:907b109b07606e78ed9eacd09b91e09b49fe46d6b4a1dc7bae2b79baf772fd03
+    cost: sha256:c1034d283fed13ddb6af0f5462d06add2df5004730d3466ae73ef2cce8d0c2bb
+    outcomes: sha256:03ea217e0092c84b02bedd1b896c3e7c5aabd174d6147bf83ab1af6934f54bc5
+    analysis: sha256:a044262a830b4615bf0ee9394879a22e46acce184a0894696baff2193b216a3a
+    exclusions: sha256:055316274c9dc14bb0b0e9e67735047ba8104db275a77ef2f8edf5e055ee3ed7
+    stopping: sha256:d8c723fd38e592c81859b7ed298c407cef3d4682077f5e96807ccd0977388c20
+    authority: sha256:c3b416c3f1a9d039713964ba4f4b1f62dfd33c44201c1787c25048e2088ac855
+
+dataset:
+  manifest_path: data/dataset-manifest.yaml
+  manifest_file_bytes: 47368
+  manifest_file_sha256: sha256:e8cf14ca9dabebcc03c3522e400dfcb79606541e9b11e59f49510ea5c40bebed
+  dataset_id: patchloop-benchmark-v1
+  status: frozen
+  selection_rule: complete-admitted-core-same-repo-and-core-cross-repo-panel
+
+tasks:
+  - {task_id: sqlglot-duckdb-ignore-nulls-modifier-order, role: core-cross-repo}
+  - {task_id: param-shared-rx-fanout-cache, role: core-cross-repo}
+  - {task_id: mtplx-mixed-content-tool-call-stream, role: core-cross-repo}
+  - {task_id: fusesoc-retained-parse-error-diagnostics, role: core-cross-repo}
+  - {task_id: hf-hub-custom-tqdm-class-contract, role: core-same-repo}
+  - {task_id: pdm-target-project-options-loading, role: core-same-repo}
+  - {task_id: anyio-extensionless-entrypoint-worker-main, role: core-same-repo}
+  - {task_id: tox-dotted-version-factor-base-python, role: core-same-repo}
+  - {task_id: loguru-post-2038-local-timezone-fallback, role: core-same-repo}
+  - {task_id: pyfakefs-file-wrapper-io-capabilities, role: core-same-repo}
+  - {task_id: dagster-subset-partition-definition-selection, role: core-cross-repo}
+  - {task_id: kubeflow-exit-handler-after-dependencies, role: core-cross-repo}
+
+treatment:
+  conditions: [no_memory, structured]
+  memory_policy_version: fixed-d110-bundle-v1
+  no_memory:
+    selected_memory: null
+    entry_count: 0
+    bundle_bytes: 0
+    bundle_sha256: null
+  structured:
+    delivery: exact-d110-three-entry-bundle-every-request
+    entry_count: 3
+    bundle_bytes: 3528
+    bundle_sha256: sha256:572667d431aa75e4fe74bfc030a99f64245b77d9afa1c88e5d531129f708accf
+    d110_index_version: idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064
+    d110_index_content_hash: sha256:3a99e6c190672d1676bc4d13604de989899de9ddac85d282cc90c4d56f426c56
+  query_embedding_or_similarity_used: false
+  threshold_or_reranking_used: false
+  only_treatment_difference: selected-memory-content-and-derived-evidence
+
+schedule_binding:
+  seed: 20260814
+  repetitions: 2
+  expected_runs: 48
+  task_condition_pairs: 24
+  waves: 4
+  rows_per_wave: 12
+  pair_adjacency_required: true
+  condition_order_reversed_in_repetition_2: true
+  replacement_allowed: false
+  retry_allowed: false
+  projection_bytes: 6128
+  projection_sha256: sha256:26ddf0c7123a8fb17e27e1b7229f4aa9d01f6ad3162f29b2463aa71a79451c51
+
+schedule:
+  - {order: 1, wave: 1, task_id: loguru-post-2038-local-timezone-fallback, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 2, wave: 1, task_id: loguru-post-2038-local-timezone-fallback, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 3, wave: 1, task_id: dagster-subset-partition-definition-selection, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 4, wave: 1, task_id: dagster-subset-partition-definition-selection, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 5, wave: 1, task_id: pyfakefs-file-wrapper-io-capabilities, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 6, wave: 1, task_id: pyfakefs-file-wrapper-io-capabilities, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 7, wave: 1, task_id: sqlglot-duckdb-ignore-nulls-modifier-order, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 8, wave: 1, task_id: sqlglot-duckdb-ignore-nulls-modifier-order, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 9, wave: 1, task_id: anyio-extensionless-entrypoint-worker-main, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 10, wave: 1, task_id: anyio-extensionless-entrypoint-worker-main, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 11, wave: 1, task_id: fusesoc-retained-parse-error-diagnostics, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 12, wave: 1, task_id: fusesoc-retained-parse-error-diagnostics, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 13, wave: 2, task_id: pdm-target-project-options-loading, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 14, wave: 2, task_id: pdm-target-project-options-loading, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 15, wave: 2, task_id: param-shared-rx-fanout-cache, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 16, wave: 2, task_id: param-shared-rx-fanout-cache, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 17, wave: 2, task_id: hf-hub-custom-tqdm-class-contract, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 18, wave: 2, task_id: hf-hub-custom-tqdm-class-contract, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 19, wave: 2, task_id: kubeflow-exit-handler-after-dependencies, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 20, wave: 2, task_id: kubeflow-exit-handler-after-dependencies, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 21, wave: 2, task_id: tox-dotted-version-factor-base-python, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 22, wave: 2, task_id: tox-dotted-version-factor-base-python, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 23, wave: 2, task_id: mtplx-mixed-content-tool-call-stream, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 24, wave: 2, task_id: mtplx-mixed-content-tool-call-stream, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 25, wave: 3, task_id: param-shared-rx-fanout-cache, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 26, wave: 3, task_id: param-shared-rx-fanout-cache, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 27, wave: 3, task_id: pyfakefs-file-wrapper-io-capabilities, role: core-same-repo, condition: structured, repetition: 2}
+  - {order: 28, wave: 3, task_id: pyfakefs-file-wrapper-io-capabilities, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 29, wave: 3, task_id: dagster-subset-partition-definition-selection, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 30, wave: 3, task_id: dagster-subset-partition-definition-selection, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 31, wave: 3, task_id: pdm-target-project-options-loading, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 32, wave: 3, task_id: pdm-target-project-options-loading, role: core-same-repo, condition: structured, repetition: 2}
+  - {order: 33, wave: 3, task_id: fusesoc-retained-parse-error-diagnostics, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 34, wave: 3, task_id: fusesoc-retained-parse-error-diagnostics, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 35, wave: 3, task_id: loguru-post-2038-local-timezone-fallback, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 36, wave: 3, task_id: loguru-post-2038-local-timezone-fallback, role: core-same-repo, condition: structured, repetition: 2}
+  - {order: 37, wave: 4, task_id: kubeflow-exit-handler-after-dependencies, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 38, wave: 4, task_id: kubeflow-exit-handler-after-dependencies, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 39, wave: 4, task_id: tox-dotted-version-factor-base-python, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 40, wave: 4, task_id: tox-dotted-version-factor-base-python, role: core-same-repo, condition: structured, repetition: 2}
+  - {order: 41, wave: 4, task_id: mtplx-mixed-content-tool-call-stream, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 42, wave: 4, task_id: mtplx-mixed-content-tool-call-stream, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 43, wave: 4, task_id: hf-hub-custom-tqdm-class-contract, role: core-same-repo, condition: structured, repetition: 2}
+  - {order: 44, wave: 4, task_id: hf-hub-custom-tqdm-class-contract, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 45, wave: 4, task_id: sqlglot-duckdb-ignore-nulls-modifier-order, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 46, wave: 4, task_id: sqlglot-duckdb-ignore-nulls-modifier-order, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 47, wave: 4, task_id: anyio-extensionless-entrypoint-worker-main, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 48, wave: 4, task_id: anyio-extensionless-entrypoint-worker-main, role: core-same-repo, condition: structured, repetition: 2}
+
+runtime:
+  evaluator_version: v2
+  safety_contract_schema: evaluator-safety-contract-v2
+  receipt_schema: evaluator-v2-evaluation-receipt-v1
+  raw_result_official: false
+  model: openai
+  model_id: gpt-5.4-mini-2026-03-17
+  reasoning_effort: medium
+  reasoning_mode: standard
+  service_tier: default
+  transport_max_retries: 0
+  store: false
+  system_prompt_version: SYSTEM_PROMPT_V3
+  tool_schema_version: v2
+  context_policy_version: phase-evidence-v5
+  memory_policy_version: fixed-d110-bundle-v1
+  sandbox_backend: docker
+  marker_profile: task-private-plus-run-secret-exact-v1
+  call_guard_policy: model-tool-bounded-enforcement-v1
+  max_output_tokens: 25000
+  token_budget_schema_version: cumulative-split-v1
+  max_cumulative_input_tokens: 4000000
+  max_cumulative_output_tokens: 500000
+  max_total_tokens: 4500000
+  max_model_calls: 240
+  max_tool_calls: 400
+  wall_clock_timeout_seconds: 3600
+
+cost:
+  schema_version: heldout-ac-split-token-full-schedule-reserve-v1
+  accounting_scope: campaign-local
+  accounting_basis: split-token-ceiling-standard-list-price
+  scheduled_run_count: 48
+  input_reserve_rate_per_million_usd: 0.75
+  output_reserve_rate_per_million_usd: 4.5
+  cache_discount_assumed: false
+  per_run_reserve_usd: 5.25
+  full_schedule_reserve_usd: 252.0
+  hard_cap_usd: 275.0
+  hard_cap_slack_usd: 23.0
+  money_scale: nano-usd
+  per_run_reserve_nanos: 5250000000
+  full_schedule_reserve_nanos: 252000000000
+  hard_cap_nanos: 275000000000
+  hard_cap_slack_nanos: 23000000000
+  reservation_mode: row-bound-full-schedule-up-front
+  initial_reservation_boundary: before-first-provider-call
+  row_reserve_count: 48
+  cost_censoring_allowed: false
+  not_started_due_to_cost_allowed: false
+  automatic_retry_or_replacement_allowed: false
+  settlement_basis: durable-token-derived-standard-list-price
+  live_resume_policy: disabled
+  completion_guaranteed: false
+  invoice_or_free_tier_claimed: false
+  pricing_basis_observed_at: "2026-08-13T12:05:26Z"
+  pricing_source_url: https://developers.openai.com/api/docs/pricing
+  pricing_refresh_required_before_candidate: true
+  pricing_drift_disposition: block-and-create-successor-cost-binding
+
+execution_gate:
+  source_qualification_present: false
+  exact_execution_candidate_present: false
+  explicit_paid_approval_present: false
+  pricing_refreshed_for_candidate: false
+  heldout_task_spec_or_outcome_access_authorized: false
+  provider_execution_authorized: false
+  evaluator_execution_authorized: false
+  agent_execution_authorized: false
+  docker_observation_authorized: false
+  sdk_observation_authorized: false
+  runtime_memory_injection_authorized: false
+  cost_reservation_authorized: false
+  spend_authorized: false
+  authorized_provider_calls: 0
+  authorized_evaluator_calls: 0
+  authorized_agent_runs: 0
+  authorized_docker_calls: 0
+  authorized_sdk_calls: 0
+  authorized_cost_usd: 0.0
+
+content_hash: sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa

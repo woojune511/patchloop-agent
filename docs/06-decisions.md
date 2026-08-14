@@ -10,17 +10,20 @@ four-run development A/C readiness. R3 through R6 were inconclusive; R8 complete
 order: preserve/correct R8 evidence -> preregister held-out A/C (complete, execution-closed) -> offline qualification
 -> separately authorize execution -> B/D after their own frozen contracts.
 
+### 2026-08-14 — isolate held-out contracts from historical execution
+
+- The 48-row suite uses dedicated strict models and a metadata-only loader, not `ExperimentSuite` or the live runner.
+- Completion and analysis code is source-qualified only as an offline-untrusted fixture/preview. It cannot authenticate
+  runtime files, claim official analysis or create candidate/approval/spend authority.
+- R1 was materialized during a source-extraction race and is preserved byte-for-byte as an invalidated predecessor.
+  R2 binds the settled source and validates R1 immutability; neither artifact authorizes a call.
+- The next semantic gate is a dedicated task/evaluator qualifier and authoritative persisted-evidence adapter, then
+  refreshed pricing and a new exact candidate. Existing R8 authority cannot transfer.
+
 ### 2026-08-14 — preserve R3-R6 and correct runtime evidence before a fresh panel
 
-- R3 is sealed `inconclusive` and never resumed: Moto A passed v2, Moto C hit 3M before submission, and Babel did not
-  start. No A/C direction or memory-effect claim follows.
-- R4's exact approval was consumed once. It sealed before provider dispatch at `$0` because paid-plan revalidation
-  selected the legacy budget; Moto A terminated and the other rows did not start. R4 and its R6 source qualification cannot retry or transfer
-  approval.
-- R5's exact approval was consumed once. Moto A resolved and passed evaluator v2, but terminal qualification still
-  expected the legacy null-call/aggregate-only profile; the other rows did not start and cost settled at `$0.19303425`.
-- R6's exact approval was consumed once. Moto A resolved and passed evaluator v2, but runtime evidence recorded the
-  legacy call-guard policy; the other rows did not start and cost settled at `$0.169596`.
+- R3-R6 remain sealed, consumed and non-transferable. Their successive token, paid-plan, qualification and runtime
+  binding failures and exact costs live in `docs/09-evidence.md`; no A/C or memory-effect claim follows.
 - R7/R9 and its no-call candidate are superseded unexecuted after API-free contract audits.
 - R10 qualified the exact contract-hardened R8 execution source while R6/R8 and earlier predecessors remain
   immutable.

@@ -96,12 +96,8 @@ D-122 predecessor evidence and current D-125 offline tests prove:
    selected-memory field and its derived hashes/counts. Later live turns may diverge with agent trajectory.
 7. Input-token counting, truncation-disabled behavior and durable usage evidence remain intact.
 
-D-108's +702 tokens cover one request shape. R3 live C delivery consumed 2,963,919 tokens before submission and says
-nothing about task effect. `docs/09-evidence.md` owns exact observations.
-
-R10 bound R8 source/plan/suite/split-budget/bounded-call and strict machine-contract identities while preserving
-A-null/C-exact-three. Candidate `sha256:60c67908...cff9e` then received one exact approval and is consumed. Raw v2
-results remain `official=false`; receipt qualification supplies completion eligibility.
+D-108 and R3 quantify delivery overhead/usage, not task effect. R10/R8 preserved A-null/C-exact-three and is now
+consumed; raw v2 results remain `official=false`. Exact observations are in `docs/09-evidence.md`.
 
 ## 7. Run-completion gate
 
@@ -115,13 +111,9 @@ The D-125-qualified completion source makes the four-row matrix analyzable only 
 - binds a specific evaluator-v2 safety result and its evidence rather than accepting a verdict string alone;
 - has no infrastructure, qualification, diagnostic or budget-terminal confound.
 
-R3 failed this gate at Moto C and left Babel unstarted. R4 sealed before provider dispatch at `$0` because its
-paid-plan capability revalidation selected the legacy budget. R5 Moto A then resolved through evaluator v2, but a
-legacy null-call/aggregate-only terminal qualification rejected it and halted the other three rows. No row may be
-replaced. R6 Moto A then resolved and passed evaluator v2, but its runtime evidence recorded the legacy call-guard
-policy and qualification halted the other rows. R8 then produced four resolved, qualified and settled rows. Its raw
-completion adapter misclassified the valid v2 qualification envelope; append-only offline correction records the
-complete matrix without rewriting the result. Global/cross-clone and kill/power-loss durability remain unverified.
+R3-R6 failed distinct runtime/qualification gates; R8 produced four resolved, qualified and settled rows. Its stale
+v1/v2 completion projection is corrected append-only without rewriting the result. No row may be replaced, and
+global/cross-clone or kill/power-loss durability remains unverified; exact history is in `docs/09-evidence.md`.
 
 ## 8. Metrics
 
@@ -170,3 +162,9 @@ The record freezes 12 tasks × A/C × two repetitions = 48 rows and a scheduled-
 It specifies deterministic 100,000-sample percentile stability and an assumption-based exact 4,096-sign sensitivity;
 neither is design-based or a population confidence claim. Eligible evaluator FAIL and typed agent terminals score zero;
 infrastructure confounds are inconclusive. `$252`/`$275` need fresh pricing; execution/unblinding remain closed.
+
+The R2 offline source gate implements the strict suite, both complete and inconclusive contract fixtures, the primary
+equal-task estimator, 6/6 role strata, four verdict distributions, directional flips, resource deltas and
+cost-per-success. It does not authenticate persisted runtime evidence and cannot make an official analysis. A
+pre-reservation cost failure is represented as 0 reserved/48 not started; a post-reservation stop retains the full
+48-row reservation. Task/evaluator qualification and the authoritative persisted-evidence adapter are the next gate.

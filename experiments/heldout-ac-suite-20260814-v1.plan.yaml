@@ -1,0 +1,45 @@
+# Offline-only plan binding the dedicated 48-row suite. It creates no
+# qualification, candidate, approval, task-spec access, or execution authority.
+schema_version: heldout-ac-suite-plan-v1
+plan_id: core-ac-fixed-bundle-heldout-20260814-v1-offline-plan
+status: offline-contract-only
+
+suite:
+  path: experiments/heldout-ac-suite-20260814-v1.yaml
+  suite_id: core-ac-fixed-bundle-heldout-20260814-v1
+  content_hash: sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa
+  file_bytes: 13348
+  file_sha256: sha256:27157e26881cc277a9026e51d22a6f21fbf5bbb8f6c1c09eaa89aec607e52534
+
+preregistration:
+  path: experiments/heldout-ac-preregistration-20260814-v1.yaml
+  preregistration_id: core-ac-fixed-bundle-heldout-20260814-v1
+  content_hash: sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74
+  file_bytes: 31338
+  file_sha256: sha256:f6d9d015329823f3f888aac5f15296b2ddefda9e45b5d5501b8d94587bb11d8f
+  section_hashes:
+    dataset: sha256:effac6a9e9a26b21db52e6377a078746819d95dfd6607e7db11ca5bc8dcbdfc2
+    treatment: sha256:f3a7256fe2201d0d43c4739c973a180ba0fd4d5bfe5de4f472b21589068982b3
+    schedule_design: sha256:52f58401c3626e5d788719ff0932f3f2a2abf1dd1cb092570ad0be461ff68a72
+    schedule: sha256:e999650448975f7382d69734ff52fa8c95d912bdb01dbdf82e17d8098d3f6206
+    runtime: sha256:907b109b07606e78ed9eacd09b91e09b49fe46d6b4a1dc7bae2b79baf772fd03
+    cost: sha256:c1034d283fed13ddb6af0f5462d06add2df5004730d3466ae73ef2cce8d0c2bb
+    outcomes: sha256:03ea217e0092c84b02bedd1b896c3e7c5aabd174d6147bf83ab1af6934f54bc5
+    analysis: sha256:a044262a830b4615bf0ee9394879a22e46acce184a0894696baff2193b216a3a
+    exclusions: sha256:055316274c9dc14bb0b0e9e67735047ba8104db275a77ef2f8edf5e055ee3ed7
+    stopping: sha256:d8c723fd38e592c81859b7ed298c407cef3d4682077f5e96807ccd0977388c20
+    authority: sha256:c3b416c3f1a9d039713964ba4f4b1f62dfd33c44201c1787c25048e2088ac855
+
+requirements:
+  dedicated_source_qualification_required: true
+  refreshed_pricing_binding_required: true
+  exact_execution_candidate_required: true
+  separate_explicit_paid_approval_required: true
+  typed_agent_failure_completion_adapter_required: true
+  complete_panel_analysis_required: true
+  may_open_heldout_task_specs_or_outcomes: false
+  may_make_provider_evaluator_agent_docker_or_sdk_calls: false
+  may_reserve_or_spend_cost: false
+
+grants_execution_authority: false
+content_hash: sha256:b2058c48de3f2b4d13df872d7fd19a325c3a76ffb5ef24974310409100cb8885

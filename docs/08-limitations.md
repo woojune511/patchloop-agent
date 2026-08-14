@@ -33,7 +33,9 @@ Historical milestone-by-milestone limitations are archived at
 - Both conditions succeeded on two development tasks with one repetition. Structured used fewer tokens/cost in both,
   but there is no variance estimate, causal attribution, held-out validation or population memory-benefit claim.
 
-The unexecuted 48-row design grants no authority; 12 high-risk clusters cannot establish broad generalization.
+The unexecuted 48-row design grants no authority; 12 high-risk clusters cannot establish broad generalization. R2
+qualifies only metadata contracts and deterministic fixture analysis. It has no task/evaluator binding, authenticated
+persisted-evidence adapter, refreshed pricing, candidate or official analysis, and therefore is not held-out evidence.
 
 ## Evaluator-v1 correctness gap
 
@@ -49,17 +51,10 @@ The unexecuted 48-row design grants no authority; 12 high-risk clusters cannot e
   direct IDs but do not prove confidentiality against dictionary/equality inference.
 - Historical evaluator-v1 artifacts, including D-098, are not regraded. They must not be described as independently
   safety-verified, production-secure or valid evidence for the corrected evaluator.
-- R3 exposed a pre-submission budget-terminal mismatch: producer events named `ModelGenerationBudgetError`, while the
-  sanitized result stored `AGENT_SUBMISSION_FAILED` and terminal qualification rejected their binding. The historical
-  source-qualification R6 artifact freezes a
-  successor typed/sanitized binding offline; no live budget terminal has exercised that correction. R3 evaluation
-  remains `NOT_RUN` and its R5 qualification/result are not rewritten.
-- R4 exposed a separate paid-plan revalidation defect: one branch compared the split budget to the legacy budget.
-  R5 exercised that correction successfully, then exposed a terminal-qualification defect that still expected null
-  call caps and an aggregate-only budget. R6 exercised that correction, then exposed a runtime-evidence serializer
-  still recording the legacy call-guard policy. R7/R9 corrected that defect but was superseded unexecuted; R10/R8
-  exercised the contract-hardened path successfully. Its raw completion adapter then exposed a v1/v2 qualification
-  schema mismatch; the append-only correction fixes future projection without rewriting the immutable result.
+- R3-R8 exposed distinct budget-terminal, paid-plan, qualification, runtime-serialization and completion-adapter
+  mismatches. Each predecessor remains immutable; exact causality and corrections are indexed in `docs/09-evidence.md`.
+  Only R10/R8 exercised the hardened development path, and its append-only v1/v2 projection correction grants no
+  held-out or production authority.
 
 ## D-132 through D-142 external boundary
 

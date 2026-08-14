@@ -14,11 +14,15 @@ uv sync --offline --frozen --extra dev
   tests/test_documentation_structure.py
 & .\.venv\Scripts\python.exe -E -s -B `
   scripts/build_r8_runtime_evidence.py
+& .\.venv\Scripts\python.exe -E -s -B `
+  scripts/build_heldout_ac_source_qualification.py
 ```
 
 These are offline-only. The R8 evidence builder validates the checked-in correction index and immutable R10 binding;
 when local `.patchloop` originals exist, it also rechecks the complete external chain. Current source intentionally
 differs from consumed R10, so do not regenerate R10. The builder never reruns a row or grants runtime/paid authority.
+The held-out builder only revalidates append-only R1/R2 contract-source artifacts. It does not open task packages,
+observe Docker/SDK/credentials, refresh pricing, create a candidate or authenticate runtime evidence.
 
 ## Historical R8 command — do not run
 
