@@ -14,6 +14,7 @@ from pydantic import ValidationError
 
 from patchloop import task_loader
 from patchloop.agent import model as agent_model
+from patchloop.errors import ContractError
 from patchloop.evals import heldout_ac_binding_source_qualification as source_q
 from patchloop.evals import runner as generic_runner
 from patchloop.sandbox import runner as sandbox_runner
@@ -21,6 +22,7 @@ from patchloop.util import sha256_bytes, sha256_json
 from patchloop.verifier import core as verifier_core
 
 ROOT = Path(__file__).resolve().parents[1]
+SEALED_R5_PATH = ROOT / source_q.OUTPUT_PATH
 
 
 def _forbidden(label: str):
@@ -62,27 +64,25 @@ def test_r5_identity_is_source_only_and_materialization_closed() -> None:
     )
 
 
-def test_build_validate_replay_are_append_only_and_no_call(isolated_output: Path) -> None:
-    first = source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
-    raw = isolated_output.read_bytes()
-    mtime = isolated_output.stat().st_mtime_ns
-    validated = source_q.validate_heldout_ac_binding_source_qualification(repository=ROOT)
-    replay = source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
-
-    assert first == validated == replay
-    assert isolated_output.read_bytes() == raw
-    assert isolated_output.stat().st_mtime_ns == mtime
-    assert first["metadata_task_bindings"] == 12
-    assert first["task_evaluator_contract_materializations"] == 0
-    assert first["authenticated_persisted_rows"] == 0
-    assert first["execution_authorized"] is False
-    assert first["file_sha256"] == sha256_bytes(raw)
+def test_historical_builder_fails_closed_without_creating_a_successor(
+    isolated_output: Path,
+) -> None:
+    with pytest.raises(ContractError, match="contract source qualification has drifted"):
+        source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
+    assert not isolated_output.exists()
 
 
-def test_artifact_binds_r4_exact_sources_and_closed_authority(isolated_output: Path) -> None:
-    source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
-    payload = json.loads(isolated_output.read_bytes())
+def test_sealed_r5_artifact_bytes_and_closed_authority_are_preserved() -> None:
+    raw = SEALED_R5_PATH.read_bytes()
+    payload = json.loads(raw)
 
+    assert len(raw) == 4_759
+    assert sha256_bytes(raw) == (
+        "sha256:809981c460c9d28e0dbc17e179260e20eb48641489973cac669b6de72282094c"
+    )
+    assert payload["content_hash"] == (
+        "sha256:c1dc0d53f5df3cbd8c37cdc453fea738a803177add7a49d6e267b186192d5f59"
+    )
     assert payload["predecessor"] == {
         "path": source_q.R4_PATH.as_posix(),
         "file_bytes": source_q.R4_FILE_BYTES,
@@ -125,15 +125,15 @@ def test_gate_never_opens_a_task_path(
 
     monkeypatch.setattr(Path, "read_bytes", read_bytes)
     monkeypatch.setattr(Path, "read_text", read_text)
-    source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
+    with pytest.raises(ContractError, match="contract source qualification has drifted"):
+        source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
 
     assert opened
     assert all("/tasks/" not in path for path in opened)
 
 
-def test_equal_but_wrong_scalar_type_fails_closed(isolated_output: Path) -> None:
-    source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
-    payload = json.loads(isolated_output.read_bytes())
+def test_equal_but_wrong_scalar_type_fails_closed() -> None:
+    payload = json.loads(SEALED_R5_PATH.read_bytes())
     payload["projection"]["metadata_task_count"] = 12.0
     payload["content_hash"] = sha256_json(
         {key: value for key, value in payload.items() if key != "content_hash"}

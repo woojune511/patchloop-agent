@@ -10,6 +10,8 @@ from patchloop.evals.heldout_ac_execution_source_qualification import (
     OUTPUT_PATH,
     SOURCE_ENTRYPOINTS,
     STATUS,
+    HeldoutACExecutionSourceQualification,
+    HeldoutACExecutionSourceQualificationError,
     _build_candidate,
     load_heldout_ac_execution_source_binding,
     run_heldout_ac_execution_source_qualification,
@@ -42,28 +44,30 @@ def test_offline_candidate_binds_paid_path_closure_without_authority() -> None:
     assert payload.authority.added_model_cost_usd == 0.0
 
 
-def test_source_qualification_artifact_replays_and_exports_binding() -> None:
-    summary = validate_heldout_ac_execution_source_qualification(repository=ROOT)
-    binding = load_heldout_ac_execution_source_binding(repository=ROOT)
+def test_r1_artifact_is_immutable_after_successor_source_drift() -> None:
     raw = (ROOT / OUTPUT_PATH).read_bytes()
+    payload = HeldoutACExecutionSourceQualification.model_validate_json(raw)
 
-    assert summary["status"] == STATUS
-    assert summary["source_qualification_hash"] == binding.source_qualification_hash
-    assert summary["evaluator_source_hash"] == binding.evaluator_source_hash
-    assert binding.qualification_file.file_bytes == len(raw)
-    assert binding.qualification_file.file_sha256 == sha256_bytes(raw)
-    assert summary["execution_candidate_created"] is False
-    assert summary["credential_values_observed"] == 0
-    assert summary["provider_calls_made"] == 0
+    assert len(raw) == 14_903
+    assert sha256_bytes(raw) == (
+        "sha256:f047ae1770c57b51e65f20cd0191bfaa310cbe8615f42c78980772ab4a45f910"
+    )
+    assert payload.content_hash == (
+        "sha256:df30eceeb8bc476565b36d3260525cf0958a82c88a402f0342838a0bda2b9ad9"
+    )
+    with pytest.raises(HeldoutACExecutionSourceQualificationError, match="has drifted"):
+        validate_heldout_ac_execution_source_qualification(repository=ROOT)
+    with pytest.raises(HeldoutACExecutionSourceQualificationError, match="has drifted"):
+        load_heldout_ac_execution_source_binding(repository=ROOT)
 
 
 def test_source_qualification_rerun_is_byte_and_mtime_stable() -> None:
     selected = ROOT / OUTPUT_PATH
     before = selected.read_bytes()
     before_mtime = selected.stat().st_mtime_ns
-    summary = run_heldout_ac_execution_source_qualification(repository=ROOT)
+    with pytest.raises(HeldoutACExecutionSourceQualificationError, match="has drifted"):
+        run_heldout_ac_execution_source_qualification(repository=ROOT)
 
-    assert summary["status"] == STATUS
     assert selected.read_bytes() == before
     assert selected.stat().st_mtime_ns == before_mtime
 

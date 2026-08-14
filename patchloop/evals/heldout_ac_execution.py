@@ -737,6 +737,7 @@ def build_heldout_ac_run_manifest(
             purpose=ExperimentPurpose.CORE,
             suite_hash=candidate.suite_content_hash,
             execution_hash=candidate.execution_hash,
+            campaign_cost_control_hash=candidate.campaign_cost_control.content_hash,
             dataset_manifest_hash=candidate.dataset_manifest_hash,
             dataset_role=role,
             schedule_seed=20_260_814,

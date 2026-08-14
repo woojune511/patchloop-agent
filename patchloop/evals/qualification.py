@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
@@ -989,6 +991,23 @@ def _execution_plan_matches(
     experiment = manifest.experiment
     if experiment is None or plan is None:
         return False
+    if experiment.experiment_id == "core-ac-fixed-bundle-heldout-20260814-v1":
+        try:
+            from patchloop.evals.heldout_ac_live_contract import (
+                heldout_ac_live_plan_matches_manifest,
+            )
+
+            journal_path = Path(str(plan.get("journal_path"))).resolve(strict=False)
+            derived_root = journal_path.parents[2]
+            plan_path = _execution_plan_path(derived_root, experiment.execution_hash)
+            return heldout_ac_live_plan_matches_manifest(
+                plan=plan,
+                manifest=manifest,
+                plan_path=plan_path,
+                plan_file_sha256=sha256_bytes(plan_path.read_bytes()),
+            )
+        except (ContractError, IndexError, OSError, ValueError):
+            return False
     approval = plan.get("approval")
     baseline_admission = plan.get("baseline_admission")
     campaign_cost_control = plan.get("campaign_cost_control")
@@ -1864,7 +1883,10 @@ def _generic_baseline_runtime_contract_evidence(
     condition_neutral_comparison = _condition_neutral_comparison_manifest_matches(manifest)
     condition_neutral_v2 = _condition_neutral_runtime_v2_manifest_matches(manifest)
     ac_fixed_bundle = _ac_fixed_bundle_readiness_manifest_matches(manifest)
-    if ac_fixed_bundle:
+    from patchloop.evals.heldout_ac_live_contract import is_heldout_ac_experiment
+
+    heldout_ac = is_heldout_ac_experiment(manifest)
+    if ac_fixed_bundle or heldout_ac:
         details.update(
             {
                 "purpose": manifest.experiment.purpose.value,
@@ -1897,7 +1919,9 @@ def _generic_baseline_runtime_contract_evidence(
         )
     expected = {
         "schema_version": (
-            "ac-fixed-bundle-runtime-evidence-v1"
+            "heldout-ac-runtime-evidence-v1"
+            if heldout_ac
+            else "ac-fixed-bundle-runtime-evidence-v1"
             if ac_fixed_bundle
             else _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA_V2
             if condition_neutral_v2
@@ -1921,7 +1945,24 @@ def _generic_baseline_runtime_contract_evidence(
         "tool_schema_version": "v2",
         "context_policy_version": "phase-evidence-v5",
     }
-    if ac_fixed_bundle:
+    if heldout_ac:
+        from patchloop.evals.heldout_ac_live_contract import (
+            heldout_ac_runtime_evidence_document,
+        )
+
+        expected = heldout_ac_runtime_evidence_document(
+            manifest=manifest,
+            system_prompt=SYSTEM_PROMPT_V3,
+            tool_schemas=TOOL_SCHEMAS_V2,
+        )
+        details.update(
+            {
+                "purpose": "core-ac-heldout",
+                "memory_condition": manifest.memory.condition.value,
+                "memory_policy_version": manifest.memory_policy_version,
+            }
+        )
+    elif ac_fixed_bundle:
         from patchloop.evals.runner import (
             AC_FIXED_BUNDLE_COST_POLICY,
             AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY,
@@ -2050,6 +2091,7 @@ def _generic_baseline_runtime_contract_evidence(
             condition_neutral_comparison
             or condition_neutral_v2
             or ac_fixed_bundle
+            or heldout_ac
             or manifest.experiment.purpose
             in {
                 ExperimentPurpose.GENERIC_BASELINE_READINESS,
@@ -3030,8 +3072,13 @@ def _fixed_memory_delivery_evidence(
         if manifest.memory.condition == MemoryCondition.NO_MEMORY
         else (D110_INDEX_VERSION, D110_INDEX_CONTENT_HASH)
     )
+    from patchloop.evals.heldout_ac_live_contract import is_heldout_ac_experiment
+
     passed = bool(
-        _ac_fixed_bundle_readiness_manifest_matches(manifest)
+        (
+            _ac_fixed_bundle_readiness_manifest_matches(manifest)
+            or is_heldout_ac_experiment(manifest)
+        )
         and context_events
         and len(context_events) == len(consumers)
         and not failures
@@ -10370,6 +10417,9 @@ def qualify_run(
     condition_neutral_v2 = _condition_neutral_runtime_v2_manifest_matches(manifest)
     condition_neutral_any = condition_neutral_comparison or condition_neutral_v2
     ac_fixed_bundle = _ac_fixed_bundle_readiness_manifest_matches(manifest)
+    from patchloop.evals.heldout_ac_live_contract import is_heldout_ac_experiment
+
+    heldout_ac = is_heldout_ac_experiment(manifest)
     task_identity = (
         manifest.task_id == package.public.task_id
         and manifest.task_version == package.public.task_version
@@ -10389,6 +10439,7 @@ def qualify_run(
         }
         or condition_neutral_any
         or ac_fixed_bundle
+        or heldout_ac
     ):
         (
             generic_runtime_ok,
@@ -10403,6 +10454,8 @@ def qualify_run(
             (
                 "ac_fixed_runtime_contract"
                 if ac_fixed_bundle
+                else "heldout_ac_runtime_contract"
+                if heldout_ac
                 else "comparison_runtime_contract"
                 if condition_neutral_any
                 else "generic_runtime_contract"
@@ -10418,6 +10471,7 @@ def qualify_run(
         )
         or (condition_neutral_any and manifest.memory.condition == MemoryCondition.NO_MEMORY)
         or ac_fixed_bundle
+        or heldout_ac
     ):
         forbidden_generation_blocks = [
             event.sequence
@@ -10460,10 +10514,19 @@ def qualify_run(
                 )
             )
         ]
+        if heldout_ac:
+            # The preregistration counts a trace-qualified finite-budget terminal as
+            # an eligible task failure.  The terminal binding is validated below;
+            # seeing the bound guard is therefore not an infrastructure confound.
+            forbidden_generation_blocks = []
+            forbidden_tail_blocks = []
+            context_tail_failures = []
         split_budget_call_guard = bool(
             ac_fixed_bundle
             and experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         )
+        heldout_call_guard = heldout_ac
+        bounded_call_guard = split_budget_call_guard or heldout_call_guard
         admission_tail_failures = []
         for event in events:
             if event.type != EventType.TOOL_ADMISSION_BLOCKED:
@@ -10471,11 +10534,21 @@ def qualify_run(
             if not _tool_admission_call_budget_binding_valid(
                 event.payload,
                 budget=manifest.budget,
-                bounded=split_budget_call_guard,
+                bounded=bounded_call_guard,
             ):
                 admission_tail_failures.append(event.sequence)
         expected_observability_budget = (
-            _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
+            Budget(
+                max_model_calls=240,
+                max_tool_calls=400,
+                max_total_tokens=4_500_000,
+                wall_clock_timeout_seconds=3_600,
+                token_budget_schema_version="cumulative-split-v1",
+                max_cumulative_input_tokens=4_000_000,
+                max_cumulative_output_tokens=500_000,
+            )
+            if heldout_call_guard
+            else _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
             if split_budget_call_guard
             else _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
             if condition_neutral_v2 or ac_fixed_bundle
@@ -10488,6 +10561,7 @@ def qualify_run(
         exact_observability_profile = bool(
             condition_neutral_any
             or ac_fixed_bundle
+            or heldout_ac
             or experiment.experiment_id
             in (
                 set(_WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID)
@@ -10498,8 +10572,11 @@ def qualify_run(
             exact_observability_profile
             and manifest.budget == expected_observability_budget
             and (
-                (manifest.budget.max_model_calls == 180 and manifest.budget.max_tool_calls == 300)
-                if split_budget_call_guard
+                (
+                    manifest.budget.max_model_calls == (240 if heldout_call_guard else 180)
+                    and manifest.budget.max_tool_calls == (400 if heldout_call_guard else 300)
+                )
+                if bounded_call_guard
                 else (
                     manifest.budget.max_model_calls is None
                     and manifest.budget.max_tool_calls is None
@@ -10515,13 +10592,15 @@ def qualify_run(
         add(
             (
                 "bounded_call_guard_contract"
-                if split_budget_call_guard
+                if bounded_call_guard
                 else "disabled_call_guard_contract"
             ),
             call_guard_contract_ok,
             policy_version=(
                 _AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY
                 if split_budget_call_guard
+                else "heldout-ac-bounded-call-guard-v1"
+                if heldout_call_guard
                 else _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
             ),
             model_call_limit=manifest.budget.max_model_calls,
@@ -10999,7 +11078,7 @@ def qualify_run(
             **self_validation_lifecycle_details,
         )
 
-    if ac_fixed_bundle:
+    if ac_fixed_bundle or heldout_ac:
         fixed_delivery_ok, fixed_delivery_details = _fixed_memory_delivery_evidence(
             root=run_root,
             manifest=manifest,
@@ -11122,6 +11201,20 @@ def qualify_run(
                     if manifest.experiment.experiment_id
                     in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                     else _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+                )
+                and manifest.model.transport_max_retries == 0
+            )
+            or (
+                heldout_ac
+                and manifest.budget
+                == Budget(
+                    max_model_calls=240,
+                    max_tool_calls=400,
+                    max_total_tokens=4_500_000,
+                    wall_clock_timeout_seconds=3_600,
+                    token_budget_schema_version="cumulative-split-v1",
+                    max_cumulative_input_tokens=4_000_000,
+                    max_cumulative_output_tokens=500_000,
                 )
                 and manifest.model.transport_max_retries == 0
             )
@@ -11298,6 +11391,40 @@ def qualify_run(
             *AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
         }
     )
+    heldout_full_schedule_cost_campaign = bool(heldout_ac)
+    if heldout_full_schedule_cost_campaign:
+        from patchloop.evals.heldout_ac_execution import HeldoutACCampaignCostControl
+
+        raw_cost_control = (
+            execution_plan.get("campaign_cost_control") if execution_plan is not None else None
+        )
+        try:
+            parsed_cost_control = HeldoutACCampaignCostControl.model_validate(raw_cost_control)
+        except (TypeError, ValidationError):
+            parsed_cost_control = None
+        add(
+            "heldout_ac_full_schedule_cost_contract",
+            bool(
+                execution_plan_ok
+                and parsed_cost_control is not None
+                and experiment is not None
+                and experiment.campaign_cost_control_hash == parsed_cost_control.content_hash
+                and parsed_cost_control.execution_hash == experiment.execution_hash
+                and parsed_cost_control.scheduled_run_count == 48
+                and parsed_cost_control.full_schedule_reserve_nanos == 252_000_000_000
+                and parsed_cost_control.hard_cap_nanos == 275_000_000_000
+                and parsed_cost_control.cost_censoring_allowed is False
+                and parsed_cost_control.live_resume_supported is False
+            ),
+            campaign_cost_control_hash=(
+                parsed_cost_control.content_hash if parsed_cost_control is not None else None
+            ),
+            manifest_cost_control_hash=(
+                experiment.campaign_cost_control_hash if experiment is not None else None
+            ),
+            schedule_row_count=48,
+            live_resume_supported=False,
+        )
     if full_schedule_cost_campaign:
         cost_control = (
             execution_plan.get("campaign_cost_control") if execution_plan is not None else None
@@ -12364,10 +12491,14 @@ def qualify_run(
         "failure_record_linkage",
     }
     trace_check_ids.add(
-        "fixed_memory_delivery_integrity" if ac_fixed_bundle else "no_memory_boundary"
+        "fixed_memory_delivery_integrity" if ac_fixed_bundle or heldout_ac else "no_memory_boundary"
     )
     if ac_fixed_bundle:
         trace_check_ids.add("ac_fixed_runtime_contract")
+    if heldout_ac:
+        trace_check_ids.add("heldout_ac_runtime_contract")
+        trace_check_ids.add("bounded_call_guard_contract")
+        trace_check_ids.add("heldout_ac_full_schedule_cost_contract")
     if structured_lifecycle_contract:
         trace_check_ids.add("submission_lifecycle")
         trace_check_ids.add("worker_claim_provenance")
@@ -12574,6 +12705,7 @@ def qualify_run(
         }
         or condition_neutral_any
         or ac_fixed_bundle
+        or heldout_ac
     ):
         payload.update(
             {
@@ -12608,6 +12740,7 @@ def qualify_run(
                             }
                             or condition_neutral_any
                             or ac_fixed_bundle
+                            or heldout_ac
                         )
                     )
                     else _runtime_contract_content_hash(events)

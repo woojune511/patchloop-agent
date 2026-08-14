@@ -67,13 +67,14 @@ delta is zero, while structured used fewer tokens and list-price cost in both pa
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: candidate/manifest/secret-expansion and no-call preflight source-qualified; execution remains closed.
+Status: authoritative dispatcher and successor no-call source are offline-qualified; execution remains closed.
 
 The record freezes 12 tasks × A/C × two repetitions = 48 rows, complete-panel analysis and `$252`/`$275` planning cost.
-The non-`ExperimentSuite` completion/analysis surfaces remain unofficial fixtures. R2/R5 bind them and 12 opaque task
-templates; materialization R1 stores no private value/outcome and preserves `$252`/`$275`. Execution-contract R1 and
-preflight R2 bind candidate/manifest/marker-expansion and observers. The first clean preflight passed Git/SDK/key
-presence but found no Docker daemon. After manual start, retry read-only; dispatcher, candidate, approval and spend are 0.
+The non-`ExperimentSuite` fixture surfaces remain historical. Materialization R1 stores no private value/outcome and
+preserves `$252`/`$275`. Preflight/dispatcher R7 binds the current candidate, manifest, marker expansion, exact
+approval plan, append-only journal, persisted-v2 authentication/replay and complete/inconclusive analysis boundary.
+R3-R6 are preserved pre-activation predecessors. Next: commit, fresh read-only preflight, then—only for its
+exact candidate—a separate 48-row `$252`/`$275` approval. Candidate, approval, runtime call and spend are currently 0.
 
 ## Work item 7 — B/D and the full comparison
 

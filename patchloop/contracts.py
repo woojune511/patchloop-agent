@@ -912,6 +912,7 @@ class ExperimentRunContext(StrictModel):
         if self.experiment_id in {
             CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
             *AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
+            "core-ac-fixed-bundle-heldout-20260814-v1",
         }:
             if self.campaign_cost_control_hash is None:
                 raise ValueError(

@@ -18,6 +18,7 @@ from patchloop.evals.heldout_ac_task_pricing_materialization import (
     OUTPUT_PATH,
     R5_PLAN_HASH,
     HeldoutACTaskPricingMaterialization,
+    HeldoutACTaskPricingMaterializationError,
     _build_candidate,
     _contract_template_hash,
     _materialize_task_template,
@@ -25,7 +26,7 @@ from patchloop.evals.heldout_ac_task_pricing_materialization import (
     validate_heldout_ac_task_pricing_materialization,
 )
 from patchloop.task_loader import load_task_package
-from patchloop.util import sha256_json
+from patchloop.util import sha256_bytes, sha256_json
 from patchloop.verifier.runtime_evidence import build_evaluator_safety_contract_v2
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -136,10 +137,15 @@ def test_rehashed_pricing_or_task_projection_drift_fails_closed() -> None:
         HeldoutACTaskPricingMaterialization.model_validate_json(json.dumps(task_drift))
 
 
-def test_checked_in_materialization_replays_without_network(
+def test_checked_in_materialization_is_preserved_and_rejects_current_source_replay(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    assert (ROOT / OUTPUT_PATH).is_file()
+    selected = ROOT / OUTPUT_PATH
+    raw = selected.read_bytes()
+    assert len(raw) == 51_018
+    assert sha256_bytes(raw) == (
+        "sha256:cdd971a57f6f20661d8de326f5603ee1d90eca4234633a8a09d65560d7d52641"
+    )
 
     def unexpected_capture() -> dict[str, object]:
         raise AssertionError("existing materialization must not refresh pricing")
@@ -148,10 +154,14 @@ def test_checked_in_materialization_replays_without_network(
         "patchloop.evals.heldout_ac_task_pricing_materialization.capture_official_pricing_evidence",
         unexpected_capture,
     )
-    validated = validate_heldout_ac_task_pricing_materialization(repository=ROOT)
-    rerun = run_heldout_ac_task_pricing_materialization(repository=ROOT)
-
-    assert validated == rerun
-    assert validated["task_evaluator_templates_materialized"] == 12
-    assert validated["runtime_secret_markers_materialized"] == 0
-    assert validated["execution_candidate_created"] is False
+    with pytest.raises(
+        HeldoutACTaskPricingMaterializationError,
+        match="has drifted",
+    ):
+        validate_heldout_ac_task_pricing_materialization(repository=ROOT)
+    with pytest.raises(
+        HeldoutACTaskPricingMaterializationError,
+        match="has drifted",
+    ):
+        run_heldout_ac_task_pricing_materialization(repository=ROOT)
+    assert selected.read_bytes() == raw

@@ -45,14 +45,18 @@ three transient pre-provider attempts without state artifacts or per-attempt app
 historical consumed set. Its candidate, plan and approval cannot run again. R10 binds the executed bytes, not the
 completion-corrected current source. No paid, held-out or B/D execution is currently authorized.
 
-The held-out suite stays outside `ExperimentSuite`. R2/R5 bind fixture/analysis and adapter source; materialization R1
-records 12 opaque run-secret-independent templates and `$0.75`/`$0.075`/`$4.50` prices. Execution-contract R1 binds
-the 48-row candidate, manifest and credential-derived marker expansion; preflight R2 binds read-only local observers.
-One clean no-call at commit `391c4e2b581bde0b184e42e7fb7d8ee7fe9a542b` found SDK 2.47.0 and key presence, but
-the installed Docker CLI had no daemon (`DOCKER_UNAVAILABLE`). Candidate, key value, runtime call and cost stayed zero.
+The held-out suite stays outside `ExperimentSuite`. R2/R5 and execution/preflight R1/R2 are immutable source
+predecessors; materialization R1 records 12 opaque run-secret-independent templates and
+`$0.75`/`$0.075`/`$4.50` prices. One clean no-call at commit `391c4e2b581bde0b184e42e7fb7d8ee7fe9a542b`
+found SDK 2.47.0 and key presence but no Docker daemon. Its source identity is now superseded.
+
+Held-out preflight/dispatcher R7 independently binds the current candidate producer, exact paid-plan boundary,
+append-only 48-row journal, one-use row consumption, persisted evaluator-v2 authentication, complete/inconclusive
+finalization, replay and preregistered analysis unlock. Pre-row guard failure now seals a zero-cost inconclusive result
+and consumes the plan. R3-R6 are predecessors; R7 created no candidate, plan, journal, result, approval or call.
 
 ## Next gate
 
-Work item 6's first actual preflight stopped only at the inactive Docker daemon. Next: start Docker Desktop manually,
-then retry the read-only gate on clean source. Any candidate remains execution-closed; an authoritative campaign
-dispatcher and separate `$252`/`$275` approval are still required.
+Commit the R7-qualified successor, then run one fresh read-only no-call preflight on execution-clean source. A READY
+result would create a new secret-free candidate only. Provider execution remains closed until a separate approval
+binds that exact new hash, all 48 rows, the `$252` full-schedule reserve and `$275` hard cap.

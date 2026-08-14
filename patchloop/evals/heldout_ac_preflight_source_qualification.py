@@ -1,7 +1,14 @@
-"""Successor source gate for the dedicated held-out no-call preflight."""
+"""Successor source gate for the held-out preflight and paid dispatcher.
+
+R2 through R6 remain immutable.  R7 binds the exact no-call candidate
+producer, the separately approved append-only 48-row dispatcher, and its
+persisted campaign replay validator; it grants no observation, candidate,
+approval, execution, or spend authority.
+"""
 
 from __future__ import annotations
 
+import json
 import os
 from datetime import UTC, datetime
 from pathlib import Path
@@ -16,24 +23,23 @@ from patchloop.evals.heldout_ac_execution import (
     HeldoutACFileBinding,
     HeldoutACSourceQualificationBinding,
 )
-from patchloop.evals.heldout_ac_execution_source_qualification import (
-    OUTPUT_PATH as R1_PATH,
-)
-from patchloop.evals.heldout_ac_execution_source_qualification import (
-    validate_heldout_ac_execution_source_qualification,
-)
 from patchloop.runtime import repository_root
 from patchloop.util import sha256_bytes, sha256_json
 
-SCHEMA_VERSION = "heldout-ac-preflight-source-qualification-v1"
-QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260814-r2"
-STATUS = "OFFLINE_NO_CALL_PREFLIGHT_SOURCE_QUALIFIED_CANDIDATE_CLOSED"
-OUTPUT_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r2.json")
-NEXT_GATE = "run-heldout-no-call-preflight-on-clean-committed-source"
+SCHEMA_VERSION = "heldout-ac-preflight-dispatch-source-qualification-v6"
+QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260814-r7"
+STATUS = "OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"
+OUTPUT_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r7.json")
+R6_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r6.json")
+R5_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r5.json")
+R4_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r4.json")
+R3_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r3.json")
+R2_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r2.json")
+NEXT_GATE = "run-fresh-heldout-no-call-preflight-on-clean-committed-successor"
 
 SOURCE_ENTRYPOINTS = (
-    Path("patchloop/agent/runner.py"),
     Path("patchloop/evals/heldout_ac_preflight.py"),
+    Path("patchloop/evals/heldout_ac_dispatcher.py"),
 )
 SOURCE_EXTRAS = (
     Path("patchloop/evals/heldout_ac_preflight_source_qualification.py"),
@@ -44,10 +50,14 @@ VALIDATION_PATHS = (
     Path("scripts/build_heldout_ac_execution_source_qualification.py"),
     Path("scripts/build_heldout_ac_preflight_source_qualification.py"),
     Path("scripts/run_heldout_ac_preflight.py"),
+    Path("scripts/run_heldout_ac_campaign.py"),
     Path("tests/test_heldout_ac_execution.py"),
     Path("tests/test_heldout_ac_execution_source_qualification.py"),
     Path("tests/test_heldout_ac_preflight.py"),
     Path("tests/test_heldout_ac_preflight_source_qualification.py"),
+    Path("tests/test_heldout_ac_dispatcher.py"),
+    Path("tests/test_heldout_ac_persisted_adapter.py"),
+    Path("tests/test_heldout_ac_analysis.py"),
 )
 
 
@@ -61,11 +71,13 @@ class FileBinding(HeldoutACFrozenModel):
     file_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
-class R1Binding(FileBinding):
-    path: Literal["reports/heldout-ac/artifacts/heldout-ac-execution-source-qualification-r1.json"]
+class R6Binding(FileBinding):
+    path: Literal["reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r6.json"]
     source_qualification_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     evaluator_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    original_status: Literal["OFFLINE_EXECUTION_CONTRACT_SOURCE_QUALIFIED_NO_CANDIDATE"]
+    original_qualification_id: Literal["core-ac-fixed-bundle-heldout-preflight-source-20260814-r6"]
+    original_status: Literal["OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"]
+    successor_reason: Literal["pre-row-guard-failure-consumption-sealed-before-activation"]
 
 
 class PreflightProjection(HeldoutACFrozenModel):
@@ -73,15 +85,25 @@ class PreflightProjection(HeldoutACFrozenModel):
         "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa"
     ]
     scheduled_rows: Literal[48]
-    r1_source_replay_valid: Literal[True]
+    r6_predecessor_bytes_preserved: Literal[True]
     git_commit_tree_and_execution_clean_observation_present: Literal[True]
     digest_pinned_docker_image_observation_present: Literal[True]
     sdk_version_observation_present: Literal[True]
     credential_presence_only_boundary_present: Literal[True]
     custom_base_url_block_present: Literal[True]
     candidate_factory_bound: Literal[True]
+    exact_paid_plan_boundary_bound: Literal[True]
+    append_only_48_row_dispatcher_bound: Literal[True]
+    one_use_row_consumption_bound: Literal[True]
+    persisted_v2_authentication_bound: Literal[True]
+    complete_or_inconclusive_finalization_bound: Literal[True]
+    persisted_campaign_replay_validator_bound: Literal[True]
+    preregistered_analysis_unlock_bound: Literal[True]
     blocked_preflight_candidate_count: Literal[0]
     execution_candidates_created: Literal[0]
+    approved_plans_created: Literal[0]
+    campaign_journals_created: Literal[0]
+    campaign_results_created: Literal[0]
 
 
 class QualificationAuthority(HeldoutACFrozenModel):
@@ -96,6 +118,9 @@ class QualificationAuthority(HeldoutACFrozenModel):
     approval_reservation_or_spend_authorized: Literal[False]
     official_analysis_or_claim_authorized: Literal[False]
     execution_candidates_created: Literal[0]
+    approved_plans_created: Literal[0]
+    campaign_journals_created: Literal[0]
+    campaign_results_created: Literal[0]
     credential_values_observed: Literal[0]
     provider_calls_made: Literal[0]
     evaluator_calls_made: Literal[0]
@@ -110,7 +135,7 @@ class HeldoutACPreflightSourceQualification(HeldoutACFrozenModel):
     qualification_id: Literal[QUALIFICATION_ID]
     status: Literal[STATUS]
     recorded_at: datetime
-    predecessor: R1Binding
+    predecessor: R6Binding
     source_entrypoints: tuple[str, ...] = Field(min_length=2, max_length=2)
     import_closure: tuple[str, ...] = Field(min_length=1)
     import_closure_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
@@ -162,17 +187,46 @@ def _binding(root: Path, relative: Path) -> FileBinding:
     )
 
 
-def _r1_binding(root: Path) -> R1Binding:
-    summary = validate_heldout_ac_execution_source_qualification(repository=root)
-    selected = root / R1_PATH
-    raw = selected.read_bytes()
-    return R1Binding(
-        path=R1_PATH.as_posix(),
+def _r6_binding(root: Path) -> R6Binding:
+    selected = (root / R6_PATH).resolve()
+    if not selected.is_relative_to(root) or selected.is_symlink() or not selected.is_file():
+        raise HeldoutACPreflightSourceQualificationError(
+            "held-out R6 source qualification predecessor is unavailable"
+        )
+    try:
+        raw = selected.read_bytes()
+        payload = json.loads(raw)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HeldoutACPreflightSourceQualificationError(
+            "held-out R6 source qualification predecessor is invalid"
+        ) from exc
+    exact = (
+        len(raw) == 18_413
+        and sha256_bytes(raw)
+        == "sha256:10ccf88e9255c6ae0a0d8246ca8f2d478137bac03b7ffd7e6f59d23b938e942b"
+        and isinstance(payload, dict)
+        and payload.get("qualification_id")
+        == "core-ac-fixed-bundle-heldout-preflight-source-20260814-r6"
+        and payload.get("status")
+        == "OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"
+        and payload.get("content_hash")
+        == "sha256:6a5cf10d8818954e15c17e25f8c4bea8d8bac722c01de2cf4d21c2880d3ae3be"
+        and payload.get("evaluator_source_hash")
+        == "sha256:69edd395dc19b80be0ce9dd17995530b77d261a0ff6eda8544a6ba058f377566"
+    )
+    if not exact:
+        raise HeldoutACPreflightSourceQualificationError(
+            "held-out R6 source qualification predecessor bytes differ"
+        )
+    return R6Binding(
+        path=R6_PATH.as_posix(),
         file_bytes=len(raw),
         file_sha256=sha256_bytes(raw),
-        source_qualification_hash=str(summary["source_qualification_hash"]),
-        evaluator_source_hash=str(summary["evaluator_source_hash"]),
-        original_status=str(summary["status"]),
+        source_qualification_hash=str(payload["content_hash"]),
+        evaluator_source_hash=str(payload["evaluator_source_hash"]),
+        original_qualification_id=str(payload["qualification_id"]),
+        original_status=str(payload["status"]),
+        successor_reason="pre-row-guard-failure-consumption-sealed-before-activation",
     )
 
 
@@ -181,7 +235,7 @@ def _build_candidate(
     *,
     recorded_at: datetime,
 ) -> HeldoutACPreflightSourceQualification:
-    predecessor = _r1_binding(root)
+    predecessor = _r6_binding(root)
     closure = _paid_path_import_closure(root, entrypoints=SOURCE_ENTRYPOINTS)
     source_paths = tuple(sorted({*closure, *SOURCE_EXTRAS}, key=lambda item: item.as_posix()))
     source_files = tuple(_binding(root, item) for item in source_paths)
@@ -206,15 +260,25 @@ def _build_candidate(
                 "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa"
             ),
             "scheduled_rows": 48,
-            "r1_source_replay_valid": True,
+            "r6_predecessor_bytes_preserved": True,
             "git_commit_tree_and_execution_clean_observation_present": True,
             "digest_pinned_docker_image_observation_present": True,
             "sdk_version_observation_present": True,
             "credential_presence_only_boundary_present": True,
             "custom_base_url_block_present": True,
             "candidate_factory_bound": True,
+            "exact_paid_plan_boundary_bound": True,
+            "append_only_48_row_dispatcher_bound": True,
+            "one_use_row_consumption_bound": True,
+            "persisted_v2_authentication_bound": True,
+            "complete_or_inconclusive_finalization_bound": True,
+            "persisted_campaign_replay_validator_bound": True,
+            "preregistered_analysis_unlock_bound": True,
             "blocked_preflight_candidate_count": 0,
             "execution_candidates_created": 0,
+            "approved_plans_created": 0,
+            "campaign_journals_created": 0,
+            "campaign_results_created": 0,
         },
         "authority": {
             "offline_source_qualification_authorized": True,
@@ -228,6 +292,9 @@ def _build_candidate(
             "approval_reservation_or_spend_authorized": False,
             "official_analysis_or_claim_authorized": False,
             "execution_candidates_created": 0,
+            "approved_plans_created": 0,
+            "campaign_journals_created": 0,
+            "campaign_results_created": 0,
             "credential_values_observed": 0,
             "provider_calls_made": 0,
             "evaluator_calls_made": 0,
@@ -285,6 +352,9 @@ def _summary(
         "file_bytes": len(raw),
         "file_sha256": sha256_bytes(raw),
         "execution_candidate_created": False,
+        "approved_plan_created": False,
+        "campaign_journal_created": False,
+        "campaign_result_created": False,
         "credential_values_observed": 0,
         "provider_calls_made": 0,
         "evaluator_calls_made": 0,
@@ -354,6 +424,11 @@ __all__ = [
     "NEXT_GATE",
     "OUTPUT_PATH",
     "QUALIFICATION_ID",
+    "R2_PATH",
+    "R3_PATH",
+    "R4_PATH",
+    "R5_PATH",
+    "R6_PATH",
     "SCHEMA_VERSION",
     "SOURCE_ENTRYPOINTS",
     "SOURCE_EXTRAS",

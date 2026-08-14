@@ -37,10 +37,10 @@
   result has a stale v1/v2 completion projection; the append-only R8 R4 index records the corrected complete matrix.
 - Exact R10/R9/R8/R6/R5/R4/R3 evidence tuples are owned by `docs/09-evidence.md`. R8 is descriptive development
   readiness only; no causal, held-out, retrieval or general memory-benefit claim follows.
-- Held-out A/C is preregistered for 48 rows. R2/R5 qualify offline contracts and adapter source; materialization R1
-  stores 12 opaque run-secret-independent templates and refreshed prices. Execution-contract R1 and no-call-preflight
-  R2 source-qualify candidate/manifest/secret expansion and readiness code. One clean no-call at commit `391c4e2` saw
-  SDK/key presence but `DOCKER_UNAVAILABLE`; candidate, runtime contract, call, approval, spend and execution stayed 0.
+- Held-out A/C is preregistered for 48 rows. Contract R2, binding R5 and execution/preflight R1/R2 are immutable
+  predecessors; materialization R1 stores 12 opaque templates and prices. Current preflight/dispatcher R7 binds the
+  candidate producer, exact paid plan, append-only dispatcher, persisted-v2 authentication/replay and final analysis
+  gate. R3-R6 are zero-authority pre-activation predecessors. Candidate, approval, call, spend and execution are 0.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
 - V1-V25 artifacts are immutable historical evidence. V23 reached Docker and both frames before
@@ -49,7 +49,7 @@
 - The active fast track preserves completed attempt records but reuses unchanged source/configuration. A new version
   is required only for schema, evaluator, security-boundary or treatment changes—not for another attempt.
 - Local no-call preflight may make at most three pre-provider attempts without state/approval/exact-prose ceremony.
-  Paid/provider execution still requires one approval binding the exact four-row hash and hard cost cap.
+  Paid/provider execution still requires one approval binding the exact campaign hash, schedule and hard cost cap.
 - R3 through R8 executions are sealed and cannot resume or overwrite; all approvals are consumed. A future paid run
   requires a new suite/source qualification, exact candidate and separate approval. No provider execution is
   currently authorized.

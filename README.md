@@ -18,10 +18,10 @@ rows were not started.
 R3-R6 are sealed `inconclusive`; their distinct stops are indexed in `docs/09-evidence.md`. R7/R9 was superseded
 unexecuted after offline contract audits. R10 qualified the exact R8 source. R8 completed all four rows at `$0.3664215`; an append-only
 correction fixes its stale v1/v2 completion projection without rewriting runtime evidence.
-The 48-row held-out A/C design has a metadata-only suite plus R2/R5 source gates. Materialization R1 froze 12
-run-secret-independent evaluator templates and refreshed prices without serializing private values or outcomes.
-Execution-contract R1 and preflight R2 now bind candidate/manifest/secret-expansion and read-only readiness source;
-they created no candidate, final contract, approval or execution.
+The 48-row held-out A/C design has a metadata-only suite and immutable offline predecessors. Materialization R1 froze
+12 run-secret-independent evaluator templates and refreshed prices without serializing private values or outcomes.
+Current preflight/dispatcher R7 source-qualifies the no-call producer, persisted replay and approval-gated dispatcher;
+it created no candidate, plan, journal, approval or execution.
 `docs/current-status.md` owns the exact tuple and next gate.
 
 ## Implemented product path
@@ -48,8 +48,8 @@ they created no candidate, final contract, approval or execution.
   and 3,600 seconds. Its price-aware reserve is `$3.825`/row, `$15.30`/panel and `$18` hard cap.
 - Those thresholds come from one observed R3 development row: they are neither held-out-safe nor a completion claim.
   R8 candidate `sha256:60c67908...cff9e` and all R3-R8 approvals are consumed; no identity may resume. Held-out A/C
-  is preregistered for 48 rows; templates, pricing and no-call candidate source are bound. Checked-in artifacts contain
-  no readiness/candidate/runtime contract, and execution/unblinding, B/D and approval remain closed.
+  is preregistered for 48 rows; templates, pricing, no-call and dispatcher source are bound. Checked-in artifacts
+  contain no current candidate or held-out result, and execution/unblinding, B/D and approval remain closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

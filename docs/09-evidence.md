@@ -33,11 +33,31 @@ Machine artifacts under `reports/` are authoritative. Historical narrative is ar
 - No-call preflight R2: content `sha256:7384a8bfa9a44ae3db2edd36c3a860ff0e85567652579770c42d781e4335f224`;
   file `sha256:5a06587069932599fd18aa7c2a3e72be098ccc0887b3b5906a6f5a0891391589` (15,725 bytes); source
   `sha256:b9acab3b68981d6be321a3019282b977b885f83d38b359f707bc6e7b29725aeb`.
+- Preflight/dispatcher R3 (historical-R1 replay correction): content
+  `sha256:8afdde929bbf93fe555a04cc332d0085d495327626c769a5c730917cf90f3678`; file
+  `sha256:88831118d5da9b9d0a826a49ef585a3532195003e78f8cb67c8b243ba4d4ff16` (18,334 bytes); source `sha256:3460e9c34047a5c2fb423b1854c30ae16359c4943902be06e0e3e765ed74ad0a`.
+- R4 (pre-replay-validator predecessor): content
+  `sha256:86e63aa20a527bb09ec8e700d38e42f185f2f14eb8d2b06e3c66704049bf6cf9`; file
+  `sha256:5616484bc441baad27d5edd435aacdec7be292141a2f68b30bf9ae6dd9a45100` (18,354 bytes); source
+  `sha256:4150971d9e7676c81d0536f70d102654e7a811a0cc95cf399b0af560ccbdfd7a`; validation
+  `sha256:fe694ca0a06450afb0072717cff53b43ed6fb6e3040b02d4de43fbc5f983c8dd`.
+- R5 (pre-format predecessor): content `sha256:3b85db358520e5ce7c32f965b629a385026ececad806f0a10b5715c4659ba5ce`;
+  file `sha256:6a46651ed3774ae3192e5674c57452220306d191f1f98ab76626e1cf5798bf5b` (18,415 bytes); source
+  `sha256:aa02b892d196862ff54ef34ec216ac777ddfdd0c2f16098cd5b4170c77de226b`; validation
+  `sha256:88ad015958411a7cd1ff00f9c52f02799bf79e6a5b84cc0c805fb7438b9650d3`.
+- R6 (pre-row-guard consumption predecessor): content `sha256:6a5cf10d8818954e15c17e25f8c4bea8d8bac722c01de2cf4d21c2880d3ae3be`;
+  file `sha256:10ccf88e9255c6ae0a0d8246ca8f2d478137bac03b7ffd7e6f59d23b938e942b` (18,413 bytes); source
+  `sha256:69edd395dc19b80be0ce9dd17995530b77d261a0ff6eda8544a6ba058f377566`; validation
+  `sha256:7564f76f74a1c1907a08216a2bb4577a6ec3ab5ed24457a70e308cd906e59c75`.
+- Current preflight/dispatcher R7: content `sha256:8491c1a6faf1e3affa961853705e06eb2b7afbe04d440e33d36cbe66757a003c`;
+  file `sha256:d4bf85b1d0e26bc9a6f2bdc9fb809ab6ca04020d6cf9f766ba194b56773581c7` (18,414 bytes); source
+  `sha256:47dd2bc2895bae8e1fcb3fe277beb727e917f4b1d99cb5f78ef599f4696ed8f0`; validation
+  `sha256:ff34096453b79307bf59a95d2bedc83ffc811da61c700ee1628cc0aeb52ee1d2`.
 
-Materialization R1 evaluator-side opened exact package/private/reference inputs only for hash validation and serialized
-no private value/outcome. Execution R1/R2 only read source and validation files. Across them: 12 independent templates,
-0 final contracts, authenticated rows, runtime observations, candidates, provider/evaluator/agent/Docker/SDK calls,
-reservation, spend or official analysis.
+Materialization R1 opened package/private/reference inputs for hashes and serialized no private value/outcome.
+Source-qualification R7 only read source/validation files. It created 0 candidates, approved
+plans, journals, results, authenticated rows, provider/evaluator/agent/Docker/SDK calls, reservation, spend or official
+analysis. A fresh committed no-call observation and exact paid approval remain separate future gates.
 
 ## R8 complete development-readiness matrix
 

@@ -880,9 +880,9 @@ class AgentRunner:
                 manifest=manifest,
             )
             try:
-                if (
-                    selected_provider == "openai"
-                    and self._is_ac_fixed_bundle_cost_completion_manifest(manifest)
+                if selected_provider == "openai" and (
+                    self._is_ac_fixed_bundle_cost_completion_manifest(manifest)
+                    or self._is_heldout_ac_experiment(manifest)
                 ):
                     self._consume_ac_row_start_once(
                         manifest,
@@ -960,6 +960,7 @@ class AgentRunner:
                 CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
                 CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
                 *AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
+                "core-ac-fixed-bundle-heldout-20260814-v1",
             }
         ):
             if (
@@ -1141,6 +1142,12 @@ class AgentRunner:
         )
 
     @staticmethod
+    def _is_heldout_ac_experiment(manifest: RunManifest | None) -> bool:
+        from patchloop.evals.heldout_ac_live_contract import is_heldout_ac_experiment
+
+        return is_heldout_ac_experiment(manifest)
+
+    @staticmethod
     def _require_live_authorization(
         manifest: RunManifest | None,
         authorization: LiveExecutionAuthorization | None,
@@ -1185,9 +1192,11 @@ class AgentRunner:
                 raise ContractError(
                     "live model execution requires the exact qualified evaluator-v2 authority"
                 ) from exc
-        if AgentRunner._is_condition_neutral_runtime_v2_manifest(
-            manifest
-        ) or AgentRunner._is_ac_fixed_bundle_cost_completion_manifest(manifest):
+        if (
+            AgentRunner._is_condition_neutral_runtime_v2_manifest(manifest)
+            or AgentRunner._is_ac_fixed_bundle_cost_completion_manifest(manifest)
+            or AgentRunner._is_heldout_ac_experiment(manifest)
+        ):
             AgentRunner._require_full_schedule_reservation(
                 manifest,
                 authorization,
@@ -1206,6 +1215,22 @@ class AgentRunner:
         """Require an exact up-front reserve journal before every paid row."""
 
         assert manifest.experiment is not None
+        if AgentRunner._is_heldout_ac_experiment(manifest):
+            from patchloop.evals.heldout_ac_live_contract import (
+                validate_heldout_ac_reservation_journal_prefix,
+            )
+
+            if runner_root is None:
+                raise ContractError("held-out reservation requires the exact runtime root")
+            if plan is None:
+                plan = _load_live_execution_plan(authorization)
+            return validate_heldout_ac_reservation_journal_prefix(
+                plan=plan,
+                manifest=manifest,
+                plan_path=authorization.plan_path,
+                plan_file_sha256=authorization.plan_hash,
+                runner_root=runner_root,
+            )
         ac_cost_profile = AgentRunner._is_ac_fixed_bundle_cost_completion_manifest(manifest)
         expected_experiment_id = (
             manifest.experiment.experiment_id
@@ -1543,7 +1568,10 @@ class AgentRunner:
     ) -> dict[str, str] | None:
         """Consume one exact A/C schedule row before entering the paid runtime."""
 
-        if not self._is_ac_fixed_bundle_cost_completion_manifest(manifest):
+        if not (
+            self._is_ac_fixed_bundle_cost_completion_manifest(manifest)
+            or self._is_heldout_ac_experiment(manifest)
+        ):
             return None
         if live_authorization is None or manifest.experiment is None:
             raise ContractError("A/C row-start consumption requires exact live authorization")
@@ -1793,6 +1821,17 @@ class AgentRunner:
                 return False
         if not isinstance(plan, dict):
             return False
+        if AgentRunner._is_heldout_ac_experiment(manifest):
+            from patchloop.evals.heldout_ac_live_contract import (
+                heldout_ac_live_plan_matches_manifest,
+            )
+
+            return heldout_ac_live_plan_matches_manifest(
+                plan=plan,
+                manifest=manifest,
+                plan_path=authorization.plan_path,
+                plan_file_sha256=authorization.plan_hash,
+            )
         runtime_contract = plan.get("runtime_contract")
         corrective = bool(
             manifest.experiment is not None
@@ -3875,6 +3914,7 @@ class AgentRunner:
         frozen_comparison = AgentRunner._is_frozen_comparison_runtime_manifest(manifest)
         condition_neutral_v2 = AgentRunner._is_condition_neutral_runtime_v2_manifest(manifest)
         ac_fixed_bundle = AgentRunner._is_ac_fixed_bundle_readiness_manifest(manifest)
+        heldout_ac = AgentRunner._is_heldout_ac_experiment(manifest)
         if manifest.experiment is None or (
             manifest.experiment.purpose
             not in {
@@ -3884,8 +3924,19 @@ class AgentRunner:
             and not frozen_comparison
             and not condition_neutral_v2
             and not ac_fixed_bundle
+            and not heldout_ac
         ):
             return None
+        if heldout_ac:
+            from patchloop.evals.heldout_ac_live_contract import (
+                heldout_ac_runtime_evidence_document,
+            )
+
+            return heldout_ac_runtime_evidence_document(
+                manifest=manifest,
+                system_prompt=system_prompt,
+                tool_schemas=tool_schemas,
+            )
         if ac_fixed_bundle:
             from patchloop.evals.runner import (
                 AC_FIXED_BUNDLE_COST_POLICY,

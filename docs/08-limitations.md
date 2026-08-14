@@ -34,8 +34,9 @@ Historical milestone-by-milestone limitations are archived at
   but there is no variance estimate, causal attribution, held-out validation or population memory-benefit claim.
 
 The unexecuted 48-row design grants no authority; 12 high-risk clusters cannot establish broad generalization.
-Materialization R1 validates 12 packages and prices, but stores only opaque templates without runtime-secret expansion.
-No row is authenticated and candidate/official analysis are absent, so this is not held-out outcome evidence.
+Materialization R1 validates 12 packages and prices, but stores only opaque templates. R7 source-qualifies the
+dispatcher, persisted authenticator and replay validator; it is not a runtime observation. No row is authenticated and candidate,
+approval and official analysis are absent, so this is not held-out outcome evidence.
 
 ## Evaluator-v1 correctness gap
 
@@ -56,22 +57,15 @@ No row is authenticated and candidate/official analysis are absent, so this is n
   Only R10/R8 exercised the hardened development path, and its append-only v1/v2 projection correction grants no
   held-out or production authority.
 
-## D-132 through D-142 external boundary
+## Historical external boundary
 
-- D-132-D-141 exact external facts remain in `docs/09-evidence.md` and do not reopen.
-- D-142 is source-qualified, unactivated and deferred. Its mocked tests made no external observation or runtime
-  artifact and cannot qualify evaluator-v2/R8 bytes.
-- Repository-local gates do not prove authenticated identity, global/cross-clone exclusion or long-term environment
-  stability. R10's execution authority is consumed; the post-run correction and reusable preflight contract grant no
-  new provider/evaluator/agent or paid authority.
+D-132-D-141 remain closed in `docs/09-evidence.md`; D-142 is source-qualified, unactivated and deferred. Local gates
+do not prove global identity/exclusion or grant new provider, evaluator, agent or paid authority.
 
-## Isolation, identity and operations
+## Isolation and identity
 
-- Repository-local logs are cooperative: append-only prevents rewriting, not repeated execution or cross-clone use.
-- D-118 lacks a trusted pre-D-116 anchor; D-119 ended consumed with unknown probe outcome. D-121 verified
-  no-start configuration only, not hash-probe isolation.
-- User-reported Docker facts remain self-attested unless captured by an approved phase. Historical tests may assert
-  superseded states; current authority is source/artifacts plus `docs/current-status.md`.
+Repository-local logs do not prove cross-clone uniqueness. D-118/D-119/D-121 and user-reported Docker boundaries are
+historical; current authority is source/artifacts plus `docs/current-status.md`.
 
 ## Claims still forbidden
 

@@ -26,11 +26,11 @@ Current A/C sources are:
 
 - `heldout-ac-preregistration-20260814-v1.yaml`: standalone, execution-closed 48-row task-cluster design;
 - `heldout-ac-suite-20260814-v1.yaml` and its plan: strict metadata-only 48-row contracts outside `ExperimentSuite`;
-- held-out R2/R5 source gates: R2 validates suite/fixture analysis; R5 binds the 12-task metadata plan plus hardened
-  evaluator-v2 materialization and persisted-row authentication source. Materialization R1 binds 12 evaluator-side
-  packages as opaque templates and refreshed prices. Execution-contract R1 binds the secret-free candidate, exact
-  schedule/cost control, run-manifest-v2 factory and ephemeral secret expansion; preflight R2 binds read-only local
-  observers. Neither gate observed readiness, created a candidate/final contract or authorized execution;
+- held-out contract R2, binding R5 and execution/preflight R1/R2 are immutable source predecessors. Materialization R1
+  binds 12 evaluator-side packages as opaque templates and prices. Preflight/dispatcher R7 independently binds the
+  current secret-free candidate producer, run-manifest-v2/ephemeral marker expansion, exact `$252`/`$275` paid plan,
+  append-only journal, one-use rows, persisted-v2 authenticator/replay and complete/inconclusive boundary. R3/R4 are
+  preserved zero-authority pre-activation predecessors; R3-R6 created no candidate or runtime;
 - `ac-structured-pilot-v11.plan.yaml`: R10-qualified contract-hardened split-budget design used by sealed R8;
 - `dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml`: consumed Moto/Babel A/C suite whose four rows all
   resolved, evaluator-v2 receipt-qualified and cost-settled; R7/R9 remains superseded unexecuted;
@@ -43,8 +43,8 @@ R1/R2 plans, suites and runtime seals remain immutable predecessors.
 An accepted plan/suite grants no provider, evaluator, Docker, runtime-memory or cost authority.
 
 Held-out fixtures never impersonate runtime schemas and emit `official=false`, `analysis_ready=false`. Templates omit
-credential-derived markers; R1 only source-qualifies their ephemeral expansion. Persisted-row authentication, an
-observed no-call candidate and a paid campaign remain separate gates.
+credential-derived markers. Only the R4 dispatcher may unlock analysis, after 48 exact independently authenticated
+and settled persisted rows. A fresh no-call candidate and paid approval remain separate gates.
 
 ## 4. Run manifest
 

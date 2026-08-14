@@ -121,8 +121,8 @@ It specifies deterministic 100,000-sample percentile stability and an assumption
 neither is design-based or a population confidence claim. Eligible evaluator FAIL and typed agent terminals score zero;
 infrastructure confounds are inconclusive. Refreshed prices preserve `$252`/`$275`; execution/unblinding remain closed.
 
-R2 implements the strict suite, complete/inconclusive fixtures and deterministic analysis. R5 binds 12 metadata tasks,
-hardened materialization and persisted-row authentication source. Materialization R1 records opaque templates and one
-price capture without outcomes/private values. Execution-contract R1 binds exact schedule/cost, manifest and ephemeral
-secret expansion; preflight R2 binds read-only Git/Docker-image/SDK/credential-presence checks. They performed no such
-observation and created no candidate, expanded contract or authenticated row.
+Contract R2, binding R5 and execution/preflight R1/R2 are immutable predecessors. Materialization R1 records opaque
+templates and one price capture without outcomes/private values. Current preflight/dispatcher R7 source-qualifies the
+approval-gated dispatcher: 48 append-only one-use rows, persisted evaluator-v2/qualification/usage authentication,
+full-schedule settlement, post-run replay, stop-on-confound sealing and analysis only after the complete matrix. It created
+no candidate, plan, journal, authenticated row, approval or call; execution/unblinding remain closed.

@@ -15,23 +15,15 @@ uv sync --offline --frozen --extra dev
 & .\.venv\Scripts\python.exe -E -s -B `
   scripts/build_r8_runtime_evidence.py
 & .\.venv\Scripts\python.exe -E -s -B `
-  scripts/build_heldout_ac_source_qualification.py
-& .\.venv\Scripts\python.exe -E -s -B `
-  scripts/build_heldout_ac_task_pricing_materialization.py
-& .\.venv\Scripts\python.exe -E -s -B `
-  scripts/build_heldout_ac_execution_source_qualification.py
-& .\.venv\Scripts\python.exe -E -s -B `
   scripts/build_heldout_ac_preflight_source_qualification.py
 ```
 
 These are offline-only. The R8 evidence builder validates the checked-in correction index and immutable R10 binding;
 when local `.patchloop` originals exist, it also rechecks the complete external chain. Current source intentionally
 differs from consumed R10, so do not regenerate R10. The builder never reruns a row or grants runtime/paid authority.
-The first held-out builder only revalidates append-only R1/R2 contract-source artifacts. The checked-in task/pricing
-builder replays materialization R1: because the artifact already exists it makes no network call and does not rewrite
-it, but it evaluator-side revalidates package hashes. It never reads credentials, observes Docker/SDK, creates a
-candidate, authenticates a row or spends cost. The last two builders replay execution-contract R1 and preflight R2;
-they only read source/validation files and likewise create no runtime authority.
+The held-out builder replays current preflight/dispatcher R7 and preserves R6/R5/R4/R3/R2 bytes. Historical contract R2,
+binding R5 and execution-contract R1 intentionally differ from current source; do not invoke their old builders as a
+current gate. Preflight R7 reads source/validation files only and creates no observation, candidate, plan or journal.
 
 ## Current held-out no-call preflight
 
@@ -45,6 +37,22 @@ approval false:
 
 A successful result is only a secret-free candidate for the fixed 48 rows and `$252`/`$275`; it cannot dispatch the
 campaign. Any source change requires a successor qualification and candidate.
+
+## Future held-out paid form — closed until exact approval
+
+After a fresh READY preflight is saved to `candidate.json`, a separate user approval must name its exact execution
+hash, 48 rows, `$252` reserve and `$275` cap. Only then is this form valid:
+
+```powershell
+& .\.venv\Scripts\python.exe -E -s -B scripts/run_heldout_ac_campaign.py `
+  --candidate-file candidate.json `
+  --env-file .env `
+  --approve-live-cost `
+  --approved-execution-hash sha256:<exact-new-candidate>
+```
+
+Do not run it now. R7 is source qualification only and there is no current candidate or approval. A started row is
+consumed once; a confound seals the remainder `not_started`, and no retry, replacement or resume path exists.
 
 ## Historical R8 command — do not run
 
