@@ -27,10 +27,17 @@ Machine artifacts under `reports/` are authoritative. Historical narrative is ar
   `sha256:cdd971a57f6f20661d8de326f5603ee1d90eca4234633a8a09d65560d7d52641` (51,018 bytes); 12-template hash
   `sha256:c8be4aaddf3b5aa0de07713b4a565ac3ebba5e5023eb658e250822160f6d06e9`. One unauthenticated public GET at
   `2026-08-14T09:40:21.765508Z` confirmed `$0.75`/`$0.075`/`$4.50` input/cached/output prices.
+- Execution-contract R1: content `sha256:df30eceeb8bc476565b36d3260525cf0958a82c88a402f0342838a0bda2b9ad9`;
+  file `sha256:f047ae1770c57b51e65f20cd0191bfaa310cbe8615f42c78980772ab4a45f910` (14,903 bytes); source
+  `sha256:45a7f6331efc8eed6e3b792ad692a4b74406ddb33f01a675e72ee7e88e5da55b`.
+- No-call preflight R2: content `sha256:7384a8bfa9a44ae3db2edd36c3a860ff0e85567652579770c42d781e4335f224`;
+  file `sha256:5a06587069932599fd18aa7c2a3e72be098ccc0887b3b5906a6f5a0891391589` (15,725 bytes); source
+  `sha256:b9acab3b68981d6be321a3019282b977b885f83d38b359f707bc6e7b29725aeb`.
 
-R1 evaluator-side opened the exact package/private/reference inputs for hash validation but serialized no private value
-or outcome. It materialized 12 run-secret-independent templates, 0 final contracts and 0 authenticated rows; provider,
-evaluator, agent, Docker, SDK, candidate, reservation, spend and analysis remain zero/closed.
+Materialization R1 evaluator-side opened exact package/private/reference inputs only for hash validation and serialized
+no private value/outcome. Execution R1/R2 only read source and validation files. Across them: 12 independent templates,
+0 final contracts, authenticated rows, runtime observations, candidates, provider/evaluator/agent/Docker/SDK calls,
+reservation, spend or official analysis.
 
 ## R8 complete development-readiness matrix
 

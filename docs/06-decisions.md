@@ -19,6 +19,8 @@ order: preserve/correct R8 evidence -> preregister held-out A/C (complete, execu
   materializer/authenticator while replaying R2. R3/R4 preserve pre-hardening/pre-format source.
 - Materialization R1 records 12 opaque evaluator templates and one fresh public pricing GET. It deliberately excludes
   runtime secrets/final contracts, outcomes, candidate and spend; existing R8 authority cannot transfer.
+- Execution-contract R1 source-qualifies candidate/manifest/ephemeral marker expansion; preflight R2 source-qualifies
+  clean Git, local image, SDK and credential-presence checks. Their source artifacts authorize no observation or run.
 
 ### 2026-08-14 — preserve R3-R6 and correct runtime evidence before a fresh panel
 

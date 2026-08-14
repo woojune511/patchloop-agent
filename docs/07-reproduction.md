@@ -18,6 +18,10 @@ uv sync --offline --frozen --extra dev
   scripts/build_heldout_ac_source_qualification.py
 & .\.venv\Scripts\python.exe -E -s -B `
   scripts/build_heldout_ac_task_pricing_materialization.py
+& .\.venv\Scripts\python.exe -E -s -B `
+  scripts/build_heldout_ac_execution_source_qualification.py
+& .\.venv\Scripts\python.exe -E -s -B `
+  scripts/build_heldout_ac_preflight_source_qualification.py
 ```
 
 These are offline-only. The R8 evidence builder validates the checked-in correction index and immutable R10 binding;
@@ -26,7 +30,21 @@ differs from consumed R10, so do not regenerate R10. The builder never reruns a 
 The first held-out builder only revalidates append-only R1/R2 contract-source artifacts. The checked-in task/pricing
 builder replays materialization R1: because the artifact already exists it makes no network call and does not rewrite
 it, but it evaluator-side revalidates package hashes. It never reads credentials, observes Docker/SDK, creates a
-candidate, authenticates a row or spends cost.
+candidate, authenticates a row or spends cost. The last two builders replay execution-contract R1 and preflight R2;
+they only read source/validation files and likewise create no runtime authority.
+
+## Current held-out no-call preflight
+
+After the exact source is committed and execution-clean, this command checks key presence, Git, SDK and digest-pinned
+local Docker images. It neither exports/prints the key nor calls a provider/evaluator/agent and always leaves paid
+approval false:
+
+```powershell
+& .\.venv\Scripts\python.exe -E -s -B scripts/run_heldout_ac_preflight.py --env-file .env
+```
+
+A successful result is only a secret-free candidate for the fixed 48 rows and `$252`/`$275`; it cannot dispatch the
+campaign. Any source change requires a successor qualification and candidate.
 
 ## Historical R8 command — do not run
 

@@ -67,13 +67,13 @@ delta is zero, while structured used fewer tokens and list-price cost in both pa
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: 12 evaluator templates and fresh pricing materialized after R5; execution and unblinding remain closed.
+Status: candidate/manifest/secret-expansion and no-call preflight source-qualified; execution remains closed.
 
 The record freezes 12 tasks × A/C × two repetitions = 48 rows, complete-panel analysis and `$252`/`$275` planning cost.
-The non-`ExperimentSuite` completion/analysis surfaces remain unofficial fixtures. R2 binds them; R5 replays R2 and
-binds 12 opaque tasks plus hardened materializer/authenticator source. Materialization R1 opened the exact packages
-only evaluator-side, stored no private value/outcome, and preserved `$252`/`$275`. Next qualify the executable runner
-and credential-derived marker boundary before any candidate; approval, reservation and spend remain absent.
+The non-`ExperimentSuite` completion/analysis surfaces remain unofficial fixtures. R2/R5 bind them and 12 opaque task
+templates; materialization R1 stores no private value/outcome and preserves `$252`/`$275`. Execution-contract R1 and
+preflight R2 now bind the exact candidate/manifest/marker-expansion and no-call observer code. Next run one clean,
+read-only preflight; checked-in evidence contains no candidate, authoritative dispatcher, approval, reservation or spend.
 
 ## Work item 7 — B/D and the full comparison
 

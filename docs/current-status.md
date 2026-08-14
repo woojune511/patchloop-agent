@@ -45,13 +45,14 @@ three transient pre-provider attempts without state artifacts or per-attempt app
 historical consumed set. Its candidate, plan and approval cannot run again. R10 binds the executed bytes, not the
 completion-corrected current source. No paid, held-out or B/D execution is currently authorized.
 
-The held-out suite stays outside `ExperimentSuite` and the live runner. R2/R5 bind fixture/analysis and adapter source.
-Materialization R1 evaluator-side validated 12 exact packages and recorded only opaque run-secret-independent templates.
-One official pricing GET confirmed `$0.75` input, `$0.075` cached input and `$4.50` output per million; `$252`/`$275`
-remain bound. No outcome, credential, final evaluator contract, authenticated row or analysis was created.
+The held-out suite stays outside `ExperimentSuite`. R2/R5 bind fixture/analysis and adapter source; materialization R1
+records 12 opaque run-secret-independent templates and `$0.75`/`$0.075`/`$4.50` prices. Execution-contract R1 binds
+the 48-row candidate, manifest and credential-derived marker expansion; preflight R2 binds clean Git, digest-pinned
+Docker image, SDK and credential-presence observation code. Both source gates created zero candidate, credential value,
+final evaluator contract, Docker/SDK observation, provider/evaluator/agent call or cost.
 
 ## Next gate
 
-Work item 6 has source-qualified adapters, 12 evaluator templates and refreshed pricing, but no executable live-runner
-route. Next: source-qualify the dedicated runner plus credential-derived marker expansion, then produce a no-call
-candidate. Any 48-row provider execution still needs separate approval for that future hash and cap.
+Work item 6 now has source-qualified candidate/manifest/marker-expansion and no-call preflight code, but no observed
+readiness or candidate. Next: commit the exact source and run the documented read-only no-call preflight. A resulting
+hash is execution-closed; an authoritative campaign dispatcher and separate `$252`/`$275` approval remain required.

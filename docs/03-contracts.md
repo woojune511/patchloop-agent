@@ -25,11 +25,12 @@ Held-out task content may not be used to tune prompt, memory, score policy or se
 Current A/C sources are:
 
 - `heldout-ac-preregistration-20260814-v1.yaml`: standalone, execution-closed 48-row task-cluster design;
-- `heldout-ac-suite-20260814-v1.yaml` and its plan: strict metadata-only 48-row contracts that are not
-  `ExperimentSuite` and have no live-runner route;
+- `heldout-ac-suite-20260814-v1.yaml` and its plan: strict metadata-only 48-row contracts outside `ExperimentSuite`;
 - held-out R2/R5 source gates: R2 validates suite/fixture analysis; R5 binds the 12-task metadata plan plus hardened
   evaluator-v2 materialization and persisted-row authentication source. Materialization R1 binds 12 evaluator-side
-  packages as opaque run-secret-independent templates and a refreshed price observation; it is not a final contract;
+  packages as opaque templates and refreshed prices. Execution-contract R1 binds the secret-free candidate, exact
+  schedule/cost control, run-manifest-v2 factory and ephemeral secret expansion; preflight R2 binds read-only local
+  observers. Neither gate observed readiness, created a candidate/final contract or authorized execution;
 - `ac-structured-pilot-v11.plan.yaml`: R10-qualified contract-hardened split-budget design used by sealed R8;
 - `dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml`: consumed Moto/Babel A/C suite whose four rows all
   resolved, evaluator-v2 receipt-qualified and cost-settled; R7/R9 remains superseded unexecuted;
@@ -41,9 +42,9 @@ R1/R2 plans, suites and runtime seals remain immutable predecessors.
 
 An accepted plan/suite grants no provider, evaluator, Docker, runtime-memory or cost authority.
 
-Held-out fixtures never impersonate runtime schemas and emit `official=false`, `analysis_ready=false`. Template R1
-does not contain the credential-derived marker or executable evaluator source identity. Final contract expansion,
-persisted-row authentication and a fresh candidate therefore remain separate gates.
+Held-out fixtures never impersonate runtime schemas and emit `official=false`, `analysis_ready=false`. Templates omit
+credential-derived markers; R1 only source-qualifies their ephemeral expansion. Persisted-row authentication, an
+observed no-call candidate and a paid campaign remain separate gates.
 
 ## 4. Run manifest
 
@@ -59,12 +60,8 @@ Exact R3/R8 runtime and budget tuples are immutable in `docs/09-evidence.md`.
 
 ## 5. Event and checkpoint contracts
 
-Events carry stable run ID, monotonic sequence, timestamp, actor, type, payload and artifact hashes. Durable
-model usage is written before a malformed response can terminate the run. Checkpoints bind current phase,
-workspace/diff identity and completed action IDs.
-
-Observed events are never edited. Corrections are successor artifacts or events that explicitly reference the
-original evidence.
+Events bind run/sequence/time/actor/type/payload/artifacts; checkpoints bind phase, workspace/diff and completed
+actions. Usage precedes a malformed terminal. Observations are immutable; corrections explicitly reference them.
 
 ## 6. Tool contract
 
@@ -83,27 +80,15 @@ No unrestricted shell, arbitrary command, new-file creation, rename or binary pa
 
 ## 7. Failure memory
 
-A memory entry contains a generalized failure pattern, applicability, remediation, non-applicability,
-validation evidence and provenance. Only the approved D-105 `model_facing_text` is eligible for the fixed C
-bundle; source run IDs, raw traces, vectors and reviewer-only fields must not enter the model context.
-
-The D-110 frozen index is an immutable storage artifact, not runtime authority. Its current authority says
-`retrieval_ready=false` and `retrieval_experiment_authorized=false`.
+A memory entry binds generalized pattern, applicability, remediation, limits, validation and provenance. Only approved
+D-105 `model_facing_text` enters fixed C; run IDs, traces, vectors and reviewer fields do not. D-110 is immutable
+storage, not runtime authority; retrieval remains false.
 
 ## 8. Fixed-bundle C delivery contract
 
-`fixed-d110-bundle-v1` provides strict delivery/request evidence:
-
-- A binds no index and renders `selected_memory=null` with zero entries and zero bundle bytes;
-- C binds D-105/D-110 inputs and renders the exact ordered 3,528-byte bundle on every request;
-- model-request/CAS/`ContextBuilt` evidence binds delivery and normalized A identity; no retrieval event is emitted;
-- missing, linked, replaced or hash-mismatched bound inputs fail closed;
-- construction performs no retrieval/ranking/model/provider/evaluator activity.
-
-This is delivery, not retrieval. It does not mutate D-110 or set selective-retrieval authority true.
-
-The A/C qualifier reconstructs the same chain and fails closed on retrieval events, consumer reuse, wrong
-roles, provider-state use or byte/hash tamper.
+`fixed-d110-bundle-v1` makes A null/zero and renders C's exact ordered 3,528-byte D-105/D-110 bundle on every request.
+Request/CAS/context evidence binds delivery; missing/replaced/tampered inputs or retrieval events fail closed. This is
+delivery, not retrieval, and grants no selective authority or provider/evaluator activity during construction.
 
 ## 9. Outcome and reporting
 

@@ -84,77 +84,35 @@ invoice/completion predictions or proof extra capacity resolves C.
 
 ## 6. Memory delivery qualification
 
-D-122 predecessor evidence and current D-125 offline tests prove:
-
-1. A renders no selected-memory text or memory-delivery event.
-2. C renders exactly the three approved D-105 texts in frozen D-110 `group_provenance` order on every
-   model request.
-3. D-110 index/marker/text drift, missing input or unknown entry fails closed.
-4. No embedding load, query encode, similarity, rerank or threshold occurs.
-5. Source provenance, vectors, raw traces and reviewer-only fields never enter model input.
-6. For the same durable event prefix, the normalized offline A/C request pair differs only at the
-   selected-memory field and its derived hashes/counts. Later live turns may diverge with agent trajectory.
-7. Input-token counting, truncation-disabled behavior and durable usage evidence remain intact.
-
-D-108 and R3 quantify delivery overhead/usage, not task effect. R10/R8 preserved A-null/C-exact-three and is now
-consumed; raw v2 results remain `official=false`. Exact observations are in `docs/09-evidence.md`.
+D-122/D-125 freeze A as null and C as the exact ordered three-text D-110 bundle on every request. Drift fails closed;
+no retrieval/ranking or reviewer-only/source material enters model input. Paired requests differ only in memory and
+derived identities; durable token/usage accounting remains active. D-108/R3 measure delivery overhead, not effect.
+R8 is consumed and raw v2 results remain `official=false`; see `docs/09-evidence.md`.
 
 ## 7. Run-completion gate
 
-The D-125-qualified completion source makes the four-row matrix analyzable only if every row:
-
-- reaches a terminal state;
-- is trace-qualified and cost-settled;
-- records complete provider response usage with exact token-count reconciliation;
-- reaches either the historical official v1 evaluator or receipt-qualified v2 path and binds all verdicts
-  consistently with SCRR and resolved/task-failure outcome;
-- binds a specific evaluator-v2 safety result and its evidence rather than accepting a verdict string alone;
-- has no infrastructure, qualification, diagnostic or budget-terminal confound.
-
-R3-R6 failed distinct runtime/qualification gates; R8 produced four resolved, qualified and settled rows. Its stale
-v1/v2 completion projection is corrected append-only without rewriting the result. No row may be replaced, and
-global/cross-clone or kill/power-loss durability remains unverified; exact history is in `docs/09-evidence.md`.
+Analysis requires every row terminal, trace-qualified, cost/usage-settled, evaluator/verdict-consistent and free of
+infrastructure, qualification, diagnostic or budget confounds. V2 also requires its authenticated receipt and typed
+safety evidence. R3-R6 failed distinct gates; R8 met them, with its stale projection corrected append-only. Rows cannot
+be replaced; cross-clone and kill/power-loss durability remain unverified.
 
 ## 8. Metrics
 
-Primary readiness metrics:
-
-- terminal, trace-qualified and evaluator-reached status;
-- A memory count 0 versus C exact-three delivery integrity;
-- request-diff, leak scan and truncation status.
-
-Descriptive task metrics, only after the complete matrix:
-
-- hidden/regression/scope/safety and their SCRR conjunction;
-- A-fail/C-success and A-success/C-fail directional flips;
-- accepted submission and process outcome;
-- input/output/reasoning tokens, model/tool calls, duration and list-price cost;
-- C−A deltas and cumulative memory overhead.
+Readiness metrics cover terminal/qualification/evaluator reach, A-null versus C-exact-three integrity, leak/diff and
+truncation. Only a complete matrix adds descriptive SCRR/verdicts, flips, submission outcome, token/call/duration/cost
+and paired C-minus-A deltas.
 
 ## 9. Interpretation boundary
 
-Allowed statement:
-
-> The exact fixed structured bundle could/could not be delivered leak-safely through the full workflow, and
-> these two development-validation pairs showed the following descriptive direction and cost.
-
-Not allowed:
-
-- general or causal memory improvement;
-- held-out or cross-repository generalization;
-- statistical significance or confidence intervals;
-- individual-rule efficacy, because all three rules are bundled;
-- retrieval/selective-policy quality;
-- a population negative-transfer rate;
-- production/core readiness.
+The result may state whether the exact bundle traversed the workflow and report these two development pairs'
+descriptive direction/cost. It cannot claim causal/general memory improvement, held-out/cross-repository or production
+readiness, significance/confidence, individual-rule efficacy, retrieval quality or population negative transfer.
 
 ## 10. Leakage and selection controls
 
-- Use both development-validation tasks; do not hand-pick one after inspection.
-- Do not use exact memory-source tasks as efficacy rows.
-- Do not inspect private specs, hidden results, reference/known-bad patches or source traces for task selection.
-- Freeze task/index/text identities before outcomes.
-- Never tune the fixed bundle on Moto/Babel results and then reuse the same rows as fresh validation.
+Use both development tasks, exclude memory-source rows, freeze identities before outcomes, and never select/tune from
+private specs, hidden/reference evidence, known-bad patches or traces. Moto/Babel cannot become fresh validation after
+their results informed changes.
 
 ## 11. Preregistered held-out A/C
 
@@ -163,8 +121,8 @@ It specifies deterministic 100,000-sample percentile stability and an assumption
 neither is design-based or a population confidence claim. Eligible evaluator FAIL and typed agent terminals score zero;
 infrastructure confounds are inconclusive. Refreshed prices preserve `$252`/`$275`; execution/unblinding remain closed.
 
-R2 implements the strict suite, complete/inconclusive fixtures and deterministic analysis. Current R5 replays R2's
-source closure and binds the 12 metadata tasks plus hardened evaluator-v2 materialization and receipt/trace-replayed
-persisted-row authentication source; it opened no private task. Materialization R1 then evaluator-side validated all
-12 packages and recorded opaque templates and one official price capture without outcomes or private values. No
-runtime-secret-expanded contract or row is authenticated. Executable source qualification remains before a candidate.
+R2 implements the strict suite, complete/inconclusive fixtures and deterministic analysis. R5 binds 12 metadata tasks,
+hardened materialization and persisted-row authentication source. Materialization R1 records opaque templates and one
+price capture without outcomes/private values. Execution-contract R1 binds exact schedule/cost, manifest and ephemeral
+secret expansion; preflight R2 binds read-only Git/Docker-image/SDK/credential-presence checks. They performed no such
+observation and created no candidate, expanded contract or authenticated row.
