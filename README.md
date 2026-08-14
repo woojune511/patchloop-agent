@@ -46,7 +46,7 @@ correction fixes its stale v1/v2 completion projection without rewriting runtime
   and 3,600 seconds. Its price-aware reserve is `$3.825`/row, `$15.30`/panel and `$18` hard cap.
 - Those thresholds come from one observed R3 development row: they are neither held-out-safe nor a completion claim.
   R8 candidate `sha256:60c67908...cff9e` and all R3-R8 approvals are consumed; no identity may resume. Held-out A/C
-  and B/D remain closed pending preregistration and separate authority.
+  is preregistered for 48 rows, but execution/unblinding, B/D, candidate and approval remain closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

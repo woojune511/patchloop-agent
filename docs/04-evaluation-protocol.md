@@ -164,9 +164,9 @@ Not allowed:
 - Freeze task/index/text identities before outcomes.
 - Never tune the fixed bundle on Moto/Babel results and then reuse the same rows as fresh validation.
 
-## 11. Deferred experiments
+## 11. Preregistered held-out A/C
 
-After valid readiness, the planning target is the frozen 12-task core panel × A/C × at least two repetitions
-(at least 48 rows). Exact schedule, analysis, runtime and cost require preregistration before held-out unblinding.
-The full A/B/C/D design remains later: freeze B/D first or use a separate fresh held-out panel afterward. The
-historical `experiments/core.template.yaml` is not modified or authorized by this decision.
+The record freezes 12 tasks × A/C × two repetitions = 48 rows and a scheduled-row complete-panel SCRR contrast.
+It specifies deterministic 100,000-sample percentile stability and an assumption-based exact 4,096-sign sensitivity;
+neither is design-based or a population confidence claim. Eligible evaluator FAIL and typed agent terminals score zero;
+infrastructure confounds are inconclusive. `$252`/`$275` need fresh pricing; execution/unblinding remain closed.

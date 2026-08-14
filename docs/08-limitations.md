@@ -33,6 +33,8 @@ Historical milestone-by-milestone limitations are archived at
 - Both conditions succeeded on two development tasks with one repetition. Structured used fewer tokens/cost in both,
   but there is no variance estimate, causal attribution, held-out validation or population memory-benefit claim.
 
+The unexecuted 48-row design grants no authority; 12 high-risk clusters cannot establish broad generalization.
+
 ## Evaluator-v1 correctness gap
 
 - `EvaluationEngine` assigns safety a literal PASS; it does not bind an executed independent safety result.

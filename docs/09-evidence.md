@@ -3,6 +3,12 @@
 Machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## Held-out A/C preregistration
+
+`heldout-ac-preregistration-20260814-v1.yaml` freezes a 48-row complete-panel design and `$252`/`$275` planning cost,
+but authorizes nothing. Content hash is `sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74`;
+file hash is `sha256:f6d9d015329823f3f888aac5f15296b2ddefda9e45b5d5501b8d94587bb11d8f` (31,338 bytes).
+
 ## R8 complete development-readiness matrix
 
 Candidate `sha256:60c679083ad7b995918e2ba5de79843be8b03ce0511b67eb859da437f16cff9e` bound source

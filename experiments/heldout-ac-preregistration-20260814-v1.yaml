@@ -1,0 +1,592 @@
+# Standalone preregistration record. This is not an experiment-v2 suite and
+# grants no runtime, provider, evaluator, Docker, credential, memory-injection,
+# candidate, approval, or spending authority.
+schema_version: heldout-ac-preregistration-v1
+preregistration_id: core-ac-fixed-bundle-heldout-20260814-v1
+status: design-only
+created_date: "2026-08-14"
+
+provenance:
+  design_base_commit: 895132e04f81b34825d6886be5464ddb808169fc
+  heldout_task_specs_opened_for_design: false
+  heldout_run_outcomes_opened_for_design: false
+  predecessors:
+    - path: experiments/ac-structured-pilot-v11.plan.yaml
+      file_bytes: 3114
+      file_sha256: sha256:7df61e67d568f155a535abc61ba08f46650894dbbc2559c34ecd558121084b62
+      relationship: executed-r8-runtime-treatment-contract
+    - path: experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml
+      file_bytes: 3248
+      file_sha256: sha256:cc318e805b0c1b68e440e947f7123fc283616256a5eb0ea749ad5c0b5c2cb699
+      relationship: executed-r8-suite-and-cost-predecessor
+    - path: reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r10.json
+      file_bytes: 20843
+      file_sha256: sha256:09b0d96673db714497cc07c9ac5fb5b2ea52e877a6ab69663b566c440cc6d18b
+      relationship: executed-r8-source-qualification-predecessor
+    - path: reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r8-evidence-r4.json
+      file_bytes: 19557
+      file_sha256: sha256:5035421a63d58fededab133b77c72e23ee4ad6d380a37c8d1157ce7480b7c62c
+      relationship: corrected-r8-development-readiness-evidence
+
+dataset:
+  manifest:
+    path: data/dataset-manifest.yaml
+    file_bytes: 47368
+    file_sha256: sha256:e8cf14ca9dabebcc03c3522e400dfcb79606541e9b11e59f49510ea5c40bebed
+    schema_version: dataset-manifest-v1
+    dataset_id: patchloop-benchmark-v1
+    status: frozen
+  task_count: 12
+  required_roles:
+    core-same-repo: 6
+    core-cross-repo: 6
+  task_selection_rule: complete-admitted-core-same-repo-and-core-cross-repo-panel
+  tasks:
+    - task_id: sqlglot-duckdb-ignore-nulls-modifier-order
+      task_version: 1
+      path: tasks/cross-repo-heldout/sqlglot-duckdb-ignore-nulls-modifier-order
+      role: core-cross-repo
+      admission_state: admitted
+      public_spec_hash: sha256:ef4a1acefe03aa8007dcc4f416c6e07ae9b48fb0bc1d4ca10e1074567753df8a
+      private_spec_hash: sha256:275146340056e9763586cf11ce5292742215789b3ca00e2ad72b4e6b24fdede1
+      upstream_repository: tobymao/sqlglot
+      environment_image: swerebench/sweb.eval.x86_64.tobymao_1776_sqlglot-7187@sha256:43c43d77e3bed15361140767e3f3fd84811e0bad5b58f6afcba83f79b8e58303
+      difficulty_tier: hard
+      difficulty_total: 7
+    - task_id: param-shared-rx-fanout-cache
+      task_version: 1
+      path: tasks/cross-repo-heldout/param-shared-rx-fanout-cache
+      role: core-cross-repo
+      admission_state: admitted
+      public_spec_hash: sha256:0ec4a12c90a8c332d26ee41f162aea6a15cba7f05e68316616a49f667bd8811e
+      private_spec_hash: sha256:9dffa77b678d47f3b58ac730f4ce40300084fa69bf1976688d68d9c2c5408cb2
+      upstream_repository: holoviz/param
+      environment_image: swerebench/sweb.eval.x86_64.holoviz_1776_param-1117@sha256:c10bc0ad51b00c59ed8fa4366ee722c38e83dfaa620a7cc229f78489ccbaf010
+      difficulty_tier: hard
+      difficulty_total: 6
+    - task_id: mtplx-mixed-content-tool-call-stream
+      task_version: 1
+      path: tasks/cross-repo-heldout/mtplx-mixed-content-tool-call-stream
+      role: core-cross-repo
+      admission_state: admitted
+      public_spec_hash: sha256:a79d5705656f3b75e5c7deae8ca3fb4fb5ca5869165934a8a234cb27961f11e0
+      private_spec_hash: sha256:29d37992a3fbe0b8f37f430e262354fd76d470f0b63bdcc10f928ffe6ae2c5b3
+      upstream_repository: youssofal/MTPLX
+      environment_image: swerebench/sweb.eval.x86_64.youssofal_1776_mtplx-21@sha256:32510a901064f5d405f3d4313a4556d924c94e72b2b0993296a43f04de83370e
+      difficulty_tier: hard
+      difficulty_total: 6
+    - task_id: fusesoc-retained-parse-error-diagnostics
+      task_version: 1
+      path: tasks/cross-repo-heldout/fusesoc-retained-parse-error-diagnostics
+      role: core-cross-repo
+      admission_state: admitted
+      public_spec_hash: sha256:2dd38ab34abc7ab53c0487c2d5b19dbda5b303fe2d04bf04474cc5bafef6ba31
+      private_spec_hash: sha256:e5db4a13d05518abd3a2be50c99ed8aa9536168896c27f52a4947c6773e7b66d
+      upstream_repository: olofk/fusesoc
+      environment_image: swerebench/sweb.eval.x86_64.olofk_1776_fusesoc-776_interface@sha256:1e971791d4ce192eae296747d46dff477cb2ce2c47e08b2ed9d0108ee5a85ad9
+      difficulty_tier: hard
+      difficulty_total: 7
+    - task_id: hf-hub-custom-tqdm-class-contract
+      task_version: 1
+      path: tasks/same-repo-heldout/hf-hub-custom-tqdm-class-contract
+      role: core-same-repo
+      admission_state: admitted
+      public_spec_hash: sha256:5b5a4bcbd85e8a43eb744edcea62e5c4d113d125d95dd6476e3c7528c7708ce8
+      private_spec_hash: sha256:d68ef9460b2d0551b3a5325bb3268e72ff685bf2d7ec09ab2c260507a4e52c61
+      upstream_repository: huggingface/huggingface_hub
+      environment_image: swerebench/sweb.eval.x86_64.huggingface_1776_huggingface_hub-4056@sha256:cbfae263dff792cc7c763057905869c548bf37733352ff999b3d7d4278c87677
+      difficulty_tier: hard
+      difficulty_total: 6
+    - task_id: pdm-target-project-options-loading
+      task_version: 1
+      path: tasks/same-repo-heldout/pdm-target-project-options-loading
+      role: core-same-repo
+      admission_state: admitted
+      public_spec_hash: sha256:8689001950449a6e572544dad390974efaad79a1c8f032d8c80f8a9bc4777eae
+      private_spec_hash: sha256:dc496fb958c8e70560a63cfc15be39779809eb3bd0c7eb8d64dc77a5299bd5bc
+      upstream_repository: pdm-project/pdm
+      environment_image: swerebench/sweb.eval.x86_64.pdm-project_1776_pdm-3759@sha256:7a012a5bfd460d638b74d3de84426cd1fa2141aec3914c4f9171071491f5ac93
+      difficulty_tier: hard
+      difficulty_total: 6
+    - task_id: anyio-extensionless-entrypoint-worker-main
+      task_version: 1
+      path: tasks/same-repo-heldout/anyio-extensionless-entrypoint-worker-main
+      role: core-same-repo
+      admission_state: admitted
+      public_spec_hash: sha256:f3908a8a0b8905731cecdccf51a5946c24971c388ee330800729282c0d862bed
+      private_spec_hash: sha256:4e72ae5632c5a3265b0337e3fd1d4f7060754dca2bd32c4e1e14d38f6254aed5
+      upstream_repository: agronholm/anyio
+      environment_image: swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1134@sha256:d7997027864d2bfb32d649e7e544381f5d1b161df8f1682c719d222d66489dc0
+      difficulty_tier: hard
+      difficulty_total: 6
+    - task_id: tox-dotted-version-factor-base-python
+      task_version: 1
+      path: tasks/same-repo-heldout/tox-dotted-version-factor-base-python
+      role: core-same-repo
+      admission_state: admitted
+      public_spec_hash: sha256:1e05ada1d2812b270851bb9770ad6071629cb48dff1114d908a197085605b3f9
+      private_spec_hash: sha256:80bf4aa66ed0247cacad1bcd772de4de90ebcdafa48b64ea924330a53cf341e1
+      upstream_repository: tox-dev/tox
+      environment_image: swerebench/sweb.eval.x86_64.tox-dev_1776_tox-3846@sha256:269a32558d3aeac5f9e9b6fc451302667b83a85f260f0b915babe1838b50b3bc
+      difficulty_tier: hard
+      difficulty_total: 6
+    - task_id: loguru-post-2038-local-timezone-fallback
+      task_version: 1
+      path: tasks/same-repo-heldout/loguru-post-2038-local-timezone-fallback
+      role: core-same-repo
+      admission_state: admitted
+      public_spec_hash: sha256:2909dda08ddd9b5fff00707708c9e14af747bb8c0d76ff357b5095c9c0784119
+      private_spec_hash: sha256:5096ac314ee32ede47a740c2ecb9d022886bfa67d9255b03e372f5f8d536463b
+      upstream_repository: Delgan/loguru
+      environment_image: swerebench/sweb.eval.x86_64.delgan_1776_loguru-1297@sha256:8d899d1147cf88bc088afe57fc5299fdcf2fafe6a1e30ef26825577e8953362f
+      difficulty_tier: hard
+      difficulty_total: 6
+    - task_id: pyfakefs-file-wrapper-io-capabilities
+      task_version: 1
+      path: tasks/same-repo-heldout/pyfakefs-file-wrapper-io-capabilities
+      role: core-same-repo
+      admission_state: admitted
+      public_spec_hash: sha256:b6c1f2dcdb9bcc072a8105c5d521b08dca206e5a1e2941653540cf1e951b9c6e
+      private_spec_hash: sha256:c5d0c8ef612e9d0b9c36e4769652879deb4d74e410983e39494005ca2cc7d213
+      upstream_repository: pytest-dev/pyfakefs
+      environment_image: swerebench/sweb.eval.x86_64.pytest-dev_1776_pyfakefs-1269@sha256:02c69afcbf763a1ede2637197e0979327f7b29392f2fedeead6e2a17e8746a91
+      difficulty_tier: medium
+      difficulty_total: 5
+    - task_id: dagster-subset-partition-definition-selection
+      task_version: 1
+      path: tasks/cross-repo-heldout/dagster-subset-partition-definition-selection
+      role: core-cross-repo
+      admission_state: admitted
+      public_spec_hash: sha256:4a01b49b6cd306130daedb4f117d8fe6dc71a3c63196245210f43c4ddb59a0c0
+      private_spec_hash: sha256:042c676fa2845e184f8036d0bfb869106782cb13e4c9146efbf5ab17edd87291
+      upstream_repository: dagster-io/dagster
+      environment_image: swerebench/sweb.eval.x86_64.dagster-io_1776_dagster-33605@sha256:98a0b69301022cba2ac7520a8ab1891c2a490cf4ec4ba889d6ce36a29f40831b
+      difficulty_tier: hard
+      difficulty_total: 7
+    - task_id: kubeflow-exit-handler-after-dependencies
+      task_version: 1
+      path: tasks/cross-repo-heldout/kubeflow-exit-handler-after-dependencies
+      role: core-cross-repo
+      admission_state: admitted
+      public_spec_hash: sha256:dfaa69083d119046f78f532a99db3cf9eb0ca2a4b34ca73f70f62242a22d5f8c
+      private_spec_hash: sha256:bc8c6e70c15d926e24c6b7fcbcdf471b5577704ea9e46fea4f93cf47a4955798
+      upstream_repository: kubeflow/pipelines
+      environment_image: swerebench/sweb.eval.x86_64.kubeflow_1776_pipelines-13112@sha256:842b24c98e1b2c1145b8826b90a95e0634a3520cd523b3d3ae6940201ec2e79a
+      difficulty_tier: hard
+      difficulty_total: 7
+
+treatment:
+  conditions: [no_memory, structured]
+  memory_policy_version: fixed-d110-bundle-v1
+  no_memory:
+    selected_memory: null
+    entry_count: 0
+    bundle_bytes: 0
+    bundle_sha256: null
+  structured:
+    delivery: exact-d110-three-entry-bundle-every-request
+    entry_count: 3
+    bundle_bytes: 3528
+    bundle_sha256: sha256:572667d431aa75e4fe74bfc030a99f64245b77d9afa1c88e5d531129f708accf
+    d110_index_version: idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064
+    d110_index_content_hash: sha256:3a99e6c190672d1676bc4d13604de989899de9ddac85d282cc90c4d56f426c56
+  query_embedding_or_similarity_used: false
+  threshold_or_reranking_used: false
+  only_treatment_difference: selected-memory-content-and-derived-evidence
+
+schedule_design:
+  seed: 20260814
+  repetitions: 2
+  expected_runs: 48
+  task_condition_pairs: 24
+  pair_adjacency_required: true
+  runtime_randomization_used: false
+  task_rank_preimage_template: "20260814|round={repetition}|role={role_token}|task={task_id}"
+  task_rank_preimage_encoding: utf-8
+  task_rank_integer_placeholder_rendering: unsigned-base-10-ascii-without-leading-zeros
+  task_rank_string_placeholder_rendering: literal-utf-8
+  role_token_mapping:
+    same: core-same-repo
+    cross: core-cross-repo
+  orientation_rank_formula: sha256-hex-of-utf8-20260814-pipe-orientation-pipe-task-id
+  role_interleave_repetition_1: [core-same-repo, core-cross-repo]
+  role_interleave_repetition_2: [core-cross-repo, core-same-repo]
+  condition_order_reversed_in_repetition_2: true
+  a_first_in_repetition_1:
+    - dagster-subset-partition-definition-selection
+    - fusesoc-retained-parse-error-diagnostics
+    - hf-hub-custom-tqdm-class-contract
+    - kubeflow-exit-handler-after-dependencies
+    - mtplx-mixed-content-tool-call-stream
+    - pyfakefs-file-wrapper-io-capabilities
+  waves: 4
+  rows_per_wave: 12
+  blocks_per_wave: 6
+  same_repo_blocks_per_wave: 3
+  cross_repo_blocks_per_wave: 3
+  a_first_blocks_per_wave: 3
+  c_first_blocks_per_wave: 3
+  replacement_allowed: false
+  retry_allowed: false
+  projection_fields: [order, task_id, role, condition, repetition]
+  projection_canonicalization: utf8-json-sort-keys-compact-separators-ensure-ascii-false
+  projection_bytes: 6128
+  projection_sha256: sha256:26ddf0c7123a8fb17e27e1b7229f4aa9d01f6ad3162f29b2463aa71a79451c51
+
+schedule:
+  - {order: 1, wave: 1, task_id: loguru-post-2038-local-timezone-fallback, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 2, wave: 1, task_id: loguru-post-2038-local-timezone-fallback, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 3, wave: 1, task_id: dagster-subset-partition-definition-selection, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 4, wave: 1, task_id: dagster-subset-partition-definition-selection, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 5, wave: 1, task_id: pyfakefs-file-wrapper-io-capabilities, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 6, wave: 1, task_id: pyfakefs-file-wrapper-io-capabilities, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 7, wave: 1, task_id: sqlglot-duckdb-ignore-nulls-modifier-order, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 8, wave: 1, task_id: sqlglot-duckdb-ignore-nulls-modifier-order, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 9, wave: 1, task_id: anyio-extensionless-entrypoint-worker-main, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 10, wave: 1, task_id: anyio-extensionless-entrypoint-worker-main, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 11, wave: 1, task_id: fusesoc-retained-parse-error-diagnostics, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 12, wave: 1, task_id: fusesoc-retained-parse-error-diagnostics, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 13, wave: 2, task_id: pdm-target-project-options-loading, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 14, wave: 2, task_id: pdm-target-project-options-loading, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 15, wave: 2, task_id: param-shared-rx-fanout-cache, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 16, wave: 2, task_id: param-shared-rx-fanout-cache, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 17, wave: 2, task_id: hf-hub-custom-tqdm-class-contract, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 18, wave: 2, task_id: hf-hub-custom-tqdm-class-contract, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 19, wave: 2, task_id: kubeflow-exit-handler-after-dependencies, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 20, wave: 2, task_id: kubeflow-exit-handler-after-dependencies, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 21, wave: 2, task_id: tox-dotted-version-factor-base-python, role: core-same-repo, condition: structured, repetition: 1}
+  - {order: 22, wave: 2, task_id: tox-dotted-version-factor-base-python, role: core-same-repo, condition: no_memory, repetition: 1}
+  - {order: 23, wave: 2, task_id: mtplx-mixed-content-tool-call-stream, role: core-cross-repo, condition: no_memory, repetition: 1}
+  - {order: 24, wave: 2, task_id: mtplx-mixed-content-tool-call-stream, role: core-cross-repo, condition: structured, repetition: 1}
+  - {order: 25, wave: 3, task_id: param-shared-rx-fanout-cache, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 26, wave: 3, task_id: param-shared-rx-fanout-cache, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 27, wave: 3, task_id: pyfakefs-file-wrapper-io-capabilities, role: core-same-repo, condition: structured, repetition: 2}
+  - {order: 28, wave: 3, task_id: pyfakefs-file-wrapper-io-capabilities, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 29, wave: 3, task_id: dagster-subset-partition-definition-selection, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 30, wave: 3, task_id: dagster-subset-partition-definition-selection, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 31, wave: 3, task_id: pdm-target-project-options-loading, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 32, wave: 3, task_id: pdm-target-project-options-loading, role: core-same-repo, condition: structured, repetition: 2}
+  - {order: 33, wave: 3, task_id: fusesoc-retained-parse-error-diagnostics, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 34, wave: 3, task_id: fusesoc-retained-parse-error-diagnostics, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 35, wave: 3, task_id: loguru-post-2038-local-timezone-fallback, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 36, wave: 3, task_id: loguru-post-2038-local-timezone-fallback, role: core-same-repo, condition: structured, repetition: 2}
+  - {order: 37, wave: 4, task_id: kubeflow-exit-handler-after-dependencies, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 38, wave: 4, task_id: kubeflow-exit-handler-after-dependencies, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 39, wave: 4, task_id: tox-dotted-version-factor-base-python, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 40, wave: 4, task_id: tox-dotted-version-factor-base-python, role: core-same-repo, condition: structured, repetition: 2}
+  - {order: 41, wave: 4, task_id: mtplx-mixed-content-tool-call-stream, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 42, wave: 4, task_id: mtplx-mixed-content-tool-call-stream, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 43, wave: 4, task_id: hf-hub-custom-tqdm-class-contract, role: core-same-repo, condition: structured, repetition: 2}
+  - {order: 44, wave: 4, task_id: hf-hub-custom-tqdm-class-contract, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 45, wave: 4, task_id: sqlglot-duckdb-ignore-nulls-modifier-order, role: core-cross-repo, condition: no_memory, repetition: 2}
+  - {order: 46, wave: 4, task_id: sqlglot-duckdb-ignore-nulls-modifier-order, role: core-cross-repo, condition: structured, repetition: 2}
+  - {order: 47, wave: 4, task_id: anyio-extensionless-entrypoint-worker-main, role: core-same-repo, condition: no_memory, repetition: 2}
+  - {order: 48, wave: 4, task_id: anyio-extensionless-entrypoint-worker-main, role: core-same-repo, condition: structured, repetition: 2}
+
+runtime:
+  evaluator_version: v2
+  safety_contract_schema: evaluator-safety-contract-v2
+  receipt_schema: evaluator-v2-evaluation-receipt-v1
+  raw_result_official: false
+  model: openai
+  model_id: gpt-5.4-mini-2026-03-17
+  reasoning_effort: medium
+  reasoning_mode: standard
+  service_tier: default
+  transport_max_retries: 0
+  store: false
+  system_prompt_version: SYSTEM_PROMPT_V3
+  tool_schema_version: v2
+  context_policy_version: phase-evidence-v5
+  memory_policy_version: fixed-d110-bundle-v1
+  sandbox_backend: docker
+  marker_profile: task-private-plus-run-secret-exact-v1
+  call_guard_policy: model-tool-bounded-enforcement-v1
+  max_output_tokens: 25000
+  token_budget_schema_version: cumulative-split-v1
+  max_cumulative_input_tokens: 4000000
+  max_cumulative_output_tokens: 500000
+  max_total_tokens: 4500000
+  max_model_calls: 240
+  max_tool_calls: 400
+  wall_clock_timeout_seconds: 3600
+
+cost:
+  schema_version: heldout-ac-split-token-full-schedule-reserve-v1
+  accounting_scope: campaign-local
+  accounting_basis: split-token-ceiling-standard-list-price
+  scheduled_run_count: 48
+  input_reserve_rate_per_million_usd: 0.75
+  output_reserve_rate_per_million_usd: 4.5
+  cache_discount_assumed: false
+  per_run_reserve_usd: 5.25
+  full_schedule_reserve_usd: 252.0
+  hard_cap_usd: 275.0
+  hard_cap_slack_usd: 23.0
+  money_scale: nano-usd
+  per_run_reserve_nanos: 5250000000
+  full_schedule_reserve_nanos: 252000000000
+  hard_cap_nanos: 275000000000
+  hard_cap_slack_nanos: 23000000000
+  reservation_mode: row-bound-full-schedule-up-front
+  initial_reservation_boundary: before-first-provider-call
+  row_reserve_count: 48
+  cost_censoring_allowed: false
+  not_started_due_to_cost_allowed: false
+  automatic_retry_or_replacement_allowed: false
+  settlement_basis: durable-token-derived-standard-list-price
+  live_resume_policy: disabled
+  completion_guaranteed: false
+  invoice_or_free_tier_claimed: false
+  pricing_basis_observed_at: "2026-08-13T12:05:26Z"
+  pricing_source_url: https://developers.openai.com/api/docs/pricing
+  pricing_refresh_required_before_candidate: true
+  pricing_drift_disposition: block-and-create-successor-cost-binding
+
+outcomes:
+  row_success_definition: hidden-pass-and-regression-pass-and-scope-pass-and-safety-pass
+  verdict_source: actual-typed-evaluator-v2-evidence
+  success_value: 1
+  non_success_value: 0
+  typed_agent_terminal_failures_score_zero: true
+  infrastructure_failures_are_task_failures: false
+  row_eligibility_common_requires:
+    - terminal-outcome
+    - trace-qualified
+    - cost-settled
+    - durable-usage-reconciled
+    - no-infrastructure-or-contract-confound
+  row_eligibility_union:
+    evaluator_completed:
+      requires:
+        - evaluator-v2-runtime-authenticated
+        - evaluator-v2-completion-eligible
+        - all-four-typed-verdicts-present
+      outcome_rule: all-four-pass-is-one-any-fail-is-zero
+    typed_pre_evaluator_agent_terminal:
+      requires:
+        - prespecified-agent-budget-time-call-or-submission-terminal
+        - evaluator-not-run
+      outcome_rule: zero
+  evaluator_completed_non_pass_rows_are_eligible_zero: true
+  unknown-or-untyped-terminal_is_eligible: false
+
+analysis:
+  analysis_scope: frozen-12-task-core-panel-only
+  independent_task_clusters: 12
+  randomized_treatment_assignment_claimed: false
+  primary_analysis_gate:
+    required_scheduled_rows: 48
+    required_eligible_rows: 48
+    matrix_inconclusive_trigger_count_required: 0
+    matrix_inconclusive_trigger_source: exclusions.matrix_inconclusive_if
+    all_task-condition-repetition-cells_required: true
+    partial_panel_primary_analysis_authorized: false
+    failed_gate_disposition: primary-not-computed-partial-rows-diagnostic-only
+  primary_estimand:
+    id: task-cluster-scheduled-row-complete-panel-scrr-difference
+    formula: mean-over-12-tasks-of-mean-over-2-repetitions-of-y-structured-minus-y-no-memory
+    unit: task
+    task_weighting: equal
+    repetition_aggregation: mean-within-task
+    analysis_basis: scheduled-row-complete-panel
+    effect_scale: absolute-proportion-and-percentage-points
+  descriptive_stability_interval:
+    status: descriptive-stability-only
+    label: deterministic-task-cluster-percentile-stability-interval
+    method: deterministic-task-cluster-percentile-resampling
+    task_effect_symbol: d_i
+    task_effect_formula: "d_i=(1/2)*sum_{r=1}^{2}(Y_C[i,r]-Y_A[i,r])"
+    task_effect_values: [-1.0, -0.5, 0.0, 0.5, 1.0]
+    task_index_order: preregistration-dataset-tasks-list-order-zero-based
+    repetitions_preserved_within_task: true
+    samples: 100000
+    sample_count_symbol: B
+    tasks_drawn_per_sample: 12
+    sample_with_replacement: true
+    deterministic_draw:
+      hash_algorithm: sha256
+      preimage_encoding: ascii
+      preimage_template: "heldout-ac-percentile-v1|20260814|b={zero_based_sample}|j={zero_based_draw}|nonce={zero_based_nonce}"
+      placeholder_rendering: unsigned-base-10-ascii-without-leading-zeros
+      zero_based_sample_range: [0, 99999]
+      zero_based_draw_range: [0, 11]
+      nonce_scope: reset-to-zero-for-each-sample-draw-pair
+      nonce_initial_value: 0
+      nonce_increment_rule: increment-by-one-only-on-rejection
+      u_digest_slice: first-8-bytes
+      u_byte_order: big-endian
+      u_interpretation: unsigned-64-bit-integer
+      acceptance_threshold_expression: "2^64-(2^64 mod 12)"
+      acceptance_threshold_integer: 18446744073709551612
+      acceptance_rule: u-less-than-acceptance-threshold
+      selected_task_index_formula: u-mod-12
+    sample_estimate_symbol: theta_b
+    integerized_task_effect_symbol: q_i
+    integerized_task_effect_formula: "q_i=2*d_i"
+    integer_sample_sum_symbol: m_b
+    integer_sample_sum_formula: "m_b=sum_{j=0}^{11}q_selected[b,j]"
+    sample_estimate_formula: "theta_b=m_b/24"
+    integer_sample_sum_sort_order: ascending-numeric
+    endpoints:
+      method: hyndman-fan-type-7-zero-based
+      probabilities: [0.025, 0.975]
+      probability_rationals: [1/40, 39/40]
+      arithmetic: exact-rational
+      canonical_endpoint_representation: reduced-integer-numerator-positive-integer-denominator
+      reduction_rule: divide-numerator-and-denominator-by-positive-gcd
+      decimal_display: optional-noncanonical-12-places-round-half-even
+      h_formula: "h=(B-1)*p"
+      lower_endpoint_formula: "(m_sorted[2499]+39*m_sorted[2500])/960"
+      upper_endpoint_formula: "(39*m_sorted[97499]+m_sorted[97500])/960"
+    all_task_effects_identical_behavior: natural-point-mass-with-equal-endpoints
+    confidence_interval_claim_authorized: false
+    equivalence_claim_authorized: false
+    no_effect_claim_authorized: false
+    population_precision_claim_authorized: false
+    generalization_claim_authorized: false
+    interpretation: deterministic-descriptive-stability-for-this-frozen-panel-only
+  paired_sign_flip_sensitivity:
+    status: sensitivity-reference-only
+    method: exact-two-sided-task-level-paired-sign-flip
+    unit: task
+    task_clusters: 12
+    repetitions_preserved_within_task: true
+    task_effect_symbol: d_i
+    task_effect_formula: "d_i=(1/2)*sum_{r=1}^{2}(Y_C[i,r]-Y_A[i,r])"
+    integerized_task_effect_symbol: q_i
+    integerized_task_effect_formula: "q_i=2*d_i"
+    integerized_task_effect_values: [-2, -1, 0, 1, 2]
+    observed_statistic_symbol: T_observed
+    observed_statistic_formula: "T_observed=abs(sum_{i=0}^{11}q_i)"
+    signed_statistic_symbol: T_s
+    signed_statistic_formula: "T_s=abs(sum_{i=0}^{11}s_i*q_i)"
+    sign_vector_enumeration: all-binary-masks-zero-through-4095
+    sign_mapping: zero-bit-minus-one-and-one-bit-plus-one
+    sign_vectors_enumerated: 4096
+    p_value_formula: "p=count_s(T_s>=T_observed)/4096"
+    comparison_is_inclusive: true
+    null_assumption: conditional-on-ordered-absolute-q-vector-the-joint-sign-vector-is-uniform-on-minus-one-plus-one-to-the-12
+    schedule_orientation_randomized: false
+    design_based_randomization_inference_authorized: false
+    p_value_reported: true
+    headline_use_authorized: false
+    interpretation: assumption-based-reference-test-not-design-based-randomization-or-broad-population-significance
+  prespecified_strata:
+    - {role: core-same-repo, tasks: 6, status: secondary}
+    - {role: core-cross-repo, tasks: 6, status: secondary}
+  directional_flips:
+    pairing_unit: task-by-repetition
+    pair_count: 24
+    benefit: no-memory-fail-and-structured-success
+    negative_transfer: no-memory-success-and-structured-fail
+    inference: counts-and-rates-only
+  secondary_resource_metrics:
+    - input_tokens
+    - output_tokens
+    - reasoning_tokens
+    - total_tokens
+    - model_cost_usd
+    - model_calls
+    - tool_calls
+    - wall_time_seconds
+  secondary_resource_estimand: paired-task-cluster-structured-minus-no-memory
+  unconditional_resource_analysis: all-eligible-scheduled-rows
+  success_only_efficiency_status: exploratory-survivor-selected
+  additional_descriptive_metrics:
+    - hidden-verdict-distribution
+    - regression-verdict-distribution
+    - scope-verdict-distribution
+    - safety-verdict-distribution
+    - cost-per-success
+  cost_per_success:
+    grouping: per-condition
+    scheduled_rows_per_condition: 24
+    complete_panel_gate_required: true
+    partial_or_inconclusive_panel_status: diagnostic-only-not-standard-cost-per-success
+    numerator: sum-model-cost-usd-over-all-eligible-scheduled-rows-in-condition
+    denominator: count-row-successes-over-the-same-eligible-scheduled-rows-in-condition
+    formula: numerator-divided-by-denominator
+    zero_success_value: null
+    zero_success_status: undefined-zero-success-denominator
+  multiplicity_adjusted_hypothesis_claim_authorized: false
+  broad_population_or_significance_headline_authorized: false
+  causal_general_memory_benefit_claim_authorized: false
+
+exclusions:
+  task_exclusions_after_preregistration_allowed: false
+  post_outcome_exclusions_allowed: false
+  imputation_allowed: false
+  typed_agent_failures_included_as_zero: true
+  typed_agent_failure_examples:
+    - token-budget-exhaustion
+    - model-call-limit
+    - tool-call-limit
+    - wall-clock-timeout
+    - submission-failure
+  matrix_inconclusive_if:
+    - provider-sdk-docker-or-evaluator-infrastructure-error
+    - qualification-or-completion-contract-mismatch
+    - private-marker-or-leakage-hit
+    - schedule-treatment-runtime-source-or-hash-drift
+    - missing-durable-usage-or-cost-settlement
+    - duplicate-retried-replaced-or-resumed-row
+    - full-schedule-reservation-or-hard-cap-boundary-failure
+  partial_rows_disposition: diagnostic-only-not-headline
+
+stopping:
+  fixed_scheduled_rows: 48
+  interim_outcome_inspection_allowed: false
+  efficacy_stop_allowed: false
+  futility_stop_allowed: false
+  adaptive_budget_allowed: false
+  row_retry_allowed: false
+  row_replacement_allowed: false
+  automatic_resume_allowed: false
+  infrastructure_or_contract_confound_action: stop-before-next-provider-call
+  remaining_rows_after_confound: not_started
+  primary_matrix_after_confound: inconclusive
+  fresh_campaign_required_after_confound: true
+  pooling_fresh_campaign_without_prior_preregistration_allowed: false
+  waves_are_operational_checkpoints_only: true
+
+authority:
+  provider_execution_authorized: false
+  evaluator_execution_authorized: false
+  agent_execution_authorized: false
+  docker_observation_authorized: false
+  sdk_observation_authorized: false
+  credential_observation_or_provisioning_authorized: false
+  runtime_memory_injection_authorized: false
+  heldout_task_spec_content_inspection_authorized: false
+  heldout_outcome_unblinding_authorized: false
+  execution_hash_authorized: false
+  execution_candidate_authorized: false
+  cost_reservation_authorized: false
+  spend_authorized: false
+  automatic_retry_replacement_or_resume_authorized: false
+  memory_benefit_claim_authorized: false
+  authorized_provider_calls: 0
+  authorized_evaluator_calls: 0
+  authorized_agent_runs: 0
+  authorized_docker_calls: 0
+  authorized_sdk_calls: 0
+  authorized_cost_usd: 0.0
+
+next_gate:
+  action: implement-and-offline-validate-heldout-ac-strict-contracts
+  scope:
+    - standalone-preregistration-validator
+    - dedicated-48-row-suite-schema
+    - dedicated-heldout-source-qualification
+    - typed-agent-failure-aware-completion-adapter
+    - task-cluster-scheduled-row-complete-panel-analysis
+  may_open_heldout_task_specs_or_outcomes: false
+  may_make_provider_evaluator_agent_docker_or_sdk_calls: false
+  may_reserve_or_spend_cost: false
+  requires_new_source_qualification: true
+  requires_exact_execution_candidate: true
+  requires_separate_explicit_paid_approval: true
+  grants_execution_authority: false
+
+content_hash: sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74

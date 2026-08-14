@@ -67,11 +67,10 @@ delta is zero, while structured used fewer tokens and list-price cost in both pa
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: next design task only; no held-out execution authority.
+Status: preregistered; execution and unblinding remain closed.
 
-After valid readiness, freeze task identities, repetitions, metrics, exclusions, analysis and stop rules before
-viewing held-out outcomes. The target is 12 tasks × A/C × at least two repetitions = at least 48 rows. Moto/Babel
-results must not tune the fixed bundle or held-out policy.
+The record freezes 12 tasks × A/C × two repetitions = 48 rows, complete-panel analysis and `$252`/`$275` planning cost.
+Next offline-qualify its strict contracts. It authorizes no call, unblinding, candidate, approval or spend.
 
 ## Work item 7 — B/D and the full comparison
 

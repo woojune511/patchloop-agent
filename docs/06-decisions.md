@@ -7,8 +7,8 @@ The full decision ledger through D-121 is archived at
 
 Completed order: evaluator correctness v2 -> successor A/C qualification -> local preflight -> exact campaign approval ->
 four-run development A/C readiness. R3 through R6 were inconclusive; R8 completed the matrix. Current
-order: preserve/correct R8 evidence -> preregister held-out A/C without tuning -> separately authorize any future
-held-out execution -> B/D only after their own frozen contracts.
+order: preserve/correct R8 evidence -> preregister held-out A/C (complete, execution-closed) -> offline qualification
+-> separately authorize execution -> B/D after their own frozen contracts.
 
 ### 2026-08-14 — preserve R3-R6 and correct runtime evidence before a fresh panel
 
@@ -80,7 +80,7 @@ execution. `docs/current-status.md` owns the current path, `reports/` owns exact
 
 ## Open questions
 
-1. Before held-out A/C, what exact 12-task × A/C × repetition schedule, analysis and cost cap should be frozen?
-2. Should B/D be frozen before A/C unblinding, or use a separate fresh held-out panel afterward?
+1. Should later B/D use this design family or a fresh panel?
+2. What separately qualified source and refreshed price should back a future candidate?
 
 These questions do not authorize work beyond `docs/05-implementation-plan.md`.

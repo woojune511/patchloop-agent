@@ -49,7 +49,5 @@ completion-corrected current source. No paid, held-out or B/D execution is curre
 
 ## Next gate
 
-Commit the correction and treat R8 only as development-readiness evidence. Before held-out A/C, preregister the
-12-task schedule, repetitions, metrics, exclusions, analysis, runtime tuple and cost cap without tuning on R8. That
-work grants no execution authority; any future provider run requires a new suite/source qualification, exact
-candidate and explicit approval.
+Work item 6 freezes a 48-row scheduled-row complete-panel design; execution and unblinding remain closed. Next: offline
+qualification, refreshed pricing, an exact candidate and separate approval.
