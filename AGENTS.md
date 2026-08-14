@@ -39,8 +39,8 @@
   readiness only; no causal, held-out, retrieval or general memory-benefit claim follows.
 - Held-out A/C is preregistered for 48 rows. R2/R5 qualify offline contracts and adapter source; materialization R1
   stores 12 opaque run-secret-independent templates and refreshed prices. Execution-contract R1 and no-call-preflight
-  R2 source-qualify candidate/manifest/secret expansion and readiness code. Their artifacts contain no observation,
-  runtime contract or candidate; documented no-call output grants no authenticated row, approval, spend or execution.
+  R2 source-qualify candidate/manifest/secret expansion and readiness code. One clean no-call at commit `391c4e2` saw
+  SDK/key presence but `DOCKER_UNAVAILABLE`; candidate, runtime contract, call, approval, spend and execution stayed 0.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
 - V1-V25 artifacts are immutable historical evidence. V23 reached Docker and both frames before

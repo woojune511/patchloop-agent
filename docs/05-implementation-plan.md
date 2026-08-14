@@ -72,8 +72,8 @@ Status: candidate/manifest/secret-expansion and no-call preflight source-qualifi
 The record freezes 12 tasks × A/C × two repetitions = 48 rows, complete-panel analysis and `$252`/`$275` planning cost.
 The non-`ExperimentSuite` completion/analysis surfaces remain unofficial fixtures. R2/R5 bind them and 12 opaque task
 templates; materialization R1 stores no private value/outcome and preserves `$252`/`$275`. Execution-contract R1 and
-preflight R2 now bind the exact candidate/manifest/marker-expansion and no-call observer code. Next run one clean,
-read-only preflight; checked-in evidence contains no candidate, authoritative dispatcher, approval, reservation or spend.
+preflight R2 bind candidate/manifest/marker-expansion and observers. The first clean preflight passed Git/SDK/key
+presence but found no Docker daemon. After manual start, retry read-only; dispatcher, candidate, approval and spend are 0.
 
 ## Work item 7 — B/D and the full comparison
 

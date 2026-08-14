@@ -47,12 +47,12 @@ completion-corrected current source. No paid, held-out or B/D execution is curre
 
 The held-out suite stays outside `ExperimentSuite`. R2/R5 bind fixture/analysis and adapter source; materialization R1
 records 12 opaque run-secret-independent templates and `$0.75`/`$0.075`/`$4.50` prices. Execution-contract R1 binds
-the 48-row candidate, manifest and credential-derived marker expansion; preflight R2 binds clean Git, digest-pinned
-Docker image, SDK and credential-presence observation code. Both source gates created zero candidate, credential value,
-final evaluator contract, Docker/SDK observation, provider/evaluator/agent call or cost.
+the 48-row candidate, manifest and credential-derived marker expansion; preflight R2 binds read-only local observers.
+One clean no-call at commit `391c4e2b581bde0b184e42e7fb7d8ee7fe9a542b` found SDK 2.47.0 and key presence, but
+the installed Docker CLI had no daemon (`DOCKER_UNAVAILABLE`). Candidate, key value, runtime call and cost stayed zero.
 
 ## Next gate
 
-Work item 6 now has source-qualified candidate/manifest/marker-expansion and no-call preflight code, but no observed
-readiness or candidate. Next: commit the exact source and run the documented read-only no-call preflight. A resulting
-hash is execution-closed; an authoritative campaign dispatcher and separate `$252`/`$275` approval remain required.
+Work item 6's first actual preflight stopped only at the inactive Docker daemon. Next: start Docker Desktop manually,
+then retry the read-only gate on clean source. Any candidate remains execution-closed; an authoritative campaign
+dispatcher and separate `$252`/`$275` approval are still required.
