@@ -11,22 +11,10 @@
 
 ## Current state
 
-- D-129부터 D-141까지는 immutable historical predecessor다. Consumed gate, attempt 또는 marker를
-  retry/resume/repair/backfill하지 않는다.
-- D-136은 공식 public GET 1회(HTTP 200, redirect 0, replay 3,735 bytes)를 보존했고, D-137은 bounded
-  Docker READY 뒤 SDK missing-key BLOCKED로 종료됐다. D-138부터 D-140도 missing-key BLOCKED다. 모두 consumed며
-  external mutation/value/`.env`/SDK dispatch는 0이었다. Exact tuple은 `docs/09-evidence.md`가 소유한다.
-- D-141은 gate→receipt→attempt→ACTION_STARTED+BLOCKED transition
-  `6405be40eb52d71fc9376065b553a04164543a4b`로 종료되고 consumed됐다. `OPENAI_API_KEY`, `PYTHONHOME`,
-  `PYTHONPATH` presence는 false/false/false였고 membership check는 3회였다. Credential/environment value,
-  `.env`, child launch, SDK import/probe, transport/network와 provider/evaluator/agent는 모두 0이었다.
-- 현재 D-142 gate는 `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914`다.
-  Source commit `1370cf43c08cefb550b158a5d4172a60ac172470`, tree
-  `7f7e7e25c79899eee6180ae45767492435003096`는 D-141 terminal commit의 exact four-path sole child다.
-- D-142의 evidence state는 source-qualified/unactivated이며 planning disposition은 deferred다. Fully
-  injected/mocked focused test 170/170은 별도 local evidence이고 runtime artifact나 external observation은
-  없다. 원래 one-use contract는 `reports/`에 보존하지만 현재 경로에서 receipt/attempt/marker/terminal을
-  만들지 않는다.
+- D-129부터 D-141까지는 immutable consumed predecessor다. D-136의 public pricing GET과 D-137-D-141의
+  bounded BLOCKED transitions를 포함한 exact tuple은 `docs/09-evidence.md`가 소유하며 retry/repair하지 않는다.
+- D-142는 source-qualified/unactivated/deferred다. Mocked test는 runtime evidence가 아니며 현재 경로는
+  receipt, attempt, marker 또는 terminal을 만들지 않는다.
 - 현재 evaluator-v1 runtime은 safety verdict를 literal PASS로 둔다. Evaluator-v2는 separately supplied
   authority가 있을 때만 standard runner가 선택하며 durable-prefix/CAS 재검증, append-only receipt,
   completed-result persistence, qualification과 completion adapter까지 구현됐다. Raw v2 result는 계속
@@ -49,9 +37,9 @@
   result has a stale v1/v2 completion projection; the append-only R8 R4 index records the corrected complete matrix.
 - Exact R10/R9/R8/R6/R5/R4/R3 evidence tuples are owned by `docs/09-evidence.md`. R8 is descriptive development
   readiness only; no causal, held-out, retrieval or general memory-benefit claim follows.
-- Held-out A/C is preregistered for 48 rows. R2 qualifies offline contracts; current R5 binds the 12-task metadata plan
-  and hardened future materializer/authenticator source. Private bindings/authenticated rows are 0 and execution
-  authority is closed. R3/R4 are pre-hardening/pre-format predecessors; R1 is the pre-seal-race predecessor.
+- Held-out A/C is preregistered for 48 rows. R2/R5 qualify offline contracts and adapter source. Materialization R1
+  evaluator-side validated 12 packages, stored only opaque run-secret-independent templates, and refreshed official
+  prices. Runtime secrets/final contracts, authenticated rows, candidate, approval, spend and execution remain closed.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
 - V1-V25 artifacts are immutable historical evidence. V23 reached Docker and both frames before

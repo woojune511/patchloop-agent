@@ -15,14 +15,12 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 R3 attempted the four-row readiness panel once and sealed it `inconclusive`: Moto A resolved through receipt-qualified
 evaluator v2, Moto C could not fund the exact next request within the 3M ceiling before submission, and both Babel
 rows were not started.
-R3 through R6 are sealed `inconclusive`. R4 stopped before provider dispatch at `$0`; R5 and R6 each resolved Moto A
-through evaluator v2 but failed distinct post-evaluator qualification contracts, so their remaining rows did not
-start. R7/R9 was superseded unexecuted after offline contract audits found type and evidence-binding gaps. R10 now
-qualified the exact contract-hardened R8 execution source. R8 completed all four rows at `$0.3664215`; an append-only
+R3-R6 are sealed `inconclusive`; their distinct stops are indexed in `docs/09-evidence.md`. R7/R9 was superseded
+unexecuted after offline contract audits. R10 qualified the exact R8 source. R8 completed all four rows at `$0.3664215`; an append-only
 correction fixes its stale v1/v2 completion projection without rewriting runtime evidence.
-The 48-row held-out A/C design has a metadata-only suite plus current R2/R5 source gates. R5 binds all 12 metadata and
-hardened future materializer/authenticator source; R3/R4 are superseded. Private materializations/authenticated rows are
-zero, and pricing, candidate, approval and execution are closed.
+The 48-row held-out A/C design has a metadata-only suite plus R2/R5 source gates. Materialization R1 validated all 12
+evaluator-side task packages and froze run-secret-independent evaluator templates plus refreshed official prices;
+private values and outcomes were not serialized. Final runtime contracts, candidate, approval and execution are closed.
 `docs/current-status.md` owns the exact tuple and next gate.
 
 ## Implemented product path
@@ -49,7 +47,8 @@ zero, and pricing, candidate, approval and execution are closed.
   and 3,600 seconds. Its price-aware reserve is `$3.825`/row, `$15.30`/panel and `$18` hard cap.
 - Those thresholds come from one observed R3 development row: they are neither held-out-safe nor a completion claim.
   R8 candidate `sha256:60c67908...cff9e` and all R3-R8 approvals are consumed; no identity may resume. Held-out A/C
-  is preregistered for 48 rows, but execution/unblinding, B/D, candidate and approval remain closed.
+  is preregistered for 48 rows; evaluator-side templates and pricing are bound, but runtime-secret expansion,
+  execution/unblinding, B/D, candidate and approval remain closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

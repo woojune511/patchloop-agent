@@ -22,9 +22,15 @@ Machine artifacts under `reports/` are authoritative. Historical narrative is ar
   `sha256:809981c460c9d28e0dbc17e179260e20eb48641489973cac669b6de72282094c` (4,759 bytes); source
   `sha256:caa95f52567001f68aacdcf3d2cd6bd9006ebbe9d1166c17dc076932c185b279`; plan
   `sha256:34edbad3f5a31f5d7e16ed2358905c195372a0d1f420c0ac03bd3be6a68668a8`.
+- Task/pricing materialization R1: content
+  `sha256:76b15ed1e0ef7f602d53678696ae83d914081bd7174c8ff7dff5a5738db55424`; file
+  `sha256:cdd971a57f6f20661d8de326f5603ee1d90eca4234633a8a09d65560d7d52641` (51,018 bytes); 12-template hash
+  `sha256:c8be4aaddf3b5aa0de07713b4a565ac3ebba5e5023eb658e250822160f6d06e9`. One unauthenticated public GET at
+  `2026-08-14T09:40:21.765508Z` confirmed `$0.75`/`$0.075`/`$4.50` input/cached/output prices.
 
-Held-out gates record zero private opens, materialized/authenticated rows, calls and cost; analysis/execution remain
-closed.
+R1 evaluator-side opened the exact package/private/reference inputs for hash validation but serialized no private value
+or outcome. It materialized 12 run-secret-independent templates, 0 final contracts and 0 authenticated rows; provider,
+evaluator, agent, Docker, SDK, candidate, reservation, spend and analysis remain zero/closed.
 
 ## R8 complete development-readiness matrix
 

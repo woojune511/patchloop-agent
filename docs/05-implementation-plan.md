@@ -67,12 +67,13 @@ delta is zero, while structured used fewer tokens and list-price cost in both pa
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: offline contract/binding-adapter source-qualified through held-out R5; execution and unblinding remain closed.
+Status: 12 evaluator templates and fresh pricing materialized after R5; execution and unblinding remain closed.
 
 The record freezes 12 tasks × A/C × two repetitions = 48 rows, complete-panel analysis and `$252`/`$275` planning cost.
 The non-`ExperimentSuite` completion/analysis surfaces remain unofficial fixtures. R2 binds them; R5 replays R2 and
-binds 12 opaque tasks plus hardened future materializer/authenticator source. R3/R4 are superseded and actual rows remain
-zero. Authorize materialization and refresh pricing before a candidate; approval and spend remain absent.
+binds 12 opaque tasks plus hardened materializer/authenticator source. Materialization R1 opened the exact packages
+only evaluator-side, stored no private value/outcome, and preserved `$252`/`$275`. Next qualify the executable runner
+and credential-derived marker boundary before any candidate; approval, reservation and spend remain absent.
 
 ## Work item 7 — B/D and the full comparison
 

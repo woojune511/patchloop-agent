@@ -45,12 +45,13 @@ three transient pre-provider attempts without state artifacts or per-attempt app
 historical consumed set. Its candidate, plan and approval cannot run again. R10 binds the executed bytes, not the
 completion-corrected current source. No paid, held-out or B/D execution is currently authorized.
 
-The held-out suite stays outside `ExperimentSuite` and the live runner. R2 binds fixture/analysis contracts; current R5
-replays them and binds 12 metadata tasks plus hardened evaluator-v2 materialization and persisted-row authentication.
-R3/R4 are pre-hardening/pre-format predecessors. Private opens/materializations, authenticated rows and analyses are zero.
+The held-out suite stays outside `ExperimentSuite` and the live runner. R2/R5 bind fixture/analysis and adapter source.
+Materialization R1 evaluator-side validated 12 exact packages and recorded only opaque run-secret-independent templates.
+One official pricing GET confirmed `$0.75` input, `$0.075` cached input and `$4.50` output per million; `$252`/`$275`
+remain bound. No outcome, credential, final evaluator contract, authenticated row or analysis was created.
 
 ## Next gate
 
-Work item 6 now has R5 source-qualified binding/adapter code, but runtime materialization and unblinding remain closed.
-Next: separately authorize and materialize the exact 12 task/evaluator bindings, refresh pricing, then produce a no-call
+Work item 6 has source-qualified adapters, 12 evaluator templates and refreshed pricing, but no executable live-runner
+route. Next: source-qualify the dedicated runner plus credential-derived marker expansion, then produce a no-call
 candidate. Any 48-row provider execution still needs separate approval for that future hash and cap.

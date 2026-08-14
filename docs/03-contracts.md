@@ -27,9 +27,9 @@ Current A/C sources are:
 - `heldout-ac-preregistration-20260814-v1.yaml`: standalone, execution-closed 48-row task-cluster design;
 - `heldout-ac-suite-20260814-v1.yaml` and its plan: strict metadata-only 48-row contracts that are not
   `ExperimentSuite` and have no live-runner route;
-- held-out R2/R5 source gates: R2 validates suite/fixture analysis; R5 replays that closure and binds the 12-task
-  metadata plan plus hardened evaluator-v2 materialization and receipt/trace-backed persisted-row authentication
-  source. R3/R4 are superseded predecessors; actual bindings stay 0;
+- held-out R2/R5 source gates: R2 validates suite/fixture analysis; R5 binds the 12-task metadata plan plus hardened
+  evaluator-v2 materialization and persisted-row authentication source. Materialization R1 binds 12 evaluator-side
+  packages as opaque run-secret-independent templates and a refreshed price observation; it is not a final contract;
 - `ac-structured-pilot-v11.plan.yaml`: R10-qualified contract-hardened split-budget design used by sealed R8;
 - `dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml`: consumed Moto/Babel A/C suite whose four rows all
   resolved, evaluator-v2 receipt-qualified and cost-settled; R7/R9 remains superseded unexecuted;
@@ -41,9 +41,9 @@ R1/R2 plans, suites and runtime seals remain immutable predecessors.
 
 An accepted plan/suite grants no provider, evaluator, Docker, runtime-memory or cost authority.
 
-Held-out fixtures never impersonate runtime schemas and emit `official=false`, `analysis_ready=false`. R5 source can
-later validate durable result/qualification/receipt/usage bytes, but authority requires materialized task bindings,
-authenticated rows and a fresh candidate.
+Held-out fixtures never impersonate runtime schemas and emit `official=false`, `analysis_ready=false`. Template R1
+does not contain the credential-derived marker or executable evaluator source identity. Final contract expansion,
+persisted-row authentication and a fresh candidate therefore remain separate gates.
 
 ## 4. Run manifest
 

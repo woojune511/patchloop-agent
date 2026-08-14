@@ -161,10 +161,10 @@ Not allowed:
 The record freezes 12 tasks × A/C × two repetitions = 48 rows and a scheduled-row complete-panel SCRR contrast.
 It specifies deterministic 100,000-sample percentile stability and an assumption-based exact 4,096-sign sensitivity;
 neither is design-based or a population confidence claim. Eligible evaluator FAIL and typed agent terminals score zero;
-infrastructure confounds are inconclusive. `$252`/`$275` need fresh pricing; execution/unblinding remain closed.
+infrastructure confounds are inconclusive. Refreshed prices preserve `$252`/`$275`; execution/unblinding remain closed.
 
 R2 implements the strict suite, complete/inconclusive fixtures and deterministic analysis. Current R5 replays R2's
 source closure and binds the 12 metadata tasks plus hardened evaluator-v2 materialization and receipt/trace-replayed
-persisted-row authentication; it opened no private task and authenticated no row. R3/R4 preserve pre-hardening and
-pre-format source. Pre-reservation failure remains 0 reserved/48 not started; post-reservation keeps 48. Exact
-task/evaluator materialization and fresh pricing are next, before any candidate.
+persisted-row authentication source; it opened no private task. Materialization R1 then evaluator-side validated all
+12 packages and recorded opaque templates and one official price capture without outcomes or private values. No
+runtime-secret-expanded contract or row is authenticated. Executable source qualification remains before a candidate.
