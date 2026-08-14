@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
 from patchloop.errors import ContractError
 from patchloop.evals.heldout_ac_preflight import preflight_heldout_ac
+from scripts.run_heldout_ac_preflight import _write_canonical_output
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,12 +43,14 @@ def _sdk() -> dict[str, object]:
 
 def test_preflight_produces_secret_free_candidate_without_runtime_calls(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.delenv("OPENAI_API_BASE", raising=False)
     result = preflight_heldout_ac(
         credential_present=True,
         repository=ROOT,
+        runtime=tmp_path,
         _git_observer=_git,
         _docker_observer=_docker,
         _sdk_observer=_sdk,
@@ -87,6 +91,7 @@ def test_preflight_blocks_before_candidate(
     docker_ready: bool,
     sdk_ready: bool,
     expected: str,
+    tmp_path: Path,
 ) -> None:
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.delenv("OPENAI_API_BASE", raising=False)
@@ -110,6 +115,7 @@ def test_preflight_blocks_before_candidate(
     result = preflight_heldout_ac(
         credential_present=credential_present,
         repository=ROOT,
+        runtime=tmp_path,
         _git_observer=git_observer,
         _docker_observer=docker_observer,
         _sdk_observer=sdk_observer,
@@ -122,11 +128,15 @@ def test_preflight_blocks_before_candidate(
     assert result["provider_calls_made"] == 0
 
 
-def test_preflight_blocks_custom_base_url(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_preflight_blocks_custom_base_url(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     monkeypatch.setenv("OPENAI_BASE_URL", "https://example.invalid")
     result = preflight_heldout_ac(
         credential_present=True,
         repository=ROOT,
+        runtime=tmp_path,
         _git_observer=_git,
         _docker_observer=_docker,
         _sdk_observer=_sdk,
@@ -144,3 +154,17 @@ def test_preflight_requires_exact_boolean_boundary() -> None:
             _docker_observer=_docker,
             _sdk_observer=_sdk,
         )
+
+
+def test_preflight_output_is_canonical_utf8_and_new_only(tmp_path: Path) -> None:
+    output = tmp_path / "handoff" / "preflight.json"
+    payload = {"한글": "보존", "a": 1}
+
+    encoded = _write_canonical_output(output, payload)
+
+    assert output.read_bytes() == encoded
+    assert encoded == (
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    ).encode("utf-8")
+    with pytest.raises(FileExistsError, match="already exists"):
+        _write_canonical_output(output, payload)

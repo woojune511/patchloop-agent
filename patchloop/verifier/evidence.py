@@ -36,7 +36,11 @@ from patchloop.contracts import (
     registered_check_result_hash,
     safety_evidence_bundle_artifact_bytes,
 )
-from patchloop.errors import ContractError
+from patchloop.errors import (
+    ContractError,
+    EvaluatorControlContractCollision,
+    UntrustedPrivateMarkerHit,
+)
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 
@@ -612,12 +616,28 @@ def validate_evaluator_v2_artifact_chain(
     supplied_event_bytes = canonical_json(
         [event.model_dump(mode="json") for event in prefix]
     ).encode("utf-8")
-    if any(
-        marker in content
-        for marker in private_markers
-        for content in (*cached_bytes.values(), descriptor_bytes, supplied_event_bytes)
+    if _marker_match_count(
+        (supplied_event_bytes, cached_bytes[patch_ref.artifact_id]),
+        private_markers,
     ):
-        raise ContractError("private marker escaped into the supplied evaluator evidence chain")
+        raise UntrustedPrivateMarkerHit(
+            "agent-visible evidence contained an evaluator-private marker"
+        )
+    evaluator_private_bytes = (
+        manifest_bytes,
+        result_bytes,
+        bundle_bytes,
+        descriptor_bytes,
+        *(
+            content
+            for artifact_id, content in cached_bytes.items()
+            if artifact_id != patch_ref.artifact_id
+        ),
+    )
+    if _marker_match_count(evaluator_private_bytes, private_markers):
+        raise EvaluatorControlContractCollision(
+            "evaluator-private evidence collided with the private marker set"
+        )
 
     network_or_sandbox_states = [
         record.state
@@ -656,7 +676,9 @@ def validate_evaluator_v2_artifact_chain(
         for marker in private_markers
         for content in (manifest_bytes, result_bytes, bundle_bytes)
     ):
-        raise ContractError("private marker escaped into evaluator control artifacts")
+        raise EvaluatorControlContractCollision(
+            "evaluator-private control artifacts collided with the private marker set"
+        )
 
     def parse_json_model(content: bytes, model: type[_ObservationModel]) -> _ObservationModel:
         try:
@@ -667,7 +689,6 @@ def validate_evaluator_v2_artifact_chain(
     non_safety_refs: list[EvidenceArtifactRef] = []
     check_by_hash: dict[tuple[str, str], Any] = {}
     executed_check_requests: dict[str, DockerRegisteredCheckRequestV1] = {}
-    redacted_private_marker_match_count = 0
     for check in package.private.hidden_checks:
         check_by_hash[("hidden", registered_check_result_hash("hidden", check))] = check
     for check in package.public.visible_checks:
@@ -717,7 +738,6 @@ def validate_evaluator_v2_artifact_chain(
             if payload.check_hash in executed_check_requests:
                 raise ContractError("evaluator-v2 registered check execution is duplicated")
             executed_check_requests[payload.check_hash] = payload.request
-            redacted_private_marker_match_count += payload.redacted_private_marker_match_count
             expected_state = (
                 VerdictState.ERROR
                 if payload.checker_error or payload.timed_out
@@ -771,7 +791,9 @@ def validate_evaluator_v2_artifact_chain(
                 raise ContractError("evaluator-v2 safety observations must be JSON")
             content = cached_bytes[ref.artifact_id]
             if any(marker in content for marker in private_markers):
-                raise ContractError("private marker escaped into safety observation evidence")
+                raise EvaluatorControlContractCollision(
+                    "safety observation evidence collided with the private marker set"
+                )
             envelope = parse_json_model(content, SafetyEvidenceObservationV2)
             assert isinstance(envelope, SafetyEvidenceObservationV2)
             if (
@@ -903,7 +925,7 @@ def validate_evaluator_v2_artifact_chain(
         assert isinstance(patch_payload, ScannedPatchV1)
         inventory_refs = sorted(non_safety_refs, key=lambda item: item.artifact_id)
         inventory_hash = sha256_json([ref.model_dump(mode="json") for ref in inventory_refs])
-        artifact_matches = redacted_private_marker_match_count + _marker_match_count(
+        artifact_matches = _marker_match_count(
             [cached_bytes[ref.artifact_id] for ref in inventory_refs],
             private_markers,
         )
@@ -928,11 +950,7 @@ def validate_evaluator_v2_artifact_chain(
             or patch_payload.match_count != patch_matches
         ):
             raise ContractError("evaluator-v2 secret scan evidence is incomplete or misbound")
-        expected_state = (
-            VerdictState.FAIL
-            if artifact_matches + event_matches + patch_matches
-            else VerdictState.PASS
-        )
+        expected_state = VerdictState.FAIL if event_matches + patch_matches else VerdictState.PASS
         _require_safety_state(checked_bundle.records, SafetyControlKind.SECRET, expected_state)
 
     sandbox = observations.get(SafetyControlKind.SANDBOX)

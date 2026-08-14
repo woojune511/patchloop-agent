@@ -7,35 +7,43 @@ Historical D/V commands are preserved in Git and `docs/archive/`; they are not t
 ```powershell
 uv sync --offline --frozen --extra dev
 & .\.venv\Scripts\python.exe -E -s -B -m pytest -q -p no:cacheprovider `
-  tests/test_fast_preflight.py `
-  tests/test_evaluator_v2_source_qualification.py `
   tests/test_evaluator_v2_contracts.py `
-  tests/test_ac_fixed_bundle_cost_completion.py `
+  tests/test_heldout_ac_source_qualification.py `
+  tests/test_heldout_ac_binding_source_qualification.py `
+  tests/test_heldout_ac_task_pricing_materialization.py `
+  tests/test_heldout_ac_execution_source_qualification.py `
+  tests/test_heldout_ac_persisted_adapter.py `
+  tests/test_heldout_ac_completion.py `
+  tests/test_heldout_ac_preflight.py `
+  tests/test_heldout_ac_dispatcher.py `
+  tests/test_heldout_ac_preflight_source_qualification.py `
   tests/test_documentation_structure.py
-& .\.venv\Scripts\python.exe -E -s -B `
-  scripts/build_r8_runtime_evidence.py
-& .\.venv\Scripts\python.exe -E -s -B `
-  scripts/build_heldout_ac_preflight_source_qualification.py
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_heldout_ac_source_qualification.py
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_heldout_ac_binding_source_qualification.py
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_heldout_ac_task_pricing_materialization.py
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_heldout_ac_execution_source_qualification.py
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_heldout_ac_preflight_source_qualification.py
 ```
 
-These are offline-only. The R8 evidence builder validates the checked-in correction index and immutable R10 binding;
-when local `.patchloop` originals exist, it also rechecks the complete external chain. Current source intentionally
-differs from consumed R10, so do not regenerate R10. The builder never reruns a row or grants runtime/paid authority.
-The held-out builder replays R11 and preserves R10-R2. Old builders are not current gates; R11 qualification makes no
-runtime observation, candidate, plan or journal.
+These are offline-only. The builders validate the checked-in contract R7, binding R8, materialization R4, execution R5
+and preflight/dispatcher R13 chain. They preserve R12 and all earlier seals, never rerun a row and grant no
+runtime/paid authority. R13 binds the immutable R11 correction index and creates no candidate, plan or journal.
 
 ## Current held-out no-call preflight
 
 After the exact source is committed and execution-clean, this command checks key presence, Git, SDK and digest-pinned
-local Docker images. It neither exports/prints the key nor calls a provider/evaluator/agent and always leaves paid
-approval false:
+local Docker images. `--output` is required and must name a nonexistent append-only UTF-8 JSON handoff. The command
+neither exports/prints the key nor calls a provider/evaluator/agent and always leaves paid approval false:
 
 ```powershell
-& .\.venv\Scripts\python.exe -E -s -B scripts/run_heldout_ac_preflight.py --env-file .env
+& .\.venv\Scripts\python.exe -E -s -B scripts/run_heldout_ac_preflight.py `
+  --env-file .env `
+  --output .patchloop/heldout-ac-preflight-<fresh-id>.json
 ```
 
 A successful result is only a secret-free candidate for the fixed 48 rows and `$252`/`$275`; it cannot dispatch the
-campaign. Any source change requires a successor qualification and candidate.
+campaign. Do not run this form until the R13-bound source is committed and clean. Any later source change requires a
+successor qualification and candidate.
 
 ## Future held-out paid form — closed until exact approval
 
@@ -50,46 +58,19 @@ hash, 48 rows, `$252` reserve and `$275` cap. Only then is this form valid:
   --approved-execution-hash sha256:<exact-new-candidate>
 ```
 
-Do not run it now. R7 and its approval are consumed after a first-row byte confound; R11 has no candidate or approval.
-Rows are one-use, with no retry, replacement or resume.
+Do not run it now. Held-out R7 and R11 and both approvals are consumed; current R13 has no candidate or approval.
+Rows and semantic paid-campaign identity are one-use, with no retry, replacement or resume.
 
-## Historical R8 command — do not run
+## Historical commands
 
-The root `.env` must contain only `OPENAI_API_KEY`. Preflight checks presence, local Git/SDK and read-only Docker/image
-state without printing/exporting the value or making container, network, provider, evaluator or agent calls.
+R3-R8 development and held-out R7/R11 commands, candidates and approvals are audit-only and must not be instantiated
+again. `docs/09-evidence.md`, Git and append-only artifacts preserve their exact forms and limits.
 
-```powershell
-& .\.venv\Scripts\patchloop.exe preflight `
-  --suite experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml `
-  --env-file .env `
-  --max-attempts 3
-```
+## Verify sealed evidence
 
-This was the bounded no-call form used before R8. R8 is now consumed and preflight returns
-`HISTORICAL_SUITE_IMMUTABLE`; the command is retained only for audit and must not be used to create another attempt.
-The prior R7 candidate `sha256:8b962b80...bf6c` is also superseded.
-
-## Historical paid R8 form — do not run
-
-R3 through R8 are sealed and their approvals consumed. This is the form used for R8 candidate
-`sha256:60c67908...cff9e`; it is preserved for audit only and must never be instantiated again:
-
-```powershell
-& .\.venv\Scripts\patchloop.exe evaluate `
-  --suite experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml `
-  --env-file .env `
-  --approve-live-cost `
-  --approved-execution-hash sha256:60c679083ad7b995918e2ba5de79843be8b03ce0511b67eb859da437f16cff9e
-```
-
-That provider boundary was crossed once. R8's equal limits were 3M input, 350k output, 3.35M aggregate,
-25k/response, 180 model, 300 tool and 3,600 seconds. The complete development matrix grants no held-out or B/D
-authority. Any future provider campaign needs a new suite/source qualification, candidate and approval.
-
-## Verify the sealed R3-R8 evidence
-
-Use the checked-in R3-R8 evidence indices read-only; never evaluate, finalize, recover or resume these identities.
-Raw state stays under `.patchloop`.
+Use the checked-in R3-R8 development and held-out R7/R11 evidence indices read-only; never evaluate, finalize, recover
+or resume these identities. The R11 correction adds cost accounting and deterministic attribution only. Raw state
+stays under `.patchloop`.
 
 ## Static checks
 

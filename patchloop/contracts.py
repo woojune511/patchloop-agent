@@ -535,12 +535,14 @@ class SafetyRequirement(FrozenStrictModel):
             raise ValueError("safety requirement check IDs must be unique and sorted")
         if self.evidence_producer == SafetyEvidenceProducer.SANDBOX_POLICY_TRACE:
             if not self.check_ids:
-                raise ValueError("sandbox-audit safety evidence requires registered check IDs")
+                raise ValueError(
+                    "sandbox-audit safety evidence requires opaque registered check identities"
+                )
             if any(
-                re.fullmatch(r"(?:hidden|regression):[a-z][a-z0-9_-]+", check_id) is None
+                re.fullmatch(r"(?:hidden|regression):h_[0-9a-f]{64}", check_id) is None
                 for check_id in self.check_ids
             ):
-                raise ValueError("sandbox-audit check IDs must be role-prefixed registered IDs")
+                raise ValueError("sandbox-audit check identities must be opaque and role-prefixed")
             if self.policy_input_count != len(self.check_ids):
                 raise ValueError("sandbox-audit policy input count must match registered checks")
             if self.policy_input_hash != docker_registered_check_policy_input_hash(
@@ -800,6 +802,15 @@ def registered_check_result_hash(
     return sha256_json({"role": role, "check": check.model_dump(mode="json")})
 
 
+def registered_check_opaque_identity(
+    role: Literal["hidden", "regression"], check: RegisteredCheck
+) -> str:
+    """Return a role-bound check identity without serializing the registered ID."""
+
+    digest = registered_check_result_hash(role, check).removeprefix("sha256:")
+    return f"{role}:h_{digest}"
+
+
 def build_evaluator_contract_binding(
     contract: EvaluatorSafetyContract,
     package: TaskPackage,
@@ -826,11 +837,17 @@ def build_evaluator_contract_binding(
     )
     if contract_identity != expected_identity:
         raise ValueError("evaluator safety contract belongs to a different task package")
-    hidden_ids, regression_ids, registered_specs = _registered_check_projection(package)
+    _, _, registered_specs = _registered_check_projection(package)
     registered_ids = tuple(
         sorted(
-            [f"hidden:{check_id}" for check_id in hidden_ids]
-            + [f"regression:{check_id}" for check_id in regression_ids]
+            [
+                registered_check_opaque_identity("hidden", check)
+                for check in package.private.hidden_checks
+            ]
+            + [
+                registered_check_opaque_identity("regression", check)
+                for check in package.public.visible_checks
+            ]
         )
     )
     sandbox_requirements = tuple(

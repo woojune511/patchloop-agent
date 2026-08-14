@@ -37,10 +37,15 @@ from patchloop.evals.heldout_ac_suite import load_heldout_ac_suite
 from patchloop.runtime import repository_root
 from patchloop.util import sha256_bytes, sha256_json
 
-SCHEMA_VERSION = "heldout-ac-execution-source-qualification-v1"
-QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-execution-source-20260814-r1"
-STATUS = "OFFLINE_EXECUTION_CONTRACT_SOURCE_QUALIFIED_NO_CANDIDATE"
-OUTPUT_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-execution-source-qualification-r1.json")
+SCHEMA_VERSION = "heldout-ac-execution-source-qualification-v5"
+QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-execution-source-20260815-r5"
+STATUS = "OFFLINE_EXECUTION_CONTRACT_SOURCE_QUALIFIED_OPAQUE_MARKERS_NO_CANDIDATE"
+OUTPUT_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-execution-source-qualification-r5.json")
+R4_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-execution-source-qualification-r4.json")
+R4_FILE_BYTES = 16_921
+R4_FILE_SHA256 = "sha256:4489780920f89a8907108d750c4e0fd307dcb859fa6a3669bd129f6c514649ef"
+R4_CONTENT_HASH = "sha256:a33663aa5de28640bb7759b9703cef1b298e12c79e30b54c50ede46c0c1f22c7"
+R4_EVALUATOR_SOURCE_HASH = "sha256:b4dc58866b937d74e2bfcf8436df8f0dc55515bb701751a74caf5565a6412412"
 NEXT_GATE = "run-dedicated-heldout-no-call-readiness-before-candidate"
 
 SOURCE_ENTRYPOINTS = (
@@ -69,8 +74,22 @@ class FileBinding(HeldoutACFrozenModel):
     file_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
+class R4ExecutionSourcePredecessor(FileBinding):
+    path: Literal["reports/heldout-ac/artifacts/heldout-ac-execution-source-qualification-r4.json"]
+    file_bytes: Literal[R4_FILE_BYTES]
+    file_sha256: Literal[R4_FILE_SHA256]
+    content_hash: Literal[R4_CONTENT_HASH]
+    evaluator_source_hash: Literal[R4_EVALUATOR_SOURCE_HASH]
+    original_status: Literal[
+        "OFFLINE_EXECUTION_CONTRACT_SOURCE_QUALIFIED_OPAQUE_MARKERS_NO_CANDIDATE"
+    ]
+    disposition: Literal["invalidated-by-final-r13-preflight-source-staging"]
+    invalidation_reason: Literal["final-r13-preflight-source-staged-after-execution-r4"]
+    current_source_replay_valid: Literal[False]
+
+
 class MaterializationBinding(FileBinding):
-    path: Literal["reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r1.json"]
+    path: Literal["reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r4.json"]
     file_bytes: Literal[MATERIALIZATION_FILE_BYTES]
     file_sha256: Literal[MATERIALIZATION_FILE_SHA256]
     content_hash: Literal[MATERIALIZATION_CONTENT_HASH]
@@ -127,6 +146,7 @@ class HeldoutACExecutionSourceQualification(HeldoutACFrozenModel):
     qualification_id: Literal[QUALIFICATION_ID]
     status: Literal[STATUS]
     recorded_at: datetime
+    predecessor: R4ExecutionSourcePredecessor
     suite: FileBinding
     materialization: MaterializationBinding
     source_entrypoints: tuple[str, ...] = Field(min_length=2, max_length=2)
@@ -181,6 +201,62 @@ def _binding(root: Path, relative: Path) -> FileBinding:
     )
 
 
+def _r4_predecessor(root: Path) -> R4ExecutionSourcePredecessor:
+    selected = root / R4_PATH
+    try:
+        raw = selected.read_bytes()
+        payload = json.loads(raw)
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        raise HeldoutACExecutionSourceQualificationError(
+            "held-out execution source R4 predecessor is unavailable"
+        ) from exc
+    if (
+        len(raw) != R4_FILE_BYTES
+        or sha256_bytes(raw) != R4_FILE_SHA256
+        or not isinstance(payload, dict)
+        or payload.get("schema_version") != "heldout-ac-execution-source-qualification-v4"
+        or payload.get("qualification_id")
+        != "core-ac-fixed-bundle-heldout-execution-source-20260815-r4"
+        or payload.get("content_hash") != R4_CONTENT_HASH
+        or payload.get("evaluator_source_hash") != R4_EVALUATOR_SOURCE_HASH
+        or payload.get("status") != STATUS
+        or sha256_json({key: value for key, value in payload.items() if key != "content_hash"})
+        != R4_CONTENT_HASH
+        or (payload.get("materialization") or {}).get("path")
+        != "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r4.json"
+        or (payload.get("authority") or {}).get("candidates_created") != 0
+    ):
+        raise HeldoutACExecutionSourceQualificationError(
+            "held-out execution source R4 predecessor bytes drifted"
+        )
+    preflight_path = "patchloop/evals/heldout_ac_preflight_source_qualification.py"
+    preflight_binding = next(
+        (
+            item
+            for item in payload.get("source_files", ())
+            if isinstance(item, dict) and item.get("path") == preflight_path
+        ),
+        None,
+    )
+    if not isinstance(preflight_binding, dict) or preflight_binding.get(
+        "file_sha256"
+    ) == sha256_bytes((root / preflight_path).read_bytes()):
+        raise HeldoutACExecutionSourceQualificationError(
+            "held-out execution source R4 preflight-source invalidation is absent"
+        )
+    return R4ExecutionSourcePredecessor(
+        path=R4_PATH.as_posix(),
+        file_bytes=len(raw),
+        file_sha256=sha256_bytes(raw),
+        content_hash=payload["content_hash"],
+        evaluator_source_hash=payload["evaluator_source_hash"],
+        original_status=payload["status"],
+        disposition="invalidated-by-final-r13-preflight-source-staging",
+        invalidation_reason="final-r13-preflight-source-staged-after-execution-r4",
+        current_source_replay_valid=False,
+    )
+
+
 def _materialization(root: Path) -> MaterializationBinding:
     selected = root / MATERIALIZATION_PATH
     try:
@@ -188,7 +264,7 @@ def _materialization(root: Path) -> MaterializationBinding:
         payload = json.loads(raw)
     except (OSError, UnicodeDecodeError, ValueError) as exc:
         raise HeldoutACExecutionSourceQualificationError(
-            "held-out R1 materialization is unavailable"
+            "held-out R4 materialization is unavailable"
         ) from exc
     if not (
         len(raw) == MATERIALIZATION_FILE_BYTES
@@ -199,7 +275,7 @@ def _materialization(root: Path) -> MaterializationBinding:
         and (payload.get("pricing") or {}).get("content_hash") == MATERIALIZATION_PRICING_HASH
     ):
         raise HeldoutACExecutionSourceQualificationError(
-            "held-out R1 materialization bytes drifted"
+            "held-out R4 materialization bytes drifted"
         )
     return MaterializationBinding(
         path=MATERIALIZATION_PATH.as_posix(),
@@ -233,6 +309,7 @@ def _build_candidate(
         "qualification_id": QUALIFICATION_ID,
         "status": STATUS,
         "recorded_at": recorded_at,
+        "predecessor": _r4_predecessor(root).model_dump(mode="json"),
         "suite": _binding(root, SUITE_PATH).model_dump(mode="json"),
         "materialization": _materialization(root).model_dump(mode="json"),
         "source_entrypoints": tuple(item.as_posix() for item in SOURCE_ENTRYPOINTS),
@@ -330,6 +407,7 @@ def _summary(
         "qualification_id": payload.qualification_id,
         "source_qualification_hash": payload.content_hash,
         "evaluator_source_hash": payload.evaluator_source_hash,
+        "predecessor_source_qualification_hash": payload.predecessor.content_hash,
         "suite_content_hash": payload.projection.suite_content_hash,
         "scheduled_rows": payload.projection.scheduled_rows,
         "file_bytes": len(raw),
@@ -404,6 +482,11 @@ __all__ = [
     "NEXT_GATE",
     "OUTPUT_PATH",
     "QUALIFICATION_ID",
+    "R4_CONTENT_HASH",
+    "R4_EVALUATOR_SOURCE_HASH",
+    "R4_FILE_BYTES",
+    "R4_FILE_SHA256",
+    "R4_PATH",
     "SCHEMA_VERSION",
     "SOURCE_ENTRYPOINTS",
     "SOURCE_EXTRAS",

@@ -13,6 +13,18 @@ class ContractError(PatchLoopError):
     code = "CONTRACT_ERROR"
 
 
+class EvaluatorControlContractCollision(ContractError):
+    """Evaluator-private control bytes collided with a private marker."""
+
+    code = "EVALUATOR_CONTROL_CONTRACT_COLLISION"
+
+
+class UntrustedPrivateMarkerHit(ContractError):
+    """Agent-visible evidence contained an evaluator-private marker."""
+
+    code = "UNTRUSTED_PRIVATE_MARKER_HIT"
+
+
 class CoverageCitationError(ContractError):
     """A public coverage target cited evidence outside its bound authority."""
 

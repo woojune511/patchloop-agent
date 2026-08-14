@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -8,11 +9,14 @@ from pydantic import ValidationError
 
 from patchloop.evals.heldout_ac_execution_source_qualification import (
     OUTPUT_PATH,
+    R4_CONTENT_HASH,
+    R4_FILE_BYTES,
+    R4_FILE_SHA256,
+    R4_PATH,
     SOURCE_ENTRYPOINTS,
     STATUS,
-    HeldoutACExecutionSourceQualification,
-    HeldoutACExecutionSourceQualificationError,
     _build_candidate,
+    _paid_path_import_closure,
     load_heldout_ac_execution_source_binding,
     run_heldout_ac_execution_source_qualification,
     validate_heldout_ac_execution_source_qualification,
@@ -29,6 +33,8 @@ def test_offline_candidate_binds_paid_path_closure_without_authority() -> None:
     )
 
     assert payload.status == STATUS
+    assert payload.schema_version == "heldout-ac-execution-source-qualification-v5"
+    assert payload.qualification_id.endswith("20260815-r5")
     assert payload.source_entrypoints == tuple(item.as_posix() for item in SOURCE_ENTRYPOINTS)
     assert "patchloop/agent/runner.py" in payload.paid_path_import_closure
     assert "patchloop/verifier/core.py" in payload.paid_path_import_closure
@@ -37,6 +43,13 @@ def test_offline_candidate_binds_paid_path_closure_without_authority() -> None:
     assert payload.projection.candidate_created is False
     assert payload.projection.runtime_secret_markers_materialized == 0
     assert payload.projection.final_evaluator_contracts_materialized == 0
+    assert payload.predecessor.content_hash == R4_CONTENT_HASH
+    assert payload.predecessor.disposition == "invalidated-by-final-r13-preflight-source-staging"
+    assert payload.predecessor.invalidation_reason == (
+        "final-r13-preflight-source-staged-after-execution-r4"
+    )
+    assert payload.predecessor.current_source_replay_valid is False
+    assert payload.materialization.path.endswith("task-pricing-materialization-r4.json")
     assert payload.authority.heldout_task_packages_opened == 0
     assert payload.authority.credential_values_observed == 0
     assert payload.authority.provider_calls_made == 0
@@ -44,30 +57,43 @@ def test_offline_candidate_binds_paid_path_closure_without_authority() -> None:
     assert payload.authority.added_model_cost_usd == 0.0
 
 
-def test_r1_artifact_is_immutable_after_successor_source_drift() -> None:
-    raw = (ROOT / OUTPUT_PATH).read_bytes()
-    payload = HeldoutACExecutionSourceQualification.model_validate_json(raw)
+def test_paid_execution_closure_retains_lazy_runtime_modules() -> None:
+    closure = {
+        item.as_posix() for item in _paid_path_import_closure(ROOT, entrypoints=SOURCE_ENTRYPOINTS)
+    }
 
-    assert len(raw) == 14_903
-    assert sha256_bytes(raw) == (
-        "sha256:f047ae1770c57b51e65f20cd0191bfaa310cbe8615f42c78980772ab4a45f910"
+    assert {
+        "patchloop/evals/heldout_ac_execution.py",
+        "patchloop/evals/heldout_ac_task_pricing_materialization.py",
+        "patchloop/evals/heldout_ac_live_contract.py",
+        "patchloop/evals/qualification.py",
+        "patchloop/verifier/runtime_evidence.py",
+    }.issubset(closure)
+
+
+def test_r4_artifact_is_byte_preserved_as_an_immutable_predecessor() -> None:
+    raw = (ROOT / R4_PATH).read_bytes()
+    payload = json.loads(raw)
+
+    assert len(raw) == R4_FILE_BYTES
+    assert sha256_bytes(raw) == R4_FILE_SHA256
+    assert payload["content_hash"] == R4_CONTENT_HASH
+    assert payload["schema_version"] == "heldout-ac-execution-source-qualification-v4"
+    assert payload["predecessor"]["path"].endswith(
+        "heldout-ac-execution-source-qualification-r3.json"
     )
-    assert payload.content_hash == (
-        "sha256:df30eceeb8bc476565b36d3260525cf0958a82c88a402f0342838a0bda2b9ad9"
-    )
-    with pytest.raises(HeldoutACExecutionSourceQualificationError, match="has drifted"):
-        validate_heldout_ac_execution_source_qualification(repository=ROOT)
-    with pytest.raises(HeldoutACExecutionSourceQualificationError, match="has drifted"):
-        load_heldout_ac_execution_source_binding(repository=ROOT)
 
 
 def test_source_qualification_rerun_is_byte_and_mtime_stable() -> None:
     selected = ROOT / OUTPUT_PATH
     before = selected.read_bytes()
     before_mtime = selected.stat().st_mtime_ns
-    with pytest.raises(HeldoutACExecutionSourceQualificationError, match="has drifted"):
-        run_heldout_ac_execution_source_qualification(repository=ROOT)
+    validated = validate_heldout_ac_execution_source_qualification(repository=ROOT)
+    binding = load_heldout_ac_execution_source_binding(repository=ROOT)
+    rerun = run_heldout_ac_execution_source_qualification(repository=ROOT)
 
+    assert validated == rerun
+    assert binding.source_qualification_hash == validated["source_qualification_hash"]
     assert selected.read_bytes() == before
     assert selected.stat().st_mtime_ns == before_mtime
 

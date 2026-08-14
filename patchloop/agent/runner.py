@@ -252,7 +252,8 @@ def issue_live_execution_authorization(
     approval = plan.get("approval") if isinstance(plan, dict) else None
     if (
         not isinstance(plan, dict)
-        or plan.get("schema_version") != "experiment-execution-plan-v1"
+        or plan.get("schema_version")
+        not in {"experiment-execution-plan-v1", "experiment-execution-plan-v2"}
         or plan.get("ready") is not True
         or plan.get("blockers") != []
         or plan.get("execution_hash") != execution_hash
@@ -1169,6 +1170,7 @@ class AgentRunner:
                 manifest,
                 authorization,
                 plan=plan,
+                runner_root=runner_root,
             )
         ):
             raise ContractError(
@@ -1811,6 +1813,7 @@ class AgentRunner:
         authorization: LiveExecutionAuthorization,
         *,
         plan: dict[str, Any] | None = None,
+        runner_root: Path | None = None,
     ) -> bool:
         """Bind the complete hash-approved plan at the paid-call boundary."""
 
@@ -1826,11 +1829,14 @@ class AgentRunner:
                 heldout_ac_live_plan_matches_manifest,
             )
 
+            if runner_root is None:
+                return False
             return heldout_ac_live_plan_matches_manifest(
                 plan=plan,
                 manifest=manifest,
                 plan_path=authorization.plan_path,
                 plan_file_sha256=authorization.plan_hash,
+                expected_run_root=runner_root,
             )
         runtime_contract = plan.get("runtime_contract")
         corrective = bool(

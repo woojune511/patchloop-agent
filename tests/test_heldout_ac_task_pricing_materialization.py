@@ -16,9 +16,12 @@ from patchloop.evals.heldout_ac_task_evaluator import (
 )
 from patchloop.evals.heldout_ac_task_pricing_materialization import (
     OUTPUT_PATH,
-    R5_PLAN_HASH,
+    PLAN_HASH,
+    PRICING_HASH,
+    R3_FILE_BYTES,
+    R3_FILE_SHA256,
+    R3_PATH,
     HeldoutACTaskPricingMaterialization,
-    HeldoutACTaskPricingMaterializationError,
     _build_candidate,
     _contract_template_hash,
     _materialize_task_template,
@@ -30,32 +33,31 @@ from patchloop.util import sha256_bytes, sha256_json
 from patchloop.verifier.runtime_evidence import build_evaluator_safety_contract_v2
 
 ROOT = Path(__file__).resolve().parents[1]
-HISTORICAL_PRICING = (
-    ROOT / "reports/live-pilot/artifacts/d136-replayable-official-pricing-evidence.json"
-)
-
-
-def _pricing_capture() -> dict[str, object]:
-    payload = json.loads(HISTORICAL_PRICING.read_bytes())
-    return payload["semantic_body"]["observation"]
 
 
 def _candidate() -> HeldoutACTaskPricingMaterialization:
     return _build_candidate(
         ROOT,
-        recorded_at=datetime(2026, 8, 14, 12, 0, tzinfo=UTC),
-        pricing_capture=_pricing_capture(),
+        recorded_at=datetime(2026, 8, 15, 12, 0, tzinfo=UTC),
     )
 
 
 def test_offline_candidate_materializes_exact_12_templates_and_pricing() -> None:
     candidate = _candidate()
 
+    assert candidate.schema_version == "heldout-ac-task-pricing-materialization-v4"
+    assert candidate.materialization_id.endswith("20260815-r4")
+    assert candidate.binding_source_predecessor.path.endswith(
+        "heldout-ac-binding-adapter-source-qualification-r8.json"
+    )
+    assert candidate.materialization_predecessor.disposition == (
+        "invalidated-by-formatting-and-binding-source-r8-successor"
+    )
     assert len(candidate.task_bindings) == 12
     assert len({item.task.task_id for item in candidate.task_bindings}) == 12
     assert sum(item.task.role == "core-same-repo" for item in candidate.task_bindings) == 6
     assert sum(item.task.role == "core-cross-repo" for item in candidate.task_bindings) == 6
-    assert candidate.task_evaluator_plan_content_hash == R5_PLAN_HASH
+    assert candidate.task_evaluator_plan_content_hash == PLAN_HASH
     assert all(item.task_private_marker_count > 0 for item in candidate.task_bindings)
     assert all(item.runtime_secret_markers_materialized == 0 for item in candidate.task_bindings)
     assert all(
@@ -72,6 +74,26 @@ def test_offline_candidate_materializes_exact_12_templates_and_pricing() -> None
     assert candidate.pricing.hard_cap_nanos == 275_000_000_000
     assert candidate.authority.provider_calls_made == 0
     assert candidate.authority.execution_candidate_authorized is False
+    assert candidate.authority.predecessor_official_pricing_public_get_requests == 1
+    assert candidate.authority.added_official_pricing_public_get_requests == 0
+    assert candidate.pricing.content_hash == PRICING_HASH
+    r3 = json.loads((ROOT / R3_PATH).read_bytes())
+    assert candidate.pricing.model_dump(mode="json") == r3["pricing"]
+
+
+def test_retained_r1_pricing_reuse_makes_no_added_public_get(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import patchloop.evals.d136_fixed_pricing_capture as pricing_capture
+
+    def unexpected_get(*_args: object, **_kwargs: object) -> object:
+        raise AssertionError("R4 materialization must not make a pricing GET")
+
+    monkeypatch.setattr(pricing_capture, "capture_official_pricing_evidence", unexpected_get)
+    candidate = _candidate()
+
+    assert candidate.authority.official_pricing_public_get_authorized is False
+    assert candidate.authority.added_official_pricing_public_get_requests == 0
 
 
 def test_materialized_record_serializes_no_private_marker_value() -> None:
@@ -137,31 +159,20 @@ def test_rehashed_pricing_or_task_projection_drift_fails_closed() -> None:
         HeldoutACTaskPricingMaterialization.model_validate_json(json.dumps(task_drift))
 
 
-def test_checked_in_materialization_is_preserved_and_rejects_current_source_replay(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_r3_is_byte_preserved_and_checked_in_r4_is_idempotent() -> None:
+    sealed_r3 = ROOT / R3_PATH
+    r3_raw = sealed_r3.read_bytes()
+    assert len(r3_raw) == R3_FILE_BYTES
+    assert sha256_bytes(r3_raw) == R3_FILE_SHA256
+
     selected = ROOT / OUTPUT_PATH
-    raw = selected.read_bytes()
-    assert len(raw) == 51_018
-    assert sha256_bytes(raw) == (
-        "sha256:cdd971a57f6f20661d8de326f5603ee1d90eca4234633a8a09d65560d7d52641"
-    )
+    before = selected.read_bytes()
+    before_mtime = selected.stat().st_mtime_ns
+    validated = validate_heldout_ac_task_pricing_materialization(repository=ROOT)
+    rerun = run_heldout_ac_task_pricing_materialization(repository=ROOT)
 
-    def unexpected_capture() -> dict[str, object]:
-        raise AssertionError("existing materialization must not refresh pricing")
-
-    monkeypatch.setattr(
-        "patchloop.evals.heldout_ac_task_pricing_materialization.capture_official_pricing_evidence",
-        unexpected_capture,
-    )
-    with pytest.raises(
-        HeldoutACTaskPricingMaterializationError,
-        match="has drifted",
-    ):
-        validate_heldout_ac_task_pricing_materialization(repository=ROOT)
-    with pytest.raises(
-        HeldoutACTaskPricingMaterializationError,
-        match="has drifted",
-    ):
-        run_heldout_ac_task_pricing_materialization(repository=ROOT)
-    assert selected.read_bytes() == raw
+    assert validated == rerun
+    assert validated["added_pricing_public_get_requests"] == 0
+    assert selected.read_bytes() == before
+    assert selected.stat().st_mtime_ns == before_mtime
+    assert sealed_r3.read_bytes() == r3_raw

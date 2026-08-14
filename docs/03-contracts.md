@@ -26,11 +26,10 @@ Current A/C sources are:
 
 - `heldout-ac-preregistration-20260814-v1.yaml`: standalone, execution-closed 48-row task-cluster design;
 - `heldout-ac-suite-20260814-v1.yaml` and its plan: strict metadata-only 48-row contracts outside `ExperimentSuite`;
-- held-out contract R2, binding R5 and execution/preflight R1/R2 are immutable source predecessors. Materialization R1
-  binds 12 evaluator-side packages as opaque templates and prices. Preflight/dispatcher R11 independently binds the
-  current secret-free candidate producer, run-manifest-v2/ephemeral marker expansion, exact `$252`/`$275` paid plan,
-  append-only journal, persisted-v2 replay and finalization. R7 consumed one inconclusive campaign after CRLF/LF
-  qualification-byte drift; R8-R10 are zero-authority pre-seal predecessors;
+- held-out contract R7, binding R8, materialization R4, execution R5 and preflight/dispatcher R13 are the current
+  zero-authority source chain. R4 binds 12 evaluator-side packages with opaque check identities and retains R1 prices
+  without another GET. R13 binds the candidate producer, semantic one-use campaign identity, canonical paths, atomic
+  journal/cost settlement, typed sidecars, persisted-v2 replay and exact `$252`/`$275` paid boundary;
 - `ac-structured-pilot-v11.plan.yaml`: R10-qualified contract-hardened split-budget design used by sealed R8;
 - `dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml`: consumed Moto/Babel A/C suite whose four rows all
   resolved, evaluator-v2 receipt-qualified and cost-settled; R7/R9 remains superseded unexecuted;
@@ -43,8 +42,10 @@ R1/R2 plans, suites and runtime seals remain immutable predecessors.
 An accepted plan/suite grants no provider, evaluator, Docker, runtime-memory or cost authority.
 
 Held-out fixtures never impersonate runtime schemas and emit `official=false`, `analysis_ready=false`. Templates omit
-credential-derived markers. Only the R4 dispatcher may unlock analysis, after 48 exact independently authenticated
-and settled persisted rows. A fresh no-call candidate and paid approval remain separate gates.
+credential-derived markers and serialize role-prefixed opaque registered-check identities, never raw private control
+text. Only the trusted runtime adapter may unlock analysis after 48 exact independently authenticated and settled rows;
+dumped, reparsed or copied DTOs cannot carry that provenance. A fresh no-call candidate and paid approval remain
+separate gates.
 
 ## 4. Run manifest
 
@@ -56,12 +57,15 @@ must bind the D-110 index and `fixed-d110-bundle-v1`. The manifest/preflight mat
 `latest_frozen_index` serialization, suite tamper, wrong profile, source drift or schedule drift. Both
 conditions retain the identical runtime tuple and resource ceilings.
 
-Exact R3/R8 runtime and budget tuples are immutable in `docs/09-evidence.md`.
+Exact R3/R8 development and held-out R7/R11 runtime tuples are immutable in `docs/09-evidence.md`.
 
 ## 5. Event and checkpoint contracts
 
 Events bind run/sequence/time/actor/type/payload/artifacts; checkpoints bind phase, workspace/diff and completed
-actions. Usage precedes a malformed terminal. Observations are immutable; corrections explicitly reference them.
+actions. Current held-out writes use canonical run-root-contained paths and atomically append terminal plus cost
+evidence. Started usage is persisted before qualification, so a later adapter failure cannot erase observed cost.
+Credential/context-entry errors seal as typed confounds. Observations are immutable; corrections explicitly reference
+them.
 
 ## 6. Tool contract
 
@@ -99,22 +103,24 @@ hidden_pass and regression_pass and scope_pass and safety_pass
 ```
 
 Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
-`ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial.
-V5-V25 retain their exact historical observations in `docs/09-evidence.md`.
+`ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial. Private
+checker-output redactions are evaluator diagnostics, while only agent-visible event/patch marker hits are leakage
+verdict inputs. Control-contract collision and untrusted marker escape use distinct stable codes.
 
 Fast preflight permits at most three no-call attempts with new attempt IDs; semantic changes require a new version.
 Incomplete matrices, including R3, are diagnostic only.
 
 ## 10. Cost and completion gates
 
-Cost is reserved before provider dispatch, settled from durable usage in integer nano-USD and reloaded before the
-next paid row. Completion requires every exact row once, qualified trace, settlement and evaluator/verdict
-consistency; missing, duplicate, retried, replaced or confounded rows are inconclusive. R8's immutable v1/v2 adapter
-mismatch is corrected only by its append-only index. Exact historical caps and local durability limits are in
-`docs/09-evidence.md`.
+Cost is reserved before provider dispatch, observed from durable usage in integer nano-USD before qualification, and
+reloaded before the next paid row. Reports separate settled, observed-unsettled and total observed-started cost.
+Completion requires every exact row once, runtime-authenticated provenance, settlement and evaluator/verdict
+consistency; missing, duplicate, retried, replaced or confounded rows are inconclusive. Persisted replay validates
+bytes but cannot mint official analysis authority. Exact historical caps and limits are in `docs/09-evidence.md`.
 
 ## 11. Evidence gates
 
-Preparation, execution receipt, journal and completion remain distinct. No historical identity or approval can be
-reused; future execution needs a new qualified suite/source, exact candidate and approval. D-126-D-141 never reopen,
-D-142 remains source-qualified/unactivated/deferred, and exact tuples remain in `docs/09-evidence.md`.
+Preparation, execution receipt, journal and completion remain distinct. Full path/price/result/qualification/receipt
+bytes are replayed, and the semantic paid-campaign identity excludes transient readiness observations so a timestamp
+cannot reopen a consumed plan. R11 is immutable inconclusive; current R13 created no candidate or authority. Future
+execution needs a clean committed source, fresh no-call candidate and separate exact approval.

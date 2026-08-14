@@ -1,7 +1,7 @@
 """No-call activation contract for the preregistered held-out A/C panel.
 
 This module deliberately stops before campaign state or provider dispatch.  It
-binds the sealed 48-row suite, the evaluator-side R1 materialization, a fresh
+binds the sealed 48-row suite, the evaluator-side R4 materialization, a fresh
 source qualification and read-only local readiness into one execution hash.
 It also owns the only supported expansion from an explicitly supplied runtime
 secret to a task-bound evaluator-v2 authority.  Secret bytes are never returned
@@ -63,17 +63,17 @@ from patchloop.verifier.runtime_evidence import (
 
 SUITE_PATH = Path("experiments/heldout-ac-suite-20260814-v1.yaml")
 MATERIALIZATION_PATH = Path(
-    "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r1.json"
+    "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r4.json"
 )
-MATERIALIZATION_FILE_BYTES = 51_018
+MATERIALIZATION_FILE_BYTES = 52_056
 MATERIALIZATION_FILE_SHA256 = (
-    "sha256:cdd971a57f6f20661d8de326f5603ee1d90eca4234633a8a09d65560d7d52641"
+    "sha256:37c5cb805e137e55f5b0a11b3a3235dc0514aa2a77938abfc6d74695113d5380"
 )
 MATERIALIZATION_CONTENT_HASH = (
-    "sha256:76b15ed1e0ef7f602d53678696ae83d914081bd7174c8ff7dff5a5738db55424"
+    "sha256:7c6ecc31b471da83cf46ddb5a3fb687008e4a6648ae55485d0109e0d6114af58"
 )
 MATERIALIZATION_TASK_BINDINGS_HASH = (
-    "sha256:c8be4aaddf3b5aa0de07713b4a565ac3ebba5e5023eb658e250822160f6d06e9"
+    "sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f"
 )
 MATERIALIZATION_PRICING_HASH = (
     "sha256:03e9cde4d6d04a09995da669d7e3aea26fda31310615640508f6bd0a9c2cbd34"
@@ -281,7 +281,7 @@ def _read_materialization(root: Path) -> tuple[HeldoutACTaskPricingMaterializati
         raw = selected.read_bytes()
         payload = HeldoutACTaskPricingMaterialization.model_validate_json(raw)
     except (OSError, ValidationError) as exc:
-        raise HeldoutACExecutionError("held-out R1 materialization is invalid") from exc
+        raise HeldoutACExecutionError("held-out R4 materialization is invalid") from exc
     if (
         len(raw) != MATERIALIZATION_FILE_BYTES
         or sha256_bytes(raw) != MATERIALIZATION_FILE_SHA256
@@ -290,7 +290,7 @@ def _read_materialization(root: Path) -> tuple[HeldoutACTaskPricingMaterializati
         or payload.pricing.content_hash != MATERIALIZATION_PRICING_HASH
         or raw != (payload.model_dump_json(indent=2) + "\n").encode("utf-8")
     ):
-        raise HeldoutACExecutionError("held-out R1 materialization bytes drifted")
+        raise HeldoutACExecutionError("held-out R4 materialization bytes drifted")
     return payload, raw
 
 
@@ -336,6 +336,35 @@ def _execution_projection(candidate: HeldoutACExecutionCandidate) -> dict[str, A
         "base_schedule_hash": candidate.base_schedule_hash,
         "readiness": candidate.readiness.model_dump(mode="json"),
     }
+
+
+def heldout_ac_campaign_identity_hash(candidate: HeldoutACExecutionCandidate) -> str:
+    """Return the one-use paid-campaign identity, excluding transient readiness.
+
+    ``observed_at`` and other readiness observations intentionally affect the
+    execution hash, but they must not create another paid opportunity for the
+    same qualified source, suite, runtime and base schedule.
+    """
+
+    checked = HeldoutACExecutionCandidate.model_validate_json(candidate.model_dump_json())
+    return sha256_json(
+        {
+            "schema_version": "heldout-ac-paid-campaign-identity-v1",
+            "suite_id": checked.suite_id,
+            "suite_content_hash": checked.suite_content_hash,
+            "dataset_manifest_hash": checked.dataset_manifest_hash,
+            "materialization_content_hash": checked.materialization.content_hash,
+            "task_bindings_hash": checked.task_bindings_hash,
+            "pricing_binding_hash": checked.pricing_binding_hash,
+            "source_qualification_hash": (checked.source_qualification.source_qualification_hash),
+            "evaluator_source_hash": checked.source_qualification.evaluator_source_hash,
+            "runtime_tuple_hash": checked.runtime_tuple_hash,
+            "base_schedule_hash": checked.base_schedule_hash,
+            "scheduled_run_count": 48,
+            "full_schedule_reserve_nanos": 252_000_000_000,
+            "hard_cap_nanos": 275_000_000_000,
+        }
+    )
 
 
 def _schedule_row_id(
@@ -620,7 +649,7 @@ def materialize_heldout_ac_runtime_task_authority(
     api_key: str,
     repository: str | Path | None = None,
 ) -> HeldoutACRuntimeTaskAuthority:
-    """Expand one R1 template into an ephemeral final evaluator-v2 authority."""
+    """Expand one R4 template into an ephemeral final evaluator-v2 authority."""
 
     root = _root(repository)
     suite = load_heldout_ac_suite(SUITE_PATH, repository=root)
@@ -649,7 +678,7 @@ def materialize_heldout_ac_runtime_task_authority(
         or binding.private_marker_count != len(markers)
         or binding.private_marker_set_hash != evaluator_v2_marker_set_hash(markers)
     ):
-        raise HeldoutACExecutionError("held-out runtime contract differs from its R1 template")
+        raise HeldoutACExecutionError("held-out runtime contract differs from its R4 template")
     authority = EvaluatorV2QualificationAuthority(
         runtime=EvaluatorV2RuntimeAuthority(
             safety_contract=binding.safety_contract,
@@ -776,5 +805,6 @@ __all__ = [
     "build_heldout_ac_run_manifest",
     "candidate_json",
     "encode_heldout_ac_runtime_secret",
+    "heldout_ac_campaign_identity_hash",
     "materialize_heldout_ac_runtime_task_authority",
 ]

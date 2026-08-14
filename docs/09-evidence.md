@@ -12,51 +12,27 @@ Machine artifacts under `reports/` are authoritative. Historical narrative is ar
   `sha256:27157e26881cc277a9026e51d22a6f21fbf5bbb8f6c1c09eaa89aec607e52534` (13,348 bytes). Plan: content
   `sha256:b2058c48de3f2b4d13df872d7fd19a325c3a76ffb5ef24974310409100cb8885`; file
   `sha256:901f898d7f6f81b00e8840160b3efde2cc4fb7d8f4625c6188ea7235de264695` (2,466 bytes).
-- Contract R1 predecessor: content `sha256:f024e04fd3a01b98f8fb469f2f0d0a11f4faf8372ed57cc7986e163bdecc5042`;
-  file `sha256:1c42aecbbe4c9e3f39215658fb3ffba87930f94385b526c13287a0d09448fa22` (18,750 bytes). Current R2:
-  content `sha256:0277225b0992b8e0562b21f5f8c2f8dcc4921017bea03b5087c4f6dd0e860172`; file
-  `sha256:5f5406858603d918f296ca7b4a7bf2d62426c99a5915481964ed41f91c6b961c` (20,052 bytes); source
-  `sha256:a61ad810d2d3de4a13c19c7dfd307dc5b64a1a8409b0de1f0858389ba866889c`.
-- Binding R3/R4 preserve pre-hardening/pre-format source; R5 owns R4's exact predecessor tuple. Current R5: content
-  `sha256:c1dc0d53f5df3cbd8c37cdc453fea738a803177add7a49d6e267b186192d5f59`; file
-  `sha256:809981c460c9d28e0dbc17e179260e20eb48641489973cac669b6de72282094c` (4,759 bytes); source
-  `sha256:caa95f52567001f68aacdcf3d2cd6bd9006ebbe9d1166c17dc076932c185b279`; plan
-  `sha256:34edbad3f5a31f5d7e16ed2358905c195372a0d1f420c0ac03bd3be6a68668a8`.
-- Task/pricing materialization R1: content
-  `sha256:76b15ed1e0ef7f602d53678696ae83d914081bd7174c8ff7dff5a5738db55424`; file
-  `sha256:cdd971a57f6f20661d8de326f5603ee1d90eca4234633a8a09d65560d7d52641` (51,018 bytes); 12-template hash
-  `sha256:c8be4aaddf3b5aa0de07713b4a565ac3ebba5e5023eb658e250822160f6d06e9`. One unauthenticated public GET at
-  `2026-08-14T09:40:21.765508Z` confirmed `$0.75`/`$0.075`/`$4.50` input/cached/output prices.
-- Execution-contract R1: content `sha256:df30eceeb8bc476565b36d3260525cf0958a82c88a402f0342838a0bda2b9ad9`;
-  file `sha256:f047ae1770c57b51e65f20cd0191bfaa310cbe8615f42c78980772ab4a45f910` (14,903 bytes); source
-  `sha256:45a7f6331efc8eed6e3b792ad692a4b74406ddb33f01a675e72ee7e88e5da55b`.
-- No-call preflight R2: content `sha256:7384a8bfa9a44ae3db2edd36c3a860ff0e85567652579770c42d781e4335f224`;
-  file `sha256:5a06587069932599fd18aa7c2a3e72be098ccc0887b3b5906a6f5a0891391589` (15,725 bytes); source
-  `sha256:b9acab3b68981d6be321a3019282b977b885f83d38b359f707bc6e7b29725aeb`.
-- Preflight/dispatcher R3 (historical-R1 replay correction): content
-  `sha256:8afdde929bbf93fe555a04cc332d0085d495327626c769a5c730917cf90f3678`; file
-  `sha256:88831118d5da9b9d0a826a49ef585a3532195003e78f8cb67c8b243ba4d4ff16` (18,334 bytes); source `sha256:3460e9c34047a5c2fb423b1854c30ae16359c4943902be06e0e3e765ed74ad0a`.
-- R4 (pre-replay-validator predecessor): content
-  `sha256:86e63aa20a527bb09ec8e700d38e42f185f2f14eb8d2b06e3c66704049bf6cf9`; file
-  `sha256:5616484bc441baad27d5edd435aacdec7be292141a2f68b30bf9ae6dd9a45100` (18,354 bytes); source
-  `sha256:4150971d9e7676c81d0536f70d102654e7a811a0cc95cf399b0af560ccbdfd7a`; validation
-  `sha256:fe694ca0a06450afb0072717cff53b43ed6fb6e3040b02d4de43fbc5f983c8dd`.
-- R5 (pre-format predecessor): content `sha256:3b85db358520e5ce7c32f965b629a385026ececad806f0a10b5715c4659ba5ce`;
-  file `sha256:6a46651ed3774ae3192e5674c57452220306d191f1f98ab76626e1cf5798bf5b` (18,415 bytes); source
-  `sha256:aa02b892d196862ff54ef34ec216ac777ddfdd0c2f16098cd5b4170c77de226b`; validation
-  `sha256:88ad015958411a7cd1ff00f9c52f02799bf79e6a5b84cc0c805fb7438b9650d3`.
-- R6 (pre-row-guard consumption predecessor): content `sha256:6a5cf10d8818954e15c17e25f8c4bea8d8bac722c01de2cf4d21c2880d3ae3be`;
-  file `sha256:10ccf88e9255c6ae0a0d8246ca8f2d478137bac03b7ffd7e6f59d23b938e942b` (18,413 bytes); source
-  `sha256:69edd395dc19b80be0ce9dd17995530b77d261a0ff6eda8544a6ba058f377566`; validation
-  `sha256:7564f76f74a1c1907a08216a2bb4577a6ec3ab5ed24457a70e308cd906e59c75`.
-- R7 content/file `sha256:8491c1a6...a003c`/`sha256:d4bf85b1...581c7`; R8 zero-authority pre-seal
-  content/file `sha256:b64b3c83...3aab`/`sha256:296716c8...e7fd3` (19,351 bytes).
-- R9/R10 zero-authority predecessors content/file: `sha256:dafac691...223a9`/`sha256:e72c619c...5854` and
-  `sha256:89477de2...7922`/`sha256:7b338220...6f21`.
-- Current R11 content/file `sha256:13e3124c7f0ca0b3ed7afca68ea0f523f2eea4dc4c358cef37db29ac53d0b22b`/
-  `sha256:45b21684520968903ab57afc7a4e0d9f4e66022ad0752140d24b988ba0df747f` (19,359 bytes); source/validation
-  `sha256:50b615250f566cd0cb580ab8f16a000d2c23105d10d5c6c9b9f36e0a2ff9ce3a`/
-  `sha256:7de1872c84752f92d57598275e7c512f99eedd84f58ee811d625decdf030d72c`. R11 made no runtime call or artifact.
+- Historical contract/binding/materialization/execution/preflight seals remain append-only. Current contract R7 has
+  content/file `sha256:27cfb3d91c326c1e767a6e63580941d48e14a7872783db39dbdacdd075f08ea5`/
+  `sha256:fec1c4ea12fdd8399f989ad9b0dba02a22071604eb8fc431f821ae5900ed36fa` (20,544 bytes), source
+  `sha256:cb478787f0845324b305c6208bc70ab29c81dc739c84eb03c0c757fbe2f05dbf`.
+- Binding R8 content/file is `sha256:ac75004d98f647dbedf00819b93b40e85119c4c1deb244080f42c59dda48918c`/
+  `sha256:4fa0dc9629a7fa2030c1af4f3831ecc169330360c6f0813d5778517723c39b13` (5,674 bytes); source
+  `sha256:20eb314516985fd6aa8e7f1970fd754bb3c839607f5b73b55f526b305662118c`.
+- Materialization R4 content/file is `sha256:7c6ecc31b471da83cf46ddb5a3fb687008e4a6648ae55485d0109e0d6114af58`/
+  `sha256:37c5cb805e137e55f5b0a11b3a3235dc0514aa2a77938abfc6d74695113d5380` (52,056 bytes); source/task bindings
+  `sha256:010b8c1fd2d46c58a56976fd1ce750f4640e54a8d38758beecbe3c75e896b888`/
+  `sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f`. It retains R1's sole public price GET and
+  `$0.75`/`$0.075`/`$4.50` prices; added GET count is zero.
+- Execution R5 content/file is `sha256:b2d6307f9e94f4324faf3d11ade14845c8f8d22c645a694bb729f2e13d7e9b2e`/
+  `sha256:e396b4e121c53f7aca27dad3283c035aaa077265f1c0065bed6c9124e5a05fcf` (16,921 bytes); evaluator source
+  `sha256:2037b16643a44c5e2434d5147d6ebeb04bca5f65402d9ca8f37373694ab66c84`.
+- Current preflight/dispatcher R13 content/file is
+  `sha256:5bbb8e77d88684d1a67f7f40d5436d01d9ab1a0f6e286385e1e47959485eab61`/
+  `sha256:f55cf62163b68f0a5d1d890a58b54dfa31f60ed90ac0da466bfe9b08e35b922f` (21,539 bytes); evaluator source/validation
+  `sha256:103b13f61031cde96a74f6af09f86a5f3d4a550af3664d0279f1a9cdafcc8671`/
+  `sha256:7e544db90de1bbff5acca45e8aaec6e9b1e18a34b05a4f388bdffa4503149698`. R12 and intermediate seals are preserved
+  invalidated predecessors. R13 made no observation, candidate, plan, journal, call or spend.
 
 ## R7 held-out live inconclusive campaign
 
@@ -68,6 +44,28 @@ Candidate `sha256:2f51935b...b2afa` at commit `f6a1bda` consumed one 48-row `$25
 `sha256:70657e66...8e04`. The checked-in index content/file is
 `sha256:0a421d5baf26abd6fa1092dd6c2c6a5f064950be53ba9a2a3f5fd93b7e639157`/
 `sha256:dd50a53a1c19e1214a575c3b37b82400b8961bf9a38e72f39a2aa87b3390b906` (7,854 bytes); it is not an A/C result.
+
+## R11 held-out live inconclusive campaign
+
+Candidate `sha256:f48a0de27f8b3e46e627d957dfd714b395c94855587ccfc36e78028fa711a6b0` at commit/tree
+`2f9f920eeb63a2704b387e78af74982b98f7136d`/`d67be34a7de21c4d4ebc8025e9d070887dd47cf0` consumed one 48-row
+`$252`/`$275` approval. Its historical R11 source qualification content/file was
+`sha256:13e3124c7f0ca0b3ed7afca68ea0f523f2eea4dc4c358cef37db29ac53d0b22b`/
+`sha256:45b21684520968903ab57afc7a4e0d9f4e66022ad0752140d24b988ba0df747f` (19,359 bytes), evaluator source
+`sha256:50b615250f566cd0cb580ab8f16a000d2c23105d10d5c6c9b9f36e0a2ff9ce3a`.
+
+Loguru/structured resolved with four PASS verdicts and `$0.0972915`; Loguru/no-memory settled as hidden/safety FAIL
+with `$0.05970375`. Its 14 marker redactions were evaluator-private; agent-visible event and patch matches were zero.
+Dagster/no-memory completed agent submission but evaluator status was NOT_RUN; durable usage cost was `$0.261021`.
+Historical runtime code is `CONTRACT_ERROR`; successor post-runtime diagnosis is
+`EVALUATOR_CONTROL_CONTRACT_COLLISION`, not a task or memory-effect failure.
+
+Append-only correction index `reports/heldout-ac/artifacts/heldout-ac-r11-campaign-inconclusive-r1.json` has
+content/file `sha256:ff66718e1fa403baf0978de1b0e43625aac0a046117e85c5f42fb0cc4312db9b`/
+`sha256:1badf8a78ba142f9868a3b9e836fa83df7beb0248f9c5e745fd205fd0185f48c` (18,525 bytes). It records 2 settled,
+1 observed-unsettled and 45 not-started; settled cost is `$0.15699525` and total observed-started cost is
+`$0.41801625`. Runtime bytes remain unchanged. Correction activity was zero calls and `$0`; no complete matrix,
+official analysis, retry or memory claim is authorized.
 
 ## R8 complete development-readiness matrix
 

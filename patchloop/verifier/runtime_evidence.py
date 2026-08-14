@@ -8,6 +8,7 @@ and offline source qualification grants no execution authority.
 
 from __future__ import annotations
 
+import json
 import uuid
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -42,10 +43,16 @@ from patchloop.contracts import (
     build_evaluator_contract_binding,
     build_evidence_artifact_ref,
     docker_registered_check_policy_input_hash,
+    registered_check_opaque_identity,
     registered_check_result_hash,
     safety_evidence_bundle_artifact_bytes,
 )
-from patchloop.errors import ContractError, RecoveryError
+from patchloop.errors import (
+    ContractError,
+    EvaluatorControlContractCollision,
+    RecoveryError,
+    UntrustedPrivateMarkerHit,
+)
 from patchloop.sandbox.runner import SandboxResult
 from patchloop.state import StateStore
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
@@ -95,6 +102,71 @@ class EvaluatorV2ResultProduction:
     bundle_artifact: Artifact
     evidence_artifacts: tuple[Artifact, ...]
     validation: EvaluatorV2EvidenceValidation
+
+
+def _artifact_store_json_bytes(value: Any) -> bytes:
+    """Serialize exactly as ``ArtifactStore.put_json`` before any CAS write."""
+
+    return json.dumps(
+        value,
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+
+def _contains_private_marker(
+    contents: Sequence[bytes],
+    private_markers: Sequence[bytes],
+) -> bool:
+    return any(marker in content for marker in private_markers for content in contents)
+
+
+def _require_control_bytes_marker_free(
+    contents: Sequence[bytes],
+    private_markers: Sequence[bytes],
+) -> None:
+    if _contains_private_marker(contents, private_markers):
+        raise EvaluatorControlContractCollision(
+            "evaluator-private control bytes collided with the private marker set"
+        )
+
+
+def _require_agent_visible_bytes_marker_free(
+    contents: Sequence[bytes],
+    private_markers: Sequence[bytes],
+) -> None:
+    if _contains_private_marker(contents, private_markers):
+        raise UntrustedPrivateMarkerHit(
+            "agent-visible evidence contained an evaluator-private marker"
+        )
+
+
+def _redact_evaluator_private_output(
+    content: bytes,
+    private_markers: Sequence[bytes],
+) -> tuple[bytes, int]:
+    """Delete private markers without introducing a marker-bearing sentinel.
+
+    Deletion is repeated to a fixed point because removing one marker can join
+    previously separated bytes into another marker.  The caller already
+    rejects empty markers, so every pass that finds a match strictly shortens
+    the output and terminates.
+    """
+
+    redacted = content
+    match_count = 0
+    markers = tuple(sorted(private_markers, key=lambda item: (-len(item), item)))
+    while True:
+        pass_match_count = 0
+        for marker in markers:
+            occurrences = redacted.count(marker)
+            if occurrences:
+                redacted = redacted.replace(marker, b"")
+                pass_match_count += occurrences
+        if not pass_match_count:
+            return redacted, match_count
+        match_count += pass_match_count
 
 
 @dataclass(frozen=True)
@@ -261,8 +333,14 @@ def build_evaluator_safety_contract_v2(
     tool_schema_hash = sha256_json(list(tool_schemas))
     registered_ids = tuple(
         sorted(
-            [f"hidden:{check.id}" for check in package.private.hidden_checks]
-            + [f"regression:{check.id}" for check in package.public.visible_checks]
+            [
+                registered_check_opaque_identity("hidden", check)
+                for check in package.private.hidden_checks
+            ]
+            + [
+                registered_check_opaque_identity("regression", check)
+                for check in package.public.visible_checks
+            ]
         )
     )
     if not registered_ids:
@@ -328,7 +406,12 @@ def build_evaluator_safety_contract_v2(
         "requirements": [item.model_dump(mode="json") for item in requirements],
         "aggregation_precedence": ["error", "fail", "not_run", "pass"],
     }
-    return EvaluatorSafetyContract(**payload, content_hash=sha256_json(payload))
+    contract = EvaluatorSafetyContract(**payload, content_hash=sha256_json(payload))
+    _require_control_bytes_marker_free(
+        (_artifact_store_json_bytes(contract.model_dump(mode="json")),),
+        private_markers,
+    )
+    return contract
 
 
 def build_submitted_patch_ref(
@@ -431,14 +514,15 @@ def produce_registered_check_evidence_v2(
             if key != "schema_version"
         },
     )
-    stdout = outcome.stdout.encode("utf-8")
-    stderr = outcome.stderr.encode("utf-8")
-    marker_match_count = sum(
-        content.count(marker) for content in (stdout, stderr) for marker in private_markers
+    stdout, stdout_marker_match_count = _redact_evaluator_private_output(
+        outcome.stdout.encode("utf-8"),
+        private_markers,
     )
-    for marker in private_markers:
-        stdout = stdout.replace(marker, b"[REDACTED:private-marker]")
-        stderr = stderr.replace(marker, b"[REDACTED:private-marker]")
+    stderr, stderr_marker_match_count = _redact_evaluator_private_output(
+        outcome.stderr.encode("utf-8"),
+        private_markers,
+    )
+    marker_match_count = stdout_marker_match_count + stderr_marker_match_count
     observation = RegisteredCheckResultEvidenceV2(
         run_id=manifest.run_id,
         check_type=check_type,
@@ -456,7 +540,12 @@ def produce_registered_check_evidence_v2(
         truncated=outcome.truncated,
         duration_ms=outcome.duration_ms,
     )
-    artifact = artifact_store.put_json(observation.model_dump(mode="json"))
+    observation_bytes = _artifact_store_json_bytes(observation.model_dump(mode="json"))
+    _require_control_bytes_marker_free((observation_bytes,), private_markers)
+    artifact = artifact_store.put_bytes(
+        observation_bytes,
+        media_type="application/json; charset=utf-8",
+    )
     artifact_ref = build_evidence_artifact_ref(
         artifact,
         role=f"{check_type}_check_result",
@@ -620,7 +709,6 @@ def produce_evaluator_v2_result(
     non_safety_artifacts: list[Artifact] = []
     non_safety_refs: list[EvidenceArtifactRef] = []
     verifier_results: list[VerifierResult] = []
-    redacted_marker_matches = 0
     for production in registered_checks:
         observation = RegisteredCheckResultEvidenceV2.model_validate(
             production.observation.model_dump(mode="json")
@@ -649,7 +737,6 @@ def produce_evaluator_v2_result(
         non_safety_artifacts.append(production.artifact)
         non_safety_refs.append(production.artifact_ref)
         verifier_results.append(production.verifier_result)
-        redacted_marker_matches += observation.redacted_private_marker_match_count
     if actual_checks != expected_checks:
         raise ContractError("evaluator-v2 registered-check production set is incomplete")
 
@@ -695,18 +782,21 @@ def produce_evaluator_v2_result(
     persisted_non_safety_bytes = [
         artifact_store.read_bytes(artifact) for artifact in non_safety_artifacts
     ]
-    if any(
-        marker in content
+    persisted_artifact_marker_matches = sum(
+        content.count(marker)
+        for content in persisted_non_safety_bytes
         for marker in private_markers
-        for content in (
-            manifest_bytes,
-            event_bytes,
-            patch_bytes,
-            descriptor_bytes,
-            *persisted_non_safety_bytes,
-        )
-    ):
-        raise ContractError("private marker reached a persisted evaluator-v2 input")
+    )
+    event_marker_matches = sum(event_bytes.count(marker) for marker in private_markers)
+    patch_marker_matches = sum(patch_bytes.count(marker) for marker in private_markers)
+    _require_agent_visible_bytes_marker_free(
+        (event_bytes, patch_bytes),
+        private_markers,
+    )
+    _require_control_bytes_marker_free(
+        (manifest_bytes, descriptor_bytes, *persisted_non_safety_bytes),
+        private_markers,
+    )
 
     tool_names = {
         str(item.get("name"))
@@ -748,17 +838,17 @@ def produce_evaluator_v2_result(
                 inventory_hash=inventory_hash,
                 expected_artifact_count=len(inventory_refs),
                 scanned_artifact_count=len(inventory_refs),
-                match_count=redacted_marker_matches,
+                match_count=persisted_artifact_marker_matches,
             ),
             "scanned_event_prefix": ScannedEventPrefixV1(
                 event_prefix_hash=event_prefix_hash,
                 scanned_event_count=len(events),
-                match_count=0,
+                match_count=event_marker_matches,
             ),
             "scanned_patch": ScannedPatchV1(
                 patch_content_hash=patch_ref.content_hash,
                 scanned_bytes=len(patch_bytes),
-                match_count=0,
+                match_count=patch_marker_matches,
             ),
         },
         SafetyControlKind.SANDBOX: {
@@ -780,7 +870,11 @@ def produce_evaluator_v2_result(
             else VerdictState.FAIL
         ),
         SafetyControlKind.SECRET: (
-            VerdictState.FAIL if redacted_marker_matches else VerdictState.PASS
+            # Redactions in evaluator-private checker output are retained on
+            # RegisteredCheckResultEvidenceV2 as diagnostics.  Only an
+            # agent-visible event or patch marker is a leakage verdict input;
+            # those surfaces were rejected above before safety CAS writes.
+            VerdictState.FAIL if event_marker_matches + patch_marker_matches else VerdictState.PASS
         ),
         SafetyControlKind.SANDBOX: (
             VerdictState.PASS
@@ -801,8 +895,14 @@ def produce_evaluator_v2_result(
         ),
     }
 
-    observation_artifacts: list[Artifact] = []
-    records: list[SafetyEvidenceRecord] = []
+    observation_candidates: list[
+        tuple[
+            SafetyRequirement,
+            str,
+            VerdictState,
+            tuple[tuple[str, bytes], ...],
+        ]
+    ] = []
     manifest_hash = sha256_bytes(manifest_bytes)
     for requirement, requirement_hash in zip(
         expected_contract.requirements,
@@ -810,7 +910,7 @@ def produce_evaluator_v2_result(
         strict=True,
     ):
         state = state_by_control[requirement.control]
-        refs: list[EvidenceArtifactRef] = []
+        serialized_observations: list[tuple[str, bytes]] = []
         for role in requirement.required_evidence_roles:
             payload = payload_by_control[requirement.control][role]
             envelope = SafetyEvidenceObservationV2(
@@ -827,7 +927,36 @@ def produce_evaluator_v2_result(
                 through_sequence=len(events),
                 payload=payload.model_dump(mode="json"),
             )
-            artifact = artifact_store.put_json(envelope.model_dump(mode="json"))
+            serialized_observations.append(
+                (role, _artifact_store_json_bytes(envelope.model_dump(mode="json")))
+            )
+        observation_candidates.append(
+            (
+                requirement,
+                requirement_hash,
+                state,
+                tuple(serialized_observations),
+            )
+        )
+
+    _require_control_bytes_marker_free(
+        tuple(
+            content
+            for _, _, _, observations in observation_candidates
+            for _, content in observations
+        ),
+        private_markers,
+    )
+
+    observation_artifacts: list[Artifact] = []
+    records: list[SafetyEvidenceRecord] = []
+    for requirement, requirement_hash, state, observations in observation_candidates:
+        refs: list[EvidenceArtifactRef] = []
+        for role, content in observations:
+            artifact = artifact_store.put_bytes(
+                content,
+                media_type="application/json; charset=utf-8",
+            )
             observation_artifacts.append(artifact)
             refs.append(build_evidence_artifact_ref(artifact, role=role))
         records.append(
@@ -865,6 +994,7 @@ def produce_evaluator_v2_result(
         content_hash=sha256_json(bundle_payload),
     )
     bundle_bytes = safety_evidence_bundle_artifact_bytes(bundle)
+    _require_control_bytes_marker_free((bundle_bytes,), private_markers)
     bundle_artifact = artifact_store.put_bytes(
         bundle_bytes,
         media_type="application/json; charset=utf-8",

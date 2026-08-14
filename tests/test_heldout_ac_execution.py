@@ -173,7 +173,7 @@ def test_runtime_secret_encoder_fails_closed(value: object) -> None:
         encode_heldout_ac_runtime_secret(value)  # type: ignore[arg-type]
 
 
-def test_runtime_secret_expansion_matches_r1_template_and_builds_manifest() -> None:
+def test_runtime_secret_expansion_matches_r4_template_and_builds_manifest() -> None:
     candidate = _candidate()
     row = candidate.schedule[0]
     package = load_task_package(ROOT / row.task_path)

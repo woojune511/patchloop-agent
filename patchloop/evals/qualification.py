@@ -987,6 +987,7 @@ def _execution_plan_matches(
     *,
     plan: dict[str, Any] | None,
     manifest,
+    root: Path,
 ) -> bool:
     experiment = manifest.experiment
     if experiment is None or plan is None:
@@ -997,14 +998,13 @@ def _execution_plan_matches(
                 heldout_ac_live_plan_matches_manifest,
             )
 
-            journal_path = Path(str(plan.get("journal_path"))).resolve(strict=False)
-            derived_root = journal_path.parents[2]
-            plan_path = _execution_plan_path(derived_root, experiment.execution_hash)
+            plan_path = _execution_plan_path(root, experiment.execution_hash)
             return heldout_ac_live_plan_matches_manifest(
                 plan=plan,
                 manifest=manifest,
                 plan_path=plan_path,
                 plan_file_sha256=sha256_bytes(plan_path.read_bytes()),
+                expected_run_root=root,
             )
         except (ContractError, IndexError, OSError, ValueError):
             return False
@@ -10156,7 +10156,11 @@ def calculate_source_evidence_hash(
     except (RecoveryError, ValueError) as exc:
         raise ContractError(f"source evidence is unavailable: {run_id}") from exc
     plan, plan_bytes = _load_execution_plan(root=run_root, manifest=manifest)
-    if require_valid_plan and not _execution_plan_matches(plan=plan, manifest=manifest):
+    if require_valid_plan and not _execution_plan_matches(
+        plan=plan,
+        manifest=manifest,
+        root=run_root,
+    ):
         raise ContractError("approved execution plan is unavailable or no longer matches")
     _, _, _, artifacts, _ = _artifact_evidence(
         root=run_root,
@@ -11334,6 +11338,7 @@ def qualify_run(
     execution_plan_ok = _execution_plan_matches(
         plan=execution_plan,
         manifest=manifest,
+        root=run_root,
     )
     add(
         "approved_execution_plan",

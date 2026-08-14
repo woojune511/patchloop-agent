@@ -4,9 +4,10 @@ Status: active fast-track roadmap. Historical milestone plans remain under `docs
 
 ## Sequencing rule
 
-Preserve observed attempts, but do not consume unchanged source or configuration. Local no-call readiness may be
-retried up to three times for transient pre-provider failures. Provider execution still requires an exact execution
-hash, fixed schedule, hard cost cap and one explicit campaign approval.
+Preserve observed attempts. Local no-call readiness may be retried up to three times for transient pre-provider
+failures, but a paid campaign's semantic source/suite/schedule identity is one-use even when readiness timestamps
+change. Provider execution still requires an exact execution hash, fixed schedule, hard cost cap and one explicit
+campaign approval.
 
 ## Preserved foundation
 
@@ -19,8 +20,9 @@ none is relabeled as evaluator-v2 live evidence.
 Status: implemented and locally verified.
 
 Task-bound projections, typed safety evidence, fail-closed four-verdict aggregation, authority-gated runner,
-receipt, persistence, qualification and completion adapters are tested with v1 byte goldens. R3 Moto A exercised the
-live receipt-qualified path; this remains one development row, not a production-security claim.
+receipt, persistence, qualification and completion adapters are tested with v1 byte goldens. Current held-out source
+also separates evaluator-private diagnostics from agent-visible leakage, uses opaque control identities and requires
+runtime-issued provenance for official completion. This is harness correctness, not a production-security claim.
 
 ## Work item 2 — successor A/C qualification
 
@@ -67,13 +69,20 @@ delta is zero, while structured used fewer tokens and list-price cost in both pa
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: R7 live campaign sealed inconclusive after row 1; corrected successor source is offline-qualified as R11.
+Status: held-out R7 and R11 live campaigns are immutable inconclusive; corrected successor is offline-qualified as
+contract R7, binding R8, materialization R4, execution R5 and preflight/dispatcher R13.
 
 The record freezes 12 tasks × A/C × two repetitions = 48 rows, complete-panel analysis and `$252`/`$275` planning cost.
-The non-`ExperimentSuite` fixture surfaces remain historical. Materialization R1 stores no private value/outcome and
-preserves `$252`/`$275`. R7 consumed candidate `sha256:2f51935b...b2afa`; its first row resolved but CRLF
-qualification bytes failed LF authentication, sealing 47 rows not-started and no analysis. R11 binds the fix. Next:
-commit, fresh no-call preflight, then a new exact 48-row approval; current candidate/provider authority is 0.
+R7 consumed candidate `sha256:2f51935b...b2afa` and stopped at 0 settled/1 unsettled/47 not-started. R11 consumed
+candidate `sha256:f48a0de...a6b0`; it stopped at 2 settled/1 observed-unsettled/45 not-started with `$0.15699525`
+settled and `$0.41801625` total observed started cost. Its correction index preserves historical `CONTRACT_ERROR` and
+attributes the Dagster stop post-runtime to `EVALUATOR_CONTROL_CONTRACT_COLLISION`; no analysis follows.
+
+The successor implements opaque marker controls, trust-domain separation, typed confounds, durable pre-qualification
+cost observation, atomic terminal/cost journal settlement, canonical paths, complete pre-journal plan validation and
+non-authorizing persisted replay. R12 and intermediate seals remain invalidated predecessors. Next: commit R13-bound
+source, run one fresh append-only no-call preflight, then seek a new exact 48-row approval; current candidate/provider
+authority is 0.
 
 ## Work item 7 — B/D and the full comparison
 

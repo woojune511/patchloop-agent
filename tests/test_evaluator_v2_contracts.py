@@ -47,7 +47,11 @@ from patchloop.contracts import (
     registered_check_result_hash,
 )
 from patchloop.dataset import load_dataset_manifest
-from patchloop.errors import ContractError
+from patchloop.errors import (
+    ContractError,
+    EvaluatorControlContractCollision,
+    UntrustedPrivateMarkerHit,
+)
 from patchloop.repository import WorkspaceManager
 from patchloop.sandbox.runner import (
     DockerSandbox,
@@ -906,11 +910,12 @@ def test_contract_rejects_unbound_or_invented_registered_checks() -> None:
         )
 
     payload = chain.contract.model_dump(mode="json", exclude={"content_hash"})
-    payload["requirements"][1]["check_ids"] = ["hidden:invented"]
+    invented = "hidden:h_" + "f" * 64
+    payload["requirements"][1]["check_ids"] = [invented]
     payload["requirements"][1]["policy_input_count"] = 1
     payload["requirements"][1]["policy_input_hash"] = docker_registered_check_policy_input_hash(
         SafetyPolicyProfile.DOCKER_REGISTERED_CHECK_REQUESTED_NETWORK_NONE_V1,
-        ("hidden:invented",),
+        (invented,),
     )
     changed = EvaluatorSafetyContract(**payload, content_hash=sha256_json(payload))
     with pytest.raises(ValueError, match="exact registered check set"):
@@ -919,6 +924,19 @@ def test_contract_rejects_unbound_or_invented_registered_checks() -> None:
             chain.package,
             evaluator_source_hash=SHA_C,
         )
+
+
+def test_contract_builder_fails_closed_on_private_control_collision() -> None:
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+
+    with pytest.raises(EvaluatorControlContractCollision) as raised:
+        build_evaluator_safety_contract_v2(
+            package=package,
+            tool_schemas=TOOL_SCHEMAS_V2,
+            private_markers=(b"command_dispatch_control",),
+        )
+
+    assert raised.value.code == "EVALUATOR_CONTROL_CONTRACT_COLLISION"
 
 
 def test_binding_is_exactly_four_opaque_requirements_and_task_bound() -> None:
@@ -1374,6 +1392,87 @@ def test_runtime_producer_persists_typed_registered_check_and_scope_evidence(
     assert scope.observation.violation_count == 1
 
 
+def test_evaluator_private_redaction_never_reintroduces_private_marker(
+    tmp_path,
+) -> None:
+    private_markers = (b"private-marker",)
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    contract = build_evaluator_safety_contract_v2(
+        package=package,
+        tool_schemas=TOOL_SCHEMAS_V2,
+        private_markers=private_markers,
+    )
+    binding = build_evaluator_contract_binding(
+        contract,
+        package,
+        evaluator_source_hash=SHA_C,
+    )
+    manifest = _manifest(package, binding, sandbox_backend="docker")
+    store = ArtifactStore(tmp_path / "artifacts")
+    patch = store.put_text(
+        "diff --git a/example.py b/example.py\n",
+        "text/x-diff",
+    )
+    patch_ref = build_submitted_patch_ref(store, patch)
+    registered = []
+    for check_type, checks in (
+        ("hidden", package.private.hidden_checks),
+        ("regression", package.public.visible_checks),
+    ):
+        for check in checks:
+            outcome = _sandbox_result_for_check(check)
+            if not registered:
+                outcome = SandboxResult(
+                    **{
+                        **outcome.__dict__,
+                        "stdout": "before private-marker after",
+                    }
+                )
+            registered.append(
+                produce_registered_check_evidence_v2(
+                    artifact_store=store,
+                    manifest=manifest,
+                    submitted_patch=patch_ref,
+                    check_type=check_type,
+                    check=check,
+                    outcome=outcome,
+                    private_markers=private_markers,
+                )
+            )
+    policies = [
+        produce_scope_policy_evidence_v2(
+            artifact_store=store,
+            manifest=manifest,
+            submitted_patch=patch_ref,
+            check_id=check_id,
+            outcome=PolicyOutcome(passed=True),
+        )
+        for check_id in SCOPE_IDS
+    ]
+
+    produced = produce_evaluator_v2_result(
+        artifact_store=store,
+        package=package,
+        manifest=manifest,
+        expected_contract=contract,
+        expected_evaluator_source_hash=SHA_C,
+        expected_tool_schemas=TOOL_SCHEMAS_V2,
+        private_markers=private_markers,
+        events=_accepted_events_for_patch(_v2_chain(), patch),
+        submitted_patch=patch,
+        registered_checks=registered,
+        scope_policies=policies,
+    )
+
+    assert registered[0].observation.stdout == "before  after"
+    assert registered[0].observation.redacted_private_marker_match_count == 1
+    assert produced.result.verdicts.safety_policy == VerdictState.PASS
+    assert all(
+        private_markers[0] not in store.read_bytes(artifact)
+        for artifact in produced.evidence_artifacts
+    )
+
+
 def test_runtime_producer_fails_closed_on_untyped_or_misbound_sandbox_policy(
     tmp_path,
 ) -> None:
@@ -1431,7 +1530,7 @@ def test_runtime_producer_fails_closed_on_untyped_or_misbound_sandbox_policy(
     ("marker_in_output", "expected_safety", "expected_success"),
     [
         (False, VerdictState.PASS, True),
-        (True, VerdictState.FAIL, False),
+        (True, VerdictState.PASS, True),
     ],
 )
 def test_runtime_result_producer_builds_a_self_validating_unofficial_chain(
@@ -1508,6 +1607,89 @@ def test_runtime_result_producer_builds_a_self_validating_unofficial_chain(
             PRIVATE_MARKERS[0] not in store.read_bytes(artifact)
             for artifact in produced.evidence_artifacts
         )
+        assert sum(item.observation.redacted_private_marker_match_count for item in registered) == 1
+        inventory_ref = next(
+            ref
+            for record in produced.bundle.records
+            for ref in record.evidence_artifacts
+            if ref.role == "scanned_artifact_inventory"
+        )
+        inventory_artifact = next(
+            artifact
+            for artifact in produced.evidence_artifacts
+            if artifact.artifact_id == inventory_ref.artifact_id
+        )
+        inventory_payload = json.loads(store.read_bytes(inventory_artifact))
+        assert inventory_payload["payload"]["match_count"] == 0
+
+
+def test_runtime_result_producer_rejects_agent_visible_marker_before_safety_cas(
+    tmp_path,
+) -> None:
+    chain = _v2_chain()
+    store = ArtifactStore(tmp_path / "artifacts")
+    patch = store.put_text(
+        "diff --git a/example.py b/example.py\n",
+        "text/x-diff",
+    )
+    patch_ref = build_submitted_patch_ref(store, patch)
+    registered = [
+        produce_registered_check_evidence_v2(
+            artifact_store=store,
+            manifest=chain.manifest,
+            submitted_patch=patch_ref,
+            check_type=check_type,
+            check=check,
+            outcome=_sandbox_result_for_check(check),
+            private_markers=PRIVATE_MARKERS,
+        )
+        for check_type, checks in (
+            ("hidden", chain.package.private.hidden_checks),
+            ("regression", chain.package.public.visible_checks),
+        )
+        for check in checks
+    ]
+    policies = [
+        produce_scope_policy_evidence_v2(
+            artifact_store=store,
+            manifest=chain.manifest,
+            submitted_patch=patch_ref,
+            check_id=check_id,
+            outcome=PolicyOutcome(passed=True),
+        )
+        for check_id in SCOPE_IDS
+    ]
+    events = list(_accepted_events_for_patch(chain, patch))
+    events[0] = RunEvent.model_validate(
+        {
+            **events[0].model_dump(mode="json"),
+            "payload": {
+                **events[0].payload,
+                "agent_note": PRIVATE_MARKERS[0].decode("utf-8"),
+            },
+        }
+    )
+    persisted_before = {path.resolve() for path in store.objects.rglob("*") if path.is_file()}
+
+    with pytest.raises(UntrustedPrivateMarkerHit) as raised:
+        produce_evaluator_v2_result(
+            artifact_store=store,
+            package=chain.package,
+            manifest=chain.manifest,
+            expected_contract=chain.contract,
+            expected_evaluator_source_hash=SHA_C,
+            expected_tool_schemas=TOOL_SCHEMAS_V2,
+            private_markers=PRIVATE_MARKERS,
+            events=events,
+            submitted_patch=patch,
+            registered_checks=registered,
+            scope_policies=policies,
+        )
+
+    assert raised.value.code == "UNTRUSTED_PRIVATE_MARKER_HIT"
+    assert {path.resolve() for path in store.objects.rglob("*") if path.is_file()} == (
+        persisted_before
+    )
 
 
 def test_store_bound_runtime_producer_uses_the_exact_durable_event_prefix(
@@ -1916,7 +2098,10 @@ def test_cross_artifact_validator_accepts_exact_task_files_events_and_cas() -> N
         ),
         (_v2_chain(requested_network="bridge"), "safety state disagrees"),
         (_v2_chain(read_only_workspace=False), "safety state disagrees"),
-        (_v2_chain(raw_marker_in_check_output=True), "private marker escaped"),
+        (
+            _v2_chain(raw_marker_in_check_output=True),
+            "evaluator-private evidence collided",
+        ),
     ],
 )
 def test_cross_artifact_validator_rejects_semantic_self_attestation(
@@ -1947,7 +2132,10 @@ def test_cross_artifact_validator_rejects_unbound_event_tail_and_descriptor_meta
     descriptors[evidence_id] = descriptor.model_copy(
         update={"path": f"C:/virtual/{PRIVATE_MARKERS[0].decode('utf-8')}"}
     )
-    with pytest.raises(ContractError, match="private marker escaped"):
+    with pytest.raises(
+        EvaluatorControlContractCollision,
+        match="evaluator-private evidence collided",
+    ):
         _validate_chain(chain, evidence_descriptors=descriptors)
 
     untrusted_tools = [{"type": "function", "name": "shell"}]
@@ -2023,7 +2211,10 @@ def test_cross_artifact_validator_rejects_wrong_files_prefix_and_cas() -> None:
     ("chain", "message"),
     [
         (_v2_chain(generic_command_observation=True), "evidence payload is invalid"),
-        (_v2_chain(raw_marker_in_event=True), "private marker escaped"),
+        (
+            _v2_chain(raw_marker_in_event=True),
+            "agent-visible evidence contained",
+        ),
     ],
 )
 def test_cross_artifact_validator_rejects_generic_payload_and_raw_private_marker(
@@ -2047,6 +2238,26 @@ def test_cross_artifact_validator_rejects_generic_payload_and_raw_private_marker
             evidence_descriptors=chain.descriptors,
             read_evidence=lambda artifact: chain.evidence_bytes[artifact.artifact_id],
         )
+
+
+def test_cross_artifact_validator_preserves_marker_trust_domain_codes() -> None:
+    cases = (
+        (
+            _v2_chain(raw_marker_in_event=True),
+            UntrustedPrivateMarkerHit,
+            "UNTRUSTED_PRIVATE_MARKER_HIT",
+        ),
+        (
+            _v2_chain(raw_marker_in_check_output=True),
+            EvaluatorControlContractCollision,
+            "EVALUATOR_CONTROL_CONTRACT_COLLISION",
+        ),
+    )
+
+    for chain, error_type, expected_code in cases:
+        with pytest.raises(error_type) as raised:
+            _validate_chain(chain)
+        assert raised.value.code == expected_code
 
 
 def test_cross_artifact_validator_requires_trusted_contract_source_and_base() -> None:

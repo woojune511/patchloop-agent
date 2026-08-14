@@ -5,9 +5,9 @@ code, and their offline validation.  It intentionally does not load task
 packages or private markers and cannot create task/evaluator bindings, a live
 candidate, approval, reservation, or any runtime authority.
 
-R1 is retained byte-for-byte as a zero-authority predecessor invalidated by a
-concurrent pre-seal source extraction.  R2 validates those immutable bytes and
-replays only the current dedicated held-out contract source.
+R1 through R6 are retained byte-for-byte.  R7 removes function-local runtime
+imports from the contract-only transitive source closure, while preserving R6
+as the formatting- and boundary-invalidated predecessor.
 """
 
 from __future__ import annotations
@@ -35,23 +35,26 @@ from patchloop.util import (
     sha256_json,
 )
 
-SCHEMA_VERSION = "heldout-ac-contract-source-qualification-v2"
-QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-contract-source-qualification-20260814-r2"
+SCHEMA_VERSION = "heldout-ac-contract-source-qualification-v7"
+QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r7"
 STATUS = "OFFLINE_CONTRACT_SOURCE_QUALIFIED_TASK_EVALUATOR_BINDING_CLOSED"
 
 PREREGISTRATION_PATH = Path("experiments/heldout-ac-preregistration-20260814-v1.yaml")
 SUITE_PATH = Path("experiments/heldout-ac-suite-20260814-v1.yaml")
 PLAN_PATH = Path("experiments/heldout-ac-suite-20260814-v1.plan.yaml")
-OUTPUT_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r2.json")
-R1_PREDECESSOR_PATH = Path(
-    "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r1.json"
+OUTPUT_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r7.json")
+R6_PREDECESSOR_PATH = Path(
+    "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r6.json"
 )
-R1_PREDECESSOR_FILE_BYTES = 18_750
-R1_PREDECESSOR_FILE_SHA256 = (
-    "sha256:1c42aecbbe4c9e3f39215658fb3ffba87930f94385b526c13287a0d09448fa22"
+R6_PREDECESSOR_FILE_BYTES = 22_888
+R6_PREDECESSOR_FILE_SHA256 = (
+    "sha256:a1101e1e31e7417efbd9b74a1ec2591296393d4a6b21f350e12d05c4c57551c3"
 )
-R1_PREDECESSOR_CONTENT_HASH = (
-    "sha256:f024e04fd3a01b98f8fb469f2f0d0a11f4faf8372ed57cc7986e163bdecc5042"
+R6_PREDECESSOR_CONTENT_HASH = (
+    "sha256:01b16ddfe83524e539fcc5624f74fa2f6922a9266f1095b1a6b992cdfd4c8fcf"
+)
+R6_PREDECESSOR_CONTRACT_SOURCE_HASH = (
+    "sha256:5440dd4f1a168172d695d67873a55b5c7b449405ab3f112594e48d0d043ad861"
 )
 
 CONTRACT_IMPORT_ENTRYPOINTS = tuple(
@@ -60,6 +63,7 @@ CONTRACT_IMPORT_ENTRYPOINTS = tuple(
             Path("patchloop/evals/heldout_ac_analysis.py"),
             Path("patchloop/evals/heldout_ac_completion.py"),
             Path("patchloop/evals/heldout_ac_contracts.py"),
+            Path("patchloop/evals/heldout_ac_persisted_adapter.py"),
             Path("patchloop/evals/heldout_ac_preregistration.py"),
             Path("patchloop/evals/heldout_ac_source_qualification.py"),
             Path("patchloop/evals/heldout_ac_suite.py"),
@@ -76,6 +80,7 @@ VALIDATION_PATHS = tuple(
             Path("tests/test_heldout_ac_analysis.py"),
             Path("tests/test_heldout_ac_completion.py"),
             Path("tests/test_heldout_ac_preregistration.py"),
+            Path("tests/test_heldout_ac_persisted_adapter.py"),
             Path("tests/test_heldout_ac_source_qualification.py"),
             Path("tests/test_heldout_ac_suite.py"),
             Path("uv.lock"),
@@ -102,17 +107,19 @@ class QualificationFileBinding(HeldoutACFrozenModel):
         return safe_relative_path(value, field_name="qualification file path")
 
 
-class InvalidatedPredecessorBinding(HeldoutACFrozenModel):
-    path: Literal["reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r1.json"]
-    schema_version: Literal["heldout-ac-contract-source-qualification-v1"]
+class R6PredecessorBinding(HeldoutACFrozenModel):
+    path: Literal["reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r6.json"]
+    schema_version: Literal["heldout-ac-contract-source-qualification-v6"]
     qualification_id: Literal[
-        "core-ac-fixed-bundle-heldout-contract-source-qualification-20260814-r1"
+        "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r6"
     ]
     original_status: Literal["OFFLINE_CONTRACT_SOURCE_QUALIFIED_TASK_EVALUATOR_BINDING_CLOSED"]
-    disposition: Literal["invalidated-by-pre-seal-source-race"]
-    source_qualification_hash: Literal[R1_PREDECESSOR_CONTENT_HASH]
-    file_bytes: Literal[R1_PREDECESSOR_FILE_BYTES]
-    file_sha256: Literal[R1_PREDECESSOR_FILE_SHA256]
+    disposition: Literal["invalidated-by-formatting-and-import-closure-boundary-fix"]
+    invalidation_reason: Literal["post-r6-formatting-and-function-local-runtime-import-cycle"]
+    source_qualification_hash: Literal[R6_PREDECESSOR_CONTENT_HASH]
+    contract_source_hash: Literal[R6_PREDECESSOR_CONTRACT_SOURCE_HASH]
+    file_bytes: Literal[R6_PREDECESSOR_FILE_BYTES]
+    file_sha256: Literal[R6_PREDECESSOR_FILE_SHA256]
     current_source_replay_valid: Literal[False]
     task_package_bindings: Literal[0]
     evaluator_v2_task_contract_bindings: Literal[0]
@@ -154,9 +161,17 @@ class HeldoutACContractProjection(HeldoutACFrozenModel):
     planning_cost_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     completion_fixture_schema: Literal["heldout-ac-completion-contract-fixture-v1"]
     completion_contract_projection_schema: Literal["heldout-ac-completion-contract-projection-v1"]
+    authenticated_completion_projection_schema: Literal["heldout-ac-authenticated-completion-v1"]
+    authenticated_persisted_evidence_schema: Literal[
+        "heldout-ac-authenticated-persisted-evidence-v4"
+    ]
     qualification_fixture_schema: Literal["heldout-ac-trace-qualification-contract-fixture-v1"]
-    future_qualification_source_schema: Literal["heldout-ac-trace-qualification-v1"]
+    authenticated_qualification_projection_schema: Literal[
+        "heldout-ac-authenticated-trace-qualification-projection-v2"
+    ]
+    qualification_source_schema: Literal["trace-qualification-v2"]
     analysis_schema: Literal["heldout-ac-analysis-v1"]
+    official_analysis_envelope_schema: Literal["heldout-ac-official-analysis-envelope-v1"]
     outcome_projection_schema: Literal["heldout-ac-outcome-projection-v1"]
     completion_surface_status: Literal["offline-untrusted-contract-fixture"]
     analysis_surface_status: Literal["unofficial-preview-only"]
@@ -172,8 +187,13 @@ class HeldoutACContractProjection(HeldoutACFrozenModel):
     planning_full_schedule_reserve_usd: Literal[252.0]
     planning_hard_cap_usd: Literal[275.0]
     fresh_pricing_binding_present: Literal[False]
-    authoritative_persisted_producer_adapter_present: Literal[False]
-    trace_qualification_v2_persisted_adapter_bound: Literal[False]
+    authoritative_persisted_producer_adapter_present: Literal[True]
+    trace_qualification_v2_persisted_adapter_bound: Literal[True]
+    runtime_authentication_capability_required: Literal[True]
+    serialized_persisted_evidence_analysis_eligible: Literal[False]
+    authenticated_completion_capability_required: Literal[True]
+    persisted_replay_reissues_runtime_authority: Literal[False]
+    full_schedule_cost_bound_in_authenticated_completion: Literal[True]
     persisted_evidence_authenticated: Literal[False]
     official: Literal[False]
     official_analysis_ready: Literal[False]
@@ -240,7 +260,7 @@ class HeldoutACContractSourceQualification(HeldoutACFrozenModel):
     qualification_id: Literal[QUALIFICATION_ID] = QUALIFICATION_ID
     status: Literal[STATUS] = STATUS
     recorded_at: datetime
-    predecessor: InvalidatedPredecessorBinding
+    predecessor: R6PredecessorBinding
     preregistration: QualificationFileBinding
     preregistration_content_hash: Literal[
         "sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74"
@@ -255,12 +275,14 @@ class HeldoutACContractSourceQualification(HeldoutACFrozenModel):
         "sha256:b2058c48de3f2b4d13df872d7fd19a325c3a76ffb5ef24974310409100cb8885"
     ]
     contract_import_entrypoints: tuple[str, ...] = Field(min_length=1)
+    contract_import_traversal: Literal["module-scope-imports-v1"]
     contract_import_closure: tuple[str, ...] = Field(min_length=1)
     contract_import_closure_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     contract_source_files: tuple[QualificationFileBinding, ...] = Field(min_length=1)
     contract_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     completion_contract_fixture_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     analysis_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    persisted_adapter_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     validation_files: tuple[QualificationFileBinding, ...] = Field(min_length=1)
     validation_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     contract_projection: HeldoutACContractProjection
@@ -286,6 +308,8 @@ class HeldoutACContractSourceQualification(HeldoutACFrozenModel):
             raise ValueError("contract import entrypoints are not canonical")
         if closure != tuple(sorted(closure)) or len(closure) != len(set(closure)):
             raise ValueError("contract import closure is not canonical")
+        if not set(entrypoints).issubset(closure):
+            raise ValueError("contract import closure omits an explicit entrypoint")
         if source_paths != closure:
             raise ValueError("contract source inventory differs from import closure")
         if validation_paths != tuple(sorted(validation_paths)) or len(validation_paths) != len(
@@ -307,6 +331,10 @@ class HeldoutACContractSourceQualification(HeldoutACFrozenModel):
             raise ValueError("completion contract fixture source hash differs")
         if self.analysis_source_hash != by_path.get("patchloop/evals/heldout_ac_analysis.py"):
             raise ValueError("analysis source hash differs")
+        if self.persisted_adapter_source_hash != by_path.get(
+            "patchloop/evals/heldout_ac_persisted_adapter.py"
+        ):
+            raise ValueError("persisted adapter source hash differs")
         expected = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
         if self.content_hash != expected:
             raise ValueError("held-out source qualification content hash mismatch")
@@ -398,7 +426,13 @@ def _contract_import_closure(
     *,
     entrypoints: Sequence[Path] = CONTRACT_IMPORT_ENTRYPOINTS,
 ) -> tuple[Path, ...]:
-    """Resolve the internal Python import closure of the bound contract entrypoints."""
+    """Resolve module-scope imports of the bound contract entrypoints.
+
+    Function-local imports are runtime edges.  Their source remains covered by
+    the full execution-source closure, while following them here would pull
+    execution/materialization identities back into this predecessor gate and
+    create an unsealable contract -> binding -> materialization cycle.
+    """
 
     queued: list[Path] = []
     closure: set[Path] = set()
@@ -437,7 +471,7 @@ def _contract_import_closure(
         current_package = (
             current_module if relative.name == "__init__.py" else current_module.rpartition(".")[0]
         )
-        for node in ast.walk(tree):
+        for node in tree.body:
             imported_modules: list[tuple[str, bool]] = []
             if isinstance(node, ast.Import):
                 imported_modules.extend((alias.name, True) for alias in node.names)
@@ -501,33 +535,34 @@ def _read_mapping(root: Path, relative: Path, *, label: str) -> dict[str, Any]:
     return value
 
 
-def _invalidated_r1_predecessor(root: Path) -> InvalidatedPredecessorBinding:
-    """Validate the immutable race-invalidated R1 bytes without replaying them."""
+def _r6_predecessor(root: Path) -> R6PredecessorBinding:
+    """Validate immutable formatting-invalidated R6 without replaying it."""
 
-    selected = _logical_path(root, R1_PREDECESSOR_PATH, must_exist=True)
+    selected = _logical_path(root, R6_PREDECESSOR_PATH, must_exist=True)
     try:
         raw = selected.read_bytes()
         payload = json.loads(raw)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise HeldoutACSourceQualificationError(
-            "held-out R1 predecessor artifact is invalid"
+            "held-out R6 predecessor artifact is invalid"
         ) from exc
-    _require(isinstance(payload, dict), "held-out R1 predecessor is not a mapping")
+    _require(isinstance(payload, dict), "held-out R6 predecessor is not a mapping")
     _require(
-        len(raw) == R1_PREDECESSOR_FILE_BYTES and sha256_bytes(raw) == R1_PREDECESSOR_FILE_SHA256,
-        "held-out R1 predecessor bytes drifted",
+        len(raw) == R6_PREDECESSOR_FILE_BYTES and sha256_bytes(raw) == R6_PREDECESSOR_FILE_SHA256,
+        "held-out R6 predecessor bytes drifted",
     )
     canonical = (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-    _require(raw == canonical, "held-out R1 predecessor bytes are noncanonical")
+    _require(raw == canonical, "held-out R6 predecessor bytes are noncanonical")
     _require(
-        payload.get("schema_version") == "heldout-ac-contract-source-qualification-v1"
+        payload.get("schema_version") == "heldout-ac-contract-source-qualification-v6"
         and payload.get("qualification_id")
-        == "core-ac-fixed-bundle-heldout-contract-source-qualification-20260814-r1"
+        == "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r6"
         and payload.get("status") == STATUS
-        and payload.get("content_hash") == R1_PREDECESSOR_CONTENT_HASH
+        and payload.get("content_hash") == R6_PREDECESSOR_CONTENT_HASH
+        and payload.get("contract_source_hash") == R6_PREDECESSOR_CONTRACT_SOURCE_HASH
         and sha256_json({key: value for key, value in payload.items() if key != "content_hash"})
-        == R1_PREDECESSOR_CONTENT_HASH,
-        "held-out R1 predecessor identity or content hash differs",
+        == R6_PREDECESSOR_CONTENT_HASH,
+        "held-out R6 predecessor identity or content hash differs",
     )
     boundary = payload.get("binding_boundary")
     authority = payload.get("authority")
@@ -544,21 +579,23 @@ def _invalidated_r1_predecessor(root: Path) -> InvalidatedPredecessorBinding:
         and type(boundary.get("authoritative_persisted_producer_adapter_binding_count")) is int
         and boundary.get("heldout_task_specs_opened") is False
         and boundary.get("heldout_task_outcomes_opened") is False,
-        "held-out R1 predecessor binding boundary differs",
+        "held-out R6 predecessor binding boundary differs",
     )
     _require(
         isinstance(projection, dict)
-        and projection.get("authoritative_persisted_producer_adapter_present") is False
-        and projection.get("trace_qualification_v2_persisted_adapter_bound") is False
+        and projection.get("authenticated_persisted_evidence_schema")
+        == "heldout-ac-authenticated-persisted-evidence-v4"
+        and projection.get("authoritative_persisted_producer_adapter_present") is True
+        and projection.get("trace_qualification_v2_persisted_adapter_bound") is True
         and projection.get("persisted_evidence_authenticated") is False
         and projection.get("official") is False
         and projection.get("official_analysis_ready") is False,
-        "held-out R1 predecessor projection authority differs",
+        "held-out R6 predecessor projection authority differs",
     )
-    _require(isinstance(authority, dict), "held-out R1 predecessor authority is absent")
+    _require(isinstance(authority, dict), "held-out R6 predecessor authority is absent")
     _require(
         all(value is False for key, value in authority.items() if key.endswith("authorized")),
-        "held-out R1 predecessor contains runtime authority",
+        "held-out R6 predecessor contains runtime authority",
     )
     _require(
         all(
@@ -567,28 +604,30 @@ def _invalidated_r1_predecessor(root: Path) -> InvalidatedPredecessorBinding:
             if (key.startswith("authorized_") and key.endswith(("_calls", "_runs")))
             or key.endswith(("_calls_made", "_runs_made"))
         ),
-        "held-out R1 predecessor contains nonzero runtime observations",
+        "held-out R6 predecessor contains nonzero runtime observations",
     )
     _require(
         type(authority.get("authorized_cost_usd")) is float
         and authority["authorized_cost_usd"] == 0.0
         and type(authority.get("added_model_cost_usd")) is float
         and authority["added_model_cost_usd"] == 0.0,
-        "held-out R1 predecessor contains cost authority or spend",
+        "held-out R6 predecessor contains cost authority or spend",
     )
     _require(
         b'"task_bindings"' not in raw and b'"private_spec_hash"' not in raw,
-        "held-out R1 predecessor contains a forbidden task binding",
+        "held-out R6 predecessor contains a forbidden task binding",
     )
-    return InvalidatedPredecessorBinding(
-        path=R1_PREDECESSOR_PATH.as_posix(),
-        schema_version="heldout-ac-contract-source-qualification-v1",
-        qualification_id=("core-ac-fixed-bundle-heldout-contract-source-qualification-20260814-r1"),
+    return R6PredecessorBinding(
+        path=R6_PREDECESSOR_PATH.as_posix(),
+        schema_version="heldout-ac-contract-source-qualification-v6",
+        qualification_id=("core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r6"),
         original_status=STATUS,
-        disposition="invalidated-by-pre-seal-source-race",
-        source_qualification_hash=R1_PREDECESSOR_CONTENT_HASH,
-        file_bytes=R1_PREDECESSOR_FILE_BYTES,
-        file_sha256=R1_PREDECESSOR_FILE_SHA256,
+        disposition="invalidated-by-formatting-and-import-closure-boundary-fix",
+        invalidation_reason="post-r6-formatting-and-function-local-runtime-import-cycle",
+        source_qualification_hash=R6_PREDECESSOR_CONTENT_HASH,
+        contract_source_hash=R6_PREDECESSOR_CONTRACT_SOURCE_HASH,
+        file_bytes=R6_PREDECESSOR_FILE_BYTES,
+        file_sha256=R6_PREDECESSOR_FILE_SHA256,
         current_source_replay_valid=False,
         task_package_bindings=0,
         evaluator_v2_task_contract_bindings=0,
@@ -617,17 +656,23 @@ def _build_candidate(
         SCHEMA_VERSION as OUTCOME_SCHEMA_VERSION,
     )
     from patchloop.evals.heldout_ac_completion import (
+        AUTHENTICATED_COMPLETION_SCHEMA_VERSION,
         COMPLETION_SCHEMA_VERSION,
+        OFFICIAL_ANALYSIS_SCHEMA_VERSION,
     )
     from patchloop.evals.heldout_ac_completion import (
         SCHEMA_VERSION as COMPLETION_INPUT_SCHEMA_VERSION,
+    )
+    from patchloop.evals.heldout_ac_persisted_adapter import (
+        PERSISTED_EVIDENCE_SCHEMA_VERSION,
+        QUALIFICATION_PROJECTION_SCHEMA_VERSION,
     )
     from patchloop.evals.heldout_ac_preregistration import (
         load_heldout_ac_preregistration,
     )
     from patchloop.evals.heldout_ac_suite import load_heldout_ac_suite_plan
 
-    predecessor = _invalidated_r1_predecessor(root)
+    predecessor = _r6_predecessor(root)
     preregistration_summary = load_heldout_ac_preregistration(repository=root)
     plan, suite = load_heldout_ac_suite_plan(PLAN_PATH, repository=root)
     preregistration_raw = _read_mapping(
@@ -665,9 +710,13 @@ def _build_candidate(
         planning_cost_hash=sha256_json(suite.cost.model_dump(mode="json")),
         completion_fixture_schema=COMPLETION_INPUT_SCHEMA_VERSION,
         completion_contract_projection_schema=COMPLETION_SCHEMA_VERSION,
+        authenticated_completion_projection_schema=AUTHENTICATED_COMPLETION_SCHEMA_VERSION,
+        authenticated_persisted_evidence_schema=PERSISTED_EVIDENCE_SCHEMA_VERSION,
         qualification_fixture_schema="heldout-ac-trace-qualification-contract-fixture-v1",
-        future_qualification_source_schema="heldout-ac-trace-qualification-v1",
+        authenticated_qualification_projection_schema=QUALIFICATION_PROJECTION_SCHEMA_VERSION,
+        qualification_source_schema="trace-qualification-v2",
         analysis_schema=ANALYSIS_SCHEMA_VERSION,
+        official_analysis_envelope_schema=OFFICIAL_ANALYSIS_SCHEMA_VERSION,
         outcome_projection_schema=OUTCOME_SCHEMA_VERSION,
         completion_surface_status="offline-untrusted-contract-fixture",
         analysis_surface_status="unofficial-preview-only",
@@ -683,8 +732,13 @@ def _build_candidate(
         planning_full_schedule_reserve_usd=suite.cost.full_schedule_reserve_usd,
         planning_hard_cap_usd=suite.cost.hard_cap_usd,
         fresh_pricing_binding_present=False,
-        authoritative_persisted_producer_adapter_present=False,
-        trace_qualification_v2_persisted_adapter_bound=False,
+        authoritative_persisted_producer_adapter_present=True,
+        trace_qualification_v2_persisted_adapter_bound=True,
+        runtime_authentication_capability_required=True,
+        serialized_persisted_evidence_analysis_eligible=False,
+        authenticated_completion_capability_required=True,
+        persisted_replay_reissues_runtime_authority=False,
+        full_schedule_cost_bound_in_authenticated_completion=True,
         persisted_evidence_authenticated=False,
         official=False,
         official_analysis_ready=False,
@@ -703,6 +757,7 @@ def _build_candidate(
         "plan": _file_binding(root, PLAN_PATH).model_dump(mode="json"),
         "plan_content_hash": plan.content_hash,
         "contract_import_entrypoints": [item.as_posix() for item in CONTRACT_IMPORT_ENTRYPOINTS],
+        "contract_import_traversal": "module-scope-imports-v1",
         "contract_import_closure": [item.as_posix() for item in closure],
         "contract_import_closure_hash": sha256_json([item.as_posix() for item in closure]),
         "contract_source_files": [item.model_dump(mode="json") for item in source_files],
@@ -713,6 +768,9 @@ def _build_candidate(
             "patchloop/evals/heldout_ac_completion.py"
         ],
         "analysis_source_hash": source_hashes["patchloop/evals/heldout_ac_analysis.py"],
+        "persisted_adapter_source_hash": source_hashes[
+            "patchloop/evals/heldout_ac_persisted_adapter.py"
+        ],
         "validation_files": [item.model_dump(mode="json") for item in validation_files],
         "validation_hash": sha256_json([item.model_dump(mode="json") for item in validation_files]),
         "contract_projection": projection.model_dump(mode="json"),
@@ -760,12 +818,14 @@ def _summary(
         "source_qualification_hash": payload.content_hash,
         "predecessor_disposition": payload.predecessor.disposition,
         "predecessor_file_sha256": payload.predecessor.file_sha256,
+        "contract_import_traversal": payload.contract_import_traversal,
         "contract_source_hash": payload.contract_source_hash,
         "suite_content_hash": payload.suite_content_hash,
         "completion_contract_fixture_source_hash": (
             payload.completion_contract_fixture_source_hash
         ),
         "analysis_source_hash": payload.analysis_source_hash,
+        "persisted_adapter_source_hash": payload.persisted_adapter_source_hash,
         "file_bytes": len(raw),
         "file_sha256": sha256_bytes(raw),
         "task_package_bindings": 0,
@@ -838,10 +898,11 @@ __all__ = [
     "PLAN_PATH",
     "PREREGISTRATION_PATH",
     "QUALIFICATION_ID",
-    "R1_PREDECESSOR_CONTENT_HASH",
-    "R1_PREDECESSOR_FILE_BYTES",
-    "R1_PREDECESSOR_FILE_SHA256",
-    "R1_PREDECESSOR_PATH",
+    "R6_PREDECESSOR_CONTENT_HASH",
+    "R6_PREDECESSOR_CONTRACT_SOURCE_HASH",
+    "R6_PREDECESSOR_FILE_BYTES",
+    "R6_PREDECESSOR_FILE_SHA256",
+    "R6_PREDECESSOR_PATH",
     "SCHEMA_VERSION",
     "STATUS",
     "SUITE_PATH",

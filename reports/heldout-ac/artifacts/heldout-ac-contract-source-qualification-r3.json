@@ -1,0 +1,531 @@
+{
+  "schema_version": "heldout-ac-contract-source-qualification-v3",
+  "qualification_id": "core-ac-fixed-bundle-heldout-contract-source-qualification-20260814-r3",
+  "status": "OFFLINE_CONTRACT_SOURCE_QUALIFIED_TASK_EVALUATOR_BINDING_CLOSED",
+  "recorded_at": "2026-08-14T14:36:24.036737Z",
+  "predecessor": {
+    "path": "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r2.json",
+    "schema_version": "heldout-ac-contract-source-qualification-v2",
+    "qualification_id": "core-ac-fixed-bundle-heldout-contract-source-qualification-20260814-r2",
+    "original_status": "OFFLINE_CONTRACT_SOURCE_QUALIFIED_TASK_EVALUATOR_BINDING_CLOSED",
+    "disposition": "superseded-by-authenticated-completion-integration",
+    "source_qualification_hash": "sha256:0277225b0992b8e0562b21f5f8c2f8dcc4921017bea03b5087c4f6dd0e860172",
+    "file_bytes": 20052,
+    "file_sha256": "sha256:5f5406858603d918f296ca7b4a7bf2d62426c99a5915481964ed41f91c6b961c",
+    "current_source_replay_valid": false,
+    "task_package_bindings": 0,
+    "evaluator_v2_task_contract_bindings": 0,
+    "authoritative_persisted_producer_adapter_bindings": 0,
+    "execution_authorized": false,
+    "provider_calls_made": 0,
+    "evaluator_calls_made": 0,
+    "docker_calls_made": 0,
+    "sdk_calls_made": 0,
+    "agent_runs_made": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "preregistration": {
+    "path": "experiments/heldout-ac-preregistration-20260814-v1.yaml",
+    "file_bytes": 31338,
+    "file_sha256": "sha256:f6d9d015329823f3f888aac5f15296b2ddefda9e45b5d5501b8d94587bb11d8f"
+  },
+  "preregistration_content_hash": "sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74",
+  "preregistration_section_hashes": {
+    "dataset": "sha256:effac6a9e9a26b21db52e6377a078746819d95dfd6607e7db11ca5bc8dcbdfc2",
+    "treatment": "sha256:f3a7256fe2201d0d43c4739c973a180ba0fd4d5bfe5de4f472b21589068982b3",
+    "schedule_design": "sha256:52f58401c3626e5d788719ff0932f3f2a2abf1dd1cb092570ad0be461ff68a72",
+    "schedule": "sha256:e999650448975f7382d69734ff52fa8c95d912bdb01dbdf82e17d8098d3f6206",
+    "runtime": "sha256:907b109b07606e78ed9eacd09b91e09b49fe46d6b4a1dc7bae2b79baf772fd03",
+    "cost": "sha256:c1034d283fed13ddb6af0f5462d06add2df5004730d3466ae73ef2cce8d0c2bb",
+    "outcomes": "sha256:03ea217e0092c84b02bedd1b896c3e7c5aabd174d6147bf83ab1af6934f54bc5",
+    "analysis": "sha256:a044262a830b4615bf0ee9394879a22e46acce184a0894696baff2193b216a3a",
+    "exclusions": "sha256:055316274c9dc14bb0b0e9e67735047ba8104db275a77ef2f8edf5e055ee3ed7",
+    "stopping": "sha256:d8c723fd38e592c81859b7ed298c407cef3d4682077f5e96807ccd0977388c20",
+    "authority": "sha256:c3b416c3f1a9d039713964ba4f4b1f62dfd33c44201c1787c25048e2088ac855"
+  },
+  "suite": {
+    "path": "experiments/heldout-ac-suite-20260814-v1.yaml",
+    "file_bytes": 13348,
+    "file_sha256": "sha256:27157e26881cc277a9026e51d22a6f21fbf5bbb8f6c1c09eaa89aec607e52534"
+  },
+  "suite_content_hash": "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa",
+  "plan": {
+    "path": "experiments/heldout-ac-suite-20260814-v1.plan.yaml",
+    "file_bytes": 2466,
+    "file_sha256": "sha256:901f898d7f6f81b00e8840160b3efde2cc4fb7d8f4625c6188ea7235de264695"
+  },
+  "plan_content_hash": "sha256:b2058c48de3f2b4d13df872d7fd19a325c3a76ffb5ef24974310409100cb8885",
+  "contract_import_entrypoints": [
+    "patchloop/evals/heldout_ac_analysis.py",
+    "patchloop/evals/heldout_ac_completion.py",
+    "patchloop/evals/heldout_ac_contracts.py",
+    "patchloop/evals/heldout_ac_persisted_adapter.py",
+    "patchloop/evals/heldout_ac_preregistration.py",
+    "patchloop/evals/heldout_ac_source_qualification.py",
+    "patchloop/evals/heldout_ac_suite.py"
+  ],
+  "contract_import_closure": [
+    "patchloop/__init__.py",
+    "patchloop/agent/__init__.py",
+    "patchloop/agent/context.py",
+    "patchloop/agent/coverage_rejection.py",
+    "patchloop/agent/investigation.py",
+    "patchloop/agent/model.py",
+    "patchloop/agent/phases.py",
+    "patchloop/agent/review.py",
+    "patchloop/agent/runner.py",
+    "patchloop/agent/tools.py",
+    "patchloop/artifacts.py",
+    "patchloop/contracts.py",
+    "patchloop/dataset.py",
+    "patchloop/errors.py",
+    "patchloop/evals/__init__.py",
+    "patchloop/evals/budget.py",
+    "patchloop/evals/coverage_rejection.py",
+    "patchloop/evals/d136_fixed_pricing_capture.py",
+    "patchloop/evals/evaluator_v2_source_qualification.py",
+    "patchloop/evals/failures.py",
+    "patchloop/evals/heldout_ac_analysis.py",
+    "patchloop/evals/heldout_ac_completion.py",
+    "patchloop/evals/heldout_ac_contracts.py",
+    "patchloop/evals/heldout_ac_execution.py",
+    "patchloop/evals/heldout_ac_live_contract.py",
+    "patchloop/evals/heldout_ac_persisted_adapter.py",
+    "patchloop/evals/heldout_ac_preflight_source_qualification.py",
+    "patchloop/evals/heldout_ac_preregistration.py",
+    "patchloop/evals/heldout_ac_source_qualification.py",
+    "patchloop/evals/heldout_ac_suite.py",
+    "patchloop/evals/heldout_ac_task_evaluator.py",
+    "patchloop/evals/heldout_ac_task_pricing_materialization.py",
+    "patchloop/evals/qualification.py",
+    "patchloop/evals/runner.py",
+    "patchloop/memory/__init__.py",
+    "patchloop/memory/fixed_bundle.py",
+    "patchloop/memory/retrieval.py",
+    "patchloop/memory/store.py",
+    "patchloop/repository.py",
+    "patchloop/runtime.py",
+    "patchloop/sandbox/__init__.py",
+    "patchloop/sandbox/runner.py",
+    "patchloop/state/__init__.py",
+    "patchloop/state/ownership.py",
+    "patchloop/state/store.py",
+    "patchloop/task_loader.py",
+    "patchloop/util.py",
+    "patchloop/verifier/__init__.py",
+    "patchloop/verifier/core.py",
+    "patchloop/verifier/evidence.py",
+    "patchloop/verifier/policy.py",
+    "patchloop/verifier/receipt.py",
+    "patchloop/verifier/runtime_evidence.py"
+  ],
+  "contract_import_closure_hash": "sha256:aabd106ae0085dfe710bfa576fa7adb271a5d13cbe9f8219638453619d547f1a",
+  "contract_source_files": [
+    {
+      "path": "patchloop/__init__.py",
+      "file_bytes": 55,
+      "file_sha256": "sha256:c1fd7c888a1b00da2132073daa2cd80663eefb92c830597b2218497669f7fa58"
+    },
+    {
+      "path": "patchloop/agent/__init__.py",
+      "file_bytes": 125,
+      "file_sha256": "sha256:132b98dd3bbe1cc52e504ff6c4f49f46bf17d1e6902dc48dc6f36cbcbc7b9c0f"
+    },
+    {
+      "path": "patchloop/agent/context.py",
+      "file_bytes": 68912,
+      "file_sha256": "sha256:6730fa00a224704220683b24ddaeeb7ff5721a742dd73d1c203a22280f5cb2dd"
+    },
+    {
+      "path": "patchloop/agent/coverage_rejection.py",
+      "file_bytes": 108974,
+      "file_sha256": "sha256:5ff01e3664b6991aefb36c23bdd5acbac8787762c6276719a72fc2334a15ab3d"
+    },
+    {
+      "path": "patchloop/agent/investigation.py",
+      "file_bytes": 37074,
+      "file_sha256": "sha256:77db783258e544a7b230dc0f184d22403b8229d252153d76e0f7b97eede97b27"
+    },
+    {
+      "path": "patchloop/agent/model.py",
+      "file_bytes": 44052,
+      "file_sha256": "sha256:b8ac21ab33421ed33942036854ecf7e1badce5d35a6014da27488903352d8568"
+    },
+    {
+      "path": "patchloop/agent/phases.py",
+      "file_bytes": 9641,
+      "file_sha256": "sha256:2670b3f8dee3ad1b99f0897b0797b184b981f08ffb6a3e51eef1bc0c7b36761f"
+    },
+    {
+      "path": "patchloop/agent/review.py",
+      "file_bytes": 14463,
+      "file_sha256": "sha256:a795a5d677cd9294315093e583353b7d4af1822d4ca721f387b65263ddd97a6f"
+    },
+    {
+      "path": "patchloop/agent/runner.py",
+      "file_bytes": 256817,
+      "file_sha256": "sha256:3658a09fcd2723eadbf7db72e495ec31dd084b18c0fb94b63aef5b4af60eeb0a"
+    },
+    {
+      "path": "patchloop/agent/tools.py",
+      "file_bytes": 208603,
+      "file_sha256": "sha256:b137c5f7ac5bbe86a70afec0929bfb6cab9ce9baac7717c1ecd2b43749809590"
+    },
+    {
+      "path": "patchloop/artifacts.py",
+      "file_bytes": 4867,
+      "file_sha256": "sha256:b60e6bffa625a5efff2d35e3de44e4d42e844dfe474d9ee613f3da74f80ad810"
+    },
+    {
+      "path": "patchloop/contracts.py",
+      "file_bytes": 154328,
+      "file_sha256": "sha256:ba85e83e1184dd16f0e1fa6d730f2206b8f3cb44e76fc2fed7cf8576332a8cdc"
+    },
+    {
+      "path": "patchloop/dataset.py",
+      "file_bytes": 24190,
+      "file_sha256": "sha256:04d1eaf6a2489704ee459e191d11158889677f46d082e1bb6cb0f6b9208bf8b8"
+    },
+    {
+      "path": "patchloop/errors.py",
+      "file_bytes": 1497,
+      "file_sha256": "sha256:6ae5e1143a226924faecda80a139762a02a17f5267ca6016e56204241aaa6814"
+    },
+    {
+      "path": "patchloop/evals/__init__.py",
+      "file_bytes": 64,
+      "file_sha256": "sha256:381b7bd6cd2b5ecbcb665ce7037edd1d178c60dcb2e095e2332b5b9de02e734c"
+    },
+    {
+      "path": "patchloop/evals/budget.py",
+      "file_bytes": 37809,
+      "file_sha256": "sha256:7c185cd53c6d38651c03db1b19ac0e9e31859b921033be65f12b2f0c5db9b868"
+    },
+    {
+      "path": "patchloop/evals/coverage_rejection.py",
+      "file_bytes": 87059,
+      "file_sha256": "sha256:34ab92e1ec1e3c462abcfd3d14ce5d31760a0a706479c6151eb031a0d7a69a7e"
+    },
+    {
+      "path": "patchloop/evals/d136_fixed_pricing_capture.py",
+      "file_bytes": 18597,
+      "file_sha256": "sha256:4c71e2a234ad3546ef3545a2a89d1218f23fdad0cd39dd3e7bcc7c3e9c9eeb46"
+    },
+    {
+      "path": "patchloop/evals/evaluator_v2_source_qualification.py",
+      "file_bytes": 52263,
+      "file_sha256": "sha256:c7723a8155cee8a77657caa248fe3927b903c3e7be4207338e438ac21d6d5328"
+    },
+    {
+      "path": "patchloop/evals/failures.py",
+      "file_bytes": 4894,
+      "file_sha256": "sha256:0bee47a4d4e40b114ec46132d8afa242082e14db6d966db644851efca629b2b7"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_analysis.py",
+      "file_bytes": 28668,
+      "file_sha256": "sha256:c813c856ba51c8ef82f9c3fc085e46e124b492a5dd853f17a65c615421c13df7"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_completion.py",
+      "file_bytes": 68669,
+      "file_sha256": "sha256:d63e69fcb6387c09732da8f9020827e02e88f6fa4e1fd545384efa170947e511"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_contracts.py",
+      "file_bytes": 14743,
+      "file_sha256": "sha256:b62ad8365ba596954bc66bfd6a27fb5cf01a327b18916d68e8ef8c1c6c9c2df7"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_execution.py",
+      "file_bytes": 33015,
+      "file_sha256": "sha256:ae97e6c72402b3c8a28b8af4ca11e8200bf374e3c8fdf28139a2b5fcda1da368"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_live_contract.py",
+      "file_bytes": 31697,
+      "file_sha256": "sha256:ea97beb1130ddc8bcc7568b6cfe211e27c494b56bc95039e1111da8105e58a7b"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_persisted_adapter.py",
+      "file_bytes": 51723,
+      "file_sha256": "sha256:809c9081056ef922f65faaba03581512f17dda8778194fcb86fd64e6cc96fd4d"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_preflight_source_qualification.py",
+      "file_bytes": 22723,
+      "file_sha256": "sha256:f55f81d956dc75d3b92c0e50ab6d3401802be8025f308763096cb623bdb53c08"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_preregistration.py",
+      "file_bytes": 30196,
+      "file_sha256": "sha256:85734d8a291c404bf2ab3aefc45f9ab2b334d859a2fdd358042bd91a4ee32b48"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_source_qualification.py",
+      "file_bytes": 40066,
+      "file_sha256": "sha256:21d076c04d1d68dfca1fd840e4276257aae220e51fa9da0ac6e894105fa7f13c"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_suite.py",
+      "file_bytes": 6764,
+      "file_sha256": "sha256:03b77cc4ecd1805d7414ee13964878cd42bb623a330ceb8ecd211a44c89f0f7c"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_task_evaluator.py",
+      "file_bytes": 13898,
+      "file_sha256": "sha256:131d62692d825c8f217c25200c18e0e5e05bfa14d99918964e092322df7ab488"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_task_pricing_materialization.py",
+      "file_bytes": 31834,
+      "file_sha256": "sha256:07190406d1be249082200b4e33846775e3903773fc8b6872e33310bb11757b0d"
+    },
+    {
+      "path": "patchloop/evals/qualification.py",
+      "file_bytes": 545239,
+      "file_sha256": "sha256:319c4e09a4b79898eca5a004a6b4d40495701674ae75b4c07bff757e0df672c1"
+    },
+    {
+      "path": "patchloop/evals/runner.py",
+      "file_bytes": 449014,
+      "file_sha256": "sha256:09939499ae3acebeb99c430d5ac04fa6ddb8b7d2e349aa4a744b76e4378208c2"
+    },
+    {
+      "path": "patchloop/memory/__init__.py",
+      "file_bytes": 883,
+      "file_sha256": "sha256:489d69b058408076fee5f9ada4461a5c7248343b692f57118ec8845f2a998e51"
+    },
+    {
+      "path": "patchloop/memory/fixed_bundle.py",
+      "file_bytes": 31076,
+      "file_sha256": "sha256:f9954b8c46df46237bd413e61082db1c2ee0c1cef761341062e224d725c2fe28"
+    },
+    {
+      "path": "patchloop/memory/retrieval.py",
+      "file_bytes": 6638,
+      "file_sha256": "sha256:da4dde2e20b2ee9c946754726d242a3962ba42d4a945603740b1c9bbae970b72"
+    },
+    {
+      "path": "patchloop/memory/store.py",
+      "file_bytes": 14817,
+      "file_sha256": "sha256:b9ab57f9022b40e47b650f58fd9f3d19dcc527132b98ba0ee4628d3e3c760087"
+    },
+    {
+      "path": "patchloop/repository.py",
+      "file_bytes": 13286,
+      "file_sha256": "sha256:3d701ae106228bf1830a89d80fab392b742061ca906eeb64a07c11d637785797"
+    },
+    {
+      "path": "patchloop/runtime.py",
+      "file_bytes": 13657,
+      "file_sha256": "sha256:e7762c637e7cdaf7aed224f5b09fac168fa309ee365b2975242ce40c9edb79e4"
+    },
+    {
+      "path": "patchloop/sandbox/__init__.py",
+      "file_bytes": 321,
+      "file_sha256": "sha256:ee8731fbd66d285b6532652b0be012edbd1bd8b546e1cf84abd7436cbc85c15b"
+    },
+    {
+      "path": "patchloop/sandbox/runner.py",
+      "file_bytes": 33508,
+      "file_sha256": "sha256:5f53e6625e9bb394f966a28fc65e236ec24e11bc457f063afffcb99d9e4537fa"
+    },
+    {
+      "path": "patchloop/state/__init__.py",
+      "file_bytes": 223,
+      "file_sha256": "sha256:3914462d669b4e249c0f07311527d6865cf05506b3e161305a26670a705d9c4f"
+    },
+    {
+      "path": "patchloop/state/ownership.py",
+      "file_bytes": 3204,
+      "file_sha256": "sha256:0ce77a6b15b39df1d21dffe6ee8bf552514cc1d3d7d69e29565bb63d99cd41ef"
+    },
+    {
+      "path": "patchloop/state/store.py",
+      "file_bytes": 49379,
+      "file_sha256": "sha256:43aca57abf927b2947bb3f5561920495c03832d345e7973d29418ae061016d55"
+    },
+    {
+      "path": "patchloop/task_loader.py",
+      "file_bytes": 4916,
+      "file_sha256": "sha256:e7c7d1aac5a4f6adedd4e433e50e6577981af1e2191273bb001e13871ee7dc68"
+    },
+    {
+      "path": "patchloop/util.py",
+      "file_bytes": 5868,
+      "file_sha256": "sha256:6ce3e5a7e5a91556c6085e3c243a4ccdaf8926dd6e57878fb438792cdb0227e6"
+    },
+    {
+      "path": "patchloop/verifier/__init__.py",
+      "file_bytes": 120,
+      "file_sha256": "sha256:ca6020604b01a2f0f51fa8b243d58321f8e90d3308c3b23bdddd7f637d89f221"
+    },
+    {
+      "path": "patchloop/verifier/core.py",
+      "file_bytes": 14010,
+      "file_sha256": "sha256:7e4308e24734f9f792722c878b19a4233f52703d5eef6131661fae076d839563"
+    },
+    {
+      "path": "patchloop/verifier/evidence.py",
+      "file_bytes": 47129,
+      "file_sha256": "sha256:7a2ab9fd931fdfc2d09dc5619c3f3ac696202f5e319f450d9eaeeca1e55fc5ea"
+    },
+    {
+      "path": "patchloop/verifier/policy.py",
+      "file_bytes": 5587,
+      "file_sha256": "sha256:11815679f4729711269558df0c0b9e80489b727668359b06d72f462011f68f1c"
+    },
+    {
+      "path": "patchloop/verifier/receipt.py",
+      "file_bytes": 21584,
+      "file_sha256": "sha256:9b86d7d4f1acb985a4c43565efd9733b1b205dde8101b870cae22b9bdafdd4f5"
+    },
+    {
+      "path": "patchloop/verifier/runtime_evidence.py",
+      "file_bytes": 44344,
+      "file_sha256": "sha256:49370b77ae1645e1526a14501537b9b6bdbd6824ad83d3ed096c3a2b41d8b512"
+    }
+  ],
+  "contract_source_hash": "sha256:116eb3e5b139c71ea4b50d99cd4e0bd038dd9fc01c88a431f52c56d58bdd9e22",
+  "completion_contract_fixture_source_hash": "sha256:d63e69fcb6387c09732da8f9020827e02e88f6fa4e1fd545384efa170947e511",
+  "analysis_source_hash": "sha256:c813c856ba51c8ef82f9c3fc085e46e124b492a5dd853f17a65c615421c13df7",
+  "persisted_adapter_source_hash": "sha256:809c9081056ef922f65faaba03581512f17dda8778194fcb86fd64e6cc96fd4d",
+  "validation_files": [
+    {
+      "path": "pyproject.toml",
+      "file_bytes": 1032,
+      "file_sha256": "sha256:2e8395b0d26e0f4e686daa3481c18301e025417666db828da0e0425cfd5b3986"
+    },
+    {
+      "path": "scripts/build_heldout_ac_source_qualification.py",
+      "file_bytes": 455,
+      "file_sha256": "sha256:0c63a297a490333b75500f32602a254bb91b8a83aa517c6034803889ebca9d09"
+    },
+    {
+      "path": "tests/test_heldout_ac_analysis.py",
+      "file_bytes": 14216,
+      "file_sha256": "sha256:e493ce1e0402f0aca901c40f286515a9c7f87bbf9ac0d8bb5c608b8197c50b68"
+    },
+    {
+      "path": "tests/test_heldout_ac_completion.py",
+      "file_bytes": 34459,
+      "file_sha256": "sha256:17f2083bb3d4462240ce67d9d5725402e7e665b51b2066d8cf995a844e65e6b4"
+    },
+    {
+      "path": "tests/test_heldout_ac_persisted_adapter.py",
+      "file_bytes": 23662,
+      "file_sha256": "sha256:54cd87b14bf6ace4fd85d2b8fdd1ec25f5fee81f05c24ce7e5b75bec4dce87d0"
+    },
+    {
+      "path": "tests/test_heldout_ac_preregistration.py",
+      "file_bytes": 11829,
+      "file_sha256": "sha256:6b7e402b1fefd4ed4b2862eb80c60fe3373f5dcb97f28734ec20a5ac9bdf2e5f"
+    },
+    {
+      "path": "tests/test_heldout_ac_source_qualification.py",
+      "file_bytes": 16734,
+      "file_sha256": "sha256:e1727b68981f7aa7276db296ec70cfeb66da89cf3489832c6fe0719bfc8180ab"
+    },
+    {
+      "path": "tests/test_heldout_ac_suite.py",
+      "file_bytes": 8796,
+      "file_sha256": "sha256:1ec005fde76e359608ebf42387bfbd532416f008501ee8a9bd933e3f6047dbd4"
+    },
+    {
+      "path": "uv.lock",
+      "file_bytes": 240131,
+      "file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c"
+    }
+  ],
+  "validation_hash": "sha256:12b136ee20fbeca8ef87fa0a440296a937ee695dd8752946a881658a7e8b6d1a",
+  "contract_projection": {
+    "suite_schema_version": "heldout-ac-suite-v1",
+    "suite_status": "execution-closed",
+    "scheduled_task_count": 12,
+    "scheduled_run_count": 48,
+    "task_condition_pair_count": 24,
+    "schedule_hash": "sha256:e999650448975f7382d69734ff52fa8c95d912bdb01dbdf82e17d8098d3f6206",
+    "treatment_hash": "sha256:f3a7256fe2201d0d43c4739c973a180ba0fd4d5bfe5de4f472b21589068982b3",
+    "runtime_tuple_hash": "sha256:907b109b07606e78ed9eacd09b91e09b49fe46d6b4a1dc7bae2b79baf772fd03",
+    "planning_cost_hash": "sha256:c1034d283fed13ddb6af0f5462d06add2df5004730d3466ae73ef2cce8d0c2bb",
+    "completion_fixture_schema": "heldout-ac-completion-contract-fixture-v1",
+    "completion_contract_projection_schema": "heldout-ac-completion-contract-projection-v1",
+    "authenticated_completion_projection_schema": "heldout-ac-authenticated-completion-v1",
+    "qualification_fixture_schema": "heldout-ac-trace-qualification-contract-fixture-v1",
+    "authenticated_qualification_projection_schema": "heldout-ac-authenticated-trace-qualification-projection-v2",
+    "qualification_source_schema": "trace-qualification-v2",
+    "analysis_schema": "heldout-ac-analysis-v1",
+    "official_analysis_envelope_schema": "heldout-ac-official-analysis-envelope-v1",
+    "outcome_projection_schema": "heldout-ac-outcome-projection-v1",
+    "completion_surface_status": "offline-untrusted-contract-fixture",
+    "analysis_surface_status": "unofficial-preview-only",
+    "complete_panel_required": true,
+    "evaluator_fail_is_eligible_zero": true,
+    "typed_pre_evaluator_agent_terminal_is_eligible_zero": true,
+    "infrastructure_or_qualification_confound_is_inconclusive": true,
+    "role_strata_count": 2,
+    "verdict_distribution_count": 4,
+    "pre_reservation_inconclusive_requires_zero_reserved_runs": true,
+    "post_reservation_inconclusive_requires_full_48_run_reservation": true,
+    "retry_replacement_or_resume_allowed": false,
+    "planning_full_schedule_reserve_usd": 252.0,
+    "planning_hard_cap_usd": 275.0,
+    "fresh_pricing_binding_present": false,
+    "authoritative_persisted_producer_adapter_present": true,
+    "trace_qualification_v2_persisted_adapter_bound": true,
+    "persisted_evidence_authenticated": false,
+    "official": false,
+    "official_analysis_ready": false
+  },
+  "binding_boundary": {
+    "qualification_scope": "metadata-suite-completion-analysis-contract-only",
+    "task_package_binding_status": "closed-not-inspected",
+    "task_package_binding_count": 0,
+    "task_private_marker_binding_count": 0,
+    "evaluator_v2_task_contract_binding_status": "closed-not-materialized",
+    "evaluator_v2_task_contract_binding_count": 0,
+    "authoritative_persisted_producer_adapter_binding_status": "closed-not-materialized",
+    "authoritative_persisted_producer_adapter_binding_count": 0,
+    "heldout_task_specs_opened": false,
+    "heldout_task_outcomes_opened": false
+  },
+  "authority": {
+    "heldout_task_spec_or_outcome_access_authorized": false,
+    "unblinding_authorized": false,
+    "credential_or_environment_observation_authorized": false,
+    "docker_observation_authorized": false,
+    "sdk_observation_authorized": false,
+    "provider_execution_authorized": false,
+    "evaluator_execution_authorized": false,
+    "agent_execution_authorized": false,
+    "runtime_memory_injection_authorized": false,
+    "authoritative_persisted_producer_adapter_authorized": false,
+    "pricing_refresh_authorized": false,
+    "exact_execution_hash_authorized": false,
+    "execution_candidate_authorized": false,
+    "approval_creation_or_transfer_authorized": false,
+    "cost_reservation_authorized": false,
+    "spend_authorized": false,
+    "automatic_retry_replacement_or_resume_authorized": false,
+    "memory_benefit_claim_authorized": false,
+    "broad_generalization_claim_authorized": false,
+    "official_analysis_authorized": false,
+    "analysis_claim_authorized": false,
+    "authorized_provider_calls": 0,
+    "authorized_evaluator_calls": 0,
+    "authorized_agent_runs": 0,
+    "authorized_docker_calls": 0,
+    "authorized_sdk_calls": 0,
+    "authorized_cost_usd": 0.0,
+    "provider_calls_made": 0,
+    "evaluator_calls_made": 0,
+    "agent_runs_made": 0,
+    "docker_calls_made": 0,
+    "sdk_calls_made": 0,
+    "retrieval_calls_made": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "next_gate": "separate-task-evaluator-binding-and-refreshed-pricing-before-candidate",
+  "content_hash": "sha256:d626cca66a7f81d9331e64082c5b4edfbae915aac359ff6891a1501029d83365"
+}

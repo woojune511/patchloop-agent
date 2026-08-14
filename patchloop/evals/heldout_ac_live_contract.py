@@ -9,7 +9,9 @@ row dispatch are owned by :mod:`patchloop.evals.heldout_ac_dispatcher`.
 from __future__ import annotations
 
 import json
+import os
 import re
+import stat
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -25,23 +27,31 @@ from patchloop.contracts import (
 )
 from patchloop.errors import ContractError
 from patchloop.evals.heldout_ac_contracts import HELDOUT_AC_SUITE_ID
-from patchloop.evals.heldout_ac_execution import HeldoutACExecutionCandidate
-from patchloop.evals.heldout_ac_persisted_adapter import HeldoutACAuthenticatedPersistedRow
+from patchloop.evals.heldout_ac_execution import (
+    HeldoutACExecutionCandidate,
+    heldout_ac_campaign_identity_hash,
+)
+from patchloop.evals.heldout_ac_persisted_adapter import (
+    HeldoutACAuthenticatedPersistedEvidence,
+    HeldoutACAuthenticatedPersistedRow,
+)
 from patchloop.evals.heldout_ac_suite import load_heldout_ac_suite
 from patchloop.memory.fixed_bundle import (
     D110_INDEX_CONTENT_HASH,
     D110_INDEX_VERSION,
     FIXED_BUNDLE_POLICY_VERSION,
 )
-from patchloop.util import sha256_bytes, sha256_json
+from patchloop.util import safe_relative_path, sha256_bytes, sha256_json
 
 PLAN_SCHEMA_VERSION = "experiment-execution-plan-v1"
+PLAN_SCHEMA_VERSION_V2 = "experiment-execution-plan-v2"
 PLAN_KIND = "heldout-ac-approved-campaign-v1"
+PLAN_KIND_V2 = "heldout-ac-approved-campaign-v2"
 RUNTIME_CONTRACT_SCHEMA_VERSION = "heldout-ac-runtime-contract-v1"
 RUNTIME_EVIDENCE_SCHEMA_VERSION = "heldout-ac-runtime-evidence-v1"
 JOURNAL_SCHEMA_VERSION = "heldout-ac-campaign-journal-event-v1"
+JOURNAL_SCHEMA_VERSION_V2 = "heldout-ac-campaign-journal-event-v2"
 CALL_GUARD_POLICY_VERSION = "heldout-ac-bounded-call-guard-v1"
-DISPATCH_SOURCE_QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260814-r11"
 
 _SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _RUN_ID_RE = re.compile(r"^run_[A-Za-z0-9_-]+$")
@@ -76,6 +86,47 @@ def _canonical_utc(value: Any) -> bool:
     return parsed.tzinfo is not None and parsed.utcoffset() == UTC.utcoffset(parsed)
 
 
+def _is_link_or_reparse_point(path: Path) -> bool:
+    if path.is_symlink():
+        return True
+    is_junction = getattr(path, "is_junction", None)
+    if callable(is_junction) and is_junction():
+        return True
+    try:
+        attributes = getattr(os.lstat(path), "st_file_attributes", 0)
+    except OSError:
+        return False
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    return bool(reparse_flag and attributes & reparse_flag)
+
+
+def canonical_heldout_ac_runtime_path(
+    path: str | Path,
+    *,
+    expected_run_root: str | Path,
+) -> Path:
+    """Return one lexical runtime path after containment and link checks."""
+
+    raw_root = Path(expected_run_root).absolute()
+    try:
+        if not raw_root.is_dir() or _is_link_or_reparse_point(raw_root):
+            raise ContractError("held-out runtime root is not a canonical directory")
+        root = raw_root.resolve(strict=True)
+    except OSError as exc:
+        raise ContractError("held-out runtime root is unavailable") from exc
+    candidate = Path(os.path.abspath(Path(path)))
+    if not candidate.is_relative_to(root):
+        raise ContractError("held-out runtime path escapes the expected root")
+    current = root
+    for part in candidate.relative_to(root).parts:
+        current /= part
+        if (current.exists() or current.is_symlink()) and _is_link_or_reparse_point(current):
+            raise ContractError("held-out runtime path traverses a link or reparse point")
+    if not candidate.resolve(strict=False).is_relative_to(root):
+        raise ContractError("held-out runtime path resolves outside the expected root")
+    return candidate
+
+
 def is_heldout_ac_experiment(manifest: RunManifest | None) -> bool:
     """Recognize the reserved identity even when the rest of a manifest is corrupt."""
 
@@ -102,6 +153,50 @@ def heldout_ac_candidate_has_current_source_binding(
     except ContractError:
         return False
     return candidate.source_qualification == expected
+
+
+def heldout_ac_candidate_has_bound_source_qualification(
+    candidate: HeldoutACExecutionCandidate,
+    *,
+    repository: str | Path | None = None,
+) -> bool:
+    """Validate the immutable qualification artifact named by this candidate.
+
+    Historical replay must remain valid after a newer source qualification is
+    checked in.  It therefore verifies the candidate-bound bytes and identities,
+    while dispatch preparation separately requires the current source binding.
+    """
+
+    root = Path(repository).resolve() if repository is not None else Path.cwd().resolve()
+    binding = candidate.source_qualification
+    try:
+        relative = safe_relative_path(
+            binding.qualification_file.path,
+            field_name="held-out source qualification path",
+        )
+        selected = (root / relative).resolve(strict=True)
+        raw = selected.read_bytes()
+        payload = json.loads(raw)
+    except (ContractError, OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return False
+    body = (
+        {key: value for key, value in payload.items() if key != "content_hash"}
+        if isinstance(payload, dict)
+        else None
+    )
+    return bool(
+        selected.is_relative_to(root)
+        and not selected.is_symlink()
+        and isinstance(payload, dict)
+        and isinstance(body, dict)
+        and len(raw) == binding.qualification_file.file_bytes
+        and sha256_bytes(raw) == binding.qualification_file.file_sha256
+        and payload.get("content_hash") == binding.qualification_file.content_hash
+        and payload.get("content_hash") == binding.source_qualification_hash
+        and payload.get("content_hash") == sha256_json(body)
+        and payload.get("qualification_id") == binding.qualification_id
+        and payload.get("evaluator_source_hash") == binding.evaluator_source_hash
+    )
 
 
 def _expected_memory(candidate_row: Any) -> dict[str, Any]:
@@ -281,15 +376,15 @@ def _parse_plan_candidate(plan: Mapping[str, Any]) -> HeldoutACExecutionCandidat
     return candidate
 
 
-def validate_heldout_ac_live_plan(
+def validate_heldout_ac_dispatch_plan(
     *,
     plan: Mapping[str, Any],
-    manifest: RunManifest,
     plan_path: str | Path,
     plan_file_sha256: str,
+    expected_run_root: str | Path,
     repository: str | Path | None = None,
 ) -> HeldoutACExecutionCandidate:
-    """Validate the complete persisted plan against one exact manifest."""
+    """Validate the complete current plan before any journal path is written."""
 
     expected_keys = {
         "schema_version",
@@ -306,6 +401,10 @@ def validate_heldout_ac_live_plan(
         "approval",
         "journal_path",
         "result_path",
+        "campaign_identity_hash",
+        "campaign_one_use_ledger_path",
+        "campaign_one_use_ledger_file_sha256",
+        "campaign_one_use_ledger_content_hash",
     }
     if set(plan) != expected_keys:
         raise ContractError("held-out approved plan fields differ")
@@ -316,24 +415,70 @@ def validate_heldout_ac_live_plan(
         raise
     raw_suite = plan.get("suite")
     approval = plan.get("approval")
-    plan_file = Path(plan_path).resolve(strict=False)
-    approved_root = plan_file.parents[2]
-    expected_journal = (
-        approved_root / "experiments" / "journals" / f"{candidate.execution_hash[7:]}.jsonl"
-    ).resolve(strict=False)
-    expected_result = (
-        approved_root / "experiments" / "heldout-ac" / f"{candidate.execution_hash[7:]}.json"
-    ).resolve(strict=False)
+    approved_root = Path(expected_run_root).absolute()
+    plan_file = canonical_heldout_ac_runtime_path(
+        plan_path,
+        expected_run_root=approved_root,
+    )
+    expected_plan = canonical_heldout_ac_runtime_path(
+        approved_root / "experiments" / "plans" / f"{candidate.execution_hash[7:]}.json",
+        expected_run_root=approved_root,
+    )
+    expected_journal = canonical_heldout_ac_runtime_path(
+        approved_root / "experiments" / "journals" / f"{candidate.execution_hash[7:]}.jsonl",
+        expected_run_root=approved_root,
+    )
+    expected_result = canonical_heldout_ac_runtime_path(
+        approved_root / "experiments" / "heldout-ac" / f"{candidate.execution_hash[7:]}.json",
+        expected_run_root=approved_root,
+    )
+    campaign_identity = heldout_ac_campaign_identity_hash(candidate)
+    expected_ledger = canonical_heldout_ac_runtime_path(
+        approved_root / "experiments" / "heldout-ac" / "one-use" / f"{campaign_identity[7:]}.json",
+        expected_run_root=approved_root,
+    )
+    try:
+        ledger_path = canonical_heldout_ac_runtime_path(
+            str(plan.get("campaign_one_use_ledger_path")),
+            expected_run_root=approved_root,
+        )
+        ledger_bytes = ledger_path.read_bytes()
+        ledger = json.loads(ledger_bytes)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError, TypeError):
+        ledger_path = expected_ledger
+        ledger_bytes = b""
+        ledger = None
+    ledger_body = (
+        {key: value for key, value in ledger.items() if key != "content_hash"}
+        if isinstance(ledger, dict)
+        else None
+    )
+    expected_ledger_body = {
+        "schema_version": "heldout-ac-paid-campaign-one-use-v1",
+        "campaign_identity_hash": campaign_identity,
+        "execution_hash": candidate.execution_hash,
+        "suite_content_hash": candidate.suite_content_hash,
+        "source_qualification_hash": (candidate.source_qualification.source_qualification_hash),
+        "base_schedule_hash": candidate.base_schedule_hash,
+        "scheduled_run_count": 48,
+        "full_schedule_reserve_nanos": 252_000_000_000,
+        "hard_cap_nanos": 275_000_000_000,
+        "claimed_at": ledger.get("claimed_at") if isinstance(ledger, dict) else None,
+    }
+    canonical_ledger = (
+        (json.dumps(ledger, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
+        if isinstance(ledger, dict)
+        else b""
+    )
     valid = bool(
-        plan.get("schema_version") == PLAN_SCHEMA_VERSION
-        and plan.get("plan_kind") == PLAN_KIND
+        plan.get("schema_version") == PLAN_SCHEMA_VERSION_V2
+        and plan.get("plan_kind") == PLAN_KIND_V2
         and _canonical_utc(plan.get("created_at"))
         and plan.get("ready") is True
         and plan.get("blockers") == []
         and isinstance(raw_suite, dict)
         and _exact_typed_equal(raw_suite, suite.model_dump(mode="json"))
         and plan.get("execution_hash") == candidate.execution_hash
-        and candidate.source_qualification.qualification_id == DISPATCH_SOURCE_QUALIFICATION_ID
         and heldout_ac_candidate_has_current_source_binding(
             candidate,
             repository=repository,
@@ -365,14 +510,47 @@ def validate_heldout_ac_live_plan(
         and approval.get("hard_cap_nanos") == 275_000_000_000
         and plan.get("journal_path") == str(expected_journal)
         and plan.get("result_path") == str(expected_result)
-        and plan_file.name == f"{candidate.execution_hash[7:]}.json"
-        and plan_file.parent.name == "plans"
-        and plan_file.parent.parent.name == "experiments"
+        and plan.get("campaign_identity_hash") == campaign_identity
+        and plan.get("campaign_one_use_ledger_path") == str(expected_ledger)
+        and ledger_path == expected_ledger
+        and not ledger_path.is_symlink()
+        and isinstance(ledger, dict)
+        and isinstance(ledger_body, dict)
+        and ledger_bytes == canonical_ledger
+        and set(ledger) == {*expected_ledger_body, "content_hash"}
+        and _canonical_utc(ledger.get("claimed_at"))
+        and _exact_typed_equal(ledger_body, expected_ledger_body)
+        and ledger.get("content_hash") == sha256_json(ledger_body)
+        and plan.get("campaign_one_use_ledger_file_sha256") == sha256_bytes(ledger_bytes)
+        and plan.get("campaign_one_use_ledger_content_hash") == ledger.get("content_hash")
+        and plan_file == expected_plan
         and _valid_sha256(plan_file_sha256)
         and sha256_bytes(plan_file.read_bytes()) == plan_file_sha256
-        and heldout_ac_manifest_matches_candidate(manifest, candidate)
     )
     if not valid:
+        raise ContractError("held-out approved dispatch plan is invalid")
+    return candidate
+
+
+def validate_heldout_ac_live_plan(
+    *,
+    plan: Mapping[str, Any],
+    manifest: RunManifest,
+    plan_path: str | Path,
+    plan_file_sha256: str,
+    expected_run_root: str | Path,
+    repository: str | Path | None = None,
+) -> HeldoutACExecutionCandidate:
+    """Validate the complete persisted plan against one exact manifest."""
+
+    candidate = validate_heldout_ac_dispatch_plan(
+        plan=plan,
+        plan_path=plan_path,
+        plan_file_sha256=plan_file_sha256,
+        expected_run_root=expected_run_root,
+        repository=repository,
+    )
+    if not heldout_ac_manifest_matches_candidate(manifest, candidate):
         raise ContractError("held-out approved plan does not match the exact manifest")
     return candidate
 
@@ -383,6 +561,7 @@ def heldout_ac_live_plan_matches_manifest(
     manifest: RunManifest,
     plan_path: str | Path,
     plan_file_sha256: str,
+    expected_run_root: str | Path,
     repository: str | Path | None = None,
 ) -> bool:
     try:
@@ -391,6 +570,7 @@ def heldout_ac_live_plan_matches_manifest(
             manifest=manifest,
             plan_path=plan_path,
             plan_file_sha256=plan_file_sha256,
+            expected_run_root=expected_run_root,
             repository=repository,
         )
         return True
@@ -408,6 +588,7 @@ def _load_journal_events(path: Path) -> tuple[list[dict[str, Any]], bytes]:
         raise ContractError("held-out campaign journal is invalid") from exc
     previous_hash: str | None = None
     previous_at: datetime | None = None
+    journal_schema: str | None = None
     for sequence, event in enumerate(events, start=1):
         if not isinstance(event, dict):
             raise ContractError("held-out campaign journal event is invalid")
@@ -418,6 +599,12 @@ def _load_journal_events(path: Path) -> tuple[list[dict[str, Any]], bytes]:
             )
         except ValueError as exc:
             raise ContractError("held-out campaign journal chronology is invalid") from exc
+        event_schema = event.get("schema_version")
+        if journal_schema is None and event_schema in {
+            JOURNAL_SCHEMA_VERSION,
+            JOURNAL_SCHEMA_VERSION_V2,
+        }:
+            journal_schema = event_schema
         if not (
             set(event)
             == {
@@ -429,7 +616,7 @@ def _load_journal_events(path: Path) -> tuple[list[dict[str, Any]], bytes]:
                 "payload",
                 "event_hash",
             }
-            and event.get("schema_version") == JOURNAL_SCHEMA_VERSION
+            and event_schema == journal_schema
             and type(event.get("sequence")) is int
             and event.get("sequence") == sequence
             and _canonical_utc(event.get("recorded_at"))
@@ -457,6 +644,39 @@ def _row_identity(row: Any) -> dict[str, Any]:
     }
 
 
+def heldout_ac_terminal_cost_settled_payload(
+    *,
+    candidate: HeldoutACExecutionCandidate,
+    row: Any,
+    authenticated: HeldoutACAuthenticatedPersistedRow,
+    run_id: str,
+    authenticated_row_path: str,
+    authenticated_row_bytes: bytes,
+    authenticated_row_content_hash: str,
+    actual_run_cost_nanos: int,
+    accrued_cost_nanos_before: int,
+) -> dict[str, Any]:
+    """Project the shared v2 atomic terminal-and-cost journal payload."""
+
+    return {
+        **_row_identity(row),
+        "run_id": run_id,
+        "execution_hash": candidate.execution_hash,
+        "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
+        "authenticated_row_path": authenticated_row_path,
+        "authenticated_row_file_sha256": sha256_bytes(authenticated_row_bytes),
+        "authenticated_row_content_hash": authenticated_row_content_hash,
+        "result_outcome_kind": authenticated.result.outcome_kind.value,
+        "evaluation_status": authenticated.result.evaluation_status,
+        "qualification_hash": authenticated.qualification_hash,
+        "source_evidence_hash": authenticated.source_evidence_hash,
+        "actual_run_cost_nanos": actual_run_cost_nanos,
+        "accrued_cost_nanos_before": accrued_cost_nanos_before,
+        "accrued_cost_nanos_after": accrued_cost_nanos_before + actual_run_cost_nanos,
+        "remaining_reserved_rows_after": 48 - row.order,
+    }
+
+
 def validate_heldout_ac_reservation_journal_prefix(
     *,
     plan: Mapping[str, Any],
@@ -473,16 +693,20 @@ def validate_heldout_ac_reservation_journal_prefix(
         manifest=manifest,
         plan_path=plan_path,
         plan_file_sha256=plan_file_sha256,
+        expected_run_root=runner_root,
         repository=repository,
     )
     assert manifest.experiment is not None
-    root = Path(runner_root).resolve(strict=False)
-    journal = Path(str(plan["journal_path"])).resolve(strict=False)
-    if journal.parents[2] != root or journal.is_symlink():
-        raise ContractError("held-out journal root differs from the runtime root")
+    root = Path(runner_root).absolute().resolve(strict=True)
+    journal = canonical_heldout_ac_runtime_path(
+        str(plan["journal_path"]),
+        expected_run_root=root,
+    )
     events, raw = _load_journal_events(journal)
     order = manifest.experiment.schedule_order
-    expected_length = 2 + (order - 1) * 3 + 1
+    v2_atomic_settlement = plan.get("schema_version") == PLAN_SCHEMA_VERSION_V2
+    prior_event_count = 2 if v2_atomic_settlement else 3
+    expected_length = 2 + (order - 1) * prior_event_count + 1
     if len(events) != expected_length:
         raise ContractError("held-out journal prefix does not end at the exact current row start")
     started = events[0]["payload"]
@@ -519,8 +743,10 @@ def validate_heldout_ac_reservation_journal_prefix(
     accrued = 0
     seen_runs: set[str] = set()
     for prior_order in range(1, order):
-        offset = 2 + (prior_order - 1) * 3
-        start_event, terminal_event, settled_event = events[offset : offset + 3]
+        offset = 2 + (prior_order - 1) * prior_event_count
+        start_event = events[offset]
+        terminal_event = events[offset + 1]
+        settled_event = None if v2_atomic_settlement else events[offset + 2]
         row = candidate.schedule[prior_order - 1]
         start_payload = start_event["payload"]
         run_id = start_payload.get("run_id")
@@ -533,14 +759,34 @@ def validate_heldout_ac_reservation_journal_prefix(
         }
         terminal = terminal_event["payload"]
         relative_path = terminal.get("authenticated_row_path")
-        if not isinstance(relative_path, str):
+        if not isinstance(relative_path, str) or not isinstance(run_id, str):
             raise ContractError("held-out prior row has no authenticated evidence path")
-        evidence_path = (root / relative_path).resolve(strict=False)
-        if not evidence_path.is_relative_to(root) or evidence_path.is_symlink():
-            raise ContractError("held-out authenticated row path escapes the runtime root")
+        expected_relative_path = (
+            Path("experiments")
+            / "heldout-ac"
+            / "rows"
+            / candidate.execution_hash.removeprefix("sha256:")
+            / f"{prior_order:02d}-{run_id}-authenticated.json"
+        ).as_posix()
+        if relative_path != expected_relative_path:
+            raise ContractError("held-out prior authenticated evidence path differs")
+        evidence_path = canonical_heldout_ac_runtime_path(
+            root / expected_relative_path,
+            expected_run_root=root,
+        )
         try:
             evidence_bytes = evidence_path.read_bytes()
-            evidence = HeldoutACAuthenticatedPersistedRow.model_validate_json(evidence_bytes)
+            if v2_atomic_settlement:
+                wrapper = HeldoutACAuthenticatedPersistedEvidence.model_validate_json(
+                    evidence_bytes
+                )
+                evidence = wrapper.row
+                persisted_content_hash = wrapper.content_hash
+                canonical_evidence_bytes = wrapper.model_dump_json(indent=2).encode("utf-8")
+            else:
+                evidence = HeldoutACAuthenticatedPersistedRow.model_validate_json(evidence_bytes)
+                persisted_content_hash = evidence.content_hash
+                canonical_evidence_bytes = evidence.model_dump_json(indent=2).encode("utf-8")
         except (OSError, ValidationError) as exc:
             raise ContractError("held-out prior authenticated row is invalid") from exc
         cost = evidence.usage_evidence.token_derived_cost_nanos
@@ -551,7 +797,7 @@ def validate_heldout_ac_reservation_journal_prefix(
             "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
             "authenticated_row_path": relative_path,
             "authenticated_row_file_sha256": sha256_bytes(evidence_bytes),
-            "authenticated_row_content_hash": evidence.content_hash,
+            "authenticated_row_content_hash": persisted_content_hash,
             "result_outcome_kind": evidence.result.outcome_kind.value,
             "evaluation_status": evidence.result.evaluation_status,
             "qualification_hash": evidence.qualification_hash,
@@ -565,22 +811,41 @@ def validate_heldout_ac_reservation_journal_prefix(
             "execution_hash": candidate.execution_hash,
             "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
             "authenticated_row_file_sha256": sha256_bytes(evidence_bytes),
-            "authenticated_row_content_hash": evidence.content_hash,
+            "authenticated_row_content_hash": persisted_content_hash,
             "actual_run_cost_nanos": cost,
             "accrued_cost_nanos_before": accrued,
             "accrued_cost_nanos_after": accrued + cost,
             "remaining_reserved_rows_after": 48 - prior_order,
         }
+        expected_atomic = heldout_ac_terminal_cost_settled_payload(
+            candidate=candidate,
+            row=row,
+            authenticated=evidence,
+            run_id=run_id,
+            authenticated_row_path=relative_path,
+            authenticated_row_bytes=evidence_bytes,
+            authenticated_row_content_hash=persisted_content_hash,
+            actual_run_cost_nanos=cost,
+            accrued_cost_nanos_before=accrued,
+        )
+        terminal_events_match = (
+            terminal_event["event_type"] == "RunTerminalCostSettled"
+            and _exact_typed_equal(terminal, expected_atomic)
+            if v2_atomic_settlement
+            else terminal_event["event_type"] == "RunTerminal"
+            and _exact_typed_equal(terminal, expected_terminal)
+            and settled_event is not None
+            and settled_event["event_type"] == "RunCostSettled"
+            and _exact_typed_equal(settled_event["payload"], expected_settled)
+        )
         if not (
             isinstance(run_id, str)
             and _RUN_ID_RE.fullmatch(run_id) is not None
             and run_id not in seen_runs
             and start_event["event_type"] == "RunStarted"
             and _exact_typed_equal(start_payload, expected_start)
-            and terminal_event["event_type"] == "RunTerminal"
-            and _exact_typed_equal(terminal, expected_terminal)
-            and settled_event["event_type"] == "RunCostSettled"
-            and _exact_typed_equal(settled_event["payload"], expected_settled)
+            and terminal_events_match
+            and evidence_bytes == canonical_evidence_bytes
             and evidence.order == prior_order
             and evidence.run_id == run_id
             and evidence.schedule_row_id == row.schedule_row_id
@@ -616,18 +881,24 @@ def validate_heldout_ac_reservation_journal_prefix(
 
 __all__ = [
     "CALL_GUARD_POLICY_VERSION",
-    "DISPATCH_SOURCE_QUALIFICATION_ID",
     "JOURNAL_SCHEMA_VERSION",
+    "JOURNAL_SCHEMA_VERSION_V2",
     "PLAN_KIND",
+    "PLAN_KIND_V2",
     "PLAN_SCHEMA_VERSION",
+    "PLAN_SCHEMA_VERSION_V2",
     "RUNTIME_CONTRACT_SCHEMA_VERSION",
     "RUNTIME_EVIDENCE_SCHEMA_VERSION",
+    "canonical_heldout_ac_runtime_path",
     "heldout_ac_live_plan_matches_manifest",
+    "heldout_ac_candidate_has_bound_source_qualification",
     "heldout_ac_candidate_has_current_source_binding",
     "heldout_ac_manifest_matches_candidate",
     "heldout_ac_runtime_contract",
     "heldout_ac_runtime_evidence_document",
+    "heldout_ac_terminal_cost_settled_payload",
     "is_heldout_ac_experiment",
+    "validate_heldout_ac_dispatch_plan",
     "validate_heldout_ac_live_plan",
     "validate_heldout_ac_reservation_journal_prefix",
 ]

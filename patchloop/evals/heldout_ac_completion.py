@@ -10,11 +10,11 @@ receipts, candidate authority, and the dedicated held-out qualifier.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from decimal import Decimal
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError, model_validator
 
 from patchloop.contracts import RunResult
 from patchloop.errors import ContractError
@@ -32,6 +32,8 @@ from patchloop.util import sha256_json
 
 SCHEMA_VERSION = "heldout-ac-completion-contract-fixture-v1"
 COMPLETION_SCHEMA_VERSION = "heldout-ac-completion-contract-projection-v1"
+AUTHENTICATED_COMPLETION_SCHEMA_VERSION = "heldout-ac-authenticated-completion-v1"
+OFFICIAL_ANALYSIS_SCHEMA_VERSION = "heldout-ac-official-analysis-envelope-v1"
 PREREGISTRATION_ID = "core-ac-fixed-bundle-heldout-20260814-v1"
 PREREGISTRATION_CONTENT_HASH = (
     "sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74"
@@ -377,6 +379,144 @@ class HeldoutACAnalysisEnvelope(_StrictFrozenModel):
         expected = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
         if self.content_hash != expected:
             raise ValueError("held-out analysis envelope content hash mismatch")
+        return self
+
+
+class HeldoutACAuthenticatedCompletionProjection(_StrictFrozenModel):
+    """Complete panel derived only from authenticated persisted-evidence DTOs."""
+
+    schema_version: Literal[AUTHENTICATED_COMPLETION_SCHEMA_VERSION] = (
+        AUTHENTICATED_COMPLETION_SCHEMA_VERSION
+    )
+    evidence_status: Literal["authenticated-persisted-evidence"] = (
+        "authenticated-persisted-evidence"
+    )
+    persisted_evidence_authenticated: Literal[True] = True
+    official: Literal[True] = True
+    analysis_ready: Literal[True] = True
+    preregistration_id: Literal["core-ac-fixed-bundle-heldout-20260814-v1"] = PREREGISTRATION_ID
+    preregistration_content_hash: Literal[
+        "sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74"
+    ] = PREREGISTRATION_CONTENT_HASH
+    suite_id: Literal[HELDOUT_AC_SUITE_ID] = HELDOUT_AC_SUITE_ID
+    suite_content_hash: str = Field(pattern=_SHA256_PATTERN)
+    execution_hash: str = Field(pattern=_SHA256_PATTERN)
+    evaluator_source_hash: str = Field(pattern=_SHA256_PATTERN)
+    evaluator_source_qualification_hash: str = Field(pattern=_SHA256_PATTERN)
+    expected_runs: Literal[48] = 48
+    terminal_runs: Literal[48] = 48
+    qualified_runs: Literal[48] = 48
+    cost_settled_runs: Literal[48] = 48
+    evaluator_completed_runs: int = Field(ge=0, le=48)
+    typed_agent_terminal_runs: int = Field(ge=0, le=48)
+    task_successes: int = Field(ge=0, le=48)
+    task_failures: int = Field(ge=0, le=48)
+    accrued_cost_nanos: int = Field(ge=0, le=252_000_000_000)
+    full_schedule_reserve_nanos: Literal[252_000_000_000] = 252_000_000_000
+    hard_cap_nanos: Literal[275_000_000_000] = 275_000_000_000
+    authenticated_row_hashes: tuple[str, ...] = Field(min_length=48, max_length=48)
+    outcome_projection: HeldoutACOutcomeProjection
+    memory_benefit_claim_authorized: Literal[False] = False
+    broad_generalization_claim_authorized: Literal[False] = False
+    content_hash: str = Field(pattern=_SHA256_PATTERN)
+    _adapter_capability: object | None = PrivateAttr(default=None)
+
+    @model_validator(mode="after")
+    def validate_authenticated_completion(self) -> HeldoutACAuthenticatedCompletionProjection:
+        if len(set(self.authenticated_row_hashes)) != 48:
+            raise ValueError("authenticated completion row identities are not unique")
+        rows = self.outcome_projection.rows
+        evaluator_completed = sum(row.outcome.kind == "evaluator_completed" for row in rows)
+        agent_terminals = 48 - evaluator_completed
+        successes = sum(
+            row.outcome.kind == "evaluator_completed"
+            and all(
+                verdict == "PASS"
+                for verdict in (
+                    row.outcome.hidden_verdict,
+                    row.outcome.regression_verdict,
+                    row.outcome.scope_verdict,
+                    row.outcome.safety_verdict,
+                )
+            )
+            for row in rows
+        )
+        if (
+            self.evaluator_completed_runs != evaluator_completed
+            or self.typed_agent_terminal_runs != agent_terminals
+            or self.task_successes != successes
+            or self.task_failures != 48 - successes
+            or self.accrued_cost_nanos != sum(row.usage.model_cost_nanos for row in rows)
+        ):
+            raise ValueError("authenticated completion counts differ from nested outcomes")
+        expected = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
+        if self.content_hash != expected:
+            raise ValueError("authenticated completion content hash mismatch")
+        return self
+
+
+class _AuthenticatedCompletionCapability:
+    __slots__ = ("content_hash", "owner")
+
+    def __init__(self, owner: HeldoutACAuthenticatedCompletionProjection) -> None:
+        self.owner = owner
+        self.content_hash = owner.content_hash
+
+    def __copy__(self) -> _AuthenticatedCompletionCapability:
+        return self
+
+    def __deepcopy__(self, _memo: dict[int, object]) -> _AuthenticatedCompletionCapability:
+        return self
+
+
+def _issue_authenticated_completion_capability(
+    completion: HeldoutACAuthenticatedCompletionProjection,
+) -> HeldoutACAuthenticatedCompletionProjection:
+    completion._adapter_capability = _AuthenticatedCompletionCapability(completion)
+    return completion
+
+
+def _has_authenticated_completion_capability(
+    completion: HeldoutACAuthenticatedCompletionProjection,
+) -> bool:
+    capability = completion._adapter_capability
+    return (
+        type(capability) is _AuthenticatedCompletionCapability
+        and capability.owner is completion
+        and capability.content_hash == completion.content_hash
+    )
+
+
+class HeldoutACOfficialAnalysisEnvelope(_StrictFrozenModel):
+    """Official deterministic analysis, gated by the typed completion adapter."""
+
+    schema_version: Literal[OFFICIAL_ANALYSIS_SCHEMA_VERSION] = OFFICIAL_ANALYSIS_SCHEMA_VERSION
+    evidence_status: Literal["authenticated-persisted-evidence"] = (
+        "authenticated-persisted-evidence"
+    )
+    persisted_evidence_authenticated: Literal[True] = True
+    official: Literal[True] = True
+    analysis_ready: Literal[True] = True
+    preregistration_id: Literal["core-ac-fixed-bundle-heldout-20260814-v1"] = PREREGISTRATION_ID
+    preregistration_content_hash: Literal[
+        "sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74"
+    ] = PREREGISTRATION_CONTENT_HASH
+    suite_id: Literal[HELDOUT_AC_SUITE_ID] = HELDOUT_AC_SUITE_ID
+    suite_content_hash: str = Field(pattern=_SHA256_PATTERN)
+    execution_hash: str = Field(pattern=_SHA256_PATTERN)
+    evaluator_source_hash: str = Field(pattern=_SHA256_PATTERN)
+    evaluator_source_qualification_hash: str = Field(pattern=_SHA256_PATTERN)
+    completion_projection_hash: str = Field(pattern=_SHA256_PATTERN)
+    analysis: HeldoutACAnalysis
+    causal_general_memory_benefit_claim_authorized: Literal[False] = False
+    broad_generalization_claim_authorized: Literal[False] = False
+    content_hash: str = Field(pattern=_SHA256_PATTERN)
+
+    @model_validator(mode="after")
+    def validate_official_analysis(self) -> HeldoutACOfficialAnalysisEnvelope:
+        expected = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
+        if self.content_hash != expected:
+            raise ValueError("official held-out analysis envelope content hash mismatch")
         return self
 
 
@@ -1090,6 +1230,398 @@ def project_heldout_ac_inconclusive_contract_fixture(
     return HeldoutACInconclusiveMatrixReport(**body, content_hash=sha256_json(body))
 
 
+def _authenticated_analysis_row(evidence: Any) -> HeldoutACOutcomeRow:
+    authenticated = evidence.row
+    result = authenticated.result
+    usage = authenticated.usage_evidence.usage
+    if result.evaluation_status == "completed":
+        outcome = EvaluatorCompletedOutcome(
+            kind="evaluator_completed",
+            terminal_outcome=True,
+            trace_qualified=True,
+            cost_settled=True,
+            durable_usage_reconciled=True,
+            matrix_inconclusive_triggers=[],
+            evaluator_v2_runtime_authenticated=True,
+            evaluator_v2_completion_eligible=True,
+            hidden_verdict=result.verdicts.hidden_tests.value.upper(),
+            regression_verdict=result.verdicts.regression_tests.value.upper(),
+            scope_verdict=result.verdicts.scope_policy.value.upper(),
+            safety_verdict=result.verdicts.safety_policy.value.upper(),
+        )
+    else:
+        terminal_type = evidence.terminal_type
+        if terminal_type is None:
+            raise HeldoutACCompletionError("authenticated agent terminal has no typed cause")
+        outcome = TypedAgentTerminalOutcome(
+            kind="typed_pre_evaluator_agent_terminal",
+            terminal_outcome=True,
+            trace_qualified=True,
+            cost_settled=True,
+            durable_usage_reconciled=True,
+            matrix_inconclusive_triggers=[],
+            evaluator_not_run=True,
+            terminal_type=terminal_type,
+        )
+    return HeldoutACOutcomeRow(
+        order=authenticated.order,
+        task_id=authenticated.task_id,
+        role=authenticated.role,
+        condition=authenticated.condition,
+        repetition=authenticated.repetition,
+        outcome=outcome,
+        usage=HeldoutACUsage(
+            input_tokens=usage.input_tokens,
+            output_tokens=usage.output_tokens,
+            reasoning_tokens=usage.reasoning_output_tokens,
+            total_tokens=usage.input_tokens + usage.output_tokens,
+            model_cost_nanos=authenticated.usage_evidence.token_derived_cost_nanos,
+            model_calls=usage.model_calls,
+            tool_calls=usage.tool_calls,
+            wall_time_milliseconds=usage.wall_clock_ms,
+        ),
+    )
+
+
+def _project_authenticated_heldout_ac_completion_without_capability(
+    *,
+    suite: HeldoutACSuite,
+    execution_hash: str,
+    expected_pricing_binding_hash: str,
+    evaluator_source_hash: str,
+    evaluator_source_qualification_hash: str,
+    rows: Sequence[Any],
+) -> HeldoutACAuthenticatedCompletionProjection:
+    """Recompute the typed completion DTO without issuing runtime authority."""
+
+    # Local import avoids making the historical offline fixture module and the
+    # persisted adapter mutually import each other during module initialization.
+    from patchloop.evals.heldout_ac_persisted_adapter import (
+        HeldoutACAuthenticatedPersistedEvidence,
+        validate_heldout_ac_persisted_usage_cross_binding,
+    )
+
+    if type(suite) is not HeldoutACSuite:
+        raise HeldoutACCompletionError("authenticated completion requires a typed suite")
+    if len(rows) != 48 or any(
+        type(row) is not HeldoutACAuthenticatedPersistedEvidence for row in rows
+    ):
+        raise HeldoutACCompletionError(
+            "authenticated completion requires exactly 48 typed persisted-evidence rows"
+        )
+    if len({row.content_hash for row in rows}) != 48 or len({row.row.run_id for row in rows}) != 48:
+        raise HeldoutACCompletionError("authenticated completion row identities are not unique")
+    projected_rows: list[HeldoutACOutcomeRow] = []
+    for evidence, expected in zip(rows, suite.schedule, strict=True):
+        authenticated = evidence.row
+        qualification = evidence.qualification
+        result = authenticated.result
+        expected_row_id = heldout_ac_schedule_row_id(
+            suite=suite,
+            execution_hash=execution_hash,
+            order=expected.order,
+        )
+        observed_identity = (
+            authenticated.order,
+            authenticated.wave,
+            authenticated.task_id,
+            authenticated.role,
+            authenticated.condition,
+            authenticated.repetition,
+            authenticated.schedule_row_id,
+        )
+        expected_identity = (
+            expected.order,
+            expected.wave,
+            expected.task_id,
+            expected.role,
+            expected.condition,
+            expected.repetition,
+            expected_row_id,
+        )
+        evaluator_contract = result.evaluator_contract
+        try:
+            validate_heldout_ac_persisted_usage_cross_binding(
+                result=result,
+                usage_evidence=authenticated.usage_evidence,
+                expected_run_id=authenticated.run_id,
+                expected_schedule_row_id=expected_row_id,
+                expected_pricing_binding_hash=expected_pricing_binding_hash,
+                expected_qualification_hash=authenticated.qualification_hash,
+                expected_source_evidence_hash=authenticated.source_evidence_hash,
+                expected_result_file_hash=authenticated.persisted_result_file_hash,
+                expected_result_semantic_hash=authenticated.persisted_result_semantic_hash,
+                expected_receipt_file_hash=authenticated.evaluator_v2_receipt_file_hash,
+            )
+        except ContractError as exc:
+            raise HeldoutACCompletionError(
+                f"authenticated usage evidence differs at order {expected.order}"
+            ) from exc
+        if (
+            observed_identity != expected_identity
+            or authenticated.execution_hash != execution_hash
+            or qualification.run_id != authenticated.run_id
+            or qualification.execution_hash != execution_hash
+            or qualification.suite_hash != suite.content_hash
+            or qualification.schedule_row_id != expected_row_id
+            or qualification.task_id != expected.task_id
+            or qualification.dataset_role != expected.role
+            or qualification.memory_condition != expected.condition
+            or qualification.outcome_kind
+            != (result.outcome_kind.value if result.outcome_kind is not None else None)
+            or qualification.source_qualification_hash != authenticated.qualification_hash
+            or qualification.source_evidence_hash != authenticated.source_evidence_hash
+            or evaluator_contract is None
+            or evaluator_contract.task_id != expected.task_id
+            or evaluator_contract.evaluator_source_hash != evaluator_source_hash
+        ):
+            raise HeldoutACCompletionError(
+                f"authenticated completion evidence differs at order {expected.order}"
+            )
+        if result.evaluation_status == "completed":
+            verdicts = tuple(value.value for value in result.verdicts.model_dump().values())
+            if not (
+                result.agent_submission_status == "completed"
+                and result.outcome_kind is not None
+                and result.outcome_kind.value in {"resolved", "task_failure"}
+                and result.terminal_error is None
+                and evidence.terminal_type is None
+                and all(verdict in {"pass", "fail"} for verdict in verdicts)
+                and qualification.evaluation_reached is True
+                and qualification.evaluator_v2_runtime_authenticated is True
+                and qualification.evaluator_v2_completion_eligible is True
+                and qualification.evaluator_v2_source_hash == evaluator_source_hash
+                and qualification.evaluator_v2_source_qualification_hash
+                == evaluator_source_qualification_hash
+                and qualification.evaluator_v2_receipt_hash
+                == authenticated.evaluator_v2_receipt_hash
+                and qualification.evaluator_v2_receipt_file_hash
+                == authenticated.evaluator_v2_receipt_file_hash
+            ):
+                raise HeldoutACCompletionError(
+                    f"authenticated evaluator completion differs at order {expected.order}"
+                )
+        elif not (
+            result.agent_submission_status == "failed"
+            and result.evaluation_status == "not_run"
+            and result.outcome_kind is not None
+            and result.outcome_kind.value == "agent_failure"
+            and result.terminal_error == {"code": "AGENT_SUBMISSION_FAILED", "phase": "agent"}
+            and evidence.terminal_type is not None
+            and qualification.evaluation_reached is False
+            and qualification.evaluator_v2_runtime_authenticated is False
+            and qualification.evaluator_v2_completion_eligible is False
+            and qualification.evaluator_v2_source_hash is None
+            and qualification.evaluator_v2_source_qualification_hash is None
+            and authenticated.evaluator_v2_receipt_hash is None
+            and authenticated.evaluator_v2_receipt_file_hash is None
+        ):
+            raise HeldoutACCompletionError(
+                f"authenticated agent terminal differs at order {expected.order}"
+            )
+        projected_rows.append(_authenticated_analysis_row(evidence))
+
+    projection = HeldoutACOutcomeProjection(
+        schema_version="heldout-ac-outcome-projection-v1",
+        preregistration_id=PREREGISTRATION_ID,
+        preregistration_content_hash=PREREGISTRATION_CONTENT_HASH,
+        rows=projected_rows,
+    )
+    evaluator_completed = sum(row.outcome.kind == "evaluator_completed" for row in projected_rows)
+    successes = sum(
+        row.outcome.kind == "evaluator_completed"
+        and all(
+            verdict == "PASS"
+            for verdict in (
+                row.outcome.hidden_verdict,
+                row.outcome.regression_verdict,
+                row.outcome.scope_verdict,
+                row.outcome.safety_verdict,
+            )
+        )
+        for row in projected_rows
+    )
+    body = {
+        "schema_version": AUTHENTICATED_COMPLETION_SCHEMA_VERSION,
+        "evidence_status": "authenticated-persisted-evidence",
+        "persisted_evidence_authenticated": True,
+        "official": True,
+        "analysis_ready": True,
+        "preregistration_id": PREREGISTRATION_ID,
+        "preregistration_content_hash": PREREGISTRATION_CONTENT_HASH,
+        "suite_id": HELDOUT_AC_SUITE_ID,
+        "suite_content_hash": suite.content_hash,
+        "execution_hash": execution_hash,
+        "evaluator_source_hash": evaluator_source_hash,
+        "evaluator_source_qualification_hash": evaluator_source_qualification_hash,
+        "expected_runs": 48,
+        "terminal_runs": 48,
+        "qualified_runs": 48,
+        "cost_settled_runs": 48,
+        "evaluator_completed_runs": evaluator_completed,
+        "typed_agent_terminal_runs": 48 - evaluator_completed,
+        "task_successes": successes,
+        "task_failures": 48 - successes,
+        "accrued_cost_nanos": sum(
+            evidence.row.usage_evidence.token_derived_cost_nanos for evidence in rows
+        ),
+        "full_schedule_reserve_nanos": 252_000_000_000,
+        "hard_cap_nanos": 275_000_000_000,
+        "authenticated_row_hashes": tuple(row.content_hash for row in rows),
+        "outcome_projection": projection.model_dump(mode="json"),
+        "memory_benefit_claim_authorized": False,
+        "broad_generalization_claim_authorized": False,
+    }
+    return HeldoutACAuthenticatedCompletionProjection(
+        **body,
+        content_hash=sha256_json(body),
+    )
+
+
+def project_authenticated_heldout_ac_completion(
+    *,
+    suite: HeldoutACSuite,
+    execution_hash: str,
+    expected_pricing_binding_hash: str,
+    evaluator_source_hash: str,
+    evaluator_source_qualification_hash: str,
+    rows: Sequence[Any],
+) -> HeldoutACAuthenticatedCompletionProjection:
+    """Build an official completion only from 48 runtime-issued row capabilities."""
+
+    from patchloop.evals.heldout_ac_persisted_adapter import (
+        HeldoutACAuthenticatedPersistedEvidence,
+        has_heldout_ac_runtime_authentication_capability,
+    )
+
+    if len(rows) != 48 or any(
+        type(row) is not HeldoutACAuthenticatedPersistedEvidence for row in rows
+    ):
+        raise HeldoutACCompletionError(
+            "authenticated completion requires exactly 48 typed persisted-evidence rows"
+        )
+    if any(not has_heldout_ac_runtime_authentication_capability(row) for row in rows):
+        raise HeldoutACCompletionError(
+            "authenticated completion requires 48 runtime-issued evidence capabilities"
+        )
+    completion = _project_authenticated_heldout_ac_completion_without_capability(
+        suite=suite,
+        execution_hash=execution_hash,
+        expected_pricing_binding_hash=expected_pricing_binding_hash,
+        evaluator_source_hash=evaluator_source_hash,
+        evaluator_source_qualification_hash=evaluator_source_qualification_hash,
+        rows=rows,
+    )
+    return _issue_authenticated_completion_capability(completion)
+
+
+def _build_official_analysis_envelope_without_capability(
+    completion: HeldoutACAuthenticatedCompletionProjection,
+) -> HeldoutACOfficialAnalysisEnvelope:
+    """Deterministically build the envelope DTO without granting authority."""
+
+    analysis = analyze_heldout_ac(completion.outcome_projection)
+    body = {
+        "schema_version": OFFICIAL_ANALYSIS_SCHEMA_VERSION,
+        "evidence_status": "authenticated-persisted-evidence",
+        "persisted_evidence_authenticated": True,
+        "official": True,
+        "analysis_ready": True,
+        "preregistration_id": PREREGISTRATION_ID,
+        "preregistration_content_hash": PREREGISTRATION_CONTENT_HASH,
+        "suite_id": HELDOUT_AC_SUITE_ID,
+        "suite_content_hash": completion.suite_content_hash,
+        "execution_hash": completion.execution_hash,
+        "evaluator_source_hash": completion.evaluator_source_hash,
+        "evaluator_source_qualification_hash": (completion.evaluator_source_qualification_hash),
+        "completion_projection_hash": completion.content_hash,
+        "analysis": analysis.model_dump(mode="json"),
+        "causal_general_memory_benefit_claim_authorized": False,
+        "broad_generalization_claim_authorized": False,
+    }
+    return HeldoutACOfficialAnalysisEnvelope(**body, content_hash=sha256_json(body))
+
+
+def analyze_authenticated_heldout_ac_completion(
+    completion: HeldoutACAuthenticatedCompletionProjection,
+) -> HeldoutACOfficialAnalysisEnvelope:
+    """Run official analysis only after the typed completion adapter succeeds."""
+
+    if type(completion) is not HeldoutACAuthenticatedCompletionProjection:
+        raise HeldoutACCompletionError(
+            "official held-out analysis requires a typed authenticated completion"
+        )
+    if not _has_authenticated_completion_capability(completion):
+        raise HeldoutACCompletionError(
+            "official held-out analysis requires an adapter-issued completion capability"
+        )
+    expected_hash = sha256_json(completion.model_dump(mode="json", exclude={"content_hash"}))
+    if completion.content_hash != expected_hash:
+        raise HeldoutACCompletionError("authenticated completion projection hash mismatch")
+    return _build_official_analysis_envelope_without_capability(completion)
+
+
+def validate_persisted_heldout_ac_completion_replay(
+    *,
+    suite: HeldoutACSuite,
+    execution_hash: str,
+    expected_pricing_binding_hash: str,
+    evaluator_source_hash: str,
+    evaluator_source_qualification_hash: str,
+    rows: Sequence[Any],
+    completion: HeldoutACAuthenticatedCompletionProjection,
+    official_envelope: HeldoutACOfficialAnalysisEnvelope,
+) -> None:
+    """Recompute persisted completion/envelope DTOs without issuing authority.
+
+    Callers remain responsible for authenticating the containing persisted file
+    bytes.  This function reparses every nested DTO, deterministically rebuilds
+    both projections and compares their complete serialized values.  It never
+    attaches a runtime row or completion capability.
+    """
+
+    from patchloop.evals.heldout_ac_persisted_adapter import (
+        HeldoutACAuthenticatedPersistedEvidence,
+    )
+
+    if (
+        type(suite) is not HeldoutACSuite
+        or len(rows) != 48
+        or any(type(row) is not HeldoutACAuthenticatedPersistedEvidence for row in rows)
+        or type(completion) is not HeldoutACAuthenticatedCompletionProjection
+        or type(official_envelope) is not HeldoutACOfficialAnalysisEnvelope
+    ):
+        raise HeldoutACCompletionError(
+            "persisted completion replay requires exact typed DTOs for the complete panel"
+        )
+    try:
+        reparsed_rows = tuple(
+            HeldoutACAuthenticatedPersistedEvidence.model_validate_json(row.model_dump_json())
+            for row in rows
+        )
+        reparsed_completion = HeldoutACAuthenticatedCompletionProjection.model_validate_json(
+            completion.model_dump_json()
+        )
+        reparsed_envelope = HeldoutACOfficialAnalysisEnvelope.model_validate_json(
+            official_envelope.model_dump_json()
+        )
+    except ValidationError as exc:
+        raise HeldoutACCompletionError("persisted completion replay DTO is invalid") from exc
+    expected_completion = _project_authenticated_heldout_ac_completion_without_capability(
+        suite=suite,
+        execution_hash=execution_hash,
+        expected_pricing_binding_hash=expected_pricing_binding_hash,
+        evaluator_source_hash=evaluator_source_hash,
+        evaluator_source_qualification_hash=evaluator_source_qualification_hash,
+        rows=reparsed_rows,
+    )
+    expected_envelope = _build_official_analysis_envelope_without_capability(expected_completion)
+    if expected_completion.model_dump(mode="json") != reparsed_completion.model_dump(mode="json"):
+        raise HeldoutACCompletionError("persisted authenticated completion replay differs")
+    if expected_envelope.model_dump(mode="json") != reparsed_envelope.model_dump(mode="json"):
+        raise HeldoutACCompletionError("persisted official analysis envelope replay differs")
+
+
 def preview_heldout_ac_completion_analysis(
     completion: HeldoutACCompletionProjection,
 ) -> HeldoutACAnalysisEnvelope:
@@ -1138,11 +1670,14 @@ def preview_heldout_ac_completion_analysis(
 
 
 __all__ = [
+    "AUTHENTICATED_COMPLETION_SCHEMA_VERSION",
     "COMPLETION_SCHEMA_VERSION",
+    "OFFICIAL_ANALYSIS_SCHEMA_VERSION",
     "PREREGISTRATION_CONTENT_HASH",
     "PREREGISTRATION_ID",
     "SCHEMA_VERSION",
     "HeldoutACAnalysisEnvelope",
+    "HeldoutACAuthenticatedCompletionProjection",
     "HeldoutACCompleteMatrixReport",
     "HeldoutACCompletionError",
     "HeldoutACCompletionInput",
@@ -1154,13 +1689,17 @@ __all__ = [
     "HeldoutACInconclusiveMatrixReport",
     "HeldoutACNotStartedRow",
     "HeldoutACObservedTerminalBinding",
+    "HeldoutACOfficialAnalysisEnvelope",
     "HeldoutACQualificationProjection",
     "HeldoutACRowSettlementEvidence",
     "HeldoutACTerminalClassification",
     "build_heldout_ac_completion_contract_report",
+    "analyze_authenticated_heldout_ac_completion",
     "heldout_ac_campaign_cost_control_hash",
     "heldout_ac_schedule_row_id",
     "preview_heldout_ac_completion_analysis",
     "project_heldout_ac_completion_contract_fixture",
     "project_heldout_ac_inconclusive_contract_fixture",
+    "project_authenticated_heldout_ac_completion",
+    "validate_persisted_heldout_ac_completion_replay",
 ]

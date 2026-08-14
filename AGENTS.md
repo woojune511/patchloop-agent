@@ -11,47 +11,25 @@
 
 ## Current state
 
-- D-129부터 D-141까지는 immutable consumed predecessor다. D-136의 public pricing GET과 D-137-D-141의
-  bounded BLOCKED transitions를 포함한 exact tuple은 `docs/09-evidence.md`가 소유하며 retry/repair하지 않는다.
-- D-142는 source-qualified/unactivated/deferred다. Mocked test는 runtime evidence가 아니며 현재 경로는
-  receipt, attempt, marker 또는 terminal을 만들지 않는다.
-- 현재 evaluator-v1 runtime은 safety verdict를 literal PASS로 둔다. Evaluator-v2는 separately supplied
-  authority가 있을 때만 standard runner가 선택하며 durable-prefix/CAS 재검증, append-only receipt,
-  completed-result persistence, qualification과 completion adapter까지 구현됐다. Raw v2 result는 계속
-  `official=false`; R3 Moto A의 live receipt-qualified completion은 한 행의 실제 v2 evidence다.
-- Evaluator-v2 boundary는 `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`다. V1/v2는 immutable predecessor다.
-  Qualified executable v3 source `ce0628880107db2319816272cfa49adc7ea99667`와 state
-  `ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317`는 exact approval 뒤 1회
-  `BLOCKED(docker_not_ready)` terminal로 consumed됐다. Read-only Docker CLI는 8회였고 daemon start/pull/load/
-  mutation, `.env` read, SDK child, network/provider/evaluator/agent는 0이었다. Retry/resume하지 않는다.
-- Manual-start v4 source `5b592e4f4f86a62d90951e49494ed3f8cf2ae315`와 state
-  `ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef`는 사용자 수동 시작 보고만
-  결속한다. Daemon/image/container는 미검증이고 runtime/approval/external observation/mutation은 0이다.
-- Selective retrieval과 held-out/B/D authority는 닫혀 있다. Fixed C injection은 R3 Moto C에서 live로
-  실행됐지만 제출 전 exact-request token-budget guard로 evaluator에 도달하지 않았다.
-- R3-R6 are sealed `inconclusive` predecessors whose successive budget/plan/qualification/runtime-binding failures
-  are indexed in `docs/09-evidence.md`; no row, approval or configuration may retry, resume or transfer authority.
-- R7/R9 and candidate `sha256:8b962b80...bf6c` are superseded unexecuted after offline contract audits. R10
-  qualified the exact R8 execution source. Candidate `sha256:60c67908...cff9e` consumed one exact `$15.30`/`$18`
-  approval; all four rows resolved, evaluator-v2 receipt-qualified and settled at `$0.3664215`. The immutable raw
-  result has a stale v1/v2 completion projection; the append-only R8 R4 index records the corrected complete matrix.
-- Exact R10/R9/R8/R6/R5/R4/R3 evidence tuples are owned by `docs/09-evidence.md`. R8 is descriptive development
-  readiness only; no causal, held-out, retrieval or general memory-benefit claim follows.
-- Held-out R7 candidate `sha256:2f51935b...b2afa` consumed its 48-row `$252`/`$275` approval. Row 1 resolved with
-  four PASS verdicts, but CRLF qualification bytes failed LF authentication; 0 settled/1 unsettled/47 not-started
-  makes the matrix inconclusive. R11 qualifies the byte fix; there is no current candidate, approval or execution.
-- 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
-
-- V1-V25 artifacts are immutable historical evidence. V23 reached Docker and both frames before
-  `ERROR(child_checker_error/diagnostic_result_invalid)`; V24/V25 are source correction/wrapper evidence, not live
-  readiness. Exact tuples remain in `docs/09-evidence.md`.
-- The active fast track preserves completed attempt records but reuses unchanged source/configuration. A new version
-  is required only for schema, evaluator, security-boundary or treatment changes—not for another attempt.
-- Local no-call preflight may make at most three pre-provider attempts without state/approval/exact-prose ceremony.
-  Paid/provider execution still requires one approval binding the exact campaign hash, schedule and hard cost cap.
-- R3 through R8 executions are sealed and cannot resume or overwrite; all approvals are consumed. A future paid run
-  requires a new suite/source qualification, exact candidate and separate approval. No provider execution is
-  currently authorized.
+- D-129-D-141, V1-V25 and their exact transitions are immutable consumed evidence in `docs/09-evidence.md`; never
+  retry, repair or relabel them. D-142 remains source-qualified/unactivated/deferred and mocked tests are not runtime
+  evidence.
+- Evaluator-v1 still assigns literal safety PASS. V2 uses typed controls, receipts, persistence and qualification;
+  raw v2 results remain `official=false`. Selective retrieval and B/D authority remain closed.
+- Development R3-R6 are sealed inconclusive; R7/R9 is superseded. R10-qualified R8 consumed candidate
+  `sha256:60c67908...cff9e`, completed four receipt-qualified rows for `$0.3664215`, and has an append-only correction
+  for its stale v1/v2 projection. It supports descriptive development readiness only.
+- Held-out R7 sealed 0 settled/1 unsettled/47 not-started. R11 candidate `sha256:f48a0de...a6b0` consumed a fresh
+  `$252`/`$275` approval and sealed 2 settled/1 observed-unsettled/45 not-started; costs were `$0.15699525` settled and
+  `$0.41801625` total observed-started. Successor attribution is `EVALUATOR_CONTROL_CONTRACT_COLLISION`, with zero
+  agent-visible marker matches. No complete analysis or memory claim follows.
+- Current zero-authority chain is contract R7, binding R8, materialization R4, execution R5 and
+  preflight/dispatcher R13. R12/intermediate seals are invalidated predecessors; R13 created no candidate, observation,
+  call, approval or spend.
+- Local no-call preflight permits at most three transient pre-provider attempts. Paid campaign identity ignores
+  readiness timestamps and is one-use by semantic source/suite/schedule; a future run needs committed qualified source,
+  fresh clean candidate and separate exact approval. No provider execution is currently authorized.
+- `docs/current-status.md` is the single current prose authority; `docs/09-evidence.md` owns exact tuples.
 
 ## Required reading
 

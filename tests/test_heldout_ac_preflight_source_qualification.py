@@ -18,6 +18,9 @@ from patchloop.evals.heldout_ac_preflight_source_qualification import (
     R8_PATH,
     R9_PATH,
     R10_PATH,
+    R11_CAMPAIGN_EVIDENCE_PATH,
+    R11_PATH,
+    R12_PATH,
     SOURCE_ENTRYPOINTS,
     STATUS,
     _build_candidate,
@@ -33,7 +36,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_offline_candidate_binds_preflight_closure_without_observation() -> None:
     payload = _build_candidate(
         ROOT,
-        recorded_at=datetime(2026, 8, 14, 12, 30, tzinfo=UTC),
+        recorded_at=datetime(2026, 8, 15, 12, 30, tzinfo=UTC),
     )
 
     assert payload.status == STATUS
@@ -44,11 +47,19 @@ def test_offline_candidate_binds_preflight_closure_without_observation() -> None
         payload.import_closure
     )
     assert payload.projection.scheduled_rows == 48
-    assert payload.projection.r10_predecessor_bytes_preserved is True
+    assert payload.projection.r12_predecessor_bytes_preserved is True
+    assert payload.projection.r11_campaign_correction_index_bound is True
     assert payload.projection.append_only_48_row_dispatcher_bound is True
+    assert payload.projection.one_use_campaign_identity_ignores_observed_at is True
+    assert payload.projection.atomic_terminal_cost_settlement_bound is True
+    assert payload.projection.durable_started_cost_observation_bound is True
+    assert payload.projection.typed_evaluator_and_agent_terminal_sidecars_bound is True
     assert payload.projection.persisted_v2_authentication_bound is True
     assert payload.projection.persisted_campaign_replay_validator_bound is True
+    assert payload.projection.historical_v1_campaign_replay_bound is True
+    assert payload.projection.current_dispatch_source_loader_bound_without_literal_id is True
     assert payload.projection.preregistered_analysis_unlock_bound is True
+    assert payload.projection.official_completion_and_analysis_envelope_persisted is True
     assert payload.projection.execution_candidates_created == 0
     assert payload.projection.approved_plans_created == 0
     assert payload.authority.git_docker_sdk_or_credential_observation_authorized is False
@@ -138,6 +149,30 @@ def test_r10_predecessor_bytes_are_preserved() -> None:
     )
 
 
+def test_r11_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R11_PATH
+    assert len(selected.read_bytes()) == 19_359
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:45b21684520968903ab57afc7a4e0d9f4e66022ad0752140d24b988ba0df747f"
+    )
+
+
+def test_r11_campaign_correction_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R11_CAMPAIGN_EVIDENCE_PATH
+    assert len(selected.read_bytes()) == 18_525
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:1badf8a78ba142f9868a3b9e836fa83df7beb0248f9c5e745fd205fd0185f48c"
+    )
+
+
+def test_r12_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R12_PATH
+    assert len(selected.read_bytes()) == 21_550
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:21d38740e1c69c60204bf234f4a75502cf4b0fe549780914cb8e2789db9cb9f9"
+    )
+
+
 def test_preflight_source_artifact_replays_and_exports_binding() -> None:
     summary = validate_heldout_ac_preflight_source_qualification(repository=ROOT)
     binding = load_heldout_ac_preflight_source_binding(repository=ROOT)
@@ -169,7 +204,7 @@ def test_preflight_source_rerun_is_byte_and_mtime_stable() -> None:
 def test_preflight_source_rejects_rehashed_authority_escalation() -> None:
     payload = _build_candidate(
         ROOT,
-        recorded_at=datetime(2026, 8, 14, 12, 30, tzinfo=UTC),
+        recorded_at=datetime(2026, 8, 15, 12, 30, tzinfo=UTC),
     )
     body = payload.model_dump(mode="json")
     body["authority"]["provider_evaluator_or_agent_execution_authorized"] = True
@@ -190,7 +225,7 @@ def test_preflight_source_qualification_does_not_observe_runtime_surfaces(
     monkeypatch.setattr(sandbox_runner.DockerSandbox, "available", bomb)
     payload = _build_candidate(
         ROOT,
-        recorded_at=datetime(2026, 8, 14, 12, 30, tzinfo=UTC),
+        recorded_at=datetime(2026, 8, 15, 12, 30, tzinfo=UTC),
     )
     assert payload.authority.sdk_calls_made == 0
     assert payload.authority.docker_calls_made == 0

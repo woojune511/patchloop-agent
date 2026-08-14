@@ -94,7 +94,8 @@ R8 is consumed and raw v2 results remain `official=false`; see `docs/09-evidence
 Analysis requires every row terminal, trace-qualified, cost/usage-settled, evaluator/verdict-consistent and free of
 infrastructure, qualification, diagnostic or budget confounds. V2 also requires its authenticated receipt and typed
 safety evidence. R3-R6 failed distinct gates; R8 met them, with its stale projection corrected append-only. Rows cannot
-be replaced; cross-clone and kill/power-loss durability remain unverified.
+be replaced; cross-clone and kill/power-loss durability remain unverified. Held-out R11 did not meet this gate: 2 rows
+settled, 1 had observed usage but no evaluator completion, and 45 never started.
 
 ## 8. Metrics
 
@@ -106,22 +107,29 @@ and paired C-minus-A deltas.
 
 The result may state whether the exact bundle traversed the workflow and report these two development pairs'
 descriptive direction/cost. It cannot claim causal/general memory improvement, held-out/cross-repository or production
-readiness, significance/confidence, individual-rule efficacy, retrieval quality or population negative transfer.
+readiness, significance/confidence, individual-rule efficacy, retrieval quality or population negative transfer. R11
+adds incomplete held-out operational observations only; it supplies neither a complete A/C contrast nor a memory claim.
 
 ## 10. Leakage and selection controls
 
 Use both development tasks, exclude memory-source rows, freeze identities before outcomes, and never select/tune from
 private specs, hidden/reference evidence, known-bad patches or traces. Moto/Babel cannot become fresh validation after
-their results informed changes.
+their results informed changes. R11 partially unblinded Loguru and Dagster runtime outcomes; those observations may be
+used to repair infrastructure contracts but not to tune tasks, memory, thresholds, prompts, selection or policy.
 
 ## 11. Preregistered held-out A/C
 
 The record freezes 12 tasks × A/C × two repetitions = 48 rows and a scheduled-row complete-panel SCRR contrast.
 It specifies deterministic 100,000-sample percentile stability and an assumption-based exact 4,096-sign sensitivity;
 neither is design-based or a population confidence claim. Eligible evaluator FAIL and typed agent terminals score zero;
-infrastructure confounds are inconclusive. Refreshed prices preserve `$252`/`$275`; execution/unblinding remain closed.
+infrastructure confounds are inconclusive. R11 partially unblinded outcomes; further execution remains closed.
 
-Contract R2, binding R5 and execution/preflight R1/R2 are immutable predecessors. Materialization R1 records opaque
-templates and one price capture without outcomes/private values. Current preflight/dispatcher R11 source-qualifies the
-approval-gated 48-row dispatcher and complete-matrix analysis. R7 sealed 0 settled/1 unsettled/47 not-started after
-CRLF/LF qualification-byte drift. R11 created no candidate, approval or call; execution remains separately gated.
+Held-out R7 first sealed 0 settled/1 unsettled/47 not-started after CRLF/LF qualification-byte drift. R11 candidate
+`sha256:f48a0de...a6b0` then consumed its 48-row approval and sealed 2 settled/1 observed-unsettled/45 not-started.
+Settled cost was `$0.15699525`; total observed started cost was `$0.41801625`. One Loguru task failure and the Dagster
+evaluator-control collision prevent analysis.
+
+Current contract R7, binding R8, materialization R4, execution R5 and preflight/dispatcher R13 source-qualify the
+corrected path without a candidate or runtime call. R13 binds semantic one-use campaign identity, atomic journal/cost
+settlement, opaque marker controls, typed confounds and authenticated 48-row completion. Further execution remains
+separately gated by a fresh clean preflight and exact approval.

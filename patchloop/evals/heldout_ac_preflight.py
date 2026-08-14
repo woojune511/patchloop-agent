@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.errors import ContractError
+from patchloop.evals.heldout_ac_dispatcher import heldout_ac_paid_campaign_identity_consumed
 from patchloop.evals.heldout_ac_execution import (
     MATERIALIZATION_PATH,
     build_heldout_ac_execution_candidate,
@@ -18,7 +19,7 @@ from patchloop.evals.heldout_ac_execution import (
 from patchloop.evals.heldout_ac_preflight_source_qualification import (
     load_heldout_ac_preflight_source_binding,
 )
-from patchloop.runtime import repository_root
+from patchloop.runtime import repository_root, runtime_root
 from patchloop.sandbox import DockerSandbox
 from patchloop.util import utc_now
 
@@ -106,6 +107,7 @@ def preflight_heldout_ac(
     *,
     credential_present: bool,
     repository: str | Path | None = None,
+    runtime: str | Path | None = None,
     _git_observer: Callable[[Path], dict[str, Any]] = _git_observation,
     _docker_observer: Callable[[tuple[tuple[str, str], ...]], dict[str, Any]] = (
         _docker_observation
@@ -164,6 +166,15 @@ def preflight_heldout_ac(
             source_qualification=source_binding,
             repository=root,
         )
+        selected_runtime = (
+            Path(runtime).resolve() if runtime is not None else runtime_root().resolve()
+        )
+        if heldout_ac_paid_campaign_identity_consumed(candidate, root=selected_runtime):
+            block(
+                "PAID_CAMPAIGN_IDENTITY_CONSUMED",
+                "this qualified source, suite and schedule already consumed paid authority",
+            )
+            candidate = None
     return {
         "schema_version": "heldout-ac-preflight-v1",
         "execution_candidate_ready": candidate is not None,

@@ -2,16 +2,28 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-from patchloop.contracts import RunResult, TaskPackage, VerdictState, task_package_spec_hashes
+from patchloop.contracts import (
+    EventType,
+    RunEvent,
+    RunResult,
+    TaskPackage,
+    VerdictState,
+    task_package_spec_hashes,
+)
 from patchloop.errors import ContractError
 from patchloop.evals.heldout_ac_completion import heldout_ac_schedule_row_id
 from patchloop.evals.heldout_ac_persisted_adapter import (
+    HeldoutACAuthenticatedPersistedEvidence,
     HeldoutACPersistedUsageEvidence,
+    authenticate_heldout_ac_persisted_evidence,
+    has_heldout_ac_runtime_authentication_capability,
+    project_authenticated_heldout_ac_persisted_evidence,
     project_authenticated_heldout_ac_persisted_row,
 )
 from patchloop.evals.heldout_ac_suite import load_heldout_ac_suite
@@ -30,6 +42,36 @@ SUITE_PATH = Path("experiments/heldout-ac-suite-20260814-v1.yaml")
 EXECUTION_HASH = "sha256:" + "e" * 64
 SOURCE_HASH = "sha256:" + "a" * 64
 PRICING_HASH = "sha256:" + "c" * 64
+
+BASE_CHECK_IDS = (
+    "task_identity",
+    "heldout_ac_runtime_contract",
+    "bounded_call_guard_contract",
+    "contiguous_events",
+    "worker_claim_provenance",
+    "single_terminal_event",
+    "required_trace_evidence",
+    "submission_lifecycle",
+    "fixed_memory_delivery_integrity",
+    "live_openai_provider",
+    "frozen_model_contract",
+    "fault_free",
+    "frozen_campaign_provenance",
+    "approved_execution_plan",
+    "heldout_ac_full_schedule_cost_contract",
+    "sandbox_provenance",
+    "agent_visible_artifacts",
+    "rejected_patch_retry_context",
+    "public_private_boundary",
+    "investigation_evidence",
+    "investigation_lifecycle",
+    "prompt_token_integrity",
+    "usage_reconciliation",
+    "persisted_result",
+    "pilot_tool_loop",
+    "terminal_result_integrity",
+    "failure_record_linkage",
+)
 
 
 def _synthetic_package(task_id: str) -> TaskPackage:
@@ -133,22 +175,78 @@ def _binding_and_agent_result():
     return suite, binding, result
 
 
-def _row_files():
+def _row_files(*, thin_qualification: bool = False):
     suite, binding, result = _binding_and_agent_result()
     row_id = heldout_ac_schedule_row_id(suite=suite, execution_hash=EXECUTION_HASH, order=1)
     result_bytes = result.model_dump_json(indent=2).encode("utf-8")
-    qualification_body = {
-        "schema_version": "trace-qualification-v2",
-        "qualified": True,
-        "run_id": result.run_id,
-        "task_id": suite.schedule[0].task_id,
-        "dataset_role": suite.schedule[0].role,
-        "memory_condition": suite.schedule[0].condition,
-        "suite_hash": suite.content_hash,
-        "execution_hash": EXECUTION_HASH,
-        "schedule_row_id": row_id,
-        "source_evidence_hash": "sha256:" + "d" * 64,
-    }
+    if thin_qualification:
+        qualification_body = {
+            "schema_version": "trace-qualification-v2",
+            "qualified": True,
+            "run_id": result.run_id,
+            "task_id": suite.schedule[0].task_id,
+            "dataset_role": suite.schedule[0].role,
+            "memory_condition": suite.schedule[0].condition,
+            "suite_hash": suite.content_hash,
+            "execution_hash": EXECUTION_HASH,
+            "schedule_row_id": row_id,
+            "source_evidence_hash": "sha256:" + "d" * 64,
+        }
+    else:
+        runtime = suite.runtime
+        qualification_body = {
+            "schema_version": "trace-qualification-v2",
+            "run_id": result.run_id,
+            "qualified": True,
+            "trace_integrity_passed": True,
+            "leakage_scan_passed": True,
+            "evaluation_reached": False,
+            "outcome_kind": "agent_failure",
+            "purpose": "core",
+            "experiment_id": suite.suite_id,
+            "dataset_role": suite.schedule[0].role,
+            "dataset_manifest_hash": "sha256:" + "1" * 64,
+            "suite_hash": suite.content_hash,
+            "execution_hash": EXECUTION_HASH,
+            "schedule_row_id": row_id,
+            "model_provider": runtime.model,
+            "memory_condition": suite.schedule[0].condition,
+            "fault_type": "none",
+            "memory_candidate_eligible": False,
+            "failure_record_id": None,
+            "failure_record_hash": None,
+            "source_evidence_hash": "sha256:" + "d" * 64,
+            "checks": [
+                {"check_id": check_id, "passed": True, "details": {}} for check_id in BASE_CHECK_IDS
+            ],
+            "evaluator_version": "v2",
+            "evaluator_v2_receipt_hash": None,
+            "evaluator_v2_receipt_file_hash": None,
+            "evaluator_v2_source_hash": None,
+            "evaluator_v2_source_qualification_hash": None,
+            "evaluator_v2_runtime_authenticated": False,
+            "evaluator_v2_completion_eligible": False,
+            "task_id": suite.schedule[0].task_id,
+            "model_id": runtime.model_id,
+            "reasoning_effort": runtime.reasoning_effort,
+            "reasoning_mode": runtime.reasoning_mode,
+            "service_tier": runtime.service_tier,
+            "max_output_tokens": runtime.max_output_tokens,
+            "budget": {
+                "max_model_calls": runtime.max_model_calls,
+                "max_tool_calls": runtime.max_tool_calls,
+                "max_total_tokens": runtime.max_total_tokens,
+                "wall_clock_timeout_seconds": runtime.wall_clock_timeout_seconds,
+                "token_budget_schema_version": runtime.token_budget_schema_version,
+                "max_cumulative_input_tokens": runtime.max_cumulative_input_tokens,
+                "max_cumulative_output_tokens": runtime.max_cumulative_output_tokens,
+            },
+            "harness_git_commit": "1" * 40,
+            "tool_schema_version": runtime.tool_schema_version,
+            "context_policy_version": runtime.context_policy_version,
+            "runtime_contract_content_hash": "sha256:" + "2" * 64,
+            "transport_max_retries": runtime.transport_max_retries,
+        }
     qualification = {
         **qualification_body,
         "qualification_hash": sha256_json(qualification_body),
@@ -218,6 +316,92 @@ def test_authenticated_agent_terminal_binds_exact_persisted_bytes() -> None:
     assert row.result.evaluation_status == "not_run"
     assert row.persisted_result_file_hash == sha256_bytes(result_bytes)
     assert row.qualification_file_hash == sha256_bytes(qualification_bytes)
+
+
+def test_pure_projection_is_unofficial_until_runtime_authenticator_issues_capability() -> None:
+    suite, binding, result_bytes, qualification, qualification_bytes, usage_bytes = _row_files()
+    evidence = project_authenticated_heldout_ac_persisted_evidence(
+        suite=suite,
+        execution_hash=EXECUTION_HASH,
+        expected_pricing_binding_hash=PRICING_HASH,
+        order=1,
+        task_evaluator_binding=binding,
+        persisted_result_bytes=result_bytes,
+        qualification_bytes=qualification_bytes,
+        recomputed_qualification=qualification,
+        usage_evidence_bytes=usage_bytes,
+        receipt_validation=None,
+        receipt_bytes=None,
+        agent_terminal_type="submission-failure",
+        agent_terminal_event=RunEvent(
+            event_id="evt_agent_terminal_projection",
+            run_id=RunResult.model_validate_json(result_bytes).run_id,
+            sequence=10,
+            type=EventType.RUN_FAILED,
+            timestamp=datetime(2026, 8, 14, tzinfo=UTC),
+            actor="runner",
+            payload={"error_code": None},
+        ),
+    )
+    assert type(evidence) is HeldoutACAuthenticatedPersistedEvidence
+    assert evidence.official is False
+    assert evidence.analysis_eligible is False
+    assert has_heldout_ac_runtime_authentication_capability(evidence) is False
+
+    with patch(
+        "patchloop.evals.heldout_ac_persisted_adapter."
+        "_load_and_project_heldout_ac_persisted_evidence",
+        return_value=evidence,
+    ):
+        issued = authenticate_heldout_ac_persisted_evidence(
+            suite=suite,
+            execution_hash=EXECUTION_HASH,
+            expected_pricing_binding_hash=PRICING_HASH,
+            order=1,
+            task_evaluator_binding=binding,
+            run_root=ROOT,
+            task_dir=ROOT,
+            dataset_manifest_path=ROOT,
+            evaluator_authority=object(),  # type: ignore[arg-type]
+            usage_evidence_relative_path="unused.json",
+        )
+
+    assert issued is evidence
+    assert has_heldout_ac_runtime_authentication_capability(issued) is True
+    drifted_terminal = issued.model_dump(mode="json")
+    drifted_terminal["terminal_type"] = "model-call-limit"
+    drifted_terminal["content_hash"] = sha256_json(
+        {key: value for key, value in drifted_terminal.items() if key != "content_hash"}
+    )
+    with pytest.raises(ValueError, match="terminal event differs"):
+        HeldoutACAuthenticatedPersistedEvidence.model_validate(drifted_terminal)
+    replayed = HeldoutACAuthenticatedPersistedEvidence.model_validate(
+        issued.model_dump(mode="json")
+    )
+    assert has_heldout_ac_runtime_authentication_capability(replayed) is False
+    assert has_heldout_ac_runtime_authentication_capability(issued.model_copy()) is False
+    assert has_heldout_ac_runtime_authentication_capability(issued.model_copy(deep=True)) is False
+
+
+def test_persisted_adapter_rejects_thin_qualification_even_when_recomputation_matches() -> None:
+    suite, binding, result_bytes, qualification, qualification_bytes, usage_bytes = _row_files(
+        thin_qualification=True
+    )
+
+    with pytest.raises(ContractError, match="fields are incomplete"):
+        project_authenticated_heldout_ac_persisted_row(
+            suite=suite,
+            execution_hash=EXECUTION_HASH,
+            expected_pricing_binding_hash=PRICING_HASH,
+            order=1,
+            task_evaluator_binding=binding,
+            persisted_result_bytes=result_bytes,
+            qualification_bytes=qualification_bytes,
+            recomputed_qualification=qualification,
+            usage_evidence_bytes=usage_bytes,
+            receipt_validation=None,
+            receipt_bytes=None,
+        )
 
 
 @pytest.mark.parametrize("target", ["result", "qualification", "usage"])
@@ -329,4 +513,210 @@ def test_persisted_adapter_rejects_result_cost_drift_after_rehash() -> None:
             usage_evidence_bytes=usage_bytes,
             receipt_validation=None,
             receipt_bytes=None,
+        )
+
+
+def _post_submission_evaluator_confound_files():
+    suite, binding, result_bytes, qualification, _, usage_bytes = _row_files()
+    result_payload = json.loads(result_bytes)
+    completed = _v2_chain(VerdictState.PASS).result
+    result_payload.update(
+        {
+            "agent_submission_status": "completed",
+            "evaluation_status": "not_run",
+            "submitted_patch_artifact_id": completed.submitted_patch_artifact_id,
+            "submitted_patch_artifact": completed.submitted_patch_artifact.model_dump(mode="json"),
+            "outcome_kind": "infrastructure_error",
+            "terminal_error": {
+                "code": "EVALUATOR_INFRASTRUCTURE_ERROR",
+                "phase": "evaluator",
+            },
+        }
+    )
+    result = RunResult.model_validate(result_payload)
+    result_bytes = result.model_dump_json(indent=2).encode("utf-8")
+
+    qualification = deepcopy(qualification)
+    qualification["outcome_kind"] = "infrastructure_error"
+    qualification["qualification_hash"] = sha256_json(
+        {key: value for key, value in qualification.items() if key != "qualification_hash"}
+    )
+    qualification_bytes = json.dumps(
+        qualification, indent=2, sort_keys=True, ensure_ascii=False
+    ).encode("utf-8")
+
+    usage_payload = json.loads(usage_bytes)
+    usage_payload["persisted_result_file_hash"] = sha256_bytes(result_bytes)
+    usage_payload["qualification_hash"] = qualification["qualification_hash"]
+    usage_payload["content_hash"] = sha256_json(
+        {key: value for key, value in usage_payload.items() if key != "content_hash"}
+    )
+    usage_bytes = json.dumps(
+        HeldoutACPersistedUsageEvidence.model_validate(usage_payload).model_dump(mode="json"),
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    ).encode("utf-8")
+    failure_event = RunEvent(
+        event_id="evt_heldout_adapter_confound",
+        run_id=result.run_id,
+        sequence=10,
+        type=EventType.RUN_FAILED,
+        timestamp=datetime(2026, 8, 14, tzinfo=UTC),
+        actor="runner",
+        payload={
+            "error_code": "EVALUATOR_CONTROL_CONTRACT_COLLISION",
+            "message": "redacted by projection",
+        },
+    )
+    return (
+        suite,
+        binding,
+        result_bytes,
+        qualification,
+        qualification_bytes,
+        usage_bytes,
+        failure_event,
+    )
+
+
+def test_post_submission_evaluator_failure_is_typed_authenticated_confound() -> None:
+    (
+        suite,
+        binding,
+        result_bytes,
+        qualification,
+        qualification_bytes,
+        usage_bytes,
+        failure_event,
+    ) = _post_submission_evaluator_confound_files()
+
+    evidence = project_authenticated_heldout_ac_persisted_evidence(
+        suite=suite,
+        execution_hash=EXECUTION_HASH,
+        expected_pricing_binding_hash=PRICING_HASH,
+        order=1,
+        task_evaluator_binding=binding,
+        persisted_result_bytes=result_bytes,
+        qualification_bytes=qualification_bytes,
+        recomputed_qualification=qualification,
+        usage_evidence_bytes=usage_bytes,
+        receipt_validation=None,
+        receipt_bytes=None,
+        evaluator_failure_event=failure_event,
+    )
+
+    assert evidence.analysis_eligible is False
+    assert evidence.evaluator_failure_code == "EVALUATOR_CONTROL_CONTRACT_COLLISION"
+    assert "message" not in evidence.model_dump_json()
+    assert evidence.qualification.source_schema_version == "trace-qualification-v2"
+    assert evidence.qualification.schema_version != evidence.qualification.source_schema_version
+
+    changed_event = failure_event.model_dump(mode="json")
+    changed_event["payload"]["message"] = "different redacted diagnostic"
+    same_safe_projection = project_authenticated_heldout_ac_persisted_evidence(
+        suite=suite,
+        execution_hash=EXECUTION_HASH,
+        expected_pricing_binding_hash=PRICING_HASH,
+        order=1,
+        task_evaluator_binding=binding,
+        persisted_result_bytes=result_bytes,
+        qualification_bytes=qualification_bytes,
+        recomputed_qualification=qualification,
+        usage_evidence_bytes=usage_bytes,
+        receipt_validation=None,
+        receipt_bytes=None,
+        evaluator_failure_event=RunEvent.model_validate(changed_event),
+    )
+    assert same_safe_projection.evaluator_failure_event_hash == (
+        evidence.evaluator_failure_event_hash
+    )
+    assert same_safe_projection.content_hash == evidence.content_hash
+
+
+@pytest.mark.parametrize(
+    "failure_code",
+    [None, "EVALUATOR_INFRASTRUCTURE_ERROR", "UNTRUSTED_PRIVATE_MARKER_HIT"],
+)
+def test_evaluator_confound_requires_exact_persisted_stable_code(
+    failure_code: str | None,
+) -> None:
+    (
+        suite,
+        binding,
+        result_bytes,
+        qualification,
+        qualification_bytes,
+        usage_bytes,
+        failure_event,
+    ) = _post_submission_evaluator_confound_files()
+    if failure_code is None:
+        event = None
+    else:
+        event_payload = failure_event.model_dump(mode="json")
+        event_payload["payload"]["error_code"] = failure_code
+        event = RunEvent.model_validate(event_payload)
+
+    if failure_code == "UNTRUSTED_PRIVATE_MARKER_HIT":
+        evidence = project_authenticated_heldout_ac_persisted_evidence(
+            suite=suite,
+            execution_hash=EXECUTION_HASH,
+            expected_pricing_binding_hash=PRICING_HASH,
+            order=1,
+            task_evaluator_binding=binding,
+            persisted_result_bytes=result_bytes,
+            qualification_bytes=qualification_bytes,
+            recomputed_qualification=qualification,
+            usage_evidence_bytes=usage_bytes,
+            receipt_validation=None,
+            receipt_bytes=None,
+            evaluator_failure_event=event,
+        )
+        assert evidence.evaluator_failure_code == "UNTRUSTED_PRIVATE_MARKER_HIT"
+        return
+
+    with pytest.raises(ContractError, match="typed event|not trusted"):
+        project_authenticated_heldout_ac_persisted_evidence(
+            suite=suite,
+            execution_hash=EXECUTION_HASH,
+            expected_pricing_binding_hash=PRICING_HASH,
+            order=1,
+            task_evaluator_binding=binding,
+            persisted_result_bytes=result_bytes,
+            qualification_bytes=qualification_bytes,
+            recomputed_qualification=qualification,
+            usage_evidence_bytes=usage_bytes,
+            receipt_validation=None,
+            receipt_bytes=None,
+            evaluator_failure_event=event,
+        )
+
+
+def test_evaluator_confound_requires_runner_event_provenance() -> None:
+    (
+        suite,
+        binding,
+        result_bytes,
+        qualification,
+        qualification_bytes,
+        usage_bytes,
+        failure_event,
+    ) = _post_submission_evaluator_confound_files()
+    changed = failure_event.model_dump(mode="json")
+    changed["actor"] = "evaluator"
+
+    with pytest.raises(ContractError, match="not trusted"):
+        project_authenticated_heldout_ac_persisted_evidence(
+            suite=suite,
+            execution_hash=EXECUTION_HASH,
+            expected_pricing_binding_hash=PRICING_HASH,
+            order=1,
+            task_evaluator_binding=binding,
+            persisted_result_bytes=result_bytes,
+            qualification_bytes=qualification_bytes,
+            recomputed_qualification=qualification,
+            usage_evidence_bytes=usage_bytes,
+            receipt_validation=None,
+            receipt_bytes=None,
+            evaluator_failure_event=RunEvent.model_validate(changed),
         )

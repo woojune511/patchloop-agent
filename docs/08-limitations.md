@@ -33,8 +33,11 @@ Historical milestone-by-milestone limitations are archived at
 - Both conditions succeeded on two development tasks with one repetition. Structured used fewer tokens/cost in both,
   but there is no variance estimate, causal attribution, held-out validation or population memory-benefit claim.
 
-R7 ran one structured row: it resolved, but CRLF qualification bytes failed LF authentication before settlement; 47
-rows were not started. There is no A/C contrast, official analysis or memory claim. R11 grants no runtime authority.
+Held-out R7 stopped at 0 settled/1 unsettled/47 not-started. R11 later stopped at 2 settled/1 observed-unsettled/45
+not-started. Its first Loguru row passed, its no-memory Loguru row failed hidden tests, and Dagster/no-memory never
+reached evaluation after a control-contract collision. There is no complete A/C contrast, official analysis or memory
+claim. Settled `$0.15699525` and total observed-started `$0.41801625` are accounting observations, not an invoice or
+performance estimate.
 
 ## Evaluator-v1 correctness gap
 
@@ -46,6 +49,9 @@ rows were not started. There is no A/C contrast, official analysis or memory cla
   are offline correction/wrapper evidence. `docs/09-evidence.md` owns exact limits and unknown accounting.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
+- R11 showed that evaluator-private checker redactions could falsely fail safety and raw private check IDs could
+  self-collide with control scanning. The successor fixes these exact trust-domain and serialization paths; it does not
+  retroactively change R11 verdicts or prove all leakage channels absent.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit
   direct IDs but do not prove confidentiality against dictionary/equality inference.
 - Historical evaluator-v1 artifacts, including D-098, are not regraded. They must not be described as independently
@@ -64,6 +70,11 @@ do not prove global identity/exclusion or grant new provider, evaluator, agent o
 
 Repository-local logs do not prove cross-clone uniqueness. D-118/D-119/D-121 and user-reported Docker boundaries are
 historical; current authority is source/artifacts plus `docs/current-status.md`.
+
+The non-serialized runtime capability is a provenance gate inside the trusted Python harness TCB, not a security
+boundary against hostile in-process Python code. Current canonical path containment, content hashes and clean-Git
+checks reject outside-root substitutions, but exact provenance hardening for a qualification leaf symlink remains a
+P2 follow-up.
 
 ## Claims still forbidden
 

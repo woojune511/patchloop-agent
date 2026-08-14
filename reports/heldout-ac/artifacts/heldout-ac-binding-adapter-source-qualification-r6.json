@@ -1,0 +1,113 @@
+{
+  "schema_version": "heldout-ac-binding-adapter-source-qualification-v4",
+  "qualification_id": "core-ac-fixed-bundle-heldout-binding-adapter-20260814-r6",
+  "status": "OFFLINE_BINDING_ADAPTER_SOURCE_QUALIFIED_RUNTIME_MATERIALIZATION_CLOSED",
+  "recorded_at": "2026-08-14T15:13:49.349777Z",
+  "predecessor": {
+    "path": "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r5.json",
+    "file_bytes": 4759,
+    "file_sha256": "sha256:809981c460c9d28e0dbc17e179260e20eb48641489973cac669b6de72282094c",
+    "source_qualification_hash": "sha256:c1dc0d53f5df3cbd8c37cdc453fea738a803177add7a49d6e267b186192d5f59",
+    "original_status": "OFFLINE_BINDING_ADAPTER_SOURCE_QUALIFIED_RUNTIME_MATERIALIZATION_CLOSED",
+    "disposition": "superseded-by-authenticated-completion-integration",
+    "current_source_replay_valid": false
+  },
+  "contract_source_qualification": {
+    "path": "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r4.json",
+    "file_bytes": 22968,
+    "file_sha256": "sha256:ba9149af53555cce6290081ea4e0a6a114b16e4aa31f2f6dc1f078fb07f215ca"
+  },
+  "contract_source_qualification_hash": "sha256:31a9ef38c44682db8fa090c29a9893f091e4567eee96619df94858695bdb9e90",
+  "suite_content_hash": "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa",
+  "dataset_manifest_file_sha256": "sha256:e8cf14ca9dabebcc03c3522e400dfcb79606541e9b11e59f49510ea5c40bebed",
+  "source_files": [
+    {
+      "path": "patchloop/evals/heldout_ac_binding_source_qualification.py",
+      "file_bytes": 18949,
+      "file_sha256": "sha256:69d32d302e3145f1fbd3d6134115fcfdc05340e966c86b5267645f3fbd746384"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_persisted_adapter.py",
+      "file_bytes": 55260,
+      "file_sha256": "sha256:8c34dd4a9ca96e29182f6891ece2c289058c0f36c3fc34e4636202707c0aed36"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_task_evaluator.py",
+      "file_bytes": 13898,
+      "file_sha256": "sha256:131d62692d825c8f217c25200c18e0e5e05bfa14d99918964e092322df7ab488"
+    }
+  ],
+  "source_hash": "sha256:1c3c792fad74bebe97cef74d857513dc3f154d4bbc8e1d9d8d71b17994d954b6",
+  "validation_files": [
+    {
+      "path": "scripts/build_heldout_ac_binding_source_qualification.py",
+      "file_bytes": 401,
+      "file_sha256": "sha256:99a0a4b1edc7eb6079ae64515f1ff2fc8f5110bc9541e0be5e96d20e3ad7ff20"
+    },
+    {
+      "path": "tests/test_heldout_ac_binding_source_qualification.py",
+      "file_bytes": 7988,
+      "file_sha256": "sha256:754a69e234321668d808244c19f2e65db51b0fa094b875f9a2a11a3a1258273f"
+    },
+    {
+      "path": "tests/test_heldout_ac_persisted_adapter.py",
+      "file_bytes": 27790,
+      "file_sha256": "sha256:3d6c9add05fb182b1d9d5ce2dae18268245feb59fbfab7366fb199515e263b4a"
+    },
+    {
+      "path": "tests/test_heldout_ac_task_evaluator.py",
+      "file_bytes": 9618,
+      "file_sha256": "sha256:942a681a5f25474ac644a180bf27904bacdd2b4b7dd108be916332092dfd6ef1"
+    }
+  ],
+  "validation_hash": "sha256:4768a942cad341474cd4c2dc5d436dbab71dc88444b159d57fdd972be61043e5",
+  "projection": {
+    "metadata_task_count": 12,
+    "same_repo_task_count": 6,
+    "cross_repo_task_count": 6,
+    "task_evaluator_plan_content_hash": "sha256:34edbad3f5a31f5d7e16ed2358905c195372a0d1f420c0ac03bd3be6a68668a8",
+    "r4_contract_source_replay_valid": true,
+    "metadata_task_bindings_present": true,
+    "task_package_files_opened": false,
+    "private_task_files_opened": false,
+    "task_evaluator_contract_materializations": 0,
+    "task_evaluator_materializer_source_present": true,
+    "persisted_adapter_source_present": true,
+    "invokes_evaluator_v2_receipt_revalidation": true,
+    "invokes_read_only_trace_recomputation": true,
+    "full_trace_qualification_v2_projection_present": true,
+    "typed_completion_adapter_source_qualified": true,
+    "official_analysis_type_gate_source_qualified": true,
+    "typed_evaluator_confound_codes_preserved": true,
+    "runtime_authentication_capability_source_qualified": true,
+    "serialized_evidence_analysis_ineligible": true,
+    "persisted_official_replay_non_authorizing": true,
+    "authenticated_completion_cost_envelope_bound": true,
+    "authenticated_persisted_rows": 0,
+    "authoritative_complete_matrix_present": false,
+    "official_analysis_present": false
+  },
+  "authority": {
+    "heldout_task_package_access_authorized": false,
+    "heldout_private_content_access_authorized": false,
+    "task_evaluator_contract_materialization_authorized": false,
+    "persisted_runtime_evidence_access_authorized": false,
+    "pricing_refresh_authorized": false,
+    "docker_sdk_or_credential_observation_authorized": false,
+    "provider_evaluator_or_agent_execution_authorized": false,
+    "execution_candidate_authorized": false,
+    "approval_reservation_or_spend_authorized": false,
+    "official_analysis_or_claim_authorized": false,
+    "task_packages_opened": 0,
+    "task_evaluator_contracts_materialized": 0,
+    "persisted_rows_authenticated": 0,
+    "provider_calls_made": 0,
+    "evaluator_calls_made": 0,
+    "agent_runs_made": 0,
+    "docker_calls_made": 0,
+    "sdk_calls_made": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "next_gate": "authorized-task-package-materialization-and-fresh-pricing-before-candidate",
+  "content_hash": "sha256:7ed7a13d43b980604998ad86fae47f70b901da0c7b9d2752ccfc98eab4d81cfc"
+}

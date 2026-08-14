@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 from pathlib import Path
 
@@ -8,6 +9,9 @@ from pydantic import ValidationError
 
 from patchloop.contracts import TaskPackage, task_package_spec_hashes
 from patchloop.errors import ContractError
+from patchloop.evals.evaluator_v2_source_qualification import (
+    evaluator_v2_task_private_markers,
+)
 from patchloop.evals.heldout_ac_task_evaluator import (
     SEALED_PLAN_CONTENT_HASH,
     HeldoutACTaskEvaluatorBindingPlan,
@@ -119,9 +123,12 @@ def test_materialization_builds_a_real_v2_contract_without_serializing_markers(
     assert binding.evaluator_contract.evaluator_source_hash == SOURCE_HASH
     assert binding.evaluator_contract.contract_hash == binding.safety_contract.content_hash
     assert binding.private_marker_count > 1
-    serialized = binding.model_dump_json()
-    assert "synthetic-private-marker" not in serialized
-    assert "synthetic-run-secret" not in serialized
+    serialized = binding.model_dump_json().encode("utf-8")
+    expected_markers = (
+        *evaluator_v2_task_private_markers(package),
+        b"synthetic-run-secret",
+    )
+    assert all(marker not in serialized for marker in expected_markers)
     secret_requirement = next(
         item
         for item in binding.safety_contract.requirements
@@ -129,6 +136,50 @@ def test_materialization_builds_a_real_v2_contract_without_serializing_markers(
     )
     assert secret_requirement.policy_input_count == binding.private_marker_count
     assert secret_requirement.policy_input_hash == binding.private_marker_set_hash
+
+
+def test_exact_12_task_contracts_use_opaque_check_identities_without_marker_collisions() -> None:
+    plan = load_heldout_ac_task_evaluator_plan(repository=ROOT)
+    covered: set[str] = set()
+
+    for expected_task in plan.tasks:
+        package = load_task_package(ROOT / expected_task.task_path)
+        runtime_secret = f"runtime-secret-{expected_task.task_id}".encode()
+        binding = materialize_heldout_ac_task_evaluator_binding(
+            plan=plan,
+            expected_task=expected_task,
+            package=package,
+            evaluator_source_hash=SOURCE_HASH,
+            runtime_secret_markers=(runtime_secret,),
+        )
+        serialized_contract = binding.safety_contract.model_dump_json().encode("utf-8")
+        private_markers = (
+            *evaluator_v2_task_private_markers(package),
+            runtime_secret,
+        )
+
+        assert all(marker not in serialized_contract for marker in private_markers)
+        assert all(
+            f"hidden:{check.id}".encode() not in serialized_contract
+            for check in package.private.hidden_checks
+        )
+        sandbox_requirements = (
+            requirement
+            for requirement in binding.safety_contract.requirements
+            if requirement.control in {"network", "sandbox"}
+        )
+        assert all(
+            re.fullmatch(r"(?:hidden|regression):h_[0-9a-f]{64}", check_id)
+            for requirement in sandbox_requirements
+            for check_id in requirement.check_ids
+        )
+        covered.add(expected_task.task_id)
+
+    assert len(covered) == 12
+    assert {
+        "dagster-subset-partition-definition-selection",
+        "tox-dotted-version-factor-base-python",
+    } <= covered
 
 
 def test_materialization_fails_closed_on_package_or_marker_drift(

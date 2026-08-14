@@ -14,7 +14,6 @@ from pydantic import ValidationError
 
 from patchloop import task_loader
 from patchloop.agent import model as agent_model
-from patchloop.errors import ContractError
 from patchloop.evals import heldout_ac_binding_source_qualification as source_q
 from patchloop.evals import runner as generic_runner
 from patchloop.sandbox import runner as sandbox_runner
@@ -22,7 +21,7 @@ from patchloop.util import sha256_bytes, sha256_json
 from patchloop.verifier import core as verifier_core
 
 ROOT = Path(__file__).resolve().parents[1]
-SEALED_R5_PATH = ROOT / source_q.OUTPUT_PATH
+SEALED_R7_PATH = ROOT / source_q.R7_PATH
 
 
 def _forbidden(label: str):
@@ -55,48 +54,81 @@ def isolated_output(monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
             output.unlink()
 
 
-def test_r5_identity_is_source_only_and_materialization_closed() -> None:
-    assert source_q.SCHEMA_VERSION == "heldout-ac-binding-adapter-source-qualification-v3"
-    assert source_q.QUALIFICATION_ID.endswith("20260814-r5")
+def test_r8_identity_is_source_only_and_materialization_closed() -> None:
+    assert source_q.SCHEMA_VERSION == "heldout-ac-binding-adapter-source-qualification-v6"
+    assert source_q.QUALIFICATION_ID.endswith("20260815-r8")
     assert source_q.STATUS.endswith("RUNTIME_MATERIALIZATION_CLOSED")
     assert source_q.NEXT_GATE == (
         "authorized-task-package-materialization-and-fresh-pricing-before-candidate"
     )
 
 
-def test_historical_builder_fails_closed_without_creating_a_successor(
+def test_r8_builder_is_append_only_idempotent_and_zero_authority(
     isolated_output: Path,
 ) -> None:
-    with pytest.raises(ContractError, match="contract source qualification has drifted"):
-        source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
-    assert not isolated_output.exists()
-
-
-def test_sealed_r5_artifact_bytes_and_closed_authority_are_preserved() -> None:
-    raw = SEALED_R5_PATH.read_bytes()
+    first = source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
+    raw = isolated_output.read_bytes()
+    first_mtime = isolated_output.stat().st_mtime_ns
+    validated = source_q.validate_heldout_ac_binding_source_qualification(repository=ROOT)
+    replay = source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
     payload = json.loads(raw)
 
-    assert len(raw) == 4_759
+    assert first == validated == replay
+    assert isolated_output.read_bytes() == raw
+    assert isolated_output.stat().st_mtime_ns == first_mtime
+    assert first["contract_source_qualification_hash"] == (source_q.R7_CONTRACT_CONTENT_HASH)
+    assert payload["contract_source_qualification"] == {
+        "path": source_q.R7_CONTRACT_PATH.as_posix(),
+        "file_bytes": source_q.R7_CONTRACT_FILE_BYTES,
+        "file_sha256": source_q.R7_CONTRACT_FILE_SHA256,
+    }
+    assert payload["predecessor"] == {
+        "path": source_q.R7_PATH.as_posix(),
+        "file_bytes": source_q.R7_FILE_BYTES,
+        "file_sha256": source_q.R7_FILE_SHA256,
+        "source_qualification_hash": source_q.R7_CONTENT_HASH,
+        "source_hash": source_q.R7_SOURCE_HASH,
+        "contract_source_qualification_hash": (
+            "sha256:01b16ddfe83524e539fcc5624f74fa2f6922a9266f1095b1a6b992cdfd4c8fcf"
+        ),
+        "original_status": source_q.STATUS,
+        "disposition": "invalidated-by-formatting-and-contract-source-successor",
+        "invalidation_reason": "post-r7-formatting-and-contract-module-scope-boundary",
+        "current_source_replay_valid": False,
+    }
+    assert payload["projection"]["r7_contract_source_replay_valid"] is True
+    assert payload["projection"]["full_trace_qualification_v2_projection_present"] is True
+    assert payload["projection"]["typed_completion_adapter_source_qualified"] is True
+    assert payload["projection"]["official_analysis_type_gate_source_qualified"] is True
+    assert payload["projection"]["typed_evaluator_confound_codes_preserved"] is True
+    assert payload["projection"]["runtime_authentication_capability_source_qualified"] is True
+    assert payload["projection"]["serialized_evidence_analysis_ineligible"] is True
+    assert payload["projection"]["persisted_official_replay_non_authorizing"] is True
+    assert payload["projection"]["authenticated_completion_cost_envelope_bound"] is True
+    assert all(
+        value is False
+        or (type(value) is int and value == 0)
+        or (type(value) is float and value == 0.0)
+        for value in payload["authority"].values()
+    )
+
+
+def test_sealed_r7_artifact_bytes_and_closed_authority_are_preserved() -> None:
+    raw = SEALED_R7_PATH.read_bytes()
+    payload = json.loads(raw)
+
+    assert len(raw) == 5_697
     assert sha256_bytes(raw) == (
-        "sha256:809981c460c9d28e0dbc17e179260e20eb48641489973cac669b6de72282094c"
+        "sha256:9e9629570eae6fb2aaaeddd4be7f139a8cc0fc539f6a86cbfd5e8bf01ad76a0f"
     )
     assert payload["content_hash"] == (
-        "sha256:c1dc0d53f5df3cbd8c37cdc453fea738a803177add7a49d6e267b186192d5f59"
+        "sha256:d1c8049f80e11b70e37895f6eca2ad7a56c74d890229f33ff2ec31d52e627b1b"
     )
-    assert payload["predecessor"] == {
-        "path": source_q.R4_PATH.as_posix(),
-        "file_bytes": source_q.R4_FILE_BYTES,
-        "file_sha256": source_q.R4_FILE_SHA256,
-        "source_qualification_hash": source_q.R4_CONTENT_HASH,
-        "original_status": source_q.STATUS,
-        "disposition": "superseded-by-final-format-conformance",
-        "current_source_replay_valid": False,
-        "r3_source_qualification_hash": source_q.R3_CONTENT_HASH,
-        "r2_source_qualification_hash": source_q.R2_CONTENT_HASH,
-    }
+    assert payload["schema_version"] == "heldout-ac-binding-adapter-source-qualification-v5"
+    assert payload["qualification_id"].endswith("20260815-r7")
     projection = payload["projection"]
     assert projection["metadata_task_count"] == 12
-    assert projection["r2_contract_source_replay_valid"] is True
+    assert projection["r6_contract_source_replay_valid"] is True
     assert projection["task_evaluator_materializer_source_present"] is True
     assert projection["persisted_adapter_source_present"] is True
     assert projection["invokes_evaluator_v2_receipt_revalidation"] is True
@@ -125,15 +157,15 @@ def test_gate_never_opens_a_task_path(
 
     monkeypatch.setattr(Path, "read_bytes", read_bytes)
     monkeypatch.setattr(Path, "read_text", read_text)
-    with pytest.raises(ContractError, match="contract source qualification has drifted"):
-        source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
+    source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
 
     assert opened
     assert all("/tasks/" not in path for path in opened)
 
 
-def test_equal_but_wrong_scalar_type_fails_closed() -> None:
-    payload = json.loads(SEALED_R5_PATH.read_bytes())
+def test_equal_but_wrong_scalar_type_fails_closed(isolated_output: Path) -> None:
+    source_q.run_heldout_ac_binding_source_qualification(repository=ROOT)
+    payload = json.loads(isolated_output.read_bytes())
     payload["projection"]["metadata_task_count"] = 12.0
     payload["content_hash"] = sha256_json(
         {key: value for key, value in payload.items() if key != "content_hash"}
