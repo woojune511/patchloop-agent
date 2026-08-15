@@ -104,9 +104,12 @@ def _build(output: Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
 
 
 def test_identity_is_contract_only_and_does_not_reuse_the_live_runner() -> None:
-    assert source_q.SCHEMA_VERSION == "heldout-ac-contract-source-qualification-v8"
+    assert source_q.SCHEMA_VERSION == "heldout-ac-contract-source-qualification-v10"
     assert source_q.QUALIFICATION_ID == (
-        "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r8"
+        "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r10"
+    )
+    assert source_q.OUTPUT_PATH.as_posix() == (
+        "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r10.json"
     )
     assert source_q.STATUS == ("OFFLINE_CONTRACT_SOURCE_QUALIFIED_TASK_EVALUATOR_BINDING_CLOSED")
     assert source_q.SUITE_PATH.as_posix() == ("experiments/heldout-ac-suite-20260814-v1.yaml")
@@ -141,8 +144,10 @@ def test_build_validate_and_replay_are_append_only_canonical_and_no_call(
         "status": source_q.STATUS,
         "qualification_id": source_q.QUALIFICATION_ID,
         "source_qualification_hash": payload["content_hash"],
-        "predecessor_disposition": ("invalidated-by-development-budget-amendment-successor"),
-        "predecessor_file_sha256": source_q.R7_PREDECESSOR_FILE_SHA256,
+        "predecessor_disposition": (
+            "invalidated-by-post-seal-candidate-v3-realized-schedule-and-known-history-replay-successor"
+        ),
+        "predecessor_file_sha256": source_q.R9_PREDECESSOR_FILE_SHA256,
         "contract_import_traversal": "module-scope-imports-v1",
         "contract_source_hash": payload["contract_source_hash"],
         "suite_content_hash": payload["suite_content_hash"],
@@ -172,18 +177,22 @@ def test_artifact_binds_exact_prereg_suite_plan_and_closed_adapters(
     _summary, payload, _raw = _build(isolated_output)
 
     assert payload["predecessor"] == {
-        "path": source_q.R7_PREDECESSOR_PATH.as_posix(),
-        "schema_version": "heldout-ac-contract-source-qualification-v7",
+        "path": source_q.R9_PREDECESSOR_PATH.as_posix(),
+        "schema_version": "heldout-ac-contract-source-qualification-v9",
         "qualification_id": (
-            "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r7"
+            "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r9"
         ),
         "original_status": source_q.STATUS,
-        "disposition": "invalidated-by-development-budget-amendment-successor",
-        "invalidation_reason": "post-r7-cost-exposure-reduction-contract-amendment",
-        "source_qualification_hash": source_q.R7_PREDECESSOR_CONTENT_HASH,
-        "contract_source_hash": source_q.R7_PREDECESSOR_CONTRACT_SOURCE_HASH,
-        "file_bytes": source_q.R7_PREDECESSOR_FILE_BYTES,
-        "file_sha256": source_q.R7_PREDECESSOR_FILE_SHA256,
+        "disposition": (
+            "invalidated-by-post-seal-candidate-v3-realized-schedule-and-known-history-replay-successor"
+        ),
+        "invalidation_reason": (
+            "post-r9-candidate-v3-realized-schedule-and-known-history-replay-fixes"
+        ),
+        "source_qualification_hash": source_q.R9_PREDECESSOR_CONTENT_HASH,
+        "contract_source_hash": source_q.R9_PREDECESSOR_CONTRACT_SOURCE_HASH,
+        "file_bytes": source_q.R9_PREDECESSOR_FILE_BYTES,
+        "file_sha256": source_q.R9_PREDECESSOR_FILE_SHA256,
         "current_source_replay_valid": False,
         "task_package_bindings": 0,
         "evaluator_v2_task_contract_bindings": 0,
@@ -240,8 +249,15 @@ def test_artifact_binds_exact_prereg_suite_plan_and_closed_adapters(
         "heldout-ac-authenticated-completion-v1"
     )
     assert projection["authenticated_persisted_evidence_schema"] == (
-        "heldout-ac-authenticated-persisted-evidence-v4"
+        "heldout-ac-authenticated-persisted-evidence-v5"
     )
+    assert projection["completion_campaign_authority_schema"] == (
+        "heldout-ac-completion-campaign-authority-v1"
+    )
+    assert projection["completion_campaign_authority_current_candidate_schema"] == (
+        "heldout-ac-execution-candidate-v3"
+    )
+    assert projection["completion_campaign_authority_realized_schedule_hash_required"] is True
     assert projection["authenticated_qualification_projection_schema"] == (
         "heldout-ac-authenticated-trace-qualification-projection-v2"
     )
@@ -253,6 +269,10 @@ def test_artifact_binds_exact_prereg_suite_plan_and_closed_adapters(
     assert projection["analysis_surface_status"] == "unofficial-preview-only"
     assert projection["authoritative_persisted_producer_adapter_present"] is True
     assert projection["trace_qualification_v2_persisted_adapter_bound"] is True
+    assert projection["candidate_runtime_tuple_authentication_bound"] is True
+    assert projection["campaign_cost_control_authentication_bound"] is True
+    assert projection["current_persisted_replay_candidate_authority_required"] is True
+    assert projection["known_historical_replay_authority_surface"] == "paid-full-closure-only"
     assert projection["runtime_authentication_capability_required"] is True
     assert projection["serialized_persisted_evidence_analysis_eligible"] is False
     assert projection["authenticated_completion_capability_required"] is True
@@ -270,15 +290,15 @@ def test_artifact_binds_exact_prereg_suite_plan_and_closed_adapters(
     assert projection["effective_hard_cap_nanos"] == 60_000_000_000
 
 
-def test_r7_predecessor_is_read_only_and_exactly_preserved(isolated_output: Path) -> None:
-    predecessor = ROOT / source_q.R7_PREDECESSOR_PATH
+def test_r9_predecessor_is_read_only_and_exactly_preserved(isolated_output: Path) -> None:
+    predecessor = ROOT / source_q.R9_PREDECESSOR_PATH
     before = predecessor.read_bytes()
     before_mtime = predecessor.stat().st_mtime_ns
 
     _build(isolated_output)
 
-    assert len(before) == source_q.R7_PREDECESSOR_FILE_BYTES
-    assert sha256_bytes(before) == source_q.R7_PREDECESSOR_FILE_SHA256
+    assert len(before) == source_q.R9_PREDECESSOR_FILE_BYTES
+    assert sha256_bytes(before) == source_q.R9_PREDECESSOR_FILE_SHA256
     assert predecessor.read_bytes() == before
     assert predecessor.stat().st_mtime_ns == before_mtime
 
@@ -326,17 +346,55 @@ def test_source_and_validation_closures_are_canonical_and_task_free(
     assert "patchloop/evals/heldout_ac_live_contract.py" not in closure
     assert "patchloop/evals/heldout_ac_execution.py" not in closure
     assert "patchloop/evals/heldout_ac_task_pricing_materialization.py" not in closure
+    assert "patchloop/evals/heldout_ac_preflight_source_qualification.py" not in closure
     assert "patchloop/evals/runner.py" not in closure
-    assert any(
-        item["path"] == "tests/test_heldout_ac_persisted_adapter.py" for item in validation_files
-    )
-    assert any(
-        item["path"] == "tests/test_heldout_ac_budget_amendment.py" for item in validation_files
-    )
+    validation_paths = {item["path"] for item in validation_files}
+    assert {
+        "tests/test_heldout_ac_budget_amendment.py",
+        "tests/test_heldout_ac_completion.py",
+        "tests/test_heldout_ac_persisted_adapter.py",
+        "tests/test_heldout_ac_source_qualification.py",
+    }.issubset(validation_paths)
     assert all(not path.startswith("tasks/") for path in closure)
     assert all(not item["path"].startswith("tasks/") for item in validation_files)
     assert b'"task_bindings"' not in raw
     assert b'"private_spec_hash"' not in raw
+
+
+def test_completion_contract_closure_excludes_runtime_activation_modules() -> None:
+    from patchloop.evals.heldout_ac_execution_source_qualification import (
+        SOURCE_ENTRYPOINTS,
+        _paid_path_import_closure,
+    )
+
+    contract_closure = {
+        item.as_posix()
+        for item in source_q._contract_import_closure(ROOT)  # noqa: SLF001
+    }
+    paid_full_closure = {
+        item.as_posix() for item in _paid_path_import_closure(ROOT, entrypoints=SOURCE_ENTRYPOINTS)
+    }
+    activation_modules = {
+        "patchloop/evals/heldout_ac_execution.py",
+        "patchloop/evals/heldout_ac_execution_source_qualification.py",
+        "patchloop/evals/heldout_ac_task_pricing_materialization.py",
+        "patchloop/evals/heldout_ac_binding_source_qualification.py",
+        "patchloop/evals/heldout_ac_preflight.py",
+        "patchloop/evals/heldout_ac_preflight_source_qualification.py",
+        "patchloop/evals/heldout_ac_dispatcher.py",
+    }
+
+    assert "patchloop/evals/heldout_ac_completion.py" in contract_closure
+    assert "patchloop/evals/heldout_ac_contracts.py" in contract_closure
+    assert activation_modules.isdisjoint(contract_closure)
+    assert contract_closure != paid_full_closure
+    assert "patchloop/evals/heldout_ac_source_qualification.py" in contract_closure
+    assert "patchloop/evals/heldout_ac_source_qualification.py" not in paid_full_closure
+    assert {
+        "patchloop/evals/heldout_ac_execution.py",
+        "patchloop/evals/heldout_ac_task_pricing_materialization.py",
+        "patchloop/evals/heldout_ac_preflight_source_qualification.py",
+    }.issubset(paid_full_closure)
 
 
 def test_contract_model_rejects_an_explicit_entrypoint_omitted_from_closure(

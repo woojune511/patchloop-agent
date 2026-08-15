@@ -48,12 +48,15 @@ from patchloop.evals.heldout_ac_completion import (
 from patchloop.evals.heldout_ac_contracts import (
     HELDOUT_AC_SUITE_ID,
     HeldoutACFrozenModel,
+    HeldoutACSuite,
 )
 from patchloop.evals.heldout_ac_execution import (
     HeldoutACExecutionCandidate,
     build_heldout_ac_run_manifest,
     heldout_ac_campaign_identity_hash,
+    heldout_ac_candidate_matches_current_execution_inputs,
     heldout_ac_candidate_token_limits,
+    heldout_ac_completion_campaign_authority,
     materialize_heldout_ac_runtime_task_authority,
 )
 from patchloop.evals.heldout_ac_live_contract import (
@@ -71,6 +74,10 @@ from patchloop.evals.heldout_ac_live_contract import (
 )
 from patchloop.evals.heldout_ac_persisted_adapter import (
     HELDOUT_AC_PRICE_NANOS_PER_TOKEN,
+    LEGACY_PERSISTED_EVIDENCE_SCHEMA_VERSION,
+    LEGACY_ROW_SCHEMA_VERSION,
+    PERSISTED_EVIDENCE_SCHEMA_VERSION,
+    ROW_SCHEMA_VERSION,
     EvaluatorFailureCode,
     HeldoutACAgentTerminalEventProjection,
     HeldoutACAuthenticatedPersistedEvidence,
@@ -79,6 +86,8 @@ from patchloop.evals.heldout_ac_persisted_adapter import (
     HeldoutACPersistedUsageEvidence,
     authenticate_heldout_ac_persisted_evidence,
     validate_heldout_ac_persisted_usage_cross_binding,
+    validate_heldout_ac_qualification_runtime_cost_authority,
+    validate_heldout_ac_usage_against_authenticated_budget,
 )
 from patchloop.evals.heldout_ac_suite import load_heldout_ac_suite
 from patchloop.runtime import make_run_id, repository_root, runtime_root
@@ -94,9 +103,28 @@ SETTLED_ROW_SCHEMA_VERSION = "heldout-ac-settled-campaign-row-v1"
 SETTLED_ROW_SCHEMA_VERSION_V2 = "heldout-ac-settled-campaign-row-v2"
 CONFOUND_SCHEMA_VERSION = "heldout-ac-campaign-confound-v1"
 CONFOUND_SCHEMA_VERSION_V2 = "heldout-ac-campaign-confound-v2"
-CONFOUND_EVIDENCE_SCHEMA_VERSION = "heldout-ac-confounded-durable-evidence-v1"
+LEGACY_CONFOUND_EVIDENCE_SCHEMA_VERSION = "heldout-ac-confounded-durable-evidence-v1"
+CONFOUND_EVIDENCE_SCHEMA_VERSION = "heldout-ac-confounded-durable-evidence-v2"
 COST_OBSERVATION_SCHEMA_VERSION = "heldout-ac-dispatched-cost-observation-v1"
 NOT_STARTED_SCHEMA_VERSION = "heldout-ac-campaign-not-started-row-v1"
+
+_HISTORICAL_LEGACY_AUTHORITY_RESULTS = {
+    "sha256:2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa": (
+        "sha256:70657e66a2117c310f1626d1d7c993e020cf77fcd7b860962c2e43c68e368e04",
+        "sha256:0c810c442e4cafcf5f14013ed9dbf3b2fce79c48b09618cbe9239d1e15ea3bc3",
+        "sha256:8e1968814691b597c7a04f746699ab690dba40dcb7b319e52d9c30642e937472",
+    ),
+    "sha256:f48a0de27f8b3e46e627d957dfd714b395c94855587ccfc36e78028fa711a6b0": (
+        "sha256:9298b78252bf0ed5d74003a15ddbde9ead588312df79d1fc4a423538e0a58079",
+        "sha256:7f60cae9c08cea2c528482b8a1c7c9ae0ce2befb4f995413bcbc847e24c307a8",
+        "sha256:b5ea7ddd8cb7a5bdd5fa77d8b6ab100ad24c200f432d02b6ba23bfa962515a42",
+    ),
+    "sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd": (
+        "sha256:77a8a129f031041c447bc46ef8a29446bf1c39bae9ef9404cf1598f3f037ed34",
+        "sha256:1860badbfc1d21b0ec244e44b04dc768b5c8530d7db179a2765c89312eec6619",
+        "sha256:8f4365522e647f916dcfc17fb0c4a9101b4dab1c56051a31ac03209734ce30a6",
+    ),
+}
 
 MatrixConfound = Literal[
     "provider-sdk-docker-or-evaluator-infrastructure-error",
@@ -271,8 +299,21 @@ class HeldoutACEvaluatorFailureEventProjection(HeldoutACFrozenModel):
 
 
 class HeldoutACConfoundedDurableEvidence(HeldoutACFrozenModel):
-    schema_version: Literal[CONFOUND_EVIDENCE_SCHEMA_VERSION] = CONFOUND_EVIDENCE_SCHEMA_VERSION
+    schema_version: Literal[
+        LEGACY_CONFOUND_EVIDENCE_SCHEMA_VERSION,
+        CONFOUND_EVIDENCE_SCHEMA_VERSION,
+    ] = CONFOUND_EVIDENCE_SCHEMA_VERSION
     run_id: str = Field(pattern=r"^run_[A-Za-z0-9_-]+$")
+    runtime_tuple_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    campaign_cost_control_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
     result_relative_path: str
     result_file_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     result_semantic_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
@@ -300,6 +341,13 @@ class HeldoutACConfoundedDurableEvidence(HeldoutACFrozenModel):
 
     @model_validator(mode="after")
     def validate_evidence(self) -> HeldoutACConfoundedDurableEvidence:
+        current_schema = self.schema_version == CONFOUND_EVIDENCE_SCHEMA_VERSION
+        authority_fields = (self.runtime_tuple_hash, self.campaign_cost_control_hash)
+        if not (
+            current_schema == all(isinstance(value, str) for value in authority_fields)
+            and (current_schema or all(value is None for value in authority_fields))
+        ):
+            raise ValueError("confounded durable authority shape differs")
         qualification_fields = (
             self.qualification_relative_path,
             self.qualification_file_sha256,
@@ -396,6 +444,29 @@ class HeldoutACNotStartedRow(HeldoutACFrozenModel):
     trigger: MatrixConfound
 
 
+def _validate_campaign_result_common(result: Any) -> None:
+    if result.terminal_settled_runs != len(result.settled_rows):
+        raise ValueError("held-out settled run count differs")
+    if result.not_started_runs != len(result.not_started_rows):
+        raise ValueError("held-out not-started run count differs")
+    expected_boundary = (
+        (252_000_000_000, 275_000_000_000)
+        if result.schema_version == CAMPAIGN_RESULT_SCHEMA_VERSION
+        else (57_600_000_000, 60_000_000_000)
+    )
+    if (result.full_schedule_reserve_nanos, result.hard_cap_nanos) != expected_boundary:
+        raise ValueError("held-out result cost boundary differs")
+    if result.full_schedule_reserve_nanos > result.hard_cap_nanos:
+        raise ValueError("held-out result reserve exceeds hard cap")
+    settled_cost = sum(
+        row.authenticated_row.usage_evidence.token_derived_cost_nanos for row in result.settled_rows
+    )
+    if result.settled_model_cost_nanos != settled_cost:
+        raise ValueError("held-out settled model cost differs")
+    if settled_cost > result.full_schedule_reserve_nanos:
+        raise ValueError("held-out settled model cost exceeds its reserve")
+
+
 class HeldoutACCampaignResult(HeldoutACFrozenModel):
     schema_version: Literal[CAMPAIGN_RESULT_SCHEMA_VERSION] = CAMPAIGN_RESULT_SCHEMA_VERSION
     evidence_status: Literal["authenticated-persisted-campaign"]
@@ -437,22 +508,9 @@ class HeldoutACCampaignResult(HeldoutACFrozenModel):
     def validate_result(self) -> HeldoutACCampaignResult:
         if type(self) is not HeldoutACCampaignResult:
             return self
+        _validate_campaign_result_common(self)
         settled_orders = tuple(row.authenticated_row.order for row in self.settled_rows)
         not_started_orders = tuple(row.order for row in self.not_started_rows)
-        if self.terminal_settled_runs != len(self.settled_rows):
-            raise ValueError("held-out settled run count differs")
-        if self.not_started_runs != len(self.not_started_rows):
-            raise ValueError("held-out not-started run count differs")
-        if (self.full_schedule_reserve_nanos, self.hard_cap_nanos) not in {
-            (252_000_000_000, 275_000_000_000),
-            (57_600_000_000, 60_000_000_000),
-        }:
-            raise ValueError("held-out result cost boundary differs")
-        if self.settled_model_cost_nanos != sum(
-            row.authenticated_row.usage_evidence.token_derived_cost_nanos
-            for row in self.settled_rows
-        ):
-            raise ValueError("held-out settled model cost differs")
         expected_unsettled = int(
             self.confound is not None and self.confound.run_started_event_written
         )
@@ -501,6 +559,7 @@ class HeldoutACCampaignResultV2(HeldoutACCampaignResult):
 
     @model_validator(mode="after")
     def validate_result_v2(self) -> HeldoutACCampaignResultV2:
+        _validate_campaign_result_common(self)
         settled_orders = tuple(row.authenticated_row.order for row in self.settled_rows)
         not_started_orders = tuple(row.order for row in self.not_started_rows)
         settled_cost = sum(
@@ -530,6 +589,8 @@ class HeldoutACCampaignResultV2(HeldoutACCampaignResult):
             and self.cost_accounting_complete == accounting_complete
         ):
             raise ValueError("held-out campaign v2 counts or cost accounting differ")
+        if self.observed_started_model_cost_nanos > self.full_schedule_reserve_nanos:
+            raise ValueError("held-out observed-started model cost exceeds its reserve")
         if self.disposition == "complete-matrix":
             complete = (
                 settled_orders == tuple(range(1, 49))
@@ -549,6 +610,9 @@ class HeldoutACCampaignResultV2(HeldoutACCampaignResult):
                 == self.evaluator_source_hash
                 and self.authenticated_completion.evaluator_source_qualification_hash
                 == self.source_qualification_hash
+                and self.authenticated_completion.full_schedule_reserve_nanos
+                == self.full_schedule_reserve_nanos
+                and self.authenticated_completion.hard_cap_nanos == self.hard_cap_nanos
                 and self.official_analysis_envelope.completion_projection_hash
                 == self.authenticated_completion.content_hash
             )
@@ -571,6 +635,106 @@ class HeldoutACCampaignResultV2(HeldoutACCampaignResult):
         if self.content_hash != expected:
             raise ValueError("held-out campaign result v2 content hash differs")
         return self
+
+
+def _historical_legacy_authority_replay_matches(
+    *,
+    candidate: HeldoutACExecutionCandidate,
+    result: HeldoutACCampaignResult | HeldoutACCampaignResultV2,
+    result_bytes: bytes,
+) -> bool:
+    return (
+        _historical_legacy_authority_replay_status(
+            execution_hash=candidate.execution_hash,
+            result_file_sha256=sha256_bytes(result_bytes),
+            result_content_hash=result.content_hash,
+            journal_file_sha256=result.journal_file_sha256,
+        )
+        == "exact-historical-replay"
+    )
+
+
+def _historical_legacy_authority_replay_status(
+    *,
+    execution_hash: str,
+    result_file_sha256: str,
+    result_content_hash: str,
+    journal_file_sha256: str,
+) -> Literal["not-historical", "exact-historical-replay"]:
+    binding = _HISTORICAL_LEGACY_AUTHORITY_RESULTS.get(execution_hash)
+    if binding is None:
+        return "not-historical"
+    if (result_file_sha256, result_content_hash, journal_file_sha256) != binding:
+        raise HeldoutACDispatcherError("known historical held-out result artifact tuple differs")
+    return "exact-historical-replay"
+
+
+def _candidate_suite(
+    candidate: HeldoutACExecutionCandidate,
+    *,
+    repository: Path | None = None,
+) -> HeldoutACSuite:
+    suite = load_heldout_ac_suite(_SUITE_PATH, repository=repository)
+    if suite.content_hash != candidate.suite_content_hash:
+        raise HeldoutACDispatcherError("held-out candidate suite authority differs")
+    return suite
+
+
+def _require_settled_candidate_authority(
+    settled: HeldoutACSettledCampaignRow | HeldoutACSettledCampaignRowV2,
+    *,
+    candidate: HeldoutACExecutionCandidate,
+    legacy_replay_authorized: bool,
+) -> None:
+    row = settled.authenticated_row
+    if row.schema_version == LEGACY_ROW_SCHEMA_VERSION:
+        if not legacy_replay_authorized or (
+            row.runtime_tuple_hash is not None or row.campaign_cost_control_hash is not None
+        ):
+            raise HeldoutACDispatcherError(
+                "legacy held-out row is not an exact immutable historical replay"
+            )
+        if isinstance(settled, HeldoutACSettledCampaignRowV2) and (
+            settled.authenticated_evidence.schema_version
+            != LEGACY_PERSISTED_EVIDENCE_SCHEMA_VERSION
+            or settled.authenticated_evidence.runtime_tuple_hash is not None
+            or settled.authenticated_evidence.campaign_cost_control_hash is not None
+        ):
+            raise HeldoutACDispatcherError("legacy held-out row/evidence schemas differ")
+        return
+    if not (
+        row.schema_version == ROW_SCHEMA_VERSION
+        and isinstance(settled, HeldoutACSettledCampaignRowV2)
+        and settled.authenticated_evidence.schema_version == PERSISTED_EVIDENCE_SCHEMA_VERSION
+        and row.runtime_tuple_hash == candidate.runtime_tuple_hash
+        and row.campaign_cost_control_hash == candidate.campaign_cost_control.content_hash
+        and settled.authenticated_evidence.runtime_tuple_hash == candidate.runtime_tuple_hash
+        and settled.authenticated_evidence.campaign_cost_control_hash
+        == candidate.campaign_cost_control.content_hash
+    ):
+        raise HeldoutACDispatcherError("held-out settled candidate authority differs")
+
+
+def _require_durable_candidate_authority(
+    durable: HeldoutACConfoundedDurableEvidence,
+    *,
+    candidate: HeldoutACExecutionCandidate,
+    legacy_replay_authorized: bool,
+) -> None:
+    if durable.schema_version == LEGACY_CONFOUND_EVIDENCE_SCHEMA_VERSION:
+        if not legacy_replay_authorized or (
+            durable.runtime_tuple_hash is not None or durable.campaign_cost_control_hash is not None
+        ):
+            raise HeldoutACDispatcherError(
+                "legacy held-out durable evidence is not an exact immutable historical replay"
+            )
+        return
+    if not (
+        durable.schema_version == CONFOUND_EVIDENCE_SCHEMA_VERSION
+        and durable.runtime_tuple_hash == candidate.runtime_tuple_hash
+        and durable.campaign_cost_control_hash == candidate.campaign_cost_control.content_hash
+    ):
+        raise HeldoutACDispatcherError("held-out durable candidate authority differs")
 
 
 def _root(path: str | Path | None) -> Path:
@@ -665,12 +829,13 @@ def _claim_paid_campaign_identity(
         raise HeldoutACDispatcherError(
             "held-out paid campaign identity was already consumed by this source and schedule"
         )
+    ledger_schema_versions = {
+        "heldout-ac-execution-candidate-v1": "heldout-ac-paid-campaign-one-use-v1",
+        "heldout-ac-execution-candidate-v2": "heldout-ac-paid-campaign-one-use-v2",
+        "heldout-ac-execution-candidate-v3": "heldout-ac-paid-campaign-one-use-v3",
+    }
     body = {
-        "schema_version": (
-            "heldout-ac-paid-campaign-one-use-v1"
-            if candidate.schema_version == "heldout-ac-execution-candidate-v1"
-            else "heldout-ac-paid-campaign-one-use-v2"
-        ),
+        "schema_version": ledger_schema_versions[candidate.schema_version],
         "campaign_identity_hash": identity,
         "execution_hash": candidate.execution_hash,
         "suite_content_hash": candidate.suite_content_hash,
@@ -683,6 +848,8 @@ def _claim_paid_campaign_identity(
         "hard_cap_nanos": candidate.campaign_cost_control.hard_cap_nanos,
         "claimed_at": _utc_text(claimed_at),
     }
+    if candidate.realized_schedule_hash is not None:
+        body["realized_schedule_hash"] = candidate.realized_schedule_hash
     payload = {**body, "content_hash": sha256_json(body)}
     encoded = (json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode(
         "utf-8"
@@ -731,6 +898,13 @@ def prepare_heldout_ac_approved_plan(
     ):
         raise HeldoutACDispatcherError(
             "held-out candidate source qualification differs from the current successor"
+        )
+    if not heldout_ac_candidate_matches_current_execution_inputs(
+        parsed,
+        repository=_repository(repository),
+    ):
+        raise HeldoutACDispatcherError(
+            "held-out candidate differs from the sealed execution inputs"
         )
     run_root = _root(root)
     digest = parsed.execution_hash.removeprefix("sha256:")
@@ -1047,6 +1221,7 @@ def _persist_cost_observation(
 def _durable_evidence_from_cost_observation(
     observation: HeldoutACDispatchedCostObservation,
     *,
+    candidate: HeldoutACExecutionCandidate,
     run_root: Path,
     observation_relative_path: Path,
 ) -> HeldoutACConfoundedDurableEvidence:
@@ -1067,6 +1242,8 @@ def _durable_evidence_from_cost_observation(
     body = {
         "schema_version": CONFOUND_EVIDENCE_SCHEMA_VERSION,
         "run_id": observation.run_id,
+        "runtime_tuple_hash": candidate.runtime_tuple_hash,
+        "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
         "result_relative_path": observation.result_relative_path,
         "result_file_sha256": observation.result_file_sha256,
         "result_semantic_hash": observation.result_semantic_hash,
@@ -1205,6 +1382,32 @@ def _extend_durable_evidence_from_files(
         raise HeldoutACDispatcherError(
             "held-out durable usage/result cross-binding differs"
         ) from exc
+    if cost_only.schema_version == CONFOUND_EVIDENCE_SCHEMA_VERSION:
+        _require_durable_candidate_authority(
+            cost_only,
+            candidate=candidate,
+            legacy_replay_authorized=False,
+        )
+        assert isinstance(qualification, dict)
+        try:
+            qualification_budget = validate_heldout_ac_qualification_runtime_cost_authority(
+                qualification=qualification,
+                suite=_candidate_suite(candidate),
+                expected_runtime_tuple_hash=candidate.runtime_tuple_hash,
+                expected_campaign_cost_control_hash=(candidate.campaign_cost_control.content_hash),
+            )
+            validate_heldout_ac_usage_against_authenticated_budget(
+                usage=usage.usage,
+                budget=qualification_budget,
+                token_derived_cost_nanos=usage.token_derived_cost_nanos,
+                expected_per_run_reserve_nanos=(
+                    candidate.campaign_cost_control.per_run_reserve_nanos
+                ),
+            )
+        except ContractError as exc:
+            raise HeldoutACDispatcherError(
+                "held-out durable qualification authority differs"
+            ) from exc
 
     body = {
         **cost_only.model_dump(mode="json", exclude={"content_hash"}),
@@ -1297,6 +1500,8 @@ def _authenticate_persisted_evidence(
     return authenticate_heldout_ac_persisted_evidence(
         suite=load_heldout_ac_suite(_SUITE_PATH, repository=repository),
         execution_hash=candidate.execution_hash,
+        expected_campaign_cost_control_hash=candidate.campaign_cost_control.content_hash,
+        expected_per_run_reserve_nanos=candidate.campaign_cost_control.per_run_reserve_nanos,
         expected_pricing_binding_hash=candidate.pricing_binding_hash,
         order=order,
         task_evaluator_binding=authority.task_binding,
@@ -1387,6 +1592,7 @@ def _evaluator_failure_event_projection(
 def _durable_evidence_from_authenticated(
     evidence: HeldoutACAuthenticatedPersistedEvidence | HeldoutACEvaluatorConfoundEvidence,
     *,
+    candidate: HeldoutACExecutionCandidate,
     run_root: Path,
     usage_relative_path: Path,
     cost_observation: HeldoutACDispatchedCostObservation,
@@ -1395,6 +1601,11 @@ def _durable_evidence_from_authenticated(
     authenticated = (
         evidence.row if isinstance(evidence, HeldoutACAuthenticatedPersistedEvidence) else evidence
     )
+    if not (
+        authenticated.runtime_tuple_hash == candidate.runtime_tuple_hash
+        and authenticated.campaign_cost_control_hash == candidate.campaign_cost_control.content_hash
+    ):
+        raise HeldoutACDispatcherError("held-out authenticated durable authority differs")
     run_id = authenticated.run_id
     result_relative = Path("artifacts") / "runs" / run_id / "result.json"
     qualification_relative = Path("qualifications") / f"{run_id}.json"
@@ -1453,6 +1664,7 @@ def _durable_evidence_from_authenticated(
 
     cost_only = _durable_evidence_from_cost_observation(
         cost_observation,
+        candidate=candidate,
         run_root=run_root,
         observation_relative_path=cost_observation_relative_path,
     )
@@ -1487,8 +1699,15 @@ def _verify_confound_durable_evidence(
     *,
     run_root: Path,
     candidate: HeldoutACExecutionCandidate,
+    suite: HeldoutACSuite,
     expected_row: Any,
+    legacy_replay_authorized: bool,
 ) -> None:
+    _require_durable_candidate_authority(
+        durable,
+        candidate=candidate,
+        legacy_replay_authorized=legacy_replay_authorized,
+    )
     evidence_root = (
         Path("experiments")
         / "heldout-ac"
@@ -1597,6 +1816,8 @@ def _verify_confound_durable_evidence(
             raise HeldoutACDispatcherError(
                 "held-out confounded evaluator failure event replay differs"
             )
+    qualification: dict[str, Any] | None = None
+    qualification_budget = None
     if durable.qualification_relative_path is not None:
         assert durable.qualification_file_sha256 is not None
         assert durable.qualification_hash is not None
@@ -1605,16 +1826,31 @@ def _verify_confound_durable_evidence(
             run_root=run_root,
         )
         try:
-            qualification = json.loads(qualification_bytes)
+            qualification_payload = json.loads(qualification_bytes)
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise HeldoutACDispatcherError("held-out confounded qualification is invalid") from exc
         if not (
             sha256_bytes(qualification_bytes) == durable.qualification_file_sha256
-            and isinstance(qualification, dict)
-            and qualification.get("qualification_hash") == durable.qualification_hash
-            and isinstance(qualification.get("source_evidence_hash"), str)
+            and isinstance(qualification_payload, dict)
+            and qualification_payload.get("qualification_hash") == durable.qualification_hash
+            and isinstance(qualification_payload.get("source_evidence_hash"), str)
         ):
             raise HeldoutACDispatcherError("held-out confounded qualification replay differs")
+        qualification = qualification_payload
+        if durable.schema_version == CONFOUND_EVIDENCE_SCHEMA_VERSION:
+            try:
+                qualification_budget = validate_heldout_ac_qualification_runtime_cost_authority(
+                    qualification=qualification,
+                    suite=suite,
+                    expected_runtime_tuple_hash=candidate.runtime_tuple_hash,
+                    expected_campaign_cost_control_hash=(
+                        candidate.campaign_cost_control.content_hash
+                    ),
+                )
+            except ContractError as exc:
+                raise HeldoutACDispatcherError(
+                    "held-out confounded qualification authority differs"
+                ) from exc
     if durable.usage_relative_path is not None:
         assert durable.usage_file_sha256 is not None
         assert durable.usage_evidence_hash is not None
@@ -1627,6 +1863,7 @@ def _verify_confound_durable_evidence(
         except ValidationError as exc:
             raise HeldoutACDispatcherError("held-out confounded usage is invalid") from exc
         try:
+            assert qualification is not None
             validate_heldout_ac_persisted_usage_cross_binding(
                 result=result,
                 usage_evidence=usage,
@@ -1643,6 +1880,22 @@ def _verify_confound_durable_evidence(
             raise HeldoutACDispatcherError(
                 "held-out confounded usage/result cross-binding differs"
             ) from exc
+        if durable.schema_version == CONFOUND_EVIDENCE_SCHEMA_VERSION:
+            if qualification_budget is None:
+                raise HeldoutACDispatcherError("held-out confounded usage lacks runtime authority")
+            try:
+                validate_heldout_ac_usage_against_authenticated_budget(
+                    usage=usage.usage,
+                    budget=qualification_budget,
+                    token_derived_cost_nanos=usage.token_derived_cost_nanos,
+                    expected_per_run_reserve_nanos=(
+                        candidate.campaign_cost_control.per_run_reserve_nanos
+                    ),
+                )
+            except ContractError as exc:
+                raise HeldoutACDispatcherError(
+                    "held-out confounded usage exceeds candidate authority"
+                ) from exc
         if not (
             sha256_bytes(usage_bytes) == durable.usage_file_sha256
             and usage.content_hash == durable.usage_evidence_hash
@@ -1672,6 +1925,7 @@ def _verify_confound_durable_evidence(
             == candidate.source_qualification.evaluator_source_hash
             and receipt.source_qualification_hash
             == candidate.source_qualification.source_qualification_hash
+            and qualification is not None
             and qualification.get("evaluator_v2_receipt_hash") == receipt.content_hash
             and qualification.get("evaluator_v2_receipt_file_hash") == durable.receipt_file_sha256
             and qualification.get("evaluator_v2_source_hash") == receipt.evaluator_source_hash
@@ -1682,13 +1936,25 @@ def _verify_confound_durable_evidence(
 
 
 def _verify_settled_source_files(
-    authenticated: HeldoutACAuthenticatedPersistedRow,
+    settled: HeldoutACSettledCampaignRow | HeldoutACSettledCampaignRowV2,
     *,
     run_root: Path,
     candidate: HeldoutACExecutionCandidate,
+    suite: HeldoutACSuite,
     expected_row: Any,
-    authenticated_evidence: HeldoutACAuthenticatedPersistedEvidence | None,
+    legacy_replay_authorized: bool,
 ) -> None:
+    _require_settled_candidate_authority(
+        settled,
+        candidate=candidate,
+        legacy_replay_authorized=legacy_replay_authorized,
+    )
+    authenticated = settled.authenticated_row
+    authenticated_evidence = (
+        settled.authenticated_evidence
+        if isinstance(settled, HeldoutACSettledCampaignRowV2)
+        else None
+    )
     usage_relative = (
         Path("experiments")
         / "heldout-ac"
@@ -1714,6 +1980,21 @@ def _verify_settled_source_files(
     source_evidence_hash = (
         qualification.get("source_evidence_hash") if isinstance(qualification, dict) else None
     )
+    qualification_budget = None
+    if authenticated.schema_version == ROW_SCHEMA_VERSION:
+        if not isinstance(qualification, dict):
+            raise HeldoutACDispatcherError("held-out settled qualification is not an object")
+        try:
+            qualification_budget = validate_heldout_ac_qualification_runtime_cost_authority(
+                qualification=qualification,
+                suite=suite,
+                expected_runtime_tuple_hash=candidate.runtime_tuple_hash,
+                expected_campaign_cost_control_hash=(candidate.campaign_cost_control.content_hash),
+            )
+        except ContractError as exc:
+            raise HeldoutACDispatcherError(
+                "held-out settled qualification authority differs"
+            ) from exc
     try:
         validate_heldout_ac_persisted_usage_cross_binding(
             result=result,
@@ -1731,6 +2012,20 @@ def _verify_settled_source_files(
         raise HeldoutACDispatcherError(
             "held-out settled usage/result cross-binding differs"
         ) from exc
+    if qualification_budget is not None:
+        try:
+            validate_heldout_ac_usage_against_authenticated_budget(
+                usage=usage.usage,
+                budget=qualification_budget,
+                token_derived_cost_nanos=usage.token_derived_cost_nanos,
+                expected_per_run_reserve_nanos=(
+                    candidate.campaign_cost_control.per_run_reserve_nanos
+                ),
+            )
+        except ContractError as exc:
+            raise HeldoutACDispatcherError(
+                "held-out settled usage exceeds candidate authority"
+            ) from exc
     if not (
         sha256_bytes(result_bytes) == authenticated.persisted_result_file_hash
         and sha256_json(result.model_dump(mode="json"))
@@ -1919,6 +2214,7 @@ def _validate_settlement_limits(
         and usage.input_tokens + usage.output_tokens <= max_total_tokens
         and usage.model_calls <= 240
         and usage.tool_calls <= 400
+        and usage.wall_clock_ms <= 3_600_000
         and cost <= per_run_reserve_nanos
     )
     if not within_runtime:
@@ -2067,8 +2363,14 @@ def _prepared_result(
         HeldoutACOfficialAnalysisEnvelope,
     ]
     | None = None,
+    legacy_replay_authorized: bool = False,
 ) -> tuple[dict[str, Any], HeldoutACOutcomeProjection | None, HeldoutACAnalysis | None]:
     for index, settled_row in enumerate(settled, start=1):
+        _require_settled_candidate_authority(
+            settled_row,
+            candidate=candidate,
+            legacy_replay_authorized=legacy_replay_authorized,
+        )
         authenticated = settled_row.authenticated_row
         expected = candidate.schedule[index - 1]
         evaluator_contract = authenticated.result.evaluator_contract
@@ -2107,6 +2409,17 @@ def _prepared_result(
                 f"authenticated held-out row differs from candidate at order {index}"
             )
     if confound is not None:
+        if isinstance(confound, HeldoutACCampaignConfound):
+            if not legacy_replay_authorized:
+                raise HeldoutACDispatcherError(
+                    "legacy held-out confound is not an exact immutable historical replay"
+                )
+        elif confound.durable_evidence is not None:
+            _require_durable_candidate_authority(
+                confound.durable_evidence,
+                candidate=candidate,
+                legacy_replay_authorized=legacy_replay_authorized,
+            )
         expected_confound = candidate.schedule[confound.order - 1]
         if (
             confound.schedule_row_id != expected_confound.schedule_row_id
@@ -2143,20 +2456,16 @@ def _prepared_result(
             for item in settled
             if isinstance(item, HeldoutACSettledCampaignRowV2)
         ]
+        completion_suite = load_heldout_ac_suite(_SUITE_PATH)
+        completion_authority = heldout_ac_completion_campaign_authority(
+            candidate=candidate,
+            suite=completion_suite,
+        )
         if persisted_official is None:
             completion = project_authenticated_heldout_ac_completion(
-                suite=load_heldout_ac_suite(_SUITE_PATH),
-                execution_hash=candidate.execution_hash,
-                expected_pricing_binding_hash=candidate.pricing_binding_hash,
-                evaluator_source_hash=candidate.source_qualification.evaluator_source_hash,
-                evaluator_source_qualification_hash=(
-                    candidate.source_qualification.source_qualification_hash
-                ),
+                suite=completion_suite,
+                authority=completion_authority,
                 rows=typed_rows,
-                full_schedule_reserve_nanos=(
-                    candidate.campaign_cost_control.full_schedule_reserve_nanos
-                ),
-                hard_cap_nanos=candidate.campaign_cost_control.hard_cap_nanos,
             )
             official = analyze_authenticated_heldout_ac_completion(completion)
             projection = completion.outcome_projection
@@ -2164,20 +2473,11 @@ def _prepared_result(
         else:
             completion, official = persisted_official
             validate_persisted_heldout_ac_completion_replay(
-                suite=load_heldout_ac_suite(_SUITE_PATH),
-                execution_hash=candidate.execution_hash,
-                expected_pricing_binding_hash=candidate.pricing_binding_hash,
-                evaluator_source_hash=candidate.source_qualification.evaluator_source_hash,
-                evaluator_source_qualification_hash=(
-                    candidate.source_qualification.source_qualification_hash
-                ),
+                suite=completion_suite,
+                authority=completion_authority,
                 rows=typed_rows,
                 completion=completion,
                 official_envelope=official,
-                full_schedule_reserve_nanos=(
-                    candidate.campaign_cost_control.full_schedule_reserve_nanos
-                ),
-                hard_cap_nanos=candidate.campaign_cost_control.hard_cap_nanos,
             )
             projection = completion.outcome_projection
             analysis = official.analysis
@@ -2360,6 +2660,7 @@ def validate_heldout_ac_campaign_result(
         raise HeldoutACDispatcherError(
             "held-out result candidate bound source qualification differs"
         )
+    suite = _candidate_suite(candidate, repository=repo)
     result_path = canonical_heldout_ac_runtime_path(
         str(plan["result_path"]),
         expected_run_root=run_root,
@@ -2386,6 +2687,11 @@ def validate_heldout_ac_campaign_result(
         or result_bytes != (result.model_dump_json(indent=2) + "\n").encode("utf-8")
     ):
         raise HeldoutACDispatcherError("held-out campaign result bytes differ")
+    legacy_replay_authorized = _historical_legacy_authority_replay_matches(
+        candidate=candidate,
+        result=result,
+        result_bytes=result_bytes,
+    )
     plan_path = canonical_heldout_ac_runtime_path(
         run_root / "experiments" / "plans" / f"{execution_hash[7:]}.json",
         expected_run_root=run_root,
@@ -2437,6 +2743,7 @@ def validate_heldout_ac_campaign_result(
             and result.official_analysis_envelope is not None
             else None
         ),
+        legacy_replay_authorized=legacy_replay_authorized,
     )
     canonical_prepared = (
         json.dumps(prepared, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
@@ -2493,15 +2800,12 @@ def validate_heldout_ac_campaign_result(
         if isinstance(settled, HeldoutACSettledCampaignRowV2):
             _verify_settled_agent_terminal_sidecar(settled, run_root=run_root)
         _verify_settled_source_files(
-            authenticated,
+            settled,
             run_root=run_root,
             candidate=candidate,
+            suite=suite,
             expected_row=row,
-            authenticated_evidence=(
-                settled.authenticated_evidence
-                if isinstance(settled, HeldoutACSettledCampaignRowV2)
-                else None
-            ),
+            legacy_replay_authorized=legacy_replay_authorized,
         )
         v2_atomic_settlement = isinstance(settled, HeldoutACSettledCampaignRowV2)
         required_events = 2 if v2_atomic_settlement else 3
@@ -2530,11 +2834,10 @@ def validate_heldout_ac_campaign_result(
         try:
             row_bytes = _read_canonical_runtime_file(row_path, run_root=run_root)
             raw_persisted = json.loads(row_bytes)
-            if (
-                isinstance(raw_persisted, dict)
-                and raw_persisted.get("schema_version")
-                == "heldout-ac-authenticated-persisted-evidence-v4"
-            ):
+            if isinstance(raw_persisted, dict) and raw_persisted.get("schema_version") in {
+                "heldout-ac-authenticated-persisted-evidence-v4",
+                "heldout-ac-authenticated-persisted-evidence-v5",
+            }:
                 persisted_row: (
                     HeldoutACAuthenticatedPersistedRow | HeldoutACAuthenticatedPersistedEvidence
                 ) = HeldoutACAuthenticatedPersistedEvidence.model_validate_json(row_bytes)
@@ -2657,7 +2960,9 @@ def validate_heldout_ac_campaign_result(
                     confound.durable_evidence,
                     run_root=run_root,
                     candidate=candidate,
+                    suite=suite,
                     expected_row=row,
+                    legacy_replay_authorized=legacy_replay_authorized,
                 )
         if len(events) <= cursor:
             raise HeldoutACDispatcherError("held-out confound journal event is absent")
@@ -2907,6 +3212,7 @@ def run_heldout_ac_campaign(
                 )
                 durable_evidence = _durable_evidence_from_cost_observation(
                     cost_observation,
+                    candidate=candidate,
                     run_root=run_root,
                     observation_relative_path=cost_observation_relative,
                 )
@@ -2948,6 +3254,7 @@ def run_heldout_ac_campaign(
                 )
                 authenticated_durable_evidence = _durable_evidence_from_authenticated(
                     persisted_evidence,
+                    candidate=candidate,
                     run_root=run_root,
                     usage_relative_path=usage_relative,
                     cost_observation=cost_observation,

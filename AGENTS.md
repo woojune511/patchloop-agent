@@ -23,9 +23,14 @@
   `$252`/`$275` approval and sealed 2 settled/1 observed-unsettled/45 not-started; costs were `$0.15699525` settled and
   `$0.41801625` total observed-started. Successor attribution is `EVALUATOR_CONTROL_CONTRACT_COLLISION`, with zero
   agent-visible marker matches. No complete analysis or memory claim follows.
-- Development-only evidence lowers equal A/C to 1M/100k/1.1M tokens and `$57.60`/`$60`; R11 outcomes and held-out
-  task content were excluded. Contract R8 → binding R9 → materialization R5 → execution R6 → preflight R14 remains
-  zero-authority: no candidate, observation, approval or spend.
+- Held-out R14 candidate `sha256:67475f57...307fd` consumed one `$57.60`/`$60` approval and sealed 0 settled/
+  1 observed-unsettled/47 not-started with `$0.126342` observed. Historical reason
+  `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` is unchanged; deterministic successor attribution is
+  `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` (candidate 1M/100k/1.1M versus immutable suite
+  4M/500k/4.5M). It cannot retry, resume, reauthenticate or reclassify, and supports no official analysis or claim.
+- Current Contract R10 → binding R10 → materialization R6 → execution R7 → preflight R15 is source-qualified only.
+  Candidate-v3 binds the realized 48-row schedule plus candidate runtime/cost authority; it created no candidate,
+  approval, observation or spend.
 - Local no-call preflight permits at most three transient pre-provider attempts. Paid campaign identity ignores
   readiness timestamps and is one-use by semantic source/suite/schedule; a future run needs committed qualified source,
   fresh clean candidate and separate exact approval. No provider execution is currently authorized.

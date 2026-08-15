@@ -1,0 +1,604 @@
+{
+  "schema_version": "heldout-ac-preflight-dispatch-source-qualification-v14",
+  "qualification_id": "core-ac-fixed-bundle-heldout-preflight-source-20260815-r15",
+  "status": "OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED",
+  "recorded_at": "2026-08-14T22:58:18.291396Z",
+  "predecessor": {
+    "path": "reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r14.json",
+    "file_bytes": 21984,
+    "file_sha256": "sha256:259407d7c30113096844541b01f93ea18e78c5dd0d471c261311657acd7135a3",
+    "source_qualification_hash": "sha256:d71f0ad53cadb2957e1870cc40291a4979d0eed93321a0d082233408c03aed5c",
+    "evaluator_source_hash": "sha256:f9660226185d33726bc3585381d0606234e6231faf5d9a9f62b79b44b67c20fd",
+    "original_schema_version": "heldout-ac-preflight-dispatch-source-qualification-v13",
+    "original_qualification_id": "core-ac-fixed-bundle-heldout-preflight-source-20260815-r14",
+    "original_status": "OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED",
+    "successor_reason": "r14-campaign-inconclusive-runtime-budget-attribution-index-successor"
+  },
+  "campaign_predecessor": {
+    "path": "reports/heldout-ac/artifacts/heldout-ac-r14-campaign-inconclusive-r1.json",
+    "file_bytes": 12856,
+    "file_sha256": "sha256:21cda8f99aa835b196aa54cc6f7ad2483942f43d986fd935ce511a0d6974cd7b",
+    "schema_version": "heldout-ac-campaign-evidence-index-v3",
+    "evidence_id": "core-ac-fixed-bundle-heldout-r14-live-inconclusive-20260815-r1",
+    "status": "LIVE_CAMPAIGN_INCONCLUSIVE_RUNTIME_BUDGET_AUTHORITY_MISMATCH_INDEXED",
+    "content_hash": "sha256:1b602c1900ddfbd6867c81818d48ee9ada72f0b2fb2503d5eb83db7faf0e5341",
+    "execution_hash": "sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd",
+    "approval_consumed": true,
+    "disposition": "inconclusive-matrix",
+    "terminal_settled_runs": 0,
+    "observed_unsettled_runs": 1,
+    "not_started_runs": 47,
+    "settled_model_cost_nanos": 0,
+    "observed_unsettled_model_cost_nanos": 126342000,
+    "observed_started_model_cost_nanos": 126342000,
+    "historical_reason_code": "DURABLE_EVIDENCE_AUTHENTICATION_FAILED",
+    "post_runtime_attribution_code": "TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH",
+    "historical_reason_preserved_without_relabeling": true,
+    "historical_typed_diagnosis_code_observed": false,
+    "post_runtime_deterministic_attribution": true,
+    "post_runtime_attribution_changes_historical_reason": false,
+    "historical_row_reclassified": false,
+    "campaign_settlement_preserved_without_reauthentication": true,
+    "attribution_only": true,
+    "r14_campaign_is_immutable_and_consumed": true,
+    "historical_runtime_files_mutated": false,
+    "historical_row_reauthentication_authorized": false,
+    "retry_replacement_or_resume_performed": false,
+    "candidate_creation_authorized": false,
+    "future_execution_authorized": false,
+    "future_spend_authorized": false
+  },
+  "source_entrypoints": [
+    "patchloop/evals/heldout_ac_preflight.py",
+    "patchloop/evals/heldout_ac_dispatcher.py"
+  ],
+  "import_closure": [
+    "patchloop/__init__.py",
+    "patchloop/agent/__init__.py",
+    "patchloop/agent/context.py",
+    "patchloop/agent/coverage_rejection.py",
+    "patchloop/agent/investigation.py",
+    "patchloop/agent/model.py",
+    "patchloop/agent/phases.py",
+    "patchloop/agent/review.py",
+    "patchloop/agent/runner.py",
+    "patchloop/agent/tools.py",
+    "patchloop/artifacts.py",
+    "patchloop/contracts.py",
+    "patchloop/dataset.py",
+    "patchloop/environment.py",
+    "patchloop/errors.py",
+    "patchloop/evals/__init__.py",
+    "patchloop/evals/budget.py",
+    "patchloop/evals/coverage_rejection.py",
+    "patchloop/evals/evaluator_v2_source_qualification.py",
+    "patchloop/evals/failures.py",
+    "patchloop/evals/heldout_ac_analysis.py",
+    "patchloop/evals/heldout_ac_budget_amendment.py",
+    "patchloop/evals/heldout_ac_completion.py",
+    "patchloop/evals/heldout_ac_contracts.py",
+    "patchloop/evals/heldout_ac_dispatcher.py",
+    "patchloop/evals/heldout_ac_execution.py",
+    "patchloop/evals/heldout_ac_live_contract.py",
+    "patchloop/evals/heldout_ac_persisted_adapter.py",
+    "patchloop/evals/heldout_ac_preflight.py",
+    "patchloop/evals/heldout_ac_preflight_source_qualification.py",
+    "patchloop/evals/heldout_ac_preregistration.py",
+    "patchloop/evals/heldout_ac_r11_campaign_evidence.py",
+    "patchloop/evals/heldout_ac_r14_campaign_evidence.py",
+    "patchloop/evals/heldout_ac_suite.py",
+    "patchloop/evals/heldout_ac_task_evaluator.py",
+    "patchloop/evals/heldout_ac_task_pricing_materialization.py",
+    "patchloop/evals/qualification.py",
+    "patchloop/evals/runner.py",
+    "patchloop/memory/__init__.py",
+    "patchloop/memory/fixed_bundle.py",
+    "patchloop/memory/retrieval.py",
+    "patchloop/memory/store.py",
+    "patchloop/repository.py",
+    "patchloop/runtime.py",
+    "patchloop/sandbox/__init__.py",
+    "patchloop/sandbox/runner.py",
+    "patchloop/state/__init__.py",
+    "patchloop/state/ownership.py",
+    "patchloop/state/store.py",
+    "patchloop/task_loader.py",
+    "patchloop/util.py",
+    "patchloop/verifier/__init__.py",
+    "patchloop/verifier/core.py",
+    "patchloop/verifier/evidence.py",
+    "patchloop/verifier/policy.py",
+    "patchloop/verifier/receipt.py",
+    "patchloop/verifier/runtime_evidence.py"
+  ],
+  "import_closure_hash": "sha256:77395e880667a68b48dd8f3eaa259c96b5cd7b1761659586effc4d7c96f2464b",
+  "source_files": [
+    {
+      "path": "patchloop/__init__.py",
+      "file_bytes": 55,
+      "file_sha256": "sha256:c1fd7c888a1b00da2132073daa2cd80663eefb92c830597b2218497669f7fa58"
+    },
+    {
+      "path": "patchloop/agent/__init__.py",
+      "file_bytes": 125,
+      "file_sha256": "sha256:132b98dd3bbe1cc52e504ff6c4f49f46bf17d1e6902dc48dc6f36cbcbc7b9c0f"
+    },
+    {
+      "path": "patchloop/agent/context.py",
+      "file_bytes": 68912,
+      "file_sha256": "sha256:6730fa00a224704220683b24ddaeeb7ff5721a742dd73d1c203a22280f5cb2dd"
+    },
+    {
+      "path": "patchloop/agent/coverage_rejection.py",
+      "file_bytes": 108974,
+      "file_sha256": "sha256:5ff01e3664b6991aefb36c23bdd5acbac8787762c6276719a72fc2334a15ab3d"
+    },
+    {
+      "path": "patchloop/agent/investigation.py",
+      "file_bytes": 37074,
+      "file_sha256": "sha256:77db783258e544a7b230dc0f184d22403b8229d252153d76e0f7b97eede97b27"
+    },
+    {
+      "path": "patchloop/agent/model.py",
+      "file_bytes": 44052,
+      "file_sha256": "sha256:b8ac21ab33421ed33942036854ecf7e1badce5d35a6014da27488903352d8568"
+    },
+    {
+      "path": "patchloop/agent/phases.py",
+      "file_bytes": 9641,
+      "file_sha256": "sha256:2670b3f8dee3ad1b99f0897b0797b184b981f08ffb6a3e51eef1bc0c7b36761f"
+    },
+    {
+      "path": "patchloop/agent/review.py",
+      "file_bytes": 14463,
+      "file_sha256": "sha256:a795a5d677cd9294315093e583353b7d4af1822d4ca721f387b65263ddd97a6f"
+    },
+    {
+      "path": "patchloop/agent/runner.py",
+      "file_bytes": 257057,
+      "file_sha256": "sha256:eb6df9cf98b6f012f2a351d39084af1968be1d01bb28fc55d6bc65e02e98f8d7"
+    },
+    {
+      "path": "patchloop/agent/tools.py",
+      "file_bytes": 208603,
+      "file_sha256": "sha256:b137c5f7ac5bbe86a70afec0929bfb6cab9ce9baac7717c1ecd2b43749809590"
+    },
+    {
+      "path": "patchloop/artifacts.py",
+      "file_bytes": 4867,
+      "file_sha256": "sha256:b60e6bffa625a5efff2d35e3de44e4d42e844dfe474d9ee613f3da74f80ad810"
+    },
+    {
+      "path": "patchloop/contracts.py",
+      "file_bytes": 154290,
+      "file_sha256": "sha256:a72594556806d70ffa8d5bbea6606f403640018a309d8cac78a8fea3fc118702"
+    },
+    {
+      "path": "patchloop/dataset.py",
+      "file_bytes": 24190,
+      "file_sha256": "sha256:04d1eaf6a2489704ee459e191d11158889677f46d082e1bb6cb0f6b9208bf8b8"
+    },
+    {
+      "path": "patchloop/environment.py",
+      "file_bytes": 3253,
+      "file_sha256": "sha256:8722facced50fbf2e451f8d573c0134a46c7e068feb74a3683becf4eabefbf28"
+    },
+    {
+      "path": "patchloop/errors.py",
+      "file_bytes": 1497,
+      "file_sha256": "sha256:6ae5e1143a226924faecda80a139762a02a17f5267ca6016e56204241aaa6814"
+    },
+    {
+      "path": "patchloop/evals/__init__.py",
+      "file_bytes": 64,
+      "file_sha256": "sha256:381b7bd6cd2b5ecbcb665ce7037edd1d178c60dcb2e095e2332b5b9de02e734c"
+    },
+    {
+      "path": "patchloop/evals/budget.py",
+      "file_bytes": 37809,
+      "file_sha256": "sha256:7c185cd53c6d38651c03db1b19ac0e9e31859b921033be65f12b2f0c5db9b868"
+    },
+    {
+      "path": "patchloop/evals/coverage_rejection.py",
+      "file_bytes": 87059,
+      "file_sha256": "sha256:34ab92e1ec1e3c462abcfd3d14ce5d31760a0a706479c6151eb031a0d7a69a7e"
+    },
+    {
+      "path": "patchloop/evals/evaluator_v2_source_qualification.py",
+      "file_bytes": 52263,
+      "file_sha256": "sha256:c7723a8155cee8a77657caa248fe3927b903c3e7be4207338e438ac21d6d5328"
+    },
+    {
+      "path": "patchloop/evals/failures.py",
+      "file_bytes": 4894,
+      "file_sha256": "sha256:0bee47a4d4e40b114ec46132d8afa242082e14db6d966db644851efca629b2b7"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_analysis.py",
+      "file_bytes": 28668,
+      "file_sha256": "sha256:c813c856ba51c8ef82f9c3fc085e46e124b492a5dd853f17a65c615421c13df7"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_budget_amendment.py",
+      "file_bytes": 19309,
+      "file_sha256": "sha256:b9eb64ffbf1940cfeee3c5b8c97c6155c210ae4d1b1d34689ae6d23fa5190907"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_completion.py",
+      "file_bytes": 81858,
+      "file_sha256": "sha256:4cffcd6037f90732c7191f3fe7d6d5b268b5476b3532c53b539c0eca7c6e7360"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_contracts.py",
+      "file_bytes": 19226,
+      "file_sha256": "sha256:c516a433e0097bfa51173967cd5f249cf3cc203a86b2f6c9ded9b73c5af534bd"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_dispatcher.py",
+      "file_bytes": 151624,
+      "file_sha256": "sha256:a68013c4995ada87405ec9e3b55129cef8a0ae6d76bbf37de3ecde96e303a765"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_execution.py",
+      "file_bytes": 47347,
+      "file_sha256": "sha256:23377b38d76e46425dad6b76e49cfdf0ae4a9567353eb99db42214d9e665dfd1"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_live_contract.py",
+      "file_bytes": 41891,
+      "file_sha256": "sha256:d75f068dac745dbca8c5f9c8c8c20428655f9b064229584ef4718e47f670b51d"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_persisted_adapter.py",
+      "file_bytes": 77302,
+      "file_sha256": "sha256:2bb28bba64f13bc26d3a6e782c629426c5722cffb63cb87eb8d79617c1285394"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_preflight.py",
+      "file_bytes": 8377,
+      "file_sha256": "sha256:384309efcb94d115e406786297b9806894b90c1dd31a9158011b841c51bb12e9"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_preflight_source_qualification.py",
+      "file_bytes": 33776,
+      "file_sha256": "sha256:96f621517c6891f4ec42d8a3b389c73802f10dd1940ee1affd705e31fafe3265"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_preregistration.py",
+      "file_bytes": 30196,
+      "file_sha256": "sha256:85734d8a291c404bf2ab3aefc45f9ab2b334d859a2fdd358042bd91a4ee32b48"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_r11_campaign_evidence.py",
+      "file_bytes": 53382,
+      "file_sha256": "sha256:190a69e00eebdbed134001781d48c524b2b69152d05f92e97a3aaf0fbb1cd3b3"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_r14_campaign_evidence.py",
+      "file_bytes": 51747,
+      "file_sha256": "sha256:124f3bef6e098f9920a1fb419aa704a47779ef8f0cee7e4de9eb2e1400cec2e3"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_suite.py",
+      "file_bytes": 6764,
+      "file_sha256": "sha256:03b77cc4ecd1805d7414ee13964878cd42bb623a330ceb8ecd211a44c89f0f7c"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_task_evaluator.py",
+      "file_bytes": 13898,
+      "file_sha256": "sha256:131d62692d825c8f217c25200c18e0e5e05bfa14d99918964e092322df7ab488"
+    },
+    {
+      "path": "patchloop/evals/heldout_ac_task_pricing_materialization.py",
+      "file_bytes": 40611,
+      "file_sha256": "sha256:504af29d0b62e891d96b95b78074b38e6e26a0995d230d0ac9cfabb8ddde5349"
+    },
+    {
+      "path": "patchloop/evals/qualification.py",
+      "file_bytes": 545425,
+      "file_sha256": "sha256:d29cac0e8bef7c4f4e92a850f3573b2112dadf554a6fbc7e9a967026ca99167d"
+    },
+    {
+      "path": "patchloop/evals/runner.py",
+      "file_bytes": 449014,
+      "file_sha256": "sha256:09939499ae3acebeb99c430d5ac04fa6ddb8b7d2e349aa4a744b76e4378208c2"
+    },
+    {
+      "path": "patchloop/memory/__init__.py",
+      "file_bytes": 883,
+      "file_sha256": "sha256:489d69b058408076fee5f9ada4461a5c7248343b692f57118ec8845f2a998e51"
+    },
+    {
+      "path": "patchloop/memory/fixed_bundle.py",
+      "file_bytes": 31076,
+      "file_sha256": "sha256:f9954b8c46df46237bd413e61082db1c2ee0c1cef761341062e224d725c2fe28"
+    },
+    {
+      "path": "patchloop/memory/retrieval.py",
+      "file_bytes": 6638,
+      "file_sha256": "sha256:da4dde2e20b2ee9c946754726d242a3962ba42d4a945603740b1c9bbae970b72"
+    },
+    {
+      "path": "patchloop/memory/store.py",
+      "file_bytes": 14817,
+      "file_sha256": "sha256:b9ab57f9022b40e47b650f58fd9f3d19dcc527132b98ba0ee4628d3e3c760087"
+    },
+    {
+      "path": "patchloop/repository.py",
+      "file_bytes": 13286,
+      "file_sha256": "sha256:3d701ae106228bf1830a89d80fab392b742061ca906eeb64a07c11d637785797"
+    },
+    {
+      "path": "patchloop/runtime.py",
+      "file_bytes": 13657,
+      "file_sha256": "sha256:e7762c637e7cdaf7aed224f5b09fac168fa309ee365b2975242ce40c9edb79e4"
+    },
+    {
+      "path": "patchloop/sandbox/__init__.py",
+      "file_bytes": 321,
+      "file_sha256": "sha256:ee8731fbd66d285b6532652b0be012edbd1bd8b546e1cf84abd7436cbc85c15b"
+    },
+    {
+      "path": "patchloop/sandbox/runner.py",
+      "file_bytes": 33508,
+      "file_sha256": "sha256:5f53e6625e9bb394f966a28fc65e236ec24e11bc457f063afffcb99d9e4537fa"
+    },
+    {
+      "path": "patchloop/state/__init__.py",
+      "file_bytes": 223,
+      "file_sha256": "sha256:3914462d669b4e249c0f07311527d6865cf05506b3e161305a26670a705d9c4f"
+    },
+    {
+      "path": "patchloop/state/ownership.py",
+      "file_bytes": 3204,
+      "file_sha256": "sha256:0ce77a6b15b39df1d21dffe6ee8bf552514cc1d3d7d69e29565bb63d99cd41ef"
+    },
+    {
+      "path": "patchloop/state/store.py",
+      "file_bytes": 49379,
+      "file_sha256": "sha256:43aca57abf927b2947bb3f5561920495c03832d345e7973d29418ae061016d55"
+    },
+    {
+      "path": "patchloop/task_loader.py",
+      "file_bytes": 4916,
+      "file_sha256": "sha256:e7c7d1aac5a4f6adedd4e433e50e6577981af1e2191273bb001e13871ee7dc68"
+    },
+    {
+      "path": "patchloop/util.py",
+      "file_bytes": 5868,
+      "file_sha256": "sha256:6ce3e5a7e5a91556c6085e3c243a4ccdaf8926dd6e57878fb438792cdb0227e6"
+    },
+    {
+      "path": "patchloop/verifier/__init__.py",
+      "file_bytes": 120,
+      "file_sha256": "sha256:ca6020604b01a2f0f51fa8b243d58321f8e90d3308c3b23bdddd7f637d89f221"
+    },
+    {
+      "path": "patchloop/verifier/core.py",
+      "file_bytes": 14010,
+      "file_sha256": "sha256:7e4308e24734f9f792722c878b19a4233f52703d5eef6131661fae076d839563"
+    },
+    {
+      "path": "patchloop/verifier/evidence.py",
+      "file_bytes": 47081,
+      "file_sha256": "sha256:80481c7d28ab48bba0d2b7d7bdc67a44e66b504cccce113da7a0798491dd862a"
+    },
+    {
+      "path": "patchloop/verifier/policy.py",
+      "file_bytes": 5587,
+      "file_sha256": "sha256:11815679f4729711269558df0c0b9e80489b727668359b06d72f462011f68f1c"
+    },
+    {
+      "path": "patchloop/verifier/receipt.py",
+      "file_bytes": 21584,
+      "file_sha256": "sha256:9b86d7d4f1acb985a4c43565efd9733b1b205dde8101b870cae22b9bdafdd4f5"
+    },
+    {
+      "path": "patchloop/verifier/runtime_evidence.py",
+      "file_bytes": 45790,
+      "file_sha256": "sha256:5c2073bd47e014512c94fd964b250ba972c6b47d3e0b30c8d8b20f6b4e141c4b"
+    },
+    {
+      "path": "pyproject.toml",
+      "file_bytes": 1032,
+      "file_sha256": "sha256:2e8395b0d26e0f4e686daa3481c18301e025417666db828da0e0425cfd5b3986"
+    },
+    {
+      "path": "uv.lock",
+      "file_bytes": 240131,
+      "file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c"
+    }
+  ],
+  "evaluator_source_hash": "sha256:d04b90cc92c8888b1e21f6911b201511180230e62db055d5dd5bb4cb3fbac95c",
+  "validation_files": [
+    {
+      "path": "scripts/build_heldout_ac_execution_source_qualification.py",
+      "file_bytes": 317,
+      "file_sha256": "sha256:27bba3d0563028f152875f256884d3cabd7569dfe8dc9e58f4cd1653639b76ef"
+    },
+    {
+      "path": "scripts/build_heldout_ac_preflight_source_qualification.py",
+      "file_bytes": 317,
+      "file_sha256": "sha256:845f05e483f03a2612533b554b4558697e5126c49c64ce1a6d1ad7ef56a09df2"
+    },
+    {
+      "path": "scripts/build_heldout_ac_r11_campaign_evidence.py",
+      "file_bytes": 326,
+      "file_sha256": "sha256:503af53889fc746a106261cee4f876036294266cfafe29cf524d34d5a43dc7d6"
+    },
+    {
+      "path": "scripts/build_heldout_ac_r14_campaign_evidence.py",
+      "file_bytes": 324,
+      "file_sha256": "sha256:4919435b2fd5c4394b441456ff4710b82d9d919648be65895c8abdae15cec872"
+    },
+    {
+      "path": "scripts/run_heldout_ac_preflight.py",
+      "file_bytes": 1455,
+      "file_sha256": "sha256:199560d87c4a58c619b433d53208df9fc17dec2383d212b14eb434085f50c705"
+    },
+    {
+      "path": "scripts/run_heldout_ac_campaign.py",
+      "file_bytes": 1739,
+      "file_sha256": "sha256:0ff75b37d05b9e1b23f045ba4c3786221d17555276eb3b0b93eb2d1f8a90ff5b"
+    },
+    {
+      "path": "tests/test_evaluator_v2_contracts.py",
+      "file_bytes": 87315,
+      "file_sha256": "sha256:cb5cf96a50cf7c84441bbc5b6d7734bc7be140c6662fd56611dcc2f4b031c933"
+    },
+    {
+      "path": "tests/test_heldout_ac_binding_source_qualification.py",
+      "file_bytes": 11949,
+      "file_sha256": "sha256:cb4e80bd8c6d9b9ab11f92e8a91dcabb9577d7d2d3abe5a115007f1b7214ee99"
+    },
+    {
+      "path": "tests/test_heldout_ac_budget_amendment.py",
+      "file_bytes": 6111,
+      "file_sha256": "sha256:2fafc8201720b78eb8b517877228419e9336a7694144b67bee5d894de01c741b"
+    },
+    {
+      "path": "tests/test_heldout_ac_completion.py",
+      "file_bytes": 46828,
+      "file_sha256": "sha256:6eff0125be048ec3d1a5d9609e7083058ad5ccff8f03a2809661e637cba4d272"
+    },
+    {
+      "path": "tests/test_heldout_ac_execution.py",
+      "file_bytes": 23237,
+      "file_sha256": "sha256:830211d7bdb5deab6b7e79c29ea467c21ee6bb1d13f2f92231051b3f3dae0b09"
+    },
+    {
+      "path": "tests/test_heldout_ac_execution_source_qualification.py",
+      "file_bytes": 7955,
+      "file_sha256": "sha256:e2f54f0abbae3fd0da1a8f1f7e28103722ab6fc19b2bfb3e9df5d34e24bf9bdd"
+    },
+    {
+      "path": "tests/test_heldout_ac_preflight.py",
+      "file_bytes": 5538,
+      "file_sha256": "sha256:1dbb19fc6a36262dd9e61004e4402193a042b85a483b664256bff7f803b33bee"
+    },
+    {
+      "path": "tests/test_heldout_ac_preflight_source_qualification.py",
+      "file_bytes": 16110,
+      "file_sha256": "sha256:58eb08687bd5bb499ddf98f63a84ddaffdfaaf68c84613e1d1a65b308350ad62"
+    },
+    {
+      "path": "tests/test_heldout_ac_dispatcher.py",
+      "file_bytes": 105650,
+      "file_sha256": "sha256:6986dcec80532fc76b7e05dfd23c6dc2c0f6514c23e04fef55854c59f5e11f5d"
+    },
+    {
+      "path": "tests/test_heldout_ac_persisted_adapter.py",
+      "file_bytes": 46150,
+      "file_sha256": "sha256:65f80522db825e0bf0d16f971a8cbbc4e74f471628e45f23e3b262dbf09eebb7"
+    },
+    {
+      "path": "tests/test_heldout_ac_analysis.py",
+      "file_bytes": 14216,
+      "file_sha256": "sha256:e493ce1e0402f0aca901c40f286515a9c7f87bbf9ac0d8bb5c608b8197c50b68"
+    },
+    {
+      "path": "tests/test_heldout_ac_r7_runtime_evidence_index.py",
+      "file_bytes": 3719,
+      "file_sha256": "sha256:5022e8627032be098df92db486c64a8c3e4bdcff19ff83051e5d222346178fdb"
+    },
+    {
+      "path": "tests/test_heldout_ac_r11_runtime_evidence_index.py",
+      "file_bytes": 6241,
+      "file_sha256": "sha256:8cb7ebd0d735f19dbbbb2bff03cd1e2facfaadeed98bbfee2ac5279a943a8120"
+    },
+    {
+      "path": "tests/test_heldout_ac_r14_runtime_evidence_index.py",
+      "file_bytes": 8417,
+      "file_sha256": "sha256:ef7623aa83e556bd7134f40864150a96b0f2a48acfc458b48f586f085b1ee378"
+    },
+    {
+      "path": "tests/test_heldout_ac_source_qualification.py",
+      "file_bytes": 23021,
+      "file_sha256": "sha256:05e4ced9b9f8b2fc6dc67eb03699dbd79307ca55df2a6d6163913101fcf187cc"
+    },
+    {
+      "path": "tests/test_heldout_ac_task_evaluator.py",
+      "file_bytes": 9618,
+      "file_sha256": "sha256:942a681a5f25474ac644a180bf27904bacdd2b4b7dd108be916332092dfd6ef1"
+    },
+    {
+      "path": "tests/test_heldout_ac_task_pricing_materialization.py",
+      "file_bytes": 8222,
+      "file_sha256": "sha256:2722290f7ac9fcf20c391a6f3d185dc4aca01ad83cc974bf5513234278e950ee"
+    },
+    {
+      "path": "tests/test_trace_qualification.py",
+      "file_bytes": 202767,
+      "file_sha256": "sha256:047b3957a331e8f487a11fd640c0c16e4f1d08cc4bf1c33cb03363f5e2884424"
+    }
+  ],
+  "validation_hash": "sha256:c20c7f5a02bb16895ff6c746d7c5a364a336303219539cadc07e3880de98fce2",
+  "projection": {
+    "suite_content_hash": "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa",
+    "scheduled_rows": 48,
+    "r14_predecessor_bytes_preserved": true,
+    "r14_campaign_inconclusive_index_bound": true,
+    "r14_historical_reason_and_post_runtime_attribution_distinct": true,
+    "r14_observed_unsettled_cost_bound": true,
+    "r14_reauthentication_retry_or_runtime_authority_granted": false,
+    "git_commit_tree_and_execution_clean_observation_present": true,
+    "digest_pinned_docker_image_observation_present": true,
+    "sdk_version_observation_present": true,
+    "credential_presence_only_boundary_present": true,
+    "custom_base_url_block_present": true,
+    "candidate_factory_bound": true,
+    "exact_paid_plan_boundary_bound": true,
+    "append_only_48_row_dispatcher_bound": true,
+    "one_use_row_consumption_bound": true,
+    "one_use_campaign_identity_ignores_observed_at": true,
+    "canonical_runtime_path_boundary_bound": true,
+    "atomic_terminal_cost_settlement_bound": true,
+    "durable_started_cost_observation_bound": true,
+    "typed_evaluator_and_agent_terminal_sidecars_bound": true,
+    "persisted_v2_authentication_bound": true,
+    "current_candidate_schema": "heldout-ac-execution-candidate-v3",
+    "current_persisted_evidence_schema": "heldout-ac-authenticated-persisted-evidence-v5",
+    "current_persisted_row_schema": "heldout-ac-authenticated-persisted-row-v2",
+    "candidate_v3_realized_schedule_bound": true,
+    "candidate_runtime_tuple_recomputed_before_plan_write": true,
+    "current_prior_row_requires_persisted_v5_row_v2": true,
+    "prior_row_runtime_cost_usage_budget_revalidated": true,
+    "known_r7_r11_r14_exact_result_content_journal_triple_required": true,
+    "complete_or_inconclusive_finalization_bound": true,
+    "persisted_campaign_replay_validator_bound": true,
+    "historical_v1_campaign_replay_bound": true,
+    "current_dispatch_source_loader_bound_without_literal_id": true,
+    "preregistered_analysis_unlock_bound": true,
+    "official_completion_and_analysis_envelope_persisted": true,
+    "blocked_preflight_candidate_count": 0,
+    "execution_candidates_created": 0,
+    "approved_plans_created": 0,
+    "campaign_journals_created": 0,
+    "campaign_results_created": 0
+  },
+  "authority": {
+    "offline_source_qualification_authorized": true,
+    "source_and_validation_file_reads_authorized": true,
+    "git_docker_sdk_or_credential_observation_authorized": false,
+    "heldout_task_package_or_private_content_access_authorized": false,
+    "heldout_outcome_access_authorized": false,
+    "runtime_secret_materialization_authorized": false,
+    "provider_evaluator_or_agent_execution_authorized": false,
+    "execution_candidate_authorized": false,
+    "approval_reservation_or_spend_authorized": false,
+    "official_analysis_or_claim_authorized": false,
+    "execution_candidates_created": 0,
+    "approved_plans_created": 0,
+    "campaign_journals_created": 0,
+    "campaign_results_created": 0,
+    "credential_values_observed": 0,
+    "provider_calls_made": 0,
+    "evaluator_calls_made": 0,
+    "agent_runs_made": 0,
+    "docker_calls_made": 0,
+    "sdk_calls_made": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "next_gate": "run-fresh-heldout-no-call-preflight-on-clean-committed-successor",
+  "content_hash": "sha256:f0e100d44f713cde134882025481b0038bfb0b4d880f4192e0558dc806e6809c"
+}

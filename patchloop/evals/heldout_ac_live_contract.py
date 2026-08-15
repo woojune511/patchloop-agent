@@ -30,11 +30,16 @@ from patchloop.evals.heldout_ac_contracts import HELDOUT_AC_SUITE_ID
 from patchloop.evals.heldout_ac_execution import (
     HeldoutACExecutionCandidate,
     heldout_ac_campaign_identity_hash,
+    heldout_ac_candidate_matches_current_execution_inputs,
     heldout_ac_candidate_token_limits,
 )
 from patchloop.evals.heldout_ac_persisted_adapter import (
+    PERSISTED_EVIDENCE_SCHEMA_VERSION,
+    ROW_SCHEMA_VERSION,
     HeldoutACAuthenticatedPersistedEvidence,
     HeldoutACAuthenticatedPersistedRow,
+    validate_heldout_ac_persisted_usage_cross_binding,
+    validate_heldout_ac_usage_against_authenticated_budget,
 )
 from patchloop.evals.heldout_ac_suite import load_heldout_ac_suite
 from patchloop.memory.fixed_bundle import (
@@ -49,6 +54,7 @@ PLAN_SCHEMA_VERSION_V2 = "experiment-execution-plan-v2"
 PLAN_KIND = "heldout-ac-approved-campaign-v1"
 PLAN_KIND_V2 = "heldout-ac-approved-campaign-v2"
 RUNTIME_CONTRACT_SCHEMA_VERSION = "heldout-ac-runtime-contract-v1"
+RUNTIME_CONTRACT_SCHEMA_VERSION_V2 = "heldout-ac-runtime-contract-v2"
 RUNTIME_EVIDENCE_SCHEMA_VERSION = "heldout-ac-runtime-evidence-v1"
 JOURNAL_SCHEMA_VERSION = "heldout-ac-campaign-journal-event-v1"
 JOURNAL_SCHEMA_VERSION_V2 = "heldout-ac-campaign-journal-event-v2"
@@ -216,6 +222,12 @@ def heldout_ac_manifest_matches_candidate(
 ) -> bool:
     """Match every public runtime field that is fixed before secret expansion."""
 
+    try:
+        candidate = HeldoutACExecutionCandidate.model_validate(
+            candidate.model_dump(mode="python", exclude_none=True)
+        )
+    except ValidationError:
+        return False
     experiment = manifest.experiment
     if experiment is None or not 1 <= experiment.schedule_order <= 48:
         return False
@@ -294,11 +306,18 @@ def heldout_ac_manifest_matches_candidate(
 def heldout_ac_runtime_contract(candidate: HeldoutACExecutionCandidate) -> dict[str, Any]:
     """Build the exact secret-free runtime contract embedded in an approved plan."""
 
+    candidate = HeldoutACExecutionCandidate.model_validate(
+        candidate.model_dump(mode="python", exclude_none=True)
+    )
     max_input_tokens, max_output_tokens, max_total_tokens = heldout_ac_candidate_token_limits(
         candidate
     )
-    return {
-        "schema_version": RUNTIME_CONTRACT_SCHEMA_VERSION,
+    body = {
+        "schema_version": (
+            RUNTIME_CONTRACT_SCHEMA_VERSION_V2
+            if candidate.schema_version == "heldout-ac-execution-candidate-v3"
+            else RUNTIME_CONTRACT_SCHEMA_VERSION
+        ),
         "suite_id": candidate.suite_id,
         "suite_content_hash": candidate.suite_content_hash,
         "execution_hash": candidate.execution_hash,
@@ -331,6 +350,9 @@ def heldout_ac_runtime_contract(candidate: HeldoutACExecutionCandidate) -> dict[
         "context_policy_version": "phase-evidence-v5",
         "call_guard_policy": CALL_GUARD_POLICY_VERSION,
     }
+    if candidate.realized_schedule_hash is not None:
+        body["realized_schedule_hash"] = candidate.realized_schedule_hash
+    return body
 
 
 def heldout_ac_runtime_evidence_document(
@@ -460,12 +482,13 @@ def validate_heldout_ac_dispatch_plan(
         if isinstance(ledger, dict)
         else None
     )
+    ledger_schema_versions = {
+        "heldout-ac-execution-candidate-v1": "heldout-ac-paid-campaign-one-use-v1",
+        "heldout-ac-execution-candidate-v2": "heldout-ac-paid-campaign-one-use-v2",
+        "heldout-ac-execution-candidate-v3": "heldout-ac-paid-campaign-one-use-v3",
+    }
     expected_ledger_body = {
-        "schema_version": (
-            "heldout-ac-paid-campaign-one-use-v1"
-            if candidate.schema_version == "heldout-ac-execution-candidate-v1"
-            else "heldout-ac-paid-campaign-one-use-v2"
-        ),
+        "schema_version": ledger_schema_versions[candidate.schema_version],
         "campaign_identity_hash": campaign_identity,
         "execution_hash": candidate.execution_hash,
         "suite_content_hash": candidate.suite_content_hash,
@@ -478,6 +501,8 @@ def validate_heldout_ac_dispatch_plan(
         "hard_cap_nanos": candidate.campaign_cost_control.hard_cap_nanos,
         "claimed_at": ledger.get("claimed_at") if isinstance(ledger, dict) else None,
     }
+    if candidate.realized_schedule_hash is not None:
+        expected_ledger_body["realized_schedule_hash"] = candidate.realized_schedule_hash
     canonical_ledger = (
         (json.dumps(ledger, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
         if isinstance(ledger, dict)
@@ -493,6 +518,10 @@ def validate_heldout_ac_dispatch_plan(
         and _exact_typed_equal(raw_suite, suite.model_dump(mode="json"))
         and plan.get("execution_hash") == candidate.execution_hash
         and heldout_ac_candidate_has_current_source_binding(
+            candidate,
+            repository=repository,
+        )
+        and heldout_ac_candidate_matches_current_execution_inputs(
             candidate,
             repository=repository,
         )
@@ -790,6 +819,7 @@ def validate_heldout_ac_reservation_journal_prefix(
             root / expected_relative_path,
             expected_run_root=root,
         )
+        wrapper: HeldoutACAuthenticatedPersistedEvidence | None = None
         try:
             evidence_bytes = evidence_path.read_bytes()
             if v2_atomic_settlement:
@@ -806,6 +836,39 @@ def validate_heldout_ac_reservation_journal_prefix(
         except (OSError, ValidationError) as exc:
             raise ContractError("held-out prior authenticated row is invalid") from exc
         cost = evidence.usage_evidence.token_derived_cost_nanos
+        if candidate.schema_version == "heldout-ac-execution-candidate-v3":
+            if not (
+                wrapper is not None
+                and wrapper.schema_version == PERSISTED_EVIDENCE_SCHEMA_VERSION
+                and evidence.schema_version == ROW_SCHEMA_VERSION
+                and wrapper.runtime_tuple_hash == candidate.runtime_tuple_hash
+                and evidence.runtime_tuple_hash == candidate.runtime_tuple_hash
+                and wrapper.campaign_cost_control_hash
+                == candidate.campaign_cost_control.content_hash
+                and evidence.campaign_cost_control_hash
+                == candidate.campaign_cost_control.content_hash
+            ):
+                raise ContractError("held-out prior authenticated row authority differs")
+            validate_heldout_ac_persisted_usage_cross_binding(
+                result=evidence.result,
+                usage_evidence=evidence.usage_evidence,
+                expected_run_id=run_id,
+                expected_schedule_row_id=row.schedule_row_id,
+                expected_pricing_binding_hash=candidate.pricing_binding_hash,
+                expected_qualification_hash=evidence.qualification_hash,
+                expected_source_evidence_hash=evidence.source_evidence_hash,
+                expected_result_file_hash=evidence.persisted_result_file_hash,
+                expected_result_semantic_hash=evidence.persisted_result_semantic_hash,
+                expected_receipt_file_hash=evidence.evaluator_v2_receipt_file_hash,
+            )
+            validate_heldout_ac_usage_against_authenticated_budget(
+                usage=evidence.usage_evidence.usage,
+                budget=manifest.budget,
+                token_derived_cost_nanos=cost,
+                expected_per_run_reserve_nanos=(
+                    candidate.campaign_cost_control.per_run_reserve_nanos
+                ),
+            )
         expected_terminal = {
             **_row_identity(row),
             "run_id": run_id,

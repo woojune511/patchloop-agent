@@ -12,6 +12,11 @@ Held-out R11 candidate `sha256:f48a0de...a6b0` consumed one exact 48-row `$252`/
 `$0.15699525`; the unsettled row had durable `$0.261021` usage, so total observed started cost was `$0.41801625`.
 No complete matrix, official held-out analysis or memory claim follows.
 
+Held-out R14 candidate `sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd`
+consumed one exact 48-row `$57.60`/`$60` approval. It sealed `inconclusive`: 0 settled, 1 observed-unsettled and 47
+not started, with `$0.126342` observed-started model cost. It cannot retry, resume, reauthenticate, reclassify or
+transfer approval; no official held-out analysis or memory claim follows.
+
 ## R11 failure attribution
 
 - Loguru/structured resolved with four PASS verdicts at `$0.0972915`.
@@ -26,6 +31,15 @@ The immutable runtime artifacts remain unchanged. Correction index
 historical error code and post-runtime attribution; it made zero provider/evaluator/Docker/SDK/agent calls and added
 `$0` cost.
 
+## R14 failure attribution
+
+The immutable runtime reason remains `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` in phase `authentication`.
+Append-only deterministic diagnosis attributes the contract stop to
+`TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH`: trace-qualification-v2 correctly recorded the approved
+candidate budget (1M input, 100k output, 1.1M total), while the completion path compared it with the immutable suite
+budget (4M/500k/4.5M). This does not relabel the historical reason, reauthenticate the row or change its underlying
+hidden FAIL. The R14 evidence index added zero calls and `$0` cost.
+
 ## Evaluator correctness gap
 
 Evaluator-v1 still assigns literal safety PASS. V2 binds typed evidence, fail-closed verdicts, durable receipts and
@@ -33,25 +47,29 @@ qualification while raw v2 results remain `official=false`. R8 is the first comp
 development-readiness matrix; this validates the exact path, not production security, held-out generalization or a
 memory effect.
 
-The successor uses opaque controls, agent-visible leakage evidence, durable pre-qualification cost, typed failures,
-pre-journal plan validation and timestamp-independent paid identity. Persisted DTOs remain unofficial; only
-runtime-authenticated non-serialized provenance can reach the 48-row analysis gate.
+The successor uses candidate-v3. Its `realized_schedule_hash` binds every ordered row and task/evaluator identity;
+runtime tuple and cost controls bind the candidate rather than the immutable suite. A current next row requires a
+persisted-v5 wrapper and persisted-row-v2, then revalidates runtime/cost hashes, semantic usage/result bindings and all
+budgets. Known R7/R11/R14 replay is accepted only for each exact final-file/content/journal SHA triple. Persisted DTOs
+remain unofficial; only runtime-authenticated non-serialized provenance can reach analysis.
 
-Development-only evidence lowers equal A/C to 1M/100k/1.1M tokens, `$1.20`/row and `$57.60`/`$60`; held-out outcomes
-and task content were excluded, and results cannot pool directly with R11. Contract R8 → binding R9 → materialization
-R5 → execution R6 → preflight R14 remains zero-authority.
+Development-only evidence lowered equal A/C to 1M/100k/1.1M tokens, `$1.20`/row and `$57.60`/`$60`; held-out outcomes
+and task content were excluded, and results cannot pool with R11 or R14. Current Contract R10 → binding R10 →
+materialization R6 → execution R7 → preflight R15 is source-qualified but zero-authority.
 
 ## Evidence, retry and authority
 
-Completed evidence is append-only. R3-R8 development campaigns and held-out R7/R11 cannot retry, resume, overwrite or
+Completed evidence is append-only. R3-R8 development and held-out R7/R11/R14 cannot retry, resume, overwrite or
 transfer approval. Reusable no-call preflight allows at most three transient pre-provider attempts without state
 artifacts or per-attempt approval prose; paid campaign identity is separately one-use across readiness timestamps.
 
-D-142 remains **source-qualified only, unactivated**; its planning disposition is now **deferred**. D-142 and the V25 one-use
-lifecycle are historical, not current gates. No paid, held-out or B/D execution is currently authorized.
+D-142 remains **source-qualified only, unactivated**; its planning disposition is now **deferred**.
+D-142 and the V25 one-use lifecycle are historical, not current gates.
+No paid, held-out or B/D execution is currently authorized.
 
 ## Next gate
 
-Commit the source-qualified successor, then run one fresh read-only no-call preflight with a new append-only output on
-execution-clean source. A READY result would create a secret-free candidate only. Provider execution remains closed
-until a separate approval binds that exact new hash, all 48 rows, the `$57.60` reserve and `$60` hard cap.
+Commit the R10/R10/R6/R7/R15 source-qualified successor, then run one fresh read-only no-call preflight with a new
+append-only output on execution-clean source. A READY result would create a secret-free candidate only. No candidate
+or approval exists now; provider execution remains closed until separate approval binds that exact new hash, all 48
+rows, the `$57.60` reserve and `$60` hard cap.

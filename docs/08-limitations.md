@@ -33,14 +33,14 @@ Historical milestone-by-milestone limitations are archived at
 - Both conditions succeeded on two development tasks with one repetition. Structured used fewer tokens/cost in both,
   but there is no variance estimate, causal attribution, held-out validation or population memory-benefit claim.
 
-Held-out R7 stopped at 0 settled/1 unsettled/47 not-started. R11 later stopped at 2 settled/1 observed-unsettled/45
-not-started. Its first Loguru row passed, its no-memory Loguru row failed hidden tests, and Dagster/no-memory never
-reached evaluation after a control-contract collision. There is no complete A/C contrast, official analysis or memory
-claim. Settled `$0.15699525` and total observed-started `$0.41801625` are accounting observations, not an invoice or
-performance estimate.
+Held-out R7 stopped at 0 settled/1 unsettled/47 not-started. R11 stopped at 2 settled/1 observed-unsettled/45
+not-started after a hidden failure and evaluator-control collision. R14 then consumed candidate
+`sha256:67475f57...307fd` and stopped at 0 settled/1 observed-unsettled/47 not-started with `$0.126342` observed. Its
+historical reason remains `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; the deterministic budget-authority diagnosis does
+not reauthenticate, reclassify or settle it. None supplies a complete contrast, official analysis or memory claim.
 
-The development-only `$57.60`/`$60` envelope may censor long trajectories; budget terminals score zero. It excludes
-R11 outcomes/task content, predicts neither completion nor invoices, and does not make future results poolable with R11.
+The development-only `$57.60`/`$60` envelope may censor long trajectories; budget terminals score zero. It excluded
+R11 outcomes/task content, predicted neither completion nor invoices, and does not make later results poolable.
 
 ## Evaluator-v1 correctness gap
 
@@ -75,9 +75,15 @@ Repository-local logs do not prove cross-clone uniqueness. D-118/D-119/D-121 and
 historical; current authority is source/artifacts plus `docs/current-status.md`.
 
 The non-serialized runtime capability is a provenance gate inside the trusted Python harness TCB, not a security
-boundary against hostile in-process Python code. Current canonical path containment, content hashes and clean-Git
-checks reject outside-root substitutions, but exact provenance hardening for a qualification leaf symlink remains a
-P2 follow-up.
+boundary against hostile in-process Python code.
+
+## Successor residual P2 limits
+
+- Alternate-root manifest construction can reject a valid nonstandard repository even though the supported root
+  dispatcher path works; this is a portability false negative, not an authority bypass.
+- Cost-only confound replay can retain an over-limit observation, but it stops the campaign and cannot authorize
+  analysis. Lower-level v1/v2 completion DTOs remain parseable for immutable history; supported dispatch is v3-only.
+- Qualification-leaf symlink provenance and the trusted in-process capability issuer remain TCB hardening work.
 
 ## Claims still forbidden
 

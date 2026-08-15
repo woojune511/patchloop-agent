@@ -21,9 +21,15 @@ four-run development A/C readiness -> preregister held-out A/C -> separately aut
 - Paid campaign identity excludes transient readiness observations and is one-use. A complete plan is validated before
   journal creation; terminal/cost evidence is atomic, started usage precedes qualification, and typed codes—not error
   prose—select confound phase.
-- Development-only evidence sets equal A/C to 1M/100k/1.1M and `$57.60`/`$60`; R11 outcomes/task content are excluded,
-  budget terminals score zero, rows never retry and results do not pool with R11.
-- Contract R8 → binding R9 → materialization R5 → execution R6 → preflight R14 is zero-authority.
+- R14 candidate `sha256:67475f57...307fd` consumed the 1M/100k/1.1M and `$57.60`/`$60` authority and sealed 0
+  settled/1 observed-unsettled/47 not-started at `$0.126342` observed. Preserve its historical
+  `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; deterministic `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH`
+  attribution (candidate limits versus immutable 4M/500k/4.5M suite limits) cannot reauthenticate or reclassify it.
+- Candidate-v3 commits the realized row order and every task/evaluator binding. Runtime/cost authority is candidate-
+  bound; current prior rows require persisted-v5/row-v2 and full budget/semantic revalidation. Historical R7/R11/R14
+  replay requires the exact execution/final-file/content/journal binding, not merely a parseable legacy schema.
+- Contract R10 → binding R10 → materialization R6 → execution R7 → preflight R15 is zero-authority. Commit it before a
+  fresh read-only no-call preflight; no candidate, approval or provider authority exists now.
 
 ### 2026-08-14 — isolate held-out contracts from historical execution
 

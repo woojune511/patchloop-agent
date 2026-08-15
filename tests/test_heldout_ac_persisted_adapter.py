@@ -17,7 +17,14 @@ from patchloop.contracts import (
     task_package_spec_hashes,
 )
 from patchloop.errors import ContractError
-from patchloop.evals.heldout_ac_completion import heldout_ac_schedule_row_id
+from patchloop.evals.heldout_ac_completion import (
+    HeldoutACDurableUsage,
+    heldout_ac_schedule_row_id,
+)
+from patchloop.evals.heldout_ac_execution import (
+    build_heldout_ac_run_manifest,
+    materialize_heldout_ac_runtime_task_authority,
+)
 from patchloop.evals.heldout_ac_persisted_adapter import (
     HeldoutACAuthenticatedPersistedEvidence,
     HeldoutACPersistedUsageEvidence,
@@ -35,13 +42,20 @@ from patchloop.evals.heldout_ac_task_evaluator import (
 )
 from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes, sha256_json
+from patchloop.verifier.runtime_evidence import evaluator_v2_runtime_tuple_hash
 from tests.test_evaluator_v2_contracts import _v2_chain
+from tests.test_heldout_ac_execution import _candidate as _lower_budget_execution_candidate
 
 ROOT = Path(__file__).resolve().parents[1]
 SUITE_PATH = Path("experiments/heldout-ac-suite-20260814-v1.yaml")
 EXECUTION_HASH = "sha256:" + "e" * 64
 SOURCE_HASH = "sha256:" + "a" * 64
 PRICING_HASH = "sha256:" + "c" * 64
+CAMPAIGN_COST_CONTROL_HASH = "sha256:" + "9" * 64
+PER_RUN_RESERVE_NANOS = 1_200_000_000
+CANDIDATE_MAX_CUMULATIVE_INPUT_TOKENS = 1_000_000
+CANDIDATE_MAX_CUMULATIVE_OUTPUT_TOKENS = 100_000
+CANDIDATE_MAX_TOTAL_TOKENS = 1_100_000
 
 BASE_CHECK_IDS = (
     "task_identity",
@@ -90,6 +104,35 @@ def _synthetic_package(task_id: str) -> TaskPackage:
         root=f"C:/synthetic/{task_id}",
         public_spec_hash=public_hash,
         private_spec_hash=private_hash,
+    )
+
+
+def _runtime_tuple_hash_for_qualification(
+    suite: object,
+    qualification: dict[str, object],
+) -> str:
+    runtime = suite.runtime  # type: ignore[attr-defined]
+    budget = qualification["budget"]
+    assert isinstance(budget, dict)
+    return evaluator_v2_runtime_tuple_hash(
+        provider=str(qualification["model_provider"]),
+        model_id=str(qualification["model_id"]),
+        reasoning_effort=str(qualification["reasoning_effort"]),
+        reasoning_mode=str(qualification["reasoning_mode"]),
+        service_tier=str(qualification["service_tier"]),
+        transport_max_retries=qualification["transport_max_retries"],  # type: ignore[arg-type]
+        max_output_tokens=qualification["max_output_tokens"],  # type: ignore[arg-type]
+        max_total_tokens=budget["max_total_tokens"],  # type: ignore[arg-type]
+        wall_clock_timeout_seconds=budget["wall_clock_timeout_seconds"],  # type: ignore[arg-type]
+        tool_schema_version=str(qualification["tool_schema_version"]),
+        context_policy_version=str(qualification["context_policy_version"]),
+        memory_policy_version=runtime.memory_policy_version,
+        sandbox_backend=runtime.sandbox_backend,
+        token_budget_schema_version=budget["token_budget_schema_version"],  # type: ignore[arg-type]
+        max_model_calls=budget["max_model_calls"],  # type: ignore[arg-type]
+        max_tool_calls=budget["max_tool_calls"],  # type: ignore[arg-type]
+        max_cumulative_input_tokens=budget["max_cumulative_input_tokens"],  # type: ignore[arg-type]
+        max_cumulative_output_tokens=budget["max_cumulative_output_tokens"],  # type: ignore[arg-type]
     )
 
 
@@ -175,9 +218,20 @@ def _binding_and_agent_result():
     return suite, binding, result
 
 
-def _row_files(*, thin_qualification: bool = False):
+def _row_files(
+    *,
+    thin_qualification: bool = False,
+    campaign_cost_control_hash: str = CAMPAIGN_COST_CONTROL_HASH,
+    execution_hash: str = EXECUTION_HASH,
+    token_limits: tuple[int, int, int] = (
+        CANDIDATE_MAX_CUMULATIVE_INPUT_TOKENS,
+        CANDIDATE_MAX_CUMULATIVE_OUTPUT_TOKENS,
+        CANDIDATE_MAX_TOTAL_TOKENS,
+    ),
+):
     suite, binding, result = _binding_and_agent_result()
-    row_id = heldout_ac_schedule_row_id(suite=suite, execution_hash=EXECUTION_HASH, order=1)
+    input_limit, output_limit, total_limit = token_limits
+    row_id = heldout_ac_schedule_row_id(suite=suite, execution_hash=execution_hash, order=1)
     result_bytes = result.model_dump_json(indent=2).encode("utf-8")
     if thin_qualification:
         qualification_body = {
@@ -188,7 +242,7 @@ def _row_files(*, thin_qualification: bool = False):
             "dataset_role": suite.schedule[0].role,
             "memory_condition": suite.schedule[0].condition,
             "suite_hash": suite.content_hash,
-            "execution_hash": EXECUTION_HASH,
+            "execution_hash": execution_hash,
             "schedule_row_id": row_id,
             "source_evidence_hash": "sha256:" + "d" * 64,
         }
@@ -207,7 +261,7 @@ def _row_files(*, thin_qualification: bool = False):
             "dataset_role": suite.schedule[0].role,
             "dataset_manifest_hash": "sha256:" + "1" * 64,
             "suite_hash": suite.content_hash,
-            "execution_hash": EXECUTION_HASH,
+            "execution_hash": execution_hash,
             "schedule_row_id": row_id,
             "model_provider": runtime.model,
             "memory_condition": suite.schedule[0].condition,
@@ -217,7 +271,21 @@ def _row_files(*, thin_qualification: bool = False):
             "failure_record_hash": None,
             "source_evidence_hash": "sha256:" + "d" * 64,
             "checks": [
-                {"check_id": check_id, "passed": True, "details": {}} for check_id in BASE_CHECK_IDS
+                {
+                    "check_id": check_id,
+                    "passed": True,
+                    "details": (
+                        {
+                            "campaign_cost_control_hash": campaign_cost_control_hash,
+                            "manifest_cost_control_hash": campaign_cost_control_hash,
+                            "schedule_row_count": 48,
+                            "live_resume_supported": False,
+                        }
+                        if check_id == "heldout_ac_full_schedule_cost_contract"
+                        else {}
+                    ),
+                }
+                for check_id in BASE_CHECK_IDS
             ],
             "evaluator_version": "v2",
             "evaluator_v2_receipt_hash": None,
@@ -235,11 +303,11 @@ def _row_files(*, thin_qualification: bool = False):
             "budget": {
                 "max_model_calls": runtime.max_model_calls,
                 "max_tool_calls": runtime.max_tool_calls,
-                "max_total_tokens": runtime.max_total_tokens,
+                "max_total_tokens": total_limit,
                 "wall_clock_timeout_seconds": runtime.wall_clock_timeout_seconds,
                 "token_budget_schema_version": runtime.token_budget_schema_version,
-                "max_cumulative_input_tokens": runtime.max_cumulative_input_tokens,
-                "max_cumulative_output_tokens": runtime.max_cumulative_output_tokens,
+                "max_cumulative_input_tokens": input_limit,
+                "max_cumulative_output_tokens": output_limit,
             },
             "harness_git_commit": "1" * 40,
             "tool_schema_version": runtime.tool_schema_version,
@@ -296,11 +364,59 @@ def _row_files(*, thin_qualification: bool = False):
     return suite, binding, result_bytes, qualification, qualification_bytes, usage_bytes
 
 
+def _with_usage_updates(
+    result_bytes: bytes,
+    usage_bytes: bytes,
+    **updates: int,
+) -> tuple[bytes, bytes]:
+    result_payload = json.loads(result_bytes)
+    result_payload["usage"].update(updates)
+    durable_usage = HeldoutACDurableUsage(
+        **{
+            key: result_payload["usage"][key]
+            for key in (
+                "input_tokens",
+                "cached_input_tokens",
+                "cache_write_input_tokens",
+                "output_tokens",
+                "reasoning_output_tokens",
+                "model_calls",
+                "input_token_count_calls",
+                "tool_calls",
+                "wall_clock_ms",
+            )
+        }
+    )
+    result_payload["usage"]["model_cost_usd"] = (
+        durable_usage.token_derived_cost_nanos() / 1_000_000_000
+    )
+    result = RunResult.model_validate(result_payload)
+    changed_result_bytes = result.model_dump_json(indent=2).encode("utf-8")
+
+    usage_payload = json.loads(usage_bytes)
+    usage_payload["usage"] = durable_usage.model_dump(mode="json")
+    usage_payload["token_derived_cost_nanos"] = durable_usage.token_derived_cost_nanos()
+    usage_payload["persisted_result_file_hash"] = sha256_bytes(changed_result_bytes)
+    usage_payload["content_hash"] = sha256_json(
+        {key: value for key, value in usage_payload.items() if key != "content_hash"}
+    )
+    changed_usage_bytes = json.dumps(
+        HeldoutACPersistedUsageEvidence.model_validate(usage_payload).model_dump(mode="json"),
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return changed_result_bytes, changed_usage_bytes
+
+
 def test_authenticated_agent_terminal_binds_exact_persisted_bytes() -> None:
     suite, binding, result_bytes, qualification, qualification_bytes, usage_bytes = _row_files()
     row = project_authenticated_heldout_ac_persisted_row(
         suite=suite,
         execution_hash=EXECUTION_HASH,
+        expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+        expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+        expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
         expected_pricing_binding_hash=PRICING_HASH,
         order=1,
         task_evaluator_binding=binding,
@@ -313,9 +429,185 @@ def test_authenticated_agent_terminal_binds_exact_persisted_bytes() -> None:
     )
 
     assert row.persisted_evidence_authenticated is True
+    assert row.runtime_tuple_hash == _runtime_tuple_hash_for_qualification(suite, qualification)
+    assert row.campaign_cost_control_hash == CAMPAIGN_COST_CONTROL_HASH
     assert row.result.evaluation_status == "not_run"
     assert row.persisted_result_file_hash == sha256_bytes(result_bytes)
     assert row.qualification_file_hash == sha256_bytes(qualification_bytes)
+
+
+def test_actual_lower_budget_candidate_authority_authenticates_manifest_budget() -> None:
+    candidate = _lower_budget_execution_candidate()
+    candidate_row = candidate.schedule[0]
+    package = load_task_package(ROOT / candidate_row.task_path)
+    authority = materialize_heldout_ac_runtime_task_authority(
+        candidate=candidate,
+        task_id=candidate_row.task_id,
+        package=package,
+        api_key="offline-test-runtime-secret",
+        repository=ROOT,
+    )
+    manifest = build_heldout_ac_run_manifest(
+        candidate=candidate,
+        row_order=1,
+        run_id="run_heldout_adapter_candidate_binding",
+        created_at=datetime(2026, 8, 15, tzinfo=UTC),
+        authority=authority,
+    )
+    assert manifest.experiment is not None
+    suite, binding, result_bytes, qualification, qualification_bytes, usage_bytes = _row_files(
+        campaign_cost_control_hash=manifest.experiment.campaign_cost_control_hash,
+        execution_hash=candidate.execution_hash,
+        token_limits=(
+            manifest.budget.max_cumulative_input_tokens,
+            manifest.budget.max_cumulative_output_tokens,
+            manifest.budget.max_total_tokens,
+        ),
+    )
+    assert manifest.budget.max_cumulative_input_tokens is not None
+    assert manifest.budget.max_cumulative_output_tokens is not None
+
+    row = project_authenticated_heldout_ac_persisted_row(
+        suite=suite,
+        execution_hash=candidate.execution_hash,
+        expected_runtime_tuple_hash=authority.qualification_authority.runtime_tuple_hash,
+        expected_campaign_cost_control_hash=candidate.campaign_cost_control.content_hash,
+        expected_per_run_reserve_nanos=candidate.campaign_cost_control.per_run_reserve_nanos,
+        expected_pricing_binding_hash=PRICING_HASH,
+        order=1,
+        task_evaluator_binding=binding,
+        persisted_result_bytes=result_bytes,
+        qualification_bytes=qualification_bytes,
+        recomputed_qualification=qualification,
+        usage_evidence_bytes=usage_bytes,
+        receipt_validation=None,
+        receipt_bytes=None,
+    )
+
+    assert row.runtime_tuple_hash == candidate.runtime_tuple_hash
+    assert row.campaign_cost_control_hash == candidate.campaign_cost_control.content_hash
+
+
+def test_candidate_budget_rejects_the_legacy_suite_runtime_authority() -> None:
+    suite, binding, result_bytes, qualification, qualification_bytes, usage_bytes = _row_files()
+    (
+        _legacy_suite,
+        _legacy_binding,
+        _legacy_result_bytes,
+        legacy_qualification,
+        _legacy_qualification_bytes,
+        _legacy_usage_bytes,
+    ) = _row_files(token_limits=(4_000_000, 500_000, 4_500_000))
+
+    with pytest.raises(ContractError, match="runtime identity differs"):
+        project_authenticated_heldout_ac_persisted_row(
+            suite=suite,
+            execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(
+                suite, legacy_qualification
+            ),
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
+            expected_pricing_binding_hash=PRICING_HASH,
+            order=1,
+            task_evaluator_binding=binding,
+            persisted_result_bytes=result_bytes,
+            qualification_bytes=qualification_bytes,
+            recomputed_qualification=qualification,
+            usage_evidence_bytes=usage_bytes,
+            receipt_validation=None,
+            receipt_bytes=None,
+        )
+
+
+def test_candidate_cost_control_rejects_another_campaign_authority() -> None:
+    suite, binding, result_bytes, qualification, qualification_bytes, usage_bytes = _row_files()
+
+    with pytest.raises(ContractError, match="runtime identity differs"):
+        project_authenticated_heldout_ac_persisted_row(
+            suite=suite,
+            execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+            expected_campaign_cost_control_hash="sha256:" + "8" * 64,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
+            expected_pricing_binding_hash=PRICING_HASH,
+            order=1,
+            task_evaluator_binding=binding,
+            persisted_result_bytes=result_bytes,
+            qualification_bytes=qualification_bytes,
+            recomputed_qualification=qualification,
+            usage_evidence_bytes=usage_bytes,
+            receipt_validation=None,
+            receipt_bytes=None,
+        )
+
+
+@pytest.mark.parametrize(
+    ("usage_updates", "per_run_reserve_nanos"),
+    [
+        ({"input_tokens": 1_000_001}, PER_RUN_RESERVE_NANOS),
+        ({"output_tokens": 100_001}, PER_RUN_RESERVE_NANOS),
+        (
+            {"model_calls": 241, "input_token_count_calls": 241},
+            PER_RUN_RESERVE_NANOS,
+        ),
+        ({"tool_calls": 401}, PER_RUN_RESERVE_NANOS),
+        ({"wall_clock_ms": 3_600_001}, PER_RUN_RESERVE_NANOS),
+        ({}, 1),
+    ],
+)
+def test_authenticated_row_rejects_usage_outside_candidate_bound_budget(
+    usage_updates: dict[str, int],
+    per_run_reserve_nanos: int,
+) -> None:
+    suite, binding, result_bytes, qualification, qualification_bytes, usage_bytes = _row_files()
+    result_bytes, usage_bytes = _with_usage_updates(
+        result_bytes,
+        usage_bytes,
+        **usage_updates,
+    )
+
+    with pytest.raises(ContractError, match="cross-binding"):
+        project_authenticated_heldout_ac_persisted_row(
+            suite=suite,
+            execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=per_run_reserve_nanos,
+            expected_pricing_binding_hash=PRICING_HASH,
+            order=1,
+            task_evaluator_binding=binding,
+            persisted_result_bytes=result_bytes,
+            qualification_bytes=qualification_bytes,
+            recomputed_qualification=qualification,
+            usage_evidence_bytes=usage_bytes,
+            receipt_validation=None,
+            receipt_bytes=None,
+        )
+
+
+def test_legacy_suite_budget_requires_its_exact_runtime_authority() -> None:
+    suite, binding, result_bytes, qualification, qualification_bytes, usage_bytes = _row_files(
+        token_limits=(4_000_000, 500_000, 4_500_000)
+    )
+    row = project_authenticated_heldout_ac_persisted_row(
+        suite=suite,
+        execution_hash=EXECUTION_HASH,
+        expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+        expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+        expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
+        expected_pricing_binding_hash=PRICING_HASH,
+        order=1,
+        task_evaluator_binding=binding,
+        persisted_result_bytes=result_bytes,
+        qualification_bytes=qualification_bytes,
+        recomputed_qualification=qualification,
+        usage_evidence_bytes=usage_bytes,
+        receipt_validation=None,
+        receipt_bytes=None,
+    )
+
+    assert row.persisted_evidence_authenticated is True
 
 
 def test_pure_projection_is_unofficial_until_runtime_authenticator_issues_capability() -> None:
@@ -323,6 +615,9 @@ def test_pure_projection_is_unofficial_until_runtime_authenticator_issues_capabi
     evidence = project_authenticated_heldout_ac_persisted_evidence(
         suite=suite,
         execution_hash=EXECUTION_HASH,
+        expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+        expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+        expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
         expected_pricing_binding_hash=PRICING_HASH,
         order=1,
         task_evaluator_binding=binding,
@@ -346,6 +641,8 @@ def test_pure_projection_is_unofficial_until_runtime_authenticator_issues_capabi
     assert type(evidence) is HeldoutACAuthenticatedPersistedEvidence
     assert evidence.official is False
     assert evidence.analysis_eligible is False
+    assert evidence.runtime_tuple_hash == evidence.row.runtime_tuple_hash
+    assert evidence.campaign_cost_control_hash == evidence.row.campaign_cost_control_hash
     assert has_heldout_ac_runtime_authentication_capability(evidence) is False
 
     with patch(
@@ -356,6 +653,8 @@ def test_pure_projection_is_unofficial_until_runtime_authenticator_issues_capabi
         issued = authenticate_heldout_ac_persisted_evidence(
             suite=suite,
             execution_hash=EXECUTION_HASH,
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
             expected_pricing_binding_hash=PRICING_HASH,
             order=1,
             task_evaluator_binding=binding,
@@ -382,6 +681,25 @@ def test_pure_projection_is_unofficial_until_runtime_authenticator_issues_capabi
     assert has_heldout_ac_runtime_authentication_capability(issued.model_copy()) is False
     assert has_heldout_ac_runtime_authentication_capability(issued.model_copy(deep=True)) is False
 
+    legacy = issued.model_dump(mode="json")
+    legacy["schema_version"] = "heldout-ac-authenticated-persisted-evidence-v4"
+    legacy.pop("runtime_tuple_hash")
+    legacy.pop("campaign_cost_control_hash")
+    legacy_row = legacy["row"]
+    legacy_row["schema_version"] = "heldout-ac-authenticated-persisted-row-v1"
+    legacy_row.pop("runtime_tuple_hash")
+    legacy_row.pop("campaign_cost_control_hash")
+    legacy_row["content_hash"] = sha256_json(
+        {key: value for key, value in legacy_row.items() if key != "content_hash"}
+    )
+    legacy["content_hash"] = sha256_json(
+        {key: value for key, value in legacy.items() if key != "content_hash"}
+    )
+    historical = HeldoutACAuthenticatedPersistedEvidence.model_validate(legacy)
+    assert historical.runtime_tuple_hash is None
+    assert historical.row.campaign_cost_control_hash is None
+    assert has_heldout_ac_runtime_authentication_capability(historical) is False
+
 
 def test_persisted_adapter_rejects_thin_qualification_even_when_recomputation_matches() -> None:
     suite, binding, result_bytes, qualification, qualification_bytes, usage_bytes = _row_files(
@@ -392,6 +710,9 @@ def test_persisted_adapter_rejects_thin_qualification_even_when_recomputation_ma
         project_authenticated_heldout_ac_persisted_row(
             suite=suite,
             execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash="sha256:" + "0" * 64,
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
             expected_pricing_binding_hash=PRICING_HASH,
             order=1,
             task_evaluator_binding=binding,
@@ -427,6 +748,9 @@ def test_persisted_adapter_rejects_any_rehashed_or_byte_drift(target: str) -> No
         project_authenticated_heldout_ac_persisted_row(
             suite=suite,
             execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
             expected_pricing_binding_hash=PRICING_HASH,
             order=1,
             task_evaluator_binding=binding,
@@ -450,6 +774,9 @@ def test_evaluator_completed_row_cannot_be_authenticated_without_receipt_validat
         project_authenticated_heldout_ac_persisted_row(
             suite=suite,
             execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
             expected_pricing_binding_hash=PRICING_HASH,
             order=1,
             task_evaluator_binding=binding,
@@ -469,6 +796,9 @@ def test_persisted_adapter_rejects_wrong_pricing_binding() -> None:
         project_authenticated_heldout_ac_persisted_row(
             suite=suite,
             execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
             expected_pricing_binding_hash="sha256:" + "f" * 64,
             order=1,
             task_evaluator_binding=binding,
@@ -504,6 +834,9 @@ def test_persisted_adapter_rejects_result_cost_drift_after_rehash() -> None:
         project_authenticated_heldout_ac_persisted_row(
             suite=suite,
             execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
             expected_pricing_binding_hash=PRICING_HASH,
             order=1,
             task_evaluator_binding=binding,
@@ -594,6 +927,9 @@ def test_post_submission_evaluator_failure_is_typed_authenticated_confound() -> 
     evidence = project_authenticated_heldout_ac_persisted_evidence(
         suite=suite,
         execution_hash=EXECUTION_HASH,
+        expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+        expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+        expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
         expected_pricing_binding_hash=PRICING_HASH,
         order=1,
         task_evaluator_binding=binding,
@@ -617,6 +953,9 @@ def test_post_submission_evaluator_failure_is_typed_authenticated_confound() -> 
     same_safe_projection = project_authenticated_heldout_ac_persisted_evidence(
         suite=suite,
         execution_hash=EXECUTION_HASH,
+        expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+        expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+        expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
         expected_pricing_binding_hash=PRICING_HASH,
         order=1,
         task_evaluator_binding=binding,
@@ -632,6 +971,42 @@ def test_post_submission_evaluator_failure_is_typed_authenticated_confound() -> 
         evidence.evaluator_failure_event_hash
     )
     assert same_safe_projection.content_hash == evidence.content_hash
+
+
+def test_evaluator_confound_rejects_usage_outside_candidate_bound_budget() -> None:
+    (
+        suite,
+        binding,
+        result_bytes,
+        qualification,
+        qualification_bytes,
+        usage_bytes,
+        failure_event,
+    ) = _post_submission_evaluator_confound_files()
+    result_bytes, usage_bytes = _with_usage_updates(
+        result_bytes,
+        usage_bytes,
+        input_tokens=CANDIDATE_MAX_CUMULATIVE_INPUT_TOKENS + 1,
+    )
+
+    with pytest.raises(ContractError, match="confound cross-binding"):
+        project_authenticated_heldout_ac_persisted_evidence(
+            suite=suite,
+            execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
+            expected_pricing_binding_hash=PRICING_HASH,
+            order=1,
+            task_evaluator_binding=binding,
+            persisted_result_bytes=result_bytes,
+            qualification_bytes=qualification_bytes,
+            recomputed_qualification=qualification,
+            usage_evidence_bytes=usage_bytes,
+            receipt_validation=None,
+            receipt_bytes=None,
+            evaluator_failure_event=failure_event,
+        )
 
 
 @pytest.mark.parametrize(
@@ -661,6 +1036,9 @@ def test_evaluator_confound_requires_exact_persisted_stable_code(
         evidence = project_authenticated_heldout_ac_persisted_evidence(
             suite=suite,
             execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
             expected_pricing_binding_hash=PRICING_HASH,
             order=1,
             task_evaluator_binding=binding,
@@ -679,6 +1057,9 @@ def test_evaluator_confound_requires_exact_persisted_stable_code(
         project_authenticated_heldout_ac_persisted_evidence(
             suite=suite,
             execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
             expected_pricing_binding_hash=PRICING_HASH,
             order=1,
             task_evaluator_binding=binding,
@@ -709,6 +1090,9 @@ def test_evaluator_confound_requires_runner_event_provenance() -> None:
         project_authenticated_heldout_ac_persisted_evidence(
             suite=suite,
             execution_hash=EXECUTION_HASH,
+            expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+            expected_campaign_cost_control_hash=CAMPAIGN_COST_CONTROL_HASH,
+            expected_per_run_reserve_nanos=PER_RUN_RESERVE_NANOS,
             expected_pricing_binding_hash=PRICING_HASH,
             order=1,
             task_evaluator_binding=binding,

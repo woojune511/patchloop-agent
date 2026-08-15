@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,10 @@ import pytest
 from patchloop.contracts import RunResult, VerdictState
 from patchloop.evals import heldout_ac_completion as completion
 from patchloop.evals import heldout_ac_persisted_adapter as persisted_adapter
+from patchloop.evals.heldout_ac_execution import (
+    HeldoutACExecutionCandidate,
+    heldout_ac_completion_campaign_authority,
+)
 from patchloop.evals.heldout_ac_persisted_adapter import (
     HeldoutACAuthenticatedPersistedEvidence,
     HeldoutACAuthenticatedPersistedRow,
@@ -18,6 +23,7 @@ from patchloop.evals.heldout_ac_persisted_adapter import (
 from patchloop.evals.heldout_ac_suite import load_heldout_ac_suite
 from patchloop.util import sha256_json
 from tests.test_evaluator_v2_contracts import _v2_chain
+from tests.test_heldout_ac_execution import _candidate as _execution_candidate
 
 ROOT = Path(__file__).resolve().parents[1]
 SUITE_PATH = Path("experiments/heldout-ac-suite-20260814-v1.yaml")
@@ -31,6 +37,36 @@ ANALYSIS_SOURCE_HASH = "sha256:" + "f" * 64
 
 def _sha(label: str) -> str:
     return sha256_json({"test": label})
+
+
+def _completion_authority(suite: Any, candidate: HeldoutACExecutionCandidate):
+    return heldout_ac_completion_campaign_authority(candidate=candidate, suite=suite)
+
+
+def _legacy_completion_authority(suite: Any, candidate: HeldoutACExecutionCandidate):
+    current = _completion_authority(suite, candidate)
+    body = current.model_dump(mode="python", exclude={"content_hash"})
+    body.update(
+        {
+            "candidate_schema_version": "heldout-ac-execution-candidate-v1",
+            "max_cumulative_input_tokens": 4_000_000,
+            "max_cumulative_output_tokens": 500_000,
+            "max_total_tokens": 4_500_000,
+            "campaign_cost_control_hash": completion.heldout_ac_campaign_cost_control_hash(
+                suite=suite,
+                execution_hash=current.execution_hash,
+                schedule_hash=current.schedule_hash,
+                per_run_reserve_nanos=5_250_000_000,
+                full_schedule_reserve_nanos=252_000_000_000,
+                hard_cap_nanos=275_000_000_000,
+            ),
+            "per_run_reserve_nanos": 5_250_000_000,
+            "full_schedule_reserve_nanos": 252_000_000_000,
+            "hard_cap_nanos": 275_000_000_000,
+        }
+    )
+    body.pop("realized_schedule_hash", None)
+    return type(current)(**body, content_hash=sha256_json(body))
 
 
 def _usage(order: int) -> dict[str, Any]:
@@ -442,6 +478,9 @@ def test_typed_pre_evaluator_agent_terminal_is_an_eligible_zero() -> None:
         lambda payload: payload["campaign_cost_qualification"].__setitem__(
             "campaign_cost_control_hash", _sha("arbitrary-cost-control")
         ),
+        lambda payload: payload["campaign_cost_qualification"].__setitem__(
+            "accrued_cost_nanos", 57_600_000_001
+        ),
         lambda payload: payload["campaign_cost_qualification"].__setitem__("settled_runs", 48.0),
         lambda payload: payload.__setitem__("source_qualification_present", True),
     ],
@@ -496,8 +535,13 @@ def test_typed_projection_recomputes_counts_from_nested_outcomes() -> None:
         completion.HeldoutACCompletionProjection.model_validate(drifted)
 
 
-def _authenticated_persisted_rows():
+def _authenticated_persisted_rows() -> tuple[
+    Any,
+    HeldoutACExecutionCandidate,
+    list[HeldoutACAuthenticatedPersistedEvidence],
+]:
     suite, payload = _completion_input()
+    candidate = _execution_candidate()
     rows: list[HeldoutACAuthenticatedPersistedEvidence] = []
     prices = {
         "uncached_input": 750,
@@ -507,7 +551,12 @@ def _authenticated_persisted_rows():
     }
     for fixture in payload["rows"]:
         order = fixture["order"]
-        result = RunResult.model_validate(fixture["result"])
+        result_payload = deepcopy(fixture["result"])
+        result_payload["evaluator_contract"]["evaluator_source_hash"] = (
+            candidate.source_qualification.evaluator_source_hash
+        )
+        result = RunResult.model_validate(result_payload)
+        schedule_row_id = candidate.schedule[order - 1].schedule_row_id
         qualification_hash = _sha(f"source-qualification-{order}")
         source_evidence_hash = _sha(f"source-evidence-{order}")
         persisted_result_file_hash = _sha(f"result-file-{order}")
@@ -515,8 +564,8 @@ def _authenticated_persisted_rows():
         usage_body = {
             "schema_version": "heldout-ac-durable-usage-evidence-v1",
             "run_id": result.run_id,
-            "schedule_row_id": fixture["schedule_row_id"],
-            "pricing_binding_hash": _sha("pricing"),
+            "schedule_row_id": schedule_row_id,
+            "pricing_binding_hash": candidate.pricing_binding_hash,
             "price_nanos_per_token": prices,
             "usage": usage,
             "token_derived_cost_nanos": fixture["settlement"]["token_derived_cost_nanos"],
@@ -545,16 +594,18 @@ def _authenticated_persisted_rows():
             "dataset_role": fixture["role"],
             "task_id": fixture["task_id"],
             "suite_hash": suite.content_hash,
-            "execution_hash": EXECUTION_HASH,
-            "schedule_row_id": fixture["schedule_row_id"],
+            "execution_hash": candidate.execution_hash,
+            "schedule_row_id": schedule_row_id,
             "memory_condition": fixture["condition"],
             "source_evidence_hash": source_evidence_hash,
             "source_qualification_hash": qualification_hash,
             "check_count": 28,
             "checks_hash": _sha(f"checks-{order}"),
             "evaluator_version": "v2",
-            "evaluator_v2_source_hash": EVALUATOR_SOURCE_HASH,
-            "evaluator_v2_source_qualification_hash": SOURCE_QUALIFICATION_HASH,
+            "evaluator_v2_source_hash": candidate.source_qualification.evaluator_source_hash,
+            "evaluator_v2_source_qualification_hash": (
+                candidate.source_qualification.source_qualification_hash
+            ),
             "evaluator_v2_receipt_hash": fixture["qualification"]["evaluator_v2_receipt_hash"],
             "evaluator_v2_receipt_file_hash": fixture["qualification"][
                 "evaluator_v2_receipt_file_hash"
@@ -567,7 +618,7 @@ def _authenticated_persisted_rows():
             content_hash=sha256_json(qualification_body),
         )
         row_body = {
-            "schema_version": "heldout-ac-authenticated-persisted-row-v1",
+            "schema_version": "heldout-ac-authenticated-persisted-row-v2",
             "persisted_evidence_authenticated": True,
             "order": order,
             "wave": fixture["wave"],
@@ -576,8 +627,10 @@ def _authenticated_persisted_rows():
             "condition": fixture["condition"],
             "repetition": fixture["repetition"],
             "run_id": result.run_id,
-            "schedule_row_id": fixture["schedule_row_id"],
-            "execution_hash": EXECUTION_HASH,
+            "schedule_row_id": schedule_row_id,
+            "execution_hash": candidate.execution_hash,
+            "runtime_tuple_hash": candidate.runtime_tuple_hash,
+            "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
             "task_evaluator_binding_hash": _sha(f"task-binding-{order}"),
             "persisted_result_file_hash": persisted_result_file_hash,
             "persisted_result_semantic_hash": sha256_json(result.model_dump(mode="json")),
@@ -598,10 +651,12 @@ def _authenticated_persisted_rows():
             content_hash=sha256_json(row_body),
         )
         evidence_body = {
-            "schema_version": "heldout-ac-authenticated-persisted-evidence-v4",
+            "schema_version": "heldout-ac-authenticated-persisted-evidence-v5",
             "persisted_evidence_authenticated": True,
             "official": False,
             "analysis_eligible": False,
+            "runtime_tuple_hash": candidate.runtime_tuple_hash,
+            "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
             "row": row.model_dump(mode="json"),
             "qualification": qualification.model_dump(mode="json"),
             "terminal_type": None,
@@ -613,13 +668,17 @@ def _authenticated_persisted_rows():
                 content_hash=sha256_json(evidence_body),
             )
         )
-    return suite, rows
+    return suite, candidate, rows
 
 
 def _runtime_authenticated_rows(
     monkeypatch: pytest.MonkeyPatch,
-) -> tuple[Any, list[HeldoutACAuthenticatedPersistedEvidence]]:
-    suite, projected_rows = _authenticated_persisted_rows()
+) -> tuple[
+    Any,
+    HeldoutACExecutionCandidate,
+    list[HeldoutACAuthenticatedPersistedEvidence],
+]:
+    suite, candidate, projected_rows = _authenticated_persisted_rows()
     queued_rows = iter(projected_rows)
     monkeypatch.setattr(
         persisted_adapter,
@@ -629,8 +688,10 @@ def _runtime_authenticated_rows(
     authenticated_rows = [
         persisted_adapter.authenticate_heldout_ac_persisted_evidence(
             suite=suite,
-            execution_hash=EXECUTION_HASH,
-            expected_pricing_binding_hash=_sha("pricing"),
+            execution_hash=candidate.execution_hash,
+            expected_campaign_cost_control_hash=(candidate.campaign_cost_control.content_hash),
+            expected_per_run_reserve_nanos=(candidate.campaign_cost_control.per_run_reserve_nanos),
+            expected_pricing_binding_hash=candidate.pricing_binding_hash,
             order=order,
             task_evaluator_binding=object(),  # type: ignore[arg-type]
             run_root=ROOT,
@@ -642,19 +703,74 @@ def _runtime_authenticated_rows(
         for order in range(1, 49)
     ]
     assert all(type(row) is HeldoutACAuthenticatedPersistedEvidence for row in authenticated_rows)
-    return suite, authenticated_rows  # type: ignore[return-value]
+    return suite, candidate, authenticated_rows  # type: ignore[return-value]
+
+
+def test_durable_usage_is_structural_and_candidate_authority_enforces_runtime() -> None:
+    suite = load_heldout_ac_suite(SUITE_PATH, repository=ROOT)
+    candidate = _execution_candidate()
+    current = _completion_authority(suite, candidate)
+    legacy = _legacy_completion_authority(suite, candidate)
+    usage = completion.HeldoutACDurableUsage(
+        input_tokens=1_500_000,
+        cached_input_tokens=1_500_000,
+        cache_write_input_tokens=0,
+        output_tokens=0,
+        reasoning_output_tokens=0,
+        model_calls=1,
+        input_token_count_calls=1,
+        tool_calls=0,
+        wall_clock_ms=1,
+    )
+
+    completion._validate_candidate_bound_durable_usage(
+        usage=usage,
+        token_derived_cost_nanos=usage.token_derived_cost_nanos(),
+        suite=suite,
+        authority=legacy,
+        order=1,
+    )
+    with pytest.raises(completion.HeldoutACCompletionError, match="candidate runtime"):
+        completion._validate_candidate_bound_durable_usage(
+            usage=usage,
+            token_derived_cost_nanos=usage.token_derived_cost_nanos(),
+            suite=suite,
+            authority=current,
+            order=1,
+        )
+
+
+def test_completion_authority_rejects_rehashed_call_limit_drift() -> None:
+    suite = load_heldout_ac_suite(SUITE_PATH, repository=ROOT)
+    authority = _completion_authority(suite, _execution_candidate())
+    payload = authority.model_dump(mode="python")
+    payload["max_model_calls"] = 241
+    payload["content_hash"] = sha256_json(
+        {key: value for key, value in payload.items() if key != "content_hash"}
+    )
+
+    with pytest.raises(ValueError, match="budget or cost boundary"):
+        type(authority).model_validate(payload)
+
+
+def test_candidate_bound_completion_rejects_v2_rows_under_v1_cost_control() -> None:
+    suite, candidate, rows = _authenticated_persisted_rows()
+
+    with pytest.raises(completion.HeldoutACCompletionError, match="evidence differs"):
+        completion._project_authenticated_heldout_ac_completion_without_capability(
+            suite=suite,
+            authority=_legacy_completion_authority(suite, candidate),
+            rows=rows,
+        )
 
 
 def test_directly_constructed_typed_rows_cannot_open_official_analysis() -> None:
-    suite, rows = _authenticated_persisted_rows()
+    suite, candidate, rows = _authenticated_persisted_rows()
 
     with pytest.raises(completion.HeldoutACCompletionError, match="runtime-issued"):
         completion.project_authenticated_heldout_ac_completion(
             suite=suite,
-            execution_hash=EXECUTION_HASH,
-            expected_pricing_binding_hash=_sha("pricing"),
-            evaluator_source_hash=EVALUATOR_SOURCE_HASH,
-            evaluator_source_qualification_hash=SOURCE_QUALIFICATION_HASH,
+            authority=_completion_authority(suite, candidate),
             rows=rows,
         )
 
@@ -662,13 +778,10 @@ def test_directly_constructed_typed_rows_cannot_open_official_analysis() -> None
 def test_authenticated_completion_is_the_only_official_analysis_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    suite, rows = _runtime_authenticated_rows(monkeypatch)
+    suite, candidate, rows = _runtime_authenticated_rows(monkeypatch)
     projected = completion.project_authenticated_heldout_ac_completion(
         suite=suite,
-        execution_hash=EXECUTION_HASH,
-        expected_pricing_binding_hash=_sha("pricing"),
-        evaluator_source_hash=EVALUATOR_SOURCE_HASH,
-        evaluator_source_qualification_hash=SOURCE_QUALIFICATION_HASH,
+        authority=_completion_authority(suite, candidate),
         rows=rows,
     )
     envelope = completion.analyze_authenticated_heldout_ac_completion(projected)
@@ -684,10 +797,26 @@ def test_authenticated_completion_is_the_only_official_analysis_path(
     assert envelope.official is True
     assert envelope.analysis.eligible_rows == 48
     assert envelope.suite_content_hash == suite.content_hash
-    assert envelope.execution_hash == EXECUTION_HASH
-    assert envelope.evaluator_source_hash == EVALUATOR_SOURCE_HASH
-    assert envelope.evaluator_source_qualification_hash == SOURCE_QUALIFICATION_HASH
+    assert envelope.execution_hash == candidate.execution_hash
+    assert envelope.evaluator_source_hash == candidate.source_qualification.evaluator_source_hash
+    assert envelope.evaluator_source_qualification_hash == (
+        candidate.source_qualification.source_qualification_hash
+    )
     assert envelope.completion_projection_hash == projected.content_hash
+
+    historical_body = projected.model_dump(mode="json")
+    for row in historical_body["outcome_projection"]["rows"]:
+        row["usage"]["model_cost_nanos"] = 1_300_000_000
+    historical_body["accrued_cost_nanos"] = 62_400_000_000
+    historical_body["full_schedule_reserve_nanos"] = 252_000_000_000
+    historical_body["hard_cap_nanos"] = 275_000_000_000
+    historical_body["content_hash"] = sha256_json(
+        {key: value for key, value in historical_body.items() if key != "content_hash"}
+    )
+    historical = completion.HeldoutACAuthenticatedCompletionProjection.model_validate_json(
+        json.dumps(historical_body, sort_keys=True)
+    )
+    assert historical.accrued_cost_nanos > 57_600_000_000
 
     with pytest.raises(completion.HeldoutACCompletionError, match="typed authenticated"):
         completion.analyze_authenticated_heldout_ac_completion(  # type: ignore[arg-type]
@@ -703,7 +832,7 @@ def test_authenticated_completion_is_the_only_official_analysis_path(
 def test_serialization_revalidation_and_copy_strip_runtime_authority(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    suite, rows = _runtime_authenticated_rows(monkeypatch)
+    suite, candidate, rows = _runtime_authenticated_rows(monkeypatch)
     reparsed = [
         HeldoutACAuthenticatedPersistedEvidence.model_validate(row.model_dump(mode="json"))
         for row in rows
@@ -714,10 +843,7 @@ def test_serialization_revalidation_and_copy_strip_runtime_authority(
         with pytest.raises(completion.HeldoutACCompletionError, match="runtime-issued"):
             completion.project_authenticated_heldout_ac_completion(
                 suite=suite,
-                execution_hash=EXECUTION_HASH,
-                expected_pricing_binding_hash=_sha("pricing"),
-                evaluator_source_hash=EVALUATOR_SOURCE_HASH,
-                evaluator_source_qualification_hash=SOURCE_QUALIFICATION_HASH,
+                authority=_completion_authority(suite, candidate),
                 rows=unauthoritative,
             )
 
@@ -725,13 +851,10 @@ def test_serialization_revalidation_and_copy_strip_runtime_authority(
 def test_persisted_completion_replay_recomputes_without_reissuing_authority(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    suite, runtime_rows = _runtime_authenticated_rows(monkeypatch)
+    suite, candidate, runtime_rows = _runtime_authenticated_rows(monkeypatch)
     projected = completion.project_authenticated_heldout_ac_completion(
         suite=suite,
-        execution_hash=EXECUTION_HASH,
-        expected_pricing_binding_hash=_sha("pricing"),
-        evaluator_source_hash=EVALUATOR_SOURCE_HASH,
-        evaluator_source_qualification_hash=SOURCE_QUALIFICATION_HASH,
+        authority=_completion_authority(suite, candidate),
         rows=runtime_rows,
     )
     envelope = completion.analyze_authenticated_heldout_ac_completion(projected)
@@ -749,10 +872,7 @@ def test_persisted_completion_replay_recomputes_without_reissuing_authority(
     assert (
         completion.validate_persisted_heldout_ac_completion_replay(
             suite=suite,
-            execution_hash=EXECUTION_HASH,
-            expected_pricing_binding_hash=_sha("pricing"),
-            evaluator_source_hash=EVALUATOR_SOURCE_HASH,
-            evaluator_source_qualification_hash=SOURCE_QUALIFICATION_HASH,
+            authority=_completion_authority(suite, candidate),
             rows=persisted_rows,
             completion=persisted_completion,
             official_envelope=persisted_envelope,
@@ -785,10 +905,7 @@ def test_persisted_completion_replay_recomputes_without_reissuing_authority(
     with pytest.raises(completion.HeldoutACCompletionError, match="usage evidence differs"):
         completion.validate_persisted_heldout_ac_completion_replay(
             suite=suite,
-            execution_hash=EXECUTION_HASH,
-            expected_pricing_binding_hash=_sha("pricing"),
-            evaluator_source_hash=EVALUATOR_SOURCE_HASH,
-            evaluator_source_qualification_hash=SOURCE_QUALIFICATION_HASH,
+            authority=_completion_authority(suite, candidate),
             rows=drifted_rows,
             completion=persisted_completion,
             official_envelope=persisted_envelope,
@@ -805,10 +922,7 @@ def test_persisted_completion_replay_recomputes_without_reissuing_authority(
     with pytest.raises(completion.HeldoutACCompletionError, match="envelope replay differs"):
         completion.validate_persisted_heldout_ac_completion_replay(
             suite=suite,
-            execution_hash=EXECUTION_HASH,
-            expected_pricing_binding_hash=_sha("pricing"),
-            evaluator_source_hash=EVALUATOR_SOURCE_HASH,
-            evaluator_source_qualification_hash=SOURCE_QUALIFICATION_HASH,
+            authority=_completion_authority(suite, candidate),
             rows=persisted_rows,
             completion=persisted_completion,
             official_envelope=drifted_envelope,
@@ -816,16 +930,13 @@ def test_persisted_completion_replay_recomputes_without_reissuing_authority(
 
 
 def test_authenticated_completion_rejects_legacy_or_reduced_row_inputs() -> None:
-    suite, rows = _authenticated_persisted_rows()
+    suite, candidate, rows = _authenticated_persisted_rows()
     raw_rows = [row.model_dump(mode="json") for row in rows]
 
     with pytest.raises(completion.HeldoutACCompletionError, match="typed persisted-evidence"):
         completion.project_authenticated_heldout_ac_completion(
             suite=suite,
-            execution_hash=EXECUTION_HASH,
-            expected_pricing_binding_hash=_sha("pricing"),
-            evaluator_source_hash=EVALUATOR_SOURCE_HASH,
-            evaluator_source_qualification_hash=SOURCE_QUALIFICATION_HASH,
+            authority=_completion_authority(suite, candidate),
             rows=raw_rows,
         )
 

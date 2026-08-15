@@ -30,12 +30,13 @@ from patchloop.evals.heldout_ac_analysis import (
 from patchloop.evals.heldout_ac_budget_amendment import (
     FULL_SCHEDULE_RESERVE_NANOS,
     HARD_CAP_NANOS,
-    MAX_CUMULATIVE_INPUT_TOKENS,
-    MAX_CUMULATIVE_OUTPUT_TOKENS,
-    MAX_TOTAL_TOKENS,
     PER_RUN_RESERVE_NANOS,
 )
-from patchloop.evals.heldout_ac_contracts import HELDOUT_AC_SUITE_ID, HeldoutACSuite
+from patchloop.evals.heldout_ac_contracts import (
+    HELDOUT_AC_SUITE_ID,
+    HeldoutACCompletionCampaignAuthority,
+    HeldoutACSuite,
+)
 from patchloop.util import sha256_json
 
 SCHEMA_VERSION = "heldout-ac-completion-contract-fixture-v1"
@@ -147,16 +148,6 @@ class HeldoutACDurableUsage(_StrictFrozenModel):
             raise ValueError("cached and cache-write input exceed total input")
         if self.reasoning_output_tokens > self.output_tokens:
             raise ValueError("reasoning output exceeds total output")
-        if self.input_tokens > MAX_CUMULATIVE_INPUT_TOKENS:
-            raise ValueError("held-out cumulative input ceiling exceeded")
-        if self.output_tokens > MAX_CUMULATIVE_OUTPUT_TOKENS:
-            raise ValueError("held-out cumulative output ceiling exceeded")
-        if self.input_tokens + self.output_tokens > MAX_TOTAL_TOKENS:
-            raise ValueError("held-out aggregate token ceiling exceeded")
-        if self.model_calls > 240 or self.tool_calls > 400:
-            raise ValueError("held-out model or tool call ceiling exceeded")
-        if self.wall_clock_ms > 3_600_000:
-            raise ValueError("held-out wall-clock ceiling exceeded")
         return self
 
     def token_derived_cost_nanos(self) -> int:
@@ -233,6 +224,8 @@ class HeldoutACFullScheduleCostQualification(_StrictFrozenModel):
 
     @model_validator(mode="after")
     def validate_content_hash(self) -> HeldoutACFullScheduleCostQualification:
+        if self.accrued_cost_nanos > self.full_schedule_reserve_nanos:
+            raise ValueError("full-schedule accrued cost exceeds its reserve")
         expected = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
         if self.content_hash != expected:
             raise ValueError("full-schedule cost qualification content hash mismatch")
@@ -419,7 +412,7 @@ class HeldoutACAuthenticatedCompletionProjection(_StrictFrozenModel):
     typed_agent_terminal_runs: int = Field(ge=0, le=48)
     task_successes: int = Field(ge=0, le=48)
     task_failures: int = Field(ge=0, le=48)
-    accrued_cost_nanos: int = Field(ge=0, le=FULL_SCHEDULE_RESERVE_NANOS)
+    accrued_cost_nanos: int = Field(ge=0, le=252_000_000_000)
     full_schedule_reserve_nanos: int = Field(gt=0)
     hard_cap_nanos: int = Field(gt=0)
     authenticated_row_hashes: tuple[str, ...] = Field(min_length=48, max_length=48)
@@ -436,6 +429,8 @@ class HeldoutACAuthenticatedCompletionProjection(_StrictFrozenModel):
             (FULL_SCHEDULE_RESERVE_NANOS, HARD_CAP_NANOS),
         }:
             raise ValueError("authenticated completion cost boundary differs")
+        if self.accrued_cost_nanos > self.full_schedule_reserve_nanos:
+            raise ValueError("authenticated completion accrued cost exceeds its reserve")
         if len(set(self.authenticated_row_hashes)) != 48:
             raise ValueError("authenticated completion row identities are not unique")
         rows = self.outcome_projection.rows
@@ -1310,41 +1305,107 @@ def _authenticated_analysis_row(evidence: Any) -> HeldoutACOutcomeRow:
     )
 
 
+def _validate_candidate_bound_durable_usage(
+    *,
+    usage: HeldoutACDurableUsage,
+    token_derived_cost_nanos: int,
+    suite: HeldoutACSuite,
+    authority: HeldoutACCompletionCampaignAuthority,
+    order: int,
+) -> None:
+    if (
+        authority.max_model_calls != suite.runtime.max_model_calls
+        or authority.max_tool_calls != suite.runtime.max_tool_calls
+        or authority.wall_clock_timeout_seconds != suite.runtime.wall_clock_timeout_seconds
+        or usage.input_tokens > authority.max_cumulative_input_tokens
+        or usage.output_tokens > authority.max_cumulative_output_tokens
+        or usage.input_tokens + usage.output_tokens > authority.max_total_tokens
+        or usage.model_calls > authority.max_model_calls
+        or usage.tool_calls > authority.max_tool_calls
+        or usage.wall_clock_ms > authority.wall_clock_timeout_seconds * 1_000
+        or token_derived_cost_nanos > authority.per_run_reserve_nanos
+    ):
+        raise HeldoutACCompletionError(
+            f"authenticated usage exceeds candidate runtime at order {order}"
+        )
+
+
 def _project_authenticated_heldout_ac_completion_without_capability(
     *,
     suite: HeldoutACSuite,
-    execution_hash: str,
-    expected_pricing_binding_hash: str,
-    evaluator_source_hash: str,
-    evaluator_source_qualification_hash: str,
+    authority: HeldoutACCompletionCampaignAuthority,
     rows: Sequence[Any],
-    full_schedule_reserve_nanos: int = FULL_SCHEDULE_RESERVE_NANOS,
-    hard_cap_nanos: int = HARD_CAP_NANOS,
 ) -> HeldoutACAuthenticatedCompletionProjection:
     """Recompute the typed completion DTO without issuing runtime authority."""
 
     # Local import avoids making the historical offline fixture module and the
     # persisted adapter mutually import each other during module initialization.
     from patchloop.evals.heldout_ac_persisted_adapter import (
+        PERSISTED_EVIDENCE_SCHEMA_VERSION,
+        ROW_SCHEMA_VERSION,
         HeldoutACAuthenticatedPersistedEvidence,
         validate_heldout_ac_persisted_usage_cross_binding,
     )
 
     if type(suite) is not HeldoutACSuite:
         raise HeldoutACCompletionError("authenticated completion requires a typed suite")
+    if type(authority) is not HeldoutACCompletionCampaignAuthority:
+        raise HeldoutACCompletionError("authenticated completion requires exact typed authority")
+    try:
+        authority = HeldoutACCompletionCampaignAuthority.model_validate(
+            authority.model_dump(mode="python")
+        )
+    except ValidationError as exc:
+        raise HeldoutACCompletionError("authenticated completion authority is invalid") from exc
+    expected_row_ids = tuple(
+        heldout_ac_schedule_row_id(
+            suite=suite,
+            execution_hash=authority.execution_hash,
+            order=row.order,
+        )
+        for row in suite.schedule
+    )
+    schedule_projection = [
+        {
+            "order": row.order,
+            "wave": row.wave,
+            "schedule_row_id": schedule_row_id,
+            "task_id": row.task_id,
+            "role": row.role,
+            "condition": row.condition,
+            "repetition": row.repetition,
+        }
+        for row, schedule_row_id in zip(suite.schedule, expected_row_ids, strict=True)
+    ]
+    if (
+        authority.suite_id != suite.suite_id
+        or authority.suite_content_hash != suite.content_hash
+        or authority.schedule_row_ids != expected_row_ids
+        or authority.schedule_hash != sha256_json(schedule_projection)
+    ):
+        raise HeldoutACCompletionError("authenticated completion authority differs from suite")
     if len(rows) != 48 or any(
         type(row) is not HeldoutACAuthenticatedPersistedEvidence for row in rows
     ):
         raise HeldoutACCompletionError(
             "authenticated completion requires exactly 48 typed persisted-evidence rows"
         )
+    if any(
+        row.schema_version != PERSISTED_EVIDENCE_SCHEMA_VERSION
+        or row.row.schema_version != ROW_SCHEMA_VERSION
+        for row in rows
+    ):
+        raise HeldoutACCompletionError(
+            "authenticated completion requires current candidate-bound evidence schemas"
+        )
     if len({row.content_hash for row in rows}) != 48 or len({row.row.run_id for row in rows}) != 48:
         raise HeldoutACCompletionError("authenticated completion row identities are not unique")
-    if (full_schedule_reserve_nanos, hard_cap_nanos) not in {
-        (252_000_000_000, 275_000_000_000),
-        (FULL_SCHEDULE_RESERVE_NANOS, HARD_CAP_NANOS),
-    }:
-        raise HeldoutACCompletionError("authenticated completion cost boundary differs")
+    execution_hash = authority.execution_hash
+    expected_pricing_binding_hash = authority.pricing_binding_hash
+    evaluator_source_hash = authority.evaluator_source_hash
+    evaluator_source_qualification_hash = authority.evaluator_source_qualification_hash
+    full_schedule_reserve_nanos = authority.full_schedule_reserve_nanos
+    hard_cap_nanos = authority.hard_cap_nanos
     projected_rows: list[HeldoutACOutcomeRow] = []
     for evidence, expected in zip(rows, suite.schedule, strict=True):
         authenticated = evidence.row
@@ -1374,6 +1435,14 @@ def _project_authenticated_heldout_ac_completion_without_capability(
             expected_row_id,
         )
         evaluator_contract = result.evaluator_contract
+        usage = authenticated.usage_evidence.usage
+        _validate_candidate_bound_durable_usage(
+            usage=usage,
+            token_derived_cost_nanos=authenticated.usage_evidence.token_derived_cost_nanos,
+            suite=suite,
+            authority=authority,
+            order=expected.order,
+        )
         try:
             validate_heldout_ac_persisted_usage_cross_binding(
                 result=result,
@@ -1394,6 +1463,10 @@ def _project_authenticated_heldout_ac_completion_without_capability(
         if (
             observed_identity != expected_identity
             or authenticated.execution_hash != execution_hash
+            or authenticated.runtime_tuple_hash != authority.runtime_tuple_hash
+            or evidence.runtime_tuple_hash != authority.runtime_tuple_hash
+            or authenticated.campaign_cost_control_hash != authority.campaign_cost_control_hash
+            or evidence.campaign_cost_control_hash != authority.campaign_cost_control_hash
             or qualification.run_id != authenticated.run_id
             or qualification.execution_hash != execution_hash
             or qualification.suite_hash != suite.content_hash
@@ -1455,6 +1528,11 @@ def _project_authenticated_heldout_ac_completion_without_capability(
             )
         projected_rows.append(_authenticated_analysis_row(evidence))
 
+    accrued_cost_nanos = sum(
+        evidence.row.usage_evidence.token_derived_cost_nanos for evidence in rows
+    )
+    if accrued_cost_nanos > full_schedule_reserve_nanos:
+        raise HeldoutACCompletionError("authenticated completion exceeds candidate reserve")
     projection = HeldoutACOutcomeProjection(
         schema_version="heldout-ac-outcome-projection-v1",
         preregistration_id=PREREGISTRATION_ID,
@@ -1496,9 +1574,7 @@ def _project_authenticated_heldout_ac_completion_without_capability(
         "typed_agent_terminal_runs": 48 - evaluator_completed,
         "task_successes": successes,
         "task_failures": 48 - successes,
-        "accrued_cost_nanos": sum(
-            evidence.row.usage_evidence.token_derived_cost_nanos for evidence in rows
-        ),
+        "accrued_cost_nanos": accrued_cost_nanos,
         "full_schedule_reserve_nanos": full_schedule_reserve_nanos,
         "hard_cap_nanos": hard_cap_nanos,
         "authenticated_row_hashes": tuple(row.content_hash for row in rows),
@@ -1515,13 +1591,8 @@ def _project_authenticated_heldout_ac_completion_without_capability(
 def project_authenticated_heldout_ac_completion(
     *,
     suite: HeldoutACSuite,
-    execution_hash: str,
-    expected_pricing_binding_hash: str,
-    evaluator_source_hash: str,
-    evaluator_source_qualification_hash: str,
+    authority: HeldoutACCompletionCampaignAuthority,
     rows: Sequence[Any],
-    full_schedule_reserve_nanos: int = FULL_SCHEDULE_RESERVE_NANOS,
-    hard_cap_nanos: int = HARD_CAP_NANOS,
 ) -> HeldoutACAuthenticatedCompletionProjection:
     """Build an official completion only from 48 runtime-issued row capabilities."""
 
@@ -1542,13 +1613,8 @@ def project_authenticated_heldout_ac_completion(
         )
     completion = _project_authenticated_heldout_ac_completion_without_capability(
         suite=suite,
-        execution_hash=execution_hash,
-        expected_pricing_binding_hash=expected_pricing_binding_hash,
-        evaluator_source_hash=evaluator_source_hash,
-        evaluator_source_qualification_hash=evaluator_source_qualification_hash,
+        authority=authority,
         rows=rows,
-        full_schedule_reserve_nanos=full_schedule_reserve_nanos,
-        hard_cap_nanos=hard_cap_nanos,
     )
     return _issue_authenticated_completion_capability(completion)
 
@@ -1602,15 +1668,10 @@ def analyze_authenticated_heldout_ac_completion(
 def validate_persisted_heldout_ac_completion_replay(
     *,
     suite: HeldoutACSuite,
-    execution_hash: str,
-    expected_pricing_binding_hash: str,
-    evaluator_source_hash: str,
-    evaluator_source_qualification_hash: str,
+    authority: HeldoutACCompletionCampaignAuthority,
     rows: Sequence[Any],
     completion: HeldoutACAuthenticatedCompletionProjection,
     official_envelope: HeldoutACOfficialAnalysisEnvelope,
-    full_schedule_reserve_nanos: int = FULL_SCHEDULE_RESERVE_NANOS,
-    hard_cap_nanos: int = HARD_CAP_NANOS,
 ) -> None:
     """Recompute persisted completion/envelope DTOs without issuing authority.
 
@@ -1649,13 +1710,8 @@ def validate_persisted_heldout_ac_completion_replay(
         raise HeldoutACCompletionError("persisted completion replay DTO is invalid") from exc
     expected_completion = _project_authenticated_heldout_ac_completion_without_capability(
         suite=suite,
-        execution_hash=execution_hash,
-        expected_pricing_binding_hash=expected_pricing_binding_hash,
-        evaluator_source_hash=evaluator_source_hash,
-        evaluator_source_qualification_hash=evaluator_source_qualification_hash,
+        authority=authority,
         rows=reparsed_rows,
-        full_schedule_reserve_nanos=full_schedule_reserve_nanos,
-        hard_cap_nanos=hard_cap_nanos,
     )
     expected_envelope = _build_official_analysis_envelope_without_capability(expected_completion)
     if expected_completion.model_dump(mode="json") != reparsed_completion.model_dump(mode="json"):

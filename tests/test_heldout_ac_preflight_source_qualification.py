@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import ast
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
 
+from patchloop.evals import heldout_ac_preflight_source_qualification as source_q
 from patchloop.evals.heldout_ac_preflight_source_qualification import (
     OUTPUT_PATH,
+    QUALIFICATION_ID,
     R2_PATH,
     R3_PATH,
     R4_PATH,
@@ -22,6 +27,9 @@ from patchloop.evals.heldout_ac_preflight_source_qualification import (
     R11_PATH,
     R12_PATH,
     R13_PATH,
+    R14_CAMPAIGN_EVIDENCE_PATH,
+    R14_PATH,
+    SCHEMA_VERSION,
     SOURCE_ENTRYPOINTS,
     STATUS,
     _build_candidate,
@@ -34,6 +42,19 @@ from patchloop.util import sha256_bytes
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.fixture
+def isolated_r15_output(monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
+    relative = Path(".patchloop") / f"heldout-ac-preflight-source-r15-{uuid4().hex}.json"
+    selected = ROOT / relative
+    assert not selected.exists()
+    monkeypatch.setattr(source_q, "OUTPUT_PATH", relative)
+    try:
+        yield selected
+    finally:
+        if selected.exists() or selected.is_symlink():
+            selected.unlink()
+
+
 def test_offline_candidate_binds_preflight_closure_without_observation() -> None:
     payload = _build_candidate(
         ROOT,
@@ -41,23 +62,48 @@ def test_offline_candidate_binds_preflight_closure_without_observation() -> None
     )
 
     assert payload.status == STATUS
-    assert payload.schema_version == "heldout-ac-preflight-dispatch-source-qualification-v13"
-    assert payload.qualification_id.endswith("20260815-r14")
+    assert payload.schema_version == SCHEMA_VERSION
+    assert payload.schema_version == "heldout-ac-preflight-dispatch-source-qualification-v14"
+    assert payload.qualification_id == QUALIFICATION_ID
+    assert payload.qualification_id.endswith("20260815-r15")
+    assert OUTPUT_PATH.as_posix() == (
+        "reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r15.json"
+    )
     assert payload.source_entrypoints == tuple(item.as_posix() for item in SOURCE_ENTRYPOINTS)
     assert "patchloop/agent/runner.py" in payload.import_closure
     assert "patchloop/evals/heldout_ac_preflight.py" in payload.import_closure
     assert "patchloop/evals/heldout_ac_preflight_source_qualification.py" in (
         payload.import_closure
     )
+    source_paths = {item.path for item in payload.source_files}
+    validation_paths = {item.path for item in payload.validation_files}
+    assert "patchloop/evals/heldout_ac_r14_campaign_evidence.py" in source_paths
+    assert "scripts/build_heldout_ac_r14_campaign_evidence.py" in validation_paths
+    assert "tests/test_heldout_ac_r14_runtime_evidence_index.py" in validation_paths
     assert payload.projection.scheduled_rows == 48
-    assert payload.projection.r13_predecessor_bytes_preserved is True
-    assert payload.projection.r11_campaign_correction_index_bound is True
+    assert payload.projection.r14_predecessor_bytes_preserved is True
+    assert payload.projection.r14_campaign_inconclusive_index_bound is True
+    assert payload.projection.r14_historical_reason_and_post_runtime_attribution_distinct is True
+    assert payload.projection.r14_observed_unsettled_cost_bound is True
+    assert payload.projection.r14_reauthentication_retry_or_runtime_authority_granted is False
     assert payload.projection.append_only_48_row_dispatcher_bound is True
     assert payload.projection.one_use_campaign_identity_ignores_observed_at is True
     assert payload.projection.atomic_terminal_cost_settlement_bound is True
     assert payload.projection.durable_started_cost_observation_bound is True
     assert payload.projection.typed_evaluator_and_agent_terminal_sidecars_bound is True
     assert payload.projection.persisted_v2_authentication_bound is True
+    assert payload.projection.current_candidate_schema == "heldout-ac-execution-candidate-v3"
+    assert payload.projection.current_persisted_evidence_schema == (
+        "heldout-ac-authenticated-persisted-evidence-v5"
+    )
+    assert payload.projection.current_persisted_row_schema == (
+        "heldout-ac-authenticated-persisted-row-v2"
+    )
+    assert payload.projection.candidate_v3_realized_schedule_bound is True
+    assert payload.projection.candidate_runtime_tuple_recomputed_before_plan_write is True
+    assert payload.projection.current_prior_row_requires_persisted_v5_row_v2 is True
+    assert payload.projection.prior_row_runtime_cost_usage_budget_revalidated is True
+    assert payload.projection.known_r7_r11_r14_exact_result_content_journal_triple_required is True
     assert payload.projection.persisted_campaign_replay_validator_bound is True
     assert payload.projection.historical_v1_campaign_replay_bound is True
     assert payload.projection.current_dispatch_source_loader_bound_without_literal_id is True
@@ -70,6 +116,80 @@ def test_offline_candidate_binds_preflight_closure_without_observation() -> None
     assert payload.authority.provider_calls_made == 0
     assert payload.authority.docker_calls_made == 0
     assert payload.authority.added_model_cost_usd == 0.0
+
+
+def test_r15_binds_exact_r14_source_and_campaign_predecessors() -> None:
+    payload = _build_candidate(
+        ROOT,
+        recorded_at=datetime(2026, 8, 15, 12, 30, tzinfo=UTC),
+    )
+
+    assert payload.predecessor.model_dump(mode="json") == {
+        "path": R14_PATH.as_posix(),
+        "file_bytes": 21_984,
+        "file_sha256": ("sha256:259407d7c30113096844541b01f93ea18e78c5dd0d471c261311657acd7135a3"),
+        "source_qualification_hash": (
+            "sha256:d71f0ad53cadb2957e1870cc40291a4979d0eed93321a0d082233408c03aed5c"
+        ),
+        "evaluator_source_hash": (
+            "sha256:f9660226185d33726bc3585381d0606234e6231faf5d9a9f62b79b44b67c20fd"
+        ),
+        "original_schema_version": "heldout-ac-preflight-dispatch-source-qualification-v13",
+        "original_qualification_id": ("core-ac-fixed-bundle-heldout-preflight-source-20260815-r14"),
+        "original_status": STATUS,
+        "successor_reason": (
+            "r14-campaign-inconclusive-runtime-budget-attribution-index-successor"
+        ),
+    }
+    campaign = payload.campaign_predecessor
+    assert campaign.path == R14_CAMPAIGN_EVIDENCE_PATH.as_posix()
+    assert campaign.file_bytes == 12_856
+    assert campaign.file_sha256 == (
+        "sha256:21cda8f99aa835b196aa54cc6f7ad2483942f43d986fd935ce511a0d6974cd7b"
+    )
+    assert campaign.content_hash == (
+        "sha256:1b602c1900ddfbd6867c81818d48ee9ada72f0b2fb2503d5eb83db7faf0e5341"
+    )
+    assert campaign.approval_consumed is True
+    assert campaign.disposition == "inconclusive-matrix"
+    assert campaign.terminal_settled_runs == 0
+    assert campaign.observed_unsettled_runs == 1
+    assert campaign.not_started_runs == 47
+    assert campaign.settled_model_cost_nanos == 0
+    assert campaign.observed_unsettled_model_cost_nanos == 126_342_000
+    assert campaign.observed_started_model_cost_nanos == 126_342_000
+    assert campaign.historical_reason_code == "DURABLE_EVIDENCE_AUTHENTICATION_FAILED"
+    assert campaign.post_runtime_attribution_code == (
+        "TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH"
+    )
+    assert campaign.historical_reason_preserved_without_relabeling is True
+    assert campaign.historical_typed_diagnosis_code_observed is False
+    assert campaign.post_runtime_deterministic_attribution is True
+    assert campaign.post_runtime_attribution_changes_historical_reason is False
+    assert campaign.historical_row_reclassified is False
+    assert campaign.campaign_settlement_preserved_without_reauthentication is True
+    assert campaign.attribution_only is True
+    assert campaign.r14_campaign_is_immutable_and_consumed is True
+    assert campaign.historical_runtime_files_mutated is False
+    assert campaign.historical_row_reauthentication_authorized is False
+    assert campaign.retry_replacement_or_resume_performed is False
+    assert campaign.candidate_creation_authorized is False
+    assert campaign.future_execution_authorized is False
+    assert campaign.future_spend_authorized is False
+
+
+def test_r15_does_not_hardcode_or_reverse_import_future_execution_source_r7() -> None:
+    source = (ROOT / "patchloop/evals/heldout_ac_preflight_source_qualification.py").read_text(
+        encoding="utf-8"
+    )
+    imported_modules = {
+        node.module
+        for node in ast.walk(ast.parse(source))
+        if isinstance(node, ast.ImportFrom) and node.module is not None
+    }
+
+    assert "patchloop.evals.heldout_ac_execution_source_qualification" not in imported_modules
+    assert "heldout-ac-execution-source-qualification-r7.json" not in source
 
 
 def test_r2_predecessor_bytes_are_preserved() -> None:
@@ -184,11 +304,31 @@ def test_r13_predecessor_bytes_are_preserved() -> None:
     )
 
 
-def test_preflight_source_artifact_replays_and_exports_binding() -> None:
+def test_r14_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R14_PATH
+    assert len(selected.read_bytes()) == 21_984
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:259407d7c30113096844541b01f93ea18e78c5dd0d471c261311657acd7135a3"
+    )
+
+
+def test_r14_campaign_index_predecessor_bytes_are_preserved() -> None:
+    selected = ROOT / R14_CAMPAIGN_EVIDENCE_PATH
+    assert len(selected.read_bytes()) == 12_856
+    assert sha256_bytes(selected.read_bytes()) == (
+        "sha256:21cda8f99aa835b196aa54cc6f7ad2483942f43d986fd935ce511a0d6974cd7b"
+    )
+
+
+def test_preflight_source_artifact_replays_and_exports_binding(
+    isolated_r15_output: Path,
+) -> None:
+    created = run_heldout_ac_preflight_source_qualification(repository=ROOT)
     summary = validate_heldout_ac_preflight_source_qualification(repository=ROOT)
     binding = load_heldout_ac_preflight_source_binding(repository=ROOT)
-    raw = (ROOT / OUTPUT_PATH).read_bytes()
+    raw = isolated_r15_output.read_bytes()
 
+    assert summary == created
     assert summary["status"] == STATUS
     assert summary["source_qualification_hash"] == binding.source_qualification_hash
     assert summary["evaluator_source_hash"] == binding.evaluator_source_hash
@@ -201,8 +341,9 @@ def test_preflight_source_artifact_replays_and_exports_binding() -> None:
     assert summary["provider_calls_made"] == 0
 
 
-def test_preflight_source_rerun_is_byte_and_mtime_stable() -> None:
-    selected = ROOT / OUTPUT_PATH
+def test_preflight_source_rerun_is_byte_and_mtime_stable(isolated_r15_output: Path) -> None:
+    selected = isolated_r15_output
+    run_heldout_ac_preflight_source_qualification(repository=ROOT)
     before = selected.read_bytes()
     before_mtime = selected.stat().st_mtime_ns
     summary = run_heldout_ac_preflight_source_qualification(repository=ROOT)

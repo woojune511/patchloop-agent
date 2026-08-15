@@ -69,7 +69,7 @@ delta is zero, while structured used fewer tokens and list-price cost in both pa
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: R7/R11 are immutable inconclusive; R8 → R9 → R5 → R6 → R14 offline-qualifies the lower-cost successor.
+Status: R7/R11/R14 are immutable inconclusive; R10 → R10 → R6 → R7 → R15 offline-qualifies the corrected successor.
 
 The preregistration freezes 12 tasks × A/C × two repetitions = 48 rows and historical `$252`/`$275` planning cost.
 Development-only evidence preserves the design but sets 1M/100k/1.1M and `$57.60`/`$60`, excluding R11/task content.
@@ -78,10 +78,14 @@ candidate `sha256:f48a0de...a6b0`; it stopped at 2 settled/1 observed-unsettled/
 settled and `$0.41801625` total observed started cost. Its correction index preserves historical `CONTRACT_ERROR` and
 attributes the Dagster stop post-runtime to `EVALUATOR_CONTROL_CONTRACT_COLLISION`; no analysis follows.
 
-The successor implements opaque marker controls, trust-domain separation, typed confounds, durable pre-qualification
-cost observation, atomic terminal/cost journal settlement, canonical paths, complete pre-journal plan validation and
-non-authorizing persisted replay. Next: commit R14, run a fresh append-only no-call preflight, then require a separate
-exact 48-row `$57.60`/`$60` approval; current candidate/provider authority is 0.
+R14 consumed candidate `sha256:67475f57...307fd` and stopped at 0 settled/1 observed-unsettled/47 not-started with
+`$0.126342` observed. Preserve historical `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; append-only diagnosis is
+`TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` (candidate 1M/100k/1.1M versus suite 4M/500k/4.5M).
+
+The successor adds candidate-v3 realized-schedule identity, candidate-bound runtime/cost, current persisted-v5/row-v2
+prior-row revalidation and exact R7/R11/R14 triple replay. Next: commit R10/R10/R6/R7/R15, then run one fresh
+read-only append-only no-call preflight. A separate exact 48-row `$57.60`/`$60` approval would still be required;
+current candidate, approval and provider authority are 0.
 
 ## Work item 7 — B/D and the full comparison
 

@@ -1,7 +1,7 @@
 """No-call activation contract for the preregistered held-out A/C panel.
 
 This module deliberately stops before campaign state or provider dispatch.  It
-binds the sealed 48-row suite, the evaluator-side R5 materialization, a fresh
+binds the sealed 48-row suite, the evaluator-side R6 materialization, a fresh
 source qualification and read-only local readiness into one execution hash.
 It also owns the only supported expansion from an explicitly supplied runtime
 secret to a task-bound evaluator-v2 authority.  Secret bytes are never returned
@@ -48,6 +48,7 @@ from patchloop.evals.heldout_ac_budget_amendment import (
 )
 from patchloop.evals.heldout_ac_contracts import (
     HELDOUT_AC_SUITE_ID,
+    HeldoutACCompletionCampaignAuthority,
     HeldoutACFrozenModel,
     HeldoutACSuite,
 )
@@ -73,20 +74,33 @@ from patchloop.verifier.runtime_evidence import (
 
 SUITE_PATH = Path("experiments/heldout-ac-suite-20260814-v1.yaml")
 MATERIALIZATION_PATH = Path(
-    "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r5.json"
+    "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r6.json"
 )
-MATERIALIZATION_FILE_BYTES = 53_234
+MATERIALIZATION_FILE_BYTES = 53_250
 MATERIALIZATION_FILE_SHA256 = (
-    "sha256:34186e94134bffceaa05f893c24f9cdf5e1981e4e13c8b37de541ba49a5d6e17"
+    "sha256:1a3568e372c9b3af1e384addfb3b5d8351138625072b3af95ccc6290bed3d975"
 )
 MATERIALIZATION_CONTENT_HASH = (
-    "sha256:a7d6347c13368c60b65933041cfc33748fdb780549fa0ad9d358fcfcf4843f60"
+    "sha256:61f65a54891ef60c07c1edbadd67040cdf5d31e21e4c6e1d3ac97d7f94e419fb"
+)
+MATERIALIZATION_SOURCE_HASH = (
+    "sha256:7135f82bebfee3b635cd67347fee258be57fa2ef15cce09e3df838897c197131"
 )
 MATERIALIZATION_TASK_BINDINGS_HASH = (
     "sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f"
 )
 MATERIALIZATION_PRICING_HASH = (
     "sha256:83bb15d171564f32d0ca6df24f733a957032e144bbd0dfed49071e1b205a27e9"
+)
+LEGACY_MATERIALIZATION_PATH = Path(
+    "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r5.json"
+)
+LEGACY_MATERIALIZATION_FILE_BYTES = 53_234
+LEGACY_MATERIALIZATION_FILE_SHA256 = (
+    "sha256:34186e94134bffceaa05f893c24f9cdf5e1981e4e13c8b37de541ba49a5d6e17"
+)
+LEGACY_MATERIALIZATION_CONTENT_HASH = (
+    "sha256:a7d6347c13368c60b65933041cfc33748fdb780549fa0ad9d358fcfcf4843f60"
 )
 
 _SHA256_PATTERN = r"^sha256:[0-9a-f]{64}$"
@@ -237,6 +251,7 @@ class HeldoutACExecutionCandidate(HeldoutACFrozenModel):
     schema_version: Literal[
         "heldout-ac-execution-candidate-v1",
         "heldout-ac-execution-candidate-v2",
+        "heldout-ac-execution-candidate-v3",
     ]
     status: Literal["NO_CALL_CANDIDATE_READY_EXECUTION_NOT_AUTHORIZED"]
     suite_id: Literal[HELDOUT_AC_SUITE_ID]
@@ -249,6 +264,7 @@ class HeldoutACExecutionCandidate(HeldoutACFrozenModel):
     source_qualification: HeldoutACSourceQualificationBinding
     runtime_tuple_hash: str = Field(pattern=_SHA256_PATTERN)
     base_schedule_hash: str = Field(pattern=_SHA256_PATTERN)
+    realized_schedule_hash: str | None = Field(default=None, pattern=_SHA256_PATTERN)
     readiness: HeldoutACNoCallReadiness
     execution_hash: str = Field(pattern=_SHA256_PATTERN)
     schedule: tuple[HeldoutACExecutionScheduleRow, ...] = Field(min_length=48, max_length=48)
@@ -271,6 +287,23 @@ class HeldoutACExecutionCandidate(HeldoutACFrozenModel):
                 self.campaign_cost_control.schema_version,
             ) != (252.0, 275.0, "heldout-ac-full-schedule-cost-control-v1"):
                 raise ValueError("held-out historical candidate budget binding differs")
+        elif self.schema_version == "heldout-ac-execution-candidate-v2":
+            if (
+                self.budget_amendment is None
+                or self.task_bindings_hash != MATERIALIZATION_TASK_BINDINGS_HASH
+                or self.pricing_binding_hash != MATERIALIZATION_PRICING_HASH
+                or self.materialization.path != LEGACY_MATERIALIZATION_PATH.as_posix()
+                or self.materialization.file_bytes != LEGACY_MATERIALIZATION_FILE_BYTES
+                or self.materialization.file_sha256 != LEGACY_MATERIALIZATION_FILE_SHA256
+                or self.materialization.content_hash != LEGACY_MATERIALIZATION_CONTENT_HASH
+                or (
+                    self.full_schedule_reserve_usd,
+                    self.hard_cap_usd,
+                    self.campaign_cost_control.schema_version,
+                )
+                != (57.6, 60.0, "heldout-ac-full-schedule-cost-control-v2")
+            ):
+                raise ValueError("held-out historical cost-bounded candidate binding differs")
         elif (
             self.budget_amendment is None
             or self.task_bindings_hash != MATERIALIZATION_TASK_BINDINGS_HASH
@@ -286,11 +319,21 @@ class HeldoutACExecutionCandidate(HeldoutACFrozenModel):
             )
             != (57.6, 60.0, "heldout-ac-full-schedule-cost-control-v2")
         ):
-            raise ValueError("held-out cost-bounded candidate binding differs")
+            raise ValueError("held-out current cost-bounded candidate binding differs")
         if len(self.schedule) != 48 or tuple(row.order for row in self.schedule) != tuple(
             range(1, 49)
         ):
             raise ValueError("held-out candidate schedule is not exactly 48 ordered rows")
+        if self.schema_version == "heldout-ac-execution-candidate-v3":
+            if self.base_schedule_hash != sha256_json(_base_schedule_projection(self.schedule)):
+                raise ValueError("held-out candidate base schedule hash differs")
+            expected_realized_schedule_hash = sha256_json(
+                _realized_schedule_projection(self.schedule)
+            )
+            if self.realized_schedule_hash != expected_realized_schedule_hash:
+                raise ValueError("held-out candidate realized schedule hash differs")
+        elif self.realized_schedule_hash is not None:
+            raise ValueError("held-out historical candidate has a realized schedule hash")
         expected_hash = sha256_json(_execution_projection(self))
         if self.execution_hash != expected_hash:
             raise ValueError("held-out candidate execution hash differs")
@@ -332,16 +375,17 @@ def _read_materialization(root: Path) -> tuple[HeldoutACTaskPricingMaterializati
         raw = selected.read_bytes()
         payload = HeldoutACTaskPricingMaterialization.model_validate_json(raw)
     except (OSError, ValidationError) as exc:
-        raise HeldoutACExecutionError("held-out R5 materialization is invalid") from exc
+        raise HeldoutACExecutionError("held-out R6 materialization is invalid") from exc
     if (
         len(raw) != MATERIALIZATION_FILE_BYTES
         or sha256_bytes(raw) != MATERIALIZATION_FILE_SHA256
         or payload.content_hash != MATERIALIZATION_CONTENT_HASH
+        or payload.source_hash != MATERIALIZATION_SOURCE_HASH
         or payload.task_bindings_hash != MATERIALIZATION_TASK_BINDINGS_HASH
         or payload.pricing.content_hash != MATERIALIZATION_PRICING_HASH
         or raw != (payload.model_dump_json(indent=2) + "\n").encode("utf-8")
     ):
-        raise HeldoutACExecutionError("held-out R5 materialization bytes drifted")
+        raise HeldoutACExecutionError("held-out R6 materialization bytes drifted")
     return payload, raw
 
 
@@ -373,13 +417,30 @@ def _base_schedule_hash(suite: HeldoutACSuite) -> str:
     return sha256_json([item.model_dump(mode="json") for item in suite.schedule])
 
 
+def _base_schedule_projection(
+    rows: Sequence[HeldoutACExecutionScheduleRow],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "order": row.order,
+            "wave": row.wave,
+            "task_id": row.task_id,
+            "role": row.role,
+            "condition": row.condition,
+            "repetition": row.repetition,
+        }
+        for row in rows
+    ]
+
+
 def _execution_projection(candidate: HeldoutACExecutionCandidate) -> dict[str, Any]:
+    execution_schema_versions = {
+        "heldout-ac-execution-candidate-v1": "heldout-ac-execution-v1",
+        "heldout-ac-execution-candidate-v2": "heldout-ac-execution-v2",
+        "heldout-ac-execution-candidate-v3": "heldout-ac-execution-v3",
+    }
     projection = {
-        "schema_version": (
-            "heldout-ac-execution-v1"
-            if candidate.schema_version == "heldout-ac-execution-candidate-v1"
-            else "heldout-ac-execution-v2"
-        ),
+        "schema_version": execution_schema_versions[candidate.schema_version],
         "suite_id": candidate.suite_id,
         "suite_content_hash": candidate.suite_content_hash,
         "dataset_manifest_hash": candidate.dataset_manifest_hash,
@@ -391,10 +452,17 @@ def _execution_projection(candidate: HeldoutACExecutionCandidate) -> dict[str, A
         "base_schedule_hash": candidate.base_schedule_hash,
         "readiness": candidate.readiness.model_dump(mode="json"),
     }
-    if candidate.schema_version == "heldout-ac-execution-candidate-v2":
+    if candidate.schema_version in {
+        "heldout-ac-execution-candidate-v2",
+        "heldout-ac-execution-candidate-v3",
+    }:
         if candidate.budget_amendment is None:  # pragma: no cover - model invariant
             raise ValueError("held-out cost-bounded candidate amendment is absent")
         projection["budget_amendment"] = candidate.budget_amendment.model_dump(mode="json")
+    if candidate.schema_version == "heldout-ac-execution-candidate-v3":
+        if candidate.realized_schedule_hash is None:  # pragma: no cover - model invariant
+            raise ValueError("held-out realized schedule binding is absent")
+        projection["realized_schedule_hash"] = candidate.realized_schedule_hash
     return projection
 
 
@@ -409,12 +477,13 @@ def heldout_ac_campaign_identity_hash(candidate: HeldoutACExecutionCandidate) ->
     checked = HeldoutACExecutionCandidate.model_validate(
         candidate.model_dump(mode="python", exclude_none=True)
     )
+    paid_identity_schema_versions = {
+        "heldout-ac-execution-candidate-v1": "heldout-ac-paid-campaign-identity-v1",
+        "heldout-ac-execution-candidate-v2": "heldout-ac-paid-campaign-identity-v2",
+        "heldout-ac-execution-candidate-v3": "heldout-ac-paid-campaign-identity-v3",
+    }
     body = {
-        "schema_version": (
-            "heldout-ac-paid-campaign-identity-v1"
-            if checked.schema_version == "heldout-ac-execution-candidate-v1"
-            else "heldout-ac-paid-campaign-identity-v2"
-        ),
+        "schema_version": paid_identity_schema_versions[checked.schema_version],
         "suite_id": checked.suite_id,
         "suite_content_hash": checked.suite_content_hash,
         "dataset_manifest_hash": checked.dataset_manifest_hash,
@@ -431,6 +500,8 @@ def heldout_ac_campaign_identity_hash(candidate: HeldoutACExecutionCandidate) ->
     }
     if checked.budget_amendment is not None:
         body["budget_amendment_content_hash"] = checked.budget_amendment.content_hash
+    if checked.realized_schedule_hash is not None:
+        body["realized_schedule_hash"] = checked.realized_schedule_hash
     return sha256_json(body)
 
 
@@ -449,6 +520,59 @@ def heldout_ac_candidate_token_limits(
         MAX_CUMULATIVE_OUTPUT_TOKENS,
         MAX_TOTAL_TOKENS,
     )
+
+
+def heldout_ac_completion_campaign_authority(
+    *,
+    candidate: HeldoutACExecutionCandidate,
+    suite: HeldoutACSuite,
+) -> HeldoutACCompletionCampaignAuthority:
+    """Project one validated candidate into the execution-free completion boundary."""
+
+    checked = HeldoutACExecutionCandidate.model_validate(candidate.model_dump(mode="python"))
+    if checked.suite_id != suite.suite_id or checked.suite_content_hash != suite.content_hash:
+        raise HeldoutACExecutionError("held-out completion authority candidate differs from suite")
+    if checked.base_schedule_hash != _base_schedule_hash(suite):
+        raise HeldoutACExecutionError("held-out completion authority base schedule differs")
+    expected_schedule = tuple(
+        (row.order, row.wave, row.task_id, row.role, row.condition, row.repetition)
+        for row in suite.schedule
+    )
+    observed_schedule = tuple(
+        (row.order, row.wave, row.task_id, row.role, row.condition, row.repetition)
+        for row in checked.schedule
+    )
+    if observed_schedule != expected_schedule:
+        raise HeldoutACExecutionError("held-out completion authority schedule differs")
+    max_input, max_output, max_total = heldout_ac_candidate_token_limits(checked)
+    body = {
+        "schema_version": "heldout-ac-completion-campaign-authority-v1",
+        "candidate_schema_version": checked.schema_version,
+        "suite_id": checked.suite_id,
+        "suite_content_hash": checked.suite_content_hash,
+        "execution_hash": checked.execution_hash,
+        "schedule_hash": checked.schedule_hash,
+        "schedule_row_ids": tuple(row.schedule_row_id for row in checked.schedule),
+        "runtime_tuple_hash": checked.runtime_tuple_hash,
+        "pricing_binding_hash": checked.pricing_binding_hash,
+        "evaluator_source_hash": checked.source_qualification.evaluator_source_hash,
+        "evaluator_source_qualification_hash": (
+            checked.source_qualification.source_qualification_hash
+        ),
+        "max_cumulative_input_tokens": max_input,
+        "max_cumulative_output_tokens": max_output,
+        "max_total_tokens": max_total,
+        "max_model_calls": suite.runtime.max_model_calls,
+        "max_tool_calls": suite.runtime.max_tool_calls,
+        "wall_clock_timeout_seconds": suite.runtime.wall_clock_timeout_seconds,
+        "campaign_cost_control_hash": checked.campaign_cost_control.content_hash,
+        "per_run_reserve_nanos": checked.campaign_cost_control.per_run_reserve_nanos,
+        "full_schedule_reserve_nanos": (checked.campaign_cost_control.full_schedule_reserve_nanos),
+        "hard_cap_nanos": checked.campaign_cost_control.hard_cap_nanos,
+    }
+    if checked.realized_schedule_hash is not None:
+        body["realized_schedule_hash"] = checked.realized_schedule_hash
+    return HeldoutACCompletionCampaignAuthority(**body, content_hash=sha256_json(body))
 
 
 def _schedule_row_id(
@@ -489,6 +613,114 @@ def _runtime_schedule_projection(
         }
         for row in rows
     ]
+
+
+def _realized_schedule_projection(
+    rows: Sequence[HeldoutACExecutionScheduleRow] | Sequence[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Project every pre-dispatch row field without the execution-derived row ID."""
+
+    field_names = (
+        "order",
+        "wave",
+        "task_id",
+        "task_version",
+        "task_path",
+        "role",
+        "condition",
+        "repetition",
+        "public_spec_hash",
+        "private_spec_hash",
+        "base_commit",
+        "evaluator_image",
+        "evaluator_image_digest",
+        "evaluator_contract_template_hash",
+    )
+    return [
+        {
+            field_name: (row[field_name] if isinstance(row, dict) else getattr(row, field_name))
+            for field_name in field_names
+        }
+        for row in rows
+    ]
+
+
+def _realized_schedule_bodies_from_execution_inputs(
+    *,
+    suite: HeldoutACSuite,
+    materialization: HeldoutACTaskPricingMaterialization,
+    metadata: dict[str, Any],
+) -> list[dict[str, Any]]:
+    templates = {item.task.task_id: item for item in materialization.task_bindings}
+    if set(templates) != set(metadata):
+        raise HeldoutACExecutionError("held-out task template set differs from metadata plan")
+    rows: list[dict[str, Any]] = []
+    for row in suite.schedule:
+        task = metadata.get(row.task_id)
+        template = templates.get(row.task_id)
+        if task is None or template is None:
+            raise HeldoutACExecutionError("held-out realized schedule task is absent")
+        rows.append(
+            {
+                "order": row.order,
+                "wave": row.wave,
+                "schedule_row_id": "sha256:" + "0" * 64,
+                "task_id": row.task_id,
+                "task_version": task.task_version,
+                "task_path": task.task_path,
+                "role": row.role,
+                "condition": row.condition,
+                "repetition": row.repetition,
+                "public_spec_hash": task.public_spec_hash,
+                "private_spec_hash": task.private_spec_hash,
+                "base_commit": template.base_commit,
+                "evaluator_image": task.evaluator_image,
+                "evaluator_image_digest": task.evaluator_image_digest,
+                "evaluator_contract_template_hash": (
+                    template.run_secret_independent_contract_template_hash
+                ),
+            }
+        )
+    return rows
+
+
+def heldout_ac_candidate_matches_current_execution_inputs(
+    candidate: HeldoutACExecutionCandidate,
+    *,
+    repository: str | Path | None = None,
+) -> bool:
+    """Rebind a current v3 candidate to the sealed suite and public execution inputs."""
+
+    root = _root(repository)
+    try:
+        checked = HeldoutACExecutionCandidate.model_validate(
+            candidate.model_dump(mode="python", exclude_none=True)
+        )
+        suite = load_heldout_ac_suite(SUITE_PATH, repository=root)
+        materialization, _raw = _read_materialization(root)
+        plan = load_heldout_ac_task_evaluator_plan(repository=root)
+        _manifest, dataset_manifest_hash, _path = load_dataset_manifest(
+            root / suite.dataset.manifest_path
+        )
+        expected_rows = _realized_schedule_bodies_from_execution_inputs(
+            suite=suite,
+            materialization=materialization,
+            metadata={item.task_id: item for item in plan.tasks},
+        )
+    except (ContractError, OSError, ValidationError, ValueError, TypeError):
+        return False
+    return bool(
+        checked.schema_version == "heldout-ac-execution-candidate-v3"
+        and checked.suite_id == suite.suite_id
+        and checked.suite_content_hash == suite.content_hash
+        and checked.dataset_manifest_hash == dataset_manifest_hash
+        and checked.runtime_tuple_hash == _runtime_tuple_hash(suite)
+        and checked.base_schedule_hash == _base_schedule_hash(suite)
+        and checked.realized_schedule_hash
+        == sha256_json(_realized_schedule_projection(expected_rows))
+        and _realized_schedule_projection(checked.schedule)
+        == _realized_schedule_projection(expected_rows)
+    )
 
 
 def _contract_template_hash(contract: Any) -> str:
@@ -594,41 +826,18 @@ def build_heldout_ac_execution_candidate(
     )
     if observed_images != expected_images:
         raise HeldoutACExecutionError("held-out readiness does not bind every evaluator image")
-    templates = {item.task.task_id: item for item in materialization.task_bindings}
     metadata = {
         item.task_id: item for item in load_heldout_ac_task_evaluator_plan(repository=root).tasks
     }
-    if set(templates) != set(metadata):
-        raise HeldoutACExecutionError("held-out task template set differs from metadata plan")
+    base_rows = _realized_schedule_bodies_from_execution_inputs(
+        suite=suite,
+        materialization=materialization,
+        metadata=metadata,
+    )
 
-    base_rows: list[dict[str, Any]] = []
-    for row in suite.schedule:
-        task = metadata[row.task_id]
-        template = templates[row.task_id]
-        base_rows.append(
-            {
-                "order": row.order,
-                "wave": row.wave,
-                "schedule_row_id": "sha256:" + "0" * 64,
-                "task_id": row.task_id,
-                "task_version": task.task_version,
-                "task_path": task.task_path,
-                "role": row.role,
-                "condition": row.condition,
-                "repetition": row.repetition,
-                "public_spec_hash": task.public_spec_hash,
-                "private_spec_hash": task.private_spec_hash,
-                "base_commit": template.base_commit,
-                "evaluator_image": task.evaluator_image,
-                "evaluator_image_digest": task.evaluator_image_digest,
-                "evaluator_contract_template_hash": (
-                    template.run_secret_independent_contract_template_hash
-                ),
-            }
-        )
-
+    realized_schedule_hash = sha256_json(_realized_schedule_projection(base_rows))
     provisional = HeldoutACExecutionCandidate.model_construct(
-        schema_version="heldout-ac-execution-candidate-v2",
+        schema_version="heldout-ac-execution-candidate-v3",
         status="NO_CALL_CANDIDATE_READY_EXECUTION_NOT_AUTHORIZED",
         suite_id=suite.suite_id,
         suite_content_hash=suite.content_hash,
@@ -640,6 +849,7 @@ def build_heldout_ac_execution_candidate(
         source_qualification=source_qualification,
         runtime_tuple_hash=_runtime_tuple_hash(suite),
         base_schedule_hash=_base_schedule_hash(suite),
+        realized_schedule_hash=realized_schedule_hash,
         readiness=readiness,
     )
     execution_hash = sha256_json(_execution_projection(provisional))
@@ -685,7 +895,7 @@ def build_heldout_ac_execution_candidate(
         "live_resume_supported": False,
     }
     return HeldoutACExecutionCandidate(
-        schema_version="heldout-ac-execution-candidate-v2",
+        schema_version="heldout-ac-execution-candidate-v3",
         status="NO_CALL_CANDIDATE_READY_EXECUTION_NOT_AUTHORIZED",
         suite_id=suite.suite_id,
         suite_content_hash=suite.content_hash,
@@ -697,6 +907,7 @@ def build_heldout_ac_execution_candidate(
         source_qualification=source_qualification,
         runtime_tuple_hash=_runtime_tuple_hash(suite),
         base_schedule_hash=_base_schedule_hash(suite),
+        realized_schedule_hash=realized_schedule_hash,
         readiness=readiness,
         execution_hash=execution_hash,
         schedule=schedule,
@@ -739,6 +950,8 @@ def materialize_heldout_ac_runtime_task_authority(
     """Expand one R4 template into an ephemeral final evaluator-v2 authority."""
 
     root = _root(repository)
+    if not heldout_ac_candidate_matches_current_execution_inputs(candidate, repository=root):
+        raise HeldoutACExecutionError("held-out candidate realized schedule differs from inputs")
     suite = load_heldout_ac_suite(SUITE_PATH, repository=root)
     materialization, _ = _read_materialization(root)
     plan = load_heldout_ac_task_evaluator_plan(repository=root)
@@ -793,6 +1006,8 @@ def build_heldout_ac_run_manifest(
 ) -> RunManifest:
     """Build the exact v2 manifest consumed by a future dedicated dispatcher."""
 
+    if not heldout_ac_candidate_matches_current_execution_inputs(candidate):
+        raise HeldoutACExecutionError("held-out candidate realized schedule differs from inputs")
     row = next((item for item in candidate.schedule if item.order == row_order), None)
     if row is None or authority.task_binding.task.task_id != row.task_id:
         raise HeldoutACExecutionError("held-out runtime authority belongs to another row")
@@ -880,7 +1095,12 @@ __all__ = [
     "MATERIALIZATION_FILE_SHA256",
     "MATERIALIZATION_PATH",
     "MATERIALIZATION_PRICING_HASH",
+    "MATERIALIZATION_SOURCE_HASH",
     "MATERIALIZATION_TASK_BINDINGS_HASH",
+    "LEGACY_MATERIALIZATION_CONTENT_HASH",
+    "LEGACY_MATERIALIZATION_FILE_BYTES",
+    "LEGACY_MATERIALIZATION_FILE_SHA256",
+    "LEGACY_MATERIALIZATION_PATH",
     "SUITE_PATH",
     "HeldoutACExecutionCandidate",
     "HeldoutACExecutionError",
@@ -893,6 +1113,8 @@ __all__ = [
     "candidate_json",
     "encode_heldout_ac_runtime_secret",
     "heldout_ac_candidate_token_limits",
+    "heldout_ac_candidate_matches_current_execution_inputs",
+    "heldout_ac_completion_campaign_authority",
     "heldout_ac_campaign_identity_hash",
     "materialize_heldout_ac_runtime_task_authority",
 ]

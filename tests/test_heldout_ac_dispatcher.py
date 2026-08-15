@@ -26,6 +26,7 @@ from patchloop.evals.heldout_ac_completion import (
     HeldoutACAuthenticatedCompletionProjection,
     HeldoutACOfficialAnalysisEnvelope,
 )
+from patchloop.evals.heldout_ac_contracts import HeldoutACSuite
 from patchloop.evals.heldout_ac_dispatcher import (
     HeldoutACCampaignConfoundV2,
     HeldoutACConfoundedDurableEvidence,
@@ -36,9 +37,13 @@ from patchloop.evals.heldout_ac_dispatcher import (
     _append_journal,
     _append_terminal_cost_settled,
     _candidate_from_mapping,
+    _claim_paid_campaign_identity,
     _confound_reason_code,
     _create_journal,
     _durable_evidence_from_authenticated,
+    _finalize_result,
+    _historical_legacy_authority_replay_matches,
+    _historical_legacy_authority_replay_status,
     _prepared_result,
     _record_confound,
     _row_identity,
@@ -88,13 +93,26 @@ from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes, sha256_json
 from scripts.run_heldout_ac_campaign import _candidate_payload
 from tests.test_evaluator_v2_contracts import _v2_chain
+from tests.test_heldout_ac_execution import _candidate as _synthetic_execution_candidate
+from tests.test_heldout_ac_execution import _legacy_candidate as _synthetic_legacy_candidate
+from tests.test_heldout_ac_execution import (
+    _rehashed_candidate_row,
+    _rehashed_candidate_runtime_tuple,
+)
+from tests.test_heldout_ac_persisted_adapter import (
+    CAMPAIGN_COST_CONTROL_HASH as ADAPTER_CAMPAIGN_COST_CONTROL_HASH,
+)
 from tests.test_heldout_ac_persisted_adapter import (
     EXECUTION_HASH as ADAPTER_EXECUTION_HASH,
+)
+from tests.test_heldout_ac_persisted_adapter import (
+    PER_RUN_RESERVE_NANOS as ADAPTER_PER_RUN_RESERVE_NANOS,
 )
 from tests.test_heldout_ac_persisted_adapter import PRICING_HASH as ADAPTER_PRICING_HASH
 from tests.test_heldout_ac_persisted_adapter import (
     _post_submission_evaluator_confound_files,
     _row_files,
+    _runtime_tuple_hash_for_qualification,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -222,6 +240,68 @@ def test_current_dispatch_gate_is_loader_bound_while_predecessor_remains_replaya
     assert not (tmp_path / "experiments").exists()
 
 
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("condition", "no_memory"),
+        ("task_path", "tasks/tampered-before-ledger-write"),
+    ],
+)
+def test_plan_rejects_schedule_drift_before_writing_one_use_state(
+    tmp_path: Path,
+    field_name: str,
+    value: str,
+) -> None:
+    candidate = _synthetic_execution_candidate()
+    if field_name == "condition" and candidate.schedule[0].condition == value:
+        value = "structured"
+    mutated = _rehashed_candidate_row(candidate, field_name=field_name, value=value)
+
+    with (
+        patch(
+            "patchloop.evals.heldout_ac_dispatcher.heldout_ac_candidate_has_current_source_binding",
+            return_value=True,
+        ),
+        pytest.raises(ContractError, match="sealed execution inputs"),
+    ):
+        prepare_heldout_ac_approved_plan(
+            candidate=mutated,
+            approve_live_cost=True,
+            approved_execution_hash=mutated.execution_hash,
+            root=tmp_path,
+            repository=ROOT,
+            created_at=datetime(2026, 8, 14, 12, 1, tzinfo=UTC),
+        )
+
+    assert not (tmp_path / "experiments").exists()
+
+
+def test_plan_rejects_runtime_tuple_drift_before_writing_one_use_state(
+    tmp_path: Path,
+) -> None:
+    candidate = _synthetic_execution_candidate()
+    mutated = _rehashed_candidate_runtime_tuple(candidate)
+    assert mutated.execution_hash != candidate.execution_hash
+
+    with (
+        patch(
+            "patchloop.evals.heldout_ac_dispatcher.heldout_ac_candidate_has_current_source_binding",
+            return_value=True,
+        ),
+        pytest.raises(ContractError, match="sealed execution inputs"),
+    ):
+        prepare_heldout_ac_approved_plan(
+            candidate=mutated,
+            approve_live_cost=True,
+            approved_execution_hash=mutated.execution_hash,
+            root=tmp_path,
+            repository=ROOT,
+            created_at=datetime(2026, 8, 14, 12, 1, tzinfo=UTC),
+        )
+
+    assert not (tmp_path / "experiments").exists()
+
+
 def test_campaign_cli_loader_accepts_only_a_candidate_object(tmp_path: Path) -> None:
     candidate = _candidate().model_dump(mode="json")
     direct = tmp_path / "candidate.json"
@@ -259,6 +339,14 @@ def _manifest(candidate: HeldoutACExecutionCandidate, order: int = 1):
 
 def test_approved_plan_binds_live_manifest_reservation_and_one_use_row(tmp_path: Path) -> None:
     candidate, plan_path, plan = _plan(tmp_path)
+    ledger_path = Path(plan["campaign_one_use_ledger_path"])
+    ledger = json.loads(ledger_path.read_bytes())
+    assert candidate.schema_version == "heldout-ac-execution-candidate-v3"
+    assert ledger["schema_version"] == "heldout-ac-paid-campaign-one-use-v3"
+    assert ledger["realized_schedule_hash"] == candidate.realized_schedule_hash
+    assert ledger["content_hash"] == sha256_json(
+        {key: value for key, value in ledger.items() if key != "content_hash"}
+    )
     manifest, authority = _manifest(candidate)
     live = issue_live_execution_authorization(candidate.execution_hash, root=tmp_path)
     journal = Path(plan["journal_path"])
@@ -304,10 +392,33 @@ def test_approved_plan_binds_live_manifest_reservation_and_one_use_row(tmp_path:
         runner._consume_ac_row_start_once(manifest, live)
 
 
-def test_v2_atomic_settlement_admits_row_two_from_dispatcher_wrapper_bytes(
+def _current_row_two_reservation_prefix(
     tmp_path: Path,
-) -> None:
-    candidate, plan_path, plan = _plan(tmp_path)
+    monkeypatch: pytest.MonkeyPatch,
+) -> SimpleNamespace:
+    candidate = _synthetic_execution_candidate()
+    monkeypatch.setattr(
+        "patchloop.evals.heldout_ac_dispatcher.heldout_ac_candidate_has_current_source_binding",
+        lambda *_args, **_kwargs: True,
+    )
+    monkeypatch.setattr(
+        "patchloop.evals.heldout_ac_live_contract.heldout_ac_candidate_has_current_source_binding",
+        lambda *_args, **_kwargs: True,
+    )
+    monkeypatch.setattr(
+        "patchloop.evals.heldout_ac_live_contract."
+        "heldout_ac_candidate_matches_current_execution_inputs",
+        lambda *_args, **_kwargs: True,
+    )
+    plan_path = prepare_heldout_ac_approved_plan(
+        candidate=candidate,
+        approve_live_cost=True,
+        approved_execution_hash=candidate.execution_hash,
+        root=tmp_path,
+        repository=ROOT,
+        created_at=datetime(2026, 8, 14, 12, 1, tzinfo=UTC),
+    )
+    plan = json.loads(plan_path.read_text("utf-8"))
     live = issue_live_execution_authorization(candidate.execution_hash, root=tmp_path)
     journal = Path(plan["journal_path"])
     _create_journal(journal, candidate, live.plan_hash, run_root=tmp_path)
@@ -365,11 +476,91 @@ def test_v2_atomic_settlement_admits_row_two_from_dispatcher_wrapper_bytes(
         run_root=tmp_path,
     )
 
-    validated = validate_heldout_ac_reservation_journal_prefix(
-        plan=plan,
-        manifest=manifest,
+    return SimpleNamespace(
+        candidate=candidate,
         plan_path=plan_path,
-        plan_file_sha256=live.plan_hash,
+        plan=plan,
+        live=live,
+        journal=journal,
+        authenticated=authenticated,
+        row_path=row_path,
+        manifest=manifest,
+    )
+
+
+def _rewrite_prior_wrapper_and_journal(
+    prefix: SimpleNamespace,
+    wrapper_payload: dict[str, object],
+) -> HeldoutACAuthenticatedPersistedEvidence:
+    wrapper = HeldoutACAuthenticatedPersistedEvidence.model_validate(wrapper_payload)
+    wrapper_bytes = wrapper.model_dump_json(indent=2).encode("utf-8")
+    prefix.row_path.write_bytes(wrapper_bytes)
+    events = [json.loads(line) for line in prefix.journal.read_text("utf-8").splitlines()]
+    terminal = events[-2]
+    cost = wrapper.row.usage_evidence.token_derived_cost_nanos
+    terminal["payload"]["authenticated_row_file_sha256"] = sha256_bytes(wrapper_bytes)
+    terminal["payload"]["authenticated_row_content_hash"] = wrapper.content_hash
+    terminal["payload"]["actual_run_cost_nanos"] = cost
+    terminal["payload"]["accrued_cost_nanos_after"] = (
+        terminal["payload"]["accrued_cost_nanos_before"] + cost
+    )
+    terminal["event_hash"] = sha256_json(
+        {key: value for key, value in terminal.items() if key != "event_hash"}
+    )
+    current = events[-1]
+    current["previous_event_hash"] = terminal["event_hash"]
+    current["event_hash"] = sha256_json(
+        {key: value for key, value in current.items() if key != "event_hash"}
+    )
+    prefix.journal.write_bytes(
+        (
+            "\n".join(json.dumps(event, sort_keys=True, separators=(",", ":")) for event in events)
+            + "\n"
+        ).encode("utf-8")
+    )
+    return wrapper
+
+
+def _rehash_authenticated_wrapper_payload(payload: dict[str, object]) -> None:
+    row = payload["row"]
+    assert isinstance(row, dict)
+    usage_evidence = row["usage_evidence"]
+    assert isinstance(usage_evidence, dict)
+    usage_evidence["content_hash"] = sha256_json(
+        {key: value for key, value in usage_evidence.items() if key != "content_hash"}
+    )
+    row["usage_evidence_hash"] = usage_evidence["content_hash"]
+    row["content_hash"] = sha256_json(
+        {key: value for key, value in row.items() if key != "content_hash"}
+    )
+    payload["content_hash"] = sha256_json(
+        {key: value for key, value in payload.items() if key != "content_hash"}
+    )
+
+
+def test_v2_atomic_settlement_admits_row_two_from_dispatcher_wrapper_bytes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    prefix = _current_row_two_reservation_prefix(tmp_path, monkeypatch)
+    candidate = prefix.candidate
+    authenticated = prefix.authenticated
+    journal = prefix.journal
+    assert candidate.schema_version == "heldout-ac-execution-candidate-v3"
+    assert authenticated.schema_version == "heldout-ac-authenticated-persisted-evidence-v5"
+    assert authenticated.row.schema_version == "heldout-ac-authenticated-persisted-row-v2"
+    assert authenticated.runtime_tuple_hash == candidate.runtime_tuple_hash
+    assert authenticated.row.runtime_tuple_hash == candidate.runtime_tuple_hash
+    assert authenticated.campaign_cost_control_hash == candidate.campaign_cost_control.content_hash
+    assert (
+        authenticated.row.campaign_cost_control_hash == candidate.campaign_cost_control.content_hash
+    )
+
+    validated = validate_heldout_ac_reservation_journal_prefix(
+        plan=prefix.plan,
+        manifest=prefix.manifest,
+        plan_path=prefix.plan_path,
+        plan_file_sha256=prefix.live.plan_hash,
         runner_root=tmp_path,
         repository=ROOT,
     )
@@ -381,6 +572,8 @@ def test_v2_atomic_settlement_admits_row_two_from_dispatcher_wrapper_bytes(
         "RunStarted",
     ]
 
+    relative = prefix.row_path.relative_to(tmp_path)
+    row_bytes = prefix.row_path.read_bytes()
     alternate_relative = relative.with_name("alternate-authenticated.json")
     alternate = tmp_path / alternate_relative
     alternate.write_bytes(row_bytes)
@@ -402,10 +595,152 @@ def test_v2_atomic_settlement_admits_row_two_from_dispatcher_wrapper_bytes(
     )
     with pytest.raises(ContractError, match="authenticated evidence path differs"):
         validate_heldout_ac_reservation_journal_prefix(
-            plan=plan,
-            manifest=manifest,
-            plan_path=plan_path,
-            plan_file_sha256=live.plan_hash,
+            plan=prefix.plan,
+            manifest=prefix.manifest,
+            plan_path=prefix.plan_path,
+            plan_file_sha256=prefix.live.plan_hash,
+            runner_root=tmp_path,
+            repository=ROOT,
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["legacy_schema", "runtime_tuple_hash", "campaign_cost_control_hash"],
+)
+def test_v3_reservation_rejects_rehashed_prior_authority_downgrade_or_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mutation: str,
+) -> None:
+    prefix = _current_row_two_reservation_prefix(tmp_path, monkeypatch)
+    payload = prefix.authenticated.model_dump(mode="json")
+    row = payload["row"]
+    assert isinstance(row, dict)
+    if mutation == "legacy_schema":
+        payload["schema_version"] = "heldout-ac-authenticated-persisted-evidence-v4"
+        payload.pop("runtime_tuple_hash")
+        payload.pop("campaign_cost_control_hash")
+        row["schema_version"] = "heldout-ac-authenticated-persisted-row-v1"
+        row.pop("runtime_tuple_hash")
+        row.pop("campaign_cost_control_hash")
+    else:
+        wrong_hash = "sha256:" + "9" * 64
+        payload[mutation] = wrong_hash
+        row[mutation] = wrong_hash
+    _rehash_authenticated_wrapper_payload(payload)
+    _rewrite_prior_wrapper_and_journal(prefix, payload)
+
+    with pytest.raises(ContractError, match="prior authenticated row authority differs"):
+        validate_heldout_ac_reservation_journal_prefix(
+            plan=prefix.plan,
+            manifest=prefix.manifest,
+            plan_path=prefix.plan_path,
+            plan_file_sha256=prefix.live.plan_hash,
+            runner_root=tmp_path,
+            repository=ROOT,
+        )
+
+
+def test_v3_reservation_rejects_rehashed_usage_result_under_report(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    prefix = _current_row_two_reservation_prefix(tmp_path, monkeypatch)
+    payload = prefix.authenticated.model_dump(mode="json")
+    row = payload["row"]
+    assert isinstance(row, dict)
+    result = row["result"]
+    assert isinstance(result, dict)
+    result_usage = result["usage"]
+    assert isinstance(result_usage, dict)
+    result_usage["model_calls"] = 1
+    row["persisted_result_semantic_hash"] = sha256_json(result)
+    _rehash_authenticated_wrapper_payload(payload)
+    _rewrite_prior_wrapper_and_journal(prefix, payload)
+
+    with pytest.raises(ContractError, match="persisted usage/result cross-binding differs"):
+        validate_heldout_ac_reservation_journal_prefix(
+            plan=prefix.plan,
+            manifest=prefix.manifest,
+            plan_path=prefix.plan_path,
+            plan_file_sha256=prefix.live.plan_hash,
+            runner_root=tmp_path,
+            repository=ROOT,
+        )
+
+
+@pytest.mark.parametrize(
+    "limit",
+    [
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "model_calls",
+        "tool_calls",
+        "wall_clock_ms",
+    ],
+)
+def test_v3_reservation_rejects_rehashed_prior_usage_over_candidate_budget(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    limit: str,
+) -> None:
+    prefix = _current_row_two_reservation_prefix(tmp_path, monkeypatch)
+    payload = prefix.authenticated.model_dump(mode="json")
+    row = payload["row"]
+    assert isinstance(row, dict)
+    result = row["result"]
+    usage_evidence = row["usage_evidence"]
+    assert isinstance(result, dict) and isinstance(usage_evidence, dict)
+    result_usage = result["usage"]
+    persisted_usage = usage_evidence["usage"]
+    assert isinstance(result_usage, dict) and isinstance(persisted_usage, dict)
+    budget = prefix.manifest.budget
+    assert budget.max_cumulative_input_tokens is not None
+    assert budget.max_cumulative_output_tokens is not None
+    mutations = {
+        "input_tokens": {"input_tokens": budget.max_cumulative_input_tokens + 1},
+        "output_tokens": {"output_tokens": budget.max_cumulative_output_tokens + 1},
+        "total_tokens": {
+            "input_tokens": budget.max_cumulative_input_tokens,
+            "output_tokens": budget.max_cumulative_output_tokens + 1,
+        },
+        "model_calls": {"model_calls": budget.max_model_calls + 1},
+        "tool_calls": {"tool_calls": budget.max_tool_calls + 1},
+        "wall_clock_ms": {"wall_clock_ms": budget.wall_clock_timeout_seconds * 1_000 + 1},
+    }
+    for field, value in mutations[limit].items():
+        result_usage[field] = value
+        persisted_usage[field] = value
+    prices = usage_evidence["price_nanos_per_token"]
+    assert isinstance(prices, dict)
+    uncached = (
+        persisted_usage["input_tokens"]
+        - persisted_usage["cached_input_tokens"]
+        - persisted_usage["cache_write_input_tokens"]
+    )
+    cost = (
+        uncached * prices["uncached_input"]
+        + persisted_usage["cached_input_tokens"] * prices["cached_input"]
+        + persisted_usage["cache_write_input_tokens"] * prices["cache_write_input"]
+        + persisted_usage["output_tokens"] * prices["output"]
+    )
+    usage_evidence["token_derived_cost_nanos"] = cost
+    result_usage["model_cost_usd"] = cost / 1_000_000_000
+    row["persisted_result_semantic_hash"] = sha256_json(result)
+    _rehash_authenticated_wrapper_payload(payload)
+    _rewrite_prior_wrapper_and_journal(prefix, payload)
+
+    with pytest.raises(
+        ContractError,
+        match="usage exceeds authenticated runtime or cost authority",
+    ):
+        validate_heldout_ac_reservation_journal_prefix(
+            plan=prefix.plan,
+            manifest=prefix.manifest,
+            plan_path=prefix.plan_path,
+            plan_file_sha256=prefix.live.plan_hash,
             runner_root=tmp_path,
             repository=ROOT,
         )
@@ -449,6 +784,101 @@ def test_paid_campaign_one_use_identity_ignores_readiness_observation_time(
             root=tmp_path,
             repository=ROOT,
         )
+
+
+@pytest.mark.parametrize(
+    ("candidate_schema", "ledger_schema"),
+    [
+        (
+            "heldout-ac-execution-candidate-v1",
+            "heldout-ac-paid-campaign-one-use-v1",
+        ),
+        (
+            "heldout-ac-execution-candidate-v2",
+            "heldout-ac-paid-campaign-one-use-v2",
+        ),
+        (
+            "heldout-ac-execution-candidate-v3",
+            "heldout-ac-paid-campaign-one-use-v3",
+        ),
+    ],
+)
+def test_paid_campaign_ledger_binds_candidate_generation_and_realized_schedule(
+    tmp_path: Path,
+    candidate_schema: str,
+    ledger_schema: str,
+) -> None:
+    current = _synthetic_execution_candidate()
+    candidate = (
+        current
+        if candidate_schema == "heldout-ac-execution-candidate-v3"
+        else _synthetic_legacy_candidate(current, schema_version=candidate_schema)
+    )
+
+    ledger_path, ledger_bytes, ledger_content_hash = _claim_paid_campaign_identity(
+        candidate,
+        run_root=tmp_path,
+        claimed_at=datetime(2026, 8, 14, 12, 1, tzinfo=UTC),
+    )
+    ledger = json.loads(ledger_bytes)
+    ledger_body = {key: value for key, value in ledger.items() if key != "content_hash"}
+
+    assert ledger_path.read_bytes() == ledger_bytes
+    assert ledger["schema_version"] == ledger_schema
+    assert ledger["content_hash"] == ledger_content_hash == sha256_json(ledger_body)
+    if candidate_schema == "heldout-ac-execution-candidate-v3":
+        assert candidate.realized_schedule_hash is not None
+        assert ledger["realized_schedule_hash"] == candidate.realized_schedule_hash
+    else:
+        assert candidate.realized_schedule_hash is None
+        assert "realized_schedule_hash" not in ledger
+
+
+def test_v3_paid_plan_round_trips_realized_schedule_ledger_without_artifacts(
+    tmp_path: Path,
+) -> None:
+    candidate = _synthetic_execution_candidate()
+    assert candidate.schema_version == "heldout-ac-execution-candidate-v3"
+    assert candidate.realized_schedule_hash is not None
+
+    with (
+        patch(
+            "patchloop.evals.heldout_ac_dispatcher.heldout_ac_candidate_has_current_source_binding",
+            return_value=True,
+        ),
+        patch(
+            "patchloop.evals.heldout_ac_live_contract."
+            "heldout_ac_candidate_has_current_source_binding",
+            return_value=True,
+        ),
+        patch(
+            "patchloop.evals.heldout_ac_live_contract."
+            "heldout_ac_candidate_matches_current_execution_inputs",
+            return_value=True,
+        ),
+    ):
+        plan_path = prepare_heldout_ac_approved_plan(
+            candidate=candidate,
+            approve_live_cost=True,
+            approved_execution_hash=candidate.execution_hash,
+            root=tmp_path,
+            repository=ROOT,
+            created_at=datetime(2026, 8, 14, 12, 1, tzinfo=UTC),
+        )
+        plan_bytes = plan_path.read_bytes()
+        plan = json.loads(plan_bytes)
+        replayed = validate_heldout_ac_dispatch_plan(
+            plan=plan,
+            plan_path=plan_path,
+            plan_file_sha256=sha256_bytes(plan_bytes),
+            expected_run_root=tmp_path,
+            repository=ROOT,
+        )
+
+    ledger = json.loads(Path(plan["campaign_one_use_ledger_path"]).read_bytes())
+    assert replayed == candidate
+    assert ledger["schema_version"] == "heldout-ac-paid-campaign-one-use-v3"
+    assert ledger["realized_schedule_hash"] == candidate.realized_schedule_hash
 
 
 def test_plan_preparation_rejects_parent_link_before_any_runtime_write(
@@ -826,7 +1256,10 @@ def _fake_settled_row_v2(
     )
     authenticated_body = {
         **legacy.model_dump(mode="json", exclude={"content_hash"}),
+        "schema_version": "heldout-ac-authenticated-persisted-row-v2",
         "run_id": run_id,
+        "runtime_tuple_hash": candidate.runtime_tuple_hash,
+        "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
         "persisted_result_semantic_hash": sha256_json(result.model_dump(mode="json")),
         "usage_evidence_hash": usage.content_hash,
         "result": result.model_dump(mode="json"),
@@ -872,10 +1305,12 @@ def _fake_settled_row_v2(
         content_hash=sha256_json(qualification_body),
     )
     evidence_body = {
-        "schema_version": "heldout-ac-authenticated-persisted-evidence-v4",
+        "schema_version": "heldout-ac-authenticated-persisted-evidence-v5",
         "persisted_evidence_authenticated": True,
         "official": False,
         "analysis_eligible": False,
+        "runtime_tuple_hash": candidate.runtime_tuple_hash,
+        "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
         "row": authenticated.model_dump(mode="json"),
         "qualification": qualification.model_dump(mode="json"),
         "terminal_type": None,
@@ -919,6 +1354,8 @@ def test_complete_authenticated_matrix_unlocks_only_preregistered_analysis(
                 repository=ROOT,
             ),
             execution_hash=candidate.execution_hash,
+            expected_campaign_cost_control_hash=candidate.campaign_cost_control.content_hash,
+            expected_per_run_reserve_nanos=candidate.campaign_cost_control.per_run_reserve_nanos,
             expected_pricing_binding_hash=candidate.pricing_binding_hash,
             order=order,
             task_evaluator_binding=object(),  # type: ignore[arg-type]
@@ -1001,8 +1438,10 @@ def test_confounded_durable_cost_is_observed_but_not_settled(tmp_path: Path) -> 
     journal = Path(plan["journal_path"])
     _create_journal(journal, candidate, "sha256:" + "7" * 64, run_root=tmp_path)
     durable_body = {
-        "schema_version": "heldout-ac-confounded-durable-evidence-v1",
+        "schema_version": "heldout-ac-confounded-durable-evidence-v2",
         "run_id": "run_heldout_observed_cost",
+        "runtime_tuple_hash": candidate.runtime_tuple_hash,
+        "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
         "result_relative_path": "artifacts/runs/run_heldout_observed_cost/result.json",
         "result_file_sha256": "sha256:" + "1" * 64,
         "result_semantic_hash": "sha256:" + "2" * 64,
@@ -1063,6 +1502,14 @@ def test_confounded_durable_cost_is_observed_but_not_settled(tmp_path: Path) -> 
     assert projection is None and analysis is None
     confound_event = json.loads(journal.read_text("utf-8").splitlines()[2])
     assert confound_event["payload"]["durable_evidence"]["token_derived_cost_nanos"] == 261_021_000
+    assert (
+        confound_event["payload"]["durable_evidence"]["runtime_tuple_hash"]
+        == candidate.runtime_tuple_hash
+    )
+    assert (
+        confound_event["payload"]["durable_evidence"]["campaign_cost_control_hash"]
+        == candidate.campaign_cost_control.content_hash
+    )
 
 
 def test_confound_classification_never_depends_on_exception_message() -> None:
@@ -1094,6 +1541,7 @@ def _persist_evaluator_confound_durable(
     HeldoutACConfoundedDurableEvidence,
     SimpleNamespace,
     SimpleNamespace,
+    HeldoutACSuite,
 ]:
     (
         suite,
@@ -1107,6 +1555,9 @@ def _persist_evaluator_confound_durable(
     evidence = project_authenticated_heldout_ac_persisted_evidence(
         suite=suite,
         execution_hash=ADAPTER_EXECUTION_HASH,
+        expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+        expected_campaign_cost_control_hash=ADAPTER_CAMPAIGN_COST_CONTROL_HASH,
+        expected_per_run_reserve_nanos=ADAPTER_PER_RUN_RESERVE_NANOS,
         expected_pricing_binding_hash=ADAPTER_PRICING_HASH,
         order=1,
         task_evaluator_binding=binding,
@@ -1198,32 +1649,38 @@ def _persist_evaluator_confound_durable(
         content_hash=sha256_json(event_body),
     )
     assert projection.content_hash == evidence.evaluator_failure_event_hash
+    candidate = SimpleNamespace(
+        execution_hash=ADAPTER_EXECUTION_HASH,
+        runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+        pricing_binding_hash=ADAPTER_PRICING_HASH,
+        suite_content_hash=suite.content_hash,
+        campaign_cost_control=SimpleNamespace(
+            content_hash=ADAPTER_CAMPAIGN_COST_CONTROL_HASH,
+            per_run_reserve_nanos=ADAPTER_PER_RUN_RESERVE_NANOS,
+        ),
+        source_qualification=SimpleNamespace(
+            evaluator_source_hash="sha256:" + "a" * 64,
+            source_qualification_hash="sha256:" + "b" * 64,
+        ),
+    )
     with patch(
         "patchloop.evals.heldout_ac_dispatcher._evaluator_failure_event_projection",
         return_value=projection,
     ):
         durable = _durable_evidence_from_authenticated(
             evidence,
+            candidate=candidate,
             run_root=tmp_path,
             usage_relative_path=usage_relative,
             cost_observation=observation,
             cost_observation_relative_path=observation_relative,
         )
-    candidate = SimpleNamespace(
-        execution_hash=ADAPTER_EXECUTION_HASH,
-        pricing_binding_hash=ADAPTER_PRICING_HASH,
-        suite_content_hash=suite.content_hash,
-        source_qualification=SimpleNamespace(
-            evaluator_source_hash="sha256:" + "a" * 64,
-            source_qualification_hash="sha256:" + "b" * 64,
-        ),
-    )
     expected_row = SimpleNamespace(order=1, schedule_row_id=evidence.schedule_row_id)
-    return durable, candidate, expected_row
+    return durable, candidate, expected_row, suite
 
 
 def test_evaluator_failure_sidecar_replay_is_db_free_and_read_only(tmp_path: Path) -> None:
-    durable, candidate, expected_row = _persist_evaluator_confound_durable(tmp_path)
+    durable, candidate, expected_row, suite = _persist_evaluator_confound_durable(tmp_path)
     assert durable.evaluator_failure_event_relative_path is not None
     sidecar = tmp_path / durable.evaluator_failure_event_relative_path
     assert sidecar.read_bytes().endswith(b"\n")
@@ -1238,7 +1695,9 @@ def test_evaluator_failure_sidecar_replay_is_db_free_and_read_only(tmp_path: Pat
         durable,
         run_root=tmp_path,
         candidate=candidate,
+        suite=suite,
         expected_row=expected_row,
+        legacy_replay_authorized=False,
     )
 
     after = {
@@ -1264,7 +1723,7 @@ def test_confound_replay_rejects_row_or_pricing_rebinding(
     target: str,
     field: str,
 ) -> None:
-    durable, candidate, expected_row = _persist_evaluator_confound_durable(tmp_path)
+    durable, candidate, expected_row, suite = _persist_evaluator_confound_durable(tmp_path)
     body = durable.model_dump(mode="json", exclude={"content_hash"})
     relative_key = (
         "cost_observation_relative_path" if target == "observation" else "usage_relative_path"
@@ -1296,12 +1755,14 @@ def test_confound_replay_rejects_row_or_pricing_rebinding(
             drifted,
             run_root=tmp_path,
             candidate=candidate,
+            suite=suite,
             expected_row=expected_row,
+            legacy_replay_authorized=False,
         )
 
 
 def test_confound_replay_recomputes_observed_cost_from_result(tmp_path: Path) -> None:
-    durable, candidate, expected_row = _persist_evaluator_confound_durable(tmp_path)
+    durable, candidate, expected_row, suite = _persist_evaluator_confound_durable(tmp_path)
     body = durable.model_dump(mode="json", exclude={"content_hash"})
     observation_path = tmp_path / durable.cost_observation_relative_path
     observation = json.loads(observation_path.read_bytes())
@@ -1327,12 +1788,14 @@ def test_confound_replay_recomputes_observed_cost_from_result(tmp_path: Path) ->
             drifted,
             run_root=tmp_path,
             candidate=candidate,
+            suite=suite,
             expected_row=expected_row,
+            legacy_replay_authorized=False,
         )
 
 
 def test_confound_replay_rejects_in_root_path_substitution(tmp_path: Path) -> None:
-    durable, candidate, expected_row = _persist_evaluator_confound_durable(tmp_path)
+    durable, candidate, expected_row, suite = _persist_evaluator_confound_durable(tmp_path)
     original = tmp_path / durable.cost_observation_relative_path
     alternate_relative = Path(durable.cost_observation_relative_path).with_name(
         "alternate-cost-observation.json"
@@ -1353,7 +1816,9 @@ def test_confound_replay_rejects_in_root_path_substitution(tmp_path: Path) -> No
             drifted,
             run_root=tmp_path,
             candidate=candidate,
+            suite=suite,
             expected_row=expected_row,
+            legacy_replay_authorized=False,
         )
 
 
@@ -1372,6 +1837,9 @@ def test_agent_terminal_sidecar_binds_runtime_classification(tmp_path: Path) -> 
     evidence = project_authenticated_heldout_ac_persisted_evidence(
         suite=suite,
         execution_hash=ADAPTER_EXECUTION_HASH,
+        expected_runtime_tuple_hash=_runtime_tuple_hash_for_qualification(suite, qualification),
+        expected_campaign_cost_control_hash=ADAPTER_CAMPAIGN_COST_CONTROL_HASH,
+        expected_per_run_reserve_nanos=ADAPTER_PER_RUN_RESERVE_NANOS,
         expected_pricing_binding_hash=ADAPTER_PRICING_HASH,
         order=1,
         task_evaluator_binding=binding,
@@ -1441,8 +1909,10 @@ def _fake_cost_observation_and_durable(
         content_hash=sha256_json(observation_body),
     )
     durable_body = {
-        "schema_version": "heldout-ac-confounded-durable-evidence-v1",
+        "schema_version": "heldout-ac-confounded-durable-evidence-v2",
         "run_id": run_id,
+        "runtime_tuple_hash": candidate.runtime_tuple_hash,
+        "campaign_cost_control_hash": candidate.campaign_cost_control.content_hash,
         "result_relative_path": observation.result_relative_path,
         "result_file_sha256": observation.result_file_sha256,
         "result_semantic_hash": observation.result_semantic_hash,
@@ -1475,6 +1945,403 @@ def _fake_cost_observation_and_durable(
         content_hash=sha256_json(durable_body),
     )
     return observation, durable
+
+
+@pytest.mark.parametrize("field", ["runtime_tuple_hash", "campaign_cost_control_hash"])
+def test_prepared_result_rejects_rehashed_settled_candidate_authority(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    candidate = _synthetic_execution_candidate()
+    settled = _fake_settled_row_v2(candidate, 1)
+    payload = settled.model_dump(mode="json")
+    evidence = payload["authenticated_evidence"]
+    row = evidence["row"]
+    wrong_hash = "sha256:" + "9" * 64
+    row[field] = wrong_hash
+    row["content_hash"] = sha256_json(
+        {key: value for key, value in row.items() if key != "content_hash"}
+    )
+    evidence[field] = wrong_hash
+    evidence["content_hash"] = sha256_json(
+        {key: value for key, value in evidence.items() if key != "content_hash"}
+    )
+    payload["content_hash"] = sha256_json(
+        {key: value for key, value in payload.items() if key != "content_hash"}
+    )
+    drifted = HeldoutACSettledCampaignRowV2.model_validate(payload)
+
+    with pytest.raises(ContractError, match="settled candidate authority differs"):
+        _prepared_result(
+            candidate=candidate,
+            plan_path=tmp_path / "plan.json",
+            plan_hash="sha256:" + "1" * 64,
+            journal_path=tmp_path / "journal.jsonl",
+            settled=[drifted],
+            confound=None,
+            not_started=[],
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["runtime_tuple_hash", "campaign_cost_control_hash", "legacy_schema"],
+)
+def test_prepared_result_rejects_rehashed_durable_authority_or_downgrade(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    candidate = _synthetic_execution_candidate()
+    _observation, durable = _fake_cost_observation_and_durable(
+        candidate,
+        run_id=f"run_heldout_{mutation}",
+        full=False,
+    )
+    durable_body = durable.model_dump(mode="json", exclude={"content_hash"})
+    if mutation == "legacy_schema":
+        durable_body["schema_version"] = "heldout-ac-confounded-durable-evidence-v1"
+        durable_body.pop("runtime_tuple_hash")
+        durable_body.pop("campaign_cost_control_hash")
+    else:
+        durable_body[mutation] = "sha256:" + "9" * 64
+    drifted = HeldoutACConfoundedDurableEvidence(
+        **durable_body,
+        content_hash=sha256_json(durable_body),
+    )
+    journal_path = tmp_path / "journal.jsonl"
+    _create_journal(
+        journal_path,
+        candidate,
+        "sha256:" + "1" * 64,
+        run_root=tmp_path,
+    )
+    confound, not_started = _record_confound(
+        candidate=candidate,
+        run_root=tmp_path,
+        journal_path=journal_path,
+        row=candidate.schedule[0],
+        run_id=drifted.run_id,
+        exc=ContractError("offline mutation"),
+        phase="qualification",
+        run_started_event_written=True,
+        durable_evidence=drifted,
+    )
+
+    with pytest.raises(ContractError, match="candidate authority|immutable historical replay"):
+        _prepared_result(
+            candidate=candidate,
+            plan_path=tmp_path / "plan.json",
+            plan_hash="sha256:" + "1" * 64,
+            journal_path=journal_path,
+            settled=[],
+            confound=confound,
+            not_started=not_started,
+        )
+
+
+def test_confound_replay_recomputes_qualification_cost_authority(tmp_path: Path) -> None:
+    durable, candidate, expected_row, suite = _persist_evaluator_confound_durable(tmp_path)
+    assert durable.qualification_relative_path is not None
+    qualification_path = tmp_path / durable.qualification_relative_path
+    qualification = json.loads(qualification_path.read_bytes())
+    cost_check = next(
+        item
+        for item in qualification["checks"]
+        if item["check_id"] == "heldout_ac_full_schedule_cost_contract"
+    )
+    cost_check["details"]["campaign_cost_control_hash"] = "sha256:" + "8" * 64
+    qualification["qualification_hash"] = sha256_json(
+        {key: value for key, value in qualification.items() if key != "qualification_hash"}
+    )
+    qualification_bytes = json.dumps(
+        qualification,
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    ).encode("utf-8")
+    qualification_path.write_bytes(qualification_bytes)
+    durable_body = {
+        **durable.model_dump(mode="json", exclude={"content_hash"}),
+        "qualification_file_sha256": sha256_bytes(qualification_bytes),
+        "qualification_hash": qualification["qualification_hash"],
+    }
+    drifted = HeldoutACConfoundedDurableEvidence(
+        **durable_body,
+        content_hash=sha256_json(durable_body),
+    )
+
+    with pytest.raises(ContractError, match="qualification authority differs"):
+        _verify_confound_durable_evidence(
+            drifted,
+            run_root=tmp_path,
+            candidate=candidate,
+            suite=suite,
+            expected_row=expected_row,
+            legacy_replay_authorized=False,
+        )
+
+
+@pytest.mark.parametrize(
+    (
+        "execution_hash",
+        "result_file_sha256",
+        "result_content_hash",
+        "journal_file_sha256",
+    ),
+    [
+        (
+            "sha256:2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa",
+            "sha256:70657e66a2117c310f1626d1d7c993e020cf77fcd7b860962c2e43c68e368e04",
+            "sha256:0c810c442e4cafcf5f14013ed9dbf3b2fce79c48b09618cbe9239d1e15ea3bc3",
+            "sha256:8e1968814691b597c7a04f746699ab690dba40dcb7b319e52d9c30642e937472",
+        ),
+        (
+            "sha256:f48a0de27f8b3e46e627d957dfd714b395c94855587ccfc36e78028fa711a6b0",
+            "sha256:9298b78252bf0ed5d74003a15ddbde9ead588312df79d1fc4a423538e0a58079",
+            "sha256:7f60cae9c08cea2c528482b8a1c7c9ae0ce2befb4f995413bcbc847e24c307a8",
+            "sha256:b5ea7ddd8cb7a5bdd5fa77d8b6ab100ad24c200f432d02b6ba23bfa962515a42",
+        ),
+        (
+            "sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd",
+            "sha256:77a8a129f031041c447bc46ef8a29446bf1c39bae9ef9404cf1598f3f037ed34",
+            "sha256:1860badbfc1d21b0ec244e44b04dc768b5c8530d7db179a2765c89312eec6619",
+            "sha256:8f4365522e647f916dcfc17fb0c4a9101b4dab1c56051a31ac03209734ce30a6",
+        ),
+    ],
+)
+def test_known_historical_authority_accepts_only_the_exact_recorded_tuple(
+    execution_hash: str,
+    result_file_sha256: str,
+    result_content_hash: str,
+    journal_file_sha256: str,
+) -> None:
+    assert (
+        _historical_legacy_authority_replay_status(
+            execution_hash=execution_hash,
+            result_file_sha256=result_file_sha256,
+            result_content_hash=result_content_hash,
+            journal_file_sha256=journal_file_sha256,
+        )
+        == "exact-historical-replay"
+    )
+
+
+def test_unknown_execution_is_not_treated_as_historical_authority() -> None:
+    assert (
+        _historical_legacy_authority_replay_status(
+            execution_hash="sha256:" + "0" * 64,
+            result_file_sha256="sha256:" + "1" * 64,
+            result_content_hash="sha256:" + "2" * 64,
+            journal_file_sha256="sha256:" + "3" * 64,
+        )
+        == "not-historical"
+    )
+
+
+def _repackaged_r14_result_tuple(
+    *,
+    durable_schema_version: str,
+    reason_code: str,
+) -> tuple[bytes, str]:
+    body = {
+        "schema_version": "heldout-ac-authoritative-campaign-result-v2",
+        "execution_hash": (
+            "sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd"
+        ),
+        "confound": {
+            "schema_version": "heldout-ac-campaign-confound-v2",
+            "reason_code": reason_code,
+            "durable_evidence": {
+                "schema_version": durable_schema_version,
+                "runtime_tuple_hash": "sha256:" + "a" * 64,
+                "campaign_cost_control_hash": "sha256:" + "b" * 64,
+            },
+        },
+    }
+    content_hash = sha256_json(body)
+    result_bytes = (
+        json.dumps(
+            {**body, "content_hash": content_hash},
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False,
+        )
+        + "\n"
+    ).encode("utf-8")
+    return result_bytes, content_hash
+
+
+@pytest.mark.parametrize(
+    ("durable_schema_version", "reason_code"),
+    [
+        (
+            "heldout-ac-confounded-durable-evidence-v2",
+            "DURABLE_EVIDENCE_AUTHENTICATION_FAILED",
+        ),
+        (
+            "heldout-ac-confounded-durable-evidence-v1",
+            "EVALUATOR_CONTROL_CONTRACT_COLLISION",
+        ),
+    ],
+    ids=["current-schema-upgrade-and-rehash", "reason-relabel-and-rehash"],
+)
+def test_known_r14_rejects_repackaged_current_schema_or_reason_relabel(
+    durable_schema_version: str,
+    reason_code: str,
+) -> None:
+    result_bytes, content_hash = _repackaged_r14_result_tuple(
+        durable_schema_version=durable_schema_version,
+        reason_code=reason_code,
+    )
+    candidate = SimpleNamespace(
+        execution_hash=("sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd")
+    )
+    result = SimpleNamespace(
+        content_hash=content_hash,
+        journal_file_sha256=(
+            "sha256:8f4365522e647f916dcfc17fb0c4a9101b4dab1c56051a31ac03209734ce30a6"
+        ),
+    )
+
+    with pytest.raises(ContractError, match="historical held-out result artifact tuple"):
+        _historical_legacy_authority_replay_matches(
+            candidate=candidate,
+            result=result,
+            result_bytes=result_bytes,
+        )
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["result_file_sha256", "result_content_hash", "journal_file_sha256"],
+)
+def test_known_r14_rejects_each_tampered_artifact_tuple_field(field: str) -> None:
+    observed = {
+        "result_file_sha256": (
+            "sha256:77a8a129f031041c447bc46ef8a29446bf1c39bae9ef9404cf1598f3f037ed34"
+        ),
+        "result_content_hash": (
+            "sha256:1860badbfc1d21b0ec244e44b04dc768b5c8530d7db179a2765c89312eec6619"
+        ),
+        "journal_file_sha256": (
+            "sha256:8f4365522e647f916dcfc17fb0c4a9101b4dab1c56051a31ac03209734ce30a6"
+        ),
+    }
+    observed[field] = "sha256:" + "9" * 64
+
+    with pytest.raises(ContractError, match="historical held-out result artifact tuple"):
+        _historical_legacy_authority_replay_status(
+            execution_hash=(
+                "sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd"
+            ),
+            **observed,
+        )
+
+
+@pytest.mark.parametrize(
+    ("execution_hash", "settled_runs"),
+    [
+        (
+            "sha256:2f51935b52cc60a1d01dbd08cfbc811736afd87cc635b08f78bff44c869b2afa",
+            0,
+        ),
+        (
+            "sha256:f48a0de27f8b3e46e627d957dfd714b395c94855587ccfc36e78028fa711a6b0",
+            2,
+        ),
+        (
+            "sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd",
+            0,
+        ),
+    ],
+)
+def test_exact_immutable_historical_legacy_authority_replay_remains_valid(
+    execution_hash: str,
+    settled_runs: int,
+) -> None:
+    result_path = (
+        ROOT
+        / ".patchloop"
+        / "experiments"
+        / "heldout-ac"
+        / f"{execution_hash.removeprefix('sha256:')}.json"
+    )
+    if not result_path.is_file():
+        pytest.skip("immutable local historical campaign artifacts are unavailable")
+    replay = validate_heldout_ac_campaign_result(
+        execution_hash=execution_hash,
+        root=ROOT / ".patchloop",
+        repository=ROOT,
+    )
+    assert replay["disposition"] == "inconclusive-matrix"
+    assert replay["terminal_settled_runs"] == settled_runs
+    assert replay["provider_calls_made_by_validation"] == 0
+
+
+def test_campaign_result_v2_rejects_rehashed_cost_boundary_drift(
+    tmp_path: Path,
+) -> None:
+    candidate = _synthetic_execution_candidate()
+    plan_hash = "sha256:" + "1" * 64
+    plan_path = tmp_path / "experiments" / "plans" / "synthetic.json"
+    journal_path = tmp_path / "experiments" / "journals" / "synthetic.jsonl"
+    result_path = tmp_path / "experiments" / "heldout-ac" / "synthetic.json"
+    _create_journal(journal_path, candidate, plan_hash, run_root=tmp_path)
+    run_id = "run_heldout_result_invariant"
+    _observation, durable = _fake_cost_observation_and_durable(
+        candidate,
+        run_id=run_id,
+        full=False,
+    )
+    confound, not_started = _record_confound(
+        candidate=candidate,
+        run_root=tmp_path,
+        journal_path=journal_path,
+        row=candidate.schedule[0],
+        run_id=run_id,
+        exc=ContractError("offline injected"),
+        phase="qualification",
+        run_started_event_written=True,
+        durable_evidence=durable,
+    )
+    result = _finalize_result(
+        run_root=tmp_path,
+        candidate=candidate,
+        plan_path=plan_path,
+        plan_hash=plan_hash,
+        journal_path=journal_path,
+        result_path=result_path,
+        settled=[],
+        confound=confound,
+        not_started=not_started,
+    )
+
+    drifted_boundary = result.model_dump(mode="json")
+    drifted_boundary["full_schedule_reserve_nanos"] = 252_000_000_000
+    drifted_boundary["hard_cap_nanos"] = 275_000_000_000
+    drifted_boundary["content_hash"] = sha256_json(
+        {key: value for key, value in drifted_boundary.items() if key != "content_hash"}
+    )
+    with pytest.raises(ValueError, match="result cost boundary differs"):
+        type(result).model_validate_json(json.dumps(drifted_boundary, sort_keys=True))
+
+    overspend = result.model_dump(mode="json")
+    overspend_cost = result.full_schedule_reserve_nanos + 1
+    durable_payload = overspend["confound"]["durable_evidence"]
+    durable_payload["token_derived_cost_nanos"] = overspend_cost
+    durable_payload["content_hash"] = sha256_json(
+        {key: value for key, value in durable_payload.items() if key != "content_hash"}
+    )
+    overspend["confound"]["content_hash"] = sha256_json(
+        {key: value for key, value in overspend["confound"].items() if key != "content_hash"}
+    )
+    overspend["observed_unsettled_model_cost_nanos"] = overspend_cost
+    overspend["observed_started_model_cost_nanos"] = overspend_cost
+    overspend["content_hash"] = sha256_json(
+        {key: value for key, value in overspend.items() if key != "content_hash"}
+    )
+    with pytest.raises(ValueError, match="observed-started model cost exceeds"):
+        type(result).model_validate_json(json.dumps(overspend, sort_keys=True))
 
 
 @pytest.mark.parametrize(

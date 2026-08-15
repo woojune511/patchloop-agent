@@ -6,6 +6,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from patchloop.util import sha256_json
+
 HELDOUT_AC_SUITE_ID = "core-ac-fixed-bundle-heldout-20260814-v1"
 HELDOUT_AC_PREREGISTRATION_CONTENT_HASH = (
     "sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74"
@@ -154,6 +156,92 @@ class HeldoutACRuntime(HeldoutACFrozenModel):
     max_model_calls: Literal[240]
     max_tool_calls: Literal[400]
     wall_clock_timeout_seconds: Literal[3_600]
+
+
+class HeldoutACCompletionCampaignAuthority(HeldoutACFrozenModel):
+    """Execution-free projection of one validated candidate's completion controls."""
+
+    schema_version: Literal["heldout-ac-completion-campaign-authority-v1"]
+    candidate_schema_version: Literal[
+        "heldout-ac-execution-candidate-v1",
+        "heldout-ac-execution-candidate-v2",
+        "heldout-ac-execution-candidate-v3",
+    ]
+    suite_id: Literal[HELDOUT_AC_SUITE_ID]
+    suite_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    execution_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    realized_schedule_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
+    schedule_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    schedule_row_ids: tuple[str, ...] = Field(min_length=48, max_length=48)
+    runtime_tuple_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    pricing_binding_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    evaluator_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    evaluator_source_qualification_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    max_cumulative_input_tokens: int = Field(gt=0)
+    max_cumulative_output_tokens: int = Field(gt=0)
+    max_total_tokens: int = Field(gt=0)
+    max_model_calls: int = Field(gt=0)
+    max_tool_calls: int = Field(gt=0)
+    wall_clock_timeout_seconds: int = Field(gt=0)
+    campaign_cost_control_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    per_run_reserve_nanos: int = Field(gt=0)
+    full_schedule_reserve_nanos: int = Field(gt=0)
+    hard_cap_nanos: int = Field(gt=0)
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_authority(self) -> HeldoutACCompletionCampaignAuthority:
+        if self.candidate_schema_version == "heldout-ac-execution-candidate-v3":
+            if self.realized_schedule_hash is None:
+                raise ValueError("held-out completion authority realized schedule is absent")
+        elif self.realized_schedule_hash is not None:
+            raise ValueError("held-out historical completion authority has a realized schedule")
+        expected_limits = (
+            (4_000_000, 500_000, 4_500_000, 5_250_000_000, 252_000_000_000, 275_000_000_000)
+            if self.candidate_schema_version == "heldout-ac-execution-candidate-v1"
+            else (1_000_000, 100_000, 1_100_000, 1_200_000_000, 57_600_000_000, 60_000_000_000)
+        )
+        observed_limits = (
+            self.max_cumulative_input_tokens,
+            self.max_cumulative_output_tokens,
+            self.max_total_tokens,
+            self.per_run_reserve_nanos,
+            self.full_schedule_reserve_nanos,
+            self.hard_cap_nanos,
+        )
+        if observed_limits != expected_limits or (
+            self.max_model_calls,
+            self.max_tool_calls,
+            self.wall_clock_timeout_seconds,
+        ) != (240, 400, 3_600):
+            raise ValueError("held-out completion authority budget or cost boundary differs")
+        if len(set(self.schedule_row_ids)) != 48:
+            raise ValueError("held-out completion authority schedule identities are not unique")
+        cost_body = {
+            "schema_version": (
+                "heldout-ac-full-schedule-cost-control-v1"
+                if self.candidate_schema_version == "heldout-ac-execution-candidate-v1"
+                else "heldout-ac-full-schedule-cost-control-v2"
+            ),
+            "suite_id": self.suite_id,
+            "suite_content_hash": self.suite_content_hash,
+            "execution_hash": self.execution_hash,
+            "schedule_hash": self.schedule_hash,
+            "scheduled_run_count": 48,
+            "per_run_reserve_nanos": self.per_run_reserve_nanos,
+            "full_schedule_reserve_nanos": self.full_schedule_reserve_nanos,
+            "hard_cap_nanos": self.hard_cap_nanos,
+            "cost_censoring_allowed": False,
+            "live_resume_supported": False,
+        }
+        if self.campaign_cost_control_hash != sha256_json(cost_body):
+            raise ValueError("held-out completion authority cost-control hash differs")
+        expected_hash = sha256_json(
+            self.model_dump(mode="json", exclude={"content_hash"}, exclude_none=True)
+        )
+        if self.content_hash != expected_hash:
+            raise ValueError("held-out completion authority content hash differs")
+        return self
 
 
 class HeldoutACCost(HeldoutACFrozenModel):

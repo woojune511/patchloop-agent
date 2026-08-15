@@ -15,22 +15,28 @@ Machine artifacts under `reports/` are authoritative. Historical narrative is ar
 - Budget amendment content/file is `sha256:9df732d5bf8d5c754ea47084e5dbf9c490f78882bcc9fbc6b0c5d2e2b8bf220d`/
   `sha256:a2532b466c55659c72e6602a37a6a6114ad42d90c5fd78502ad976f9384f9e53` (7,248 bytes). It binds development
   evidence only, equal 1M/100k/1.1M token limits and `$57.60`/`$60`, with all runtime authority false.
-- Contract R8 content/file/source is `sha256:77de0d1519cfc7032bda023bf1f1cca86449533fe3a1be39887d5784fc2d013b`/
-  `sha256:014085aea45b31c40d53a3c83483ca79585ec1ca105631a53b9c8e64ff465432` (21,501 bytes)/
-  `sha256:218e5a2fc36aaff18474a66297f0c1a8f3fa66cb8526a893dec41829962557b8`.
-- Binding R9 content/file/source is `sha256:a26bb59cb5b16d6d3a94676b195b3fb36a21e974216088780c90c92aaac2bd2b`/
-  `sha256:6b1597d3b0f4202aeadaa424b67e06ec6e37ff7abfd8fd62f4af23208f3aaf68` (5,683 bytes)/
-  `sha256:04eeab81a9a8130dbe5624068317ee3d68711465d18e3e8032ffbeb92e3fdcf6`.
-- Materialization R5 content/file/source is `sha256:a7d6347c13368c60b65933041cfc33748fdb780549fa0ad9d358fcfcf4843f60`/
-  `sha256:34186e94134bffceaa05f893c24f9cdf5e1981e4e13c8b37de541ba49a5d6e17` (53,234 bytes)/
-  `sha256:c265e6f6e6484ea514d418fceacbd448c6db0972c7fdb4c21c770da8f56380cf`; task bindings remain
-  `sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f`, added task opens/price GETs are zero.
-- Execution R6 content/file/evaluator source is `sha256:375727d1c32c93105afb1875da0fadedb9dcb05bdfa17b088aade293bee72c1a`/
-  `sha256:380c4ed66f1df3b7e80db490144ac7c1674de59229e6d72084b0e145b2b92232` (17,212 bytes)/
-  `sha256:965aef5aa3da61dcfbb11b7cc4e1f5ccfd3f0d83c450986f028ed812a6e1653b`.
-- Preflight/dispatcher R14 content/file/evaluator source is `sha256:d71f0ad53cadb2957e1870cc40291a4979d0eed93321a0d082233408c03aed5c`/
-  `sha256:259407d7c30113096844541b01f93ea18e78c5dd0d471c261311657acd7135a3` (21,984 bytes)/
-  `sha256:f9660226185d33726bc3585381d0606234e6231faf5d9a9f62b79b44b67c20fd`. It made no observation, candidate, call or spend.
+- Contract R10 at `reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r10.json` is 22,080 bytes;
+  file/content/source are `sha256:3e98b35ebae9b7d4a50a23e4f984fdf4be213702cb296c55394ef1e8ceb361e0`/
+  `sha256:c04127095d998ee345e4449f897de5b5c6666c75ade6f12d2784e59254b97a32`/
+  `sha256:30ad36dca70f12ed10b27585c1a33751dabd687f7da72075e089f5a5481334fd`.
+- Binding R10 at `reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r10.json` is 6,376
+  bytes; file/content/source are `sha256:376e94d84b7bdb5f0a2ec507fcc12e2016fbd718817e05a913c86824bc3e2ef4`/
+  `sha256:27283c8a1d1075a9e22f395eed0d845069531e230d30aab2aeda75dc76c17626`/
+  `sha256:3f01c1817a42daf35081926481c808887422d15e331138e90134069cdc17ba07`.
+- Materialization R6 at `reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r6.json` is 53,250
+  bytes; file/content/source are `sha256:1a3568e372c9b3af1e384addfb3b5d8351138625072b3af95ccc6290bed3d975`/
+  `sha256:61f65a54891ef60c07c1edbadd67040cdf5d31e21e4c6e1d3ac97d7f94e419fb`/
+  `sha256:7135f82bebfee3b635cd67347fee258be57fa2ef15cce09e3df838897c197131`.
+- Execution R7 at `reports/heldout-ac/artifacts/heldout-ac-execution-source-qualification-r7.json` is 20,007 bytes;
+  file/content/evaluator-source are `sha256:4202aa19b148e9e3567cb79c3b928fe0bfeb08a2b2d980f46e9899ff6489e7f1`/
+  `sha256:783b757d07b76d943899ff3a2d66d1033fc84b44026e4472f263495f9877e80a`/
+  `sha256:c06109120a7b9f5821755a89aae42ff6e1e734470707913882414282773d5f83`.
+- Preflight/dispatcher R15 at `reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r15.json` is
+  24,713 bytes; file/content/evaluator-source are
+  `sha256:0ed3be6f51213867acc4f27560f87ae33103e5ee60deb237affe942a7ebd6cbc`/
+  `sha256:f0e100d44f713cde134882025481b0038bfb0b4d880f4192e0558dc806e6809c`/
+  `sha256:d04b90cc92c8888b1e21f6911b201511180230e62db055d5dd5bb4cb3fbac95c`. This R10/R10/R6/R7/R15 chain is
+  source-qualified only and made no candidate, approval, observation or spend.
 
 ## R7 held-out live inconclusive campaign
 
@@ -64,6 +70,27 @@ content/file `sha256:ff66718e1fa403baf0978de1b0e43625aac0a046117e85c5f42fb0cc431
 1 observed-unsettled and 45 not-started; settled cost is `$0.15699525` and total observed-started cost is
 `$0.41801625`. Runtime bytes remain unchanged. Correction activity was zero calls and `$0`; no complete matrix,
 official analysis, retry or memory claim is authorized.
+
+## R14 held-out live inconclusive campaign
+
+Candidate `sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd` at commit/tree
+`0fc8c1dbec71b292296d0ca5dd520c8b226fd1b6`/`3c37a307129f4dbebba9536dd44cac148be7a3cf` consumed one exact
+48-row `$57.60`/`$60` approval. It sealed 0 settled, 1 observed-unsettled and 47 not-started with `$0.126342`
+observed-started cost. The observed Loguru/structured row completed evaluation as hidden FAIL and carried an
+authenticated trace-qualification-v2 budget of 1M input/100k output/1.1M total.
+
+Historical reason `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` and phase `authentication` remain immutable. Deterministic
+post-runtime attribution `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` records that completion compared the
+candidate budget with the immutable suite's 4M/500k/4.5M tuple. It does not reauthenticate, settle, reclassify or
+change the underlying task outcome. The exact final-file/content/journal triple is
+`sha256:77a8a129f031041c447bc46ef8a29446bf1c39bae9ef9404cf1598f3f037ed34`/
+`sha256:1860badbfc1d21b0ec244e44b04dc768b5c8530d7db179a2765c89312eec6619`/
+`sha256:8f4365522e647f916dcfc17fb0c4a9101b4dab1c56051a31ac03209734ce30a6`.
+
+Append-only index `reports/heldout-ac/artifacts/heldout-ac-r14-campaign-inconclusive-r1.json` is 12,856 bytes;
+file/content are `sha256:21cda8f99aa835b196aa54cc6f7ad2483942f43d986fd935ce511a0d6974cd7b`/
+`sha256:1b602c1900ddfbd6867c81818d48ee9ada72f0b2fb2503d5eb83db7faf0e5341`. It added zero provider/evaluator/
+Docker/SDK/agent calls and `$0`; retry, resume, reauthentication, official analysis and memory claims remain closed.
 
 ## R8 complete development-readiness matrix
 

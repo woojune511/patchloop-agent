@@ -1,56 +1,28 @@
 # Evaluation protocol
 
-상태: current normative protocol. Historical per-milestone protocols are archived at
+Status: current normative protocol. Historical milestone protocols are archived at
 `docs/archive/snapshots/d121/04-evaluation-protocol.full.md`.
 
-## 1. Research questions
+## 1. Questions and dataset roles
 
-Long-term question:
+Long-term question: under a fixed coding-agent runtime, how do no memory, raw trace, structured memory and selective
+structured memory affect held-out scope-compliant success, cost and negative transfer?
 
-> Under an otherwise fixed coding-agent runtime, how do no memory, raw trace, structured memory and
-> selective structured memory affect held-out scope-compliant success, cost and negative transfer?
+Immediate readiness asks only whether an exact fixed structured bundle traverses the full workflow beside no memory.
+R8 completed that four-row development matrix; it is not the long-term answer. `data/dataset-manifest.yaml` assigns
+calibration, memory-development, development-validation, core same-repo, core cross-repo and external-acceptance roles.
+External acceptance never enters the core aggregate.
 
-Immediate readiness question:
+## 2. Conditions and development matrix
 
-> Can an exact fixed structured bundle be delivered through the full workflow without leakage, ambiguity or
-> process failure when compared contemporaneously with no memory?
-
-The readiness result is not the long-term answer. R3 through R6 are immutable inconclusive attempts; R8 completed
-the exact four-row development-readiness matrix under its R10-qualified source. R7/R9 is superseded unexecuted.
-
-## 2. Dataset roles
-
-`data/dataset-manifest.yaml` is authoritative.
-
-| Role | Current use |
-| --- | --- |
-| Calibration | Schema/evaluator plumbing only |
-| Memory development | Failure review and entry authoring |
-| Development validation | Rendering, no-match, leak and live runtime readiness |
-| Core same-repo | Future held-out transfer evaluation |
-| Core cross-repo | Future cross-repository generalization evaluation |
-| External acceptance | Separate interoperability lane; never core aggregate |
-
-The current A/C readiness uses the complete two-task development-validation panel. It does not consume a
-held-out result.
-
-## 3. Memory conditions
-
-| ID | Condition | Current status |
+| ID | Condition | Status |
 | --- | --- | --- |
-| A | `no_memory` | Implemented baseline condition |
-| B | `raw_trace` | Deferred; portable selection/redaction contract incomplete |
-| C | `structured` | Exact-three delivered through resolved, qualified Moto and Babel runs in R8 |
-| D | `selective_structured` | Deferred; applicability calibration and score policy incomplete |
+| A | `no_memory` | Implemented baseline |
+| B | `raw_trace` | Deferred; portable redaction contract incomplete |
+| C | `structured` | Exact frozen D-110 three-entry bundle |
+| D | `selective_structured` | Deferred; applicability/score policy incomplete |
 
-For this readiness panel, C means all three approved generic rules in frozen D-110 `group_provenance`
-order. It does not mean
-embedding retrieval or threshold selection.
-
-## 4. Four-run readiness matrix
-
-The v11 plan binds sealed, consumed R8; v10/R9/R7, v9/R8/R6, v8/R7/R5, v7/R6-qualification/R4 and
-v6/R5-qualification/R3 remain immutable predecessors.
+R8's consumed schedule was:
 
 | Order | Task | Condition |
 | ---: | --- | --- |
@@ -59,78 +31,48 @@ v6/R5-qualification/R3 remain immutable predecessors.
 | 3 | Babel #1042 | C `structured` |
 | 4 | Babel #1042 | A `no_memory` |
 
-Rows use fresh workspaces and one repetition. Preflight may retry transient pre-provider failure; campaign rows do
-not retry or replace, and any confound makes the counterbalanced panel inconclusive.
+Rows used fresh workspaces and no retry/replacement. They shared `gpt-5.4-mini-2026-03-17`, medium reasoning,
+standard/default tier, retry 0, `store=false`, SYSTEM_PROMPT_V3, tool schema v2, phase-evidence-v5, exact task/image/
+evaluator, 3M input/350k output/3.35M aggregate, 25k/response, 180 model, 300 tool and 3,600 seconds. R8 reserved
+`$3.825`/row, `$15.30`/panel and `$18`; actual cost was `$0.3664215`.
 
-## 5. Controlled variables
+A is null; C renders the exact three texts in frozen order on every request. No retrieval/ranking or reviewer/source
+material enters model input. R8 raw v2 results remain `official=false` despite receipt-qualified completion.
 
-All four rows must share:
+## 3. Completion, metrics and interpretation
 
-- `gpt-5.4-mini-2026-03-17`, medium reasoning, standard mode, default tier;
-- transport retry 0 and `store=false`;
-- SYSTEM_PROMPT_V3, tool schema v2 and phase-evidence-v5;
-- exact task package, base commit and official evaluator per task;
-- cumulative input/output/aggregate ceilings of 3,000,000/350,000/3,350,000 tokens, with reasoning counted as
-  output;
-- max output 25,000 per response, max 180 model calls, max 300 tool calls and wall timeout 3,600 seconds;
-- identical pricing/accounting and schedule qualification; D-126 observed official default-tier list prices
-  of $0.75 input, $0.075 cached input and $4.50 output per 1M text tokens.
+Analysis requires every scheduled row terminal, trace-qualified, usage/cost-settled, evaluator/verdict-consistent and
+free of infrastructure, qualification, diagnostic and budget confounds. V2 also requires authenticated receipt and
+typed safety evidence. Rows cannot be replaced. Cross-clone and kill/power-loss durability remain unverified.
 
-The only planned treatment difference is exact selected-memory content.
+A complete matrix may report terminal/evaluator reach, delivery integrity, SCRR/verdicts, flips, token/call/duration/
+cost and paired C-minus-A deltas. It cannot claim causal or general memory improvement, held-out/cross-repository or
+production readiness, significance/confidence, per-rule efficacy, retrieval quality or population negative transfer.
+R11 and R14 provide incomplete operational observations only.
 
-R8 reserves full-price input/output at `$3.825` per row and `$15.30` per panel, with `$18` cap and `$2.70` slack; it
-assumes no cache discount. The equal A/C thresholds are informed by one R3 development row, not held-out-safe,
-invoice/completion predictions or proof extra capacity resolves C.
+Private specs, hidden/reference evidence, known-bad patches and traces cannot tune tasks, memory, thresholds, prompt,
+selection or policy. Moto/Babel cannot become fresh validation after their outcomes informed changes. Partially
+unblinded R11/R14 may repair infrastructure contracts only.
 
-## 6. Memory delivery qualification
+## 4. Preregistered held-out A/C
 
-D-122/D-125 freeze A as null and C as the exact ordered three-text D-110 bundle on every request. Drift fails closed;
-no retrieval/ranking or reviewer-only/source material enters model input. Paired requests differ only in memory and
-derived identities; durable token/usage accounting remains active. D-108/R3 measure delivery overhead, not effect.
-R8 is consumed and raw v2 results remain `official=false`; see `docs/09-evidence.md`.
+The preregistration freezes 12 tasks × A/C × two repetitions = 48 rows and complete-panel SCRR. Deterministic
+100,000-sample percentile stability and exact 4,096-sign sensitivity are assumption-based, not population confidence.
+Eligible evaluator FAIL and typed agent terminals score zero; infrastructure confounds are inconclusive.
 
-## 7. Run-completion gate
+- R7 sealed 0 settled/1 unsettled/47 not-started after qualification-byte drift.
+- R11 candidate `sha256:f48a0de...a6b0` sealed 2 settled/1 observed-unsettled/45 not-started: `$0.15699525`
+  settled and `$0.41801625` observed-started. A hidden failure and evaluator-control collision block analysis.
+- Development-only evidence set equal A/C to 1M/100k/1.1M and `$57.60`/`$60`, excluding R11 outcomes and held-out
+  task content. R14 candidate `sha256:67475f57...307fd` consumed it and sealed 0 settled/1 observed-unsettled/47
+  not-started with `$0.126342` observed.
 
-Analysis requires every row terminal, trace-qualified, cost/usage-settled, evaluator/verdict-consistent and free of
-infrastructure, qualification, diagnostic or budget confounds. V2 also requires its authenticated receipt and typed
-safety evidence. R3-R6 failed distinct gates; R8 met them, with its stale projection corrected append-only. Rows cannot
-be replaced; cross-clone and kill/power-loss durability remain unverified. Held-out R11 did not meet this gate: 2 rows
-settled, 1 had observed usage but no evaluator completion, and 45 never started.
+R14's immutable reason is `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`. Post-runtime
+`TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` records that completion compared the candidate
+1M/100k/1.1M budget with the immutable suite's 4M/500k/4.5M tuple; it grants no reauthentication/reclassification.
 
-## 8. Metrics
-
-Readiness metrics cover terminal/qualification/evaluator reach, A-null versus C-exact-three integrity, leak/diff and
-truncation. Only a complete matrix adds descriptive SCRR/verdicts, flips, submission outcome, token/call/duration/cost
-and paired C-minus-A deltas.
-
-## 9. Interpretation boundary
-
-The result may state whether the exact bundle traversed the workflow and report these two development pairs'
-descriptive direction/cost. It cannot claim causal/general memory improvement, held-out/cross-repository or production
-readiness, significance/confidence, individual-rule efficacy, retrieval quality or population negative transfer. R11
-adds incomplete held-out operational observations only; it supplies neither a complete A/C contrast nor a memory claim.
-
-## 10. Leakage and selection controls
-
-Use both development tasks, exclude memory-source rows, freeze identities before outcomes, and never select/tune from
-private specs, hidden/reference evidence, known-bad patches or traces. Moto/Babel cannot become fresh validation after
-their results informed changes. R11 partially unblinded Loguru and Dagster runtime outcomes; those observations may be
-used to repair infrastructure contracts but not to tune tasks, memory, thresholds, prompts, selection or policy.
-
-## 11. Preregistered held-out A/C
-
-The record freezes 12 tasks × A/C × two repetitions = 48 rows and a scheduled-row complete-panel SCRR contrast.
-It specifies deterministic 100,000-sample percentile stability and an assumption-based exact 4,096-sign sensitivity;
-neither is design-based or a population confidence claim. Eligible evaluator FAIL and typed agent terminals score zero;
-infrastructure confounds are inconclusive. R11 partially unblinded outcomes; further execution remains closed.
-
-Held-out R7 first sealed 0 settled/1 unsettled/47 not-started after CRLF/LF qualification-byte drift. R11 candidate
-`sha256:f48a0de...a6b0` then consumed its 48-row approval and sealed 2 settled/1 observed-unsettled/45 not-started.
-Settled cost was `$0.15699525`; total observed started cost was `$0.41801625`. One Loguru task failure and the Dagster
-evaluator-control collision prevent analysis.
-
-Development-only evidence keeps the design but sets equal A/C to 1M/100k/1.1M tokens and `$57.60`/`$60`. R11 outcomes
-and held-out task content were excluded; budget terminals score zero, rows never retry and results do not pool with R11.
-
-Contract R8 → binding R9 → materialization R5 → execution R6 → preflight R14 source-qualifies the lower-cost path.
-Further execution requires a fresh clean preflight and separate exact approval.
+Contract R10 → binding R10 → materialization R6 → execution R7 → preflight R15 is the corrected zero-authority path.
+Candidate-v3 binds the realized schedule and candidate runtime/cost. Current next-row admission requires
+persisted-v5/row-v2 plus budget/semantic revalidation; known R7/R11/R14 history requires the exact allowlisted
+final-file/content/journal triple. Further execution requires committed source, a fresh read-only no-call candidate and
+separate exact approval. No candidate, approval, official analysis or memory claim exists now.

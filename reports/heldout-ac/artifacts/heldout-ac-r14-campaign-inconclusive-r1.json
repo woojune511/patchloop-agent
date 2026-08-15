@@ -1,0 +1,252 @@
+{
+  "schema_version": "heldout-ac-campaign-evidence-index-v3",
+  "evidence_id": "core-ac-fixed-bundle-heldout-r14-live-inconclusive-20260815-r1",
+  "status": "LIVE_CAMPAIGN_INCONCLUSIVE_RUNTIME_BUDGET_AUTHORITY_MISMATCH_INDEXED",
+  "recorded_at": "2026-08-14T21:04:37.529863Z",
+  "historical_source": {
+    "git_commit": "0fc8c1dbec71b292296d0ca5dd520c8b226fd1b6",
+    "git_tree": "3c37a307129f4dbebba9536dd44cac148be7a3cf",
+    "suite_id": "core-ac-fixed-bundle-heldout-20260814-v1",
+    "suite_content_hash": "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa",
+    "suite_file": {
+      "path": "experiments/heldout-ac-suite-20260814-v1.yaml",
+      "file_bytes": 13348,
+      "file_sha256": "sha256:27157e26881cc277a9026e51d22a6f21fbf5bbb8f6c1c09eaa89aec607e52534"
+    },
+    "runtime_tuple_hash": "sha256:ff8ddf0a4735162820b3fd91966fb977fa996c9c04d9d4ee649d2353a01e95a8",
+    "schedule_hash": "sha256:b73e4cff23891636ec74c9f1a45993f2ad98e9f4c36e4b7ca2f6e5d18f178d86",
+    "source_qualification": {
+      "path": "reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r14.json",
+      "file_bytes": 21984,
+      "file_sha256": "sha256:259407d7c30113096844541b01f93ea18e78c5dd0d471c261311657acd7135a3",
+      "content_hash": "sha256:d71f0ad53cadb2957e1870cc40291a4979d0eed93321a0d082233408c03aed5c",
+      "qualification_id": "core-ac-fixed-bundle-heldout-preflight-source-20260815-r14",
+      "evaluator_source_hash": "sha256:f9660226185d33726bc3585381d0606234e6231faf5d9a9f62b79b44b67c20fd"
+    }
+  },
+  "approval": {
+    "execution_hash": "sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd",
+    "scheduled_rows": 48,
+    "full_schedule_reserve_nanos": 57600000000,
+    "hard_cap_nanos": 60000000000,
+    "approval_consumed": true,
+    "retry_replacement_or_resume_authorized": false
+  },
+  "runtime_files": {
+    "candidate_preflight": {
+      "path": ".patchloop/heldout-ac-preflight-budget-v1.json",
+      "file_bytes": 66736,
+      "file_sha256": "sha256:b281a515c440896776a5205e8d7fa633c6e4db5ad922640e8f140ecc5d725efc"
+    },
+    "execution_plan": {
+      "path": ".patchloop/experiments/plans/67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd.json",
+      "file_bytes": 83389,
+      "file_sha256": "sha256:2057fc0c252ce97f1f29d55a3ec60cdeed169ece4e4de0d9517a95ab78912601"
+    },
+    "journal": {
+      "path": ".patchloop/experiments/journals/67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd.jsonl",
+      "file_bytes": 48045,
+      "file_sha256": "sha256:8f4365522e647f916dcfc17fb0c4a9101b4dab1c56051a31ac03209734ce30a6",
+      "terminal_sequence": 52,
+      "campaign_completed_event_hash": "sha256:e46119248590a0d7e9b2624f2ddc3638eba76af191649451562b7d6cdbff3c00"
+    },
+    "prepared_result": {
+      "path": ".patchloop/experiments/heldout-ac/67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd.prepared.json",
+      "file_bytes": 27059,
+      "file_sha256": "sha256:10d14f04c64c7868ac692b1fea7d0eff65830a2ed9ced6273326d23b1bed7170",
+      "content_hash": "sha256:6f961ea25ea87ffe5539e0036a0f6f366a152e7c81520d2fe6225900b709a755"
+    },
+    "final_result": {
+      "path": ".patchloop/experiments/heldout-ac/67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd.json",
+      "file_bytes": 27676,
+      "file_sha256": "sha256:77a8a129f031041c447bc46ef8a29446bf1c39bae9ef9404cf1598f3f037ed34",
+      "content_hash": "sha256:1860badbfc1d21b0ec244e44b04dc768b5c8530d7db179a2765c89312eec6619"
+    }
+  },
+  "campaign_observation": {
+    "disposition": "inconclusive-matrix",
+    "expected_runs": 48,
+    "started_runs": 1,
+    "terminal_settled_runs": 0,
+    "observed_unsettled_runs": 1,
+    "not_started_runs": 47,
+    "settled_model_cost_nanos": 0,
+    "observed_unsettled_model_cost_nanos": 126342000,
+    "observed_started_model_cost_nanos": 126342000,
+    "historical_result_cost_accounting_complete": true,
+    "analysis_ready": false,
+    "official_heldout_analysis": false,
+    "memory_benefit_claim_authorized": false,
+    "broad_generalization_claim_authorized": false,
+    "campaign_settlement_preserved_without_reauthentication": true
+  },
+  "observed_row": {
+    "order": 1,
+    "wave": 1,
+    "schedule_row_id": "sha256:8fd328a7e8684d8a24bf1bf8bf732ed7e46bf9c773d28bb5cf3c09b933939a42",
+    "task_id": "loguru-post-2038-local-timezone-fallback",
+    "role": "core-same-repo",
+    "condition": "structured",
+    "repetition": 1,
+    "run_id": "run_heldout_ca223089cb0c462e",
+    "underlying_outcome_kind": "task_failure",
+    "agent_submission_status": "completed",
+    "evaluation_status": "completed",
+    "raw_official": false,
+    "verdicts": {
+      "hidden_tests": "fail",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    },
+    "model_cost_nanos": 126342000,
+    "campaign_settled": false,
+    "authenticated_row_persisted": false,
+    "qualification_schema_version": "trace-qualification-v2",
+    "qualification_check_count": 28,
+    "qualification_passed_check_count": 28,
+    "evaluator_v2_runtime_authenticated": true,
+    "evaluator_v2_completion_eligible": true,
+    "qualification_budget": {
+      "max_model_calls": 240,
+      "max_tool_calls": 400,
+      "max_total_tokens": 1100000,
+      "wall_clock_timeout_seconds": 3600,
+      "token_budget_schema_version": "cumulative-split-v1",
+      "max_cumulative_input_tokens": 1000000,
+      "max_cumulative_output_tokens": 100000
+    },
+    "result": {
+      "path": ".patchloop/artifacts/runs/run_heldout_ca223089cb0c462e/result.json",
+      "file_bytes": 19649,
+      "file_sha256": "sha256:9bcc274f4f584bd33b319dfab260887afba00714facdd9edb399094b88933c41",
+      "semantic_hash": "sha256:3a0bccaba6f50aba5db3f444cf1a368b2b53aeaa392d9877456dd5f1b4cd8c2e"
+    },
+    "qualification": {
+      "path": ".patchloop/qualifications/run_heldout_ca223089cb0c462e.json",
+      "file_bytes": 13054,
+      "file_sha256": "sha256:d0caf49d7b0375f3a4bc7dbb972db49491aa63350ee3fa73e6c54d4c0e868824",
+      "qualification_hash": "sha256:5bd8e7d67748bdbaccfe71fc9a55daed8a72635a3bddd336656abfd79ebc5d07",
+      "source_evidence_hash": "sha256:3a3be4a82fcfb633d59229b051aacb72292dcf6c0cb50dd36a8ef9f531f777d4"
+    },
+    "receipt": {
+      "path": ".patchloop/artifacts/runs/run_heldout_ca223089cb0c462e/evaluation-receipt.json",
+      "file_bytes": 1998,
+      "file_sha256": "sha256:5854fa708d2678152eb628c46e019d9b137b253956fc902afaec604e3488f3f7",
+      "content_hash": "sha256:b7167999075e2a6798310771164f1bda78d2fdbabc1a8c8c5f56231855fe5dbe"
+    },
+    "usage": {
+      "path": ".patchloop/experiments/heldout-ac/rows/67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd/01-run_heldout_ca223089cb0c462e-usage.json",
+      "file_bytes": 1270,
+      "file_sha256": "sha256:3c46007c2217f8eac64a7ad4967fb7d47c774b40b6fa0bb560a670d767ad0dbb",
+      "content_hash": "sha256:684e561fbd3e52228e7bf4338c6cb0d2bd636d916113da0b6a2aa97858c62d69"
+    },
+    "cost_observation": {
+      "path": ".patchloop/experiments/heldout-ac/rows/67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd/01-run_heldout_ca223089cb0c462e-cost-observation.json",
+      "file_bytes": 1143,
+      "file_sha256": "sha256:5462eade1d781fea8b661d1b7a34fd01a04de0dfe93f90670c0f3cd796a405fe",
+      "content_hash": "sha256:b16ea41eb65bd718690dda1bbc2b542a2ae023a73eb467141baed1e024310642"
+    }
+  },
+  "historical_confound": {
+    "trigger": "qualification-or-completion-contract-mismatch",
+    "phase": "authentication",
+    "historical_reason_code": "DURABLE_EVIDENCE_AUTHENTICATION_FAILED",
+    "exception_type": "ContractError",
+    "run_started_event_written": true,
+    "durable_evidence_content_hash": "sha256:5fdde6cb0770b7414fe054627f113b98ca9ebe19ba38e67fd0bdf3511301b8b5",
+    "confound_content_hash": "sha256:aba6c2c0c837faca951abbf099822b7770de568d3a72ff57be8b26cb213487be",
+    "secret_or_exception_message_persisted": false,
+    "historical_reason_preserved_without_relabeling": true
+  },
+  "post_runtime_attribution": {
+    "diagnosis_code": "TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH",
+    "direct_cause": "trace-qualification-v2-budget-compared-to-immutable-suite-runtime-instead-of-candidate-runtime-authority",
+    "trace_qualification_source_schema": "trace-qualification-v2",
+    "candidate_runtime_tuple_hash": "sha256:ff8ddf0a4735162820b3fd91966fb977fa996c9c04d9d4ee649d2353a01e95a8",
+    "candidate_budget": {
+      "max_model_calls": 240,
+      "max_tool_calls": 400,
+      "max_total_tokens": 1100000,
+      "wall_clock_timeout_seconds": 3600,
+      "token_budget_schema_version": "cumulative-split-v1",
+      "max_cumulative_input_tokens": 1000000,
+      "max_cumulative_output_tokens": 100000
+    },
+    "immutable_suite_budget": {
+      "max_model_calls": 240,
+      "max_tool_calls": 400,
+      "max_total_tokens": 4500000,
+      "wall_clock_timeout_seconds": 3600,
+      "token_budget_schema_version": "cumulative-split-v1",
+      "max_cumulative_input_tokens": 4000000,
+      "max_cumulative_output_tokens": 500000
+    },
+    "historical_typed_diagnosis_code_observed": false,
+    "post_runtime_deterministic_attribution": true,
+    "changes_historical_reason_code": false,
+    "underlying_evaluator_outcome_preserved": "task_failure",
+    "campaign_confound_attributed_to_task_or_memory_effect": false,
+    "historical_row_reauthenticated": false,
+    "historical_row_reclassified": false
+  },
+  "historical_source_chain": {
+    "contract_source": {
+      "path": "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r8.json",
+      "file_bytes": 21501,
+      "file_sha256": "sha256:014085aea45b31c40d53a3c83483ca79585ec1ca105631a53b9c8e64ff465432",
+      "content_hash": "sha256:77de0d1519cfc7032bda023bf1f1cca86449533fe3a1be39887d5784fc2d013b"
+    },
+    "binding_adapter_source": {
+      "path": "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r9.json",
+      "file_bytes": 5683,
+      "file_sha256": "sha256:6b1597d3b0f4202aeadaa424b67e06ec6e37ff7abfd8fd62f4af23208f3aaf68",
+      "content_hash": "sha256:a26bb59cb5b16d6d3a94676b195b3fb36a21e974216088780c90c92aaac2bd2b"
+    },
+    "task_pricing_materialization": {
+      "path": "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r5.json",
+      "file_bytes": 53234,
+      "file_sha256": "sha256:34186e94134bffceaa05f893c24f9cdf5e1981e4e13c8b37de541ba49a5d6e17",
+      "content_hash": "sha256:a7d6347c13368c60b65933041cfc33748fdb780549fa0ad9d358fcfcf4843f60"
+    },
+    "execution_source": {
+      "path": "reports/heldout-ac/artifacts/heldout-ac-execution-source-qualification-r6.json",
+      "file_bytes": 17212,
+      "file_sha256": "sha256:380c4ed66f1df3b7e80db490144ac7c1674de59229e6d72084b0e145b2b92232",
+      "content_hash": "sha256:375727d1c32c93105afb1875da0fadedb9dcb05bdfa17b088aade293bee72c1a",
+      "qualification_id": "core-ac-fixed-bundle-heldout-execution-source-20260815-r6",
+      "evaluator_source_hash": "sha256:965aef5aa3da61dcfbb11b7cc4e1f5ccfd3f0d83c450986f028ed812a6e1653b"
+    },
+    "contract_source_hash": "sha256:218e5a2fc36aaff18474a66297f0c1a8f3fa66cb8526a893dec41829962557b8",
+    "persisted_adapter_source_hash": "sha256:9f101a615806692a8f7802e0331fc37b1d7955a97621ad61c30673c58ff70eab",
+    "binding_adapter_source_hash": "sha256:04eeab81a9a8130dbe5624068317ee3d68711465d18e3e8032ffbeb92e3fdcf6",
+    "materialization_source_hash": "sha256:c265e6f6e6484ea514d418fceacbd448c6db0972c7fdb4c21c770da8f56380cf",
+    "materialized_task_bindings_hash": "sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f",
+    "pricing_binding_hash": "sha256:83bb15d171564f32d0ca6df24f733a957032e144bbd0dfed49071e1b205a27e9"
+  },
+  "authority": {
+    "r14_campaign_is_immutable_and_consumed": true,
+    "evidence_index_is_append_only_attribution_only": true,
+    "historical_runtime_files_mutated": false,
+    "historical_row_reauthentication_authorized": false,
+    "retry_replacement_or_resume_performed": false,
+    "runtime_secret_materialization_authorized": false,
+    "candidate_creation_authorized": false,
+    "future_provider_evaluator_or_agent_execution_authorized": false,
+    "future_cost_reservation_or_spend_authorized": false,
+    "official_analysis_or_claim_authorized": false,
+    "execution_candidates_created": 0,
+    "approved_plans_created": 0,
+    "campaign_journals_created": 0,
+    "campaign_results_created": 0,
+    "credential_values_observed": 0,
+    "provider_calls_made": 0,
+    "evaluator_calls_made": 0,
+    "agent_runs_made": 0,
+    "docker_calls_made": 0,
+    "sdk_calls_made": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "next_gate": "bind-this-index-into-a-fresh-offline-source-qualified-successor",
+  "content_hash": "sha256:1b602c1900ddfbd6867c81818d48ee9ada72f0b2fb2503d5eb83db7faf0e5341"
+}

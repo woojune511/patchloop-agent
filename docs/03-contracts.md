@@ -1,127 +1,81 @@
 # Data and tool contracts
 
-상태: current contract map. Pydantic models, exact JSON artifacts and tests are authoritative. The cumulative
-D-001–D-121 prose is preserved at `docs/archive/snapshots/d121/03-contracts.full.md`.
+Status: current contract map. Pydantic models, exact JSON artifacts and tests are authoritative; cumulative D-001
+through D-121 prose is archived at `docs/archive/snapshots/d121/03-contracts.full.md`.
 
 ## 1. Cross-cutting rules
 
-- JSON/YAML input uses strict schemas and rejects unknown fields where the owning model is strict.
-- IDs derive from canonical content; mutable observations also carry file SHA-256 and byte size.
-- UTC timestamps and nondecreasing chronology are required where ordering is material.
-- Evidence writers use new-only/append-only attempt records; a new attempt may reuse unchanged source/configuration.
-- Public and private task material use separate files and loaders.
-- Runtime authority must be explicit; preparation and validation are not execution.
+- Strict JSON/YAML schemas reject unknown fields. IDs derive from canonical content; mutable observations also bind
+  byte size and file SHA-256.
+- Evidence is append-only, chronology is nondecreasing, and runtime authority is explicit. Preparation, validation
+  and replay never imply execution.
+- Public/private task material, generated state and agent-visible inputs remain separated. Held-out content cannot tune
+  task selection, prompt, memory or score policy.
 
-## 2. Task package
+## 2. Experiment inputs
 
-Each audited task separates public issue/check inputs from private acceptance, reference patch and audit
-evidence. `data/dataset-manifest.yaml` owns dataset role.
+`data/dataset-manifest.yaml` owns dataset role. The 48-row held-out preregistration, metadata-only suite and plan are
+outside `ExperimentSuite` and grant no runtime authority. The budget amendment changes equal A/C to 1M input, 100k
+output, 1.1M aggregate and `$57.60`/`$60`, based only on development evidence.
 
-Held-out task content may not be used to tune prompt, memory, score policy or selection.
+Current zero-authority source is Contract R10 → binding R10 → materialization R6 → execution R7 → preflight/
+dispatcher R15. R6 retains the 12 opaque task bindings and R1 prices without another GET. Exact tuples are in
+`docs/09-evidence.md`. R14 candidate `sha256:67475f57...307fd` is a consumed predecessor: 0 settled, 1
+observed-unsettled, 47 not-started. R3-R8 development and held-out R7/R11/R14 remain immutable.
 
-## 3. Experiment inputs
+Fixtures emit `official=false`, `analysis_ready=false`; only trusted runtime-issued, non-serialized provenance for 48
+independently authenticated and settled rows can unlock analysis. A fresh candidate and paid approval are separate.
 
-`ExperimentSuite` binds purpose, ordered rows, runtime tuple, budget, pricing, dataset and execution hash.
-Current A/C sources are:
+## 3. Run, candidate and state contracts
 
-- `heldout-ac-preregistration-20260814-v1.yaml`: standalone, execution-closed 48-row task-cluster design;
-- `heldout-ac-suite-20260814-v1.yaml` and its plan: strict metadata-only 48-row contracts outside `ExperimentSuite`;
-- `heldout-ac-budget-amendment-20260815-v1.yaml`: development-evidence-only equal-A/C override to
-  1M input/100k output/1.1M aggregate and `$57.60`/`$60`; it grants no candidate or execution authority;
-- held-out contract R8, binding R9, materialization R5, execution R6 and preflight/dispatcher R14 are the current
-  zero-authority chain. R5 reuses R4's 12 opaque task bindings without reopening task packages and retains R1 prices
-  without another GET. R14 binds atomic cost/replay contracts and the amended paid boundary;
-- `ac-structured-pilot-v11.plan.yaml`: R10-qualified contract-hardened split-budget design used by sealed R8;
-- `dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml`: consumed Moto/Babel A/C suite whose four rows all
-  resolved, evaluator-v2 receipt-qualified and cost-settled; R7/R9 remains superseded unexecuted;
-- R6/R8 and R5/R7: immutable post-evaluator qualification failures; R4/R6-qualification: immutable
-  provider-before-dispatch `$0` terminal;
-  R3/R5-source-qualification: immutable partial live predecessor.
+Every run binds task/source/image, prompt/tool/policy, model/service/transport, memory, limits, fault/schedule identity
+and pricing. A and C differ only in memory: A binds none; C binds D-110 `fixed-d110-bundle-v1`.
 
-R1/R2 plans, suites and runtime seals remain immutable predecessors.
-
-An accepted plan/suite grants no provider, evaluator, Docker, runtime-memory or cost authority.
-
-Held-out fixtures never impersonate runtime schemas and emit `official=false`, `analysis_ready=false`. Templates omit
-credential-derived markers and serialize role-prefixed opaque registered-check identities, never raw private control
-text. Only the trusted runtime adapter may unlock analysis after 48 exact independently authenticated and settled rows;
-dumped, reparsed or copied DTOs cannot carry that provenance. A fresh no-call candidate and paid approval remain
-separate gates.
-
-## 4. Run manifest
-
-Every run binds task/source/image, prompt/tool/policy, model/service/transport, memory, limits, fault/schedule
-identity and pricing/accounting.
-
-A and C manifests differ only in the memory condition and evidence derived from it. A must bind no index; C
-must bind the D-110 index and `fixed-d110-bundle-v1`. The manifest/preflight matcher rejects a legacy
-`latest_frozen_index` serialization, suite tamper, wrong profile, source drift or schedule drift. Both
-conditions retain the identical runtime tuple and resource ceilings.
-
-Exact R3/R8 development and held-out R7/R11 runtime tuples are immutable in `docs/09-evidence.md`.
-
-## 5. Event and checkpoint contracts
+Current `heldout-ac-execution-candidate-v3` uses `realized_schedule_hash` to commit every ordered row's wave,
+task/version/path, role, condition, repetition, public/private spec hashes, base commit, image and evaluator template.
+Its runtime tuple and per-row/full-schedule cost controls are candidate-bound and are recomputed before a plan or
+one-use ledger is written. V1/v2 semantics remain parseable only for exact historical replay.
 
 Events bind run/sequence/time/actor/type/payload/artifacts; checkpoints bind phase, workspace/diff and completed
-actions. Current held-out writes use canonical run-root-contained paths and atomically append terminal plus cost
-evidence. Started usage is persisted before qualification, so a later adapter failure cannot erase observed cost.
-Credential/context-entry errors seal as typed confounds. Observations are immutable; corrections explicitly reference
-them.
+actions. Started usage is durable before qualification. Terminal plus cost evidence is atomic, canonical paths stay
+inside the run root, typed confounds fail closed, and corrections reference rather than rewrite observations.
 
-## 6. Tool contract
-
-The generic comparison surface is tool schema v2:
+## 4. Agent tool contract
 
 | Tool | Boundary |
 | --- | --- |
-| `search_files` | Literal, bounded search in allowed public files |
+| `search_files` | Literal bounded search in allowed public files |
 | `read_file` | Bounded public-file reads |
-| `apply_patch` | Existing tracked text files only; idempotent action identity |
+| `apply_patch` | Existing tracked text only; idempotent action identity |
 | `run_check` | Task-registered visible checks only |
 | `get_diff` | Current allowed diff and provenance |
-| `finish_task` | Structured submission after current-diff verification |
+| `finish_task` | Structured submission after diff verification |
 
-No unrestricted shell, arbitrary command, new-file creation, rename or binary patch is exposed to the agent.
+The agent receives no unrestricted shell, arbitrary command, new-file creation, rename or binary patch.
 
-## 7. Failure memory
+## 5. Memory and evaluator contracts
 
-A memory entry binds generalized pattern, applicability, remediation, limits, validation and provenance. Only approved
-D-105 `model_facing_text` enters fixed C; run IDs, traces, vectors and reviewer fields do not. D-110 is immutable
-storage, not runtime authority; retrieval remains false.
+Memory entries bind generalized pattern, applicability, remediation, limits, validation and provenance. Only approved
+D-105 `model_facing_text` enters fixed C in frozen D-110 order. A stays null. Retrieval/ranking, run IDs, traces,
+vectors and reviewer fields are excluded.
 
-## 8. Fixed-bundle C delivery contract
+Primary success is `hidden_pass and regression_pass and scope_pass and safety_pass`. Evaluator-v1 safety is literal
+PASS. V2 binds four typed controls with `ERROR > FAIL > NOT_RUN > PASS`, receipts and qualification; raw results stay
+unofficial. Evaluator-private redactions are diagnostics, while only agent-visible event/patch hits inform leakage.
 
-`fixed-d110-bundle-v1` makes A null/zero and renders C's exact ordered 3,528-byte D-105/D-110 bundle on every request.
-Request/CAS/context evidence binds delivery; missing/replaced/tampered inputs or retrieval events fail closed. This is
-delivery, not retrieval, and grants no selective authority or provider/evaluator activity during construction.
+## 6. Cost, completion and replay
 
-## 9. Outcome and reporting
+Cost is reserved before provider dispatch and observed from durable integer nano-USD usage before qualification. A
+current next row requires a persisted-v5 wrapper and authenticated-row-v2, then revalidates candidate runtime/cost
+hashes, usage/result semantics and token/model/tool/wall/per-run limits. Reports separate settled,
+observed-unsettled and total observed-started cost.
 
-Primary task success is:
+Completion requires each exact row once, runtime-authenticated provenance, settlement and evaluator/verdict
+consistency. Missing, duplicate, retried, replaced or confounded rows are inconclusive; persisted bytes cannot mint
+analysis authority. Known R7/R11/R14 history is accepted only when execution hash, final-file SHA, result content hash
+and journal SHA equal its allowlisted tuple.
 
-```python
-hidden_pass and regression_pass and scope_pass and safety_pass
-```
-
-Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
-`ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial. Private
-checker-output redactions are evaluator diagnostics, while only agent-visible event/patch marker hits are leakage
-verdict inputs. Control-contract collision and untrusted marker escape use distinct stable codes.
-
-Fast preflight permits at most three no-call attempts with new attempt IDs; semantic changes require a new version.
-Incomplete matrices, including R3, are diagnostic only.
-
-## 10. Cost and completion gates
-
-Cost is reserved before provider dispatch, observed from durable usage in integer nano-USD before qualification, and
-reloaded before the next paid row. Reports separate settled, observed-unsettled and total observed-started cost.
-Completion requires every exact row once, runtime-authenticated provenance, settlement and evaluator/verdict
-consistency; missing, duplicate, retried, replaced or confounded rows are inconclusive. Persisted replay validates
-bytes but cannot mint official analysis authority. Exact historical caps and limits are in `docs/09-evidence.md`.
-
-## 11. Evidence gates
-
-Preparation, execution receipt, journal and completion remain distinct. Full path/price/result/qualification/receipt
-bytes are replayed, and the semantic paid-campaign identity excludes transient readiness observations so a timestamp
-cannot reopen a consumed plan. R11 is immutable inconclusive; current R14 created no candidate or authority. Future
-execution needs a clean committed source, fresh no-call candidate and separate exact approval.
+R14's historical `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` remains unchanged. The deterministic
+`TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` diagnosis records candidate 1M/100k/1.1M versus immutable
+suite 4M/500k/4.5M without reauthentication or reclassification. R10/R10/R6/R7/R15 creates no candidate or authority;
+future paid execution needs committed source, a fresh read-only no-call candidate and separate exact approval.

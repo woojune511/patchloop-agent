@@ -47,15 +47,19 @@ from patchloop.verifier.receipt import (
     EvaluatorV2ReceiptValidation,
     validate_persisted_evaluator_v2_evaluation_receipt,
 )
+from patchloop.verifier.runtime_evidence import evaluator_v2_runtime_tuple_hash
 
 USAGE_SCHEMA_VERSION = "heldout-ac-durable-usage-evidence-v1"
-ROW_SCHEMA_VERSION = "heldout-ac-authenticated-persisted-row-v1"
+LEGACY_ROW_SCHEMA_VERSION = "heldout-ac-authenticated-persisted-row-v1"
+ROW_SCHEMA_VERSION = "heldout-ac-authenticated-persisted-row-v2"
 QUALIFICATION_PROJECTION_SCHEMA_VERSION = (
     "heldout-ac-authenticated-trace-qualification-projection-v2"
 )
-PERSISTED_EVIDENCE_SCHEMA_VERSION = "heldout-ac-authenticated-persisted-evidence-v4"
+LEGACY_PERSISTED_EVIDENCE_SCHEMA_VERSION = "heldout-ac-authenticated-persisted-evidence-v4"
+PERSISTED_EVIDENCE_SCHEMA_VERSION = "heldout-ac-authenticated-persisted-evidence-v5"
 AGENT_TERMINAL_EVENT_PROJECTION_SCHEMA_VERSION = "heldout-ac-agent-terminal-event-projection-v1"
-EVALUATOR_CONFOUND_SCHEMA_VERSION = "heldout-ac-authenticated-evaluator-confound-v1"
+LEGACY_EVALUATOR_CONFOUND_SCHEMA_VERSION = "heldout-ac-authenticated-evaluator-confound-v1"
+EVALUATOR_CONFOUND_SCHEMA_VERSION = "heldout-ac-authenticated-evaluator-confound-v2"
 HELDOUT_AC_PRICE_NANOS_PER_TOKEN: Mapping[str, int] = MappingProxyType(
     {
         "uncached_input": 750,
@@ -268,7 +272,7 @@ class HeldoutACAuthenticatedQualificationProjection(HeldoutACFrozenModel):
 
 
 class HeldoutACAuthenticatedPersistedRow(HeldoutACFrozenModel):
-    schema_version: Literal[ROW_SCHEMA_VERSION] = ROW_SCHEMA_VERSION
+    schema_version: Literal[LEGACY_ROW_SCHEMA_VERSION, ROW_SCHEMA_VERSION] = ROW_SCHEMA_VERSION
     persisted_evidence_authenticated: Literal[True] = True
     order: int = Field(ge=1, le=48)
     wave: int = Field(ge=1, le=4)
@@ -279,6 +283,16 @@ class HeldoutACAuthenticatedPersistedRow(HeldoutACFrozenModel):
     run_id: str = Field(pattern=r"^run_[A-Za-z0-9_-]+$")
     schedule_row_id: str = Field(pattern=_SHA256_PATTERN)
     execution_hash: str = Field(pattern=_SHA256_PATTERN)
+    runtime_tuple_hash: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+        exclude_if=lambda value: value is None,
+    )
+    campaign_cost_control_hash: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+        exclude_if=lambda value: value is None,
+    )
     task_evaluator_binding_hash: str = Field(pattern=_SHA256_PATTERN)
     persisted_result_file_hash: str = Field(pattern=_SHA256_PATTERN)
     persisted_result_semantic_hash: str = Field(pattern=_SHA256_PATTERN)
@@ -295,8 +309,14 @@ class HeldoutACAuthenticatedPersistedRow(HeldoutACFrozenModel):
 
     @model_validator(mode="after")
     def validate_row(self) -> HeldoutACAuthenticatedPersistedRow:
-        if self.result.run_id != self.run_id:
-            raise ValueError("authenticated row result identity differs")
+        authority_fields = (self.runtime_tuple_hash, self.campaign_cost_control_hash)
+        current_schema = self.schema_version == ROW_SCHEMA_VERSION
+        if (
+            self.result.run_id != self.run_id
+            or current_schema != all(isinstance(value, str) for value in authority_fields)
+            or (not current_schema and any(value is not None for value in authority_fields))
+        ):
+            raise ValueError("authenticated row authority shape or result identity differs")
         expected_hash = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
         if self.content_hash != expected_hash:
             raise ValueError("authenticated persisted row content hash mismatch")
@@ -354,10 +374,23 @@ class HeldoutACAuthenticatedPersistedEvidence(HeldoutACFrozenModel):
     constructing this DTO therefore cannot authorize official completion.
     """
 
-    schema_version: Literal[PERSISTED_EVIDENCE_SCHEMA_VERSION] = PERSISTED_EVIDENCE_SCHEMA_VERSION
+    schema_version: Literal[
+        LEGACY_PERSISTED_EVIDENCE_SCHEMA_VERSION,
+        PERSISTED_EVIDENCE_SCHEMA_VERSION,
+    ] = PERSISTED_EVIDENCE_SCHEMA_VERSION
     persisted_evidence_authenticated: Literal[True] = True
     official: Literal[False] = False
     analysis_eligible: Literal[False] = False
+    runtime_tuple_hash: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+        exclude_if=lambda value: value is None,
+    )
+    campaign_cost_control_hash: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+        exclude_if=lambda value: value is None,
+    )
     row: HeldoutACAuthenticatedPersistedRow
     qualification: HeldoutACAuthenticatedQualificationProjection
     terminal_type: AgentTerminalType | None
@@ -367,11 +400,17 @@ class HeldoutACAuthenticatedPersistedEvidence(HeldoutACFrozenModel):
 
     @model_validator(mode="after")
     def validate_evidence(self) -> HeldoutACAuthenticatedPersistedEvidence:
+        current_schema = self.schema_version == PERSISTED_EVIDENCE_SCHEMA_VERSION
+        authority_fields = (self.runtime_tuple_hash, self.campaign_cost_control_hash)
         if (
             self.row.qualification_hash != self.qualification.source_qualification_hash
             or self.row.source_evidence_hash != self.qualification.source_evidence_hash
             or self.row.run_id != self.qualification.run_id
             or self.row.schedule_row_id != self.qualification.schedule_row_id
+            or current_schema != all(isinstance(value, str) for value in authority_fields)
+            or (not current_schema and any(value is not None for value in authority_fields))
+            or self.runtime_tuple_hash != self.row.runtime_tuple_hash
+            or self.campaign_cost_control_hash != self.row.campaign_cost_control_hash
         ):
             raise ValueError("authenticated persisted evidence projection differs")
         evaluator_completed = self.row.result.evaluation_status == "completed"
@@ -432,7 +471,10 @@ def has_heldout_ac_runtime_authentication_capability(
 class HeldoutACEvaluatorConfoundEvidence(HeldoutACFrozenModel):
     """Authenticated post-submission evaluator confound, never an analysis row."""
 
-    schema_version: Literal[EVALUATOR_CONFOUND_SCHEMA_VERSION] = EVALUATOR_CONFOUND_SCHEMA_VERSION
+    schema_version: Literal[
+        LEGACY_EVALUATOR_CONFOUND_SCHEMA_VERSION,
+        EVALUATOR_CONFOUND_SCHEMA_VERSION,
+    ] = EVALUATOR_CONFOUND_SCHEMA_VERSION
     persisted_evidence_authenticated: Literal[True] = True
     analysis_eligible: Literal[False] = False
     order: int = Field(ge=1, le=48)
@@ -444,6 +486,16 @@ class HeldoutACEvaluatorConfoundEvidence(HeldoutACFrozenModel):
     run_id: str = Field(pattern=r"^run_[A-Za-z0-9_-]+$")
     schedule_row_id: str = Field(pattern=_SHA256_PATTERN)
     execution_hash: str = Field(pattern=_SHA256_PATTERN)
+    runtime_tuple_hash: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+        exclude_if=lambda value: value is None,
+    )
+    campaign_cost_control_hash: str | None = Field(
+        default=None,
+        pattern=_SHA256_PATTERN,
+        exclude_if=lambda value: value is None,
+    )
     task_evaluator_binding_hash: str = Field(pattern=_SHA256_PATTERN)
     persisted_result_file_hash: str = Field(pattern=_SHA256_PATTERN)
     persisted_result_semantic_hash: str = Field(pattern=_SHA256_PATTERN)
@@ -461,8 +513,12 @@ class HeldoutACEvaluatorConfoundEvidence(HeldoutACFrozenModel):
 
     @model_validator(mode="after")
     def validate_confound(self) -> HeldoutACEvaluatorConfoundEvidence:
+        authority_fields = (self.runtime_tuple_hash, self.campaign_cost_control_hash)
+        current_schema = self.schema_version == EVALUATOR_CONFOUND_SCHEMA_VERSION
         if not (
-            self.result.run_id == self.run_id == self.qualification.run_id
+            current_schema == all(isinstance(value, str) for value in authority_fields)
+            and (current_schema or all(value is None for value in authority_fields))
+            and self.result.run_id == self.run_id == self.qualification.run_id
             and self.result.schema_version == "run-result-v2"
             and self.result.agent_submission_status == "completed"
             and self.result.evaluation_status == "not_run"
@@ -512,6 +568,50 @@ def _usage_from_result(result: RunResult) -> dict[str, Any]:
             "wall_clock_ms",
         )
     }
+
+
+def _usage_within_authenticated_budget(
+    *,
+    usage: HeldoutACDurableUsage,
+    budget: Budget,
+    token_derived_cost_nanos: int,
+    expected_per_run_reserve_nanos: int,
+) -> bool:
+    """Fail closed against the exact budget already bound by the runtime tuple."""
+
+    input_limit = budget.max_cumulative_input_tokens
+    output_limit = budget.max_cumulative_output_tokens
+    return (
+        type(expected_per_run_reserve_nanos) is int
+        and expected_per_run_reserve_nanos > 0
+        and input_limit is not None
+        and output_limit is not None
+        and usage.input_tokens <= input_limit
+        and usage.output_tokens <= output_limit
+        and usage.input_tokens + usage.output_tokens <= budget.max_total_tokens
+        and (budget.max_model_calls is None or usage.model_calls <= budget.max_model_calls)
+        and (budget.max_tool_calls is None or usage.tool_calls <= budget.max_tool_calls)
+        and usage.wall_clock_ms <= budget.wall_clock_timeout_seconds * 1_000
+        and token_derived_cost_nanos <= expected_per_run_reserve_nanos
+    )
+
+
+def validate_heldout_ac_usage_against_authenticated_budget(
+    *,
+    usage: HeldoutACDurableUsage,
+    budget: Budget,
+    token_derived_cost_nanos: int,
+    expected_per_run_reserve_nanos: int,
+) -> None:
+    """Enforce the exact candidate-bound runtime and per-run cost ceilings."""
+
+    if not _usage_within_authenticated_budget(
+        usage=usage,
+        budget=budget,
+        token_derived_cost_nanos=token_derived_cost_nanos,
+        expected_per_run_reserve_nanos=expected_per_run_reserve_nanos,
+    ):
+        raise ContractError("held-out usage exceeds authenticated runtime or cost authority")
 
 
 def validate_heldout_ac_persisted_usage_cross_binding(
@@ -628,11 +728,112 @@ def _heldout_check_ids(*, evaluator_completed: bool) -> tuple[str, ...]:
     )
 
 
+def validate_heldout_ac_qualification_runtime_cost_authority(
+    *,
+    qualification: Mapping[str, Any],
+    suite: HeldoutACSuite,
+    expected_runtime_tuple_hash: str,
+    expected_campaign_cost_control_hash: str,
+) -> Budget:
+    """Recompute candidate-bound runtime/cost authority from qualification data.
+
+    This deliberately validates only the authority-bearing portion.  A failed
+    qualification can still be preserved as durable confound evidence, while
+    authenticated rows continue through the stricter PASS/status validation in
+    ``_project_authenticated_qualification``.
+    """
+
+    if set(qualification) != _QUALIFICATION_KEYS:
+        raise ContractError("held-out trace qualification fields are incomplete or unknown")
+    _qualification_hash(qualification)
+    try:
+        budget = Budget.model_validate(qualification.get("budget"))
+    except ValidationError as exc:
+        raise ContractError("held-out trace qualification budget is invalid") from exc
+    if (
+        not isinstance(expected_runtime_tuple_hash, str)
+        or re.fullmatch(_SHA256_PATTERN, expected_runtime_tuple_hash) is None
+        or not isinstance(expected_campaign_cost_control_hash, str)
+        or re.fullmatch(_SHA256_PATTERN, expected_campaign_cost_control_hash) is None
+    ):
+        raise ContractError("held-out runtime authority hash is invalid")
+
+    runtime = suite.runtime
+    runtime_tuple_hash = evaluator_v2_runtime_tuple_hash(
+        provider=qualification.get("model_provider"),
+        model_id=qualification.get("model_id"),
+        reasoning_effort=qualification.get("reasoning_effort"),
+        reasoning_mode=qualification.get("reasoning_mode"),
+        service_tier=qualification.get("service_tier"),
+        transport_max_retries=qualification.get("transport_max_retries"),
+        max_output_tokens=qualification.get("max_output_tokens"),
+        max_total_tokens=budget.max_total_tokens,
+        wall_clock_timeout_seconds=budget.wall_clock_timeout_seconds,
+        tool_schema_version=qualification.get("tool_schema_version"),
+        context_policy_version=qualification.get("context_policy_version"),
+        memory_policy_version=runtime.memory_policy_version,
+        sandbox_backend=runtime.sandbox_backend,
+        token_budget_schema_version=budget.token_budget_schema_version,
+        max_model_calls=budget.max_model_calls,
+        max_tool_calls=budget.max_tool_calls,
+        max_cumulative_input_tokens=budget.max_cumulative_input_tokens,
+        max_cumulative_output_tokens=budget.max_cumulative_output_tokens,
+    )
+    checks = qualification.get("checks")
+    cost_control_checks = (
+        [
+            check
+            for check in checks
+            if isinstance(check, dict)
+            and check.get("check_id") == "heldout_ac_full_schedule_cost_contract"
+        ]
+        if isinstance(checks, list)
+        else []
+    )
+    cost_control_details = (
+        cost_control_checks[0].get("details") if len(cost_control_checks) == 1 else None
+    )
+    runtime_identity = (
+        qualification.get("model_provider") == runtime.model
+        and qualification.get("model_id") == runtime.model_id
+        and qualification.get("reasoning_effort") == runtime.reasoning_effort
+        and qualification.get("reasoning_mode") == runtime.reasoning_mode
+        and qualification.get("service_tier") == runtime.service_tier
+        and type(qualification.get("transport_max_retries")) is int
+        and qualification.get("transport_max_retries") == runtime.transport_max_retries
+        and type(qualification.get("max_output_tokens")) is int
+        and qualification.get("max_output_tokens") == runtime.max_output_tokens
+        and qualification.get("tool_schema_version") == runtime.tool_schema_version
+        and qualification.get("context_policy_version") == runtime.context_policy_version
+    )
+    cost_control_identity = (
+        len(cost_control_checks) == 1
+        and type(cost_control_checks[0].get("passed")) is bool
+        and isinstance(cost_control_details, dict)
+        and cost_control_details.get("campaign_cost_control_hash")
+        == expected_campaign_cost_control_hash
+        and cost_control_details.get("manifest_cost_control_hash")
+        == expected_campaign_cost_control_hash
+        and type(cost_control_details.get("schedule_row_count")) is int
+        and cost_control_details.get("schedule_row_count") == 48
+        and cost_control_details.get("live_resume_supported") is False
+    )
+    if not (
+        runtime_identity
+        and runtime_tuple_hash == expected_runtime_tuple_hash
+        and cost_control_identity
+    ):
+        raise ContractError("held-out qualification runtime or cost authority differs")
+    return budget
+
+
 def _project_authenticated_qualification(
     *,
     qualification: Mapping[str, Any],
     suite: HeldoutACSuite,
     execution_hash: str,
+    expected_runtime_tuple_hash: str,
+    expected_campaign_cost_control_hash: str,
     order: int,
     result: RunResult,
     task_evaluator_binding: HeldoutACTaskEvaluatorBinding,
@@ -696,20 +897,15 @@ def _project_authenticated_qualification(
     ):
         raise ContractError("held-out trace qualification failure record binding is invalid")
     try:
-        budget = Budget.model_validate(qualification.get("budget"))
-    except ValidationError as exc:
-        raise ContractError("held-out trace qualification budget is invalid") from exc
-
+        validate_heldout_ac_qualification_runtime_cost_authority(
+            qualification=qualification,
+            suite=suite,
+            expected_runtime_tuple_hash=expected_runtime_tuple_hash,
+            expected_campaign_cost_control_hash=expected_campaign_cost_control_hash,
+        )
+    except ContractError as exc:
+        raise ContractError("held-out trace qualification runtime identity differs") from exc
     runtime = suite.runtime
-    expected_budget = {
-        "max_model_calls": runtime.max_model_calls,
-        "max_tool_calls": runtime.max_tool_calls,
-        "max_total_tokens": runtime.max_total_tokens,
-        "wall_clock_timeout_seconds": runtime.wall_clock_timeout_seconds,
-        "token_budget_schema_version": runtime.token_budget_schema_version,
-        "max_cumulative_input_tokens": runtime.max_cumulative_input_tokens,
-        "max_cumulative_output_tokens": runtime.max_cumulative_output_tokens,
-    }
     exact_flags = all(
         type(qualification.get(field_name)) is bool
         for field_name in (
@@ -755,7 +951,6 @@ def _project_authenticated_qualification(
         and qualification.get("fault_type") == "none"
         and isinstance(qualification.get("harness_git_commit"), str)
         and re.fullmatch(r"[0-9a-f]{40}", qualification["harness_git_commit"]) is not None
-        and budget.model_dump(mode="json") == expected_budget
         and result.evaluator_contract is not None
         and result.evaluator_contract == task_evaluator_binding.evaluator_contract
     )
@@ -834,6 +1029,9 @@ def project_authenticated_heldout_ac_persisted_row(
     *,
     suite: HeldoutACSuite,
     execution_hash: str,
+    expected_runtime_tuple_hash: str,
+    expected_campaign_cost_control_hash: str,
+    expected_per_run_reserve_nanos: int,
     expected_pricing_binding_hash: str,
     order: int,
     task_evaluator_binding: HeldoutACTaskEvaluatorBinding,
@@ -870,11 +1068,15 @@ def project_authenticated_heldout_ac_persisted_row(
         raise ContractError("held-out usage evidence bytes are not canonical")
     if canonical_json(qualification) != canonical_json(dict(recomputed_qualification)):
         raise ContractError("held-out trace qualification differs from read-only recomputation")
+    if type(expected_per_run_reserve_nanos) is not int or expected_per_run_reserve_nanos <= 0:
+        raise ContractError("held-out per-run reserve authority is invalid")
     qualification_hash = _qualification_hash(qualification)
     qualification_projection = _project_authenticated_qualification(
         qualification=qualification,
         suite=suite,
         execution_hash=execution_hash,
+        expected_runtime_tuple_hash=expected_runtime_tuple_hash,
+        expected_campaign_cost_control_hash=expected_campaign_cost_control_hash,
         order=order,
         result=result,
         task_evaluator_binding=task_evaluator_binding,
@@ -884,6 +1086,7 @@ def project_authenticated_heldout_ac_persisted_row(
     binding = result.evaluator_contract
     expected_task = task_evaluator_binding.task
     expected_usage = HeldoutACDurableUsage(**_usage_from_result(result))
+    qualification_budget = Budget.model_validate(qualification["budget"])
     validate_heldout_ac_persisted_usage_cross_binding(
         result=result,
         usage_evidence=usage_evidence,
@@ -914,6 +1117,15 @@ def project_authenticated_heldout_ac_persisted_row(
         and qualification_projection.run_id == result.run_id
         and qualification_projection.source_qualification_hash == qualification_hash
     )
+    try:
+        validate_heldout_ac_usage_against_authenticated_budget(
+            usage=expected_usage,
+            budget=qualification_budget,
+            token_derived_cost_nanos=usage_evidence.token_derived_cost_nanos,
+            expected_per_run_reserve_nanos=expected_per_run_reserve_nanos,
+        )
+    except ContractError:
+        common_valid = False
     receipt_hash: str | None = None
     receipt_file_hash: str | None = None
     if result.evaluation_status == "completed":
@@ -937,6 +1149,7 @@ def project_authenticated_heldout_ac_persisted_row(
             and experiment.experiment_id == suite.suite_id
             and experiment.suite_hash == suite.content_hash
             and experiment.execution_hash == execution_hash
+            and experiment.campaign_cost_control_hash == expected_campaign_cost_control_hash
             and experiment.schedule_order == order
             and experiment.schedule_row_id == expected_row_id
         )
@@ -964,6 +1177,8 @@ def project_authenticated_heldout_ac_persisted_row(
         "run_id": result.run_id,
         "schedule_row_id": expected_row_id,
         "execution_hash": execution_hash,
+        "runtime_tuple_hash": expected_runtime_tuple_hash,
+        "campaign_cost_control_hash": expected_campaign_cost_control_hash,
         "task_evaluator_binding_hash": task_evaluator_binding.content_hash,
         "persisted_result_file_hash": sha256_bytes(persisted_result_bytes),
         "persisted_result_semantic_hash": sha256_json(result.model_dump(mode="json")),
@@ -984,6 +1199,9 @@ def project_authenticated_heldout_ac_persisted_evidence(
     *,
     suite: HeldoutACSuite,
     execution_hash: str,
+    expected_runtime_tuple_hash: str,
+    expected_campaign_cost_control_hash: str,
+    expected_per_run_reserve_nanos: int,
     expected_pricing_binding_hash: str,
     order: int,
     task_evaluator_binding: HeldoutACTaskEvaluatorBinding,
@@ -1039,6 +1257,9 @@ def project_authenticated_heldout_ac_persisted_evidence(
         row = project_authenticated_heldout_ac_persisted_row(
             suite=suite,
             execution_hash=execution_hash,
+            expected_runtime_tuple_hash=expected_runtime_tuple_hash,
+            expected_campaign_cost_control_hash=expected_campaign_cost_control_hash,
+            expected_per_run_reserve_nanos=expected_per_run_reserve_nanos,
             expected_pricing_binding_hash=expected_pricing_binding_hash,
             order=order,
             task_evaluator_binding=task_evaluator_binding,
@@ -1053,6 +1274,8 @@ def project_authenticated_heldout_ac_persisted_evidence(
             qualification=qualification,
             suite=suite,
             execution_hash=execution_hash,
+            expected_runtime_tuple_hash=expected_runtime_tuple_hash,
+            expected_campaign_cost_control_hash=expected_campaign_cost_control_hash,
             order=order,
             result=result,
             task_evaluator_binding=task_evaluator_binding,
@@ -1063,6 +1286,8 @@ def project_authenticated_heldout_ac_persisted_evidence(
             "persisted_evidence_authenticated": True,
             "official": False,
             "analysis_eligible": False,
+            "runtime_tuple_hash": expected_runtime_tuple_hash,
+            "campaign_cost_control_hash": expected_campaign_cost_control_hash,
             "row": row.model_dump(mode="json"),
             "qualification": projection.model_dump(mode="json"),
             "terminal_type": agent_terminal_type,
@@ -1098,6 +1323,8 @@ def project_authenticated_heldout_ac_persisted_evidence(
         qualification=qualification,
         suite=suite,
         execution_hash=execution_hash,
+        expected_runtime_tuple_hash=expected_runtime_tuple_hash,
+        expected_campaign_cost_control_hash=expected_campaign_cost_control_hash,
         order=order,
         result=result,
         task_evaluator_binding=task_evaluator_binding,
@@ -1153,6 +1380,16 @@ def project_authenticated_heldout_ac_persisted_evidence(
         and Decimal(str(result.usage.model_cost_usd))
         == Decimal(usage_evidence.token_derived_cost_nanos) / Decimal(1_000_000_000)
     )
+    qualification_budget = Budget.model_validate(qualification["budget"])
+    try:
+        validate_heldout_ac_usage_against_authenticated_budget(
+            usage=expected_usage,
+            budget=qualification_budget,
+            token_derived_cost_nanos=usage_evidence.token_derived_cost_nanos,
+            expected_per_run_reserve_nanos=expected_per_run_reserve_nanos,
+        )
+    except ContractError:
+        common_valid = False
     if not common_valid:
         raise ContractError("held-out evaluator confound cross-binding differs")
     body = {
@@ -1168,6 +1405,8 @@ def project_authenticated_heldout_ac_persisted_evidence(
         "run_id": result.run_id,
         "schedule_row_id": expected_row_id,
         "execution_hash": execution_hash,
+        "runtime_tuple_hash": expected_runtime_tuple_hash,
+        "campaign_cost_control_hash": expected_campaign_cost_control_hash,
         "task_evaluator_binding_hash": task_evaluator_binding.content_hash,
         "persisted_result_file_hash": sha256_bytes(persisted_result_bytes),
         "persisted_result_semantic_hash": sha256_json(result.model_dump(mode="json")),
@@ -1199,6 +1438,8 @@ def authenticate_heldout_ac_persisted_row(
     *,
     suite: HeldoutACSuite,
     execution_hash: str,
+    expected_campaign_cost_control_hash: str,
+    expected_per_run_reserve_nanos: int,
     expected_pricing_binding_hash: str,
     order: int,
     task_evaluator_binding: HeldoutACTaskEvaluatorBinding,
@@ -1264,6 +1505,9 @@ def authenticate_heldout_ac_persisted_row(
     return project_authenticated_heldout_ac_persisted_row(
         suite=suite,
         execution_hash=execution_hash,
+        expected_runtime_tuple_hash=evaluator_authority.runtime_tuple_hash,
+        expected_campaign_cost_control_hash=expected_campaign_cost_control_hash,
+        expected_per_run_reserve_nanos=expected_per_run_reserve_nanos,
         expected_pricing_binding_hash=expected_pricing_binding_hash,
         order=order,
         task_evaluator_binding=task_evaluator_binding,
@@ -1280,6 +1524,8 @@ def _load_and_project_heldout_ac_persisted_evidence(
     *,
     suite: HeldoutACSuite,
     execution_hash: str,
+    expected_campaign_cost_control_hash: str,
+    expected_per_run_reserve_nanos: int,
     expected_pricing_binding_hash: str,
     order: int,
     task_evaluator_binding: HeldoutACTaskEvaluatorBinding,
@@ -1371,6 +1617,9 @@ def _load_and_project_heldout_ac_persisted_evidence(
     return project_authenticated_heldout_ac_persisted_evidence(
         suite=suite,
         execution_hash=execution_hash,
+        expected_runtime_tuple_hash=evaluator_authority.runtime_tuple_hash,
+        expected_campaign_cost_control_hash=expected_campaign_cost_control_hash,
+        expected_per_run_reserve_nanos=expected_per_run_reserve_nanos,
         expected_pricing_binding_hash=expected_pricing_binding_hash,
         order=order,
         task_evaluator_binding=task_evaluator_binding,
@@ -1390,6 +1639,8 @@ def authenticate_heldout_ac_persisted_evidence(
     *,
     suite: HeldoutACSuite,
     execution_hash: str,
+    expected_campaign_cost_control_hash: str,
+    expected_per_run_reserve_nanos: int,
     expected_pricing_binding_hash: str,
     order: int,
     task_evaluator_binding: HeldoutACTaskEvaluatorBinding,
@@ -1409,6 +1660,8 @@ def authenticate_heldout_ac_persisted_evidence(
     projected = _load_and_project_heldout_ac_persisted_evidence(
         suite=suite,
         execution_hash=execution_hash,
+        expected_campaign_cost_control_hash=expected_campaign_cost_control_hash,
+        expected_per_run_reserve_nanos=expected_per_run_reserve_nanos,
         expected_pricing_binding_hash=expected_pricing_binding_hash,
         order=order,
         task_evaluator_binding=task_evaluator_binding,
@@ -1427,6 +1680,9 @@ __all__ = [
     "AGENT_TERMINAL_EVENT_PROJECTION_SCHEMA_VERSION",
     "EVALUATOR_CONFOUND_SCHEMA_VERSION",
     "HELDOUT_AC_PRICE_NANOS_PER_TOKEN",
+    "LEGACY_EVALUATOR_CONFOUND_SCHEMA_VERSION",
+    "LEGACY_PERSISTED_EVIDENCE_SCHEMA_VERSION",
+    "LEGACY_ROW_SCHEMA_VERSION",
     "PERSISTED_EVIDENCE_SCHEMA_VERSION",
     "QUALIFICATION_PROJECTION_SCHEMA_VERSION",
     "ROW_SCHEMA_VERSION",
@@ -1445,4 +1701,6 @@ __all__ = [
     "project_authenticated_heldout_ac_persisted_evidence",
     "project_authenticated_heldout_ac_persisted_row",
     "validate_heldout_ac_persisted_usage_cross_binding",
+    "validate_heldout_ac_qualification_runtime_cost_authority",
+    "validate_heldout_ac_usage_against_authenticated_budget",
 ]
