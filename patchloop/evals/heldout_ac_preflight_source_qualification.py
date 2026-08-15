@@ -1,6 +1,6 @@
 """Successor source gate for the held-out preflight and paid dispatcher.
 
-R2 through R14 remain immutable.  R15 binds the append-only R14 campaign
+R2 through R15 remain immutable.  R16 binds the append-only R15 campaign
 inconclusive index and its historical-reason/post-runtime-attribution boundary
 into the current paid closure.  It grants no observation, candidate, approval,
 reauthentication, retry, execution, or spend authority.
@@ -27,25 +27,40 @@ from patchloop.evals.heldout_ac_r11_campaign_evidence import (
     OUTPUT_PATH as R11_CAMPAIGN_EVIDENCE_PATH,
 )
 from patchloop.evals.heldout_ac_r14_campaign_evidence import (
-    EVIDENCE_ID as R14_CAMPAIGN_EVIDENCE_ID,
-)
-from patchloop.evals.heldout_ac_r14_campaign_evidence import (
-    EXECUTION_HASH as R14_EXECUTION_HASH,
-)
-from patchloop.evals.heldout_ac_r14_campaign_evidence import (
     OUTPUT_PATH as R14_CAMPAIGN_EVIDENCE_PATH,
 )
-from patchloop.evals.heldout_ac_r14_campaign_evidence import (
-    STATUS as R14_CAMPAIGN_STATUS,
+from patchloop.evals.heldout_ac_r15_campaign_evidence import (
+    EVIDENCE_ID as R15_CAMPAIGN_EVIDENCE_ID,
+)
+from patchloop.evals.heldout_ac_r15_campaign_evidence import (
+    EXECUTION_HASH as R15_EXECUTION_HASH,
+)
+from patchloop.evals.heldout_ac_r15_campaign_evidence import (
+    OUTPUT_PATH as R15_CAMPAIGN_EVIDENCE_PATH,
+)
+from patchloop.evals.heldout_ac_r15_campaign_evidence import (
+    STATUS as R15_CAMPAIGN_STATUS,
 )
 from patchloop.runtime import repository_root
 from patchloop.util import sha256_bytes, sha256_json
 
-SCHEMA_VERSION = "heldout-ac-preflight-dispatch-source-qualification-v14"
-QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260815-r15"
+SCHEMA_VERSION = "heldout-ac-preflight-dispatch-source-qualification-v15"
+QUALIFICATION_ID = "core-ac-fixed-bundle-heldout-preflight-source-20260815-r16"
 STATUS = "OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"
 OUTPUT_PATH = Path(
-    "reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r15.json"
+    "reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r16.json"
+)
+R15_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r15.json")
+R15_FILE_BYTES = 24_713
+R15_FILE_SHA256 = "sha256:0ed3be6f51213867acc4f27560f87ae33103e5ee60deb237affe942a7ebd6cbc"
+R15_CONTENT_HASH = "sha256:f0e100d44f713cde134882025481b0038bfb0b4d880f4192e0558dc806e6809c"
+R15_EVALUATOR_SOURCE_HASH = (
+    "sha256:d04b90cc92c8888b1e21f6911b201511180230e62db055d5dd5bb4cb3fbac95c"
+)
+R15_CAMPAIGN_FILE_BYTES = 12_209
+R15_CAMPAIGN_FILE_SHA256 = "sha256:7aaca2be0797ea36f12e125dc85dd582bdc5f63ad5afd7449cc2d2cf77d46c54"
+R15_CAMPAIGN_CONTENT_HASH = (
+    "sha256:85b211c637eeff05805c8bef1ba3790a6beab8cef98a8680c48fa74f496a56eb"
 )
 R14_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r14.json")
 R14_FILE_BYTES = 21_984
@@ -84,6 +99,7 @@ SOURCE_EXTRAS = (
     Path("patchloop/evals/heldout_ac_preflight_source_qualification.py"),
     Path("patchloop/evals/heldout_ac_r11_campaign_evidence.py"),
     Path("patchloop/evals/heldout_ac_r14_campaign_evidence.py"),
+    Path("patchloop/evals/heldout_ac_r15_campaign_evidence.py"),
     Path("pyproject.toml"),
     Path("uv.lock"),
 )
@@ -92,6 +108,7 @@ VALIDATION_PATHS = (
     Path("scripts/build_heldout_ac_preflight_source_qualification.py"),
     Path("scripts/build_heldout_ac_r11_campaign_evidence.py"),
     Path("scripts/build_heldout_ac_r14_campaign_evidence.py"),
+    Path("scripts/build_heldout_ac_r15_campaign_evidence.py"),
     Path("scripts/run_heldout_ac_preflight.py"),
     Path("scripts/run_heldout_ac_campaign.py"),
     Path("tests/test_evaluator_v2_contracts.py"),
@@ -108,6 +125,7 @@ VALIDATION_PATHS = (
     Path("tests/test_heldout_ac_r7_runtime_evidence_index.py"),
     Path("tests/test_heldout_ac_r11_runtime_evidence_index.py"),
     Path("tests/test_heldout_ac_r14_runtime_evidence_index.py"),
+    Path("tests/test_heldout_ac_r15_runtime_evidence_index.py"),
     Path("tests/test_heldout_ac_source_qualification.py"),
     Path("tests/test_heldout_ac_task_evaluator.py"),
     Path("tests/test_heldout_ac_task_pricing_materialization.py"),
@@ -125,47 +143,44 @@ class FileBinding(HeldoutACFrozenModel):
     file_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
-class R14Binding(FileBinding):
-    path: Literal["reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r14.json"]
-    file_bytes: Literal[R14_FILE_BYTES]
-    file_sha256: Literal[R14_FILE_SHA256]
-    source_qualification_hash: Literal[R14_CONTENT_HASH]
-    evaluator_source_hash: Literal[R14_EVALUATOR_SOURCE_HASH]
-    original_schema_version: Literal["heldout-ac-preflight-dispatch-source-qualification-v13"]
-    original_qualification_id: Literal["core-ac-fixed-bundle-heldout-preflight-source-20260815-r14"]
+class R15Binding(FileBinding):
+    path: Literal["reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r15.json"]
+    file_bytes: Literal[R15_FILE_BYTES]
+    file_sha256: Literal[R15_FILE_SHA256]
+    source_qualification_hash: Literal[R15_CONTENT_HASH]
+    evaluator_source_hash: Literal[R15_EVALUATOR_SOURCE_HASH]
+    original_schema_version: Literal["heldout-ac-preflight-dispatch-source-qualification-v14"]
+    original_qualification_id: Literal["core-ac-fixed-bundle-heldout-preflight-source-20260815-r15"]
     original_status: Literal["OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"]
-    successor_reason: Literal[
-        "r14-campaign-inconclusive-runtime-budget-attribution-index-successor"
-    ]
+    successor_reason: Literal["r15-campaign-inconclusive-v2-terminal-result-binding-successor"]
 
 
-class R14CampaignEvidenceBinding(FileBinding):
-    path: Literal["reports/heldout-ac/artifacts/heldout-ac-r14-campaign-inconclusive-r1.json"]
-    file_bytes: Literal[R14_CAMPAIGN_FILE_BYTES]
-    file_sha256: Literal[R14_CAMPAIGN_FILE_SHA256]
-    schema_version: Literal["heldout-ac-campaign-evidence-index-v3"]
-    evidence_id: Literal[R14_CAMPAIGN_EVIDENCE_ID]
-    status: Literal[R14_CAMPAIGN_STATUS]
-    content_hash: Literal[R14_CAMPAIGN_CONTENT_HASH]
-    execution_hash: Literal[R14_EXECUTION_HASH]
+class R15CampaignEvidenceBinding(FileBinding):
+    path: Literal["reports/heldout-ac/artifacts/heldout-ac-r15-campaign-inconclusive-r1.json"]
+    file_bytes: Literal[R15_CAMPAIGN_FILE_BYTES]
+    file_sha256: Literal[R15_CAMPAIGN_FILE_SHA256]
+    schema_version: Literal["heldout-ac-campaign-evidence-index-v4"]
+    evidence_id: Literal[R15_CAMPAIGN_EVIDENCE_ID]
+    status: Literal[R15_CAMPAIGN_STATUS]
+    content_hash: Literal[R15_CAMPAIGN_CONTENT_HASH]
+    execution_hash: Literal[R15_EXECUTION_HASH]
     approval_consumed: Literal[True]
     disposition: Literal["inconclusive-matrix"]
-    terminal_settled_runs: Literal[0]
+    terminal_settled_runs: Literal[2]
     observed_unsettled_runs: Literal[1]
-    not_started_runs: Literal[47]
-    settled_model_cost_nanos: Literal[0]
-    observed_unsettled_model_cost_nanos: Literal[126_342_000]
-    observed_started_model_cost_nanos: Literal[126_342_000]
+    not_started_runs: Literal[45]
+    settled_model_cost_nanos: Literal[200_233_500]
+    observed_unsettled_model_cost_nanos: Literal[911_878_500]
+    observed_started_model_cost_nanos: Literal[1_112_112_000]
     historical_reason_code: Literal["DURABLE_EVIDENCE_AUTHENTICATION_FAILED"]
-    post_runtime_attribution_code: Literal["TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH"]
+    post_runtime_attribution_code: Literal["TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH"]
     historical_reason_preserved_without_relabeling: Literal[True]
     historical_typed_diagnosis_code_observed: Literal[False]
     post_runtime_deterministic_attribution: Literal[True]
     post_runtime_attribution_changes_historical_reason: Literal[False]
     historical_row_reclassified: Literal[False]
-    campaign_settlement_preserved_without_reauthentication: Literal[True]
     attribution_only: Literal[True]
-    r14_campaign_is_immutable_and_consumed: Literal[True]
+    r15_campaign_is_immutable_and_consumed: Literal[True]
     historical_runtime_files_mutated: Literal[False]
     historical_row_reauthentication_authorized: Literal[False]
     retry_replacement_or_resume_performed: Literal[False]
@@ -179,11 +194,11 @@ class PreflightProjection(HeldoutACFrozenModel):
         "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa"
     ]
     scheduled_rows: Literal[48]
-    r14_predecessor_bytes_preserved: Literal[True]
-    r14_campaign_inconclusive_index_bound: Literal[True]
-    r14_historical_reason_and_post_runtime_attribution_distinct: Literal[True]
-    r14_observed_unsettled_cost_bound: Literal[True]
-    r14_reauthentication_retry_or_runtime_authority_granted: Literal[False]
+    r15_predecessor_bytes_preserved: Literal[True]
+    r15_campaign_inconclusive_index_bound: Literal[True]
+    r15_historical_reason_and_post_runtime_attribution_distinct: Literal[True]
+    r15_observed_started_cost_bound: Literal[True]
+    r15_reauthentication_retry_or_runtime_authority_granted: Literal[False]
     git_commit_tree_and_execution_clean_observation_present: Literal[True]
     digest_pinned_docker_image_observation_present: Literal[True]
     sdk_version_observation_present: Literal[True]
@@ -206,7 +221,7 @@ class PreflightProjection(HeldoutACFrozenModel):
     candidate_runtime_tuple_recomputed_before_plan_write: Literal[True]
     current_prior_row_requires_persisted_v5_row_v2: Literal[True]
     prior_row_runtime_cost_usage_budget_revalidated: Literal[True]
-    known_r7_r11_r14_exact_result_content_journal_triple_required: Literal[True]
+    known_r7_r11_r14_r15_exact_result_content_journal_triple_required: Literal[True]
     complete_or_inconclusive_finalization_bound: Literal[True]
     persisted_campaign_replay_validator_bound: Literal[True]
     historical_v1_campaign_replay_bound: Literal[True]
@@ -249,8 +264,8 @@ class HeldoutACPreflightSourceQualification(HeldoutACFrozenModel):
     qualification_id: Literal[QUALIFICATION_ID]
     status: Literal[STATUS]
     recorded_at: datetime
-    predecessor: R14Binding
-    campaign_predecessor: R14CampaignEvidenceBinding
+    predecessor: R15Binding
+    campaign_predecessor: R15CampaignEvidenceBinding
     source_entrypoints: tuple[str, ...] = Field(min_length=2, max_length=2)
     import_closure: tuple[str, ...] = Field(min_length=1)
     import_closure_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
@@ -302,40 +317,40 @@ def _binding(root: Path, relative: Path) -> FileBinding:
     )
 
 
-def _r14_binding(root: Path) -> R14Binding:
-    selected = (root / R14_PATH).resolve()
+def _r15_binding(root: Path) -> R15Binding:
+    selected = (root / R15_PATH).resolve()
     if not selected.is_relative_to(root) or selected.is_symlink() or not selected.is_file():
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R14 source qualification predecessor is unavailable"
+            "held-out R15 source qualification predecessor is unavailable"
         )
     try:
         raw = selected.read_bytes()
         payload = json.loads(raw)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R14 source qualification predecessor is invalid"
+            "held-out R15 source qualification predecessor is invalid"
         ) from exc
     exact = (
-        len(raw) == R14_FILE_BYTES
-        and sha256_bytes(raw) == R14_FILE_SHA256
+        len(raw) == R15_FILE_BYTES
+        and sha256_bytes(raw) == R15_FILE_SHA256
         and isinstance(payload, dict)
         and payload.get("schema_version")
-        == "heldout-ac-preflight-dispatch-source-qualification-v13"
+        == "heldout-ac-preflight-dispatch-source-qualification-v14"
         and payload.get("qualification_id")
-        == "core-ac-fixed-bundle-heldout-preflight-source-20260815-r14"
+        == "core-ac-fixed-bundle-heldout-preflight-source-20260815-r15"
         and payload.get("status")
         == "OFFLINE_PREFLIGHT_AND_DISPATCH_SOURCE_QUALIFIED_EXECUTION_CLOSED"
-        and payload.get("content_hash") == R14_CONTENT_HASH
-        and payload.get("evaluator_source_hash") == R14_EVALUATOR_SOURCE_HASH
+        and payload.get("content_hash") == R15_CONTENT_HASH
+        and payload.get("evaluator_source_hash") == R15_EVALUATOR_SOURCE_HASH
         and sha256_json({key: value for key, value in payload.items() if key != "content_hash"})
-        == R14_CONTENT_HASH
+        == R15_CONTENT_HASH
     )
     if not exact:
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R14 source qualification predecessor bytes differ"
+            "held-out R15 source qualification predecessor bytes differ"
         )
-    return R14Binding(
-        path=R14_PATH.as_posix(),
+    return R15Binding(
+        path=R15_PATH.as_posix(),
         file_bytes=len(raw),
         file_sha256=sha256_bytes(raw),
         source_qualification_hash=str(payload["content_hash"]),
@@ -343,62 +358,60 @@ def _r14_binding(root: Path) -> R14Binding:
         original_schema_version=str(payload["schema_version"]),
         original_qualification_id=str(payload["qualification_id"]),
         original_status=str(payload["status"]),
-        successor_reason=("r14-campaign-inconclusive-runtime-budget-attribution-index-successor"),
+        successor_reason="r15-campaign-inconclusive-v2-terminal-result-binding-successor",
     )
 
 
-def _r14_campaign_evidence_binding(root: Path) -> R14CampaignEvidenceBinding:
-    selected = (root / R14_CAMPAIGN_EVIDENCE_PATH).resolve()
+def _r15_campaign_evidence_binding(root: Path) -> R15CampaignEvidenceBinding:
+    selected = (root / R15_CAMPAIGN_EVIDENCE_PATH).resolve()
     if not selected.is_relative_to(root) or selected.is_symlink() or not selected.is_file():
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R14 campaign evidence predecessor is unavailable"
+            "held-out R15 campaign evidence predecessor is unavailable"
         )
     try:
         raw = selected.read_bytes()
         payload = json.loads(raw)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R14 campaign evidence predecessor is invalid"
+            "held-out R15 campaign evidence predecessor is invalid"
         ) from exc
     campaign = payload.get("campaign_observation") if isinstance(payload, dict) else None
     historical = payload.get("historical_confound") if isinstance(payload, dict) else None
     attribution = payload.get("post_runtime_attribution") if isinstance(payload, dict) else None
     authority = payload.get("authority") if isinstance(payload, dict) else None
     exact = (
-        len(raw) == R14_CAMPAIGN_FILE_BYTES
-        and sha256_bytes(raw) == R14_CAMPAIGN_FILE_SHA256
+        len(raw) == R15_CAMPAIGN_FILE_BYTES
+        and sha256_bytes(raw) == R15_CAMPAIGN_FILE_SHA256
         and isinstance(payload, dict)
-        and payload.get("schema_version") == "heldout-ac-campaign-evidence-index-v3"
-        and payload.get("evidence_id") == R14_CAMPAIGN_EVIDENCE_ID
-        and payload.get("status") == R14_CAMPAIGN_STATUS
-        and payload.get("content_hash") == R14_CAMPAIGN_CONTENT_HASH
+        and payload.get("schema_version") == "heldout-ac-campaign-evidence-index-v4"
+        and payload.get("evidence_id") == R15_CAMPAIGN_EVIDENCE_ID
+        and payload.get("status") == R15_CAMPAIGN_STATUS
+        and payload.get("content_hash") == R15_CAMPAIGN_CONTENT_HASH
         and sha256_json({key: value for key, value in payload.items() if key != "content_hash"})
-        == R14_CAMPAIGN_CONTENT_HASH
-        and isinstance(payload.get("approval"), dict)
-        and payload["approval"].get("execution_hash") == R14_EXECUTION_HASH
-        and payload["approval"].get("approval_consumed") is True
+        == R15_CAMPAIGN_CONTENT_HASH
+        and payload.get("execution_hash") == R15_EXECUTION_HASH
+        and payload.get("approval_consumed") is True
         and isinstance(campaign, dict)
         and campaign.get("disposition") == "inconclusive-matrix"
-        and campaign.get("terminal_settled_runs") == 0
+        and campaign.get("terminal_settled_runs") == 2
         and campaign.get("observed_unsettled_runs") == 1
-        and campaign.get("not_started_runs") == 47
-        and campaign.get("settled_model_cost_nanos") == 0
-        and campaign.get("observed_unsettled_model_cost_nanos") == 126_342_000
-        and campaign.get("observed_started_model_cost_nanos") == 126_342_000
-        and campaign.get("campaign_settlement_preserved_without_reauthentication") is True
+        and campaign.get("not_started_runs") == 45
+        and campaign.get("settled_model_cost_nanos") == 200_233_500
+        and campaign.get("observed_unsettled_model_cost_nanos") == 911_878_500
+        and campaign.get("observed_started_model_cost_nanos") == 1_112_112_000
         and isinstance(historical, dict)
         and historical.get("historical_reason_code") == "DURABLE_EVIDENCE_AUTHENTICATION_FAILED"
         and historical.get("historical_reason_preserved_without_relabeling") is True
         and isinstance(attribution, dict)
         and attribution.get("diagnosis_code")
-        == "TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH"
+        == "TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH"
         and attribution.get("historical_typed_diagnosis_code_observed") is False
         and attribution.get("post_runtime_deterministic_attribution") is True
         and attribution.get("changes_historical_reason_code") is False
         and attribution.get("historical_row_reauthenticated") is False
         and attribution.get("historical_row_reclassified") is False
         and isinstance(authority, dict)
-        and authority.get("r14_campaign_is_immutable_and_consumed") is True
+        and authority.get("r15_campaign_is_immutable_and_consumed") is True
         and authority.get("evidence_index_is_append_only_attribution_only") is True
         and authority.get("historical_runtime_files_mutated") is False
         and authority.get("historical_row_reauthentication_authorized") is False
@@ -410,17 +423,17 @@ def _r14_campaign_evidence_binding(root: Path) -> R14CampaignEvidenceBinding:
     )
     if not exact:
         raise HeldoutACPreflightSourceQualificationError(
-            "held-out R14 campaign evidence predecessor bytes differ"
+            "held-out R15 campaign evidence predecessor bytes differ"
         )
-    return R14CampaignEvidenceBinding(
-        path=R14_CAMPAIGN_EVIDENCE_PATH.as_posix(),
+    return R15CampaignEvidenceBinding(
+        path=R15_CAMPAIGN_EVIDENCE_PATH.as_posix(),
         file_bytes=len(raw),
         file_sha256=sha256_bytes(raw),
         schema_version=str(payload["schema_version"]),
         evidence_id=str(payload["evidence_id"]),
         status=str(payload["status"]),
         content_hash=str(payload["content_hash"]),
-        execution_hash=str(payload["approval"]["execution_hash"]),
+        execution_hash=str(payload["execution_hash"]),
         approval_consumed=True,
         disposition=str(campaign["disposition"]),
         terminal_settled_runs=int(campaign["terminal_settled_runs"]),
@@ -436,9 +449,8 @@ def _r14_campaign_evidence_binding(root: Path) -> R14CampaignEvidenceBinding:
         post_runtime_deterministic_attribution=True,
         post_runtime_attribution_changes_historical_reason=False,
         historical_row_reclassified=False,
-        campaign_settlement_preserved_without_reauthentication=True,
         attribution_only=True,
-        r14_campaign_is_immutable_and_consumed=True,
+        r15_campaign_is_immutable_and_consumed=True,
         historical_runtime_files_mutated=False,
         historical_row_reauthentication_authorized=False,
         retry_replacement_or_resume_performed=False,
@@ -453,8 +465,8 @@ def _build_candidate(
     *,
     recorded_at: datetime,
 ) -> HeldoutACPreflightSourceQualification:
-    predecessor = _r14_binding(root)
-    campaign_predecessor = _r14_campaign_evidence_binding(root)
+    predecessor = _r15_binding(root)
+    campaign_predecessor = _r15_campaign_evidence_binding(root)
     closure = _paid_path_import_closure(root, entrypoints=SOURCE_ENTRYPOINTS)
     source_paths = tuple(sorted({*closure, *SOURCE_EXTRAS}, key=lambda item: item.as_posix()))
     source_files = tuple(_binding(root, item) for item in source_paths)
@@ -480,11 +492,11 @@ def _build_candidate(
                 "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa"
             ),
             "scheduled_rows": 48,
-            "r14_predecessor_bytes_preserved": True,
-            "r14_campaign_inconclusive_index_bound": True,
-            "r14_historical_reason_and_post_runtime_attribution_distinct": True,
-            "r14_observed_unsettled_cost_bound": True,
-            "r14_reauthentication_retry_or_runtime_authority_granted": False,
+            "r15_predecessor_bytes_preserved": True,
+            "r15_campaign_inconclusive_index_bound": True,
+            "r15_historical_reason_and_post_runtime_attribution_distinct": True,
+            "r15_observed_started_cost_bound": True,
+            "r15_reauthentication_retry_or_runtime_authority_granted": False,
             "git_commit_tree_and_execution_clean_observation_present": True,
             "digest_pinned_docker_image_observation_present": True,
             "sdk_version_observation_present": True,
@@ -507,7 +519,7 @@ def _build_candidate(
             "candidate_runtime_tuple_recomputed_before_plan_write": True,
             "current_prior_row_requires_persisted_v5_row_v2": True,
             "prior_row_runtime_cost_usage_budget_revalidated": True,
-            "known_r7_r11_r14_exact_result_content_journal_triple_required": True,
+            "known_r7_r11_r14_r15_exact_result_content_journal_triple_required": True,
             "complete_or_inconclusive_finalization_bound": True,
             "persisted_campaign_replay_validator_bound": True,
             "historical_v1_campaign_replay_bound": True,
@@ -688,6 +700,15 @@ __all__ = [
     "R14_FILE_BYTES",
     "R14_FILE_SHA256",
     "R14_PATH",
+    "R15_CAMPAIGN_CONTENT_HASH",
+    "R15_CAMPAIGN_EVIDENCE_PATH",
+    "R15_CAMPAIGN_FILE_BYTES",
+    "R15_CAMPAIGN_FILE_SHA256",
+    "R15_CONTENT_HASH",
+    "R15_EVALUATOR_SOURCE_HASH",
+    "R15_FILE_BYTES",
+    "R15_FILE_SHA256",
+    "R15_PATH",
     "SCHEMA_VERSION",
     "SOURCE_ENTRYPOINTS",
     "SOURCE_EXTRAS",

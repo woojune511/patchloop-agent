@@ -29,6 +29,7 @@ from patchloop.contracts import (
     FailureRecord,
     MemoryCondition,
     Phase,
+    RunEvent,
     RunManifest,
     RunOutcomeKind,
     RunResult,
@@ -75,6 +76,51 @@ _SUPPORTED_QUALIFICATION_SCHEMA_VERSIONS = {
     LEGACY_QUALIFICATION_SCHEMA_VERSION,
     QUALIFICATION_SCHEMA_VERSION,
 }
+
+
+def _model_generation_terminal_binding_valid(
+    *,
+    result: RunResult | None,
+    blocked_event: RunEvent | None,
+    terminal_event: RunEvent | None,
+) -> bool:
+    """Bind one validated generation block to its versioned terminal result."""
+
+    if result is None or blocked_event is None or terminal_event is None:
+        return False
+    if (
+        result.outcome_kind != RunOutcomeKind.AGENT_FAILURE
+        or terminal_event.type != EventType.RUN_FAILED
+        or terminal_event.payload.get("error_type") != "ModelGenerationBudgetError"
+        or terminal_event.payload.get("error_code") != "MODEL_GENERATION_BUDGET_EXCEEDED"
+        or terminal_event.payload.get("error_details") != blocked_event.payload
+        or not isinstance(terminal_event.payload.get("message"), str)
+    ):
+        return False
+
+    terminal_error = result.terminal_error
+    if not isinstance(terminal_error, dict):
+        return False
+    if result.schema_version == "run-result-v2":
+        return bool(
+            result.agent_submission_status == "failed"
+            and result.evaluation_status == "not_run"
+            and terminal_error
+            == {
+                "code": "AGENT_SUBMISSION_FAILED",
+                "phase": "agent",
+            }
+        )
+
+    return bool(
+        terminal_error.get("type") == "ModelGenerationBudgetError"
+        and terminal_error.get("code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
+        and terminal_error.get("details") == blocked_event.payload
+        and isinstance(terminal_error.get("message"), str)
+        and terminal_event.payload.get("message") == terminal_error.get("message")
+    )
+
+
 _LEGACY_TERRA_MODEL_ID = "gpt-5.6-terra"
 _GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
 _GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
@@ -12402,28 +12448,13 @@ def qualify_run(
             generation_blocked_events[0] if len(generation_blocked_events) == 1 else None
         )
         terminal_event = terminals[0] if len(terminals) == 1 else None
-        terminal_error = (
-            result.terminal_error
-            if result is not None and isinstance(result.terminal_error, dict)
-            else None
-        )
-        expected_details = blocked_event.payload if blocked_event is not None else None
         generation_block_terminal_binding_ok = bool(
             terminal_generation_block_ok
-            and blocked_event is not None
-            and result is not None
-            and result.outcome_kind == RunOutcomeKind.AGENT_FAILURE
-            and terminal_event is not None
-            and terminal_event.type == EventType.RUN_FAILED
-            and terminal_error is not None
-            and terminal_error.get("type") == "ModelGenerationBudgetError"
-            and terminal_error.get("code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
-            and terminal_error.get("details") == expected_details
-            and isinstance(terminal_error.get("message"), str)
-            and terminal_event.payload.get("error_type") == "ModelGenerationBudgetError"
-            and terminal_event.payload.get("error_code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
-            and terminal_event.payload.get("error_details") == expected_details
-            and terminal_event.payload.get("message") == terminal_error.get("message")
+            and _model_generation_terminal_binding_valid(
+                result=result,
+                blocked_event=blocked_event,
+                terminal_event=terminal_event,
+            )
         )
         evaluation_ok = evaluation_ok and generation_block_terminal_binding_ok
     terminal_result_details: dict[str, Any] = {

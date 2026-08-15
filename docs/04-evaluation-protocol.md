@@ -48,11 +48,11 @@ typed safety evidence. Rows cannot be replaced. Cross-clone and kill/power-loss 
 A complete matrix may report terminal/evaluator reach, delivery integrity, SCRR/verdicts, flips, token/call/duration/
 cost and paired C-minus-A deltas. It cannot claim causal or general memory improvement, held-out/cross-repository or
 production readiness, significance/confidence, per-rule efficacy, retrieval quality or population negative transfer.
-R11 and R14 provide incomplete operational observations only.
+R11, R14 and R15 provide incomplete operational observations only.
 
 Private specs, hidden/reference evidence, known-bad patches and traces cannot tune tasks, memory, thresholds, prompt,
 selection or policy. Moto/Babel cannot become fresh validation after their outcomes informed changes. Partially
-unblinded R11/R14 may repair infrastructure contracts only.
+unblinded R11/R14/R15 may repair infrastructure contracts only.
 
 ## 4. Preregistered held-out A/C
 
@@ -66,13 +66,18 @@ Eligible evaluator FAIL and typed agent terminals score zero; infrastructure con
 - Development-only evidence set equal A/C to 1M/100k/1.1M and `$57.60`/`$60`, excluding R11 outcomes and held-out
   task content. R14 candidate `sha256:67475f57...307fd` consumed it and sealed 0 settled/1 observed-unsettled/47
   not-started with `$0.126342` observed.
+- R15 candidate `sha256:e11ece55...64f8bc` separately consumed the same envelope and sealed 2 settled/
+  1 observed-unsettled/45 not-started: `$0.2002335` settled and `$1.112112` observed-started.
 
 R14's immutable reason is `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`. Post-runtime
 `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` records that completion compared the candidate
 1M/100k/1.1M budget with the immutable suite's 4M/500k/4.5M tuple; it grants no reauthentication/reclassification.
+R15 preserves the same historical campaign reason while the successor diagnosis
+`TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH` records the old qualifier's impossible v1-rich requirement
+for a sanitized v2 budget terminal.
 
-Contract R10 → binding R10 → materialization R6 → execution R7 → preflight R15 is the corrected zero-authority path.
+Contract R11 → binding R11 → materialization R7 → execution R8 → preflight R16 is the corrected zero-authority path.
 Candidate-v3 binds the realized schedule and candidate runtime/cost. Current next-row admission requires
-persisted-v5/row-v2 plus budget/semantic revalidation; known R7/R11/R14 history requires the exact allowlisted
+persisted-v5/row-v2 plus budget/semantic revalidation; known R7/R11/R14/R15 history requires the exact allowlisted
 final-file/content/journal triple. Further execution requires committed source, a fresh read-only no-call candidate and
 separate exact approval. No candidate, approval, official analysis or memory claim exists now.

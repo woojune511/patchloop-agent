@@ -16,6 +16,7 @@ from patchloop.agent.review import (
     public_review_requirement_id,
 )
 from patchloop.agent.runner import AgentRunner
+from patchloop.agent.tools import TOOL_SCHEMAS_V2
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     Artifact,
@@ -30,6 +31,7 @@ from patchloop.contracts import (
     PublicReviewContract,
     RegisteredProbeProfile,
     RunEvent,
+    RunManifest,
     RunOutcomeKind,
     RunResult,
     RunStatus,
@@ -37,6 +39,7 @@ from patchloop.contracts import (
     Verdicts,
     VerdictState,
     VerifierResult,
+    build_evaluator_contract_binding,
 )
 from patchloop.dataset import load_dataset_manifest
 from patchloop.errors import ContractError
@@ -44,6 +47,7 @@ from patchloop.evals import qualification as qualification_module
 from patchloop.evals import runner as eval_runner
 from patchloop.evals.failures import classify_failure
 from patchloop.evals.qualification import (
+    _model_generation_terminal_binding_valid,
     _private_leak_tokens,
     calculate_source_evidence_hash,
     load_trace_qualification,
@@ -66,6 +70,7 @@ from patchloop.sandbox.runner import probe_execution_policy
 from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_text, utc_now
+from patchloop.verifier.runtime_evidence import build_evaluator_safety_contract_v2
 
 MEMORY_TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
 PILOT_TASK = Path("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
@@ -93,6 +98,181 @@ DIFF_HASH = sha256_bytes(PATCH_TEXT.encode("utf-8"))
 PROBE_ID = "python-diagnostic"
 PROBE_IMAGE_DIGEST = "sha256:" + ("b" * 64)
 SELF_VALIDATION_TASK = Path("fixtures/task-packages/self-validation-csv-quoted-newline")
+
+
+def _test_evaluator_binding(package):
+    contract = build_evaluator_safety_contract_v2(
+        package=package,
+        tool_schemas=TOOL_SCHEMAS_V2,
+        private_markers=(b"qualification-private-marker",),
+    )
+    return build_evaluator_contract_binding(
+        contract,
+        package,
+        evaluator_source_hash="sha256:" + "c" * 64,
+    )
+
+
+def _budget_terminal_binding_fixture() -> tuple[RunResult, RunEvent, RunEvent]:
+    package = load_task_package(MEMORY_TASK)
+    binding = _test_evaluator_binding(package)
+    run_id = "run_v2_budget_terminal_binding"
+    result = RunResult(
+        schema_version="run-result-v2",
+        run_id=run_id,
+        agent_submission_status="failed",
+        evaluation_status="not_run",
+        scope_compliant_success=False,
+        official=False,
+        verdicts=Verdicts(),
+        evaluator_contract=binding,
+        outcome_kind=RunOutcomeKind.AGENT_FAILURE,
+        terminal_error={"code": "AGENT_SUBMISSION_FAILED", "phase": "agent"},
+    )
+    blocked = RunEvent(
+        event_id="evt_v2_budget_block",
+        run_id=run_id,
+        sequence=1,
+        type=EventType.MODEL_GENERATION_BLOCKED,
+        timestamp=datetime(2026, 8, 15, tzinfo=UTC),
+        actor="budget-guard",
+        payload={
+            "schema_version": "model-generation-block-v4",
+            "reason_code": "exact_request_budget_exceeded",
+            "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+            "generation_started": False,
+        },
+    )
+    terminal = RunEvent(
+        event_id="evt_v2_budget_terminal",
+        run_id=run_id,
+        sequence=2,
+        type=EventType.RUN_FAILED,
+        timestamp=datetime(2026, 8, 15, tzinfo=UTC),
+        actor="agent-runner",
+        payload={
+            "error_type": "ModelGenerationBudgetError",
+            "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+            "error_details": blocked.payload,
+            "message": "remaining request exceeds the exact budget",
+        },
+    )
+    return result, blocked, terminal
+
+
+def test_model_generation_terminal_binding_accepts_v1_and_v2_result_shapes() -> None:
+    result, blocked, terminal = _budget_terminal_binding_fixture()
+
+    assert _model_generation_terminal_binding_valid(
+        result=result,
+        blocked_event=blocked,
+        terminal_event=terminal,
+    )
+
+    v1_result = RunResult(
+        run_id=result.run_id,
+        agent_submission_status="failed",
+        evaluation_status="not_run",
+        scope_compliant_success=False,
+        official=False,
+        verdicts=Verdicts(),
+        outcome_kind=RunOutcomeKind.AGENT_FAILURE,
+        terminal_error={
+            "type": "ModelGenerationBudgetError",
+            "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+            "message": terminal.payload["message"],
+            "details": blocked.payload,
+        },
+    )
+    assert _model_generation_terminal_binding_valid(
+        result=v1_result,
+        blocked_event=blocked,
+        terminal_event=terminal,
+    )
+
+
+@pytest.mark.parametrize(
+    ("target", "field", "replacement"),
+    [
+        ("result", "terminal_error", {"code": "EVALUATOR_NOT_REACHED", "phase": "agent"}),
+        ("terminal", "error_type", "ContractError"),
+        ("terminal", "error_code", "AGENT_SUBMISSION_FAILED"),
+        ("terminal", "error_details", {}),
+        ("terminal", "message", None),
+    ],
+)
+def test_model_generation_terminal_binding_rejects_v2_cross_binding_drift(
+    target: str,
+    field: str,
+    replacement: object,
+) -> None:
+    result, blocked, terminal = _budget_terminal_binding_fixture()
+    if target == "result":
+        result = result.model_copy(update={field: replacement})
+    else:
+        terminal = terminal.model_copy(update={"payload": {**terminal.payload, field: replacement}})
+
+    assert not _model_generation_terminal_binding_valid(
+        result=result,
+        blocked_event=blocked,
+        terminal_event=terminal,
+    )
+
+
+def test_trace_qualification_accepts_sanitized_v2_budget_terminal(tmp_path: Path) -> None:
+    run_id, v1_result, _ = _terminal_trace(
+        tmp_path,
+        agent_failure=True,
+        force_v3_contract=True,
+        counter_generation_block_reason="model_call_budget_exhausted",
+    )
+    state = StateStore(tmp_path / "state.sqlite3")
+    manifest = state.get_manifest(run_id)
+    package = load_task_package(MEMORY_TASK)
+    binding = _test_evaluator_binding(package)
+    manifest_payload = manifest.model_dump(mode="json")
+    manifest_payload.update(
+        {
+            "schema_version": "run-manifest-v2",
+            "evaluator_contract": binding.model_dump(mode="json"),
+        }
+    )
+    v2_manifest = RunManifest.model_validate(manifest_payload)
+    v2_result = RunResult(
+        schema_version="run-result-v2",
+        run_id=run_id,
+        agent_submission_status="failed",
+        evaluation_status="not_run",
+        scope_compliant_success=False,
+        official=False,
+        verdicts=Verdicts(),
+        usage=v1_result.usage,
+        outcome_kind=RunOutcomeKind.AGENT_FAILURE,
+        terminal_error={"code": "AGENT_SUBMISSION_FAILED", "phase": "agent"},
+        evaluator_contract=binding,
+    )
+    with sqlite3.connect(tmp_path / "state.sqlite3") as connection:
+        connection.execute(
+            "UPDATE runs SET manifest_json = ?, result_json = ? WHERE run_id = ?",
+            (
+                canonical_json(v2_manifest.model_dump(mode="json")),
+                canonical_json(v2_result.model_dump(mode="json")),
+                run_id,
+            ),
+        )
+    result_path = tmp_path / "artifacts" / "runs" / run_id / "result.json"
+    result_path.write_text(v2_result.model_dump_json(indent=2), encoding="utf-8")
+
+    qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+    terminal = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "terminal_result_integrity"
+    )
+
+    assert terminal["passed"] is True
+    assert terminal["details"]["model_generation_block_binding_required"] is True
+    assert terminal["details"]["model_generation_block_binding_valid"] is True
 
 
 def _qualification_review_contract(package) -> PublicReviewContract:

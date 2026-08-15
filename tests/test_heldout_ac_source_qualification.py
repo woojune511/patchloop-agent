@@ -104,12 +104,12 @@ def _build(output: Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
 
 
 def test_identity_is_contract_only_and_does_not_reuse_the_live_runner() -> None:
-    assert source_q.SCHEMA_VERSION == "heldout-ac-contract-source-qualification-v10"
+    assert source_q.SCHEMA_VERSION == "heldout-ac-contract-source-qualification-v11"
     assert source_q.QUALIFICATION_ID == (
-        "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r10"
+        "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r11"
     )
     assert source_q.OUTPUT_PATH.as_posix() == (
-        "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r10.json"
+        "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r11.json"
     )
     assert source_q.STATUS == ("OFFLINE_CONTRACT_SOURCE_QUALIFIED_TASK_EVALUATOR_BINDING_CLOSED")
     assert source_q.SUITE_PATH.as_posix() == ("experiments/heldout-ac-suite-20260814-v1.yaml")
@@ -145,9 +145,9 @@ def test_build_validate_and_replay_are_append_only_canonical_and_no_call(
         "qualification_id": source_q.QUALIFICATION_ID,
         "source_qualification_hash": payload["content_hash"],
         "predecessor_disposition": (
-            "invalidated-by-post-seal-candidate-v3-realized-schedule-and-known-history-replay-successor"
+            "invalidated-by-trace-qualification-v2-budget-terminal-binding-successor"
         ),
-        "predecessor_file_sha256": source_q.R9_PREDECESSOR_FILE_SHA256,
+        "predecessor_file_sha256": source_q.R10_PREDECESSOR_FILE_SHA256,
         "contract_import_traversal": "module-scope-imports-v1",
         "contract_source_hash": payload["contract_source_hash"],
         "suite_content_hash": payload["suite_content_hash"],
@@ -177,22 +177,18 @@ def test_artifact_binds_exact_prereg_suite_plan_and_closed_adapters(
     _summary, payload, _raw = _build(isolated_output)
 
     assert payload["predecessor"] == {
-        "path": source_q.R9_PREDECESSOR_PATH.as_posix(),
-        "schema_version": "heldout-ac-contract-source-qualification-v9",
+        "path": source_q.R10_PREDECESSOR_PATH.as_posix(),
+        "schema_version": "heldout-ac-contract-source-qualification-v10",
         "qualification_id": (
-            "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r9"
+            "core-ac-fixed-bundle-heldout-contract-source-qualification-20260815-r10"
         ),
         "original_status": source_q.STATUS,
-        "disposition": (
-            "invalidated-by-post-seal-candidate-v3-realized-schedule-and-known-history-replay-successor"
-        ),
-        "invalidation_reason": (
-            "post-r9-candidate-v3-realized-schedule-and-known-history-replay-fixes"
-        ),
-        "source_qualification_hash": source_q.R9_PREDECESSOR_CONTENT_HASH,
-        "contract_source_hash": source_q.R9_PREDECESSOR_CONTRACT_SOURCE_HASH,
-        "file_bytes": source_q.R9_PREDECESSOR_FILE_BYTES,
-        "file_sha256": source_q.R9_PREDECESSOR_FILE_SHA256,
+        "disposition": ("invalidated-by-trace-qualification-v2-budget-terminal-binding-successor"),
+        "invalidation_reason": "post-r10-trace-qualification-v2-terminal-result-integrity-repair",
+        "source_qualification_hash": source_q.R10_PREDECESSOR_CONTENT_HASH,
+        "contract_source_hash": source_q.R10_PREDECESSOR_CONTRACT_SOURCE_HASH,
+        "file_bytes": source_q.R10_PREDECESSOR_FILE_BYTES,
+        "file_sha256": source_q.R10_PREDECESSOR_FILE_SHA256,
         "current_source_replay_valid": False,
         "task_package_bindings": 0,
         "evaluator_v2_task_contract_bindings": 0,
@@ -290,15 +286,15 @@ def test_artifact_binds_exact_prereg_suite_plan_and_closed_adapters(
     assert projection["effective_hard_cap_nanos"] == 60_000_000_000
 
 
-def test_r9_predecessor_is_read_only_and_exactly_preserved(isolated_output: Path) -> None:
-    predecessor = ROOT / source_q.R9_PREDECESSOR_PATH
+def test_r10_predecessor_is_read_only_and_exactly_preserved(isolated_output: Path) -> None:
+    predecessor = ROOT / source_q.R10_PREDECESSOR_PATH
     before = predecessor.read_bytes()
     before_mtime = predecessor.stat().st_mtime_ns
 
     _build(isolated_output)
 
-    assert len(before) == source_q.R9_PREDECESSOR_FILE_BYTES
-    assert sha256_bytes(before) == source_q.R9_PREDECESSOR_FILE_SHA256
+    assert len(before) == source_q.R10_PREDECESSOR_FILE_BYTES
+    assert sha256_bytes(before) == source_q.R10_PREDECESSOR_FILE_SHA256
     assert predecessor.read_bytes() == before
     assert predecessor.stat().st_mtime_ns == before_mtime
 

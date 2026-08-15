@@ -28,7 +28,11 @@
   `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` is unchanged; deterministic successor attribution is
   `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` (candidate 1M/100k/1.1M versus immutable suite
   4M/500k/4.5M). It cannot retry, resume, reauthenticate or reclassify, and supports no official analysis or claim.
-- Current Contract R10 → binding R10 → materialization R6 → execution R7 → preflight R15 is source-qualified only.
+- Held-out R15 candidate `sha256:e11ece55...64f8bc` consumed one `$57.60`/`$60` approval and sealed 2 settled/
+  1 observed-unsettled/45 not-started. Settled cost was `$0.2002335`; total observed-started cost was `$1.112112`.
+  Historical reason `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` is unchanged; successor attribution is
+  `TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH`. It is immutable and supports no official analysis or claim.
+- Current Contract R11 → binding R11 → materialization R7 → execution R8 → preflight R16 is source-qualified only.
   Candidate-v3 binds the realized 48-row schedule plus candidate runtime/cost authority; it created no candidate,
   approval, observation or spend.
 - Local no-call preflight permits at most three transient pre-provider attempts. Paid campaign identity ignores

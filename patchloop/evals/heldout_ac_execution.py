@@ -1,7 +1,7 @@
 """No-call activation contract for the preregistered held-out A/C panel.
 
 This module deliberately stops before campaign state or provider dispatch.  It
-binds the sealed 48-row suite, the evaluator-side R6 materialization, a fresh
+binds the sealed 48-row suite, the evaluator-side R7 materialization, a fresh
 source qualification and read-only local readiness into one execution hash.
 It also owns the only supported expansion from an explicitly supplied runtime
 secret to a task-bound evaluator-v2 authority.  Secret bytes are never returned
@@ -74,23 +74,33 @@ from patchloop.verifier.runtime_evidence import (
 
 SUITE_PATH = Path("experiments/heldout-ac-suite-20260814-v1.yaml")
 MATERIALIZATION_PATH = Path(
-    "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r6.json"
+    "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r7.json"
 )
 MATERIALIZATION_FILE_BYTES = 53_250
 MATERIALIZATION_FILE_SHA256 = (
-    "sha256:1a3568e372c9b3af1e384addfb3b5d8351138625072b3af95ccc6290bed3d975"
+    "sha256:7b9bb78b89e18e067476cdf172214fb4588d3f96b68427f6f8eb49761d801425"
 )
 MATERIALIZATION_CONTENT_HASH = (
-    "sha256:61f65a54891ef60c07c1edbadd67040cdf5d31e21e4c6e1d3ac97d7f94e419fb"
+    "sha256:2a32a034dc89a43e0d20a9dc82959d0574c82c0915a6f105f31291d7af962be4"
 )
 MATERIALIZATION_SOURCE_HASH = (
-    "sha256:7135f82bebfee3b635cd67347fee258be57fa2ef15cce09e3df838897c197131"
+    "sha256:7f2218a7a9e3fcafdc2a1746b292ec539eeeb05994101ba0f1680616226160a8"
 )
 MATERIALIZATION_TASK_BINDINGS_HASH = (
     "sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f"
 )
 MATERIALIZATION_PRICING_HASH = (
     "sha256:83bb15d171564f32d0ca6df24f733a957032e144bbd0dfed49071e1b205a27e9"
+)
+LEGACY_V3_MATERIALIZATION_PATH = Path(
+    "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r6.json"
+)
+LEGACY_V3_MATERIALIZATION_FILE_BYTES = 53_250
+LEGACY_V3_MATERIALIZATION_FILE_SHA256 = (
+    "sha256:1a3568e372c9b3af1e384addfb3b5d8351138625072b3af95ccc6290bed3d975"
+)
+LEGACY_V3_MATERIALIZATION_CONTENT_HASH = (
+    "sha256:61f65a54891ef60c07c1edbadd67040cdf5d31e21e4c6e1d3ac97d7f94e419fb"
 )
 LEGACY_MATERIALIZATION_PATH = Path(
     "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r5.json"
@@ -304,22 +314,40 @@ class HeldoutACExecutionCandidate(HeldoutACFrozenModel):
                 != (57.6, 60.0, "heldout-ac-full-schedule-cost-control-v2")
             ):
                 raise ValueError("held-out historical cost-bounded candidate binding differs")
-        elif (
-            self.budget_amendment is None
-            or self.task_bindings_hash != MATERIALIZATION_TASK_BINDINGS_HASH
-            or self.pricing_binding_hash != MATERIALIZATION_PRICING_HASH
-            or self.materialization.path != MATERIALIZATION_PATH.as_posix()
-            or self.materialization.file_bytes != MATERIALIZATION_FILE_BYTES
-            or self.materialization.file_sha256 != MATERIALIZATION_FILE_SHA256
-            or self.materialization.content_hash != MATERIALIZATION_CONTENT_HASH
-            or (
-                self.full_schedule_reserve_usd,
-                self.hard_cap_usd,
-                self.campaign_cost_control.schema_version,
+        else:
+            materialization_identity = (
+                self.materialization.path,
+                self.materialization.file_bytes,
+                self.materialization.file_sha256,
+                self.materialization.content_hash,
             )
-            != (57.6, 60.0, "heldout-ac-full-schedule-cost-control-v2")
-        ):
-            raise ValueError("held-out current cost-bounded candidate binding differs")
+            allowed_v3_materializations = {
+                (
+                    MATERIALIZATION_PATH.as_posix(),
+                    MATERIALIZATION_FILE_BYTES,
+                    MATERIALIZATION_FILE_SHA256,
+                    MATERIALIZATION_CONTENT_HASH,
+                ),
+                (
+                    LEGACY_V3_MATERIALIZATION_PATH.as_posix(),
+                    LEGACY_V3_MATERIALIZATION_FILE_BYTES,
+                    LEGACY_V3_MATERIALIZATION_FILE_SHA256,
+                    LEGACY_V3_MATERIALIZATION_CONTENT_HASH,
+                ),
+            }
+            if (
+                self.budget_amendment is None
+                or self.task_bindings_hash != MATERIALIZATION_TASK_BINDINGS_HASH
+                or self.pricing_binding_hash != MATERIALIZATION_PRICING_HASH
+                or materialization_identity not in allowed_v3_materializations
+                or (
+                    self.full_schedule_reserve_usd,
+                    self.hard_cap_usd,
+                    self.campaign_cost_control.schema_version,
+                )
+                != (57.6, 60.0, "heldout-ac-full-schedule-cost-control-v2")
+            ):
+                raise ValueError("held-out current cost-bounded candidate binding differs")
         if len(self.schedule) != 48 or tuple(row.order for row in self.schedule) != tuple(
             range(1, 49)
         ):
@@ -375,7 +403,7 @@ def _read_materialization(root: Path) -> tuple[HeldoutACTaskPricingMaterializati
         raw = selected.read_bytes()
         payload = HeldoutACTaskPricingMaterialization.model_validate_json(raw)
     except (OSError, ValidationError) as exc:
-        raise HeldoutACExecutionError("held-out R6 materialization is invalid") from exc
+        raise HeldoutACExecutionError("held-out R7 materialization is invalid") from exc
     if (
         len(raw) != MATERIALIZATION_FILE_BYTES
         or sha256_bytes(raw) != MATERIALIZATION_FILE_SHA256
@@ -385,7 +413,7 @@ def _read_materialization(root: Path) -> tuple[HeldoutACTaskPricingMaterializati
         or payload.pricing.content_hash != MATERIALIZATION_PRICING_HASH
         or raw != (payload.model_dump_json(indent=2) + "\n").encode("utf-8")
     ):
-        raise HeldoutACExecutionError("held-out R6 materialization bytes drifted")
+        raise HeldoutACExecutionError("held-out R7 materialization bytes drifted")
     return payload, raw
 
 
@@ -714,6 +742,9 @@ def heldout_ac_candidate_matches_current_execution_inputs(
         and checked.suite_id == suite.suite_id
         and checked.suite_content_hash == suite.content_hash
         and checked.dataset_manifest_hash == dataset_manifest_hash
+        and checked.materialization == _materialization_binding(materialization)
+        and checked.task_bindings_hash == materialization.task_bindings_hash
+        and checked.pricing_binding_hash == materialization.pricing.content_hash
         and checked.runtime_tuple_hash == _runtime_tuple_hash(suite)
         and checked.base_schedule_hash == _base_schedule_hash(suite)
         and checked.realized_schedule_hash
@@ -1101,6 +1132,10 @@ __all__ = [
     "LEGACY_MATERIALIZATION_FILE_BYTES",
     "LEGACY_MATERIALIZATION_FILE_SHA256",
     "LEGACY_MATERIALIZATION_PATH",
+    "LEGACY_V3_MATERIALIZATION_CONTENT_HASH",
+    "LEGACY_V3_MATERIALIZATION_FILE_BYTES",
+    "LEGACY_V3_MATERIALIZATION_FILE_SHA256",
+    "LEGACY_V3_MATERIALIZATION_PATH",
     "SUITE_PATH",
     "HeldoutACExecutionCandidate",
     "HeldoutACExecutionError",

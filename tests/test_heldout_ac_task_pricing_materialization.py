@@ -12,18 +12,18 @@ from patchloop.evals.heldout_ac_task_pricing_materialization import (
     OUTPUT_PATH,
     PLAN_HASH,
     PRICING_HASH,
-    R5_CONTENT_HASH,
-    R5_FILE_BYTES,
-    R5_FILE_SHA256,
-    R5_PATH,
-    R5_SOURCE_HASH,
-    R5_TASK_BINDINGS_HASH,
-    R10_CONTENT_HASH,
-    R10_CONTRACT_SOURCE_HASH,
-    R10_FILE_BYTES,
-    R10_FILE_SHA256,
-    R10_PATH,
-    R10_SOURCE_HASH,
+    R6_CONTENT_HASH,
+    R6_FILE_BYTES,
+    R6_FILE_SHA256,
+    R6_PATH,
+    R6_SOURCE_HASH,
+    R6_TASK_BINDINGS_HASH,
+    R11_CONTENT_HASH,
+    R11_CONTRACT_SOURCE_HASH,
+    R11_FILE_BYTES,
+    R11_FILE_SHA256,
+    R11_PATH,
+    R11_SOURCE_HASH,
     HeldoutACTaskPricingMaterialization,
     _build_candidate,
     run_heldout_ac_task_pricing_materialization,
@@ -41,28 +41,28 @@ def _candidate() -> HeldoutACTaskPricingMaterialization:
     )
 
 
-def test_offline_candidate_reuses_exact_r5_projections_and_binds_r10() -> None:
+def test_offline_candidate_reuses_exact_r6_projections_and_binds_r11() -> None:
     candidate = _candidate()
 
-    assert candidate.schema_version == "heldout-ac-task-pricing-materialization-v6"
-    assert candidate.materialization_id.endswith("20260815-r6")
+    assert candidate.schema_version == "heldout-ac-task-pricing-materialization-v7"
+    assert candidate.materialization_id.endswith("20260815-r7")
     assert candidate.binding_source_predecessor.path.endswith(
-        "heldout-ac-binding-adapter-source-qualification-r10.json"
+        "heldout-ac-binding-adapter-source-qualification-r11.json"
     )
     assert candidate.materialization_predecessor.disposition == (
-        "invalidated-by-binding-adapter-r10-successor"
+        "invalidated-by-binding-adapter-r11-successor"
     )
-    assert candidate.binding_source_predecessor.file_bytes == R10_FILE_BYTES
-    assert candidate.binding_source_predecessor.file_sha256 == R10_FILE_SHA256
-    assert candidate.binding_source_predecessor.source_qualification_hash == R10_CONTENT_HASH
-    assert candidate.binding_source_predecessor.source_hash == R10_SOURCE_HASH
+    assert candidate.binding_source_predecessor.file_bytes == R11_FILE_BYTES
+    assert candidate.binding_source_predecessor.file_sha256 == R11_FILE_SHA256
+    assert candidate.binding_source_predecessor.source_qualification_hash == R11_CONTENT_HASH
+    assert candidate.binding_source_predecessor.source_hash == R11_SOURCE_HASH
     assert (
         candidate.binding_source_predecessor.contract_source_qualification_hash
-        == R10_CONTRACT_SOURCE_HASH
+        == R11_CONTRACT_SOURCE_HASH
     )
-    assert candidate.materialization_predecessor.content_hash == R5_CONTENT_HASH
-    assert candidate.materialization_predecessor.source_hash == R5_SOURCE_HASH
-    assert candidate.materialization_predecessor.task_bindings_hash == R5_TASK_BINDINGS_HASH
+    assert candidate.materialization_predecessor.content_hash == R6_CONTENT_HASH
+    assert candidate.materialization_predecessor.source_hash == R6_SOURCE_HASH
+    assert candidate.materialization_predecessor.task_bindings_hash == R6_TASK_BINDINGS_HASH
     assert candidate.materialization_predecessor.pricing_binding_hash == PRICING_HASH
     assert len(candidate.task_bindings) == 12
     assert len({item.task.task_id for item in candidate.task_bindings}) == 12
@@ -93,9 +93,9 @@ def test_offline_candidate_reuses_exact_r5_projections_and_binds_r10() -> None:
     assert candidate.authority.added_distinct_task_packages_materialized == 0
     assert candidate.authority.added_task_package_files_opened == 0
     assert candidate.authority.added_task_evaluator_templates_materialized == 0
-    r5 = json.loads((ROOT / R5_PATH).read_bytes())
-    assert [item.model_dump(mode="json") for item in candidate.task_bindings] == r5["task_bindings"]
-    assert candidate.pricing.model_dump(mode="json") == r5["pricing"]
+    r6 = json.loads((ROOT / R6_PATH).read_bytes())
+    assert [item.model_dump(mode="json") for item in candidate.task_bindings] == r6["task_bindings"]
+    assert candidate.pricing.model_dump(mode="json") == r6["pricing"]
 
 
 def test_retained_r1_pricing_reuse_makes_no_added_public_get(
@@ -104,7 +104,7 @@ def test_retained_r1_pricing_reuse_makes_no_added_public_get(
     import patchloop.evals.d136_fixed_pricing_capture as pricing_capture
 
     def unexpected_get(*_args: object, **_kwargs: object) -> object:
-        raise AssertionError("R6 materialization must not make a pricing GET")
+        raise AssertionError("R7 materialization must not make a pricing GET")
 
     monkeypatch.setattr(pricing_capture, "capture_official_pricing_evidence", unexpected_get)
     candidate = _candidate()
@@ -117,10 +117,10 @@ def test_cost_only_successor_never_reopens_a_task_package(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def unexpected_task_open(*_args: object, **_kwargs: object) -> object:
-        raise AssertionError("R6 binding-only successor must not reopen held-out task packages")
+        raise AssertionError("R7 binding-only successor must not reopen held-out task packages")
 
     def unexpected_private_projection(*_args: object, **_kwargs: object) -> object:
-        raise AssertionError("R6 binding-only successor must not read private task files")
+        raise AssertionError("R7 binding-only successor must not read private task files")
 
     monkeypatch.setattr(materialization, "load_task_package", unexpected_task_open)
     monkeypatch.setattr(materialization, "_task_file_projection", unexpected_private_projection)
@@ -163,15 +163,15 @@ def test_rehashed_pricing_or_task_projection_drift_fails_closed() -> None:
         HeldoutACTaskPricingMaterialization.model_validate_json(json.dumps(task_drift))
 
 
-def test_r5_and_r10_are_byte_preserved_and_checked_in_r6_is_idempotent() -> None:
-    sealed_r5 = ROOT / R5_PATH
-    r5_raw = sealed_r5.read_bytes()
-    assert len(r5_raw) == R5_FILE_BYTES
-    assert sha256_bytes(r5_raw) == R5_FILE_SHA256
-    sealed_r10 = ROOT / R10_PATH
-    r10_raw = sealed_r10.read_bytes()
-    assert len(r10_raw) == R10_FILE_BYTES
-    assert sha256_bytes(r10_raw) == R10_FILE_SHA256
+def test_r6_and_r11_are_byte_preserved_and_checked_in_r7_is_idempotent() -> None:
+    sealed_r6 = ROOT / R6_PATH
+    r6_raw = sealed_r6.read_bytes()
+    assert len(r6_raw) == R6_FILE_BYTES
+    assert sha256_bytes(r6_raw) == R6_FILE_SHA256
+    sealed_r11 = ROOT / R11_PATH
+    r11_raw = sealed_r11.read_bytes()
+    assert len(r11_raw) == R11_FILE_BYTES
+    assert sha256_bytes(r11_raw) == R11_FILE_SHA256
 
     selected = ROOT / OUTPUT_PATH
     before = selected.read_bytes()
@@ -184,5 +184,5 @@ def test_r5_and_r10_are_byte_preserved_and_checked_in_r6_is_idempotent() -> None
     assert validated["added_task_package_files_opened"] == 0
     assert selected.read_bytes() == before
     assert selected.stat().st_mtime_ns == before_mtime
-    assert sealed_r5.read_bytes() == r5_raw
-    assert sealed_r10.read_bytes() == r10_raw
+    assert sealed_r6.read_bytes() == r6_raw
+    assert sealed_r11.read_bytes() == r11_raw

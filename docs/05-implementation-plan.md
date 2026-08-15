@@ -69,7 +69,7 @@ delta is zero, while structured used fewer tokens and list-price cost in both pa
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: R7/R11/R14 are immutable inconclusive; R10 → R10 → R6 → R7 → R15 offline-qualifies the corrected successor.
+Status: R7/R11/R14/R15 are immutable inconclusive; R11 → R11 → R7 → R8 → R16 offline-qualifies the corrected successor.
 
 The preregistration freezes 12 tasks × A/C × two repetitions = 48 rows and historical `$252`/`$275` planning cost.
 Development-only evidence preserves the design but sets 1M/100k/1.1M and `$57.60`/`$60`, excluding R11/task content.
@@ -82,8 +82,14 @@ R14 consumed candidate `sha256:67475f57...307fd` and stopped at 0 settled/1 obse
 `$0.126342` observed. Preserve historical `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; append-only diagnosis is
 `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` (candidate 1M/100k/1.1M versus suite 4M/500k/4.5M).
 
+R15 consumed candidate `sha256:e11ece55...64f8bc` and stopped at 2 settled/1 observed-unsettled/45 not-started:
+`$0.2002335` settled and `$1.112112` total observed-started. Its historical campaign reason remains
+`DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; the append-only diagnosis is
+`TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH`. The V2 qualifier now accepts the sanitized terminal result
+only when exact typed `RunFailed` and `ModelGenerationBlocked` evidence binds it; V1 keeps its legacy rich shape.
+
 The successor adds candidate-v3 realized-schedule identity, candidate-bound runtime/cost, current persisted-v5/row-v2
-prior-row revalidation and exact R7/R11/R14 triple replay. Next: commit R10/R10/R6/R7/R15, then run one fresh
+prior-row revalidation and exact R7/R11/R14/R15 triple replay. Next: commit R11/R11/R7/R8/R16, then run one fresh
 read-only append-only no-call preflight. A separate exact 48-row `$57.60`/`$60` approval would still be required;
 current candidate, approval and provider authority are 0.
 

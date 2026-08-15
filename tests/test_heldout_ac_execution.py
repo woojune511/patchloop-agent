@@ -272,18 +272,18 @@ def test_candidate_binds_exact_48_rows_without_live_authority() -> None:
         execution._realized_schedule_projection(candidate.schedule)
     )
     assert candidate.materialization.path == (
-        "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r6.json"
+        "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r7.json"
     )
     assert candidate.materialization.file_bytes == 53_250
     assert candidate.materialization.file_sha256 == (
-        "sha256:1a3568e372c9b3af1e384addfb3b5d8351138625072b3af95ccc6290bed3d975"
+        "sha256:7b9bb78b89e18e067476cdf172214fb4588d3f96b68427f6f8eb49761d801425"
     )
     assert candidate.materialization.content_hash == (
-        "sha256:61f65a54891ef60c07c1edbadd67040cdf5d31e21e4c6e1d3ac97d7f94e419fb"
+        "sha256:2a32a034dc89a43e0d20a9dc82959d0574c82c0915a6f105f31291d7af962be4"
     )
     materialization, _raw = execution._read_materialization(ROOT)
     assert materialization.source_hash == (
-        "sha256:7135f82bebfee3b635cd67347fee258be57fa2ef15cce09e3df838897c197131"
+        "sha256:7f2218a7a9e3fcafdc2a1746b292ec539eeeb05994101ba0f1680616226160a8"
     )
     assert candidate.budget_amendment is not None
     assert candidate.full_schedule_reserve_usd == 57.6
@@ -509,6 +509,29 @@ def test_historical_candidate_hash_and_runtime_contract_remain_parse_compatible(
         assert legacy.materialization.content_hash == execution.LEGACY_MATERIALIZATION_CONTENT_HASH
     assert heldout_ac_runtime_contract(legacy)["schema_version"] == "heldout-ac-runtime-contract-v1"
     assert "realized_schedule_hash" not in heldout_ac_runtime_contract(legacy)
+
+
+def test_consumed_r15_candidate_v3_remains_parse_only_compatible() -> None:
+    preflight_path = ROOT / ".patchloop/heldout-ac-preflight-r15-20260815T155352146.json"
+    payload = json.loads(preflight_path.read_bytes())
+
+    historical = HeldoutACExecutionCandidate.model_validate_json(json.dumps(payload["candidate"]))
+
+    assert historical.schema_version == "heldout-ac-execution-candidate-v3"
+    assert historical.execution_hash == (
+        "sha256:e11ece5552e2f574ee334ec98a93a9929732df7592096bcd0478717dfd64f8bc"
+    )
+    assert historical.materialization.path == execution.LEGACY_V3_MATERIALIZATION_PATH.as_posix()
+    assert historical.materialization.file_sha256 == (
+        execution.LEGACY_V3_MATERIALIZATION_FILE_SHA256
+    )
+    assert (
+        heldout_ac_candidate_matches_current_execution_inputs(
+            historical,
+            repository=ROOT,
+        )
+        is False
+    )
 
 
 @pytest.mark.parametrize("value", ["", 1, None, "x" * 16_385])

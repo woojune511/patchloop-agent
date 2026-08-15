@@ -7,9 +7,9 @@ run-secret-independent evaluator-v2 contract template.  It never serializes a
 private marker, hidden check identifier, hidden path, reference patch, or task
 content.
 
-R6 is a binding-only successor.  It reuses the exact opaque task bindings and
-amended R1-origin pricing projection from immutable R5, then binds the current
-R10 adapter qualification.  It does not reopen a task package and makes no
+R7 is a binding-only successor.  It reuses the exact opaque task bindings and
+amended R1-origin pricing projection from immutable R6, then binds the current
+R11 adapter qualification.  It does not reopen a task package and makes no
 added pricing GET.
 """
 
@@ -52,24 +52,24 @@ from patchloop.util import ensure_within, safe_relative_path, sha256_bytes, sha2
 from patchloop.verifier.evidence import evaluator_v2_marker_set_hash
 from patchloop.verifier.runtime_evidence import build_evaluator_safety_contract_v2
 
-SCHEMA_VERSION = "heldout-ac-task-pricing-materialization-v6"
-MATERIALIZATION_ID = "core-ac-fixed-bundle-heldout-task-pricing-20260815-r6"
+SCHEMA_VERSION = "heldout-ac-task-pricing-materialization-v7"
+MATERIALIZATION_ID = "core-ac-fixed-bundle-heldout-task-pricing-20260815-r7"
 STATUS = "OPAQUE_TASK_EVALUATOR_TEMPLATES_MATERIALIZED_RETAINED_PRICING_RUNTIME_CLOSED"
-OUTPUT_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r6.json")
-R10_PATH = Path(
-    "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r10.json"
+OUTPUT_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r7.json")
+R11_PATH = Path(
+    "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r11.json"
 )
-R10_FILE_BYTES = 6_376
-R10_FILE_SHA256 = "sha256:376e94d84b7bdb5f0a2ec507fcc12e2016fbd718817e05a913c86824bc3e2ef4"
-R10_CONTENT_HASH = "sha256:27283c8a1d1075a9e22f395eed0d845069531e230d30aab2aeda75dc76c17626"
-R10_SOURCE_HASH = "sha256:3f01c1817a42daf35081926481c808887422d15e331138e90134069cdc17ba07"
-R10_CONTRACT_SOURCE_HASH = "sha256:c04127095d998ee345e4449f897de5b5c6666c75ade6f12d2784e59254b97a32"
-R5_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r5.json")
-R5_FILE_BYTES = 53_234
-R5_FILE_SHA256 = "sha256:34186e94134bffceaa05f893c24f9cdf5e1981e4e13c8b37de541ba49a5d6e17"
-R5_CONTENT_HASH = "sha256:a7d6347c13368c60b65933041cfc33748fdb780549fa0ad9d358fcfcf4843f60"
-R5_SOURCE_HASH = "sha256:c265e6f6e6484ea514d418fceacbd448c6db0972c7fdb4c21c770da8f56380cf"
-R5_TASK_BINDINGS_HASH = "sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f"
+R11_FILE_BYTES = 6_353
+R11_FILE_SHA256 = "sha256:9176a0671133985e3b01cfe540ab55a6a014e1db4a1a117602a7d774518ba7f8"
+R11_CONTENT_HASH = "sha256:5d2b92fe34be90aabda0f2fc3fd90ff6136c5e794e362299b33f35f707aee762"
+R11_SOURCE_HASH = "sha256:567358425e9508d358609775413568201d2161dabde99f5a8c60ca2cbe8ab202"
+R11_CONTRACT_SOURCE_HASH = "sha256:140c747effd5621cc33ba2d2a0187774332fa31b50b978f4791039bb05f06755"
+R6_PATH = Path("reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r6.json")
+R6_FILE_BYTES = 53_250
+R6_FILE_SHA256 = "sha256:1a3568e372c9b3af1e384addfb3b5d8351138625072b3af95ccc6290bed3d975"
+R6_CONTENT_HASH = "sha256:61f65a54891ef60c07c1edbadd67040cdf5d31e21e4c6e1d3ac97d7f94e419fb"
+R6_SOURCE_HASH = "sha256:7135f82bebfee3b635cd67347fee258be57fa2ef15cce09e3df838897c197131"
+R6_TASK_BINDINGS_HASH = "sha256:10505056de7f4bd95a06f9c3a16414ce120442c485413e52d113c2aba4c5157f"
 LEGACY_PRICING_HASH = "sha256:03e9cde4d6d04a09995da669d7e3aea26fda31310615640508f6bd0a9c2cbd34"
 PRICING_HASH = "sha256:83bb15d171564f32d0ca6df24f733a957032e144bbd0dfed49071e1b205a27e9"
 TEMPLATE_BINDING_SOURCE_HASH = (
@@ -120,34 +120,34 @@ class FileBinding(HeldoutACFrozenModel):
     file_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
-class R10BindingSourcePredecessor(FileBinding):
+class R11BindingSourcePredecessor(FileBinding):
     path: Literal[
-        "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r10.json"
+        "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r11.json"
     ]
-    file_bytes: Literal[R10_FILE_BYTES]
-    file_sha256: Literal[R10_FILE_SHA256]
-    source_qualification_hash: Literal[R10_CONTENT_HASH]
-    source_hash: Literal[R10_SOURCE_HASH]
-    contract_source_qualification_hash: Literal[R10_CONTRACT_SOURCE_HASH]
+    file_bytes: Literal[R11_FILE_BYTES]
+    file_sha256: Literal[R11_FILE_SHA256]
+    source_qualification_hash: Literal[R11_CONTENT_HASH]
+    source_hash: Literal[R11_SOURCE_HASH]
+    contract_source_qualification_hash: Literal[R11_CONTRACT_SOURCE_HASH]
     task_evaluator_plan_content_hash: Literal[PLAN_HASH]
     original_status: Literal[
         "OFFLINE_BINDING_ADAPTER_SOURCE_QUALIFIED_RUNTIME_MATERIALIZATION_CLOSED"
     ]
 
 
-class R5MaterializationPredecessor(FileBinding):
-    path: Literal["reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r5.json"]
-    file_bytes: Literal[R5_FILE_BYTES]
-    file_sha256: Literal[R5_FILE_SHA256]
-    content_hash: Literal[R5_CONTENT_HASH]
-    source_hash: Literal[R5_SOURCE_HASH]
-    task_bindings_hash: Literal[R5_TASK_BINDINGS_HASH]
+class R6MaterializationPredecessor(FileBinding):
+    path: Literal["reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r6.json"]
+    file_bytes: Literal[R6_FILE_BYTES]
+    file_sha256: Literal[R6_FILE_SHA256]
+    content_hash: Literal[R6_CONTENT_HASH]
+    source_hash: Literal[R6_SOURCE_HASH]
+    task_bindings_hash: Literal[R6_TASK_BINDINGS_HASH]
     pricing_binding_hash: Literal[PRICING_HASH]
     original_status: Literal[
         "OPAQUE_TASK_EVALUATOR_TEMPLATES_MATERIALIZED_RETAINED_PRICING_RUNTIME_CLOSED"
     ]
-    disposition: Literal["invalidated-by-binding-adapter-r10-successor"]
-    invalidation_reason: Literal["post-r5-binding-adapter-r10"]
+    disposition: Literal["invalidated-by-binding-adapter-r11-successor"]
+    invalidation_reason: Literal["post-r6-binding-adapter-r11"]
     current_source_replay_valid: Literal[False]
     retained_task_bindings_reused: Literal[True]
     retained_pricing_capture_reused: Literal[True]
@@ -366,8 +366,8 @@ class HeldoutACTaskPricingMaterialization(HeldoutACFrozenModel):
     materialization_id: Literal[MATERIALIZATION_ID] = MATERIALIZATION_ID
     status: Literal[STATUS] = STATUS
     recorded_at: datetime
-    binding_source_predecessor: R10BindingSourcePredecessor
-    materialization_predecessor: R5MaterializationPredecessor
+    binding_source_predecessor: R11BindingSourcePredecessor
+    materialization_predecessor: R6MaterializationPredecessor
     budget_amendment: HeldoutACBudgetAmendmentBinding
     suite_content_hash: Literal[
         "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa"
@@ -441,29 +441,29 @@ def _file_binding(root: Path, relative: Path) -> FileBinding:
     )
 
 
-def _r10_binding_source_predecessor(root: Path) -> R10BindingSourcePredecessor:
-    selected = root / R10_PATH
+def _r11_binding_source_predecessor(root: Path) -> R11BindingSourcePredecessor:
+    selected = root / R11_PATH
     try:
         raw = selected.read_bytes()
         payload = json.loads(raw)
     except (OSError, UnicodeDecodeError, ValueError) as exc:
         raise HeldoutACTaskPricingMaterializationError(
-            "held-out R10 binding-source predecessor is invalid"
+            "held-out R11 binding-source predecessor is invalid"
         ) from exc
     if (
-        len(raw) != R10_FILE_BYTES
-        or sha256_bytes(raw) != R10_FILE_SHA256
+        len(raw) != R11_FILE_BYTES
+        or sha256_bytes(raw) != R11_FILE_SHA256
         or not isinstance(payload, dict)
-        or payload.get("content_hash") != R10_CONTENT_HASH
-        or payload.get("source_hash") != R10_SOURCE_HASH
-        or payload.get("contract_source_qualification_hash") != R10_CONTRACT_SOURCE_HASH
+        or payload.get("content_hash") != R11_CONTENT_HASH
+        or payload.get("source_hash") != R11_SOURCE_HASH
+        or payload.get("contract_source_qualification_hash") != R11_CONTRACT_SOURCE_HASH
         or (payload.get("projection") or {}).get("task_evaluator_plan_content_hash") != PLAN_HASH
     ):
         raise HeldoutACTaskPricingMaterializationError(
-            "held-out R10 binding-source predecessor drifted"
+            "held-out R11 binding-source predecessor drifted"
         )
-    return R10BindingSourcePredecessor(
-        path=R10_PATH.as_posix(),
+    return R11BindingSourcePredecessor(
+        path=R11_PATH.as_posix(),
         file_bytes=len(raw),
         file_sha256=sha256_bytes(raw),
         source_qualification_hash=payload["content_hash"],
@@ -474,14 +474,14 @@ def _r10_binding_source_predecessor(root: Path) -> R10BindingSourcePredecessor:
     )
 
 
-def _r5_materialization_predecessor(
+def _r6_materialization_predecessor(
     root: Path,
 ) -> tuple[
-    R5MaterializationPredecessor,
+    R6MaterializationPredecessor,
     tuple[TaskEvaluatorTemplateBinding, ...],
     OfficialPricingBinding,
 ]:
-    selected = root / R5_PATH
+    selected = root / R6_PATH
     try:
         raw = selected.read_bytes()
         payload = json.loads(raw)
@@ -493,27 +493,27 @@ def _r5_materialization_predecessor(
         )
     except (KeyError, OSError, TypeError, UnicodeDecodeError, ValueError) as exc:
         raise HeldoutACTaskPricingMaterializationError(
-            "held-out R5 materialization predecessor is invalid"
+            "held-out R6 materialization predecessor is invalid"
         ) from exc
     if (
-        len(raw) != R5_FILE_BYTES
-        or sha256_bytes(raw) != R5_FILE_SHA256
+        len(raw) != R6_FILE_BYTES
+        or sha256_bytes(raw) != R6_FILE_SHA256
         or not isinstance(payload, dict)
-        or payload.get("content_hash") != R5_CONTENT_HASH
-        or payload.get("source_hash") != R5_SOURCE_HASH
-        or payload.get("task_bindings_hash") != R5_TASK_BINDINGS_HASH
+        or payload.get("content_hash") != R6_CONTENT_HASH
+        or payload.get("source_hash") != R6_SOURCE_HASH
+        or payload.get("task_bindings_hash") != R6_TASK_BINDINGS_HASH
         or sha256_json([item.model_dump(mode="json") for item in task_bindings])
-        != R5_TASK_BINDINGS_HASH
+        != R6_TASK_BINDINGS_HASH
         or pricing.content_hash != PRICING_HASH
         or (payload.get("authority") or {}).get("predecessor_official_pricing_public_get_requests")
         != 1
         or (payload.get("authority") or {}).get("added_official_pricing_public_get_requests") != 0
     ):
         raise HeldoutACTaskPricingMaterializationError(
-            "held-out R5 materialization predecessor drifted"
+            "held-out R6 materialization predecessor drifted"
         )
-    predecessor = R5MaterializationPredecessor(
-        path=R5_PATH.as_posix(),
+    predecessor = R6MaterializationPredecessor(
+        path=R6_PATH.as_posix(),
         file_bytes=len(raw),
         file_sha256=sha256_bytes(raw),
         content_hash=payload["content_hash"],
@@ -521,8 +521,8 @@ def _r5_materialization_predecessor(
         task_bindings_hash=payload["task_bindings_hash"],
         pricing_binding_hash=pricing.content_hash,
         original_status=payload["status"],
-        disposition="invalidated-by-binding-adapter-r10-successor",
-        invalidation_reason="post-r5-binding-adapter-r10",
+        disposition="invalidated-by-binding-adapter-r11-successor",
+        invalidation_reason="post-r6-binding-adapter-r11",
         current_source_replay_valid=False,
         retained_task_bindings_reused=True,
         retained_pricing_capture_reused=True,
@@ -694,8 +694,8 @@ def _build_candidate(
     *,
     recorded_at: datetime,
 ) -> HeldoutACTaskPricingMaterialization:
-    binding_predecessor = _r10_binding_source_predecessor(root)
-    materialization_predecessor, task_bindings, pricing = _r5_materialization_predecessor(root)
+    binding_predecessor = _r11_binding_source_predecessor(root)
+    materialization_predecessor, task_bindings, pricing = _r6_materialization_predecessor(root)
     budget_amendment = heldout_ac_budget_amendment_binding(repository=root)
     plan = load_heldout_ac_task_evaluator_plan(repository=root)
     if tuple(item.task for item in task_bindings) != plan.tasks:
@@ -856,18 +856,18 @@ __all__ = [
     "OUTPUT_PATH",
     "PLAN_HASH",
     "PRICING_HASH",
-    "R10_CONTENT_HASH",
-    "R10_CONTRACT_SOURCE_HASH",
-    "R10_FILE_BYTES",
-    "R10_FILE_SHA256",
-    "R10_PATH",
-    "R10_SOURCE_HASH",
-    "R5_CONTENT_HASH",
-    "R5_FILE_BYTES",
-    "R5_FILE_SHA256",
-    "R5_PATH",
-    "R5_SOURCE_HASH",
-    "R5_TASK_BINDINGS_HASH",
+    "R11_CONTENT_HASH",
+    "R11_CONTRACT_SOURCE_HASH",
+    "R11_FILE_BYTES",
+    "R11_FILE_SHA256",
+    "R11_PATH",
+    "R11_SOURCE_HASH",
+    "R6_CONTENT_HASH",
+    "R6_FILE_BYTES",
+    "R6_FILE_SHA256",
+    "R6_PATH",
+    "R6_SOURCE_HASH",
+    "R6_TASK_BINDINGS_HASH",
     "SCHEMA_VERSION",
     "SOURCE_PATHS",
     "STATUS",

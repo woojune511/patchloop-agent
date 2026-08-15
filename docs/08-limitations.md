@@ -39,8 +39,14 @@ not-started after a hidden failure and evaluator-control collision. R14 then con
 historical reason remains `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; the deterministic budget-authority diagnosis does
 not reauthenticate, reclassify or settle it. None supplies a complete contrast, official analysis or memory claim.
 
+R15 separately consumed candidate `sha256:e11ece55...64f8bc` and stopped at 2 settled/1 observed-unsettled/
+45 not-started. Settled cost was `$0.2002335`; total observed-started cost was `$1.112112`. The third row reached a
+typed model-generation budget terminal, but trace qualification expected the legacy rich terminal-result shape while
+V2 persisted a sanitized result plus typed events. The successor repairs that producer/consumer contract; it does not
+retroactively authenticate R15. R15 supplies no complete contrast, official analysis or memory claim either.
+
 The development-only `$57.60`/`$60` envelope may censor long trajectories; budget terminals score zero. It excluded
-R11 outcomes/task content, predicted neither completion nor invoices, and does not make later results poolable.
+R11 outcomes/task content, predicted neither completion nor invoices, and does not make R14/R15 results poolable.
 
 ## Evaluator-v1 correctness gap
 

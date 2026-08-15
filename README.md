@@ -15,10 +15,16 @@ The held-out 48-row design remains incomplete. R7 sealed 0 settled/1 unsettled/4
 `$0.41801625` observed-started. R14 candidate `sha256:67475f57...307fd` consumed its `$57.60`/`$60` approval and
 sealed 0 settled/1 observed-unsettled/47 not-started with `$0.126342` observed.
 
+R15 candidate `sha256:e11ece55...64f8bc` consumed a separate `$57.60`/`$60` approval and sealed 2 settled,
+1 observed-unsettled and 45 not-started rows. Settled cost was `$0.2002335`; total observed-started cost was
+`$1.112112`.
+
 R14's historical `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` is unchanged. Deterministic successor attribution is
 `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH`: candidate 1M/100k/1.1M limits were compared with immutable
 suite 4M/500k/4.5M limits. No retry, reauthentication, reclassification, official analysis or memory claim follows.
-Contract R10 → binding R10 → materialization R6 → execution R7 → preflight R15 is current zero-authority source.
+R15's historical reason is also unchanged; its successor diagnosis is
+`TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH`. Contract R11 → binding R11 → materialization R7 →
+execution R8 → preflight R16 is current zero-authority source.
 
 ## Implemented path
 
@@ -29,7 +35,7 @@ Contract R10 → binding R10 → materialization R6 → execution R7 → preflig
 - Candidate-v3 realized-schedule identity, candidate-bound runtime/cost, atomic evidence and exact historical replay
 
 Evaluator-v1 still assigns literal safety PASS, so historical results are not independently safety-verified. D-142
-stays source-qualified/unactivated/deferred. R8 and held-out R7/R11/R14 are consumed; none may resume or transfer
+stays source-qualified/unactivated/deferred. R8 and held-out R7/R11/R14/R15 are consumed; none may resume or transfer
 approval. There is no current candidate, approval, provider/B/D authority or official held-out analysis.
 
 Exact tuples, provenance and zero-activity limits are in `docs/09-evidence.md`.

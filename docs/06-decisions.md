@@ -25,10 +25,15 @@ four-run development A/C readiness -> preregister held-out A/C -> separately aut
   settled/1 observed-unsettled/47 not-started at `$0.126342` observed. Preserve its historical
   `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; deterministic `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH`
   attribution (candidate limits versus immutable 4M/500k/4.5M suite limits) cannot reauthenticate or reclassify it.
+- R15 candidate `sha256:e11ece55...64f8bc` separately consumed the same cost envelope and sealed 2 settled/
+  1 observed-unsettled/45 not-started at `$0.2002335` settled and `$1.112112` total observed-started. Preserve its
+  historical `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; deterministic
+  `TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH` attribution cannot reauthenticate, reclassify or resume it.
+  V2 terminal qualification binds the sanitized result to exact typed failure events; V1 compatibility remains exact.
 - Candidate-v3 commits the realized row order and every task/evaluator binding. Runtime/cost authority is candidate-
-  bound; current prior rows require persisted-v5/row-v2 and full budget/semantic revalidation. Historical R7/R11/R14
+  bound; current prior rows require persisted-v5/row-v2 and full budget/semantic revalidation. Historical R7/R11/R14/R15
   replay requires the exact execution/final-file/content/journal binding, not merely a parseable legacy schema.
-- Contract R10 → binding R10 → materialization R6 → execution R7 → preflight R15 is zero-authority. Commit it before a
+- Contract R11 → binding R11 → materialization R7 → execution R8 → preflight R16 is zero-authority. Commit it before a
   fresh read-only no-call preflight; no candidate, approval or provider authority exists now.
 
 ### 2026-08-14 — isolate held-out contracts from historical execution
