@@ -90,8 +90,9 @@ Three generalized entries have approved D-105 text and a D-110 frozen index; ret
 It verifies D-105/D-110 assets, assembles only the three texts in frozen order, renders A as null and C as the exact
 3,528-byte bundle, and binds delivery through existing request/context evidence without retrieval events.
 
-It loads no embedding model or scorer. R8 completed both A/C task pairs under the contract-hardened evaluator-v2
-source. The result is descriptive development readiness, not retrieval or held-out memory-effect evidence.
+It loads no embedding model or scorer. R8 completed both development A/C task pairs; R16 later completed the frozen
+48-row held-out A/C panel. R16's official estimate is panel-specific and does not establish retrieval or a causal/
+general memory effect.
 
 ### Deferred paths
 
@@ -105,7 +106,7 @@ source. The result is descriptive development readiness, not retrieval or held-o
 - Config, tests and a frozen index authorize neither paid calls nor retrieval/injection.
 - A candidate ID does not technically authenticate a user; repository gates are cooperative and append-only.
 - No active path may read private/hidden/reference data to construct memory or select a task.
-- Completed attempt evidence is immutable. Unchanged source/configuration may run again with a new attempt ID;
-  only an experiment-defining semantic change requires a new version.
+- Completed attempt evidence is immutable. Paid campaign identity and unblinded panels are one-use; another experiment
+  requires a fresh preregistered design, source/candidate identity and approval.
 
 Current authority is summarized only in `docs/current-status.md`.

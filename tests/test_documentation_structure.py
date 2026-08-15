@@ -72,6 +72,7 @@ def test_agent_required_reading_does_not_require_archive() -> None:
 def test_current_docs_bind_the_consumed_four_run_result_without_new_live_authority() -> None:
     status = Path("docs/current-status.md").read_text(encoding="utf-8")
     protocol = Path("docs/04-evaluation-protocol.md").read_text(encoding="utf-8")
+    evidence = Path("docs/09-evidence.md").read_text(encoding="utf-8")
     plan = Path("experiments/ac-structured-pilot.plan.yaml").read_text(encoding="utf-8")
 
     assert "four-run A/C readiness" in status
@@ -79,6 +80,14 @@ def test_current_docs_bind_the_consumed_four_run_result_without_new_live_authori
     assert "Babel #1042" in protocol
     assert "candidate `sha256:60c67908...cff9e`" in status
     assert "All four Moto A/C + Babel C/A rows resolved" in status
+    assert (
+        "candidate `sha256:24044c1ed525458446f1c97d94f52331082d74051f5c6d680da995ea9aa48813`"
+        in status
+    )
+    assert "48 settled, 0" in status
+    assert "structured minus no-memory is `-1/24`" in status
+    assert "R16 held-out complete matrix" in evidence
+    assert "Causal/general" in evidence
     assert "No paid, held-out or B/D execution is currently authorized" in status
     assert "expected_runs: 4" in plan
     assert "provider_execution_authorized: false" in plan

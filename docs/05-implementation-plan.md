@@ -24,74 +24,31 @@ receipt, persistence, qualification and completion adapters are tested with v1 b
 also separates evaluator-private diagnostics from agent-visible leakage, uses opaque control identities and requires
 runtime-issued provenance for official completion. This is harness correctness, not a production-security claim.
 
-## Work item 2 — successor A/C qualification
+## Work items 2-5a — development A/C
 
-Status: R3-R6 and their R5-R8 qualifications are immutable; R10 offline-qualifies R8 source/tests, tasks/images, v11
-plan, four rows and unchanged A-null/C-exact-three treatment. R7/R9 is superseded unexecuted.
-
-## Work item 3 — reusable fast preflight
-
-Status: implemented and exercised for R8. Its exact candidate was used once and is now consumed; R7 remains
-superseded unexecuted.
-
-The supported command validates source identities, loads only secret presence, performs bounded Docker/SDK no-call
-checks, retries transient pre-provider failures at most three times and emits a candidate only if all gates pass.
-Attempt summaries remain immutable; the command makes no provider/evaluator/agent call.
-
-## Work item 4 — one campaign approval
-
-Status: completed for R3 through R8; all five exact approvals are consumed.
-
-R3 bound `$54.45` reserve/`$55` cap. R4 bound `$15.30` reserve/`$18` cap and sealed provider-before-dispatch at
-`$0`; R5 and R6 used the same reserve/cap and sealed after one evaluated row failed qualification at `$0.19303425`
-and `$0.169596`, respectively. R8 used the same reserve/cap, completed four rows at `$0.3664215` and is consumed.
-No approval transfers to another suite or campaign.
-
-## Work item 5 — four-run A/C readiness
-
-Status: complete for the R8 development-readiness matrix after append-only completion-projection correction.
-
-R3 Moto A resolved; Moto C hit 3M before submission and its secondary binding mismatch halted Babel. R4 then failed
-capability revalidation before provider dispatch at `$0`. R5 Moto A resolved and passed evaluator v2, but legacy
-terminal-qualification assumptions rejected the row and halted the rest. R6 Moto A also resolved, but runtime evidence
-serialized the legacy call-guard policy and failed terminal qualification. R8 completed all four exact rows; its raw
-result's stale v1 completion envelope misclassified v2 qualifications, and the R3 correction index recomputes the
-matrix without rewriting it. Output remains descriptive, not causal or held-out.
-
-## Work item 5a — contract-hardening successor and fresh panel
-
-Status: completed and consumed as R10/R8 plus append-only R8 completion correction.
-
-R8 preserves the runtime-evidence fix and hardens types/evidence bindings while keeping equal A/C limits: 3M input, 350k output, 3.35M aggregate,
-25k/response, 180 model, 300 tool and 3,600 seconds; reserve is `$3.825`/row, `$15.30`/panel, `$18` cap. This
-R3-informed diagnostic is not held-out-safe or a benefit claim. Both conditions resolved both tasks; observed success
-delta is zero, while structured used fewer tokens and list-price cost in both pairs. No rerun is authorized.
+Status: complete and consumed. R3-R6 are immutable inconclusive, R7/R9 is superseded, and R10-qualified R8 completed
+the four Moto/Babel A/C readiness rows for `$0.3664215`. Its append-only correction preserves the raw result while
+recomputing the v2 completion projection. This is descriptive development readiness only; exact predecessor limits,
+failure classes and hashes remain in `docs/09-evidence.md`. No development candidate or approval may be reused.
 
 ## Work item 6 — preregistered held-out A/C
 
-Status: R7/R11/R14/R15 are immutable inconclusive; R11 → R11 → R7 → R8 → R16 offline-qualifies the corrected successor.
+Status: complete and consumed as R16; R7/R11/R14/R15 remain immutable inconclusive predecessors.
 
-The preregistration freezes 12 tasks × A/C × two repetitions = 48 rows and historical `$252`/`$275` planning cost.
-Development-only evidence preserves the design but sets 1M/100k/1.1M and `$57.60`/`$60`, excluding R11/task content.
-R7 consumed candidate `sha256:2f51935b...b2afa` and stopped at 0 settled/1 unsettled/47 not-started. R11 consumed
-candidate `sha256:f48a0de...a6b0`; it stopped at 2 settled/1 observed-unsettled/45 not-started with `$0.15699525`
-settled and `$0.41801625` total observed started cost. Its correction index preserves historical `CONTRACT_ERROR` and
-attributes the Dagster stop post-runtime to `EVALUATOR_CONTROL_CONTRACT_COLLISION`; no analysis follows.
+The preregistration freezes 12 tasks × A/C × two repetitions = 48 rows. Development-only evidence set equal A/C at
+1M/100k/1.1M and `$57.60`/`$60`, excluding held-out outcomes/task content. R7/R11/R14/R15 are immutable inconclusive;
+their exact accounting, historical reasons and append-only successor diagnoses remain in `docs/09-evidence.md` and
+cannot reauthenticate, relabel, settle or resume them.
 
-R14 consumed candidate `sha256:67475f57...307fd` and stopped at 0 settled/1 observed-unsettled/47 not-started with
-`$0.126342` observed. Preserve historical `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; append-only diagnosis is
-`TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` (candidate 1M/100k/1.1M versus suite 4M/500k/4.5M).
+The successor added candidate-v3 realized-schedule identity, candidate-bound runtime/cost, current
+persisted-v5/row-v2 prior-row revalidation and exact historical replay. R16 candidate `sha256:24044c1e...8813`
+consumed a separate approval and completed 48 settled rows at `$27.24465825`: 15 resolved, 14 task failures and
+19 typed agent failures. No-memory succeeded 8/24 and structured 7/24, yielding official frozen-panel C-minus-A
+`-1/24`; the descriptive stability interval is `[-1/4, 1/6]`. No causal/general memory claim follows.
 
-R15 consumed candidate `sha256:e11ece55...64f8bc` and stopped at 2 settled/1 observed-unsettled/45 not-started:
-`$0.2002335` settled and `$1.112112` total observed-started. Its historical campaign reason remains
-`DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; the append-only diagnosis is
-`TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH`. The V2 qualifier now accepts the sanitized terminal result
-only when exact typed `RunFailed` and `ModelGenerationBlocked` evidence binds it; V1 keeps its legacy rich shape.
-
-The successor adds candidate-v3 realized-schedule identity, candidate-bound runtime/cost, current persisted-v5/row-v2
-prior-row revalidation and exact R7/R11/R14/R15 triple replay. Next: commit R11/R11/R7/R8/R16, then run one fresh
-read-only append-only no-call preflight. A separate exact 48-row `$57.60`/`$60` approval would still be required;
-current candidate, approval and provider authority are 0.
+The candidate, approval and panel are consumed. Preserve the append-only R16 index and do not rerun or tune against
+this unblinded panel. Any next experiment begins with a separately preregistered fresh design; current provider
+authority is 0.
 
 ## Work item 7 — B/D and the full comparison
 
@@ -99,6 +56,6 @@ Status: deferred.
 
 - B/raw-trace needs portable source selection, redaction and equal-budget truncation.
 - D/selective needs independent applicability labels and a frozen score/rerank/threshold policy.
-- If designed after held-out A/C is unblinded, B/D use a separate fresh held-out panel.
+- Because held-out A/C is now unblinded, B/D must use a separate fresh held-out panel.
 
 No readiness or held-out A/C result automatically unlocks B, D or a full A/B/C/D campaign.

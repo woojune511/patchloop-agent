@@ -10,21 +10,23 @@ exact three-entry D-110 bundle (C) on Moto and Babel under an otherwise fixed ru
 four rows for `$0.3664215`; its stale v1/v2 completion projection is corrected append-only. This is descriptive
 workflow readiness, not a causal or general memory result.
 
-The held-out 48-row design remains incomplete. R7 sealed 0 settled/1 unsettled/47 not-started. R11 candidate
-`sha256:f48a0de...a6b0` sealed 2 settled/1 observed-unsettled/45 not-started with `$0.15699525` settled and
-`$0.41801625` observed-started. R14 candidate `sha256:67475f57...307fd` consumed its `$57.60`/`$60` approval and
-sealed 0 settled/1 observed-unsettled/47 not-started with `$0.126342` observed.
+The preregistered held-out A/C panel is now complete. R16 candidate `sha256:24044c1e...8813` consumed one exact
+48-row `$57.60`/`$60` approval and settled all 48 rows for `$27.24465825`: 15 resolved, 14 task failures and
+19 typed agent failures. No-memory succeeded on 8/24 rows and structured on 7/24, an official frozen-panel
+structured-minus-no-memory estimate of `-1/24` (-4.17 percentage points). The deterministic descriptive stability
+interval is `[-1/4, 1/6]`; it is not a population confidence interval or a causal/general memory result.
 
-R15 candidate `sha256:e11ece55...64f8bc` consumed a separate `$57.60`/`$60` approval and sealed 2 settled,
-1 observed-unsettled and 45 not-started rows. Settled cost was `$0.2002335`; total observed-started cost was
-`$1.112112`.
+Earlier R7/R11/R14/R15 campaigns remain immutable inconclusive predecessors. R11 sealed 2 settled/1
+observed-unsettled/45 not-started at `$0.41801625` observed-started; R14 sealed 0/1/47 at `$0.126342`; R15 sealed
+2/1/45 at `$1.112112` observed-started.
 
 R14's historical `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` is unchanged. Deterministic successor attribution is
 `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH`: candidate 1M/100k/1.1M limits were compared with immutable
 suite 4M/500k/4.5M limits. No retry, reauthentication, reclassification, official analysis or memory claim follows.
 R15's historical reason is also unchanged; its successor diagnosis is
-`TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH`. Contract R11 → binding R11 → materialization R7 →
-execution R8 → preflight R16 is current zero-authority source.
+`TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH`.
+Contract R11 → binding R11 → materialization R7 → execution R8 → preflight R16 is the consumed source chain for
+the complete R16 result; its append-only index made no new runtime call or spend.
 
 ## Implemented path
 
@@ -35,8 +37,9 @@ execution R8 → preflight R16 is current zero-authority source.
 - Candidate-v3 realized-schedule identity, candidate-bound runtime/cost, atomic evidence and exact historical replay
 
 Evaluator-v1 still assigns literal safety PASS, so historical results are not independently safety-verified. D-142
-stays source-qualified/unactivated/deferred. R8 and held-out R7/R11/R14/R15 are consumed; none may resume or transfer
-approval. There is no current candidate, approval, provider/B/D authority or official held-out analysis.
+stays source-qualified/unactivated/deferred. R8 and held-out R7/R11/R14/R15/R16 are consumed; none may resume or
+transfer approval. R16 has official analysis for this frozen panel only. There is no current candidate, approval,
+provider/B/D authority or causal/general memory-benefit claim.
 
 Exact tuples, provenance and zero-activity limits are in `docs/09-evidence.md`.
 
@@ -50,7 +53,8 @@ $docsBasetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-docs-'
 git diff --check
 ```
 
-These checks make no external or paid call. `uv run --offline --frozen patchloop --help` lists the CLI. A future
-provider campaign needs committed qualified source, a fresh clean no-call output and separate exact cost approval.
+These checks make no external or paid call. `uv run --offline --frozen patchloop --help` lists the CLI. Any future
+campaign needs a separately preregistered fresh design, committed qualified source, a clean no-call output and an
+exact new cost approval.
 
 Use `docs/00-index.md` for active authority/navigation. Historical narratives live under `docs/archive/`.

@@ -12,41 +12,30 @@ Historical milestone-by-milestone limitations are archived at
 
 ## Existing evidence is not a memory-benefit result
 
-- D-098 is a development control: 12 rows, 11 evaluations, 2 scope-compliant successes; it is not held-out evidence.
-- Three entries are frozen and R3 Moto C received the exact bundle live, but that row could not fund the exact next
-  request within the 3M ceiling before submission. Delivery is now observed; task effect is not.
-- D-110 freezes storage, not selective-retrieval authority. Existing embedding/ranking behavior is outside the
-  exact fixed-bundle C treatment and lacks blind independent calibration.
-- R4 exercised only the paid capability boundary and stopped before provider dispatch at `$0`. R5 and R6 reached
-  provider/evaluator for one no-memory row each but failed terminal qualification. R8 completed four qualified rows,
-  showing exact-panel workflow readiness but not that its increased headroom caused success or improved memory effect.
+- D-098 and R3-R8 are development evidence. R8 completed four qualified Moto/Babel rows for `$0.3664215`, but one
+  repetition on two tasks establishes workflow readiness only. D-110 freezes exact storage/delivery, not selective
+  retrieval, calibration or a memory effect. Exact predecessor failures remain in `docs/09-evidence.md`.
 
 ## Four-run A/C readiness
 
-- One Moto/Babel development repetition is descriptive only: no variance, causal/general benefit, production,
-  retrieval, transfer, per-rule or negative-transfer claim follows.
-- R3 is a sealed four-row result container but only two rows became terminal. Its Moto A success and Moto C
-  pre-evaluator budget failure do not form an analyzable pair.
-- R8's 3M/350k/3.35M token and 180/300 call limits are R3-informed diagnostics, not held-out-safe or convergent.
-  Its `$3.825`/row, `$15.30`/panel and `$18` cap were approval ceilings, not invoices or completion predictions;
-  actual cost was `$0.3664215`. R8 is consumed and cannot transfer approval.
-- Both conditions succeeded on two development tasks with one repetition. Structured used fewer tokens/cost in both,
-  but there is no variance estimate, causal attribution, held-out validation or population memory-benefit claim.
+- R8's 3M/350k/3.35M limits and `$15.30`/`$18` envelope were R3-informed diagnostics, not completion predictions.
+  Both conditions succeeded on two tasks and structured used fewer tokens/cost, but no causal, general, retrieval,
+  transfer, per-rule or population negative-transfer claim follows.
 
-Held-out R7 stopped at 0 settled/1 unsettled/47 not-started. R11 stopped at 2 settled/1 observed-unsettled/45
-not-started after a hidden failure and evaluator-control collision. R14 then consumed candidate
-`sha256:67475f57...307fd` and stopped at 0 settled/1 observed-unsettled/47 not-started with `$0.126342` observed. Its
-historical reason remains `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; the deterministic budget-authority diagnosis does
-not reauthenticate, reclassify or settle it. None supplies a complete contrast, official analysis or memory claim.
+Held-out R7/R11/R14/R15 are immutable inconclusive predecessors. Their correction indices preserve historical reasons,
+add deterministic contract attribution only, and cannot reauthenticate, reclassify, settle or resume rows. None
+supplies a complete contrast or official analysis; exact accounting and causes remain in `docs/09-evidence.md`.
 
-R15 separately consumed candidate `sha256:e11ece55...64f8bc` and stopped at 2 settled/1 observed-unsettled/
-45 not-started. Settled cost was `$0.2002335`; total observed-started cost was `$1.112112`. The third row reached a
-typed model-generation budget terminal, but trace qualification expected the legacy rich terminal-result shape while
-V2 persisted a sanitized result plus typed events. The successor repairs that producer/consumer contract; it does not
-retroactively authenticate R15. R15 supplies no complete contrast, official analysis or memory claim either.
+R16 then completed 48/48 settled rows for `$27.24465825`, with 15 resolved, 14 task failures and 19 typed agent
+failures. No-memory succeeded 8/24 and structured 7/24; the official frozen-panel C-minus-A estimate is `-1/24`.
+The `[-1/4, 1/6]` deterministic stability interval is descriptive, not a population confidence interval, and the
+assumption-based sign-flip reference is `p=1`. Benefit/negative-transfer flips were 3/24 and 4/24. Same-repo effect
+was 0 and cross-repo effect `-1/12`; these small strata are descriptive only.
 
-The development-only `$57.60`/`$60` envelope may censor long trajectories; budget terminals score zero. It excluded
-R11 outcomes/task content, predicted neither completion nor invoices, and does not make R14/R15 results poolable.
+The development-only `$57.60`/`$60` envelope censored 18 rows at the token budget and one at submission, all scored
+zero by the preregistration. It excluded R11 outcomes/task content when set, but predicted neither completion nor the
+`$27.24465825` actual cost. The 12 task clusters, two repetitions and high-contamination public lineage do not support
+causal, uncontaminated, population or production generalization. R16 is unblinded and cannot be reused for tuning.
 
 ## Evaluator-v1 correctness gap
 

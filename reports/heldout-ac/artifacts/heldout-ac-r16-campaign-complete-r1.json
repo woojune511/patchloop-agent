@@ -1,0 +1,275 @@
+{
+  "schema_version": "heldout-ac-complete-campaign-evidence-index-v1",
+  "evidence_id": "core-ac-fixed-bundle-heldout-r16-live-complete-20260815-r1",
+  "status": "LIVE_CAMPAIGN_COMPLETE_MATRIX_OFFICIAL_ANALYSIS_INDEXED",
+  "recorded_at": "2026-08-15T14:06:03.992444Z",
+  "historical_git_commit": "d82291d9332894a4e0b0fc0618e3464bfc9a77e6",
+  "historical_git_tree": "827eb2a0640be0ccb816affde8ff7fa2b148e0b4",
+  "suite_id": "core-ac-fixed-bundle-heldout-20260814-v1",
+  "suite_content_hash": "sha256:1d023e8837e99889d76acf6f3a2d970261cb7aa4b3e978c84cef2ef5cf517aaa",
+  "execution_hash": "sha256:24044c1ed525458446f1c97d94f52331082d74051f5c6d680da995ea9aa48813",
+  "runtime_tuple_hash": "sha256:ff8ddf0a4735162820b3fd91966fb977fa996c9c04d9d4ee649d2353a01e95a8",
+  "campaign_cost_control_hash": "sha256:c705d04b2bd6756fed96dd5d91caaa0480a9edf02d84c5a0509c3c4707590a4c",
+  "pricing_binding_hash": "sha256:83bb15d171564f32d0ca6df24f733a957032e144bbd0dfed49071e1b205a27e9",
+  "realized_schedule_hash": "sha256:f75459b2cace0d3dd71920bf57a441b792209720ecc36763b706d7c2a8601739",
+  "schedule_hash": "sha256:7eb4b583415e832e44da242de02a894152aa882255514532cfb5bd770b205b88",
+  "full_schedule_reserve_nanos": 57600000000,
+  "hard_cap_nanos": 60000000000,
+  "approval_consumed": true,
+  "source_chain": [
+    {
+      "path": "reports/heldout-ac/artifacts/heldout-ac-contract-source-qualification-r11.json",
+      "file_bytes": 22246,
+      "file_sha256": "sha256:8373844f7d548ecfa98d32ea712d7626cd4e1f6ced021af9c1253f3af08be42f",
+      "content_hash": "sha256:140c747effd5621cc33ba2d2a0187774332fa31b50b978f4791039bb05f06755"
+    },
+    {
+      "path": "reports/heldout-ac/artifacts/heldout-ac-binding-adapter-source-qualification-r11.json",
+      "file_bytes": 6353,
+      "file_sha256": "sha256:9176a0671133985e3b01cfe540ab55a6a014e1db4a1a117602a7d774518ba7f8",
+      "content_hash": "sha256:5d2b92fe34be90aabda0f2fc3fd90ff6136c5e794e362299b33f35f707aee762"
+    },
+    {
+      "path": "reports/heldout-ac/artifacts/heldout-ac-task-pricing-materialization-r7.json",
+      "file_bytes": 53250,
+      "file_sha256": "sha256:7b9bb78b89e18e067476cdf172214fb4588d3f96b68427f6f8eb49761d801425",
+      "content_hash": "sha256:2a32a034dc89a43e0d20a9dc82959d0574c82c0915a6f105f31291d7af962be4"
+    },
+    {
+      "path": "reports/heldout-ac/artifacts/heldout-ac-execution-source-qualification-r8.json",
+      "file_bytes": 20256,
+      "file_sha256": "sha256:c8e7cc989d9730c0b9671b973dd8c79d58a39b425d3975bfc729832e9a49dfeb",
+      "content_hash": "sha256:23d0c31bcc00a8b66dd7ab6518dffa3afacb6cbbad284a5ab4d995349098fd27"
+    },
+    {
+      "path": "reports/heldout-ac/artifacts/heldout-ac-preflight-source-qualification-r16.json",
+      "file_bytes": 25319,
+      "file_sha256": "sha256:033fd414cfc0b2499171e91a8b0e9e82e823f452520dfe42f54c1c9e8469e1f5",
+      "content_hash": "sha256:a15c6c0ade8bd9bb1f57cacd07ec6dbfcbb84bfc1b622b642bb4f332873b6742"
+    }
+  ],
+  "runtime_files": {
+    "candidate_preflight": {
+      "path": ".patchloop/heldout-ac-preflight-r16-20260815T174458448.json",
+      "file_bytes": 66841,
+      "file_sha256": "sha256:0e9b927cdd64413e926f5d4ca478895d9a0e4097ed785042ee5602a680552c4c",
+      "content_hash": null
+    },
+    "execution_plan": {
+      "path": ".patchloop/experiments/plans/24044c1ed525458446f1c97d94f52331082d74051f5c6d680da995ea9aa48813.json",
+      "file_bytes": 83599,
+      "file_sha256": "sha256:e8e9ae072eaf7c68798572c1ae124cff90bcc67a33fc4a872c19b00d7478bf94",
+      "content_hash": null
+    },
+    "journal": {
+      "path": ".patchloop/experiments/journals/24044c1ed525458446f1c97d94f52331082d74051f5c6d680da995ea9aa48813.jsonl",
+      "file_bytes": 122930,
+      "file_sha256": "sha256:40668bfa7b1b2142c952f2a83d12fd50aa0dbadf4d984e7c88b23c5378d33669",
+      "content_hash": null
+    },
+    "prepared_result": {
+      "path": ".patchloop/experiments/heldout-ac/24044c1ed525458446f1c97d94f52331082d74051f5c6d680da995ea9aa48813.prepared.json",
+      "file_bytes": 1202867,
+      "file_sha256": "sha256:c459886b3b65215623e4a9320f6ffe5a5f8216dda66e35d91f4bf84fdc43db2f",
+      "content_hash": "sha256:61d791264549833b5e0ec07bdd1cf68f3289e9ca374518c70e29a1d350c6dff6"
+    },
+    "final_result": {
+      "path": ".patchloop/experiments/heldout-ac/24044c1ed525458446f1c97d94f52331082d74051f5c6d680da995ea9aa48813.json",
+      "file_bytes": 1203484,
+      "file_sha256": "sha256:6a6203c049e838675925a519a8d2bd7933823779b7c5cbee850d6e18a1bbd91f",
+      "content_hash": "sha256:2e7466eba5c5cbd9e8fcbc5fae655972b78c9854ff83e9c906881337f7f985e4"
+    }
+  },
+  "campaign_observation": {
+    "disposition": "complete-matrix",
+    "expected_runs": 48,
+    "started_runs": 48,
+    "terminal_settled_runs": 48,
+    "observed_unsettled_runs": 0,
+    "not_started_runs": 0,
+    "confounded_runs": 0,
+    "settled_model_cost_nanos": 27244658250,
+    "observed_unsettled_model_cost_nanos": 0,
+    "observed_started_model_cost_nanos": 27244658250,
+    "cost_accounting_complete": true,
+    "analysis_ready": true,
+    "official_heldout_analysis": true,
+    "memory_benefit_claim_authorized": false,
+    "broad_generalization_claim_authorized": false,
+    "retry_replacement_or_resume_performed": false,
+    "outcomes": {
+      "resolved": 15,
+      "task_failure": 14,
+      "agent_failure": 19,
+      "evaluator_completed": 29,
+      "typed_pre_evaluator_agent_terminal": 19,
+      "token_budget_exhaustion": 18,
+      "submission_failure": 1
+    }
+  },
+  "official_analysis": {
+    "authenticated_completion_hash": "sha256:954ccd1ead1e826fcd07c435303f1b8c859b58ee3c742b1580ec94c675d88a95",
+    "official_analysis_envelope_hash": "sha256:7cd2e7657b2b7d878c5874f9a1e29f0aa5dea58fe8a135c9706ee903c7ccc260",
+    "analysis_semantic_hash": "sha256:635d27581c603edadf5c49f514049c446dedec37fdfe745e1faa3fa78a72c8e6",
+    "outcome_projection_semantic_hash": "sha256:4e64cbb35720229345d7ce8ec044c13d0f4bb471e4d60f66a8008e64866f325b",
+    "scheduled_rows": 48,
+    "eligible_rows": 48,
+    "task_clusters": 12,
+    "complete_panel": true,
+    "primary_estimate": {
+      "numerator": -1,
+      "denominator": 24
+    },
+    "conditions": [
+      {
+        "condition": "no_memory",
+        "eligible_rows": 24,
+        "successes": 8,
+        "success_rate": {
+          "numerator": 1,
+          "denominator": 3
+        },
+        "total_model_cost_usd": {
+          "numerator": 12380361,
+          "denominator": 1000000
+        },
+        "cost_per_success_usd": {
+          "numerator": 12380361,
+          "denominator": 8000000
+        },
+        "cost_per_success_status": "defined"
+      },
+      {
+        "condition": "structured",
+        "eligible_rows": 24,
+        "successes": 7,
+        "success_rate": {
+          "numerator": 7,
+          "denominator": 24
+        },
+        "total_model_cost_usd": {
+          "numerator": 59457189,
+          "denominator": 4000000
+        },
+        "cost_per_success_usd": {
+          "numerator": 59457189,
+          "denominator": 28000000
+        },
+        "cost_per_success_status": "defined"
+      }
+    ],
+    "stability_interval": {
+      "status": "descriptive-stability-only",
+      "method": "deterministic-task-cluster-percentile-resampling",
+      "samples": 100000,
+      "lower": {
+        "numerator": -1,
+        "denominator": 4
+      },
+      "upper": {
+        "numerator": 1,
+        "denominator": 6
+      },
+      "confidence_interval_claim_authorized": false
+    },
+    "sign_flip_sensitivity": {
+      "status": "sensitivity-reference-only",
+      "observed_abs_integer_statistic": 1,
+      "extreme_or_equal_sign_vectors": 4096,
+      "sign_vectors_enumerated": 4096,
+      "p_value": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "design_based_randomization_inference_authorized": false,
+      "headline_use_authorized": false
+    },
+    "directional_flips": {
+      "pair_count": 24,
+      "benefit_count": 3,
+      "benefit_rate": {
+        "numerator": 1,
+        "denominator": 8
+      },
+      "negative_transfer_count": 4,
+      "negative_transfer_rate": {
+        "numerator": 1,
+        "denominator": 6
+      },
+      "inference": "counts-and-rates-only"
+    },
+    "role_strata": [
+      {
+        "role": "core-same-repo",
+        "task_clusters": 6,
+        "eligible_rows": 24,
+        "estimate": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "status": "secondary-descriptive"
+      },
+      {
+        "role": "core-cross-repo",
+        "task_clusters": 6,
+        "eligible_rows": 24,
+        "estimate": {
+          "numerator": -1,
+          "denominator": 12
+        },
+        "status": "secondary-descriptive"
+      }
+    ],
+    "verdict_distributions": [
+      {
+        "verdict": "hidden",
+        "eligible_rows": 48,
+        "pass_rows": 15,
+        "fail_rows": 14,
+        "not_run_typed_agent_terminal_rows": 19
+      },
+      {
+        "verdict": "regression",
+        "eligible_rows": 48,
+        "pass_rows": 29,
+        "fail_rows": 0,
+        "not_run_typed_agent_terminal_rows": 19
+      },
+      {
+        "verdict": "scope",
+        "eligible_rows": 48,
+        "pass_rows": 29,
+        "fail_rows": 0,
+        "not_run_typed_agent_terminal_rows": 19
+      },
+      {
+        "verdict": "safety",
+        "eligible_rows": 48,
+        "pass_rows": 29,
+        "fail_rows": 0,
+        "not_run_typed_agent_terminal_rows": 19
+      }
+    ],
+    "causal_general_memory_benefit_claim_authorized": false,
+    "broad_generalization_claim_authorized": false
+  },
+  "authority": {
+    "r16_campaign_is_immutable_and_consumed": true,
+    "evidence_index_is_append_only_summary_only": true,
+    "historical_runtime_files_mutated": false,
+    "retry_replacement_or_resume_performed": false,
+    "official_frozen_panel_analysis_recorded": true,
+    "causal_or_general_memory_benefit_claim_authorized": false,
+    "future_candidate_or_paid_execution_authorized": false,
+    "runtime_artifacts_created": 0,
+    "credential_values_observed": 0,
+    "provider_calls_made": 0,
+    "evaluator_calls_made": 0,
+    "agent_runs_made": 0,
+    "docker_calls_made": 0,
+    "sdk_calls_made": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "next_gate": "preserve-this-consumed-panel-and-require-a-new-preregistered-design-for-future-paid-work",
+  "content_hash": "sha256:945e8e9ff1df60a255d20fb406ca7b7ab20ca16a3b50da5cbce12f2fb38a6521"
+}

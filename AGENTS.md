@@ -32,12 +32,17 @@
   1 observed-unsettled/45 not-started. Settled cost was `$0.2002335`; total observed-started cost was `$1.112112`.
   Historical reason `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` is unchanged; successor attribution is
   `TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH`. It is immutable and supports no official analysis or claim.
-- Current Contract R11 → binding R11 → materialization R7 → execution R8 → preflight R16 is source-qualified only.
-  Candidate-v3 binds the realized 48-row schedule plus candidate runtime/cost authority; it created no candidate,
-  approval, observation or spend.
+- Held-out R16 candidate `sha256:24044c1e...8813` consumed a separate `$57.60`/`$60` approval and completed all
+  48 settled rows for `$27.24465825`, with 15 resolved, 14 task failures and 19 typed agent failures. The official
+  frozen-panel estimate is structured minus no-memory `-1/24` (-4.17 pp); its descriptive stability interval is
+  `[-1/4, 1/6]`. This is not a causal, general or uncontaminated memory-benefit result, and R16 cannot retry or resume.
+- Contract R11 → binding R11 → materialization R7 → execution R8 → preflight R16 is the consumed source chain for
+  that result. Candidate-v3 binds the realized schedule and runtime/cost authority; the append-only R16 evidence
+  index added no runtime calls or cost and grants no future execution authority.
 - Local no-call preflight permits at most three transient pre-provider attempts. Paid campaign identity ignores
-  readiness timestamps and is one-use by semantic source/suite/schedule; a future run needs committed qualified source,
-  fresh clean candidate and separate exact approval. No provider execution is currently authorized.
+  readiness timestamps and is one-use by semantic source/suite/schedule. R16 unblinded the A/C panel, so another
+  experiment needs a separately preregistered fresh design, qualified source, candidate and exact approval. No provider
+  execution is currently authorized.
 - `docs/current-status.md` is the single current prose authority; `docs/09-evidence.md` owns exact tuples.
 
 ## Required reading

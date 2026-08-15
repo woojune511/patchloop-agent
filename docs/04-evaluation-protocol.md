@@ -46,9 +46,9 @@ free of infrastructure, qualification, diagnostic and budget confounds. V2 also 
 typed safety evidence. Rows cannot be replaced. Cross-clone and kill/power-loss durability remain unverified.
 
 A complete matrix may report terminal/evaluator reach, delivery integrity, SCRR/verdicts, flips, token/call/duration/
-cost and paired C-minus-A deltas. It cannot claim causal or general memory improvement, held-out/cross-repository or
-production readiness, significance/confidence, per-rule efficacy, retrieval quality or population negative transfer.
-R11, R14 and R15 provide incomplete operational observations only.
+cost and paired C-minus-A deltas. It cannot claim causal or general memory improvement, production readiness,
+significance/confidence, per-rule efficacy, retrieval quality or population negative transfer. R16 supplies an
+official estimate for the frozen held-out panel only; R11, R14 and R15 remain incomplete operational observations.
 
 Private specs, hidden/reference evidence, known-bad patches and traces cannot tune tasks, memory, thresholds, prompt,
 selection or policy. Moto/Babel cannot become fresh validation after their outcomes informed changes. Partially
@@ -68,6 +68,8 @@ Eligible evaluator FAIL and typed agent terminals score zero; infrastructure con
   not-started with `$0.126342` observed.
 - R15 candidate `sha256:e11ece55...64f8bc` separately consumed the same envelope and sealed 2 settled/
   1 observed-unsettled/45 not-started: `$0.2002335` settled and `$1.112112` observed-started.
+- R16 candidate `sha256:24044c1e...8813` consumed a fresh approval and completed 48/48 settled rows at
+  `$27.24465825`, with 15 resolved, 14 task failures and 19 typed agent failures. No retry/replacement/resume occurred.
 
 R14's immutable reason is `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`. Post-runtime
 `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` records that completion compared the candidate
@@ -76,8 +78,13 @@ R15 preserves the same historical campaign reason while the successor diagnosis
 `TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH` records the old qualifier's impossible v1-rich requirement
 for a sanitized v2 budget terminal.
 
-Contract R11 → binding R11 → materialization R7 → execution R8 → preflight R16 is the corrected zero-authority path.
-Candidate-v3 binds the realized schedule and candidate runtime/cost. Current next-row admission requires
-persisted-v5/row-v2 plus budget/semantic revalidation; known R7/R11/R14/R15 history requires the exact allowlisted
-final-file/content/journal triple. Further execution requires committed source, a fresh read-only no-call candidate and
-separate exact approval. No candidate, approval, official analysis or memory claim exists now.
+Contract R11 → binding R11 → materialization R7 → execution R8 → preflight R16 was the corrected source path consumed
+by R16. Candidate-v3 bound the realized schedule and runtime/cost; every next-row admission required
+persisted-v5/row-v2 plus budget/semantic revalidation. Known legacy R7/R11/R14/R15 history requires its exact allowlisted
+final-file/content/journal triple.
+
+R16's official frozen-panel results are no-memory 8/24 and structured 7/24, so C-minus-A is `-1/24`. The deterministic
+100,000-sample stability interval is `[-1/4, 1/6]`; the assumption-based sign-flip sensitivity is `p=1`; benefit and
+negative-transfer flips are 3/24 and 4/24. Same-repo effect is 0 and cross-repo effect is `-1/12`. These quantities do
+not authorize a causal/general memory claim or reuse of the now-unblinded panel. Another experiment requires a fresh
+preregistered design and separate authority; no candidate or approval exists now.

@@ -18,13 +18,14 @@ through D-121 prose is archived at `docs/archive/snapshots/d121/03-contracts.ful
 outside `ExperimentSuite` and grant no runtime authority. The budget amendment changes equal A/C to 1M input, 100k
 output, 1.1M aggregate and `$57.60`/`$60`, based only on development evidence.
 
-Current zero-authority source is Contract R11 → binding R11 → materialization R7 → execution R8 → preflight/
-dispatcher R16. R7 retains the 12 opaque task bindings and R1 prices without another GET. Exact tuples are in
-`docs/09-evidence.md`. R15 candidate `sha256:e11ece55...64f8bc` is a consumed predecessor: 2 settled,
-1 observed-unsettled, 45 not-started. R3-R8 development and held-out R7/R11/R14/R15 remain immutable.
+Contract R11 → binding R11 → materialization R7 → execution R8 → preflight/dispatcher R16 is the consumed source
+chain for candidate `sha256:24044c1e...8813`. It completed 48 settled rows for `$27.24465825`; exact source/runtime
+tuples are in `docs/09-evidence.md`. R7 retains the 12 opaque task bindings and R1 prices without another GET.
+R3-R8 development and held-out R7/R11/R14/R15/R16 remain immutable.
 
 Fixtures emit `official=false`, `analysis_ready=false`; only trusted runtime-issued, non-serialized provenance for 48
-independently authenticated and settled rows can unlock analysis. A fresh candidate and paid approval are separate.
+independently authenticated and settled rows can unlock analysis. R16 crossed that boundary for its frozen panel;
+persisted rows themselves remain unofficial, and no execution or broad claim transfers from the result.
 
 ## 3. Run, candidate and state contracts
 
@@ -72,12 +73,13 @@ observed-unsettled and total observed-started cost.
 
 Completion requires each exact row once, runtime-authenticated provenance, settlement and evaluator/verdict
 consistency. Missing, duplicate, retried, replaced or confounded rows are inconclusive; persisted bytes cannot mint
-analysis authority. Known R7/R11/R14/R15 history is accepted only when execution hash, final-file SHA, result content hash
-and journal SHA equal its allowlisted tuple.
+analysis authority. Known legacy R7/R11/R14/R15 history is accepted only when execution hash, final-file SHA, result
+content hash and journal SHA equal its allowlisted tuple.
 
 R14's historical `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` remains unchanged. The deterministic
 `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` diagnosis records candidate 1M/100k/1.1M versus immutable
 suite 4M/500k/4.5M without reauthentication or reclassification. R15's separate v2 terminal mismatch is repaired by
 binding its sanitized result to exact blocked/RunFailed events while preserving the historical reason. The
-R11/R11/R7/R8/R16 chain creates no candidate or authority; future paid execution needs committed source, a fresh
-read-only no-call candidate and separate exact approval.
+R16 completed under the R11/R11/R7/R8/R16 chain and consumed its candidate and approval. The append-only index records
+official frozen-panel analysis but authorizes neither a causal/general memory claim nor another campaign. Future paid
+work needs a separately preregistered fresh design, qualified source, candidate and exact approval.

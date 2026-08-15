@@ -67,7 +67,7 @@ PatchLoop v1은 다음을 제공해야 한다.
 
 | ID | Hypothesis | Primary evidence |
 | --- | --- | --- |
-| H1 | Structured failure memory가 no-memory보다 held-out SCRR을 높이는지 단계적으로 검증한다. | A/C readiness 뒤 별도 paired held-out comparison |
+| H1 | Structured failure memory가 no-memory보다 held-out SCRR을 높이는지 단계적으로 검증한다. | 완료된 frozen-panel A/C와 별도 fresh-panel 후속 |
 | H2 | Raw trace는 token을 더 사용하고 무관한 task에서 negative transfer를 만들 수 있다. | Token overhead, failure flip, reviewed trace |
 | H3 | Persistent checkpoint는 정상 성공률보다 fault recovery에 더 큰 영향을 준다. | Context-reset/worker-restart ablation |
 | H4 | Deterministic verifier는 단순 visible pass보다 scope violation과 regression을 더 잘 차단한다. | Verifier ablation |
@@ -137,7 +137,7 @@ Task 수보다 audit 품질을 우선한다. 모든 evaluation task에는 base c
 2. Single agent run이 완전한 manifest·trace·artifact를 남긴다.
 3. Worker kill 이후 중복 patch 없이 동일 run을 재개한다.
 4. Development-validation에서 A/C fixed-bundle delivery를 검증한 뒤, 별도 승인된 frozen held-out 비교를 실행한다.
-5. 충분한 반복을 가진 held-out 단계에서 SCRR, 비용, recovery, negative-transfer 관련 task-level 결과와 confidence interval을 생성한다.
+5. 사전등록된 held-out 단계에서 SCRR, 비용, negative-transfer와 명시적으로 제한된 uncertainty summary를 생성한다.
 6. 최소 trace viewer에서 대표 성공·실패 run의 provenance를 확인할 수 있다.
 
 개선이 없거나 음수여도 실험이 재현 가능하고 failure analysis가 정직하면 유효한 결과다.

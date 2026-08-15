@@ -35,8 +35,9 @@ Machine artifacts under `reports/` are authoritative. Historical narrative is ar
   25,319 bytes; file/content/evaluator-source are
   `sha256:033fd414cfc0b2499171e91a8b0e9e82e823f452520dfe42f54c1c9e8469e1f5`/
   `sha256:a15c6c0ade8bd9bb1f57cacd07ec6dbfcbb84bfc1b622b642bb4f332873b6742`/
-  `sha256:bbc790eb53fbc7883a454d963ccc2e6195e4f73f160f162c814aec2efade92ad`. This R11/R11/R7/R8/R16 chain is
-  source-qualified only and made no candidate, approval, observation or spend.
+  `sha256:bbc790eb53fbc7883a454d963ccc2e6195e4f73f160f162c814aec2efade92ad`. These five qualification artifacts
+  themselves made no candidate, approval, observation or spend; the later R16 candidate and campaign consumed the
+  chain as recorded below.
 - The immediately preceding R10/R10/R6/R7/R15 zero-authority chain remains append-only. Its exact content hashes are
   `sha256:c0412709...7a32`, `sha256:27283c8a...c17626`, `sha256:61f65a54...e419fb`,
   `sha256:783b757d...77e80a` and `sha256:f0e100d4...6809c`; it is superseded, not rewritten.
@@ -82,6 +83,37 @@ Append-only index `reports/heldout-ac/artifacts/heldout-ac-r15-campaign-inconclu
 file/content are `sha256:7aaca2be0797ea36f12e125dc85dd582bdc5f63ad5afd7449cc2d2cf77d46c54`/
 `sha256:85b211c637eeff05805c8bef1ba3790a6beab8cef98a8680c48fa74f496a56eb`. It added zero runtime calls and `$0`;
 retry, resume, official analysis and memory claims remain closed.
+
+## R16 held-out complete matrix
+
+Candidate `sha256:24044c1ed525458446f1c97d94f52331082d74051f5c6d680da995ea9aa48813` at commit/tree
+`d82291d9332894a4e0b0fc0618e3464bfc9a77e6`/`827eb2a0640be0ccb816affde8ff7fa2b148e0b4` consumed one exact
+48-row `$57.60`/`$60` approval. Its no-call preflight file is 66,841 bytes with
+`sha256:0e9b927cdd64413e926f5d4ca478895d9a0e4097ed785042ee5602a680552c4c`.
+
+The campaign completed 48 settled rows, 0 observed-unsettled, 0 not-started and 0 confounded for `$27.24465825`.
+It recorded 15 resolved, 14 task failures and 19 typed agent failures, with no retry/replacement/resume. Exact runtime
+bindings are:
+
+- plan `sha256:e8e9ae072eaf7c68798572c1ae124cff90bcc67a33fc4a872c19b00d7478bf94` (83,599 bytes);
+- journal `sha256:40668bfa7b1b2142c952f2a83d12fd50aa0dbadf4d984e7c88b23c5378d33669` (122,930 bytes),
+  99 events ending `CampaignCompleted` at `sha256:c7ddea5ffe5411433849668c7bc54fad57d8b2fb4a9836563c769d573d989e52`;
+- prepared file/content `sha256:c459886b3b65215623e4a9320f6ffe5a5f8216dda66e35d91f4bf84fdc43db2f`/
+  `sha256:61d791264549833b5e0ec07bdd1cf68f3289e9ca374518c70e29a1d350c6dff6` (1,202,867 bytes);
+- final file/content `sha256:6a6203c049e838675925a519a8d2bd7933823779b7c5cbee850d6e18a1bbd91f`/
+  `sha256:2e7466eba5c5cbd9e8fcbc5fae655972b78c9854ff83e9c906881337f7f985e4` (1,203,484 bytes).
+
+Authenticated completion is `sha256:954ccd1ead1e826fcd07c435303f1b8c859b58ee3c742b1580ec94c675d88a95`;
+the official analysis envelope is `sha256:7cd2e7657b2b7d878c5874f9a1e29f0aa5dea58fe8a135c9706ee903c7ccc260`.
+No-memory succeeded 8/24 at `$12.380361`; structured succeeded 7/24 at `$14.86429725`; C-minus-A is `-1/24`.
+The deterministic descriptive stability interval is `[-1/4, 1/6]`, sign-flip sensitivity is `p=1`, benefit flips
+are 3/24 and negative-transfer flips 4/24. Same-repo effect is 0 and cross-repo effect `-1/12`. Causal/general
+memory-benefit and broad-generalization authority are false.
+
+Append-only index `reports/heldout-ac/artifacts/heldout-ac-r16-campaign-complete-r1.json` is 10,375 bytes;
+file/content are `sha256:999fa9e42f010b03b96013d089f662ad3f50b1c5c6469b2aa8ddb901c522391e`/
+`sha256:945e8e9ff1df60a255d20fb406ca7b7ab20ca16a3b50da5cbce12f2fb38a6521`. It independently revalidated exact
+source/runtime bytes and the matrix summary, added zero runtime calls and `$0`, and grants no rerun or future authority.
 
 ## R8 complete development-readiness matrix
 

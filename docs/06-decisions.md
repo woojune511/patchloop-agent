@@ -33,8 +33,12 @@ four-run development A/C readiness -> preregister held-out A/C -> separately aut
 - Candidate-v3 commits the realized row order and every task/evaluator binding. Runtime/cost authority is candidate-
   bound; current prior rows require persisted-v5/row-v2 and full budget/semantic revalidation. Historical R7/R11/R14/R15
   replay requires the exact execution/final-file/content/journal binding, not merely a parseable legacy schema.
-- Contract R11 → binding R11 → materialization R7 → execution R8 → preflight R16 is zero-authority. Commit it before a
-  fresh read-only no-call preflight; no candidate, approval or provider authority exists now.
+- R16 candidate `sha256:24044c1e...8813` consumed the R11/R11/R7/R8/R16 chain and a fresh `$57.60`/`$60`
+  approval. It completed 48 settled rows for `$27.24465825`; no-memory succeeded 8/24 and structured 7/24, so the
+  official frozen-panel C-minus-A estimate is `-1/24`. Its `[-1/4, 1/6]` stability interval is descriptive, not a
+  population confidence interval. The result authorizes neither a causal/general memory claim nor another execution.
+- R16 and its approval are one-use and consumed. Do not rerun, resume or tune against the unblinded panel. A later
+  experiment needs a separately preregistered fresh panel and a new source/candidate/approval chain.
 
 ### 2026-08-14 — isolate held-out contracts from historical execution
 
@@ -75,7 +79,7 @@ no-call preflight nor authorize paid execution. Current status, artifacts and Gi
 
 ## Open questions
 
-1. Should later B/D use this design family or a fresh panel?
+1. Which fresh panel and preregistered design should later B/D use?
 2. Should exact qualification-leaf symlink provenance be hardened beyond current root containment, hashing and clean
    Git checks before a future candidate?
 
