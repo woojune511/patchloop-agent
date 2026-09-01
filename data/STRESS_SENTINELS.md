@@ -107,4 +107,4 @@ not prove that:
 
 Those claims require separate executable runtime tests and immutable run artifacts. Until then, stress
 and recovery numbers remain unreported and the outstanding runtime/campaign work is tracked in
-[`docs/08-limitations.md`](../docs/08-limitations.md).
+[`docs/evidence.md`](../docs/evidence.md).

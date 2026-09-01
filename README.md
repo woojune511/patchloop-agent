@@ -1,20 +1,25 @@
 # PatchLoop
 
-PatchLoop is a single coding agent. The active product path is one mutable,
-unofficial development runtime named `dev-head`; task loading, constrained tools,
-recovery state, sandboxing, and private evaluation support that agent.
+PatchLoop is a single coding agent with a deliberately short development loop.
+Its mutable runtime, `dev-head`, inspects a public task, edits through constrained
+tools, runs registered checks, submits a patch, and receives an isolated private
+evaluator summary. Every current run is development-only and `official=false`.
 
-The old Rapid, candidate, qualification, activation, adoption, and claim runners
-are not part of the current checkout. Their code is recoverable from Git history,
-and their immutable results remain under `experiments/`, `reports/`, and
-`docs/archive/`.
+## Start here
 
-## Fast local loop
+- [Current status](docs/current-status.md) — what works now and what remains
+- [Product and architecture](docs/product.md) — what PatchLoop is and how it fits together
+- [Run and validate](docs/operations.md) — local, mock, and explicitly approved live commands
+- [Evidence and limitations](docs/evidence.md) — measured facts, non-results, and claim boundaries
+- [Documentation index](docs/README.md) — the complete human-facing set
 
-Use an external state directory. Mock mode forbids credentials and cost options.
+## Try the local loop
+
+Mock mode uses no credentials, provider call, or Docker image.
 
 ```powershell
 $env:PATCHLOOP_STATE_ROOT = 'C:\patchloop-state'
+uv sync --extra dev --locked
 uv run ruff check patchloop tests
 uv run pytest tests
 uv run patchloop dev `
@@ -24,26 +29,22 @@ uv run patchloop dev `
   --repeat 1
 ```
 
-## One-row live development
+Live development has a stricter boundary: the exact invocation is the approval
+for one declared task/model/repetition/cost envelope. See
+[Run and validate](docs/operations.md) before using it.
 
-```powershell
-$env:PATCHLOOP_STATE_ROOT = 'C:\patchloop-state'
-uv run patchloop dev `
-  --provider openai `
-  --task tasks/dev-train/<task>/public.yaml `
-  --model gpt-5.4-mini-2026-03-17 `
-  --reasoning-effort medium `
-  --env-file <credential-file> `
-  --max-cost-usd <positive-decimal> `
-  --repeat 1
+## Repository map
+
+```text
+patchloop/dev/       mutable agent loop, tools, context, cost, and journal
+patchloop/verifier/  separate private evaluator
+tasks/               audited task packages
+fixtures/            local smoke repositories and task fixtures
+docs/                current human documentation
+reports/             immutable historical evidence
+experiments/         immutable historical plans and results
 ```
 
-That exact invocation is the approval for its provider, task, model, repetition
-count, and total cap. Live mode accepts only `dev-train`, requires a local
-digest-pinned evaluator image, never pulls or builds an image, and uses zero SDK
-transport retries. A run remains `official=false` even when its private evaluator
-passes.
-
-Start at [docs/00-index.md](docs/00-index.md). Current behavior is owned by
-[docs/current-status.md](docs/current-status.md); measured facts and explicit
-non-results are in [docs/09-evidence.md](docs/09-evidence.md).
+Historical Rapid and claim executables are recoverable from checkpoint commit
+`b71ddeee`. Their immutable artifacts and archived documentation remain in the
+repository, but they do not describe the current runtime.

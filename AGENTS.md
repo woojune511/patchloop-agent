@@ -1,98 +1,53 @@
 # PatchLoop Agent Guide
 
-This file applies to the entire repository. Historical milestone material under
-`docs/archive/` is audit evidence, not current implementation guidance.
+This file stays at the repository root because agent tooling discovers it here.
+It applies to the entire repository. Detailed implementation guidance lives in
+the hidden [`.agent/guide.md`](.agent/guide.md).
 
-## Mission
+## Mission and current lane
 
-Build a reliable single coding agent with a fast public development loop. The
-agent is the product. Task loading, constrained tools, recovery state, sandboxing,
-and private evaluation are supporting layers.
+Build a reliable single coding agent through a fast, mutable `dev-head` loop. The
+agent is the product; task loading, recovery, sandboxing, and private evaluation
+are supporting layers.
 
-## Active state
-
-- `dev-head` is the only coding-agent runtime and is intentionally mutable.
-- Work Item 87 candidate preparation is abandoned. Do not create a new Work Item,
-  candidate, qualification, activation, adoption, or rehearsal artifact for a
-  normal development change.
-- Legacy Rapid and provider-backed claim commands are removed. Historical runs
-  and archived bytes are immutable and must not be edited or relabeled.
-- Memory is disabled. `dev-validation` and held-out splits are not development
-  tuning inputs.
-- Every new run is `official=false`. No current result supports a quality,
-  generalization, or memory-benefit claim.
+- Every current run is `official=false`.
+- Memory, validation/held-out tuning, and claim execution are disabled.
+- Historical Rapid executables are absent; historical artifacts are immutable.
+- Normal fixes do not create Work Items, candidates, qualifications, activations,
+  adoptions, rehearsals, or runtime versions.
 
 ## Required reading
 
-Read only what the change needs, in this order:
+1. Read `docs/current-status.md` for current authority.
+2. Read only the relevant section of `.agent/guide.md` for implementation detail.
+3. Use the human docs under `docs/` only when product, operation, or evidence
+   context is needed. `docs/archive/` is never current guidance.
 
-1. `docs/00-index.md`
-2. `docs/current-status.md`
-3. One or two relevant documents:
+## Hard gates
 
-| Change | Documents |
-| --- | --- |
-| agent, state, tools | `docs/02-architecture.md`, `docs/03-contracts.md` |
-| task, evaluator, schema | `docs/03-contracts.md`, `docs/04-evaluation-protocol.md` |
-| next implementation | `docs/05-implementation-plan.md` |
-| decision or boundary | `docs/06-decisions.md` |
-| validation or operation | `docs/07-reproduction.md` |
-| review or claim language | `docs/08-limitations.md`, `docs/09-evidence.md` |
-
-## Hard gates for the development lane
-
-1. Keep public task material separate from private specs, hidden tests, reference
-   patches, and evaluator details. Never project private material into agent context.
+1. Never project private specs, hidden tests, reference patches, or evaluator
+   details into agent context.
 2. Expose only registered reads, searches, mutations, visible checks, and finish;
-   never give the agent an unrestricted shell.
-3. Store generated state outside the PatchLoop repository in append-only,
-   hash-chained `dev-run-v1` JSONL.
-4. Require `action_id + input_hash` for idempotent mutation and check recovery.
-5. Live OpenAI runs require an explicit `dev-train` task, model, credential file,
-   positive invocation-wide cost cap, and repetition count. The exact invocation
-   is its development authority; do not broaden it.
-6. Check cost immediately before provider dispatch using actual counted input and
-   a conservative output reservation. Use zero SDK retries and stop repetitions
-   on count, transport, or billing uncertainty.
-7. Inspect a required local evaluator image once before live work. Never pull,
-   build, start Docker Desktop, or install prerequisites automatically.
-8. Preserve historical `experiments/`, `reports/`, and `docs/archive/` bytes.
-9. Distinguish implemented, locally tested, live-executed, and claim-producing
-   evidence. Never invent or promote a result.
-
-Exact candidate/hash/rehearsal rules belong only to a future confirmatory lane.
-They are not development-lane gates and must not be reintroduced incidentally.
+   never provide unrestricted shell access to the coding agent.
+3. Keep generated state outside the repository in append-only, hash-chained
+   `dev-run-v1` JSONL.
+4. Preserve `action_id + input_hash` idempotency for mutation and check recovery.
+5. Live OpenAI work requires an exact `dev-train` task, model, credential file,
+   repeat count, and positive invocation-wide cap.
+6. Count cost immediately before dispatch, use zero SDK retries, and stop all
+   repetitions on count, transport, or billing uncertainty.
+7. Never start Docker Desktop or pull/build an evaluator image automatically.
+8. Do not alter historical `reports/`, `experiments/`, or `docs/archive/` bytes.
+9. Separate implemented, locally tested, live-executed, and claim-producing evidence.
 
 ## Workflow
 
-1. State the smallest behavior change and its failure boundary.
-2. Implement directly on `dev-head` with a small feature commit.
-3. Run the focused test, then Ruff, the fast suite, and mock smoke as relevant.
-4. Verify no private projection, in-repository run state, live call, Docker action,
-   or historical artifact mutation occurred.
-5. Report commands actually run and work deliberately not run.
+1. Define the smallest behavior change and failure boundary.
+2. Modify `dev-head` directly; update contracts and docs in the same change.
+3. Run the focused test, Ruff, the fast suite, and mock smoke as relevant.
+4. Recheck public/private, cost, external-state, and historical-byte boundaries.
+5. Commit a small coherent change and report both executed and unexecuted work.
 
-## Definition of done
-
-- Success and important failure paths are covered by the fast suite.
-- Focused validation remains under two minutes.
-- Public/private, allowed-path, cost-cap, and append-only boundaries remain enforced.
-- Mock smoke completes read, mutation, visible check, automatic diff, finish, and
-  isolated private evaluation.
-- Live operational acceptance is claimed only after an explicitly authorized
-  one-row run leaves a durable terminal and evaluator summary within 30 minutes.
-- No quality or generalization claim is made from development results.
-
-## Active source boundaries
-
-```text
-patchloop/dev/         mutable orchestration, tools, context, cost, and journal
-patchloop/agent/       provider adapter only
-patchloop/sandbox/     registered local/Docker checks
-patchloop/verifier/    isolated private evaluator and static policy
-patchloop/state/       active journal export
-tasks/                 audited public/private task packages
-fixtures/              audited local repository snapshots
-experiments/ reports/  immutable historical artifacts
-docs/archive/          immutable historical documentation
-```
+Done means success and important failures are tested, focused validation remains
+under two minutes, mock smoke reaches isolated evaluation, and no unsupported
+quality or generalization claim is made.

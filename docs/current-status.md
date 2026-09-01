@@ -1,42 +1,41 @@
 # Current status
 
-## Active runtime
+`dev-head` is the only active coding-agent runtime. It is mutable, development-only,
+and always records `official=false`. The available commands are `patchloop dev`,
+`patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
+claim commands are absent.
 
-`dev-head` is the sole mutable coding-agent runtime. Its state machine is
-`WORK -> VERIFY -> REVIEW -> SUBMITTED`; there is no `PLAN` phase, work-plan tool,
-candidate switch, qualification gate, activation gate, or memory retrieval path.
+## Targets and limits
 
-The only coding command is `patchloop dev`. `patchloop doctor` and
-`patchloop task validate` are read-only support commands. Legacy `run`, `resume`,
-`evaluate`, `rapid`, and provider-backed claim commands are absent.
-
-## Development target
-
-- focused validation: less than two minutes
-- default live cycle: one row within 1,800 seconds
-- default limits: 40 model calls, 100 tool actions, 4 accepted mutations,
-  1 protocol/incomplete recovery, and at most 4 parallel read/search calls
-- repeat: 1 by default, 6 maximum, with one invocation-wide cost cap
+- focused local validation: under 2 minutes
+- default one-row live limit: 1,800 seconds
+- 40 model calls, 100 tool actions, and 4 accepted mutations
+- one protocol/incomplete correction and at most 4 parallel reads
+- `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
 ## Authority
 
-Mock execution has no provider authority and forbids credentials and cost options.
-For OpenAI, one fully specified `patchloop dev` invocation is explicit development
-authority for exactly its `dev-train` task, model, credential file, repeat count,
-and positive total cap. It does not authorize image pull/build, a different task,
-a retry after uncertainty, or any confirmatory/claim run.
+Mock execution carries no provider authority. One exact live `patchloop dev`
+invocation authorizes only its declared `dev-train` task, model, credential file,
+repeat count, and positive total cap. It never authorizes an image pull/build,
+another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates a paid call. The reset implementation was
-performed without live provider or Docker execution.
+Repository policy alone never initiates paid work. No live provider or Docker
+execution occurred during the reset or this documentation consolidation.
 
-## Evidence status
+## Evidence state
 
-The local fast suite and mock smoke pass; see `docs/09-evidence.md`. No first-row
-live acceptance has been run, so the 30-minute operational target is unverified.
-Every current result is `official=false`, and no quality, generalization, causal,
-or memory-benefit claim follows.
+Ruff, the fast suite, and mock smoke pass. The first live row has not been run, so
+the 30-minute operational target remains unverified. See
+[Evidence and limitations](evidence.md) for exact local observations and non-results.
 
-Historical Rapid and claim code remains recoverable at checkpoint commit
-`b71ddeee`; immutable historical results and archive documents remain in their
-existing directories. Current checkout compatibility with old runners is not a
-goal.
+Historical executables are recoverable at checkpoint `b71ddeee`; immutable
+historical artifacts and `docs/archive/` remain preserved. Current checkout
+compatibility with those runners is intentionally unsupported.
+
+## Next decision
+
+The next operational step is a separately approved one-row `dev-train` invocation.
+A confirmatory lane is not considered until three distinct tasks submit without a
+harness/contract terminal and at least two privately pass. That threshold opens a
+design review only; it does not support a quality or generalization claim.
