@@ -392,6 +392,22 @@ class StateStore:
             raise RecoveryError(f"unknown run: {run_id}")
         return RunManifest.model_validate_json(row["manifest_json"])
 
+    def get_run_result(self, run_id: str) -> RunResult | None:
+        """Read the atomically persisted terminal result for one exact run."""
+
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT result_json FROM runs WHERE run_id = ?", (run_id,)
+            ).fetchone()
+        if row is None:
+            raise RecoveryError(f"unknown run: {run_id}")
+        if row["result_json"] is None:
+            return None
+        try:
+            return RunResult.model_validate_json(row["result_json"])
+        except ValueError as exc:
+            raise RecoveryError(f"run has an invalid terminal result: {run_id}") from exc
+
     def list_runs(self) -> list[dict]:
         with self._connect() as connection:
             rows = connection.execute(
@@ -912,6 +928,7 @@ class StateStore:
         outcome_type: EventType,
         outcome_payload: dict,
         patch_payload: dict | None = None,
+        admission_payload: dict | None = None,
     ) -> None:
         if outcome_type not in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}:
             raise ValueError("action outcome must be ToolSucceeded or ToolFailed")
@@ -924,7 +941,7 @@ class StateStore:
             raise ValueError("tool result status and outcome event do not match")
         if outcome_payload.get("status") != result.status:
             raise ValueError("tool outcome payload status conflicts with result")
-        expected = [(outcome_type, outcome_payload)]
+        expected = [(outcome_type, "tool-gateway", outcome_payload)]
         if patch_payload is not None:
             if outcome_type != EventType.TOOL_SUCCEEDED:
                 raise ValueError("PatchApplied requires a successful tool outcome")
@@ -932,7 +949,17 @@ class StateStore:
                 "patch_hash"
             ) or patch_payload.get("worktree_diff_hash") != result.output.get("worktree_diff_hash"):
                 raise ValueError("PatchApplied payload conflicts with tool result")
-            expected.append((EventType.PATCH_APPLIED, patch_payload))
+            expected.append((EventType.PATCH_APPLIED, "tool-gateway", patch_payload))
+        if admission_payload is not None:
+            if outcome_type != EventType.TOOL_FAILED or patch_payload is not None:
+                raise ValueError("ToolAdmissionBlocked requires a rejected non-mutation outcome")
+            expected.append(
+                (
+                    EventType.TOOL_ADMISSION_BLOCKED,
+                    "workflow-state-machine",
+                    admission_payload,
+                )
+            )
         result_json = canonical_json(result.model_dump(mode="json"))
         with self._lock, self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
@@ -966,17 +993,18 @@ class StateStore:
                     EventType.TOOL_SUCCEEDED,
                     EventType.TOOL_FAILED,
                     EventType.PATCH_APPLIED,
+                    EventType.TOOL_ADMISSION_BLOCKED,
                 }
             ]
             expected_types = [item[0] for item in expected]
             if [event.type for event in relevant] != expected_types[: len(relevant)]:
                 raise RecoveryError(f"action {action_id} has an invalid durable outcome prefix")
-            for event, (_, payload) in zip(
+            for event, (_, actor, payload) in zip(
                 relevant,
                 expected[: len(relevant)],
                 strict=True,
             ):
-                if event.payload != payload:
+                if event.actor != actor or event.payload != payload:
                     raise RecoveryError(f"action {action_id} outcome conflicts with its result")
 
             row = connection.execute(
@@ -984,7 +1012,7 @@ class StateStore:
                 (run_id,),
             ).fetchone()
             sequence = int(row["value"])
-            for event_type, payload in expected[len(relevant) :]:
+            for event_type, actor, payload in expected[len(relevant) :]:
                 sequence += 1
                 event = RunEvent(
                     event_id=f"evt_{uuid.uuid4().hex}",
@@ -992,7 +1020,7 @@ class StateStore:
                     sequence=sequence,
                     type=event_type,
                     timestamp=utc_now(),
-                    actor="tool-gateway",
+                    actor=actor,
                     correlation_id=action_id,
                     payload=payload,
                 )

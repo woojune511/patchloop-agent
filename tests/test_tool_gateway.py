@@ -8,6 +8,11 @@ from pathlib import Path
 import pytest
 
 from patchloop.agent.context import build_context, build_context_with_evidence
+from patchloop.agent.context_event_compaction import (
+    project_lean_context_event_descriptors,
+    project_lean_context_event_descriptors_v2,
+    restore_lean_context_event_descriptors,
+)
 from patchloop.agent.investigation import (
     investigation_ledger_schema,
     investigation_policy_version,
@@ -24,7 +29,12 @@ from patchloop.agent.tools import (
     TOOL_SCHEMAS,
     TOOL_SCHEMAS_V3,
     TOOL_SCHEMAS_V4,
+    TOOL_SCHEMAS_V8,
+    TOOL_SCHEMAS_V9,
+    TOOL_SCHEMAS_V10,
+    TOOL_SCHEMAS_V11,
     ToolGateway,
+    _validate_raw_git_patch,
 )
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
@@ -57,9 +67,7 @@ PROBE_ID = "python-diagnostic"
 
 
 def _smoke_review_contract(package) -> PublicReviewContract:
-    excerpt = normalize_public_issue_text(
-        package.public.issue.description
-    )
+    excerpt = normalize_public_issue_text(package.public.issue.description)
     payload = {
         "schema_version": "public-review-contract-v1",
         "task_id": package.public.task_id,
@@ -73,9 +81,7 @@ def _smoke_review_contract(package) -> PublicReviewContract:
             }
         ],
     }
-    payload["content_hash"] = public_review_contract_content_hash(
-        payload
-    )
+    payload["content_hash"] = public_review_contract_content_hash(payload)
     return PublicReviewContract.model_validate(payload)
 
 
@@ -99,9 +105,7 @@ class _OfficialProbeSandbox:
     ):
         del workspace
         assert image_identity == PROBE_IMAGE_DIGEST
-        self.probe_calls.append(
-            (source, timeout_seconds, output_limit_bytes)
-        )
+        self.probe_calls.append((source, timeout_seconds, output_limit_bytes))
         return SandboxResult(
             command=["python", "-I", "<ephemeral-probe>"],
             exit_code=0,
@@ -131,22 +135,12 @@ def _smoke_gateway(
     gateway_context_policy_version: str | None = None,
 ):
     package = load_task_package("tasks/smoke/csv-quoted-newline")
-    corrective_validation = (
-        manifest_context_policy_version == "phase-evidence-v7"
-    )
-    saturation_context_validation = (
-        manifest_context_policy_version == "phase-evidence-v8"
-    )
-    review_evidence_validation = (
-        manifest_context_policy_version == "phase-evidence-v9"
-    )
+    corrective_validation = manifest_context_policy_version == "phase-evidence-v7"
+    saturation_context_validation = manifest_context_policy_version == "phase-evidence-v8"
+    review_evidence_validation = manifest_context_policy_version == "phase-evidence-v9"
     public_review_contract = (
         _smoke_review_contract(package)
-        if (
-            corrective_validation
-            or saturation_context_validation
-            or review_evidence_validation
-        )
+        if (corrective_validation or saturation_context_validation or review_evidence_validation)
         else None
     )
     manifest = build_manifest(
@@ -159,11 +153,7 @@ def _smoke_gateway(
         saturation_context_validation=saturation_context_validation,
         review_evidence_validation=review_evidence_validation,
         public_review_contract=public_review_contract,
-    ).model_copy(
-        update={
-            "context_policy_version": manifest_context_policy_version
-        }
-    )
+    ).model_copy(update={"context_policy_version": manifest_context_policy_version})
     state = StateStore(tmp_path / "state.sqlite3")
     state.create_run(manifest)
     manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
@@ -180,12 +170,50 @@ def _smoke_gateway(
         artifacts=ArtifactStore(tmp_path / "artifacts"),
         sandbox=LocalSandbox(),
         tool_schema_version=tool_schema_version,
-        context_policy_version=(
-            gateway_context_policy_version or "phase-evidence-v3"
-        ),
+        context_policy_version=(gateway_context_policy_version or "phase-evidence-v3"),
         fault=manifest.fault,
     )
     return manager, workspace, gateway
+
+
+def test_v14_rejects_mutation_without_current_diff_plan_before_apply(tmp_path) -> None:
+    _, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_v14_missing_plan",
+        tool_schema_version="v14",
+        gateway_context_policy_version="phase-evidence-v20",
+    )
+    before = WorkspaceManager.diff_summary(workspace).patch_hash
+
+    result = gateway.execute(
+        "apply_structured_edit",
+        "v14-missing-plan-edit",
+        {
+            "schema_version": "structured-edit-arguments-v2",
+            "files": [
+                {
+                    "path": "mini_data_utils/csvlite.py",
+                    "replacements": [
+                        {
+                            "expected_text": "for physical_line in text.splitlines():",
+                            "replacement_text": (
+                                "for physical_line in text.splitlines(keepends=False):"
+                            ),
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+
+    assert result.status == "rejected"
+    assert result.error_code == "CONTRACT_ERROR"
+    assert "current-diff recorded work plan" in (result.error_message or "")
+    assert WorkspaceManager.diff_summary(workspace).patch_hash == before
+    assert not any(
+        event.type == EventType.PATCH_APPLIED
+        for event in gateway.state.list_events(gateway.run_id)
+    )
 
 
 def _r2_style_recount_patch() -> str:
@@ -281,9 +309,7 @@ def _v3_gateway(tmp_path, run_id: str, *, sandbox=None):
         task=package.public.model_copy(
             update={
                 "schema_version": "task-public-v2",
-                "probe_profiles": [
-                    RegisteredProbeProfile(id=PROBE_ID)
-                ],
+                "probe_profiles": [RegisteredProbeProfile(id=PROBE_ID)],
             }
         ),
         state=state,
@@ -296,9 +322,7 @@ def _v3_gateway(tmp_path, run_id: str, *, sandbox=None):
 
 
 def _v8_probe_gateway(tmp_path, run_id: str):
-    package = load_task_package(
-        "fixtures/task-packages/self-validation-csv-quoted-newline"
-    )
+    package = load_task_package("fixtures/task-packages/self-validation-csv-quoted-newline")
     manifest = build_manifest(
         package,
         run_id=run_id,
@@ -380,12 +404,10 @@ def test_apply_patch_recounts_incorrect_hunk_line_totals(tmp_path) -> None:
 
     assert result.status == "succeeded"
     assert result.output["patch_hash"] == sha256_text(patch)
-    assert manager.diff_summary(workspace).changed_files == [
-        "mini_data_utils/csvlite.py"
-    ]
-    assert "one verified defect" in (
-        workspace / "mini_data_utils" / "csvlite.py"
-    ).read_text(encoding="utf-8")
+    assert manager.diff_summary(workspace).changed_files == ["mini_data_utils/csvlite.py"]
+    assert "one verified defect" in (workspace / "mini_data_utils" / "csvlite.py").read_text(
+        encoding="utf-8"
+    )
     objects_after = {
         path.relative_to(object_root).as_posix(): path.read_bytes()
         for path in object_root.rglob("*")
@@ -393,6 +415,431 @@ def test_apply_patch_recounts_incorrect_hunk_line_totals(tmp_path) -> None:
     }
     assert objects_after == objects_before
     assert not (workspace / ".git" / "patchloop-recovery").exists()
+
+
+def test_v8_normalizes_outer_wrapper_and_preserves_raw_input_evidence(
+    tmp_path,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v8_wrapper_normalization",
+        tool_schema_version="v8",
+        gateway_context_policy_version="phase-evidence-v13",
+    )
+    normalized_patch = _r2_style_recount_patch()
+    raw_patch = "*** Begin Patch\r\n" + normalized_patch.replace("\n", "\r\n") + "*** End Patch\r\n"
+
+    result = gateway.execute(
+        "apply_patch",
+        "v8-normalize-wrapper",
+        {"patch": raw_patch},
+    )
+
+    assert result.status == "succeeded"
+    assert result.output["patch_hash"] == sha256_text(normalized_patch)
+    assert result.output["patch_normalization"] == {
+        **result.output["patch_normalization"],
+        "changed": True,
+        "line_endings_normalized": True,
+        "removed_outer_markers": ("begin", "end"),
+        "terminal_newline_added": False,
+        "raw_patch_hash": sha256_text(raw_patch),
+        "normalized_patch_hash": sha256_text(normalized_patch),
+    }
+    call = next(
+        event
+        for event in gateway.state.list_events(gateway.run_id)
+        if event.type == EventType.TOOL_CALLED
+    )
+    raw_artifact = Artifact.model_validate(call.payload["patch_artifact"])
+    normalized_artifact = Artifact.model_validate(call.payload["normalized_patch_artifact"])
+    assert gateway.artifacts.read_bytes(raw_artifact) == raw_patch.encode("utf-8")
+    assert gateway.artifacts.read_bytes(normalized_artifact) == normalized_patch.encode("utf-8")
+    assert manager.diff_summary(workspace).changed_files == ["mini_data_utils/csvlite.py"]
+
+
+def test_v8_normalizes_missing_patch_terminal_newline(tmp_path) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v8_terminal_newline",
+        tool_schema_version="v8",
+        gateway_context_policy_version="phase-evidence-v13",
+    )
+    raw_patch = _r2_style_recount_patch().removesuffix("\n")
+
+    result = gateway.execute(
+        "apply_patch",
+        "v8-normalize-newline",
+        {"patch": raw_patch},
+    )
+
+    assert result.status == "succeeded"
+    assert result.output["patch_normalization"]["terminal_newline_added"] is True
+    assert result.output["patch_hash"] == sha256_text(_r2_style_recount_patch())
+
+
+def test_v8_classifies_stale_patch_context_before_mutation(tmp_path) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v8_context_mismatch",
+        tool_schema_version="v8",
+        gateway_context_policy_version="phase-evidence-v13",
+    )
+    patch = _r2_style_recount_patch().replace(
+        "A deliberately small CSV reader",
+        "A source line that is not present",
+    )
+
+    result = gateway.execute(
+        "apply_patch",
+        "v8-stale-context",
+        {"patch": patch},
+    )
+
+    assert result.status == "rejected"
+    assert result.output["error_details"]["reason"] == "context_mismatch"
+    assert result.output["error_details"]["stage"] == "context"
+    assert manager.diff_summary(workspace).changed_files == []
+
+
+def test_v10_structured_edit_refreshes_hashes_and_offsets_inside_gateway(
+    tmp_path,
+) -> None:
+    _, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v10_fresh_structured",
+        tool_schema_version="v10",
+        gateway_context_policy_version="phase-evidence-v15",
+    )
+    result = gateway.execute(
+        "apply_structured_edit",
+        "v10-fresh-structured",
+        {
+            "schema_version": "structured-edit-arguments-v2",
+            "files": [
+                {
+                    "path": "mini_data_utils/csvlite.py",
+                    "replacements": [
+                        {
+                            "expected_text": (
+                                "A deliberately small CSV reader with one audited defect."
+                            ),
+                            "replacement_text": (
+                                "A deliberately small CSV reader with one documented defect."
+                            ),
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+
+    assert result.status == "succeeded"
+    assert result.output["structured_edit_refresh_projection_artifact"] is not None
+    assert "documented defect" in (workspace / "mini_data_utils" / "csvlite.py").read_text(
+        encoding="utf-8"
+    )
+    assert next(item for item in TOOL_SCHEMAS_V10 if item["name"] == "run_check")[
+        "description"
+    ].startswith("Execute one registered public check")
+
+
+def test_v11_raw_patch_rejection_returns_bounded_current_source_without_mutation(
+    tmp_path,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v11_raw_correction",
+        tool_schema_version="v11",
+        gateway_context_policy_version="phase-evidence-v17",
+    )
+    baseline = manager.diff_summary(workspace)
+    stale = _r2_style_recount_patch().replace(
+        "A deliberately small CSV reader",
+        "A source line that is not present",
+    )
+
+    result = gateway.execute("apply_patch", "v11-stale", {"patch": stale})
+
+    assert result.status == "rejected"
+    correction = result.output["error_details"]["edit_correction"]
+    assert correction["policy_version"] == "bounded-public-current-source-v1"
+    assert correction["failure_reason"] == "context_mismatch"
+    assert correction["mutation_synthesized"] is False
+    assert correction["public_task_source_only"] is True
+    assert correction["current_source"]["entries"]
+    excerpt = correction["current_source"]["entries"][0]
+    assert excerpt["path"] == "mini_data_utils/csvlite.py"
+    assert "A deliberately small CSV reader" in excerpt["content"]
+    assert manager.diff_summary(workspace) == baseline
+    assert (
+        "bounded current-source excerpt"
+        in next(item for item in TOOL_SCHEMAS_V11 if item["name"] == "apply_patch")["description"]
+    )
+
+
+def test_v11_structured_rejection_returns_closest_public_preimage_without_mutation(
+    tmp_path,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v11_structured_correction",
+        tool_schema_version="v11",
+        gateway_context_policy_version="phase-evidence-v17",
+    )
+    baseline = manager.diff_summary(workspace)
+    result = gateway.execute(
+        "apply_structured_edit",
+        "v11-absent-structured",
+        {
+            "schema_version": "structured-edit-arguments-v2",
+            "files": [
+                {
+                    "path": "mini_data_utils/csvlite.py",
+                    "replacements": [
+                        {
+                            "expected_text": (
+                                "A deliberately tiny CSV reader with one audited defect."
+                            ),
+                            "replacement_text": (
+                                "A deliberately tiny CSV reader with one documented defect."
+                            ),
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+
+    assert result.status == "rejected"
+    correction = result.output["error_details"]["edit_correction"]
+    assert correction["failure_reason"] == "expected_text_absent"
+    assert correction["task_constraints"]["max_diff_lines"] == (
+        gateway.task.constraints.max_diff_lines
+    )
+    excerpt = correction["current_source"]["entries"][0]
+    assert excerpt["exact_occurrence_count"] == 0
+    assert excerpt["closest_line_match_ratio"] > 0
+    assert "A deliberately small CSV reader" in excerpt["content"]
+    assert manager.diff_summary(workspace) == baseline
+
+
+def test_v16_builds_next_context_after_structured_edit_and_same_turn_block(
+    tmp_path,
+) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v16_descriptor_roles",
+        tool_schema_version="v10",
+        gateway_context_policy_version="phase-evidence-v16",
+    )
+    mutation = gateway.execute(
+        "apply_structured_edit",
+        "v16-fresh-structured",
+        {
+            "schema_version": "structured-edit-arguments-v2",
+            "files": [
+                {
+                    "path": "mini_data_utils/csvlite.py",
+                    "replacements": [
+                        {
+                            "expected_text": "one audited defect",
+                            "replacement_text": "one documented defect",
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+    blocked = gateway.block_same_turn_action(
+        "run_check",
+        "v16-blocked-check",
+        {"check_id": gateway.task.visible_checks[0].id},
+        source_action_id="v16-fresh-structured",
+        source_result_status=mutation.status,
+        source_model_event_id="evt_model_v16",
+        source_call_index=0,
+        blocked_call_index=1,
+    )
+    events = gateway.state.list_events(gateway.run_id)
+    built = build_context_with_evidence(
+        gateway.task,
+        events,
+        None,
+        policy_version="phase-evidence-v5",
+        artifact_store=gateway.artifacts,
+        budget=Budget(),
+        max_output_tokens=4_096,
+    )
+
+    assert mutation.status == "succeeded"
+    assert blocked.status == "rejected"
+    with pytest.raises(ValueError, match="artifact binding differs"):
+        project_lean_context_event_descriptors(built)
+    projected = project_lean_context_event_descriptors_v2(built)
+    assert projected.evidence.preserved_distinct_descriptor_count == 2
+    assert restore_lean_context_event_descriptors(projected) == built.rendered
+
+
+def test_v10_run_check_reports_invocation_and_behavior_separately(tmp_path) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v10_typed_check",
+        tool_schema_version="v10",
+        gateway_context_policy_version="phase-evidence-v15",
+    )
+    check_id = gateway.task.visible_checks[0].id
+    result = gateway.execute(
+        "run_check",
+        "v10-typed-check",
+        {"check_id": check_id},
+    )
+
+    assert result.status == "succeeded"
+    assert result.output["invocation_status"] == "completed"
+    assert result.output["behavior_status"] == ("passed" if result.output["passed"] else "failed")
+    assert result.output["correction_required"] is (not result.output["passed"])
+    if not result.output["passed"]:
+        assert result.output["failure_summary"]
+
+
+def test_v8_rejects_non_outer_patch_wrapper_before_git_apply(tmp_path) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v8_inner_wrapper",
+        tool_schema_version="v8",
+        gateway_context_policy_version="phase-evidence-v13",
+    )
+    patch = _r2_style_recount_patch().replace(
+        " import csv\n",
+        "*** End Patch\n import csv\n",
+    )
+
+    result = gateway.execute(
+        "apply_patch",
+        "v8-inner-wrapper",
+        {"patch": patch},
+    )
+
+    assert result.status == "rejected"
+    assert result.output["error_details"]["reason"] == "invalid_wrapper_position"
+    assert result.output["error_details"]["stage"] == "syntax"
+    assert manager.diff_summary(workspace).changed_files == []
+
+
+def test_v8_wrapper_diagnosis_preserves_valid_context_prefix() -> None:
+    patch = (
+        "diff --git a/example.txt b/example.txt\n"
+        "--- a/example.txt\n"
+        "+++ b/example.txt\n"
+        "@@ -1 +1 @@\n"
+        " *** Update File: literal source content\n"
+    )
+
+    _validate_raw_git_patch(
+        patch,
+        diagnose_hunk_headers=True,
+        diagnose_wrappers=True,
+    )
+
+
+def test_v9_normalizes_terminal_recursive_glob_and_preserves_raw_evidence(
+    tmp_path,
+) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v9_recursive_glob",
+        tool_schema_version="v9",
+        gateway_context_policy_version="phase-evidence-v13",
+    )
+
+    result = gateway.execute(
+        "search_files",
+        "v9-terminal-recursive-glob",
+        {"query": "parse_rows", "path_glob": "mini_data_utils/**"},
+    )
+
+    assert result.status == "succeeded"
+    assert result.output["match_count"] >= 1
+    assert result.output["path_glob"] == "mini_data_utils/**"
+    assert result.output["search_glob_normalization"] == {
+        "schema_version": "search-glob-normalization-evidence-v1",
+        "policy_version": "recursive-file-glob-normalization-v1",
+        "raw_path_glob": "mini_data_utils/**",
+        "executed_path_glob": "mini_data_utils/**/*",
+        "changed": True,
+        "reasons": ["trailing_recursive_directory_pattern"],
+        "raw_path_glob_hash": sha256_text("mini_data_utils/**"),
+        "executed_path_glob_hash": sha256_text("mini_data_utils/**/*"),
+    }
+
+    root_result = gateway.execute(
+        "search_files",
+        "v9-root-recursive-glob",
+        {"query": "parse_rows", "path_glob": "**"},
+    )
+    assert root_result.status == "succeeded"
+    assert root_result.output["match_count"] >= 1
+    assert root_result.output["search_glob_normalization"]["executed_path_glob"] == ("**/*")
+
+
+def test_v9_search_guidance_and_normalization_are_opt_in(tmp_path) -> None:
+    search_v8 = next(item for item in TOOL_SCHEMAS_V8 if item["name"] == "search_files")
+    search_v9 = next(item for item in TOOL_SCHEMAS_V9 if item["name"] == "search_files")
+    assert search_v8["description"] == "Search repository text files for a literal query."
+    assert "'**/*.py'" in search_v9["description"]
+    assert "terminal '/**'" in search_v9["parameters"]["properties"]["path_glob"]["description"]
+
+    _, _, v8_gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v8_glob_unchanged",
+        tool_schema_version="v8",
+        gateway_context_policy_version="phase-evidence-v13",
+    )
+    v8_result = v8_gateway.execute(
+        "search_files",
+        "v8-canonical-recursive-glob",
+        {"query": "parse_rows", "path_glob": "**/*.py"},
+    )
+    assert "search_glob_normalization" not in v8_result.output
+
+    _, _, v9_gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v9_glob_noop",
+        tool_schema_version="v9",
+        gateway_context_policy_version="phase-evidence-v13",
+    )
+    v9_result = v9_gateway.execute(
+        "search_files",
+        "v9-canonical-recursive-glob",
+        {"query": "parse_rows", "path_glob": "**/*.py"},
+    )
+    evidence = v9_result.output["search_glob_normalization"]
+    assert evidence["changed"] is False
+    assert evidence["reasons"] == []
+    assert evidence["raw_path_glob"] == evidence["executed_path_glob"] == "**/*.py"
+
+
+def test_v9_preserves_v8_safe_patch_normalization(tmp_path) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v9_patch_normalization",
+        tool_schema_version="v9",
+        gateway_context_policy_version="phase-evidence-v13",
+    )
+    normalized_patch = _r2_style_recount_patch()
+    raw_patch = "*** Begin Patch\r\n" + normalized_patch.replace("\n", "\r\n") + "*** End Patch\r\n"
+
+    result = gateway.execute(
+        "apply_patch",
+        "v9-normalize-wrapper",
+        {"patch": raw_patch},
+    )
+
+    assert result.status == "succeeded"
+    assert result.output["patch_hash"] == sha256_text(normalized_patch)
+    assert result.output["patch_normalization"]["changed"] is True
+    assert manager.diff_summary(workspace).changed_files == ["mini_data_utils/csvlite.py"]
 
 
 def test_v4_reports_invalid_hunk_header_without_changing_v2_diagnosis(
@@ -433,23 +880,15 @@ def test_v4_reports_invalid_hunk_header_without_changing_v2_diagnosis(
     )
 
     assert v4_result.status == "rejected"
-    assert v4_result.output["error_details"]["reason"] == (
-        "invalid_hunk_header"
-    )
-    assert "@@ -<old_start>" in v4_result.output["error_details"][
-        "guidance"
-    ]
-    assert v2_result.output["error_details"]["reason"] == (
-        "missing_ordered_headers"
-    )
+    assert v4_result.output["error_details"]["reason"] == ("invalid_hunk_header")
+    assert "@@ -<old_start>" in v4_result.output["error_details"]["guidance"]
+    assert v2_result.output["error_details"]["reason"] == ("missing_ordered_headers")
     assert not any(
         event.type in {EventType.PATCH_PREPARED, EventType.PATCH_APPLIED}
         for event in v4_gateway.state.list_events(v4_gateway.run_id)
     )
     assert "numeric unified-diff ranges" in next(
-        item["description"]
-        for item in TOOL_SCHEMAS_V4
-        if item["name"] == "apply_patch"
+        item["description"] for item in TOOL_SCHEMAS_V4 if item["name"] == "apply_patch"
     )
 
 
@@ -519,12 +958,8 @@ def test_v7_retry_persists_with_source_snapshot_until_next_apply_outcome(
         "state": "pending",
         "resolution": "next_apply_patch_outcome",
     }
-    assert retry["source_snapshot"]["entries"][0]["path"] == (
-        "mini_data_utils/csvlite.py"
-    )
-    assert "A deliberately small CSV reader" in retry[
-        "source_snapshot"
-    ]["entries"][0]["content"]
+    assert retry["source_snapshot"]["entries"][0]["path"] == ("mini_data_utils/csvlite.py")
+    assert "A deliberately small CSV reader" in retry["source_snapshot"]["entries"][0]["content"]
     assert built.evidence["schema_version"] == "context-build-evidence-v7"
 
     applied = gateway.execute(
@@ -544,9 +979,7 @@ def test_v7_retry_persists_with_source_snapshot_until_next_apply_outcome(
         public_review_contract=manifest.public_review_contract,
     )
     assert json.loads(cleared.rendered)["rejected_mutation_retry"] is None
-    assert WorkspaceManager.diff_summary(workspace).changed_files == [
-        "mini_data_utils/csvlite.py"
-    ]
+    assert WorkspaceManager.diff_summary(workspace).changed_files == ["mini_data_utils/csvlite.py"]
 
 
 def test_v7_retry_source_snapshot_cas_tampering_fails_closed(tmp_path) -> None:
@@ -575,12 +1008,9 @@ def test_v7_retry_source_snapshot_cas_tampering_fails_closed(tmp_path) -> None:
     call = next(
         event
         for event in gateway.state.list_events(gateway.run_id)
-        if event.type == EventType.TOOL_CALLED
-        and event.payload.get("tool") == "apply_patch"
+        if event.type == EventType.TOOL_CALLED and event.payload.get("tool") == "apply_patch"
     )
-    descriptor = Artifact.model_validate(
-        call.payload["source_snapshot_artifact"]
-    )
+    descriptor = Artifact.model_validate(call.payload["source_snapshot_artifact"])
     Path(descriptor.path).write_text("{}", encoding="utf-8")
     manifest = gateway.state.get_manifest(gateway.run_id)
 
@@ -625,14 +1055,11 @@ def test_v7_blocks_search_after_six_semantic_replays_and_resets_on_patch(
     )
 
     assert blocked.error_code == "TOOL_ADMISSION_BLOCKED"
-    assert blocked.output["error_details"]["reason_codes"] == [
-        "evidence_saturated"
-    ]
+    assert blocked.output["error_details"]["reason_codes"] == ["evidence_saturated"]
     assert blocked.output["error_details"]["semantic_replay_count"] == 6
     assert blocked.output["error_details"]["semantic_replay_threshold"] == 6
     assert not any(
-        event.type == EventType.TOOL_CALLED
-        and event.correlation_id == "v7-search-after-saturation"
+        event.type == EventType.TOOL_CALLED and event.correlation_id == "v7-search-after-saturation"
         for event in gateway.state.list_events(gateway.run_id)
     )
 
@@ -684,9 +1111,7 @@ def test_v8_context_exposes_saturation_and_resets_only_after_mutation(
         public_review_contract=manifest.public_review_contract,
     )
     before_payload = json.loads(before_saturation.rendered)
-    before_policy = before_payload["phase_contract"][
-        "read_search_policy"
-    ]
+    before_policy = before_payload["phase_contract"]["read_search_policy"]
     assert before_policy == {
         "schema_version": "read-search-policy-v1",
         "policy_version": "evidence-saturation-v1",
@@ -733,9 +1158,7 @@ def test_v8_context_exposes_saturation_and_resets_only_after_mutation(
     assert "read_file" not in saturated_contract["allowed_next_actions"]
     assert "search_files" not in saturated_contract["allowed_next_actions"]
     assert "apply_patch" in saturated_contract["allowed_next_actions"]
-    assert saturated.evidence["schema_version"] == (
-        "context-build-evidence-v8"
-    )
+    assert saturated.evidence["schema_version"] == ("context-build-evidence-v8")
     assert saturated.evidence["read_search_policy"] == saturated_policy
 
     historical_v7 = build_context_with_evidence(
@@ -749,16 +1172,12 @@ def test_v8_context_exposes_saturation_and_resets_only_after_mutation(
         public_review_contract=manifest.public_review_contract,
     )
     historical_payload = json.loads(historical_v7.rendered)
-    assert historical_payload["phase_contract"]["schema_version"] == (
-        "phase-contract-v2"
-    )
+    assert historical_payload["phase_contract"]["schema_version"] == ("phase-contract-v2")
     assert "read_search_policy" not in historical_payload["phase_contract"]
     assert {"read_file", "search_files"}.issubset(
         historical_payload["phase_contract"]["allowed_next_actions"]
     )
-    assert historical_v7.evidence["schema_version"] == (
-        "context-build-evidence-v7"
-    )
+    assert historical_v7.evidence["schema_version"] == ("context-build-evidence-v7")
     assert "read_search_policy" not in historical_v7.evidence
 
     blocked = gateway.execute(
@@ -767,12 +1186,9 @@ def test_v8_context_exposes_saturation_and_resets_only_after_mutation(
         {"query": "csv", "path_glob": "**/*.py"},
     )
     assert blocked.error_code == "TOOL_ADMISSION_BLOCKED"
-    assert blocked.output["error_details"]["reason_codes"] == [
-        "evidence_saturated"
-    ]
+    assert blocked.output["error_details"]["reason_codes"] == ["evidence_saturated"]
     assert not any(
-        event.type == EventType.TOOL_CALLED
-        and event.correlation_id == "v8-search-after-saturation"
+        event.type == EventType.TOOL_CALLED and event.correlation_id == "v8-search-after-saturation"
         for event in gateway.state.list_events(gateway.run_id)
     )
 
@@ -801,9 +1217,9 @@ def test_v8_context_exposes_saturation_and_resets_only_after_mutation(
         max_output_tokens=manifest.model.max_output_tokens,
         public_review_contract=manifest.public_review_contract,
     )
-    after_rejection_policy = json.loads(after_rejection.rendered)[
-        "phase_contract"
-    ]["read_search_policy"]
+    after_rejection_policy = json.loads(after_rejection.rendered)["phase_contract"][
+        "read_search_policy"
+    ]
     assert after_rejection_policy["semantic_replay_count"] == 6
     assert after_rejection_policy["mutation_epoch_sequence"] is None
     assert after_rejection_policy["admitted"] is False
@@ -830,9 +1246,7 @@ def test_v8_context_exposes_saturation_and_resets_only_after_mutation(
         public_review_contract=manifest.public_review_contract,
     )
     after_mutation_payload = json.loads(after_mutation.rendered)
-    after_mutation_policy = after_mutation_payload["phase_contract"][
-        "read_search_policy"
-    ]
+    after_mutation_policy = after_mutation_payload["phase_contract"]["read_search_policy"]
     assert after_mutation_policy == {
         "schema_version": "read-search-policy-v1",
         "policy_version": "evidence-saturation-v1",
@@ -856,11 +1270,14 @@ def test_v9_gateway_enforces_rendered_evidence_saturation(tmp_path) -> None:
         gateway_context_policy_version="phase-evidence-v9",
     )
     search = {"query": "parse_rows", "path_glob": "**/*.py"}
-    assert gateway.execute(
-        "search_files",
-        "v9-search-first",
-        search,
-    ).status == "succeeded"
+    assert (
+        gateway.execute(
+            "search_files",
+            "v9-search-first",
+            search,
+        ).status
+        == "succeeded"
+    )
     for index in range(6):
         replay = gateway.execute(
             "search_files",
@@ -876,12 +1293,9 @@ def test_v9_gateway_enforces_rendered_evidence_saturation(tmp_path) -> None:
     )
 
     assert blocked.error_code == "TOOL_ADMISSION_BLOCKED"
-    assert blocked.output["error_details"]["reason_codes"] == [
-        "evidence_saturated"
-    ]
+    assert blocked.output["error_details"]["reason_codes"] == ["evidence_saturated"]
     assert not any(
-        event.type == EventType.TOOL_CALLED
-        and event.correlation_id == "v9-search-after-saturation"
+        event.type == EventType.TOOL_CALLED and event.correlation_id == "v9-search-after-saturation"
         for event in gateway.state.list_events(gateway.run_id)
     )
 
@@ -908,27 +1322,19 @@ def test_v7_minimal_context_rendering_remains_byte_stable(tmp_path) -> None:
     )
 
     assert built.content_hash == (
-        "sha256:93a131bfb2bb25a48f0bad023b6c1b88"
-        "e4343d9a0fab8b95a763b1407329ec8e"
+        "sha256:93a131bfb2bb25a48f0bad023b6c1b88e4343d9a0fab8b95a763b1407329ec8e"
     )
     assert sha256_text(canonical_json(built.evidence)) == (
-        "sha256:c5a00dec69617ae999148b8184aac3dd"
-        "62ff59dcd836613e97ebf0bb0fec8c79"
+        "sha256:c5a00dec69617ae999148b8184aac3dd62ff59dcd836613e97ebf0bb0fec8c79"
     )
     payload = json.loads(built.rendered)
-    assert payload["phase_contract"]["schema_version"] == (
-        "phase-contract-v2"
-    )
+    assert payload["phase_contract"]["schema_version"] == ("phase-contract-v2")
     assert "read_search_policy" not in payload["phase_contract"]
-    assert built.evidence["schema_version"] == (
-        "context-build-evidence-v7"
-    )
+    assert built.evidence["schema_version"] == ("context-build-evidence-v7")
 
 
 def test_v8_public_investigation_helpers_use_corrective_v2_contract() -> None:
-    task = load_task_package(
-        "tasks/smoke/csv-quoted-newline"
-    ).public
+    task = load_task_package("tasks/smoke/csv-quoted-newline").public
 
     assert nominal_tail_reserve(
         task,
@@ -937,15 +1343,9 @@ def test_v8_public_investigation_helpers_use_corrective_v2_contract() -> None:
         task,
         context_policy_version="phase-evidence-v7",
     )
-    assert investigation_policy_version("phase-evidence-v8") == (
-        "investigation-policy-v2"
-    )
-    assert investigation_ledger_schema("phase-evidence-v8") == (
-        "investigation-ledger-v2"
-    )
-    assert tool_admission_schema("phase-evidence-v8") == (
-        "tool-admission-blocked-v2"
-    )
+    assert investigation_policy_version("phase-evidence-v8") == ("investigation-policy-v2")
+    assert investigation_ledger_schema("phase-evidence-v8") == ("investigation-ledger-v2")
+    assert tool_admission_schema("phase-evidence-v8") == ("tool-admission-blocked-v2")
     v8_tail = tail_policy(
         task,
         None,
@@ -956,9 +1356,7 @@ def test_v8_public_investigation_helpers_use_corrective_v2_contract() -> None:
     )
     assert v8_tail["schema_version"] == "investigation-tail-policy-v2"
     assert v8_tail["policy_version"] == "investigation-policy-v2"
-    assert v8_tail["token_projection"]["projection_stage"] == (
-        "pre_generation"
-    )
+    assert v8_tail["token_projection"]["projection_stage"] == ("pre_generation")
 
 
 def test_v8_saturation_keeps_probe_until_tail_policy_blocks_it(
@@ -970,11 +1368,14 @@ def test_v8_saturation_keeps_probe_until_tail_policy_blocks_it(
     )
     manifest = gateway.state.get_manifest(gateway.run_id)
     search = {"query": "parse_rows", "path_glob": "**/*.py"}
-    assert gateway.execute(
-        "search_files",
-        "v8-probe-search-first",
-        search,
-    ).status == "succeeded"
+    assert (
+        gateway.execute(
+            "search_files",
+            "v8-probe-search-first",
+            search,
+        ).status
+        == "succeeded"
+    )
     for index in range(6):
         replay = gateway.execute(
             "search_files",
@@ -994,13 +1395,9 @@ def test_v8_saturation_keeps_probe_until_tail_policy_blocks_it(
         public_review_contract=manifest.public_review_contract,
     )
     saturated_contract = json.loads(saturated.rendered)["phase_contract"]
-    assert saturated_contract["read_search_policy"]["reason_codes"] == [
-        "evidence_saturated"
-    ]
+    assert saturated_contract["read_search_policy"]["reason_codes"] == ["evidence_saturated"]
     assert "read_file" not in saturated_contract["allowed_next_actions"]
-    assert "search_files" not in saturated_contract[
-        "allowed_next_actions"
-    ]
+    assert "search_files" not in saturated_contract["allowed_next_actions"]
     assert "run_probe" in saturated_contract["allowed_next_actions"]
 
     probe = gateway.execute(
@@ -1025,9 +1422,7 @@ def test_v8_saturation_keeps_probe_until_tail_policy_blocks_it(
         public_review_contract=manifest.public_review_contract,
     )
     after_probe_contract = json.loads(after_probe.rendered)["phase_contract"]
-    assert after_probe_contract["read_search_policy"][
-        "semantic_replay_count"
-    ] == 6
+    assert after_probe_contract["read_search_policy"]["semantic_replay_count"] == 6
     assert "run_probe" in after_probe_contract["allowed_next_actions"]
 
     for _ in range(14):
@@ -1072,11 +1467,14 @@ def test_v6_does_not_apply_v7_evidence_saturation_limit(tmp_path) -> None:
         gateway_context_policy_version="phase-evidence-v6",
     )
     search = {"query": "parse_rows", "path_glob": "**/*.py"}
-    assert gateway.execute(
-        "search_files",
-        "v6-search-first",
-        search,
-    ).status == "succeeded"
+    assert (
+        gateway.execute(
+            "search_files",
+            "v6-search-first",
+            search,
+        ).status
+        == "succeeded"
+    )
     for index in range(6):
         replay = gateway.execute(
             "search_files",
@@ -1117,25 +1515,20 @@ def test_controlled_rejection_is_one_shot_and_does_not_mutate_worktree(
 
     assert rejected.status == "rejected"
     assert rejected.error_code == "CONTROLLED_DIAGNOSTIC_REJECTION"
-    assert (
-        rejected.output["error_details"]["schema_version"]
-        == "controlled-rejection-v1"
-    )
+    assert rejected.output["error_details"]["schema_version"] == "controlled-rejection-v1"
     assert rejected.output["error_details"]["worktree_mutated"] is False
     assert manager.diff_summary(workspace) == baseline
     events = gateway.state.list_events(gateway.run_id)
-    assert sum(
-        event.type == EventType.PATCH_PREPARED for event in events
-    ) == 1
-    assert sum(
-        event.type == EventType.TOOL_FAILED
-        and event.payload.get("error_code")
-        == "CONTROLLED_DIAGNOSTIC_REJECTION"
-        for event in events
-    ) == 1
-    assert not any(
-        event.type == EventType.PATCH_APPLIED for event in events
+    assert sum(event.type == EventType.PATCH_PREPARED for event in events) == 1
+    assert (
+        sum(
+            event.type == EventType.TOOL_FAILED
+            and event.payload.get("error_code") == "CONTROLLED_DIAGNOSTIC_REJECTION"
+            for event in events
+        )
+        == 1
     )
+    assert not any(event.type == EventType.PATCH_APPLIED for event in events)
 
     replayed = gateway.execute(
         "apply_patch",
@@ -1153,19 +1546,17 @@ def test_controlled_rejection_is_one_shot_and_does_not_mutate_worktree(
         {"patch": patch},
     )
     assert applied.status == "succeeded"
-    assert manager.diff_summary(workspace).changed_files == [
-        "mini_data_utils/csvlite.py"
-    ]
+    assert manager.diff_summary(workspace).changed_files == ["mini_data_utils/csvlite.py"]
     events = gateway.state.list_events(gateway.run_id)
-    assert sum(
-        event.type == EventType.TOOL_FAILED
-        and event.payload.get("error_code")
-        == "CONTROLLED_DIAGNOSTIC_REJECTION"
-        for event in events
-    ) == 1
-    assert sum(
-        event.type == EventType.PATCH_APPLIED for event in events
-    ) == 1
+    assert (
+        sum(
+            event.type == EventType.TOOL_FAILED
+            and event.payload.get("error_code") == "CONTROLLED_DIAGNOSTIC_REJECTION"
+            for event in events
+        )
+        == 1
+    )
+    assert sum(event.type == EventType.PATCH_APPLIED for event in events) == 1
 
 
 def test_controlled_rejection_requires_prepared_intent_to_be_latest(
@@ -1207,13 +1598,10 @@ def test_controlled_rejection_requires_prepared_intent_to_be_latest(
     assert result.status == "failed"
     assert result.error_code == "RECOVERY_ERROR"
     assert result.output["fatal"] is True
-    assert "not the current latest event" in (
-        result.error_message or ""
-    )
+    assert "not the current latest event" in (result.error_message or "")
     assert manager.diff_summary(workspace) == baseline
     assert not any(
-        event.type == EventType.PATCH_APPLIED
-        for event in gateway.state.list_events(gateway.run_id)
+        event.type == EventType.PATCH_APPLIED for event in gateway.state.list_events(gateway.run_id)
     )
 
 
@@ -1267,8 +1655,7 @@ def test_controlled_rejection_durable_declaration_rejects_interleaving(
     assert "evidence is malformed" in (result.error_message or "")
     assert manager.diff_summary(workspace) == baseline
     assert not any(
-        event.type == EventType.PATCH_APPLIED
-        for event in gateway.state.list_events(gateway.run_id)
+        event.type == EventType.PATCH_APPLIED for event in gateway.state.list_events(gateway.run_id)
     )
 
 
@@ -1305,8 +1692,7 @@ def test_invalid_patch_does_not_consume_controlled_rejection(
         event
         for event in gateway.state.list_events(gateway.run_id)
         if event.type == EventType.TOOL_FAILED
-        and event.payload.get("error_code")
-        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+        and event.payload.get("error_code") == "CONTROLLED_DIAGNOSTIC_REJECTION"
     ]
     assert len(controlled_failures) == 1
 
@@ -1363,15 +1749,15 @@ def test_controlled_rejection_recovery_never_applies_interrupted_patch(
     assert result.error_code == "CONTROLLED_DIAGNOSTIC_REJECTION"
     assert manager.diff_summary(workspace) == baseline
     events = gateway.state.list_events(gateway.run_id)
-    assert sum(
-        event.type == EventType.TOOL_FAILED
-        and event.payload.get("error_code")
-        == "CONTROLLED_DIAGNOSTIC_REJECTION"
-        for event in events
-    ) == 1
-    assert not any(
-        event.type == EventType.PATCH_APPLIED for event in events
+    assert (
+        sum(
+            event.type == EventType.TOOL_FAILED
+            and event.payload.get("error_code") == "CONTROLLED_DIAGNOSTIC_REJECTION"
+            for event in events
+        )
+        == 1
     )
+    assert not any(event.type == EventType.PATCH_APPLIED for event in events)
 
 
 def test_controlled_rejection_recovery_fails_closed_on_malformed_declaration(
@@ -1419,8 +1805,7 @@ def test_controlled_rejection_recovery_fails_closed_on_malformed_declaration(
     assert "evidence is malformed" in (result.error_message or "")
     assert manager.diff_summary(workspace) == baseline
     assert not any(
-        event.type == EventType.PATCH_APPLIED
-        for event in gateway.state.list_events(gateway.run_id)
+        event.type == EventType.PATCH_APPLIED for event in gateway.state.list_events(gateway.run_id)
     )
 
 
@@ -1453,13 +1838,10 @@ def test_controlled_rejection_fails_closed_when_intent_is_not_first_prepared(
     assert result.status == "failed"
     assert result.error_code == "RECOVERY_ERROR"
     assert result.output["fatal"] is True
-    assert "not bound to the first prepared patch" in (
-        result.error_message or ""
-    )
+    assert "not bound to the first prepared patch" in (result.error_message or "")
     assert manager.diff_summary(workspace) == baseline
     assert not any(
-        event.type == EventType.PATCH_APPLIED
-        for event in gateway.state.list_events(gateway.run_id)
+        event.type == EventType.PATCH_APPLIED for event in gateway.state.list_events(gateway.run_id)
     )
 
 
@@ -1485,8 +1867,7 @@ def test_controlled_rejection_recovery_fails_closed_on_duplicate_declaration(
         event
         for event in gateway.state.list_events(gateway.run_id)
         if event.type == EventType.TOOL_FAILED
-        and event.payload.get("error_code")
-        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+        and event.payload.get("error_code") == "CONTROLLED_DIAGNOSTIC_REJECTION"
     )
     gateway.state.append_event(
         gateway.run_id,
@@ -1509,8 +1890,7 @@ def test_controlled_rejection_recovery_fails_closed_on_duplicate_declaration(
     assert "duplicate declarations" in (result.error_message or "")
     assert manager.diff_summary(workspace) == baseline
     assert not any(
-        event.type == EventType.PATCH_APPLIED
-        for event in gateway.state.list_events(gateway.run_id)
+        event.type == EventType.PATCH_APPLIED for event in gateway.state.list_events(gateway.run_id)
     )
 
 
@@ -1542,10 +1922,101 @@ def test_interrupted_patch_in_pre_state_is_applied_once_on_recovery(
 
     assert result is not None
     assert result.status == "succeeded"
-    assert manager.diff_summary(workspace).patch_hash == result.output[
-        "worktree_diff_hash"
-    ]
+    assert manager.diff_summary(workspace).patch_hash == result.output["worktree_diff_hash"]
     events = gateway.state.list_events(gateway.run_id)
+    assert sum(event.type == EventType.TOOL_CALLED for event in events) == 1
+    assert sum(event.type == EventType.PATCH_PREPARED for event in events) == 1
+    assert sum(event.type == EventType.PATCH_APPLIED for event in events) == 1
+
+
+def test_v8_interrupted_normalized_patch_recovers_from_bound_evidence(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v8_normalized_recovery",
+        tool_schema_version="v8",
+        gateway_context_policy_version="phase-evidence-v13",
+    )
+    checkpoint = _durable_checkpoint(gateway)
+    normalized_patch = _r2_style_recount_patch()
+    raw_patch = "*** Begin Patch\r\n" + normalized_patch.replace("\n", "\r\n") + "*** End Patch"
+
+    def crash_before_mutation(*_args, **_kwargs):
+        raise SystemExit(86)
+
+    monkeypatch.setattr(gateway, "_apply_patch", crash_before_mutation)
+    with pytest.raises(SystemExit, match="86"):
+        gateway.execute(
+            "apply_patch",
+            "recover-v8-normalized-action",
+            {"patch": raw_patch},
+        )
+
+    assert manager.diff_summary(workspace).patch_hash == checkpoint.worktree_diff_hash
+    recovered = _fresh_gateway(gateway)
+    result = recovered.reconcile_interrupted_patch(checkpoint)
+
+    assert result is not None
+    assert result.status == "succeeded"
+    assert result.output["patch_hash"] == sha256_text(normalized_patch)
+    assert manager.diff_summary(workspace).patch_hash == result.output["worktree_diff_hash"]
+    events = gateway.state.list_events(gateway.run_id)
+    assert sum(event.type == EventType.TOOL_CALLED for event in events) == 1
+    assert sum(event.type == EventType.PATCH_PREPARED for event in events) == 1
+    assert sum(event.type == EventType.PATCH_APPLIED for event in events) == 1
+
+
+def test_v10_interrupted_fresh_structured_edit_replays_requested_and_derived_evidence(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v10_fresh_structured_recovery",
+        tool_schema_version="v10",
+        gateway_context_policy_version="phase-evidence-v15",
+    )
+    checkpoint = _durable_checkpoint(gateway)
+    arguments = {
+        "schema_version": "structured-edit-arguments-v2",
+        "files": [
+            {
+                "path": "mini_data_utils/csvlite.py",
+                "replacements": [
+                    {
+                        "expected_text": "one audited defect",
+                        "replacement_text": "one documented defect",
+                    }
+                ],
+            }
+        ],
+    }
+
+    def crash_before_mutation(*_args, **_kwargs):
+        raise SystemExit(86)
+
+    monkeypatch.setattr(gateway, "_apply_patch", crash_before_mutation)
+    with pytest.raises(SystemExit, match="86"):
+        gateway.execute(
+            "apply_structured_edit",
+            "recover-v10-fresh-structured",
+            arguments,
+        )
+
+    assert manager.diff_summary(workspace).patch_hash == checkpoint.worktree_diff_hash
+    recovered = _fresh_gateway(gateway)
+    result = recovered.reconcile_interrupted_patch(checkpoint)
+
+    assert result is not None
+    assert result.status == "succeeded"
+    assert "one documented defect" in (
+        workspace / "mini_data_utils" / "csvlite.py"
+    ).read_text(encoding="utf-8")
+    events = gateway.state.list_events(gateway.run_id)
+    call = next(event for event in events if event.type == EventType.TOOL_CALLED)
+    assert call.payload["structured_edit_refresh_projection_artifact"] is not None
     assert sum(event.type == EventType.TOOL_CALLED for event in events) == 1
     assert sum(event.type == EventType.PATCH_PREPARED for event in events) == 1
     assert sum(event.type == EventType.PATCH_APPLIED for event in events) == 1
@@ -1586,16 +2057,14 @@ def test_interrupted_read_action_reuses_tool_call_and_closes_outcome(
     events = gateway.state.list_events(gateway.run_id)
     assert (
         sum(
-            event.type == EventType.TOOL_CALLED
-            and event.correlation_id == "recover-read-action"
+            event.type == EventType.TOOL_CALLED and event.correlation_id == "recover-read-action"
             for event in events
         )
         == 1
     )
     assert (
         sum(
-            event.type == EventType.TOOL_SUCCEEDED
-            and event.correlation_id == "recover-read-action"
+            event.type == EventType.TOOL_SUCCEEDED and event.correlation_id == "recover-read-action"
             for event in events
         )
         == 1
@@ -1652,11 +2121,7 @@ def test_partial_multi_file_patch_restores_preimages_then_applies_once(
         "run_gateway_recover_partial",
     )
     gateway.task = gateway.task.model_copy(
-        update={
-            "constraints": gateway.task.constraints.model_copy(
-                update={"max_changed_files": 2}
-            )
-        }
+        update={"constraints": gateway.task.constraints.model_copy(update={"max_changed_files": 2})}
     )
     checkpoint = _durable_checkpoint(gateway)
     patch = (
@@ -1694,32 +2159,24 @@ def test_partial_multi_file_patch_restores_preimages_then_applies_once(
         for event in gateway.state.list_events(gateway.run_id)
         if event.type == EventType.PATCH_PREPARED
     )
-    intent_artifact = Artifact.model_validate(
-        prepared.payload["intent_artifact"]
-    )
-    intent = json.loads(
-        gateway.artifacts.read_bytes(intent_artifact).decode("utf-8")
-    )
+    intent_artifact = Artifact.model_validate(prepared.payload["intent_artifact"])
+    intent = json.loads(gateway.artifacts.read_bytes(intent_artifact).decode("utf-8"))
     first = intent["files"][0]
     first_post = Artifact.model_validate(first["postimage_artifact"])
-    (workspace / first["path"]).write_bytes(
-        gateway.artifacts.read_bytes(first_post)
-    )
+    (workspace / first["path"]).write_bytes(gateway.artifacts.read_bytes(first_post))
 
     recovered = _fresh_gateway(gateway)
     result = recovered.reconcile_interrupted_patch(checkpoint)
 
     assert result is not None
     assert result.status == "succeeded"
-    assert "recoverable defect" in (
-        workspace / "mini_data_utils" / "csvlite.py"
-    ).read_text(encoding="utf-8")
-    assert "durable PatchLoop fixture" in (
-        workspace / "mini_data_utils" / "__init__.py"
-    ).read_text(encoding="utf-8")
-    assert manager.diff_summary(workspace).patch_hash == result.output[
-        "worktree_diff_hash"
-    ]
+    assert "recoverable defect" in (workspace / "mini_data_utils" / "csvlite.py").read_text(
+        encoding="utf-8"
+    )
+    assert "durable PatchLoop fixture" in (workspace / "mini_data_utils" / "__init__.py").read_text(
+        encoding="utf-8"
+    )
+    assert manager.diff_summary(workspace).patch_hash == result.output["worktree_diff_hash"]
 
 
 def test_preflight_validates_every_postimage_target_before_any_write(
@@ -1748,9 +2205,7 @@ def test_preflight_validates_every_postimage_target_before_any_write(
         " \n"
     )
     action_id = "preflight-all-targets"
-    input_hash = sha256_text(
-        canonical_json({"tool": "apply_patch", "input": {"patch": patch}})
-    )
+    input_hash = sha256_text(canonical_json({"tool": "apply_patch", "input": {"patch": patch}}))
     patch_artifact = gateway.artifacts.put_text(
         patch,
         media_type="text/x-diff",
@@ -1828,16 +2283,11 @@ def test_mixed_recovery_does_not_overwrite_unrelated_tracked_change(
     first_entry = intent["files"][0]
     first = workspace / first_entry["path"]
     first.write_bytes(
-        gateway.artifacts.read_bytes(
-            Artifact.model_validate(
-                first_entry["postimage_artifact"]
-            )
-        )
+        gateway.artifacts.read_bytes(Artifact.model_validate(first_entry["postimage_artifact"]))
     )
     unrelated = workspace / "README.md"
     unrelated.write_text(
-        unrelated.read_text(encoding="utf-8")
-        + "\nunrelated third state\n",
+        unrelated.read_text(encoding="utf-8") + "\nunrelated third state\n",
         encoding="utf-8",
     )
     bytes_before = {
@@ -1854,13 +2304,8 @@ def test_mixed_recovery_does_not_overwrite_unrelated_tracked_change(
     assert result is not None
     assert result.status == "failed"
     assert result.output["fatal"] is True
-    assert "outside the prepared mutation" in (
-        result.error_message or ""
-    )
-    assert {
-        path: (workspace / path).read_bytes()
-        for path in bytes_before
-    } == bytes_before
+    assert "outside the prepared mutation" in (result.error_message or "")
+    assert {path: (workspace / path).read_bytes() for path in bytes_before} == bytes_before
 
 
 def test_interrupted_patch_with_tampered_intent_fails_closed(
@@ -1944,9 +2389,9 @@ def test_interrupted_policy_bad_post_state_is_rolled_back_and_rejected(
         "run_gateway_recover_policy_bad",
     )
     checkpoint = _durable_checkpoint(gateway)
-    patch = Path(
-        "tasks/smoke/csv-quoted-newline/bad/forbidden-path.patch"
-    ).read_text(encoding="utf-8")
+    patch = Path("tasks/smoke/csv-quoted-newline/bad/forbidden-path.patch").read_text(
+        encoding="utf-8"
+    )
 
     def crash_before_policy(*_args, **_kwargs):
         raise SystemExit(86)
@@ -2039,12 +2484,8 @@ def test_v1_cached_result_preserves_legacy_outcome_event(tmp_path) -> None:
     assert first.status == "succeeded"
     assert second.output["replayed"] is True
     events = gateway.state.list_events(gateway.run_id)
-    assert sum(
-        event.type == EventType.TOOL_SUCCEEDED for event in events
-    ) == 2
-    assert not any(
-        event.type == EventType.TOOL_REPLAYED for event in events
-    )
+    assert sum(event.type == EventType.TOOL_SUCCEEDED for event in events) == 2
+    assert not any(event.type == EventType.TOOL_REPLAYED for event in events)
 
 
 def test_recounted_policy_violation_is_rolled_back_with_same_patch(tmp_path) -> None:
@@ -2061,9 +2502,9 @@ def test_recounted_policy_violation_is_rolled_back_with_same_patch(tmp_path) -> 
     assert accepted.status == "succeeded"
     pre_rejection_diff_hash = manager.diff_summary(workspace).patch_hash
 
-    patch = Path(
-        "tasks/smoke/csv-quoted-newline/bad/forbidden-path.patch"
-    ).read_text(encoding="utf-8")
+    patch = Path("tasks/smoke/csv-quoted-newline/bad/forbidden-path.patch").read_text(
+        encoding="utf-8"
+    )
     patch = patch.replace("@@ -1,4 +1,6 @@", "@@ -1,40 +1,60 @@")
 
     result = gateway.execute(
@@ -2077,9 +2518,9 @@ def test_recounted_policy_violation_is_rolled_back_with_same_patch(tmp_path) -> 
     summary = manager.diff_summary(workspace)
     assert summary.patch_hash == pre_rejection_diff_hash
     assert summary.changed_files == ["mini_data_utils/csvlite.py"]
-    assert "intentionally outside the task scope" not in (
-        workspace / "README.md"
-    ).read_text(encoding="utf-8")
+    assert "intentionally outside the task scope" not in (workspace / "README.md").read_text(
+        encoding="utf-8"
+    )
 
 
 def test_search_glob_cannot_escape_workspace(tmp_path) -> None:
@@ -2132,13 +2573,7 @@ def test_rejected_patch_format_is_durable_and_visible_to_next_turn(tmp_path) -> 
     result = gateway.execute(
         "apply_patch",
         "invalid-patch-envelope",
-        {
-            "patch": (
-                "*** Begin Patch\n"
-                "*** Update File: mini_data_utils/csvlite.py\n"
-                "*** End Patch"
-            )
-        },
+        {"patch": ("*** Begin Patch\n*** Update File: mini_data_utils/csvlite.py\n*** End Patch")},
     )
 
     assert result.status == "rejected"
@@ -2169,9 +2604,7 @@ def test_check_and_diff_results_are_bound_to_current_worktree(tmp_path) -> None:
         tmp_path,
         "run_gateway_diff_binding",
     )
-    patch = Path(
-        "tasks/smoke/csv-quoted-newline/reference.patch"
-    ).read_text(encoding="utf-8")
+    patch = Path("tasks/smoke/csv-quoted-newline/reference.patch").read_text(encoding="utf-8")
 
     applied = gateway.execute(
         "apply_patch",
@@ -2195,9 +2628,7 @@ def test_check_and_diff_results_are_bound_to_current_worktree(tmp_path) -> None:
         if event.type == EventType.TOOL_SUCCEEDED
         and event.payload.get("tool") in {"run_check", "get_diff"}
     ]
-    assert {event.payload["worktree_diff_hash"] for event in bound_events} == {
-        diff_hash
-    }
+    assert {event.payload["worktree_diff_hash"] for event in bound_events} == {diff_hash}
 
 
 def test_repeated_call_is_advisory_and_visible(tmp_path) -> None:
@@ -2286,11 +2717,7 @@ def test_v4_nonconsecutive_exact_search_uses_semantic_replay(
     assert sum(event.type == EventType.TOOL_CALLED for event in events) == 3
     assert sum(event.type == EventType.TOOL_SUCCEEDED for event in events) == 2
     assert sum(event.type == EventType.TOOL_REPLAYED for event in events) == 1
-    loop = next(
-        event
-        for event in events
-        if event.type == EventType.LOOP_DETECTED
-    )
+    loop = next(event for event in events if event.type == EventType.LOOP_DETECTED)
     assert loop.payload["schema_version"] == "investigation-loop-v1"
     assert loop.payload["reason_code"] == "duplicate_search"
     assert loop.payload["enforcement"] == "semantic-cache-replay"
@@ -2494,11 +2921,7 @@ def test_v4_tail_policy_blocks_inspection_before_tool_admission(
     assert result.output["admission_blocked"] is True
     events = gateway.state.list_events(gateway.run_id)
     assert not any(event.type == EventType.TOOL_CALLED for event in events)
-    blocked = next(
-        event
-        for event in events
-        if event.type == EventType.TOOL_ADMISSION_BLOCKED
-    )
+    blocked = next(event for event in events if event.type == EventType.TOOL_ADMISSION_BLOCKED)
     assert blocked.payload["reason_codes"] == ["model_tail_reserved"]
 
 
@@ -2535,13 +2958,11 @@ def test_v4_tail_policy_blocks_semantic_replay_before_tool_admission(
     assert blocked.error_code == "TOOL_ADMISSION_BLOCKED"
     events = gateway.state.list_events(gateway.run_id)
     assert not any(
-        event.type == EventType.TOOL_CALLED
-        and event.correlation_id == "tail-duplicate-search"
+        event.type == EventType.TOOL_CALLED and event.correlation_id == "tail-duplicate-search"
         for event in events
     )
     assert not any(
-        event.type == EventType.TOOL_REPLAYED
-        and event.correlation_id == "tail-duplicate-search"
+        event.type == EventType.TOOL_REPLAYED and event.correlation_id == "tail-duplicate-search"
         for event in events
     )
 
@@ -2576,10 +2997,7 @@ def test_v4_tail_policy_does_not_hide_invalid_inspection_input(
     assert result.error_code == "CONTRACT_ERROR"
     events = gateway.state.list_events(gateway.run_id)
     assert any(event.type == EventType.TOOL_CALLED for event in events)
-    assert not any(
-        event.type == EventType.TOOL_ADMISSION_BLOCKED
-        for event in events
-    )
+    assert not any(event.type == EventType.TOOL_ADMISSION_BLOCKED for event in events)
 
 
 def test_v4_tail_policy_does_not_hide_missing_read_target(
@@ -2612,14 +3030,10 @@ def test_v4_tail_policy_does_not_hide_missing_read_target(
     assert result.error_code == "CONTRACT_ERROR"
     events = gateway.state.list_events(gateway.run_id)
     assert any(
-        event.type == EventType.TOOL_CALLED
-        and event.correlation_id == "missing-tail-read"
+        event.type == EventType.TOOL_CALLED and event.correlation_id == "missing-tail-read"
         for event in events
     )
-    assert not any(
-        event.type == EventType.TOOL_ADMISSION_BLOCKED
-        for event in events
-    )
+    assert not any(event.type == EventType.TOOL_ADMISSION_BLOCKED for event in events)
 
 
 @pytest.mark.parametrize(
@@ -2786,10 +3200,7 @@ def test_v4_tail_policy_does_not_hide_symlink_escape(
     assert result.error_code == "CONTRACT_ERROR"
     events = gateway.state.list_events(gateway.run_id)
     assert any(event.type == EventType.TOOL_CALLED for event in events)
-    assert not any(
-        event.type == EventType.TOOL_ADMISSION_BLOCKED
-        for event in events
-    )
+    assert not any(event.type == EventType.TOOL_ADMISSION_BLOCKED for event in events)
 
 
 @pytest.mark.parametrize(
@@ -2835,9 +3246,9 @@ def test_v4_context_projects_the_imminent_model_call_for_tail_policy(
     tail = payload["investigation_ledger"]["tail_policy"]
 
     assert tail["exploration_admitted"] is exploration_admitted
-    assert tail["remaining_budget"][
-        "model_calls_after_next_generation"
-    ] == max(0, remaining_model_calls - 1)
+    assert tail["remaining_budget"]["model_calls_after_next_generation"] == max(
+        0, remaining_model_calls - 1
+    )
     allowed = payload["phase_contract"]["allowed_next_actions"]
     assert ("search_files" in allowed) is exploration_admitted
     assert ("read_file" in allowed) is exploration_admitted
@@ -2875,18 +3286,10 @@ def test_v4_context_removes_inspection_from_tail_actions(
     )
 
     payload = json.loads(context)
-    assert payload["investigation_ledger"]["tail_policy"][
-        "exploration_admitted"
-    ] is False
-    assert "search_files" not in payload["phase_contract"][
-        "allowed_next_actions"
-    ]
-    assert "read_file" not in payload["phase_contract"][
-        "allowed_next_actions"
-    ]
-    assert "apply_patch" in payload["phase_contract"][
-        "allowed_next_actions"
-    ]
+    assert payload["investigation_ledger"]["tail_policy"]["exploration_admitted"] is False
+    assert "search_files" not in payload["phase_contract"]["allowed_next_actions"]
+    assert "read_file" not in payload["phase_contract"]["allowed_next_actions"]
+    assert "apply_patch" in payload["phase_contract"]["allowed_next_actions"]
 
 
 def test_v5_context_projects_exact_input_growth_across_five_tail_turns(
@@ -2956,9 +3359,7 @@ def test_v5_context_projects_exact_input_growth_across_five_tail_turns(
         ),
         max_output_tokens=25_000,
     )
-    open_tail = json.loads(open_built.rendered)[
-        "investigation_ledger"
-    ]["tail_policy"]
+    open_tail = json.loads(open_built.rendered)["investigation_ledger"]["tail_policy"]
     assert open_tail["remaining_budget"]["tokens"] == 165_001
     assert open_tail["block_reasons"] == []
     assert open_tail["exploration_admitted"] is True
@@ -2981,9 +3382,7 @@ def test_v5_context_uses_input_fallback_only_when_requested_is_none(
         budget=Budget(max_total_tokens=1),
         max_output_tokens=25_000,
     )
-    no_observation_tail = json.loads(no_observation.rendered)[
-        "investigation_ledger"
-    ]["tail_policy"]
+    no_observation_tail = json.loads(no_observation.rendered)["investigation_ledger"]["tail_policy"]
     assert no_observation_tail["block_reasons"] == []
     assert no_observation_tail["exploration_admitted"] is True
 
@@ -3097,8 +3496,7 @@ def test_v5_gateway_blocks_token_tail_at_post_generation_boundary(
         for event in events
     )
     assert not any(
-        event.type == EventType.TOOL_REPLAYED
-        and event.correlation_id == "v5-token-tail-block"
+        event.type == EventType.TOOL_REPLAYED and event.correlation_id == "v5-token-tail-block"
         for event in events
     )
 
@@ -3157,9 +3555,7 @@ def test_v5_tail_reason_order_is_stable_when_all_reserves_close(
         max_output_tokens=25_000,
     )
 
-    assert json.loads(built.rendered)["investigation_ledger"][
-        "tail_policy"
-    ]["block_reasons"] == [
+    assert json.loads(built.rendered)["investigation_ledger"]["tail_policy"]["block_reasons"] == [
         "tool_tail_reserved",
         "model_tail_reserved",
         "token_tail_reserved",
@@ -3225,19 +3621,13 @@ def test_v4_lifecycle_qualification_recomputes_replay_and_admission(
     assert nested_integrity is True
     assert nested_count == 2
     assert nested_leaks == 2
-    assert {
-        item["role"] for item in nested_evidence
-    } == {
+    assert {item["role"] for item in nested_evidence} == {
         "investigation-admission-input",
         "investigation-admission-preflight",
     }
     assert nested_missing == []
 
-    loop = next(
-        event
-        for event in events
-        if event.type == EventType.LOOP_DETECTED
-    )
+    loop = next(event for event in events if event.type == EventType.LOOP_DETECTED)
     tampered_loop = loop.model_copy(
         update={
             "payload": {
@@ -3247,8 +3637,7 @@ def test_v4_lifecycle_qualification_recomputes_replay_and_admission(
         }
     )
     tampered_events = [
-        tampered_loop if event.sequence == loop.sequence else event
-        for event in events
+        tampered_loop if event.sequence == loop.sequence else event for event in events
     ]
     passed, details = _v4_investigation_lifecycle_evidence(
         root=tmp_path,
@@ -3262,20 +3651,14 @@ def test_v4_lifecycle_qualification_recomputes_replay_and_admission(
     replay = next(
         event
         for event in events
-        if event.type == EventType.TOOL_REPLAYED
-        and event.payload.get("semantic_replay") is True
+        if event.type == EventType.TOOL_REPLAYED and event.payload.get("semantic_replay") is True
     )
     stripped_payload = dict(replay.payload)
     stripped_payload.pop("schema_version")
     stripped_payload.pop("semantic_replay")
-    stripped_replay = replay.model_copy(
-        update={"payload": stripped_payload}
-    )
+    stripped_replay = replay.model_copy(update={"payload": stripped_payload})
     stripped_events = [
-        stripped_replay
-        if event.sequence == replay.sequence
-        else event
-        for event in events
+        stripped_replay if event.sequence == replay.sequence else event for event in events
     ]
     passed, details = _v4_investigation_lifecycle_evidence(
         root=tmp_path,
@@ -3284,9 +3667,7 @@ def test_v4_lifecycle_qualification_recomputes_replay_and_admission(
         events=stripped_events,
     )
     assert passed is False
-    assert replay.sequence in details[
-        "failed_semantic_replay_sequences"
-    ]
+    assert replay.sequence in details["failed_semantic_replay_sequences"]
 
     def reject_admission_request(*_args, **_kwargs) -> None:
         raise ContractError("synthetic admission validation failure")
@@ -3345,16 +3726,10 @@ def test_v4_read_admission_uses_frozen_preflight_after_target_deletion(
     assert passed is True
     assert details["verified_admission_block_count"] == 1
 
-    admission = next(
-        event
-        for event in events
-        if event.type == EventType.TOOL_ADMISSION_BLOCKED
-    )
+    admission = next(event for event in events if event.type == EventType.TOOL_ADMISSION_BLOCKED)
     preflight = json.loads(
         gateway.artifacts.read_bytes(
-            Artifact.model_validate(
-                admission.payload["preflight_artifact"]
-            )
+            Artifact.model_validate(admission.payload["preflight_artifact"])
         ).decode("utf-8")
     )
     target = Artifact.model_validate(preflight["target_artifact"])
@@ -3413,17 +3788,10 @@ def test_v4_context_retains_evicted_investigation_evidence(
     assert first.rendered == reopened.rendered
     assert first.content_hash == reopened.content_hash
     assert first.evidence["events"]["omitted_count"] > 0
-    assert (
-        first.evidence["investigation_ledger"]["read_file_count"]
-        == 1
-    )
+    assert first.evidence["investigation_ledger"]["read_file_count"] == 1
     payload = json.loads(first.rendered)
-    assert payload["investigation_ledger"]["reads"][0]["path"] == (
-        "mini_data_utils/csvlite.py"
-    )
-    assert payload["investigation_ledger"]["reads"][0][
-        "covered_ranges"
-    ] == [[1, 4]]
+    assert payload["investigation_ledger"]["reads"][0]["path"] == ("mini_data_utils/csvlite.py")
+    assert payload["investigation_ledger"]["reads"][0]["covered_ranges"] == [[1, 4]]
 
 
 def test_v4_context_rehydrates_semantic_replay_result(
@@ -3452,9 +3820,7 @@ def test_v4_context_rehydrates_semantic_replay_result(
         for event in payload["recent_events"]
         if event["type"] == EventType.TOOL_REPLAYED.value
     )
-    assert replay_event["payload"]["tool_result"][
-        "semantic_replay"
-    ] is True
+    assert replay_event["payload"]["tool_result"]["semantic_replay"] is True
     assert replay_event["payload"]["tool_result"]["matches"]
 
 
@@ -3484,9 +3850,7 @@ def test_v4_same_action_idempotency_replay_keeps_context_readable(
     event = gateway.state.list_events(gateway.run_id)[-1]
     assert event.type == EventType.TOOL_REPLAYED
     assert event.actor == "idempotency-store"
-    assert event.payload["result_artifact"] == first.output[
-        "result_artifact"
-    ]
+    assert event.payload["result_artifact"] == first.output["result_artifact"]
 
     reopened_state = StateStore(gateway.state.path)
     reopened_artifacts = ArtifactStore(gateway.artifacts.root)
@@ -3499,9 +3863,7 @@ def test_v4_same_action_idempotency_replay_keeps_context_readable(
     )
     payload = json.loads(context)
     replay_event = next(
-        item
-        for item in payload["recent_events"]
-        if item["sequence"] == event.sequence
+        item for item in payload["recent_events"] if item["sequence"] == event.sequence
     )
     assert replay_event["payload"]["tool_result"]["matches"]
 
@@ -3549,9 +3911,7 @@ def test_v4_semantic_result_idempotency_and_regular_tool_replay(
         policy_version="phase-evidence-v4",
         artifact_store=gateway.artifacts,
     )
-    assert json.loads(context)["investigation_ledger"][
-        "no_progress"
-    ]["total_semantic_replays"] == 1
+    assert json.loads(context)["investigation_ledger"]["no_progress"]["total_semantic_replays"] == 1
 
 
 def test_v4_second_semantic_replay_requires_strategy_change(
@@ -3660,18 +4020,10 @@ def test_v4_qualification_recomputes_context_ledger(
             "request_body_hash": request_body_hash,
             "artifact_id": request_artifact.artifact_id,
             "artifact_path": request_artifact.path,
-            "investigation_ledger_hash": ledger_evidence[
-                "content_hash"
-            ],
-            "investigation_source_through_sequence": (
-                ledger_evidence["source_through_sequence"]
-            ),
-            "investigation_no_progress_streak": ledger_evidence[
-                "no_progress_streak"
-            ],
-            "investigation_exploration_admitted": ledger_evidence[
-                "exploration_admitted"
-            ],
+            "investigation_ledger_hash": ledger_evidence["content_hash"],
+            "investigation_source_through_sequence": (ledger_evidence["source_through_sequence"]),
+            "investigation_no_progress_streak": ledger_evidence["no_progress_streak"],
+            "investigation_exploration_admitted": ledger_evidence["exploration_admitted"],
         },
     )
     package = load_task_package("tasks/smoke/csv-quoted-newline")
@@ -3704,9 +4056,7 @@ def test_v4_qualification_recomputes_context_ledger(
         context_events=[tampered],
     )
     assert passed is False
-    assert details["failed_context_sequences"] == [
-        context_event.sequence
-    ]
+    assert details["failed_context_sequences"] == [context_event.sequence]
 
 
 def test_live_request_evidence_uses_responses_input_not_mock_context(
@@ -3984,9 +4334,10 @@ def test_apply_patch_fails_closed_when_policy_rollback_fails(
         tmp_path,
         "run_gateway_failed_rollback",
     )
-    patch = Path(
-        "tasks/smoke/csv-quoted-newline/bad/forbidden-path.patch"
-    ).read_text(encoding="utf-8")
+    patch = Path("tasks/smoke/csv-quoted-newline/bad/forbidden-path.patch").read_text(
+        encoding="utf-8"
+    )
+
     def fail_preimage_restore(_intent):
         raise RecoveryError("forced preimage restoration failure")
 
@@ -4004,13 +4355,11 @@ def test_apply_patch_fails_closed_when_policy_rollback_fails(
 
     assert result.status == "failed"
     assert result.error_code == RecoveryError.code
-    assert "forced preimage restoration failure" in (
-        result.error_message or ""
-    )
+    assert "forced preimage restoration failure" in (result.error_message or "")
     assert result.output["fatal"] is True
-    assert "intentionally outside the task scope" in (
-        workspace / "README.md"
-    ).read_text(encoding="utf-8")
+    assert "intentionally outside the task scope" in (workspace / "README.md").read_text(
+        encoding="utf-8"
+    )
 
 
 def test_v3_schema_adds_optional_probe_and_mandatory_review_task() -> None:
@@ -4040,9 +4389,7 @@ def test_v3_probe_is_docker_only_and_diff_bound(tmp_path) -> None:
     )
 
     assert rejected.status == "rejected"
-    assert rejected.output["error_details"]["reason"] == (
-        "probe_requires_docker"
-    )
+    assert rejected.output["error_details"]["reason"] == ("probe_requires_docker")
     assert manager.diff_summary(workspace).patch_hash == baseline.patch_hash
 
     sandbox = _OfficialProbeSandbox()
@@ -4063,37 +4410,27 @@ def test_v3_probe_is_docker_only_and_diff_bound(tmp_path) -> None:
     assert succeeded.status == "succeeded"
     assert succeeded.output["passed"] is True
     assert succeeded.output["authoritative"] is False
-    assert succeeded.output["worktree_diff_hash"] == (
-        manager.diff_summary(workspace).patch_hash
-    )
+    assert succeeded.output["worktree_diff_hash"] == (manager.diff_summary(workspace).patch_hash)
     assert len(sandbox.probe_calls) == 1
-    source_descriptor = Artifact.model_validate(
-        succeeded.output["source_artifact"]
-    )
-    assert gateway.artifacts.read_bytes(source_descriptor) == (
-        b"assert 2 + 2 == 4"
-    )
+    source_descriptor = Artifact.model_validate(succeeded.output["source_artifact"])
+    assert gateway.artifacts.read_bytes(source_descriptor) == (b"assert 2 + 2 == 4")
     outcome = next(
         event
         for event in gateway.state.list_events(gateway.run_id)
-        if event.type == EventType.TOOL_SUCCEEDED
-        and event.payload.get("tool") == "run_probe"
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "run_probe"
     )
     assert outcome.payload["source_hash"] == source_descriptor.content_hash
     call = next(
         event
         for event in gateway.state.list_events(gateway.run_id)
-        if event.type == EventType.TOOL_CALLED
-        and event.payload.get("tool") == "run_probe"
+        if event.type == EventType.TOOL_CALLED and event.payload.get("tool") == "run_probe"
     )
     assert (
         call.payload["source_artifact"]
         == succeeded.output["source_artifact"]
         == outcome.payload["source_artifact"]
     )
-    assert outcome.payload["execution_policy"] == (
-        succeeded.output["execution_policy"]
-    )
+    assert outcome.payload["execution_policy"] == (succeeded.output["execution_policy"])
     assert outcome.payload["result_artifact"]["content_hash"]
 
     replayed = gateway.execute(
@@ -4135,13 +4472,10 @@ def test_v6_token_tail_blocks_probe_before_dispatch(tmp_path) -> None:
 
     assert blocked.status == "rejected"
     assert blocked.output["admission_blocked"] is True
-    assert "model_tail_reserved" in blocked.output["error_details"][
-        "reason_codes"
-    ]
+    assert "model_tail_reserved" in blocked.output["error_details"]["reason_codes"]
     assert sandbox.probe_calls == []
     assert not any(
-        event.type == EventType.TOOL_CALLED
-        and event.payload.get("tool") == "run_probe"
+        event.type == EventType.TOOL_CALLED and event.payload.get("tool") == "run_probe"
         for event in gateway.state.list_events(gateway.run_id)
     )
 
@@ -4211,9 +4545,7 @@ def test_v3_probe_rejects_process_and_dynamic_code_capabilities(
     )
 
     assert result.status == "rejected"
-    assert result.output["error_details"]["reason"] == (
-        "probe_source_policy_violation"
-    )
+    assert result.output["error_details"]["reason"] == ("probe_source_policy_violation")
     assert result.output["error_details"]["stage"] == "probe"
     assert sandbox.probe_calls == []
 
@@ -4237,11 +4569,10 @@ def test_v3_probe_rejects_multibyte_source_over_byte_limit(
     assert result.status == "rejected"
     assert sandbox.probe_calls == []
     events = gateway.state.list_events(gateway.run_id)
-    assert [
-        event.type
-        for event in events
-        if event.correlation_id == "multibyte-probe"
-    ] == [EventType.TOOL_CALLED, EventType.TOOL_FAILED]
+    assert [event.type for event in events if event.correlation_id == "multibyte-probe"] == [
+        EventType.TOOL_CALLED,
+        EventType.TOOL_FAILED,
+    ]
 
 
 def test_v3_interrupted_probe_fails_closed_without_redispatch(
@@ -4269,9 +4600,7 @@ def test_v3_interrupted_probe_fails_closed_without_redispatch(
             {"probe_id": PROBE_ID, "source": "assert True"},
         )
 
-    recovered = _fresh_gateway(gateway).reconcile_interrupted_action(
-        checkpoint
-    )
+    recovered = _fresh_gateway(gateway).reconcile_interrupted_action(checkpoint)
 
     assert recovered is not None
     assert recovered[0] == "run_probe"
@@ -4285,9 +4614,7 @@ def test_v3_review_binds_presented_check_and_diff_evidence(tmp_path) -> None:
         tmp_path,
         "run_v3_review",
     )
-    reference = Path(
-        "tasks/smoke/csv-quoted-newline/reference.patch"
-    ).read_text(encoding="utf-8")
+    reference = Path("tasks/smoke/csv-quoted-newline/reference.patch").read_text(encoding="utf-8")
     patched = gateway.execute(
         "apply_patch",
         "v3-patch",
@@ -4307,14 +4634,12 @@ def test_v3_review_binds_presented_check_and_diff_evidence(tmp_path) -> None:
     check_event = next(
         event
         for event in events
-        if event.type == EventType.TOOL_SUCCEEDED
-        and event.payload.get("tool") == "run_check"
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "run_check"
     )
     diff_event = next(
         event
         for event in events
-        if event.type == EventType.TOOL_SUCCEEDED
-        and event.payload.get("tool") == "get_diff"
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "get_diff"
     )
     review_arguments = {
         "requirements": [
@@ -4336,9 +4661,7 @@ def test_v3_review_binds_presented_check_and_diff_evidence(tmp_path) -> None:
                 "notes": "Current-diff public regression check passed.",
             }
         ],
-        "residual_risks": [
-            "Private evaluator cases are unavailable before submission."
-        ],
+        "residual_risks": ["Private evaluator cases are unavailable before submission."],
     }
     execution_context = {
         "request_artifact_id": "artifact-request-review",
@@ -4365,27 +4688,15 @@ def test_v3_review_binds_presented_check_and_diff_evidence(tmp_path) -> None:
     )
 
     assert reviewed.status == "succeeded"
-    assert reviewed.output["source_get_diff_sequence"] == (
-        diff_event.sequence
-    )
-    assert reviewed.output["request_artifact_id"] == (
-        "artifact-request-review"
-    )
+    assert reviewed.output["source_get_diff_sequence"] == (diff_event.sequence)
+    assert reviewed.output["request_artifact_id"] == ("artifact-request-review")
     assert reviewed.output["self_attestation"] is True
     assert reviewed.output["deterministic_correctness_claimed"] is False
-    descriptor = Artifact.model_validate(
-        reviewed.output["review_artifact"]
-    )
-    document = json.loads(
-        gateway.artifacts.read_bytes(descriptor).decode("utf-8")
-    )
+    descriptor = Artifact.model_validate(reviewed.output["review_artifact"])
+    document = json.loads(gateway.artifacts.read_bytes(descriptor).decode("utf-8"))
     assert reviewed.output["review"] == document
-    assert document["worktree_diff_hash"] == diffed.output[
-        "worktree_diff_hash"
-    ]
-    assert document["targeted_validation"] == (
-        review_arguments["targeted_validation"]
-    )
+    assert document["worktree_diff_hash"] == diffed.output["worktree_diff_hash"]
+    assert document["targeted_validation"] == (review_arguments["targeted_validation"])
 
 
 def test_v3_review_rejects_unpresented_evidence(tmp_path) -> None:
@@ -4393,37 +4704,42 @@ def test_v3_review_rejects_unpresented_evidence(tmp_path) -> None:
         tmp_path,
         "run_v3_unpresented_review",
     )
-    reference = Path(
-        "tasks/smoke/csv-quoted-newline/reference.patch"
-    ).read_text(encoding="utf-8")
-    assert gateway.execute(
-        "apply_patch",
-        "v3-unpresented-patch",
-        {"patch": reference},
-    ).status == "succeeded"
+    reference = Path("tasks/smoke/csv-quoted-newline/reference.patch").read_text(encoding="utf-8")
+    assert (
+        gateway.execute(
+            "apply_patch",
+            "v3-unpresented-patch",
+            {"patch": reference},
+        ).status
+        == "succeeded"
+    )
     check_id = gateway.task.visible_checks[0].id
-    assert gateway.execute(
-        "run_check",
-        "v3-unpresented-check",
-        {"check_id": check_id},
-    ).output["passed"] is True
-    assert gateway.execute(
-        "get_diff",
-        "v3-unpresented-diff",
-        {},
-    ).status == "succeeded"
+    assert (
+        gateway.execute(
+            "run_check",
+            "v3-unpresented-check",
+            {"check_id": check_id},
+        ).output["passed"]
+        is True
+    )
+    assert (
+        gateway.execute(
+            "get_diff",
+            "v3-unpresented-diff",
+            {},
+        ).status
+        == "succeeded"
+    )
     events = gateway.state.list_events(gateway.run_id)
     check_event = next(
         event
         for event in events
-        if event.type == EventType.TOOL_SUCCEEDED
-        and event.payload.get("tool") == "run_check"
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "run_check"
     )
     diff_event = next(
         event
         for event in events
-        if event.type == EventType.TOOL_SUCCEEDED
-        and event.payload.get("tool") == "get_diff"
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "get_diff"
     )
 
     rejected = gateway.execute(
@@ -4473,59 +4789,57 @@ def test_v9_review_rejection_names_exact_citable_sequences(tmp_path) -> None:
         manifest_context_policy_version="phase-evidence-v9",
         gateway_context_policy_version="phase-evidence-v9",
     )
-    reference = Path(
-        "tasks/smoke/csv-quoted-newline/reference.patch"
-    ).read_text(encoding="utf-8")
-    assert gateway.execute(
-        "apply_patch",
-        "v9-review-patch",
-        {"patch": reference},
-    ).status == "succeeded"
-    check_id = gateway.task.visible_checks[0].id
-    assert gateway.execute(
-        "run_check",
-        "v9-review-check",
-        {"check_id": check_id},
-    ).output["passed"] is True
-    assert gateway.execute(
-        "get_diff",
-        "v9-review-diff",
-        {},
-    ).status == "succeeded"
-    events = gateway.state.list_events(gateway.run_id)
-    mutation_event = next(
-        event for event in events if event.type == EventType.PATCH_APPLIED
+    reference = Path("tasks/smoke/csv-quoted-newline/reference.patch").read_text(encoding="utf-8")
+    assert (
+        gateway.execute(
+            "apply_patch",
+            "v9-review-patch",
+            {"patch": reference},
+        ).status
+        == "succeeded"
     )
+    check_id = gateway.task.visible_checks[0].id
+    assert (
+        gateway.execute(
+            "run_check",
+            "v9-review-check",
+            {"check_id": check_id},
+        ).output["passed"]
+        is True
+    )
+    assert (
+        gateway.execute(
+            "get_diff",
+            "v9-review-diff",
+            {},
+        ).status
+        == "succeeded"
+    )
+    events = gateway.state.list_events(gateway.run_id)
+    mutation_event = next(event for event in events if event.type == EventType.PATCH_APPLIED)
     check_call = next(
         event
         for event in events
-        if event.type == EventType.TOOL_CALLED
-        and event.payload.get("tool") == "run_check"
+        if event.type == EventType.TOOL_CALLED and event.payload.get("tool") == "run_check"
     )
     check_event = next(
         event
         for event in events
-        if event.type == EventType.TOOL_SUCCEEDED
-        and event.payload.get("tool") == "run_check"
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "run_check"
     )
     diff_event = next(
         event
         for event in events
-        if event.type == EventType.TOOL_SUCCEEDED
-        and event.payload.get("tool") == "get_diff"
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "get_diff"
     )
     for event in (check_event, diff_event):
-        descriptor = Artifact.model_validate(
-            event.payload["result_artifact"]
-        )
+        descriptor = Artifact.model_validate(event.payload["result_artifact"])
         assert event.payload["artifact_id"] == descriptor.artifact_id
         assert event.payload["artifact_path"] == descriptor.path
         assert gateway.artifacts.read_bytes(descriptor)
     manifest = gateway.state.get_manifest(gateway.run_id)
     assert manifest.public_review_contract is not None
-    requirement_id = manifest.public_review_contract.requirements[
-        0
-    ].requirement_id
+    requirement_id = manifest.public_review_contract.requirements[0].requirement_id
     presented = [
         {
             "event_sequence": check_event.sequence,
@@ -4541,9 +4855,7 @@ def test_v9_review_rejection_names_exact_citable_sequences(tmp_path) -> None:
     review_evidence = {
         "schema_version": "review-evidence-v1",
         "pinning_active": True,
-        "worktree_diff_hash": diff_event.payload[
-            "worktree_diff_hash"
-        ],
+        "worktree_diff_hash": diff_event.payload["worktree_diff_hash"],
         "mutation_event_sequence": mutation_event.sequence,
         "passing_check_event_sequences": [check_event.sequence],
         "source_get_diff_sequence": diff_event.sequence,

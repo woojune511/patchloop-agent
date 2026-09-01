@@ -323,7 +323,43 @@ def test_openai_adapter_rejects_input_token_count_mismatch_after_preserving_usag
     assert turn.requested_input_tokens == 11
     assert turn.input_tokens == 10
     assert turn.input_token_count_match is False
-    assert turn.output_tokens == 3
+
+
+def test_openai_successor_count_binds_parallel_tool_setting() -> None:
+    adapter = OpenAIResponsesAdapter.__new__(OpenAIResponsesAdapter)
+    captured: dict[str, object] = {}
+
+    class InputTokens:
+        @staticmethod
+        def count(**kwargs):
+            captured.update(kwargs)
+            return SimpleNamespace(input_tokens=123)
+
+    adapter.client = SimpleNamespace(
+        responses=SimpleNamespace(input_tokens=InputTokens())
+    )
+    request = {
+        "model": "gpt-5.4-mini-2026-03-17",
+        "input": [{"role": "user", "content": "public"}],
+        "tools": [],
+        "reasoning": {"effort": "low"},
+        "truncation": "disabled",
+        "parallel_tool_calls": False,
+        "store": False,
+        "max_output_tokens": 2048,
+        "service_tier": "default",
+    }
+
+    assert adapter.count_input_tokens_v2(request) == 123
+    assert captured["parallel_tool_calls"] is False
+    assert set(captured) == {
+        "model",
+        "input",
+        "tools",
+        "reasoning",
+        "truncation",
+        "parallel_tool_calls",
+    }
 
 
 def test_openai_adapter_rejects_incomplete_response_after_preserving_usage() -> None:

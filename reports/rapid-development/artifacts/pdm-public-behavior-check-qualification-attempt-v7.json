@@ -1,0 +1,20 @@
+{
+  "approval": {
+    "content_hash": "sha256:68085682bcd6f4716b92a17f93bfd21c915031a92fab61090e326d1a0d42c3f7",
+    "file_bytes": 1001,
+    "file_sha256": "sha256:94b7896e0a2edb922b2469aa828c59cc4fef79c847072cc0ec42b33d391b0cd7",
+    "path": "reports/rapid-development/artifacts/pdm-public-behavior-check-qualification-approval-v7.json"
+  },
+  "candidate": {
+    "content_hash": "sha256:0bbf713fcdd58e4d6ebe9f3fa113a1f3054a4c6b698e42ce665e6fc0ff061976",
+    "file_bytes": 14282,
+    "file_sha256": "sha256:5f2935d5e99f8c7e0207387fed20d84736ca6829c1b021f66cca77336ce41e70",
+    "path": "reports/rapid-development/artifacts/pdm-public-behavior-check-qualification-candidate-v7.json"
+  },
+  "content_hash": "sha256:ddeaf7454de2ba68323403bcd0f7ea0b0b58821cc0b79326c535b9f346fef916",
+  "docker_calls_before_claim": 0,
+  "execution_hash": "sha256:bb0a182325cfeb66fe030251b244d4528ca84777758ba0a6c41a2de431a28f20",
+  "recorded_at": "2026-08-22T04:08:38.488860Z",
+  "schema_version": "public-behavior-check-qualification-attempt-v7",
+  "status": "DOCKER_QUALIFICATION_ATTEMPT_CLAIMED_BEFORE_CALL"
+}

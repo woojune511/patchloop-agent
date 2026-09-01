@@ -1,0 +1,1280 @@
+{
+  "schema_version": "lean-harness-compacted-shadow-public-qualification-v1",
+  "qualification_id": "lean-harness-compacted-shadow-public-20260816-v1",
+  "status": "PUBLIC_NO_CALL_SHADOW_PHASE_POLICY_QUALIFIED_RUNTIME_CLOSED",
+  "evidence_date": "2026-08-16",
+  "frame_source": "deterministic-synthetic-public-events",
+  "phase_evidence_source": "rendered-phase-contract-derived-synthetic-evidence-state",
+  "live_public_trace_files_read": 0,
+  "live_public_trace_replay_verified": false,
+  "non_public_task_repository_files_read": 0,
+  "predecessor_event_compaction": {
+    "path": "experiments/lean-harness-event-descriptor-compaction-public-qualification-20260816-v1.json",
+    "file_bytes": 41798,
+    "file_sha256": "sha256:3d1a7b4c2f11f3ab749fdc45e6ec27c170f626dfbd9cdde8e61366f44d99aa05"
+  },
+  "predecessor_event_compaction_content_hash": "sha256:53f625b335f09bf8144a2b8b2d58425e84bbc151e5207bd82c46f35d2fa5562e",
+  "task_bindings": [
+    {
+      "task_id": "moto-query-scanned-count",
+      "task_version": 1,
+      "split": "dev-validation",
+      "path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "file_bytes": 2839,
+      "file_sha256": "sha256:4005b070d9e46c72a68554fbe998e9d81e920321a31e8bf633d3fd32277857f7",
+      "public_spec_hash": "sha256:15b4c9f378d48ae8eadbfad1a375d367fc973c230abf0996c617282ca0df8ea7",
+      "base_commit": "624de34d82a1b2c521727b14a2173380e196f1d8",
+      "private_file_opened": false,
+      "hidden_file_opened": false,
+      "reference_patch_opened": false
+    },
+    {
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_version": 1,
+      "split": "dev-validation",
+      "path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "file_bytes": 2023,
+      "file_sha256": "sha256:d65e09fe70bb0449c85e663d0eeb695fe52bc7fb34619debbbe81a0b16ab2aca",
+      "public_spec_hash": "sha256:dd7151171da2a60e2c772fafe7eb53840c335145206016bdc5a4f8f7486cc5cf",
+      "base_commit": "aca7663728e08e9d60b192b11fa6626a60974929",
+      "private_file_opened": false,
+      "hidden_file_opened": false,
+      "reference_patch_opened": false
+    }
+  ],
+  "frame_phases": [
+    "INTAKE",
+    "REPRODUCE",
+    "PLAN",
+    "IMPLEMENT",
+    "VERIFY",
+    "REVIEW"
+  ],
+  "conditions": [
+    "no_memory",
+    "structured"
+  ],
+  "expected_observations": 24,
+  "context_policy_version": "phase-evidence-v5",
+  "model_id": "gpt-5.4-mini-2026-03-17",
+  "fixed_bundle_sha256": "sha256:572667d431aa75e4fe74bfc030a99f64245b77d9afa1c88e5d531129f708accf",
+  "fixed_bundle_bytes": 3528,
+  "runtime_input_limit": 1000000,
+  "runtime_output_limit": 100000,
+  "runtime_total_limit": 1100000,
+  "configured_max_output_tokens": 25000,
+  "counter_contract": "caller-attested-canonical-utf8-byte-proxy-v1",
+  "provider_token_count_verified": false,
+  "observations": [
+    {
+      "frame_id": "sha256:7cf020b9a388c339186f8c33298f8b7ea003b8bb0b4ce604b4acfad53a6cdbcd",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "no_memory",
+      "phase": "INTAKE",
+      "frame_order": 1,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:7173436895a62ea5a09821dedd0762038a813826936c663aed32b63d57fe160c",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:52b71f217c390dddf6a6b82e420917129348cc16e9bac994704ca28075964ade",
+      "compacted_context_hash": "sha256:52b71f217c390dddf6a6b82e420917129348cc16e9bac994704ca28075964ade",
+      "removed_descriptor_count": 0,
+      "baseline_source_request_bytes": 10501,
+      "compacted_source_request_bytes": 10501,
+      "source_request_bytes_saved": 0,
+      "baseline_phase_request_bytes": 9864,
+      "compacted_phase_request_bytes": 9864,
+      "phase_request_bytes_saved": 0,
+      "baseline_counted_input_units": 9799,
+      "compacted_counted_input_units": 9799,
+      "counted_input_units_saved": 0,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:86a57bf318f59da0bf1f499d0453064f74aa275121b2876a64f04a7d0a2d54bf",
+      "shadow_evidence_hash": "sha256:b36140a9cc7324b3589f242a46a66210811a4a870b3c0b56a43d9ea8a6f4a562",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:baa0f2185b8353b8313814ae4a12883ae07a6d65b27a7afb835fd6d3fbafbff7",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "structured",
+      "phase": "INTAKE",
+      "frame_order": 1,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:7173436895a62ea5a09821dedd0762038a813826936c663aed32b63d57fe160c",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:2fc73ac9d61bc21cf464bfbd0d0a6a394c9532002e36afc39aa0be778ee5efde",
+      "compacted_context_hash": "sha256:2fc73ac9d61bc21cf464bfbd0d0a6a394c9532002e36afc39aa0be778ee5efde",
+      "removed_descriptor_count": 0,
+      "baseline_source_request_bytes": 14191,
+      "compacted_source_request_bytes": 14191,
+      "source_request_bytes_saved": 0,
+      "baseline_phase_request_bytes": 13554,
+      "compacted_phase_request_bytes": 13554,
+      "phase_request_bytes_saved": 0,
+      "baseline_counted_input_units": 13489,
+      "compacted_counted_input_units": 13489,
+      "counted_input_units_saved": 0,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:a06ac226a83f0840e1b0f83ad3cace06b6d026fbcfe730286a58813c981b9629",
+      "shadow_evidence_hash": "sha256:3786952fd57d47b03b26b16043a100c90f89fd280db02d9e29cae9856c4c2c20",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:cd741bc177275f12a2a15923edf7e75b60d1fb88c418a83a6055069d7d50252e",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "no_memory",
+      "phase": "REPRODUCE",
+      "frame_order": 2,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:7173436895a62ea5a09821dedd0762038a813826936c663aed32b63d57fe160c",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:15d140dd6ee876c7e11edcdb2bebf6c637ef860c95d35de8aee53804777cb823",
+      "compacted_context_hash": "sha256:36de7f0bddd4a751b7a103a31f9fd7429aa109359b0b2debd9c5fabe1e8c16dd",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 15411,
+      "compacted_source_request_bytes": 14342,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 14774,
+      "compacted_phase_request_bytes": 13705,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 14709,
+      "compacted_counted_input_units": 13640,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:78908480fc29b2fd9530f34e7788f9a0ca391a0df4d578e74e375cb703343387",
+      "shadow_evidence_hash": "sha256:8a50c862f4091c6198bc91385011947ba948067d632ce0d02cdbf22e3861edf7",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:2a0452476975079f509351a7b8821961f9a0c05967199b0f12afca5efc42d18d",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "structured",
+      "phase": "REPRODUCE",
+      "frame_order": 2,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:7173436895a62ea5a09821dedd0762038a813826936c663aed32b63d57fe160c",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:98e9238a4dab7872dcb1583fe5b3c898a2c4a00c6df27c5ba7ba03def510f05e",
+      "compacted_context_hash": "sha256:5d3d6080256c2695e33355aaeb895c0c885a4ef544517d665a3eec2d198cd30e",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 19101,
+      "compacted_source_request_bytes": 18032,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 18464,
+      "compacted_phase_request_bytes": 17395,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 18399,
+      "compacted_counted_input_units": 17330,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:56d129c0b5bab18bd0cd065bee4cac3457801a938b4f6b199daa2c97927701ca",
+      "shadow_evidence_hash": "sha256:3384649acc3e495e57e2bdc9bed13da70bfd920bf43924d3041205fb9b48e48d",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:1bb743ef454f8374b2ea79fc56876b0e30a9d0b8cd2d7986757aa91e39cd3b81",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "no_memory",
+      "phase": "PLAN",
+      "frame_order": 3,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:7173436895a62ea5a09821dedd0762038a813826936c663aed32b63d57fe160c",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:418dffb654f03b99ad53207a82c2a0a7dc1aa3ccd1bb21a9636325512cf2e884",
+      "compacted_context_hash": "sha256:ea408ffe42da314548580aef12d1b61070c571930998d291883375952852e23a",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 15391,
+      "compacted_source_request_bytes": 14322,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 14754,
+      "compacted_phase_request_bytes": 13685,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 14689,
+      "compacted_counted_input_units": 13620,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:cc9c4a9aa8b74243d097de6fb772ebc572fe3363b1e8a97ad364f17248e02cbc",
+      "shadow_evidence_hash": "sha256:0bbba9ac309a475e5c3f6eb7df6a306453ba25f03e619915af55462d8b6a5be6",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:d2497eaacc79a47da5fa654bbf442c1f95e3f696ac3a3a91e40fac740ea3db6a",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "structured",
+      "phase": "PLAN",
+      "frame_order": 3,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:7173436895a62ea5a09821dedd0762038a813826936c663aed32b63d57fe160c",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:85117e87aaa4b21bad01463200598b294900bc60d71aa976fcfb335977c4e844",
+      "compacted_context_hash": "sha256:58a2dd7ce8692401b807289c8233151397d3ced46bb33af0c440c6e2ca2251b9",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 19081,
+      "compacted_source_request_bytes": 18012,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 18444,
+      "compacted_phase_request_bytes": 17375,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 18379,
+      "compacted_counted_input_units": 17310,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:763c5bd012accf6cbddbd548c5cd70e0bc4c1c90f93387e9516bb8c9f058e44b",
+      "shadow_evidence_hash": "sha256:cf15649098a410b65f4678f7e6a23f5792fa033d204a46459f6a435ca3f8423f",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:2d09fad334eb8d8d14bef02e61398d82c3669930242ed81f658cce0fab838f58",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "no_memory",
+      "phase": "IMPLEMENT",
+      "frame_order": 4,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:d1d3d10297b2f447f54306f01318ed90a8006d3e0cbb4c5e46c557e888c83cdf",
+      "phase_allowed_actions": [
+        "run_check",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:45dd6c0e08f282dacc359caef65979d0f3ee35ffb439e6e3df98934d9e890194",
+      "compacted_context_hash": "sha256:a5ae60c10feb3f0e2fa5233ba9b44ee78b7dd28917575d181e083640a83fa76d",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 14705,
+      "compacted_source_request_bytes": 13636,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 14068,
+      "compacted_phase_request_bytes": 12999,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 14003,
+      "compacted_counted_input_units": 12934,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:241d6b911a84ee18398e939222d7eee341654e1e3e19a12f30e28b93be7559f4",
+      "shadow_evidence_hash": "sha256:44c5cf39aa100dc06e4539b85eb037a67a2fd6a9f0053c4ac8b8f14f98890c4a",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:7500058782ed836b8fa38f9d885b3840c34d616ce6e9ece64f5fd80089806a81",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "structured",
+      "phase": "IMPLEMENT",
+      "frame_order": 4,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:d1d3d10297b2f447f54306f01318ed90a8006d3e0cbb4c5e46c557e888c83cdf",
+      "phase_allowed_actions": [
+        "run_check",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:73a464c6a5733ff176d45be5c83abd11144edfb53bb1d036c2bea7d0c6d47b81",
+      "compacted_context_hash": "sha256:06134629a23add7f36b4eab3b5cb12760c303629d9f7d9068f0d2a071d52452b",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 18395,
+      "compacted_source_request_bytes": 17326,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 17758,
+      "compacted_phase_request_bytes": 16689,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 17693,
+      "compacted_counted_input_units": 16624,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:665d7197a0f30836d3c1bb579f2625e1424b6d1d693c8a180cfca53cfe5470eb",
+      "shadow_evidence_hash": "sha256:49248dc86b1790a00e84388a5b7b757711f825215c7dddb8ded6a8eb8950f2fe",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:9d2ff697cb3e37ea70f88b6f71b0e7745c0b8778cf8ec0d5f07aca2cf136b3af",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "no_memory",
+      "phase": "VERIFY",
+      "frame_order": 5,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:8045cb234b1dd7566070fda3c929619d0f30079459e7780358cbdb2bc822097c",
+      "phase_allowed_actions": [
+        "get_diff",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "get_diff"
+      ],
+      "removed_tool_names": [
+        "run_check",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:9e58b50e5a8c1d34b110e39b434ffc1de55e234c87669dceb43b675e37744b92",
+      "compacted_context_hash": "sha256:be99472db09948613d71b88175b1077665080ecfcd7bb948e6b70c6a72a14483",
+      "removed_descriptor_count": 3,
+      "baseline_source_request_bytes": 15935,
+      "compacted_source_request_bytes": 14331,
+      "source_request_bytes_saved": 1604,
+      "baseline_phase_request_bytes": 15246,
+      "compacted_phase_request_bytes": 13642,
+      "phase_request_bytes_saved": 1604,
+      "baseline_counted_input_units": 15181,
+      "compacted_counted_input_units": 13577,
+      "counted_input_units_saved": 1604,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:17a5707f8a71d0c6ef3680a154b30272a6fc28a7748206f75204fa8ae73dc793",
+      "shadow_evidence_hash": "sha256:cfdff5da7ae41ab944653417794ba860bb2de101502ed9793040ef6f4a157fc4",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:f5bb960ca2549397f05bff287e44732dc4706d84c40020e0657c7c5ccf08fe82",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "structured",
+      "phase": "VERIFY",
+      "frame_order": 5,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:8045cb234b1dd7566070fda3c929619d0f30079459e7780358cbdb2bc822097c",
+      "phase_allowed_actions": [
+        "get_diff",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "get_diff"
+      ],
+      "removed_tool_names": [
+        "run_check",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:11dc0907f7af07560aabc6e992af222d1e5a78df2d731dff0c1ba69e4039901b",
+      "compacted_context_hash": "sha256:3a337bdc8e64ec4cf76c10e302ebe1aaa0ad32e89d216242ca85529302c1ffbb",
+      "removed_descriptor_count": 3,
+      "baseline_source_request_bytes": 19625,
+      "compacted_source_request_bytes": 18021,
+      "source_request_bytes_saved": 1604,
+      "baseline_phase_request_bytes": 18936,
+      "compacted_phase_request_bytes": 17332,
+      "phase_request_bytes_saved": 1604,
+      "baseline_counted_input_units": 18871,
+      "compacted_counted_input_units": 17267,
+      "counted_input_units_saved": 1604,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:afc7eeeb218b1a9da79a8b153ffaa5917f2c8f15846eefae67fe4e23f60c933a",
+      "shadow_evidence_hash": "sha256:193a2bfef42300e58212c736b145bda9ed0c5194b8a8dc0487cd3b40849f68a0",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:af770dedbf1eef0106a3f18b8ca10b80b69bebf177bec0699065f7885894e9c7",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "no_memory",
+      "phase": "REVIEW",
+      "frame_order": 6,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:ba8c02f5db9f0c393cef68c8bce2c55e92581eafd3fae5e6729092a7d2f4f36a",
+      "phase_allowed_actions": [
+        "get_diff",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "get_diff"
+      ],
+      "removed_tool_names": [
+        "run_check",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:67f29b60d2ed9202c06c08e31dcb8d997179e05c4eaffdc3450a3355ab3cd7e9",
+      "compacted_context_hash": "sha256:f4035bc1ca9de65e54d8b6e481e7ae067be6ac9fa79b953721d9f3a191f890e9",
+      "removed_descriptor_count": 4,
+      "baseline_source_request_bytes": 17078,
+      "compacted_source_request_bytes": 14939,
+      "source_request_bytes_saved": 2139,
+      "baseline_phase_request_bytes": 16389,
+      "compacted_phase_request_bytes": 14250,
+      "phase_request_bytes_saved": 2139,
+      "baseline_counted_input_units": 16324,
+      "compacted_counted_input_units": 14185,
+      "counted_input_units_saved": 2139,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:0219950a38ccdea855954a2debcc955ca98aee161f06def3c178c41179e5aa18",
+      "shadow_evidence_hash": "sha256:f1cfd744f05bdd8f115a57866566de6e96c73a7932ad070eaffc04aad54f3667",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:22adbce8fd3324531f77504e70c9dd59f38b3ba720b50e06d608cb247a41001e",
+      "task_id": "moto-query-scanned-count",
+      "task_path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "condition": "structured",
+      "phase": "REVIEW",
+      "frame_order": 6,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:ba8c02f5db9f0c393cef68c8bce2c55e92581eafd3fae5e6729092a7d2f4f36a",
+      "phase_allowed_actions": [
+        "get_diff",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "get_diff"
+      ],
+      "removed_tool_names": [
+        "run_check",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:235e5e6f65c7a64f3120f4adb7621af340302f24216044c940eea66e7ff9f929",
+      "compacted_context_hash": "sha256:ffe6863fafce8945093753f94144d097053ade74cd99feae73fc8a863f937bfe",
+      "removed_descriptor_count": 4,
+      "baseline_source_request_bytes": 20768,
+      "compacted_source_request_bytes": 18629,
+      "source_request_bytes_saved": 2139,
+      "baseline_phase_request_bytes": 20079,
+      "compacted_phase_request_bytes": 17940,
+      "phase_request_bytes_saved": 2139,
+      "baseline_counted_input_units": 20014,
+      "compacted_counted_input_units": 17875,
+      "counted_input_units_saved": 2139,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:43854df32a9fc8aab1999c7d3c99d09592d8b65cfe62867b60d6801f8e2a831b",
+      "shadow_evidence_hash": "sha256:d5eb9a74e6dcdfd0e9b19b4ff78f1c5e9cda9305860100e23614d8dbcf5ff578",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:80edbb16331011b07494370835be614c5c806a3ba97139cf9b7d9a8bbcec09f8",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "no_memory",
+      "phase": "INTAKE",
+      "frame_order": 1,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:015c61f37f4c046b8d3568b8fc1723db2d77b9a2dcf8015aad98737f3254d032",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:d3f4a416e2725f088004bc7bfef80479123b9f6a682d3fd4cf09133cd42970dc",
+      "compacted_context_hash": "sha256:d3f4a416e2725f088004bc7bfef80479123b9f6a682d3fd4cf09133cd42970dc",
+      "removed_descriptor_count": 0,
+      "baseline_source_request_bytes": 9410,
+      "compacted_source_request_bytes": 9410,
+      "source_request_bytes_saved": 0,
+      "baseline_phase_request_bytes": 8773,
+      "compacted_phase_request_bytes": 8773,
+      "phase_request_bytes_saved": 0,
+      "baseline_counted_input_units": 8708,
+      "compacted_counted_input_units": 8708,
+      "counted_input_units_saved": 0,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:12cfdb0b4f38fe4a10513f5ec144fca99872652a153900c1632e11cc91f2ce54",
+      "shadow_evidence_hash": "sha256:1fb3423e792c977477fb9b65c7f21d5a52f1cb5d5cc90a52227a4242834a8924",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:96d806c623440dad865f61e1a284f870058dba55ad9c33ec6063043c33da740b",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "structured",
+      "phase": "INTAKE",
+      "frame_order": 1,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:015c61f37f4c046b8d3568b8fc1723db2d77b9a2dcf8015aad98737f3254d032",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:926efcde1e0187718bac7c36bc29b09d22f5f0dd712def9f2a3282658336d09b",
+      "compacted_context_hash": "sha256:926efcde1e0187718bac7c36bc29b09d22f5f0dd712def9f2a3282658336d09b",
+      "removed_descriptor_count": 0,
+      "baseline_source_request_bytes": 13100,
+      "compacted_source_request_bytes": 13100,
+      "source_request_bytes_saved": 0,
+      "baseline_phase_request_bytes": 12463,
+      "compacted_phase_request_bytes": 12463,
+      "phase_request_bytes_saved": 0,
+      "baseline_counted_input_units": 12398,
+      "compacted_counted_input_units": 12398,
+      "counted_input_units_saved": 0,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:861b75254dad8053e1f35652c58b8ae3f168a453c33ecb80d778db9b5661a272",
+      "shadow_evidence_hash": "sha256:546998cec58cf88baca9a5760d3da3a484215bc521464f978669c6db5878a238",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:d5b4243b5dc2bb0c51ec30f0aae55d113ba2a21e21a10245d094bc7db6a52709",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "no_memory",
+      "phase": "REPRODUCE",
+      "frame_order": 2,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:015c61f37f4c046b8d3568b8fc1723db2d77b9a2dcf8015aad98737f3254d032",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:490757f13b9d20ae6aadee843d74cd87e3a7bce882b7b96cecdc0460ba7d9efe",
+      "compacted_context_hash": "sha256:1dc3ea8a2b0e998338cf89f86133c1cb8f1df2076b39cffcf843403364535e41",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 14361,
+      "compacted_source_request_bytes": 13292,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 13724,
+      "compacted_phase_request_bytes": 12655,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 13659,
+      "compacted_counted_input_units": 12590,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:0a6f0638b79b83184c2ba612847f68bebceaa305b25970c69b48a3f0f7b2766d",
+      "shadow_evidence_hash": "sha256:1ec850a0daabc1b7683918d9fd513beb00e3ca11229f59d867675add2896c6ec",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:0fe1904b38be924060bdf9e1a3459ebbf18a9a40907fbc9c27ea52e717a7c220",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "structured",
+      "phase": "REPRODUCE",
+      "frame_order": 2,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:015c61f37f4c046b8d3568b8fc1723db2d77b9a2dcf8015aad98737f3254d032",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:46052fd853cf2289f12ca7449e82926223273fc4fe80b9b71ddd8c27d2bbb7d1",
+      "compacted_context_hash": "sha256:05384708acd32700f63a784dcaf675b7c1f8a4a42b9367d3fbacef0455509749",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 18051,
+      "compacted_source_request_bytes": 16982,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 17414,
+      "compacted_phase_request_bytes": 16345,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 17349,
+      "compacted_counted_input_units": 16280,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:5e07f7637a157de4476caa8a62157dffc7543bf2f5de00c6cce2259da8c626be",
+      "shadow_evidence_hash": "sha256:04b44cc33faf70cb117c044ec9157172f5d83add57dc83efcb675f61883a2ec7",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:ec5ee9ae2e66e8bb0bb3bed12d227fecf48ae6d144efe31ac17a0fccc25e32e6",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "no_memory",
+      "phase": "PLAN",
+      "frame_order": 3,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:015c61f37f4c046b8d3568b8fc1723db2d77b9a2dcf8015aad98737f3254d032",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:cc4c838261e3c54390f5fc5b7bd89d176f67a24ce5d32f4716b335ba77af315e",
+      "compacted_context_hash": "sha256:91e6495322ec79fbc37b099b72f0791b6e00e86d4de0dd030508d15b4073ae1f",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 14341,
+      "compacted_source_request_bytes": 13272,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 13704,
+      "compacted_phase_request_bytes": 12635,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 13639,
+      "compacted_counted_input_units": 12570,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:5efd8b2a8691faa73ae41a64d18e86d987bc6c190597cf9ed54ffdbf445bde45",
+      "shadow_evidence_hash": "sha256:952afe4e5baf882936ce9b7a0f0d3e183f564117295b2918d94b370f361f5c73",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:7f7b9b1ff27d292d0247a7d1cb0edbbac74743f99ba261d5b3f3ebbd44f8c47e",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "structured",
+      "phase": "PLAN",
+      "frame_order": 3,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:015c61f37f4c046b8d3568b8fc1723db2d77b9a2dcf8015aad98737f3254d032",
+      "phase_allowed_actions": [
+        "apply_patch",
+        "run_check",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:cb0b03d5a5725b2f99eddd9f7371f55bfac53ab6fd68550ad5ef3ebd305555a7",
+      "compacted_context_hash": "sha256:b119f8679f06bcd3157610a106dca24b1c6e3fbf90820b5d7ba3216fb2def82f",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 18031,
+      "compacted_source_request_bytes": 16962,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 17394,
+      "compacted_phase_request_bytes": 16325,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 17329,
+      "compacted_counted_input_units": 16260,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:7e8da7cb3cb10dff78f8dece58c7931b806640c3ca4a34c79d84f8cd6ded4d2e",
+      "shadow_evidence_hash": "sha256:c74263b53f45f78a17427904015f3a847ae0eff1e83615552120c29a66652fbf",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:64f745b2a09d779e66c39e23025f8c52e8be4c6298fb541a889ab0a031418d9d",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "no_memory",
+      "phase": "IMPLEMENT",
+      "frame_order": 4,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:9ec637e6facc689712ebc6604c91dad9e0481a26756a8dad08d0124f04a20cdd",
+      "phase_allowed_actions": [
+        "run_check",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:83049d8427e257d127c1cbe50bac80e0615531569e2b99b29073b08e7e3364fa",
+      "compacted_context_hash": "sha256:2e8f6e34d72bb861f62771bbbfc1a0ab7f15fb014be46d22f794d04ec6dd43f7",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 13648,
+      "compacted_source_request_bytes": 12579,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 13011,
+      "compacted_phase_request_bytes": 11942,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 12946,
+      "compacted_counted_input_units": 11877,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:c94e9d762029031b8c49dd16cfefed55e2d415f4a19073780683b1f30ad98fdb",
+      "shadow_evidence_hash": "sha256:a630e980469116233e924a9efd980eabce758966e564255e485d93d6d538189d",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:387c457f44c4b858862c2c888f684b060bf7fbd8a53fdf049424523a31d6f7b4",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "structured",
+      "phase": "IMPLEMENT",
+      "frame_order": 4,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:9ec637e6facc689712ebc6604c91dad9e0481a26756a8dad08d0124f04a20cdd",
+      "phase_allowed_actions": [
+        "run_check",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "run_check"
+      ],
+      "removed_tool_names": [
+        "get_diff",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:c7f245dbe481cbba1f0cfc7d215fe0ae857476b80e9a8d6ebc4ffe3a04933c8a",
+      "compacted_context_hash": "sha256:6cb1f21134ae2fb5f03685f1f44f5f8b3948d2dd016319d3d238f924a20fca69",
+      "removed_descriptor_count": 2,
+      "baseline_source_request_bytes": 17338,
+      "compacted_source_request_bytes": 16269,
+      "source_request_bytes_saved": 1069,
+      "baseline_phase_request_bytes": 16701,
+      "compacted_phase_request_bytes": 15632,
+      "phase_request_bytes_saved": 1069,
+      "baseline_counted_input_units": 16636,
+      "compacted_counted_input_units": 15567,
+      "counted_input_units_saved": 1069,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:925edbcec3506fdcb2f8b612d65ebcb34031525336c667dbe826521438c703a0",
+      "shadow_evidence_hash": "sha256:bd6945390609573aabe4c7dd2e61cdfcb56f5b49ce14ba9e4a3205cb16675ef6",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:d9807e645e57a0d14d9e69b428faccc08601ff2fb86bbe356cd13b5b09f5ab75",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "no_memory",
+      "phase": "VERIFY",
+      "frame_order": 5,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:bcc7477b69999682515f5c0db5c4f92dfa7059b1ec0a7c12b4bc4b31565bb018",
+      "phase_allowed_actions": [
+        "get_diff",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "get_diff"
+      ],
+      "removed_tool_names": [
+        "run_check",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:33cb90b44439e880f4822b517fb829178d33297e88cb874a85e49043337a55b2",
+      "compacted_context_hash": "sha256:bac400777a54b03ac2b2bdf3b4b5bc9349bc800b783b20e999020860396d8ee1",
+      "removed_descriptor_count": 3,
+      "baseline_source_request_bytes": 14876,
+      "compacted_source_request_bytes": 13272,
+      "source_request_bytes_saved": 1604,
+      "baseline_phase_request_bytes": 14187,
+      "compacted_phase_request_bytes": 12583,
+      "phase_request_bytes_saved": 1604,
+      "baseline_counted_input_units": 14122,
+      "compacted_counted_input_units": 12518,
+      "counted_input_units_saved": 1604,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:9c77af76371673c5c53d5936f261d779c9b9db75b9f232a89e29284fe31557c7",
+      "shadow_evidence_hash": "sha256:53f62a0eb870c6fe8fe4ba72641e42af020311b3621a76cd76805332b595bab6",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:34e7f0b31fc29123d08e1ff6dffa200d814f7be04fb2ccbb4d2949875b9aa1bb",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "structured",
+      "phase": "VERIFY",
+      "frame_order": 5,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:bcc7477b69999682515f5c0db5c4f92dfa7059b1ec0a7c12b4bc4b31565bb018",
+      "phase_allowed_actions": [
+        "get_diff",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "get_diff"
+      ],
+      "removed_tool_names": [
+        "run_check",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:cc4d8cdcebf54ee1d909cb0d36abbcbdd0ab134115aa00839e27118191c74ba4",
+      "compacted_context_hash": "sha256:d7a080cf582b431a46c342d609bfec66eeea90029eb5ae22e95fa603f89e143e",
+      "removed_descriptor_count": 3,
+      "baseline_source_request_bytes": 18566,
+      "compacted_source_request_bytes": 16962,
+      "source_request_bytes_saved": 1604,
+      "baseline_phase_request_bytes": 17877,
+      "compacted_phase_request_bytes": 16273,
+      "phase_request_bytes_saved": 1604,
+      "baseline_counted_input_units": 17812,
+      "compacted_counted_input_units": 16208,
+      "counted_input_units_saved": 1604,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:71f8992a7204c94b33bb60b2ba0e401c40fe5bbaf5ccf378023821969b837b5b",
+      "shadow_evidence_hash": "sha256:22e5e70bfb70b47c5d3e9141381aa697d83101271de97997361a0dc530094c6d",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:7fb658f244b3f907642f8b62c897cf05bcf01174ee226190959f3dbb4910b23b",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "no_memory",
+      "phase": "REVIEW",
+      "frame_order": 6,
+      "selected_memory_bytes": 0,
+      "phase_evidence_hash": "sha256:7952a673897b0e55114fca5cbc6d578c7569577c87001e54b050b0c1fb69fc65",
+      "phase_allowed_actions": [
+        "get_diff",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "get_diff"
+      ],
+      "removed_tool_names": [
+        "run_check",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:7eaad541e0f931d71c05dfd780a6809544c69acdb69a15abff4e7e69d206025c",
+      "compacted_context_hash": "sha256:eb550b8cb8ddf0435bd32a77063abfc1f1ae58aee4b99bcc4d1f258b1b193391",
+      "removed_descriptor_count": 4,
+      "baseline_source_request_bytes": 16019,
+      "compacted_source_request_bytes": 13880,
+      "source_request_bytes_saved": 2139,
+      "baseline_phase_request_bytes": 15330,
+      "compacted_phase_request_bytes": 13191,
+      "phase_request_bytes_saved": 2139,
+      "baseline_counted_input_units": 15265,
+      "compacted_counted_input_units": 13126,
+      "counted_input_units_saved": 2139,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:f139d954da242e79bd696ac168a4ebcd430d7fe1dcf1c3ddc709bb9a7a84d89b",
+      "shadow_evidence_hash": "sha256:d9cd7bb3b6a60821af8fa72b85ad06317b1a773cb889ab60704a59c104835777",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    },
+    {
+      "frame_id": "sha256:6e741bc5ab23183abe6ee73ccd3ff285320dedb7cdb55db818c18d8bdad6a7a4",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+      "condition": "structured",
+      "phase": "REVIEW",
+      "frame_order": 6,
+      "selected_memory_bytes": 3528,
+      "phase_evidence_hash": "sha256:7952a673897b0e55114fca5cbc6d578c7569577c87001e54b050b0c1fb69fc65",
+      "phase_allowed_actions": [
+        "get_diff",
+        "apply_patch",
+        "read_file",
+        "search_files"
+      ],
+      "selected_tool_names": [
+        "search_files",
+        "read_file",
+        "apply_patch",
+        "get_diff"
+      ],
+      "removed_tool_names": [
+        "run_check",
+        "finish_task"
+      ],
+      "source_context_hash": "sha256:b39ca61d95edbe7cbbdf3f647353d7b5bc0f6cf17c79f4c5bb51f3292358bfc7",
+      "compacted_context_hash": "sha256:90f8748f70dc48591d84bb35946db3f27d259908e932673098eb20c0871f298f",
+      "removed_descriptor_count": 4,
+      "baseline_source_request_bytes": 19709,
+      "compacted_source_request_bytes": 17570,
+      "source_request_bytes_saved": 2139,
+      "baseline_phase_request_bytes": 19020,
+      "compacted_phase_request_bytes": 16881,
+      "phase_request_bytes_saved": 2139,
+      "baseline_counted_input_units": 18955,
+      "compacted_counted_input_units": 16816,
+      "counted_input_units_saved": 2139,
+      "request_mode": "exploration",
+      "request_ready": true,
+      "compaction_evidence_hash": "sha256:c3df1b37202b8d7f0b18264afd9addb6371adcd3f7c8d59d6d4841fdb0c45730",
+      "shadow_evidence_hash": "sha256:e7fab8e518bedda12cb825cb0e9919cf378c803f17cda42ab02c72068fa6af5e",
+      "exact_source_roundtrip": true,
+      "phase_tool_surface_unchanged": true
+    }
+  ],
+  "aggregate_baseline_phase_request_bytes": 371928,
+  "aggregate_compacted_phase_request_bytes": 344128,
+  "aggregate_phase_request_bytes_saved": 27800,
+  "aggregate_baseline_counted_input_units": 370368,
+  "aggregate_compacted_counted_input_units": 342568,
+  "aggregate_counted_input_units_saved": 27800,
+  "aggregate_removed_descriptor_count": 52,
+  "frames_with_compaction": 20,
+  "noop_frames": 4,
+  "observed_phase_proxy_reduction_basis_points_floor": 750,
+  "public_integration_threshold_basis_points": 100,
+  "all_phase_tool_surfaces_exact": true,
+  "all_request_modes_unchanged": true,
+  "all_request_readiness_unchanged": true,
+  "exact_roundtrip_all": true,
+  "condition_neutral_projection": true,
+  "current_phase_policy_requalified": true,
+  "source_files": [
+    {
+      "path": "patchloop/agent/context.py",
+      "file_bytes": 68912,
+      "file_sha256": "sha256:6730fa00a224704220683b24ddaeeb7ff5721a742dd73d1c203a22280f5cb2dd"
+    },
+    {
+      "path": "patchloop/agent/context_dedup_qualification.py",
+      "file_bytes": 42956,
+      "file_sha256": "sha256:8ae7c280f3b8ee384855248c93ea4d48bf281d5377c9c5a3fc5be0d467f39e8f"
+    },
+    {
+      "path": "patchloop/agent/context_event_compaction.py",
+      "file_bytes": 19023,
+      "file_sha256": "sha256:088ccb05b9e1db22acb71c4ec9d629d1af3548c8e068cb2e9c2e649ceeb40956"
+    },
+    {
+      "path": "patchloop/agent/context_event_compaction_qualification.py",
+      "file_bytes": 25763,
+      "file_sha256": "sha256:188b8149c9486930a4eb75333b03be83fb20b800ecab9a2a6838c968600a735a"
+    },
+    {
+      "path": "patchloop/agent/context_event_shadow.py",
+      "file_bytes": 13346,
+      "file_sha256": "sha256:5e46591273ac785af72d5fbddc2b46e710bfcc90cf91b9873ba215ace6916394"
+    },
+    {
+      "path": "patchloop/agent/context_event_shadow_qualification.py",
+      "file_bytes": 30717,
+      "file_sha256": "sha256:c8d17a86c50c98525cad873ef7d63ffb30fff7c623a5ad677d959c72c7cec32b"
+    },
+    {
+      "path": "patchloop/agent/shadow_runtime.py",
+      "file_bytes": 22519,
+      "file_sha256": "sha256:5669328dc014daedd3bfc14cc8cce2265ba09000294205f4358433a0c5b3afdb"
+    },
+    {
+      "path": "patchloop/agent/finalization.py",
+      "file_bytes": 39641,
+      "file_sha256": "sha256:1f67d0bb2247f90bb112ec93cf60d56e1c9a8c6332fabe94005e7e016224d823"
+    },
+    {
+      "path": "patchloop/agent/request_allowance.py",
+      "file_bytes": 9740,
+      "file_sha256": "sha256:8ad851fccf0e143688965e715aafa7672ef7257b81518391f956cbeb800744f7"
+    },
+    {
+      "path": "patchloop/agent/model.py",
+      "file_bytes": 44052,
+      "file_sha256": "sha256:b8ac21ab33421ed33942036854ecf7e1badce5d35a6014da27488903352d8568"
+    },
+    {
+      "path": "patchloop/agent/tools.py",
+      "file_bytes": 208603,
+      "file_sha256": "sha256:b137c5f7ac5bbe86a70afec0929bfb6cab9ce9baac7717c1ecd2b43749809590"
+    },
+    {
+      "path": "patchloop/agent/phases.py",
+      "file_bytes": 9641,
+      "file_sha256": "sha256:2670b3f8dee3ad1b99f0897b0797b184b981f08ffb6a3e51eef1bc0c7b36761f"
+    },
+    {
+      "path": "patchloop/memory/fixed_bundle.py",
+      "file_bytes": 31076,
+      "file_sha256": "sha256:f9954b8c46df46237bd413e61082db1c2ee0c1cef761341062e224d725c2fe28"
+    },
+    {
+      "path": "patchloop/task_loader.py",
+      "file_bytes": 4916,
+      "file_sha256": "sha256:e7c7d1aac5a4f6adedd4e433e50e6577981af1e2191273bb001e13871ee7dc68"
+    },
+    {
+      "path": "patchloop/contracts.py",
+      "file_bytes": 154290,
+      "file_sha256": "sha256:a72594556806d70ffa8d5bbea6606f403640018a309d8cac78a8fea3fc118702"
+    },
+    {
+      "path": "patchloop/errors.py",
+      "file_bytes": 1497,
+      "file_sha256": "sha256:6ae5e1143a226924faecda80a139762a02a17f5267ca6016e56204241aaa6814"
+    },
+    {
+      "path": "patchloop/util.py",
+      "file_bytes": 5868,
+      "file_sha256": "sha256:6ce3e5a7e5a91556c6085e3c243a4ccdaf8926dd6e57878fb438792cdb0227e6"
+    },
+    {
+      "path": "scripts/build_lean_harness_compacted_shadow_qualification.py",
+      "file_bytes": 1759,
+      "file_sha256": "sha256:fff8e8a93805421688926ac369faae8ae25a86e35504fb5c1b4579b399e9e2cf"
+    }
+  ],
+  "validation_files": [
+    {
+      "path": "tests/test_context_event_compaction.py",
+      "file_bytes": 11056,
+      "file_sha256": "sha256:9073eb7c17eef94840532f8cbb2c16463f406460898bb82dd1663170e20de5e7"
+    },
+    {
+      "path": "tests/test_context_event_shadow.py",
+      "file_bytes": 10249,
+      "file_sha256": "sha256:23b2b73e1d159cc0826ec7ae0e6f157a2ddb1b18439c5bb676cc1d5249bcc48b"
+    },
+    {
+      "path": "tests/test_shadow_runtime.py",
+      "file_bytes": 12622,
+      "file_sha256": "sha256:ac233bd234b99ed06caf30e02756dfedae21528e3f822c27eb9894bbc43cb1e1"
+    },
+    {
+      "path": "tests/test_context_event_shadow_qualification.py",
+      "file_bytes": 11094,
+      "file_sha256": "sha256:e2286cee5dfa594080d4f6ae125f1fc1a56b27055d092a6ddaa933a4c47da7bd"
+    }
+  ],
+  "source_inventory_hash": "sha256:4bb43cba21eb79c4224a5d7688350295de5b46b81f37ef38bf9a9ebfc9e7c6a8",
+  "validation_inventory_hash": "sha256:e7d9f7a501b5743829bbffb218568acb443246c8fc5cdb3c2e59d544c7d1f95a",
+  "public_task_files_read": 2,
+  "private_task_files_read": 0,
+  "hidden_files_read": 0,
+  "reference_patches_read": 0,
+  "in_memory_fixture_artifacts": 8,
+  "adapter_payload_builds": 96,
+  "isolated_count_calls": 48,
+  "provider_transport_calls": 0,
+  "provider_generation_calls": 0,
+  "runner_calls": 0,
+  "docker_calls": 0,
+  "evaluator_calls": 0,
+  "added_model_cost_usd": 0,
+  "provider_calls_authorized": false,
+  "runner_activation_authorized": false,
+  "request_integration_authorized": false,
+  "request_persistence_authorized": false,
+  "state_mutation_authorized": false,
+  "paid_execution_authorized": false,
+  "next_gate": "freeze-condition-neutral-saturation-and-recovery-thresholds-from-separate-public-development-evidence",
+  "content_hash": "sha256:566589fe6ecc246bfa31720c141b321e13b6764de37cc80fa8be0dee1f59e8c5"
+}

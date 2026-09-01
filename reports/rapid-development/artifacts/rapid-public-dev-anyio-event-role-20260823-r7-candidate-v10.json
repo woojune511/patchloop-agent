@@ -1,0 +1,308 @@
+{
+  "schema_version": "rapid-public-development-candidate-v10",
+  "candidate_revision": 10,
+  "experiment_id": "rapid-public-dev-anyio-event-role-20260823-r7",
+  "purpose": "rapid-public-development",
+  "official": false,
+  "config_path": "experiments/rapid-public-development-anyio-event-role-20260823-r7.yaml",
+  "config_file_sha256": "sha256:6e0eefe0ba1df903f8761bf38d1f2bef15f4450054db26c0d73e834cf7f41caf",
+  "config_semantic_hash": "sha256:bbbe3c5d822efd358dcc94bc16f2bdd288dc245e4d4c154c3f283f2d9451ad2a",
+  "selection_evidence": {
+    "schema_version": "rapid-anyio-event-role-selection-evidence-v1",
+    "policy_version": "qualified-public-event-role-successor-v1",
+    "official": false,
+    "heldout_outcomes_used": false,
+    "private_evidence_used": false,
+    "pdm_task_included": false,
+    "reference_result_role": "check-admission-only-not-task-semantic-authority",
+    "public_contract_source": "public-task-description-and-upstream-public-behavior",
+    "qualification_v5": {
+      "path": "reports/rapid-development/artifacts/pdm-anyio-public-behavior-check-qualification-result-v5.json",
+      "file_bytes": 9828,
+      "file_sha256": "sha256:57ac80b98f26970aba4927157c91eba6964a20b9326cca5470bfa28b4a5b54e4",
+      "content_hash": "sha256:71bb74dfbae3346549a6cc8912aa9c85990db1b2e9ea9cf10f022464150cc1b8",
+      "execution_hash": "sha256:f7b0159d622ee6329db6560ab253d117187e6a05a5e7bb630ba325588eb211b3"
+    },
+    "retention_v7": {
+      "path": "reports/rapid-development/artifacts/pdm-public-behavior-check-qualification-result-v7.json",
+      "file_bytes": 6558,
+      "file_sha256": "sha256:57756c0b4d51c800ae179a4078573e623b9b2cf0f37c12650969d2d79fca3f9f",
+      "content_hash": "sha256:4f6dcde9743c8afd0cd59b31d3ba6533d00fa0a245aaec1720fe8c435c7dbd12",
+      "execution_hash": "sha256:bb0a182325cfeb66fe030251b244d4528ca84777758ba0a6c41a2de431a28f20"
+    },
+    "retained_anyio": {
+      "base_row_hash": "sha256:850ff7a3af99cf6d60bd85bd88783f20e2ed25b908a0923a29a60983f8dacf2b",
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "image_identity_hash": "sha256:1ec0739eef629e229001d3870f7e5769dfd9a6343e4ae357842cc48361dc4980",
+      "raw_output_persisted": false,
+      "reference_row_hash": "sha256:b37d01908cf8f65be630240223d54fe912219f883fca40e72079359a1c5ff94e",
+      "schema_version": "retained-public-task-qualification-v1",
+      "status": "QUALIFIED_FROM_CONSUMED_V5_ROWS",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4
+    },
+    "finalization_successor": {
+      "path": "experiments/lean-harness-finalization-successor-public-qualification-20260822-v1.json",
+      "file_bytes": 10944,
+      "file_sha256": "sha256:3dc973ec737058b6dd964de1c652f174c6274e060eabc8ace29c3b77694604f1",
+      "content_hash": "sha256:a3146592d6482405eac27f7bbb003ae57982983eabe814a5d86f0aba2e2a3aeb",
+      "qualification_id": "anyio-r4-finalization-successor-20260822-v1",
+      "runtime_policy_version": "lean-harness-v4",
+      "tool_schema_version": "v9",
+      "context_policy_version": "phase-evidence-v14",
+      "completion_policy_version": "completion-driven-current-diff-v2",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "runtime_activation_authorized": false
+    },
+    "mechanical_successor": {
+      "path": "experiments/lean-harness-mechanical-friction-public-qualification-20260823-v1.json",
+      "file_bytes": 7282,
+      "file_sha256": "sha256:7d622124874b561f8f8447cdfbb180433cb56d0ff484fae3299bcaf2fe9b0b68",
+      "content_hash": "sha256:0053adbd4ae2d0b4aed0aac3f7885af13e2021c00a75eed892ab72f0f79c5e32",
+      "qualification_id": "lean-harness-mechanical-friction-public-20260823-v1",
+      "scenario_set_hash": "sha256:8483b1265da38b881622c38652f58d4c2630466cb4dfe7617d0154a6054372c0",
+      "runtime_policy_version": "lean-harness-v5",
+      "tool_schema_version": "v10",
+      "context_policy_version": "phase-evidence-v15",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "incomplete_recovery_policy_version": "reasoning-only-single-retry-split-reserved-v1",
+      "runtime_activation_authorized": false
+    },
+    "event_role_successor": {
+      "path": "experiments/lean-harness-event-descriptor-role-public-qualification-20260823-v1.json",
+      "file_bytes": 3917,
+      "file_sha256": "sha256:5b12e5f14428fc6be83ed7da581c0c9b345af0eeae3cdb43a98f6e263e8a9d35",
+      "content_hash": "sha256:b946531d9b19597f059370a40b0204d44e404de8e1ece78caa9fc1b51e31e5f2",
+      "qualification_id": "lean-harness-event-descriptor-role-public-20260823-v1",
+      "scenario_set_hash": "sha256:8234062503735fa13615bd74c3bf85b5e62ca9ba5d6e0b9134b58fa63444361c",
+      "source_execution_hash": "sha256:d977b523f672e6b2d2d01674ad7909197ad797b109f39b69cdc39ab9b02c3c66",
+      "runtime_policy_version": "lean-harness-v6",
+      "tool_schema_version": "v10",
+      "context_policy_version": "phase-evidence-v16",
+      "compaction_schema_version": "lean-harness-context-event-compaction-v2",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "runtime_activation_authorized": false,
+      "r6_retry_authorized": false,
+      "quality_improvement_established": false
+    },
+    "source_transition": {
+      "schema_version": "event-role-qualification-to-live-activation-v1",
+      "qualified_snapshot_preserved": true,
+      "unchanged_mechanical_source_count": 4,
+      "permitted_changed_paths": [
+        "patchloop/contracts.py"
+      ],
+      "activation_change_role": "r7-live-manifest-admission-only",
+      "source_rows": [
+        {
+          "path": "patchloop/agent/context_event_compaction.py",
+          "qualified_file_bytes": 27369,
+          "qualified_file_sha256": "sha256:dab0d5ee1a72915b2c75164f18a261c20d16f27f297ae8511c4812acee197a41",
+          "current_file_bytes": 27369,
+          "current_file_sha256": "sha256:dab0d5ee1a72915b2c75164f18a261c20d16f27f297ae8511c4812acee197a41",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/lean_runtime.py",
+          "qualified_file_bytes": 59664,
+          "qualified_file_sha256": "sha256:313804db58925ef76b849c1877a412d86ae95c8f50ac65577e2a468beeb4eaf1",
+          "current_file_bytes": 59664,
+          "current_file_sha256": "sha256:313804db58925ef76b849c1877a412d86ae95c8f50ac65577e2a468beeb4eaf1",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/tools.py",
+          "qualified_file_bytes": 221048,
+          "qualified_file_sha256": "sha256:aeca285301e45b952b335a2835326299f2dd1e156c33ed3a9b2e057dc23773d3",
+          "current_file_bytes": 221048,
+          "current_file_sha256": "sha256:aeca285301e45b952b335a2835326299f2dd1e156c33ed3a9b2e057dc23773d3",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/runner.py",
+          "qualified_file_bytes": 288863,
+          "qualified_file_sha256": "sha256:9bed9b0b8818debc7b262bab878a50f6bd9482a7ee8bca22475e9de9ac1da53b",
+          "current_file_bytes": 288863,
+          "current_file_sha256": "sha256:9bed9b0b8818debc7b262bab878a50f6bd9482a7ee8bca22475e9de9ac1da53b",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/contracts.py",
+          "qualified_file_bytes": 166143,
+          "qualified_file_sha256": "sha256:36e3756d9634a77fb527869972111ed5a194183b58a478c962ba9887295cad90",
+          "current_file_bytes": 167000,
+          "current_file_sha256": "sha256:4e906e5561af58ab2188f2aa496ce975aaa09f5b1b68dcdfa1d34c5cbde878c5",
+          "unchanged": false
+        }
+      ]
+    }
+  },
+  "selection_evidence_hash": "sha256:6266be4c84703531199a596191658f1762e60a964e648b044e352e236ae67f1b",
+  "runtime_build_schema": "rapid-runtime-build-v1",
+  "runtime_build_hash": "sha256:f0bfeb05281b7b047ae7e6774cbc7ce8ef8bddbd6189243c17630935b7e15d0c",
+  "model_contract": {
+    "provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "transport_max_retries": 0,
+    "temperature": 0.0,
+    "max_output_tokens": 25000
+  },
+  "predecessor_candidate": {
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-mechanical-20260823-r6-candidate-v9.json",
+    "file_bytes": 14740,
+    "file_sha256": "sha256:0c73f969cd3c6181225d91111e735a670fc9e443c43e3cd48011cb01be3b5440"
+  },
+  "predecessor_result": {
+    "path": "reports/rapid-development/rapid-public-dev-anyio-mechanical-20260823-r6-d977b523f672.jsonl",
+    "file_bytes": 7854,
+    "file_sha256": "sha256:f801ce43dc2e47ccb97e84cc0a50b0c296c2868546c36ffaab9140ccc96b0739"
+  },
+  "variant_contracts": {
+    "baseline-v2v5": {
+      "tool_schema_version": "v2",
+      "context_policy_version": "phase-evidence-v5",
+      "runtime_policy_version": null
+    },
+    "lean-harness-v6": {
+      "tool_schema_version": "v10",
+      "context_policy_version": "phase-evidence-v16",
+      "runtime_policy_version": "lean-harness-v6",
+      "completion_policy_version": "completion-driven-current-diff-v2",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1",
+      "search_glob_policy_version": "recursive-file-glob-normalization-v1",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "incomplete_recovery_policy_version": "reasoning-only-single-retry-split-reserved-v1"
+    }
+  },
+  "task_bindings": [
+    {
+      "task_path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+      "public_spec_hash": "sha256:ac32db22e505caf61dac267a590870f8c6a4dc39d7f83ce589342a729d7968e6",
+      "private_spec_hash": "sha256:cb95ced3ad387ea2fc76304145f803904f577e62ff17b7b6972219d9d7a1e8b4",
+      "evaluator_image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "evaluator_image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "package_file_count": 6,
+      "package_inventory_hash": "sha256:60fab6e3fc3a56fef5ad8a7eee2c410f66e4a67a2eed7b8b57e3b58888f92fd4",
+      "visible_check_ids": [
+        "public-interrupt-runner-lifecycle",
+        "upstream-pytest-plugin-regression"
+      ],
+      "visible_check_command_hashes": [
+        "sha256:c0ef4f062b90676734637a3b4966b1206870c847ae0f4dd2c74754250bf0a034",
+        "sha256:965d00d50dede491672c1a53762e4b6aa3d78ff58583cc062fdfdb8f56c9548c"
+      ],
+      "task_successor_opt_in": true,
+      "frozen_dataset_member": false,
+      "qualification_binding_hash": "sha256:6266be4c84703531199a596191658f1762e60a964e648b044e352e236ae67f1b"
+    }
+  ],
+  "schedule": [
+    {
+      "order": 1,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "baseline-v2v5",
+      "tool_schema_version": "v2",
+      "context_policy_version": "phase-evidence-v5",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:6d64e76520721ff9a6fd340d8f39524130587911d21c31807cb06395cb18ee98"
+    },
+    {
+      "order": 2,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v6",
+      "tool_schema_version": "v10",
+      "context_policy_version": "phase-evidence-v16",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:eb1a268291cf07af9253b59e24d370666d80d329e077f770df79983a5e6b9569"
+    },
+    {
+      "order": 3,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v6",
+      "tool_schema_version": "v10",
+      "context_policy_version": "phase-evidence-v16",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:b513a8a29501a2025e6925c7f4bee01ef808624a29d87083c25de7f377d46ea7"
+    },
+    {
+      "order": 4,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "baseline-v2v5",
+      "tool_schema_version": "v2",
+      "context_policy_version": "phase-evidence-v5",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:6c38338778d7647f16263e7df62eb240753459b83fc0bf10666bdb3477c646ae"
+    },
+    {
+      "order": 5,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "baseline-v2v5",
+      "tool_schema_version": "v2",
+      "context_policy_version": "phase-evidence-v5",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:dff51535fbb6f76ab8fbd384b1399dc16b6a980b4c0eb626b935eab901150de0"
+    },
+    {
+      "order": 6,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v6",
+      "tool_schema_version": "v10",
+      "context_policy_version": "phase-evidence-v16",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:0f06afd0759a65e682403c1a3dc3ef73afef1a62446d011e6ac23d3a786c81e9"
+    }
+  ],
+  "schedule_hash": "sha256:19e7892110b5070f7c6939aee20fa7383516d87d9cdfc44e725cc391ca07e869",
+  "cost_control": {
+    "per_run_reserve_nanos": 1200000000,
+    "full_schedule_reserve_nanos": 7200000000,
+    "hard_cap_nanos": 7500000000,
+    "pricing_nanos_per_token": {
+      "uncached_input": 750,
+      "cached_input": 75,
+      "cache_write_input": 750,
+      "output": 4500
+    },
+    "scheduled_run_count": 6,
+    "cost_censoring_allowed": false,
+    "official": false
+  },
+  "cost_control_hash": "sha256:a7bc2f24b7ec0ecb501130ef310f958b790108d5788d51dfad958c2cf4691605",
+  "execution_hash": "sha256:a088c64c369836f06308c3105341f220e3cfb1d3a6d492f33886b8f7f90dbdcf",
+  "source_qualified": true,
+  "execution_authorized": false,
+  "provider_calls_made": 0,
+  "docker_calls_made": 0,
+  "added_model_cost_usd": 0.0,
+  "approval_required": true,
+  "rehearsal_required": true,
+  "content_hash": "sha256:560a2be27a04b28a526bef500036e983071a29c66e6525e56759fe7c1d26d4b5"
+}

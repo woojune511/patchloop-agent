@@ -1,0 +1,136 @@
+{
+  "schema_version": "rapid-public-trace-diagnosis-v1",
+  "official": false,
+  "source_bundle": {
+    "bytes": 11927,
+    "content_hash": "sha256:964d9a605fdce11ecc43913f02a70174f6294d57475f7555ead2e5aabf0c2e94",
+    "execution_hash": "sha256:5ae158b3ed650118aa5e9e334f676eccf3b8e44a2df305ed1a3af35b1bcfcfc6",
+    "path": "reports/rapid-development/rapid-public-dev-hard-panel-20260822-r3-5ae158b3ed65.jsonl",
+    "terminal_content_hash": "sha256:a3f7fe8fbce2d7de73ef7a0cdfb1ce19eab3350f666d51502b4b0e985753409b"
+  },
+  "evidence_boundary": {
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "evaluator_private_artifacts_read": false,
+    "hidden_assertions_read": false,
+    "inputs_used": [
+      "two public task specifications",
+      "agent-visible model and tool events",
+      "content-addressed submitted diffs",
+      "public terminal verdict states"
+    ],
+    "private_evidence_used": false,
+    "provider_calls": 0,
+    "reasoning_text_read": false,
+    "reference_patches_read": false,
+    "settled_cost_usd": "0"
+  },
+  "batch_observations": {
+    "failed_rows": 4,
+    "failed_rows_with_diff_review_and_submission": 4,
+    "failed_rows_with_hidden_tests_fail": 4,
+    "failed_rows_with_registered_visible_check_pass": 4,
+    "failed_rows_with_regression_scope_and_safety_pass": 4,
+    "harness_admission_failures": 0,
+    "model_incomplete_rows": 0,
+    "submission_failures": 0,
+    "token_terminal_rows": 0
+  },
+  "repeated_public_failure_mechanism": {
+    "classification": "PUBLIC_BEHAVIOR_CHECK_GAP",
+    "confidence": "high",
+    "evidence": [
+      "All four task-failure rows passed their sole broad upstream regression check before submission.",
+      "Each failed submitted diff has a public-spec mismatch or edge-risk that the registered check did not distinguish.",
+      "The mechanism appears in both tasks and both harness variants, so it does not select a quality winner."
+    ],
+    "limit": "The public evidence establishes a non-discriminating visible-check gap, not the exact hidden assertion that failed."
+  },
+  "rows": [
+    {
+      "classification": "PATH_RELATIONSHIP_OVERGENERALIZATION",
+      "confidence": "high for public mismatch; exact hidden failure unknown",
+      "failed_tools": [],
+      "observed": "The patch skips every associated venv whose root is relative to the active environment path. The public specification requires excluding the active environment without confusing sibling and descendant relationships; both successful comparators use resolved path equality.",
+      "outcome": "task_failure",
+      "patch_bytes": 2513,
+      "patch_content_hash": "sha256:9e4b196434ee5005b72b22c169ffe258d5e2924bee5c4032b5964836b6ffc1c6",
+      "repetition": 1,
+      "run_id": "run_rapid_v6_5ae158b3ed65_02",
+      "task_id": "pdm-ignore-active-venv-resolution",
+      "variant": "lean-harness-v2",
+      "visible_check": "upstream-project-regression",
+      "zero_match_searches": 4
+    },
+    {
+      "classification": "INTERRUPT_HANDLING_AT_WRONG_BOUNDARY",
+      "confidence": "medium-high public causal hypothesis; exact hidden failure unknown",
+      "failed_tools": [],
+      "observed": "The patch catches CancelledError while awaiting the internal future in _call_in_runner_task. It does not catch and re-raise KeyboardInterrupt at the synchronous run_test boundary, while both successful comparators cancel and clear the shared runner task from run_test.",
+      "outcome": "task_failure",
+      "patch_bytes": 719,
+      "patch_content_hash": "sha256:57ba6ba080b3abc15cecd21835d82379ca63986bc566e8c1c78eeeaa54432c30",
+      "repetition": 2,
+      "run_id": "run_rapid_v6_5ae158b3ed65_05",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "variant": "baseline-v2v5",
+      "visible_check": "upstream-pytest-plugin-regression",
+      "zero_match_searches": 0
+    },
+    {
+      "classification": "SEARCH_GLOB_BLINDNESS_AND_CAUSAL_BOUNDARY_MISS",
+      "confidence": "high for observed search and public mismatch; exact hidden failure unknown",
+      "failed_tools": [],
+      "observed": "Seventeen searches returned zero matches because src/anyio/** and src/** matched no files under the tool's Path.glob semantics. The agent then edited only pytest option extraction and did not change runner cancellation, interrupt propagation, resumption, or cleanup behavior described by the public task.",
+      "outcome": "task_failure",
+      "patch_bytes": 1253,
+      "patch_content_hash": "sha256:3e61bc7ffe86639a25ee9184070ba221072b190774cb5391bccdb4eb5c92c948",
+      "repetition": 2,
+      "run_id": "run_rapid_v6_5ae158b3ed65_06",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "variant": "lean-harness-v2",
+      "visible_check": "upstream-pytest-plugin-regression",
+      "zero_match_searches": 17
+    },
+    {
+      "classification": "ENVIRONMENT_FLAG_EDGE_SEMANTICS",
+      "confidence": "medium public edge-risk; exact hidden failure unknown",
+      "failed_tools": [
+        "apply_patch:CONTRACT_ERROR:raw wrapper marker"
+      ],
+      "observed": "The recovered submitted patch recognizes only a truthy allow-list instead of treating every non-false-like value as enabled, and nested getenv fallback lets an empty VIRTUAL_ENV mask CONDA_PREFIX. The public specification explicitly requires false-like handling and both environment variables; the successful repetition-2 comparator avoids both risks.",
+      "outcome": "task_failure",
+      "patch_bytes": 2048,
+      "patch_content_hash": "sha256:411206cbed086ee8735257e4958fe446241e87855a1f12cb582d05e36a81c96c",
+      "repetition": 2,
+      "run_id": "run_rapid_v6_5ae158b3ed65_08",
+      "task_id": "pdm-ignore-active-venv-resolution",
+      "variant": "baseline-v2v5",
+      "visible_check": "upstream-project-regression",
+      "zero_match_searches": 0
+    }
+  ],
+  "non_outcome_separating_observations": [
+    {
+      "classification": "RECOVERED_RAW_DIFF_FAILURE",
+      "evidence": "Baseline run 04 resolved after two apply_patch contract failures, while baseline run 08 failed the task after one recovered contract failure. All three malformed/context-stale candidates were corrected before a successful visible check and submission.",
+      "implication": "These failures cost calls but do not explain the task-quality split in this batch. Lean V2 had no failed apply_patch calls."
+    },
+    {
+      "classification": "SINGLE_SEARCH_GLOB_INCIDENT",
+      "evidence": "Run 06 produced 17 zero-match searches from directory-style recursive globs; the other task-failure rows reached relevant source with valid globs.",
+      "implication": "Add explicit glob guidance or safe normalization in an opt-in tool successor, but do not present this one incident as the repeated batch-wide cause."
+    }
+  ],
+  "successor_disposition": {
+    "paid_execution_authorized": false,
+    "proposal": [
+      "Create new PDM and AnyIO public task versions whose first visible check directly exercises behavior stated in the public issue, while preserving version-1 packages byte-for-byte.",
+      "Freeze the targeted checks before any successor run and apply the same task version, model, budget, evaluator, and schedule to both variants.",
+      "Add explicit search_files glob guidance or safe trailing-/** normalization under a new opt-in tool/runtime version, with raw and normalized pattern evidence.",
+      "Keep any successor official=false and require a new exact candidate hash, schedule, reserve, and hard-cap approval before external execution."
+    ],
+    "status": "proposed_not_implemented_or_executed"
+  },
+  "claim_boundary": "Candidate-v6 demonstrates complete execution and a within-batch cost difference. This diagnosis supports engineering changes only and makes no causal, general, hidden-test-specific, or harness-quality claim."
+}

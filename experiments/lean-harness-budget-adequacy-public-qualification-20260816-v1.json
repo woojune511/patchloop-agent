@@ -1,0 +1,1630 @@
+{
+  "schema_version": "lean-harness-budget-adequacy-public-qualification-v1",
+  "qualification_id": "lean-harness-budget-adequacy-public-20260816-v1",
+  "status": "PUBLIC_NO_CALL_BUDGET_ADEQUACY_QUALIFIED_RUNTIME_CLOSED",
+  "evidence_date": "2026-08-16",
+  "evidence_scope": "r8-public-development-and-deterministic-synthetic-boundaries",
+  "contract": {
+    "schema_version": "lean-harness-budget-adequacy-contract-v1",
+    "contract_id": "r8-public-development-zero-terminal-criterion-20260816-v1",
+    "status": "PUBLIC_DEVELOPMENT_MEASUREMENT_CONTRACT_RUNTIME_CLOSED",
+    "evidence_date": "2026-08-16",
+    "evidence_scope": "r8-public-development-only",
+    "r8_development_evidence": {
+      "path": "reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r8-evidence-r4.json",
+      "file_bytes": 19557,
+      "file_sha256": "sha256:5035421a63d58fededab133b77c72e23ee4ad6d380a37c8d1157ce7480b7c62c",
+      "content_hash": "sha256:0ef31d2b27a7601800d4352e352f67262e462f19b5c2aef25d1d3f0106aade83"
+    },
+    "finalization_reserve": {
+      "path": "experiments/lean-harness-finalization-reserve-20260816-v1.json",
+      "file_bytes": 6036,
+      "file_sha256": "sha256:30cf34a19c94025777df612b283376be5d08047069f3c49e19b58e950434bf06",
+      "content_hash": "sha256:9458bb1d59d51aaf94a082504a3883d799bf4d807ce7a83376bdc391ab6348db"
+    },
+    "saturation_thresholds": {
+      "path": "experiments/lean-harness-saturation-recovery-public-qualification-20260816-v1.json",
+      "file_bytes": 10993,
+      "file_sha256": "sha256:99b30c828989b1a2cae28bd1412d27a9d4e9514768b22cea8047780792f13d0e",
+      "content_hash": "sha256:f07374bca99d1046c66f7ade6d96caf2bd06cbafe307dcabcad681f473485db6"
+    },
+    "admission_recovery_shadow": {
+      "path": "experiments/lean-harness-saturation-recovery-shadow-public-qualification-20260816-v2.json",
+      "file_bytes": 365815,
+      "file_sha256": "sha256:d046025d4c4277786d0d63fc3f946aa50d0c1481fb3237200f51aebf13de2478",
+      "content_hash": "sha256:172359ac848acf18e38fff43117cefd58c4cad691d9180f77008b6bbc8f57916"
+    },
+    "public_task_count": 2,
+    "public_rows": 4,
+    "public_rows_per_condition": 2,
+    "public_realized_schedule_hash": "sha256:26026929c2992473b00ce58af760481d7406509f592b8d7674cb7ac6fa4a9a6d",
+    "public_max_cumulative_input_tokens": 3000000,
+    "public_max_cumulative_output_tokens": 350000,
+    "public_max_total_tokens": 3350000,
+    "public_full_schedule_reserve_nanos": 15300000000,
+    "public_hard_cap_nanos": 18000000000,
+    "public_settled_model_cost_nanos": 366421500,
+    "public_resolved_rows": 4,
+    "public_evaluator_reached_rows": 4,
+    "public_token_terminal_rows": 0,
+    "public_patch_milestone_rows": 4,
+    "public_check_milestone_rows": 4,
+    "public_diff_milestone_rows": 4,
+    "public_submission_milestone_rows": 4,
+    "conditions": [
+      "no_memory",
+      "structured"
+    ],
+    "terminal_dimensions": [
+      "input_tokens",
+      "output_tokens",
+      "total_tokens"
+    ],
+    "required_metrics": [
+      "success_at_budget",
+      "evaluator_reach",
+      "input_output_total_token_terminals",
+      "patch_check_diff_submission_milestones",
+      "no_new_evidence_turns",
+      "patch_rejection_rate",
+      "spend",
+      "cost_per_success"
+    ],
+    "maximum_overall_token_terminal_rows": 0,
+    "maximum_per_condition_token_terminal_rows": 0,
+    "maximum_input_token_terminal_rows": 0,
+    "maximum_output_token_terminal_rows": 0,
+    "maximum_total_token_terminal_rows": 0,
+    "maximum_absolute_condition_terminal_difference_rows": 0,
+    "terminal_rate_denominator": "all-scheduled-rows",
+    "fixed_budget_estimand": "complete-scheduled-row-success-at-exact-envelope",
+    "token_terminal_source": "authenticated-typed-terminal-evidence",
+    "patch_milestone_definition": "at-least-one-authenticated-successful-mutation",
+    "check_milestone_definition": "at-least-one-authenticated-check-completion",
+    "diff_milestone_definition": "authenticated-terminal-diff-observed",
+    "submission_milestone_definition": "authenticated-submission-observed",
+    "no_new_evidence_turn_definition": "typed-loop-detected-event-count",
+    "patch_attempt_definition": "successful-mutations-plus-typed-rejected-apply-patch-events",
+    "patch_rejection_definition": "typed-rejected-apply-patch-event-count",
+    "token_terminals_score_zero": true,
+    "complete_case_exclusion_authorized": false,
+    "evaluator_reached_subset_as_primary_authorized": false,
+    "post_hoc_continuation_authorized": false,
+    "condition_specific_budget_relief_authorized": false,
+    "threshold_selection_uses_r16": false,
+    "threshold_optimality_established": false,
+    "population_terminal_rate_bound_established": false,
+    "unrestricted_capability_claim_authorized": false,
+    "pure_projection_is_official_analysis": false,
+    "official_analysis_requires_authenticated_persisted_evidence": true,
+    "provider_calls_authorized": false,
+    "runner_activation_authorized": false,
+    "fresh_panel_authorized": false,
+    "content_hash": "sha256:89f3c5de037246a013c5bde1996bffe2d6297bfc613490aec709a319edf3d31e"
+  },
+  "contract_hash": "sha256:89f3c5de037246a013c5bde1996bffe2d6297bfc613490aec709a319edf3d31e",
+  "r8_development_evidence": {
+    "path": "reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r8-evidence-r4.json",
+    "file_bytes": 19557,
+    "file_sha256": "sha256:5035421a63d58fededab133b77c72e23ee4ad6d380a37c8d1157ce7480b7c62c",
+    "content_hash": "sha256:0ef31d2b27a7601800d4352e352f67262e462f19b5c2aef25d1d3f0106aade83"
+  },
+  "finalization_reserve": {
+    "path": "experiments/lean-harness-finalization-reserve-20260816-v1.json",
+    "file_bytes": 6036,
+    "file_sha256": "sha256:30cf34a19c94025777df612b283376be5d08047069f3c49e19b58e950434bf06",
+    "content_hash": "sha256:9458bb1d59d51aaf94a082504a3883d799bf4d807ce7a83376bdc391ab6348db"
+  },
+  "saturation_thresholds": {
+    "path": "experiments/lean-harness-saturation-recovery-public-qualification-20260816-v1.json",
+    "file_bytes": 10993,
+    "file_sha256": "sha256:99b30c828989b1a2cae28bd1412d27a9d4e9514768b22cea8047780792f13d0e",
+    "content_hash": "sha256:f07374bca99d1046c66f7ade6d96caf2bd06cbafe307dcabcad681f473485db6"
+  },
+  "admission_recovery_shadow": {
+    "path": "experiments/lean-harness-saturation-recovery-shadow-public-qualification-20260816-v2.json",
+    "file_bytes": 365815,
+    "file_sha256": "sha256:d046025d4c4277786d0d63fc3f946aa50d0c1481fb3237200f51aebf13de2478",
+    "content_hash": "sha256:172359ac848acf18e38fff43117cefd58c4cad691d9180f77008b6bbc8f57916"
+  },
+  "reference_report": {
+    "schema_version": "lean-harness-budget-adequacy-report-v1",
+    "measurement_id": "r8-public-development-budget-adequacy-reference",
+    "contract_hash": "sha256:89f3c5de037246a013c5bde1996bffe2d6297bfc613490aec709a319edf3d31e",
+    "realized_schedule_hash": "sha256:26026929c2992473b00ce58af760481d7406509f592b8d7674cb7ac6fa4a9a6d",
+    "envelope": {
+      "schema_version": "lean-harness-budget-envelope-v1",
+      "max_cumulative_input_tokens": 3000000,
+      "max_cumulative_output_tokens": 350000,
+      "max_total_tokens": 3350000,
+      "equal_for_all_conditions": true,
+      "content_hash": "sha256:924e244aebd56e447a16c847da15b8da6d1f4d5ed4f53af639d215e6b1a6c1f5"
+    },
+    "full_schedule_reserve_nanos": 15300000000,
+    "hard_cap_nanos": 18000000000,
+    "settled_model_cost_nanos": 366421500,
+    "dollar_cap_boundary_reached": false,
+    "dollar_cap_truncation_observed": false,
+    "expected_rows": 4,
+    "rows_per_condition": 2,
+    "rows": [
+      {
+        "observation_id": "sha256:e957fb98413f15bb0b9435b882f92841aa9106a15e56af36dc639572798ddc35",
+        "order": 1,
+        "task_id": "moto-query-scanned-count",
+        "condition": "no_memory",
+        "outcome_kind": "resolved",
+        "success": true,
+        "evaluator_reached": true,
+        "token_terminal_dimension": "none",
+        "patch_milestone": true,
+        "check_milestone": true,
+        "diff_milestone": true,
+        "submission_milestone": true,
+        "no_new_evidence_turns": 3,
+        "patch_attempts": 2,
+        "patch_rejections": 1,
+        "input_tokens": 116952,
+        "output_tokens": 4649,
+        "total_tokens": 121601,
+        "model_cost_nanos": 108634500,
+        "content_hash": "sha256:9b1ab4bf2d386541d4f8c824af72c71c6e9c48cc4390472ebfc3c26fd69d8341"
+      },
+      {
+        "observation_id": "sha256:f38764f3903bff9a16be458655e7b6427d7b6173a9a7e2c8bd6c52af1ca8d09d",
+        "order": 2,
+        "task_id": "moto-query-scanned-count",
+        "condition": "structured",
+        "outcome_kind": "resolved",
+        "success": true,
+        "evaluator_reached": true,
+        "token_terminal_dimension": "none",
+        "patch_milestone": true,
+        "check_milestone": true,
+        "diff_milestone": true,
+        "submission_milestone": true,
+        "no_new_evidence_turns": 0,
+        "patch_attempts": 1,
+        "patch_rejections": 0,
+        "input_tokens": 81655,
+        "output_tokens": 1949,
+        "total_tokens": 83604,
+        "model_cost_nanos": 70011750,
+        "content_hash": "sha256:7529c0f5df10360a0f35d1d3b7cbde4a1a20c095b07ccb535a247939ce2e279d"
+      },
+      {
+        "observation_id": "sha256:6ff0a3bb308b84016c0b8a436ae618b52fc6bed9b9543f7e8fd1565113c2570e",
+        "order": 3,
+        "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+        "condition": "structured",
+        "outcome_kind": "resolved",
+        "success": true,
+        "evaluator_reached": true,
+        "token_terminal_dimension": "none",
+        "patch_milestone": true,
+        "check_milestone": true,
+        "diff_milestone": true,
+        "submission_milestone": true,
+        "no_new_evidence_turns": 0,
+        "patch_attempts": 1,
+        "patch_rejections": 0,
+        "input_tokens": 67627,
+        "output_tokens": 4866,
+        "total_tokens": 72493,
+        "model_cost_nanos": 72617250,
+        "content_hash": "sha256:b9a97692fa7c2d863ae44bb1cec22615bd46b75881c517fdf9df0b58d1f8de74"
+      },
+      {
+        "observation_id": "sha256:4a8432f4359b24bf115f1f2cfbf523fff7268199ab9aca98492c2a95445b9836",
+        "order": 4,
+        "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+        "condition": "no_memory",
+        "outcome_kind": "resolved",
+        "success": true,
+        "evaluator_reached": true,
+        "token_terminal_dimension": "none",
+        "patch_milestone": true,
+        "check_milestone": true,
+        "diff_milestone": true,
+        "submission_milestone": true,
+        "no_new_evidence_turns": 0,
+        "patch_attempts": 2,
+        "patch_rejections": 0,
+        "input_tokens": 99532,
+        "output_tokens": 9002,
+        "total_tokens": 108534,
+        "model_cost_nanos": 115158000,
+        "content_hash": "sha256:9d9c9d50fb7abcd0ccda891baea28ad82b9caaa3bf2c501786bd456baca869c3"
+      }
+    ],
+    "condition_summaries": [
+      {
+        "label": "no_memory",
+        "scheduled_rows": 2,
+        "successes": 2,
+        "success_rate": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "evaluator_reached_rows": 2,
+        "evaluator_reach_rate": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "input_token_terminal_rows": 0,
+        "output_token_terminal_rows": 0,
+        "total_token_terminal_rows": 0,
+        "any_token_terminal_rows": 0,
+        "token_terminal_rate": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "patch_milestone_rows": 2,
+        "check_milestone_rows": 2,
+        "diff_milestone_rows": 2,
+        "submission_milestone_rows": 2,
+        "no_new_evidence_turns": 3,
+        "maximum_no_new_evidence_turns": 3,
+        "patch_attempts": 4,
+        "patch_rejections": 1,
+        "patch_rejection_rate": {
+          "status": "defined",
+          "value": {
+            "numerator": 1,
+            "denominator": 4
+          }
+        },
+        "model_cost_nanos": 223792500,
+        "cost_per_success_nanos": {
+          "status": "defined",
+          "value": {
+            "numerator": 111896250,
+            "denominator": 1
+          }
+        }
+      },
+      {
+        "label": "structured",
+        "scheduled_rows": 2,
+        "successes": 2,
+        "success_rate": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "evaluator_reached_rows": 2,
+        "evaluator_reach_rate": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "input_token_terminal_rows": 0,
+        "output_token_terminal_rows": 0,
+        "total_token_terminal_rows": 0,
+        "any_token_terminal_rows": 0,
+        "token_terminal_rate": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "patch_milestone_rows": 2,
+        "check_milestone_rows": 2,
+        "diff_milestone_rows": 2,
+        "submission_milestone_rows": 2,
+        "no_new_evidence_turns": 0,
+        "maximum_no_new_evidence_turns": 0,
+        "patch_attempts": 2,
+        "patch_rejections": 0,
+        "patch_rejection_rate": {
+          "status": "defined",
+          "value": {
+            "numerator": 0,
+            "denominator": 1
+          }
+        },
+        "model_cost_nanos": 142629000,
+        "cost_per_success_nanos": {
+          "status": "defined",
+          "value": {
+            "numerator": 71314500,
+            "denominator": 1
+          }
+        }
+      }
+    ],
+    "overall_summary": {
+      "label": "overall",
+      "scheduled_rows": 4,
+      "successes": 4,
+      "success_rate": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "evaluator_reached_rows": 4,
+      "evaluator_reach_rate": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "input_token_terminal_rows": 0,
+      "output_token_terminal_rows": 0,
+      "total_token_terminal_rows": 0,
+      "any_token_terminal_rows": 0,
+      "token_terminal_rate": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "patch_milestone_rows": 4,
+      "check_milestone_rows": 4,
+      "diff_milestone_rows": 4,
+      "submission_milestone_rows": 4,
+      "no_new_evidence_turns": 3,
+      "maximum_no_new_evidence_turns": 3,
+      "patch_attempts": 6,
+      "patch_rejections": 1,
+      "patch_rejection_rate": {
+        "status": "defined",
+        "value": {
+          "numerator": 1,
+          "denominator": 6
+        }
+      },
+      "model_cost_nanos": 366421500,
+      "cost_per_success_nanos": {
+        "status": "defined",
+        "value": {
+          "numerator": 91605375,
+          "denominator": 1
+        }
+      }
+    },
+    "structured_minus_no_memory_success_rate": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "structured_minus_no_memory_token_terminal_rows": 0,
+    "absolute_condition_token_terminal_difference_rows": 0,
+    "complete_matrix": true,
+    "fixed_budget_primary_status": "estimable-complete-matrix",
+    "token_terminals_retained_as_observed_zero": true,
+    "budget_adequacy_gate_passed": true,
+    "administrative_truncation_status": "none-observed-at-frozen-envelope",
+    "higher_budget_capability_status": "not-identified-no-terminal-observation-only",
+    "complete_case_exclusion_performed": false,
+    "post_hoc_continuation_performed": false,
+    "condition_specific_budget_relief_performed": false,
+    "threshold_optimality_established": false,
+    "population_terminal_rate_bound_established": false,
+    "measurement_projection_only": true,
+    "official_analysis_authorized": false,
+    "unrestricted_capability_claim_authorized": false,
+    "runtime_activation_authorized": false,
+    "paid_execution_authorized": false,
+    "content_hash": "sha256:2f183f9cbf34dffd5388f0aa442e415a02a6d69c3dadea78e9d459cd2600f55a"
+  },
+  "reference_report_hash": "sha256:2f183f9cbf34dffd5388f0aa442e415a02a6d69c3dadea78e9d459cd2600f55a",
+  "boundary_scenarios": [
+    "input-token-terminal",
+    "output-token-terminal",
+    "total-token-terminal",
+    "zero-success-cost-denominator"
+  ],
+  "boundary_observations": [
+    {
+      "observation_id": "sha256:fcc818fa2de7865569e3d9e50ef67b90723d30cb38694edfec53570878154eb4",
+      "scenario": "input-token-terminal",
+      "expected_gate_passed": false,
+      "expected_terminal_dimension": "input_tokens",
+      "report": {
+        "schema_version": "lean-harness-budget-adequacy-report-v1",
+        "measurement_id": "synthetic-input-token-terminal",
+        "contract_hash": "sha256:89f3c5de037246a013c5bde1996bffe2d6297bfc613490aec709a319edf3d31e",
+        "realized_schedule_hash": "sha256:26026929c2992473b00ce58af760481d7406509f592b8d7674cb7ac6fa4a9a6d",
+        "envelope": {
+          "schema_version": "lean-harness-budget-envelope-v1",
+          "max_cumulative_input_tokens": 3000000,
+          "max_cumulative_output_tokens": 350000,
+          "max_total_tokens": 3350000,
+          "equal_for_all_conditions": true,
+          "content_hash": "sha256:924e244aebd56e447a16c847da15b8da6d1f4d5ed4f53af639d215e6b1a6c1f5"
+        },
+        "full_schedule_reserve_nanos": 15300000000,
+        "hard_cap_nanos": 18000000000,
+        "settled_model_cost_nanos": 366421500,
+        "dollar_cap_boundary_reached": false,
+        "dollar_cap_truncation_observed": false,
+        "expected_rows": 4,
+        "rows_per_condition": 2,
+        "rows": [
+          {
+            "observation_id": "sha256:e957fb98413f15bb0b9435b882f92841aa9106a15e56af36dc639572798ddc35",
+            "order": 1,
+            "task_id": "moto-query-scanned-count",
+            "condition": "no_memory",
+            "outcome_kind": "agent_failure",
+            "success": false,
+            "evaluator_reached": false,
+            "token_terminal_dimension": "input_tokens",
+            "patch_milestone": true,
+            "check_milestone": false,
+            "diff_milestone": false,
+            "submission_milestone": false,
+            "no_new_evidence_turns": 3,
+            "patch_attempts": 2,
+            "patch_rejections": 1,
+            "input_tokens": 116952,
+            "output_tokens": 4649,
+            "total_tokens": 121601,
+            "model_cost_nanos": 108634500,
+            "content_hash": "sha256:723eef4481acb03a932b23d52bcfba314a4e3a76a1e0a2d8c607f6e858455695"
+          },
+          {
+            "observation_id": "sha256:f38764f3903bff9a16be458655e7b6427d7b6173a9a7e2c8bd6c52af1ca8d09d",
+            "order": 2,
+            "task_id": "moto-query-scanned-count",
+            "condition": "structured",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 1,
+            "patch_rejections": 0,
+            "input_tokens": 81655,
+            "output_tokens": 1949,
+            "total_tokens": 83604,
+            "model_cost_nanos": 70011750,
+            "content_hash": "sha256:7529c0f5df10360a0f35d1d3b7cbde4a1a20c095b07ccb535a247939ce2e279d"
+          },
+          {
+            "observation_id": "sha256:6ff0a3bb308b84016c0b8a436ae618b52fc6bed9b9543f7e8fd1565113c2570e",
+            "order": 3,
+            "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+            "condition": "structured",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 1,
+            "patch_rejections": 0,
+            "input_tokens": 67627,
+            "output_tokens": 4866,
+            "total_tokens": 72493,
+            "model_cost_nanos": 72617250,
+            "content_hash": "sha256:b9a97692fa7c2d863ae44bb1cec22615bd46b75881c517fdf9df0b58d1f8de74"
+          },
+          {
+            "observation_id": "sha256:4a8432f4359b24bf115f1f2cfbf523fff7268199ab9aca98492c2a95445b9836",
+            "order": 4,
+            "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+            "condition": "no_memory",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 2,
+            "patch_rejections": 0,
+            "input_tokens": 99532,
+            "output_tokens": 9002,
+            "total_tokens": 108534,
+            "model_cost_nanos": 115158000,
+            "content_hash": "sha256:9d9c9d50fb7abcd0ccda891baea28ad82b9caaa3bf2c501786bd456baca869c3"
+          }
+        ],
+        "condition_summaries": [
+          {
+            "label": "no_memory",
+            "scheduled_rows": 2,
+            "successes": 1,
+            "success_rate": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "evaluator_reached_rows": 1,
+            "evaluator_reach_rate": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "input_token_terminal_rows": 1,
+            "output_token_terminal_rows": 0,
+            "total_token_terminal_rows": 0,
+            "any_token_terminal_rows": 1,
+            "token_terminal_rate": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "patch_milestone_rows": 2,
+            "check_milestone_rows": 1,
+            "diff_milestone_rows": 1,
+            "submission_milestone_rows": 1,
+            "no_new_evidence_turns": 3,
+            "maximum_no_new_evidence_turns": 3,
+            "patch_attempts": 4,
+            "patch_rejections": 1,
+            "patch_rejection_rate": {
+              "status": "defined",
+              "value": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            },
+            "model_cost_nanos": 223792500,
+            "cost_per_success_nanos": {
+              "status": "defined",
+              "value": {
+                "numerator": 223792500,
+                "denominator": 1
+              }
+            }
+          },
+          {
+            "label": "structured",
+            "scheduled_rows": 2,
+            "successes": 2,
+            "success_rate": {
+              "numerator": 1,
+              "denominator": 1
+            },
+            "evaluator_reached_rows": 2,
+            "evaluator_reach_rate": {
+              "numerator": 1,
+              "denominator": 1
+            },
+            "input_token_terminal_rows": 0,
+            "output_token_terminal_rows": 0,
+            "total_token_terminal_rows": 0,
+            "any_token_terminal_rows": 0,
+            "token_terminal_rate": {
+              "numerator": 0,
+              "denominator": 1
+            },
+            "patch_milestone_rows": 2,
+            "check_milestone_rows": 2,
+            "diff_milestone_rows": 2,
+            "submission_milestone_rows": 2,
+            "no_new_evidence_turns": 0,
+            "maximum_no_new_evidence_turns": 0,
+            "patch_attempts": 2,
+            "patch_rejections": 0,
+            "patch_rejection_rate": {
+              "status": "defined",
+              "value": {
+                "numerator": 0,
+                "denominator": 1
+              }
+            },
+            "model_cost_nanos": 142629000,
+            "cost_per_success_nanos": {
+              "status": "defined",
+              "value": {
+                "numerator": 71314500,
+                "denominator": 1
+              }
+            }
+          }
+        ],
+        "overall_summary": {
+          "label": "overall",
+          "scheduled_rows": 4,
+          "successes": 3,
+          "success_rate": {
+            "numerator": 3,
+            "denominator": 4
+          },
+          "evaluator_reached_rows": 3,
+          "evaluator_reach_rate": {
+            "numerator": 3,
+            "denominator": 4
+          },
+          "input_token_terminal_rows": 1,
+          "output_token_terminal_rows": 0,
+          "total_token_terminal_rows": 0,
+          "any_token_terminal_rows": 1,
+          "token_terminal_rate": {
+            "numerator": 1,
+            "denominator": 4
+          },
+          "patch_milestone_rows": 4,
+          "check_milestone_rows": 3,
+          "diff_milestone_rows": 3,
+          "submission_milestone_rows": 3,
+          "no_new_evidence_turns": 3,
+          "maximum_no_new_evidence_turns": 3,
+          "patch_attempts": 6,
+          "patch_rejections": 1,
+          "patch_rejection_rate": {
+            "status": "defined",
+            "value": {
+              "numerator": 1,
+              "denominator": 6
+            }
+          },
+          "model_cost_nanos": 366421500,
+          "cost_per_success_nanos": {
+            "status": "defined",
+            "value": {
+              "numerator": 122140500,
+              "denominator": 1
+            }
+          }
+        },
+        "structured_minus_no_memory_success_rate": {
+          "numerator": 1,
+          "denominator": 2
+        },
+        "structured_minus_no_memory_token_terminal_rows": -1,
+        "absolute_condition_token_terminal_difference_rows": 1,
+        "complete_matrix": true,
+        "fixed_budget_primary_status": "estimable-complete-matrix",
+        "token_terminals_retained_as_observed_zero": true,
+        "budget_adequacy_gate_passed": false,
+        "administrative_truncation_status": "exceeds-zero-terminal-criterion",
+        "higher_budget_capability_status": "inconclusive-administrative-truncation",
+        "complete_case_exclusion_performed": false,
+        "post_hoc_continuation_performed": false,
+        "condition_specific_budget_relief_performed": false,
+        "threshold_optimality_established": false,
+        "population_terminal_rate_bound_established": false,
+        "measurement_projection_only": true,
+        "official_analysis_authorized": false,
+        "unrestricted_capability_claim_authorized": false,
+        "runtime_activation_authorized": false,
+        "paid_execution_authorized": false,
+        "content_hash": "sha256:08b60e878ce0bff72846cd62ca0ec310e17fe8cd481a8e03e31ac8da303a8f25"
+      }
+    },
+    {
+      "observation_id": "sha256:838cd384181320c894b21ca309f25a80040d867e04eac65753136a8f9ae60fcf",
+      "scenario": "output-token-terminal",
+      "expected_gate_passed": false,
+      "expected_terminal_dimension": "output_tokens",
+      "report": {
+        "schema_version": "lean-harness-budget-adequacy-report-v1",
+        "measurement_id": "synthetic-output-token-terminal",
+        "contract_hash": "sha256:89f3c5de037246a013c5bde1996bffe2d6297bfc613490aec709a319edf3d31e",
+        "realized_schedule_hash": "sha256:26026929c2992473b00ce58af760481d7406509f592b8d7674cb7ac6fa4a9a6d",
+        "envelope": {
+          "schema_version": "lean-harness-budget-envelope-v1",
+          "max_cumulative_input_tokens": 3000000,
+          "max_cumulative_output_tokens": 350000,
+          "max_total_tokens": 3350000,
+          "equal_for_all_conditions": true,
+          "content_hash": "sha256:924e244aebd56e447a16c847da15b8da6d1f4d5ed4f53af639d215e6b1a6c1f5"
+        },
+        "full_schedule_reserve_nanos": 15300000000,
+        "hard_cap_nanos": 18000000000,
+        "settled_model_cost_nanos": 366421500,
+        "dollar_cap_boundary_reached": false,
+        "dollar_cap_truncation_observed": false,
+        "expected_rows": 4,
+        "rows_per_condition": 2,
+        "rows": [
+          {
+            "observation_id": "sha256:e957fb98413f15bb0b9435b882f92841aa9106a15e56af36dc639572798ddc35",
+            "order": 1,
+            "task_id": "moto-query-scanned-count",
+            "condition": "no_memory",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 3,
+            "patch_attempts": 2,
+            "patch_rejections": 1,
+            "input_tokens": 116952,
+            "output_tokens": 4649,
+            "total_tokens": 121601,
+            "model_cost_nanos": 108634500,
+            "content_hash": "sha256:9b1ab4bf2d386541d4f8c824af72c71c6e9c48cc4390472ebfc3c26fd69d8341"
+          },
+          {
+            "observation_id": "sha256:f38764f3903bff9a16be458655e7b6427d7b6173a9a7e2c8bd6c52af1ca8d09d",
+            "order": 2,
+            "task_id": "moto-query-scanned-count",
+            "condition": "structured",
+            "outcome_kind": "agent_failure",
+            "success": false,
+            "evaluator_reached": false,
+            "token_terminal_dimension": "output_tokens",
+            "patch_milestone": true,
+            "check_milestone": false,
+            "diff_milestone": false,
+            "submission_milestone": false,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 1,
+            "patch_rejections": 0,
+            "input_tokens": 81655,
+            "output_tokens": 1949,
+            "total_tokens": 83604,
+            "model_cost_nanos": 70011750,
+            "content_hash": "sha256:d02c5929bab6e5eeca9f2ed6cd7a515671a4841cd4c00e568ed6d72303e60467"
+          },
+          {
+            "observation_id": "sha256:6ff0a3bb308b84016c0b8a436ae618b52fc6bed9b9543f7e8fd1565113c2570e",
+            "order": 3,
+            "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+            "condition": "structured",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 1,
+            "patch_rejections": 0,
+            "input_tokens": 67627,
+            "output_tokens": 4866,
+            "total_tokens": 72493,
+            "model_cost_nanos": 72617250,
+            "content_hash": "sha256:b9a97692fa7c2d863ae44bb1cec22615bd46b75881c517fdf9df0b58d1f8de74"
+          },
+          {
+            "observation_id": "sha256:4a8432f4359b24bf115f1f2cfbf523fff7268199ab9aca98492c2a95445b9836",
+            "order": 4,
+            "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+            "condition": "no_memory",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 2,
+            "patch_rejections": 0,
+            "input_tokens": 99532,
+            "output_tokens": 9002,
+            "total_tokens": 108534,
+            "model_cost_nanos": 115158000,
+            "content_hash": "sha256:9d9c9d50fb7abcd0ccda891baea28ad82b9caaa3bf2c501786bd456baca869c3"
+          }
+        ],
+        "condition_summaries": [
+          {
+            "label": "no_memory",
+            "scheduled_rows": 2,
+            "successes": 2,
+            "success_rate": {
+              "numerator": 1,
+              "denominator": 1
+            },
+            "evaluator_reached_rows": 2,
+            "evaluator_reach_rate": {
+              "numerator": 1,
+              "denominator": 1
+            },
+            "input_token_terminal_rows": 0,
+            "output_token_terminal_rows": 0,
+            "total_token_terminal_rows": 0,
+            "any_token_terminal_rows": 0,
+            "token_terminal_rate": {
+              "numerator": 0,
+              "denominator": 1
+            },
+            "patch_milestone_rows": 2,
+            "check_milestone_rows": 2,
+            "diff_milestone_rows": 2,
+            "submission_milestone_rows": 2,
+            "no_new_evidence_turns": 3,
+            "maximum_no_new_evidence_turns": 3,
+            "patch_attempts": 4,
+            "patch_rejections": 1,
+            "patch_rejection_rate": {
+              "status": "defined",
+              "value": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            },
+            "model_cost_nanos": 223792500,
+            "cost_per_success_nanos": {
+              "status": "defined",
+              "value": {
+                "numerator": 111896250,
+                "denominator": 1
+              }
+            }
+          },
+          {
+            "label": "structured",
+            "scheduled_rows": 2,
+            "successes": 1,
+            "success_rate": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "evaluator_reached_rows": 1,
+            "evaluator_reach_rate": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "input_token_terminal_rows": 0,
+            "output_token_terminal_rows": 1,
+            "total_token_terminal_rows": 0,
+            "any_token_terminal_rows": 1,
+            "token_terminal_rate": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "patch_milestone_rows": 2,
+            "check_milestone_rows": 1,
+            "diff_milestone_rows": 1,
+            "submission_milestone_rows": 1,
+            "no_new_evidence_turns": 0,
+            "maximum_no_new_evidence_turns": 0,
+            "patch_attempts": 2,
+            "patch_rejections": 0,
+            "patch_rejection_rate": {
+              "status": "defined",
+              "value": {
+                "numerator": 0,
+                "denominator": 1
+              }
+            },
+            "model_cost_nanos": 142629000,
+            "cost_per_success_nanos": {
+              "status": "defined",
+              "value": {
+                "numerator": 142629000,
+                "denominator": 1
+              }
+            }
+          }
+        ],
+        "overall_summary": {
+          "label": "overall",
+          "scheduled_rows": 4,
+          "successes": 3,
+          "success_rate": {
+            "numerator": 3,
+            "denominator": 4
+          },
+          "evaluator_reached_rows": 3,
+          "evaluator_reach_rate": {
+            "numerator": 3,
+            "denominator": 4
+          },
+          "input_token_terminal_rows": 0,
+          "output_token_terminal_rows": 1,
+          "total_token_terminal_rows": 0,
+          "any_token_terminal_rows": 1,
+          "token_terminal_rate": {
+            "numerator": 1,
+            "denominator": 4
+          },
+          "patch_milestone_rows": 4,
+          "check_milestone_rows": 3,
+          "diff_milestone_rows": 3,
+          "submission_milestone_rows": 3,
+          "no_new_evidence_turns": 3,
+          "maximum_no_new_evidence_turns": 3,
+          "patch_attempts": 6,
+          "patch_rejections": 1,
+          "patch_rejection_rate": {
+            "status": "defined",
+            "value": {
+              "numerator": 1,
+              "denominator": 6
+            }
+          },
+          "model_cost_nanos": 366421500,
+          "cost_per_success_nanos": {
+            "status": "defined",
+            "value": {
+              "numerator": 122140500,
+              "denominator": 1
+            }
+          }
+        },
+        "structured_minus_no_memory_success_rate": {
+          "numerator": -1,
+          "denominator": 2
+        },
+        "structured_minus_no_memory_token_terminal_rows": 1,
+        "absolute_condition_token_terminal_difference_rows": 1,
+        "complete_matrix": true,
+        "fixed_budget_primary_status": "estimable-complete-matrix",
+        "token_terminals_retained_as_observed_zero": true,
+        "budget_adequacy_gate_passed": false,
+        "administrative_truncation_status": "exceeds-zero-terminal-criterion",
+        "higher_budget_capability_status": "inconclusive-administrative-truncation",
+        "complete_case_exclusion_performed": false,
+        "post_hoc_continuation_performed": false,
+        "condition_specific_budget_relief_performed": false,
+        "threshold_optimality_established": false,
+        "population_terminal_rate_bound_established": false,
+        "measurement_projection_only": true,
+        "official_analysis_authorized": false,
+        "unrestricted_capability_claim_authorized": false,
+        "runtime_activation_authorized": false,
+        "paid_execution_authorized": false,
+        "content_hash": "sha256:1ea72983e0cb3a20a89ecfd84c34dc7df8aec22f469fd658f7bd8483986a824e"
+      }
+    },
+    {
+      "observation_id": "sha256:83524d8f32e044ee240e0ab77c06157dcffc85e55e47b8c78a38e6f4575c379f",
+      "scenario": "total-token-terminal",
+      "expected_gate_passed": false,
+      "expected_terminal_dimension": "total_tokens",
+      "report": {
+        "schema_version": "lean-harness-budget-adequacy-report-v1",
+        "measurement_id": "synthetic-total-token-terminal",
+        "contract_hash": "sha256:89f3c5de037246a013c5bde1996bffe2d6297bfc613490aec709a319edf3d31e",
+        "realized_schedule_hash": "sha256:26026929c2992473b00ce58af760481d7406509f592b8d7674cb7ac6fa4a9a6d",
+        "envelope": {
+          "schema_version": "lean-harness-budget-envelope-v1",
+          "max_cumulative_input_tokens": 3000000,
+          "max_cumulative_output_tokens": 350000,
+          "max_total_tokens": 3350000,
+          "equal_for_all_conditions": true,
+          "content_hash": "sha256:924e244aebd56e447a16c847da15b8da6d1f4d5ed4f53af639d215e6b1a6c1f5"
+        },
+        "full_schedule_reserve_nanos": 15300000000,
+        "hard_cap_nanos": 18000000000,
+        "settled_model_cost_nanos": 366421500,
+        "dollar_cap_boundary_reached": false,
+        "dollar_cap_truncation_observed": false,
+        "expected_rows": 4,
+        "rows_per_condition": 2,
+        "rows": [
+          {
+            "observation_id": "sha256:e957fb98413f15bb0b9435b882f92841aa9106a15e56af36dc639572798ddc35",
+            "order": 1,
+            "task_id": "moto-query-scanned-count",
+            "condition": "no_memory",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 3,
+            "patch_attempts": 2,
+            "patch_rejections": 1,
+            "input_tokens": 116952,
+            "output_tokens": 4649,
+            "total_tokens": 121601,
+            "model_cost_nanos": 108634500,
+            "content_hash": "sha256:9b1ab4bf2d386541d4f8c824af72c71c6e9c48cc4390472ebfc3c26fd69d8341"
+          },
+          {
+            "observation_id": "sha256:f38764f3903bff9a16be458655e7b6427d7b6173a9a7e2c8bd6c52af1ca8d09d",
+            "order": 2,
+            "task_id": "moto-query-scanned-count",
+            "condition": "structured",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 1,
+            "patch_rejections": 0,
+            "input_tokens": 81655,
+            "output_tokens": 1949,
+            "total_tokens": 83604,
+            "model_cost_nanos": 70011750,
+            "content_hash": "sha256:7529c0f5df10360a0f35d1d3b7cbde4a1a20c095b07ccb535a247939ce2e279d"
+          },
+          {
+            "observation_id": "sha256:6ff0a3bb308b84016c0b8a436ae618b52fc6bed9b9543f7e8fd1565113c2570e",
+            "order": 3,
+            "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+            "condition": "structured",
+            "outcome_kind": "agent_failure",
+            "success": false,
+            "evaluator_reached": false,
+            "token_terminal_dimension": "total_tokens",
+            "patch_milestone": true,
+            "check_milestone": false,
+            "diff_milestone": false,
+            "submission_milestone": false,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 1,
+            "patch_rejections": 0,
+            "input_tokens": 67627,
+            "output_tokens": 4866,
+            "total_tokens": 72493,
+            "model_cost_nanos": 72617250,
+            "content_hash": "sha256:44aa1e50e15815c791c09fef2a7f41905a9ee8313b068dc6519091bffa7ee0f7"
+          },
+          {
+            "observation_id": "sha256:4a8432f4359b24bf115f1f2cfbf523fff7268199ab9aca98492c2a95445b9836",
+            "order": 4,
+            "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+            "condition": "no_memory",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 2,
+            "patch_rejections": 0,
+            "input_tokens": 99532,
+            "output_tokens": 9002,
+            "total_tokens": 108534,
+            "model_cost_nanos": 115158000,
+            "content_hash": "sha256:9d9c9d50fb7abcd0ccda891baea28ad82b9caaa3bf2c501786bd456baca869c3"
+          }
+        ],
+        "condition_summaries": [
+          {
+            "label": "no_memory",
+            "scheduled_rows": 2,
+            "successes": 2,
+            "success_rate": {
+              "numerator": 1,
+              "denominator": 1
+            },
+            "evaluator_reached_rows": 2,
+            "evaluator_reach_rate": {
+              "numerator": 1,
+              "denominator": 1
+            },
+            "input_token_terminal_rows": 0,
+            "output_token_terminal_rows": 0,
+            "total_token_terminal_rows": 0,
+            "any_token_terminal_rows": 0,
+            "token_terminal_rate": {
+              "numerator": 0,
+              "denominator": 1
+            },
+            "patch_milestone_rows": 2,
+            "check_milestone_rows": 2,
+            "diff_milestone_rows": 2,
+            "submission_milestone_rows": 2,
+            "no_new_evidence_turns": 3,
+            "maximum_no_new_evidence_turns": 3,
+            "patch_attempts": 4,
+            "patch_rejections": 1,
+            "patch_rejection_rate": {
+              "status": "defined",
+              "value": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            },
+            "model_cost_nanos": 223792500,
+            "cost_per_success_nanos": {
+              "status": "defined",
+              "value": {
+                "numerator": 111896250,
+                "denominator": 1
+              }
+            }
+          },
+          {
+            "label": "structured",
+            "scheduled_rows": 2,
+            "successes": 1,
+            "success_rate": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "evaluator_reached_rows": 1,
+            "evaluator_reach_rate": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "input_token_terminal_rows": 0,
+            "output_token_terminal_rows": 0,
+            "total_token_terminal_rows": 1,
+            "any_token_terminal_rows": 1,
+            "token_terminal_rate": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "patch_milestone_rows": 2,
+            "check_milestone_rows": 1,
+            "diff_milestone_rows": 1,
+            "submission_milestone_rows": 1,
+            "no_new_evidence_turns": 0,
+            "maximum_no_new_evidence_turns": 0,
+            "patch_attempts": 2,
+            "patch_rejections": 0,
+            "patch_rejection_rate": {
+              "status": "defined",
+              "value": {
+                "numerator": 0,
+                "denominator": 1
+              }
+            },
+            "model_cost_nanos": 142629000,
+            "cost_per_success_nanos": {
+              "status": "defined",
+              "value": {
+                "numerator": 142629000,
+                "denominator": 1
+              }
+            }
+          }
+        ],
+        "overall_summary": {
+          "label": "overall",
+          "scheduled_rows": 4,
+          "successes": 3,
+          "success_rate": {
+            "numerator": 3,
+            "denominator": 4
+          },
+          "evaluator_reached_rows": 3,
+          "evaluator_reach_rate": {
+            "numerator": 3,
+            "denominator": 4
+          },
+          "input_token_terminal_rows": 0,
+          "output_token_terminal_rows": 0,
+          "total_token_terminal_rows": 1,
+          "any_token_terminal_rows": 1,
+          "token_terminal_rate": {
+            "numerator": 1,
+            "denominator": 4
+          },
+          "patch_milestone_rows": 4,
+          "check_milestone_rows": 3,
+          "diff_milestone_rows": 3,
+          "submission_milestone_rows": 3,
+          "no_new_evidence_turns": 3,
+          "maximum_no_new_evidence_turns": 3,
+          "patch_attempts": 6,
+          "patch_rejections": 1,
+          "patch_rejection_rate": {
+            "status": "defined",
+            "value": {
+              "numerator": 1,
+              "denominator": 6
+            }
+          },
+          "model_cost_nanos": 366421500,
+          "cost_per_success_nanos": {
+            "status": "defined",
+            "value": {
+              "numerator": 122140500,
+              "denominator": 1
+            }
+          }
+        },
+        "structured_minus_no_memory_success_rate": {
+          "numerator": -1,
+          "denominator": 2
+        },
+        "structured_minus_no_memory_token_terminal_rows": 1,
+        "absolute_condition_token_terminal_difference_rows": 1,
+        "complete_matrix": true,
+        "fixed_budget_primary_status": "estimable-complete-matrix",
+        "token_terminals_retained_as_observed_zero": true,
+        "budget_adequacy_gate_passed": false,
+        "administrative_truncation_status": "exceeds-zero-terminal-criterion",
+        "higher_budget_capability_status": "inconclusive-administrative-truncation",
+        "complete_case_exclusion_performed": false,
+        "post_hoc_continuation_performed": false,
+        "condition_specific_budget_relief_performed": false,
+        "threshold_optimality_established": false,
+        "population_terminal_rate_bound_established": false,
+        "measurement_projection_only": true,
+        "official_analysis_authorized": false,
+        "unrestricted_capability_claim_authorized": false,
+        "runtime_activation_authorized": false,
+        "paid_execution_authorized": false,
+        "content_hash": "sha256:f3a459f8e45e7d00be483213d104605037839eadea97a21e0ef7f5cabefee7d6"
+      }
+    },
+    {
+      "observation_id": "sha256:e9870bfcaa0de306d011d9e7f106340a577369918ecc6c4baa62e6514068b17f",
+      "scenario": "zero-success-cost-denominator",
+      "expected_gate_passed": true,
+      "expected_terminal_dimension": "none",
+      "report": {
+        "schema_version": "lean-harness-budget-adequacy-report-v1",
+        "measurement_id": "synthetic-zero-success-cost-denominator",
+        "contract_hash": "sha256:89f3c5de037246a013c5bde1996bffe2d6297bfc613490aec709a319edf3d31e",
+        "realized_schedule_hash": "sha256:26026929c2992473b00ce58af760481d7406509f592b8d7674cb7ac6fa4a9a6d",
+        "envelope": {
+          "schema_version": "lean-harness-budget-envelope-v1",
+          "max_cumulative_input_tokens": 3000000,
+          "max_cumulative_output_tokens": 350000,
+          "max_total_tokens": 3350000,
+          "equal_for_all_conditions": true,
+          "content_hash": "sha256:924e244aebd56e447a16c847da15b8da6d1f4d5ed4f53af639d215e6b1a6c1f5"
+        },
+        "full_schedule_reserve_nanos": 15300000000,
+        "hard_cap_nanos": 18000000000,
+        "settled_model_cost_nanos": 366421500,
+        "dollar_cap_boundary_reached": false,
+        "dollar_cap_truncation_observed": false,
+        "expected_rows": 4,
+        "rows_per_condition": 2,
+        "rows": [
+          {
+            "observation_id": "sha256:e957fb98413f15bb0b9435b882f92841aa9106a15e56af36dc639572798ddc35",
+            "order": 1,
+            "task_id": "moto-query-scanned-count",
+            "condition": "no_memory",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 3,
+            "patch_attempts": 2,
+            "patch_rejections": 1,
+            "input_tokens": 116952,
+            "output_tokens": 4649,
+            "total_tokens": 121601,
+            "model_cost_nanos": 108634500,
+            "content_hash": "sha256:9b1ab4bf2d386541d4f8c824af72c71c6e9c48cc4390472ebfc3c26fd69d8341"
+          },
+          {
+            "observation_id": "sha256:f38764f3903bff9a16be458655e7b6427d7b6173a9a7e2c8bd6c52af1ca8d09d",
+            "order": 2,
+            "task_id": "moto-query-scanned-count",
+            "condition": "structured",
+            "outcome_kind": "task_failure",
+            "success": false,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 1,
+            "patch_rejections": 0,
+            "input_tokens": 81655,
+            "output_tokens": 1949,
+            "total_tokens": 83604,
+            "model_cost_nanos": 70011750,
+            "content_hash": "sha256:f060b603041564b83f584f749261ba170e9cc0ee1fe93c12e2b54f2f641ab463"
+          },
+          {
+            "observation_id": "sha256:6ff0a3bb308b84016c0b8a436ae618b52fc6bed9b9543f7e8fd1565113c2570e",
+            "order": 3,
+            "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+            "condition": "structured",
+            "outcome_kind": "task_failure",
+            "success": false,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 1,
+            "patch_rejections": 0,
+            "input_tokens": 67627,
+            "output_tokens": 4866,
+            "total_tokens": 72493,
+            "model_cost_nanos": 72617250,
+            "content_hash": "sha256:1c911b554a27968b27a5b8438b23af8bfc23c681018e21d47aeb79cbbec6b48a"
+          },
+          {
+            "observation_id": "sha256:4a8432f4359b24bf115f1f2cfbf523fff7268199ab9aca98492c2a95445b9836",
+            "order": 4,
+            "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+            "condition": "no_memory",
+            "outcome_kind": "resolved",
+            "success": true,
+            "evaluator_reached": true,
+            "token_terminal_dimension": "none",
+            "patch_milestone": true,
+            "check_milestone": true,
+            "diff_milestone": true,
+            "submission_milestone": true,
+            "no_new_evidence_turns": 0,
+            "patch_attempts": 2,
+            "patch_rejections": 0,
+            "input_tokens": 99532,
+            "output_tokens": 9002,
+            "total_tokens": 108534,
+            "model_cost_nanos": 115158000,
+            "content_hash": "sha256:9d9c9d50fb7abcd0ccda891baea28ad82b9caaa3bf2c501786bd456baca869c3"
+          }
+        ],
+        "condition_summaries": [
+          {
+            "label": "no_memory",
+            "scheduled_rows": 2,
+            "successes": 2,
+            "success_rate": {
+              "numerator": 1,
+              "denominator": 1
+            },
+            "evaluator_reached_rows": 2,
+            "evaluator_reach_rate": {
+              "numerator": 1,
+              "denominator": 1
+            },
+            "input_token_terminal_rows": 0,
+            "output_token_terminal_rows": 0,
+            "total_token_terminal_rows": 0,
+            "any_token_terminal_rows": 0,
+            "token_terminal_rate": {
+              "numerator": 0,
+              "denominator": 1
+            },
+            "patch_milestone_rows": 2,
+            "check_milestone_rows": 2,
+            "diff_milestone_rows": 2,
+            "submission_milestone_rows": 2,
+            "no_new_evidence_turns": 3,
+            "maximum_no_new_evidence_turns": 3,
+            "patch_attempts": 4,
+            "patch_rejections": 1,
+            "patch_rejection_rate": {
+              "status": "defined",
+              "value": {
+                "numerator": 1,
+                "denominator": 4
+              }
+            },
+            "model_cost_nanos": 223792500,
+            "cost_per_success_nanos": {
+              "status": "defined",
+              "value": {
+                "numerator": 111896250,
+                "denominator": 1
+              }
+            }
+          },
+          {
+            "label": "structured",
+            "scheduled_rows": 2,
+            "successes": 0,
+            "success_rate": {
+              "numerator": 0,
+              "denominator": 1
+            },
+            "evaluator_reached_rows": 2,
+            "evaluator_reach_rate": {
+              "numerator": 1,
+              "denominator": 1
+            },
+            "input_token_terminal_rows": 0,
+            "output_token_terminal_rows": 0,
+            "total_token_terminal_rows": 0,
+            "any_token_terminal_rows": 0,
+            "token_terminal_rate": {
+              "numerator": 0,
+              "denominator": 1
+            },
+            "patch_milestone_rows": 2,
+            "check_milestone_rows": 2,
+            "diff_milestone_rows": 2,
+            "submission_milestone_rows": 2,
+            "no_new_evidence_turns": 0,
+            "maximum_no_new_evidence_turns": 0,
+            "patch_attempts": 2,
+            "patch_rejections": 0,
+            "patch_rejection_rate": {
+              "status": "defined",
+              "value": {
+                "numerator": 0,
+                "denominator": 1
+              }
+            },
+            "model_cost_nanos": 142629000,
+            "cost_per_success_nanos": {
+              "status": "undefined-zero-denominator",
+              "value": null
+            }
+          }
+        ],
+        "overall_summary": {
+          "label": "overall",
+          "scheduled_rows": 4,
+          "successes": 2,
+          "success_rate": {
+            "numerator": 1,
+            "denominator": 2
+          },
+          "evaluator_reached_rows": 4,
+          "evaluator_reach_rate": {
+            "numerator": 1,
+            "denominator": 1
+          },
+          "input_token_terminal_rows": 0,
+          "output_token_terminal_rows": 0,
+          "total_token_terminal_rows": 0,
+          "any_token_terminal_rows": 0,
+          "token_terminal_rate": {
+            "numerator": 0,
+            "denominator": 1
+          },
+          "patch_milestone_rows": 4,
+          "check_milestone_rows": 4,
+          "diff_milestone_rows": 4,
+          "submission_milestone_rows": 4,
+          "no_new_evidence_turns": 3,
+          "maximum_no_new_evidence_turns": 3,
+          "patch_attempts": 6,
+          "patch_rejections": 1,
+          "patch_rejection_rate": {
+            "status": "defined",
+            "value": {
+              "numerator": 1,
+              "denominator": 6
+            }
+          },
+          "model_cost_nanos": 366421500,
+          "cost_per_success_nanos": {
+            "status": "defined",
+            "value": {
+              "numerator": 183210750,
+              "denominator": 1
+            }
+          }
+        },
+        "structured_minus_no_memory_success_rate": {
+          "numerator": -1,
+          "denominator": 1
+        },
+        "structured_minus_no_memory_token_terminal_rows": 0,
+        "absolute_condition_token_terminal_difference_rows": 0,
+        "complete_matrix": true,
+        "fixed_budget_primary_status": "estimable-complete-matrix",
+        "token_terminals_retained_as_observed_zero": true,
+        "budget_adequacy_gate_passed": true,
+        "administrative_truncation_status": "none-observed-at-frozen-envelope",
+        "higher_budget_capability_status": "not-identified-no-terminal-observation-only",
+        "complete_case_exclusion_performed": false,
+        "post_hoc_continuation_performed": false,
+        "condition_specific_budget_relief_performed": false,
+        "threshold_optimality_established": false,
+        "population_terminal_rate_bound_established": false,
+        "measurement_projection_only": true,
+        "official_analysis_authorized": false,
+        "unrestricted_capability_claim_authorized": false,
+        "runtime_activation_authorized": false,
+        "paid_execution_authorized": false,
+        "content_hash": "sha256:306cebcf2e1a3dfb3ae79062a6a26232b1f1f30a3ea5f56a03a6a74e557c51e1"
+      }
+    }
+  ],
+  "expected_boundary_observations": 4,
+  "reference_rows": 4,
+  "reference_rows_per_condition": 2,
+  "reference_realized_schedule_hash": "sha256:26026929c2992473b00ce58af760481d7406509f592b8d7674cb7ac6fa4a9a6d",
+  "reference_full_schedule_reserve_nanos": 15300000000,
+  "reference_hard_cap_nanos": 18000000000,
+  "reference_settled_model_cost_nanos": 366421500,
+  "reference_successes": 4,
+  "reference_evaluator_reached_rows": 4,
+  "reference_token_terminal_rows": 0,
+  "reference_patch_attempts": 6,
+  "reference_patch_rejections": 1,
+  "reference_no_new_evidence_turns": 3,
+  "reference_patch_check_diff_submission_rows": 4,
+  "zero_terminal_criterion_exact": true,
+  "all_terminal_dimensions_fail_adequacy_only": true,
+  "fixed_budget_success_remains_estimable_with_token_terminal": true,
+  "zero_success_cost_denominator_is_null": true,
+  "equal_condition_denominator_required": true,
+  "threshold_selection_uses_r16": false,
+  "r16_artifact_files_read": 0,
+  "trace_snapshot_files_read": 0,
+  "runtime_state_files_read": 0,
+  "public_task_files_read": 0,
+  "private_task_files_read": 0,
+  "hidden_files_read": 0,
+  "reference_patches_read": 0,
+  "source_files": [
+    {
+      "path": "patchloop/agent/budget_adequacy.py",
+      "file_bytes": 36194,
+      "file_sha256": "sha256:b0b4c7282fce9c79a1609b041e0fb172cca7865158732ff0435a5beb70a155ee"
+    },
+    {
+      "path": "patchloop/agent/budget_adequacy_qualification.py",
+      "file_bytes": 32518,
+      "file_sha256": "sha256:9692c0ddade4358e5674f5e5404cd09318745ddf1ee8ceaba2f8c0621d647c4f"
+    },
+    {
+      "path": "patchloop/agent/finalization.py",
+      "file_bytes": 39641,
+      "file_sha256": "sha256:1f67d0bb2247f90bb112ec93cf60d56e1c9a8c6332fabe94005e7e016224d823"
+    },
+    {
+      "path": "patchloop/agent/saturation_recovery_qualification.py",
+      "file_bytes": 37106,
+      "file_sha256": "sha256:ef6b54be29477da11465ee91e1dfcd2e31ff5699a3cd33b202e4ae26554a9c1b"
+    },
+    {
+      "path": "patchloop/agent/saturation_recovery_shadow_qualification.py",
+      "file_bytes": 31498,
+      "file_sha256": "sha256:78e9d065892e50e0c9e594574602a2bccd56b65026e412945f8490c6e68418c3"
+    },
+    {
+      "path": "patchloop/errors.py",
+      "file_bytes": 1497,
+      "file_sha256": "sha256:6ae5e1143a226924faecda80a139762a02a17f5267ca6016e56204241aaa6814"
+    },
+    {
+      "path": "patchloop/util.py",
+      "file_bytes": 5868,
+      "file_sha256": "sha256:6ce3e5a7e5a91556c6085e3c243a4ccdaf8926dd6e57878fb438792cdb0227e6"
+    },
+    {
+      "path": "scripts/build_lean_harness_budget_adequacy_qualification.py",
+      "file_bytes": 1534,
+      "file_sha256": "sha256:679dd044ddc71931f5a0c22945ac01eb90fc8eac6a52b4ab4d346821a0a952a8"
+    }
+  ],
+  "validation_files": [
+    {
+      "path": "tests/test_budget_adequacy.py",
+      "file_bytes": 13443,
+      "file_sha256": "sha256:58df63054222c5500de486b0356a634696d2fd03b5cb28c9794a15082989881b"
+    },
+    {
+      "path": "tests/test_budget_adequacy_qualification.py",
+      "file_bytes": 11196,
+      "file_sha256": "sha256:054c2ca210bcb4149abf0c75ac1ffda93bf3965de4c86554393c311b14d266e3"
+    },
+    {
+      "path": "tests/test_finalization.py",
+      "file_bytes": 14169,
+      "file_sha256": "sha256:36a079b7df9d5eac68c4546c9fc018bd412655541993f602c874d1ecc6a81531"
+    },
+    {
+      "path": "tests/test_saturation_recovery_qualification.py",
+      "file_bytes": 10672,
+      "file_sha256": "sha256:60cdf9ac2814aa53f72a42451bc1ad33812ac074470955490f70eca03816b997"
+    },
+    {
+      "path": "tests/test_saturation_recovery_shadow_qualification.py",
+      "file_bytes": 10957,
+      "file_sha256": "sha256:8036214d51dc981e399de6d1b833b98b6a3a52ee60b346422a5fc8e970e8389c"
+    }
+  ],
+  "source_inventory_hash": "sha256:b8bb2a265fec939e172f00a0ce4542dab5bcd4118023a556fdbc7dbf71d9ffe9",
+  "validation_inventory_hash": "sha256:26f566afd1b10fafefc00349be6ee9df36054a8638f94ec5c85d03b7e9978823",
+  "bound_evidence_artifact_files_read": 4,
+  "provider_transport_calls": 0,
+  "provider_generation_calls": 0,
+  "runner_calls": 0,
+  "tool_execution_calls": 0,
+  "docker_calls": 0,
+  "evaluator_calls": 0,
+  "added_model_cost_usd": 0,
+  "provider_calls_authorized": false,
+  "runner_activation_authorized": false,
+  "tool_policy_activation_authorized": false,
+  "request_integration_authorized": false,
+  "state_mutation_authorized": false,
+  "fresh_panel_authorized": false,
+  "paid_execution_authorized": false,
+  "next_gate": "preregister-versioned-lean-runtime-integration-and-fresh-development-validation",
+  "content_hash": "sha256:d628390d8cf3971e81144bde8717c10c75f8450c19ae6f441aa5d6c6fa1251e6"
+}

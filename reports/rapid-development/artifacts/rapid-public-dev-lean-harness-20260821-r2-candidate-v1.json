@@ -1,0 +1,191 @@
+{
+  "schema_version": "rapid-public-development-candidate-v2",
+  "experiment_id": "rapid-public-dev-lean-harness-20260821-r2",
+  "purpose": "rapid-public-development",
+  "official": false,
+  "config_path": "experiments/rapid-public-development-lean-harness-20260821-r2.yaml",
+  "config_file_sha256": "sha256:39e5069990e52ccb5fab3ccaaac9b2de7498ec48f8411ddb2c244147f75457bf",
+  "config_semantic_hash": "sha256:2e4fc1633854b612cf65f281b4a23d8eeb32e878ac1564dcd662565dd5158f3d",
+  "source_qualification": {
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-v2-source-qualification-20260821-r1.json",
+    "file_bytes": 8558,
+    "file_sha256": "sha256:9e6749f977426fa8f85c1db4ff9f4c738f9646436c2d6846d271c851ea0e8a1f",
+    "content_hash": "sha256:d835ffd004929c3c95ac5f8f495b590fb6e96e3eeee80e7b4d612cbb1eca31d9"
+  },
+  "source_snapshot_hash": "sha256:7f2ae839ff6e836a22a42fad110e4e1e9d62f8047cd28ec5bc598b9d044c0824",
+  "source_file_count": 186,
+  "runtime_dependencies": {
+    "uv_lock_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c",
+    "openai_sdk_version": "2.47.0"
+  },
+  "variant_contracts": {
+    "baseline-v2v5": {
+      "tool_schema_version": "v2",
+      "context_policy_version": "phase-evidence-v5",
+      "runtime_policy_version": null
+    },
+    "lean-harness-v2": {
+      "tool_schema_version": "v8",
+      "context_policy_version": "phase-evidence-v13",
+      "runtime_policy_version": "lean-harness-v2",
+      "completion_policy_version": "completion-driven-current-diff-v1",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1"
+    }
+  },
+  "task_bindings": [
+    {
+      "task_path": "tasks/dev-validation/moto-query-scanned-count-v2/public.yaml",
+      "task_id": "moto-query-scanned-count",
+      "task_version": 2,
+      "base_commit": "624de34d82a1b2c521727b14a2173380e196f1d8",
+      "public_spec_hash": "sha256:9b15f9fa374ed7d49d7d8bd22fe9d0b8ba6d2f41a0a8746771469f16a0034272",
+      "private_spec_hash": "sha256:cd761aae5838f4ab9a301157bd4b6942ea2e05d5e33e90f890bbf9d267ac972b",
+      "evaluator_image": "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+      "evaluator_image_digest": "sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+      "package_file_count": 14,
+      "package_inventory_hash": "sha256:0984f406346c6df6e30070617c5b2e7c280733e1c7e30696148ef1b7f6c9b445",
+      "targeted_check_id": "public-query-page-scanned-count",
+      "targeted_check_command_hash": "sha256:e0b8ad4d0f2b5a6e13cb1d6dff72d87eb799f4ee57dce32319873b712a803413",
+      "regression_check_id": "upstream-dynamodb-regression",
+      "targeted_check_source": "public-issue-derived"
+    },
+    {
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes-v2/public.yaml",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_version": 2,
+      "base_commit": "aca7663728e08e9d60b192b11fa6626a60974929",
+      "public_spec_hash": "sha256:cbe9094a75446fe1f996cd210854cbe15d3ff372eb846a1aa4ac6faa531ea159",
+      "private_spec_hash": "sha256:ca727785d54103a8aea5ee8f6dc0f91ef8c30f80e9f29a3bc4ac79bf35c0c9b0",
+      "evaluator_image": "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+      "evaluator_image_digest": "sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+      "package_file_count": 15,
+      "package_inventory_hash": "sha256:f09ac55b1f177dbd0a95052e3b541a0dcc66adca59393ccd3756396aa93967c3",
+      "targeted_check_id": "public-strict-trailing-zero-behavior",
+      "targeted_check_command_hash": "sha256:5b504ac878c09f21e9b3866f5f0af8fd149eae379596c02d5476e4d881cb1943",
+      "regression_check_id": "upstream-number-regression",
+      "targeted_check_source": "public-issue-derived"
+    }
+  ],
+  "schedule": [
+    {
+      "order": 1,
+      "task": "tasks/dev-validation/moto-query-scanned-count-v2/public.yaml",
+      "task_id": "moto-query-scanned-count",
+      "task_version": 2,
+      "variant": "baseline-v2v5",
+      "tool_schema_version": "v2",
+      "context_policy_version": "phase-evidence-v5",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:291e47fd245287e56d513b1e7621c064d59dd800c6bfbf24dcd11dfb993d21ec"
+    },
+    {
+      "order": 2,
+      "task": "tasks/dev-validation/moto-query-scanned-count-v2/public.yaml",
+      "task_id": "moto-query-scanned-count",
+      "task_version": 2,
+      "variant": "lean-harness-v2",
+      "tool_schema_version": "v8",
+      "context_policy_version": "phase-evidence-v13",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:2985b6a713a10a6bee44f085bfac2bd861f810e6ea47bef687d2a5d9339f6990"
+    },
+    {
+      "order": 3,
+      "task": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes-v2/public.yaml",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_version": 2,
+      "variant": "lean-harness-v2",
+      "tool_schema_version": "v8",
+      "context_policy_version": "phase-evidence-v13",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:a70e4ddc8b7b287cf9c9c2355bc7c53c7ed5d9f54677d376d0b2e415dbd80c0e"
+    },
+    {
+      "order": 4,
+      "task": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes-v2/public.yaml",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_version": 2,
+      "variant": "baseline-v2v5",
+      "tool_schema_version": "v2",
+      "context_policy_version": "phase-evidence-v5",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:88fa8b18b638a15ac88afea1d720e9bdf250e07ea7aa73c0af30b3395fbf7b21"
+    },
+    {
+      "order": 5,
+      "task": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes-v2/public.yaml",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_version": 2,
+      "variant": "baseline-v2v5",
+      "tool_schema_version": "v2",
+      "context_policy_version": "phase-evidence-v5",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:5d61a42eec0183f9adee5d01c7a74b2707e888dc911935ecd0c836e2115e8405"
+    },
+    {
+      "order": 6,
+      "task": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes-v2/public.yaml",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_version": 2,
+      "variant": "lean-harness-v2",
+      "tool_schema_version": "v8",
+      "context_policy_version": "phase-evidence-v13",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:4dee62475c7797cf72874d144c6d97c1740c6be048deb182ecae4c1a51c8028d"
+    },
+    {
+      "order": 7,
+      "task": "tasks/dev-validation/moto-query-scanned-count-v2/public.yaml",
+      "task_id": "moto-query-scanned-count",
+      "task_version": 2,
+      "variant": "lean-harness-v2",
+      "tool_schema_version": "v8",
+      "context_policy_version": "phase-evidence-v13",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:e9a3bfa4437346d09888647339e3298467d48128d0a8277ecf9c1ea97dbb5c57"
+    },
+    {
+      "order": 8,
+      "task": "tasks/dev-validation/moto-query-scanned-count-v2/public.yaml",
+      "task_id": "moto-query-scanned-count",
+      "task_version": 2,
+      "variant": "baseline-v2v5",
+      "tool_schema_version": "v2",
+      "context_policy_version": "phase-evidence-v5",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:cc372d8ca57b8e58444dd08758befbc7560e8e4dc3a6cdbe338e47212bcbccd7"
+    }
+  ],
+  "schedule_hash": "sha256:69c9a5794812faf3fbffb04606f68c1cbf20bce81e0c9503132df46568695197",
+  "cost_control": {
+    "per_run_reserve_nanos": 1200000000,
+    "full_schedule_reserve_nanos": 9600000000,
+    "hard_cap_nanos": 10000000000,
+    "pricing_nanos_per_token": {
+      "uncached_input": 750,
+      "cached_input": 75,
+      "cache_write_input": 750,
+      "output": 4500
+    },
+    "scheduled_run_count": 8,
+    "cost_censoring_allowed": false,
+    "official": false
+  },
+  "cost_control_hash": "sha256:bbace900dfce109a1a0e6232d6ef418971219e534bc9fe44db1ec4289ffba3e2",
+  "execution_hash": "sha256:f066bd044465a53c5c25e001de316f7e3b522b8ccbc7bcb21e09be8c66cb5ca1",
+  "source_qualified": true,
+  "execution_authorized": false,
+  "provider_calls_made": 0,
+  "docker_calls_made": 0,
+  "added_model_cost_usd": 0.0,
+  "approval_required": true,
+  "content_hash": "sha256:6dd7548ef175db4357b7bcd13cb15d19d55d0d8eaeeefefa4e9c22c207722de2"
+}

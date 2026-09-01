@@ -1,0 +1,88 @@
+{
+  "schema_version": "rapid-public-development-harness-admission-terminal-v3",
+  "incident_id": "rapid-public-dev-hard-panel-20260822-r3-harness-admission-terminal-v3",
+  "official": false,
+  "experiment_id": "rapid-public-dev-hard-panel-20260822-r3",
+  "candidate_path": "reports/rapid-development/artifacts/rapid-public-dev-hard-panel-20260822-r3-candidate-v5.json",
+  "candidate_file_sha256": "sha256:e37686ddd6c8315a1882f417d52a6395b1824e3a6711c57a45f43d64f9ff54c8",
+  "candidate_content_hash": "sha256:63d7f116c2ea5fc221617a9ed27dc0a2772455649f2ab5d48c399aa96d7d42f5",
+  "execution_hash": "sha256:7174d4b462aceca5fbc82a7248f1bca90b0453bbab6be379f099c01ec4415fe2",
+  "schedule_hash": "sha256:0661dac737dadb3be5d5f8aae90a9970c6c51d1ec8bf5633c2862dce95e8375b",
+  "cost_control_hash": "sha256:bbace900dfce109a1a0e6232d6ef418971219e534bc9fe44db1ec4289ffba3e2",
+  "approved_full_schedule_reserve_nanos": 9600000000,
+  "approved_hard_cap_nanos": 10000000000,
+  "attempted_command": "uv run --offline patchloop rapid --mode run --env-file .env --approve-live-cost --approved-execution-hash sha256:7174d4b462aceca5fbc82a7248f1bca90b0453bbab6be379f099c01ec4415fe2",
+  "persisted_plan": {
+    "path": ".patchloop/experiments/plans/7174d4b462aceca5fbc82a7248f1bca90b0453bbab6be379f099c01ec4415fe2.json",
+    "observed_last_write_utc": "2026-08-21T20:34:18.6955452Z",
+    "file_bytes": 7223,
+    "file_sha256": "sha256:15978b1a3ae1627d1de26ea7f21c1e19109c40706632abe67bde4780f3e818f5",
+    "schema_version": "experiment-execution-plan-v5",
+    "ready": true
+  },
+  "result_bundle": {
+    "path": "reports/rapid-development/rapid-public-dev-hard-panel-20260822-r3-7174d4b462ac.jsonl",
+    "observed_last_write_utc": "2026-08-21T20:36:23.9717493Z",
+    "file_bytes": 8672,
+    "file_sha256": "sha256:a9ff7e30d89f258b17dd45727e5e4de0d766d37670e181a7b207938d417950c1",
+    "event_count": 11,
+    "terminal_content_hash": "sha256:851f661215a641369775b4074cb7fbf166bc23602e6fd628666704757612079a"
+  },
+  "observed_rows": [
+    {
+      "order": 1,
+      "variant": "baseline-v2v5",
+      "task_id": "pdm-ignore-active-venv-resolution",
+      "agent_started": true,
+      "evaluator_reached": true,
+      "submission_completed": true,
+      "success_at_budget": true,
+      "runtime_result_official": true,
+      "model_calls": 9,
+      "tool_calls": 10,
+      "model_cost_nanos": 84498750
+    },
+    {
+      "order": 2,
+      "variant": "lean-harness-v2",
+      "task_id": "pdm-ignore-active-venv-resolution",
+      "agent_started": false,
+      "harness_admission_failure": true,
+      "observed_error_type": "HarnessAdmissionError",
+      "observed_error_message": "Rapid V4 active bundle row order differs",
+      "model_calls": 0,
+      "tool_calls": 0,
+      "model_cost_nanos": 0
+    }
+  ],
+  "execution_observation": {
+    "scheduled_rows": 8,
+    "attempted_rows": 2,
+    "agent_rows_started": 1,
+    "harness_admission_failures": 1,
+    "evaluator_reached": 1,
+    "submissions_completed": 1,
+    "successes_at_budget": 1,
+    "token_terminals": 0,
+    "agent_failures": 0,
+    "model_calls": 9,
+    "tool_calls": 10,
+    "model_cost_nanos": 84498750,
+    "rows_not_started": 6
+  },
+  "root_cause": {
+    "observed_predicate": "The active-prefix validator required runtime_result_official to be false for every non-admission row terminal.",
+    "incompatible_observation": "The completed row 1 evaluator result correctly persisted runtime_result_official=true while its public development bundle remained bundle_official=false.",
+    "effect": "The valid row 1 terminal made the prefix validator return no next order, and row 2 was rejected before agent admission with a misleading row-order error.",
+    "rehearsal_gap": "Candidate-v5 rehearsal validated only batch-started through the first row provider-dispatch gate; it did not project a realistic row terminal and request the second row capability."
+  },
+  "classification": "harness_admission_failure",
+  "agent_failure_denominator_included": false,
+  "candidate_reusable": false,
+  "approval_transferable": false,
+  "successor_requirements": [
+    "Accept an exact boolean runtime_result_official independently of bundle_official.",
+    "Rehearse batch-started, first-row capability, realistic successful row terminal, and second-row capability through the provider-dispatch gate.",
+    "Bind the successor to this immutable incident and require a new exact approval."
+  ]
+}

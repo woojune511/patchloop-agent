@@ -1,0 +1,256 @@
+{
+  "schema_version": "lean-finalization-successor-qualification-v1",
+  "qualification_id": "anyio-r4-finalization-successor-20260822-v1",
+  "status": "PUBLIC_OFFLINE_FINALIZATION_SUCCESSOR_QUALIFIED_RUNTIME_CLOSED",
+  "evidence_date": "2026-08-22",
+  "source_result": {
+    "path": "reports/rapid-development/rapid-public-dev-anyio-targeted-20260822-r4-041dbeddae57.jsonl",
+    "file_bytes": 9530,
+    "file_sha256": "sha256:dc3fdc8d35f236cd810d47b7be4dff55599d0a242f5c4be9cd98071d7d8ccf8c"
+  },
+  "source_execution_hash": "sha256:041dbeddae57ae3b512207b064f9475175333f0cc134db1fc6b6fb8ece92bd98",
+  "source_result_head": "sha256:65222f5a733ee2c757c87b6db76d03dd0a182a90b44e6889429041424e164f74",
+  "source_rows": 6,
+  "source_evaluator_reached": 0,
+  "source_baseline_token_terminals": 3,
+  "source_lean_agent_failures": 3,
+  "runtime_policy_version": "lean-harness-v4",
+  "tool_schema_version": "v9",
+  "context_policy_version": "phase-evidence-v14",
+  "completion_policy_version": "completion-driven-current-diff-v2",
+  "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+  "predecessor_finalization_max_output_tokens": 5000,
+  "successor_configured_max_output_tokens": 25000,
+  "scenarios": [
+    {
+      "scenario_id": "initial-mutation",
+      "condition": "no_memory",
+      "input_tokens_used": 890000,
+      "output_tokens_used": 60000,
+      "completion_target": "mutation",
+      "selected_tool_names": [
+        "apply_patch"
+      ],
+      "registered_check_preferred": true,
+      "recheck_after_mutation_required": true,
+      "request_mode": "finalization",
+      "configured_max_output_tokens": 25000,
+      "effective_max_output_tokens": 25000,
+      "allowance_decision": "admit_full",
+      "allowance_binding_dimension": null,
+      "request_body_hash": "sha256:53999e4e08b6b7e26fbc7cd07f7aabe3e9b6b00b3df1dc6e1a8033012f954658",
+      "normalized_no_memory_request_body_sha256": "sha256:53999e4e08b6b7e26fbc7cd07f7aabe3e9b6b00b3df1dc6e1a8033012f954658",
+      "request_evidence_hash": "sha256:eb982d1d6ff4c3974911cf5b9e9845dd0e7efb6432323177f0fbd866676827e7",
+      "provider_authority_granted": false
+    },
+    {
+      "scenario_id": "check-preferred-a",
+      "condition": "no_memory",
+      "input_tokens_used": 890000,
+      "output_tokens_used": 60000,
+      "completion_target": "visible-check",
+      "selected_tool_names": [
+        "run_check"
+      ],
+      "registered_check_preferred": true,
+      "recheck_after_mutation_required": false,
+      "request_mode": "finalization",
+      "configured_max_output_tokens": 25000,
+      "effective_max_output_tokens": 25000,
+      "allowance_decision": "admit_full",
+      "allowance_binding_dimension": null,
+      "request_body_hash": "sha256:2832e12f8bace464f7630a736419b4bc73109aed3d5ec8e18f57424b32e237fb",
+      "normalized_no_memory_request_body_sha256": "sha256:2832e12f8bace464f7630a736419b4bc73109aed3d5ec8e18f57424b32e237fb",
+      "request_evidence_hash": "sha256:aba9a45ac7dc56f3c30ea550614e8af52e2cea6eb74e8953b7386615d399c45b",
+      "provider_authority_granted": false
+    },
+    {
+      "scenario_id": "check-preferred-c",
+      "condition": "structured",
+      "input_tokens_used": 890000,
+      "output_tokens_used": 60000,
+      "completion_target": "visible-check",
+      "selected_tool_names": [
+        "run_check"
+      ],
+      "registered_check_preferred": true,
+      "recheck_after_mutation_required": false,
+      "request_mode": "finalization",
+      "configured_max_output_tokens": 25000,
+      "effective_max_output_tokens": 25000,
+      "allowance_decision": "admit_full",
+      "allowance_binding_dimension": null,
+      "request_body_hash": "sha256:50a685dac603c4f31e0dc24a7e4f6b35a448fd3cef1fd2e3a87b22a64c41b555",
+      "normalized_no_memory_request_body_sha256": "sha256:2832e12f8bace464f7630a736419b4bc73109aed3d5ec8e18f57424b32e237fb",
+      "request_evidence_hash": "sha256:2e162729afa77a968b9acab002a2bacb618d512689e445c2690679c8ac9384d2",
+      "provider_authority_granted": false
+    },
+    {
+      "scenario_id": "corrective-mutation",
+      "condition": "no_memory",
+      "input_tokens_used": 890000,
+      "output_tokens_used": 60000,
+      "completion_target": "corrective-mutation",
+      "selected_tool_names": [
+        "apply_patch"
+      ],
+      "registered_check_preferred": true,
+      "recheck_after_mutation_required": true,
+      "request_mode": "finalization",
+      "configured_max_output_tokens": 25000,
+      "effective_max_output_tokens": 25000,
+      "allowance_decision": "admit_full",
+      "allowance_binding_dimension": null,
+      "request_body_hash": "sha256:53999e4e08b6b7e26fbc7cd07f7aabe3e9b6b00b3df1dc6e1a8033012f954658",
+      "normalized_no_memory_request_body_sha256": "sha256:53999e4e08b6b7e26fbc7cd07f7aabe3e9b6b00b3df1dc6e1a8033012f954658",
+      "request_evidence_hash": "sha256:7ef56e7a8d12cb192f2ca9c8bc4d5286874b7ac2508d7eb7dafbab75cf0d3052",
+      "provider_authority_granted": false
+    },
+    {
+      "scenario_id": "diff-review",
+      "condition": "no_memory",
+      "input_tokens_used": 890000,
+      "output_tokens_used": 60000,
+      "completion_target": "diff-review",
+      "selected_tool_names": [
+        "get_diff"
+      ],
+      "registered_check_preferred": true,
+      "recheck_after_mutation_required": false,
+      "request_mode": "finalization",
+      "configured_max_output_tokens": 25000,
+      "effective_max_output_tokens": 25000,
+      "allowance_decision": "admit_full",
+      "allowance_binding_dimension": null,
+      "request_body_hash": "sha256:d93f1187b7fe66680e89f70bde6cca7b64c89b9af98f1bd65124852d62c045b1",
+      "normalized_no_memory_request_body_sha256": "sha256:d93f1187b7fe66680e89f70bde6cca7b64c89b9af98f1bd65124852d62c045b1",
+      "request_evidence_hash": "sha256:72478419c3f349c849b9c02994355f886de80a7f84310318e3fabff122b79e71",
+      "provider_authority_granted": false
+    },
+    {
+      "scenario_id": "submission",
+      "condition": "no_memory",
+      "input_tokens_used": 890000,
+      "output_tokens_used": 60000,
+      "completion_target": "submission",
+      "selected_tool_names": [
+        "finish_task"
+      ],
+      "registered_check_preferred": true,
+      "recheck_after_mutation_required": false,
+      "request_mode": "finalization",
+      "configured_max_output_tokens": 25000,
+      "effective_max_output_tokens": 25000,
+      "allowance_decision": "admit_full",
+      "allowance_binding_dimension": null,
+      "request_body_hash": "sha256:6bda7a586f631ea3e06686c658e957375c2dee3425002b8d0efa6058341acb2c",
+      "normalized_no_memory_request_body_sha256": "sha256:6bda7a586f631ea3e06686c658e957375c2dee3425002b8d0efa6058341acb2c",
+      "request_evidence_hash": "sha256:1c3ded03b5731787519cc7bcf4a88f90c6bd6835b5c5b64ebacd64a694f1fa28",
+      "provider_authority_granted": false
+    },
+    {
+      "scenario_id": "split-reduced",
+      "condition": "no_memory",
+      "input_tokens_used": 890000,
+      "output_tokens_used": 90000,
+      "completion_target": "visible-check",
+      "selected_tool_names": [
+        "run_check"
+      ],
+      "registered_check_preferred": true,
+      "recheck_after_mutation_required": false,
+      "request_mode": "finalization",
+      "configured_max_output_tokens": 25000,
+      "effective_max_output_tokens": 10000,
+      "allowance_decision": "admit_reduced",
+      "allowance_binding_dimension": "output_tokens",
+      "request_body_hash": "sha256:5f5945374c9d46f666b7846801ea7b953f347fd28804ff767dd2663436e060e8",
+      "normalized_no_memory_request_body_sha256": "sha256:5f5945374c9d46f666b7846801ea7b953f347fd28804ff767dd2663436e060e8",
+      "request_evidence_hash": "sha256:9d2fcff2e4999e9212db2548f9ca2365baec6e7079cd988124fb24d50f4f6a1f",
+      "provider_authority_granted": false
+    }
+  ],
+  "condition_neutral_check_projection": true,
+  "corrective_mutation_requires_recheck": true,
+  "unchanged_failed_diff_recheck_forced": false,
+  "split_budget_remains_hard": true,
+  "policy_arithmetic_qualified": true,
+  "reasoning_adequacy_established": false,
+  "completion_improvement_established": false,
+  "quality_improvement_established": false,
+  "source_files": [
+    {
+      "path": "patchloop/agent/finalization_successor_qualification.py",
+      "file_bytes": 23637,
+      "file_sha256": "sha256:a38b77d8ce3200d6cb0f9ea6fc2dd1995016bab3ac553b9d4b8e6a8decad927f"
+    },
+    {
+      "path": "patchloop/agent/lean_runtime.py",
+      "file_bytes": 46770,
+      "file_sha256": "sha256:ac235638fb3f25a13c64a0e92cc24547eb5e546eb9101cef1d9c9a8c94a4e528"
+    },
+    {
+      "path": "patchloop/agent/phases.py",
+      "file_bytes": 11056,
+      "file_sha256": "sha256:c6e8ae77bf3010647033d4c0eb3c3ef4a22aca9a78e44740af959d7c189fa4ad"
+    },
+    {
+      "path": "patchloop/agent/request_allowance.py",
+      "file_bytes": 9740,
+      "file_sha256": "sha256:8ad851fccf0e143688965e715aafa7672ef7257b81518391f956cbeb800744f7"
+    },
+    {
+      "path": "patchloop/agent/runner.py",
+      "file_bytes": 282799,
+      "file_sha256": "sha256:21a44a22b2420555d6f5fb1da68735d5edd7a961a30497507161dcb34983e467"
+    },
+    {
+      "path": "patchloop/agent/tools.py",
+      "file_bytes": 217480,
+      "file_sha256": "sha256:d6cfb2d87d001b206493cb9d189fb7d3f289d970f829ece69e27128d3e0544f1"
+    },
+    {
+      "path": "patchloop/contracts.py",
+      "file_bytes": 164233,
+      "file_sha256": "sha256:53d80b7c052728bc2d61ad34143084545015d7421cacee93e6630dbabae7b8e2"
+    }
+  ],
+  "validation_files": [
+    {
+      "path": "tests/test_finalization_successor_qualification.py",
+      "file_bytes": 5550,
+      "file_sha256": "sha256:c8a511a22aff84bb3a9ec1f05112584d4a6fad58e3f9a411d0172b6a9b5a48bf"
+    },
+    {
+      "path": "tests/test_lean_runtime.py",
+      "file_bytes": 29244,
+      "file_sha256": "sha256:8cf97c04d8b7b5e43c9c1eddfa3c3d966727fde99921401135e3ef7f33dfed4d"
+    },
+    {
+      "path": "tests/test_phase_evidence.py",
+      "file_bytes": 14179,
+      "file_sha256": "sha256:ed0f6d014bd192f8da4546845b46b336894f74227fed4f7c8797580b006d80a0"
+    }
+  ],
+  "source_inventory_hash": "sha256:520b93d2a4c5aa705548818817647ae1dc203cb0910a9629948f3bf92083af78",
+  "validation_inventory_hash": "sha256:f8c97b72079a95b0f34f91c8bff3adaddeb5b085e644bf5602d7fc842576b848",
+  "public_result_files_read": 1,
+  "runtime_state_files_read": 0,
+  "public_task_files_read": 0,
+  "private_task_files_read": 0,
+  "hidden_files_read": 0,
+  "reference_patches_read": 0,
+  "provider_calls": 0,
+  "runner_calls": 0,
+  "tool_calls": 0,
+  "docker_calls": 0,
+  "evaluator_calls": 0,
+  "added_model_cost_usd": 0,
+  "runtime_activation_authorized": false,
+  "provider_calls_authorized": false,
+  "docker_execution_authorized": false,
+  "paid_execution_authorized": false,
+  "fresh_panel_authorized": false,
+  "next_gate": "review-offline-successor-before-any-new-rapid-candidate",
+  "content_hash": "sha256:a3146592d6482405eac27f7bbb003ae57982983eabe814a5d86f0aba2e2a3aeb"
+}

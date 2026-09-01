@@ -1,0 +1,18 @@
+{
+  "agent_evaluator_provider_network_cost_authorized": false,
+  "approved_container_runs": 2,
+  "approved_image_identity_inspects": 1,
+  "candidate": {
+    "content_hash": "sha256:e1323a1ae39b412f21949d2687eb7186ef136f16fe5b6f3947bc41a4502cd630",
+    "file_bytes": 14636,
+    "file_sha256": "sha256:3b3341d1dc5802fad004973ef4b92d31ba8233f9a95dcd9153ed66e9e6c9fa0b",
+    "path": "reports/rapid-development/artifacts/anyio-ordinary-failure-public-check-qualification-candidate-v1.json"
+  },
+  "content_hash": "sha256:aefd6c84abd0da33529101228849b6298386774c77abf6d7f1a789b181c1f1da",
+  "execution_hash": "sha256:4269db56125f87e84e22a26299c9e2c58c55832e696f344068f6f09063544600",
+  "image_pull_build_tag_remove_prune_authorized": false,
+  "recorded_at": "2026-08-26T20:45:00.414426Z",
+  "schema_version": "anyio-ordinary-failure-public-check-qualification-approval-v1",
+  "status": "EXACT_DOCKER_QUALIFICATION_APPROVED_ONCE",
+  "user_message_sha256": "sha256:42b609e115a3cf1e733020c17b73039ad78f8a523c9e60cf62961641bb7c9fa9"
+}

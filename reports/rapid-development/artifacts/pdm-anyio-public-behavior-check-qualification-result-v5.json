@@ -1,0 +1,225 @@
+{
+  "added_cost_usd": 0,
+  "agent_calls": 0,
+  "content_hash": "sha256:71bb74dfbae3346549a6cc8912aa9c85990db1b2e9ea9cf10f022464150cc1b8",
+  "docker_container_run_attempts": 4,
+  "docker_container_run_completions": 4,
+  "docker_image_inspect_calls": 2,
+  "evaluator_calls": 0,
+  "execution_error_class": null,
+  "execution_hash": "sha256:f7b0159d622ee6329db6560ab253d117187e6a05a5e7bb630ba325588eb211b3",
+  "image_identity_observations": [
+    {
+      "config_id": "sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+      "error_class": null,
+      "matched": true,
+      "matched_repo_digest": "swerebenchv2/pdm-project-pdm@sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+      "requested_digest": "sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+      "task_id": "pdm-ignore-active-venv-resolution"
+    },
+    {
+      "config_id": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "error_class": null,
+      "matched": true,
+      "matched_repo_digest": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "requested_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "task_id": "anyio-interrupt-runner-cleanup"
+    }
+  ],
+  "image_pull_build_tag_remove_prune_calls": 0,
+  "network_calls": 0,
+  "next_gate": "preserve-result-and-review-public-qualification-surface",
+  "official": false,
+  "provider_calls": 0,
+  "recorded_at": "2026-08-22T01:06:53.106331Z",
+  "row_observations": [
+    {
+      "base_source_archive_sha256": "sha256:e726b45e767bc9f2abe5b1d38b5b898120c0953328eff1c56eb19c18a1c10ec9",
+      "exit_code": 1,
+      "expected_observation": "public-assertion-failure",
+      "expected_observation_matched": true,
+      "image_digest": "sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+      "observation": "public-assertion-failure",
+      "order": 1,
+      "original_output_bytes": 663,
+      "public_assertion_marker_observed": true,
+      "public_case_markers": [
+        "PUBLIC_CASE:pdm:false-zero:no-python"
+      ],
+      "raw_output_persisted": false,
+      "reference_patch_sha256": "sha256:9c6c6cf6748b576a91cc9d4116838e8df28dc03db879fe77f04a747200957e65",
+      "requested_execution_policy": {
+        "cpus": "2",
+        "image": "docker.io/swerebenchv2/pdm-project-pdm@sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+        "launcher_timeout_seconds": 35,
+        "memory": "2g",
+        "output_limit_bytes": 200000,
+        "pids_limit": 128,
+        "read_only_root": true,
+        "read_only_workspace": true,
+        "requested_network": "none",
+        "requested_timeout_seconds": 30,
+        "sandbox_backend": "docker",
+        "schema_version": "docker-registered-check-requested-policy-v1",
+        "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+        "working_directory": "/workspace"
+      },
+      "schedule_row_id": "sha256:5a6cbb301869bf2cce0c91090a62e4a1fc0061a94f5037f1913a972fddb045f5",
+      "source_state": "base",
+      "stderr": {
+        "bounded_bytes": 663,
+        "bounded_sha256": "sha256:dbabce2d716cf0e0e51d12cd05c72c749dac5f9780524dfa221843f3c2361371"
+      },
+      "stdout": {
+        "bounded_bytes": 0,
+        "bounded_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "targeted_check_id": "public-ignore-active-venv-resolution",
+      "task_id": "pdm-ignore-active-venv-resolution",
+      "task_version": 4,
+      "timed_out": false,
+      "truncated": false
+    },
+    {
+      "base_source_archive_sha256": "sha256:e726b45e767bc9f2abe5b1d38b5b898120c0953328eff1c56eb19c18a1c10ec9",
+      "exit_code": 1,
+      "expected_observation": "pass",
+      "expected_observation_matched": false,
+      "image_digest": "sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+      "observation": "unexpected-reference-result",
+      "order": 2,
+      "original_output_bytes": 172,
+      "public_assertion_marker_observed": true,
+      "public_case_markers": [
+        "PUBLIC_CASE:pdm:false-off:wrong-path"
+      ],
+      "raw_output_persisted": false,
+      "reference_patch_sha256": "sha256:9c6c6cf6748b576a91cc9d4116838e8df28dc03db879fe77f04a747200957e65",
+      "requested_execution_policy": {
+        "cpus": "2",
+        "image": "docker.io/swerebenchv2/pdm-project-pdm@sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+        "launcher_timeout_seconds": 35,
+        "memory": "2g",
+        "output_limit_bytes": 200000,
+        "pids_limit": 128,
+        "read_only_root": true,
+        "read_only_workspace": true,
+        "requested_network": "none",
+        "requested_timeout_seconds": 30,
+        "sandbox_backend": "docker",
+        "schema_version": "docker-registered-check-requested-policy-v1",
+        "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+        "working_directory": "/workspace"
+      },
+      "schedule_row_id": "sha256:1914726b3eb75c3b3d9738c08e124087f4a67a9fcab771dbfa9946c916c260bd",
+      "source_state": "reference",
+      "stderr": {
+        "bounded_bytes": 172,
+        "bounded_sha256": "sha256:847e1e21c85a1e999a4c027863213e0450eb527fd8944974df712de1fab82a9d"
+      },
+      "stdout": {
+        "bounded_bytes": 0,
+        "bounded_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "targeted_check_id": "public-ignore-active-venv-resolution",
+      "task_id": "pdm-ignore-active-venv-resolution",
+      "task_version": 4,
+      "timed_out": false,
+      "truncated": false
+    },
+    {
+      "base_source_archive_sha256": "sha256:28cecaf9114d994f69ca8bd8eafa2abebbd0ae4b6c9a89367ca04dbfc45d5326",
+      "exit_code": 1,
+      "expected_observation": "public-assertion-failure",
+      "expected_observation_matched": true,
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "observation": "public-assertion-failure",
+      "order": 3,
+      "original_output_bytes": 182,
+      "public_assertion_marker_observed": true,
+      "public_case_markers": [
+        "PUBLIC_CASE:anyio:test-resumed"
+      ],
+      "raw_output_persisted": false,
+      "reference_patch_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+      "requested_execution_policy": {
+        "cpus": "2",
+        "image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+        "launcher_timeout_seconds": 35,
+        "memory": "2g",
+        "output_limit_bytes": 200000,
+        "pids_limit": 128,
+        "read_only_root": true,
+        "read_only_workspace": true,
+        "requested_network": "none",
+        "requested_timeout_seconds": 30,
+        "sandbox_backend": "docker",
+        "schema_version": "docker-registered-check-requested-policy-v1",
+        "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+        "working_directory": "/workspace"
+      },
+      "schedule_row_id": "sha256:4234422d44e18b8a8c2f93894657e9b924a0603fdb86505de636fa4be83a9052",
+      "source_state": "base",
+      "stderr": {
+        "bounded_bytes": 182,
+        "bounded_sha256": "sha256:0140719f687deb9cf7b9649e03e5a892fe3b70da67abb9d3016d6a765f2fd70f"
+      },
+      "stdout": {
+        "bounded_bytes": 0,
+        "bounded_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "targeted_check_id": "public-interrupt-runner-lifecycle",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "timed_out": false,
+      "truncated": false
+    },
+    {
+      "base_source_archive_sha256": "sha256:28cecaf9114d994f69ca8bd8eafa2abebbd0ae4b6c9a89367ca04dbfc45d5326",
+      "exit_code": 0,
+      "expected_observation": "pass",
+      "expected_observation_matched": true,
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "observation": "pass",
+      "order": 4,
+      "original_output_bytes": 0,
+      "public_assertion_marker_observed": false,
+      "public_case_markers": [],
+      "raw_output_persisted": false,
+      "reference_patch_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+      "requested_execution_policy": {
+        "cpus": "2",
+        "image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+        "launcher_timeout_seconds": 35,
+        "memory": "2g",
+        "output_limit_bytes": 200000,
+        "pids_limit": 128,
+        "read_only_root": true,
+        "read_only_workspace": true,
+        "requested_network": "none",
+        "requested_timeout_seconds": 30,
+        "sandbox_backend": "docker",
+        "schema_version": "docker-registered-check-requested-policy-v1",
+        "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+        "working_directory": "/workspace"
+      },
+      "schedule_row_id": "sha256:947dc4f12a7ca481c0dfd4d69ef8f15c06793246d534638f346c0849029cc6aa",
+      "source_state": "reference",
+      "stderr": {
+        "bounded_bytes": 0,
+        "bounded_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bounded_bytes": 0,
+        "bounded_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "targeted_check_id": "public-interrupt-runner-lifecycle",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "timed_out": false,
+      "truncated": false
+    }
+  ],
+  "schema_version": "public-behavior-check-qualification-result-v5",
+  "status": "PUBLIC_BEHAVIOR_CHECKS_NOT_QUALIFIED"
+}

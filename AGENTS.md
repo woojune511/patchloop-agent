@@ -11,39 +11,30 @@
 
 ## Current state
 
-- D-129-D-141, V1-V25 and their exact transitions are immutable consumed evidence in `docs/09-evidence.md`; never
-  retry, repair or relabel them. D-142 remains source-qualified/unactivated/deferred and mocked tests are not runtime
-  evidence.
-- Evaluator-v1 still assigns literal safety PASS. V2 uses typed controls, receipts, persistence and qualification;
-  raw v2 results remain `official=false`. Selective retrieval and B/D authority remain closed.
-- Development R3-R6 are sealed inconclusive; R7/R9 is superseded. R10-qualified R8 consumed candidate
-  `sha256:60c67908...cff9e`, completed four receipt-qualified rows for `$0.3664215`, and has an append-only correction
-  for its stale v1/v2 projection. It supports descriptive development readiness only.
-- Held-out R7 sealed 0 settled/1 unsettled/47 not-started. R11 candidate `sha256:f48a0de...a6b0` consumed a fresh
-  `$252`/`$275` approval and sealed 2 settled/1 observed-unsettled/45 not-started; costs were `$0.15699525` settled and
-  `$0.41801625` total observed-started. Successor attribution is `EVALUATOR_CONTROL_CONTRACT_COLLISION`, with zero
-  agent-visible marker matches. No complete analysis or memory claim follows.
-- Held-out R14 candidate `sha256:67475f57...307fd` consumed one `$57.60`/`$60` approval and sealed 0 settled/
-  1 observed-unsettled/47 not-started with `$0.126342` observed. Historical reason
-  `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` is unchanged; deterministic successor attribution is
-  `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` (candidate 1M/100k/1.1M versus immutable suite
-  4M/500k/4.5M). It cannot retry, resume, reauthenticate or reclassify, and supports no official analysis or claim.
-- Held-out R15 candidate `sha256:e11ece55...64f8bc` consumed one `$57.60`/`$60` approval and sealed 2 settled/
-  1 observed-unsettled/45 not-started. Settled cost was `$0.2002335`; total observed-started cost was `$1.112112`.
-  Historical reason `DURABLE_EVIDENCE_AUTHENTICATION_FAILED` is unchanged; successor attribution is
-  `TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH`. It is immutable and supports no official analysis or claim.
-- Held-out R16 candidate `sha256:24044c1e...8813` consumed a separate `$57.60`/`$60` approval and completed all
-  48 settled rows for `$27.24465825`, with 15 resolved, 14 task failures and 19 typed agent failures. The official
-  frozen-panel estimate is structured minus no-memory `-1/24` (-4.17 pp); its descriptive stability interval is
-  `[-1/4, 1/6]`. This is not a causal, general or uncontaminated memory-benefit result, and R16 cannot retry or resume.
-- Contract R11 → binding R11 → materialization R7 → execution R8 → preflight R16 is the consumed source chain for
-  that result. Candidate-v3 binds the realized schedule and runtime/cost authority; the append-only R16 evidence
-  index added no runtime calls or cost and grants no future execution authority.
-- Local no-call preflight permits at most three transient pre-provider attempts. Paid campaign identity ignores
-  readiness timestamps and is one-use by semantic source/suite/schedule. R16 unblinded the A/C panel, so another
-  experiment needs a separately preregistered fresh design, qualified source, candidate and exact approval. No provider
-  execution is currently authorized.
-- `docs/current-status.md` is the single current prose authority; `docs/09-evidence.md` owns exact tuples.
+- D-129-D-141, historical V1-V25, development R3-R8, held-out R7/R11/R14-R16 and Rapid R1-R24 are immutable; never
+  retry, repair, relabel or resume them. D-142 is source-qualified/unactivated/deferred.
+- Evaluator-v1 still assigns literal safety PASS. V2 uses typed controls and receipts; raw results remain
+  `official=false`. Selective retrieval and B/D authority are closed.
+- Exact consumed metrics/hashes and limits are owned by `docs/current-status.md` and `docs/09-evidence.md`; none proves
+  a causal/general benefit. PDM is retired and AnyIO is retained.
+- R20 settled 6/6 for `$1.62950550`; V22 and V24 both reached/submitted/succeeded 0/3/0. Two V24 rows exposed an
+  internal initial-plan/feedback compatibility confound, so V24 is not promoted and lower cost is censored.
+- R21 consumed candidate-v29 once and settled 3/3 for `$1.42525890`. V25 reached/submitted/succeeded 1/3/0; two rows
+  recorded a valid initial plan and first mutation, but the preregistered evaluator-reach floor was 2/3. V25 is not
+  promoted and R21 cannot retry; no quality, efficiency or generalization claim follows.
+- R22 candidate-v30's approved entry was stopped before batch start: its complete path would inspect the image 13 times
+  against approval for one. All six rows are unstarted, provider/evaluator/model cost are zero; outer Docker preflight
+  count is unknown. The plan and prestart-stop audit are preserved. Do not retry.
+- R23 candidate-v32 inspected its image once, then halted after 2 settled rows for `$0.16285425`; 4 rows never started.
+  V25 submitted but failed hidden evaluation; V26 hit a provider strict-schema rejection before generation. Zero model
+  events do not mean zero API requests. R23 is consumed, cannot retry/resume and supports no V25/V26 comparison.
+- R24 candidate-v33 inspected its image once, then halted after 3 settled rows for `$0.927549`; 3 rows never started.
+  No row reached the evaluator or submitted. V25 exhausted exploration; V27 hit three cross-field lifecycle-plan
+  rejections across two rows, and the latter recovery timed out. R24 is consumed, cannot retry/resume and supports no
+  V25/V27 comparison or promotion.
+- Paid authority is closed. Harbor has 0/12 local images; pull authority is closed. Work Item 86 selected Lean V28 only
+  as a future `official=false` Rapid treatment; Work Item 87 has no candidate or execution authority yet.
+  `docs/current-status.md` owns current prose and `docs/09-evidence.md` owns exact tuples.
 
 ## Required reading
 

@@ -1,0 +1,60 @@
+{
+  "schema_version": "rapid-public-development-live-boundary-terminal-v2",
+  "incident_id": "rapid-public-dev-hard-panel-20260822-r3-live-boundary-terminal-v2",
+  "official": false,
+  "experiment_id": "rapid-public-dev-hard-panel-20260822-r3",
+  "candidate_path": "reports/rapid-development/artifacts/rapid-public-dev-hard-panel-20260822-r3-candidate-v2.json",
+  "candidate_file_sha256": "sha256:91f52564d6e7d86b75f62ac0f92528b94b517a41c902267342e9e948b5c16d88",
+  "candidate_content_hash": "sha256:487f169fb8e734982d7763b1c35ad9ce54106214c94ec0ec8fec6553ea3bc1de",
+  "execution_hash": "sha256:6a6de5cbc6a709ef8b94ce98375e2962824b222b7f090fd875ba8efc4b0b535a",
+  "schedule_hash": "sha256:0661dac737dadb3be5d5f8aae90a9970c6c51d1ec8bf5633c2862dce95e8375b",
+  "cost_control_hash": "sha256:bbace900dfce109a1a0e6232d6ef418971219e534bc9fe44db1ec4289ffba3e2",
+  "approved_full_schedule_reserve_nanos": 9600000000,
+  "approved_hard_cap_nanos": 10000000000,
+  "attempted_command": "uv run --offline patchloop rapid --mode run --env-file .env --approve-live-cost --approved-execution-hash sha256:6a6de5cbc6a709ef8b94ce98375e2962824b222b7f090fd875ba8efc4b0b535a",
+  "persisted_plan": {
+    "path": ".patchloop/experiments/plans/6a6de5cbc6a709ef8b94ce98375e2962824b222b7f090fd875ba8efc4b0b535a.json",
+    "observed_last_write_utc": "2026-08-21T18:31:50.1119064Z",
+    "file_bytes": 6923,
+    "file_sha256": "sha256:9d9589bef8587dc87df9e81c3d1f8ba41365e8e075172447b84591b594b53a25",
+    "schema_version": "experiment-execution-plan-v3",
+    "ready": true
+  },
+  "result_bundle": {
+    "path": "reports/rapid-development/rapid-public-dev-hard-panel-20260822-r3-6a6de5cbc6a7.jsonl",
+    "observed_last_write_utc": "2026-08-21T18:31:54.7911976Z",
+    "file_bytes": 7500,
+    "file_sha256": "sha256:359e459580f0a61914a56653100b1df953a07fd1780cfeef6e5bdd8344ee1c60",
+    "event_count": 10,
+    "terminal_content_hash": "sha256:93281925ad7ab2a74c705021762d76905ca337605e8a1f5943b2a51ac28c3bfd"
+  },
+  "terminal": {
+    "stage": "first-row-live-plan-paid-boundary",
+    "schedule_order": 1,
+    "schedule_row_id": "sha256:2a5f29b7973c019858cc66a280c5a4be6ee4b51039278e431bd028c1d22580b2",
+    "observed_error_type": "ContractError",
+    "source_reconstructed_message": "live model execution requires an approved experiment execution capability",
+    "message_provenance": "The result bundle retained only error_type. The exact message and rejecting predicate are reconstructed from the candidate-bound runner and Rapid V3 source snapshot.",
+    "root_cause": "The runner appended batch-started before the first row. rapid_v3_live_plan_matches_manifest then rejected every manifest whenever that same result bundle existed, so the normal append-only start record invalidated the paid-boundary authorization it was meant to precede."
+  },
+  "execution_observation": {
+    "scheduled_rows": 8,
+    "started_rows": 1,
+    "evaluator_reached": 0,
+    "submissions_completed": 0,
+    "successes_at_budget": 0,
+    "model_calls": 0,
+    "tool_calls": 0,
+    "provider_calls_made": 0,
+    "model_cost_nanos": 0,
+    "rows_not_started": 7,
+    "agent_run_id_created": false,
+    "agent_container_runs": 0,
+    "evaluator_container_runs": 0,
+    "docker_image_mutations": 0
+  },
+  "observation_basis": "The sealed bundle records one ContractError infrastructure terminal with run_id null and zero model/tool usage, followed by seven prior-infrastructure-terminal rows. In AgentRunner.start, live authorization is checked before Docker sandbox construction, run-state claim, workspace creation or provider dispatch.",
+  "candidate_reusable": false,
+  "approval_transferable": false,
+  "successor_requires_new_source_snapshot_candidate_and_exact_approval": true
+}

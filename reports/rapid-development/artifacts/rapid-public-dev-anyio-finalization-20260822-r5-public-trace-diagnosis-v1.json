@@ -1,0 +1,159 @@
+{
+  "schema_version": "rapid-public-finalization-trace-diagnosis-v1",
+  "official": false,
+  "source_bundle": {
+    "bytes": 9546,
+    "file_sha256": "sha256:09da402f811abfbf5c161ec8e6174854077b4ed23440c65bb015a5ecd3d2cbcb",
+    "execution_hash": "sha256:8676d960ad92a632f8c61f56f9a2056506b12675877b4eb26ca373552cbe5456",
+    "path": "reports/rapid-development/rapid-public-dev-anyio-finalization-20260822-r5-8676d960ad92.jsonl",
+    "terminal_content_hash": "sha256:33f2820f2b33549b4e0938dd2be91c5a8e4be0842bb60a642396441f1b2fbaac"
+  },
+  "trace_snapshot": {
+    "path": ".patchloop/state.sqlite3",
+    "bytes_at_observation": 115322880,
+    "file_sha256_at_observation": "sha256:6b1bdda2662c08bf5706dfb4d49afad5ed3a22036e5e79176a44894292547be1",
+    "wal_bytes_at_observation": 0,
+    "checked_in": false,
+    "raw_trace_replayable_from_checked_in_files": false
+  },
+  "evidence_boundary": {
+    "analysis_provider_calls": 0,
+    "analysis_docker_calls": 0,
+    "analysis_evaluator_calls": 0,
+    "analysis_added_cost_usd": "0",
+    "agent_visible_model_metadata_read": true,
+    "agent_visible_tool_events_read": true,
+    "public_check_outcomes_read": true,
+    "reasoning_text_read": false,
+    "private_evaluator_artifacts_read": false,
+    "hidden_assertions_read": false,
+    "reference_patch_read": false
+  },
+  "batch_outcome": {
+    "rows_started": 6,
+    "agent_failures": 6,
+    "harness_admission_failures": 0,
+    "evaluator_reached": 0,
+    "submissions_completed": 0,
+    "successes_at_budget": 0,
+    "token_terminals": 3,
+    "model_calls": 279,
+    "tool_calls": 423,
+    "model_cost_usd": "5.22965385",
+    "full_schedule_reserve_usd": "7.20",
+    "hard_cap_usd": "7.50"
+  },
+  "variant_comparison": {
+    "baseline-v2v5": {
+      "rows": 3,
+      "token_terminals": 3,
+      "incomplete_response_terminals": 0,
+      "evaluator_reached": 0,
+      "submissions_completed": 0,
+      "successes_at_budget": 0,
+      "model_calls": 171,
+      "tool_calls": 258,
+      "input_tokens": 2884916,
+      "cached_input_tokens": 407040,
+      "output_tokens": 192181,
+      "reasoning_output_tokens": 177260,
+      "model_cost_usd": "2.7537495"
+    },
+    "lean-harness-v4": {
+      "rows": 3,
+      "token_terminals": 0,
+      "incomplete_response_terminals": 3,
+      "evaluator_reached": 0,
+      "submissions_completed": 0,
+      "successes_at_budget": 0,
+      "model_calls": 108,
+      "tool_calls": 165,
+      "input_tokens": 1862227,
+      "cached_input_tokens": 201728,
+      "output_tokens": 270089,
+      "reasoning_output_tokens": 256655,
+      "model_cost_usd": "2.47590435"
+    },
+    "lean_minus_baseline_cost_usd": "-0.27784515",
+    "lean_cost_reduction_fraction": "0.10089703148380058",
+    "quality_comparison_identified": false
+  },
+  "validation_evidence": {
+    "rows_passing_targeted_and_upstream_on_a_submission_ready_state": 0,
+    "targeted_check_invocations": 25,
+    "targeted_check_passes": 1,
+    "upstream_regression_invocations": 14,
+    "upstream_regression_passes": 6,
+    "tool_succeeded_is_not_check_pass": true,
+    "interpretation": "Every run_check invocation completed as a tool call, but its separate passed field shows that no row satisfied both registered checks before terminal failure."
+  },
+  "edit_recovery_evidence": {
+    "baseline-v2v5": {
+      "patches_applied": 8,
+      "failed_apply_patch_calls": 7,
+      "failed_search_calls": 1
+    },
+    "lean-harness-v4": {
+      "patches_applied": 3,
+      "failed_apply_patch_calls": 7,
+      "failed_structured_edit_calls": 10,
+      "raw_context_mismatch_failures": 7,
+      "structured_preimage_hash_failures": 6,
+      "structured_argument_failures": 4
+    },
+    "interpretation": "The structured fallback did not recover stale raw-diff context in this batch; it added typed failures after context mismatch because the preimage hash or structured arguments were stale or invalid."
+  },
+  "lean_terminal_rows": [
+    {
+      "order": 2,
+      "patches_applied": 0,
+      "terminal_error": "CONTRACT_ERROR:model response rejected: incomplete_response",
+      "response_status": "incomplete",
+      "response_incomplete_reason": "max_output_tokens",
+      "requested_max_output_tokens": 25000,
+      "response_output_tokens": 25000,
+      "reasoning_output_tokens": 25000
+    },
+    {
+      "order": 3,
+      "patches_applied": 2,
+      "terminal_error": "CONTRACT_ERROR:model response rejected: incomplete_response",
+      "response_status": "incomplete",
+      "response_incomplete_reason": "max_output_tokens",
+      "requested_max_output_tokens": 5093,
+      "response_output_tokens": 5093,
+      "reasoning_output_tokens": 5093
+    },
+    {
+      "order": 6,
+      "patches_applied": 1,
+      "terminal_error": "CONTRACT_ERROR:model response rejected: incomplete_response",
+      "response_status": "incomplete",
+      "response_incomplete_reason": "max_output_tokens",
+      "requested_max_output_tokens": 1716,
+      "response_output_tokens": 1716,
+      "reasoning_output_tokens": 1716
+    }
+  ],
+  "diagnosis": {
+    "classification": "VALIDATION_NOT_SATISFIED_THEN_MODEL_RESPONSE_EXHAUSTED",
+    "confidence": "high for observed public execution path",
+    "evidence": [
+      "No row simultaneously satisfied the targeted public behavior check and upstream regression check, so submission readiness was never established.",
+      "All three baseline rows exhausted the cumulative token contract before submission.",
+      "All three Lean V4 rows ended when the final provider response consumed its exact requested output allowance entirely as reasoning and returned incomplete with max_output_tokens.",
+      "Lean V4 reduced calls and cost, but its raw-diff-to-structured-edit recovery produced seventeen typed edit failures and only three applied mutations."
+    ],
+    "limit": "This repeated public task supports completion-path engineering only. It does not identify hidden-test behavior, task quality, general coding-agent quality or a harness winner."
+  },
+  "successor_disposition": {
+    "status": "offline_successor_required_before_another_paid_batch",
+    "paid_execution_authorized": false,
+    "proposal": [
+      "Make context-mismatch recovery refresh the exact current preimage before issuing a structured edit, and reject stale preimage reuse deterministically.",
+      "Expose check passed=false distinctly from tool execution success and feed the concise targeted failure back into the next correction step.",
+      "Qualify a reasoning-aware incomplete-response recovery that cannot spend the entire final response allowance without producing a tool call or final submission decision.",
+      "Keep any successor opt-in, official=false and behind a fresh deterministic rehearsal and exact paid approval."
+    ]
+  }
+}

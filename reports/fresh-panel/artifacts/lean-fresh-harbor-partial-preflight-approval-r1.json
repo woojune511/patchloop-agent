@@ -1,0 +1,51 @@
+{
+  "approval_id": "lean-fresh-harbor-partial-preflight-approval-20260818-r1",
+  "approved_scope": [
+    "record-this-self-attested-exact-approval-receipt",
+    "read-exact-local-runner-candidate-and-twelve-package-dockerfiles",
+    "read-exact-local-docker-cli-bytes",
+    "read-local-desktop-linux-docker-version-once",
+    "inspect-the-twelve-exact-local-base-image-refs-in-one-call",
+    "record-one-append-only-terminal-preflight-artifact"
+  ],
+  "authority": {
+    "bulk_image_inspect_authorized": true,
+    "container_create_start_run_exec_authorized": false,
+    "cost_authorized_usd": 0,
+    "docker_version_authorized": true,
+    "exact_read_only_preflight_authorized": true,
+    "harbor_task_evaluator_agent_provider_authorized": false,
+    "image_pull_or_build_authorized": false,
+    "self_attested_not_authenticated": true,
+    "task_materialization_authorized": false
+  },
+  "content_hash": "sha256:0c64e5478b27c3254bb0a0f1d9d500317aef0956c95b77b6f634961cdec3a741",
+  "execution_hash": "sha256:92fb35e786a4dfe257d2c242c9a5e3ca62f0f330c497aa10b8235fb049dc2bdb",
+  "explicitly_not_authorized": [
+    "image-pull-load-build-tag-remove-or-prune",
+    "container-create-start-run-exec-stop-remove-or-restart",
+    "harbor-task-evaluator-agent-or-provider-execution",
+    "task-package-materialization",
+    "network-or-credential-probe",
+    "cost-reservation-or-spend",
+    "admission-result-or-official-analysis"
+  ],
+  "recorded_at": "2026-08-18T01:02:46.428181Z",
+  "runner_candidate_binding": {
+    "content_hash": "sha256:f687a887c3c405ad76251b75aa45d89c20b528c8d9cf0724cf7020e05e1255c0",
+    "file_bytes": 92174,
+    "file_sha256": "sha256:c2e63b4e9c679f0d3b5ff97d02399d9b4fcfac82ff2b18123937946667898082",
+    "path": "experiments/lean-harness-fresh-harbor-partial-admission-runner-20260818-v1.json",
+    "role": "sealed-partial-runner-candidate"
+  },
+  "schema_version": "lean-fresh-harbor-partial-preflight-approval-v1",
+  "source_qualification_binding": {
+    "content_hash": "sha256:214d3179847777960317a84c3e4805c6ff0499c93ab5d69cab2b4bcac11ea35c",
+    "file_bytes": 3146,
+    "file_sha256": "sha256:59f835655945b91cd41f1ea63f8e11cbb43c705bd83c3181da6b12bcb487e0c8",
+    "path": "reports/fresh-panel/artifacts/lean-fresh-harbor-partial-preflight-source-qualification-r1.json",
+    "role": "preflight-source-qualification"
+  },
+  "status": "EXACT_READ_ONLY_DOCKER_PREFLIGHT_APPROVED_ONCE",
+  "user_message_sha256": "sha256:b321554536421155847f28c853d6643cdea92676f41b5b20adeb6835109bb094"
+}

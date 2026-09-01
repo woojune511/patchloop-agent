@@ -28,6 +28,10 @@ PYFAKEFS_CAPABILITY_TASK = Path(
 )
 MOTO_TASK = Path("tasks/dev-validation/moto-query-scanned-count")
 BABEL_TASK = Path("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
+MOTO_TASK_V2 = Path("tasks/dev-validation/moto-query-scanned-count-v2")
+BABEL_TASK_V2 = Path(
+    "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes-v2"
+)
 SQLGLOT_TASK = Path(
     "tasks/cross-repo-heldout/sqlglot-duckdb-ignore-nulls-modifier-order"
 )
@@ -1160,6 +1164,46 @@ def test_babel_public_contract_excludes_evaluator_only_material() -> None:
     assert ".patchloop-hidden" not in "\n".join(
         argument for check in package.public.visible_checks for argument in check.command
     )
+
+
+def test_successor_tasks_add_public_issue_derived_behavior_checks() -> None:
+    moto_v1 = load_task_package(MOTO_TASK)
+    babel_v1 = load_task_package(BABEL_TASK)
+    moto = load_task_package(MOTO_TASK_V2)
+    babel = load_task_package(BABEL_TASK_V2)
+
+    assert moto_v1.public.task_version == babel_v1.public.task_version == 1
+    assert len(moto_v1.public.visible_checks) == len(babel_v1.public.visible_checks) == 1
+    assert moto.public.task_version == babel.public.task_version == 2
+    assert [check.id for check in moto.public.visible_checks] == [
+        "public-query-page-scanned-count",
+        "upstream-dynamodb-regression",
+    ]
+    assert [check.id for check in babel.public.visible_checks] == [
+        "public-strict-trailing-zero-behavior",
+        "upstream-number-regression",
+    ]
+
+    moto_source = moto.public.visible_checks[0].command[-1]
+    assert '"ScannedCount"' in moto_source
+    assert '"LastEvaluatedKey"' in moto_source
+    assert "ExclusiveStartKey" in moto_source
+    assert "attribute_exists" in moto_source
+    babel_source = babel.public.visible_checks[0].command[-1]
+    assert 'parse_decimal("1,234.500"' in babel_source
+    assert 'Decimal("1234.500")' in babel_source
+    assert 'parse_decimal("12,34.500"' in babel_source
+
+    for package in (moto, babel):
+        public_commands = "\n".join(
+            argument
+            for check in package.public.visible_checks
+            for argument in check.command
+        )
+        assert ".patchloop-hidden" not in public_commands
+        assert "reference.patch" not in public_commands
+    assert moto.private.reference_patch.sha256 == moto_v1.private.reference_patch.sha256
+    assert babel.private.reference_patch.sha256 == babel_v1.private.reference_patch.sha256
 
 
 def test_babel_candidate_is_traceable_to_swe_rebench_v2_row() -> None:

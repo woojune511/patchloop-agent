@@ -1,0 +1,112 @@
+{
+  "activation_authorized": false,
+  "content_hash": "sha256:dbd9b94fbe1ca3aadf34f59bd5045c05d234ac907c192368abef42a973ca4307",
+  "evidence_boundary": {
+    "added_cost_usd": 0,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "hidden_evaluator_content_read": false,
+    "network_calls": 0,
+    "private_task_spec_read": false,
+    "provider_calls": 0,
+    "public_only": true,
+    "reasoning_text_read": false,
+    "reference_patch_read": false,
+    "registered_check_calls": 0
+  },
+  "input_bindings": [
+    {
+      "file_bytes": 9539,
+      "file_sha256": "sha256:e1ddf5ae6fbe9023f207f2f62d24d7b4a87672fa5b7fe375dfd14ff147bceb5c",
+      "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml"
+    },
+    {
+      "content_hash": "sha256:fa7497f94aa5854cb28b3ca48ca16d45d2d39db59b0c71da3efa2beec96e3695",
+      "file_bytes": 16969,
+      "file_sha256": "sha256:42cedd83a425ef5beca6d0a597d7fcfe7d7243eb2890515ccc5386bca1d5cca5",
+      "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-causal-plan-projection-ab-20260826-r14-workflow-diagnosis-v1.json"
+    }
+  ],
+  "paid_execution_authorized": false,
+  "policy_version": "public-ordinary-failure-preservation-v1",
+  "proposed_check": {
+    "command": [
+      "/opt/conda/envs/testbed/bin/python",
+      "-c",
+      "import os\nimport subprocess\nimport sys\nimport tempfile\nimport textwrap\nfrom pathlib import Path\n\n\nwith tempfile.TemporaryDirectory(prefix=\"patchloop-anyio-ordinary-failure-\") as selected:\n    root = Path(selected)\n    event_log = root / \"events.log\"\n    test_path = root / \"test_ordinary_failure.py\"\n    test_path.write_text(\n        textwrap.dedent(\n            f\"\"\"\n            import pytest\n            from pathlib import Path\n\n            EVENT_LOG = Path({str(event_log)!r})\n\n            def record(value):\n                with EVENT_LOG.open(\"a\", encoding=\"utf-8\") as stream:\n                    stream.write(value + \"\\\\n\")\n\n            @pytest.fixture(scope=\"module\")\n            def anyio_backend():\n                return \"asyncio\"\n\n            @pytest.fixture(scope=\"module\")\n            async def shared(anyio_backend):\n                record(\"shared-start\")\n                try:\n                    yield\n                finally:\n                    record(\"shared-cleanup\")\n\n            @pytest.mark.anyio\n            async def test_ordinary_failure(shared):\n                record(\"ordinary-failure\")\n                assert False, \"expected public ordinary failure\"\n\n            @pytest.mark.anyio\n            async def test_after_failure(shared):\n                record(\"after-failure\")\n            \"\"\"\n        ),\n        encoding=\"utf-8\",\n    )\n    environment = os.environ.copy()\n    environment[\"PYTHONDONTWRITEBYTECODE\"] = \"1\"\n    completed = subprocess.run(\n        [\n            sys.executable,\n            \"-m\",\n            \"pytest\",\n            \"-q\",\n            \"--disable-warnings\",\n            \"-p\",\n            \"anyio\",\n            \"-p\",\n            \"no:asyncio\",\n            \"-p\",\n            \"no:trio\",\n            str(test_path),\n        ],\n        cwd=root,\n        env=environment,\n        capture_output=True,\n        text=True,\n        timeout=20,\n    )\n    events = (\n        event_log.read_text(encoding=\"utf-8\").splitlines()\n        if event_log.is_file()\n        else []\n    )\n    expected_events = [\n        \"shared-start\",\n        \"ordinary-failure\",\n        \"after-failure\",\n        \"shared-cleanup\",\n    ]\n    if completed.returncode != 1:\n        raise AssertionError(\"PUBLIC_CASE:anyio:ordinary-failure-status\")\n    if events != expected_events:\n        raise AssertionError(\"PUBLIC_CASE:anyio:ordinary-failure-events\")\n    output = completed.stdout + \"\\n\" + completed.stderr\n    if \"1 failed\" not in output or \"1 passed\" not in output:\n        raise AssertionError(\"PUBLIC_CASE:anyio:ordinary-failure-summary\")\n"
+    ],
+    "environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/workspace/src"
+    },
+    "expected_base_observation": "pass",
+    "expected_reference_observation": "pass",
+    "id": "public-ordinary-failure-preservation",
+    "output_limit_bytes": 20000,
+    "timeout_seconds": 30,
+    "working_directory": "."
+  },
+  "proposed_check_hash": "sha256:b10149fb43597396bf5c40c19f207b22ac186d750fee65933cd7643e53cc3bad",
+  "public_source_gap": {
+    "missing_intersection": "ordinary pytest failure under one async-generator fixture spanning a later test, with one final cleanup",
+    "public_clause_present": true,
+    "public_task_content_hash": "sha256:4c8bbb8ce1a1d0fefb4b7a91c3c6bdd4f172ccb92574fcf3537272413081637d",
+    "public_task_file_sha256": "sha256:e1ddf5ae6fbe9023f207f2f62d24d7b4a87672fa5b7fe375dfd14ff147bceb5c",
+    "targeted_ordinary_failure_present": false,
+    "targeted_shared_fixture_present": true,
+    "targeted_skip_xfail_pass_present": true,
+    "task_id": "anyio-interrupt-runner-cleanup",
+    "task_version": 4,
+    "visible_check_ids": [
+      "public-interrupt-runner-lifecycle",
+      "upstream-pytest-plugin-regression"
+    ]
+  },
+  "qualification_assertions": {
+    "base_and_reference_are_both_expected_to_pass": true,
+    "does_not_claim_hidden_failure_attribution": true,
+    "later_test_must_execute": true,
+    "module_scoped_async_generator_fixture": true,
+    "one_failed_one_passed_summary": true,
+    "ordinary_assertion_failure": true,
+    "pytest_exit_code_must_be_one": true,
+    "shared_cleanup_exactly_once_and_last": true
+  },
+  "r14_public_result": {
+    "diagnosis_content_hash": "sha256:fa7497f94aa5854cb28b3ca48ca16d45d2d39db59b0c71da3efa2beec96e3695",
+    "diagnosis_file_sha256": "sha256:42cedd83a425ef5beca6d0a597d7fcfe7d7243eb2890515ccc5386bca1d5cca5",
+    "hidden_failure_cause_attributed": false,
+    "submitted_run_ids": [
+      "run_rapid_v21_f077496605d0_02",
+      "run_rapid_v21_f077496605d0_06"
+    ],
+    "submitted_successes": [
+      false,
+      false
+    ],
+    "submitted_visible_checks_passed": [
+      2,
+      2
+    ]
+  },
+  "schema_version": "anyio-ordinary-failure-public-check-source-qualification-v1",
+  "source_bindings": [
+    {
+      "file_bytes": 11169,
+      "file_sha256": "sha256:57478d47df8864d9f00b3439b73a027c6873c931d4f3a7167c63fe9de8754631",
+      "path": "patchloop/evals/anyio_ordinary_failure_public_check.py"
+    },
+    {
+      "file_bytes": 872,
+      "file_sha256": "sha256:aa1523f4313415ba4c0e9c0f1280fac605184b86b307c7097288475343500a64",
+      "path": "scripts/build_anyio_ordinary_failure_public_check_qualification.py"
+    },
+    {
+      "file_bytes": 3648,
+      "file_sha256": "sha256:0d2a45a599c1130b7e4a986970180e1d64c6217882aeb7a9719edff6010faf08",
+      "path": "tests/test_anyio_ordinary_failure_public_check.py"
+    }
+  ],
+  "status": "offline-source-qualified",
+  "task_version_created": false
+}

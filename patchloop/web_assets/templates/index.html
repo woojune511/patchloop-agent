@@ -1,23 +1,87 @@
 {% extends "base.html" %}
-{% block title %}Runs · PatchLoop{% endblock %}
+{% block title %}Trace · PatchLoop{% endblock %}
 {% block content %}
-<h1>Runs</h1>
-<p class="lede">Every row links the immutable manifest, event trace, checkpoint and evaluator result.</p>
-<table>
-  <thead><tr><th>Run</th><th>Task</th><th>Memory</th><th>Status</th><th>SCRR</th><th>Official</th></tr></thead>
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">Local trace viewer</span>
+    <h1>실행 Trace</h1>
+    <p class="lede">최근 개발 batch부터 보고, 필요할 때 전체 과거 run으로 넓힙니다.</p>
+  </div>
+</div>
+
+<section class="run-controls" aria-label="Run filters">
+  <label>
+    <span>범위</span>
+    <select id="run-scope">
+      {% if viewer.default_experiment_id %}<option value="{{ viewer.default_experiment_id }}">Latest Rapid · {{ viewer.default_count }}</option>{% endif %}
+      <option value="all">모든 run · {{ viewer.total_count }}</option>
+    </select>
+  </label>
+  <label>
+    <span>결과</span>
+    <select id="run-outcome">
+      <option value="all">모든 결과</option>
+      <option value="resolved">성공</option>
+      <option value="task_failure">평가 실패</option>
+      <option value="agent_failure">Agent 실패</option>
+      <option value="infrastructure_error">인프라 오류</option>
+      <option value="pending">진행 중</option>
+    </select>
+  </label>
+  <label class="search-control">
+    <span>검색</span>
+    <input id="run-filter" type="search" placeholder="task 또는 run ID" aria-label="실행 검색">
+  </label>
+  <strong id="run-count" class="run-count" aria-live="polite"></strong>
+</section>
+
+<table class="run-table">
+  <thead><tr><th>결과</th><th>Task</th><th>Agent</th><th>LLM</th><th>Tokens</th><th>비용</th><th>시각</th></tr></thead>
   <tbody>
-  {% for run in runs %}
-    <tr>
-      <td><a href="/runs/{{ run.run_id }}">{{ run.run_id }}</a></td>
-      <td>{{ run.manifest.task_id }}</td>
-      <td>{{ run.manifest.memory.condition }}</td>
-      <td><span class="pill {{ run.status }}">{{ run.status }}</span></td>
-      <td>{{ run.result.scope_compliant_success if run.result else "—" }}</td>
-      <td>{{ run.result.official if run.result else "—" }}</td>
+  {% for run in viewer.runs %}
+    <tr
+      data-search="{{ run.task_id }} {{ run.run_id }} {{ run.variant }} {{ run.outcome_label }} {{ run.experiment_id or '' }}"
+      data-experiment="{{ run.experiment_id or '' }}"
+      data-outcome="{{ run.outcome or 'pending' }}"
+      {% if not run.default_visible %}hidden{% endif %}
+    >
+      <td><span class="pill {{ run.tone }}">{{ run.outcome_label }}</span></td>
+      <td>
+        <a class="run-link" href="/runs/{{ run.run_id }}">{{ run.task_id }}</a>
+        <small>{{ run.run_id }}{% if run.schedule_order %} · row {{ run.schedule_order }}{% endif %}</small>
+      </td>
+      <td>{{ run.variant }}</td>
+      <td>{{ run.model }}</td>
+      <td>{{ "{:,}".format(run.total_tokens) }}</td>
+      <td>${{ "%.6f"|format(run.cost_usd) }}</td>
+      <td>{{ run.created_at }}</td>
     </tr>
   {% else %}
-    <tr><td colspan="6">No runs yet. Start with the offline mock smoke command.</td></tr>
+    <tr><td colspan="7">표시할 run이 없습니다.</td></tr>
   {% endfor %}
   </tbody>
 </table>
+<script>
+const scope = document.getElementById('run-scope');
+const outcome = document.getElementById('run-outcome');
+const filter = document.getElementById('run-filter');
+const count = document.getElementById('run-count');
+const rows = [...document.querySelectorAll('.run-table tbody tr[data-search]')];
+
+function applyFilters() {
+  const query = filter.value.toLowerCase().trim();
+  let visible = 0;
+  rows.forEach((row) => {
+    const scopeMatch = scope.value === 'all' || row.dataset.experiment === scope.value;
+    const outcomeMatch = outcome.value === 'all' || row.dataset.outcome === outcome.value;
+    const searchMatch = !query || row.dataset.search.toLowerCase().includes(query);
+    row.hidden = !(scopeMatch && outcomeMatch && searchMatch);
+    if (!row.hidden) visible += 1;
+  });
+  count.textContent = `${visible} / ${rows.length} runs`;
+}
+
+[scope, outcome, filter].forEach((control) => control.addEventListener('input', applyFilters));
+applyFilters();
+</script>
 {% endblock %}

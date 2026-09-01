@@ -1,0 +1,55 @@
+{
+  "schema_version": "lean-harness-completion-policy-successor-spec-v1",
+  "spec_id": "lean-harness-completion-policy-successor-20260823-v1",
+  "status": "offline-design-frozen",
+  "official": false,
+  "diagnostic_source": {
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-event-role-20260823-r7-public-trace-diagnosis-v1.json",
+    "file_sha256": "sha256:1d55ec573c5caf554b530af264d49fa6da30230293320e8c459db020d83faab5",
+    "content_hash": "sha256:8b07c9f7fa8c4695ff571a43efec5b0d8f1b129af28128d501ff86c0bfff41d9",
+    "hidden_assertions_used": false,
+    "reference_patch_used": false,
+    "reasoning_text_used": false
+  },
+  "inputs": [
+    "public task and current-diff evidence",
+    "durable public tool and model-response metadata",
+    "existing cumulative split-token and model-call limits",
+    "public task constraints and tracked UTF-8 source"
+  ],
+  "outputs": {
+    "runtime_policy_version": "lean-harness-v7",
+    "tool_schema_version": "v11",
+    "context_policy_version": "phase-evidence-v17",
+    "completion_policy_version": "state-driven-current-diff-v3",
+    "response_recovery_policy_version": "completion-response-single-shared-retry-v1",
+    "edit_correction_policy_version": "bounded-public-current-source-v1"
+  },
+  "failure_modes": [
+    "insufficient exact input, output, total-token or model-call capacity fails before redispatch",
+    "a second actionless or reasoning-only incomplete response is terminal",
+    "untrusted, missing, non-UTF-8 or out-of-scope source produces guidance without a source excerpt",
+    "edit correction never synthesizes or applies a mutation",
+    "legacy V6 bytes and behavior remain unchanged"
+  ],
+  "authority_boundary": {
+    "workspace_mutation_authorized_by_spec": false,
+    "provider_calls_authorized": false,
+    "docker_calls_authorized": false,
+    "evaluator_calls_authorized": false,
+    "paid_execution_authorized": false,
+    "new_live_candidate_requires_fresh_qualification_and_two_byte_identical_rehearsals": true
+  },
+  "acceptance_cases": [
+    "after a successful mutation, an exploratory request exposes only the next completion action",
+    "a first current-diff check is forced before further investigation",
+    "a failed current-diff check exposes correction only and a successful correction forces recheck",
+    "passing checks force diff review and then structured submission",
+    "one fundable actionless primary response receives one low-effort action-only retry",
+    "actionless and reasoning-only incomplete responses share one run-global retry slot",
+    "an unfundable or already-consumed retry stops without another provider dispatch",
+    "raw and structured edit rejections return bounded typed correction evidence without mutation",
+    "V6 request evidence and runtime selection are regression-tested unchanged",
+    "offline qualification performs zero provider, Docker and evaluator calls"
+  ]
+}

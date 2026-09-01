@@ -188,6 +188,149 @@ def test_passing_base_checks_and_review_cannot_submit_a_noop() -> None:
     assert evidence.allowed_next_actions[0] == "apply_patch"
 
 
+def test_v13_completion_policy_forces_check_review_and_submission() -> None:
+    task = load_task_package("tasks/smoke/csv-quoted-newline").public
+    check_id = task.visible_checks[0].id
+    diff_hash = "sha256:completion-driven"
+    events = [
+        _event(
+            1,
+            EventType.PATCH_APPLIED,
+            {
+                "patch_hash": "sha256:patch",
+                "worktree_diff_hash": diff_hash,
+            },
+        )
+    ]
+
+    after_mutation = diff_bound_evidence(
+        task,
+        events,
+        diff_hash,
+        phase=Phase.IMPLEMENT,
+        completion_driven=True,
+    )
+    assert after_mutation.allowed_next_actions == ("run_check",)
+
+    events.append(
+        _event(
+            2,
+            EventType.TOOL_SUCCEEDED,
+            {
+                "tool": "run_check",
+                "check_id": check_id,
+                "passed": False,
+                "worktree_diff_hash": diff_hash,
+            },
+        )
+    )
+    after_failed_check = diff_bound_evidence(
+        task,
+        events,
+        diff_hash,
+        phase=Phase.IMPLEMENT,
+        completion_driven=True,
+    )
+    assert after_failed_check.allowed_next_actions == (
+        "apply_patch",
+        "read_file",
+        "search_files",
+    )
+
+    events.append(
+        _event(
+            3,
+            EventType.TOOL_SUCCEEDED,
+            {
+                "tool": "run_check",
+                "check_id": check_id,
+                "passed": True,
+                "worktree_diff_hash": diff_hash,
+            },
+        )
+    )
+    after_passing_check = diff_bound_evidence(
+        task,
+        events,
+        diff_hash,
+        phase=Phase.VERIFY,
+        completion_driven=True,
+    )
+    assert after_passing_check.allowed_next_actions == ("get_diff",)
+
+    events.append(
+        _event(
+            4,
+            EventType.TOOL_SUCCEEDED,
+            {"tool": "get_diff", "worktree_diff_hash": diff_hash},
+        )
+    )
+    ready = diff_bound_evidence(
+        task,
+        events,
+        diff_hash,
+        presented_tool_results=[_presented_result(4)],
+        phase=Phase.REVIEW,
+        completion_driven=True,
+    )
+    assert ready.submission_ready is True
+    assert ready.allowed_next_actions == ("finish_task",)
+
+
+def test_completion_policy_binds_successful_correction_to_recheck() -> None:
+    task = load_task_package("tasks/smoke/csv-quoted-newline").public
+    check_id = task.visible_checks[0].id
+    failed_diff = "sha256:failed-diff"
+    corrected_diff = "sha256:corrected-diff"
+    events = [
+        _event(
+            1,
+            EventType.PATCH_APPLIED,
+            {"worktree_diff_hash": failed_diff},
+        ),
+        _event(
+            2,
+            EventType.TOOL_SUCCEEDED,
+            {
+                "tool": "run_check",
+                "check_id": check_id,
+                "passed": False,
+                "worktree_diff_hash": failed_diff,
+            },
+        ),
+    ]
+    correction = diff_bound_evidence(
+        task,
+        events,
+        failed_diff,
+        phase=Phase.IMPLEMENT,
+        completion_driven=True,
+    )
+    assert correction.allowed_next_actions == (
+        "apply_patch",
+        "read_file",
+        "search_files",
+    )
+
+    events.append(
+        _event(
+            3,
+            EventType.PATCH_APPLIED,
+            {"worktree_diff_hash": corrected_diff},
+        )
+    )
+    recheck = diff_bound_evidence(
+        task,
+        events,
+        corrected_diff,
+        phase=Phase.IMPLEMENT,
+        completion_driven=True,
+    )
+    assert recheck.latest_check_sequence is None
+    assert recheck.pending_checks == (check_id,)
+    assert recheck.allowed_next_actions == ("run_check",)
+
+
 def test_v6_requires_same_diff_structured_review_presented_to_model() -> None:
     task = load_task_package("tasks/smoke/csv-quoted-newline").public
     check_id = task.visible_checks[0].id

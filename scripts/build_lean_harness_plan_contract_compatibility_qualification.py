@@ -1,0 +1,23 @@
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+from patchloop.agent.workflow_plan_contract_compatibility_qualification import (
+    materialize_plan_contract_compatibility_qualification,
+)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Build the zero-call Lean V25 plan compatibility qualification."
+    )
+    parser.add_argument("--repository", type=Path, default=Path("."))
+    args = parser.parse_args()
+    value = materialize_plan_contract_compatibility_qualification(args.repository)
+    print(value["content_hash"])
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

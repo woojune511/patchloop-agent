@@ -1,0 +1,171 @@
+{
+  "authority": {
+    "added_model_cost_usd": 0,
+    "agent_runs": 0,
+    "approval_granted": false,
+    "candidate_created": false,
+    "candidate_registry_materialized": false,
+    "credentials_or_personal_api_keys_read": 0,
+    "dataset_task_membership_requests": 0,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "execution_authorized": false,
+    "fresh_task_panel_materialized": false,
+    "memory_effect_claim_authorized": false,
+    "official_analysis_authorized": false,
+    "official_source_identity_gets": 3,
+    "provider_calls": 0,
+    "public_registry_metadata_gets": 3,
+    "raw_source_qualification_executed": false,
+    "scope": "final-capture-transcript-only-not-exploratory-turn-total",
+    "solution_test_oracle_private_fields_read": 0,
+    "task_archive_or_file_requests": 0,
+    "task_rows_downloaded": 0,
+    "total_recorded_network_gets": 6
+  },
+  "content_hash": "sha256:cc2e0d8678f4aeb404c586efe87af62cdbf01e6be01a9d64292e6fb447329377",
+  "decision": {
+    "absence_scope": "public-harbor-package-registry-at-observation-time-only",
+    "exact_august_monthly_package_visible": false,
+    "future_snapshot_availability_ruled_out": false,
+    "harbor_current_status_established": true,
+    "latest_visible_monthly_source": "ibragim-badertdinov/swe-rebench-07-2026@revision-1",
+    "observation_is_selector_input": false,
+    "qualifying_post_window_snapshot_observed": false,
+    "qualifying_snapshot_absence_proven": false,
+    "raw_source_completeness_qualified": false
+  },
+  "next_gate": "wait-for-the-earliest-qualifying-snapshot-then-capture-raw-bytes-and-qualify-its-source-specific-adapter-before-selector-use",
+  "observation_id": "lean-harness-fresh-source-registry-observation-20260818-v1",
+  "observed_finished_at": "2026-08-17T18:49:29.7228882Z",
+  "observed_rows": {
+    "exact_august_packages": [],
+    "packages": [
+      {
+        "id": "71e13c51-0761-493b-9d62-c90f98ea770c",
+        "name": "swe-rebench-07-2026",
+        "org": "ibragim-badertdinov",
+        "type": "dataset",
+        "visibility": "public"
+      },
+      {
+        "id": "2454eaf3-5205-4cfe-a989-108a3edc17d5",
+        "name": "swe-rebench-leaderboard",
+        "org": "swe-rebench",
+        "type": "dataset",
+        "visibility": "public"
+      },
+      {
+        "id": "b9143293-78f0-4950-9e14-78d63d8235e4",
+        "name": "tasktrove-swe-rebench-patched-oracle",
+        "org": "openthoughts",
+        "type": "dataset",
+        "visibility": "public"
+      },
+      {
+        "id": "8f0a1b82-814e-459e-bdff-f9273bfb290a",
+        "name": "tasktrove-swe-rebench-v2-patched-oracle",
+        "org": "openthoughts",
+        "type": "dataset",
+        "visibility": "public"
+      }
+    ],
+    "versions": [
+      {
+        "content_hash": "sha256:c90d7716b4ab56bd545dd31af46a808ff3ce44c0537fba041524c5dad353a159",
+        "id": "2d6bca54-b245-452c-af2d-bc021a737225",
+        "package": "swe-rebench/swe-rebench-leaderboard",
+        "published_at": "2026-06-25T20:30:39.658965+09:00",
+        "revision": 1,
+        "tags": [],
+        "yanked": false
+      },
+      {
+        "content_hash": "sha256:ebe7444e313a0d8db94fa541139826eaebe2b0abcd4900c6f73e750494910dca",
+        "id": "b5a1b010-d34b-43e9-b08a-a23e4169a327",
+        "package": "swe-rebench/swe-rebench-leaderboard",
+        "published_at": "2026-06-26T03:52:28.245788+09:00",
+        "revision": 2,
+        "tags": [
+          "latest"
+        ],
+        "yanked": false
+      },
+      {
+        "content_hash": "sha256:e2e357045bf03e4900d2506c36562f6eaff7acd37f63780600967ea3aecdcd79",
+        "id": "574acb72-70aa-46fb-8758-0a814a5eb213",
+        "package": "ibragim-badertdinov/swe-rebench-07-2026",
+        "published_at": "2026-07-27T01:08:18.172829+09:00",
+        "revision": 1,
+        "tags": [
+          "2026-07",
+          "latest"
+        ],
+        "yanked": false
+      }
+    ]
+  },
+  "observed_started_at": "2026-08-17T18:49:28.1777599Z",
+  "official_client_source": {
+    "auth_constants_bytes": 2034,
+    "auth_constants_sha256": "sha256:90cfcf350ecf396d9d6c6166faa6f54c9de4348deef6b6240440fdb942f71dd3",
+    "auth_constants_url": "https://raw.githubusercontent.com/harbor-framework/harbor/f03db62fd2ed2ed1f79aefe024cfcbc68a0d759e/src/harbor/auth/constants.py",
+    "commit_response_bytes": 23397,
+    "commit_response_sha256": "sha256:789fa9fd63a95ea9c51f2d3ea82aa0337d33af820f195a5a7107639fcbbd3a90",
+    "db_client_bytes": 26275,
+    "db_client_sha256": "sha256:8c5445f47f114ccc175d06aaa733a156a1712c6dcf4ddf3e233d8ae0813fa747",
+    "db_client_url": "https://raw.githubusercontent.com/harbor-framework/harbor/f03db62fd2ed2ed1f79aefe024cfcbc68a0d759e/src/harbor/db/client.py",
+    "head_commit": "f03db62fd2ed2ed1f79aefe024cfcbc68a0d759e",
+    "head_committed_at": "2026-08-16T14:25:07Z",
+    "public_publishable_key_persisted": false,
+    "registry_origin": "https://ofhuhcpkvzjlejydnvyd.supabase.co",
+    "repository": "https://github.com/harbor-framework/harbor"
+  },
+  "predecessor_binding": {
+    "content_hash": "sha256:2b84e6271fa11ebb4285c5a0fde5b6b66af407503e2ef219bc2db63cab174f15",
+    "file_bytes": 5117,
+    "file_sha256": "sha256:e7cb73fa16059c72a6aee072ee2e7d661dcc1287abeeb53ba034d5378dbc599b",
+    "path": "experiments/lean-harness-fresh-source-availability-20260818-v3.json",
+    "role": "browser-availability-v3-predecessor"
+  },
+  "queries": [
+    {
+      "canonical_query": "select=id,name,type,visibility,org:org_id!inner(name)&type=eq.dataset&name=ilike.*swe-rebench*&order=name.asc",
+      "exact_count_header_observed": false,
+      "id": "swe-rebench-package-name-scan",
+      "method": "GET",
+      "path": "/rest/v1/package",
+      "response_bytes": 637,
+      "response_sha256": "sha256:9f5c4884750600d567c32d69a948621bf9f4aae7313386a96376482c285f5ba6",
+      "returned_less_than_server_page_limit": true,
+      "row_count": 4,
+      "status": 200
+    },
+    {
+      "canonical_query": "select=id,name,type,visibility,org:org_id!inner(name)&type=eq.dataset&name=eq.swe-rebench-08-2026&org.name=eq.ibragim-badertdinov",
+      "exact_count_header_observed": false,
+      "id": "exact-august-monthly-package",
+      "method": "GET",
+      "path": "/rest/v1/package",
+      "response_bytes": 2,
+      "response_sha256": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "returned_less_than_server_page_limit": true,
+      "row_count": 0,
+      "status": 200
+    },
+    {
+      "canonical_query": "select=id,package_id,revision,content_hash,published_at,yanked_at,tags:dataset_version_tag(tag)&package_id=in.(<two-observed-source-package-ids>)&order=published_at.asc",
+      "exact_count_header_observed": false,
+      "id": "visible-source-package-versions",
+      "method": "GET",
+      "path": "/rest/v1/dataset_version",
+      "response_bytes": 871,
+      "response_sha256": "sha256:3a6998b6a1880d19e5186fd8610641bbabcbcf72233c474098b4b9ccb90cde85",
+      "returned_less_than_server_page_limit": true,
+      "row_count": 3,
+      "status": 200
+    }
+  ],
+  "schema_version": "lean-harness-fresh-source-registry-observation-v1",
+  "status": "OFFICIAL_METADATA_OBSERVED_NO_QUALIFYING_SNAPSHOT"
+}

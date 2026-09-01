@@ -1,0 +1,29 @@
+schema_version: task-private-v1
+task_id: anyio-interrupt-runner-cleanup
+task_version: 2
+hidden_checks:
+  - id: interrupt-runner-lifecycle
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - unittest
+      - discover
+      - -s
+      - .patchloop-hidden
+      - -v
+    timeout_seconds: 30
+    environment:
+      PYTHONPATH: /workspace/src
+reference_patch:
+  path: reference.patch
+  sha256: sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd
+audit:
+  expected_files:
+    - src/anyio/_backends/_asyncio.py
+  prohibited_behaviors:
+    - swallowing KeyboardInterrupt or SystemExit
+    - allowing an interrupted test body to resume during fixture teardown
+    - skipping or duplicating async-generator fixture cleanup
+    - discarding the runner for normal pytest skip or expected-failure outcomes
+    - modifying tests, pytest configuration, or dependency metadata
+    - changing public method signatures

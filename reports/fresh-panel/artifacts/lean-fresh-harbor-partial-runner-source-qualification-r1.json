@@ -1,0 +1,141 @@
+{
+  "authority": {
+    "added_cost_usd": 0,
+    "agent_runs": 0,
+    "candidate_creation_authorized": false,
+    "docker_calls": 0,
+    "docker_execution_authorized": false,
+    "docker_preflight_authorized": false,
+    "evaluator_calls": 0,
+    "harbor_audit_source_files_read": 6,
+    "harbor_git_metadata_reads": 3,
+    "local_source_files_read": 3,
+    "local_validation_files_read": 1,
+    "network_calls": 0,
+    "package_archives_read": 0,
+    "private_reference_patches_read": 0,
+    "provider_calls": 0,
+    "source_qualified": true,
+    "task_packages_materialized": 0
+  },
+  "checks": {
+    "docker-environment-only": true,
+    "exact-harbor-commit-and-tree-bound": true,
+    "exact-seven-member-archive-contract": true,
+    "no-subprocess-shell": true,
+    "one-attempt-zero-retries-one-concurrent": true,
+    "oracle-agent-only": true,
+    "private-patch-body-never-enters-candidate": true,
+    "single-report-and-agent-exit-evidence-required": true,
+    "solution-script-replaced-by-fixed-git-apply-wrapper": true,
+    "source-gate-makes-no-docker-or-harbor-call": true,
+    "telemetry-forced-off": true,
+    "tracked-harbor-worktree-clean": true
+  },
+  "content_hash": "sha256:a48645430f939d4c2bcec7fb57dcb5d308b4c115052170b78571bb14a3572515",
+  "harbor_source": {
+    "audit_files": [
+      {
+        "content_hash": null,
+        "file_bytes": 6387,
+        "file_sha256": "sha256:bb7e5a75d1156f6e511a19cc4396428d50cdbc3abe3a1e8f9052b65a0ff964ec",
+        "path": "pyproject.toml",
+        "role": "harbor-runner-source"
+      },
+      {
+        "content_hash": null,
+        "file_bytes": 6614,
+        "file_sha256": "sha256:80684215a23790cecd830a8e167b604c26e557fbca72d86b991ccf4c50e852f0",
+        "path": "src/harbor/cli/main.py",
+        "role": "harbor-runner-source"
+      },
+      {
+        "content_hash": null,
+        "file_bytes": 86079,
+        "file_sha256": "sha256:8af79e97e9f1de4577d352b8d34f180ea0f5c6b1f64754b995ee25d463fe9302",
+        "path": "src/harbor/cli/jobs.py",
+        "role": "harbor-runner-source"
+      },
+      {
+        "content_hash": null,
+        "file_bytes": 5884,
+        "file_sha256": "sha256:d2eb2bb6ff4ee3e9119a433dcf1123d9add0b47248b3ea53094f4ee073f361b4",
+        "path": "src/harbor/agents/oracle.py",
+        "role": "harbor-runner-source"
+      },
+      {
+        "content_hash": null,
+        "file_bytes": 11667,
+        "file_sha256": "sha256:717f29d538248a5ef291e3da1ff99f42d6d73897c44daaf3a3f7fc832a17eff8",
+        "path": "src/harbor/models/trial/paths.py",
+        "role": "harbor-runner-source"
+      },
+      {
+        "content_hash": null,
+        "file_bytes": 33140,
+        "file_sha256": "sha256:ca6c0efb676e5bf9ca0e8665c1b536aafbcce9d90def9b979b6bda8b9a700929",
+        "path": "src/harbor/telemetry.py",
+        "role": "harbor-runner-source"
+      }
+    ],
+    "audit_inventory_hash": "sha256:cccc617a6aa5b6244b2b149b7e2aece51285875db1f558934f2dc9a2c4de18be",
+    "commit": "f03db62fd2ed2ed1f79aefe024cfcbc68a0d759e",
+    "tracked_worktree_clean": true,
+    "tree": "ad3ff0729de33525c618fad6b60557643d1cb24c",
+    "version": "0.21.0"
+  },
+  "next_gate": "materialize-execution-closed-exact-144-row-runner-candidate",
+  "predecessor_bindings": [
+    {
+      "content_hash": "sha256:c4544a05e91478869a1afcf8b5abe4bf5083a362808969e748067d5f64822f96",
+      "file_bytes": 5326,
+      "file_sha256": "sha256:db9f4ad3856f339c0a53e31e5f97979a7fcae5c5855d5814083c095efccfb514",
+      "path": "reports/fresh-panel/artifacts/lean-fresh-harbor-partial-admission-source-qualification-r1.json",
+      "role": "deterministic-partial-generator-source"
+    },
+    {
+      "content_hash": "sha256:02d32a43fc4697814dba503a1623d9733a4c494fa0cac47f2e5c696148054efb",
+      "file_bytes": 140706,
+      "file_sha256": "sha256:7431e4f8d9dd6274ecc0124ef40935206e02bae31c4a01ae16024f4d612a0dec",
+      "path": "experiments/lean-harness-fresh-harbor-partial-admission-20260818-v1.json",
+      "role": "deterministic-partial-admission-preregistration"
+    }
+  ],
+  "qualification_id": "lean-fresh-harbor-partial-runner-20260818-r1",
+  "schema_version": "lean-fresh-harbor-partial-runner-source-qualification-v1",
+  "source_files": [
+    {
+      "content_hash": null,
+      "file_bytes": 29649,
+      "file_sha256": "sha256:6cb882ca780519a3082e31a5d4fea662a25dceb36e0a890af6216d8fe2b4ecf8",
+      "path": "patchloop/evals/fresh_harbor_partial_runner.py",
+      "role": "partial-runner-source"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 668,
+      "file_sha256": "sha256:8e8feabe104ca03856e71dad6e297c1e8ae2dfbdbe97eae38deeacf9809ddedf",
+      "path": "scripts/build_lean_fresh_harbor_partial_runner_source_qualification.py",
+      "role": "partial-runner-source"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 468,
+      "file_sha256": "sha256:3d614ec727963c66e26525a22e964bca0ddbfd1e0c6487ee9d84242d3fd5eb08",
+      "path": "scripts/build_lean_fresh_harbor_partial_runner_candidate.py",
+      "role": "partial-runner-source"
+    }
+  ],
+  "source_inventory_hash": "sha256:063371bdaad04bcc1c45c3cd8cae93175a8bf555199a05d6fc9cafc09dd5b6ff",
+  "status": "PARTIAL_RUNNER_SOURCE_QUALIFIED_NO_DOCKER_AUTHORITY",
+  "validation_files": [
+    {
+      "content_hash": null,
+      "file_bytes": 4367,
+      "file_sha256": "sha256:bcd896ae4182fffa3e8feda3272cdac64397413cfb45daba7d084d874a43b03f",
+      "path": "tests/test_fresh_harbor_partial_runner.py",
+      "role": "partial-runner-validation"
+    }
+  ],
+  "validation_inventory_hash": "sha256:186206f2a3578a6422b1b8a4ea87383f3cd2cbe59cf4c776139ffa3f735c9379"
+}

@@ -1,0 +1,1771 @@
+{
+  "all_raw_receipts_available": false,
+  "archive_receipts_available": 12,
+  "authority": {
+    "added_model_cost_usd": 0,
+    "agent_runs": 0,
+    "approval_granted": false,
+    "candidate_creation_authorized": false,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "execution_authorized": false,
+    "memory_effect_claim_authorized": false,
+    "network_calls": 0,
+    "official_analysis_authorized": false,
+    "package_archive_contents_read": 0,
+    "package_archive_files_read": 12,
+    "preflight_authorized": false,
+    "private_test_identifiers_persisted": 0,
+    "private_verifier_report_files_read_by_trusted_sanitizer": 62,
+    "provider_calls": 0,
+    "raw_admission_replay_complete": false,
+    "raw_test_outputs_persisted": 0,
+    "runtime_source_qualification_authorized": false,
+    "sanitized_inventory_created": true,
+    "solution_or_reference_patch_files_read": 0,
+    "task_admission_authorized": false,
+    "task_package_conversion_authorized": false,
+    "task_packages_materialized": 0
+  },
+  "base_receipts_available": 12,
+  "candidate_count": 12,
+  "content_hash": "sha256:b55d89d45cb2b601994d7bca19aada66be7cfcc32152cbc6e0c592b8b5472917",
+  "inventory_id": "lean-fresh-harbor-admission-evidence-availability-20260818-r1",
+  "next_gate": "produce-and-persist-the-missing-partial-verifier-receipts-under-a-new-approved-admission-run",
+  "partial_receipts_available": 14,
+  "partial_receipts_expected": 133,
+  "partial_receipts_missing": 119,
+  "partial_rejections_available": 14,
+  "partial_rejections_expected": 105,
+  "predecessor_bindings": [
+    {
+      "content_hash": "sha256:12bb5ca18034f7592c4d630ff91c9789a81ff7af22803da3269e68343f234955",
+      "file_bytes": 8815,
+      "file_sha256": "sha256:a6d2918b486e36dc2ba6e4d8f586ee4b46a8c2b60a4abb3854b98c4715c99748",
+      "path": "experiments/lean-harness-fresh-all-cross-preregistration-20260818-v1.json",
+      "role": "all-cross-successor-preregistration"
+    },
+    {
+      "content_hash": "sha256:bf4e3711c4b116bd3027781a9f39b3ae0fcf94b38563c83a408061c15e34f135",
+      "file_bytes": 19240,
+      "file_sha256": "sha256:2e5565faa2bb2c2b63cb52a4fcde8b920488be1c59acc5538f567a99c26917a6",
+      "path": "reports/fresh-panel/artifacts/lean-fresh-all-cross-registry-qualification-r1.json",
+      "role": "all-cross-public-registry-qualification"
+    },
+    {
+      "content_hash": "sha256:f57eded985460f982e908b768d1b512cc6bf6daeaf26e59f86a688343d9f951f",
+      "file_bytes": 22629,
+      "file_sha256": "sha256:3d81476977071be5e578697e0e4da53e9bdbbdf9e84504af465f8159e40c3a19",
+      "path": "experiments/lean-harness-fresh-all-cross-suite-20260818-v1.json",
+      "role": "all-cross-metadata-suite"
+    },
+    {
+      "content_hash": "sha256:1f13d5a84fb41ecb83ccc45c16f8fff8551114475cc55041be9ebbe49e75c755",
+      "file_bytes": 3726,
+      "file_sha256": "sha256:d7408a99fc498032f736b8741edb28848e6eb0a963eabfc18546a5a572036939",
+      "path": "experiments/lean-harness-fresh-all-cross-activation-plan-20260818-v1.json",
+      "role": "all-cross-activation-plan"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 15689,
+      "file_sha256": "sha256:fb947e2e6ba227f1993fe41a625ab5fac028d38b4e9ec42a7e859101c85e6e1a",
+      "path": "reports/fresh-panel/artifacts/fresh-all-cross-search-observation-v1.json",
+      "role": "frozen-public-admission-observation"
+    }
+  ],
+  "reference_receipts_available": 36,
+  "reference_receipts_expected": 36,
+  "row_inventory_hash": "sha256:42de58788c24f0de363ffe39d5430d93e4f426fef2f4c73bb663f60178df4e63",
+  "rows": [
+    {
+      "available_partial_receipts": 14,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 14,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:eb3127222647dd6fb84cebf86178840baa35edf9d683fed4402e058657f4eb63",
+        "fail_to_pass_case_count": 25,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 25,
+          "passed": 13,
+          "skipped": 0
+        },
+        "pass_to_pass_case_count": 13,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 5136,
+          "file_sha256": "sha256:a73b88f11117b475c259bf6dbbe8ad3fe47080c236a525c2187e8bb798870716"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:d03b3f7dc597a89afe36c0af9556d9e70e12717739040109e049b61f6b3a102e",
+      "expected_partial_receipts": 14,
+      "expected_rejected_partial_receipts": 14,
+      "missing_partial_receipts": 0,
+      "package_archive": {
+        "file_bytes": 23748,
+        "file_sha256": "sha256:2660abcf4e6a58830849a60f423728f3b269dd7affc4bd85e430c2494b080823"
+      },
+      "partial_reports": [
+        {
+          "content_hash": "sha256:8cde30adb1570844c6b1237c192a2ec0a8971230bd36a6347a1cbeb323eececa",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 1,
+            "failed": 0,
+            "passed": 0,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": false,
+          "raw_report": {
+            "file_bytes": 5174,
+            "file_sha256": "sha256:3db7bbd50c3e54c3ae6f9e82591e781c553a4750712e3f915e1a4508857a25ba"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:dfaf4f89ba986a337850f70cf41ac69b036484b0a2bb1bf1098f2af9ad4cedeb",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 14,
+            "passed": 24,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": false,
+          "raw_report": {
+            "file_bytes": 5104,
+            "file_sha256": "sha256:4003db5d04a478b1f7b69deb815e51e6e209f1d5deb920ebc72bc1bc8cc42012"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:a38fe528f1bbe02dc3ec6279260c8926ad9b5919691c54290b862586045e790b",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 11,
+            "passed": 27,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": false,
+          "raw_report": {
+            "file_bytes": 5095,
+            "file_sha256": "sha256:93dc3f5d38b4b095b5a52db78ba550c1d2c69c9fb70fdf1a75ba4f2343cca6be"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:0e2e0f72f296c1c2fb2d4c8f009c648cc220dd593c342dd4cbebe8cff30c2d62",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 4,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 14,
+            "passed": 24,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": false,
+          "raw_report": {
+            "file_bytes": 5104,
+            "file_sha256": "sha256:c0f66b9f297672ad44bd9cced5d62155b40ae1db82311dd97603075b8ab25d0a"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:f3aaf89f503db99bdaaef22991d352bc52ef958831ba36f4994f1478824c64f9",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 5,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 29,
+            "passed": 9,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": false,
+          "raw_report": {
+            "file_bytes": 5148,
+            "file_sha256": "sha256:11e056d5969eed8397eedb27ba3d03828828ce3707cf05d24a7e81aec1ab38b6"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:ca556bf130c133313ea10d41e5bff182cc380602009a626672980eeb46743c76",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 6,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 8,
+            "passed": 30,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 5084,
+            "file_sha256": "sha256:fba437cae0c902afe78b5c3bf0c1458cbb59f1b8cf0ac83190506e6b4b8a4944"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:2161ff0260d94052417b73c17943dbd46a1072c42c4066ee8a1cc24f33f8f183",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 7,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 2,
+            "passed": 36,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 5066,
+            "file_sha256": "sha256:4dc4fa6204c50724e22feb2e7459d92518cda3f213c3b225908b0d65aacf3a02"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:b86ea91060d314bee3e031295ea531ddf01f3257bc0fde1f1035f692bda35538",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 8,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 25,
+            "passed": 13,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 5136,
+            "file_sha256": "sha256:a73b88f11117b475c259bf6dbbe8ad3fe47080c236a525c2187e8bb798870716"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:2344978723263f7651edfe8991328159fbba87d170dbd3371936f2d127d25a2f",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 9,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 25,
+            "passed": 13,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 5136,
+            "file_sha256": "sha256:a73b88f11117b475c259bf6dbbe8ad3fe47080c236a525c2187e8bb798870716"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:8e74b8f9fabe98536a901b673bdb7d1a009bd3422844fe4a5fedba76fb2478c7",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 10,
+          "parsed_counts": {
+            "error": 1,
+            "failed": 0,
+            "passed": 0,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": false,
+          "raw_report": {
+            "file_bytes": 5174,
+            "file_sha256": "sha256:3db7bbd50c3e54c3ae6f9e82591e781c553a4750712e3f915e1a4508857a25ba"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:7713dfda785c52df8e8fd0a3ba7ba1869227ed5946243ee03d5cc1676424f7b1",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 11,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 25,
+            "passed": 13,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 5136,
+            "file_sha256": "sha256:a73b88f11117b475c259bf6dbbe8ad3fe47080c236a525c2187e8bb798870716"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:d6abfb97044defa547c5a6b297b699c3166d9d24cb1f681c2af1c7df25fc1340",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 12,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 25,
+            "passed": 13,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": false,
+          "raw_report": {
+            "file_bytes": 5137,
+            "file_sha256": "sha256:0eef784bcec8e8056c7f2ef096a03623557659d46f4ecfbcc2f2d7472d61672f"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:edacd24e9e4441c3f40588e85f5d09208a8fe883dddb184e2038d852150babfd",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 13,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 29,
+            "passed": 9,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": false,
+          "raw_report": {
+            "file_bytes": 5148,
+            "file_sha256": "sha256:11e056d5969eed8397eedb27ba3d03828828ce3707cf05d24a7e81aec1ab38b6"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        },
+        {
+          "content_hash": "sha256:8eafe08c5ff4aa27ecfcb5f5a34c55e2b4e3eaa152fcc2ae07c6fb62df0f933e",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": false,
+          "log_parser_present": true,
+          "ordinal": 14,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 25,
+            "passed": 13,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 5136,
+            "file_sha256": "sha256:a73b88f11117b475c259bf6dbbe8ad3fe47080c236a525c2187e8bb798870716"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": false,
+          "role": "partial"
+        }
+      ],
+      "raw_receipt_set_complete": true,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:6b2433ceb20be01cef8d1cd120a956b3c223d79c20f3c33c7c2283efbda9581f",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 38,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 5058,
+            "file_sha256": "sha256:4ecf1beb57de8ccea06b817ecf50aff4ec3967f6873cacbcd4bd4b4ec2cfb104"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:78604b5b7ae0c27aeebbfcb217c345fa16cebcde8b35f89f71e2992f2a1b4581",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 38,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 5058,
+            "file_sha256": "sha256:4ecf1beb57de8ccea06b817ecf50aff4ec3967f6873cacbcd4bd4b4ec2cfb104"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:b22e77716dfa28e8f6b73ea97c2db9ba3b6175a9a560954b730911bcdaef0a7f",
+          "fail_to_pass_case_count": 25,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 38,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 13,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 5058,
+            "file_sha256": "sha256:4ecf1beb57de8ccea06b817ecf50aff4ec3967f6873cacbcd4bd4b4ec2cfb104"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "harbor-framework/harbor",
+      "task_id": "harbor-framework__harbor-1764"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:cd819179a35109a651523af3347950ce76c2ba891fee6cc992cdc364101c26f7",
+        "fail_to_pass_case_count": 6,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 6,
+          "passed": 26,
+          "skipped": 0
+        },
+        "pass_to_pass_case_count": 26,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 4208,
+          "file_sha256": "sha256:f9e94fecc08be7e515a1b8e5b22b5990bb791b9f91ba246712ea93d8151dc6c1"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:e81f02df234c69c21d6a8aae66b9764b5febb51a812d7f8aa800249a0a307101",
+      "expected_partial_receipts": 10,
+      "expected_rejected_partial_receipts": 8,
+      "missing_partial_receipts": 10,
+      "package_archive": {
+        "file_bytes": 15494,
+        "file_sha256": "sha256:17ebbb41ddd1000cbccaa6b0d165cf85ab7b33b4656ae4cf54022d4ae919d5e7"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:51b29547ab0465a20bccd042acb0f8f4bb8d0832c3958ab137dc2499f3cebfc5",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 32,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 26,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 4188,
+            "file_sha256": "sha256:716e23d57226b14476c816ae7c32e107d66077069d63228e878beb9849cedb1d"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:1c4a8a2b1bc277180f5b03a8e778a8dfeca0f78fa11c518051b6219c681fef54",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 32,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 26,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 4188,
+            "file_sha256": "sha256:716e23d57226b14476c816ae7c32e107d66077069d63228e878beb9849cedb1d"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:53c824700506a7a8713fbfa37f67e5b7b47c20e067769e75e50a243f82d03208",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 32,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 26,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 4188,
+            "file_sha256": "sha256:716e23d57226b14476c816ae7c32e107d66077069d63228e878beb9849cedb1d"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "marimo-team/marimo",
+      "task_id": "marimo-team__marimo-9626"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:7f8c798ca6f5f44ee836f710c2a655077b8b00fbdf9f6beae5e86dd218214350",
+        "fail_to_pass_case_count": 3,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 3,
+          "passed": 24,
+          "skipped": 0
+        },
+        "pass_to_pass_case_count": 24,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 3749,
+          "file_sha256": "sha256:ef6be72fd5b9c09f2a7c5e32cc73f2a27f3ce9df550bc9458505f01ab2a5207b"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:f6990205f9e5acb6d209dbc421925855392a71339173db432c145e5f0dd3bb64",
+      "expected_partial_receipts": 15,
+      "expected_rejected_partial_receipts": 9,
+      "missing_partial_receipts": 15,
+      "package_archive": {
+        "file_bytes": 25914,
+        "file_sha256": "sha256:c66de84a55804d76db3b8c1db8f0b10e0e7fbf1f09d5fa5fed60368b65beaa01"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:2b7e54d538ae9f7b9be6b8d394636cf1f87953643e66f3e604d9069977153c34",
+          "fail_to_pass_case_count": 3,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 27,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 24,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 3738,
+            "file_sha256": "sha256:ba6509fa4740c318ea58c132571e296dbd1a6cc3966346d6fafe11ee25f14279"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:a06249ecdfcaba0069f937243f994b5edfdee4ca071c81255f1cda897ea290e4",
+          "fail_to_pass_case_count": 3,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 27,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 24,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 3738,
+            "file_sha256": "sha256:ba6509fa4740c318ea58c132571e296dbd1a6cc3966346d6fafe11ee25f14279"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:664db3a3e0dffded8e44d3754950eac45e7de36cabdea996514b60e8fe085119",
+          "fail_to_pass_case_count": 3,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 27,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 24,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 3738,
+            "file_sha256": "sha256:ba6509fa4740c318ea58c132571e296dbd1a6cc3966346d6fafe11ee25f14279"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "microsoft/apm",
+      "task_id": "microsoft__apm-1553"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:83612558d38b55f26ea78d1453ed5238647b34852deb556c11e6573095d6915e",
+        "fail_to_pass_case_count": 3,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 3,
+          "passed": 4,
+          "skipped": 0
+        },
+        "pass_to_pass_case_count": 4,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 1121,
+          "file_sha256": "sha256:80cb43bc5028647c4010256e2af81c39f32b2c0d57c3dcd2e24f0ceb35b9b20e"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:c8e677ad487f4a78f783db8044c3091aea43c5790854fa6d298bcdc88f0131dd",
+      "expected_partial_receipts": 13,
+      "expected_rejected_partial_receipts": 8,
+      "missing_partial_receipts": 13,
+      "package_archive": {
+        "file_bytes": 22678,
+        "file_sha256": "sha256:631833144f2d7495cd52870878afe039b66819afebc45f7f41f6fbd728eae106"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:636a0bd0ca8cd356ec6b67b14b638c5a57a0a3dafddc90972bd7cced79be04b5",
+          "fail_to_pass_case_count": 3,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 7,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 4,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 1110,
+            "file_sha256": "sha256:be95b937234cf6cd6dfba2c767035546fddfe6cb389a9858af49aeeb7469a6fa"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:3e512dfe0ca21d6202bba242004708fc2f50779df7a2905a5a55117f1bcae2be",
+          "fail_to_pass_case_count": 3,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 7,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 4,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 1110,
+            "file_sha256": "sha256:be95b937234cf6cd6dfba2c767035546fddfe6cb389a9858af49aeeb7469a6fa"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:25294dc40cc4432c6206d368580103d65fb41f2a45a33a8ba7823d62500788d1",
+          "fail_to_pass_case_count": 3,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 7,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 4,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 1110,
+            "file_sha256": "sha256:be95b937234cf6cd6dfba2c767035546fddfe6cb389a9858af49aeeb7469a6fa"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "pydantic/pydantic-ai",
+      "task_id": "pydantic__pydantic-ai-5842"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:7780f887498d06b0992e93bb6a431122235ea5170e0b3915679c972a5b77a737",
+        "fail_to_pass_case_count": 6,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 6,
+          "passed": 12,
+          "skipped": 31
+        },
+        "pass_to_pass_case_count": 12,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 2125,
+          "file_sha256": "sha256:b8f20d3e4f93ab9aa4daabf8014b0ede823ffdcdb85b1b270b9e26480aeab83d"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:1f5ba84885793a7e9565ac5044d57f85ce83b320f16a872d96c3c887e7086945",
+      "expected_partial_receipts": 10,
+      "expected_rejected_partial_receipts": 8,
+      "missing_partial_receipts": 10,
+      "package_archive": {
+        "file_bytes": 18011,
+        "file_sha256": "sha256:8a8904c595faee8f949f99a8150d514b31e27cd64d3d36bd8055b1431eb7e350"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:deb24e4c022848000ce8b558d0fb735f402d57c2ec09e84b3315011e5ac6933e",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 49,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 12,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 2104,
+            "file_sha256": "sha256:79da320b4f1b8190fe28d3b9cddcd612f70afde1d05db46efaa1f1b078d95456"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:30377e8c91e075d1a9af086480fc12687eb697f76a0f93f36ba3c583966140d3",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 49,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 12,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 2104,
+            "file_sha256": "sha256:79da320b4f1b8190fe28d3b9cddcd612f70afde1d05db46efaa1f1b078d95456"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:bc089a23d4eff05ba94ebd2d77f375e0497cad32a2e7ea0ff1f01733594dedc8",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 49,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 12,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 2104,
+            "file_sha256": "sha256:79da320b4f1b8190fe28d3b9cddcd612f70afde1d05db46efaa1f1b078d95456"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "HKUDS/nanobot",
+      "task_id": "hkuds__nanobot-4048"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:d4a269da02567f9f4ab61313c2773968a0d98c8d20844af3a0ee0d736daf6273",
+        "fail_to_pass_case_count": 6,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 6,
+          "passed": 17,
+          "skipped": 0
+        },
+        "pass_to_pass_case_count": 17,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 2470,
+          "file_sha256": "sha256:7bc8cc1b0dbda442c987fef6877bbabeb75ad1b62d419a84c35cacb1c418872f"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:b142ae14e0b6d72969236a3329a33f5f4895d21da38adc5022294b555dbc3544",
+      "expected_partial_receipts": 8,
+      "expected_rejected_partial_receipts": 8,
+      "missing_partial_receipts": 8,
+      "package_archive": {
+        "file_bytes": 19108,
+        "file_sha256": "sha256:854584328ef2c46260e01d0e1517e3bdc7a7599abe8538fdc79da911610366ca"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:4086341e885319b13d2ab97926e5c5a3973983be1752722ce819578b40cfd25d",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 23,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 17,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 2450,
+            "file_sha256": "sha256:de4413556b6ca841ba1748aa27faba185d26b171e1d7ee259b0bc2d2c207db34"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:a74a8ea626e0de1afbdea5298fe94dde52a4e6bb7439a1eb45daad4a7ce95633",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 23,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 17,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 2450,
+            "file_sha256": "sha256:de4413556b6ca841ba1748aa27faba185d26b171e1d7ee259b0bc2d2c207db34"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:23d4d17606f6ba2b714af96a786fb73e500109c6b6a808d92a5ac344815a6b68",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 23,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 17,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 2450,
+            "file_sha256": "sha256:de4413556b6ca841ba1748aa27faba185d26b171e1d7ee259b0bc2d2c207db34"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "Soju06/codex-lb",
+      "task_id": "soju06__codex-lb-744"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:0a8271fd2b23eec1724478c1b67b7a06efbd573e0e29191e0f871d8ed6f9b68b",
+        "fail_to_pass_case_count": 2,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 2,
+          "passed": 8,
+          "skipped": 1
+        },
+        "pass_to_pass_case_count": 8,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 1825,
+          "file_sha256": "sha256:011e8252424bb96b77f47bfdd9ecc855e5c584d4e89ad5a5cb5a9ecf4b161666"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:97ac82cfbb06b9508e4b9161a36e279f5be23e1fac4f30c48317863a384c65f4",
+      "expected_partial_receipts": 10,
+      "expected_rejected_partial_receipts": 8,
+      "missing_partial_receipts": 10,
+      "package_archive": {
+        "file_bytes": 20201,
+        "file_sha256": "sha256:2f60d14628014e4aeb9553c0fd656331a46bc0b89a98961caf813816f587709e"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:d3428fadb44bc9028bfa8a7612573769d2697c8370a9ab86e0e9762dbb3ff2fe",
+          "fail_to_pass_case_count": 2,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 10,
+            "skipped": 1
+          },
+          "pass_to_pass_case_count": 8,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 1818,
+            "file_sha256": "sha256:b657cb37b37611b69fce266adad709a4529ce902e7f94cd6f5ab4bde10f2febe"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:31781756378e1b5a0893b574b60ff654ffbfd5386b20d6f550134fb205cccb26",
+          "fail_to_pass_case_count": 2,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 10,
+            "skipped": 1
+          },
+          "pass_to_pass_case_count": 8,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 1818,
+            "file_sha256": "sha256:b657cb37b37611b69fce266adad709a4529ce902e7f94cd6f5ab4bde10f2febe"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:1430f7b9ca10f4655ad7fa329de1590a6905c3898858f3a03adcfc963d9dd8e0",
+          "fail_to_pass_case_count": 2,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 10,
+            "skipped": 1
+          },
+          "pass_to_pass_case_count": 8,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 1818,
+            "file_sha256": "sha256:b657cb37b37611b69fce266adad709a4529ce902e7f94cd6f5ab4bde10f2febe"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "nesquena/hermes-webui",
+      "task_id": "nesquena__hermes-webui-3069"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:357a5c5c79337cbdede5ce42341c387065dfc1f2ac6808da4003019e0e53411a",
+        "fail_to_pass_case_count": 8,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 8,
+          "passed": 50,
+          "skipped": 0
+        },
+        "pass_to_pass_case_count": 50,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 8280,
+          "file_sha256": "sha256:39d7b02901766189bf47c3b4d7993d4d58d63ae5b663e524183c54ba3ba2fbc7"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:3a016e03cfb170267db00837cb02308dcc33124c4211c70b83e88390639b33bb",
+      "expected_partial_receipts": 8,
+      "expected_rejected_partial_receipts": 8,
+      "missing_partial_receipts": 8,
+      "package_archive": {
+        "file_bytes": 19577,
+        "file_sha256": "sha256:d3abcef43f93dbef255adb73eff1844b5b32bd6a3fafb5f98313d01abf12c209"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:aefcf8484ef91da19e6ab0591f4dd6a7afd4971b3ba952ab544be0de3a26cc8b",
+          "fail_to_pass_case_count": 8,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 58,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 50,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 8254,
+            "file_sha256": "sha256:692b2deec22fe43371a738069c25569e0728457a07c10eff959777139fdb977b"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:3fc6bae72befb116329edad694213114928648a089809d308b4e6bcbe3fe8d3d",
+          "fail_to_pass_case_count": 8,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 58,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 50,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 8254,
+            "file_sha256": "sha256:692b2deec22fe43371a738069c25569e0728457a07c10eff959777139fdb977b"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:88fca7389ad74fcb5b38d97b132b82323c08ab75407f9ec8b41e3db804c0ddb5",
+          "fail_to_pass_case_count": 8,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 58,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 50,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 8254,
+            "file_sha256": "sha256:692b2deec22fe43371a738069c25569e0728457a07c10eff959777139fdb977b"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "agno-agi/agno",
+      "task_id": "agno-agi__agno-8148"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:236e87c6e6ff3abe5c27149c2b6904c4b845003b79f9473595b225d8718b3490",
+        "fail_to_pass_case_count": 9,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 9,
+          "passed": 23,
+          "skipped": 1
+        },
+        "pass_to_pass_case_count": 23,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 4081,
+          "file_sha256": "sha256:6305409e6ae3da02f4c5895fdce81b13e5527731409537b8b72d56f77b7efb2c"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:5f1e6d80141a4afbbef48ef0fd819d9b0a695b842a88f9b8e1dfbc3421a39ff3",
+      "expected_partial_receipts": 8,
+      "expected_rejected_partial_receipts": 8,
+      "missing_partial_receipts": 8,
+      "package_archive": {
+        "file_bytes": 21263,
+        "file_sha256": "sha256:532218405f8db113438de18fcc5bb90af8cb3808ecd41d65d1c8cd6ebc49ce7f"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:c6e8d1f0c0d29869ccd4d5f5261e525b9c47eb0347b15e92acd3a14323aa232a",
+          "fail_to_pass_case_count": 9,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 33,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 23,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 4052,
+            "file_sha256": "sha256:3543e3d11c0428097389456827de3a45fb8f7f16676e361b68bf386312b57795"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:6de6b07610388983fb0e12105855c8c0c9c5c09f836dbf4cadd552ce451f1bfd",
+          "fail_to_pass_case_count": 9,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 33,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 23,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 4052,
+            "file_sha256": "sha256:3543e3d11c0428097389456827de3a45fb8f7f16676e361b68bf386312b57795"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:4ddb5e6218b154ec757d315661b744fbc48a7389b703ffb950415e86b52c9d54",
+          "fail_to_pass_case_count": 9,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 33,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 23,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 4052,
+            "file_sha256": "sha256:3543e3d11c0428097389456827de3a45fb8f7f16676e361b68bf386312b57795"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "mozilla-ai/any-llm",
+      "task_id": "mozilla-ai__any-llm-1121"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:dac97d9e7c24c5080f1f08587da602b2888cd6c2840086666551f909c18b2eb7",
+        "fail_to_pass_case_count": 3,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 3,
+          "passed": 1,
+          "skipped": 0
+        },
+        "pass_to_pass_case_count": 1,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 674,
+          "file_sha256": "sha256:f15cd822c0b23483daece566d134a3268c60d78c79229a96482932a66e64902f"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:403075da8192ea17d4f2fbe0113cd79856ec86e0ee7fb045592695c83a191c22",
+      "expected_partial_receipts": 19,
+      "expected_rejected_partial_receipts": 8,
+      "missing_partial_receipts": 19,
+      "package_archive": {
+        "file_bytes": 14371,
+        "file_sha256": "sha256:2c9a1c39438de8b7049388615925f7e3c998bb0e8dc28e41e664a8eed4df556c"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:03983199e7b6ff26cb8bf57ce4ec75b74635fc6a137dde934c3fe44faa2019f2",
+          "fail_to_pass_case_count": 3,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 4,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 1,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 663,
+            "file_sha256": "sha256:06c0af87b3509632b92e495e5e26af614a07d814aea6719c3f24a4484761420d"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:7f8431dc9a919617a3d5e781031b4fbde2f907b1d4d80427dea4719eecf5f7d6",
+          "fail_to_pass_case_count": 3,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 4,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 1,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 663,
+            "file_sha256": "sha256:06c0af87b3509632b92e495e5e26af614a07d814aea6719c3f24a4484761420d"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:95ba464841c987de01f4d181aede7ccc1ab93ca15b4a5416bb89f5133c991a9c",
+          "fail_to_pass_case_count": 3,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 4,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 1,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 663,
+            "file_sha256": "sha256:06c0af87b3509632b92e495e5e26af614a07d814aea6719c3f24a4484761420d"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "livekit/agents",
+      "task_id": "livekit__agents-5944"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:6dea5452e2ccf28e1f18d4b8834d097af73e77ac332290b46a0e28b180f49345",
+        "fail_to_pass_case_count": 1,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 1,
+          "passed": 1,
+          "skipped": 1
+        },
+        "pass_to_pass_case_count": 1,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 504,
+          "file_sha256": "sha256:af9b0ccc8531ac0aa190a6755614e77c7411ae3127a33418a2604a3246845fdf"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:d9c5eee98e45299fe218ba34fbedc47eac9783f3fb99fb11171d130e0486ace5",
+      "expected_partial_receipts": 8,
+      "expected_rejected_partial_receipts": 8,
+      "missing_partial_receipts": 8,
+      "package_archive": {
+        "file_bytes": 17996,
+        "file_sha256": "sha256:e04eb6b88b472fa87221969a18d6f02799e481cc0ea5c910e09b7fe817440482"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:350451fe02698fff76dfceb772998232cbfa329a7fa7e53cede9ffbe5617d06e",
+          "fail_to_pass_case_count": 1,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 2,
+            "skipped": 1
+          },
+          "pass_to_pass_case_count": 1,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 499,
+            "file_sha256": "sha256:40007bd4216f34d3a7a48ca975db17afe364ec75538d818ee1e97299f8f388d6"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:80c8ad0dd7bad4914abd2cb162508f4365d1acb11eb1f8ed07a5c741d92daff3",
+          "fail_to_pass_case_count": 1,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 2,
+            "skipped": 1
+          },
+          "pass_to_pass_case_count": 1,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 499,
+            "file_sha256": "sha256:40007bd4216f34d3a7a48ca975db17afe364ec75538d818ee1e97299f8f388d6"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:1ce2fe14d2d7814ac4bc2cccbbcac7ff60de39dc6d8b61857419846fb381ec43",
+          "fail_to_pass_case_count": 1,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 2,
+            "skipped": 1
+          },
+          "pass_to_pass_case_count": 1,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 499,
+            "file_sha256": "sha256:40007bd4216f34d3a7a48ca975db17afe364ec75538d818ee1e97299f8f388d6"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "verl-project/verl",
+      "task_id": "verl-project__verl-6506"
+    },
+    {
+      "available_partial_receipts": 0,
+      "available_partial_receipts_sanitized": true,
+      "available_rejected_partial_receipts": 0,
+      "base_contract_verified": true,
+      "base_report": {
+        "content_hash": "sha256:8122e47c4782cb2864b759eb4bfc8aebee7e5487e9f63726a00f49dd6c5260d6",
+        "fail_to_pass_case_count": 6,
+        "fail_to_pass_ok": false,
+        "log_parser_present": true,
+        "ordinal": 1,
+        "parsed_counts": {
+          "error": 0,
+          "failed": 6,
+          "passed": 77,
+          "skipped": 0
+        },
+        "pass_to_pass_case_count": 77,
+        "pass_to_pass_ok": true,
+        "raw_report": {
+          "file_bytes": 9969,
+          "file_sha256": "sha256:7bd36e34236404427c48ea8ed83bdb585b1be063630edd83a5effe88b0915a2a"
+        },
+        "raw_test_identifiers_persisted": 0,
+        "raw_test_outputs_persisted": 0,
+        "resolved": false,
+        "role": "base"
+      },
+      "content_hash": "sha256:6394c458277bb45ef2a3bbb62955e425ce71187a3b74225e8b958d635bdee33e",
+      "expected_partial_receipts": 10,
+      "expected_rejected_partial_receipts": 10,
+      "missing_partial_receipts": 10,
+      "package_archive": {
+        "file_bytes": 22465,
+        "file_sha256": "sha256:815dfac81de402c2c874ebf0fa7cee371254989fa941419803bb7526d4b68f00"
+      },
+      "partial_reports": [],
+      "raw_receipt_set_complete": false,
+      "reference_reports": [
+        {
+          "content_hash": "sha256:cae156b310c15534bb26655b1edae0f9919bd7aed7e14b6a97429e3f57f81797",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 1,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 83,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 77,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 9949,
+            "file_sha256": "sha256:fbdd68ebbf945a54d20396669b1f0097965b86dab214fc2dacb721bef0dc61ba"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:9c0c2fa14e15f887447e8c2572f4524bc2fc837a5aad039d3cf14e424105987e",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 2,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 83,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 77,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 9949,
+            "file_sha256": "sha256:fbdd68ebbf945a54d20396669b1f0097965b86dab214fc2dacb721bef0dc61ba"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        },
+        {
+          "content_hash": "sha256:05f9ca8d5420f4cace3eca4007407b994be4ba35c6a8ff961b72a1d74090726a",
+          "fail_to_pass_case_count": 6,
+          "fail_to_pass_ok": true,
+          "log_parser_present": true,
+          "ordinal": 3,
+          "parsed_counts": {
+            "error": 0,
+            "failed": 0,
+            "passed": 83,
+            "skipped": 0
+          },
+          "pass_to_pass_case_count": 77,
+          "pass_to_pass_ok": true,
+          "raw_report": {
+            "file_bytes": 9949,
+            "file_sha256": "sha256:fbdd68ebbf945a54d20396669b1f0097965b86dab214fc2dacb721bef0dc61ba"
+          },
+          "raw_test_identifiers_persisted": 0,
+          "raw_test_outputs_persisted": 0,
+          "resolved": true,
+          "role": "reference"
+        }
+      ],
+      "reference_triplicate_verified": true,
+      "repository": "raullenchai/Rapid-MLX",
+      "task_id": "raullenchai__rapid-mlx-426"
+    }
+  ],
+  "schema_version": "lean-fresh-harbor-admission-evidence-inventory-v1",
+  "source_qualification_binding": {
+    "content_hash": "sha256:cbe435ae2f6a203e6c468afb1e5cd9c61d9802d1bad7331de642142daf6c6056",
+    "file_bytes": 4797,
+    "file_sha256": "sha256:7f930251777d2c512b8769c13fb838dff6d9b30f1db0a2dbe6d750a2c5f2f10d",
+    "path": "reports/fresh-panel/artifacts/lean-fresh-harbor-admission-source-qualification-r1.json",
+    "role": "admission-sanitizer-source-qualification"
+  },
+  "status": "SANITIZED_RAW_ADMISSION_INVENTORY_INCOMPLETE_ACTIVATION_BLOCKED",
+  "tasks_with_complete_raw_receipt_set": 1
+}

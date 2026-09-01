@@ -1,0 +1,118 @@
+schema_version: task-public-v1
+task_id: anyio-interrupt-runner-cleanup
+task_version: 2
+split: dev-validation
+repository:
+  url: https://github.com/agronholm/anyio.git
+  base_commit: cb245dba9883516f2ed4c23899de157183a1cb50
+  language: python
+issue:
+  title: Async pytest tests resume after KeyboardInterrupt during fixture teardown
+  description: |
+    On the asyncio backend, interrupting an async pytest test that uses an
+    async-generator fixture can leave the test runner alive. When pytest later
+    re-enters the event loop to tear the fixture down, the interrupted test may
+    resume and execute code that should never run.
+
+    Ensure the interrupt still propagates, the interrupted test cannot resume,
+    and async fixture cleanup completes exactly once. Preserve normal pytest
+    pass, failure, skip, and expected-failure outcomes, including fixtures whose
+    lifetime spans more than one test.
+constraints:
+  allowed_paths:
+    - src/anyio/**
+  forbidden_paths:
+    - tests/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - uv.lock
+    - requirements.txt
+  max_changed_files: 1
+  max_diff_lines: 50
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: public-interrupt-runner-lifecycle
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -c
+      - |-
+        import asyncio
+        import signal
+
+        from anyio._backends._asyncio import TestRunner
+
+        events = []
+
+        async def fixture():
+            events.append("fixture-start")
+            try:
+                yield "ready"
+            finally:
+                events.append("fixture-cleanup")
+
+        async def interrupted_test():
+            events.append("test-start")
+            signal.raise_signal(signal.SIGINT)
+            await asyncio.sleep(0)
+            events.append("test-resumed")
+
+        async def following_test():
+            events.append("following-test")
+
+        with TestRunner() as runner:
+            fixture_runner = runner.run_asyncgen_fixture(fixture, {})
+            assert next(fixture_runner) == "ready"
+            try:
+                runner.run_test(interrupted_test, {})
+            except KeyboardInterrupt:
+                events.append("interrupt-propagated")
+            else:
+                raise AssertionError("KeyboardInterrupt did not propagate")
+
+            try:
+                next(fixture_runner)
+            except StopIteration:
+                pass
+            else:
+                raise AssertionError("async fixture cleanup did not finish")
+            runner.run_test(following_test, {})
+
+        assert events == [
+            "fixture-start",
+            "test-start",
+            "interrupt-propagated",
+            "fixture-cleanup",
+            "following-test",
+        ], events
+    timeout_seconds: 30
+    environment:
+      PYTHONPATH: /workspace/src
+  - id: upstream-pytest-plugin-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - tests/test_pytest_plugin.py
+      - --deselect
+      - tests/test_pytest_plugin.py::test_plugin
+      - --deselect
+      - tests/test_pytest_plugin.py::test_hypothesis_module_mark
+      - --deselect
+      - tests/test_pytest_plugin.py::test_hypothesis_function_mark
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/src
+tags:
+  - swe-rebench
+  - real-repository
+  - asyncio
+  - pytest-plugin
+  - interrupt-lifecycle
+  - memory-development
+  - development-validation
+  - public-behavior-check-v2

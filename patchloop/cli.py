@@ -8,7 +8,7 @@ import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 
@@ -432,6 +432,97 @@ def evaluate(
     )
 
 
+@app.command("rapid")
+def rapid_public_development(
+    config: Annotated[
+        Path,
+        typer.Option("--config", exists=True, dir_okay=False),
+    ] = Path("experiments/rapid-public-development-hard-panel-20260822-r3.yaml"),
+    mode: Annotated[
+        Literal["validate", "rehearse", "run"],
+        typer.Option("--mode"),
+    ] = "validate",
+    approve_live_cost: Annotated[bool, typer.Option("--approve-live-cost")] = False,
+    approved_execution_hash: Annotated[
+        str | None,
+        typer.Option("--approved-execution-hash"),
+    ] = None,
+    env_file: Annotated[
+        Path | None,
+        typer.Option("--env-file", exists=True, dir_okay=False),
+    ] = None,
+) -> None:
+    """Validate, no-call rehearse, or run one unofficial development batch."""
+
+    root = repository_root()
+    v3_config = (
+        root / "experiments" / "rapid-public-development-hard-panel-20260822-r3.yaml"
+    ).resolve()
+    v2_config = (
+        root
+        / "experiments"
+        / "rapid-public-development-lean-harness-20260821-r2.yaml"
+    ).resolve()
+    is_current = config.resolve() == v3_config
+    is_v2 = config.resolve() == v2_config
+    rehearse_rapid = None
+    if is_current:
+        from patchloop.evals.rapid_public_development_v4 import (
+            load_rapid_public_development_v4_candidate as validate_candidate,
+        )
+        from patchloop.evals.rapid_public_development_v4 import (
+            rehearse_rapid_public_development_v4 as rehearse_rapid,
+        )
+        from patchloop.evals.rapid_public_development_v4 import (
+            run_rapid_public_development_v4 as run_rapid,
+        )
+
+    elif is_v2:
+        from patchloop.evals.rapid_public_development_v2 import (
+            load_rapid_public_development_v2_candidate as validate_candidate,
+        )
+        from patchloop.evals.rapid_public_development_v2 import (
+            run_rapid_public_development_v2 as run_rapid,
+        )
+
+    else:
+        from patchloop.evals.rapid_public_development import (
+            build_rapid_public_development_candidate as validate_candidate,
+        )
+        from patchloop.evals.rapid_public_development import (
+            run_rapid_public_development as run_rapid,
+        )
+
+    if mode == "validate":
+        if is_v2 or is_current:
+            _guarded(validate_candidate)
+        else:
+            _guarded(lambda: validate_candidate(config))
+        return
+    if mode == "rehearse":
+        if rehearse_rapid is None:
+            _guarded(
+                lambda: (_ for _ in ()).throw(
+                    ContractError(
+                        "rehearsal is available only for the active Rapid candidate-v6"
+                    )
+                )
+            )
+        else:
+            _guarded(lambda: rehearse_rapid(config))
+        return
+    _guarded(
+        lambda: _with_exact_env_file(
+            env_file,
+            lambda: run_rapid(
+                config,
+                approve_live_cost=approve_live_cost,
+                approved_execution_hash=approved_execution_hash,
+            ),
+        )
+    )
+
+
 @app.command("preflight")
 def preflight_command(
     suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False)],
@@ -441,10 +532,7 @@ def preflight_command(
             "--env-file",
             exists=True,
             dir_okay=False,
-            help=(
-                "Credential file containing only OPENAI_API_KEY. "
-                "Its value is never emitted."
-            ),
+            help=("Credential file containing only OPENAI_API_KEY. Its value is never emitted."),
         ),
     ] = Path(".env"),
     max_attempts: Annotated[

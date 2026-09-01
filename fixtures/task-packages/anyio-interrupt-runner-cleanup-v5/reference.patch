@@ -1,0 +1,31 @@
+diff --git a/src/anyio/_backends/_asyncio.py b/src/anyio/_backends/_asyncio.py
+--- a/src/anyio/_backends/_asyncio.py
++++ b/src/anyio/_backends/_asyncio.py
+@@ -2315,11 +2315,27 @@ class TestRunner(abc.TestRunner):
+     def run_test(
+         self, test_func: Callable[..., Coroutine[Any, Any, Any]], kwargs: dict[str, Any]
+     ) -> None:
++        from _pytest.outcomes import OutcomeException
++
+         try:
+             self.get_loop().run_until_complete(
+                 self._call_in_runner_task(test_func, **kwargs)
+             )
+         except Exception as exc:
+             self._exceptions.append(exc)
++        except OutcomeException:
++            raise
++        except BaseException:
++            if self._runner_task is not None and not self._runner_task.done():
++                self._runner_task.cancel()
++                self._send_stream.close()
++                try:
++                    self.get_loop().run_until_complete(self._runner_task)
++                except CancelledError:
++                    pass
++                finally:
++                    self._runner_task = None
++
++            raise
+ 
+         self._raise_async_exceptions()

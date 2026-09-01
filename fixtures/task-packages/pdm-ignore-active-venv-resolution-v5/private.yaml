@@ -1,0 +1,41 @@
+schema_version: task-private-v1
+task_id: pdm-ignore-active-venv-resolution
+task_version: 5
+hidden_checks:
+  - id: ignore-active-venv-resolution
+    command:
+      - /usr/local/bin/python
+      - -m
+      - unittest
+      - discover
+      - -s
+      - .patchloop-hidden
+      - -p
+      - test_*.py
+      - -v
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      XDG_CACHE_HOME: /tmp/xdg-cache
+      XDG_CONFIG_HOME: /tmp/xdg-config
+      XDG_DATA_HOME: /tmp/xdg-data
+      PDM_HOME: /tmp/pdm-home
+      HOME: /tmp/home
+      CI: "1"
+      PDM_CHECK_UPDATE: "0"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:9c6c6cf6748b576a91cc9d4116838e8df28dc03db879fe77f04a747200957e65
+audit:
+  expected_files:
+    - src/pdm/project/core.py
+  prohibited_behaviors:
+    - disabling the entire virtualenv resolution branch when the flag is enabled
+    - reusing the active environment through the associated-venv search
+    - treating false-like environment values as enabled
+    - ignoring every associated virtualenv instead of only the active one
+    - omitting CONDA_PREFIX from active-environment detection
+    - classifying sibling path prefixes as active-environment descendants
+    - changing saved-interpreter, global-project, or non-venv precedence
+    - modifying tests, news, documentation, configuration, or dependency metadata

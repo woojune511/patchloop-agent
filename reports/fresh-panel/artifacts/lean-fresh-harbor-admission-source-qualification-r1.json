@@ -1,0 +1,111 @@
+{
+  "authority": {
+    "added_model_cost_usd": 0,
+    "agent_runs": 0,
+    "candidate_creation_authorized": false,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "execution_authorized": false,
+    "network_calls": 0,
+    "private_test_identifiers_persisted": 0,
+    "private_verifier_reports_read": 0,
+    "provider_calls": 0,
+    "raw_admission_replay_complete": false,
+    "raw_package_archives_read": 0,
+    "raw_test_outputs_persisted": 0,
+    "sanitizer_source_qualified": true,
+    "solution_or_reference_patch_files_read": 0,
+    "source_files_read": 3,
+    "task_package_conversion_authorized": false,
+    "validation_files_read": 1
+  },
+  "checks": {
+    "append-only-output": true,
+    "base-and-reference-semantics-fail-closed": true,
+    "duplicate-json-keys-rejected": true,
+    "package-archive-bytes-not-extracted": true,
+    "partial-receipt-absence-remains-blocking": true,
+    "raw-output-text-not-persisted": true,
+    "raw-report-top-level-schema-closed": true,
+    "report-byte-size-and-sha-bound": true,
+    "selected-archive-hash-bound-to-frozen-observation": true,
+    "source-root-links-and-escape-rejected": true,
+    "test-identifiers-counted-not-persisted": true
+  },
+  "content_hash": "sha256:cbe435ae2f6a203e6c468afb1e5cd9c61d9802d1bad7331de642142daf6c6056",
+  "next_gate": "capture-sanitized-raw-admission-availability-without-docker-or-task-conversion",
+  "predecessor_bindings": [
+    {
+      "content_hash": "sha256:12bb5ca18034f7592c4d630ff91c9789a81ff7af22803da3269e68343f234955",
+      "file_bytes": 8815,
+      "file_sha256": "sha256:a6d2918b486e36dc2ba6e4d8f586ee4b46a8c2b60a4abb3854b98c4715c99748",
+      "path": "experiments/lean-harness-fresh-all-cross-preregistration-20260818-v1.json",
+      "role": "all-cross-successor-preregistration"
+    },
+    {
+      "content_hash": "sha256:bf4e3711c4b116bd3027781a9f39b3ae0fcf94b38563c83a408061c15e34f135",
+      "file_bytes": 19240,
+      "file_sha256": "sha256:2e5565faa2bb2c2b63cb52a4fcde8b920488be1c59acc5538f567a99c26917a6",
+      "path": "reports/fresh-panel/artifacts/lean-fresh-all-cross-registry-qualification-r1.json",
+      "role": "all-cross-public-registry-qualification"
+    },
+    {
+      "content_hash": "sha256:f57eded985460f982e908b768d1b512cc6bf6daeaf26e59f86a688343d9f951f",
+      "file_bytes": 22629,
+      "file_sha256": "sha256:3d81476977071be5e578697e0e4da53e9bdbbdf9e84504af465f8159e40c3a19",
+      "path": "experiments/lean-harness-fresh-all-cross-suite-20260818-v1.json",
+      "role": "all-cross-metadata-suite"
+    },
+    {
+      "content_hash": "sha256:1f13d5a84fb41ecb83ccc45c16f8fff8551114475cc55041be9ebbe49e75c755",
+      "file_bytes": 3726,
+      "file_sha256": "sha256:d7408a99fc498032f736b8741edb28848e6eb0a963eabfc18546a5a572036939",
+      "path": "experiments/lean-harness-fresh-all-cross-activation-plan-20260818-v1.json",
+      "role": "all-cross-activation-plan"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 15689,
+      "file_sha256": "sha256:fb947e2e6ba227f1993fe41a625ab5fac028d38b4e9ec42a7e859101c85e6e1a",
+      "path": "reports/fresh-panel/artifacts/fresh-all-cross-search-observation-v1.json",
+      "role": "frozen-public-admission-observation"
+    }
+  ],
+  "qualification_id": "lean-fresh-harbor-admission-sanitizer-20260818-r1",
+  "schema_version": "lean-fresh-harbor-admission-source-qualification-v1",
+  "source_files": [
+    {
+      "content_hash": null,
+      "file_bytes": 43865,
+      "file_sha256": "sha256:148c93f096e118d6fbf9162733539d3965d4c1e165fcf086cb99069692f7e150",
+      "path": "patchloop/evals/fresh_harbor_admission.py",
+      "role": "admission-sanitizer-source"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 484,
+      "file_sha256": "sha256:e0237e4d0a6cb4e3271e3b4eb0658a74f989eb8fd67d0d2215c91ac8a8649f33",
+      "path": "scripts/build_lean_fresh_harbor_admission_source_qualification.py",
+      "role": "admission-sanitizer-source"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 671,
+      "file_sha256": "sha256:e840739fad7663f454c7030a7c18cb8e25bd171542011ef15ea9023163dd1e4d",
+      "path": "scripts/capture_lean_fresh_harbor_admission_inventory.py",
+      "role": "admission-sanitizer-source"
+    }
+  ],
+  "source_inventory_hash": "sha256:8dcb44a5e7a02eb224e8a0f405546388b77b7521be4d9ec7d4f31bdfa66cf80f",
+  "status": "ADMISSION_SANITIZER_SOURCE_QUALIFIED_NO_RAW_REPLAY_AUTHORITY",
+  "validation_files": [
+    {
+      "content_hash": null,
+      "file_bytes": 8879,
+      "file_sha256": "sha256:26425b2e74e64940debf91d5001b86cae5792a61b65740f394a92f70f882319d",
+      "path": "tests/test_fresh_harbor_admission.py",
+      "role": "admission-sanitizer-validation"
+    }
+  ],
+  "validation_inventory_hash": "sha256:ef9f8f9ba8aa41307a823125023213e85e6286997f8421d26ef5b90fa731ac84"
+}

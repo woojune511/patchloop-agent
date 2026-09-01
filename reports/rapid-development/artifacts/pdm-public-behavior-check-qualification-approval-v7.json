@@ -1,0 +1,18 @@
+{
+  "agent_evaluator_provider_network_cost_authorized": false,
+  "approved_container_runs": 2,
+  "approved_image_identity_inspects": 1,
+  "candidate": {
+    "content_hash": "sha256:0bbf713fcdd58e4d6ebe9f3fa113a1f3054a4c6b698e42ce665e6fc0ff061976",
+    "file_bytes": 14282,
+    "file_sha256": "sha256:5f2935d5e99f8c7e0207387fed20d84736ca6829c1b021f66cca77336ce41e70",
+    "path": "reports/rapid-development/artifacts/pdm-public-behavior-check-qualification-candidate-v7.json"
+  },
+  "content_hash": "sha256:68085682bcd6f4716b92a17f93bfd21c915031a92fab61090e326d1a0d42c3f7",
+  "execution_hash": "sha256:bb0a182325cfeb66fe030251b244d4528ca84777758ba0a6c41a2de431a28f20",
+  "image_pull_build_tag_remove_prune_authorized": false,
+  "recorded_at": "2026-08-22T04:08:22.061418Z",
+  "schema_version": "public-behavior-check-qualification-approval-v7",
+  "status": "EXACT_DOCKER_QUALIFICATION_APPROVED_ONCE",
+  "user_message_sha256": "sha256:13f876df7fbc02e5a2f649d07c2f1150ca1e8494d6072a5f1021139f70912180"
+}

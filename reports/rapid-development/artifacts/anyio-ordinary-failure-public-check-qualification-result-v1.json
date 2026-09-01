@@ -1,0 +1,130 @@
+{
+  "added_cost_usd": 0,
+  "agent_calls": 0,
+  "content_hash": "sha256:0e5d5e48dc15b0fa01bb1d83ff8068cdf28d6ebe6affed7c407e6eb1cdef465a",
+  "docker_container_run_attempts": 2,
+  "docker_container_run_completions": 2,
+  "docker_image_inspect_calls": 1,
+  "evaluator_calls": 0,
+  "execution_error_class": null,
+  "execution_hash": "sha256:4269db56125f87e84e22a26299c9e2c58c55832e696f344068f6f09063544600",
+  "image_identity_observations": [
+    {
+      "config_id": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "error_class": null,
+      "matched": true,
+      "matched_repo_digest": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "requested_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "task_id": "anyio-interrupt-runner-cleanup"
+    }
+  ],
+  "image_pull_build_tag_remove_prune_calls": 0,
+  "network_calls": 0,
+  "next_gate": "design-append-only-anyio-public-task-successor",
+  "official": false,
+  "provider_calls": 0,
+  "raw_output_persisted": false,
+  "recorded_at": "2026-08-26T20:45:15.108012Z",
+  "row_observations": [
+    {
+      "base_source_archive_sha256": "sha256:28cecaf9114d994f69ca8bd8eafa2abebbd0ae4b6c9a89367ca04dbfc45d5326",
+      "check_command_hash": "sha256:eec2ca90c5a2be9d962243d6ca257d593b665e700735ca1a805767ced18a932a",
+      "check_hash": "sha256:428c3a661178add9ec53b2ba4b4d19b34948e1824f3b1a88f6949c2690080040",
+      "check_id": "public-ordinary-failure-preservation",
+      "exit_code": 0,
+      "expected_observation": "pass",
+      "expected_observation_matched": true,
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "observation": "pass",
+      "order": 1,
+      "original_output_bytes": 0,
+      "public_case_markers": [],
+      "raw_output_persisted": false,
+      "reference_patch_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+      "requested_execution_policy": {
+        "cpus": "2",
+        "image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+        "launcher_timeout_seconds": 35,
+        "memory": "2g",
+        "output_limit_bytes": 20000,
+        "pids_limit": 128,
+        "read_only_root": true,
+        "read_only_workspace": true,
+        "requested_network": "none",
+        "requested_timeout_seconds": 30,
+        "sandbox_backend": "docker",
+        "schema_version": "docker-registered-check-requested-policy-v1",
+        "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+        "working_directory": "/workspace"
+      },
+      "schedule_row_id": "sha256:9cdfe4dab196badcb205120b99056dd57c05988a9a4fb5c7ab5b2623b4d95960",
+      "source_state": "base",
+      "stderr": {
+        "bounded_bytes": 0,
+        "bounded_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bounded_bytes": 0,
+        "bounded_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "timed_out": false,
+      "truncated": false
+    },
+    {
+      "base_source_archive_sha256": "sha256:28cecaf9114d994f69ca8bd8eafa2abebbd0ae4b6c9a89367ca04dbfc45d5326",
+      "check_command_hash": "sha256:eec2ca90c5a2be9d962243d6ca257d593b665e700735ca1a805767ced18a932a",
+      "check_hash": "sha256:428c3a661178add9ec53b2ba4b4d19b34948e1824f3b1a88f6949c2690080040",
+      "check_id": "public-ordinary-failure-preservation",
+      "exit_code": 0,
+      "expected_observation": "pass",
+      "expected_observation_matched": true,
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "observation": "pass",
+      "order": 2,
+      "original_output_bytes": 0,
+      "public_case_markers": [],
+      "raw_output_persisted": false,
+      "reference_patch_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+      "requested_execution_policy": {
+        "cpus": "2",
+        "image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+        "launcher_timeout_seconds": 35,
+        "memory": "2g",
+        "output_limit_bytes": 20000,
+        "pids_limit": 128,
+        "read_only_root": true,
+        "read_only_workspace": true,
+        "requested_network": "none",
+        "requested_timeout_seconds": 30,
+        "sandbox_backend": "docker",
+        "schema_version": "docker-registered-check-requested-policy-v1",
+        "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+        "working_directory": "/workspace"
+      },
+      "schedule_row_id": "sha256:a4bd2d07309952be4a4432d03737c9633772afff87cdbf3a28056a45b80ae29e",
+      "source_state": "reference",
+      "stderr": {
+        "bounded_bytes": 0,
+        "bounded_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bounded_bytes": 0,
+        "bounded_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "timed_out": false,
+      "truncated": false
+    }
+  ],
+  "schema_version": "anyio-ordinary-failure-public-check-qualification-result-v1",
+  "source_qualification": {
+    "content_hash": "sha256:dbd9b94fbe1ca3aadf34f59bd5045c05d234ac907c192368abef42a973ca4307",
+    "file_bytes": 6970,
+    "file_sha256": "sha256:f92590a5dd1ae8d5baf68541c3013dd24dd76bd43ab298b9299ed5f8e381b369",
+    "path": "experiments/anyio-ordinary-failure-public-check-source-qualification-20260827-v1.json"
+  },
+  "status": "PUBLIC_ORDINARY_FAILURE_CHECK_QUALIFIED"
+}

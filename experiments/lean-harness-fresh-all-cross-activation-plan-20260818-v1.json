@@ -1,0 +1,96 @@
+{
+  "approval": null,
+  "authority": {
+    "agent_runs_authorized": false,
+    "approval_granted": false,
+    "authorized_agent_runs": 0,
+    "authorized_cost_usd": 0.0,
+    "authorized_provider_calls": 0,
+    "candidate_creation_authorized": false,
+    "docker_calls_authorized": false,
+    "evaluator_calls_authorized": false,
+    "memory_benefit_claim_authorized": false,
+    "official_analysis_authorized": false,
+    "preflight_authorized": false,
+    "private_or_reference_material_agent_visible": false,
+    "provider_calls_authorized": false,
+    "sdk_calls_authorized": false,
+    "spend_authorized": false,
+    "task_package_materialization_authorized": false
+  },
+  "candidate_hash": null,
+  "content_hash": "sha256:1f13d5a84fb41ecb83ccc45c16f8fff8551114475cc55041be9ebbe49e75c755",
+  "first_blocked_gate": 3,
+  "full_schedule_reserve_authorized_usd": 0.0,
+  "gates": [
+    {
+      "completion_evidence": "sha256:12bb5ca18034f7592c4d630ff91c9789a81ff7af22803da3269e68343f234955",
+      "gate": "successor-design-and-analysis-freeze",
+      "order": 1,
+      "status": "complete"
+    },
+    {
+      "completion_evidence": "sha256:bf4e3711c4b116bd3027781a9f39b3ae0fcf94b38563c83a408061c15e34f135",
+      "gate": "public-membership-and-exact-panel-binding",
+      "order": 2,
+      "status": "complete"
+    },
+    {
+      "completion_evidence": "missing-checked-in-replayable-admission-evidence-bundle",
+      "gate": "task-admission-producer-and-raw-evidence-source-qualification",
+      "order": 3,
+      "status": "blocked"
+    },
+    {
+      "completion_evidence": "not-started",
+      "gate": "patchloop-public-private-task-package-materialization",
+      "order": 4,
+      "status": "blocked"
+    },
+    {
+      "completion_evidence": "not-started",
+      "gate": "task-evaluator-and-lean-runtime-source-qualification",
+      "order": 5,
+      "status": "blocked"
+    },
+    {
+      "completion_evidence": "not-authorized-before-gates-3-through-5",
+      "gate": "candidate-and-no-call-preflight",
+      "order": 6,
+      "status": "blocked"
+    },
+    {
+      "completion_evidence": "no-candidate-no-approval",
+      "gate": "exact-paid-campaign-approval",
+      "order": 7,
+      "status": "blocked"
+    }
+  ],
+  "next_gate": "source-qualify-admission-and-materialize-evaluator-separated-task-packages",
+  "no_call_preflight_artifact": null,
+  "plan_id": "lean-harness-fresh-all-cross-activation-20260818-v1",
+  "preregistration_binding": {
+    "content_hash": "sha256:12bb5ca18034f7592c4d630ff91c9789a81ff7af22803da3269e68343f234955",
+    "file_bytes": 8815,
+    "file_sha256": "sha256:a6d2918b486e36dc2ba6e4d8f586ee4b46a8c2b60a4abb3854b98c4715c99748",
+    "path": "experiments/lean-harness-fresh-all-cross-preregistration-20260818-v1.json",
+    "role": "all-cross-successor-preregistration"
+  },
+  "registry_binding": {
+    "content_hash": "sha256:bf4e3711c4b116bd3027781a9f39b3ae0fcf94b38563c83a408061c15e34f135",
+    "file_bytes": 19240,
+    "file_sha256": "sha256:2e5565faa2bb2c2b63cb52a4fcde8b920488be1c59acc5538f567a99c26917a6",
+    "path": "reports/fresh-panel/artifacts/lean-fresh-all-cross-registry-qualification-r1.json",
+    "role": "all-cross-public-registry-qualification"
+  },
+  "schema_version": "lean-fresh-all-cross-activation-plan-v1",
+  "spend_authorized_usd": 0.0,
+  "status": "ACTIVATION_BLOCKED_BEFORE_CANDIDATE_AND_PREFLIGHT",
+  "suite_binding": {
+    "content_hash": "sha256:f57eded985460f982e908b768d1b512cc6bf6daeaf26e59f86a688343d9f951f",
+    "file_bytes": 22629,
+    "file_sha256": "sha256:3d81476977071be5e578697e0e4da53e9bdbbdf9e84504af465f8159e40c3a19",
+    "path": "experiments/lean-harness-fresh-all-cross-suite-20260818-v1.json",
+    "role": "all-cross-metadata-suite"
+  }
+}

@@ -1,76 +1,160 @@
 {% extends "base.html" %}
-{% block title %}{{ manifest.run_id }} · PatchLoop{% endblock %}
-{% block content %}
-<div class="run-title">
-  <div><h1>{{ manifest.run_id }}</h1><p>{{ manifest.task_id }} · {{ manifest.memory.condition.value }}</p></div>
-  {% if patch_available %}
-    <a class="button" href="/runs/{{ manifest.run_id }}/patch">Download submitted patch</a>
-  {% else %}
-    <span class="button disabled">No submitted patch</span>
+
+{% macro render_leaf(view) %}
+  {% if view.kind in ["code", "diff", "terminal"] %}
+  <div class="document-view {{ view.kind }}-view">
+    <div class="document-toolbar">
+      <span>{{ view.kind }}</span>
+      {% if view.path %}<code>{{ view.path }}</code>{% endif %}
+      {% if view.language %}<span>{{ view.language }}</span>{% endif %}
+      <span>{{ view.lines | length }} lines{% if view.omitted_line_count %} shown{% endif %}</span>
+    </div>
+    <div class="document-lines">
+    {% for line in view.lines %}
+      <div class="document-line {{ line.tone or 'neutral' }}"><span class="line-number">{{ line.number }}</span><code>{{ line.text }}</code></div>
+    {% endfor %}
+    {% if view.omitted_line_count %}<div class="document-omitted">viewer에서 {{ "{:,}".format(view.omitted_line_count) }}개 줄을 접었습니다. 아래 직렬화 원문에서 확인할 수 있습니다.</div>{% endif %}
+    </div>
+  </div>
+  {% elif view.kind == "text" %}
+  <div class="rendered-text">
+    {% for block in view.blocks %}
+      {% if block.kind == "paragraph" %}<p>{{ block.text }}</p>
+      {% elif block.kind == "heading" %}<div class="text-heading level-{{ block.level }}">{{ block.text }}</div>
+      {% elif block.kind == "list" %}<ul>{% for item in block.items %}<li>{{ item }}</li>{% endfor %}</ul>
+      {% elif block.kind == "code" %}{{ render_leaf(block) }}
+      {% endif %}
+    {% endfor %}
+    {% if view.omitted_line_count %}<p class="document-omitted">viewer에서 {{ "{:,}".format(view.omitted_line_count) }}개 줄을 접었습니다.</p>{% endif %}
+  </div>
   {% endif %}
+{% endmacro %}
+
+{% macro json_node(node, key=None) %}
+  {% if node.kind in ["object", "array"] %}
+  <details class="json-branch" {% if node.open %}open{% endif %}>
+    <summary>{% if key is not none %}<span class="json-key">{{ key }}</span>{% else %}<span class="json-root">root</span>{% endif %}<span class="json-bracket">{{ "{}" if node.kind == "object" else "[]" }}</span><span class="json-count">{{ node.summary }}</span></summary>
+    <div class="json-children">
+    {% for child in node.children %}{{ json_node(child.node, child.key) }}{% endfor %}
+    {% if node.omitted_child_count %}<div class="json-limit">{{ node.omitted_child_count }} entries omitted from the tree; see serialized source.</div>{% endif %}
+    </div>
+  </details>
+  {% elif node.kind == "scalar" %}
+  <div class="json-scalar{% if node.rendered %} expanded{% endif %}">{% if key is not none %}<span class="json-key">{{ key }}</span><span class="json-colon">:</span>{% endif %}<code class="json-value {{ node.scalar_type }}">{{ node.display }}</code>{% if node.rendered %}<div class="json-rendered">{{ render_leaf(node.rendered) if node.rendered.kind != "json" else json_node(node.rendered.node) }}</div>{% endif %}</div>
+  {% else %}
+  <div class="json-limit">{% if key is not none %}<span class="json-key">{{ key }}</span>: {% endif %}{{ node.display }}</div>
+  {% endif %}
+{% endmacro %}
+
+{% macro render_value(view) %}
+  {% if view and view.kind == "json" %}<div class="json-view">{{ json_node(view.node) }}</div>
+  {% elif view %}{{ render_leaf(view) }}
+  {% endif %}
+{% endmacro %}
+
+{% macro raw_source(label, content) %}
+  <details class="serialized-source"><summary>{{ label }}</summary><pre>{{ content }}</pre></details>
+{% endmacro %}
+
+{% block title %}{{ viewer.task.task_id }} · 원문 Trace{% endblock %}
+{% block content %}
+<a class="back-link" href="/runs/{{ viewer.run_id }}">← 요약으로</a>
+<div class="run-title trace-title">
+  <div>
+    <span class="eyebrow">Raw evidence · {{ viewer.task.variant }}</span>
+    <h1>구조화된 LLM·Tool 원문</h1>
+    <p>{{ viewer.task.task_id }}</p>
+    <p class="lede"><code>{{ viewer.run_id }}</code></p>
+  </div>
+  {% if patch_available %}<a class="button" href="/runs/{{ viewer.run_id }}/patch">제출 patch 받기</a>{% endif %}
 </div>
 
-<section class="outcome-banner {{ outcome.tone }}">
+<section class="outcome-banner {{ viewer.result.tone }}">
   <div>
-    <span class="eyebrow">Boundary outcome</span>
-    <h2>{{ outcome.label }}</h2>
-    <p>{{ outcome.description }}</p>
+    <span class="eyebrow">Task result</span>
+    <h2>{{ viewer.result.outcome_label }}</h2>
+    <p>submission={{ viewer.result.submission_status }} · evaluation={{ viewer.result.evaluation_status }}</p>
+    {% if viewer.result.terminal_error %}<p class="terminal-error">{{ viewer.result.terminal_error.type }} · {{ viewer.result.terminal_error.code }} · {{ viewer.result.terminal_error.message }}</p>{% endif %}
   </div>
-  <div class="status-stack">
-    <span class="pill {{ row.status }}">{{ row.status }}</span>
-    <span class="pill {{ trace.lifecycle.review.tone }}">{{ trace.lifecycle.review.label }}</span>
-    <span class="pill {{ trace.lifecycle.submission.tone }}">{{ trace.lifecycle.submission.label }}</span>
-    {% if qualification %}
-      <span class="pill {{ 'completed' if qualification.qualified else 'failed' }}">trace qualified={{ qualification.qualified | lower }}</span>
-    {% endif %}
+  <span class="pill {{ viewer.result.tone }}">success={{ viewer.result.success | lower }}</span>
+</section>
+
+<section id="task" class="raw-task-context">
+  <div class="section-heading"><div><span class="eyebrow">Public task</span><h2>{{ viewer.task.title or viewer.task.task_id }}</h2></div><span>{{ viewer.task.visible_check_count }} visible checks</span></div>
+  {% if viewer.task.description %}<div class="rendered-task-description">{{ render_value(viewer.task.description_view) }}</div>{% else %}<p class="lede">저장된 public task 설명을 찾지 못했습니다.</p>{% endif %}
+  <div class="task-facts">
+    {% for path in viewer.task.allowed_paths %}<span>allowed · <code>{{ path }}</code></span>{% endfor %}
+    {% for check_id in viewer.task.visible_check_ids %}<span>check · <code>{{ check_id }}</code></span>{% endfor %}
   </div>
 </section>
 
-{% if checkpoint %}
-<section class="qualification-strip">
-  <div><span>Current phase</span><strong>{{ checkpoint.phase.value }}</strong></div>
-  {% if manifest.context_policy_version in ["phase-evidence-v2", "phase-evidence-v3", "phase-evidence-v4", "phase-evidence-v5", "phase-evidence-v6", "phase-evidence-v7", "phase-evidence-v8", "phase-evidence-v9", "phase-evidence-v10", "phase-evidence-v11"] %}
-    <div><span>Current-diff checks</span><strong>{{ checkpoint.completed_checks | length }} passed / {{ checkpoint.pending_checks | length }} pending</strong></div>
-    <div><span>Next allowed actions</span><strong>{{ checkpoint_action_label }}</strong></div>
-  {% else %}
-    <div><span>Check semantics</span><strong>legacy history, not diff-bound</strong></div>
-    <div><span>Submission evidence</span><strong>legacy telemetry unavailable</strong></div>
-  {% endif %}
-  <div><span>Current diff</span><strong><code>{{ checkpoint.worktree_diff_hash }}</code></strong></div>
-</section>
-{% endif %}
-
-<section class="cards">
-  <article><h2>Model calls</h2><strong>{{ row.result.usage.model_calls if row.result else 0 }}</strong><p>{{ manifest.model.model_id }}</p></article>
-  <article><h2>Tool calls</h2><strong>{{ row.result.usage.tool_calls if row.result else 0 }}</strong><p>{{ trace.event_count }} durable events</p></article>
-  <article><h2>Total tokens</h2><strong>{{ "{:,}".format((row.result.usage.input_tokens + row.result.usage.output_tokens) if row.result else 0) }}</strong><p>{{ "{:,}".format(row.result.usage.input_tokens if row.result else 0) }} input · {{ "{:,}".format(row.result.usage.output_tokens if row.result else 0) }} output</p></article>
-  <article><h2>List-price cost</h2><strong>${{ "%.6f"|format(row.result.usage.model_cost_usd if row.result else 0) }}</strong><p>{{ manifest.model.reasoning_effort }} reasoning · store=false</p></article>
+<section class="cards trace-cards">
+  <article><h2>Tokens</h2><strong>{{ "{:,}".format(viewer.usage.total_tokens) }}</strong><p>{{ "{:,}".format(viewer.usage.input_tokens) }} input · {{ "{:,}".format(viewer.usage.output_tokens) }} output · {{ "{:,}".format(viewer.usage.reasoning_tokens) }} reasoning</p></article>
+  <article><h2>Cost</h2><strong>${{ "%.6f"|format(viewer.usage.cost_usd) }}</strong><p>list-price model usage</p></article>
+  <article><h2>LLM</h2><strong>{{ viewer.usage.model_calls }} calls</strong><p>{{ viewer.model.model_id }} · {{ viewer.model.reasoning_effort }}</p></article>
+  <article><h2>Tools</h2><strong>{{ viewer.usage.tool_calls }} calls</strong><p>{{ viewer.usage.wall_clock_ms / 1000 }} seconds total</p></article>
 </section>
 
-{% if qualification %}
-<section class="qualification-strip">
-  <div><span>Trace integrity</span><strong>{{ qualification.trace_integrity_passed | lower }}</strong></div>
-  <div><span>Leakage scan</span><strong>{{ qualification.leakage_scan_passed | lower }}</strong></div>
-  <div><span>Evaluator reached</span><strong>{{ qualification.evaluation_reached | lower }}</strong></div>
-  <div><span>Outcome</span><strong>{{ qualification.outcome_kind }}</strong></div>
-</section>
-{% endif %}
-
-<section>
-  <h2>Trace</h2>
-  <p class="lede">Start with the critical path. Expand a model turn only when you need its tools or raw payload.</p>
-  {% include "events.html" %}
+<section class="task-strip">
+  <div><span>Task version</span><strong>{{ viewer.task.task_version }}</strong></div>
+  <div><span>Base commit</span><code>{{ viewer.task.base_commit }}</code></div>
+  <div><span>Public spec</span><code>{{ viewer.task.public_spec_hash }}</code></div>
+  <div><span>Schedule</span><strong>row {{ viewer.task.schedule_order or "—" }}</strong></div>
 </section>
 
-<section><h2>Submitted diff</h2><pre class="diff">{{ patch_text or "No patch was submitted. Patch/check activity may still appear in the trace and checkpoints." }}</pre></section>
-<section><h2>Checkpoint history</h2>
-  <table><thead><tr><th>Sequence</th><th>Phase</th><th>Files</th><th>Diff hash</th></tr></thead><tbody>
-  {% for item in checkpoints %}<tr><td>{{ item.through_sequence }}</td><td>{{ item.phase.value }}</td><td>{{ item.modified_files | join(", ") or "—" }}</td><td><code>{{ item.worktree_diff_hash }}</code></td></tr>{% endfor %}
-  </tbody></table>
+<nav class="section-nav" aria-label="Trace sections">
+  <a href="#task">Task</a><a href="#llm">LLM 입출력</a><a href="#tools">Tool 호출</a><a href="#result">Task 결과</a>
+</nav>
+
+<section id="llm">
+  <div class="section-heading"><div><span class="eyebrow">Conversation</span><h2>LLM 입출력</h2></div><span>{{ viewer.turns | length }} turns</span></div>
+  <p class="lede">저장된 provider request/response를 JSON tree와 문서 형태로 표시합니다. 각 항목의 접힌 직렬화 원문도 그대로 남깁니다. Reasoning 원문은 저장하지 않으며 token 수만 표시합니다.</p>
+  <div class="llm-turns">
+  {% for turn in viewer.turns %}
+    <details id="turn-{{ turn.number }}" class="llm-turn">
+      <summary>
+        <span class="turn-number">Turn {{ turn.number }}</span>
+        <strong>{{ turn.response.tool_calls | map(attribute="name") | join(", ") or "text response" }}</strong>
+        <span>{{ "{:,}".format(turn.input_tokens) }} in / {{ "{:,}".format(turn.output_tokens) }} out</span>
+        <span>${{ "%.6f"|format(turn.cost_usd) }}</span>
+        <span class="pill {{ 'bad' if turn.response.status != 'completed' else 'good' }}">{{ turn.response.status }}</span>
+      </summary>
+      <div class="llm-body">
+        <div class="turn-meta">
+          <span>{{ turn.model }}</span><span>{{ "{:,}".format(turn.reasoning_tokens) }} reasoning tokens</span><span>max output {{ "{:,}".format(turn.max_output_tokens or 0) }}</span>{% if turn.response.incomplete_reason %}<span class="danger">{{ turn.response.incomplete_reason }}</span>{% endif %}
+        </div>
+        <h3>Input</h3>
+        {% for message in turn.messages %}<article class="message"><span class="role">{{ message.role }}</span>{{ render_value(message.view) }}{{ raw_source("저장 문자열", message.content) }}</article>{% else %}<p class="lede">요청 artifact를 사용할 수 없습니다.</p>{% endfor %}
+        <h3>Output</h3>
+        {% if turn.response.text %}<article class="message assistant"><span class="role">assistant</span>{{ render_value(turn.response.text_view) }}{{ raw_source("저장 문자열", turn.response.text) }}</article>{% endif %}
+        {% for call in turn.response.tool_calls %}<article class="model-tool-call"><span class="role">tool call · {{ call.name }}</span>{{ render_value(call.arguments_view) }}{{ raw_source("직렬화 arguments", call.arguments) }}</article>{% endfor %}
+        {% if not turn.response.text and not turn.response.tool_calls %}<p class="lede">저장된 text/tool output이 없습니다.</p>{% if turn.response.error %}<article class="model-tool-call"><span class="role">response error</span>{{ render_value(turn.response.error_view) }}{{ raw_source("직렬화 error", turn.response.error) }}</article>{% endif %}{% endif %}
+      </div>
+    </details>
+  {% else %}<p class="lede">저장된 LLM turn이 없습니다.</p>{% endfor %}
+  </div>
 </section>
-<section><h2>Memory decisions</h2>
-  {% set memory_events = events | selectattr("type.value", "equalto", "MemoryRetrieved") | list %}
-  {% if memory_events %}{% for event in memory_events %}<pre>{{ event.payload | tojson(indent=2) }}</pre>{% endfor %}{% else %}<p class="lede">No memory was requested for this run.</p>{% endif %}
+
+<section id="tools">
+  <div class="section-heading"><div><span class="eyebrow">Actions</span><h2>Tool 호출</h2></div><span>{{ viewer.tools | length }} calls</span></div>
+  <div class="tool-list">
+  {% for tool in viewer.tools %}
+    <details id="tool-{{ tool.sequence }}" class="tool-call {{ tool.tone }}">
+      <summary><span class="seq">{{ tool.sequence }}</span><strong>{{ tool.name }}</strong>{% if tool.agent_summary %}<span class="raw-tool-summary">{{ tool.agent_summary.title }}</span>{% endif %}<span class="pill {{ tool.tone }}">{{ tool.status }}</span>{% if tool.duration_ms is not none %}<span>{{ tool.duration_ms }} ms</span>{% endif %}</summary>
+      {% if tool.agent_summary %}<p class="raw-tool-detail">{{ tool.agent_summary.detail }}</p>{% endif %}
+      <div class="tool-body">
+        <div><h3>Input</h3>{{ render_value(tool.input_view) }}{{ raw_source("직렬화 input", tool.input) }}</div>
+        <div><h3>Output</h3>{% if tool.output %}{{ render_value(tool.output_view) }}{{ raw_source("직렬화 output", tool.output) }}{% else %}<p class="danger">{{ tool.error_code or "output unavailable" }}{% if tool.error_message %} · {{ tool.error_message }}{% endif %}</p>{% endif %}</div>
+      </div>
+    </details>
+  {% else %}<p class="lede">Tool 호출이 없습니다.</p>{% endfor %}
+  </div>
 </section>
-<section><h2>Verifier result</h2><pre>{{ result_json }}</pre></section>
+
+<section id="result">
+  <div class="section-heading"><div><span class="eyebrow">Evaluator</span><h2>Task 결과</h2></div></div>
+  <div class="verdict-grid">
+  {% for name, value in viewer.result.verdicts.items() %}<article><span>{{ name | replace("_", " ") }}</span><strong class="{{ 'good-text' if value == 'pass' else 'bad-text' if value == 'fail' else '' }}">{{ value }}</strong></article>{% else %}<p class="lede">Evaluator verdict가 없습니다.</p>{% endfor %}
+  </div>
+</section>
 {% endblock %}

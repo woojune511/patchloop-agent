@@ -6,14 +6,62 @@ import json
 import os
 import re
 import subprocess
+import threading
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from patchloop.agent.batch_image_authority import (
+    IMAGE_ADMISSION_CONTRACT,
+    BatchImageAuthorization,
+    validate_row_batch_image,
+)
+from patchloop.agent.batch_image_authority import (
+    POLICY_VERSION as BATCH_IMAGE_POLICY_VERSION,
+)
+from patchloop.agent.completion_loop_successor import (
+    ProviderTerminalAttribution,
+    project_provider_terminal_attribution,
+)
 from patchloop.agent.context import BuiltContext, build_context_with_evidence
+from patchloop.agent.investigation import load_inspection_records
+from patchloop.agent.lean_runtime import (
+    LEAN_RUNTIME_POLICY_VERSION,
+    LEAN_RUNTIME_POLICY_VERSION_V2,
+    LEAN_RUNTIME_POLICY_VERSION_V3,
+    LEAN_RUNTIME_POLICY_VERSION_V4,
+    LEAN_RUNTIME_POLICY_VERSION_V5,
+    LEAN_RUNTIME_POLICY_VERSION_V6,
+    LEAN_RUNTIME_POLICY_VERSION_V7,
+    LEAN_RUNTIME_POLICY_VERSION_V8,
+    LEAN_RUNTIME_POLICY_VERSION_V9,
+    LEAN_RUNTIME_POLICY_VERSION_V10,
+    LEAN_RUNTIME_POLICY_VERSION_V11,
+    LEAN_RUNTIME_POLICY_VERSION_V12,
+    LEAN_RUNTIME_POLICY_VERSION_V13,
+    LEAN_RUNTIME_POLICY_VERSION_V14,
+    LEAN_RUNTIME_POLICY_VERSION_V15,
+    LEAN_RUNTIME_POLICY_VERSION_V16,
+    LEAN_RUNTIME_POLICY_VERSION_V17,
+    LEAN_RUNTIME_POLICY_VERSION_V18,
+    LEAN_RUNTIME_POLICY_VERSION_V19,
+    LEAN_RUNTIME_POLICY_VERSION_V20,
+    LEAN_RUNTIME_POLICY_VERSION_V21,
+    LEAN_RUNTIME_POLICY_VERSION_V22,
+    LEAN_RUNTIME_POLICY_VERSION_V23,
+    LEAN_RUNTIME_POLICY_VERSION_V24,
+    LEAN_RUNTIME_POLICY_VERSION_V25,
+    LEAN_RUNTIME_POLICY_VERSION_V26,
+    LEAN_RUNTIME_POLICY_VERSION_V27,
+    LEAN_RUNTIME_POLICY_VERSION_V28,
+    assemble_lean_harness_request,
+    load_lean_harness_dependencies,
+    recover_plan_gate_readiness_pins,
+    validate_persisted_lean_harness_request,
+)
 from patchloop.agent.model import (
     SYSTEM_PROMPT_V1,
     SYSTEM_PROMPT_V2,
@@ -25,10 +73,21 @@ from patchloop.agent.model import (
     SYSTEM_PROMPT_V8,
     MockModelAdapter,
     ModelAdapter,
+    ModelTurnError,
     OpenAIResponsesAdapter,
     ReplayModelAdapter,
 )
 from patchloop.agent.phases import diff_bound_evidence, validate_transition
+from patchloop.agent.provider_count_accounting import (
+    assert_input_token_count_recoverable,
+    counted_request_with_receipts,
+    project_input_token_count_attempts,
+)
+from patchloop.agent.provider_schema_adapter import StrictOpenAIResponsesAdapter
+from patchloop.agent.provider_schema_admission import (
+    ProviderToolSchemaError,
+    normalize_strict_read_arguments,
+)
 from patchloop.agent.review import (
     build_public_review_base_provenance,
     validate_public_review_base_provenance_document,
@@ -40,8 +99,45 @@ from patchloop.agent.tools import (
     TOOL_SCHEMAS_V4,
     TOOL_SCHEMAS_V5,
     TOOL_SCHEMAS_V6,
+    TOOL_SCHEMAS_V7,
+    TOOL_SCHEMAS_V8,
+    TOOL_SCHEMAS_V9,
+    TOOL_SCHEMAS_V10,
+    TOOL_SCHEMAS_V11,
+    TOOL_SCHEMAS_V12,
+    TOOL_SCHEMAS_V13,
+    TOOL_SCHEMAS_V14,
+    TOOL_SCHEMAS_V15,
+    TOOL_SCHEMAS_V16,
+    TOOL_SCHEMAS_V17,
+    TOOL_SCHEMAS_V18,
+    TOOL_SCHEMAS_V19,
+    TOOL_SCHEMAS_V20,
+    TOOL_SCHEMAS_V21,
+    TOOL_SCHEMAS_V22,
+    TOOL_SCHEMAS_V23,
+    TOOL_SCHEMAS_V24,
+    TOOL_SCHEMAS_V25,
+    TOOL_SCHEMAS_V26,
+    TOOL_SCHEMAS_V27,
+    TOOL_SCHEMAS_V28,
+    TOOL_SCHEMAS_V29,
     ToolGateway,
 )
+from patchloop.agent.workflow_r21_reliability_successor import (
+    GENERATION_INCOMPLETE_RECOVERY_POLICY,
+    project_generation_incomplete_recovery,
+    resolve_anchored_read,
+)
+from patchloop.agent.workflow_self_directed_exploration_successor import (
+    SelfDirectedExplorationState,
+    WorkflowDecisionV4,
+    project_episode_investigation_target_hashes,
+    validate_exploration_stop,
+    validate_investigation_action,
+)
+from patchloop.agent.workflow_successor import PROTOCOL_RECOVERY_POLICY
+from patchloop.agent.workflow_successor_v2 import project_active_work_state
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
@@ -74,10 +170,15 @@ from patchloop.contracts import (
 )
 from patchloop.errors import (
     ContractError,
+    HarnessAdmissionError,
     InjectedFault,
+    ModelActionContractRepeatedError,
     ModelGenerationBudgetError,
+    ModelGenerationIncompleteRepeatedError,
     RecoveryError,
+    ReviewCorrectionLimitError,
     RunOwnershipConflict,
+    SelfDirectedExplorationExhaustedError,
     SubmissionProtocolError,
 )
 from patchloop.evals.failures import classify_failure
@@ -106,6 +207,7 @@ from patchloop.util import (
     ensure_within,
     safe_relative_path,
     sha256_bytes,
+    sha256_json,
     sha256_text,
     utc_now,
 )
@@ -118,6 +220,8 @@ from patchloop.verifier.receipt import (
 )
 
 _LIVE_AUTHORIZATION_GUARD = object()
+_BATCH_EXECUTION_AUTHORIZATION_GUARD = object()
+_ROW_EXECUTION_AUTHORIZATION_GUARD = object()
 _CAMPAIGN_COST_RESERVATION_GUARD = object()
 _CAMPAIGN_COST_CONTROL_SCHEMA = "campaign-cost-control-evidence-v1"
 _CAMPAIGN_COST_POLICY_SCHEMA = "campaign-list-price-accrual-cap-v1"
@@ -213,6 +317,65 @@ class LiveExecutionAuthorization:
     _guard: object
 
 
+@dataclass
+class _BatchExecutionAuthorizationState:
+    next_order: int = 1
+    image_admission_attempted: bool = False
+    image_authorization: object | None = None
+    lock: threading.Lock = field(default_factory=threading.Lock)
+
+
+@dataclass
+class _RowExecutionAuthorizationState:
+    consumed: bool = False
+    provider_dispatch_started: bool = False
+    provider_dispatch_rehearsed: bool = False
+    # R24 integration begin: count-rehearsal-state
+    input_count_rehearsed: bool = False
+    # R24 integration end: count-rehearsal-state
+    lock: threading.Lock = field(default_factory=threading.Lock)
+
+
+@dataclass(frozen=True)
+class BatchExecutionAuthorization:
+    """Batch-scoped authority from one complete candidate verification."""
+
+    authority_kind: str
+    execution_hash: str
+    plan_hash: str
+    runtime_build_hash: str
+    schedule_hash: str
+    cost_control_hash: str
+    manifest_hashes: tuple[str, ...]
+    _state: _BatchExecutionAuthorizationState
+    _guard: object
+    image_admission_policy: str | None = None
+    image_admission_image: str | None = None
+    # R24 integration begin: batch-request-policy
+    provider_request_policy: str | None = None
+    # R24 integration end: batch-request-policy
+
+
+@dataclass(frozen=True)
+class RowExecutionAuthorization:
+    """Typed one-use capability for one exact prevalidated schedule row."""
+
+    authority_kind: str
+    execution_hash: str
+    plan_hash: str
+    schedule_order: int
+    schedule_row_id: str
+    run_id: str
+    manifest_hash: str
+    _state: _RowExecutionAuthorizationState
+    _guard: object
+    image_admission_policy: str | None = None
+    _batch_state: _BatchExecutionAuthorizationState | None = None
+    # R24 integration begin: row-request-policy
+    provider_request_policy: str | None = None
+    # R24 integration end: row-request-policy
+
+
 @dataclass(frozen=True)
 class CampaignCostReservationAuthorization:
     """One-use D-087 capability for one exact scheduled paid run."""
@@ -250,10 +413,25 @@ def issue_live_execution_authorization(
             "live execution capability requires a persisted approved execution plan"
         ) from exc
     approval = plan.get("approval") if isinstance(plan, dict) else None
+    plan_schema = plan.get("schema_version") if isinstance(plan, dict) else None
+    from patchloop.evals.live_verifier_registry import live_verifier_registry
+
+    registry_decision = (
+        live_verifier_registry().validate_authorization_plan(plan)
+        if isinstance(plan, dict)
+        else None
+    )
+    plan_schema_supported = bool(
+        registry_decision is not None
+        and (
+            registry_decision.accepted
+            if registry_decision.handled
+            else plan_schema in {"experiment-execution-plan-v1", "experiment-execution-plan-v2"}
+        )
+    )
     if (
         not isinstance(plan, dict)
-        or plan.get("schema_version")
-        not in {"experiment-execution-plan-v1", "experiment-execution-plan-v2"}
+        or not plan_schema_supported
         or plan.get("ready") is not True
         or plan.get("blockers") != []
         or plan.get("execution_hash") != execution_hash
@@ -269,6 +447,343 @@ def issue_live_execution_authorization(
         plan_hash=sha256_bytes(plan_bytes),
         _guard=_LIVE_AUTHORIZATION_GUARD,
     )
+
+
+def issue_batch_execution_authorization(
+    *,
+    authority_kind: str,
+    execution_hash: str,
+    plan_hash: str,
+    runtime_build_hash: str,
+    schedule_hash: str,
+    cost_control_hash: str,
+    manifests: tuple[RunManifest, ...],
+    live_authorization: LiveExecutionAuthorization | None = None,
+    image_admission_policy: str | None = None,
+    image_admission_image: str | None = None,
+    # R24 integration begin: issuer-request-policy
+    provider_request_policy: str | None = None,
+    # R24 integration end: issuer-request-policy
+) -> BatchExecutionAuthorization:
+    """Issue one batch capability after all row manifests were prevalidated."""
+
+    identities = (
+        execution_hash,
+        plan_hash,
+        runtime_build_hash,
+        schedule_hash,
+        cost_control_hash,
+    )
+    if authority_kind not in {"live", "rehearsal"} or any(
+        re.fullmatch(r"sha256:[0-9a-f]{64}", value) is None for value in identities
+    ):
+        raise HarnessAdmissionError("batch execution authorization identity is invalid")
+    if image_admission_policy not in {None, BATCH_IMAGE_POLICY_VERSION}:
+        raise HarnessAdmissionError("batch image admission policy is unsupported")
+    if (image_admission_policy is None and image_admission_image is not None) or (
+        image_admission_policy is not None
+        and (
+            not isinstance(image_admission_image, str)
+            or re.fullmatch(r"[^\s@]+@sha256:[0-9a-f]{64}", image_admission_image) is None
+        )
+    ):
+        raise HarnessAdmissionError("batch image reference is invalid")
+    if not manifests:
+        raise HarnessAdmissionError("batch execution authorization has no manifests")
+    # R24 integration begin: validate-request-policy
+    from patchloop.agent.provider_request_gate import REQUEST_CONTRACT, REQUEST_POLICY
+
+    if provider_request_policy not in {None, REQUEST_POLICY}:
+        raise HarnessAdmissionError("batch provider-request policy is unsupported")
+    if provider_request_policy is not None and any(
+        (m.tool_schema_version, m.context_policy_version)
+        not in {
+            ("v26", "phase-evidence-v35"),
+            ("v28", "phase-evidence-v37"),
+            ("v29", "phase-evidence-v38"),
+        }
+        for m in manifests
+    ):
+        raise HarnessAdmissionError("batch provider-request runtime differs")
+    # R24 integration end: validate-request-policy
+    for order, manifest in enumerate(manifests, start=1):
+        experiment = manifest.experiment
+        if (
+            experiment is None
+            or experiment.execution_hash != execution_hash
+            or experiment.schedule_order != order
+        ):
+            raise HarnessAdmissionError("batch manifest order or execution identity differs")
+    if authority_kind == "live":
+        try:
+            unchanged = bool(
+                live_authorization is not None
+                and live_authorization._guard is _LIVE_AUTHORIZATION_GUARD
+                and live_authorization.execution_hash == execution_hash
+                and live_authorization.plan_hash == plan_hash
+                and sha256_bytes(Path(live_authorization.plan_path).read_bytes()) == plan_hash
+            )
+        except OSError:
+            unchanged = False
+        if not unchanged:
+            raise HarnessAdmissionError("live batch capability lacks its unchanged approved plan")
+        assert live_authorization is not None
+        approved_plan = json.loads(Path(live_authorization.plan_path).read_bytes())
+        # R24 integration begin: bind-request-policy
+        if not _exact_typed_equal(
+            approved_plan.get("provider_request_contract"),
+            REQUEST_CONTRACT if provider_request_policy is not None else None,
+        ):
+            raise HarnessAdmissionError("batch provider-request policy differs from approval")
+        # R24 integration end: bind-request-policy
+        expected_image_contract = (
+            IMAGE_ADMISSION_CONTRACT if image_admission_policy is not None else None
+        )
+        if not _exact_typed_equal(
+            approved_plan.get("image_admission_contract"), expected_image_contract
+        ):
+            raise HarnessAdmissionError("batch image policy differs from its approved plan")
+        if image_admission_policy is not None:
+            bindings = approved_plan.get("task_bindings")
+            if not (
+                isinstance(bindings, list)
+                and len(bindings) == 1
+                and isinstance(bindings[0], dict)
+                and bindings[0].get("evaluator_image") == image_admission_image
+                and bindings[0].get("evaluator_image_digest")
+                == image_admission_image.rsplit("@", 1)[1]
+            ):
+                raise HarnessAdmissionError("batch image reference differs from its approved plan")
+    elif live_authorization is not None:
+        raise HarnessAdmissionError("rehearsal batch cannot carry live execution authority")
+    return BatchExecutionAuthorization(
+        authority_kind=authority_kind,
+        execution_hash=execution_hash,
+        plan_hash=plan_hash,
+        runtime_build_hash=runtime_build_hash,
+        schedule_hash=schedule_hash,
+        cost_control_hash=cost_control_hash,
+        manifest_hashes=tuple(
+            sha256_json(manifest.model_dump(mode="json")) for manifest in manifests
+        ),
+        _state=_BatchExecutionAuthorizationState(),
+        _guard=_BATCH_EXECUTION_AUTHORIZATION_GUARD,
+        image_admission_policy=image_admission_policy,
+        image_admission_image=image_admission_image,
+        # R24 integration begin: issue-batch-request-policy
+        provider_request_policy=provider_request_policy,
+        # R24 integration end: issue-batch-request-policy
+    )
+
+
+def issue_row_execution_authorization(
+    batch: BatchExecutionAuthorization,
+    manifest: RunManifest,
+    *,
+    active_schedule_order: int,
+) -> RowExecutionAuthorization:
+    """Derive one exact, sequential, one-use row capability from a batch."""
+
+    experiment = manifest.experiment
+    manifest_hash = sha256_json(manifest.model_dump(mode="json"))
+    if (
+        batch._guard is not _BATCH_EXECUTION_AUTHORIZATION_GUARD
+        or experiment is None
+        or experiment.execution_hash != batch.execution_hash
+        or experiment.schedule_order != active_schedule_order
+        or active_schedule_order < 1
+        or active_schedule_order > len(batch.manifest_hashes)
+        or manifest_hash != batch.manifest_hashes[active_schedule_order - 1]
+    ):
+        raise HarnessAdmissionError("row capability does not match the prevalidated batch")
+    with batch._state.lock:
+        if batch._state.next_order != active_schedule_order:
+            raise HarnessAdmissionError("row capability order was already issued or skipped")
+        batch._state.next_order += 1
+    return RowExecutionAuthorization(
+        authority_kind=batch.authority_kind,
+        execution_hash=batch.execution_hash,
+        plan_hash=batch.plan_hash,
+        schedule_order=active_schedule_order,
+        schedule_row_id=experiment.schedule_row_id,
+        run_id=manifest.run_id,
+        manifest_hash=manifest_hash,
+        _state=_RowExecutionAuthorizationState(),
+        _guard=_ROW_EXECUTION_AUTHORIZATION_GUARD,
+        image_admission_policy=batch.image_admission_policy,
+        _batch_state=batch._state,
+        # R24 integration begin: issue-row-request-policy
+        provider_request_policy=batch.provider_request_policy,
+        # R24 integration end: issue-row-request-policy
+    )
+
+
+def batch_execution_authorization_receipt(
+    authorization: BatchExecutionAuthorization,
+) -> dict[str, Any]:
+    """Project bounded batch state for post-row continuation admission."""
+
+    if authorization._guard is not _BATCH_EXECUTION_AUTHORIZATION_GUARD:
+        raise HarnessAdmissionError("batch execution capability receipt is invalid")
+    with authorization._state.lock:
+        body = {
+            "schema_version": "batch-execution-capability-receipt-v1",
+            "authority_kind": authorization.authority_kind,
+            "execution_hash": authorization.execution_hash,
+            "plan_hash": authorization.plan_hash,
+            "runtime_build_hash": authorization.runtime_build_hash,
+            "schedule_hash": authorization.schedule_hash,
+            "cost_control_hash": authorization.cost_control_hash,
+            "manifest_count": len(authorization.manifest_hashes),
+            "next_order": authorization._state.next_order,
+        }
+    return {**body, "content_hash": sha256_json(body)}
+
+
+def row_execution_authorization_receipt(
+    authorization: RowExecutionAuthorization,
+) -> dict[str, Any]:
+    """Project one row capability's exact one-use and provider-boundary state."""
+
+    if authorization._guard is not _ROW_EXECUTION_AUTHORIZATION_GUARD:
+        raise HarnessAdmissionError("row execution capability receipt is invalid")
+    with authorization._state.lock:
+        body = {
+            "schema_version": "row-execution-capability-receipt-v1",
+            "authority_kind": authorization.authority_kind,
+            "execution_hash": authorization.execution_hash,
+            "plan_hash": authorization.plan_hash,
+            "schedule_order": authorization.schedule_order,
+            "schedule_row_id": authorization.schedule_row_id,
+            "run_id": authorization.run_id,
+            "manifest_hash": authorization.manifest_hash,
+            "consumed": authorization._state.consumed,
+            "provider_dispatch_started": authorization._state.provider_dispatch_started,
+            "provider_dispatch_rehearsed": authorization._state.provider_dispatch_rehearsed,
+        }
+        # R24 integration begin: request-policy-receipt
+        if authorization.provider_request_policy is not None:
+            body["provider_request_policy"] = authorization.provider_request_policy
+            body["input_count_rehearsed"] = authorization._state.input_count_rehearsed
+        # R24 integration end: request-policy-receipt
+    return {**body, "content_hash": sha256_json(body)}
+
+
+def _consume_row_execution_authorization(
+    manifest: RunManifest,
+    authorization: RowExecutionAuthorization,
+    *,
+    expected_authority_kind: str,
+    live_authorization: LiveExecutionAuthorization | None,
+) -> None:
+    experiment = manifest.experiment
+    valid = bool(
+        authorization._guard is _ROW_EXECUTION_AUTHORIZATION_GUARD
+        and authorization.authority_kind == expected_authority_kind
+        and experiment is not None
+        and authorization.execution_hash == experiment.execution_hash
+        and authorization.schedule_order == experiment.schedule_order
+        and authorization.schedule_row_id == experiment.schedule_row_id
+        and authorization.run_id == manifest.run_id
+        and authorization.manifest_hash == sha256_json(manifest.model_dump(mode="json"))
+    )
+    if expected_authority_kind == "live":
+        valid = bool(
+            valid
+            and live_authorization is not None
+            and live_authorization._guard is _LIVE_AUTHORIZATION_GUARD
+            and live_authorization.execution_hash == authorization.execution_hash
+            and live_authorization.plan_hash == authorization.plan_hash
+        )
+        try:
+            valid = bool(
+                valid
+                and live_authorization is not None
+                and sha256_bytes(Path(live_authorization.plan_path).read_bytes())
+                == authorization.plan_hash
+            )
+        except OSError:
+            valid = False
+    elif live_authorization is not None:
+        valid = False
+    if not valid:
+        raise HarnessAdmissionError("row execution capability is invalid")
+    with authorization._state.lock:
+        if authorization._state.consumed:
+            raise HarnessAdmissionError("row execution capability was already consumed")
+        authorization._state.consumed = True
+
+
+def _provider_dispatch_boundary(
+    manifest: RunManifest,
+    authorization: RowExecutionAuthorization,
+    *,
+    stop_before_dispatch: bool,
+) -> dict[str, Any] | None:
+    """Shared last contract gate immediately before the provider adapter call."""
+
+    experiment = manifest.experiment
+    expected_kind = "rehearsal" if stop_before_dispatch else "live"
+    valid = bool(
+        authorization._guard is _ROW_EXECUTION_AUTHORIZATION_GUARD
+        and authorization.authority_kind == expected_kind
+        and experiment is not None
+        and authorization.execution_hash == experiment.execution_hash
+        and authorization.schedule_order == experiment.schedule_order
+        and authorization.schedule_row_id == experiment.schedule_row_id
+        and authorization.run_id == manifest.run_id
+        and authorization.manifest_hash == sha256_json(manifest.model_dump(mode="json"))
+    )
+    if not valid:
+        raise HarnessAdmissionError("provider dispatch capability is invalid")
+    with authorization._state.lock:
+        if not authorization._state.consumed:
+            raise HarnessAdmissionError("provider dispatch precedes row admission")
+        if stop_before_dispatch:
+            if (
+                authorization._state.provider_dispatch_rehearsed
+                or authorization._state.provider_dispatch_started
+            ):
+                raise HarnessAdmissionError("provider dispatch boundary was already visited")
+            authorization._state.provider_dispatch_rehearsed = True
+        elif authorization._state.provider_dispatch_rehearsed:
+            raise HarnessAdmissionError("a rehearsal capability cannot enter live dispatch")
+        else:
+            authorization._state.provider_dispatch_started = True
+    if not stop_before_dispatch:
+        return None
+    return {
+        "stage": "provider-dispatch-boundary",
+        "provider_dispatch_blocked": True,
+        "execution_hash": experiment.execution_hash,
+        "schedule_order": experiment.schedule_order,
+        "schedule_row_id": experiment.schedule_row_id,
+        "run_id": manifest.run_id,
+        "manifest_hash": authorization.manifest_hash,
+    }
+
+
+def _provider_input_count_boundary(
+    manifest: RunManifest,
+    authorization: RowExecutionAuthorization | None,
+) -> None:
+    """Validate live count authority without falsely marking generation as started."""
+    if type(authorization) is not RowExecutionAuthorization:
+        raise HarnessAdmissionError("provider input count lacks a live row capability")
+    receipt = row_execution_authorization_receipt(authorization)
+    experiment = manifest.experiment
+    if (
+        experiment is None
+        or receipt["authority_kind"] != "live"
+        or receipt["execution_hash"] != experiment.execution_hash
+        or receipt["schedule_order"] != experiment.schedule_order
+        or receipt["schedule_row_id"] != experiment.schedule_row_id
+        or receipt["run_id"] != manifest.run_id
+        or receipt["manifest_hash"] != sha256_json(manifest.model_dump(mode="json"))
+        or not receipt["consumed"]
+        or receipt["provider_dispatch_rehearsed"]
+    ):
+        raise HarnessAdmissionError("provider input-count capability is invalid")
 
 
 def issue_campaign_cost_reservation_authorization(
@@ -736,6 +1251,8 @@ class AgentRunner:
         experiment_context: ExperimentRunContext | None = None,
         self_validation: bool = False,
         live_authorization: LiveExecutionAuthorization | None = None,
+        row_execution_authorization: RowExecutionAuthorization | None = None,
+        batch_image_authorization: BatchImageAuthorization | None = None,
         campaign_cost_reservation: (CampaignCostReservationAuthorization | None) = None,
         evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
         _allowed_worker_statuses: set[RunStatus] | None = None,
@@ -799,37 +1316,64 @@ class AgentRunner:
                 "self-validation v3/v6 is offline-only and unavailable for the OpenAI provider"
             )
         if selected_provider == "openai":
-            self._require_live_authorization(
-                manifest,
-                live_authorization,
-                runner_root=self.root,
-                evaluator_v2_authority=evaluator_v2_authority,
-            )
+            if row_execution_authorization is None:
+                self._require_live_authorization(
+                    manifest,
+                    live_authorization,
+                    runner_root=self.root,
+                    evaluator_v2_authority=evaluator_v2_authority,
+                )
+            elif manifest is None:
+                raise HarnessAdmissionError("row capability requires a prebuilt manifest")
+            else:
+                _consume_row_execution_authorization(
+                    manifest,
+                    row_execution_authorization,
+                    expected_authority_kind="live",
+                    live_authorization=live_authorization,
+                )
             self._require_campaign_cost_reservation(
                 manifest,
                 live_authorization,
                 campaign_cost_reservation,
             )
-        elif campaign_cost_reservation is not None:
-            raise ContractError("campaign cost reservation capability is only valid for OpenAI")
+        elif campaign_cost_reservation is not None or row_execution_authorization is not None:
+            raise ContractError("live execution capabilities are only valid for OpenAI")
 
         docker_sandbox = self._docker_sandbox(package)
-        backend = (
-            "docker"
-            if DockerSandbox.available() and docker_sandbox.image_identity() is not None
-            else "local"
-        )
-        if package.environment is not None:
-            image_identity = docker_sandbox.image_identity()
-            if backend != "docker":
-                raise ContractError(
-                    "task requires its digest-pinned Docker evaluator image, but it is unavailable"
-                )
-            if image_identity != package.environment.image_digest:
-                raise ContractError(
-                    "task evaluator image identity does not match environment.yaml: "
-                    f"{image_identity} != {package.environment.image_digest}"
-                )
+        if batch_image_authorization is not None or (
+            row_execution_authorization is not None
+            and row_execution_authorization.image_admission_policy is not None
+        ):
+            image_identity = validate_row_batch_image(
+                batch_image_authorization,
+                row_execution_authorization,
+                manifest,
+                expected_kind="live",
+                expected_image=(
+                    package.environment.evaluator_image if package.environment else None
+                ),
+                expected_digest=(package.environment.image_digest if package.environment else None),
+            )
+            backend = "docker"
+        else:
+            backend = (
+                "docker"
+                if DockerSandbox.available() and docker_sandbox.image_identity() is not None
+                else "local"
+            )
+            if package.environment is not None:
+                image_identity = docker_sandbox.image_identity()
+                if backend != "docker":
+                    raise ContractError(
+                        "task requires its digest-pinned Docker evaluator image, "
+                        "but it is unavailable"
+                    )
+                if image_identity != package.environment.image_digest:
+                    raise ContractError(
+                        "task evaluator image identity does not match environment.yaml: "
+                        f"{image_identity} != {package.environment.image_digest}"
+                    )
         if manifest is None:
             selected_model_id = "mock-v1" if selected_provider == "mock" else normalized_model
             image_identity = docker_sandbox.image_identity() if backend == "docker" else None
@@ -922,6 +1466,7 @@ class AgentRunner:
                     public_review_base_provenance=(public_review_base_provenance),
                     worker_claim=worker_claim,
                     evaluator_v2_authority=evaluator_v2_authority,
+                    row_execution_authorization=row_execution_authorization,
                 )
             except RunOwnershipConflict:
                 raise
@@ -953,6 +1498,12 @@ class AgentRunner:
         evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
     ) -> dict[str, Any]:
         manifest = self.state.get_manifest(run_id)
+        if (
+            manifest.model.provider == "openai"
+            and manifest.experiment is not None
+            and manifest.experiment.purpose == ExperimentPurpose.RAPID_PUBLIC_DEVELOPMENT
+        ):
+            raise ContractError("rapid public development live resume is disabled")
         if (
             manifest.model.provider == "openai"
             and manifest.experiment is not None
@@ -1149,6 +1700,42 @@ class AgentRunner:
         return is_heldout_ac_experiment(manifest)
 
     @staticmethod
+    def rehearse_provider_dispatch(
+        manifest: RunManifest,
+        row_execution_authorization: RowExecutionAuthorization,
+        *,
+        batch_image_authorization: BatchImageAuthorization | None = None,
+    ) -> dict[str, Any]:
+        """Consume the real row gate and stop before any provider adapter call."""
+
+        _consume_row_execution_authorization(
+            manifest,
+            row_execution_authorization,
+            expected_authority_kind="rehearsal",
+            live_authorization=None,
+        )
+        if batch_image_authorization is not None or (
+            row_execution_authorization.image_admission_policy is not None
+        ):
+            validate_row_batch_image(
+                batch_image_authorization,
+                row_execution_authorization,
+                manifest,
+                expected_kind="rehearsal",
+                expected_image=(
+                    batch_image_authorization.image if batch_image_authorization else None
+                ),
+                expected_digest=manifest.evaluator_image_digest,
+            )
+        boundary = _provider_dispatch_boundary(
+            manifest,
+            row_execution_authorization,
+            stop_before_dispatch=True,
+        )
+        assert boundary is not None
+        return boundary
+
+    @staticmethod
     def _require_live_authorization(
         manifest: RunManifest | None,
         authorization: LiveExecutionAuthorization | None,
@@ -1173,7 +1760,7 @@ class AgentRunner:
                 runner_root=runner_root,
             )
         ):
-            raise ContractError(
+            raise HarnessAdmissionError(
                 "live model execution requires an approved experiment execution capability"
             )
         assert isinstance(plan, dict)
@@ -1824,20 +2411,18 @@ class AgentRunner:
                 return False
         if not isinstance(plan, dict):
             return False
-        if AgentRunner._is_heldout_ac_experiment(manifest):
-            from patchloop.evals.heldout_ac_live_contract import (
-                heldout_ac_live_plan_matches_manifest,
-            )
+        from patchloop.evals.live_verifier_registry import live_verifier_registry
 
-            if runner_root is None:
-                return False
-            return heldout_ac_live_plan_matches_manifest(
-                plan=plan,
-                manifest=manifest,
-                plan_path=authorization.plan_path,
-                plan_file_sha256=authorization.plan_hash,
-                expected_run_root=runner_root,
-            )
+        registry_decision = live_verifier_registry().verify_manifest(
+            plan=plan,
+            manifest=manifest,
+            authorization_plan_path=authorization.plan_path,
+            authorization_plan_hash=authorization.plan_hash,
+            repository=repository_root(),
+            runner_root=runner_root,
+        )
+        if registry_decision.handled:
+            return registry_decision.accepted
         runtime_contract = plan.get("runtime_contract")
         corrective = bool(
             manifest.experiment is not None
@@ -1975,6 +2560,7 @@ class AgentRunner:
         public_review_base_provenance: Artifact | None = None,
         worker_claim: dict[str, Any] | None = None,
         evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
+        row_execution_authorization: RowExecutionAuthorization | None = None,
     ) -> dict[str, Any]:
         task_dir = package.root
         system_prompt, tool_schemas = self._runtime_contract(manifest)
@@ -2040,6 +2626,18 @@ class AgentRunner:
                 )
             else:
                 self._reconcile_workspace_head(checkpoint, workspace)
+                causal_trigger = gateway.reconcile_causal_mutation_baseline_restore()
+                if causal_trigger is not None and (
+                    checkpoint.through_sequence < causal_trigger.restored_event_sequence
+                    or checkpoint.worktree_diff_hash != causal_trigger.restored_baseline_diff_hash
+                ):
+                    checkpoint = self._checkpoint(
+                        manifest,
+                        workspace,
+                        self._phase_after_checkpoint(checkpoint),
+                        self._usage(manifest.run_id),
+                        task=package.public,
+                    )
                 recovered_patch = gateway.reconcile_interrupted_patch(checkpoint)
                 recovered_tool: tuple[str, ToolResult] | None = None
                 if recovered_patch is not None:
@@ -2139,6 +2737,46 @@ class AgentRunner:
                         )
                     )
                 }
+            elif generic_runtime_document is None and manifest.context_policy_version in {
+                "phase-evidence-v12",
+                "phase-evidence-v13",
+                "phase-evidence-v14",
+                "phase-evidence-v15",
+                "phase-evidence-v16",
+                "phase-evidence-v17",
+                "phase-evidence-v18",
+                "phase-evidence-v19",
+                "phase-evidence-v20",
+                "phase-evidence-v21",
+                "phase-evidence-v22",
+                "phase-evidence-v23",
+                "phase-evidence-v24",
+                "phase-evidence-v25",
+                "phase-evidence-v26",
+                "phase-evidence-v27",
+                "phase-evidence-v28",
+                "phase-evidence-v29",
+                "phase-evidence-v30",
+                "phase-evidence-v31",
+                "phase-evidence-v32",
+                "phase-evidence-v33",
+                "phase-evidence-v34",
+                "phase-evidence-v35",
+                "phase-evidence-v36",
+                "phase-evidence-v37",
+                "phase-evidence-v38",
+            }:
+                lean_dependencies = load_lean_harness_dependencies(repository_root())
+                runtime_contract_metadata = {
+                    "schema_version": "lean-harness-runtime-contract-v1",
+                    "preregistration_id": (lean_dependencies.preregistration.preregistration_id),
+                    "preregistration_content_hash": (
+                        lean_dependencies.preregistration.content_hash
+                    ),
+                    "runtime_contract": (
+                        lean_dependencies.preregistration.runtime_contract.model_dump(mode="json")
+                    ),
+                }
             runtime_contract = self.artifacts.put_json(
                 generic_runtime_document
                 or {
@@ -2161,7 +2799,35 @@ class AgentRunner:
                     **(
                         {"runtime_contract_artifact": (runtime_contract.model_dump(mode="json"))}
                         if generic_runtime_document is not None
-                        or manifest.tool_schema_version in {"v4", "v5", "v6"}
+                        or manifest.tool_schema_version
+                        in {
+                            "v4",
+                            "v5",
+                            "v6",
+                            "v7",
+                            "v8",
+                            "v9",
+                            "v10",
+                            "v11",
+                            "v12",
+                            "v13",
+                            "v14",
+                            "v15",
+                            "v16",
+                            "v17",
+                            "v18",
+                            "v19",
+                            "v20",
+                            "v21",
+                            "v22",
+                            "v23",
+                            "v24",
+                            "v25",
+                            "v26",
+                            "v27",
+                            "v28",
+                            "v29",
+                        }
                         else {}
                     ),
                     **(
@@ -2203,6 +2869,10 @@ class AgentRunner:
 
         usage = self._usage(manifest.run_id)
         try:
+            if manifest.context_policy_version in {"phase-evidence-v37", "phase-evidence-v38"}:
+                assert_input_token_count_recoverable(
+                    manifest.run_id, self.state.list_events(manifest.run_id)
+                )
             phase, checkpoint, recovered_submission = self._reconcile_submission_recovery(
                 manifest=manifest,
                 task=package.public,
@@ -2250,16 +2920,118 @@ class AgentRunner:
                     "phase-evidence-v9",
                     "phase-evidence-v10",
                     "phase-evidence-v11",
+                    "phase-evidence-v12",
+                    "phase-evidence-v13",
+                    "phase-evidence-v14",
+                    "phase-evidence-v15",
+                    "phase-evidence-v16",
+                    "phase-evidence-v17",
+                    "phase-evidence-v18",
+                    "phase-evidence-v19",
+                    "phase-evidence-v20",
+                    "phase-evidence-v21",
+                    "phase-evidence-v22",
+                    "phase-evidence-v23",
+                    "phase-evidence-v24",
+                    "phase-evidence-v25",
+                    "phase-evidence-v26",
+                    "phase-evidence-v27",
+                    "phase-evidence-v28",
+                    "phase-evidence-v29",
+                    "phase-evidence-v30",
+                    "phase-evidence-v31",
+                    "phase-evidence-v32",
+                    "phase-evidence-v33",
+                    "phase-evidence-v34",
+                    "phase-evidence-v35",
+                    "phase-evidence-v36",
+                    "phase-evidence-v37",
+                    "phase-evidence-v38",
                 }:
                     self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
+                if manifest.context_policy_version in {
+                    "phase-evidence-v27",
+                    "phase-evidence-v28",
+                    "phase-evidence-v29",
+                    "phase-evidence-v30",
+                    "phase-evidence-v31",
+                    "phase-evidence-v32",
+                    "phase-evidence-v33",
+                    "phase-evidence-v34",
+                    "phase-evidence-v35",
+                    "phase-evidence-v36",
+                    "phase-evidence-v37",
+                    "phase-evidence-v38",
+                }:
+                    before_restore_hash = WorkspaceManager.diff_summary(workspace).patch_hash
+                    restore_evidence = diff_bound_evidence(
+                        package.public,
+                        events,
+                        before_restore_hash,
+                        phase=phase,
+                        completion_driven=True,
+                    )
+                    causal_trigger = gateway.activate_causal_mutation_baseline_restore(
+                        restore_evidence
+                    )
+                    after_restore_hash = WorkspaceManager.diff_summary(workspace).patch_hash
+                    if after_restore_hash != before_restore_hash:
+                        if causal_trigger is None:
+                            raise RecoveryError("causal restore changed worktree without a trigger")
+                        checkpoint = self._checkpoint(
+                            manifest,
+                            workspace,
+                            phase,
+                            usage,
+                            task=package.public,
+                        )
+                    events = self.state.list_events(manifest.run_id)
                 fixed_delivery: FixedMemoryDelivery | None = None
                 if manifest.memory_policy_version == FIXED_BUNDLE_POLICY_VERSION:
-                    if (
-                        manifest.tool_schema_version != "v2"
-                        or manifest.context_policy_version != "phase-evidence-v5"
-                    ):
-                        raise ContractError("fixed D-110 bundle requires the exact v2/v5 runtime")
+                    fixed_runtime_pair = (
+                        manifest.tool_schema_version,
+                        manifest.context_policy_version,
+                    )
+                    if fixed_runtime_pair not in {
+                        ("v2", "phase-evidence-v5"),
+                        ("v7", "phase-evidence-v12"),
+                        ("v8", "phase-evidence-v13"),
+                        ("v9", "phase-evidence-v13"),
+                        ("v9", "phase-evidence-v14"),
+                        ("v10", "phase-evidence-v15"),
+                        ("v10", "phase-evidence-v16"),
+                        ("v11", "phase-evidence-v17"),
+                        ("v12", "phase-evidence-v18"),
+                        ("v13", "phase-evidence-v19"),
+                        ("v14", "phase-evidence-v20"),
+                        ("v15", "phase-evidence-v21"),
+                        ("v16", "phase-evidence-v22"),
+                        ("v17", "phase-evidence-v23"),
+                        ("v18", "phase-evidence-v24"),
+                        ("v19", "phase-evidence-v25"),
+                        ("v20", "phase-evidence-v26"),
+                        ("v21", "phase-evidence-v27"),
+                        ("v22", "phase-evidence-v28"),
+                        ("v23", "phase-evidence-v29"),
+                        ("v24", "phase-evidence-v30"),
+                        ("v25", "phase-evidence-v31"),
+                        ("v25", "phase-evidence-v32"),
+                        ("v26", "phase-evidence-v33"),
+                        ("v26", "phase-evidence-v34"),
+                        ("v26", "phase-evidence-v35"),
+                        ("v27", "phase-evidence-v36"),
+                        ("v28", "phase-evidence-v37"),
+                        ("v29", "phase-evidence-v38"),
+                    }:
+                        raise ContractError(
+                            "fixed D-110 bundle requires the exact v2/v5, v7/v12, "
+                            "v8/v13, v9/v13, v9/v14, v10/v15, v10/v16, or "
+                            "v11/v17, v12/v18, v13/v19, v14/v20, v15/v21, "
+                            "v16/v22, v17/v23, v18/v24, v19/v25, v20/v26, "
+                            "v21/v27, v22/v28, v23/v29, v24/v30, v25/v31, "
+                            "v25/v32, v26/v33, v26/v34, v26/v35, or v27/v36 runtime"
+                        )
                     fixed_delivery = build_fixed_memory_delivery(
                         condition=manifest.memory.condition,
                         token_budget=manifest.memory.max_context_tokens,
@@ -2307,17 +3079,78 @@ class AgentRunner:
                     "phase-evidence-v9",
                     "phase-evidence-v10",
                     "phase-evidence-v11",
+                    "phase-evidence-v12",
+                    "phase-evidence-v13",
+                    "phase-evidence-v14",
+                    "phase-evidence-v15",
+                    "phase-evidence-v16",
+                    "phase-evidence-v17",
+                    "phase-evidence-v18",
+                    "phase-evidence-v19",
+                    "phase-evidence-v20",
+                    "phase-evidence-v21",
+                    "phase-evidence-v22",
+                    "phase-evidence-v23",
+                    "phase-evidence-v24",
+                    "phase-evidence-v25",
+                    "phase-evidence-v26",
+                    "phase-evidence-v27",
+                    "phase-evidence-v28",
+                    "phase-evidence-v29",
+                    "phase-evidence-v30",
+                    "phase-evidence-v31",
+                    "phase-evidence-v32",
+                    "phase-evidence-v33",
+                    "phase-evidence-v34",
+                    "phase-evidence-v35",
+                    "phase-evidence-v36",
+                    "phase-evidence-v37",
+                    "phase-evidence-v38",
                 }:
                     # V5 binds the ledger to the exact durable prefix. A
                     # MemoryRetrieved event appended above must therefore be
                     # included before ContextBuilt is emitted.
                     events = self.state.list_events(manifest.run_id)
+                context_build_policy_version = (
+                    "phase-evidence-v5"
+                    if manifest.context_policy_version
+                    in {
+                        "phase-evidence-v12",
+                        "phase-evidence-v13",
+                        "phase-evidence-v14",
+                        "phase-evidence-v15",
+                        "phase-evidence-v16",
+                        "phase-evidence-v17",
+                        "phase-evidence-v18",
+                        "phase-evidence-v19",
+                        "phase-evidence-v20",
+                        "phase-evidence-v21",
+                        "phase-evidence-v22",
+                        "phase-evidence-v23",
+                        "phase-evidence-v24",
+                        "phase-evidence-v25",
+                        "phase-evidence-v26",
+                        "phase-evidence-v27",
+                        "phase-evidence-v28",
+                        "phase-evidence-v29",
+                        "phase-evidence-v30",
+                        "phase-evidence-v31",
+                        "phase-evidence-v32",
+                        "phase-evidence-v33",
+                        "phase-evidence-v34",
+                        "phase-evidence-v35",
+                        "phase-evidence-v36",
+                        "phase-evidence-v37",
+                        "phase-evidence-v38",
+                    }
+                    else manifest.context_policy_version
+                )
                 built_context = build_context_with_evidence(
                     package.public,
                     events,
                     checkpoint,
                     memory_text,
-                    policy_version=manifest.context_policy_version,
+                    policy_version=context_build_policy_version,
                     artifact_store=self.artifacts,
                     budget=manifest.budget,
                     max_output_tokens=manifest.model.max_output_tokens,
@@ -2347,6 +3180,12 @@ class AgentRunner:
                     request_endpoint = None
                 request_body_hash = sha256_text(canonical_json(request_body))
                 fixed_memory_request_evidence = None
+                lean_request_evidence = None
+                lean_request_context: str | None = None
+                lean_input_count_calls = 0
+                lean_input_count_duration_ms = 0
+                provider_terminal_attribution: ProviderTerminalAttribution | None = None
+                request_tool_schemas = tool_schemas
                 if fixed_delivery is not None:
                     try:
                         rendered_payload = json.loads(context)
@@ -2359,13 +3198,14 @@ class AgentRunner:
                         )
                     normalized_payload = dict(rendered_payload)
                     normalized_payload["selected_memory"] = None
+                    normalized_context_build = built_context
                     if fixed_delivery.evidence.selected_memory_present:
                         normalized_context_build = build_context_with_evidence(
                             package.public,
                             events,
                             checkpoint,
                             "",
-                            policy_version=manifest.context_policy_version,
+                            policy_version=context_build_policy_version,
                             artifact_store=self.artifacts,
                             budget=manifest.budget,
                             max_output_tokens=manifest.model.max_output_tokens,
@@ -2375,24 +3215,362 @@ class AgentRunner:
                         normalized_context = normalized_context_build.rendered
                         if json.loads(normalized_context) != normalized_payload:
                             raise ContractError("fixed D-110 treatment changes non-memory context")
-                        if isinstance(adapter, OpenAIResponsesAdapter):
-                            normalized_request_body = adapter.request_payload(
-                                normalized_context,
-                                tool_schemas,
+                    if manifest.context_policy_version in {
+                        "phase-evidence-v12",
+                        "phase-evidence-v13",
+                        "phase-evidence-v14",
+                        "phase-evidence-v15",
+                        "phase-evidence-v16",
+                        "phase-evidence-v17",
+                        "phase-evidence-v18",
+                        "phase-evidence-v19",
+                        "phase-evidence-v20",
+                        "phase-evidence-v21",
+                        "phase-evidence-v22",
+                        "phase-evidence-v23",
+                        "phase-evidence-v24",
+                        "phase-evidence-v25",
+                        "phase-evidence-v26",
+                        "phase-evidence-v27",
+                        "phase-evidence-v28",
+                        "phase-evidence-v29",
+                        "phase-evidence-v30",
+                        "phase-evidence-v31",
+                        "phase-evidence-v32",
+                        "phase-evidence-v33",
+                        "phase-evidence-v34",
+                        "phase-evidence-v35",
+                        "phase-evidence-v36",
+                        "phase-evidence-v37",
+                        "phase-evidence-v38",
+                    }:
+                        current_diff_hash = WorkspaceManager.diff_summary(workspace).patch_hash
+                        phase_evidence = diff_bound_evidence(
+                            package.public,
+                            events,
+                            current_diff_hash,
+                            presented_tool_results=built_context.evidence["tool_results"],
+                            phase=phase,
+                            completion_driven=(
+                                manifest.context_policy_version
+                                in {
+                                    "phase-evidence-v13",
+                                    "phase-evidence-v14",
+                                    "phase-evidence-v15",
+                                    "phase-evidence-v16",
+                                    "phase-evidence-v17",
+                                    "phase-evidence-v18",
+                                    "phase-evidence-v19",
+                                    "phase-evidence-v20",
+                                    "phase-evidence-v21",
+                                    "phase-evidence-v22",
+                                    "phase-evidence-v23",
+                                    "phase-evidence-v24",
+                                    "phase-evidence-v25",
+                                    "phase-evidence-v26",
+                                    "phase-evidence-v27",
+                                    "phase-evidence-v28",
+                                    "phase-evidence-v29",
+                                    "phase-evidence-v30",
+                                    "phase-evidence-v31",
+                                    "phase-evidence-v32",
+                                    "phase-evidence-v33",
+                                    "phase-evidence-v34",
+                                    "phase-evidence-v35",
+                                    "phase-evidence-v36",
+                                    "phase-evidence-v37",
+                                    "phase-evidence-v38",
+                                }
+                            ),
+                        )
+
+                        def lean_provider_request_builder(
+                            selected_context: str,
+                            selected_tools: tuple[dict[str, Any], ...],
+                            selected_max_output_tokens: int,
+                        ) -> dict[str, Any]:
+                            if not isinstance(adapter, OpenAIResponsesAdapter):
+                                raise ContractError("Lean live request requires OpenAI adapter")
+                            body = adapter.request_payload(
+                                selected_context,
+                                list(selected_tools),
                                 system_prompt=system_prompt,
                             )
-                        else:
-                            normalized_request_body = {
-                                "model": manifest.model.model_id,
-                                "system_prompt": system_prompt,
-                                "context": normalized_context,
-                                "tools": tool_schemas,
+                            body["max_output_tokens"] = selected_max_output_tokens
+                            return body
+
+                        def lean_provider_input_token_counter(
+                            body: dict[str, Any],
+                        ) -> int:
+                            nonlocal lean_input_count_calls, lean_input_count_duration_ms
+                            nonlocal usage
+                            if not isinstance(adapter, OpenAIResponsesAdapter):
+                                raise ContractError("Lean live count requires OpenAI adapter")
+                            # R24 integration begin: production-count-gate
+                            from patchloop.agent.provider_request_gate import (
+                                admit_request,
+                                request_admission_required,
+                            )
+
+                            if request_admission_required(manifest, row_execution_authorization):
+                                admit_request(
+                                    manifest,
+                                    row_execution_authorization,
+                                    body,
+                                    adapter,
+                                    stop_before_count=False,
+                                )
+                            # R24 integration end: production-count-gate
+                            if manifest.context_policy_version in {
+                                "phase-evidence-v37",
+                                "phase-evidence-v38",
+                            }:
+                                adapter.admit_request_v3(body)
+                                if manifest.model.provider == "openai":
+                                    _provider_input_count_boundary(
+                                        manifest, row_execution_authorization
+                                    )
+                                try:
+                                    return counted_request_with_receipts(
+                                        state=self.state,
+                                        run_id=manifest.run_id,
+                                        request=body,
+                                        count=adapter.count_input_tokens_v3,
+                                    )
+                                finally:
+                                    usage = self._usage(manifest.run_id)
+                            count_started = time.monotonic()
+                            counted = (
+                                adapter.count_input_tokens_v2(body)
+                                if manifest.context_policy_version
+                                in {
+                                    "phase-evidence-v18",
+                                    "phase-evidence-v19",
+                                    "phase-evidence-v20",
+                                    "phase-evidence-v21",
+                                    "phase-evidence-v22",
+                                    "phase-evidence-v23",
+                                    "phase-evidence-v24",
+                                    "phase-evidence-v25",
+                                    "phase-evidence-v26",
+                                    "phase-evidence-v27",
+                                    "phase-evidence-v28",
+                                    "phase-evidence-v29",
+                                    "phase-evidence-v30",
+                                    "phase-evidence-v31",
+                                    "phase-evidence-v32",
+                                    "phase-evidence-v33",
+                                    "phase-evidence-v34",
+                                    "phase-evidence-v35",
+                                    "phase-evidence-v36",
+                                    "phase-evidence-v37",
+                                    "phase-evidence-v38",
+                                }
+                                else adapter.count_input_tokens(body)
+                            )
+                            lean_input_count_duration_ms += int(
+                                (time.monotonic() - count_started) * 1000
+                            )
+                            lean_input_count_calls += 1
+                            return counted
+
+                        def load_plan_gate_request_artifact(
+                            artifact_path: str,
+                            artifact_hash: str,
+                        ) -> dict[str, Any]:
+                            hex_digest = artifact_hash.removeprefix("sha256:")
+                            if len(hex_digest) != 64 or not re.fullmatch(
+                                r"[0-9a-f]{64}", hex_digest
+                            ):
+                                raise RecoveryError(
+                                    "plan-gate request artifact identity is invalid"
+                                )
+                            expected = (
+                                self.artifacts.objects / hex_digest[:2] / hex_digest[2:]
+                            ).resolve()
+                            try:
+                                actual = Path(artifact_path).resolve()
+                                content = actual.read_bytes()
+                            except OSError as exc:
+                                raise RecoveryError(
+                                    "plan-gate request artifact is unavailable"
+                                ) from exc
+                            if actual != expected or sha256_bytes(content) != artifact_hash:
+                                raise RecoveryError("plan-gate request artifact binding differs")
+                            try:
+                                payload = json.loads(content)
+                            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                                raise RecoveryError(
+                                    "plan-gate request artifact is not canonical JSON"
+                                ) from exc
+                            if not isinstance(payload, dict):
+                                raise RecoveryError("plan-gate request artifact must be an object")
+                            return payload
+
+                        recovered_plan_gate_pins = (
+                            recover_plan_gate_readiness_pins(
+                                run_id=manifest.run_id,
+                                events=events,
+                                request_artifact_loader=load_plan_gate_request_artifact,
+                            )
+                            if manifest.context_policy_version
+                            in {
+                                "phase-evidence-v31",
+                                "phase-evidence-v32",
+                                "phase-evidence-v33",
+                                "phase-evidence-v34",
+                                "phase-evidence-v35",
+                                "phase-evidence-v36",
+                                "phase-evidence-v37",
+                                "phase-evidence-v38",
                             }
-                        normalized_request_body_hash = sha256_text(
-                            canonical_json(normalized_request_body)
+                            else ()
                         )
+
+                        lean_request = assemble_lean_harness_request(
+                            dependencies=load_lean_harness_dependencies(repository_root()),
+                            built_context=built_context,
+                            normalized_no_memory_context=normalized_context_build,
+                            base_tool_schemas=tool_schemas,
+                            phase_evidence=phase_evidence,
+                            events=events,
+                            usage=usage,
+                            budget=manifest.budget,
+                            model_id=manifest.model.model_id,
+                            system_prompt=system_prompt,
+                            configured_max_output_tokens=manifest.model.max_output_tokens,
+                            memory_delivery_evidence_sha256=fixed_delivery.evidence_sha256,
+                            runtime_policy_version={
+                                "phase-evidence-v12": LEAN_RUNTIME_POLICY_VERSION,
+                                "phase-evidence-v13": (
+                                    LEAN_RUNTIME_POLICY_VERSION_V3
+                                    if manifest.tool_schema_version == "v9"
+                                    else LEAN_RUNTIME_POLICY_VERSION_V2
+                                ),
+                                "phase-evidence-v14": LEAN_RUNTIME_POLICY_VERSION_V4,
+                                "phase-evidence-v15": LEAN_RUNTIME_POLICY_VERSION_V5,
+                                "phase-evidence-v16": LEAN_RUNTIME_POLICY_VERSION_V6,
+                                "phase-evidence-v17": LEAN_RUNTIME_POLICY_VERSION_V7,
+                                "phase-evidence-v18": LEAN_RUNTIME_POLICY_VERSION_V8,
+                                "phase-evidence-v19": LEAN_RUNTIME_POLICY_VERSION_V9,
+                                "phase-evidence-v20": LEAN_RUNTIME_POLICY_VERSION_V10,
+                                "phase-evidence-v21": LEAN_RUNTIME_POLICY_VERSION_V11,
+                                "phase-evidence-v22": LEAN_RUNTIME_POLICY_VERSION_V12,
+                                "phase-evidence-v23": LEAN_RUNTIME_POLICY_VERSION_V13,
+                                "phase-evidence-v24": LEAN_RUNTIME_POLICY_VERSION_V14,
+                                "phase-evidence-v25": LEAN_RUNTIME_POLICY_VERSION_V15,
+                                "phase-evidence-v26": LEAN_RUNTIME_POLICY_VERSION_V16,
+                                "phase-evidence-v27": LEAN_RUNTIME_POLICY_VERSION_V17,
+                                "phase-evidence-v28": LEAN_RUNTIME_POLICY_VERSION_V18,
+                                "phase-evidence-v29": LEAN_RUNTIME_POLICY_VERSION_V19,
+                                "phase-evidence-v30": LEAN_RUNTIME_POLICY_VERSION_V20,
+                                "phase-evidence-v31": LEAN_RUNTIME_POLICY_VERSION_V21,
+                                "phase-evidence-v32": LEAN_RUNTIME_POLICY_VERSION_V22,
+                                "phase-evidence-v33": LEAN_RUNTIME_POLICY_VERSION_V23,
+                                "phase-evidence-v34": LEAN_RUNTIME_POLICY_VERSION_V24,
+                                "phase-evidence-v35": LEAN_RUNTIME_POLICY_VERSION_V25,
+                                "phase-evidence-v36": LEAN_RUNTIME_POLICY_VERSION_V26,
+                                "phase-evidence-v37": LEAN_RUNTIME_POLICY_VERSION_V27,
+                                "phase-evidence-v38": LEAN_RUNTIME_POLICY_VERSION_V28,
+                            }[manifest.context_policy_version],
+                            task=(
+                                package.public
+                                if manifest.context_policy_version
+                                in {
+                                    "phase-evidence-v18",
+                                    "phase-evidence-v19",
+                                    "phase-evidence-v20",
+                                    "phase-evidence-v21",
+                                    "phase-evidence-v22",
+                                    "phase-evidence-v23",
+                                    "phase-evidence-v24",
+                                    "phase-evidence-v25",
+                                    "phase-evidence-v26",
+                                    "phase-evidence-v27",
+                                    "phase-evidence-v28",
+                                    "phase-evidence-v29",
+                                    "phase-evidence-v30",
+                                    "phase-evidence-v31",
+                                    "phase-evidence-v32",
+                                    "phase-evidence-v33",
+                                    "phase-evidence-v34",
+                                    "phase-evidence-v35",
+                                    "phase-evidence-v36",
+                                    "phase-evidence-v37",
+                                    "phase-evidence-v38",
+                                }
+                                else None
+                            ),
+                            provider_request_builder=(
+                                lean_provider_request_builder
+                                if isinstance(adapter, OpenAIResponsesAdapter)
+                                else None
+                            ),
+                            provider_input_token_counter=(
+                                lean_provider_input_token_counter
+                                if isinstance(adapter, OpenAIResponsesAdapter)
+                                else None
+                            ),
+                            live_input_count_method=(
+                                "openai-input-token-count-v2-parallel-bound"
+                                if manifest.context_policy_version
+                                in {
+                                    "phase-evidence-v18",
+                                    "phase-evidence-v19",
+                                    "phase-evidence-v20",
+                                    "phase-evidence-v21",
+                                    "phase-evidence-v22",
+                                    "phase-evidence-v23",
+                                    "phase-evidence-v24",
+                                    "phase-evidence-v25",
+                                    "phase-evidence-v26",
+                                    "phase-evidence-v27",
+                                    "phase-evidence-v28",
+                                    "phase-evidence-v29",
+                                    "phase-evidence-v30",
+                                    "phase-evidence-v31",
+                                    "phase-evidence-v32",
+                                    "phase-evidence-v33",
+                                    "phase-evidence-v34",
+                                    "phase-evidence-v35",
+                                    "phase-evidence-v36",
+                                    "phase-evidence-v37",
+                                    "phase-evidence-v38",
+                                }
+                                and isinstance(adapter, OpenAIResponsesAdapter)
+                                else "openai-input-token-count-v1"
+                            ),
+                            recovered_plan_gate_pins=recovered_plan_gate_pins,
+                        )
+                        context = lean_request.context
+                        lean_request_context = lean_request.context
+                        request_tool_schemas = list(lean_request.tool_schemas)
+                        request_body = lean_request.request_body
+                        request_body_hash = lean_request.evidence.request_body_hash
+                        normalized_request_body_hash = (
+                            lean_request.evidence.normalized_no_memory_request_body_sha256
+                        )
+                        lean_request_evidence = lean_request.evidence
                     else:
-                        normalized_request_body_hash = request_body_hash
+                        if fixed_delivery.evidence.selected_memory_present:
+                            if isinstance(adapter, OpenAIResponsesAdapter):
+                                normalized_request_body = adapter.request_payload(
+                                    normalized_context,
+                                    tool_schemas,
+                                    system_prompt=system_prompt,
+                                )
+                            else:
+                                normalized_request_body = {
+                                    "model": manifest.model.model_id,
+                                    "system_prompt": system_prompt,
+                                    "context": normalized_context,
+                                    "tools": tool_schemas,
+                                }
+                            normalized_request_body_hash = sha256_text(
+                                canonical_json(normalized_request_body)
+                            )
+                        else:
+                            normalized_request_body_hash = request_body_hash
                     fixed_memory_request_evidence = FixedMemoryRequestEvidence(
                         delivery=fixed_delivery.evidence,
                         delivery_evidence_sha256=fixed_delivery.evidence_sha256,
@@ -2425,6 +3603,11 @@ class AgentRunner:
                         else {}
                     ),
                     **(
+                        {"lean_harness_request": lean_request_evidence.model_dump(mode="json")}
+                        if lean_request_evidence is not None
+                        else {}
+                    ),
+                    **(
                         {"worker_claim": worker_claim_evidence}
                         if worker_claim_evidence is not None
                         else {}
@@ -2432,15 +3615,39 @@ class AgentRunner:
                 }
                 if fixed_memory_request_evidence is not None:
                     validate_fixed_memory_request_artifact(request_artifact_payload)
+                if lean_request_evidence is not None:
+                    validate_persisted_lean_harness_request(request_artifact_payload)
                 request_artifact = self.artifacts.put_json(request_artifact_payload)
                 self.state.append_event(
                     manifest.run_id,
                     EventType.CONTEXT_BUILT,
                     actor="context-builder",
                     payload={
-                        "context_hash": built_context.content_hash,
-                        "context_characters": built_context.evidence["rendered_characters"],
-                        "context_bytes": built_context.evidence["rendered_bytes"],
+                        "context_hash": (
+                            getattr(
+                                lean_request_evidence,
+                                "recovery_context_hash",
+                                lean_request_evidence.context_compaction.projected_context_hash,
+                            )
+                            if lean_request_evidence is not None
+                            else built_context.content_hash
+                        ),
+                        "context_characters": (
+                            len(lean_request_context)
+                            if lean_request_context is not None
+                            else (
+                                lean_request_evidence.context_compaction.projected_context_characters
+                            )
+                            if lean_request_evidence is not None
+                            else built_context.evidence["rendered_characters"]
+                        ),
+                        "context_bytes": (
+                            len(lean_request_context.encode("utf-8"))
+                            if lean_request_context is not None
+                            else lean_request_evidence.context_compaction.projected_context_bytes
+                            if lean_request_evidence is not None
+                            else built_context.evidence["rendered_bytes"]
+                        ),
                         "eligible_event_count": built_context.evidence["events"]["eligible_count"],
                         "included_event_count": built_context.evidence["events"]["included_count"],
                         "omitted_event_count": built_context.evidence["events"]["omitted_count"],
@@ -2453,6 +3660,39 @@ class AgentRunner:
                         "artifact_path": request_artifact.path,
                         "artifact_role": "model-request-evidence",
                         "provider_state_used": False,
+                        **(
+                            {
+                                "lean_harness_request_evidence_hash": (
+                                    lean_request_evidence.content_hash
+                                ),
+                                "lean_harness_requested_input_tokens": (
+                                    lean_request_evidence.requested_input_tokens
+                                ),
+                                "lean_harness_effective_max_output_tokens": (
+                                    lean_request_evidence.effective_max_output_tokens
+                                ),
+                                "lean_harness_phase_tool_surface_hash": (
+                                    lean_request_evidence.phase_tool_surface_hash
+                                ),
+                                **(
+                                    {
+                                        "lean_incomplete_recovery_mode": (
+                                            lean_request_evidence.incomplete_recovery.mode
+                                        ),
+                                        "lean_incomplete_recovery_hash": (
+                                            lean_request_evidence.incomplete_recovery_hash
+                                        ),
+                                    }
+                                    if hasattr(
+                                        lean_request_evidence,
+                                        "incomplete_recovery",
+                                    )
+                                    else {}
+                                ),
+                            }
+                            if lean_request_evidence is not None
+                            else {}
+                        ),
                         **(
                             {
                                 "memory_delivery_policy_version": (FIXED_BUNDLE_POLICY_VERSION),
@@ -2718,61 +3958,166 @@ class AgentRunner:
                             reason_code=pre_generation_reason,
                             usage=usage,
                         )
+                if lean_request_evidence is not None:
+                    try:
+                        persisted_request_payload = json.loads(
+                            self.artifacts.read_bytes(request_artifact).decode(
+                                "utf-8", errors="strict"
+                            )
+                        )
+                    except (UnicodeDecodeError, ValueError) as exc:
+                        raise ContractError(
+                            "persisted Lean request evidence is unavailable"
+                        ) from exc
+                    persisted_lean = validate_persisted_lean_harness_request(
+                        persisted_request_payload
+                    )
+                    if persisted_lean != lean_request_evidence:
+                        raise ContractError("persisted Lean request evidence differs")
                 model_started = time.monotonic()
                 if isinstance(adapter, OpenAIResponsesAdapter):
-                    requested_input_tokens = adapter.count_input_tokens(request_body)
-                    split_budget_evidence = self._split_token_request_budget_evidence(
-                        manifest,
-                        usage,
-                        requested_input_tokens=requested_input_tokens,
-                    )
-                    remaining_tokens = (
-                        manifest.budget.max_total_tokens - usage.input_tokens - usage.output_tokens
-                    )
-                    legacy_budget_exceeded = bool(
-                        split_budget_evidence is None
-                        and requested_input_tokens + manifest.model.max_output_tokens
-                        > remaining_tokens
-                    )
-                    split_budget_exceeded = bool(
-                        split_budget_evidence is not None
-                        and split_budget_evidence["exceeded_dimensions"]
-                    )
-                    if legacy_budget_exceeded or split_budget_exceeded:
-                        if manifest.context_policy_version in {
-                            "phase-evidence-v3",
-                            "phase-evidence-v4",
-                            "phase-evidence-v5",
-                            "phase-evidence-v6",
-                            "phase-evidence-v7",
-                            "phase-evidence-v8",
-                            "phase-evidence-v9",
-                            "phase-evidence-v10",
-                            "phase-evidence-v11",
-                        }:
-                            usage.input_token_count_calls += 1
-                            self._block_model_generation(
-                                manifest=manifest,
-                                built_context=built_context,
-                                request_artifact=request_artifact,
-                                request_body_hash=request_body_hash,
-                                reason_code="exact_request_budget_exceeded",
-                                usage=usage,
-                                requested_input_tokens=requested_input_tokens,
-                                remaining_tokens=remaining_tokens,
-                                input_token_count_calls=1,
-                                split_budget_evidence=(
-                                    split_budget_evidence if split_budget_exceeded else None
-                                ),
-                            )
-                        raise ContractError(
-                            "remaining token budget cannot fund the exact input "
-                            "plus one bounded model response"
+                    if lean_request_evidence is not None:
+                        requested_input_tokens = lean_request_evidence.requested_input_tokens
+                    else:
+                        requested_input_tokens = adapter.count_input_tokens(request_body)
+                        split_budget_evidence = self._split_token_request_budget_evidence(
+                            manifest,
+                            usage,
+                            requested_input_tokens=requested_input_tokens,
                         )
-                    turn = adapter.execute_request(
+                        remaining_tokens = (
+                            manifest.budget.max_total_tokens
+                            - usage.input_tokens
+                            - usage.output_tokens
+                        )
+                        legacy_budget_exceeded = bool(
+                            split_budget_evidence is None
+                            and requested_input_tokens + manifest.model.max_output_tokens
+                            > remaining_tokens
+                        )
+                        split_budget_exceeded = bool(
+                            split_budget_evidence is not None
+                            and split_budget_evidence["exceeded_dimensions"]
+                        )
+                        if legacy_budget_exceeded or split_budget_exceeded:
+                            if manifest.context_policy_version in {
+                                "phase-evidence-v3",
+                                "phase-evidence-v4",
+                                "phase-evidence-v5",
+                                "phase-evidence-v6",
+                                "phase-evidence-v7",
+                                "phase-evidence-v8",
+                                "phase-evidence-v9",
+                                "phase-evidence-v10",
+                                "phase-evidence-v11",
+                            }:
+                                usage.input_token_count_calls += 1
+                                self._block_model_generation(
+                                    manifest=manifest,
+                                    built_context=built_context,
+                                    request_artifact=request_artifact,
+                                    request_body_hash=request_body_hash,
+                                    reason_code="exact_request_budget_exceeded",
+                                    usage=usage,
+                                    requested_input_tokens=requested_input_tokens,
+                                    remaining_tokens=remaining_tokens,
+                                    input_token_count_calls=1,
+                                    split_budget_evidence=(
+                                        split_budget_evidence if split_budget_exceeded else None
+                                    ),
+                                )
+                            raise ContractError(
+                                "remaining token budget cannot fund the exact input "
+                                "plus one bounded model response"
+                            )
+                    if manifest.context_policy_version in {
+                        "phase-evidence-v37",
+                        "phase-evidence-v38",
+                    }:
+                        adapter.admit_request_v3(request_body)
+                    # R24 integration begin: production-create-gate
+                    from patchloop.agent.provider_request_gate import (
+                        admit_request,
+                        request_admission_required,
+                    )
+
+                    if request_admission_required(manifest, row_execution_authorization):
+                        admit_request(
+                            manifest,
+                            row_execution_authorization,
+                            request_body,
+                            adapter,
+                            stop_before_count=False,
+                        )
+                    # R24 integration end: production-create-gate
+                    if row_execution_authorization is not None:
+                        _provider_dispatch_boundary(
+                            manifest,
+                            row_execution_authorization,
+                            stop_before_dispatch=False,
+                        )
+                    execute_request = (
+                        adapter.execute_request_v3
+                        if manifest.context_policy_version
+                        in {"phase-evidence-v37", "phase-evidence-v38"}
+                        else adapter.execute_request
+                    )
+                    turn = execute_request(
                         request_body,
                         requested_input_tokens=requested_input_tokens,
                     )
+                    if lean_request_evidence is not None:
+                        turn = replace(
+                            turn,
+                            input_token_count_calls=lean_input_count_calls,
+                        )
+                    if manifest.context_policy_version in {
+                        "phase-evidence-v18",
+                        "phase-evidence-v19",
+                        "phase-evidence-v20",
+                        "phase-evidence-v21",
+                        "phase-evidence-v22",
+                        "phase-evidence-v23",
+                        "phase-evidence-v24",
+                        "phase-evidence-v25",
+                        "phase-evidence-v26",
+                        "phase-evidence-v27",
+                        "phase-evidence-v28",
+                        "phase-evidence-v29",
+                        "phase-evidence-v30",
+                        "phase-evidence-v31",
+                        "phase-evidence-v32",
+                    }:
+                        provider_terminal_attribution = project_provider_terminal_attribution(
+                            response_status=turn.response_status,
+                            response_incomplete_reason=turn.response_incomplete_reason,
+                            usage_present=bool(
+                                turn.input_tokens or turn.output_tokens or turn.total_tokens
+                            ),
+                            input_token_count_match=(turn.input_token_count_match is True),
+                        )
+                        if (
+                            provider_terminal_attribution.primary_error_code
+                            == "incomplete_response"
+                            and (
+                                turn.error is None
+                                or turn.error.code == "input_token_count_mismatch"
+                            )
+                        ):
+                            turn = replace(
+                                turn,
+                                error=ModelTurnError(
+                                    code="incomplete_response",
+                                    message=(
+                                        "provider response was incomplete"
+                                        + (
+                                            f": {turn.response_incomplete_reason}"
+                                            if turn.response_incomplete_reason
+                                            else ""
+                                        )
+                                    ),
+                                ),
+                            )
                 else:
                     if (
                         manifest.context_policy_version
@@ -2798,8 +4143,16 @@ class AgentRunner:
                             reason_code="token_budget_exhausted",
                             usage=usage,
                         )
-                    turn = adapter.next_turn(context, tool_schemas)
-                model_duration_ms = int((time.monotonic() - model_started) * 1000)
+                    if row_execution_authorization is not None:
+                        _provider_dispatch_boundary(
+                            manifest,
+                            row_execution_authorization,
+                            stop_before_dispatch=False,
+                        )
+                    turn = adapter.next_turn(context, request_tool_schemas)
+                model_duration_ms = (
+                    int((time.monotonic() - model_started) * 1000) + lean_input_count_duration_ms
+                )
                 usage.model_calls += 1
                 usage.input_tokens += turn.input_tokens
                 usage.cached_input_tokens += turn.cached_input_tokens
@@ -2836,6 +4189,15 @@ class AgentRunner:
                             }
                             if turn.error is not None
                             else None
+                        ),
+                        **(
+                            {
+                                "provider_terminal_attribution": (
+                                    provider_terminal_attribution.model_dump(mode="json")
+                                )
+                            }
+                            if provider_terminal_attribution is not None
+                            else {}
                         ),
                     }
                 )
@@ -2875,13 +4237,418 @@ class AgentRunner:
                         "response_error_code": (
                             turn.error.code if turn.error is not None else None
                         ),
+                        **(
+                            {
+                                "provider_terminal_attribution_hash": (
+                                    provider_terminal_attribution.content_hash
+                                ),
+                                "provider_terminal_accounting_mismatch_preserved": (
+                                    provider_terminal_attribution.accounting_mismatch_preserved
+                                ),
+                            }
+                            if provider_terminal_attribution is not None
+                            else {}
+                        ),
+                        "response_text_present": bool(turn.text.strip()),
+                        "response_tool_call_count": len(turn.tool_calls),
+                        **(
+                            {
+                                "lean_workflow_target": (
+                                    lean_request_evidence.workflow_decision.target
+                                ),
+                                "lean_workflow_decision_hash": (
+                                    lean_request_evidence.workflow_decision_hash
+                                ),
+                                "lean_shared_recovery_used": (
+                                    getattr(
+                                        lean_request_evidence.workflow_decision,
+                                        "shared_recovery_used",
+                                        False,
+                                    )
+                                ),
+                            }
+                            if lean_request_evidence is not None
+                            and hasattr(lean_request_evidence, "workflow_decision")
+                            else {}
+                        ),
+                        **(
+                            {
+                                "lean_incomplete_recovery_mode": (
+                                    lean_request_evidence.incomplete_recovery.mode
+                                ),
+                                "lean_reserved_retry_output_tokens": (
+                                    lean_request_evidence.incomplete_recovery.reserved_retry_output_tokens
+                                ),
+                                "lean_incomplete_recovery_hash": (
+                                    lean_request_evidence.incomplete_recovery_hash
+                                ),
+                            }
+                            if lean_request_evidence is not None
+                            and hasattr(
+                                lean_request_evidence,
+                                "incomplete_recovery",
+                            )
+                            else {}
+                        ),
+                        **(
+                            {
+                                "lean_completion_recovery_mode": (
+                                    lean_request_evidence.completion_response_recovery.mode
+                                ),
+                                "lean_reserved_completion_retry_output_tokens": (
+                                    lean_request_evidence.completion_response_recovery.reserved_retry_output_tokens
+                                ),
+                                "lean_completion_recovery_hash": (
+                                    lean_request_evidence.completion_response_recovery_hash
+                                ),
+                                "lean_completion_lane_active": (
+                                    lean_request_evidence.completion_response_recovery.completion_lane_active
+                                ),
+                                "lean_response_done": turn.done,
+                            }
+                            if lean_request_evidence is not None
+                            and hasattr(
+                                lean_request_evidence,
+                                "completion_response_recovery",
+                            )
+                            else {}
+                        ),
                         "artifact_id": turn_artifact.artifact_id,
                         "artifact_path": turn_artifact.path,
                         "duration_ms": model_duration_ms,
                     },
                 )
                 self._assert_consumed_budget(manifest, usage)
+                successor_workflow = manifest.context_policy_version in {
+                    "phase-evidence-v19",
+                    "phase-evidence-v20",
+                    "phase-evidence-v21",
+                    "phase-evidence-v22",
+                    "phase-evidence-v23",
+                    "phase-evidence-v24",
+                    "phase-evidence-v25",
+                    "phase-evidence-v26",
+                    "phase-evidence-v27",
+                    "phase-evidence-v28",
+                    "phase-evidence-v29",
+                    "phase-evidence-v30",
+                    "phase-evidence-v31",
+                    "phase-evidence-v32",
+                    "phase-evidence-v33",
+                    "phase-evidence-v34",
+                    "phase-evidence-v35",
+                    "phase-evidence-v36",
+                    "phase-evidence-v37",
+                    "phase-evidence-v38",
+                }
+                if manifest.context_policy_version in {
+                    "phase-evidence-v18",
+                    "phase-evidence-v19",
+                    "phase-evidence-v20",
+                    "phase-evidence-v21",
+                    "phase-evidence-v22",
+                    "phase-evidence-v23",
+                    "phase-evidence-v24",
+                    "phase-evidence-v25",
+                    "phase-evidence-v26",
+                    "phase-evidence-v27",
+                    "phase-evidence-v28",
+                    "phase-evidence-v29",
+                    "phase-evidence-v30",
+                    "phase-evidence-v31",
+                    "phase-evidence-v32",
+                    "phase-evidence-v33",
+                    "phase-evidence-v34",
+                    "phase-evidence-v35",
+                    "phase-evidence-v36",
+                    "phase-evidence-v37",
+                    "phase-evidence-v38",
+                }:
+                    allowed_request_tools = tuple(
+                        str(schema.get("name"))
+                        for schema in request_tool_schemas
+                        if isinstance(schema.get("name"), str)
+                    )
+                    protocol_reason: str | None = None
+                    protocol_error_details: dict[str, Any] = {}
+                    if len(turn.tool_calls) > 1:
+                        protocol_reason = "multiple_tool_calls"
+                    elif turn.tool_calls and turn.tool_calls[0].name not in allowed_request_tools:
+                        protocol_reason = "unavailable_tool"
+                    elif turn.tool_calls and turn.tool_calls[0].name == "run_check":
+                        run_check_schema = next(
+                            (
+                                schema
+                                for schema in request_tool_schemas
+                                if schema.get("name") == "run_check"
+                            ),
+                            {},
+                        )
+                        expected_check_ids = (
+                            run_check_schema.get("parameters", {})
+                            .get("properties", {})
+                            .get("check_id", {})
+                            .get("enum")
+                        )
+                        if turn.tool_calls[0].arguments.get("check_id") not in (
+                            expected_check_ids or []
+                        ):
+                            protocol_reason = "wrong_check_id"
+                    elif (
+                        turn.tool_calls
+                        and manifest.tool_schema_version in {"v26", "v27", "v28", "v29"}
+                        and turn.tool_calls[0].name in {"search_files", "read_file"}
+                    ):
+                        state = (
+                            lean_request_evidence.self_directed_exploration_state
+                            if lean_request_evidence is not None
+                            and hasattr(
+                                lean_request_evidence,
+                                "self_directed_exploration_state",
+                            )
+                            else None
+                        )
+                        decision = (
+                            lean_request_evidence.workflow_decision
+                            if lean_request_evidence is not None
+                            and hasattr(lean_request_evidence, "workflow_decision")
+                            else None
+                        )
+                        if not isinstance(decision, WorkflowDecisionV4):
+                            raise RecoveryError(
+                                "V23 inspection lacks its exact self-directed request state"
+                            )
+                        inspection_arguments = turn.tool_calls[0].arguments
+                        if (
+                            manifest.tool_schema_version in {"v28", "v29"}
+                            and turn.tool_calls[0].name == "read_file"
+                        ):
+                            try:
+                                inspection_arguments = normalize_strict_read_arguments(
+                                    inspection_arguments
+                                )
+                                if "search_anchor" in inspection_arguments:
+                                    current_diff = WorkspaceManager.diff_summary(
+                                        workspace
+                                    ).patch_hash
+                                    resolved = resolve_anchored_read(
+                                        run_id=manifest.run_id,
+                                        task=package.public,
+                                        worktree_diff_hash=current_diff,
+                                        records=load_inspection_records(
+                                            self.state.list_events(manifest.run_id),
+                                            self.artifacts,
+                                            worktree_diff_hash=current_diff,
+                                        ),
+                                        raw_anchor=inspection_arguments["search_anchor"],
+                                    )
+                                    inspection_arguments = {
+                                        **{
+                                            key: value
+                                            for key, value in inspection_arguments.items()
+                                            if key != "search_anchor"
+                                        },
+                                        "path": resolved.path,
+                                        "start_line": resolved.start_line,
+                                        "end_line": resolved.end_line,
+                                    }
+                            except ContractError as exc:
+                                protocol_reason = "self_directed_investigation_read_mode_invalid"
+                                protocol_error_details = {
+                                    "reason_codes": [protocol_reason],
+                                    "read_admission": dict(exc.details),
+                                }
+                        if decision.investigation_intent_required and protocol_reason is None:
+                            if not isinstance(state, SelfDirectedExplorationState):
+                                raise RecoveryError(
+                                    "V23 investigation lacks its exact self-directed state"
+                                )
+                            try:
+                                prior_target_hashes = project_episode_investigation_target_hashes(
+                                    events=self.state.list_events(manifest.run_id),
+                                    decision=decision,
+                                    worktree_diff_hash=state.worktree_diff_hash,
+                                )
+                                validate_investigation_action(
+                                    task=package.public,
+                                    state=state,
+                                    tool=turn.tool_calls[0].name,
+                                    arguments=inspection_arguments,
+                                    prior_target_hashes=prior_target_hashes,
+                                )
+                            except ContractError as exc:
+                                reason_codes = exc.details.get("reason_codes", [])
+                                if not reason_codes or any(
+                                    not isinstance(item, str)
+                                    or not item.startswith("self_directed_investigation_")
+                                    for item in reason_codes
+                                ):
+                                    raise
+                                protocol_reason = reason_codes[0]
+                                protocol_error_details = dict(exc.details)
+                        elif (
+                            not decision.investigation_intent_required
+                            and "investigation_intent" in turn.tool_calls[0].arguments
+                        ):
+                            protocol_reason = "self_directed_investigation_intent_premature"
+                            protocol_error_details = {"reason_codes": [protocol_reason]}
+                    reasoning_only_incomplete = bool(
+                        turn.error is not None
+                        and turn.error.code == "incomplete_response"
+                        and turn.response_incomplete_reason == "max_output_tokens"
+                        and turn.output_tokens > 0
+                        and turn.reasoning_output_tokens == turn.output_tokens
+                        and not turn.text.strip()
+                        and not turn.tool_calls
+                    )
+                    if (
+                        manifest.context_policy_version
+                        in {
+                            "phase-evidence-v36",
+                            "phase-evidence-v37",
+                            "phase-evidence-v38",
+                        }
+                        and reasoning_only_incomplete
+                    ):
+                        generation_recovery = project_generation_incomplete_recovery(
+                            self.state.list_events(manifest.run_id)
+                        )
+                        if generation_recovery.used:
+                            raise ModelGenerationIncompleteRepeatedError(
+                                "model exhausted the dedicated reasoning-only generation retry"
+                            )
+                        self.state.append_event(
+                            manifest.run_id,
+                            EventType.TOOL_ADMISSION_BLOCKED,
+                            actor="workflow-state-machine",
+                            correlation_id=model_event.event_id,
+                            payload={
+                                "policy_version": GENERATION_INCOMPLETE_RECOVERY_POLICY,
+                                "reason_code": "reasoning_incomplete",
+                                "execution": "not_dispatched",
+                                "model_event_sequence": model_event.sequence,
+                                "request_artifact_id": request_artifact.artifact_id,
+                                "request_body_hash": request_body_hash,
+                                "allowed_tool_names": list(allowed_request_tools),
+                                "response_tool_names": [],
+                                "generation_recovery_slot": 1,
+                                "shared_protocol_recovery_slot_consumed": False,
+                            },
+                        )
+                        checkpoint = self._checkpoint(
+                            manifest,
+                            workspace,
+                            phase,
+                            usage,
+                            task=package.public,
+                        )
+                        continue
+                    if successor_workflow and reasoning_only_incomplete:
+                        protocol_reason = "reasoning_incomplete"
+                    elif (
+                        successor_workflow
+                        and protocol_reason is None
+                        and turn.error is None
+                        and (turn.done or not turn.tool_calls)
+                    ):
+                        protocol_reason = "actionless_response"
+                    if protocol_reason is not None:
+                        if not successor_workflow:
+                            legacy_messages = {
+                                "multiple_tool_calls": (
+                                    "Lean V8 response emitted more than one tool call"
+                                ),
+                                "unavailable_tool": "Lean V8 response used an unavailable tool",
+                                "wrong_check_id": (
+                                    "Lean V8 response used a check outside the request binding"
+                                ),
+                            }
+                            raise ContractError(legacy_messages[protocol_reason])
+                        prior_recoveries = [
+                            event
+                            for event in self.state.list_events(manifest.run_id)
+                            if event.type == EventType.TOOL_ADMISSION_BLOCKED
+                            and event.payload.get("policy_version") == PROTOCOL_RECOVERY_POLICY
+                        ]
+                        if prior_recoveries:
+                            raise ModelActionContractRepeatedError(
+                                "model violated the one-action request contract after recovery"
+                            )
+                        self.state.append_event(
+                            manifest.run_id,
+                            EventType.TOOL_ADMISSION_BLOCKED,
+                            actor="workflow-state-machine",
+                            correlation_id=model_event.event_id,
+                            payload={
+                                "policy_version": PROTOCOL_RECOVERY_POLICY,
+                                "reason_code": protocol_reason,
+                                "execution": "not_dispatched",
+                                "model_event_sequence": model_event.sequence,
+                                "request_artifact_id": request_artifact.artifact_id,
+                                "request_body_hash": request_body_hash,
+                                "allowed_tool_names": list(allowed_request_tools),
+                                "response_tool_names": [call.name for call in turn.tool_calls],
+                                "expected_check_ids": (
+                                    list(expected_check_ids)
+                                    if protocol_reason == "wrong_check_id"
+                                    else []
+                                ),
+                                "error_details": protocol_error_details or None,
+                                "shared_recovery_slot": 1,
+                            },
+                        )
+                        checkpoint = self._checkpoint(
+                            manifest,
+                            workspace,
+                            phase,
+                            usage,
+                            task=package.public,
+                        )
+                        continue
                 if turn.error is not None:
+                    recovery = (
+                        lean_request_evidence.incomplete_recovery
+                        if lean_request_evidence is not None
+                        and hasattr(lean_request_evidence, "incomplete_recovery")
+                        else None
+                    )
+                    completion_recovery = (
+                        lean_request_evidence.completion_response_recovery
+                        if lean_request_evidence is not None
+                        and hasattr(
+                            lean_request_evidence,
+                            "completion_response_recovery",
+                        )
+                        else None
+                    )
+                    reasoning_only_incomplete = bool(
+                        turn.error.code == "incomplete_response"
+                        and turn.response_incomplete_reason == "max_output_tokens"
+                        and turn.output_tokens > 0
+                        and turn.reasoning_output_tokens == turn.output_tokens
+                        and not turn.text.strip()
+                        and not turn.tool_calls
+                    )
+                    if reasoning_only_incomplete and (
+                        (
+                            recovery is not None
+                            and recovery.mode == "primary-reserved"
+                            and recovery.retry_available_after_response
+                        )
+                        or (
+                            completion_recovery is not None
+                            and completion_recovery.mode == "primary-reserved"
+                            and completion_recovery.retry_available_after_response
+                        )
+                    ):
+                        checkpoint = self._checkpoint(
+                            manifest,
+                            workspace,
+                            phase,
+                            usage,
+                            task=package.public,
+                        )
+                        continue
                     raise ContractError(f"model response rejected: {turn.error.code}")
                 if turn.done:
                     if manifest.tool_schema_version == "v1":
@@ -2928,13 +4695,63 @@ class AgentRunner:
                         )
                     continue
                 if not turn.tool_calls:
+                    completion_recovery = (
+                        lean_request_evidence.completion_response_recovery
+                        if lean_request_evidence is not None
+                        and hasattr(
+                            lean_request_evidence,
+                            "completion_response_recovery",
+                        )
+                        else None
+                    )
+                    if (
+                        completion_recovery is not None
+                        and completion_recovery.mode == "primary-reserved"
+                        and completion_recovery.retry_available_after_response
+                    ):
+                        checkpoint = self._checkpoint(
+                            manifest,
+                            workspace,
+                            phase,
+                            usage,
+                            task=package.public,
+                        )
+                        continue
                     raise ContractError("model returned neither a tool call nor a submission")
                 finish_calls = [call for call in turn.tool_calls if call.name == "finish_task"]
                 v4_apply_precedes_finish = (
-                    manifest.tool_schema_version in {"v4", "v5", "v6"}
+                    manifest.tool_schema_version
+                    in {
+                        "v4",
+                        "v5",
+                        "v6",
+                        "v7",
+                        "v8",
+                        "v9",
+                        "v10",
+                        "v11",
+                        "v12",
+                        "v13",
+                        "v14",
+                        "v15",
+                        "v16",
+                        "v17",
+                        "v18",
+                        "v19",
+                        "v20",
+                        "v21",
+                        "v22",
+                        "v23",
+                        "v24",
+                        "v25",
+                        "v26",
+                        "v27",
+                        "v28",
+                        "v29",
+                    }
                     and bool(finish_calls)
                     and any(
-                        call.name == "apply_patch"
+                        call.name in {"apply_patch", "apply_structured_edit"}
                         for call in turn.tool_calls[: turn.tool_calls.index(finish_calls[0])]
                     )
                 )
@@ -2979,6 +4796,47 @@ class AgentRunner:
                     continue
                 for call_index, call in enumerate(turn.tool_calls, 1):
                     if (
+                        successor_workflow
+                        and call.name in {"apply_patch", "apply_structured_edit"}
+                        and lean_request_evidence is not None
+                        and hasattr(lean_request_evidence, "workflow_decision")
+                        and lean_request_evidence.workflow_decision.target == "review-decision"
+                        and lean_request_evidence.workflow_decision.review_corrections_used >= 1
+                    ):
+                        raise ReviewCorrectionLimitError(
+                            "a second review correction was rejected before tool dispatch"
+                        )
+                    if call.name == "declare_exploration_exhausted":
+                        if manifest.tool_schema_version not in {"v26", "v27", "v28", "v29"}:
+                            raise ContractError(
+                                "declare_exploration_exhausted requires tool schema v26+"
+                            )
+                        state = (
+                            lean_request_evidence.self_directed_exploration_state
+                            if lean_request_evidence is not None
+                            and hasattr(
+                                lean_request_evidence,
+                                "self_directed_exploration_state",
+                            )
+                            else None
+                        )
+                        if not isinstance(state, SelfDirectedExplorationState):
+                            raise RecoveryError(
+                                "exploration stop lacks its exact self-directed request state"
+                            )
+                        self._record_self_directed_exploration_stop(
+                            run_id=manifest.run_id,
+                            state=state,
+                            action_id=call.action_id,
+                            arguments=call.arguments,
+                            model_event_sequence=model_event.sequence,
+                            request_artifact_id=request_artifact.artifact_id,
+                            request_body_hash=request_body_hash,
+                        )
+                        raise SelfDirectedExplorationExhaustedError(
+                            "bounded public exploration ended without a safe plan"
+                        )
+                    if (
                         manifest.budget.max_tool_calls is not None
                         and usage.tool_calls >= manifest.budget.max_tool_calls
                     ):
@@ -2990,6 +4848,29 @@ class AgentRunner:
                             "v4",
                             "v5",
                             "v6",
+                            "v7",
+                            "v8",
+                            "v9",
+                            "v10",
+                            "v11",
+                            "v12",
+                            "v13",
+                            "v14",
+                            "v15",
+                            "v16",
+                            "v17",
+                            "v18",
+                            "v19",
+                            "v20",
+                            "v21",
+                            "v22",
+                            "v23",
+                            "v24",
+                            "v25",
+                            "v26",
+                            "v27",
+                            "v28",
+                            "v29",
                         }:
                             raise ContractError("finish_task is unavailable in tool schema v1")
                         result, accepted, should_stop = self._finish_task(
@@ -3070,7 +4951,169 @@ class AgentRunner:
                             ),
                         }
                         if call.name == "review_task"
-                        else None
+                        else (
+                            {
+                                "request_artifact_id": request_artifact.artifact_id,
+                                "request_body_hash": request_body_hash,
+                                "eligible_plan_evidence_catalog": (
+                                    lean_request_evidence.eligible_plan_evidence_catalog.model_dump(
+                                        mode="json"
+                                    )
+                                ),
+                                "workflow_decision": (
+                                    lean_request_evidence.workflow_decision.model_dump(mode="json")
+                                ),
+                                "active_work_state": (
+                                    lean_request_evidence.active_work_state.model_dump(mode="json")
+                                    if lean_request_evidence.active_work_state is not None
+                                    else None
+                                ),
+                                **(
+                                    {
+                                        "phase_evidence": lean_request_evidence.phase_evidence,
+                                        "semantic_progress_state": (
+                                            lean_request_evidence.semantic_progress_state.model_dump(
+                                                mode="json"
+                                            )
+                                            if lean_request_evidence.semantic_progress_state
+                                            is not None
+                                            else None
+                                        ),
+                                        **(
+                                            {
+                                                "semantic_progress_event_domain": (
+                                                    lean_request_evidence.semantic_progress_event_domain.model_dump(
+                                                        mode="json"
+                                                    )
+                                                )
+                                            }
+                                            if hasattr(
+                                                lean_request_evidence,
+                                                "semantic_progress_event_domain",
+                                            )
+                                            else {}
+                                        ),
+                                    }
+                                    if hasattr(
+                                        lean_request_evidence,
+                                        "semantic_progress_state",
+                                    )
+                                    else {}
+                                ),
+                                **(
+                                    {
+                                        "cross_reset_failure_trigger": (
+                                            lean_request_evidence.cross_reset_failure_trigger.model_dump(
+                                                mode="json"
+                                            )
+                                            if lean_request_evidence.cross_reset_failure_trigger
+                                            is not None
+                                            else None
+                                        ),
+                                        "mutation_baseline_projection": (
+                                            lean_request_evidence.mutation_baseline_projection.model_dump(
+                                                mode="json"
+                                            )
+                                            if lean_request_evidence.mutation_baseline_projection
+                                            is not None
+                                            else None
+                                        ),
+                                        "mutation_baseline_restore_receipt": (
+                                            lean_request_evidence.mutation_baseline_restore_receipt.model_dump(
+                                                mode="json"
+                                            )
+                                            if (
+                                                lean_request_evidence.mutation_baseline_restore_receipt
+                                                is not None
+                                            )
+                                            else None
+                                        ),
+                                        "causal_mechanism_history": [
+                                            item.model_dump(mode="json")
+                                            for item in (
+                                                lean_request_evidence.causal_mechanism_history
+                                            )
+                                        ],
+                                        **(
+                                            {
+                                                "causal_plan_request_projection": (
+                                                    lean_request_evidence.causal_plan_request_projection.model_dump(
+                                                        mode="json"
+                                                    )
+                                                )
+                                            }
+                                            if hasattr(
+                                                lean_request_evidence,
+                                                "causal_plan_request_projection",
+                                            )
+                                            and lean_request_evidence.causal_plan_request_projection
+                                            is not None
+                                            else {}
+                                        ),
+                                        **(
+                                            {
+                                                "activated_exploration_plan_request": (
+                                                    lean_request_evidence.activated_exploration_plan_request.model_dump(
+                                                        mode="json"
+                                                    )
+                                                )
+                                            }
+                                            if hasattr(
+                                                lean_request_evidence,
+                                                "activated_exploration_plan_request",
+                                            )
+                                            and (
+                                                lean_request_evidence.activated_exploration_plan_request
+                                                is not None
+                                            )
+                                            else {}
+                                        ),
+                                    }
+                                    if hasattr(
+                                        lean_request_evidence,
+                                        "cross_reset_failure_trigger",
+                                    )
+                                    else {}
+                                ),
+                            }
+                            if call.name in {"record_work_plan", "revise_work_plan"}
+                            and lean_request_evidence is not None
+                            and hasattr(
+                                lean_request_evidence,
+                                "eligible_plan_evidence_catalog",
+                            )
+                            else (
+                                {
+                                    "self_directed_exploration_state": (
+                                        lean_request_evidence.self_directed_exploration_state.model_dump(
+                                            mode="json"
+                                        )
+                                        if isinstance(
+                                            getattr(
+                                                lean_request_evidence,
+                                                "self_directed_exploration_state",
+                                                None,
+                                            ),
+                                            SelfDirectedExplorationState,
+                                        )
+                                        else None
+                                    ),
+                                    "workflow_decision": (
+                                        lean_request_evidence.workflow_decision.model_dump(
+                                            mode="json"
+                                        )
+                                    ),
+                                }
+                                if manifest.tool_schema_version in {"v26", "v27", "v28", "v29"}
+                                and call.name in {"search_files", "read_file"}
+                                and lean_request_evidence is not None
+                                and isinstance(
+                                    getattr(lean_request_evidence, "workflow_decision", None),
+                                    WorkflowDecisionV4,
+                                )
+                                else None
+                            )
+                        )
                     )
                     result = gateway.execute(
                         call.name,
@@ -3078,10 +5121,37 @@ class AgentRunner:
                         call.arguments,
                         execution_context=execution_context,
                     )
-                    if (
-                        manifest.tool_schema_version in {"v4", "v5", "v6"}
-                        and call.name == "apply_patch"
-                    ):
+                    if manifest.tool_schema_version in {
+                        "v4",
+                        "v5",
+                        "v6",
+                        "v7",
+                        "v8",
+                        "v9",
+                        "v10",
+                        "v11",
+                        "v12",
+                        "v13",
+                        "v14",
+                        "v15",
+                        "v16",
+                        "v17",
+                        "v18",
+                        "v19",
+                        "v20",
+                        "v21",
+                        "v22",
+                        "v23",
+                        "v24",
+                        "v25",
+                        "v26",
+                        "v27",
+                        "v28",
+                        "v29",
+                    } and call.name in {
+                        "apply_patch",
+                        "apply_structured_edit",
+                    }:
                         for blocked_index, blocked_call in enumerate(
                             turn.tool_calls[call_index:],
                             call_index + 1,
@@ -3151,7 +5221,7 @@ class AgentRunner:
                         )
                     if (
                         manifest.fault.type == "worker-kill-after-patch"
-                        and call.name == "apply_patch"
+                        and call.name in {"apply_patch", "apply_structured_edit"}
                         and result.status == "succeeded"
                     ):
                         self.state.append_event(
@@ -3166,10 +5236,37 @@ class AgentRunner:
                         raise InjectedFault(
                             "worker terminated immediately after durable patch checkpoint"
                         )
-                    if (
-                        manifest.tool_schema_version in {"v4", "v5", "v6"}
-                        and call.name == "apply_patch"
-                    ):
+                    if manifest.tool_schema_version in {
+                        "v4",
+                        "v5",
+                        "v6",
+                        "v7",
+                        "v8",
+                        "v9",
+                        "v10",
+                        "v11",
+                        "v12",
+                        "v13",
+                        "v14",
+                        "v15",
+                        "v16",
+                        "v17",
+                        "v18",
+                        "v19",
+                        "v20",
+                        "v21",
+                        "v22",
+                        "v23",
+                        "v24",
+                        "v25",
+                        "v26",
+                        "v27",
+                        "v28",
+                        "v29",
+                    } and call.name in {
+                        "apply_patch",
+                        "apply_structured_edit",
+                    }:
                         break
         except InjectedFault as exc:
             self.state.set_run_status(manifest.run_id, RunStatus.SUSPENDED)
@@ -3183,9 +5280,16 @@ class AgentRunner:
         except Exception as exc:
             if self._evaluation_receipt_path(manifest.run_id).exists():
                 raise
+            if manifest.context_policy_version in {"phase-evidence-v37", "phase-evidence-v38"}:
+                usage = self._usage(manifest.run_id)
             outcome_kind = (
                 RunOutcomeKind.AGENT_FAILURE
                 if isinstance(exc, ContractError)
+                and not isinstance(exc, ProviderToolSchemaError)
+                and not (
+                    manifest.context_policy_version in {"phase-evidence-v37", "phase-evidence-v38"}
+                    and isinstance(exc, HarnessAdmissionError)
+                )
                 else RunOutcomeKind.INFRASTRUCTURE_ERROR
             )
             return self._terminal_failure(
@@ -3210,7 +5314,36 @@ class AgentRunner:
         usage.model_cost_usd = calculate_model_cost(usage, manifest.model)
         summary = WorkspaceManager.diff_summary(workspace)
         submitted_patch_artifact: Artifact | None = None
-        if manifest.tool_schema_version in {"v2", "v3", "v4", "v5", "v6"}:
+        if manifest.tool_schema_version in {
+            "v2",
+            "v3",
+            "v4",
+            "v5",
+            "v6",
+            "v7",
+            "v8",
+            "v9",
+            "v10",
+            "v11",
+            "v12",
+            "v13",
+            "v14",
+            "v15",
+            "v16",
+            "v17",
+            "v18",
+            "v19",
+            "v20",
+            "v21",
+            "v22",
+            "v23",
+            "v24",
+            "v25",
+            "v26",
+            "v27",
+            "v28",
+            "v29",
+        }:
             accepted_events = [
                 event
                 for event in self.state.list_events(manifest.run_id)
@@ -3787,6 +5920,32 @@ class AgentRunner:
             "phase-evidence-v9",
             "phase-evidence-v10",
             "phase-evidence-v11",
+            "phase-evidence-v13",
+            "phase-evidence-v14",
+            "phase-evidence-v15",
+            "phase-evidence-v16",
+            "phase-evidence-v17",
+            "phase-evidence-v18",
+            "phase-evidence-v19",
+            "phase-evidence-v20",
+            "phase-evidence-v21",
+            "phase-evidence-v22",
+            "phase-evidence-v23",
+            "phase-evidence-v24",
+            "phase-evidence-v25",
+            "phase-evidence-v26",
+            "phase-evidence-v27",
+            "phase-evidence-v28",
+            "phase-evidence-v29",
+            "phase-evidence-v30",
+            "phase-evidence-v31",
+            "phase-evidence-v32",
+            "phase-evidence-v33",
+            "phase-evidence-v34",
+            "phase-evidence-v35",
+            "phase-evidence-v36",
+            "phase-evidence-v37",
+            "phase-evidence-v38",
         }:
             evidence_task = task or load_task_package(self._find_task(manifest)).public
             evidence = diff_bound_evidence(
@@ -3808,12 +5967,125 @@ class AgentRunner:
                     manifest.context_policy_version in {"phase-evidence-v10", "phase-evidence-v11"}
                 ),
                 probe_available=bool(evidence_task.probe_profiles),
+                completion_driven=(
+                    manifest.context_policy_version
+                    in {
+                        "phase-evidence-v13",
+                        "phase-evidence-v14",
+                        "phase-evidence-v15",
+                        "phase-evidence-v16",
+                        "phase-evidence-v17",
+                        "phase-evidence-v18",
+                        "phase-evidence-v19",
+                        "phase-evidence-v20",
+                        "phase-evidence-v21",
+                        "phase-evidence-v22",
+                        "phase-evidence-v23",
+                        "phase-evidence-v24",
+                        "phase-evidence-v25",
+                        "phase-evidence-v26",
+                        "phase-evidence-v27",
+                        "phase-evidence-v28",
+                        "phase-evidence-v29",
+                        "phase-evidence-v30",
+                        "phase-evidence-v31",
+                        "phase-evidence-v32",
+                        "phase-evidence-v33",
+                        "phase-evidence-v34",
+                        "phase-evidence-v35",
+                        "phase-evidence-v36",
+                        "phase-evidence-v37",
+                        "phase-evidence-v38",
+                    }
+                ),
             )
             completed_checks = list(evidence.completed_checks)
             pending_checks = list(evidence.pending_checks)
             # The next model context recalculates presented-result evidence.
-            # Avoid persisting a stale tool prescription in the checkpoint.
-            current_plan = []
+            # V10 persists only the diff-bound durable plan hash, never a stale
+            # tool prescription.
+            current_plan: list[str] = []
+            reproduction_status = "unknown"
+            if manifest.context_policy_version == "phase-evidence-v20":
+                all_plan_events = [
+                    event
+                    for event in events
+                    if event.type == EventType.PLAN_RECORDED
+                    and isinstance(event.payload.get("plan_hash"), str)
+                ]
+                plan_events = [
+                    event
+                    for event in all_plan_events
+                    if event.payload.get("worktree_diff_hash") == summary.patch_hash
+                ]
+                if not plan_events:
+                    linked_patch = next(
+                        (
+                            event
+                            for event in reversed(events)
+                            if event.type == EventType.PATCH_APPLIED
+                            and event.payload.get("worktree_diff_hash") == summary.patch_hash
+                            and isinstance(event.payload.get("plan_hash"), str)
+                        ),
+                        None,
+                    )
+                    if linked_patch is not None:
+                        plan_events = [
+                            event
+                            for event in all_plan_events
+                            if event.payload.get("plan_hash")
+                            == linked_patch.payload.get("plan_hash")
+                        ]
+                plan_hashes = {str(event.payload["plan_hash"]) for event in plan_events}
+                if len(plan_hashes) > 1:
+                    raise RecoveryError("checkpoint found conflicting current-diff work plans")
+                if plan_events:
+                    current_plan = [str(plan_events[-1].payload["plan_hash"])]
+                    plan_reproduction_status = plan_events[-1].payload.get("reproduction_status")
+                    reproduction_status = (
+                        "confirmed"
+                        if plan_reproduction_status == "confirmed_failure"
+                        else plan_reproduction_status
+                    )
+                    if reproduction_status not in {
+                        "confirmed",
+                        "not_reproduced",
+                        "static_evidence",
+                    }:
+                        raise RecoveryError("checkpoint work plan status differs")
+            elif manifest.context_policy_version in {
+                "phase-evidence-v21",
+                "phase-evidence-v22",
+                "phase-evidence-v23",
+                "phase-evidence-v24",
+                "phase-evidence-v25",
+                "phase-evidence-v26",
+                "phase-evidence-v27",
+                "phase-evidence-v28",
+                "phase-evidence-v29",
+                "phase-evidence-v30",
+                "phase-evidence-v31",
+                "phase-evidence-v32",
+                "phase-evidence-v33",
+                "phase-evidence-v34",
+                "phase-evidence-v35",
+                "phase-evidence-v36",
+                "phase-evidence-v37",
+                "phase-evidence-v38",
+            }:
+                active_work_state = project_active_work_state(
+                    run_id=manifest.run_id,
+                    task=evidence_task,
+                    current_diff_hash=summary.patch_hash,
+                    events=events,
+                )
+                if active_work_state is not None:
+                    current_plan = [active_work_state.latest_plan.content_hash]
+                    reproduction_status = {
+                        "targeted_check_failed": "confirmed",
+                        "targeted_check_passed": "not_reproduced",
+                        "static_source": "static_evidence",
+                    }.get(active_work_state.initial_plan.observation_status, "unknown")
             patch_events = [
                 event
                 for event in events
@@ -3831,6 +6103,8 @@ class AgentRunner:
                 if event.type
                 in {
                     EventType.REVIEW_RECORDED,
+                    EventType.PLAN_RECORDED,
+                    EventType.EXPLORATION_STOP_RECORDED,
                     EventType.SUBMISSION_REJECTED,
                     EventType.SUBMISSION_ACCEPTED,
                 }
@@ -3848,6 +6122,7 @@ class AgentRunner:
             )
             pending_checks = []
             current_plan = []
+            reproduction_status = "unknown"
             important_decisions = []
             last_patch_hash = (
                 last_result.output.get("patch_hash")
@@ -3861,6 +6136,7 @@ class AgentRunner:
             through_sequence=self.state.last_sequence(manifest.run_id),
             phase=phase,
             task_summary=manifest.task_id,
+            reproduction_status=reproduction_status,
             current_plan=current_plan,
             modified_files=summary.changed_files,
             completed_action_ids=completed_actions,
@@ -4191,6 +6467,132 @@ class AgentRunner:
             and manifest.context_policy_version == "phase-evidence-v11"
         ):
             return SYSTEM_PROMPT_V8, TOOL_SCHEMAS_V6
+        if (
+            manifest.tool_schema_version == "v7"
+            and manifest.context_policy_version == "phase-evidence-v12"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V7
+        if (
+            manifest.tool_schema_version == "v8"
+            and manifest.context_policy_version == "phase-evidence-v13"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V8
+        if (
+            manifest.tool_schema_version == "v9"
+            and manifest.context_policy_version == "phase-evidence-v13"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V9
+        if (
+            manifest.tool_schema_version == "v9"
+            and manifest.context_policy_version == "phase-evidence-v14"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V9
+        if (
+            manifest.tool_schema_version == "v10"
+            and manifest.context_policy_version == "phase-evidence-v15"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V10
+        if (
+            manifest.tool_schema_version == "v10"
+            and manifest.context_policy_version == "phase-evidence-v16"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V10
+        if (
+            manifest.tool_schema_version == "v11"
+            and manifest.context_policy_version == "phase-evidence-v17"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V11
+        if (
+            manifest.tool_schema_version == "v12"
+            and manifest.context_policy_version == "phase-evidence-v18"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V12
+        if (
+            manifest.tool_schema_version == "v13"
+            and manifest.context_policy_version == "phase-evidence-v19"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V13
+        if (
+            manifest.tool_schema_version == "v14"
+            and manifest.context_policy_version == "phase-evidence-v20"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V14
+        if (
+            manifest.tool_schema_version == "v15"
+            and manifest.context_policy_version == "phase-evidence-v21"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V15
+        if (
+            manifest.tool_schema_version == "v16"
+            and manifest.context_policy_version == "phase-evidence-v22"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V16
+        if (
+            manifest.tool_schema_version == "v17"
+            and manifest.context_policy_version == "phase-evidence-v23"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V17
+        if (
+            manifest.tool_schema_version == "v18"
+            and manifest.context_policy_version == "phase-evidence-v24"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V18
+        if (
+            manifest.tool_schema_version == "v19"
+            and manifest.context_policy_version == "phase-evidence-v25"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V19
+        if (
+            manifest.tool_schema_version == "v20"
+            and manifest.context_policy_version == "phase-evidence-v26"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V20
+        if (
+            manifest.tool_schema_version == "v21"
+            and manifest.context_policy_version == "phase-evidence-v27"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V21
+        if (
+            manifest.tool_schema_version == "v22"
+            and manifest.context_policy_version == "phase-evidence-v28"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V22
+        if (
+            manifest.tool_schema_version == "v23"
+            and manifest.context_policy_version == "phase-evidence-v29"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V23
+        if (
+            manifest.tool_schema_version == "v24"
+            and manifest.context_policy_version == "phase-evidence-v30"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V24
+        if manifest.tool_schema_version == "v25" and manifest.context_policy_version in {
+            "phase-evidence-v31",
+            "phase-evidence-v32",
+        }:
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V25
+        if manifest.tool_schema_version == "v26" and manifest.context_policy_version in {
+            "phase-evidence-v33",
+            "phase-evidence-v34",
+            "phase-evidence-v35",
+        }:
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V26
+        if (
+            manifest.tool_schema_version == "v27"
+            and manifest.context_policy_version == "phase-evidence-v36"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V27
+        if manifest.tool_schema_version == "v28" and manifest.context_policy_version in {
+            "phase-evidence-v37",
+            "phase-evidence-v38",
+        }:
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V28
+        if (
+            manifest.tool_schema_version == "v29"
+            and manifest.context_policy_version == "phase-evidence-v38"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V29
         raise ContractError("unsupported tool schema and context policy version combination")
 
     def _validate_legacy_submission(
@@ -5116,7 +7518,13 @@ class AgentRunner:
     ) -> Phase:
         if result.status != "succeeded":
             return phase
-        if tool == "apply_patch":
+        if result.output.get("replayed") or result.output.get("admission_blocked"):
+            return phase
+        if tool == "record_work_plan":
+            if phase != Phase.REPRODUCE:
+                raise ContractError("record_work_plan requires the REPRODUCE phase")
+            return self._transition(run_id, phase, Phase.PLAN)
+        if tool in {"apply_patch", "apply_structured_edit"}:
             if phase == Phase.REPRODUCE:
                 phase = self._transition(run_id, phase, Phase.PLAN)
                 return self._transition(run_id, phase, Phase.IMPLEMENT)
@@ -5165,6 +7573,59 @@ class AgentRunner:
                 return self._transition(run_id, phase, Phase.REVIEW)
         return phase
 
+    def _record_self_directed_exploration_stop(
+        self,
+        *,
+        run_id: str,
+        state: SelfDirectedExplorationState,
+        action_id: str,
+        arguments: dict[str, Any],
+        model_event_sequence: int,
+        request_artifact_id: str,
+        request_body_hash: str,
+    ) -> None:
+        input_hash = sha256_text(
+            canonical_json(
+                {
+                    "tool": "declare_exploration_exhausted",
+                    "input": arguments,
+                }
+            )
+        )
+        prior = [
+            event
+            for event in self.state.list_events(run_id)
+            if event.type == EventType.EXPLORATION_STOP_RECORDED
+            and event.payload.get("plan_gate_id") == state.plan_gate_id
+            and event.payload.get("worktree_diff_hash") == state.worktree_diff_hash
+        ]
+        if len(prior) > 1:
+            raise RecoveryError("self-directed exploration stop repeats")
+        if prior:
+            if (
+                prior[0].payload.get("action_id") != action_id
+                or prior[0].payload.get("input_hash") != input_hash
+            ):
+                raise RecoveryError("self-directed exploration stop replay differs")
+            return
+        receipt = validate_exploration_stop(state=state, arguments=arguments)
+        self.state.append_event(
+            run_id,
+            EventType.EXPLORATION_STOP_RECORDED,
+            actor="workflow-state-machine",
+            correlation_id=action_id,
+            payload={
+                **receipt,
+                "action_id": action_id,
+                "input_hash": input_hash,
+                "model_event_sequence": model_event_sequence,
+                "request_artifact_id": request_artifact_id,
+                "request_body_hash": request_body_hash,
+                "execution": "not_dispatched",
+                "agent_terminal_code": SelfDirectedExplorationExhaustedError.code,
+            },
+        )
+
     @staticmethod
     def _task_dir(task_path: str | Path) -> Path:
         path = Path(task_path).resolve()
@@ -5199,7 +7660,37 @@ class AgentRunner:
             return MockModelAdapter(
                 manifest.task_id,
                 completed_tools,
-                structured_finish=manifest.tool_schema_version in {"v2", "v3", "v4", "v5", "v6"},
+                structured_finish=manifest.tool_schema_version
+                in {
+                    "v2",
+                    "v3",
+                    "v4",
+                    "v5",
+                    "v6",
+                    "v7",
+                    "v8",
+                    "v9",
+                    "v10",
+                    "v11",
+                    "v12",
+                    "v13",
+                    "v14",
+                    "v15",
+                    "v16",
+                    "v17",
+                    "v18",
+                    "v19",
+                    "v20",
+                    "v21",
+                    "v22",
+                    "v23",
+                    "v24",
+                    "v25",
+                    "v26",
+                    "v27",
+                    "v28",
+                    "v29",
+                },
                 structured_review=manifest.tool_schema_version in {"v3", "v4", "v5", "v6"},
                 structured_probe=(
                     manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}
@@ -5221,6 +7712,8 @@ class AgentRunner:
                 expected_hash=manifest.model.replay_hash,
             )
         if model == "openai":
+            if manifest.context_policy_version in {"phase-evidence-v37", "phase-evidence-v38"}:
+                return StrictOpenAIResponsesAdapter(manifest.model)
             return OpenAIResponsesAdapter(manifest.model)
         raise ContractError(f"unknown model adapter: {model}")
 
@@ -5384,6 +7877,11 @@ class AgentRunner:
 
     def _usage(self, run_id: str) -> Usage:
         usage = Usage()
+        manifest = self.state.get_manifest(run_id)
+        durable_counts = manifest.context_policy_version in {
+            "phase-evidence-v37",
+            "phase-evidence-v38",
+        }
         for event in self.state.list_events(run_id):
             if event.type == EventType.MODEL_CALLED:
                 usage.model_calls += 1
@@ -5396,19 +7894,24 @@ class AgentRunner:
                 usage.reasoning_output_tokens += int(
                     event.payload.get("reasoning_output_tokens", 0)
                 )
-                usage.input_token_count_calls += int(
-                    event.payload.get("input_token_count_calls", 0)
-                )
+                if not durable_counts:
+                    usage.input_token_count_calls += int(
+                        event.payload.get("input_token_count_calls", 0)
+                    )
                 usage.wall_clock_ms += int(event.payload.get("duration_ms", 0))
             elif event.type == EventType.TOOL_CALLED:
                 usage.tool_calls += 1
             elif event.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}:
                 usage.wall_clock_ms += int(event.payload.get("duration_ms", 0))
             elif event.type == EventType.MODEL_GENERATION_BLOCKED:
-                usage.input_token_count_calls += int(
-                    event.payload.get("input_token_count_calls", 0)
-                )
-        manifest = self.state.get_manifest(run_id)
+                if not durable_counts:
+                    usage.input_token_count_calls += int(
+                        event.payload.get("input_token_count_calls", 0)
+                    )
+        if durable_counts:
+            accounting = project_input_token_count_attempts(run_id, self.state.list_events(run_id))
+            usage.input_token_count_calls = accounting["logical_attempts"]
+            usage.wall_clock_ms += accounting["duration_ms"]
         usage.model_cost_usd = calculate_model_cost(usage, manifest.model)
         return usage
 

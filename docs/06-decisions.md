@@ -1,86 +1,94 @@
-# Effective decisions and open questions
+# Effective decisions
 
-The full decision ledger through D-121 is archived at
-`docs/archive/snapshots/d121/06-decisions.full.md`. This file lists only decisions that constrain current work.
+Status: current decisions only. Historical decision chronology through R20 is in
+`docs/archive/rapid-workflow-history-20260830.md`; older full documents are under `docs/archive/snapshots/d121/`.
 
-## Effective decisions
+## Product and evidence
 
-Order: evaluator correctness v2 -> successor A/C qualification -> local preflight -> exact campaign approval ->
-four-run development A/C readiness -> preregister held-out A/C -> separately authorize execution -> B/D.
+- Keep one coding agent. Independent reviewer agents, memory variants B/D, arbitrary shell, PR creation and human
+  handoff are separate future variables.
+- Treat the agent as the product; evaluator, recovery, memory and experiment layers support measurement and safety.
+- Separate rapid public development from confirmatory evaluation. Every Rapid output is `official=false`.
+- Preserve public/private separation and append-only evidence in code, not only in prompts or prose.
+- Do not infer improvement from qualification, mock completion, evaluator-reached subsets or censored cost.
 
-### 2026-08-15 — preserve R11 and split evaluator trust domains
+## Workflow and recovery
 
-- R11 is an immutable 2-settled/1-observed-unsettled/45-not-started campaign. Its correction index may add durable
-  cost accounting and deterministic post-runtime attribution, but cannot rewrite `CONTRACT_ERROR`, settle row 3 or
-  authorize analysis.
-- Raw registered-check controls are replaced by role-prefixed opaque identities. Evaluator-private checker redactions
-  are diagnostic; agent-visible event/patch matches alone drive marker-leak verdicts. Control self-collision and actual
-  untrusted marker escape use distinct stable codes.
-- Persisted rows remain unofficial and analysis-ineligible. Official completion requires exact runtime-issued,
-  non-serialized provenance for all 48 rows; historical replay validates bytes without minting that authority.
-- Paid campaign identity excludes transient readiness observations and is one-use. A complete plan is validated before
-  journal creation; terminal/cost evidence is atomic, started usage precedes qualification, and typed codes—not error
-  prose—select confound phase.
-- R14 candidate `sha256:67475f57...307fd` consumed the 1M/100k/1.1M and `$57.60`/`$60` authority and sealed 0
-  settled/1 observed-unsettled/47 not-started at `$0.126342` observed. Preserve its historical
-  `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; deterministic `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH`
-  attribution (candidate limits versus immutable 4M/500k/4.5M suite limits) cannot reauthenticate or reclassify it.
-- R15 candidate `sha256:e11ece55...64f8bc` separately consumed the same cost envelope and sealed 2 settled/
-  1 observed-unsettled/45 not-started at `$0.2002335` settled and `$1.112112` total observed-started. Preserve its
-  historical `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; deterministic
-  `TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH` attribution cannot reauthenticate, reclassify or resume it.
-  V2 terminal qualification binds the sanitized result to exact typed failure events; V1 compatibility remains exact.
-- Candidate-v3 commits the realized row order and every task/evaluator binding. Runtime/cost authority is candidate-
-  bound; current prior rows require persisted-v5/row-v2 and full budget/semantic revalidation. Historical R7/R11/R14/R15
-  replay requires the exact execution/final-file/content/journal binding, not merely a parseable legacy schema.
-- R16 candidate `sha256:24044c1e...8813` consumed the R11/R11/R7/R8/R16 chain and a fresh `$57.60`/`$60`
-  approval. It completed 48 settled rows for `$27.24465825`; no-memory succeeded 8/24 and structured 7/24, so the
-  official frozen-panel C-minus-A estimate is `-1/24`. Its `[-1/4, 1/6]` stability interval is descriptive, not a
-  population confidence interval. The result authorizes neither a causal/general memory claim nor another execution.
-- R16 and its approval are one-use and consumed. Do not rerun, resume or tune against the unblinded panel. A later
-  experiment needs a separately preregistered fresh panel and a new source/candidate/approval chain.
+- Use a deterministic outer state machine with bounded tool choice inside each state.
+- Require public current-diff evidence and a structured plan before semantic mutation.
+- Permit self-directed extra exploration after the minimum provenance gate; do not make a validator guess whether the
+  model truly understands the code.
+- After a failed check, require fresh exploration and a revision before semantic correction. If the same public
+  signature survives distinct diffs, require rejection of the prior hypothesis and a different causal boundary.
+- Roll back the latest successful mutation only at the versioned repeated-failure boundary. Mechanical edit rejection
+  does not change the worktree and requires reread, not a new semantic revision.
+- Targeted checks precede upstream checks. Review correction requires full revalidation and a fresh diff.
+- Share one bounded action/protocol admission slot per gate and persist it across restart. A reasoning-only incomplete
+  generation in V26 has a separate one-use slot so it does not consume an action-contract retry.
 
-### 2026-08-14 — isolate held-out contracts from historical execution
+## Evaluation and authority
 
-- The 48-row suite uses dedicated strict models and a metadata-only loader, not `ExperimentSuite` or the live runner.
-- Historical completion fixtures remain unofficial. Official held-out analysis may be produced only after 48 exact
-  persisted-v2 authenticated and settled rows; any confound seals the matrix inconclusive.
-- R7 sealed after CRLF/LF qualification-byte drift. R11 later consumed a fresh approval and also sealed inconclusive;
-  neither campaign may retry, resume or transfer authority.
-- Materialization R1 owns the sole public pricing GET. Current R4 reuses those exact prices with zero added GET and
-  omits runtime secrets, private values/outcomes, final contracts, candidate and spend.
+- Keep evaluator-v1 safety gap explicit; only deterministic typed evaluator-v2 evidence can support a future official
+  result.
+- Keep A null and C exactly D-110. The consumed R16 difference `-1/24` supports no memory claim or panel tuning.
+- D-142 remains source-qualified only, unactivated and deferred. Harbor remains 0 present/12 missing.
+- External execution requires an exact candidate/runtime/config/task/image/schedule/cost hash, two byte-identical no-
+  call rehearsals and a separate one-use reserve/cap approval. Source changes supersede the candidate at zero calls.
+- A consumed candidate cannot retry, resume or transfer approval.
 
-### 2026-08-13 — fast-track attempts, not one-use configurations
+Completed R20–V26 decision narrative is preserved in `docs/archive/r20-v26-decisions-20260831.md`.
+It is historical audit only; effective runtime behavior remains in `docs/03-contracts.md`.
 
-- Attempts remain append-only. Local preflight is read-only and bounded to three attempts, while paid campaigns are
-  one-use by semantic source/suite/schedule identity even if transient readiness observations differ.
-- Paid execution needs one approval binding exact source/hash/schedule/runtime/reserve/cap. Rows are one-use; a
-  confound seals the panel, and any rerun is a disclosed fresh full campaign.
+## 2026-08-31 - external-boundary successors
 
-### 2026-08-11 — evaluator correctness precedes paid A/C
+R22 adopted the V25/V26 package but stopped before rows because its path exceeded the one-inspection approval.
+R23 added a one-use batch image receipt without changing agent policy, then halted on V26's strict-schema rejection.
+Both attempts remain closed; their decisions are archived in `docs/archive/work-item-79-status-runbook-limits-20260831.md`.
 
-- Evaluator-v1's literal safety PASS is not independent four-verdict evidence. V2 uses typed evidence and receipts;
-  raw results remain `official=false`. D-142 stays source-qualified, unactivated and deferred.
+Work Item 80 adds V27 only as an offline opt-in: nullable direct/anchor reads, final strict-schema admission and durable
+input-count receipts. It changes no task/check, plan/revision, budget or evaluator policy. A pure local gate is not
+provider acceptance; keep it before count and create. Work Item 81's review remains frozen. Work Item 82 adopts V25/V27
+for six R24 rows, with one common request-authority gate. Rehearsal uses real public task/model inputs and a synthetic
+pre-action prefix, stopping before count SDK dispatch. Closed empty-object `required` equivalence is validation-only,
+not a V25 wire/policy change. Later dynamic schemas require separate mocks; exact paid approval remains separate.
 
-### 2026-08-08 — start with A/C readiness
+Work Item 83 consumed that exact approval once. Preserve the 3 settled/3 unstarted schedule and reject retry/resume or
+promotion. Treat the three `lifecycle_state_transition_unbound` plan rejections as a machine-contract friction because
+the request repeats free-form component identities while server admission enforces a cross-field relation not named in
+feedback. Do not weaken fail-closed validation. Work Item 84 therefore added an offline opt-in component registry with
+integer transition references and exact public mismatch feedback. It retains the one-use fail-closed recovery boundary
+and does not claim semantic correctness from schema admission.
 
-- First matrix: Moto and Babel development-validation tasks × A/C × one repetition = four rows.
-- A uses null memory. C receives the exact three D-105 texts in frozen D-110 `group_provenance` order on every model
-  request. No embedding, similarity, rerank or threshold participates.
-- The panel diagnoses workflow delivery/readiness, not held-out performance. One repetition provides no variance
-  estimate and supports no causal, general, cross-repository, per-rule or negative-transfer claim.
-- Full A/B/C/D is deferred. B/D require independent redaction/calibration and, if designed after A/C unblinding, a
-  separate fresh held-out panel.
+Work Item 85 reviewed that package without calls and recorded `eligible-not-adopted`. The observed contract friction is
+addressed structurally, but wrong semantic component choices, the targeted-check failure, provider timeout and live
+provider acceptance remain open. Work Item 86 adopts V28 only as a future `official=false` Rapid treatment against
+V27; it changes no default runtime and carries every open risk into the later comparison.
 
-## Historical execution boundaries
+## Ordered research path
 
-D-122 through D-141 and V1-V25 attempt artifacts remain immutable. Their old gates neither prohibit bounded local
-no-call preflight nor authorize paid execution. Current status, artifacts and Git/archive retain separate authority.
+Work Item 79 consumed R23 once, then closed it after V26's pre-generation strict-schema rejection. Preserve two settled
+rows and four unstarted rows, not a failed six-row comparison. Keep predecessor artifacts and behavior immutable;
+V27's review transferred no paid authority. R24 then consumed its separate approval and halted after 3 rows. Work Item
+86 selects V28 treatment only; Work Item 87 may prepare a fresh candidate/rehearsal but has no execution authority.
+
+When authority and resources exist, the order remains:
+
+1. evaluator correctness v2;
+2. consumed A/C evidence audit;
+3. Lean Harness offline gates;
+4. Rapid Public Development Loop;
+5. survivor-only fresh confirmation;
+6. B/D on a separately frozen fresh panel.
+
+Later steps cannot borrow authority or evidence from earlier ones. R22 is prestart-stopped; no retry or external
+authority remains. R23 and R24 are consumed and halted; their unstarted rows cannot resume.
 
 ## Open questions
 
-1. Which fresh panel and preregistered design should later B/D use?
-2. Should exact qualification-leaf symlink provenance be hardened beyond current root containment, hashing and clean
-   Git checks before a future candidate?
+1. Should the public runner-continuity proposal receive separate base/reference behavior qualification before any task
+   successor decision?
+2. Should exact qualification-leaf symlink provenance be hardened before a future candidate?
+3. When should evaluator-v2 and a fresh qualifying snapshot take priority over further public iteration?
 
-These questions do not authorize work beyond `docs/05-implementation-plan.md`.
+These questions create no Docker/provider call or paid authority. `docs/current-status.md` owns the active
+answer and `docs/05-implementation-plan.md` owns the next authorized offline seam.

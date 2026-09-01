@@ -1,0 +1,101 @@
+{
+  "authority": {
+    "added_model_cost_usd": 0,
+    "agent_runs": 0,
+    "candidate_registry_materialized": false,
+    "dataset_task_membership_requests": 0,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "execution_authorized": false,
+    "memory_effect_claim_authorized": false,
+    "metadata_candidate_materialized": false,
+    "network_calls": 0,
+    "official_analysis_authorized": false,
+    "private_or_oracle_rows_read": 0,
+    "provider_calls": 0,
+    "raw_source_qualification_executed": false,
+    "registry_observation_files_read": 1,
+    "task_admission_authorized": false,
+    "task_archive_or_file_requests": 0,
+    "task_rows_read": 0
+  },
+  "content_hash": "sha256:56477f3e9393d3b7af3af960b4ffe174fba8ad3e07a886836dc09733004fabad",
+  "current_decision": {
+    "disallowed_matching_package_names_observed": 2,
+    "disallowed_package_task_rows_read": 0,
+    "disposition": "BLOCKED_NO_POST_WINDOW_METADATA_CANDIDATE",
+    "post_window_metadata_candidates": 0,
+    "qualifying_snapshot_observed": false,
+    "raw_capture_permitted_now": false,
+    "versions_examined": 3,
+    "versions_rejected_pre_window": 3,
+    "versions_rejected_yanked": 0
+  },
+  "discovery_id": "lean-fresh-source-metadata-discovery-20260818-v1",
+  "next_gate": "create-an-append-only-successor-metadata-observation-only-after-a-new-visible-version-then-rerun-discovery-without-relaxation",
+  "observation_binding": {
+    "content_hash": "sha256:cc2e0d8678f4aeb404c586efe87af62cdbf01e6be01a9d64292e6fb447329377",
+    "file_bytes": 7161,
+    "file_sha256": "sha256:708dba66061c412117b75f86ce6de5a67b9561a12ffa8796808023a6d978389d",
+    "path": "experiments/lean-harness-fresh-source-registry-observation-20260818-v1.json",
+    "role": "official-public-registry-metadata-observation"
+  },
+  "projection": {
+    "candidates": [],
+    "transcript": [
+      {
+        "disposition": "rejected-not-after-frozen-window",
+        "raw_completeness_qualified": false,
+        "selector_eligible": false,
+        "version": {
+          "content_hash": "sha256:c90d7716b4ab56bd545dd31af46a808ff3ce44c0537fba041524c5dad353a159",
+          "id": "2d6bca54-b245-452c-af2d-bc021a737225",
+          "package": "swe-rebench/swe-rebench-leaderboard",
+          "published_at": "2026-06-25T20:30:39.658965+09:00",
+          "revision": 1,
+          "yanked": false
+        }
+      },
+      {
+        "disposition": "rejected-not-after-frozen-window",
+        "raw_completeness_qualified": false,
+        "selector_eligible": false,
+        "version": {
+          "content_hash": "sha256:ebe7444e313a0d8db94fa541139826eaebe2b0abcd4900c6f73e750494910dca",
+          "id": "b5a1b010-d34b-43e9-b08a-a23e4169a327",
+          "package": "swe-rebench/swe-rebench-leaderboard",
+          "published_at": "2026-06-26T03:52:28.245788+09:00",
+          "revision": 2,
+          "yanked": false
+        }
+      },
+      {
+        "disposition": "rejected-not-after-frozen-window",
+        "raw_completeness_qualified": false,
+        "selector_eligible": false,
+        "version": {
+          "content_hash": "sha256:e2e357045bf03e4900d2506c36562f6eaff7acd37f63780600967ea3aecdcd79",
+          "id": "574acb72-70aa-46fb-8758-0a814a5eb213",
+          "package": "ibragim-badertdinov/swe-rebench-07-2026",
+          "published_at": "2026-07-27T01:08:18.172829+09:00",
+          "revision": 1,
+          "yanked": false
+        }
+      }
+    ]
+  },
+  "rule": {
+    "allowed_source_packages": "leaderboard-exact-or-ibragim-badertdinov-monthly-name-v1",
+    "complete_row_transcript_required": true,
+    "immutable_sha256_digest_required": true,
+    "metadata_can_establish_complete_frozen_window": false,
+    "mutable_tags_used_for_ranking": false,
+    "publish_time_rule": "strictly-after-2026-08-16T23:59:59Z",
+    "ranking": "published-at-then-package-revision-content-hash-ascending",
+    "raw_capture_required_after_candidate": true,
+    "source_specific_adapter_qualification_required": true,
+    "yanked_versions_allowed": false
+  },
+  "schema_version": "lean-fresh-source-metadata-discovery-v1",
+  "status": "BLOCKED_NO_POST_WINDOW_METADATA_CANDIDATE"
+}

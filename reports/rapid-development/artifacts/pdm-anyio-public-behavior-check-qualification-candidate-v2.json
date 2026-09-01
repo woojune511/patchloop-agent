@@ -1,0 +1,238 @@
+{
+  "added_cost_usd": 0,
+  "approval_message_template": "execution hash {execution_hash}에 대해 PDM/AnyIO public behavior targeted-check qualification 4행을 승인합니다. 고정된 두 로컬 이미지의 identity inspect 2회와 --pull never, --network none, read-only workspace로 base/reference 각 1회씩 총 4개의 Docker 컨테이너 실행을 승인합니다. 이미지 pull/build/tag/remove/prune, agent/evaluator/provider 호출, 네트워크와 비용 발생은 승인하지 않습니다.",
+  "approval_required": true,
+  "candidate_id": "pdm-anyio-public-behavior-check-qualification-20260822-r2",
+  "content_hash": "sha256:a1d625e528ed29dea31928d552964cd08c68c7b931bf0d305247d0e972206c9a",
+  "docker_calls_made": 0,
+  "docker_cli": {
+    "file_bytes": 43095472,
+    "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+    "resolved_path": "C:\\Users\\geonj\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
+  },
+  "docker_context": {
+    "context": "desktop-linux",
+    "endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+  },
+  "docker_contract": {
+    "added_cost_usd": 0,
+    "agent_calls": 0,
+    "container_run_calls": 4,
+    "evaluator_calls": 0,
+    "image_identity_inspect_calls": 2,
+    "network": "none",
+    "network_calls": 0,
+    "provider_calls": 0,
+    "pull_policy": "never",
+    "root_filesystem": "read_only",
+    "workspace_mount": "read_only"
+  },
+  "execution_authorized": false,
+  "execution_hash": "sha256:c36004fe9405b75b818812294aadfaf462b42db9aac36c9aa53a157ef3751a57",
+  "git_cli": {
+    "file_bytes": 46480,
+    "file_sha256": "sha256:81ef35ae005ca9318018d18e3327578ce939fb99feaad6b2d7c8ab15f3de8db5",
+    "resolved_path": "C:\\Program Files\\Git\\cmd\\git.exe"
+  },
+  "official": false,
+  "predecessor_candidate": {
+    "content_hash": "sha256:d61e893fa7d5faf22487315255fcde514f291a0f4328e5e182f269fe5c8a088b",
+    "file_bytes": 9847,
+    "file_sha256": "sha256:655e193fdcedd8570af4ab96ee13b3d80ad5cb475a2f0dd05bb7186a1a85ff9b",
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-hard-panel-20260822-r3-candidate-v6.json"
+  },
+  "predecessor_execution_hash": "sha256:5ae158b3ed650118aa5e9e334f676eccf3b8e44a2df305ed1a3af35b1bcfcfc6",
+  "provider_calls_made": 0,
+  "purpose": "public-behavior-check-qualification",
+  "schedule": [
+    {
+      "base_source_archive_sha256": "sha256:e726b45e767bc9f2abe5b1d38b5b898120c0953328eff1c56eb19c18a1c10ec9",
+      "expected_observation": "public-assertion-failure",
+      "image_digest": "sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+      "order": 1,
+      "reference_patch_sha256": "sha256:9c6c6cf6748b576a91cc9d4116838e8df28dc03db879fe77f04a747200957e65",
+      "schedule_row_id": "sha256:6f0d58d44c39c8f3b749c2387e87df71b37ce44292980d74e6e4ddbdc161f9ca",
+      "source_state": "base",
+      "targeted_check_id": "public-ignore-active-venv-resolution",
+      "task_id": "pdm-ignore-active-venv-resolution",
+      "task_version": 2
+    },
+    {
+      "base_source_archive_sha256": "sha256:e726b45e767bc9f2abe5b1d38b5b898120c0953328eff1c56eb19c18a1c10ec9",
+      "expected_observation": "pass",
+      "image_digest": "sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+      "order": 2,
+      "reference_patch_sha256": "sha256:9c6c6cf6748b576a91cc9d4116838e8df28dc03db879fe77f04a747200957e65",
+      "schedule_row_id": "sha256:fabb28dba54c5a71dfd8a8adf382444c154105eed8e9898feb43d70ebb647800",
+      "source_state": "reference",
+      "targeted_check_id": "public-ignore-active-venv-resolution",
+      "task_id": "pdm-ignore-active-venv-resolution",
+      "task_version": 2
+    },
+    {
+      "base_source_archive_sha256": "sha256:28cecaf9114d994f69ca8bd8eafa2abebbd0ae4b6c9a89367ca04dbfc45d5326",
+      "expected_observation": "public-assertion-failure",
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "order": 3,
+      "reference_patch_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+      "schedule_row_id": "sha256:6a05769498b3abd13381631422eb2850d1c520bb20a1a0ec894c2b5f922c8527",
+      "source_state": "base",
+      "targeted_check_id": "public-interrupt-runner-lifecycle",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 2
+    },
+    {
+      "base_source_archive_sha256": "sha256:28cecaf9114d994f69ca8bd8eafa2abebbd0ae4b6c9a89367ca04dbfc45d5326",
+      "expected_observation": "pass",
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "order": 4,
+      "reference_patch_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+      "schedule_row_id": "sha256:da4823e4e9119e15d04d714252b569537171915ed7aef80865b7b89cba74ccb1",
+      "source_state": "reference",
+      "targeted_check_id": "public-interrupt-runner-lifecycle",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 2
+    }
+  ],
+  "schedule_hash": "sha256:23fcfd709de92f1a5b830c719f9358cca05f0939872793a0c5235b737f8e92d4",
+  "schema_version": "public-behavior-check-qualification-candidate-v2",
+  "source_files": [
+    {
+      "file_bytes": 32473,
+      "file_sha256": "sha256:7dcc7bebd7f5e1c2e7356567a002fdeceab203ddca4858c49270f46e26d192c2",
+      "path": "patchloop/evals/public_behavior_check_qualification.py"
+    },
+    {
+      "file_bytes": 33551,
+      "file_sha256": "sha256:c36324e8918e584469030c8caf740adfed9449ed99ea05bb981b075e5bf4966f",
+      "path": "patchloop/sandbox/runner.py"
+    },
+    {
+      "file_bytes": 163196,
+      "file_sha256": "sha256:0a4a69e709f635d87b23f24f5bb1bb878d7590748a207eab3e26de1d7de08c32",
+      "path": "patchloop/contracts.py"
+    },
+    {
+      "file_bytes": 4916,
+      "file_sha256": "sha256:e7c7d1aac5a4f6adedd4e433e50e6577981af1e2191273bb001e13871ee7dc68",
+      "path": "patchloop/task_loader.py"
+    },
+    {
+      "file_bytes": 5868,
+      "file_sha256": "sha256:6ce3e5a7e5a91556c6085e3c243a4ccdaf8926dd6e57878fb438792cdb0227e6",
+      "path": "patchloop/util.py"
+    },
+    {
+      "file_bytes": 1658,
+      "file_sha256": "sha256:ece08381c32dbbcb8b16f29e84feb2420db8419c48a62329f9685e158fe3d1fc",
+      "path": "patchloop/errors.py"
+    },
+    {
+      "file_bytes": 987,
+      "file_sha256": "sha256:243c8c4bbe7c30011a9d1189b914530ae7ee121e20a2f83370adab0a06cc35de",
+      "path": "scripts/run_public_behavior_check_qualification.py"
+    }
+  ],
+  "source_inventory_hash": "sha256:edf1e9b7273642f9b1dcb37a1c70a5e850f03078be9b6caf2de5ba23d791034a",
+  "source_qualified": true,
+  "task_bindings": [
+    {
+      "base_commit": "881cd4e38d31663ae67bdae227ec1ccdfd5e2c77",
+      "base_source": {
+        "archive_bytes": 4730880,
+        "archive_format": "git-archive-tar-v1",
+        "archive_member_count": 425,
+        "archive_sha256": "sha256:e726b45e767bc9f2abe5b1d38b5b898120c0953328eff1c56eb19c18a1c10ec9",
+        "base_commit": "881cd4e38d31663ae67bdae227ec1ccdfd5e2c77",
+        "provenance": "consumed-rapid-v6-local-git-object",
+        "seed_workspace": ".patchloop/workspaces/run_rapid_v6_5ae158b3ed65_01/repo",
+        "target_path_present": true
+      },
+      "docker_pull_policy": "never",
+      "expected_base_observation": "public-assertion-failure",
+      "expected_reference_observation": "pass",
+      "image": "docker.io/swerebenchv2/pdm-project-pdm@sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+      "image_digest": "sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+      "package_file_count": 6,
+      "package_inventory_hash": "sha256:1bfc3829c159b6c887d97dc3ff9f4f23e610f083b441cd0ee853c1aa431b41cf",
+      "private_spec_hash": "sha256:8fc8c2ca9a209ae653f23387cd11be32971a1495a2be4ac5a3f5760fadcc91fb",
+      "public_spec_hash": "sha256:006f89d2fa6110b1805eb3d9e8919279e5af3c1ab1d0bf9f1406574b4d3e65b9",
+      "reference_patch": {
+        "file_bytes": 2716,
+        "file_sha256": "sha256:9c6c6cf6748b576a91cc9d4116838e8df28dc03db879fe77f04a747200957e65",
+        "path": "fixtures/task-packages/pdm-ignore-active-venv-resolution-v2/reference.patch"
+      },
+      "requested_execution_policy": {
+        "cpus": "2",
+        "image": "docker.io/swerebenchv2/pdm-project-pdm@sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+        "launcher_timeout_seconds": 35,
+        "memory": "2g",
+        "output_limit_bytes": 200000,
+        "pids_limit": 128,
+        "read_only_root": true,
+        "read_only_workspace": true,
+        "requested_network": "none",
+        "requested_timeout_seconds": 30,
+        "sandbox_backend": "docker",
+        "schema_version": "docker-registered-check-requested-policy-v1",
+        "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+        "working_directory": "/workspace"
+      },
+      "targeted_check_command_hash": "sha256:3dbc524ce04ffa06c2bd4d366488dd2202c89d86b4350d22b5cc8b4945a3984a",
+      "targeted_check_hash": "sha256:33001494c331ded4ee27b48d43663e25b7882b7238db88e67880f00abc3ddfc2",
+      "targeted_check_id": "public-ignore-active-venv-resolution",
+      "task_id": "pdm-ignore-active-venv-resolution",
+      "task_path": "fixtures/task-packages/pdm-ignore-active-venv-resolution-v2",
+      "task_version": 2
+    },
+    {
+      "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+      "base_source": {
+        "archive_bytes": 1228800,
+        "archive_format": "git-archive-tar-v1",
+        "archive_member_count": 125,
+        "archive_sha256": "sha256:28cecaf9114d994f69ca8bd8eafa2abebbd0ae4b6c9a89367ca04dbfc45d5326",
+        "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+        "provenance": "consumed-rapid-v6-local-git-object",
+        "seed_workspace": ".patchloop/workspaces/run_rapid_v6_5ae158b3ed65_03/repo",
+        "target_path_present": true
+      },
+      "docker_pull_policy": "never",
+      "expected_base_observation": "public-assertion-failure",
+      "expected_reference_observation": "pass",
+      "image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "package_file_count": 6,
+      "package_inventory_hash": "sha256:a2daf93b9eddab5395baa61611e18ec19c4874430b23c080c729743371963599",
+      "private_spec_hash": "sha256:59a567ca15d9257784c92ef573b70d18aa0c10003b4da0fb4b077b2ced456eb1",
+      "public_spec_hash": "sha256:fbd9cbc42275e00da14318803f10bae6744e71b20d07c2ea1c210f647f34a683",
+      "reference_patch": {
+        "file_bytes": 1162,
+        "file_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v2/reference.patch"
+      },
+      "requested_execution_policy": {
+        "cpus": "2",
+        "image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+        "launcher_timeout_seconds": 35,
+        "memory": "2g",
+        "output_limit_bytes": 200000,
+        "pids_limit": 128,
+        "read_only_root": true,
+        "read_only_workspace": true,
+        "requested_network": "none",
+        "requested_timeout_seconds": 30,
+        "sandbox_backend": "docker",
+        "schema_version": "docker-registered-check-requested-policy-v1",
+        "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+        "working_directory": "/workspace"
+      },
+      "targeted_check_command_hash": "sha256:14e685c8de5beb04dcda45b5ad9ec049514f4d1f0814769b933d6b8773a10955",
+      "targeted_check_hash": "sha256:88808c4d124e3075cdb056ee6d572bcc3c6b080aaa039e1c2403c9d80be087d1",
+      "targeted_check_id": "public-interrupt-runner-lifecycle",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v2",
+      "task_version": 2
+    }
+  ]
+}

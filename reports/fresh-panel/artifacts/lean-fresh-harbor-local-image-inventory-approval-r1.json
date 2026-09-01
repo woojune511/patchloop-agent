@@ -1,0 +1,28 @@
+{
+  "approval_id": "lean-fresh-harbor-local-image-inventory-approval-20260818-r1",
+  "approved_scope": [
+    "record-this-self-attested-exact-approval",
+    "run-the-exact-local-docker-image-ls-command-once",
+    "persist-only-the-twelve-target-presence-projections",
+    "record-one-append-only-terminal"
+  ],
+  "candidate_binding": {
+    "content_hash": "sha256:7b5cf816ebd9709f4b3e46dbfcc889f933eca9f591fb10b40489af1c1b138221",
+    "file_bytes": 7521,
+    "file_sha256": "sha256:30b9d92c6ae30a017c5614707e266dc926836de2000e37fa802fc2fed9ee3ec5",
+    "path": "experiments/lean-harness-fresh-harbor-local-image-inventory-20260818-v1.json",
+    "role": "local-image-inventory-candidate"
+  },
+  "content_hash": "sha256:b896cb26abee82820a0ba504c0176eb154652666480a9e2ae4e7b2d6abfab54d",
+  "execution_hash": "sha256:2f72f2a9a1e6bc7ceef2fa656a7878f1e266081615698c61f6d74868bba5ef4c",
+  "explicitly_not_authorized": [
+    "image-pull-build-tag-remove-prune-or-load",
+    "container-create-start-run-exec-stop-remove-or-restart",
+    "harbor-task-evaluator-agent-provider-or-network-execution",
+    "credential-probe-cost-or-admission-result"
+  ],
+  "recorded_at": "2026-08-18T02:07:34.179575Z",
+  "schema_version": "lean-fresh-harbor-local-image-inventory-approval-v1",
+  "status": "EXACT_LOCAL_IMAGE_INVENTORY_APPROVED_ONCE",
+  "user_message_sha256": "sha256:0b0bc0f39281490a1be0391667128257397efd77c458bc658eeda6aa4dc1fb57"
+}

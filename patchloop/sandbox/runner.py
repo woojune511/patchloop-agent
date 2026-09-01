@@ -726,6 +726,8 @@ class DockerSandbox:
             docker,
             "run",
             "--rm",
+            "--pull",
+            "never",
             "--network",
             "none",
             "--cpus",

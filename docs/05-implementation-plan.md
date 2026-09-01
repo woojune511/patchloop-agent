@@ -1,61 +1,108 @@
 # Implementation plan
 
-Status: active fast-track roadmap. Historical milestone plans remain under `docs/archive/snapshots/d121/`.
+Status: current ordered work only. Completed milestone detail is archived in
+`docs/archive/rapid-workflow-history-20260830.md`; exact evidence is in `docs/09-evidence.md`.
 
-## Sequencing rule
+## Sequencing and authority
 
-Preserve observed attempts. Local no-call readiness may be retried up to three times for transient pre-provider
-failures, but a paid campaign's semantic source/suite/schedule identity is one-use even when readiness timestamps
-change. Provider execution still requires an exact execution hash, fixed schedule, hard cost cap and one explicit
-campaign approval.
+1. Characterize one public failure class from immutable evidence.
+2. Write input/output/failure/authority contracts and focused acceptance tests.
+3. Implement a versioned opt-in successor without mutating predecessors.
+4. Run focused unit, real-shaped mock, restart/fault and relevant regression tests.
+5. Build qualification twice; require byte identity and zero external/check calls or cost.
+6. Perform a separate zero-call activation review.
+7. Only after a distinct adoption decision may a candidate and two production-order rehearsals be created.
+8. Paid execution requires fresh exact candidate hash, schedule, reserve/cap approval and one-use row capabilities.
+
+Stop on hidden/private tuning, held-out reuse, historical mutation, condition-specific resource relief, unapproved
+external work, or official/quality/generalization claims unsupported by results.
 
 ## Preserved foundation
 
-D-098 is a development baseline; D-110 froze three entries and D-112/D-115 left selective retrieval unready.
-`fixed-d110-bundle-v1` keeps A null and C exact-three. D-129-D-141, D-142 and V1-V25 remain historical evidence;
-none is relabeled as evaluator-v2 live evidence.
+Preserve public/private task boundaries, constrained tools, ordered checks, append-only recovery and exact candidate
+admission. A-null/C-D110 stays fixed, B/D deferred, prior evidence immutable and evaluator-v1's safety gap explicit.
 
-## Work item 1 — evaluator correctness v2
+## Completed work — Lean exploration through V24
 
-Status: implemented and locally verified.
+V19-V24 established bounded correction, causal reset, plan-gate liveness and self-directed exploration; details are archived.
 
-Task-bound projections, typed safety evidence, fail-closed four-verdict aggregation, authority-gated runner,
-receipt, persistence, qualification and completion adapters are tested with v1 byte goldens. Current held-out source
-also separates evaluator-private diagnostics from agent-visible leakage, uses opaque control identities and requires
-runtime-issued provenance for official completion. This is harness correctness, not a production-security claim.
+## Completed work — R20
 
-## Work items 2-5a — development A/C
+R20 settled 6/6 but was compatibility-confounded; no retry.
 
-Status: complete and consumed. R3-R6 are immutable inconclusive, R7/R9 is superseded, and R10-qualified R8 completed
-the four Moto/Babel A/C readiness rows for `$0.3664215`. Its append-only correction preserves the raw result while
-recomputing the v2 completion projection. This is descriptive development readiness only; exact predecessor limits,
-failure classes and hashes remain in `docs/09-evidence.md`. No development candidate or approval may be reused.
+## Completed work — Work Item 71
 
-## Work item 6 — preregistered held-out A/C
+Lean V25 repaired initial-plan/feedback compatibility with one durable retry; qualification/review stay immutable.
 
-Status: complete and consumed as R16; R7/R11/R14/R15 remain immutable inconclusive predecessors.
+## Completed work — Work Item 72
 
-The preregistration freezes 12 tasks × A/C × two repetitions = 48 rows. Development-only evidence set equal A/C at
-1M/100k/1.1M and `$57.60`/`$60`, excluding held-out outcomes/task content. R7/R11/R14/R15 are immutable inconclusive;
-their exact accounting, historical reasons and append-only successor diagnoses remain in `docs/09-evidence.md` and
-cannot reauthenticate, relabel, settle or resume them.
+R21 was a V25-only smoke, not A/B.
 
-The successor added candidate-v3 realized-schedule identity, candidate-bound runtime/cost, current
-persisted-v5/row-v2 prior-row revalidation and exact historical replay. R16 candidate `sha256:24044c1e...8813`
-consumed a separate approval and completed 48 settled rows at `$27.24465825`: 15 resolved, 14 task failures and
-19 typed agent failures. No-memory succeeded 8/24 and structured 7/24, yielding official frozen-panel C-minus-A
-`-1/24`; the descriptive stability interval is `[-1/4, 1/6]`. No causal/general memory claim follows.
+## Completed work — Work Item 73
 
-The candidate, approval and panel are consumed. Preserve the append-only R16 index and do not rerun or tune against
-this unblinded panel. Any next experiment begins with a separately preregistered fresh design; current provider
-authority is 0.
+R21 settled 3/3 for `$1.42525890`. Evaluator reach 1/3 missed the 2/3 floor; V25 is not promoted and R21 cannot retry.
 
-## Work item 7 — B/D and the full comparison
+## Completed work — Work Item 74
 
-Status: deferred.
+V26 added incomplete-generation recovery, compact feedback, anchored reads and lifecycle plans; runner-continuity stayed unexecuted.
 
-- B/raw-trace needs portable source selection, redaction and equal-budget truncation.
-- D/selective needs independent applicability labels and a frozen score/rerank/threshold policy.
-- Because held-out A/C is now unblinded, B/D must use a separate fresh held-out panel.
+## Completed work — Work Item 75
 
-No readiness or held-out A/C result automatically unlocks B, D or a full A/B/C/D campaign.
+V26 was `eligible-not-adopted`.
+
+## Completed work — Work Item 76
+
+R22 adopted V25/V26; rehearsal missed image-count scope.
+
+## Closed prestart attempt — Work Item 77
+
+R22 stopped before rows because 13 planned inspections exceeded one approved inspection; retry is closed.
+
+## Completed work - Work Item 78
+
+R23 fixed batch image admission and mock SQLite cleanup.
+
+## Closed execution - Work Item 79
+
+R23 ran once: one inspect, two rows/`$0.16285425`, four unstarted; hidden failure then V26 schema rejection. No retry.
+
+## Completed offline - Work Item 80
+
+V27 qualified nullable reads, strict-schema gates and durable count receipts; 312-test limits are archived. No candidate.
+
+## Completed offline - Work Item 81
+
+V27 review covered dynamic requests/count authority and recorded `eligible-not-adopted`, with no candidate/call/cost.
+
+## Completed offline - Work Item 82
+
+Candidate-v33 bound six V25/V27 R24 rows, common pre-count admission and duplicate no-call rehearsal/qualification.
+
+## Closed execution - Work Item 83
+
+R24 ran once: one inspect, 3 rows/`$0.927549`, 3 unstarted. V25 exhausted exploration; V27 hit plan-binding friction and
+a provider timeout. No evaluator/submission, comparison, promotion or retry/resume; the public halted audit is canonical.
+
+## Completed offline - Work Item 84
+
+Lean V28 defines components once, uses integer transition references and returns exact structural mismatch feedback.
+Focused/mock/restart and V19-V27 regressions pass; its qualification is twice byte-identical and zero-call/cost. V27,
+R24 and their artifacts remain immutable. No candidate or activation authority was created.
+
+## Completed offline - Work Item 85
+
+The twice-identical zero-call review passed nine criteria and recorded Lean V28 as `eligible-not-adopted`. Static V29
+routing and fail-closed/public boundaries are eligible for a later decision; provider acceptance, live integration and
+task quality remain unobserved. No runtime, candidate, rehearsal or authority was created.
+
+## Completed offline - Work Item 86
+
+The zero-call decision adopts V28 only as a future `official=false` treatment against V27. It binds the frozen review,
+preserves all residual risks and precommits mechanical/standard Rapid interpretation. No candidate, rehearsal, runtime
+change, external call, cost, promotion or authority was created.
+
+## Next work - Work Item 87
+
+Prepare the exact V27/V28 candidate, balanced schedule, cost contract and two production-order no-call rehearsals.
+Keep task/image/model/memory/budget/evaluator fixed and semantic/timeout changes excluded. Do not execute or request
+paid authority until candidate and both receipts are frozen and byte-identical.

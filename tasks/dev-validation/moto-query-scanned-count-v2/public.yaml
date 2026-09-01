@@ -1,0 +1,149 @@
+schema_version: task-public-v1
+task_id: moto-query-scanned-count
+task_version: 2
+split: dev-validation
+repository:
+  url: https://github.com/getmoto/moto.git
+  base_commit: 624de34d82a1b2c521727b14a2173380e196f1d8
+  language: python
+issue:
+  title: DynamoDB query reports the wrong ScannedCount
+  description: |
+    DynamoDB Table.query currently reports the size of the entire table as
+    ScannedCount, even when a query evaluates only one partition or one page.
+
+    Make ScannedCount represent the number of items evaluated by the current
+    query page before non-key filtering. Do not count unrelated partitions or
+    items skipped before an ExclusiveStartKey. Preserve key-condition, index,
+    limit, pagination, ordering, projection, filtering, and LastEvaluatedKey
+    behavior.
+constraints:
+  allowed_paths:
+    - moto/dynamodb/models/table.py
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 120
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: public-query-page-scanned-count
+    command:
+      - /usr/local/bin/python
+      - -c
+      - |-
+        import boto3
+        from moto import mock_dynamodb
+
+        with mock_dynamodb():
+            client = boto3.client("dynamodb", region_name="us-east-1")
+            client.create_table(
+                TableName="items",
+                KeySchema=[
+                    {"AttributeName": "pk", "KeyType": "HASH"},
+                    {"AttributeName": "sk", "KeyType": "RANGE"},
+                ],
+                AttributeDefinitions=[
+                    {"AttributeName": "pk", "AttributeType": "S"},
+                    {"AttributeName": "sk", "AttributeType": "N"},
+                ],
+                ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
+            )
+            client.put_item(TableName="items", Item={"pk": {"S": "A"}, "sk": {"N": "1"}})
+            client.put_item(
+                TableName="items",
+                Item={"pk": {"S": "A"}, "sk": {"N": "2"}, "keep": {"BOOL": True}},
+            )
+            client.put_item(
+                TableName="items",
+                Item={"pk": {"S": "B"}, "sk": {"N": "1"}, "keep": {"BOOL": True}},
+            )
+            query = {
+                "TableName": "items",
+                "KeyConditionExpression": "pk = :pk",
+                "ExpressionAttributeValues": {":pk": {"S": "A"}},
+                "FilterExpression": "attribute_exists(#keep)",
+                "ExpressionAttributeNames": {"#keep": "keep"},
+                "Limit": 1,
+            }
+            first = client.query(**query)
+            assert first["ScannedCount"] == 1, first
+            assert first["Count"] == 0, first
+            assert first["LastEvaluatedKey"] == {
+                "pk": {"S": "A"},
+                "sk": {"N": "1"},
+            }, first
+            second = client.query(
+                **query,
+                ExclusiveStartKey=first["LastEvaluatedKey"],
+            )
+            assert second["ScannedCount"] == 1, second
+            assert second["Count"] == 1, second
+            assert second["Items"][0]["sk"] == {"N": "2"}, second
+    timeout_seconds: 30
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: testing
+      AWS_SECRET_ACCESS_KEY: testing
+      AWS_SESSION_TOKEN: testing
+      AWS_EC2_METADATA_DISABLED: "true"
+  - id: upstream-dynamodb-regression
+    command:
+      - /usr/local/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - -W
+      - ignore::DeprecationWarning
+      - --deselect
+      - tests/test_dynamodb/test_dynamodb.py::test_list_table_tags
+      - --deselect
+      - tests/test_dynamodb/test_dynamodb.py::test_list_table_tags_empty
+      - --deselect
+      - tests/test_dynamodb/test_dynamodb.py::test_list_table_tags_paginated
+      - --deselect
+      - tests/test_dynamodb/test_dynamodb.py::test_transact_write_items_put_conditional_expressions
+      - --deselect
+      - tests/test_dynamodb/test_dynamodb.py::test_transact_write_items_failure__return_item
+      - --deselect
+      - tests/test_dynamodb/test_dynamodb.py::test_describe_backup_for_non_existent_backup_raises_error
+      - --deselect
+      - tests/test_dynamodb/test_dynamodb.py::test_describe_backup
+      - --deselect
+      - tests/test_dynamodb/test_dynamodb.py::test_delete_non_existent_backup_raises_error
+      - --deselect
+      - tests/test_dynamodb/test_dynamodb.py::test_delete_backup
+      - tests/test_dynamodb/test_dynamodb.py
+      - tests/test_dynamodb/test_dynamodb_table_with_range_key.py
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: testing
+      AWS_SECRET_ACCESS_KEY: testing
+      AWS_SESSION_TOKEN: testing
+      AWS_EC2_METADATA_DISABLED: "true"
+tags:
+  - swe-rebench-v2
+  - real-repository
+  - dynamodb-semantics
+  - query-pagination
+  - development-validation

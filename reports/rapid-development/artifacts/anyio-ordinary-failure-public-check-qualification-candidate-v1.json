@@ -1,0 +1,254 @@
+{
+  "added_cost_usd": 0,
+  "approval_message_template": "execution hash {execution_hash}에 대해 AnyIO public ordinary-failure behavior check base/reference qualification 2행을 승인합니다. 고정된 로컬 AnyIO 이미지의 identity inspect 1회와 --pull never, --network none, read-only workspace로 base/reference 각 1회씩 총 2개의 Docker 컨테이너 실행을 승인합니다. 이미지 pull/build/tag/remove/prune, agent/evaluator/provider 호출, 네트워크와 비용 발생은 승인하지 않습니다.",
+  "approval_required": true,
+  "candidate_build_contract": {
+    "added_cost_usd": 0,
+    "container_runs": 0,
+    "docker_cli_invocations": 0,
+    "docker_daemon_calls": 0,
+    "evaluator_calls": 0,
+    "network_calls": 0,
+    "provider_calls": 0,
+    "registered_check_calls": 0
+  },
+  "candidate_id": "anyio-ordinary-failure-public-check-qualification-20260827-r1",
+  "consumed_anyio_qualification_candidate": {
+    "content_hash": "sha256:ebcd909b75f23de4e2b00372f2b87c66d6fb9eec159c7ddaf330f2204b622138",
+    "file_bytes": 13276,
+    "file_sha256": "sha256:0c6147c3bac5a8fdc82b3f996c6ae640131d7edecb4081eb30f416066ac7b9d4",
+    "path": "reports/rapid-development/artifacts/pdm-anyio-public-behavior-check-qualification-candidate-v6.json"
+  },
+  "consumed_anyio_qualification_result": {
+    "content_hash": "sha256:804020a7b38de349da1e28821a665ab1e7ce8c7d115b6ee2d7162e5634b40590",
+    "file_bytes": 6012,
+    "file_sha256": "sha256:1d35a3b1defb140118fb5097dd6849d1aafbbe35e7fe5e2721242a39a3bbd7db",
+    "path": "reports/rapid-development/artifacts/pdm-anyio-public-behavior-check-qualification-result-v6.json"
+  },
+  "consumed_r14_candidate": {
+    "content_hash": "sha256:cdad1a07ba580f82ed247e78db20411ef98a181a4bf54f5ee6a0db3e8a453725",
+    "file_bytes": 33567,
+    "file_sha256": "sha256:9fe924b88abafa30c2dcb3abc6fa51271d6d22521eec16d051d3e9f07b3df877",
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-causal-plan-projection-ab-20260826-r14-candidate-v21.json"
+  },
+  "content_hash": "sha256:e1323a1ae39b412f21949d2687eb7186ef136f16fe5b6f3947bc41a4502cd630",
+  "docker_calls_made": 0,
+  "docker_cli": {
+    "file_bytes": 43095472,
+    "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+    "resolved_path": "C:\\Users\\geonj\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
+  },
+  "docker_context": {
+    "context": "desktop-linux",
+    "endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine"
+  },
+  "docker_contract": {
+    "added_cost_usd": 0,
+    "agent_calls": 0,
+    "container_run_calls": 2,
+    "evaluator_calls": 0,
+    "image_identity_inspect_calls": 1,
+    "network": "none",
+    "network_calls": 0,
+    "provider_calls": 0,
+    "pull_policy": "never",
+    "root_filesystem": "read_only",
+    "workspace_mount": "read_only"
+  },
+  "execution_authorized": false,
+  "execution_hash": "sha256:4269db56125f87e84e22a26299c9e2c58c55832e696f344068f6f09063544600",
+  "git_cli": {
+    "file_bytes": 46480,
+    "file_sha256": "sha256:81ef35ae005ca9318018d18e3327578ce939fb99feaad6b2d7c8ab15f3de8db5",
+    "resolved_path": "C:\\Program Files\\Git\\cmd\\git.exe"
+  },
+  "official": false,
+  "proposed_check": {
+    "command": [
+      "/opt/conda/envs/testbed/bin/python",
+      "-c",
+      "import os\nimport subprocess\nimport sys\nimport tempfile\nimport textwrap\nfrom pathlib import Path\n\n\nwith tempfile.TemporaryDirectory(prefix=\"patchloop-anyio-ordinary-failure-\") as selected:\n    root = Path(selected)\n    event_log = root / \"events.log\"\n    test_path = root / \"test_ordinary_failure.py\"\n    test_path.write_text(\n        textwrap.dedent(\n            f\"\"\"\n            import pytest\n            from pathlib import Path\n\n            EVENT_LOG = Path({str(event_log)!r})\n\n            def record(value):\n                with EVENT_LOG.open(\"a\", encoding=\"utf-8\") as stream:\n                    stream.write(value + \"\\\\n\")\n\n            @pytest.fixture(scope=\"module\")\n            def anyio_backend():\n                return \"asyncio\"\n\n            @pytest.fixture(scope=\"module\")\n            async def shared(anyio_backend):\n                record(\"shared-start\")\n                try:\n                    yield\n                finally:\n                    record(\"shared-cleanup\")\n\n            @pytest.mark.anyio\n            async def test_ordinary_failure(shared):\n                record(\"ordinary-failure\")\n                assert False, \"expected public ordinary failure\"\n\n            @pytest.mark.anyio\n            async def test_after_failure(shared):\n                record(\"after-failure\")\n            \"\"\"\n        ),\n        encoding=\"utf-8\",\n    )\n    environment = os.environ.copy()\n    environment[\"PYTHONDONTWRITEBYTECODE\"] = \"1\"\n    completed = subprocess.run(\n        [\n            sys.executable,\n            \"-m\",\n            \"pytest\",\n            \"-q\",\n            \"--disable-warnings\",\n            \"-p\",\n            \"anyio\",\n            \"-p\",\n            \"no:asyncio\",\n            \"-p\",\n            \"no:trio\",\n            str(test_path),\n        ],\n        cwd=root,\n        env=environment,\n        capture_output=True,\n        text=True,\n        timeout=20,\n    )\n    events = (\n        event_log.read_text(encoding=\"utf-8\").splitlines()\n        if event_log.is_file()\n        else []\n    )\n    expected_events = [\n        \"shared-start\",\n        \"ordinary-failure\",\n        \"after-failure\",\n        \"shared-cleanup\",\n    ]\n    if completed.returncode != 1:\n        raise AssertionError(\"PUBLIC_CASE:anyio:ordinary-failure-status\")\n    if events != expected_events:\n        raise AssertionError(\"PUBLIC_CASE:anyio:ordinary-failure-events\")\n    output = completed.stdout + \"\\n\" + completed.stderr\n    if \"1 failed\" not in output or \"1 passed\" not in output:\n        raise AssertionError(\"PUBLIC_CASE:anyio:ordinary-failure-summary\")\n"
+    ],
+    "environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/workspace/src"
+    },
+    "expected_exit_codes": [
+      0
+    ],
+    "id": "public-ordinary-failure-preservation",
+    "output_limit_bytes": 20000,
+    "timeout_seconds": 30,
+    "working_directory": "."
+  },
+  "proposed_check_hash": "sha256:428c3a661178add9ec53b2ba4b4d19b34948e1824f3b1a88f6949c2690080040",
+  "provider_calls_made": 0,
+  "public_failure_projection": {
+    "allowlist": [
+      "PUBLIC_CASE:anyio:ordinary-failure-events",
+      "PUBLIC_CASE:anyio:ordinary-failure-status",
+      "PUBLIC_CASE:anyio:ordinary-failure-summary"
+    ],
+    "pattern": "PUBLIC_CASE:anyio:ordinary-failure-(?:status|events|summary)",
+    "raw_output_persisted": false,
+    "schema_version": "allowlisted-public-case-id-v1"
+  },
+  "public_private_boundary": {
+    "agent_context_created": false,
+    "check_derived_only_from_public_task": true,
+    "hidden_evaluator_read_or_called": false,
+    "private_spec_projected_to_check_or_result": false,
+    "reference_patch_projected_to_check_or_result": false,
+    "reference_patch_runner_only": true
+  },
+  "purpose": "anyio-ordinary-failure-public-check-base-reference-qualification",
+  "requested_execution_policy": {
+    "cpus": "2",
+    "image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+    "launcher_timeout_seconds": 35,
+    "memory": "2g",
+    "output_limit_bytes": 20000,
+    "pids_limit": 128,
+    "read_only_root": true,
+    "read_only_workspace": true,
+    "requested_network": "none",
+    "requested_timeout_seconds": 30,
+    "sandbox_backend": "docker",
+    "schema_version": "docker-registered-check-requested-policy-v1",
+    "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+    "working_directory": "/workspace"
+  },
+  "schedule": [
+    {
+      "base_source_archive_sha256": "sha256:28cecaf9114d994f69ca8bd8eafa2abebbd0ae4b6c9a89367ca04dbfc45d5326",
+      "check_command_hash": "sha256:eec2ca90c5a2be9d962243d6ca257d593b665e700735ca1a805767ced18a932a",
+      "check_hash": "sha256:428c3a661178add9ec53b2ba4b4d19b34948e1824f3b1a88f6949c2690080040",
+      "check_id": "public-ordinary-failure-preservation",
+      "expected_observation": "pass",
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "order": 1,
+      "reference_patch_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+      "schedule_row_id": "sha256:9cdfe4dab196badcb205120b99056dd57c05988a9a4fb5c7ab5b2623b4d95960",
+      "source_state": "base",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4
+    },
+    {
+      "base_source_archive_sha256": "sha256:28cecaf9114d994f69ca8bd8eafa2abebbd0ae4b6c9a89367ca04dbfc45d5326",
+      "check_command_hash": "sha256:eec2ca90c5a2be9d962243d6ca257d593b665e700735ca1a805767ced18a932a",
+      "check_hash": "sha256:428c3a661178add9ec53b2ba4b4d19b34948e1824f3b1a88f6949c2690080040",
+      "check_id": "public-ordinary-failure-preservation",
+      "expected_observation": "pass",
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "order": 2,
+      "reference_patch_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+      "schedule_row_id": "sha256:a4bd2d07309952be4a4432d03737c9633772afff87cdbf3a28056a45b80ae29e",
+      "source_state": "reference",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4
+    }
+  ],
+  "schedule_hash": "sha256:515eb70b18661f2f546b4bcc86ca7aa234d21f893f5cebedbae1b3dd8d84551b",
+  "schema_version": "anyio-ordinary-failure-public-check-qualification-candidate-v1",
+  "source_files": [
+    {
+      "file_bytes": 28722,
+      "file_sha256": "sha256:e58bf8af4e731e1e02b7d252218b35655b4976c07abc890d6292f8ffb87f11fd",
+      "path": "patchloop/evals/anyio_ordinary_failure_public_check_qualification.py"
+    },
+    {
+      "file_bytes": 11169,
+      "file_sha256": "sha256:57478d47df8864d9f00b3439b73a027c6873c931d4f3a7167c63fe9de8754631",
+      "path": "patchloop/evals/anyio_ordinary_failure_public_check.py"
+    },
+    {
+      "file_bytes": 38752,
+      "file_sha256": "sha256:8496bc244a0dc049c6ad34816ca3cfa5df73c190d83c23499a18fb9525fd65e8",
+      "path": "patchloop/evals/public_behavior_check_qualification_v6.py"
+    },
+    {
+      "file_bytes": 33551,
+      "file_sha256": "sha256:c36324e8918e584469030c8caf740adfed9449ed99ea05bb981b075e5bf4966f",
+      "path": "patchloop/sandbox/runner.py"
+    },
+    {
+      "file_bytes": 176729,
+      "file_sha256": "sha256:f03f2bf53162ac87dec920bf459e8a9e327b8b1f8361f7226ad27642c2b50e06",
+      "path": "patchloop/contracts.py"
+    },
+    {
+      "file_bytes": 5868,
+      "file_sha256": "sha256:6ce3e5a7e5a91556c6085e3c243a4ccdaf8926dd6e57878fb438792cdb0227e6",
+      "path": "patchloop/util.py"
+    },
+    {
+      "file_bytes": 1521,
+      "file_sha256": "sha256:cc16b58e3ee91ee5163c63166ced274dacd61b9cee8bcbe80564ad6416e6021e",
+      "path": "scripts/build_anyio_ordinary_failure_public_check_candidate.py"
+    },
+    {
+      "file_bytes": 1011,
+      "file_sha256": "sha256:b5d37ac9cf2de5fe04adee6e726f34c2d19e8594bf6a0d33b5b1b80cf9070b9d",
+      "path": "scripts/run_anyio_ordinary_failure_public_check_qualification.py"
+    }
+  ],
+  "source_inventory_hash": "sha256:497c3753dc3f69f0a2cfe1b8523058ac3a307986f7c9e1ec903d39c65724afa6",
+  "source_qualification": {
+    "content_hash": "sha256:dbd9b94fbe1ca3aadf34f59bd5045c05d234ac907c192368abef42a973ca4307",
+    "file_bytes": 6970,
+    "file_sha256": "sha256:f92590a5dd1ae8d5baf68541c3013dd24dd76bd43ab298b9299ed5f8e381b369",
+    "path": "experiments/anyio-ordinary-failure-public-check-source-qualification-20260827-v1.json"
+  },
+  "source_qualification_content_hash": "sha256:dbd9b94fbe1ca3aadf34f59bd5045c05d234ac907c192368abef42a973ca4307",
+  "source_qualified": true,
+  "task_binding": {
+    "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+    "base_source": {
+      "archive_bytes": 1228800,
+      "archive_format": "git-archive-tar-v1",
+      "archive_member_count": 125,
+      "archive_sha256": "sha256:28cecaf9114d994f69ca8bd8eafa2abebbd0ae4b6c9a89367ca04dbfc45d5326",
+      "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+      "provenance": "consumed-rapid-v6-local-git-object",
+      "seed_workspace": ".patchloop/workspaces/run_rapid_v6_5ae158b3ed65_03/repo",
+      "target_path_present": true
+    },
+    "docker_pull_policy": "never",
+    "expected_base_observation": "public-assertion-failure",
+    "expected_reference_observation": "pass",
+    "image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+    "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+    "package_file_count": 6,
+    "package_inventory_hash": "sha256:60fab6e3fc3a56fef5ad8a7eee2c410f66e4a67a2eed7b8b57e3b58888f92fd4",
+    "private_spec_hash": "sha256:cb95ced3ad387ea2fc76304145f803904f577e62ff17b7b6972219d9d7a1e8b4",
+    "public_spec_hash": "sha256:ac32db22e505caf61dac267a590870f8c6a4dc39d7f83ce589342a729d7968e6",
+    "reference_patch": {
+      "file_bytes": 1162,
+      "file_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+      "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/reference.patch"
+    },
+    "requested_execution_policy": {
+      "cpus": "2",
+      "image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "launcher_timeout_seconds": 35,
+      "memory": "2g",
+      "output_limit_bytes": 200000,
+      "pids_limit": 128,
+      "read_only_root": true,
+      "read_only_workspace": true,
+      "requested_network": "none",
+      "requested_timeout_seconds": 30,
+      "sandbox_backend": "docker",
+      "schema_version": "docker-registered-check-requested-policy-v1",
+      "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+      "working_directory": "/workspace"
+    },
+    "targeted_check_command_hash": "sha256:c0ef4f062b90676734637a3b4966b1206870c847ae0f4dd2c74754250bf0a034",
+    "targeted_check_hash": "sha256:0660f1685b6340a83380de9635f23b75cd887a461aa74325c1a7e40eced46f9a",
+    "targeted_check_id": "public-interrupt-runner-lifecycle",
+    "task_id": "anyio-interrupt-runner-cleanup",
+    "task_path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4",
+    "task_version": 4
+  },
+  "task_successor_created": false
+}

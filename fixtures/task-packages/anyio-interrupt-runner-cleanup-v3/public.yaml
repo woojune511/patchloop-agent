@@ -1,0 +1,237 @@
+schema_version: task-public-v1
+task_id: anyio-interrupt-runner-cleanup
+task_version: 3
+split: dev-validation
+repository:
+  url: https://github.com/agronholm/anyio.git
+  base_commit: cb245dba9883516f2ed4c23899de157183a1cb50
+  language: python
+issue:
+  title: Async pytest tests resume after KeyboardInterrupt during fixture teardown
+  description: |
+    On the asyncio backend, interrupting an async pytest test that uses an
+    async-generator fixture can leave the test runner alive. When pytest later
+    re-enters the event loop to tear the fixture down, the interrupted test may
+    resume and execute code that should never run.
+
+    Ensure the interrupt still propagates, the interrupted test cannot resume,
+    and async fixture cleanup completes exactly once. Preserve normal pytest
+    pass, failure, skip, and expected-failure outcomes, including fixtures whose
+    lifetime spans more than one test.
+constraints:
+  allowed_paths:
+    - src/anyio/**
+  forbidden_paths:
+    - tests/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - uv.lock
+    - requirements.txt
+  max_changed_files: 1
+  max_diff_lines: 50
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: public-interrupt-runner-lifecycle
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -c
+      - |-
+        import os
+        import subprocess
+        import sys
+        import tempfile
+        import textwrap
+        from pathlib import Path
+
+        def write_test(path, source):
+            path.write_text(textwrap.dedent(source), encoding="utf-8")
+
+        def read_events(path):
+            if not path.exists():
+                return []
+            return path.read_text(encoding="utf-8").splitlines()
+
+        def run_pytest(root, test_file, event_log):
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "EVENT_LOG": str(event_log),
+                    "PYTHONPATH": "/workspace/src",
+                    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+                }
+            )
+            return subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "--no-header",
+                    "-q",
+                    "-p",
+                    "anyio.pytest_plugin",
+                    "-p",
+                    "no:cacheprovider",
+                    str(test_file),
+                ],
+                cwd=root,
+                env=environment,
+                capture_output=True,
+                text=True,
+                timeout=12,
+                check=False,
+            )
+
+        with tempfile.TemporaryDirectory(prefix="anyio-public-check-", dir="/tmp") as raw:
+            root = Path(raw)
+            interrupt_log = root / "interrupt-events.txt"
+            interrupt_test = root / "test_interrupt.py"
+            write_test(
+                interrupt_test,
+                """
+                import asyncio
+                import os
+                import signal
+                from pathlib import Path
+
+                import pytest
+
+                EVENT_LOG = Path(os.environ["EVENT_LOG"])
+
+                def record(event):
+                    with EVENT_LOG.open("a", encoding="utf-8") as stream:
+                        stream.write(event + "\\n")
+
+                @pytest.fixture
+                def anyio_backend():
+                    return "asyncio"
+
+                @pytest.fixture
+                async def resource(anyio_backend):
+                    record("fixture-start")
+                    try:
+                        yield "ready"
+                    finally:
+                        record("fixture-cleanup")
+
+                @pytest.mark.anyio
+                async def test_interrupt(resource):
+                    assert resource == "ready"
+                    record("test-start")
+                    signal.raise_signal(signal.SIGINT)
+                    await asyncio.sleep(0)
+                    record("test-resumed")
+                """,
+            )
+            try:
+                interrupt = run_pytest(root, interrupt_test, interrupt_log)
+            except subprocess.TimeoutExpired as exc:
+                observed = read_events(interrupt_log)
+                if observed[:2] != ["fixture-start", "test-start"]:
+                    raise RuntimeError("interrupt scenario did not reach the public behavior") from exc
+                raise AssertionError("public behavior mismatch: interrupt teardown timed out") from exc
+
+            observed = read_events(interrupt_log)
+            if observed[:2] != ["fixture-start", "test-start"]:
+                raise RuntimeError(
+                    "interrupt scenario did not reach the public behavior: "
+                    + repr((interrupt.returncode, observed))
+                )
+            assert interrupt.returncode != 0, "KeyboardInterrupt did not propagate through pytest"
+            assert "test-resumed" not in observed, observed
+            assert observed.count("fixture-cleanup") == 1, observed
+
+            outcome_log = root / "outcome-events.txt"
+            outcome_test = root / "test_outcomes.py"
+            write_test(
+                outcome_test,
+                """
+                import os
+                from pathlib import Path
+
+                import pytest
+
+                EVENT_LOG = Path(os.environ["EVENT_LOG"])
+
+                def record(event):
+                    with EVENT_LOG.open("a", encoding="utf-8") as stream:
+                        stream.write(event + "\\n")
+
+                @pytest.fixture(scope="module")
+                def anyio_backend():
+                    return "asyncio"
+
+                @pytest.fixture(scope="module")
+                async def shared(anyio_backend):
+                    record("shared-start")
+                    try:
+                        yield
+                    finally:
+                        record("shared-cleanup")
+
+                @pytest.mark.anyio
+                async def test_skip(shared):
+                    record("skip")
+                    pytest.skip("public skip")
+
+                @pytest.mark.anyio
+                async def test_xfail(shared):
+                    record("xfail")
+                    pytest.xfail("public xfail")
+
+                @pytest.mark.anyio
+                async def test_pass(shared):
+                    record("pass")
+                """,
+            )
+            outcomes = run_pytest(root, outcome_test, outcome_log)
+            outcome_events = read_events(outcome_log)
+            if not outcome_events or outcome_events[0] != "shared-start":
+                raise RuntimeError(
+                    "outcome scenario did not reach the public behavior: "
+                    + repr((outcomes.returncode, outcome_events))
+                )
+            assert outcomes.returncode == 0, (
+                outcomes.returncode,
+                outcomes.stdout[-2000:],
+                outcomes.stderr[-2000:],
+                outcome_events,
+            )
+            assert outcome_events == [
+                "shared-start",
+                "skip",
+                "xfail",
+                "pass",
+                "shared-cleanup",
+            ], outcome_events
+    timeout_seconds: 30
+    environment:
+      PYTHONPATH: /workspace/src
+  - id: upstream-pytest-plugin-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - tests/test_pytest_plugin.py
+      - --deselect
+      - tests/test_pytest_plugin.py::test_plugin
+      - --deselect
+      - tests/test_pytest_plugin.py::test_hypothesis_module_mark
+      - --deselect
+      - tests/test_pytest_plugin.py::test_hypothesis_function_mark
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/src
+tags:
+  - swe-rebench
+  - real-repository
+  - asyncio
+  - pytest-plugin
+  - interrupt-lifecycle
+  - memory-development
+  - development-validation
+  - public-behavior-check-v3

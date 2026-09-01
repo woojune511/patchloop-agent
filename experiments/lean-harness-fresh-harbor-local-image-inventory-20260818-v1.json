@@ -1,0 +1,148 @@
+{
+  "approval_message_template": "execution hash {execution_hash}\uc5d0 \ub300\ud574 \uc0cc\ub4dc\ubc15\uc2a4 \ubc16 Docker CLI/daemon \uc77d\uae30 \uc804\uc6a9 local-image inventory 1\ud68c\ub97c \uc2b9\uc778\ud569\ub2c8\ub2e4. \ud5c8\uc6a9 \uba85\ub839\uc740 \uace0\uc815\ub41c docker image ls 1\ud68c\ubfd0\uc774\uba70, \uc774\ubbf8\uc9c0 pull/build/tag/remove/prune, \ucee8\ud14c\uc774\ub108 \uc0dd\uc131\u00b7\uc2e4\ud589, task/evaluator/provider \ud638\ucd9c\uacfc \ube44\uc6a9 \ubc1c\uc0dd\uc740 \uc2b9\uc778\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.",
+  "authority": {
+    "added_cost_usd": 0,
+    "candidate_materialized": true,
+    "container_mutations": 0,
+    "docker_cli_calls": 0,
+    "docker_daemon_calls": 0,
+    "execution_authorized": false,
+    "image_store_mutations": 0,
+    "inventory_preflight_authorized": false,
+    "network_calls": 0,
+    "predecessor_files_read": 3,
+    "source_files_read": 0,
+    "source_qualified": true,
+    "task_evaluator_agent_provider_calls": 0,
+    "validation_files_read": 0
+  },
+  "candidate_id": "lean-fresh-harbor-local-image-inventory-20260818-v1",
+  "command_arguments": [
+    "--context",
+    "desktop-linux",
+    "image",
+    "ls",
+    "--no-trunc",
+    "--format",
+    "{{json .}}"
+  ],
+  "content_hash": "sha256:7b5cf816ebd9709f4b3e46dbfcc889f933eca9f591fb10b40489af1c1b138221",
+  "docker_cli": {
+    "file_bytes": 43095472,
+    "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+    "resolved_path": "C:\\Users\\geonj\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
+  },
+  "docker_context": "desktop-linux",
+  "docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+  "evidence_contract": {
+    "exact-twelve-target-presence-projections-required-on-success": true,
+    "missing-ref-list-is-target-derived-not-error-text-derived": true,
+    "one-command-return-code-required": true,
+    "raw-output-not-persisted": true,
+    "stdout-and-stderr-byte-hashes-required": true,
+    "unrelated-local-image-names-not-persisted": true
+  },
+  "execution_hash": "sha256:2f72f2a9a1e6bc7ceef2fa656a7878f1e266081615698c61f6d74868bba5ef4c",
+  "next_gate": "obtain-exact-user-approval-for-this-inventory-execution-hash",
+  "predecessor_terminal_binding": {
+    "content_hash": "sha256:725a230863af4ae43f1c447323cba06e61140920be8b928c4065a3bd4c52b94e",
+    "file_bytes": 2940,
+    "file_sha256": "sha256:fb40fab9a53756ca2dfef4d9f0a88d326f077c7402744cfaebaac351cebfe9a2",
+    "path": "reports/fresh-panel/artifacts/lean-fresh-harbor-partial-preflight-terminal-r1.json",
+    "role": "consumed-bulk-inspect-preflight-terminal"
+  },
+  "runner_candidate_binding": {
+    "content_hash": "sha256:f687a887c3c405ad76251b75aa45d89c20b528c8d9cf0724cf7020e05e1255c0",
+    "file_bytes": 92174,
+    "file_sha256": "sha256:c2e63b4e9c679f0d3b5ff97d02399d9b4fcfac82ff2b18123937946667898082",
+    "path": "experiments/lean-harness-fresh-harbor-partial-admission-runner-20260818-v1.json",
+    "role": "sealed-partial-runner-candidate"
+  },
+  "runner_execution_hash": "sha256:92fb35e786a4dfe257d2c242c9a5e3ca62f0f330c497aa10b8235fb049dc2bdb",
+  "schema_version": "lean-fresh-harbor-local-image-inventory-candidate-v1",
+  "shell": false,
+  "source_qualification_binding": {
+    "content_hash": "sha256:72fd6a831c2431b12a4cff52c66f64db8bb0bfcf21733ae31ca563ef71e4ad87",
+    "file_bytes": 4198,
+    "file_sha256": "sha256:423291548e681feda66a8a6ba46e84c844a9e623efa6a791e1ebd97da626cd94",
+    "path": "reports/fresh-panel/artifacts/lean-fresh-harbor-local-image-inventory-source-qualification-r1.json",
+    "role": "local-image-inventory-source-qualification"
+  },
+  "status": "EXACT_LOCAL_IMAGE_INVENTORY_CANDIDATE_EXECUTION_CLOSED",
+  "stdin": "closed",
+  "target_images": [
+    {
+      "content_hash": "sha256:de392054b7b8f68a203fbc0701b2e84b25642e2014d064a17e4ee80d235c0ac6",
+      "normalized_tag": "swerebenchv2/harbor-framework__harbor-1764:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/harbor-framework__harbor-1764:v0.1.0",
+      "task_id": "harbor-framework__harbor-1764"
+    },
+    {
+      "content_hash": "sha256:6124938f5d958b3e6ca92f2c6b3fc9a18e40c3fa3f381543eb626b96844730f0",
+      "normalized_tag": "swerebenchv2/marimo-team__marimo-9626:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/marimo-team__marimo-9626:v0.1.0",
+      "task_id": "marimo-team__marimo-9626"
+    },
+    {
+      "content_hash": "sha256:47c220fa09cf40d631ce4142acf880b52458f276ae8b7e085773decc6d4d48f3",
+      "normalized_tag": "swerebenchv2/microsoft__apm-1553:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/microsoft__apm-1553:v0.1.0",
+      "task_id": "microsoft__apm-1553"
+    },
+    {
+      "content_hash": "sha256:768deb96e1424b08c6c3d6802b936ba16609b2d86868917e3e4e420c2aaa0986",
+      "normalized_tag": "swerebenchv2/pydantic__pydantic-ai-5842:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/pydantic__pydantic-ai-5842:v0.1.0",
+      "task_id": "pydantic__pydantic-ai-5842"
+    },
+    {
+      "content_hash": "sha256:93d1d3396f9f1667c619c01f444a58d05daef0a544628b6e350765d59adcfbf9",
+      "normalized_tag": "swerebenchv2/hkuds__nanobot-4048:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/hkuds__nanobot-4048:v0.1.0",
+      "task_id": "hkuds__nanobot-4048"
+    },
+    {
+      "content_hash": "sha256:c1c102afce0bd39315976aca320507b63753cb5a509c301a0fa64b7a13a9a2f9",
+      "normalized_tag": "swerebenchv2/soju06__codex-lb-744:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/soju06__codex-lb-744:v0.1.0",
+      "task_id": "soju06__codex-lb-744"
+    },
+    {
+      "content_hash": "sha256:6928cb1f95a689711f1132dad8cb7487bf025dbf625926b43b6daef4cec5636b",
+      "normalized_tag": "swerebenchv2/nesquena__hermes-webui-3069:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/nesquena__hermes-webui-3069:v0.1.0",
+      "task_id": "nesquena__hermes-webui-3069"
+    },
+    {
+      "content_hash": "sha256:f913e0b6340ff5d1841f71a6c7f30441824cbe6730f7b915f8e84cfe28389a81",
+      "normalized_tag": "swerebenchv2/agno-agi__agno-8148:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/agno-agi__agno-8148:v0.1.0",
+      "task_id": "agno-agi__agno-8148"
+    },
+    {
+      "content_hash": "sha256:e6f8d8833edcc247fba5a8857d669afde967c8a0ef2e951c7a43ece6a2ea00f8",
+      "normalized_tag": "swerebenchv2/mozilla-ai__any-llm-1121:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/mozilla-ai__any-llm-1121:v0.1.0",
+      "task_id": "mozilla-ai__any-llm-1121"
+    },
+    {
+      "content_hash": "sha256:1199fa3970e3ab1a1feba3f8aa00a05411b1c7e878002e2d6d5f4be46b791dbe",
+      "normalized_tag": "swerebenchv2/livekit__agents-5944:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/livekit__agents-5944:v0.1.0",
+      "task_id": "livekit__agents-5944"
+    },
+    {
+      "content_hash": "sha256:bcd79448b36dba5a9e378dc4280b65d36a859a095ba88f365c842eb3a157028a",
+      "normalized_tag": "swerebenchv2/verl-project__verl-6506:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/verl-project__verl-6506:v0.1.0",
+      "task_id": "verl-project__verl-6506"
+    },
+    {
+      "content_hash": "sha256:91be94dc5ffd8e63baebc3bb7b9386ab4128332903e89cccad28ee753cd696f9",
+      "normalized_tag": "swerebenchv2/raullenchai__rapid-mlx-426:v0.1.0",
+      "requested_ref": "docker.io/swerebenchv2/raullenchai__rapid-mlx-426:v0.1.0",
+      "task_id": "raullenchai__rapid-mlx-426"
+    }
+  ],
+  "target_inventory_hash": "sha256:16f207d4bc300abdde3e002480e18bc060b22349f5b7009bfbc1e2b5e604a8dd"
+}

@@ -1,0 +1,18 @@
+{
+  "agent_evaluator_provider_network_cost_authorized": false,
+  "approved_container_runs": 4,
+  "approved_docker_calls": 6,
+  "candidate": {
+    "content_hash": "sha256:1b1d4c2983abfd986449cc44053ab88d41dc6837ee5177cc666b7b96bb90b72c",
+    "file_bytes": 14710,
+    "file_sha256": "sha256:d63beb7bd71cb610d351d01eeef27b98dc73d57d5c9aec4cb5e34a48db3be9f9",
+    "path": "reports/rapid-development/artifacts/pdm-anyio-public-behavior-check-qualification-candidate-v5.json"
+  },
+  "content_hash": "sha256:65b7976044048e4804ff21e3ce7a6258dc370195019a079e3146836e0213ba03",
+  "execution_hash": "sha256:f7b0159d622ee6329db6560ab253d117187e6a05a5e7bb630ba325588eb211b3",
+  "image_pull_build_tag_remove_prune_authorized": false,
+  "recorded_at": "2026-08-22T01:06:21.103144Z",
+  "schema_version": "public-behavior-check-qualification-approval-v5",
+  "status": "EXACT_DOCKER_QUALIFICATION_APPROVED_ONCE",
+  "user_message_sha256": "sha256:5d55f9e35b12f5e873813fde3c38a1b9ba27a8310a3952fcb20d1e982a8d26a3"
+}

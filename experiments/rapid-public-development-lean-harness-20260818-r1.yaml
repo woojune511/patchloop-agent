@@ -1,0 +1,53 @@
+schema_version: rapid-public-development-v1
+experiment_id: rapid-public-dev-lean-harness-20260818-r1
+status: development-only
+official: false
+tasks:
+  - tasks/dev-validation/moto-query-scanned-count/public.yaml
+  - tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml
+variants:
+  - baseline-v2v5
+  - lean-harness-v1
+repetitions: 2
+memory_condition: no_memory
+model_provider: openai
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+transport_max_retries: 0
+max_output_tokens: 25000
+budget:
+  max_model_calls: 240
+  max_tool_calls: 400
+  max_total_tokens: 1100000
+  wall_clock_timeout_seconds: 3600
+  token_budget_schema_version: cumulative-split-v1
+  max_cumulative_input_tokens: 1000000
+  max_cumulative_output_tokens: 100000
+schedule:
+  - {order: 1, task: tasks/dev-validation/moto-query-scanned-count/public.yaml, variant: baseline-v2v5, repetition: 1}
+  - {order: 2, task: tasks/dev-validation/moto-query-scanned-count/public.yaml, variant: lean-harness-v1, repetition: 1}
+  - {order: 3, task: tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml, variant: lean-harness-v1, repetition: 1}
+  - {order: 4, task: tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml, variant: baseline-v2v5, repetition: 1}
+  - {order: 5, task: tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml, variant: baseline-v2v5, repetition: 2}
+  - {order: 6, task: tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml, variant: lean-harness-v1, repetition: 2}
+  - {order: 7, task: tasks/dev-validation/moto-query-scanned-count/public.yaml, variant: lean-harness-v1, repetition: 2}
+  - {order: 8, task: tasks/dev-validation/moto-query-scanned-count/public.yaml, variant: baseline-v2v5, repetition: 2}
+metrics:
+  - evaluator_reached
+  - token_terminal
+  - submission_completed
+  - success_at_budget
+  - model_cost_nanos
+cost_policy:
+  per_run_reserve_nanos: 1200000000
+  full_schedule_reserve_nanos: 9600000000
+  hard_cap_nanos: 10000000000
+  pricing_nanos_per_token:
+    uncached_input: 750
+    cached_input: 75
+    cache_write_input: 750
+    output: 4500
+provider_execution_authorized: false
+approved_execution_hash: null

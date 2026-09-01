@@ -1,0 +1,195 @@
+{
+  "schema_version": "rapid-public-development-source-qualification-v1",
+  "qualification_id": "rapid-public-dev-v2-source-qualification-20260821-r1",
+  "status": "PUBLIC_SOURCE_QUALIFIED_CANDIDATE_GENERATION_ONLY",
+  "evidence_date": "2026-08-21",
+  "config": {
+    "path": "experiments/rapid-public-development-lean-harness-20260821-r2.yaml",
+    "file_bytes": 2310,
+    "file_sha256": "sha256:39e5069990e52ccb5fab3ccaaac9b2de7498ec48f8411ddb2c244147f75457bf"
+  },
+  "config_semantic_hash": "sha256:2e4fc1633854b612cf65f281b4a23d8eeb32e878ac1564dcd662565dd5158f3d",
+  "source_snapshot_scope": "all-patchloop-python-v1",
+  "source_file_count": 186,
+  "source_snapshot_hash": "sha256:7f2ae839ff6e836a22a42fad110e4e1e9d62f8047cd28ec5bc598b9d044c0824",
+  "runtime_dependencies": {
+    "uv_lock_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c",
+    "openai_sdk_version": "2.47.0"
+  },
+  "task_bindings": [
+    {
+      "task_path": "tasks/dev-validation/moto-query-scanned-count-v2/public.yaml",
+      "task_id": "moto-query-scanned-count",
+      "task_version": 2,
+      "base_commit": "624de34d82a1b2c521727b14a2173380e196f1d8",
+      "public_spec_hash": "sha256:9b15f9fa374ed7d49d7d8bd22fe9d0b8ba6d2f41a0a8746771469f16a0034272",
+      "private_spec_hash": "sha256:cd761aae5838f4ab9a301157bd4b6942ea2e05d5e33e90f890bbf9d267ac972b",
+      "evaluator_image": "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+      "evaluator_image_digest": "sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+      "package_file_count": 14,
+      "package_inventory_hash": "sha256:0984f406346c6df6e30070617c5b2e7c280733e1c7e30696148ef1b7f6c9b445",
+      "targeted_check_id": "public-query-page-scanned-count",
+      "targeted_check_command_hash": "sha256:e0b8ad4d0f2b5a6e13cb1d6dff72d87eb799f4ee57dce32319873b712a803413",
+      "regression_check_id": "upstream-dynamodb-regression",
+      "targeted_check_source": "public-issue-derived"
+    },
+    {
+      "task_path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes-v2/public.yaml",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "task_version": 2,
+      "base_commit": "aca7663728e08e9d60b192b11fa6626a60974929",
+      "public_spec_hash": "sha256:cbe9094a75446fe1f996cd210854cbe15d3ff372eb846a1aa4ac6faa531ea159",
+      "private_spec_hash": "sha256:ca727785d54103a8aea5ee8f6dc0f91ef8c30f80e9f29a3bc4ac79bf35c0c9b0",
+      "evaluator_image": "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+      "evaluator_image_digest": "sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+      "package_file_count": 15,
+      "package_inventory_hash": "sha256:f09ac55b1f177dbd0a95052e3b541a0dcc66adca59393ccd3756396aa93967c3",
+      "targeted_check_id": "public-strict-trailing-zero-behavior",
+      "targeted_check_command_hash": "sha256:5b504ac878c09f21e9b3866f5f0af8fd149eae379596c02d5476e4d881cb1943",
+      "regression_check_id": "upstream-number-regression",
+      "targeted_check_source": "public-issue-derived"
+    }
+  ],
+  "schedule_hash": "sha256:69c9a5794812faf3fbffb04606f68c1cbf20bce81e0c9503132df46568695197",
+  "source_files": [
+    {
+      "path": "patchloop/agent/context.py",
+      "file_bytes": 68912,
+      "file_sha256": "sha256:6730fa00a224704220683b24ddaeeb7ff5721a742dd73d1c203a22280f5cb2dd"
+    },
+    {
+      "path": "patchloop/agent/finalization.py",
+      "file_bytes": 39641,
+      "file_sha256": "sha256:1f67d0bb2247f90bb112ec93cf60d56e1c9a8c6332fabe94005e7e016224d823"
+    },
+    {
+      "path": "patchloop/agent/lean_runtime.py",
+      "file_bytes": 39024,
+      "file_sha256": "sha256:d812f4bd6da8e6b3bf5f8546accc178fc7406ea117d8d4f7008d40e44bf9a0a6"
+    },
+    {
+      "path": "patchloop/agent/model.py",
+      "file_bytes": 44052,
+      "file_sha256": "sha256:b8ac21ab33421ed33942036854ecf7e1badce5d35a6014da27488903352d8568"
+    },
+    {
+      "path": "patchloop/agent/phases.py",
+      "file_bytes": 11056,
+      "file_sha256": "sha256:c6e8ae77bf3010647033d4c0eb3c3ef4a22aca9a78e44740af959d7c189fa4ad"
+    },
+    {
+      "path": "patchloop/agent/runner.py",
+      "file_bytes": 270258,
+      "file_sha256": "sha256:781bbeab61488a11cddbd71b79938ea6369e3614cf425a4dbfc7eaadea2f84e5"
+    },
+    {
+      "path": "patchloop/agent/saturation_recovery_shadow.py",
+      "file_bytes": 24941,
+      "file_sha256": "sha256:8f9a136b244a3f9cb264aaddc83904b5dd29a85a134e8f7054ca0a445dc01699"
+    },
+    {
+      "path": "patchloop/agent/tools.py",
+      "file_bytes": 214327,
+      "file_sha256": "sha256:df91910961eae1cc73d337829dd9e5e155a7ad0622216cde21a5a5689c37facd"
+    },
+    {
+      "path": "patchloop/cli.py",
+      "file_bytes": 27887,
+      "file_sha256": "sha256:36824df5b7675bae504482a0e233d041c652ca9b288c0ec2f0101f2a8bbf9603"
+    },
+    {
+      "path": "patchloop/contracts.py",
+      "file_bytes": 161839,
+      "file_sha256": "sha256:3d08d223ed8608a7171a677a2b98f3a85c865cd65ffbe6a9b1d6c4ece3bbbb57"
+    },
+    {
+      "path": "patchloop/evals/rapid_public_development.py",
+      "file_bytes": 29969,
+      "file_sha256": "sha256:e274feaf55aa8456fc82e0bb5060b75ebc4433055890b6b1faa5fcd684ab1b4b"
+    },
+    {
+      "path": "patchloop/evals/rapid_public_development_v2.py",
+      "file_bytes": 43919,
+      "file_sha256": "sha256:07bc6cb2ffd3377a58b5256046b3259aad693ed2d081874f3d92ff64a5ad64a8"
+    },
+    {
+      "path": "patchloop/runtime.py",
+      "file_bytes": 13657,
+      "file_sha256": "sha256:e7762c637e7cdaf7aed224f5b09fac168fa309ee365b2975242ce40c9edb79e4"
+    },
+    {
+      "path": "patchloop/task_loader.py",
+      "file_bytes": 4916,
+      "file_sha256": "sha256:e7c7d1aac5a4f6adedd4e433e50e6577981af1e2191273bb001e13871ee7dc68"
+    }
+  ],
+  "validation_files": [
+    {
+      "path": "experiments/rapid-public-development-lean-harness-20260821-r2.yaml",
+      "file_bytes": 2310,
+      "file_sha256": "sha256:39e5069990e52ccb5fab3ccaaac9b2de7498ec48f8411ddb2c244147f75457bf"
+    },
+    {
+      "path": "scripts/build_rapid_public_development_v2_source_qualification.py",
+      "file_bytes": 1586,
+      "file_sha256": "sha256:7fb9eec058ed76de56d472c68fec8c92a4423b503eafe06617948d25f647e078"
+    },
+    {
+      "path": "scripts/build_rapid_public_development_v2_candidate.py",
+      "file_bytes": 1926,
+      "file_sha256": "sha256:4930ffc9a07b45986240f9aeb319406e30a8b837caf0655fa6a2395f875ac611"
+    },
+    {
+      "path": "tests/test_phase_evidence.py",
+      "file_bytes": 12738,
+      "file_sha256": "sha256:4bdc0f1ba12d64352c8d81c862e41a89227a35e1966dac49b074b377a8537827"
+    },
+    {
+      "path": "tests/test_lean_runtime.py",
+      "file_bytes": 18447,
+      "file_sha256": "sha256:ca779e5075d48ca7426068f8e10e9319074726108673f9b70d0de80bb71112b7"
+    },
+    {
+      "path": "tests/test_tool_gateway.py",
+      "file_bytes": 151675,
+      "file_sha256": "sha256:9fa765ab58ca5771daabcebf95c1a59fbbfd57ec030ba1a2d76b1792dbb80ba8"
+    },
+    {
+      "path": "tests/test_benchmark_tasks.py",
+      "file_bytes": 183221,
+      "file_sha256": "sha256:335f290699866e9fa2e69577be7414732a5c96f666b97936d2f8f85afe59160a"
+    },
+    {
+      "path": "tests/test_rapid_public_development.py",
+      "file_bytes": 6487,
+      "file_sha256": "sha256:c1946ad7c92ed1aca935cf07b183e973f49e31ab7de52d7c839784cba5f5653e"
+    },
+    {
+      "path": "tests/test_rapid_public_development_v2.py",
+      "file_bytes": 7777,
+      "file_sha256": "sha256:0602d409ca5efc99071d60199a51568eae0b99d28871eba386bf5385d3289ff0"
+    }
+  ],
+  "source_inventory_hash": "sha256:9d2e7eead7edc705113d9ed6d6f11dffc22bfb8b05423003746a1f5858ad58b1",
+  "validation_inventory_hash": "sha256:ece263953015dc5a8864eda3a278f69b9db70228dff98dd821fd5d287b37c636",
+  "scheduled_rows": 8,
+  "rows_per_variant": 4,
+  "task_packages_complete": true,
+  "public_private_hashes_bound": true,
+  "runtime_pair_bound": true,
+  "provider_transport_calls": 0,
+  "provider_generation_calls": 0,
+  "agent_runner_calls": 0,
+  "evaluator_calls": 0,
+  "docker_cli_calls": 0,
+  "network_calls": 0,
+  "added_model_cost_usd": 0,
+  "official": false,
+  "candidate_generation_authorized": true,
+  "provider_calls_authorized": false,
+  "docker_execution_authorized": false,
+  "paid_execution_authorized": false,
+  "result_claim_authorized": false,
+  "next_gate": "materialize-exact-rapid-v2-candidate",
+  "content_hash": "sha256:d835ffd004929c3c95ac5f8f495b590fb6e96e3eeee80e7b4d612cbb1eca31d9"
+}

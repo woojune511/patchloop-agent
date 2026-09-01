@@ -1,0 +1,498 @@
+{
+  "schema_version": "rapid-public-development-candidate-v24",
+  "candidate_revision": 24,
+  "experiment_id": "rapid-public-dev-anyio-v5-epoch-parity-ab-20260827-r16",
+  "purpose": "rapid-public-development",
+  "official": false,
+  "config_path": "experiments/rapid-public-development-anyio-v5-epoch-parity-ab-20260827-r16.yaml",
+  "config_file_sha256": "sha256:7dd1cf1713ddda33d681def53d9047e91a9b415b43d49f0eddff10e3dce30448",
+  "config_semantic_hash": "sha256:30c38fe69d5a9d27fbde2a7ea7b82dfff4164a79b317e89e4fb9823de31c2cf0",
+  "selection_evidence": {
+    "schema_version": "rapid-anyio-v5-epoch-parity-ab-selection-evidence-v1",
+    "policy_version": "qualified-public-v18-v20-anyio-v5-epoch-parity-ab-v1",
+    "official": false,
+    "public_development_history_only": true,
+    "heldout_outcomes_used": false,
+    "private_evidence_used": false,
+    "hidden_failure_cause_used": false,
+    "reference_patch_used": false,
+    "baseline_role": "v18-public-development-workflow-baseline-not-quality-baseline",
+    "baseline_candidate": {
+      "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-causal-plan-projection-ab-20260826-r14-candidate-v21.json",
+      "file_bytes": 33567,
+      "file_sha256": "sha256:9fe924b88abafa30c2dcb3abc6fa51271d6d22521eec16d051d3e9f07b3df877",
+      "content_hash": "sha256:cdad1a07ba580f82ed247e78db20411ef98a181a4bf54f5ee6a0db3e8a453725",
+      "execution_hash": "sha256:f077496605d0776d7d2f2e677391cc2ae9135550077486126258429917986c1b"
+    },
+    "baseline_result": {
+      "path": "reports/rapid-development/rapid-public-dev-anyio-causal-plan-projection-ab-20260826-r14-f077496605d0.jsonl",
+      "file_bytes": 9583,
+      "file_sha256": "sha256:c00864622ac22516404c1bd1bb079e0559b0e0d6dea797b96929eec4449e39a3",
+      "execution_hash": "sha256:f077496605d0776d7d2f2e677391cc2ae9135550077486126258429917986c1b",
+      "final_event_content_hash": "sha256:ea519203604744c134eaa281b913df869a5a7f5d59d808241b511b41670410de",
+      "public_development_baseline": "lean-harness-v18",
+      "v18_evaluator_reached": 2,
+      "v18_submissions_completed": 2,
+      "v18_successes_at_budget": 0
+    },
+    "baseline_public_diagnosis": {
+      "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-causal-plan-projection-ab-20260826-r14-workflow-diagnosis-v1.json",
+      "file_bytes": 16969,
+      "file_sha256": "sha256:42cedd83a425ef5beca6d0a597d7fcfe7d7243eb2890515ccc5386bca1d5cca5",
+      "content_hash": "sha256:fa7497f94aa5854cb28b3ca48ca16d45d2d39db59b0c71da3efa2beec96e3695"
+    },
+    "task_successor_qualification": {
+      "path": "experiments/anyio-ordinary-failure-public-task-successor-source-qualification-20260827-v1.json",
+      "file_bytes": 7838,
+      "file_sha256": "sha256:f0d0c375c37b6c601dcc5364e0294be0fa4b14576194bceb833aa674c59735bf",
+      "content_hash": "sha256:5e5f1fd0db95cdf1221f11db0222a2b69aa39ddf36ba6755fd4b1f396216d489"
+    },
+    "three_check_compatibility": {
+      "path": "experiments/anyio-v5-three-visible-check-runtime-compatibility-source-qualification-20260827-v1.json",
+      "file_bytes": 7395,
+      "file_sha256": "sha256:74c1acdf905b417ae9d8d094228d1fd79eda7c95a8f0c354e91a4ffed9a4fef9",
+      "content_hash": "sha256:068106622659ba325cc789253c76765334a3f58634479f33b385555a03f04080"
+    },
+    "consumed_r15_candidate": {
+      "candidate": {
+        "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-v5-exploration-ab-20260827-r15-candidate-v23.json",
+        "file_bytes": 18887,
+        "file_sha256": "sha256:2eeeeeecc9fc1188ab4bc164c3539a3806210b91a8fb62caed351c64b297b9cf",
+        "content_hash": "sha256:33bdb0ed55442c679152868d1f12a04204b95c10c6184716b21d067a27797289"
+      },
+      "rehearsal": {
+        "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-v5-exploration-ab-20260827-r15-candidate-v23-rehearsal-v20.json",
+        "file_bytes": 3079,
+        "file_sha256": "sha256:4675cfdcd0b6b264749ce61fb97df9ad66eab7492ca3af6fdd79dd6f51067683",
+        "content_hash": "sha256:be1f1f360f8d78e4c3e43074793154d1e0ac98ad259df1f980bff5e269bfa5e0"
+      },
+      "execution_hash": "sha256:3e5890091927889b27433c6f0fdb65de5ccfb1256d10033fab25a65fbbf30a37",
+      "reason": "infrastructure-confounded-consumed-no-retry-predecessor",
+      "provider_calls": 0,
+      "docker_calls": 0,
+      "task_calls": 0,
+      "evaluator_calls": 0,
+      "added_model_cost_usd": 0.0,
+      "paid_execution_authorized": false
+    },
+    "semantic_epoch_parity_activation": {
+      "path": "experiments/lean-harness-semantic-progress-epoch-parity-rapid-activation-qualification-20260827-v1.json",
+      "file_bytes": 7860,
+      "file_sha256": "sha256:c4a1a973ff2cfe57042ca8384dd6d18741f3e12430eabfd25a93ce3f7a7885e5",
+      "content_hash": "sha256:1f782f27413891c16eed944a2f77f20a9981fe33075cc13691a96ceeecd5de99",
+      "runtime_identity": {
+        "context_policy_version": "phase-evidence-v30",
+        "epoch_parity_policy_version": "post-restore-semantic-progress-epoch-parity-v1",
+        "exploration_gate_activation_policy_version": "gateway-owned-public-exploration-closure-v1",
+        "exploration_gate_policy_version": "public-boundary-and-unknown-closure-v1",
+        "request_evidence_schema": "lean-harness-request-evidence-v20",
+        "runtime_policy_version": "lean-harness-v20",
+        "tool_schema_version": "v24"
+      },
+      "source_preservation": {
+        "permitted_admission_source_changes": [
+          "patchloop/contracts.py"
+        ],
+        "qualified_behavior_unchanged": true,
+        "transition": {
+          "observed_changed_paths": [
+            "patchloop/contracts.py"
+          ],
+          "permitted_changed_paths": [
+            "patchloop/contracts.py"
+          ],
+          "qualified_behavior_unchanged": true,
+          "source_rows": [
+            {
+              "changed": false,
+              "current": {
+                "bytes": 6120,
+                "file_sha256": "sha256:2f9b2ff47a1ec5fd1d7fef06a9694c5f07efcd4d0104d7d89301f5a4dbcf3821",
+                "path": "patchloop/agent/workflow_semantic_progress_epoch_parity.py"
+              },
+              "path": "patchloop/agent/workflow_semantic_progress_epoch_parity.py",
+              "qualified": {
+                "bytes": 6120,
+                "file_sha256": "sha256:2f9b2ff47a1ec5fd1d7fef06a9694c5f07efcd4d0104d7d89301f5a4dbcf3821",
+                "path": "patchloop/agent/workflow_semantic_progress_epoch_parity.py"
+              }
+            },
+            {
+              "changed": false,
+              "current": {
+                "bytes": 12509,
+                "file_sha256": "sha256:c7116067173f6b71e698975d2d817cb14b8a6e48507de31f64368de171a98f8c",
+                "path": "patchloop/agent/workflow_semantic_progress_epoch_parity_qualification.py"
+              },
+              "path": "patchloop/agent/workflow_semantic_progress_epoch_parity_qualification.py",
+              "qualified": {
+                "bytes": 12509,
+                "file_sha256": "sha256:c7116067173f6b71e698975d2d817cb14b8a6e48507de31f64368de171a98f8c",
+                "path": "patchloop/agent/workflow_semantic_progress_epoch_parity_qualification.py"
+              }
+            },
+            {
+              "changed": false,
+              "current": {
+                "bytes": 200423,
+                "file_sha256": "sha256:3c53bc3319db38eeb1c4f535625a29978f2816e35f9cf4dc5fea55176f363a8b",
+                "path": "patchloop/agent/lean_runtime.py"
+              },
+              "path": "patchloop/agent/lean_runtime.py",
+              "qualified": {
+                "bytes": 200423,
+                "file_sha256": "sha256:3c53bc3319db38eeb1c4f535625a29978f2816e35f9cf4dc5fea55176f363a8b",
+                "path": "patchloop/agent/lean_runtime.py"
+              }
+            },
+            {
+              "changed": false,
+              "current": {
+                "bytes": 326683,
+                "file_sha256": "sha256:d386efc37e03f3c500b9e7941a10453cb6e93acc91f49294f0a2ce8e84f65d6a",
+                "path": "patchloop/agent/tools.py"
+              },
+              "path": "patchloop/agent/tools.py",
+              "qualified": {
+                "bytes": 326683,
+                "file_sha256": "sha256:d386efc37e03f3c500b9e7941a10453cb6e93acc91f49294f0a2ce8e84f65d6a",
+                "path": "patchloop/agent/tools.py"
+              }
+            },
+            {
+              "changed": false,
+              "current": {
+                "bytes": 335155,
+                "file_sha256": "sha256:e12444644cb456bdd8a55257b871dfe20e07a5ca55048143bcd67713f1baa45e",
+                "path": "patchloop/agent/runner.py"
+              },
+              "path": "patchloop/agent/runner.py",
+              "qualified": {
+                "bytes": 335155,
+                "file_sha256": "sha256:e12444644cb456bdd8a55257b871dfe20e07a5ca55048143bcd67713f1baa45e",
+                "path": "patchloop/agent/runner.py"
+              }
+            },
+            {
+              "changed": true,
+              "current": {
+                "bytes": 178912,
+                "file_sha256": "sha256:9033360be73aeeab563073d935e75a409a42f2564c0b10a8d739539e6a09861a",
+                "path": "patchloop/contracts.py"
+              },
+              "path": "patchloop/contracts.py",
+              "qualified": {
+                "bytes": 177900,
+                "file_sha256": "sha256:40b3ebe464152f9b58fb644708d98db4cc74fa8f61d90800668ae4aa93a36fb2",
+                "path": "patchloop/contracts.py"
+              }
+            },
+            {
+              "changed": false,
+              "current": {
+                "bytes": 688,
+                "file_sha256": "sha256:47d40366b809cbdd0a0ecb274678e2c67da447a37193b15e0fe26883cc6f9678",
+                "path": "scripts/build_lean_harness_semantic_progress_epoch_parity_qualification.py"
+              },
+              "path": "scripts/build_lean_harness_semantic_progress_epoch_parity_qualification.py",
+              "qualified": {
+                "bytes": 688,
+                "file_sha256": "sha256:47d40366b809cbdd0a0ecb274678e2c67da447a37193b15e0fe26883cc6f9678",
+                "path": "scripts/build_lean_harness_semantic_progress_epoch_parity_qualification.py"
+              }
+            },
+            {
+              "changed": false,
+              "current": {
+                "bytes": 2755,
+                "file_sha256": "sha256:4387770ca2caf74aefe51749916cb7a5b3e1030caa7a6c5c113b48be919fa5d0",
+                "path": "tests/test_workflow_semantic_progress_epoch_parity.py"
+              },
+              "path": "tests/test_workflow_semantic_progress_epoch_parity.py",
+              "qualified": {
+                "bytes": 2755,
+                "file_sha256": "sha256:4387770ca2caf74aefe51749916cb7a5b3e1030caa7a6c5c113b48be919fa5d0",
+                "path": "tests/test_workflow_semantic_progress_epoch_parity.py"
+              }
+            },
+            {
+              "changed": false,
+              "current": {
+                "bytes": 3228,
+                "file_sha256": "sha256:1949c024bd1830734188c50b58be5a51d6d4d39b76eaa5a487cd4b378331cdf0",
+                "path": "tests/test_workflow_semantic_progress_epoch_parity_qualification.py"
+              },
+              "path": "tests/test_workflow_semantic_progress_epoch_parity_qualification.py",
+              "qualified": {
+                "bytes": 3228,
+                "file_sha256": "sha256:1949c024bd1830734188c50b58be5a51d6d4d39b76eaa5a487cd4b378331cdf0",
+                "path": "tests/test_workflow_semantic_progress_epoch_parity_qualification.py"
+              }
+            },
+            {
+              "changed": false,
+              "current": {
+                "bytes": 76010,
+                "file_sha256": "sha256:572b3ddf41787e0bfa2e2c5c1a9790ed6aebb77f6b82e89d8185b243a3de7a7d",
+                "path": "tests/test_workflow_successor_v2_runner.py"
+              },
+              "path": "tests/test_workflow_successor_v2_runner.py",
+              "qualified": {
+                "bytes": 76010,
+                "file_sha256": "sha256:572b3ddf41787e0bfa2e2c5c1a9790ed6aebb77f6b82e89d8185b243a3de7a7d",
+                "path": "tests/test_workflow_successor_v2_runner.py"
+              }
+            }
+          ]
+        }
+      },
+      "runtime_build_hash": "sha256:37f5948855f1a730121dc87edc88007e3ea9319964ea97573f0e50134841dd5a",
+      "verifier_descriptor_hash": "sha256:53ce786e1f23e390debd69529b72d854f4f02f4f6f2e75abc99b437a22ccc736",
+      "evidence_boundary": {
+        "added_model_cost_usd": "0",
+        "docker_calls": 0,
+        "evaluator_calls": 0,
+        "hidden_evaluator_content_read": false,
+        "private_task_spec_read": false,
+        "provider_calls": 0,
+        "public_source_only": true,
+        "reasoning_text_read": false,
+        "reference_patch_read": false,
+        "task_calls": 0,
+        "visible_check_calls": 0,
+        "workspace_mutations": 0
+      },
+      "runtime_activation_authorized": false,
+      "rapid_candidate_created_by_qualification": false,
+      "paid_execution_authorized": false,
+      "quality_improvement_established": false
+    }
+  },
+  "selection_evidence_hash": "sha256:49b69c6dee62a4eca533fc0f1ea084dc8c1b7cefa0fa81c355ee2aa7431691ec",
+  "runtime_build_schema": "rapid-runtime-build-v1",
+  "runtime_build_hash": "sha256:37f5948855f1a730121dc87edc88007e3ea9319964ea97573f0e50134841dd5a",
+  "model_contract": {
+    "provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "transport_max_retries": 0,
+    "temperature": 0.0,
+    "max_output_tokens": 25000
+  },
+  "predecessor_candidate": {
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-causal-plan-projection-ab-20260826-r14-candidate-v21.json",
+    "file_bytes": 33567,
+    "file_sha256": "sha256:9fe924b88abafa30c2dcb3abc6fa51271d6d22521eec16d051d3e9f07b3df877"
+  },
+  "predecessor_result": {
+    "path": "reports/rapid-development/rapid-public-dev-anyio-causal-plan-projection-ab-20260826-r14-f077496605d0.jsonl",
+    "file_bytes": 9583,
+    "file_sha256": "sha256:c00864622ac22516404c1bd1bb079e0559b0e0d6dea797b96929eec4449e39a3"
+  },
+  "variant_contracts": {
+    "lean-harness-v18": {
+      "tool_schema_version": "v22",
+      "context_policy_version": "phase-evidence-v28",
+      "runtime_policy_version": "lean-harness-v18",
+      "request_evidence_schema": "lean-harness-request-evidence-v18",
+      "completion_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "record_work_plan_policy_version": "gateway-owned-causal-plan-projection-v1",
+      "pre_mutation_plan_policy_version": "eligible-public-evidence-plan-gate-v2",
+      "iterative_plan_revision_policy_version": "epoch-work-plan-revision-v1",
+      "plan_admission_recovery_policy_version": "work-plan-admission-recovery-v1",
+      "evidence_catalog_schema_version": "eligible-plan-evidence-catalog-v2",
+      "recorded_work_plan_schema_version": "recorded-work-plan-v2",
+      "active_work_state_schema_version": "active-work-state-v1",
+      "finalization_workflow_surface_policy_version": "workflow-surface-retained-through-reserve-v1",
+      "required_trigger_pin_policy_version": "required-failed-check-trigger-pinned-v1",
+      "semantic_progress_policy_version": "public-failure-signature-no-progress-reset-v1",
+      "semantic_progress_state_schema_version": "public-semantic-progress-state-v1",
+      "candidate_binding_policy_version": "same-path-public-read-binding-normalization-v1",
+      "causal_activation_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "causal_alternative_policy_version": "bounded-public-causal-alternative-gate-v1",
+      "causal_plan_projection_policy_version": "server-owned-public-causal-plan-projection-v1",
+      "causal_plan_projection_activation_policy_version": "gateway-owned-causal-plan-projection-v1",
+      "workflow_instruction_schema_version": "lean-workflow-instruction-v4",
+      "protocol_recovery_policy_version": "shared-model-action-contract-recovery-v1",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1",
+      "search_glob_policy_version": "recursive-file-glob-normalization-v1",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "edit_correction_policy_version": "bounded-public-current-source-v2",
+      "correction_context_policy_version": "bounded-investigation-current-read-v1",
+      "provider_terminal_policy_version": "explicit-terminal-before-accounting-v1",
+      "parallel_tool_calls": false,
+      "one_tool_call_per_response": true
+    },
+    "lean-harness-v20": {
+      "tool_schema_version": "v24",
+      "context_policy_version": "phase-evidence-v30",
+      "runtime_policy_version": "lean-harness-v20",
+      "request_evidence_schema": "lean-harness-request-evidence-v20",
+      "completion_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "record_work_plan_policy_version": "gateway-owned-public-exploration-closure-v1",
+      "pre_mutation_plan_policy_version": "eligible-public-evidence-plan-gate-v2",
+      "iterative_plan_revision_policy_version": "epoch-work-plan-revision-v1",
+      "plan_admission_recovery_policy_version": "work-plan-admission-recovery-v1",
+      "evidence_catalog_schema_version": "eligible-plan-evidence-catalog-v2",
+      "recorded_work_plan_schema_version": "recorded-work-plan-v2",
+      "active_work_state_schema_version": "active-work-state-v1",
+      "finalization_workflow_surface_policy_version": "workflow-surface-retained-through-reserve-v1",
+      "required_trigger_pin_policy_version": "required-failed-check-trigger-pinned-v1",
+      "semantic_progress_policy_version": "public-failure-signature-no-progress-reset-v1",
+      "semantic_progress_state_schema_version": "public-semantic-progress-state-v1",
+      "candidate_binding_policy_version": "same-path-public-read-binding-normalization-v1",
+      "causal_activation_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "causal_alternative_policy_version": "bounded-public-causal-alternative-gate-v1",
+      "causal_plan_projection_policy_version": "server-owned-public-causal-plan-projection-v1",
+      "causal_plan_projection_activation_policy_version": "gateway-owned-causal-plan-projection-v1",
+      "exploration_gate_policy_version": "public-boundary-and-unknown-closure-v1",
+      "exploration_gate_activation_policy_version": "gateway-owned-public-exploration-closure-v1",
+      "semantic_progress_event_domain_policy_version": "post-restore-semantic-progress-epoch-parity-v1",
+      "workflow_instruction_schema_version": "lean-workflow-instruction-v6",
+      "protocol_recovery_policy_version": "shared-model-action-contract-recovery-v1",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1",
+      "search_glob_policy_version": "recursive-file-glob-normalization-v1",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "edit_correction_policy_version": "bounded-public-current-source-v2",
+      "correction_context_policy_version": "bounded-investigation-current-read-v1",
+      "provider_terminal_policy_version": "explicit-terminal-before-accounting-v1",
+      "parallel_tool_calls": false,
+      "one_tool_call_per_response": true
+    }
+  },
+  "task_bindings": [
+    {
+      "task_path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+      "public_spec_hash": "sha256:5c6bdd04c82e7014a795c42f9f7ebbf41e440deb41ce19720652283b62716839",
+      "private_spec_hash": "sha256:a9aaa4d4a4b0de9b181b575677ac132669bb272b00f01bd3360fe76a9eab983a",
+      "evaluator_image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "evaluator_image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "package_file_count": 6,
+      "package_inventory_hash": "sha256:e90c6d53cdf4358dd4ea7d412d258917073c69547b0ea67c5421952b2b1d7a31",
+      "visible_check_ids": [
+        "public-interrupt-runner-lifecycle",
+        "public-ordinary-failure-preservation",
+        "upstream-pytest-plugin-regression"
+      ],
+      "visible_check_command_hashes": [
+        "sha256:c0ef4f062b90676734637a3b4966b1206870c847ae0f4dd2c74754250bf0a034",
+        "sha256:eec2ca90c5a2be9d962243d6ca257d593b665e700735ca1a805767ced18a932a",
+        "sha256:965d00d50dede491672c1a53762e4b6aa3d78ff58583cc062fdfdb8f56c9548c"
+      ],
+      "task_successor_opt_in": true,
+      "frozen_dataset_member": false,
+      "qualification_binding_hash": "sha256:49b69c6dee62a4eca533fc0f1ea084dc8c1b7cefa0fa81c355ee2aa7431691ec"
+    }
+  ],
+  "schedule": [
+    {
+      "order": 1,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v18",
+      "tool_schema_version": "v22",
+      "context_policy_version": "phase-evidence-v28",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:6fad0b6e36fb7f46afaf1ce83646a2567cbdfdc3a23544fa2fe2a41aee9153b1"
+    },
+    {
+      "order": 2,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v20",
+      "tool_schema_version": "v24",
+      "context_policy_version": "phase-evidence-v30",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:758febc3f1e52831762256b3fbb45609f5ee401aa4a24b3d90ce6c87842cefde"
+    },
+    {
+      "order": 3,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v20",
+      "tool_schema_version": "v24",
+      "context_policy_version": "phase-evidence-v30",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:a3b267c676d24480bf810166657a38f98165a552abef0a5ee6b410b432c8a26a"
+    },
+    {
+      "order": 4,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v18",
+      "tool_schema_version": "v22",
+      "context_policy_version": "phase-evidence-v28",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:4801c96ffce9339a691c745bacd28b4b094a310f6d7ee4f79cf3a156d2f3263e"
+    },
+    {
+      "order": 5,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v18",
+      "tool_schema_version": "v22",
+      "context_policy_version": "phase-evidence-v28",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:ebd014a326259c0727931eeee8616faa17730a6f6d068575681180e14f80f223"
+    },
+    {
+      "order": 6,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v20",
+      "tool_schema_version": "v24",
+      "context_policy_version": "phase-evidence-v30",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:baa52687a3d2d5cca6b58a26c327f0a465d9088fc6e29e2dfa7ab1ab6f1f2890"
+    }
+  ],
+  "schedule_hash": "sha256:ff75daa01a5aa79799af688a9625d5ec0351944bf732e868df88fe1bda8cfd3c",
+  "cost_control": {
+    "per_run_reserve_nanos": 1200000000,
+    "full_schedule_reserve_nanos": 7200000000,
+    "hard_cap_nanos": 7500000000,
+    "pricing_nanos_per_token": {
+      "uncached_input": 750,
+      "cached_input": 75,
+      "cache_write_input": 750,
+      "output": 4500
+    },
+    "scheduled_run_count": 6,
+    "cost_censoring_allowed": false,
+    "official": false
+  },
+  "cost_control_hash": "sha256:a7bc2f24b7ec0ecb501130ef310f958b790108d5788d51dfad958c2cf4691605",
+  "execution_hash": "sha256:df2cc46ce6d313918499a6382ca5b1beface18aa5a7811aaf1deb9132d2ee024",
+  "source_qualified": true,
+  "execution_authorized": false,
+  "provider_calls_made": 0,
+  "docker_calls_made": 0,
+  "added_model_cost_usd": 0.0,
+  "approval_required": true,
+  "rehearsal_required": true,
+  "content_hash": "sha256:e6bccee376fd9cb24435e9c07750b147cd2aaaabfa046bf5543dec31d7f91827"
+}

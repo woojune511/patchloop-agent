@@ -1033,12 +1033,14 @@ def _execution_plan_matches(
     *,
     plan: dict[str, Any] | None,
     manifest,
-    root: Path,
+    root: Path | None = None,
 ) -> bool:
     experiment = manifest.experiment
     if experiment is None or plan is None:
         return False
     if experiment.experiment_id == "core-ac-fixed-bundle-heldout-20260814-v1":
+        if root is None:
+            return False
         try:
             from patchloop.evals.heldout_ac_live_contract import (
                 heldout_ac_live_plan_matches_manifest,

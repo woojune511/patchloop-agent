@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import httpx
 
-from patchloop.contracts import EventType, RunEvent
+from patchloop.contracts import Budget, EventType, ModelConfig, RunEvent, RunManifest
 from patchloop.util import utc_now
 from patchloop.web import (
     _build_trace_view,
@@ -106,11 +106,7 @@ def _coverage_contract():
 
 
 def _coverage_review_payload(*, complete: bool) -> dict:
-    verified_ids = (
-        ["cov-parser-path", "cov-visible-check"]
-        if complete
-        else ["cov-visible-check"]
-    )
+    verified_ids = ["cov-parser-path", "cov-visible-check"] if complete else ["cov-visible-check"]
     unresolved_ids = [] if complete else ["cov-parser-path"]
     rows = [
         {
@@ -193,9 +189,7 @@ def test_trace_view_prioritizes_critical_path_and_collapses_turns() -> None:
     assert trace["turns"][0]["tool_label"] == "run_check"
     assert trace["turns"][0]["tone"] == "bad"
     assert trace["turns"][0]["open"] is True
-    assert trace["lifecycle"]["submission"]["label"] == (
-        "legacy lifecycle telemetry unavailable"
-    )
+    assert trace["lifecycle"]["submission"]["label"] == ("legacy lifecycle telemetry unavailable")
 
 
 def test_trace_view_surfaces_review_and_submission_lifecycle() -> None:
@@ -226,9 +220,7 @@ def test_trace_view_surfaces_review_and_submission_lifecycle() -> None:
     trace = _build_trace_view(events)
 
     assert trace["lifecycle"]["review"]["label"] == "final diff review recorded"
-    assert trace["lifecycle"]["submission"]["label"] == (
-        "submission accepted for evaluator"
-    )
+    assert trace["lifecycle"]["submission"]["label"] == ("submission accepted for evaluator")
     assert [item["event"].sequence for item in trace["critical"]] == [
         1,
         2,
@@ -284,13 +276,10 @@ def test_v3_trace_labels_probe_and_semantic_self_review() -> None:
     trace = _build_trace_view(events, tool_schema_version="v3")
 
     assert trace["lifecycle"]["probe_count"] == 1
-    assert trace["lifecycle"]["review"]["label"] == (
-        "structured self-review bound to final diff"
-    )
+    assert trace["lifecycle"]["review"]["label"] == ("structured self-review bound to final diff")
     summaries = [item["summary"] for item in trace["critical"]]
     assert (
-        "temporary probe passed · python-edge-cases · "
-        "dedicated clean image · non-authoritative"
+        "temporary probe passed · python-edge-cases · dedicated clean image · non-authoritative"
     ) in summaries
     assert (
         "structured public-evidence review recorded · "
@@ -338,9 +327,7 @@ def test_v10_trace_surfaces_target_coverage_history() -> None:
     assert coverage["recorded"] is True
     assert len(coverage["reviews"]) == 2
     assert coverage["reviews"][0]["coverage_complete"] is False
-    assert coverage["reviews"][0]["unresolved_coverage_target_ids"] == [
-        "cov-parser-path"
-    ]
+    assert coverage["reviews"][0]["unresolved_coverage_target_ids"] == ["cov-parser-path"]
     assert coverage["latest"]["coverage_complete"] is True
     assert coverage["latest"]["status_label"] == "2/2 targets verified"
     assert coverage["latest"]["rows"][0] == {
@@ -354,16 +341,10 @@ def test_v10_trace_surfaces_target_coverage_history() -> None:
         "evidence_sequences_label": "8",
         "notes": "The current-diff source path was inspected.",
     }
-    assert trace["lifecycle"]["review"]["label"] == (
-        "public coverage review bound to final diff"
-    )
-    partial_event = next(
-        item for item in trace["critical"] if item["event"].sequence == 2
-    )
+    assert trace["lifecycle"]["review"]["label"] == ("public coverage review bound to final diff")
+    partial_event = next(item for item in trace["critical"] if item["event"].sequence == 2)
     assert partial_event["tone"] == "accent"
-    assert partial_event["summary"] == (
-        "public coverage review incomplete · 1/2 targets verified"
-    )
+    assert partial_event["summary"] == ("public coverage review incomplete · 1/2 targets verified")
 
 
 def test_v10_events_template_renders_inspectable_public_coverage() -> None:
@@ -413,9 +394,7 @@ def test_v11_trace_uses_public_coverage_lifecycle() -> None:
     review_label = trace["lifecycle"]["review"]["label"]
     assert review_label.startswith("public coverage review incomplete")
     assert review_label.endswith("1/2 targets verified")
-    assert trace["lifecycle"]["submission"]["label"] == (
-        "submission not attempted"
-    )
+    assert trace["lifecycle"]["submission"]["label"] == ("submission not attempted")
 
 
 def test_v2_trace_distinguishes_no_submission_from_incomplete_attempt() -> None:
@@ -438,18 +417,12 @@ def test_v2_trace_distinguishes_no_submission_from_incomplete_attempt() -> None:
         tool_schema_version="v2",
     )
 
-    assert no_submission["lifecycle"]["submission"]["label"] == (
-        "submission not attempted"
-    )
-    assert no_submission["lifecycle"]["review"]["label"] == (
-        "final diff review not reached"
-    )
+    assert no_submission["lifecycle"]["submission"]["label"] == ("submission not attempted")
+    assert no_submission["lifecycle"]["review"]["label"] == ("final diff review not reached")
     assert incomplete["lifecycle"]["submission"]["label"] == (
         "1 submission attempt(s) have no recorded outcome"
     )
-    assert incomplete["lifecycle"]["review"]["label"] == (
-        "final diff review not recorded"
-    )
+    assert incomplete["lifecycle"]["review"]["label"] == ("final diff review not recorded")
 
 
 def test_checkpoint_action_label_does_not_call_empty_plan_complete() -> None:
@@ -462,9 +435,7 @@ def test_checkpoint_action_label_does_not_call_empty_plan_complete() -> None:
         current_plan=[],
     )
 
-    assert _checkpoint_action_label(pending) == (
-        "recomputed in the next model context"
-    )
+    assert _checkpoint_action_label(pending) == ("recomputed in the next model context")
     assert _checkpoint_action_label(done) == "submission complete"
 
 
@@ -494,7 +465,7 @@ def test_failed_visible_check_is_bad_and_opens_its_turn() -> None:
     assert trace["critical"][0]["summary"] == "run_check failed · visible"
 
 
-def test_run_route_renders_summary_before_collapsible_raw_trace(
+def test_run_route_renders_story_and_keeps_raw_trace_separate(
     tmp_path,
     monkeypatch,
 ) -> None:
@@ -503,6 +474,7 @@ def test_run_route_renders_summary_before_collapsible_raw_trace(
         "official": False,
         "outcome_kind": "agent_failure",
         "evaluation_status": "not_run",
+        "agent_submission_status": "failed",
         "terminal_error": {
             "message": "invalid phase transition: VERIFY -> DONE",
         },
@@ -514,16 +486,31 @@ def test_run_route_renders_summary_before_collapsible_raw_trace(
             "model_cost_usd": 0.01,
         },
     }
-    manifest = SimpleNamespace(
+    manifest = RunManifest(
         run_id="run_viewer_test",
         task_id="viewer-test",
-        tool_schema_version="v6",
-        context_policy_version="phase-evidence-v11",
-        memory=SimpleNamespace(condition=SimpleNamespace(value="no_memory")),
-        model=SimpleNamespace(
+        task_version=1,
+        base_commit="a" * 40,
+        public_spec_hash="sha256:" + ("b" * 64),
+        tool_schema_version="v1",
+        context_policy_version="v1",
+        model=ModelConfig(
+            provider="openai",
             model_id="gpt-test",
             reasoning_effort="medium",
+            input_price_per_million_usd=0.75,
+            cached_input_price_per_million_usd=0.075,
+            cache_write_input_price_per_million_usd=0.75,
+            output_price_per_million_usd=4.5,
+            max_output_tokens=5_000,
         ),
+        budget=Budget(
+            max_model_calls=2,
+            max_tool_calls=2,
+            max_total_tokens=1_000,
+            wall_clock_timeout_seconds=60,
+        ),
+        created_at=utc_now(),
     )
     checkpoint = SimpleNamespace(
         through_sequence=5,
@@ -546,6 +533,7 @@ def test_run_route_renders_summary_before_collapsible_raw_trace(
                 {
                     "run_id": "run_viewer_test",
                     "status": "failed",
+                    "created_at": manifest.created_at.isoformat(),
                     "result": result,
                 }
             ]
@@ -569,25 +557,27 @@ def test_run_route_renders_summary_before_collapsible_raw_trace(
     monkeypatch.setattr("patchloop.web._state", lambda: FakeState())
     monkeypatch.setattr("patchloop.web.runtime_root", lambda: tmp_path)
 
-    async def request():
+    async def request(path: str):
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(
             transport=transport,
             base_url="http://test",
         ) as client:
-            return await client.get("/runs/run_viewer_test")
+            return await client.get(path)
 
-    response = asyncio.run(request())
+    response = asyncio.run(request("/runs/run_viewer_test"))
+    raw_response = asyncio.run(request("/runs/run_viewer_test/raw"))
 
     assert response.status_code == 200
-    assert "Agent stopped before evaluation" in response.text
-    assert "Prompt count" in response.text
-    assert "Critical path" in response.text
-    assert "Model turns" in response.text
-    assert "All 6 raw events" in response.text
-    assert "submission not attempted" in response.text
-    assert "Current-diff checks" in response.text
-    assert "legacy history, not diff-bound" not in response.text
-    assert response.text.index("Critical path") < response.text.index(
-        "All 6 raw events"
-    )
+    assert "Agent가 제출을 완료하지 못해 evaluator에 도달하지 못했습니다." in response.text
+    assert "코드를 이해하고 고친 과정" in response.text
+    assert "visible check · 결과 없음" in response.text
+    assert "1 actions · 1 attempts" in response.text
+    assert "LLM·Tool 원문" in response.text
+    assert "All 6 raw events" not in response.text
+    assert raw_response.status_code == 200
+    assert "구조화된 LLM·Tool 원문" in raw_response.text
+    assert "JSON tree와 문서 형태" in raw_response.text
+    assert "LLM 입출력" in raw_response.text
+    assert 'id="turn-1" class="llm-turn"' in raw_response.text
+    assert 'id="turn-1" class="llm-turn" open' not in raw_response.text

@@ -3,21 +3,22 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from patchloop.evals.r8_completion_correction import (
     EXECUTION_HASH,
     OUTPUT_PATH,
-    RESULT_PATH,
+    R8CompletionCorrectionError,
     validate_r8_runtime_evidence,
 )
 
 
-def test_r8_index_is_content_addressed_and_revalidates_external_evidence() -> None:
-    external_available = RESULT_PATH.is_file()
-    summary = validate_r8_runtime_evidence()
+def test_r8_index_is_content_addressed_and_current_source_drift_fails_closed() -> None:
+    with pytest.raises(R8CompletionCorrectionError, match="source differs"):
+        validate_r8_runtime_evidence()
     payload = json.loads(OUTPUT_PATH.read_text(encoding="utf-8"))
 
-    assert summary["status"] == "CORRECTED_COMPLETE_READINESS_MATRIX"
-    assert summary["external_evidence_revalidated"] is external_available
+    assert payload["schema_version"] == "ac-fixed-bundle-runtime-evidence-index-v5"
     assert payload["campaign"]["execution_hash"] == EXECUTION_HASH
     assert payload["campaign"]["actual_model_cost_usd"] == 0.3664215
     assert payload["external_artifacts"]["final_result"]["file_sha256"] == (

@@ -1,0 +1,176 @@
+{
+  "activation_authorized": false,
+  "content_hash": "sha256:5e5f1fd0db95cdf1221f11db0222a2b69aa39ddf36ba6755fd4b1f396216d489",
+  "delta_contract": {
+    "audit_updated": true,
+    "base_and_reference_both_passed": true,
+    "check_is_non_discriminating_regression_guard": true,
+    "environment_reference_hidden_bytes_unchanged": true,
+    "hidden_failure_cause_attributed": false,
+    "private_metadata_version_4_to_5_only": true,
+    "public_task_version_4_to_5": true,
+    "qualified_preservation_check_inserted_second": true,
+    "targeted_check_unchanged_first": true,
+    "upstream_check_unchanged_third": true
+  },
+  "docker_execution_authorized": false,
+  "evidence_boundary": {
+    "added_cost_usd": 0,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "hidden_evaluator_content_projected": false,
+    "network_calls": 0,
+    "private_metadata_body_projected": false,
+    "provider_calls": 0,
+    "public_check_derived_from_public_issue_only": true,
+    "reasoning_text_read": false,
+    "reference_patch_body_interpreted": false,
+    "registered_check_calls": 0
+  },
+  "next_gate": "three-visible-check-runtime-compatibility-source-gate",
+  "paid_execution_authorized": false,
+  "policy_version": "public-ordinary-failure-task-successor-v1",
+  "predecessor_inventory": {
+    "file_count": 6,
+    "files": [
+      {
+        "file_bytes": 1304,
+        "file_sha256": "sha256:b0b9dce017053124c733974114679832a64edb2f29068b36e3d610dae60c5ca8",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/audit.md"
+      },
+      {
+        "file_bytes": 344,
+        "file_sha256": "sha256:56ef76aff34338c70c94e5fd60eeda7a3d6aab1e32390b4584a9ef9870495635",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/environment.yaml"
+      },
+      {
+        "file_bytes": 4554,
+        "file_sha256": "sha256:438875f841ae96b8c502c09e3be8d1872c85102eff402bc876366e3ff1b26764",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/hidden/test_interrupt_runner_cleanup.py"
+      },
+      {
+        "file_bytes": 944,
+        "file_sha256": "sha256:8200ce04c52284e074626ae5b3d90e1e03fef2d98953278bed250eb23bad3785",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/private.yaml"
+      },
+      {
+        "file_bytes": 9539,
+        "file_sha256": "sha256:e1ddf5ae6fbe9023f207f2f62d24d7b4a87672fa5b7fe375dfd14ff147bceb5c",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml"
+      },
+      {
+        "file_bytes": 1162,
+        "file_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/reference.patch"
+      }
+    ],
+    "inventory_hash": "sha256:ab2d0c1361c4c72b61f4eb8303b70feb093e2886355f73b12f6ea39854078a5c",
+    "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4"
+  },
+  "qualified_check_chain": {
+    "approval": {
+      "content_hash": "sha256:aefd6c84abd0da33529101228849b6298386774c77abf6d7f1a789b181c1f1da",
+      "file_bytes": 1025,
+      "file_sha256": "sha256:4480985785f5143cc431f6108c20babbefc410d8fe17f54a769fb317b05cf5a0",
+      "path": "reports/rapid-development/artifacts/anyio-ordinary-failure-public-check-qualification-approval-v1.json"
+    },
+    "attempt": {
+      "content_hash": "sha256:367bbf0db5fb7bdd2a7596c46d617a8d1e04a8bd9dea7777b5ea29011c795e6a",
+      "file_bytes": 1126,
+      "file_sha256": "sha256:947157dbee188f4f5c55b1cddcc16c5f61ad722bc5f8217b5386441cee5203ad",
+      "path": "reports/rapid-development/artifacts/anyio-ordinary-failure-public-check-qualification-attempt-v1.json"
+    },
+    "candidate": {
+      "content_hash": "sha256:e1323a1ae39b412f21949d2687eb7186ef136f16fe5b6f3947bc41a4502cd630",
+      "file_bytes": 14636,
+      "file_sha256": "sha256:3b3341d1dc5802fad004973ef4b92d31ba8233f9a95dcd9153ed66e9e6c9fa0b",
+      "path": "reports/rapid-development/artifacts/anyio-ordinary-failure-public-check-qualification-candidate-v1.json"
+    },
+    "execution_hash": "sha256:4269db56125f87e84e22a26299c9e2c58c55832e696f344068f6f09063544600",
+    "result": {
+      "content_hash": "sha256:0e5d5e48dc15b0fa01bb1d83ff8068cdf28d6ebe6affed7c407e6eb1cdef465a",
+      "file_bytes": 5885,
+      "file_sha256": "sha256:ff70ac1a63a78d5cbb05b1a50510ce270c294252192aed196804848e3f81f760",
+      "path": "reports/rapid-development/artifacts/anyio-ordinary-failure-public-check-qualification-result-v1.json"
+    },
+    "row_hashes": [
+      "sha256:2064dd41ae6abb407597999ce166c78a1abdbd19bbc8d859a6ee9826c3325d94",
+      "sha256:92c78ad714694321c0acb0387abec5539d8f8373e0f57f010edfec771229affc"
+    ]
+  },
+  "rapid_candidate_created": false,
+  "schema_version": "anyio-ordinary-failure-public-task-successor-source-qualification-v1",
+  "source_bindings": [
+    {
+      "file_bytes": 19337,
+      "file_sha256": "sha256:983101e404d9431f2eb50e7ce1e11ed165f1d628550872381a8405b8e70863c1",
+      "path": "patchloop/evals/anyio_ordinary_failure_task_successor.py"
+    },
+    {
+      "file_bytes": 11169,
+      "file_sha256": "sha256:57478d47df8864d9f00b3439b73a027c6873c931d4f3a7167c63fe9de8754631",
+      "path": "patchloop/evals/anyio_ordinary_failure_public_check.py"
+    },
+    {
+      "file_bytes": 1561,
+      "file_sha256": "sha256:bcb5d925246b02c52d3e6d918a8c9eba3ce4b4a494e01e4457ff0b5ea00b3b10",
+      "path": "scripts/build_anyio_ordinary_failure_public_task_successor.py"
+    },
+    {
+      "file_bytes": 6264,
+      "file_sha256": "sha256:58fefffc7843fda431fad3aa43eef73d4b8afbf639d199c761eaf5b60df4ade6",
+      "path": "tests/test_anyio_ordinary_failure_task_successor.py"
+    }
+  ],
+  "status": "offline-source-qualified",
+  "successor_contract": {
+    "frozen_dataset_member": false,
+    "new_check_hash": "sha256:428c3a661178add9ec53b2ba4b4d19b34948e1824f3b1a88f6949c2690080040",
+    "predecessor_version": 4,
+    "rapid_candidate_created": false,
+    "successor_version": 5,
+    "task_id": "anyio-interrupt-runner-cleanup",
+    "visible_check_ids": [
+      "public-interrupt-runner-lifecycle",
+      "public-ordinary-failure-preservation",
+      "upstream-pytest-plugin-regression"
+    ]
+  },
+  "successor_inventory": {
+    "file_count": 6,
+    "files": [
+      {
+        "file_bytes": 1074,
+        "file_sha256": "sha256:16518a2994016e49fb62f403a695653b055751cbd5915a48632925de5638e436",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/audit.md"
+      },
+      {
+        "file_bytes": 344,
+        "file_sha256": "sha256:56ef76aff34338c70c94e5fd60eeda7a3d6aab1e32390b4584a9ef9870495635",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/environment.yaml"
+      },
+      {
+        "file_bytes": 4554,
+        "file_sha256": "sha256:438875f841ae96b8c502c09e3be8d1872c85102eff402bc876366e3ff1b26764",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/hidden/test_interrupt_runner_cleanup.py"
+      },
+      {
+        "file_bytes": 944,
+        "file_sha256": "sha256:65741f9b4efe57dbeee751d546f2fe03f75f1305d9a7ba243b37c46d04b91272",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/private.yaml"
+      },
+      {
+        "file_bytes": 13069,
+        "file_sha256": "sha256:6af0c6bc14d8ef63f1d12065370387f47bf6b0b9b7acc51e85fca894815b9171",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml"
+      },
+      {
+        "file_bytes": 1162,
+        "file_sha256": "sha256:bf21a2484c3c047d01c39590fb2ff8716b1c744dd1bbc1b902331b89466f60cd",
+        "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/reference.patch"
+      }
+    ],
+    "inventory_hash": "sha256:c8b5653e6f4c38e25ba908b30852b3dada2141654c9b95f40810fb8610ad7024",
+    "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5"
+  }
+}

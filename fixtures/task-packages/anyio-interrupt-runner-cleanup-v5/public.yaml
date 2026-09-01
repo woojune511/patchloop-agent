@@ -1,0 +1,374 @@
+schema_version: task-public-v1
+task_id: anyio-interrupt-runner-cleanup
+task_version: 5
+split: dev-validation
+repository:
+  url: https://github.com/agronholm/anyio.git
+  base_commit: cb245dba9883516f2ed4c23899de157183a1cb50
+  language: python
+issue:
+  title: Async pytest tests resume after KeyboardInterrupt during fixture teardown
+  description: |
+    On the asyncio backend, interrupting an async pytest test that uses an
+    async-generator fixture can leave the test runner alive. When pytest later
+    re-enters the event loop to tear the fixture down, the interrupted test may
+    resume and execute code that should never run.
+
+    Ensure the interrupt still propagates, the interrupted test cannot resume,
+    and async fixture cleanup completes exactly once. Preserve normal pytest
+    pass, failure, skip, and expected-failure outcomes, including fixtures whose
+    lifetime spans more than one test.
+constraints:
+  allowed_paths:
+    - src/anyio/**
+  forbidden_paths:
+    - tests/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - uv.lock
+    - requirements.txt
+  max_changed_files: 1
+  max_diff_lines: 50
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: public-interrupt-runner-lifecycle
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -c
+      - |-
+        import os
+        import signal
+        import subprocess
+        import sys
+        import tempfile
+        import textwrap
+        import time
+        from pathlib import Path
+
+        def write_test(path, source):
+            path.write_text(textwrap.dedent(source), encoding="utf-8")
+
+        def read_events(path):
+            if not path.exists():
+                return []
+            return path.read_text(encoding="utf-8").splitlines()
+
+        def pytest_environment(event_log):
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "EVENT_LOG": str(event_log),
+                    "PYTHONPATH": "/workspace/src",
+                    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+                }
+            )
+            return environment
+
+        def pytest_command(test_file):
+            return [
+                sys.executable,
+                "-m",
+                "pytest",
+                "--no-header",
+                "-q",
+                "-p",
+                "anyio.pytest_plugin",
+                "-p",
+                "no:cacheprovider",
+                str(test_file),
+            ]
+
+        def run_pytest(root, test_file, event_log):
+            return subprocess.run(
+                pytest_command(test_file),
+                cwd=root,
+                env=pytest_environment(event_log),
+                capture_output=True,
+                text=True,
+                timeout=12,
+                check=False,
+            )
+
+        def run_interrupted_pytest(root, test_file, event_log):
+            process = subprocess.Popen(
+                pytest_command(test_file),
+                cwd=root,
+                env=pytest_environment(event_log),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                if "test-waiting" in read_events(event_log) or process.poll() is not None:
+                    break
+                time.sleep(0.01)
+            if "test-waiting" not in read_events(event_log):
+                if process.poll() is None:
+                    process.kill()
+                stdout, stderr = process.communicate()
+                raise RuntimeError(
+                    "interrupt scenario did not reach the public behavior: "
+                    + repr((process.returncode, stdout[-1000:], stderr[-1000:]))
+                )
+            try:
+                process.send_signal(signal.SIGINT)
+            except ProcessLookupError as exc:
+                raise RuntimeError("pytest exited before external SIGINT") from exc
+            try:
+                stdout, stderr = process.communicate(timeout=12)
+            except subprocess.TimeoutExpired as exc:
+                process.kill()
+                process.communicate()
+                raise AssertionError("PUBLIC_CASE:anyio:interrupt-timeout") from exc
+            return subprocess.CompletedProcess(
+                process.args,
+                process.returncode,
+                stdout,
+                stderr,
+            )
+
+        with tempfile.TemporaryDirectory(prefix="anyio-public-check-", dir="/tmp") as raw:
+            root = Path(raw)
+            interrupt_log = root / "interrupt-events.txt"
+            interrupt_test = root / "test_interrupt.py"
+            write_test(
+                interrupt_test,
+                """
+                import asyncio
+                import os
+                from pathlib import Path
+
+                import pytest
+
+                EVENT_LOG = Path(os.environ["EVENT_LOG"])
+
+                def record(event):
+                    with EVENT_LOG.open("a", encoding="utf-8") as stream:
+                        stream.write(event + "\\n")
+
+                @pytest.fixture
+                def anyio_backend():
+                    return "asyncio"
+
+                @pytest.fixture
+                async def resource(anyio_backend):
+                    record("fixture-start")
+                    try:
+                        yield "ready"
+                    finally:
+                        record("fixture-cleanup")
+
+                @pytest.mark.anyio
+                async def test_interrupt(resource):
+                    assert resource == "ready"
+                    record("test-waiting")
+                    await asyncio.sleep(2)
+                    record("test-resumed")
+                """,
+            )
+            interrupt = run_interrupted_pytest(root, interrupt_test, interrupt_log)
+            observed = read_events(interrupt_log)
+            if observed[:2] != ["fixture-start", "test-waiting"]:
+                raise RuntimeError(
+                    "interrupt scenario did not reach the public behavior: "
+                    + repr((interrupt.returncode, observed))
+                )
+            if interrupt.returncode == 0:
+                raise AssertionError("PUBLIC_CASE:anyio:interrupt-not-propagated")
+            if "test-resumed" in observed:
+                raise AssertionError("PUBLIC_CASE:anyio:test-resumed")
+            if observed.count("fixture-cleanup") != 1:
+                raise AssertionError("PUBLIC_CASE:anyio:fixture-cleanup-count")
+
+            outcome_log = root / "outcome-events.txt"
+            outcome_test = root / "test_outcomes.py"
+            write_test(
+                outcome_test,
+                """
+                import os
+                from pathlib import Path
+
+                import pytest
+
+                EVENT_LOG = Path(os.environ["EVENT_LOG"])
+
+                def record(event):
+                    with EVENT_LOG.open("a", encoding="utf-8") as stream:
+                        stream.write(event + "\\n")
+
+                @pytest.fixture(scope="module")
+                def anyio_backend():
+                    return "asyncio"
+
+                @pytest.fixture(scope="module")
+                async def shared(anyio_backend):
+                    record("shared-start")
+                    try:
+                        yield
+                    finally:
+                        record("shared-cleanup")
+
+                @pytest.mark.anyio
+                async def test_skip(shared):
+                    record("skip")
+                    pytest.skip("public skip")
+
+                @pytest.mark.anyio
+                async def test_xfail(shared):
+                    record("xfail")
+                    pytest.xfail("public xfail")
+
+                @pytest.mark.anyio
+                async def test_pass(shared):
+                    record("pass")
+                """,
+            )
+            outcomes = run_pytest(root, outcome_test, outcome_log)
+            outcome_events = read_events(outcome_log)
+            if not outcome_events or outcome_events[0] != "shared-start":
+                raise RuntimeError(
+                    "outcome scenario did not reach the public behavior: "
+                    + repr((outcomes.returncode, outcome_events))
+                )
+            if outcomes.returncode != 0:
+                raise AssertionError("PUBLIC_CASE:anyio:outcome-status")
+            if outcome_events != [
+                "shared-start",
+                "skip",
+                "xfail",
+                "pass",
+                "shared-cleanup",
+            ]:
+                raise AssertionError("PUBLIC_CASE:anyio:outcome-events")
+    timeout_seconds: 30
+    environment:
+      PYTHONPATH: /workspace/src
+  - id: public-ordinary-failure-preservation
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -c
+      - |
+        import os
+        import subprocess
+        import sys
+        import tempfile
+        import textwrap
+        from pathlib import Path
+        
+        
+        with tempfile.TemporaryDirectory(prefix="patchloop-anyio-ordinary-failure-") as selected:
+            root = Path(selected)
+            event_log = root / "events.log"
+            test_path = root / "test_ordinary_failure.py"
+            test_path.write_text(
+                textwrap.dedent(
+                    f"""
+                    import pytest
+                    from pathlib import Path
+        
+                    EVENT_LOG = Path({str(event_log)!r})
+        
+                    def record(value):
+                        with EVENT_LOG.open("a", encoding="utf-8") as stream:
+                            stream.write(value + "\\n")
+        
+                    @pytest.fixture(scope="module")
+                    def anyio_backend():
+                        return "asyncio"
+        
+                    @pytest.fixture(scope="module")
+                    async def shared(anyio_backend):
+                        record("shared-start")
+                        try:
+                            yield
+                        finally:
+                            record("shared-cleanup")
+        
+                    @pytest.mark.anyio
+                    async def test_ordinary_failure(shared):
+                        record("ordinary-failure")
+                        assert False, "expected public ordinary failure"
+        
+                    @pytest.mark.anyio
+                    async def test_after_failure(shared):
+                        record("after-failure")
+                    """
+                ),
+                encoding="utf-8",
+            )
+            environment = os.environ.copy()
+            environment["PYTHONDONTWRITEBYTECODE"] = "1"
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "-q",
+                    "--disable-warnings",
+                    "-p",
+                    "anyio",
+                    "-p",
+                    "no:asyncio",
+                    "-p",
+                    "no:trio",
+                    str(test_path),
+                ],
+                cwd=root,
+                env=environment,
+                capture_output=True,
+                text=True,
+                timeout=20,
+            )
+            events = (
+                event_log.read_text(encoding="utf-8").splitlines()
+                if event_log.is_file()
+                else []
+            )
+            expected_events = [
+                "shared-start",
+                "ordinary-failure",
+                "after-failure",
+                "shared-cleanup",
+            ]
+            if completed.returncode != 1:
+                raise AssertionError("PUBLIC_CASE:anyio:ordinary-failure-status")
+            if events != expected_events:
+                raise AssertionError("PUBLIC_CASE:anyio:ordinary-failure-events")
+            output = completed.stdout + "\n" + completed.stderr
+            if "1 failed" not in output or "1 passed" not in output:
+                raise AssertionError("PUBLIC_CASE:anyio:ordinary-failure-summary")
+    timeout_seconds: 30
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONDONTWRITEBYTECODE: "1"
+    output_limit_bytes: 20000
+  - id: upstream-pytest-plugin-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - tests/test_pytest_plugin.py
+      - --deselect
+      - tests/test_pytest_plugin.py::test_plugin
+      - --deselect
+      - tests/test_pytest_plugin.py::test_hypothesis_module_mark
+      - --deselect
+      - tests/test_pytest_plugin.py::test_hypothesis_function_mark
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/src
+tags:
+  - swe-rebench
+  - real-repository
+  - asyncio
+  - pytest-plugin
+  - interrupt-lifecycle
+  - memory-development
+  - development-validation
+  - public-behavior-check-v5

@@ -1,0 +1,20 @@
+{
+  "approval": {
+    "content_hash": "sha256:aefd6c84abd0da33529101228849b6298386774c77abf6d7f1a789b181c1f1da",
+    "file_bytes": 1025,
+    "file_sha256": "sha256:4480985785f5143cc431f6108c20babbefc410d8fe17f54a769fb317b05cf5a0",
+    "path": "reports/rapid-development/artifacts/anyio-ordinary-failure-public-check-qualification-approval-v1.json"
+  },
+  "candidate": {
+    "content_hash": "sha256:e1323a1ae39b412f21949d2687eb7186ef136f16fe5b6f3947bc41a4502cd630",
+    "file_bytes": 14636,
+    "file_sha256": "sha256:3b3341d1dc5802fad004973ef4b92d31ba8233f9a95dcd9153ed66e9e6c9fa0b",
+    "path": "reports/rapid-development/artifacts/anyio-ordinary-failure-public-check-qualification-candidate-v1.json"
+  },
+  "content_hash": "sha256:367bbf0db5fb7bdd2a7596c46d617a8d1e04a8bd9dea7777b5ea29011c795e6a",
+  "docker_calls_before_claim": 0,
+  "execution_hash": "sha256:4269db56125f87e84e22a26299c9e2c58c55832e696f344068f6f09063544600",
+  "recorded_at": "2026-08-26T20:45:06.781754Z",
+  "schema_version": "anyio-ordinary-failure-public-check-qualification-attempt-v1",
+  "status": "DOCKER_QUALIFICATION_ATTEMPT_CLAIMED_BEFORE_CALL"
+}

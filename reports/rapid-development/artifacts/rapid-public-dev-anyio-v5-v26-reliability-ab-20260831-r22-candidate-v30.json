@@ -1,0 +1,508 @@
+{
+  "schema_version": "rapid-public-development-candidate-v30",
+  "candidate_revision": 30,
+  "experiment_id": "rapid-public-dev-anyio-v5-v26-reliability-ab-20260831-r22",
+  "purpose": "rapid-public-development",
+  "official": false,
+  "design_kind": "balanced-interleaved-product-package-ab",
+  "config_path": "experiments/rapid-public-development-anyio-v5-v26-reliability-ab-20260831-r22.yaml",
+  "config_file_sha256": "sha256:98fbb866de1e837f58c80e6c9bc7847e24b301852bdb5fd9a3c92efc530eb75c",
+  "config_semantic_hash": "sha256:13526b73a2b5f1d41371a6c339c586dac51745d9400db66f28a5fcc090c500e9",
+  "selection_evidence": {
+    "schema_version": "rapid-anyio-v5-v25-v26-package-selection-v1",
+    "policy_version": "qualified-public-v25-v26-anyio-v5-package-v1",
+    "official": false,
+    "public_development_history_only": true,
+    "heldout_outcomes_used": false,
+    "private_evidence_used": false,
+    "hidden_failure_cause_used": false,
+    "reference_patch_used": false,
+    "consumed_r21": {
+      "candidate": {
+        "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-v5-v25-mechanical-activation-20260830-r21-candidate-v29.json",
+        "file_bytes": 14259,
+        "file_sha256": "sha256:a96567282d325f9fe2e4a90ebf069b5555b1ea65ec4bc089f84368d7f81574be",
+        "content_hash": "sha256:3a3118c40a96412c0938277baa6af6c826ede9a61c90e02b83fae12bacfd7ae2",
+        "execution_hash": "sha256:590bbd602a34d208256d98b78ea4690f7a4d3a8f8593bd59e30b6173c9a089f4"
+      },
+      "result": {
+        "path": "reports/rapid-development/rapid-public-dev-anyio-v5-v25-mechanical-activation-20260830-r21-590bbd602a34.jsonl",
+        "file_bytes": 21394,
+        "file_sha256": "sha256:54ae5e99226ec8a2d6635e6ece104c87b3ae1ba0e6aca675e20c7d7d339a749a",
+        "final_event_content_hash": "sha256:fccc382b3ff1bc7c9ccd0d50c48a4f02eb3272638326ccded17de567be6115ab",
+        "execution_hash": "sha256:590bbd602a34d208256d98b78ea4690f7a4d3a8f8593bd59e30b6173c9a089f4",
+        "event": "batch-completed",
+        "reason_codes": [
+          "SCHEDULE_EXHAUSTED_AFTER_SETTLED_TERMINAL"
+        ],
+        "terminal_row_count": 3,
+        "not_started_row_count": 0,
+        "accrued_cost_nanos": 1425258900
+      },
+      "public_diagnosis": {
+        "path": "reports/rapid-development/rapid-workflow-diagnosis-r21-590bbd602a34.json",
+        "file_bytes": 11731,
+        "file_sha256": "sha256:14663e2ed74a684c3c9d017a8e3c6812b3187b09938cea703a0735b920f4a884",
+        "content_hash": "sha256:4893b30ff24c9d95ad844569fe5831497400893784e3a99ef663db4016adc601"
+      },
+      "retry_allowed": false,
+      "historical_result_reclassified": false
+    },
+    "terminal_state_parity_qualification": {
+      "path": "experiments/rapid-terminal-state-parity-public-qualification-20260827-v1.json",
+      "file_bytes": 3920,
+      "file_sha256": "sha256:d992159b613c9de86c1c1319eceaac29b54a5ad2adee0d94562e8df6f21de0d6",
+      "content_hash": "sha256:c316e23c0a295f6c4e5b913104e1db6e6c2f15055b4348b60822527399bc53bd",
+      "policy_version": "append-only-row-settlement-driver-v2"
+    },
+    "control_lean_v25": {
+      "qualification": {
+        "path": "experiments/lean-harness-plan-contract-compatibility-public-qualification-20260830-v1.json",
+        "file_bytes": 5493,
+        "file_sha256": "sha256:b22700a13fe823a270c439c9972e21d21eb8d1d53ae6a0431452fc77f8cbc4a9",
+        "content_hash": "sha256:c6c075746ef7557a620860acaedb9fc202f674a32be11e9cb49e2507172a8453"
+      },
+      "activation_review": {
+        "path": "experiments/lean-harness-plan-contract-compatibility-activation-review-20260830-v1.json",
+        "file_bytes": 6839,
+        "file_sha256": "sha256:2c2ca0ae927d42cee7cae6ce3461d55d33d767cdaac54fcb84a5031ada5feae4",
+        "content_hash": "sha256:70012506d6c0571e18dce4e159c752eb37e00ddee23d126ae52a70e64785e31d",
+        "candidate_preparation_ready": true
+      },
+      "runtime_identity": {
+        "compatibility_policy_version": "trigger-bound-plan-contract-compatibility-v1",
+        "context_policy_version": "phase-evidence-v35",
+        "request_evidence_schema": "lean-harness-request-evidence-v25",
+        "runtime_policy_version": "lean-harness-v25",
+        "tool_schema_version": "v26"
+      }
+    },
+    "treatment_lean_v26": {
+      "schema_version": "rapid-v26-reviewed-package-admission-binding-v1",
+      "runtime_identity": {
+        "anchor_policy_version": "anchored-source-read-v1",
+        "context_policy_version": "phase-evidence-v36",
+        "feedback_policy_version": "bounded-plan-admission-feedback-v2",
+        "generation_recovery_policy_version": "dedicated-generation-incomplete-recovery-v1",
+        "lifecycle_plan_policy_version": "public-lifecycle-state-transition-plan-v1",
+        "request_evidence_schema": "lean-harness-request-evidence-v26",
+        "runtime_policy_version": "lean-harness-v26",
+        "tool_schema_version": "v27"
+      },
+      "qualification": {
+        "path": "experiments/lean-harness-r21-reliability-public-qualification-20260831-v1.json",
+        "bytes": 6253,
+        "file_sha256": "sha256:6b0f753f26c7e7d2d303c9b82bc192396bc1fbd312c709534927b7b39a4d38df",
+        "content_hash": "sha256:4f07dd47a2d7d81580d135018b8400476880d7ce93f1c280d5b9c8f8c97f9275"
+      },
+      "activation_review": {
+        "path": "experiments/lean-harness-r21-reliability-activation-review-20260831-v1.json",
+        "bytes": 11138,
+        "file_sha256": "sha256:e7da9667fff6c16e951eb541aeb59985e91af2bcf247b8473c59549b0d16480e",
+        "content_hash": "sha256:a82f018bd3fdbe638d276844f3773d33c89278cfb254f207039f679aac3b6d8c"
+      },
+      "current_source_binding": [
+        {
+          "path": "patchloop/agent/workflow_r21_reliability_successor.py",
+          "bytes": 35629,
+          "file_sha256": "sha256:45e204a4f082a84ac00cceca75ef0be13f2341d5118eeb9c7f23e3967024b5d6"
+        },
+        {
+          "path": "patchloop/agent/workflow_r21_reliability_qualification.py",
+          "bytes": 21762,
+          "file_sha256": "sha256:698a57712d83b0e0c8c0c3b7f0d3b68a0ee65c4a518a46595880015d69d30256"
+        },
+        {
+          "path": "patchloop/agent/lean_runtime.py",
+          "bytes": 280675,
+          "file_sha256": "sha256:6395eeb771449839b9e7db5171a3028e8f3424ea781f1422f1933c7f1ab01c5e"
+        },
+        {
+          "path": "patchloop/agent/runner.py",
+          "bytes": 358447,
+          "file_sha256": "sha256:687e7101ba67ac1fc6f7e791a5bfe1e563b3affe7a59decb7944be254bf9cce4"
+        },
+        {
+          "path": "patchloop/agent/tools.py",
+          "bytes": 359039,
+          "file_sha256": "sha256:cd50c9e33ab135d5d634b668b7c3e1f5729050f22c3f2e354fdc54a41ea8e45e"
+        },
+        {
+          "path": "patchloop/agent/investigation.py",
+          "bytes": 38215,
+          "file_sha256": "sha256:9dc433ba490f5b6e145e68b34eb5602f99c2ff69ffdd991ad04f5fae667055f6"
+        },
+        {
+          "path": "patchloop/contracts.py",
+          "bytes": 186346,
+          "file_sha256": "sha256:de020778a4fa876dac047d9f73d74c0d8474f1b936ffc601cb5af22f5c7275e7"
+        },
+        {
+          "path": "patchloop/errors.py",
+          "bytes": 3545,
+          "file_sha256": "sha256:1edff9ae4cd6e9d9fbb8c0d55dd56376a86d68d85936874ee72f945d4c31af29"
+        },
+        {
+          "path": "scripts/build_lean_harness_r21_reliability_qualification.py",
+          "bytes": 619,
+          "file_sha256": "sha256:8e0ba2a96f656f06f890daf74366a9d141dae56dff6a377cfbbd7323738239b2"
+        },
+        {
+          "path": "tests/test_workflow_r21_reliability_successor.py",
+          "bytes": 10112,
+          "file_sha256": "sha256:668c946443ab9d1ec562b437999ed9b3b52e52e8677f1885ffe37af0c8cbf290"
+        },
+        {
+          "path": "tests/test_workflow_r21_reliability_runner.py",
+          "bytes": 16684,
+          "file_sha256": "sha256:6976ea9a4c14d5242080fe3ba51bb09b925ba1e6255f8ffb1407f83cd5e32bea"
+        }
+      ],
+      "admission_only_source_delta": {
+        "path": "patchloop/contracts.py",
+        "reviewed": {
+          "bytes": 185056,
+          "file_sha256": "sha256:7339df0105d51c6ebefb6635df5f554fb0fcc683d7aaee7543cf8edbdd2d157d",
+          "path": "patchloop/contracts.py"
+        },
+        "current": {
+          "path": "patchloop/contracts.py",
+          "bytes": 186346,
+          "file_sha256": "sha256:de020778a4fa876dac047d9f73d74c0d8474f1b936ffc601cb5af22f5c7275e7"
+        },
+        "exact_addition_count": 3,
+        "addition_hashes": [
+          "sha256:68b0e87c6502e172f482df177ca1c0165b4feaee23440813a505f1fb94c572f7",
+          "sha256:9519714acddce6b1d21bed8aeb368280c003404b26b1c1f90cabbf265ad82c1f",
+          "sha256:5c6c5461de185126bd4c377b2a8b03255c6ba8b19a53f75c125351fe9df88eb6"
+        ],
+        "reviewed_bytes_recovered": true,
+        "agent_policy_changed": false
+      },
+      "immutable_inputs": [
+        {
+          "path": "patchloop/agent/workflow_plan_contract_compatibility_successor.py",
+          "bytes": 9952,
+          "file_sha256": "sha256:d49329cbd4bb1f313e9612679cc7a97b450c5bc6fcf0bc5721f6b2b3cf259d8c"
+        },
+        {
+          "path": "experiments/lean-harness-plan-contract-compatibility-public-qualification-20260830-v1.json",
+          "bytes": 5493,
+          "file_sha256": "sha256:b22700a13fe823a270c439c9972e21d21eb8d1d53ae6a0431452fc77f8cbc4a9"
+        },
+        {
+          "path": "reports/rapid-development/rapid-public-dev-anyio-v5-v25-mechanical-activation-20260830-r21-590bbd602a34.jsonl",
+          "bytes": 21394,
+          "file_sha256": "sha256:54ae5e99226ec8a2d6635e6ece104c87b3ae1ba0e6aca675e20c7d7d339a749a"
+        },
+        {
+          "path": "reports/rapid-development/rapid-workflow-diagnosis-r21-590bbd602a34.json",
+          "bytes": 11731,
+          "file_sha256": "sha256:14663e2ed74a684c3c9d017a8e3c6812b3187b09938cea703a0735b920f4a884"
+        },
+        {
+          "path": "experiments/anyio-runner-continuity-public-check-source-qualification-20260831-v1.json",
+          "bytes": 7159,
+          "file_sha256": "sha256:afaea6f091497e03219a47496c9f27f177a99061d9329af6a5793d188366d6b5"
+        },
+        {
+          "path": "patchloop/agent/workflow_r21_reliability_activation_review.py",
+          "bytes": 20105,
+          "file_sha256": "sha256:cf701cfda8648445802136142309342d6b1851e5d960eef8cff464d7219598e2"
+        }
+      ],
+      "runner_continuity_check_included": false,
+      "historical_artifacts_rewritten": false,
+      "content_hash": "sha256:ee84a1a7f1779a9df6ccd9799bfdea4615b9c8747845e9e36cd79f9eb7b1cc3f"
+    },
+    "activation_decision": {
+      "adopted": true,
+      "design_kind": "balanced-interleaved-product-package-ab",
+      "row_count": 6,
+      "control_rows": 3,
+      "treatment_rows": 3,
+      "reason": "compare-reviewed-v26-package-with-v25-under-one-public-budget",
+      "package_is_single_comparison_variable": true,
+      "single_mechanism_attribution_allowed": false,
+      "runner_continuity_check_included": false,
+      "task_successor_created": false,
+      "quality_improvement_established": false,
+      "generalization_established": false
+    }
+  },
+  "selection_evidence_hash": "sha256:cb8124793569917b1fe5893e7761e54dc2ffb369f4d6dc800b451c94f253cf08",
+  "runtime_build_schema": "rapid-runtime-build-v1",
+  "runtime_build_hash": "sha256:01bbd4a16e466df7bf856e31a7b7398ea753c2f1a6014d13f1853de6e0dc6cce",
+  "model_contract": {
+    "provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "transport_max_retries": 0,
+    "temperature": 0.0,
+    "max_output_tokens": 25000
+  },
+  "predecessor_candidate": {
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-v5-v25-mechanical-activation-20260830-r21-candidate-v29.json",
+    "file_bytes": 14259,
+    "file_sha256": "sha256:a96567282d325f9fe2e4a90ebf069b5555b1ea65ec4bc089f84368d7f81574be"
+  },
+  "predecessor_result": {
+    "path": "reports/rapid-development/rapid-public-dev-anyio-v5-v25-mechanical-activation-20260830-r21-590bbd602a34.jsonl",
+    "file_bytes": 21394,
+    "file_sha256": "sha256:54ae5e99226ec8a2d6635e6ece104c87b3ae1ba0e6aca675e20c7d7d339a749a"
+  },
+  "variant_contracts": {
+    "lean-harness-v25": {
+      "tool_schema_version": "v26",
+      "context_policy_version": "phase-evidence-v35",
+      "runtime_policy_version": "lean-harness-v25",
+      "request_evidence_schema": "lean-harness-request-evidence-v25",
+      "completion_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "record_work_plan_policy_version": "gateway-owned-public-exploration-closure-v1",
+      "pre_mutation_plan_policy_version": "eligible-public-evidence-plan-gate-v2",
+      "iterative_plan_revision_policy_version": "epoch-work-plan-revision-v1",
+      "plan_admission_recovery_policy_version": "work-plan-admission-recovery-v1",
+      "evidence_catalog_schema_version": "eligible-plan-evidence-catalog-v2",
+      "recorded_work_plan_schema_version": "recorded-work-plan-v2",
+      "active_work_state_schema_version": "active-work-state-v1",
+      "finalization_workflow_surface_policy_version": "workflow-surface-retained-through-reserve-v1",
+      "required_trigger_pin_policy_version": "required-failed-check-trigger-pinned-v1",
+      "semantic_progress_policy_version": "public-failure-signature-no-progress-reset-v1",
+      "semantic_progress_state_schema_version": "public-semantic-progress-state-v1",
+      "candidate_binding_policy_version": "same-path-public-read-binding-normalization-v1",
+      "causal_activation_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "causal_alternative_policy_version": "bounded-public-causal-alternative-gate-v1",
+      "causal_plan_projection_policy_version": "server-owned-public-causal-plan-projection-v1",
+      "causal_plan_projection_activation_policy_version": "gateway-owned-causal-plan-projection-v1",
+      "exploration_gate_policy_version": "public-boundary-and-unknown-closure-v1",
+      "exploration_gate_activation_policy_version": "gateway-owned-public-exploration-closure-v1",
+      "semantic_progress_event_domain_policy_version": "post-restore-semantic-progress-epoch-parity-v1",
+      "workflow_instruction_schema_version": "lean-workflow-instruction-v6",
+      "protocol_recovery_policy_version": "shared-model-action-contract-recovery-v1",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1",
+      "search_glob_policy_version": "recursive-file-glob-normalization-v1",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "edit_correction_policy_version": "bounded-public-current-source-v2",
+      "correction_context_policy_version": "bounded-investigation-current-read-v1",
+      "provider_terminal_policy_version": "explicit-terminal-before-accounting-v1",
+      "parallel_tool_calls": false,
+      "one_tool_call_per_response": true,
+      "plan_gate_liveness_policy_version": "pinned-plan-gate-liveness-v1",
+      "plan_admission_feedback_projection_policy_version": "bounded-plan-admission-feedback-v1",
+      "self_directed_exploration_policy_version": "bounded-self-directed-exploration-v1",
+      "exact_pre_plan_surface_policy_version": "exact-self-directed-pre-plan-surface-v1",
+      "bounded_request_context_policy_version": "bounded-public-investigation-request-context-v1",
+      "compatibility_policy_version": "trigger-bound-plan-contract-compatibility-v1"
+    },
+    "lean-harness-v26": {
+      "tool_schema_version": "v27",
+      "context_policy_version": "phase-evidence-v36",
+      "runtime_policy_version": "lean-harness-v26",
+      "request_evidence_schema": "lean-harness-request-evidence-v26",
+      "completion_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "record_work_plan_policy_version": "gateway-owned-public-exploration-closure-v1",
+      "pre_mutation_plan_policy_version": "eligible-public-evidence-plan-gate-v2",
+      "iterative_plan_revision_policy_version": "epoch-work-plan-revision-v1",
+      "plan_admission_recovery_policy_version": "work-plan-admission-recovery-v1",
+      "evidence_catalog_schema_version": "eligible-plan-evidence-catalog-v2",
+      "recorded_work_plan_schema_version": "recorded-work-plan-v2",
+      "active_work_state_schema_version": "active-work-state-v1",
+      "finalization_workflow_surface_policy_version": "workflow-surface-retained-through-reserve-v1",
+      "required_trigger_pin_policy_version": "required-failed-check-trigger-pinned-v1",
+      "semantic_progress_policy_version": "public-failure-signature-no-progress-reset-v1",
+      "semantic_progress_state_schema_version": "public-semantic-progress-state-v1",
+      "candidate_binding_policy_version": "same-path-public-read-binding-normalization-v1",
+      "causal_activation_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "causal_alternative_policy_version": "bounded-public-causal-alternative-gate-v1",
+      "causal_plan_projection_policy_version": "server-owned-public-causal-plan-projection-v1",
+      "causal_plan_projection_activation_policy_version": "gateway-owned-causal-plan-projection-v1",
+      "exploration_gate_policy_version": "public-boundary-and-unknown-closure-v1",
+      "exploration_gate_activation_policy_version": "gateway-owned-public-exploration-closure-v1",
+      "semantic_progress_event_domain_policy_version": "post-restore-semantic-progress-epoch-parity-v1",
+      "workflow_instruction_schema_version": "lean-workflow-instruction-v6",
+      "protocol_recovery_policy_version": "shared-model-action-contract-recovery-v1",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1",
+      "search_glob_policy_version": "recursive-file-glob-normalization-v1",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "edit_correction_policy_version": "bounded-public-current-source-v2",
+      "correction_context_policy_version": "bounded-investigation-current-read-v1",
+      "provider_terminal_policy_version": "explicit-terminal-before-accounting-v1",
+      "parallel_tool_calls": false,
+      "one_tool_call_per_response": true,
+      "plan_gate_liveness_policy_version": "pinned-plan-gate-liveness-v1",
+      "plan_admission_feedback_projection_policy_version": "bounded-plan-admission-feedback-v1",
+      "self_directed_exploration_policy_version": "bounded-self-directed-exploration-v1",
+      "exact_pre_plan_surface_policy_version": "exact-self-directed-pre-plan-surface-v1",
+      "bounded_request_context_policy_version": "bounded-public-investigation-request-context-v1",
+      "compatibility_policy_version": "trigger-bound-plan-contract-compatibility-v1",
+      "anchor_policy_version": "anchored-source-read-v1",
+      "feedback_policy_version": "bounded-plan-admission-feedback-v2",
+      "generation_recovery_policy_version": "dedicated-generation-incomplete-recovery-v1",
+      "lifecycle_plan_policy_version": "public-lifecycle-state-transition-plan-v1"
+    }
+  },
+  "driver_contract": {
+    "contract_schema": "rapid-append-only-batch-driver-contract-v1",
+    "event_schema": "rapid-append-only-batch-driver-event-v1",
+    "policy_version": "append-only-row-settlement-driver-v2",
+    "qualification_path": "experiments/rapid-terminal-state-parity-public-qualification-20260827-v1.json",
+    "qualification_file_sha256": "sha256:d992159b613c9de86c1c1319eceaac29b54a5ad2adee0d94562e8df6f21de0d6",
+    "qualification_content_hash": "sha256:c316e23c0a295f6c4e5b913104e1db6e6c2f15055b4348b60822527399bc53bd",
+    "row_advance_owner": "append-only-driver"
+  },
+  "task_bindings": [
+    {
+      "task_path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+      "public_spec_hash": "sha256:5c6bdd04c82e7014a795c42f9f7ebbf41e440deb41ce19720652283b62716839",
+      "private_spec_hash": "sha256:a9aaa4d4a4b0de9b181b575677ac132669bb272b00f01bd3360fe76a9eab983a",
+      "evaluator_image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "evaluator_image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "package_file_count": 6,
+      "package_inventory_hash": "sha256:e90c6d53cdf4358dd4ea7d412d258917073c69547b0ea67c5421952b2b1d7a31",
+      "visible_check_ids": [
+        "public-interrupt-runner-lifecycle",
+        "public-ordinary-failure-preservation",
+        "upstream-pytest-plugin-regression"
+      ],
+      "visible_check_command_hashes": [
+        "sha256:c0ef4f062b90676734637a3b4966b1206870c847ae0f4dd2c74754250bf0a034",
+        "sha256:eec2ca90c5a2be9d962243d6ca257d593b665e700735ca1a805767ced18a932a",
+        "sha256:965d00d50dede491672c1a53762e4b6aa3d78ff58583cc062fdfdb8f56c9548c"
+      ],
+      "task_successor_opt_in": true,
+      "frozen_dataset_member": false,
+      "qualification_binding_hash": "sha256:cb8124793569917b1fe5893e7761e54dc2ffb369f4d6dc800b451c94f253cf08"
+    }
+  ],
+  "schedule": [
+    {
+      "order": 1,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v25",
+      "tool_schema_version": "v26",
+      "context_policy_version": "phase-evidence-v35",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:6b78489f04d65a790187c9c04423efcc5d94de671aeeb10522e77fd4b1297402"
+    },
+    {
+      "order": 2,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v26",
+      "tool_schema_version": "v27",
+      "context_policy_version": "phase-evidence-v36",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:e1b514bb07946f4482d4a3a7d796a4aafc9e3ff8d87546c298b545f1e2e06517"
+    },
+    {
+      "order": 3,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v26",
+      "tool_schema_version": "v27",
+      "context_policy_version": "phase-evidence-v36",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:b03b38a95cdc38c4f08a3ad7da6b09dc1d104a1bf61690ca4cca5506cd53fa35"
+    },
+    {
+      "order": 4,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v25",
+      "tool_schema_version": "v26",
+      "context_policy_version": "phase-evidence-v35",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:76318ff7df1b1cfff406d13e53f37a2c0a38e75dea1ac84ab33f05edd88b8b99"
+    },
+    {
+      "order": 5,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v25",
+      "tool_schema_version": "v26",
+      "context_policy_version": "phase-evidence-v35",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:d0d697408499fd7fc5efbf298c9d634106da57b28046df78cb62551aa4d1e995"
+    },
+    {
+      "order": 6,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v26",
+      "tool_schema_version": "v27",
+      "context_policy_version": "phase-evidence-v36",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:af52835ea2127464a50d94cee2fd6fa99b75fb8162ca4c088ae294b712e306a1"
+    }
+  ],
+  "schedule_hash": "sha256:25ef3cfca222684c0e75b5d96ee5c7d4f5c29b189faff36a62dd194242946ae9",
+  "promotion_criteria": {
+    "harness_or_admission_failure_rows_max": 0,
+    "infrastructure_failure_rows_max": 0,
+    "contract_error_rows_max": 0,
+    "plan_admission_budget_terminal_rows_max": 0,
+    "valid_initial_plan_rows_min": 2,
+    "first_mutation_rows_min": 2,
+    "evaluator_reached_rows_min": 2,
+    "evaluator_reached_not_below_control": true,
+    "submission_not_below_control": true,
+    "success_not_below_control": true,
+    "max_mean_settled_cost_ratio": 1.25,
+    "every_mutation_has_valid_plan_hash": true,
+    "targeted_before_upstream": true,
+    "fresh_read_before_correction": true,
+    "fresh_check_and_diff_before_submission": true,
+    "promote_scope": "public-development-default-only",
+    "quality_claim_allowed": false,
+    "generalization_claim_allowed": false
+  },
+  "cost_control": {
+    "per_run_reserve_nanos": 1200000000,
+    "full_schedule_reserve_nanos": 7200000000,
+    "hard_cap_nanos": 7500000000,
+    "pricing_nanos_per_token": {
+      "uncached_input": 750,
+      "cached_input": 75,
+      "cache_write_input": 750,
+      "output": 4500
+    },
+    "scheduled_run_count": 6,
+    "cost_censoring_allowed": false,
+    "official": false
+  },
+  "cost_control_hash": "sha256:a7bc2f24b7ec0ecb501130ef310f958b790108d5788d51dfad958c2cf4691605",
+  "execution_hash": "sha256:3930c68bdca28e28de1233a374e52f091d03d1dde95414d681c5be4c27c7f62b",
+  "source_qualified": true,
+  "execution_authorized": false,
+  "provider_calls_made": 0,
+  "docker_calls_made": 0,
+  "added_model_cost_usd": 0.0,
+  "approval_required": true,
+  "rehearsal_required": true,
+  "content_hash": "sha256:95ac74cdc0c3b7927c7953ffd02231e5affe78ce36efb941d358bb1eeb3b302b"
+}

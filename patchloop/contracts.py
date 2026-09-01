@@ -47,6 +47,7 @@ class ExperimentPurpose(StrEnum):
     DEVELOPMENT_VALIDATION_LIVE_PILOT = "development-validation-live-pilot"
     DEVELOPMENT_VALIDATION_AC_READINESS = "development-validation-ac-readiness"
     DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT = "development-validation-model-candidate-pilot"
+    RAPID_PUBLIC_DEVELOPMENT = "rapid-public-development"
     MEMORY_DEVELOPMENT_NO_MEMORY = "memory-development-no-memory"
     MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT = "memory-development-no-memory-budget-pilot"
     MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT = "memory-development-no-memory-corrective-pilot"
@@ -66,6 +67,63 @@ class ExperimentPurpose(StrEnum):
 CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID = (
     "dev-validation-condition-neutral-v2v5-pilot-20260803-r1"
 )
+RAPID_ANYIO_TARGETED_EXPERIMENT_ID = "rapid-public-dev-anyio-targeted-20260822-r4"
+RAPID_ANYIO_FINALIZATION_EXPERIMENT_ID = "rapid-public-dev-anyio-finalization-20260822-r5"
+RAPID_ANYIO_MECHANICAL_EXPERIMENT_ID = "rapid-public-dev-anyio-mechanical-20260823-r6"
+RAPID_ANYIO_EVENT_ROLE_EXPERIMENT_ID = "rapid-public-dev-anyio-event-role-20260823-r7"
+RAPID_ANYIO_COMPLETION_EXPERIMENT_ID = "rapid-public-dev-anyio-completion-policy-20260823-r8"
+RAPID_ANYIO_ORDERED_CORRECTION_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-ordered-correction-20260824-r9"
+)
+RAPID_ANYIO_WORKFLOW_AB_EXPERIMENT_ID = "rapid-public-dev-anyio-workflow-ab-20260824-r10"
+RAPID_ANYIO_WORKFLOW_REVISION_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-workflow-revision-ab-20260825-r11"
+)
+RAPID_ANYIO_SEMANTIC_PROGRESS_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-semantic-progress-ab-20260825-r12"
+)
+RAPID_ANYIO_CAUSAL_ACTIVATION_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-causal-activation-ab-20260826-r13"
+)
+RAPID_ANYIO_CAUSAL_PLAN_PROJECTION_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-causal-plan-projection-ab-20260826-r14"
+)
+RAPID_ANYIO_V5_EXPLORATION_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-v5-exploration-ab-20260827-r15"
+)
+RAPID_ANYIO_V5_EPOCH_PARITY_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-v5-epoch-parity-ab-20260827-r16"
+)
+RAPID_ANYIO_V5_ROW_ISOLATION_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-v5-row-isolation-ab-20260827-r17"
+)
+RAPID_ANYIO_V5_TERMINAL_PARITY_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-v5-terminal-parity-ab-20260827-r18"
+)
+RAPID_ANYIO_V5_PLAN_FEEDBACK_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-v5-plan-feedback-ab-20260828-r19"
+)
+RAPID_ANYIO_V5_SELF_DIRECTED_BOUNDED_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-v5-self-directed-bounded-ab-20260830-r20"
+)
+RAPID_ANYIO_V5_V25_MECHANICAL_ACTIVATION_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-v5-v25-mechanical-activation-20260830-r21"
+)
+# R22 admission-only: constant
+RAPID_ANYIO_V5_V26_RELIABILITY_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-v5-v26-reliability-ab-20260831-r22"
+)
+# R22 admission-only: end constant
+# R23 admission-only: constant
+RAPID_ANYIO_V5_BATCH_IMAGE_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-v5-batch-image-ab-20260831-r23"
+)
+# R23 admission-only: end constant
+# R24 integration begin: experiment
+RAPID_ANYIO_V5_PROVIDER_SCHEMA_AB_EXPERIMENT_ID = (
+    "rapid-public-dev-anyio-v5-provider-schema-ab-20260901-r24"
+)
+# R24 integration end: experiment
 CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID = (
     "dev-no-memory-condition-neutral-accrued-cap-20260804-r1"
 )
@@ -226,15 +284,23 @@ class EventType(StrEnum):
     MEMORY_RETRIEVED = "MemoryRetrieved"
     MODEL_CALLED = "ModelCalled"
     MODEL_GENERATION_BLOCKED = "ModelGenerationBlocked"
+    INPUT_TOKEN_COUNT_STARTED = "InputTokenCountStarted"
+    INPUT_TOKEN_COUNT_FINISHED = "InputTokenCountFinished"
     TOOL_CALLED = "ToolCalled"
     TOOL_REPLAYED = "ToolReplayed"
     PATCH_PREPARED = "PatchPrepared"
+    MUTATION_BASELINE_RESTORE_PREPARED = "MutationBaselineRestorePrepared"
     TOOL_SUCCEEDED = "ToolSucceeded"
     TOOL_FAILED = "ToolFailed"
     PATCH_APPLIED = "PatchApplied"
+    MUTATION_BASELINE_RESTORED = "MutationBaselineRestored"
     CHECK_STARTED = "CheckStarted"
     CHECK_FINISHED = "CheckFinished"
     REVIEW_RECORDED = "ReviewRecorded"
+    PLAN_RECORDED = "PlanRecorded"
+    CAUSAL_MECHANISM_RECORDED = "CausalMechanismRecorded"
+    EXPLORATION_CLOSURE_RECORDED = "ExplorationClosureRecorded"
+    EXPLORATION_STOP_RECORDED = "ExplorationStopRecorded"
     SUBMISSION_ATTEMPTED = "SubmissionAttempted"
     SUBMISSION_REJECTED = "SubmissionRejected"
     SUBMISSION_ACCEPTED = "SubmissionAccepted"
@@ -926,6 +992,10 @@ class ExperimentRunContext(StrictModel):
 
     @model_validator(mode="after")
     def bind_campaign_cost_context(self) -> ExperimentRunContext:
+        if self.purpose == ExperimentPurpose.RAPID_PUBLIC_DEVELOPMENT:
+            if self.campaign_cost_control_hash is None:
+                raise ValueError("rapid public development requires campaign cost control")
+            return self
         if self.experiment_id in {
             CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
             *AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
@@ -2088,6 +2158,616 @@ class RunManifest(StrictModel):
                 "disabled model/tool call limits are reserved for an exact "
                 "registered observability profile"
             )
+        lean_runtime_declared = bool(
+            self.tool_schema_version
+            in {
+                "v7",
+                "v8",
+                "v9",
+                "v10",
+                "v11",
+                "v12",
+                "v13",
+                "v14",
+                "v15",
+                "v16",
+                "v17",
+                "v18",
+                "v19",
+                "v20",
+                "v21",
+                "v22",
+                "v23",
+                "v24",
+                "v25",
+                "v26",
+                "v27",
+                "v28",
+                "v29",
+            }
+            or self.context_policy_version
+            in {
+                "phase-evidence-v12",
+                "phase-evidence-v13",
+                "phase-evidence-v14",
+                "phase-evidence-v15",
+                "phase-evidence-v16",
+                "phase-evidence-v17",
+                "phase-evidence-v18",
+                "phase-evidence-v19",
+                "phase-evidence-v20",
+                "phase-evidence-v21",
+                "phase-evidence-v22",
+                "phase-evidence-v23",
+                "phase-evidence-v24",
+                "phase-evidence-v25",
+                "phase-evidence-v26",
+                "phase-evidence-v27",
+                "phase-evidence-v28",
+                "phase-evidence-v29",
+                "phase-evidence-v30",
+                "phase-evidence-v31",
+                "phase-evidence-v32",
+                "phase-evidence-v33",
+                "phase-evidence-v34",
+                "phase-evidence-v35",
+                "phase-evidence-v36",
+                "phase-evidence-v37",
+                "phase-evidence-v38",
+            }
+        )
+        if lean_runtime_declared:
+            lean_memory = bool(
+                (
+                    self.memory.condition == MemoryCondition.NO_MEMORY
+                    and self.memory.index_version is None
+                    and self.memory.index_hash is None
+                )
+                or (
+                    self.memory.condition == MemoryCondition.STRUCTURED
+                    and self.memory.index_version == AC_FIXED_BUNDLE_D110_INDEX_VERSION
+                    and self.memory.index_hash == AC_FIXED_BUNDLE_D110_INDEX_CONTENT_HASH
+                )
+            )
+            rapid_runtime_identity = bool(
+                (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == "rapid-public-dev-lean-harness-20260818-r1"
+                    and self.experiment.schedule_seed == 20260818
+                    and (self.tool_schema_version, self.context_policy_version)
+                    == ("v7", "phase-evidence-v12")
+                    and self.task_version == 1
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == "rapid-public-dev-lean-harness-20260821-r2"
+                    and self.experiment.schedule_seed == 20260821
+                    and (self.tool_schema_version, self.context_policy_version)
+                    == ("v8", "phase-evidence-v13")
+                    and self.task_version == 2
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == "rapid-public-dev-hard-panel-20260822-r3"
+                    and self.experiment.schedule_seed == 20260822
+                    and (self.tool_schema_version, self.context_policy_version)
+                    == ("v8", "phase-evidence-v13")
+                    and self.task_version == 1
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == RAPID_ANYIO_TARGETED_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260822
+                    and (self.tool_schema_version, self.context_policy_version)
+                    == ("v8", "phase-evidence-v13")
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == RAPID_ANYIO_FINALIZATION_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260822
+                    and (self.tool_schema_version, self.context_policy_version)
+                    == ("v9", "phase-evidence-v14")
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == RAPID_ANYIO_MECHANICAL_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260823
+                    and (self.tool_schema_version, self.context_policy_version)
+                    == ("v10", "phase-evidence-v15")
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == RAPID_ANYIO_EVENT_ROLE_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260823
+                    and (self.tool_schema_version, self.context_policy_version)
+                    == ("v10", "phase-evidence-v16")
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == RAPID_ANYIO_COMPLETION_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260823
+                    and (self.tool_schema_version, self.context_policy_version)
+                    == ("v11", "phase-evidence-v17")
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_ORDERED_CORRECTION_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260824
+                    and (self.tool_schema_version, self.context_policy_version)
+                    == ("v12", "phase-evidence-v18")
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == RAPID_ANYIO_WORKFLOW_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260824
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v12", "phase-evidence-v18"),
+                        ("v14", "phase-evidence-v20"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_WORKFLOW_REVISION_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260825
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v12", "phase-evidence-v18"),
+                        ("v16", "phase-evidence-v22"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_SEMANTIC_PROGRESS_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260825
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v12", "phase-evidence-v18"),
+                        ("v19", "phase-evidence-v25"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_CAUSAL_ACTIVATION_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260826
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v12", "phase-evidence-v18"),
+                        ("v21", "phase-evidence-v27"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_CAUSAL_PLAN_PROJECTION_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260826
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v12", "phase-evidence-v18"),
+                        ("v22", "phase-evidence-v28"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 4
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == RAPID_ANYIO_V5_EXPLORATION_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260827
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v22", "phase-evidence-v28"),
+                        ("v23", "phase-evidence-v29"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 5
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_V5_EPOCH_PARITY_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260827
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v22", "phase-evidence-v28"),
+                        ("v24", "phase-evidence-v30"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 5
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_V5_ROW_ISOLATION_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260827
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v22", "phase-evidence-v28"),
+                        ("v24", "phase-evidence-v30"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 5
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_V5_TERMINAL_PARITY_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260827
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v22", "phase-evidence-v28"),
+                        ("v24", "phase-evidence-v30"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 5
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_V5_PLAN_FEEDBACK_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260828
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v22", "phase-evidence-v28"),
+                        ("v25", "phase-evidence-v32"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 5
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_V5_SELF_DIRECTED_BOUNDED_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260830
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v25", "phase-evidence-v32"),
+                        ("v26", "phase-evidence-v34"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 5
+                )
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_V5_V25_MECHANICAL_ACTIVATION_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260830
+                    and (self.tool_schema_version, self.context_policy_version)
+                    == ("v26", "phase-evidence-v35")
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 5
+                )
+                # R22 admission-only: runtime
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_V5_V26_RELIABILITY_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260831
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v26", "phase-evidence-v35"),
+                        ("v27", "phase-evidence-v36"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 5
+                )
+                # R22 admission-only: end runtime
+                # R23 admission-only: runtime
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id == RAPID_ANYIO_V5_BATCH_IMAGE_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260831
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {
+                        ("v26", "phase-evidence-v35"),
+                        ("v27", "phase-evidence-v36"),
+                    }
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 5
+                )
+                # R23 admission-only: end runtime
+                # R24 integration begin: runtime
+                or (
+                    self.experiment is not None
+                    and self.experiment.experiment_id
+                    == RAPID_ANYIO_V5_PROVIDER_SCHEMA_AB_EXPERIMENT_ID
+                    and self.experiment.schedule_seed == 20260901
+                    and (self.tool_schema_version, self.context_policy_version)
+                    in {("v26", "phase-evidence-v35"), ("v28", "phase-evidence-v37")}
+                    and self.task_id == "anyio-interrupt-runner-cleanup"
+                    and self.task_version == 5
+                )
+                # R24 integration end: runtime
+            )
+            rapid_dataset_identity = bool(
+                self.experiment is not None
+                and (
+                    (
+                        self.experiment.experiment_id
+                        in {
+                            "rapid-public-dev-lean-harness-20260818-r1",
+                            "rapid-public-dev-lean-harness-20260821-r2",
+                        }
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id == "rapid-public-dev-hard-panel-20260822-r3"
+                        and self.experiment.dataset_role == DatasetRole.MEMORY_DEVELOPMENT
+                    )
+                    or (
+                        self.experiment.experiment_id == RAPID_ANYIO_TARGETED_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id == RAPID_ANYIO_FINALIZATION_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id == RAPID_ANYIO_MECHANICAL_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id == RAPID_ANYIO_EVENT_ROLE_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id == RAPID_ANYIO_COMPLETION_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_ORDERED_CORRECTION_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id == RAPID_ANYIO_WORKFLOW_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_WORKFLOW_REVISION_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_SEMANTIC_PROGRESS_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_CAUSAL_ACTIVATION_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_CAUSAL_PLAN_PROJECTION_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id == RAPID_ANYIO_V5_EXPLORATION_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_V5_EPOCH_PARITY_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_V5_ROW_ISOLATION_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_V5_TERMINAL_PARITY_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_V5_PLAN_FEEDBACK_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_V5_SELF_DIRECTED_BOUNDED_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_V5_V25_MECHANICAL_ACTIVATION_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    # R22 admission-only: dataset
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_V5_V26_RELIABILITY_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    # R22 admission-only: end dataset
+                    # R23 admission-only: dataset
+                    or (
+                        self.experiment.experiment_id == RAPID_ANYIO_V5_BATCH_IMAGE_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    # R23 admission-only: end dataset
+                    # R24 integration begin: dataset
+                    or (
+                        self.experiment.experiment_id
+                        == RAPID_ANYIO_V5_PROVIDER_SCHEMA_AB_EXPERIMENT_ID
+                        and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+                    )
+                    # R24 integration end: dataset
+                )
+            )
+            rapid_public_development = bool(
+                self.schema_version == "run-manifest-v1"
+                and self.evaluator_contract is None
+                and self.experiment is not None
+                and self.experiment.purpose == ExperimentPurpose.RAPID_PUBLIC_DEVELOPMENT
+                and rapid_dataset_identity
+                and 1 <= self.experiment.schedule_order <= 12
+                and 1 <= self.experiment.repetition <= 20
+                and rapid_runtime_identity
+                and self.memory_policy_version == AC_FIXED_BUNDLE_POLICY_VERSION
+                and self.memory.condition == MemoryCondition.NO_MEMORY
+                and self.memory.index_version is None
+                and self.memory.index_hash is None
+                and self.memory.max_context_tokens == 2_000
+                and self.model.provider == "openai"
+                and self.model.model_id == "gpt-5.4-mini-2026-03-17"
+                and self.model.provider_sdk_version is not None
+                and self.model.replay_hash is None
+                and self.model.reasoning_effort == "medium"
+                and self.model.reasoning_mode == "standard"
+                and self.model.service_tier == "default"
+                and self.model.transport_max_retries == 0
+                and self.model.temperature == 0.0
+                and self.model.max_output_tokens == 25_000
+                and self.model.input_price_per_million_usd == 0.75
+                and self.model.cached_input_price_per_million_usd == 0.075
+                and self.model.cache_write_input_price_per_million_usd == 0.75
+                and self.model.output_price_per_million_usd == 4.5
+                and self.budget.max_model_calls == 240
+                and self.budget.max_tool_calls == 400
+                and self.budget.max_total_tokens == 1_100_000
+                and self.budget.wall_clock_timeout_seconds == 3_600
+                and self.budget.token_budget_schema_version == "cumulative-split-v1"
+                and self.budget.max_cumulative_input_tokens == 1_000_000
+                and self.budget.max_cumulative_output_tokens == 100_000
+                and self.sandbox_backend == "docker"
+                and self.agent_image_digest is not None
+                and self.evaluator_image_digest == self.agent_image_digest
+                and self.probe_image_digest is None
+                and self.public_review_contract is None
+                and self.fault.type == "none"
+                and self.fault.trigger_after is None
+            )
+            if not rapid_public_development and not (
+                self.schema_version == "run-manifest-v1"
+                and self.evaluator_contract is None
+                and (self.tool_schema_version, self.context_policy_version)
+                in {
+                    ("v7", "phase-evidence-v12"),
+                    ("v8", "phase-evidence-v13"),
+                    ("v9", "phase-evidence-v13"),
+                    ("v9", "phase-evidence-v14"),
+                    ("v10", "phase-evidence-v15"),
+                    ("v10", "phase-evidence-v16"),
+                    ("v11", "phase-evidence-v17"),
+                    ("v12", "phase-evidence-v18"),
+                    ("v13", "phase-evidence-v19"),
+                    ("v14", "phase-evidence-v20"),
+                    ("v15", "phase-evidence-v21"),
+                    ("v16", "phase-evidence-v22"),
+                    ("v17", "phase-evidence-v23"),
+                    ("v18", "phase-evidence-v24"),
+                    ("v19", "phase-evidence-v25"),
+                    ("v20", "phase-evidence-v26"),
+                    ("v21", "phase-evidence-v27"),
+                    ("v22", "phase-evidence-v28"),
+                    ("v23", "phase-evidence-v29"),
+                    ("v24", "phase-evidence-v30"),
+                    ("v25", "phase-evidence-v31"),
+                    ("v25", "phase-evidence-v32"),
+                    ("v26", "phase-evidence-v33"),
+                    ("v26", "phase-evidence-v34"),
+                    ("v26", "phase-evidence-v35"),
+                    ("v27", "phase-evidence-v36"),
+                    ("v28", "phase-evidence-v37"),
+                    ("v29", "phase-evidence-v38"),
+                }
+                and self.memory_policy_version == AC_FIXED_BUNDLE_POLICY_VERSION
+                and lean_memory
+                and self.memory.max_context_tokens == 2_000
+                and self.model.provider == "mock"
+                and self.model.model_id == "patchloop-public-calibration-mock-v1"
+                and self.model.provider_sdk_version is None
+                and self.model.replay_hash is None
+                and self.model.reasoning_effort == "medium"
+                and self.model.reasoning_mode == "standard"
+                and self.model.service_tier == "default"
+                and self.model.transport_max_retries is None
+                and self.model.temperature == 0.0
+                and self.model.max_output_tokens == 25_000
+                and self.model.input_price_per_million_usd is None
+                and self.model.cached_input_price_per_million_usd is None
+                and self.model.cache_write_input_price_per_million_usd is None
+                and self.model.output_price_per_million_usd is None
+                and self.budget.max_model_calls == 240
+                and self.budget.max_tool_calls == 400
+                and self.budget.max_total_tokens == 1_100_000
+                and self.budget.wall_clock_timeout_seconds == 3_600
+                and self.budget.token_budget_schema_version == "cumulative-split-v1"
+                and self.budget.max_cumulative_input_tokens == 1_000_000
+                and self.budget.max_cumulative_output_tokens == 100_000
+                and self.sandbox_backend == "local"
+                and self.agent_image_digest is None
+                and self.evaluator_image_digest is None
+                and self.probe_image_digest is None
+                and self.public_review_contract is None
+                and self.fault.type == "none"
+                and self.fault.trigger_after is None
+                and self.experiment is None
+                and self.task_id
+                in {
+                    "config-falsy-override",
+                    "csv-quoted-newline",
+                    "path-prefix-boundary",
+                }
+            ):
+                raise ValueError(
+                    "Lean Harness requires the exact public-calibration mock "
+                    "v7/phase-evidence-v12, v8/phase-evidence-v13, offline "
+                    "v9/phase-evidence-v13, offline v9/phase-evidence-v14, or "
+                    "offline v10/phase-evidence-v15, v10/phase-evidence-v16, "
+                    "v11/phase-evidence-v17, v12/phase-evidence-v18, "
+                    "v13/phase-evidence-v19, v14/phase-evidence-v20, "
+                    "v15/phase-evidence-v21, v16/phase-evidence-v22, "
+                    "v17/phase-evidence-v23, v18/phase-evidence-v24, "
+                    "v19/phase-evidence-v25, v20/phase-evidence-v26, "
+                    "v21/phase-evidence-v27, v22/phase-evidence-v28, "
+                    "v23/phase-evidence-v29, v24/phase-evidence-v30, "
+                    "v25/phase-evidence-v31, v25/phase-evidence-v32, "
+                    "v26/phase-evidence-v33, v26/phase-evidence-v34, "
+                    "v26/phase-evidence-v35, v27/phase-evidence-v36, "
+                    "v28/phase-evidence-v37, or v29/phase-evidence-v38 "
+                    "successor runtime, "
+                    "the consumed R1 live v7/v12 runtime, or the source-gated "
+                    "Rapid V2/V3, AnyIO-targeted R4 live v8/v13, or "
+                    "AnyIO-finalization R5 live v9/v14, AnyIO-mechanical "
+                    "R6 live v10/v15, AnyIO event-role R7 live v10/v16, or "
+                    "AnyIO completion R8 live v11/v17, or AnyIO ordered-correction "
+                    "R9 live v12/v18, or AnyIO workflow R10 live v12/v18 and "
+                    "v14/v20, R11 live v12/v18 and v16/v22, R12 live "
+                    "v12/v18 and v19/v25, R13 live v12/v18 and v21/v27, or "
+                    "R14 live v12/v18 and v22/v28, R15 live v22/v28 and "
+                    "v23/v29, R16-R18 live v22/v28 and v24/v30, or R19 live "
+                    "v22/v28 and v25/v32 runtime, or R20 live v25/v32 and "
+                    "v26/v34 runtime, or R21 live v26/v35 runtime"
+                )
         return self
 
 
@@ -2137,7 +2817,33 @@ class Checkpoint(StrictModel):
 
 class ToolCall(StrictModel):
     tool: str
-    tool_schema_version: Literal["v1", "v2", "v3", "v4", "v5", "v6"] = "v1"
+    tool_schema_version: Literal[
+        "v1",
+        "v2",
+        "v3",
+        "v4",
+        "v5",
+        "v6",
+        "v7",
+        "v8",
+        "v9",
+        "v10",
+        "v11",
+        "v12",
+        "v13",
+        "v14",
+        "v15",
+        "v16",
+        "v17",
+        "v18",
+        "v19",
+        "v20",
+        "v21",
+        "v22",
+        "v23",
+        "v24",
+        "v25",
+    ] = "v1"
     action_id: str
     run_id: str
     input: dict[str, Any] = Field(default_factory=dict)

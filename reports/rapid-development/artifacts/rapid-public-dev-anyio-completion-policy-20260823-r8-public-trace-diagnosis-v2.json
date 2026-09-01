@@ -1,0 +1,311 @@
+{
+  "schema_version": "rapid-public-completion-diagnosis-v2",
+  "diagnosis_id": "rapid-public-dev-anyio-completion-policy-20260823-r8-v2",
+  "official": false,
+  "source_bundle": {
+    "path": "reports/rapid-development/rapid-public-dev-anyio-completion-policy-20260823-r8-553f7cfca404.jsonl",
+    "bytes": 9567,
+    "file_sha256": "sha256:5d05e062a32ed4d912fdde93f7ee4048f118f461f888d1516fbb82b7d6e9ce9c",
+    "execution_hash": "sha256:553f7cfca404df2985fe5a79b267738c4e63afadd2997c9451e1fc35328faa74",
+    "terminal_content_hash": "sha256:a9ce3a74b3c1c22bde88910c0b43f4f66443eb9e58d12034e1763377aa5765dc"
+  },
+  "source_trace_snapshot": {
+    "path": ".patchloop/state.sqlite3",
+    "bytes": 129220608,
+    "file_sha256": "sha256:587c066d041ae5601efbe16754b15777a1843a27afa63241efbbdb4fe4dee2eb",
+    "checked_in": false,
+    "immutable_consumed_run_events": true,
+    "snapshot_itself_is_current_store_state": true
+  },
+  "evidence_boundary": {
+    "inputs_used": [
+      "immutable official-false R8 result bundle",
+      "six public run results",
+      "public AnyIO-v4 task and visible-check contract",
+      "agent-visible event and tool metadata",
+      "agent-visible LLM request context needed to count correction duplication",
+      "consumed R7 public diagnosis and Rapid V2 result bundle"
+    ],
+    "hidden_assertions_read": false,
+    "private_evaluator_artifacts_read": false,
+    "reference_patches_read": false,
+    "reasoning_text_read": false,
+    "llm_response_text_read": false,
+    "provider_calls": 0,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "workspace_mutations": 0,
+    "added_cost_usd": "0"
+  },
+  "observed_batch": {
+    "attempted_rows": 6,
+    "agent_rows_started": 6,
+    "harness_admission_failures": 0,
+    "agent_failures": 6,
+    "evaluator_reached": 0,
+    "submissions_completed": 0,
+    "successes_at_budget": 0,
+    "bundle_token_terminals": 3,
+    "provider_incomplete_terminals": 3,
+    "model_calls": 277,
+    "tool_calls": 444,
+    "model_cost_nanos": 5302506000
+  },
+  "task_difficulty": {
+    "task_id": "anyio-interrupt-runner-cleanup",
+    "task_version": 4,
+    "publicly_coupled_behaviors": [
+      "external SIGINT must propagate",
+      "the interrupted async test must never resume",
+      "async-generator fixture cleanup must run exactly once",
+      "ordinary pass, fail, skip and xfail outcomes must remain intact",
+      "module-lifetime async fixture behavior must remain intact"
+    ],
+    "scope": {
+      "allowed_path_glob": "src/anyio/**",
+      "max_changed_files": 1,
+      "max_diff_lines": 50,
+      "visible_check_count": 2
+    },
+    "assessment": "materially more coupled and stateful than the observed Moto and Babel development tasks"
+  },
+  "budget_counterevidence": {
+    "same_task_same_model_same_split_cap_success": {
+      "source_diagnosis_path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-event-role-20260823-r7-public-trace-diagnosis-v1.json",
+      "source_diagnosis_bytes": 11566,
+      "source_diagnosis_file_sha256": "sha256:1d55ec573c5caf554b530af264d49fa6da30230293320e8c459db020d83faab5",
+      "run_id": "run_rapid_v10_a088c64c3698_05",
+      "variant": "baseline-v2v5",
+      "input_tokens": 397915,
+      "output_tokens": 29228,
+      "reasoning_output_tokens": 26101,
+      "model_calls": 26,
+      "tool_calls": 45,
+      "submission_completed": true,
+      "success_at_budget": true
+    },
+    "same_task_baseline_success_rate_across_r7_r8": "1/6",
+    "conclusion": "the 100000-output cap is not categorically insufficient, but observed success is high-variance and uncommon on this task"
+  },
+  "prior_easy_task_counterpoint": {
+    "bundle_path": "reports/rapid-development/rapid-public-dev-lean-harness-20260821-r2-f066bd044465.jsonl",
+    "bundle_bytes": 10819,
+    "bundle_file_sha256": "sha256:0ef7358c69f1944abef14f6546f012762edcfb5e176d0d5f3d3d3bcec2210ad2",
+    "tasks": [
+      "moto-query-scanned-count",
+      "babel-strict-grouped-decimal-trailing-zeroes"
+    ],
+    "successes": "8/8",
+    "model_call_range": [6, 24],
+    "tool_call_range": [7, 30],
+    "output_token_range": [3031, 30344],
+    "interpretation": "the earlier tasks were much easier for the observed agent path; their perfect result did not establish general coding-agent quality"
+  },
+  "rows": [
+    {
+      "order": 1,
+      "run_id": "run_rapid_v11_553f7cfca404_01",
+      "variant": "baseline-v2v5",
+      "terminal_classification": "LOCAL_EXACT_REQUEST_OUTPUT_BUDGET_BLOCK",
+      "usage": {"input_tokens": 934466, "output_tokens": 88588, "reasoning_output_tokens": 82775, "model_calls": 56, "tool_calls": 97},
+      "remaining_output_tokens": 11412,
+      "requested_next_max_output_tokens": 25000,
+      "patch_applied_count": 6,
+      "search_calls": 42,
+      "read_calls": 34,
+      "visible_checks": {"passed": 0, "failed": 13},
+      "source_result": {"bytes": 2460, "file_sha256": "sha256:24a45b6cc249480ea441a87231ecd655c3230df6fc094343e571ca974a4d1304"},
+      "state_evidence": {"event_count": 429, "terminal_sequence": 429, "terminal_event_sha256": "sha256:45fe3fa654059da2322949b99508f8be5c72b70a81e5404f68f2e2b79365bff0"}
+    },
+    {
+      "order": 2,
+      "run_id": "run_rapid_v11_553f7cfca404_02",
+      "variant": "lean-harness-v7",
+      "terminal_classification": "PROVIDER_INCOMPLETE_RESPONSE_AT_OUTPUT_CAP",
+      "usage": {"input_tokens": 504246, "output_tokens": 100000, "reasoning_output_tokens": 94115, "model_calls": 42, "tool_calls": 54},
+      "patch_applied_count": 6,
+      "edit_tool_calls": 27,
+      "edit_tool_failures": 21,
+      "visible_checks": {"passed": 6, "failed": 6},
+      "simultaneous_check_pairs": 6,
+      "targeted_failed_but_upstream_still_ran": 4,
+      "source_result": {"bytes": 931, "file_sha256": "sha256:c315a69ab7759d0eed6723010f3565063d0ca1706013ccec3f0ab857ce9ca009"},
+      "state_evidence": {"event_count": 283, "terminal_sequence": 283, "terminal_event_sha256": "sha256:73263ab315d14cc1a15ff16a1dec1b3b9c2a77966d92a7664ff45f461d968ee9"}
+    },
+    {
+      "order": 3,
+      "run_id": "run_rapid_v11_553f7cfca404_03",
+      "variant": "lean-harness-v7",
+      "terminal_classification": "PROVIDER_INCOMPLETE_RESPONSE_AT_OUTPUT_CAP",
+      "usage": {"input_tokens": 382218, "output_tokens": 100000, "reasoning_output_tokens": 95166, "model_calls": 29, "tool_calls": 41},
+      "patch_applied_count": 4,
+      "edit_tool_calls": 16,
+      "edit_tool_failures": 12,
+      "visible_checks": {"passed": 0, "failed": 8},
+      "simultaneous_check_pairs": 4,
+      "targeted_failed_but_upstream_still_ran": 4,
+      "source_result": {"bytes": 931, "file_sha256": "sha256:7f85f68824703b045a3d50112fad19cdfb728992ae59ff14689692fbd73db1b0"},
+      "state_evidence": {"event_count": 199, "terminal_sequence": 199, "terminal_event_sha256": "sha256:f46ab3031a004083471f46b45ab99539490bca7ec8b86cf9ed245da3a73c1002"}
+    },
+    {
+      "order": 4,
+      "run_id": "run_rapid_v11_553f7cfca404_04",
+      "variant": "baseline-v2v5",
+      "terminal_classification": "LOCAL_EXACT_REQUEST_OUTPUT_BUDGET_BLOCK",
+      "usage": {"input_tokens": 906519, "output_tokens": 77451, "reasoning_output_tokens": 71855, "model_calls": 52, "tool_calls": 94},
+      "remaining_output_tokens": 22549,
+      "requested_next_max_output_tokens": 25000,
+      "patch_applied_count": 3,
+      "search_calls": 57,
+      "read_calls": 22,
+      "visible_checks": {"passed": 0, "failed": 8},
+      "source_result": {"bytes": 2461, "file_sha256": "sha256:609fabafee520222b5a91d888e7cc635d5ed9b8d2f170d227ca19a13edee9c34"},
+      "state_evidence": {"event_count": 422, "terminal_sequence": 422, "terminal_event_sha256": "sha256:7c0d34a8752830758944a954afad3497b450de0eaf8802416ab025514f58b7d1"}
+    },
+    {
+      "order": 5,
+      "run_id": "run_rapid_v11_553f7cfca404_05",
+      "variant": "baseline-v2v5",
+      "terminal_classification": "LOCAL_EXACT_REQUEST_OUTPUT_BUDGET_BLOCK",
+      "usage": {"input_tokens": 893338, "output_tokens": 76460, "reasoning_output_tokens": 70594, "model_calls": 57, "tool_calls": 103},
+      "remaining_output_tokens": 23540,
+      "requested_next_max_output_tokens": 25000,
+      "patch_applied_count": 7,
+      "search_calls": 53,
+      "read_calls": 28,
+      "visible_checks": {"passed": 0, "failed": 14},
+      "source_result": {"bytes": 2394, "file_sha256": "sha256:c2ebaf40a7bbf334f365b69a311976330449a97cfffdc349333844c856aa57aa"},
+      "state_evidence": {"event_count": 453, "terminal_sequence": 453, "terminal_event_sha256": "sha256:52af76db7bfeb9f640c9f26202f7c91535b49142e9c2cefc5924aa698a5c0810"}
+    },
+    {
+      "order": 6,
+      "run_id": "run_rapid_v11_553f7cfca404_06",
+      "variant": "lean-harness-v7",
+      "terminal_classification": "PROVIDER_INCOMPLETE_RESPONSE_MASKED_BY_USAGE_MISMATCH",
+      "usage": {"input_tokens": 552157, "output_tokens": 99481, "reasoning_output_tokens": 93471, "model_calls": 41, "tool_calls": 55},
+      "last_response": {"status": "incomplete", "reason": "max_output_tokens", "usage_present": false, "historical_adapter_error": "input_token_count_mismatch"},
+      "patch_applied_count": 7,
+      "edit_tool_calls": 20,
+      "edit_tool_failures": 13,
+      "visible_checks": {"passed": 0, "failed": 14},
+      "simultaneous_check_pairs": 6,
+      "targeted_failed_but_upstream_still_ran": 6,
+      "source_result": {"bytes": 938, "file_sha256": "sha256:8271f675b30c97ac60851eac4042247e4438c20df28a04930d8338d32f80a8c3"},
+      "state_evidence": {"event_count": 273, "terminal_sequence": 273, "terminal_event_sha256": "sha256:794ec5c3391ba839707e17cb9273268d3a3c0ce9dcdf591dc300e2e43d80e9a4"}
+    }
+  ],
+  "aggregate_tool_path": {
+    "baseline": {
+      "search_calls": 152,
+      "read_calls": 84,
+      "patch_applied": 16,
+      "visible_check_passes": 0,
+      "visible_check_failures": 35,
+      "local_output_budget_blocks": 3
+    },
+    "lean_v7": {
+      "search_calls": 25,
+      "read_calls": 28,
+      "post_first_mutation_search_or_read_calls": 0,
+      "raw_patch_calls": 37,
+      "structured_edit_calls": 26,
+      "patch_applied": 17,
+      "executed_edit_failures": 46,
+      "raw_invalid_hunk_header_failures": 14,
+      "raw_context_mismatch_failures": 18,
+      "visible_check_passes": 6,
+      "visible_check_failures": 28,
+      "simultaneous_check_pairs": 16,
+      "targeted_failed_but_upstream_still_ran": 14,
+      "diffs_passing_both_visible_checks": 0
+    }
+  },
+  "request_context_observation": {
+    "lean_model_request_count": 112,
+    "requests_with_full_edit_correction": 63,
+    "full_correction_occurrence_range": [2, 8],
+    "duplication_sources": [
+      "recent-event payload.error_details.edit_correction",
+      "expanded tool_result.error_details.edit_correction",
+      "rejected_mutation_retry when present"
+    ],
+    "offline_latest-only_projection": {
+      "projected_requests": 112,
+      "requests_changed": 63,
+      "full_correction_bodies_after_projection": 1,
+      "total_context_json_bytes_saved": 356077,
+      "per_changed_request_bytes_saved_range": [1858, 12983],
+      "provider_calls": 0,
+      "state_mutations": 0
+    }
+  },
+  "findings": [
+    {
+      "classification": "TASK_DIFFICULTY_IS_REAL_BUT_NOT_IMPOSSIBILITY",
+      "observed": "the public task couples interruption propagation, non-resumption and fixture lifetime invariants; the same cap nevertheless produced one R7 baseline success",
+      "limit": "one success and five baseline failures do not estimate a stable general success rate"
+    },
+    {
+      "classification": "TOKEN_CAP_IS_TERMINAL_SURFACE_NOT_PRIMARY_ROOT_CAUSE",
+      "observed": "all three baseline rows exhausted admission headroom after repeated unsuccessful exploration/check cycles, while all Lean rows spent about 100000 output tokens without submission",
+      "limit": "raising the cap alone is not qualified and may only increase cost"
+    },
+    {
+      "classification": "V7_BLIND_CORRECTION_LANE",
+      "observed": "after each Lean row's first successful mutation, no read_file or search_files call occurred; failed checks led only to check/edit cycles",
+      "limit": "this is a harness policy defect evidenced by public tool paths, not a claim about hidden model reasoning"
+    },
+    {
+      "classification": "IMPLEMENTATION_FRONTIER_OSCILLATION",
+      "observed": "Lean row 2 first produced four diffs where targeted failed and upstream passed, then two where targeted passed and upstream failed; no diff passed both",
+      "limit": "reasoning text was not inspected, so only observable implementation decisions are diagnosed"
+    },
+    {
+      "classification": "EDIT_INTERFACE_AND_CONTEXT_FRICTION_AMPLIFIED_FAILURE",
+      "observed": "63 Lean edit calls yielded only 17 applied patches and 46 executed failures; current correction bodies appeared two to eight times in affected request contexts",
+      "limit": "edit friction co-occurs with semantic non-convergence and is not a sufficient explanation by itself"
+    },
+    {
+      "classification": "CHECK_SCHEDULING_WASTED_WORK",
+      "observed": "16 Lean responses ran both public checks; 14 ran upstream even though the targeted lifecycle check had already failed",
+      "limit": "sequential gating saves calls but does not by itself produce a correct patch"
+    },
+    {
+      "classification": "TERMINAL_ATTRIBUTION_ORDER_BUG",
+      "observed": "row 6 had provider status incomplete/max_output_tokens with absent usage, but the adapter reported input_token_count_mismatch first",
+      "limit": "the attribution fix does not recover the row or authorize retry"
+    }
+  ],
+  "implemented_offline_successor": {
+    "module": "patchloop/agent/completion_loop_successor.py",
+    "policy_version": "ordered-check-refresh-structured-correction-v1",
+    "behaviors": [
+      "one public check per response in task order",
+      "upstream check only after targeted check passes on the current diff",
+      "one fresh current-source read after check failure or edit rejection",
+      "structured-edit-only correction lane when available",
+      "latest public edit-correction body once with older bodies replaced by hashes",
+      "target ceilings of 2048 check, 4096 read, 8192 correction and 2048 review/submission tokens",
+      "low reasoning effort for mechanical actions and medium only for correction"
+    ],
+    "terminal_attribution_projection": "the offline successor gives explicit incomplete status precedence over absent-usage accounting mismatch while preserving the mismatch flag",
+    "runtime_wired": false,
+    "qualification_required_before_runtime_wiring": true,
+    "provider_calls_authorized": false,
+    "paid_execution_authorized": false
+  },
+  "disposition": {
+    "r8_consumed": true,
+    "r8_retry_authorized": false,
+    "quality_improvement_established": false,
+    "root_cause_order": [
+      "hard public task and unstable semantic implementation",
+      "V7 blind correction lane",
+      "edit contract and duplicated correction context friction",
+      "wasteful non-sequential check execution",
+      "token cap reached after non-convergence"
+    ],
+    "next_work": "offline qualification and runtime integration of the opt-in successor, followed by a fresh official-false development candidate only under new exact authority"
+  },
+  "content_hash": "sha256:021af168a0fb1fb699641a6689fb5089c5f91780065cf215d5c95552ea682898"
+}

@@ -436,6 +436,8 @@ def test_docker_registered_check_records_only_exact_requested_policy(
             docker,
             "run",
             "--rm",
+            "--pull",
+            "never",
             "--network",
             "none",
             "--cpus",

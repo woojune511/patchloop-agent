@@ -1,0 +1,76 @@
+{
+  "attempt_binding": {
+    "content_hash": "sha256:fbf619e4e64f0726a5622e16acee7338457385ed213644338891f73ecdaf00a8",
+    "file_bytes": 9285,
+    "file_sha256": "sha256:b800ddf58abcd4542f8388374757f610b34089f2604167fa78ccbf37658c66b6",
+    "path": "reports/fresh-panel/artifacts/lean-fresh-harbor-partial-preflight-attempt-r1.json",
+    "role": "read-only-docker-preflight-attempt"
+  },
+  "authority": {
+    "added_cost_usd": 0,
+    "admission_authorized": false,
+    "agent_runs": 0,
+    "container_create_start_run_exec_calls": 0,
+    "docker_cli_calls": 2,
+    "docker_daemon_read_calls": 2,
+    "evaluator_calls": 0,
+    "execution_authorized": false,
+    "harbor_calls": 0,
+    "image_inspect_requested_refs": 12,
+    "image_pull_or_build_calls": 0,
+    "image_store_mutations": 0,
+    "network_calls": 0,
+    "preflight_consumed": true,
+    "provider_calls": 0,
+    "task_materializations": 0
+  },
+  "content_hash": "sha256:725a230863af4ae43f1c447323cba06e61140920be8b928c4065a3bd4c52b94e",
+  "docker_cli": {
+    "file_bytes": 43095472,
+    "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+    "resolved_path": "C:\\Users\\geonj\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
+  },
+  "docker_context": "desktop-linux",
+  "docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+  "execution_hash": "sha256:92fb35e786a4dfe257d2c242c9a5e3ca62f0f330c497aa10b8235fb049dc2bdb",
+  "image_inspect_command": {
+    "arguments_hash": "sha256:143d7071faa69047b2e84b80e25bbc83417dfc2f99ef92fbffdd489844f0a94c",
+    "return_code": 1,
+    "stderr": {
+      "byte_count": 1044,
+      "sha256": "sha256:8d3203bde04fb8b8a014a2cf992cd05472ad3ba0c75863a2178563cbdc9a96d4"
+    },
+    "stdout": {
+      "byte_count": 3,
+      "sha256": "sha256:37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    }
+  },
+  "images": [],
+  "missing_refs_identified_from_stderr": [],
+  "next_gate": "obtain-separate-local-image-readiness-remediation-authority",
+  "raw_stdout_or_stderr_persisted": false,
+  "recorded_at": "2026-08-18T01:02:56.130204Z",
+  "schema_version": "lean-fresh-harbor-partial-preflight-terminal-v1",
+  "status": "READ_ONLY_DOCKER_PREFLIGHT_BLOCKED_IMAGES",
+  "terminal_id": "lean-fresh-harbor-partial-preflight-terminal-20260818-r1",
+  "version": {
+    "client_api_version": "1.55",
+    "client_version": "29.6.2",
+    "server_api_version": "1.55",
+    "server_arch": "amd64",
+    "server_os": "linux",
+    "server_version": "29.6.2"
+  },
+  "version_command": {
+    "arguments_hash": "sha256:484940b78086687f859db5e03e71118afdd29238dde506cb6ba0feac2adc1034",
+    "return_code": 0,
+    "stderr": {
+      "byte_count": 0,
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout": {
+      "byte_count": 1145,
+      "sha256": "sha256:5ecb147f74b79c6efaa81aef74f80d15c330a16fe2e60bd28d612f9f2ea9602e"
+    }
+  }
+}

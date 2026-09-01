@@ -1,0 +1,159 @@
+{
+  "acquisition_design": {
+    "candidate_source_family": "SWE-rebench-leaderboard",
+    "condition_specific_selection_allowed": false,
+    "cross_repository_disjoint_from_all_current_manifest_repositories": true,
+    "cross_repository_selection": "six-lowest-ranked-eligible-instances-with-one-per-new-repository",
+    "cross_repository_task_count": 6,
+    "excluded_identity_dimensions": [
+      "task-id-and-version",
+      "benchmark-instance-id",
+      "issue-or-pull-request-url",
+      "upstream-base-or-resolution-commit",
+      "solution-lineage-id",
+      "public-or-private-spec-hash"
+    ],
+    "experimental_model_runs_during_acquisition": 0,
+    "insufficient_pool_rule": "stop-without-relaxation-and-require-a-successor-preregistration-before-new-screening",
+    "minimum_difficulty_tier": "medium",
+    "minimum_reference_pass_runs": 3,
+    "minimum_rejected_bad_patches": 8,
+    "r16_row_outcomes_or_traces_used_for_selection": false,
+    "ranking_algorithm": "ascending-sha256-utf8",
+    "ranking_preimage": "lean-fresh-acquisition-20260817-v1|stratum={stratum}|repo={lowercase_repo}|instance={canonical_public_instance_id}",
+    "registry_completeness_evidence": "immutable-source-snapshot-plus-complete-query-transcript-and-append-only-rejection-log",
+    "replacement_rule": "next-ranked-eligible-candidate-with-recorded-rejection-code",
+    "required_admission_states": [
+      "base-visible-pass",
+      "base-hidden-fail",
+      "reference-visible-hidden-scope-safety-pass",
+      "environment-image-digest-bound",
+      "public-private-spec-hashes-bound",
+      "license-compatible"
+    ],
+    "same_repository_selection": "one-lowest-ranked-eligible-new-instance-per-frozen-repository",
+    "same_repository_targets": [
+      "agronholm/anyio",
+      "delgan/loguru",
+      "huggingface/huggingface_hub",
+      "pdm-project/pdm",
+      "pytest-dev/pyfakefs",
+      "tox-dev/tox"
+    ],
+    "same_repository_task_count": 6,
+    "source_snapshot_selection": "earliest-published-immutable-revision-after-2026-08-16-containing-the-complete-frozen-window",
+    "source_window_basis": "public-issue-created-and-resolution-merged-after-model-snapshot-before-preregistration",
+    "source_window_end_inclusive": "2026-08-16T23:59:59Z",
+    "source_window_start_exclusive": "2026-03-17T23:59:59Z",
+    "target_task_count": 12
+  },
+  "authority": {
+    "added_model_cost_usd": 0,
+    "agent_runs": 0,
+    "approval_granted": false,
+    "candidate_created": false,
+    "candidate_registry_materialized": false,
+    "consumed_preregistration_files_read": 1,
+    "consumed_r16_index_files_read": 1,
+    "current_manifest_files_read": 1,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "execution_authorized": false,
+    "fresh_task_panel_materialized": false,
+    "full_experiment_preregistered": false,
+    "lean_source_qualification_files_read": 1,
+    "memory_effect_analysis_authorized": false,
+    "network_calls": 0,
+    "private_task_files_read": 0,
+    "provider_calls": 0,
+    "r16_runtime_or_trace_files_read": 0,
+    "runtime_source_qualified_for_fresh_panel": false,
+    "task_package_files_read": 0
+  },
+  "content_hash": "sha256:adec1153d8eab532d118fe24d0f60247385d154dbcc840db8dc24167c0c1cb94",
+  "current_pool_audit": {
+    "consumed_core_identity_hash": "sha256:7f4dceeaae7e057352db726363bcf865841e8de87f8347ee77064357c778c0af",
+    "consumed_core_task_count": 12,
+    "current_core_exactly_matches_consumed_preregistration": true,
+    "current_manifest_can_supply_fresh_panel": false,
+    "eligible_fresh_task_count": 0,
+    "existing_repository_set_hash": "sha256:8f7debfd69b6495b793ee76fb6468123441903535247a08ed46dd8c404c2f188",
+    "existing_task_identity_hash": "sha256:4cddfdef314eb214bf0ab490fbe01daa0abb651cd60c286a9d99f1627e6e16be",
+    "manifest_task_count": 25,
+    "role_counts": {
+      "calibration": 5,
+      "core-cross-repo": 6,
+      "core-same-repo": 6,
+      "development-validation": 2,
+      "memory-development": 6
+    },
+    "unused_core_task_count": 0
+  },
+  "eventual_experiment_design": {
+    "causal_population_or_uncontaminated_claim_authorized": false,
+    "complete_panel_required": true,
+    "conditions": [
+      "no_memory",
+      "structured"
+    ],
+    "equal_condition_budget_required": true,
+    "expected_rows_after_panel_seal": 48,
+    "harness": "lean-harness-v1",
+    "memory_policy": "fixed-d110-bundle-v1",
+    "partial_panel_primary_analysis_authorized": false,
+    "phase_evidence": "phase-evidence-v12",
+    "pricing_and_hard_cap_binding": "pending-before-candidate-and-before-any-panel-outcome",
+    "primary_estimand": "equal-task-weighted-mean-over-two-paired-repetitions",
+    "primary_outcome": "scheduled-row-success-at-frozen-budget",
+    "repetitions_per_task": 2,
+    "runtime_budget_binding": "pending-public-development-provider-qualification",
+    "tool_schema": "v7",
+    "treatment_difference_only_memory": true,
+    "typed_token_terminals_block_added_compute_interpretation": true,
+    "typed_token_terminals_score_zero": true
+  },
+  "next_gate": "materialize-and-audit-the-frozen-public-candidate-registry-before-any-task-package-or-runtime-activation",
+  "predecessor_bindings": [
+    {
+      "content_hash": null,
+      "file_bytes": 47368,
+      "file_sha256": "sha256:e8cf14ca9dabebcc03c3522e400dfcb79606541e9b11e59f49510ea5c40bebed",
+      "path": "data/dataset-manifest.yaml",
+      "role": "frozen-dataset-registry"
+    },
+    {
+      "content_hash": "sha256:3b75f049649850b7561f310229e1e5429f72ea24024e835ccf4910fb2c901f74",
+      "file_bytes": 31338,
+      "file_sha256": "sha256:f6d9d015329823f3f888aac5f15296b2ddefda9e45b5d5501b8d94587bb11d8f",
+      "path": "experiments/heldout-ac-preregistration-20260814-v1.yaml",
+      "role": "consumed-panel-preregistration"
+    },
+    {
+      "content_hash": "sha256:945e8e9ff1df60a255d20fb406ca7b7ab20ca16a3b50da5cbce12f2fb38a6521",
+      "file_bytes": 10375,
+      "file_sha256": "sha256:999fa9e42f010b03b96013d089f662ad3f50b1c5c6469b2aa8ddb901c522391e",
+      "path": "reports/heldout-ac/artifacts/heldout-ac-r16-campaign-complete-r1.json",
+      "role": "consumed-panel-evidence-index"
+    },
+    {
+      "content_hash": "sha256:b0f28eb86eb8463c389708af500dede582048c3f7910876dac5aa9d610768226",
+      "file_bytes": 72420,
+      "file_sha256": "sha256:7104310a700822bde8343b7ed37facdb3fa09709ced41540cb9ccb431642fdab",
+      "path": "experiments/lean-harness-runtime-source-qualification-20260817-v1.json",
+      "role": "qualified-lean-runtime-source"
+    }
+  ],
+  "preregistered_at": "2026-08-16T20:40:53.007115Z",
+  "preregistration_id": "lean-harness-fresh-ac-panel-acquisition-20260817-v1",
+  "schema_version": "lean-harness-fresh-acquisition-preregistration-v1",
+  "status": "PREREGISTERED_ACQUISITION_CLOSED_NO_FRESH_TASKS",
+  "stopping_rules": {
+    "no_retry_replacement_resume_or_pooling_after_outcome_access": true,
+    "stop_on_agent_or_provider_run_before_full_design_seal": true,
+    "stop_on_current_manifest_task_reuse": true,
+    "stop_on_private_or_reference_material_in_agent_memory": true,
+    "stop_on_r16_outcome_informed_selection_or_threshold": true,
+    "stop_on_registry_or_rejection_log_incompleteness": true,
+    "stop_on_runtime_source_or_predecessor_drift": true
+  }
+}

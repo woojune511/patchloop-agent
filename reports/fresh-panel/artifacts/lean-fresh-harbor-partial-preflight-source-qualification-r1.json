@@ -1,0 +1,76 @@
+{
+  "authority": {
+    "added_cost_usd": 0,
+    "container_mutations": 0,
+    "docker_cli_calls": 0,
+    "docker_daemon_calls": 0,
+    "execution_authorized": false,
+    "image_store_mutations": 0,
+    "network_calls": 0,
+    "package_archives_read": 0,
+    "preflight_authorized": false,
+    "runner_candidate_files_read": 1,
+    "source_files_read": 3,
+    "source_qualified": true,
+    "task_evaluator_provider_calls": 0,
+    "validation_files_read": 1
+  },
+  "checks": {
+    "append-only-approval-attempt-terminal": true,
+    "environment-docker-endpoint-overrides-rejected": true,
+    "exact-runner-candidate-and-execution-hash-bound": true,
+    "exact-two-command-read-only-docker-surface": true,
+    "explicit-local-desktop-linux-context-required": true,
+    "no-harbor-task-evaluator-agent-provider-entrypoint": true,
+    "no-image-pull-build-or-container-command": true,
+    "one-bulk-image-inspect-call": true,
+    "raw-command-output-hashed-not-persisted": true,
+    "twelve-archive-dockerfiles-only": true
+  },
+  "content_hash": "sha256:214d3179847777960317a84c3e4805c6ff0499c93ab5d69cab2b4bcac11ea35c",
+  "next_gate": "record-exact-user-approval-and-preflight-attempt-intent",
+  "qualification_id": "lean-fresh-harbor-partial-preflight-20260818-r1",
+  "runner_candidate_binding": {
+    "content_hash": "sha256:f687a887c3c405ad76251b75aa45d89c20b528c8d9cf0724cf7020e05e1255c0",
+    "file_bytes": 92174,
+    "file_sha256": "sha256:c2e63b4e9c679f0d3b5ff97d02399d9b4fcfac82ff2b18123937946667898082",
+    "path": "experiments/lean-harness-fresh-harbor-partial-admission-runner-20260818-v1.json",
+    "role": "sealed-partial-runner-candidate"
+  },
+  "schema_version": "lean-fresh-harbor-partial-preflight-source-qualification-v1",
+  "source_files": [
+    {
+      "content_hash": null,
+      "file_bytes": 42709,
+      "file_sha256": "sha256:bf4555eff79b8db58e83567e93a2ad61a0e434ad842d5e1939bd4ddd344d6a69",
+      "path": "patchloop/evals/fresh_harbor_partial_preflight.py",
+      "role": "preflight-source"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 496,
+      "file_sha256": "sha256:4763bb6b6b12f87271c6cff4952356af98561a2be1df5720f773a1ec17a05a06",
+      "path": "scripts/build_lean_fresh_harbor_partial_preflight_source_qualification.py",
+      "role": "preflight-source"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 912,
+      "file_sha256": "sha256:2ad25a0857e649ac6916565df6fb3d200f7673be80fb5f033bdc22a89d197da0",
+      "path": "scripts/run_lean_fresh_harbor_partial_preflight.py",
+      "role": "preflight-source"
+    }
+  ],
+  "source_inventory_hash": "sha256:9c493032cab090bc983385c6a071e7f45fec899769bea18fe14c957a56179dd5",
+  "status": "READ_ONLY_DOCKER_PREFLIGHT_SOURCE_QUALIFIED_NO_AUTHORITY",
+  "validation_files": [
+    {
+      "content_hash": null,
+      "file_bytes": 8461,
+      "file_sha256": "sha256:8298b41e685709875776f23742bb07a93ef9ea9f25b14bc5e40963e6419d1848",
+      "path": "tests/test_fresh_harbor_partial_preflight.py",
+      "role": "preflight-validation"
+    }
+  ],
+  "validation_inventory_hash": "sha256:96c4409c4bcf8adfd093941bc6f8e5fc0f8a05c73b6e1296c233e0c3df964048"
+}

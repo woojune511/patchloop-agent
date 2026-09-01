@@ -1,0 +1,106 @@
+{
+  "authority": {
+    "added_model_cost_usd": 0,
+    "agent_runs": 0,
+    "approval_granted": false,
+    "candidate_created": false,
+    "candidate_registry_materialized": false,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "execution_authorized": false,
+    "fresh_task_panel_materialized": false,
+    "full_experiment_preregistered": false,
+    "memory_effect_claim_authorized": false,
+    "official_analysis_authorized": false,
+    "offline_builder_network_calls": 0,
+    "oracle_solution_pages_opened": 0,
+    "private_task_files_read": 0,
+    "provider_calls": 0,
+    "public_metadata_browser_lookup_performed": true,
+    "public_metadata_surfaces_read": 6,
+    "r16_row_outcomes_or_traces_read": 0,
+    "runtime_source_qualified_for_fresh_panel": false,
+    "task_admission_authorized": false,
+    "task_package_files_read": 0,
+    "task_rows_downloaded": 0
+  },
+  "checkpoint_id": "lean-harness-fresh-source-availability-20260818-v2",
+  "content_hash": "sha256:6c841590acf00d88605fd3e4095cf8b6626918bf95bc6e0a494ccba39d61efb3",
+  "decision": {
+    "acquisition_rules_relaxed": false,
+    "candidate_registry_materialized": false,
+    "checked_canonical_public_surfaces": 6,
+    "disposition": "blocked-without-relaxation",
+    "qualifying_snapshot_observed": false,
+    "reason": "hugging-face-ended-at-2026-03-and-harbor-retained-the-2026-07-snapshot-while-the-2026-08-monthly-url-returned-404-so-no-observed-snapshot-covered-the-window-through-2026-08-16",
+    "task_package_materialization_allowed": false
+  },
+  "evidence_limitations": {
+    "absence_claim_scope": "only-the-six-recorded-canonical-public-surfaces-at-observed-at",
+    "direct_public_metadata_url_status_checks": 2,
+    "future_snapshot_availability_ruled_out": false,
+    "observation_method": "interactive-public-metadata-browser-review",
+    "raw_http_response_bytes_persisted": false,
+    "registry_completeness_established": false,
+    "remote_page_file_hashes_recorded": false,
+    "task_validity_established": false
+  },
+  "harbor_observation": {
+    "august_2026_monthly_snapshot_observed": false,
+    "august_snapshot_http_status_observed": 404,
+    "august_snapshot_url": "https://hub.harborframework.com/datasets/ibragim-badertdinov/swe-rebench-08-2026/latest",
+    "catalog_matching_results_observed": 4,
+    "catalog_search_term": "swe-rebench",
+    "catalog_total_datasets_observed": 271,
+    "catalog_url": "https://hub.harborframework.com/datasets",
+    "complete_frozen_window_observed": false,
+    "july_snapshot_difficulty": "hard",
+    "july_snapshot_language_task_counts": {
+      "go": 21,
+      "java": 21,
+      "python": 20,
+      "rust": 25,
+      "typescript": 24
+    },
+    "july_snapshot_public_task_count": 111,
+    "july_snapshot_published_on": "2026-07-26",
+    "july_snapshot_revision": 1,
+    "july_snapshot_tag": "2026-07",
+    "july_snapshot_url": "https://hub.harborframework.com/datasets/ibragim-badertdinov/swe-rebench-07-2026/latest",
+    "main_dataset_public_task_count_observed": 860,
+    "main_dataset_url": "https://hub.harborframework.com/datasets/swe-rebench/swe-rebench-leaderboard/latest"
+  },
+  "hugging_face_observation": {
+    "commit_history_url": "https://huggingface.co/datasets/nebius/SWE-rebench-leaderboard/commits/main/data",
+    "complete_frozen_window_observed": false,
+    "data_tree_head_short_commit": "ab4805d",
+    "data_tree_url": "https://huggingface.co/datasets/nebius/SWE-rebench-leaderboard/tree/main/data",
+    "latest_monthly_split_commit_short": "a1191b8",
+    "latest_monthly_split_observed": "2026_03"
+  },
+  "next_gate": "wait-for-and-record-a-successor-observation-of-the-earliest-qualifying-immutable-snapshot-before-materializing-a-candidate-registry",
+  "observed_at": "2026-08-17T17:36:26.441333Z",
+  "predecessor_binding": {
+    "content_hash": "sha256:14221cf50c1fdf373b9d2a522fa11fc5eb81899d2fef4f59cbda27c192377865",
+    "file_bytes": 4427,
+    "file_sha256": "sha256:750dfef2759f48d5c038197349cc380c5d5eaf2a840fa039663e1d0fab2cec67",
+    "path": "experiments/lean-harness-fresh-source-availability-20260817-v1.json",
+    "role": "immutable-no-qualifying-snapshot-predecessor"
+  },
+  "preregistration_binding": {
+    "content_hash": "sha256:adec1153d8eab532d118fe24d0f60247385d154dbcc840db8dc24167c0c1cb94",
+    "file_bytes": 7255,
+    "file_sha256": "sha256:086b9fc56ab5eca3ae23cd367243d9b71c3805d7f3edd3613afdb73a34bbf359",
+    "path": "experiments/lean-harness-fresh-acquisition-preregistration-20260817-v1.json",
+    "role": "outcome-blind-fresh-acquisition-preregistration"
+  },
+  "required_snapshot": {
+    "candidate_source_family": "SWE-rebench-leaderboard",
+    "completeness_evidence_required": "immutable-source-snapshot-plus-complete-query-transcript-and-append-only-rejection-log",
+    "snapshot_selection": "earliest-published-immutable-revision-after-2026-08-16-containing-the-complete-frozen-window",
+    "source_window_end_inclusive": "2026-08-16T23:59:59Z",
+    "source_window_start_exclusive": "2026-03-17T23:59:59Z"
+  },
+  "schema_version": "lean-harness-fresh-source-availability-v2",
+  "status": "NO_QUALIFYING_SNAPSHOT_OBSERVED_AT_CHECKPOINT"
+}

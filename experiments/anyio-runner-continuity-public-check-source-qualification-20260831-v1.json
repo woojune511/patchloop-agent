@@ -1,0 +1,89 @@
+{
+  "activation_authorized": false,
+  "behavior_observed": false,
+  "content_hash": "sha256:ccb2cab859d71641fbb33416ca7c5cbf31512f2e9b590c4dc97de595101d8c13",
+  "evidence_boundary": {
+    "added_cost_usd": 0,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "hidden_evaluator_content_read_by_builder": false,
+    "network_calls": 0,
+    "private_task_spec_read_by_builder": false,
+    "provider_calls": 0,
+    "public_task_source_only": true,
+    "reasoning_text_read_by_builder": false,
+    "reference_patch_read_by_builder": false,
+    "visible_check_calls": 0
+  },
+  "input_bindings": [
+    {
+      "file_bytes": 13069,
+      "file_sha256": "sha256:6af0c6bc14d8ef63f1d12065370387f47bf6b0b9b7acc51e85fca894815b9171",
+      "path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml"
+    }
+  ],
+  "paid_execution_authorized": false,
+  "policy_version": "public-runner-continuity-composite-outcomes-v1",
+  "proposed_check": {
+    "command": [
+      "/opt/conda/envs/testbed/bin/python",
+      "-c",
+      "import os\nimport subprocess\nimport sys\nimport tempfile\nimport textwrap\nfrom pathlib import Path\n\n\nwith tempfile.TemporaryDirectory(prefix=\"patchloop-anyio-runner-continuity-\") as selected:\n    root = Path(selected)\n    event_log = root / \"events.log\"\n    test_path = root / \"test_runner_continuity.py\"\n    test_path.write_text(\n        textwrap.dedent(\n            f\"\"\"\n            import asyncio\n            from pathlib import Path\n\n            import pytest\n\n            EVENT_LOG = Path({str(event_log)!r})\n\n            def record(label):\n                loop_id = id(asyncio.get_running_loop())\n                with EVENT_LOG.open(\"a\", encoding=\"utf-8\") as stream:\n                    stream.write(f\"{{label}}:{{loop_id}}\\\\n\")\n\n            @pytest.fixture(scope=\"module\")\n            def anyio_backend():\n                return \"asyncio\"\n\n            @pytest.fixture(scope=\"module\")\n            async def shared(anyio_backend):\n                record(\"shared-start\")\n                try:\n                    yield\n                finally:\n                    record(\"shared-cleanup\")\n\n            @pytest.mark.anyio\n            async def test_skip(shared):\n                record(\"skip\")\n                pytest.skip(\"public skip\")\n\n            @pytest.mark.anyio\n            async def test_xfail(shared):\n                record(\"xfail\")\n                pytest.xfail(\"public xfail\")\n\n            @pytest.mark.anyio\n            async def test_ordinary_failure(shared):\n                record(\"ordinary-failure\")\n                assert False, \"expected public ordinary failure\"\n\n            @pytest.mark.anyio\n            async def test_after_outcomes(shared):\n                record(\"after-outcomes\")\n            \"\"\"\n        ),\n        encoding=\"utf-8\",\n    )\n    environment = os.environ.copy()\n    environment.update(\n        {\n            \"PYTHONDONTWRITEBYTECODE\": \"1\",\n            \"PYTEST_DISABLE_PLUGIN_AUTOLOAD\": \"1\",\n            \"PYTHONPATH\": \"/workspace/src\",\n        }\n    )\n    completed = subprocess.run(\n        [\n            sys.executable,\n            \"-m\",\n            \"pytest\",\n            \"--no-header\",\n            \"-q\",\n            \"-p\",\n            \"anyio.pytest_plugin\",\n            \"-p\",\n            \"no:cacheprovider\",\n            str(test_path),\n        ],\n        cwd=root,\n        env=environment,\n        capture_output=True,\n        text=True,\n        timeout=20,\n        check=False,\n    )\n    events = event_log.read_text(encoding=\"utf-8\").splitlines() if event_log.is_file() else []\n    labels = [event.rsplit(\":\", 1)[0] for event in events]\n    loop_ids = [event.rsplit(\":\", 1)[1] for event in events if \":\" in event]\n    expected_labels = [\n        \"shared-start\",\n        \"skip\",\n        \"xfail\",\n        \"ordinary-failure\",\n        \"after-outcomes\",\n        \"shared-cleanup\",\n    ]\n    if completed.returncode != 1:\n        raise AssertionError(\"PUBLIC_CASE:anyio:runner-continuity-status\")\n    if labels != expected_labels:\n        raise AssertionError(\"PUBLIC_CASE:anyio:runner-continuity-events\")\n    if len(loop_ids) != len(expected_labels) or len(set(loop_ids)) != 1:\n        raise AssertionError(\"PUBLIC_CASE:anyio:runner-continuity-loop-identity\")\n    output = completed.stdout + \"\\n\" + completed.stderr\n    for summary in (\"1 failed\", \"1 passed\", \"1 skipped\", \"1 xfailed\"):\n        if summary not in output:\n            raise AssertionError(\"PUBLIC_CASE:anyio:runner-continuity-summary\")\n"
+    ],
+    "environment": {
+      "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/workspace/src"
+    },
+    "expected_base_observation": "pass_unverified",
+    "expected_reference_observation": "pass_unverified",
+    "id": "public-runner-continuity-composite-outcomes",
+    "output_limit_bytes": 20000,
+    "timeout_seconds": 30,
+    "working_directory": "."
+  },
+  "proposed_check_hash": "sha256:0aeef92b6e04ba4045f43ec6965121859cd7acb5d9e1ec444eaf8b2879cdbccb",
+  "public_source_contract": {
+    "composite_runner_continuity_present": false,
+    "existing_outcomes_split_across_checks": true,
+    "proposed_intersection": "one module-scoped async fixture and one asyncio loop survive skip, xfail, ordinary failure, and a later pass before exactly one cleanup",
+    "public_outcome_clause_present": true,
+    "public_task_content_hash": "sha256:fdaa27eaf28e23b3c70b06f2eaf1a566f9bacb90fd2f7eb4e21a9d48699f04f7",
+    "public_task_file_sha256": "sha256:6af0c6bc14d8ef63f1d12065370387f47bf6b0b9b7acc51e85fca894815b9171",
+    "task_id": "anyio-interrupt-runner-cleanup",
+    "task_version": 5,
+    "visible_check_ids": [
+      "public-interrupt-runner-lifecycle",
+      "public-ordinary-failure-preservation",
+      "upstream-pytest-plugin-regression"
+    ]
+  },
+  "qualification_assertions": {
+    "does_not_attribute_hidden_failures": true,
+    "expected_observations_are_unverified": true,
+    "shared_cleanup_exactly_once_and_last": true,
+    "single_module_scoped_async_generator_fixture": true,
+    "single_runner_identity_expected": true,
+    "skip_xfail_failure_then_pass_order": true
+  },
+  "schema_version": "anyio-runner-continuity-public-check-source-qualification-v1",
+  "source_bindings": [
+    {
+      "file_bytes": 10189,
+      "file_sha256": "sha256:4e1d672ae678f8851c121ea52a257f40fb5c570b399c693e4f6ed689f5cf5af3",
+      "path": "patchloop/evals/anyio_runner_continuity_public_check.py"
+    },
+    {
+      "file_bytes": 862,
+      "file_sha256": "sha256:be71e8b04f9b14b49467b1e8a5d7af4a62e03103d94cec50fb406b801786f023",
+      "path": "scripts/build_anyio_runner_continuity_public_check_qualification.py"
+    },
+    {
+      "file_bytes": 3245,
+      "file_sha256": "sha256:e3f48da0e6612002e2a964b3fad27c067d0f271cbc4904af10624f73ca756c3a",
+      "path": "tests/test_anyio_runner_continuity_public_check.py"
+    }
+  ],
+  "status": "offline-source-qualified-proposal",
+  "task_successor_created": false
+}

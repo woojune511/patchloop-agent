@@ -1,0 +1,63 @@
+{
+  "schema_version": "rapid-public-development-rehearsal-v8",
+  "official": false,
+  "experiment_id": "rapid-public-dev-anyio-completion-policy-20260823-r8",
+  "execution_hash": "sha256:553f7cfca404df2985fe5a79b267738c4e63afadd2997c9451e1fc35328faa74",
+  "candidate_content_hash": "sha256:79539c739d9343bd43c65bb843598bae6bc491c2f4323740e138602bda17615d",
+  "runtime_build_hash": "sha256:7c1f3b3e4a3873e34325ecf2c4646743ce487a97a3645139e6bfc180ecd560aa",
+  "config_file_sha256": "sha256:448c2ec2ceb10221e265624980c87a5dd25fd0c46b489021f08d7d5ff79d1987",
+  "schedule_hash": "sha256:d9db8467f16c85ee76d3c4d6f3474d6b145c82a7ce3f00b9c151a0d2da6f60c5",
+  "cost_control_hash": "sha256:a7bc2f24b7ec0ecb501130ef310f958b790108d5788d51dfad958c2cf4691605",
+  "plan_hash": "sha256:843ba162f0fce937196cb64b3aad7a84f7d73010ef32c2472cd02ea0d7bbd96a",
+  "plan_schema": "experiment-execution-plan-v11",
+  "plan_kind": "rapid-public-development-batch-v1",
+  "verifier_id": "rapid-r8-candidate-v11-plan-v11",
+  "verifier_entry_hash": "sha256:e885adac2d9924605d8d72d76776ef549cb9a05805e3a0a8b0f3b7c4caab5989",
+  "verified_manifest_count": 6,
+  "stage_sequence": [
+    "candidate-current-binding",
+    "registered-plan-schema",
+    "all-row-manifests",
+    "batch-capability",
+    "batch-start-prefix",
+    "first-row-capability",
+    "first-provider-dispatch-boundary",
+    "realistic-resolved-row-terminal",
+    "second-row-prefix",
+    "second-row-capability",
+    "second-provider-dispatch-boundary"
+  ],
+  "first_provider_boundary": {
+    "stage": "provider-dispatch-boundary",
+    "provider_dispatch_blocked": true,
+    "execution_hash": "sha256:553f7cfca404df2985fe5a79b267738c4e63afadd2997c9451e1fc35328faa74",
+    "schedule_order": 1,
+    "schedule_row_id": "sha256:6d64e76520721ff9a6fd340d8f39524130587911d21c31807cb06395cb18ee98",
+    "run_id": "run_rapid_v11_553f7cfca404_01",
+    "manifest_hash": "sha256:6416cd30cc68251b22b637a128367036bf72368140fdf56c330212190cea2557"
+  },
+  "inter_row_transition": {
+    "prior_terminal_content_hash": "sha256:cfdf83f0e2005571f65662e4a7d798596e6dc051dce029bcf10d994f0efcc1f5",
+    "prior_outcome_kind": "resolved",
+    "prior_runtime_result_official": true,
+    "prior_bundle_official": false,
+    "next_schedule_order": 2
+  },
+  "second_provider_boundary": {
+    "stage": "provider-dispatch-boundary",
+    "provider_dispatch_blocked": true,
+    "execution_hash": "sha256:553f7cfca404df2985fe5a79b267738c4e63afadd2997c9451e1fc35328faa74",
+    "schedule_order": 2,
+    "schedule_row_id": "sha256:9d00d0cd58a098357e8c4586c6eca76b797ca8b1eaed3ef20e45f7bff6409937",
+    "run_id": "run_rapid_v11_553f7cfca404_02",
+    "manifest_hash": "sha256:d5882c5b68169c15f344901853e8619bbbe280ad09e966adcae11191ee2bb5d9"
+  },
+  "stopped_before": "second-provider-dispatch-after-resolved-prefix",
+  "provider_calls_made": 0,
+  "docker_calls_made": 0,
+  "task_calls_made": 0,
+  "evaluator_calls_made": 0,
+  "added_model_cost_usd": 0.0,
+  "harness_admission_failures": 0,
+  "content_hash": "sha256:55c44f5407b018f483694978e49b051cc28e35c98498746d3d3c6310f7b31b8d"
+}

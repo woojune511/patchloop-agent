@@ -1,0 +1,58 @@
+{
+  "schema_version": "rapid-public-development-preprovider-terminal-v1",
+  "incident_id": "rapid-public-dev-hard-panel-20260822-r3-preprovider-contract-terminal-v1",
+  "official": false,
+  "experiment_id": "rapid-public-dev-hard-panel-20260822-r3",
+  "candidate_path": "reports/rapid-development/artifacts/rapid-public-dev-hard-panel-20260822-r3-candidate-v1.json",
+  "candidate_file_sha256": "sha256:5ea6daf3f914d3235b9001806aecc4c5f31b69b48a5b42c82d0e5607e312a4b6",
+  "candidate_content_hash": "sha256:38f962b1dda050144e9207824466f1003da417cd46133952d071e298d4347e46",
+  "execution_hash": "sha256:dc7bcc20d33d7cb8f360bc5c04052169df18793f58823a90d2d1f81800239776",
+  "schedule_hash": "sha256:0661dac737dadb3be5d5f8aae90a9970c6c51d1ec8bf5633c2862dce95e8375b",
+  "cost_control_hash": "sha256:bbace900dfce109a1a0e6232d6ef418971219e534bc9fe44db1ec4289ffba3e2",
+  "approved_full_schedule_reserve_nanos": 9600000000,
+  "approved_hard_cap_nanos": 10000000000,
+  "attempted_command": "uv run --offline patchloop rapid --mode run --env-file .env --approve-live-cost --approved-execution-hash sha256:dc7bcc20d33d7cb8f360bc5c04052169df18793f58823a90d2d1f81800239776",
+  "persisted_plan": {
+    "path": ".patchloop/experiments/plans/dc7bcc20d33d7cb8f360bc5c04052169df18793f58823a90d2d1f81800239776.json",
+    "observed_last_write_utc": "2026-08-21T18:01:00.9008955Z",
+    "file_bytes": 6789,
+    "file_sha256": "sha256:332876c4864eca30611eafc0bbaaf3ea6e339264e2f5773111c163547783bf83",
+    "content_hash": "sha256:fb3d4ec452275b93f22942c635ef47d37b92642988b70be4d9533014875927d1",
+    "schema_version": "experiment-execution-plan-v3",
+    "ready": true
+  },
+  "terminal": {
+    "stage": "live-authorization-capability-issuance",
+    "error_code": "CONTRACT_ERROR",
+    "message": "persisted execution plan does not authorize this live execution hash",
+    "root_cause": "The Rapid V3 plan emitted experiment-execution-plan-v3 while issue_live_execution_authorization accepted only experiment-execution-plan-v1 or experiment-execution-plan-v2."
+  },
+  "completed_preprovider_checks": {
+    "docker_daemon_available": true,
+    "local_image_identities": [
+      {
+        "task_id": "pdm-ignore-active-venv-resolution",
+        "digest": "sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0"
+      },
+      {
+        "task_id": "anyio-interrupt-runner-cleanup",
+        "digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320"
+      }
+    ]
+  },
+  "execution_observation": {
+    "scheduled_rows": 8,
+    "started_rows": 0,
+    "agent_runner_calls": 0,
+    "agent_container_runs": 0,
+    "evaluator_container_runs": 0,
+    "provider_calls_made": 0,
+    "result_bundle_created": false,
+    "added_model_cost_usd": 0.0,
+    "docker_image_mutations": 0
+  },
+  "observation_basis": "The persisted plan is written only after Docker availability and both image-identity checks. Capability issuance occurs before result-bundle creation and before the AgentRunner loop, so reaching this terminal proves zero row, container, evaluator and provider calls.",
+  "candidate_reusable": false,
+  "approval_transferable": false,
+  "successor_requires_new_source_snapshot_candidate_and_exact_approval": true
+}

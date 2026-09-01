@@ -11,10 +11,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from patchloop.contracts import EventType, RunEvent
-from patchloop.errors import ContractError
-from patchloop.evals.qualification import load_trace_qualification
 from patchloop.runtime import repository_root, runtime_root
-from patchloop.state import StateStore
+from patchloop.trace_view import (
+    ReadOnlyTraceStore,
+    build_run_detail_view,
+    build_run_index_view,
+)
 
 app = FastAPI(title="PatchLoop Trace Viewer", docs_url=None, redoc_url=None)
 web_root = repository_root() / "patchloop" / "web_assets"
@@ -22,8 +24,8 @@ templates = Jinja2Templates(directory=web_root / "templates")
 app.mount("/static", StaticFiles(directory=web_root / "static"), name="static")
 
 
-def _state() -> StateStore:
-    return StateStore(runtime_root() / "state.sqlite3")
+def _state() -> ReadOnlyTraceStore:
+    return ReadOnlyTraceStore(runtime_root() / "state.sqlite3")
 
 
 def _event_summary(event: RunEvent) -> str:
@@ -688,15 +690,15 @@ def health() -> dict:
 
 @app.get("/")
 def index(request: Request):
+    runs = _state().list_runs()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"runs": _state().list_runs()},
+        context={"viewer": build_run_index_view(runs)},
     )
 
 
-@app.get("/runs/{run_id}")
-def run_detail(request: Request, run_id: str):
+def _trace_context(run_id: str) -> dict[str, Any]:
     state = _state()
     try:
         manifest = state.get_manifest(run_id)
@@ -704,37 +706,36 @@ def run_detail(request: Request, run_id: str):
         raise HTTPException(status_code=404, detail="run not found") from exc
     row = next(item for item in state.list_runs() if item["run_id"] == run_id)
     events = state.list_events(run_id)
-    checkpoint = state.latest_checkpoint(run_id)
     patch_path = runtime_root() / "runs" / run_id / "submitted.patch"
-    try:
-        qualification = load_trace_qualification(run_id, root=runtime_root())
-    except ContractError:
-        qualification = None
+    viewer = build_run_detail_view(
+        row=row,
+        manifest=manifest,
+        events=events,
+        runtime=runtime_root(),
+    )
+    return {
+        "row": row,
+        "manifest": manifest,
+        "viewer": viewer,
+        "patch_available": patch_path.exists(),
+    }
+
+
+@app.get("/runs/{run_id}")
+def run_detail(request: Request, run_id: str):
+    return templates.TemplateResponse(
+        request=request,
+        name="story.html",
+        context=_trace_context(run_id),
+    )
+
+
+@app.get("/runs/{run_id}/raw")
+def run_raw(request: Request, run_id: str):
     return templates.TemplateResponse(
         request=request,
         name="run.html",
-        context={
-            "row": row,
-            "manifest": manifest,
-            "events": events,
-            "checkpoint": checkpoint,
-            "checkpoint_action_label": _checkpoint_action_label(checkpoint),
-            "checkpoints": state.list_checkpoints(run_id),
-            "patch_available": patch_path.exists(),
-            "patch_text": (patch_path.read_text(encoding="utf-8") if patch_path.exists() else ""),
-            "result_json": json.dumps(row["result"], indent=2, ensure_ascii=False),
-            "outcome": _outcome_view(row["result"]),
-            "qualification": qualification,
-            "trace": _build_trace_view(
-                events,
-                tool_schema_version=manifest.tool_schema_version,
-                public_review_contract=getattr(
-                    manifest,
-                    "public_review_contract",
-                    None,
-                ),
-            ),
-        },
+        context=_trace_context(run_id),
     )
 
 

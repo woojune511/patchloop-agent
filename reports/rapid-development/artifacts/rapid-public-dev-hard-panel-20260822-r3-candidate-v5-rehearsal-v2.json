@@ -1,0 +1,43 @@
+{
+  "schema_version": "rapid-public-development-rehearsal-v2",
+  "official": false,
+  "experiment_id": "rapid-public-dev-hard-panel-20260822-r3",
+  "execution_hash": "sha256:7174d4b462aceca5fbc82a7248f1bca90b0453bbab6be379f099c01ec4415fe2",
+  "candidate_content_hash": "sha256:63d7f116c2ea5fc221617a9ed27dc0a2772455649f2ab5d48c399aa96d7d42f5",
+  "runtime_build_hash": "sha256:c22d76d3dc1358dce3226161f55717bd60e44f00465221b06a27261dc3d6829f",
+  "config_file_sha256": "sha256:a86e1a9ab7cbd8f18ff7fd77eeb6ab848b35b1fe9bee0ab9cff8a6eb5c1dc17f",
+  "schedule_hash": "sha256:0661dac737dadb3be5d5f8aae90a9970c6c51d1ec8bf5633c2862dce95e8375b",
+  "cost_control_hash": "sha256:bbace900dfce109a1a0e6232d6ef418971219e534bc9fe44db1ec4289ffba3e2",
+  "plan_hash": "sha256:15978b1a3ae1627d1de26ea7f21c1e19109c40706632abe67bde4780f3e818f5",
+  "plan_schema": "experiment-execution-plan-v5",
+  "plan_kind": "rapid-public-development-batch-v1",
+  "verifier_id": "rapid-r3-candidate-v5-plan-v5",
+  "verifier_registry_hash": "sha256:09c0f3ecbe51477acf82e3f9a7539d4b8103c0c942584e66c7e0d39aff8a7e05",
+  "verified_manifest_count": 8,
+  "stage_sequence": [
+    "candidate-current-binding",
+    "registered-plan-schema",
+    "all-row-manifests",
+    "batch-capability",
+    "batch-start-prefix",
+    "first-row-capability",
+    "provider-dispatch-boundary"
+  ],
+  "first_provider_boundary": {
+    "stage": "provider-dispatch-boundary",
+    "provider_dispatch_blocked": true,
+    "execution_hash": "sha256:7174d4b462aceca5fbc82a7248f1bca90b0453bbab6be379f099c01ec4415fe2",
+    "schedule_order": 1,
+    "schedule_row_id": "sha256:2a5f29b7973c019858cc66a280c5a4be6ee4b51039278e431bd028c1d22580b2",
+    "run_id": "run_rapid_v5_7174d4b462ac_01",
+    "manifest_hash": "sha256:8c0984b465c81be846b246e8198d3ff2f790c85fdd76dcc6a29e14be55cf54d3"
+  },
+  "stopped_before": "first-provider-dispatch",
+  "provider_calls_made": 0,
+  "docker_calls_made": 0,
+  "task_calls_made": 0,
+  "evaluator_calls_made": 0,
+  "added_model_cost_usd": 0.0,
+  "harness_admission_failures": 0,
+  "content_hash": "sha256:edb84652206ba1c616165d5ce537ae1f0767326f0b030883a20ad9252ac22308"
+}

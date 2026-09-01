@@ -1,0 +1,263 @@
+{
+  "schema_version": "rapid-public-completion-diagnosis-v1",
+  "diagnosis_id": "rapid-public-dev-anyio-event-role-20260823-r7-v1",
+  "official": false,
+  "source_bundle": {
+    "path": "reports/rapid-development/rapid-public-dev-anyio-event-role-20260823-r7-a088c64c3698.jsonl",
+    "bytes": 9548,
+    "file_sha256": "sha256:4a37bcbee2090ed83937432e717f8291ad6bc2784f06e1b53162fbfef495858b",
+    "execution_hash": "sha256:a088c64c369836f06308c3105341f220e3cfb1d3a6d492f33886b8f7f90dbdcf",
+    "terminal_content_hash": "sha256:c5c89455d3f0c2500982804252ae21760a6fbc2b0a5b038d70ce0e875ed77e67"
+  },
+  "evidence_boundary": {
+    "inputs_used": [
+      "immutable official-false Rapid result bundle",
+      "public terminal result fields",
+      "agent-visible event type and tool metadata",
+      "registered visible-check states"
+    ],
+    "hidden_assertions_read": false,
+    "private_evaluator_artifacts_read": false,
+    "reference_patches_read": false,
+    "reasoning_text_read": false,
+    "llm_content_read": false,
+    "provider_calls": 0,
+    "docker_calls": 0,
+    "evaluator_calls": 0,
+    "added_cost_usd": "0"
+  },
+  "observed_batch": {
+    "attempted_rows": 6,
+    "agent_rows_started": 6,
+    "harness_admission_failures": 0,
+    "agent_failures": 4,
+    "evaluator_reached": 2,
+    "submissions_completed": 2,
+    "successes_at_budget": 1,
+    "token_terminals": 1,
+    "model_calls": 194,
+    "tool_calls": 324,
+    "model_cost_nanos": 3578613750
+  },
+  "rows": [
+    {
+      "order": 1,
+      "run_id": "run_rapid_v10_a088c64c3698_01",
+      "variant": "baseline-v2v5",
+      "repetition": 1,
+      "outcome_kind": "task_failure",
+      "terminal_classification": "PUBLIC_VISIBLE_CHECKS_PASS_HIDDEN_VERDICT_FAIL",
+      "evaluator_reached": true,
+      "submission_completed": true,
+      "success_at_budget": false,
+      "token_terminal": false,
+      "patch_applied_count": 1,
+      "loop_detected_count": 3,
+      "failed_tools": [],
+      "visible_checks": {"invocations": 2, "passed": 2, "failed": 0},
+      "usage": {"input_tokens": 233674, "output_tokens": 12548, "model_cost_nanos": 205801500},
+      "source_result": {
+        "path": ".patchloop/artifacts/runs/run_rapid_v10_a088c64c3698_01/result.json",
+        "bytes": 6284,
+        "file_sha256": "sha256:e0be993766508fbfb691f0cf7bc4a56ac0fd88a4edf73c4218305205a70b881c"
+      },
+      "state_evidence": {
+        "event_count": 162,
+        "terminal_sequence": 162,
+        "terminal_event_sha256": "sha256:71a6af5dc8b73503855e2dba9bb4add93282cc81d393f7a3120215dbaae6ed32"
+      }
+    },
+    {
+      "order": 2,
+      "run_id": "run_rapid_v10_a088c64c3698_02",
+      "variant": "lean-harness-v6",
+      "repetition": 1,
+      "outcome_kind": "agent_failure",
+      "terminal_classification": "ACTIONLESS_MODEL_RESPONSE",
+      "terminal_error": {"type": "ContractError", "code": "CONTRACT_ERROR", "message": "model returned neither a tool call nor a submission"},
+      "evaluator_reached": false,
+      "submission_completed": false,
+      "success_at_budget": false,
+      "token_terminal": false,
+      "patch_applied_count": 3,
+      "loop_detected_count": 11,
+      "failed_tools": [
+        {"tool": "apply_patch", "error_code": "CONTRACT_ERROR", "count": 5},
+        {"tool": "apply_structured_edit", "error_code": "INVALID_TOOL_INPUT", "count": 2},
+        {"tool": "apply_structured_edit", "error_code": "POLICY_VIOLATION", "count": 3}
+      ],
+      "visible_checks": {"invocations": 6, "passed": 2, "failed": 4},
+      "usage": {"input_tokens": 626032, "output_tokens": 99215, "model_cost_nanos": 915991500},
+      "source_result": {
+        "path": ".patchloop/artifacts/runs/run_rapid_v10_a088c64c3698_02/result.json",
+        "bytes": 937,
+        "file_sha256": "sha256:8b9e4c0f1fb2f5306755c968a60ce760a3b6c72f5ad1efa1a9597da07ad23669"
+      },
+      "state_evidence": {
+        "event_count": 335,
+        "terminal_sequence": 335,
+        "terminal_event_sha256": "sha256:11fd3c968a62fc26c5971a9ed5aa916718b372ce4b3a2caa0b61a55d947fd530"
+      }
+    },
+    {
+      "order": 3,
+      "run_id": "run_rapid_v10_a088c64c3698_03",
+      "variant": "lean-harness-v6",
+      "repetition": 2,
+      "outcome_kind": "agent_failure",
+      "terminal_classification": "ACTIONLESS_MODEL_RESPONSE",
+      "terminal_error": {"type": "ContractError", "code": "CONTRACT_ERROR", "message": "model returned neither a tool call nor a submission"},
+      "evaluator_reached": false,
+      "submission_completed": false,
+      "success_at_budget": false,
+      "token_terminal": false,
+      "patch_applied_count": 1,
+      "loop_detected_count": 3,
+      "failed_tools": [],
+      "visible_checks": {"invocations": 2, "passed": 1, "failed": 1},
+      "usage": {"input_tokens": 222959, "output_tokens": 18342, "model_cost_nanos": 249758250},
+      "source_result": {
+        "path": ".patchloop/artifacts/runs/run_rapid_v10_a088c64c3698_03/result.json",
+        "bytes": 937,
+        "file_sha256": "sha256:2c979b070c547c85d190f4dcc9084542d17f7b222f2cfdc6108e531f736eb41d"
+      },
+      "state_evidence": {
+        "event_count": 133,
+        "terminal_sequence": 133,
+        "terminal_event_sha256": "sha256:8ed33c856414d6b9b42e2b28ffe33cefff5a634f35c6739705bfe01ab4b51f5b"
+      }
+    },
+    {
+      "order": 4,
+      "run_id": "run_rapid_v10_a088c64c3698_04",
+      "variant": "baseline-v2v5",
+      "repetition": 2,
+      "outcome_kind": "agent_failure",
+      "terminal_classification": "LOCAL_EXACT_REQUEST_OUTPUT_BUDGET_BLOCK",
+      "terminal_error": {"type": "ModelGenerationBudgetError", "code": "MODEL_GENERATION_BUDGET_EXCEEDED", "message": "remaining token budget cannot fund the exact input plus one bounded model response"},
+      "evaluator_reached": false,
+      "submission_completed": false,
+      "success_at_budget": false,
+      "token_terminal": true,
+      "patch_applied_count": 2,
+      "loop_detected_count": 11,
+      "failed_tools": [
+        {"tool": "apply_patch", "error_code": "CONTRACT_ERROR", "count": 11}
+      ],
+      "visible_checks": {"invocations": 2, "passed": 0, "failed": 2},
+      "usage": {"input_tokens": 954062, "output_tokens": 79148, "model_cost_nanos": 993952500},
+      "source_result": {
+        "path": ".patchloop/artifacts/runs/run_rapid_v10_a088c64c3698_04/result.json",
+        "bytes": 2460,
+        "file_sha256": "sha256:85d6f4bb124f3aa9bb26e417baf82aff7087660c2688b463d2a00119ac240eac"
+      },
+      "state_evidence": {
+        "event_count": 382,
+        "terminal_sequence": 382,
+        "terminal_event_sha256": "sha256:e8acdfd2b37fa155bbfcc20ff1a1749050667d247d90ede8572e98106ecbde85"
+      }
+    },
+    {
+      "order": 5,
+      "run_id": "run_rapid_v10_a088c64c3698_05",
+      "variant": "baseline-v2v5",
+      "repetition": 3,
+      "outcome_kind": "resolved",
+      "terminal_classification": "RESOLVED",
+      "evaluator_reached": true,
+      "submission_completed": true,
+      "success_at_budget": true,
+      "token_terminal": false,
+      "patch_applied_count": 2,
+      "loop_detected_count": 5,
+      "failed_tools": [
+        {"tool": "apply_patch", "error_code": "CONTRACT_ERROR", "count": 1}
+      ],
+      "visible_checks": {"invocations": 2, "passed": 2, "failed": 0},
+      "usage": {"input_tokens": 397915, "output_tokens": 29228, "model_cost_nanos": 386762250},
+      "source_result": {
+        "path": ".patchloop/artifacts/runs/run_rapid_v10_a088c64c3698_05/result.json",
+        "bytes": 6285,
+        "file_sha256": "sha256:d0e4b60c936ea683838bf39caae649915ede85cd3bcc4c97b4181f26b6806487"
+      },
+      "state_evidence": {
+        "event_count": 208,
+        "terminal_sequence": 208,
+        "terminal_event_sha256": "sha256:5551ea144a5df1dbef86892cc7c50b39e987c8d8423f05ada8c247db764c8fb0"
+      }
+    },
+    {
+      "order": 6,
+      "run_id": "run_rapid_v10_a088c64c3698_06",
+      "variant": "lean-harness-v6",
+      "repetition": 3,
+      "outcome_kind": "agent_failure",
+      "terminal_classification": "PROVIDER_INCOMPLETE_RESPONSE_AT_OUTPUT_CAP",
+      "terminal_error": {"type": "ContractError", "code": "CONTRACT_ERROR", "message": "model response rejected: incomplete_response"},
+      "evaluator_reached": false,
+      "submission_completed": false,
+      "success_at_budget": false,
+      "token_terminal": false,
+      "patch_applied_count": 3,
+      "loop_detected_count": 5,
+      "failed_tools": [
+        {"tool": "apply_patch", "error_code": "CONTRACT_ERROR", "count": 5},
+        {"tool": "apply_structured_edit", "error_code": "CONTRACT_ERROR", "count": 2},
+        {"tool": "apply_structured_edit", "error_code": "INVALID_TOOL_INPUT", "count": 3}
+      ],
+      "visible_checks": {"invocations": 7, "passed": 0, "failed": 7},
+      "usage": {"input_tokens": 501797, "output_tokens": 100000, "model_cost_nanos": 826347750},
+      "source_result": {
+        "path": ".patchloop/artifacts/runs/run_rapid_v10_a088c64c3698_06/result.json",
+        "bytes": 932,
+        "file_sha256": "sha256:45617b680e03214923785936e4f2108be00331ac66b84824021797d03b608fb3"
+      },
+      "state_evidence": {
+        "event_count": 273,
+        "terminal_sequence": 273,
+        "terminal_event_sha256": "sha256:3a85a7b9e14d631814797bc9cf4c2139c43de4d1a1d7b95d59cef31459128895"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "classification": "R6_INFRASTRUCTURE_DEFECT_NOT_REPRODUCED",
+      "observed": "all six rows started with zero harness-admission failures and no recent-event artifact binding terminal",
+      "limit": "this establishes compatibility for this consumed batch only"
+    },
+    {
+      "classification": "COMPLETION_REMAINS_PRIMARY_BOTTLENECK",
+      "observed": "all six rows applied at least one mutation, but only two submitted and reached evaluation",
+      "limit": "mutation success alone did not imply completion"
+    },
+    {
+      "classification": "EDIT_CONTRACT_FRICTION_CO_OCCURS_WITH_THREE_NON_SUBMISSIONS",
+      "observed": "32 edit-tool failures occurred; 31 were in non-submitting rows 2, 4 and 6",
+      "limit": "row 3 ended actionless with no failed edit tool, so edit friction is not a sufficient explanation"
+    },
+    {
+      "classification": "ACTIONLESS_TERMINAL_IS_DISTINCT_FROM_BUDGET_AND_PROVIDER_TRUNCATION",
+      "observed": "rows 2 and 3 returned neither a tool call nor submission; row 4 was blocked locally before generation; row 6 was a provider incomplete response at 100000 output tokens",
+      "limit": "the bundle token-terminal count remains one because row 6 is not the local budget-admission class"
+    },
+    {
+      "classification": "VISIBLE_CHECK_COVERAGE_REMAINS_INCOMPLETE",
+      "observed": "baseline row 1 passed both registered visible checks and submitted, then received a hidden FAIL verdict",
+      "limit": "no hidden assertion, evaluator-private artifact or reference patch was inspected"
+    },
+    {
+      "classification": "NO_LEAN_QUALITY_IMPROVEMENT_ESTABLISHED",
+      "observed": "baseline reached/submitted 2 of 3 and succeeded 1 of 3; Lean V6 reached/submitted 0 of 3 and succeeded 0 of 3",
+      "limit": "the reused single-task three-repetition official-false batch is descriptive only"
+    }
+  ],
+  "disposition": {
+    "r7_consumed": true,
+    "r7_retry_authorized": false,
+    "quality_improvement_established": false,
+    "successor_implemented": false,
+    "successor_execution_authorized": false,
+    "next_work": "offline completion-policy successor design using only this public diagnosis"
+  },
+  "content_hash": "sha256:8b07c9f7fa8c4695ff571a43efec5b0d8f1b129af28128d501ff86c0bfff41d9"
+}

@@ -1,0 +1,1710 @@
+{
+  "schema_version": "lean-harness-runtime-source-qualification-v1",
+  "qualification_id": "lean-harness-runtime-public-calibration-20260817-v1",
+  "status": "PUBLIC_MOCK_RUNTIME_SOURCE_QUALIFIED_NO_PROVIDER_AUTHORITY",
+  "evidence_date": "2026-08-17",
+  "preregistration": {
+    "path": "experiments/lean-harness-runtime-integration-preregistration-20260816-v1.json",
+    "file_bytes": 16030,
+    "file_sha256": "sha256:e36659fd23b4d2eaac60265c0023110791341d08cad20728572d9ee8e73a2683",
+    "content_hash": "sha256:9eb9b137fd021bafb4ef2ac8d43dd0b34fbd1c5f4c64317c63bc1f88e04e0d63"
+  },
+  "preregistration_id": "lean-harness-runtime-integration-public-calibration-20260816-v1",
+  "preregistration_content_hash": "sha256:9eb9b137fd021bafb4ef2ac8d43dd0b34fbd1c5f4c64317c63bc1f88e04e0d63",
+  "runtime_contract_hash": "sha256:07bb188746e903ec779c3e707d73e20e7a83a708067022ba58502c2f1c4d3cf8",
+  "development_validation_hash": "sha256:8543ae3fe7ae597ccdb38a91cdc29db510a171a7bdba37fa15fe72c386b43de2",
+  "realized_schedule_hash": "sha256:bb7709ae52f297dfd855b3b1845ff07dec0392117a4d3f031886b5b5d7883ac3",
+  "semantic_projection_policy": "remove-memory-delivery-event-selected-memory-and-volatile-runtime-artifact-provenance-v1",
+  "rows": [
+    {
+      "order": 1,
+      "preregistered_row_id": "sha256:e5d463aef15978d13538aebeec83d7d0461f210d608e99a464934b5a3bdcfa9c",
+      "run_id": "run_lean_calibration_01_e5d463aef159",
+      "task_id": "config-falsy-override",
+      "task_version": 1,
+      "task_path": "tasks/smoke/config-falsy-override",
+      "condition": "no_memory",
+      "repetition": 1,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:6d2606eb3b086afa83687dacdb94e668ba867dd20c1736ca4956592513278fe0",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 10286,
+          "non_memory_request_semantics_hash": "sha256:9f9ed1124be81f5cfab99a321f7e87a7452a193d12f04d40fec5783bd7b21d8d",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:a80c5a541b57b41ff61cd4b596739a7448648e0273c0be3151fccf9557a359a9",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 15311,
+          "non_memory_request_semantics_hash": "sha256:d0123a469019d1f329a48bc074c78934ff1d1cccd8d97f3af92357820fed6a6d",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:bd5780b81f3c4b77ab5ea9bbe49b9ebff13c21eae55b1787e9aee6ad4b25d3bc",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19294,
+          "non_memory_request_semantics_hash": "sha256:7d2aefc7d78b4fc1182f9a9575ad8e3f05abe9f2b6cab7fa0e9c9b66912f350a",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:8778ade52fa1da46b3abfda3eca495071180bddc1cc1e2e5b293929c472a6e4b",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 18802,
+          "non_memory_request_semantics_hash": "sha256:f369b848717615fdfd027a4d3393b2f122fcfa49410012f07ecd38a4910a9753",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:c620c717730a2c2e38273f6c0a71d8d267ad762a33d058b4e9a142739bf3bcb6",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 16154,
+          "non_memory_request_semantics_hash": "sha256:462ac0a34eee92e0e77d6f2b9e703fbd2da77db95c427c181f050d3f02641704",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:e542ad2eef852a499932e0cd1c44f9b804e2ce6142b1348ac5458896f4061ead"
+    },
+    {
+      "order": 2,
+      "preregistered_row_id": "sha256:4fcbbbbd56bff2334c7927a8e8f9128c2fbaf01fbb38b269b0b815bc8b4e968e",
+      "run_id": "run_lean_calibration_02_4fcbbbbd56bf",
+      "task_id": "config-falsy-override",
+      "task_version": 1,
+      "task_path": "tasks/smoke/config-falsy-override",
+      "condition": "structured",
+      "repetition": 1,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:cb7d75ee3741506cce897778d85de5a7d5393fc2369dd9ffbf042855af290d57",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 13976,
+          "non_memory_request_semantics_hash": "sha256:9f9ed1124be81f5cfab99a321f7e87a7452a193d12f04d40fec5783bd7b21d8d",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:029426624191036315459727b7e7913333afcd570e4cd3965daecdfe0ecfbdd2",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19000,
+          "non_memory_request_semantics_hash": "sha256:d0123a469019d1f329a48bc074c78934ff1d1cccd8d97f3af92357820fed6a6d",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:f1ce0ecc7ac36813c03ce650a5393ddb2324f51cfe377f91e319ebcab1a2dcf6",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 22983,
+          "non_memory_request_semantics_hash": "sha256:7d2aefc7d78b4fc1182f9a9575ad8e3f05abe9f2b6cab7fa0e9c9b66912f350a",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:58a35c032ab7ff13909fc2ab21874935bbbdc163f2eba1c75b214c21c4793e20",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 22492,
+          "non_memory_request_semantics_hash": "sha256:f369b848717615fdfd027a4d3393b2f122fcfa49410012f07ecd38a4910a9753",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:730095647deff52931a16af8ea74b94973a770fee8ecf5595a93667ae03d4757",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19844,
+          "non_memory_request_semantics_hash": "sha256:462ac0a34eee92e0e77d6f2b9e703fbd2da77db95c427c181f050d3f02641704",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:98ecd11580d5c245a16229fb57d369fdaa0bd9e14bc97f4010cd467775523262"
+    },
+    {
+      "order": 3,
+      "preregistered_row_id": "sha256:f0973449ffc9423012ee92f8531071d38004c7755b3f3efcc75cb38584e74be5",
+      "run_id": "run_lean_calibration_03_f0973449ffc9",
+      "task_id": "csv-quoted-newline",
+      "task_version": 1,
+      "task_path": "tasks/smoke/csv-quoted-newline",
+      "condition": "structured",
+      "repetition": 1,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:f69b5d5b8bb6eabd91b19b82325e25fc71f2d1df647575db5e4b8118eaf93f8b",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 13814,
+          "non_memory_request_semantics_hash": "sha256:44281c0279d13adcd8591e72ddd8ad4ea8cffe1aa97c0e7f8cf7d31712f67c45",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:46e1df5bc3e428452aacc0f2ef7a1d24953940e551f206b7060c907bc05da20b",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 18775,
+          "non_memory_request_semantics_hash": "sha256:04a22e0ebe1958e7eea81c198b896aee2c8e1b6b475eb242da1b53c7b632db34",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:aa574e92f5a3a7de93ee1225e6145b01145b9c0a05d1f3472b3cbd3d392d2edd",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 22790,
+          "non_memory_request_semantics_hash": "sha256:69574c7c5f83859262ce0022ab24ebba9168d0be9f2093f5ddb11d3fd226023b",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:77b352b55b1a3574b08e6337ebaeced3deafb2a6fffca8544d463c31ef50f53b",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 22205,
+          "non_memory_request_semantics_hash": "sha256:cb306c0a7ca1311c1415f012b077b26b4c8f6e297f8d0539de605b1b8f13e6f5",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:80f1dc40591f18512ccc1f08a7432a37e2d5911c196d6e051e97721ee4e209d7",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19854,
+          "non_memory_request_semantics_hash": "sha256:a2599e87cfb6fa0de8a2d728ed37231faa213747982990badcdbb9defa9e7f84",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:c6d3044f0ae7bf0c1f43030df6bf7c05d04416663ed905b89ce1ea41a4359da9"
+    },
+    {
+      "order": 4,
+      "preregistered_row_id": "sha256:4351bd2efc85c12cdb1e0feb2c1e7d2c1505e8d2237f649874457faa8557fe8e",
+      "run_id": "run_lean_calibration_04_4351bd2efc85",
+      "task_id": "csv-quoted-newline",
+      "task_version": 1,
+      "task_path": "tasks/smoke/csv-quoted-newline",
+      "condition": "no_memory",
+      "repetition": 1,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:c60472952c5a17371b5988f30d212264d0dc7eae50fadb5fd089018f9fff3ab7",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 10124,
+          "non_memory_request_semantics_hash": "sha256:44281c0279d13adcd8591e72ddd8ad4ea8cffe1aa97c0e7f8cf7d31712f67c45",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:9673dead2c6497fd83e5dfc199f7530f299d8782864c375cd4ce5a516c1f7d67",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 15084,
+          "non_memory_request_semantics_hash": "sha256:04a22e0ebe1958e7eea81c198b896aee2c8e1b6b475eb242da1b53c7b632db34",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:bf434b5b95633e59c0b9ecdb85eccce4d3b24191b8b48ae257bd3f14ae6e18b2",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19099,
+          "non_memory_request_semantics_hash": "sha256:69574c7c5f83859262ce0022ab24ebba9168d0be9f2093f5ddb11d3fd226023b",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:ffb1ff4232e0ddb716bb89b8fd903342027df6c281540a5f0535bfe0fea34a9c",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 18515,
+          "non_memory_request_semantics_hash": "sha256:cb306c0a7ca1311c1415f012b077b26b4c8f6e297f8d0539de605b1b8f13e6f5",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:31a5631254190deafe0edcab8fab280d79797b2c8d75c84b308f46132cdce615",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 16164,
+          "non_memory_request_semantics_hash": "sha256:a2599e87cfb6fa0de8a2d728ed37231faa213747982990badcdbb9defa9e7f84",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:35204ceab1a683ee731d945c9f406d93b54bd8b254c38863595e8662212afb72"
+    },
+    {
+      "order": 5,
+      "preregistered_row_id": "sha256:7faef4646196facfc714c4bda3f81d7add692e218ec94cd69f811c63cb7504ba",
+      "run_id": "run_lean_calibration_05_7faef4646196",
+      "task_id": "path-prefix-boundary",
+      "task_version": 1,
+      "task_path": "tasks/smoke/path-prefix-boundary",
+      "condition": "no_memory",
+      "repetition": 1,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:937a3ab99c22f139e44b0db2dfec41f2f5e07b40f64682b8821c6ca2150aa033",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 10281,
+          "non_memory_request_semantics_hash": "sha256:9b65ecbc8c6f76fe2973db8de5a3fb1fa0ec3a9cff4cefb2dad869fbfc201b84",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:4667a23ae4504cf9dd1a65ee4fae9c03b186ffc4da4b44af03843cc7c0340185",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 15374,
+          "non_memory_request_semantics_hash": "sha256:735f6d053e9f54c535770244fa5711e366bc8c18eaea2348b528692c0b44f66e",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:8a7c73e5f30243e08ab529ee14421f7049f182c984c09069081596ff66a05544",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19327,
+          "non_memory_request_semantics_hash": "sha256:7633357c9f2c2c91cbfcb22f7476fe20b1f78c22c13f7f2dda2f97743051d5c5",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:3d48ba7753c1da0e207007bb2a8b7a27d76f4e0bc5ea7d58edd1608986f63d5d",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 18823,
+          "non_memory_request_semantics_hash": "sha256:23c8e64f5df71e5b8d0c2e374f5919a2ad5c1d0d57170925e6f034a804749d81",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:84b01c105a57e55b43cec7c53ccf8ef4faf76705a67e3a1432f71ddc65280117",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 16787,
+          "non_memory_request_semantics_hash": "sha256:96aff50cda0d015d274c269d3d857c485c5717d2dc0ee1c292b6bced0fee8867",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:be490cc6a59f015dfcd5994c17ed98768e89e7bb40c306e087e25ef0a0fb86e4"
+    },
+    {
+      "order": 6,
+      "preregistered_row_id": "sha256:72bc2af6f92004568a1e9ec6d375a5545b0b72e8c5ca39c90cae3aa7d126141f",
+      "run_id": "run_lean_calibration_06_72bc2af6f920",
+      "task_id": "path-prefix-boundary",
+      "task_version": 1,
+      "task_path": "tasks/smoke/path-prefix-boundary",
+      "condition": "structured",
+      "repetition": 1,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:69d5f172c49bed736542a79efcf71b7c8ec672aa802316abc281114132ca5c4b",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 13971,
+          "non_memory_request_semantics_hash": "sha256:9b65ecbc8c6f76fe2973db8de5a3fb1fa0ec3a9cff4cefb2dad869fbfc201b84",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:0ffeee121576c8e8bbb321883a81167c99bbf01dfe4ffaa63c7837a017cfe9b2",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19063,
+          "non_memory_request_semantics_hash": "sha256:735f6d053e9f54c535770244fa5711e366bc8c18eaea2348b528692c0b44f66e",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:c2640c1f0fe753a5143632664128813927d22d8323e8ae632154d46cd94c926a",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 23016,
+          "non_memory_request_semantics_hash": "sha256:7633357c9f2c2c91cbfcb22f7476fe20b1f78c22c13f7f2dda2f97743051d5c5",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:6a8b9de3292c8ba14762a435d7764bc1f46c80dc2e8e5bdf0a2d621accb09555",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 22513,
+          "non_memory_request_semantics_hash": "sha256:23c8e64f5df71e5b8d0c2e374f5919a2ad5c1d0d57170925e6f034a804749d81",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:5e36be2bb146673574b9778c02739175efa7c4ed2b4057cebdbf9e08fb4dc44c",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 20477,
+          "non_memory_request_semantics_hash": "sha256:96aff50cda0d015d274c269d3d857c485c5717d2dc0ee1c292b6bced0fee8867",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:3695992a6185c6429651fb1ba79c51b23ded3a023e492aa0e3301f04e1bcfe11"
+    },
+    {
+      "order": 7,
+      "preregistered_row_id": "sha256:14124594dd1e18affdaf0d534f5ef139ef390475740c5263a08bbd86dfc0debc",
+      "run_id": "run_lean_calibration_07_14124594dd1e",
+      "task_id": "config-falsy-override",
+      "task_version": 1,
+      "task_path": "tasks/smoke/config-falsy-override",
+      "condition": "structured",
+      "repetition": 2,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:91f227ac06279dd49c6bc32988911f0e4768898ba1dc933b501381a4502e963c",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 13976,
+          "non_memory_request_semantics_hash": "sha256:9f9ed1124be81f5cfab99a321f7e87a7452a193d12f04d40fec5783bd7b21d8d",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:93a7d01bbfb26bda77c0cf7da49f49ca7220337705cfcb1ce64ebdc130ee3ca0",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19000,
+          "non_memory_request_semantics_hash": "sha256:d0123a469019d1f329a48bc074c78934ff1d1cccd8d97f3af92357820fed6a6d",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:6426bdbeb69da1d6bf6c140a8d88fae32f4771f51ca06f7d4ba82db743b606c3",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 22983,
+          "non_memory_request_semantics_hash": "sha256:7d2aefc7d78b4fc1182f9a9575ad8e3f05abe9f2b6cab7fa0e9c9b66912f350a",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:b98778af92c86039d294e077fd341c233dfaa0d77276489eaa0c69f4c7a9ff0b",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 22492,
+          "non_memory_request_semantics_hash": "sha256:f369b848717615fdfd027a4d3393b2f122fcfa49410012f07ecd38a4910a9753",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:4236bd61a0dbd2e8eeaa50478af3a716aaaf4b17ba71a6214c82625aa0b0c4ea",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19844,
+          "non_memory_request_semantics_hash": "sha256:462ac0a34eee92e0e77d6f2b9e703fbd2da77db95c427c181f050d3f02641704",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:b9ce41beb8ca6e5629427ff08ef525d8be20df5ea23447e4c2c9c7e7d06c512d"
+    },
+    {
+      "order": 8,
+      "preregistered_row_id": "sha256:9056d9c3ed8f2bb615107c77d2eaccbabba9ace3c1437f3e08bae6d838671d17",
+      "run_id": "run_lean_calibration_08_9056d9c3ed8f",
+      "task_id": "config-falsy-override",
+      "task_version": 1,
+      "task_path": "tasks/smoke/config-falsy-override",
+      "condition": "no_memory",
+      "repetition": 2,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:49373b58e1924c5917bafdeeee156216e8b6eff079c975e3bd15847f2d7e6058",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 10286,
+          "non_memory_request_semantics_hash": "sha256:9f9ed1124be81f5cfab99a321f7e87a7452a193d12f04d40fec5783bd7b21d8d",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:1ab62ddd543a1b09c19cf02922ea0e9b0dc4ba2719156cefe38fe873d1f47e4a",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 15310,
+          "non_memory_request_semantics_hash": "sha256:d0123a469019d1f329a48bc074c78934ff1d1cccd8d97f3af92357820fed6a6d",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:a93139cb575f10cc93f66104b2fdb1b77761772706b4737850f7123176664108",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19293,
+          "non_memory_request_semantics_hash": "sha256:7d2aefc7d78b4fc1182f9a9575ad8e3f05abe9f2b6cab7fa0e9c9b66912f350a",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:6e06c3849665431338a72eda925a23090ce53ae929fa47eaa3fb38c28004bfea",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 18802,
+          "non_memory_request_semantics_hash": "sha256:f369b848717615fdfd027a4d3393b2f122fcfa49410012f07ecd38a4910a9753",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:94e4318c24f04fe19f8abe46aad747d7adf037f6227e6e35ce0c5915e63f3ac1",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 16154,
+          "non_memory_request_semantics_hash": "sha256:462ac0a34eee92e0e77d6f2b9e703fbd2da77db95c427c181f050d3f02641704",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:c5f6c13c2b73d45fb2ad40b91fff19faa6a7d169feeba1aff8ed68585ac4a954"
+    },
+    {
+      "order": 9,
+      "preregistered_row_id": "sha256:28786a659971660d448124ec742834da05df5e5903650f2ed7aeda10ffb9c874",
+      "run_id": "run_lean_calibration_09_28786a659971",
+      "task_id": "csv-quoted-newline",
+      "task_version": 1,
+      "task_path": "tasks/smoke/csv-quoted-newline",
+      "condition": "no_memory",
+      "repetition": 2,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:78a937120ead5e14439a7d778fc78478cc57b5a51467a8c055d243f59aa12c91",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 10124,
+          "non_memory_request_semantics_hash": "sha256:44281c0279d13adcd8591e72ddd8ad4ea8cffe1aa97c0e7f8cf7d31712f67c45",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:82ec296969c686755dbee1a56af58258722ba0114112d8d6b13ead8702a467b6",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 15084,
+          "non_memory_request_semantics_hash": "sha256:04a22e0ebe1958e7eea81c198b896aee2c8e1b6b475eb242da1b53c7b632db34",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:1a6db24ac222426d26014394226fd7785326d5d5d162a58fd4743c15fe9d9627",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19099,
+          "non_memory_request_semantics_hash": "sha256:69574c7c5f83859262ce0022ab24ebba9168d0be9f2093f5ddb11d3fd226023b",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:d7ff473b951df77da9d51de60396daeb3f68f5c77cf3f5091bf3f9e918ea6b2b",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 18515,
+          "non_memory_request_semantics_hash": "sha256:cb306c0a7ca1311c1415f012b077b26b4c8f6e297f8d0539de605b1b8f13e6f5",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:6585d6d4d4ed254af8e6eea80fb0def8bd976f0ae3b27566d1e21ec9fa18636f",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 16164,
+          "non_memory_request_semantics_hash": "sha256:a2599e87cfb6fa0de8a2d728ed37231faa213747982990badcdbb9defa9e7f84",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:43b7ec0b6bd69b0c5e2bb477a20380bfe5ff5883b22237241991e8f3cd5e30e6"
+    },
+    {
+      "order": 10,
+      "preregistered_row_id": "sha256:78886cc4e3a35916ff189beae9900b65b95c4fc4052f02cd11ab845632bb6665",
+      "run_id": "run_lean_calibration_10_78886cc4e3a3",
+      "task_id": "csv-quoted-newline",
+      "task_version": 1,
+      "task_path": "tasks/smoke/csv-quoted-newline",
+      "condition": "structured",
+      "repetition": 2,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:e065e1d8b7663694e73ca2ebf002d0c799910caea53ab0853e12783560f7f970",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 13814,
+          "non_memory_request_semantics_hash": "sha256:44281c0279d13adcd8591e72ddd8ad4ea8cffe1aa97c0e7f8cf7d31712f67c45",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:fb4d5278560dcac97e1f3182cb8e60e2bf41869fba175257ed2cf49f6b5ed8ea",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 18774,
+          "non_memory_request_semantics_hash": "sha256:04a22e0ebe1958e7eea81c198b896aee2c8e1b6b475eb242da1b53c7b632db34",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:22c75387eb5209e518806aac55d88fcf37d454b3a845e120cced1aac73387909",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 22789,
+          "non_memory_request_semantics_hash": "sha256:69574c7c5f83859262ce0022ab24ebba9168d0be9f2093f5ddb11d3fd226023b",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:1881742ad72cc49dc43746f8bb6c31778a30f059770ff93d52009594c3c1b967",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 22205,
+          "non_memory_request_semantics_hash": "sha256:cb306c0a7ca1311c1415f012b077b26b4c8f6e297f8d0539de605b1b8f13e6f5",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:ec213cfa7cc51e22fdf25ff30785a76c45bc9f1dfb8fa351392e22aa45ea0da2",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19854,
+          "non_memory_request_semantics_hash": "sha256:a2599e87cfb6fa0de8a2d728ed37231faa213747982990badcdbb9defa9e7f84",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:eeb84f4f5871e54f513f4264c3ab9dca65fa3e5f9e0141e6400c086ad6243760"
+    },
+    {
+      "order": 11,
+      "preregistered_row_id": "sha256:f08b41e365afcf9974f46c9a5878cbbf78db7d2536b7b5340280d0504f6df284",
+      "run_id": "run_lean_calibration_11_f08b41e365af",
+      "task_id": "path-prefix-boundary",
+      "task_version": 1,
+      "task_path": "tasks/smoke/path-prefix-boundary",
+      "condition": "structured",
+      "repetition": 2,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:7d6c3a43f0ae08384c97b66d262160d97664fc9718de6469c3d637a2c884be7c",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 13971,
+          "non_memory_request_semantics_hash": "sha256:9b65ecbc8c6f76fe2973db8de5a3fb1fa0ec3a9cff4cefb2dad869fbfc201b84",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:f050ef706f37eb6f7efe106a862393719cbd64834ed4cb3a72955ac4e4fd90fa",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19063,
+          "non_memory_request_semantics_hash": "sha256:735f6d053e9f54c535770244fa5711e366bc8c18eaea2348b528692c0b44f66e",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:7e83d25c976b55c5fa8e6fd872f839b4827519641017ad4782865cc1589b65b6",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 23016,
+          "non_memory_request_semantics_hash": "sha256:7633357c9f2c2c91cbfcb22f7476fe20b1f78c22c13f7f2dda2f97743051d5c5",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:cd512758030abaf1eb789c2cd7273d3ef562811df72146bd3bae6dabafc4d8e6",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 22513,
+          "non_memory_request_semantics_hash": "sha256:23c8e64f5df71e5b8d0c2e374f5919a2ad5c1d0d57170925e6f034a804749d81",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:0bf5cadc7bd725814d788376f84e4153fd7ac97e3cd2eaa3e6c69ab77a43676a",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 20477,
+          "non_memory_request_semantics_hash": "sha256:96aff50cda0d015d274c269d3d857c485c5717d2dc0ee1c292b6bced0fee8867",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:3ec5bbd837486b353485b52ed3d46e42e153987fb0db253770c30556219e29e7"
+    },
+    {
+      "order": 12,
+      "preregistered_row_id": "sha256:8717c61ccd59f641251a8c27752694af958efad2a7d16cc82b51fcd023e796a0",
+      "run_id": "run_lean_calibration_12_8717c61ccd59",
+      "task_id": "path-prefix-boundary",
+      "task_version": 1,
+      "task_path": "tasks/smoke/path-prefix-boundary",
+      "condition": "no_memory",
+      "repetition": 2,
+      "resolved": true,
+      "scope_compliant_success": true,
+      "official": false,
+      "model_calls": 5,
+      "tool_calls": 5,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "model_cost_usd": 0.0,
+      "typed_token_terminal": false,
+      "tool_sequence": [
+        "read_file",
+        "apply_patch",
+        "run_check",
+        "get_diff",
+        "finish_task"
+      ],
+      "request_observations": [
+        {
+          "request_index": 1,
+          "request_evidence_content_hash": "sha256:a23f397ed76ebcc4339c133c6052c8f12fe1b3b827675338475fac0c704a279d",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 10281,
+          "non_memory_request_semantics_hash": "sha256:9b65ecbc8c6f76fe2973db8de5a3fb1fa0ec3a9cff4cefb2dad869fbfc201b84",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 2,
+          "request_evidence_content_hash": "sha256:60dd17ce1245c4359a8bda3081b96dac0f18c70e4b5cececb3599c6fe82a88b4",
+          "phase": "REPRODUCE",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 15373,
+          "non_memory_request_semantics_hash": "sha256:735f6d053e9f54c535770244fa5711e366bc8c18eaea2348b528692c0b44f66e",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 3,
+          "request_evidence_content_hash": "sha256:4dc0776d1728d7b6cb864a2ddde9559a57ce241f11645a7d1abc0bfb57606b7c",
+          "phase": "IMPLEMENT",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "run_check"
+          ],
+          "selected_tool_schema_hash": "sha256:14f50218cba9043c5a79ae4ac8dd33aaaa2cce2b4ab0012d37f7fe06f8a8b3fa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 19326,
+          "non_memory_request_semantics_hash": "sha256:7633357c9f2c2c91cbfcb22f7476fe20b1f78c22c13f7f2dda2f97743051d5c5",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 4,
+          "request_evidence_content_hash": "sha256:57cd67b3340f6ac28b329e3fcdd21eaaa86d951d908df61fc057b25d37a807ff",
+          "phase": "VERIFY",
+          "selected_tool_names": [
+            "search_files",
+            "read_file",
+            "apply_patch",
+            "get_diff"
+          ],
+          "selected_tool_schema_hash": "sha256:e20c331688616917ccc3476feda4a47850219a9dc2d130942f3be0322587bfaa",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 18823,
+          "non_memory_request_semantics_hash": "sha256:23c8e64f5df71e5b8d0c2e374f5919a2ad5c1d0d57170925e6f034a804749d81",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        },
+        {
+          "request_index": 5,
+          "request_evidence_content_hash": "sha256:43c86b0c88e39b244b1a256b79f69fbaf3435f18cd7ca003ae886f3c870196e2",
+          "phase": "REVIEW",
+          "selected_tool_names": [
+            "apply_patch",
+            "finish_task"
+          ],
+          "selected_tool_schema_hash": "sha256:ec82e8644525536d7de07e22f65ea6688861011d20b87bbcb9b458af51e20e96",
+          "request_mode": "exploration",
+          "effective_max_output_tokens": 25000,
+          "requested_input_tokens": 16787,
+          "non_memory_request_semantics_hash": "sha256:96aff50cda0d015d274c269d3d857c485c5717d2dc0ee1c292b6bced0fee8867",
+          "persisted_before_dispatch": true,
+          "provider_authority_granted": false
+        }
+      ],
+      "every_model_turn_has_request_evidence": true,
+      "terminal_result_hash": "sha256:efa6f76c7d3fc71be18c82addaa8f7debed38504c8d739028f62a5b6b3be2ba7",
+      "observation_id": "sha256:e99c5c19dd3057febcfb6805f41ead077bb03a8919b5e3a74e9841e792840d4d"
+    }
+  ],
+  "pair_parity": [
+    {
+      "task_id": "config-falsy-override",
+      "repetition": 1,
+      "no_memory_row_id": "sha256:e5d463aef15978d13538aebeec83d7d0461f210d608e99a464934b5a3bdcfa9c",
+      "structured_row_id": "sha256:4fcbbbbd56bff2334c7927a8e8f9128c2fbaf01fbb38b269b0b815bc8b4e968e",
+      "terminal_tool_sequence_equal": true,
+      "request_count_equal": true,
+      "non_memory_request_semantics_equal": true,
+      "pair_hash": "sha256:0e032ab84675c8867ec02ecd88ce193046d578574971221b080206b859aaf81a"
+    },
+    {
+      "task_id": "config-falsy-override",
+      "repetition": 2,
+      "no_memory_row_id": "sha256:9056d9c3ed8f2bb615107c77d2eaccbabba9ace3c1437f3e08bae6d838671d17",
+      "structured_row_id": "sha256:14124594dd1e18affdaf0d534f5ef139ef390475740c5263a08bbd86dfc0debc",
+      "terminal_tool_sequence_equal": true,
+      "request_count_equal": true,
+      "non_memory_request_semantics_equal": true,
+      "pair_hash": "sha256:1e17b04674cbbae17d2a84211ad747845c92db3cb69a57c40f9b9c6ad34f176f"
+    },
+    {
+      "task_id": "csv-quoted-newline",
+      "repetition": 1,
+      "no_memory_row_id": "sha256:4351bd2efc85c12cdb1e0feb2c1e7d2c1505e8d2237f649874457faa8557fe8e",
+      "structured_row_id": "sha256:f0973449ffc9423012ee92f8531071d38004c7755b3f3efcc75cb38584e74be5",
+      "terminal_tool_sequence_equal": true,
+      "request_count_equal": true,
+      "non_memory_request_semantics_equal": true,
+      "pair_hash": "sha256:38da021d53af589af6b640c600ccb962f5e3578df1bc5b1214852921b8fa6d68"
+    },
+    {
+      "task_id": "csv-quoted-newline",
+      "repetition": 2,
+      "no_memory_row_id": "sha256:28786a659971660d448124ec742834da05df5e5903650f2ed7aeda10ffb9c874",
+      "structured_row_id": "sha256:78886cc4e3a35916ff189beae9900b65b95c4fc4052f02cd11ab845632bb6665",
+      "terminal_tool_sequence_equal": true,
+      "request_count_equal": true,
+      "non_memory_request_semantics_equal": true,
+      "pair_hash": "sha256:9db09aa39bf6a953f558706ff7df3f13e6a29717b1e34bc48b202103ac2d4ec5"
+    },
+    {
+      "task_id": "path-prefix-boundary",
+      "repetition": 1,
+      "no_memory_row_id": "sha256:7faef4646196facfc714c4bda3f81d7add692e218ec94cd69f811c63cb7504ba",
+      "structured_row_id": "sha256:72bc2af6f92004568a1e9ec6d375a5545b0b72e8c5ca39c90cae3aa7d126141f",
+      "terminal_tool_sequence_equal": true,
+      "request_count_equal": true,
+      "non_memory_request_semantics_equal": true,
+      "pair_hash": "sha256:9b25a1f32c3c830c4718cb60307de541d26623a905410052adf4df2c0351b803"
+    },
+    {
+      "task_id": "path-prefix-boundary",
+      "repetition": 2,
+      "no_memory_row_id": "sha256:8717c61ccd59f641251a8c27752694af958efad2a7d16cc82b51fcd023e796a0",
+      "structured_row_id": "sha256:f08b41e365afcf9974f46c9a5878cbbf78db7d2536b7b5340280d0504f6df284",
+      "terminal_tool_sequence_equal": true,
+      "request_count_equal": true,
+      "non_memory_request_semantics_equal": true,
+      "pair_hash": "sha256:1e68ef29b5d706697a2de6e932bf1e0583e19bd5d3fe571e4e61523dc0041f41"
+    }
+  ],
+  "boundary_revalidation": {
+    "phase_surface_cases": 6,
+    "saturation_boundary_cases": 9,
+    "split_budget_terminal_dimensions": 3,
+    "all_phase_surfaces_exact": true,
+    "all_saturation_boundary_decisions_exact": true,
+    "all_split_budget_dimensions_present": true,
+    "source": "exact-preregistered-predecessor-artifacts",
+    "content_hash": "sha256:78d0a393eb7cbe91eba438801f15aadeca481951b7bd774b87c2130d800d8f56"
+  },
+  "expected_rows": 12,
+  "resolved_rows": 12,
+  "rows_per_condition": 6,
+  "pair_count": 6,
+  "model_turns": 60,
+  "persisted_request_evidence_rows": 60,
+  "terminal_tool_calls": 60,
+  "typed_token_terminals": 0,
+  "every_model_turn_has_request_evidence": true,
+  "every_pair_has_terminal_tool_sequence_parity": true,
+  "every_pair_has_non_memory_request_semantics_parity": true,
+  "all_rows_resolved": true,
+  "source_files": [
+    {
+      "path": "patchloop/agent/context.py",
+      "file_bytes": 68912,
+      "file_sha256": "sha256:6730fa00a224704220683b24ddaeeb7ff5721a742dd73d1c203a22280f5cb2dd",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/context_event_compaction.py",
+      "file_bytes": 20078,
+      "file_sha256": "sha256:db0e962ed69c753c2517312b3b2cda1f8f468676b71675b4f21df741d6051be8",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/finalization.py",
+      "file_bytes": 39641,
+      "file_sha256": "sha256:1f67d0bb2247f90bb112ec93cf60d56e1c9a8c6332fabe94005e7e016224d823",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/lean_runtime.py",
+      "file_bytes": 29683,
+      "file_sha256": "sha256:2ef65095c09f01802d705ef994803b8b0133e9922da4ef87e8206a904a26fdfc",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/lean_runtime_preregistration.py",
+      "file_bytes": 39267,
+      "file_sha256": "sha256:bd140f6bd42a13f640aa5c5416f98316db60742494fdddd329895ea64881ede9",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/lean_runtime_source_qualification.py",
+      "file_bytes": 33671,
+      "file_sha256": "sha256:cb11c9cde412644471d3f2cc1e65e14d6a0d48f2c6927fc6730bc3c46114d729",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/model.py",
+      "file_bytes": 44052,
+      "file_sha256": "sha256:b8ac21ab33421ed33942036854ecf7e1badce5d35a6014da27488903352d8568",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/phases.py",
+      "file_bytes": 9641,
+      "file_sha256": "sha256:2670b3f8dee3ad1b99f0897b0797b184b981f08ffb6a3e51eef1bc0c7b36761f",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/request_allowance.py",
+      "file_bytes": 9740,
+      "file_sha256": "sha256:8ad851fccf0e143688965e715aafa7672ef7257b81518391f956cbeb800744f7",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/runner.py",
+      "file_bytes": 264302,
+      "file_sha256": "sha256:ca74214744ef3eceb5ee81f599d1baaa3c6eb1383120003c6c81a60484e0d0ef",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/saturation_recovery_shadow.py",
+      "file_bytes": 23408,
+      "file_sha256": "sha256:34d18f5d49c54a2ba5d4822835736699db7c03d086c52c13d2e8fca6636e9fe7",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/structured_edit.py",
+      "file_bytes": 22550,
+      "file_sha256": "sha256:baa1cb7d1b7412e53760e09adad07185269fe0c992bb05c2aa0d0a3f68ab0639",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/structured_edit_replay.py",
+      "file_bytes": 28015,
+      "file_sha256": "sha256:2fa7254f7bfb92ae498e995acefea3d982bd912e024727b5088c1d64b30fecd7",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/agent/tools.py",
+      "file_bytes": 203708,
+      "file_sha256": "sha256:b461fca82cf6cd90699ad90b8ecc86ee9d24bb7e9eca4cc27ba0c686e6711ce9",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/contracts.py",
+      "file_bytes": 157620,
+      "file_sha256": "sha256:314c07c5cf6f421db91f44e88bba1ef4d0eda3cca6ec7d2b895dac1c15bd36dd",
+      "content_hash": null
+    },
+    {
+      "path": "patchloop/memory/fixed_bundle.py",
+      "file_bytes": 31127,
+      "file_sha256": "sha256:0f73f0a483bd07429d90ea0960469fc7ac4e3afef2b1a595a91d7f4f9737cab8",
+      "content_hash": null
+    },
+    {
+      "path": "scripts/build_lean_harness_runtime_source_qualification.py",
+      "file_bytes": 1602,
+      "file_sha256": "sha256:53d631b90c09b02319dcbd0da53375c80011623bf7e1f656b87e082f78042ea9",
+      "content_hash": null
+    }
+  ],
+  "validation_files": [
+    {
+      "path": "tests/test_context_event_compaction.py",
+      "file_bytes": 10968,
+      "file_sha256": "sha256:467249dcbf544cfdd561ce487768d5e5ab50acad7f4342827f5171355f69eeed",
+      "content_hash": null
+    },
+    {
+      "path": "tests/test_finalization.py",
+      "file_bytes": 14169,
+      "file_sha256": "sha256:36a079b7df9d5eac68c4546c9fc018bd412655541993f602c874d1ecc6a81531",
+      "content_hash": null
+    },
+    {
+      "path": "tests/test_lean_runtime.py",
+      "file_bytes": 10729,
+      "file_sha256": "sha256:444536fa9b646c85b50736a8a00265e0a086a8410e10efa1b1a0575f28c7b38c",
+      "content_hash": null
+    },
+    {
+      "path": "tests/test_lean_runtime_source_qualification.py",
+      "file_bytes": 3527,
+      "file_sha256": "sha256:f5de17c80173da4c77b9ba67b07613a4bb98912b7f8dfa332128aebf20674c57",
+      "content_hash": null
+    },
+    {
+      "path": "tests/test_request_allowance.py",
+      "file_bytes": 5391,
+      "file_sha256": "sha256:560cc010710abccf4204ec370b5bde3d7d15704919ed656756476d4ab2a4a344",
+      "content_hash": null
+    },
+    {
+      "path": "tests/test_saturation_recovery_shadow.py",
+      "file_bytes": 11613,
+      "file_sha256": "sha256:d188fd2d178e2c6eec5792ced3d2bcc6d0767b7bebea3dfcbcfee140e788a324",
+      "content_hash": null
+    },
+    {
+      "path": "tests/test_structured_edit.py",
+      "file_bytes": 13204,
+      "file_sha256": "sha256:33e725a830683e9ae9cbc3848a2aa4cd99dae7bb80ffb04ac7087e271201020e",
+      "content_hash": null
+    },
+    {
+      "path": "tests/test_structured_edit_replay.py",
+      "file_bytes": 21203,
+      "file_sha256": "sha256:97dfe927767c1358864ec16e3bc04c9e102ef3af31d3152aa9ed802bd833301d",
+      "content_hash": null
+    }
+  ],
+  "source_inventory_hash": "sha256:356a21025420fa628b514ae72af0414e04fead80796d37caf624794554713140",
+  "validation_inventory_hash": "sha256:4ae62c0407c57f7fbc1d957e3289b2df9d18612c6f5d3daf95156d736f7df35c",
+  "public_calibration_task_package_loads": 15,
+  "private_calibration_evaluator_runs": 12,
+  "runner_calls": 12,
+  "local_tool_execution_calls": 60,
+  "local_evaluator_calls": 12,
+  "provider_transport_calls": 0,
+  "provider_generation_calls": 0,
+  "network_calls": 0,
+  "docker_cli_calls": 0,
+  "added_model_cost_usd": 0,
+  "source_integration_completed": true,
+  "source_qualification_completed": true,
+  "validation_frame_executed": true,
+  "quality_effect_estimate_authorized": false,
+  "memory_effect_estimate_authorized": false,
+  "official_analysis_authorized": false,
+  "provider_calls_authorized": false,
+  "paid_execution_authorized": false,
+  "future_runner_activation_authorized": false,
+  "fresh_memory_comparison_authorized": false,
+  "next_gate": "separately-preregister-fresh-design-before-any-provider-or-new-memory-comparison",
+  "content_hash": "sha256:b0f28eb86eb8463c389708af500dede582048c3f7910876dac5aa9d610768226"
+}

@@ -1,0 +1,276 @@
+{
+  "schema_version": "lean-harness-saturation-recovery-public-qualification-v1",
+  "qualification_id": "lean-harness-saturation-recovery-public-20260816-v1",
+  "status": "PUBLIC_THRESHOLDS_FROZEN_RUNTIME_CLOSED",
+  "evidence_date": "2026-08-16",
+  "evidence_scope": "r8-public-development-agent-visible-lifecycle-metadata",
+  "r16_outcomes_used_for_threshold_selection": false,
+  "heldout_task_files_read": 0,
+  "private_task_files_read": 0,
+  "hidden_files_read": 0,
+  "reference_patches_read": 0,
+  "predecessor_compacted_shadow": {
+    "path": "experiments/lean-harness-compacted-shadow-public-qualification-20260816-v1.json",
+    "file_bytes": 52449,
+    "file_sha256": "sha256:c26a8318d0f3ba5d132c003398a97d83eef317b8192021c9fd81b6266dbcbbe1",
+    "content_hash": "sha256:566589fe6ecc246bfa31720c141b321e13b6764de37cc80fa8be0dee1f59e8c5"
+  },
+  "predecessor_finalization_reserve": {
+    "path": "experiments/lean-harness-finalization-reserve-20260816-v1.json",
+    "file_bytes": 6036,
+    "file_sha256": "sha256:30cf34a19c94025777df612b283376be5d08047069f3c49e19b58e950434bf06",
+    "content_hash": "sha256:9458bb1d59d51aaf94a082504a3883d799bf4d807ce7a83376bdc391ab6348db"
+  },
+  "r8_development_evidence": {
+    "path": "reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r8-evidence-r4.json",
+    "file_bytes": 19557,
+    "file_sha256": "sha256:5035421a63d58fededab133b77c72e23ee4ad6d380a37c8d1157ce7480b7c62c",
+    "content_hash": "sha256:0ef31d2b27a7601800d4352e352f67262e462f19b5c2aef25d1d3f0106aade83"
+  },
+  "trace_snapshot": {
+    "path": ".patchloop/state.sqlite3",
+    "file_bytes": 98025472,
+    "file_sha256": "sha256:6b5d40b52dd21fd905d1a3fd5039de6a5559365aa33e9b5e817466b4201f672a",
+    "checked_in": false,
+    "wal_bytes_at_projection": 0,
+    "read_contract": "sqlite-main-db-immutable-read-v1",
+    "source_metadata_unchanged_during_read": true
+  },
+  "trace_snapshot_replayable_from_checked_in_files": false,
+  "source_tool_schema_version": "v2",
+  "source_context_policy_version": "phase-evidence-v5",
+  "public_task_count": 2,
+  "resolved_run_count": 4,
+  "observations": [
+    {
+      "order": 1,
+      "run_id": "run_5a3113600554429e",
+      "task_id": "moto-query-scanned-count",
+      "condition": "no_memory",
+      "outcome_kind": "resolved",
+      "trace_qualified": true,
+      "event_count": 92,
+      "semantic_replay_count": 3,
+      "semantic_replay_sequences": [
+        40,
+        51,
+        55
+      ],
+      "semantic_replay_tools": [
+        "search_files",
+        "read_file",
+        "read_file"
+      ],
+      "max_semantic_replays_in_one_mutation_epoch": 3,
+      "loop_detection_count": 3,
+      "max_no_progress_streak": 2,
+      "strategy_change_required_count": 1,
+      "rejected_patch_count": 1,
+      "rejected_patch_sequences": [
+        60
+      ],
+      "max_consecutive_patch_rejections": 1,
+      "successful_mutation_count": 1,
+      "first_recovery_mutation_sequence": 67,
+      "model_turns_from_rejection_to_recovery": 1,
+      "selected_event_projection_count": 20,
+      "selected_event_projection_hash": "sha256:d3cfe84c92cbaa2e9aaa1a7ac6891409a9f7a50e4980beb50d914a42dcc429fe"
+    },
+    {
+      "order": 2,
+      "run_id": "run_69f76b4948af4d9d",
+      "task_id": "moto-query-scanned-count",
+      "condition": "structured",
+      "outcome_kind": "resolved",
+      "trace_qualified": true,
+      "event_count": 65,
+      "semantic_replay_count": 0,
+      "semantic_replay_sequences": [],
+      "semantic_replay_tools": [],
+      "max_semantic_replays_in_one_mutation_epoch": 0,
+      "loop_detection_count": 0,
+      "max_no_progress_streak": 0,
+      "strategy_change_required_count": 0,
+      "rejected_patch_count": 0,
+      "rejected_patch_sequences": [],
+      "max_consecutive_patch_rejections": 0,
+      "successful_mutation_count": 1,
+      "first_recovery_mutation_sequence": null,
+      "model_turns_from_rejection_to_recovery": 0,
+      "selected_event_projection_count": 10,
+      "selected_event_projection_hash": "sha256:f2df6074fe0cec88096807c341e6fef89726ce32f3f4a49ae5fbfd8cff114d6c"
+    },
+    {
+      "order": 3,
+      "run_id": "run_d10f4197b45342d5",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "condition": "structured",
+      "outcome_kind": "resolved",
+      "trace_qualified": true,
+      "event_count": 54,
+      "semantic_replay_count": 0,
+      "semantic_replay_sequences": [],
+      "semantic_replay_tools": [],
+      "max_semantic_replays_in_one_mutation_epoch": 0,
+      "loop_detection_count": 0,
+      "max_no_progress_streak": 0,
+      "strategy_change_required_count": 0,
+      "rejected_patch_count": 0,
+      "rejected_patch_sequences": [],
+      "max_consecutive_patch_rejections": 0,
+      "successful_mutation_count": 1,
+      "first_recovery_mutation_sequence": null,
+      "model_turns_from_rejection_to_recovery": 0,
+      "selected_event_projection_count": 9,
+      "selected_event_projection_hash": "sha256:7830389c603ee85de3609cf7caace077d4a7766dea687d8e910cb2b38fa88755"
+    },
+    {
+      "order": 4,
+      "run_id": "run_cc33bef38c8a42d0",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "condition": "no_memory",
+      "outcome_kind": "resolved",
+      "trace_qualified": true,
+      "event_count": 85,
+      "semantic_replay_count": 0,
+      "semantic_replay_sequences": [],
+      "semantic_replay_tools": [],
+      "max_semantic_replays_in_one_mutation_epoch": 0,
+      "loop_detection_count": 0,
+      "max_no_progress_streak": 0,
+      "strategy_change_required_count": 0,
+      "rejected_patch_count": 0,
+      "rejected_patch_sequences": [],
+      "max_consecutive_patch_rejections": 0,
+      "successful_mutation_count": 2,
+      "first_recovery_mutation_sequence": null,
+      "model_turns_from_rejection_to_recovery": 0,
+      "selected_event_projection_count": 14,
+      "selected_event_projection_hash": "sha256:717add6766d8cab6c722684979dbfaf632095653ebb554ad558f4c8d89ebe420"
+    }
+  ],
+  "total_event_rows_read": 296,
+  "selected_event_projection_rows": 53,
+  "runs_with_semantic_replay": 1,
+  "runs_with_patch_rejection": 1,
+  "observed_max_semantic_replays_per_mutation_epoch": 3,
+  "observed_max_no_progress_streak": 2,
+  "observed_max_consecutive_patch_rejections": 1,
+  "observed_max_recovery_model_turns": 1,
+  "source_semantic_replay_saturation_threshold": 6,
+  "source_tool_gateway_saturation_threshold": 6,
+  "source_no_progress_strategy_threshold": 2,
+  "candidate_policy_version": "lean-harness-saturation-recovery-v1",
+  "candidate_semantic_replay_saturation_threshold": 4,
+  "candidate_semantic_replay_formula": "public-observed-max-plus-one-v1",
+  "candidate_no_progress_strategy_threshold": 2,
+  "candidate_no_progress_formula": "public-observed-max-v1",
+  "candidate_structured_edit_escalation_rejections": 2,
+  "candidate_patch_escalation_formula": "public-observed-max-plus-one-v1",
+  "direct_corrective_patch_retries_before_escalation": 1,
+  "replay_counter_reset_event": "PatchApplied",
+  "rejection_counter_reset_event": "PatchApplied",
+  "saturation_blocks_tools": [
+    "read_file",
+    "search_files"
+  ],
+  "saturation_preserves_mutation_and_finalization_tools": true,
+  "strategy_change_is_required_not_terminal": true,
+  "structured_edit_required_at_escalation": true,
+  "freeform_patch_blocked_at_escalation": true,
+  "condition_neutral_thresholds": true,
+  "observed_success_prefix_preserved": true,
+  "threshold_optimality_established": false,
+  "provider_token_savings_verified": false,
+  "success_effect_verified": false,
+  "source_files": [
+    {
+      "path": "patchloop/agent/context.py",
+      "file_bytes": 68912,
+      "file_sha256": "sha256:6730fa00a224704220683b24ddaeeb7ff5721a742dd73d1c203a22280f5cb2dd"
+    },
+    {
+      "path": "patchloop/agent/finalization.py",
+      "file_bytes": 39641,
+      "file_sha256": "sha256:1f67d0bb2247f90bb112ec93cf60d56e1c9a8c6332fabe94005e7e016224d823"
+    },
+    {
+      "path": "patchloop/agent/investigation.py",
+      "file_bytes": 37074,
+      "file_sha256": "sha256:77db783258e544a7b230dc0f184d22403b8229d252153d76e0f7b97eede97b27"
+    },
+    {
+      "path": "patchloop/agent/saturation_recovery_qualification.py",
+      "file_bytes": 37106,
+      "file_sha256": "sha256:ef6b54be29477da11465ee91e1dfcd2e31ff5699a3cd33b202e4ae26554a9c1b"
+    },
+    {
+      "path": "patchloop/agent/structured_edit.py",
+      "file_bytes": 22550,
+      "file_sha256": "sha256:baa1cb7d1b7412e53760e09adad07185269fe0c992bb05c2aa0d0a3f68ab0639"
+    },
+    {
+      "path": "patchloop/agent/tools.py",
+      "file_bytes": 208603,
+      "file_sha256": "sha256:b137c5f7ac5bbe86a70afec0929bfb6cab9ce9baac7717c1ecd2b43749809590"
+    },
+    {
+      "path": "patchloop/errors.py",
+      "file_bytes": 1497,
+      "file_sha256": "sha256:6ae5e1143a226924faecda80a139762a02a17f5267ca6016e56204241aaa6814"
+    },
+    {
+      "path": "patchloop/util.py",
+      "file_bytes": 5868,
+      "file_sha256": "sha256:6ce3e5a7e5a91556c6085e3c243a4ccdaf8926dd6e57878fb438792cdb0227e6"
+    },
+    {
+      "path": "scripts/build_lean_harness_saturation_recovery_qualification.py",
+      "file_bytes": 1666,
+      "file_sha256": "sha256:46df7b650f77265e67adf42501eb87d72b3433ef058ee827a632ad31574e2bc8"
+    }
+  ],
+  "validation_files": [
+    {
+      "path": "tests/test_finalization.py",
+      "file_bytes": 14169,
+      "file_sha256": "sha256:36a079b7df9d5eac68c4546c9fc018bd412655541993f602c874d1ecc6a81531"
+    },
+    {
+      "path": "tests/test_saturation_recovery_qualification.py",
+      "file_bytes": 10672,
+      "file_sha256": "sha256:60cdf9ac2814aa53f72a42451bc1ad33812ac074470955490f70eca03816b997"
+    },
+    {
+      "path": "tests/test_structured_edit.py",
+      "file_bytes": 13033,
+      "file_sha256": "sha256:256498a49b4b1fe8b04a510d2388fe17a5765561d0b8dde71b8f2f0c8b65cd34"
+    },
+    {
+      "path": "tests/test_structured_edit_replay.py",
+      "file_bytes": 19588,
+      "file_sha256": "sha256:1d9ddb7dbc2b7822958874bf3cc1d9bf47340944113577cbd41737db2e463f6e"
+    },
+    {
+      "path": "tests/test_tool_gateway.py",
+      "file_bytes": 145678,
+      "file_sha256": "sha256:24a5ab1606525b22e4d6146c8914eb0c956de82d9b889aee67ee73bd78f2b959"
+    }
+  ],
+  "source_inventory_hash": "sha256:71a5f3967adaba6f0b29006bea234e8cac31fd334f99c1d1e2ee028241bd830e",
+  "validation_inventory_hash": "sha256:393eeb96cf41969ae8b234f326b7565d0a5bb26e587c4345ae7494d2b6f069ec",
+  "sqlite_queries": 4,
+  "provider_transport_calls": 0,
+  "provider_generation_calls": 0,
+  "runner_calls": 0,
+  "docker_calls": 0,
+  "evaluator_calls": 0,
+  "added_model_cost_usd": 0,
+  "provider_calls_authorized": false,
+  "runner_activation_authorized": false,
+  "tool_policy_activation_authorized": false,
+  "state_mutation_authorized": false,
+  "paid_execution_authorized": false,
+  "next_gate": "bind-frozen-thresholds-to-versioned-no-call-admission-and-recovery-shadow",
+  "content_hash": "sha256:f07374bca99d1046c66f7ade6d96caf2bd06cbafe307dcabcad681f473485db6"
+}

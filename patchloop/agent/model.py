@@ -883,9 +883,36 @@ class OpenAIResponsesAdapter:
             )
         }
 
+    @staticmethod
+    def _token_count_payload_v2(request: dict[str, Any]) -> dict[str, Any]:
+        """Project every create-time field that changes provider input tokens.
+
+        V8 added ``parallel_tool_calls=False`` to ``responses.create`` but the
+        historical count projection omitted it.  The provider consequently
+        reported a stable 78-token delta in all three R9 Lean rows.  Keep the
+        consumed v1 projection intact and expose this opt-in successor for new
+        runtime candidates.
+        """
+
+        keys = (
+            "model",
+            "input",
+            "tools",
+            "reasoning",
+            "truncation",
+            "parallel_tool_calls",
+        )
+        return {key: request[key] for key in keys if key in request}
+
     def count_input_tokens(self, request: dict[str, Any]) -> int:
         counted = self.client.responses.input_tokens.count(
             **self._token_count_payload(request)
+        )
+        return int(counted.input_tokens)
+
+    def count_input_tokens_v2(self, request: dict[str, Any]) -> int:
+        counted = self.client.responses.input_tokens.count(
+            **self._token_count_payload_v2(request)
         )
         return int(counted.input_tokens)
 

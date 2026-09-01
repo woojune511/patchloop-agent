@@ -1,0 +1,12 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+index 441f66f..243a419 100644
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -768,6 +768,7 @@ class Table(CloudFormationModel):
+ 
+         if filter_expression is not None:
+             results = [item for item in results if filter_expression.expr(item)]
++            scanned_count = len(results)
+ 
+         if projection_expressions:
+             results = [r.project(projection_expressions) for r in results]

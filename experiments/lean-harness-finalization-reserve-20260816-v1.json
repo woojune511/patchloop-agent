@@ -1,0 +1,220 @@
+{
+  "schema_version": "finalization-reserve-contract-v1",
+  "contract_id": "r8-public-development-finalization-reserve-20260816-v1",
+  "status": "development-candidate-runtime-closed",
+  "development_evidence_path": "reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r8-evidence-r4.json",
+  "development_evidence_file_sha256": "sha256:5035421a63d58fededab133b77c72e23ee4ad6d380a37c8d1157ce7480b7c62c",
+  "development_evidence_file_bytes": 19557,
+  "trace_snapshot_path": ".patchloop/state.sqlite3",
+  "trace_snapshot_file_sha256": "sha256:6b5d40b52dd21fd905d1a3fd5039de6a5559365aa33e9b5e817466b4201f672a",
+  "trace_snapshot_file_bytes": 98025472,
+  "trace_snapshot_checked_in": false,
+  "source_tool_schema_version": "v2",
+  "source_context_policy_version": "phase-evidence-v5",
+  "public_task_count": 2,
+  "resolved_run_count": 4,
+  "observations": [
+    {
+      "run_id": "run_5a3113600554429e",
+      "task_id": "moto-query-scanned-count",
+      "condition": "no_memory",
+      "visible_check_count": 1,
+      "turns": [
+        {
+          "event_sequence": 58,
+          "requested_input_tokens": 14327,
+          "output_tokens": 1552,
+          "tool_names": [
+            "apply_patch"
+          ]
+        },
+        {
+          "event_sequence": 63,
+          "requested_input_tokens": 14248,
+          "output_tokens": 1336,
+          "tool_names": [
+            "apply_patch"
+          ]
+        },
+        {
+          "event_sequence": 72,
+          "requested_input_tokens": 7620,
+          "output_tokens": 75,
+          "tool_names": [
+            "run_check"
+          ]
+        },
+        {
+          "event_sequence": 78,
+          "requested_input_tokens": 5986,
+          "output_tokens": 150,
+          "tool_names": [
+            "get_diff"
+          ]
+        },
+        {
+          "event_sequence": 84,
+          "requested_input_tokens": 5795,
+          "output_tokens": 85,
+          "tool_names": [
+            "finish_task"
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": "run_69f76b4948af4d9d",
+      "task_id": "moto-query-scanned-count",
+      "condition": "structured",
+      "visible_check_count": 1,
+      "turns": [
+        {
+          "event_sequence": 36,
+          "requested_input_tokens": 15801,
+          "output_tokens": 992,
+          "tool_names": [
+            "apply_patch"
+          ]
+        },
+        {
+          "event_sequence": 45,
+          "requested_input_tokens": 8926,
+          "output_tokens": 106,
+          "tool_names": [
+            "run_check"
+          ]
+        },
+        {
+          "event_sequence": 51,
+          "requested_input_tokens": 6605,
+          "output_tokens": 130,
+          "tool_names": [
+            "get_diff"
+          ]
+        },
+        {
+          "event_sequence": 57,
+          "requested_input_tokens": 6384,
+          "output_tokens": 244,
+          "tool_names": [
+            "finish_task"
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": "run_d10f4197b45342d5",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "condition": "structured",
+      "visible_check_count": 1,
+      "turns": [
+        {
+          "event_sequence": 25,
+          "requested_input_tokens": 13578,
+          "output_tokens": 1868,
+          "tool_names": [
+            "apply_patch"
+          ]
+        },
+        {
+          "event_sequence": 34,
+          "requested_input_tokens": 8441,
+          "output_tokens": 115,
+          "tool_names": [
+            "run_check"
+          ]
+        },
+        {
+          "event_sequence": 40,
+          "requested_input_tokens": 8736,
+          "output_tokens": 242,
+          "tool_names": [
+            "get_diff"
+          ]
+        },
+        {
+          "event_sequence": 46,
+          "requested_input_tokens": 8525,
+          "output_tokens": 133,
+          "tool_names": [
+            "finish_task"
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": "run_cc33bef38c8a42d0",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "condition": "no_memory",
+      "visible_check_count": 1,
+      "turns": [
+        {
+          "event_sequence": 53,
+          "requested_input_tokens": 11975,
+          "output_tokens": 3046,
+          "tool_names": [
+            "apply_patch"
+          ]
+        },
+        {
+          "event_sequence": 60,
+          "requested_input_tokens": 7667,
+          "output_tokens": 168,
+          "tool_names": [
+            "read_file"
+          ]
+        },
+        {
+          "event_sequence": 65,
+          "requested_input_tokens": 8319,
+          "output_tokens": 122,
+          "tool_names": [
+            "run_check"
+          ]
+        },
+        {
+          "event_sequence": 71,
+          "requested_input_tokens": 10517,
+          "output_tokens": 66,
+          "tool_names": [
+            "get_diff"
+          ]
+        },
+        {
+          "event_sequence": 77,
+          "requested_input_tokens": 10281,
+          "output_tokens": 140,
+          "tool_names": [
+            "finish_task"
+          ]
+        }
+      ]
+    }
+  ],
+  "observed_max_model_turns": 5,
+  "observed_max_requested_input_tokens_per_turn": 15801,
+  "observed_max_output_tokens_per_turn": 3046,
+  "rounding_quantum_tokens": 5000,
+  "max_requested_input_tokens_per_turn": 20000,
+  "max_output_tokens_per_turn": 5000,
+  "base_non_check_model_turns": 4,
+  "check_model_turns_per_visible_check": 1,
+  "supported_visible_check_count": 1,
+  "reserved_model_turns": 5,
+  "reserved_input_tokens": 100000,
+  "reserved_output_tokens": 25000,
+  "reserved_total_tokens": 125000,
+  "finalization_tool_names": [
+    "read_file",
+    "apply_patch",
+    "run_check",
+    "get_diff",
+    "finish_task"
+  ],
+  "raw_trace_replayable_from_checked_in_files": false,
+  "requires_public_development_requalification": true,
+  "runtime_activation_authorized": false,
+  "provider_calls_authorized": false,
+  "fresh_panel_authorized": false,
+  "content_hash": "sha256:9458bb1d59d51aaf94a082504a3883d799bf4d807ce7a83376bdc391ab6348db"
+}

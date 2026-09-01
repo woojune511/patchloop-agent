@@ -1,0 +1,20 @@
+{
+  "approval": {
+    "content_hash": "sha256:9856cfaebe054e90dddd3874f8c5e255f73243d7a9770c379e7d32332c0d97d3",
+    "file_bytes": 996,
+    "file_sha256": "sha256:8cf32800afc882aed303d74587d46dbe82a41f8a3e18e5a8ab7e765336881afe",
+    "path": "reports/rapid-development/artifacts/pdm-anyio-public-behavior-check-qualification-approval-v2.json"
+  },
+  "candidate": {
+    "content_hash": "sha256:a1d625e528ed29dea31928d552964cd08c68c7b931bf0d305247d0e972206c9a",
+    "file_bytes": 12022,
+    "file_sha256": "sha256:4c95cf6b9d3aa7faa7464880c9a5d43e4b17112f6af4e003e56ed02f088a98a0",
+    "path": "reports/rapid-development/artifacts/pdm-anyio-public-behavior-check-qualification-candidate-v2.json"
+  },
+  "content_hash": "sha256:a8eb0b636833c010966cfbe5a383684a14d7256f7963d770f584894a136e2e4e",
+  "docker_calls_before_claim": 0,
+  "execution_hash": "sha256:c36004fe9405b75b818812294aadfaf462b42db9aac36c9aa53a157ef3751a57",
+  "recorded_at": "2026-08-22T00:20:31.358007Z",
+  "schema_version": "public-behavior-check-qualification-attempt-v2",
+  "status": "DOCKER_QUALIFICATION_ATTEMPT_CLAIMED_BEFORE_CALL"
+}

@@ -1,0 +1,100 @@
+{
+  "authority": {
+    "added_cost_usd": 0,
+    "candidate_materialized": false,
+    "container_mutations": 0,
+    "docker_cli_calls": 0,
+    "docker_daemon_calls": 0,
+    "execution_authorized": false,
+    "image_store_mutations": 0,
+    "inventory_preflight_authorized": false,
+    "network_calls": 0,
+    "predecessor_files_read": 3,
+    "source_files_read": 4,
+    "source_qualified": true,
+    "task_evaluator_agent_provider_calls": 0,
+    "validation_files_read": 1
+  },
+  "checks": {
+    "approval-attempt-terminal-append-only": true,
+    "call-claim-written-before-command-no-retry-after-uncertainty": true,
+    "consumed-preflight-terminal-bound-append-only": true,
+    "exact-one-docker-image-ls-command": true,
+    "local-desktop-linux-context-only": true,
+    "no-harbor-task-evaluator-agent-provider-command": true,
+    "no-pull-build-tag-remove-prune-or-container-command": true,
+    "raw-streams-hash-only": true,
+    "runner-execution-hash-preserved": true,
+    "twelve-exact-target-tags-only": true,
+    "unrelated-image-records-never-persisted": true
+  },
+  "content_hash": "sha256:72fd6a831c2431b12a4cff52c66f64db8bb0bfcf21733ae31ca563ef71e4ad87",
+  "next_gate": "materialize-execution-closed-local-image-inventory-candidate",
+  "predecessor_bindings": [
+    {
+      "content_hash": "sha256:f687a887c3c405ad76251b75aa45d89c20b528c8d9cf0724cf7020e05e1255c0",
+      "file_bytes": 92174,
+      "file_sha256": "sha256:c2e63b4e9c679f0d3b5ff97d02399d9b4fcfac82ff2b18123937946667898082",
+      "path": "experiments/lean-harness-fresh-harbor-partial-admission-runner-20260818-v1.json",
+      "role": "sealed-partial-runner-candidate"
+    },
+    {
+      "content_hash": "sha256:725a230863af4ae43f1c447323cba06e61140920be8b928c4065a3bd4c52b94e",
+      "file_bytes": 2940,
+      "file_sha256": "sha256:fb40fab9a53756ca2dfef4d9f0a88d326f077c7402744cfaebaac351cebfe9a2",
+      "path": "reports/fresh-panel/artifacts/lean-fresh-harbor-partial-preflight-terminal-r1.json",
+      "role": "consumed-bulk-inspect-preflight-terminal"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 42709,
+      "file_sha256": "sha256:bf4555eff79b8db58e83567e93a2ad61a0e434ad842d5e1939bd4ddd344d6a69",
+      "path": "patchloop/evals/fresh_harbor_partial_preflight.py",
+      "role": "consumed-preflight-source"
+    }
+  ],
+  "qualification_id": "lean-fresh-harbor-local-image-inventory-20260818-r1",
+  "schema_version": "lean-fresh-harbor-local-image-inventory-source-qualification-v1",
+  "source_files": [
+    {
+      "content_hash": null,
+      "file_bytes": 39560,
+      "file_sha256": "sha256:d57dd1cd6593aa197d1180d2e3cc810f93d9e5e3ce444b3093bb790a61c8e4ab",
+      "path": "patchloop/evals/fresh_harbor_local_image_inventory.py",
+      "role": "local-image-source"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 478,
+      "file_sha256": "sha256:bc85ed43958b981e2c34c5f7b36429dcea8accde0bb8bd4d7c6da3af0e4b58b6",
+      "path": "scripts/build_lean_fresh_harbor_local_image_inventory_source_qualification.py",
+      "role": "local-image-source"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 450,
+      "file_sha256": "sha256:cf87932f18b6dd0c10268e4ba4a798baed66dc4a39a0cda83af421ebea7b6149",
+      "path": "scripts/build_lean_fresh_harbor_local_image_inventory_candidate.py",
+      "role": "local-image-source"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 1005,
+      "file_sha256": "sha256:6a7c9f7cf0ad56018a175f82c1640858cb50f4dd9e233b7759dce7bd7cd50dc5",
+      "path": "scripts/run_lean_fresh_harbor_local_image_inventory.py",
+      "role": "local-image-source"
+    }
+  ],
+  "source_inventory_hash": "sha256:7a3a9f5b3c5073a60c3d30c728badd84c7f760344ebd3373cbcd1c522ac7b1fc",
+  "status": "LOCAL_IMAGE_INVENTORY_SOURCE_QUALIFIED_NO_DOCKER_AUTHORITY",
+  "validation_files": [
+    {
+      "content_hash": null,
+      "file_bytes": 9907,
+      "file_sha256": "sha256:f87aaade2bf041d8a7a3e5021b000c5c2c7631512ee42028d0169e6401c1d283",
+      "path": "tests/test_fresh_harbor_local_image_inventory.py",
+      "role": "local-image-validation"
+    }
+  ],
+  "validation_inventory_hash": "sha256:66e408e8dd023e5cdd3bf4217d965d55be4292f4fdc46318120ce00c380d0350"
+}

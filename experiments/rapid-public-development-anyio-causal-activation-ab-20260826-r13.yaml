@@ -1,0 +1,58 @@
+schema_version: rapid-public-development-anyio-causal-activation-ab-v1
+experiment_id: rapid-public-dev-anyio-causal-activation-ab-20260826-r13
+status: development-only
+official: false
+selection_policy_version: qualified-public-v8-v17-causal-activation-ab-v1
+public_development_history_only: true
+heldout_outcomes_used: false
+private_evidence_used: false
+frozen_dataset_modified: false
+task_successor_opt_in: true
+tasks:
+  - fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml
+variants:
+  - lean-harness-v8
+  - lean-harness-v17
+repetitions: 3
+memory_condition: no_memory
+model_provider: openai
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+transport_max_retries: 0
+max_output_tokens: 25000
+budget:
+  max_model_calls: 240
+  max_tool_calls: 400
+  max_total_tokens: 1100000
+  wall_clock_timeout_seconds: 3600
+  token_budget_schema_version: cumulative-split-v1
+  max_cumulative_input_tokens: 1000000
+  max_cumulative_output_tokens: 100000
+schedule:
+  - {order: 1, task: fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml, variant: lean-harness-v8, repetition: 1}
+  - {order: 2, task: fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml, variant: lean-harness-v17, repetition: 1}
+  - {order: 3, task: fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml, variant: lean-harness-v17, repetition: 2}
+  - {order: 4, task: fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml, variant: lean-harness-v8, repetition: 2}
+  - {order: 5, task: fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml, variant: lean-harness-v8, repetition: 3}
+  - {order: 6, task: fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml, variant: lean-harness-v17, repetition: 3}
+metrics:
+  - evaluator_reached
+  - token_terminal
+  - submission_completed
+  - success_at_budget
+  - model_calls
+  - tool_calls
+  - model_cost_nanos
+cost_policy:
+  per_run_reserve_nanos: 1200000000
+  full_schedule_reserve_nanos: 7200000000
+  hard_cap_nanos: 7500000000
+  pricing_nanos_per_token:
+    uncached_input: 750
+    cached_input: 75
+    cache_write_input: 750
+    output: 4500
+provider_execution_authorized: false
+approved_execution_hash: null

@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from patchloop.agent.provider_schema_admission import (
+    STRICT_ANCHORED_READ_POLICY,
+    normalize_strict_read_arguments,
+)
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, Budget, Checkpoint, EventType, PublicTask, RunEvent
 from patchloop.errors import ContractError, RecoveryError
@@ -28,9 +32,8 @@ TOOL_ADMISSION_SCHEMA_V2 = "tool-admission-blocked-v2"
 EVIDENCE_SATURATION_POLICY_VERSION = "evidence-saturation-v1"
 EVIDENCE_SATURATION_THRESHOLD = 6
 READ_SEARCH_POLICY_SCHEMA = "read-search-policy-v1"
-INSPECTION_ADMISSION_PREFLIGHT_SCHEMA = (
-    "inspection-admission-preflight-v1"
-)
+INSPECTION_ADMISSION_PREFLIGHT_SCHEMA = "inspection-admission-preflight-v1"
+SELF_DIRECTED_INVESTIGATION_POLICY_VERSION = "bounded-self-directed-exploration-v1"
 
 NO_PROGRESS_STRATEGY_THRESHOLD = 2
 SEARCH_QUERY_CHARACTER_LIMIT = 500
@@ -76,10 +79,7 @@ def validate_inspection_arguments(
 ) -> None:
     """Apply the same no-side-effect validation before dispatch or admission."""
 
-    if (
-        require_current_target
-        and (workspace is None or not workspace.is_dir())
-    ):
+    if require_current_target and (workspace is None or not workspace.is_dir()):
         raise ContractError("inspection workspace does not exist")
     if tool == "read_file":
         if set(arguments) != {"path", "start_line", "end_line"}:
@@ -95,9 +95,7 @@ def validate_inspection_arguments(
             or end_line < start_line
             or end_line - start_line > 500
         ):
-            raise ContractError(
-                "read_file range must contain at most 501 ordered lines"
-            )
+            raise ContractError("read_file range must contain at most 501 ordered lines")
         safe_relative_path(path)
         if require_current_target:
             assert workspace is not None
@@ -106,50 +104,27 @@ def validate_inspection_arguments(
                 raise ContractError(f"file does not exist: {path}")
         return
     if tool == "search_files":
-        if (
-            not set(arguments).issubset({"query", "path_glob"})
-            or "query" not in arguments
-        ):
+        if not set(arguments).issubset({"query", "path_glob"}) or "query" not in arguments:
             raise ContractError("search_files requires query and optional path_glob")
         query = arguments.get("query")
         path_glob = arguments.get("path_glob", "**/*")
-        if (
-            not isinstance(query, str)
-            or not query
-            or len(query) > SEARCH_QUERY_CHARACTER_LIMIT
-        ):
+        if not isinstance(query, str) or not query or len(query) > SEARCH_QUERY_CHARACTER_LIMIT:
             raise ContractError("search query must contain between 1 and 500 characters")
-        if (
-            not isinstance(path_glob, str)
-            or len(path_glob) > SEARCH_GLOB_CHARACTER_LIMIT
-        ):
-            raise ContractError(
-                "path_glob must contain at most 500 characters"
-            )
+        if not isinstance(path_glob, str) or len(path_glob) > SEARCH_GLOB_CHARACTER_LIMIT:
+            raise ContractError("path_glob must contain at most 500 characters")
         normalized_glob = safe_relative_path(
             path_glob,
             field_name="path_glob",
         )
         glob_segments = normalized_glob.split("/")
         if len(glob_segments) > SEARCH_GLOB_SEGMENT_LIMIT:
-            raise ContractError(
-                "path_glob must contain at most 100 path segments"
-            )
+            raise ContractError("path_glob must contain at most 100 path segments")
         if normalized_glob == "." or (
-            len(normalized_glob) >= 2
-            and normalized_glob[0].isalpha()
-            and normalized_glob[1] == ":"
+            len(normalized_glob) >= 2 and normalized_glob[0].isalpha() and normalized_glob[1] == ":"
         ):
-            raise ContractError(
-                "path_glob must be a non-drive relative glob pattern"
-            )
-        if any(
-            "**" in segment and segment != "**"
-            for segment in glob_segments
-        ):
-            raise ContractError(
-                "path_glob recursive wildcard must occupy an entire path segment"
-            )
+            raise ContractError("path_glob must be a non-drive relative glob pattern")
+        if any("**" in segment and segment != "**" for segment in glob_segments):
+            raise ContractError("path_glob recursive wildcard must occupy an entire path segment")
         return
     raise ContractError(f"unsupported inspection tool: {tool}")
 
@@ -158,22 +133,14 @@ def mutation_epoch(events: list[RunEvent]) -> int | None:
     """Return the latest successful mutation boundary."""
 
     return max(
-        (
-            event.sequence
-            for event in events
-            if event.type == EventType.PATCH_APPLIED
-        ),
+        (event.sequence for event in events if event.type == EventType.PATCH_APPLIED),
         default=None,
     )
 
 
 def active_epoch_events(events: list[RunEvent]) -> tuple[int | None, list[RunEvent]]:
     epoch = mutation_epoch(events)
-    return epoch, [
-        event
-        for event in events
-        if epoch is None or event.sequence > epoch
-    ]
+    return epoch, [event for event in events if epoch is None or event.sequence > epoch]
 
 
 def evidence_saturation_state(
@@ -258,15 +225,11 @@ def _validate_read_result(
     ):
         raise RecoveryError("read_file result conflicts with its recorded input")
     if result["line_count"] == 0:
-        if (
-            result["actual_start_line"] is not None
-            or result["actual_end_line"] is not None
-        ):
+        if result["actual_start_line"] is not None or result["actual_end_line"] is not None:
             raise RecoveryError("empty read_file result declares a returned range")
     elif (
         result["actual_start_line"] != result["start_line"]
-        or result["actual_end_line"]
-        != result["actual_start_line"] + result["line_count"] - 1
+        or result["actual_end_line"] != result["actual_start_line"] + result["line_count"] - 1
         or result["actual_end_line"] > result["total_lines"]
     ):
         raise RecoveryError("read_file returned range metadata is inconsistent")
@@ -327,9 +290,7 @@ def load_inspection_records(
             continue
         call_diff_hash = call.payload.get("worktree_diff_hash")
         if not isinstance(call_diff_hash, str):
-            raise RecoveryError(
-                "v4 inspection call lacks a worktree diff identity"
-            )
+            raise RecoveryError("v4 inspection call lacks a worktree diff identity")
         if worktree_diff_hash is not None and call_diff_hash != worktree_diff_hash:
             continue
         input_artifact = _artifact_from_payload(
@@ -346,20 +307,71 @@ def load_inspection_records(
         arguments = input_payload.get("input")
         if input_payload.get("tool") != tool or not isinstance(arguments, dict):
             raise RecoveryError("inspection input artifact conflicts with its call")
-        expected_input_hash = sha256_text(
-            canonical_json({"tool": tool, "input": arguments})
-        )
+        expected_input_hash = sha256_text(canonical_json({"tool": tool, "input": arguments}))
         input_hash = call.payload.get("input_hash")
         normalized_call_hash = call.payload.get("normalized_call_hash")
-        if input_hash != expected_input_hash or not isinstance(
-            normalized_call_hash, str
-        ):
+        if input_hash != expected_input_hash or not isinstance(normalized_call_hash, str):
             raise RecoveryError("inspection call identity failed verification")
+        normalized_arguments = arguments
+        if call.payload.get("self_directed_exploration_policy_version") == (
+            SELF_DIRECTED_INVESTIGATION_POLICY_VERSION
+        ):
+            intent = arguments.get("investigation_intent")
+            if (
+                not isinstance(intent, dict)
+                or call.payload.get("investigation_intent") != intent
+                or call.payload.get("investigation_intent_hash")
+                != sha256_text(canonical_json(intent))
+                or not isinstance(call.payload.get("investigation_target"), dict)
+                or not isinstance(call.payload.get("investigation_target_hash"), str)
+            ):
+                raise RecoveryError("self-directed inspection call binding differs")
+            normalized_arguments = {
+                key: value for key, value in arguments.items() if key != "investigation_intent"
+            }
+        read_argument_policy = call.payload.get("read_argument_policy_version")
+        if read_argument_policy is not None:
+            if tool != "read_file" or read_argument_policy != STRICT_ANCHORED_READ_POLICY:
+                raise RecoveryError("inspection read argument policy differs")
+            try:
+                normalized_arguments = normalize_strict_read_arguments(normalized_arguments)
+            except ContractError as exc:
+                raise RecoveryError("strict inspection wire arguments differ") from exc
+        if call.payload.get("anchored_read_policy_version") == "anchored-source-read-v1":
+            resolution = call.payload.get("anchored_read_resolution")
+            resolution_hash = call.payload.get("anchored_read_resolution_hash")
+            if (
+                tool != "read_file"
+                or not isinstance(resolution, dict)
+                or resolution.get("policy_version") != "anchored-source-read-v1"
+                or resolution.get("worktree_diff_hash") != call_diff_hash
+                or resolution.get("search_event_sequence")
+                not in {
+                    item.sequence
+                    for item in active
+                    if item.type == EventType.TOOL_SUCCEEDED
+                    and item.payload.get("tool") == "search_files"
+                }
+                or resolution_hash
+                != sha256_text(
+                    canonical_json(
+                        {key: value for key, value in resolution.items() if key != "content_hash"}
+                    )
+                )
+                or resolution.get("content_hash") != resolution_hash
+                or set(normalized_arguments) != {"search_anchor"}
+            ):
+                raise RecoveryError("anchored read call binding differs")
+            normalized_arguments = {
+                "path": resolution.get("path"),
+                "start_line": resolution.get("start_line"),
+                "end_line": resolution.get("end_line"),
+            }
         expected_normalized_hash = sha256_text(
             canonical_json(
                 {
                     "tool": tool,
-                    "input": arguments,
+                    "input": normalized_arguments,
                     "worktree_diff_hash": call_diff_hash,
                     "state_marker": None,
                 }
@@ -380,10 +392,12 @@ def load_inspection_records(
         )
         if result.get("worktree_diff_hash") != call_diff_hash:
             raise RecoveryError("inspection result belongs to a different worktree")
+        if result.get("read_argument_policy_version") != read_argument_policy:
+            raise RecoveryError("inspection read result policy differs")
         if tool == "read_file":
-            _validate_read_result(arguments, result)
+            _validate_read_result(normalized_arguments, result)
         else:
-            _validate_search_result(arguments, result)
+            _validate_search_result(normalized_arguments, result)
         records.append(
             InspectionRecord(
                 tool=tool,
@@ -477,9 +491,7 @@ def reconstruct_covered_read(
     """Reconstruct a requested range exclusively from verified result CAS."""
 
     sources = [
-        record
-        for record in records
-        if record.tool == "read_file" and record.result["path"] == path
+        record for record in records if record.tool == "read_file" and record.result["path"] == path
     ]
     if not sources:
         return None
@@ -502,11 +514,7 @@ def reconstruct_covered_read(
 
     actual_end = min(end_line, total_lines)
     if start_line > total_lines:
-        used_sources = [
-            record
-            for record in sources
-            if record.result["eof_reached"] is True
-        ][-1:]
+        used_sources = [record for record in sources if record.result["eof_reached"] is True][-1:]
         return (
             {
                 "path": path,
@@ -532,9 +540,7 @@ def reconstruct_covered_read(
             continue
         content_lines = str(record.result["content"]).split("\n")
         if len(content_lines) != line_count:
-            raise RecoveryError(
-                "read result content conflicts with its line count"
-            )
+            raise RecoveryError("read result content conflicts with its line count")
         source_start = int(record.result["actual_start_line"])
         for offset, content in enumerate(content_lines):
             line_number = source_start + offset
@@ -545,10 +551,7 @@ def reconstruct_covered_read(
             if start_line <= line_number <= actual_end:
                 used[record.call_sequence] = record
     try:
-        content = "\n".join(
-            lines[line_number]
-            for line_number in range(start_line, actual_end + 1)
-        )
+        content = "\n".join(lines[line_number] for line_number in range(start_line, actual_end + 1))
     except KeyError as exc:
         raise RecoveryError("read coverage could not reconstruct a covered range") from exc
     return (
@@ -663,9 +666,7 @@ def _token_tail_projection(
     reserve: dict[str, int],
 ) -> dict[str, Any]:
     if projection_stage not in {"pre_generation", "post_generation"}:
-        raise ValueError(
-            "token tail projection stage must be pre_generation or post_generation"
-        )
+        raise ValueError("token tail projection stage must be pre_generation or post_generation")
 
     observations: list[dict[str, Any]] = []
     total_tokens_used = 0
@@ -676,13 +677,9 @@ def _token_tail_projection(
         actual_input = event.payload.get("input_tokens")
         actual_output = event.payload.get("output_tokens")
         if type(actual_input) is not int or actual_input < 0:
-            raise RecoveryError(
-                "v5 token tail source has invalid input token usage"
-            )
+            raise RecoveryError("v5 token tail source has invalid input token usage")
         if type(actual_output) is not int or actual_output < 0:
-            raise RecoveryError(
-                "v5 token tail source has invalid output token usage"
-            )
+            raise RecoveryError("v5 token tail source has invalid output token usage")
         total_tokens_used += actual_input + actual_output
         if type(requested) is int and requested >= 0:
             input_tokens = requested
@@ -691,9 +688,7 @@ def _token_tail_projection(
             input_tokens = actual_input
             source = "input_tokens_fallback"
         else:
-            raise RecoveryError(
-                "v5 token tail source has invalid requested input tokens"
-            )
+            raise RecoveryError("v5 token tail source has invalid requested input tokens")
         observations.append(
             {
                 "event_sequence": event.sequence,
@@ -716,11 +711,7 @@ def _token_tail_projection(
             if current > previous
         ]
     )
-    projected_next_input = (
-        max_observed + max_positive_growth
-        if max_observed is not None
-        else None
-    )
+    projected_next_input = max_observed + max_positive_growth if max_observed is not None else None
     projected_model_turns = (
         reserve["model_calls"]
         + reserve["feedback_model_calls"]
@@ -746,9 +737,7 @@ def _token_tail_projection(
         "max_total_tokens": budget.max_total_tokens,
         "remaining_tokens": remaining_tokens,
         "admission_threshold_reached": bool(
-            max_observed is not None
-            and max_observed > 0
-            and remaining_tokens <= reserved_tokens
+            max_observed is not None and max_observed > 0 and remaining_tokens <= reserved_tokens
         ),
     }
 
@@ -775,38 +764,25 @@ def tail_policy(
     }:
         if budget is None or max_output_tokens is None:
             raise ValueError(
-                f"{context_policy_version} tail policy requires budget and "
-                "max_output_tokens"
+                f"{context_policy_version} tail policy requires budget and max_output_tokens"
             )
         source_events = events or []
-        model_calls_used = sum(
-            event.type == EventType.MODEL_CALLED for event in source_events
-        )
-        tool_calls_used = sum(
-            event.type == EventType.TOOL_CALLED for event in source_events
-        )
+        model_calls_used = sum(event.type == EventType.MODEL_CALLED for event in source_events)
+        tool_calls_used = sum(event.type == EventType.TOOL_CALLED for event in source_events)
         model_remaining = (
             budget.max_model_calls - model_calls_used
             if budget.max_model_calls is not None
             else None
         )
         tool_remaining = (
-            budget.max_tool_calls - tool_calls_used
-            if budget.max_tool_calls is not None
-            else None
+            budget.max_tool_calls - tool_calls_used if budget.max_tool_calls is not None else None
         )
         model_remaining_after_next_generation = (
             max(0, model_remaining - 1)
-            if (
-                projection_stage == "pre_generation"
-                and model_remaining is not None
-            )
+            if (projection_stage == "pre_generation" and model_remaining is not None)
             else model_remaining
         )
-        tool_blocked = bool(
-            tool_remaining is not None
-            and tool_remaining <= reserve["tool_calls"]
-        )
+        tool_blocked = bool(tool_remaining is not None and tool_remaining <= reserve["tool_calls"])
         model_blocked = bool(
             model_remaining_after_next_generation is not None
             and model_remaining_after_next_generation
@@ -834,9 +810,7 @@ def tail_policy(
             "remaining_budget": {
                 "tool_calls": tool_remaining,
                 "model_calls": model_remaining,
-                "model_calls_after_next_generation": (
-                    model_remaining_after_next_generation
-                ),
+                "model_calls_after_next_generation": (model_remaining_after_next_generation),
                 "tokens": token_projection["remaining_tokens"],
             },
             "token_projection": token_projection,
@@ -848,14 +822,9 @@ def tail_policy(
     tool_remaining = remaining.get("tool_calls")
     model_remaining = remaining.get("model_calls")
     model_remaining_after_next_generation = (
-        max(0, model_remaining - 1)
-        if type(model_remaining) is int
-        else None
+        max(0, model_remaining - 1) if type(model_remaining) is int else None
     )
-    tool_blocked = (
-        type(tool_remaining) is int
-        and tool_remaining <= reserve["tool_calls"]
-    )
+    tool_blocked = type(tool_remaining) is int and tool_remaining <= reserve["tool_calls"]
     model_blocked = (
         type(model_remaining_after_next_generation) is int
         and model_remaining_after_next_generation
@@ -873,9 +842,7 @@ def tail_policy(
         "remaining_budget": {
             "tool_calls": tool_remaining,
             "model_calls": model_remaining,
-            "model_calls_after_next_generation": (
-                model_remaining_after_next_generation
-            ),
+            "model_calls_after_next_generation": (model_remaining_after_next_generation),
         },
         "exploration_admitted": not reasons,
         "block_reasons": reasons,
@@ -936,16 +903,12 @@ def _no_progress_state(
             total_replays += 1
             max_streak = max(max_streak, streak)
             continue
-        if (
-            event.type == EventType.TOOL_SUCCEEDED
-            and event.payload.get("tool") in {"read_file", "search_files"}
-        ):
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") in {
+            "read_file",
+            "search_files",
+        }:
             novelty = event.payload.get("novelty")
-            classification = (
-                novelty.get("classification")
-                if isinstance(novelty, dict)
-                else None
-            )
+            classification = novelty.get("classification") if isinstance(novelty, dict) else None
             if classification == "seen_only":
                 streak += 1
                 max_streak = max(max_streak, streak)
@@ -953,11 +916,9 @@ def _no_progress_state(
                 streak = 0
                 last_progress_sequence = event.sequence
             continue
-        if (
-            event.type in {EventType.TOOL_SUCCEEDED, EventType.PATCH_APPLIED}
-            and event.payload.get("tool")
-            not in {"read_file", "search_files"}
-        ):
+        if event.type in {EventType.TOOL_SUCCEEDED, EventType.PATCH_APPLIED} and event.payload.get(
+            "tool"
+        ) not in {"read_file", "search_files"}:
             streak = 0
             last_progress_sequence = event.sequence
     return {
@@ -1004,16 +965,9 @@ def build_investigation_ledger(
                 "path": path,
                 "file_content_hash": latest.result["file_content_hash"],
                 "total_lines": latest.result["total_lines"],
-                "covered_ranges": [
-                    [start, end]
-                    for start, end in read_coverage(records, path)
-                ],
-                "source_call_sequences": [
-                    item.call_sequence for item in items
-                ],
-                "source_outcome_sequences": [
-                    item.outcome_sequence for item in items
-                ],
+                "covered_ranges": [[start, end] for start, end in read_coverage(records, path)],
+                "source_call_sequences": [item.call_sequence for item in items],
+                "source_outcome_sequences": [item.outcome_sequence for item in items],
             }
         )
     read_items.sort(key=lambda item: item["source_call_sequences"][-1])
@@ -1042,9 +996,7 @@ def build_investigation_ledger(
     omitted_details = 0
     for record in reversed(records):
         detail = _detail_for_record(record)
-        characters = len(
-            json.dumps(detail, ensure_ascii=False, sort_keys=True)
-        )
+        characters = len(json.dumps(detail, ensure_ascii=False, sort_keys=True))
         if (
             len(details) >= LEDGER_MAX_DETAILS
             or detail_characters + characters > LEDGER_DETAIL_CHARACTER_LIMIT

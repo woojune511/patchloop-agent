@@ -1,83 +1,75 @@
-# Current status — 2026-08-15
+# Current status - 2026-09-01
 
 ## Current checkpoint
 
-R10-qualified R8 candidate `sha256:60c67908...cff9e` consumed its Moto A/C + Babel C/A `$15.30`/`$18` approval.
-All four Moto A/C + Babel C/A rows resolved with four PASS verdicts, authenticated v2 receipts and settlement for
-`$0.3664215`; the four-run A/C readiness matrix is complete. Its stale v1/v2 projection is corrected append-only.
-R3-R6 remain sealed inconclusive and R7/R9 remains superseded.
+PatchLoop remains a single bounded coding loop. Consumed Rapid/development/held-out evidence is immutable.
+Held-out R16's C-minus-A was `-1/24`, with no causal/general memory claim. Exact identities are in `docs/09-evidence.md`.
 
-Held-out R11 candidate `sha256:f48a0de...a6b0` consumed one exact 48-row `$252`/`$275` approval. It sealed
-`inconclusive` after 3 starts: 2 settled, 1 observed-unsettled and 45 not started. Settled model cost was
-`$0.15699525`; the unsettled row had durable `$0.261021` usage, so total observed started cost was `$0.41801625`.
-No complete matrix, official held-out analysis or memory claim follows.
+Work Item 83 consumed R24 candidate-v33 execution
+`sha256:a4a8e75dfa0f1ae1365ef991b48cf18bd61f3dd717cf8d4d1bedff392236592e` exactly once. One pinned local image
+inspection passed. The driver halted after 3 started/terminal/settled rows for `$0.927549`; 3 rows never started.
+No row reached the evaluator or submitted. The incomplete, infrastructure-confounded batch cannot compare or promote
+V27 and cannot retry or resume.
+The frozen Work Item 81 review remains `eligible-not-adopted`; this consumed result does not rewrite it.
 
-Held-out R14 candidate `sha256:67475f578338026bc0c66ff3904ef1adfaaae8a33e2cba824d0f88a5d57307fd`
-consumed one exact 48-row `$57.60`/`$60` approval. It sealed `inconclusive`: 0 settled, 1 observed-unsettled and 47
-not started, with `$0.126342` observed-started model cost. It cannot retry, resume, reauthenticate, reclassify or
-transfer approval; no official held-out analysis or memory claim follows.
+Preparation's synthetic pre-count and smoke limits are archived. Live V27 exposed a separate relational gap: three
+plans used different free-form owner/state/transition component sets; admission returned only
+`lifecycle_state_transition_unbound`, without the exact mismatches.
 
-Held-out R15 candidate `sha256:e11ece5552e2f574ee334ec98a93a9929732df7592096bcd0478717dfd64f8bc`
-consumed a separate 48-row `$57.60`/`$60` approval. It sealed `inconclusive` after 3 starts: 2 settled,
-1 observed-unsettled and 45 not started. Settled cost was `$0.2002335`; total observed-started cost was `$1.112112`.
-It cannot retry, resume, reauthenticate, reclassify or transfer approval.
+Work Item 84 is complete offline. Opt-in Lean V28 (`v29` / `phase-evidence-v38`) defines lifecycle components once,
+uses integer component references in transitions and projects the exact public structural mismatch after a rejected
+plan. One retry remains durable; a second invalid plan stops before a third plan dispatch. Initial success, exact
+feedback recovery, repeated rejection and restart were covered by public mocked runners. The 6,498-byte qualification
+was built twice byte-identically with zero external/check calls or cost. It creates no candidate and proves no task
+quality or generalization improvement.
 
-Held-out R16 candidate `sha256:24044c1ed525458446f1c97d94f52331082d74051f5c6d680da995ea9aa48813`
-consumed a new exact 48-row `$57.60`/`$60` approval and completed the preregistered matrix: 48 settled, 0
-observed-unsettled, 0 not started and 0 confounded. Cost accounting is complete at `$27.24465825`, with no retry,
-replacement or resume. The result contains 15 resolved, 14 task-failure and 19 typed agent-failure rows.
+Work Item 85 completed the separate zero-call activation review. All nine fail-closed criteria passed, but the
+disposition is `eligible-not-adopted`: V28 may enter a later adoption decision, while live manifest integration,
+provider acceptance, rehearsal and AnyIO performance remain unobserved. The 8,517-byte review was built twice
+byte-identically and created no candidate, authority, external call or cost.
 
-Its authenticated persisted completion unlocked official analysis for this frozen panel. No-memory succeeded on 8/24
-rows and structured on 7/24; structured minus no-memory is `-1/24` (-4.17 percentage points). The deterministic
-task-cluster stability interval is `[-1/4, 1/6]`, and the sign-flip sensitivity reference is `p=1`. These are
-descriptive frozen-panel quantities, not a population confidence interval, causal effect or general memory-benefit
-claim. Same-repo effect is 0; cross-repo effect is `-1/12`; benefit/negative-transfer flips are 3/24 and 4/24.
+Work Item 86 then selected V28 only as the treatment for a future `official=false` V27/V28 Rapid comparison. The
+4,950-byte append-only decision was built twice identically with eight criteria passing and zero external calls/cost.
+It did not change the default runtime, create a candidate/rehearsal or claim provider acceptance or quality.
 
-## Preserved predecessor diagnoses
+Work Item 70 consumed R20 exactly once at 0/3/0 per arm. Work Item 71 is complete offline; R21 settled 3/3 for
+`$1.42525890` at 1/1/0, so V25 missed its 2/3 reach floor. V26 runner-continuity remains unexecuted.
 
-- R11 keeps historical `CONTRACT_ERROR`; append-only attribution is `EVALUATOR_CONTROL_CONTRACT_COLLISION` with zero
-  agent-visible marker matches. Correcting evaluator-private redaction does not change its hidden failure.
-- R14 keeps `DURABLE_EVIDENCE_AUTHENTICATION_FAILED`; append-only
-  `TRACE_QUALIFICATION_RUNTIME_BUDGET_AUTHORITY_MISMATCH` records candidate 1M/100k/1.1M versus suite
-  4M/500k/4.5M.
-- R15 keeps the same historical campaign reason; append-only
-  `TRACE_QUALIFICATION_V2_TERMINAL_RESULT_SCHEMA_MISMATCH` binds its sanitized v2 budget terminal to exact typed
-  failure events. None of these indices reauthenticates, reclassifies, settles or reruns a row; all added zero calls
-  and `$0` cost.
+Work Item 77 closed R22 `sha256:3930c68bdca28e28de1233a374e52f091d03d1dde95414d681c5be4c27c7f62b`
+before rows because 13 planned inspections exceeded approval for one. No R22 result or promotion exists; retry authority is closed.
+
+Candidate-v32 `sha256:d9d3818c9d2b80eb8238746c510fd071d808fb734bdc7f3d74837548c967d309` halted after two
+rows/`$0.16285425`; four remain unstarted. V26 is not promoted and R23 cannot retry or resume.
+
+## Consumed R24 - Work Item 83
+
+- V25 row 1 used 11 model calls and 10 search/read actions, then explicitly ended with
+  `SELF_DIRECTED_EXPLORATION_EXHAUSTED`; it made no plan, mutation or visible-check call.
+- V27 row 2 recorded a valid initial plan, applied one patch and failed the targeted public check with
+  `PUBLIC_CASE:anyio:test-resumed`. Both correction revisions were rejected for the lifecycle component mismatch,
+  ending as `WORK_PLAN_ADMISSION_REPEATED`.
+- V27 row 3 hit the same plan rejection once. The recovery request completed its 12th input count and context build,
+  then `responses.create` timed out before a 12th `ModelCalled` event. Its settled `APITimeoutError` lacked the only
+  continuation-eligible code, `RECOVERY_ERROR`, so the fail-closed driver left rows 4-6 unstarted.
+
+The 29,718-byte public halted audit separates these observations without reading raw responses/reasoning, private
+specification, hidden evaluator content or reference patches. R24 result, image receipt, approved plan and audit are
+append-only; exact hashes are in `docs/09-evidence.md`.
 
 ## Evaluator correctness gap
 
-Evaluator-v1 still assigns literal safety PASS. V2 binds typed evidence, fail-closed verdicts, durable receipts and
-qualification while raw v2 results remain `official=false`. R8 is the first complete receipt-qualified four-row
-development-readiness matrix; this validates the exact path, not production security, held-out generalization or a
-memory effect.
-
-The successor uses candidate-v3. Its `realized_schedule_hash` binds every ordered row and task/evaluator identity;
-runtime tuple and cost controls bind the candidate rather than the immutable suite. A current next row requires a
-persisted-v5 wrapper and persisted-row-v2, then revalidates runtime/cost hashes, semantic usage/result bindings and all
-budgets. Known legacy R7/R11/R14/R15 replay is accepted only for each exact final-file/content/journal SHA triple.
-Persisted DTOs
-remain unofficial; only runtime-authenticated non-serialized provenance can reach analysis.
-
-Development-only evidence lowered equal A/C to 1M/100k/1.1M tokens, `$1.20`/row and `$57.60`/`$60`; held-out outcomes
-and task content were excluded when that amendment was made. Contract R11 → binding R11 → materialization R7 →
-execution R8 → preflight R16 is the consumed source chain for the completed R16 campaign. Its qualification artifacts
-were zero-authority; the later candidate and approval were separate and are now consumed.
+Evaluator-v1 still assigns literal safety PASS. Rapid remains `official=false`; public checks do not prove hidden
+success or generalization.
 
 ## Evidence, retry and authority
 
-Completed evidence is append-only. R3-R8 development and held-out R7/R11/R14/R15/R16 cannot retry, resume, overwrite
-or transfer approval. The R16 index binds exact source/runtime files and official analysis while adding no calls or
-cost. Reusable no-call preflight allows at most three transient pre-provider attempts without state artifacts or
-per-attempt approval prose; paid campaign identity is separately one-use across readiness timestamps.
-
+No paid, held-out or B/D execution is currently authorized. R11-R21 approvals are consumed; R22-R24 are closed.
+Lean V28 is selected only for future Rapid treatment preparation; `candidate_created=false`.
 D-142 remains **source-qualified only, unactivated**; its planning disposition is now **deferred**.
-D-142 and the V25 one-use lifecycle are historical, not current gates.
-No paid, held-out or B/D execution is currently authorized.
+PDM is retired; Harbor remains 0/12 local images and pull authority is closed.
 
-## Next gate
+## Next work
 
-Preserve the completed R16 matrix and its append-only index; do not rerun, resume or tune against this unblinded panel.
-The next experiment, if any, must first define a separate preregistered design and fresh held-out panel, then qualify
-its exact source before any no-call candidate or approval. B/D remain deferred. No current candidate, approval or
-provider execution is authorized.
+Work Item 87 may prepare a new V27-control/V28-treatment `official=false` candidate and two byte-identical production-
+order no-call rehearsals with unchanged task/image/model/memory/budget/evaluator. Keep semantic/timeout fixes excluded;
+select exact schedule/cost but request fresh approval only after all hashes freeze. R24 cannot retry or resume.

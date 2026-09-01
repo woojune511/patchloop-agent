@@ -1,0 +1,212 @@
+{
+  "analysis": {
+    "analysis_scope": "exact-frozen-12-task-all-cross-panel-only",
+    "causal_population_uncontaminated_or_general_claim_authorized": false,
+    "cost_per_success": {
+      "complete_panel_gate_required": true,
+      "grouping": "per-condition",
+      "zero_success_status": "undefined-zero-success-denominator",
+      "zero_success_value": null
+    },
+    "descriptive_stability": {
+      "acceptance_threshold_integer": 18446744073709551612,
+      "confidence_interval_claim_authorized": false,
+      "endpoint_method": "hyndman-fan-type-7-exact-rational",
+      "hash_algorithm": "sha256",
+      "interpretation": "descriptive-stability-for-this-frozen-panel-only",
+      "lower_endpoint_formula": "(m_sorted[2499]+39*m_sorted[2500])/960",
+      "method": "deterministic-task-cluster-percentile-resampling",
+      "preimage_template": "fresh-all-cross-percentile-v1|20260818|b={zero_based_sample}|j={zero_based_draw}|nonce={zero_based_nonce}",
+      "samples": 100000,
+      "selected_task_index_formula": "u-mod-12",
+      "tasks_drawn_per_sample": 12,
+      "upper_endpoint_formula": "(39*m_sorted[97499]+m_sorted[97500])/960"
+    },
+    "directional_flips": {
+      "benefit": "no-memory-fail-and-structured-success",
+      "inference": "counts-and-rates-only",
+      "negative_transfer": "no-memory-success-and-structured-fail",
+      "pair_count": 24,
+      "pairing_unit": "task-by-repetition"
+    },
+    "primary_estimand": {
+      "effect_scale": "absolute-proportion-and-percentage-points",
+      "formula": "mean-over-12-tasks-of-mean-over-2-repetitions-of-y-structured-minus-y-no-memory",
+      "id": "equal-task-weighted-scheduled-row-success-at-budget-c-minus-a",
+      "task_weighting": "equal",
+      "unit": "task"
+    },
+    "primary_gate": {
+      "inconclusive_trigger_count_required": 0,
+      "partial_panel_primary_analysis_authorized": false,
+      "required_eligible_rows": 48,
+      "required_scheduled_rows": 48
+    },
+    "resource_metrics": [
+      "input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "total_tokens",
+      "model_cost_usd",
+      "model_calls",
+      "tool_calls",
+      "wall_time_seconds"
+    ],
+    "role-stratified-effect-authorized": false,
+    "sign_flip_sensitivity": {
+      "headline_use_authorized": false,
+      "method": "all-4096-task-level-sign-vectors-inclusive-two-sided",
+      "null_assumption": "conditional-on-ordered-absolute-task-effects-the-joint-sign-vector-is-uniform"
+    },
+    "task_role_strata": []
+  },
+  "authority": {
+    "agent_runs_authorized": false,
+    "approval_granted": false,
+    "authorized_agent_runs": 0,
+    "authorized_cost_usd": 0.0,
+    "authorized_provider_calls": 0,
+    "candidate_creation_authorized": false,
+    "docker_calls_authorized": false,
+    "evaluator_calls_authorized": false,
+    "memory_benefit_claim_authorized": false,
+    "official_analysis_authorized": false,
+    "preflight_authorized": false,
+    "private_or_reference_material_agent_visible": false,
+    "provider_calls_authorized": false,
+    "sdk_calls_authorized": false,
+    "spend_authorized": false,
+    "task_package_materialization_authorized": false
+  },
+  "content_hash": "sha256:12bb5ca18034f7592c4d630ff91c9789a81ff7af22803da3269e68343f234955",
+  "design_change": {
+    "all_repositories_disjoint_from_current_manifest": true,
+    "all_repositories_distinct": true,
+    "broad_snapshot-universe-optimal-selection_claimed": false,
+    "change_trigger": "public-source-feasibility-only-not-ac-outcomes",
+    "effective_public_chronology": "issue-created-after-2026-03-17-and-resolution-merged-before-the-2026-07-27-snapshot",
+    "july_snapshot_covers_original_window_through_2026_08_16": false,
+    "original_design": {
+      "cross_repository_tasks": 6,
+      "same_repository_tasks": 6
+    },
+    "original_post-window-snapshot-rule_satisfied": false,
+    "predecessor_disposition": "preserved-unsatisfied-not-amended",
+    "r16-outcomes_used_to-select-these-tasks": false,
+    "selection_timing": "post-public-screening-and-admission-observation-pre-ac-provider-outcome",
+    "successor-required_before_any-ac-provider-outcome": true,
+    "successor_design": {
+      "cross_repository_tasks": 12,
+      "same_repository_tasks": 0
+    },
+    "task-specific-admission-information_used_to_change_harness": false
+  },
+  "exact_candidate_ids": [
+    "harbor-framework__harbor-1764",
+    "marimo-team__marimo-9626",
+    "microsoft__apm-1553",
+    "pydantic__pydantic-ai-5842",
+    "hkuds__nanobot-4048",
+    "soju06__codex-lb-744",
+    "nesquena__hermes-webui-3069",
+    "agno-agi__agno-8148",
+    "mozilla-ai__any-llm-1121",
+    "livekit__agents-5944",
+    "verl-project__verl-6506",
+    "raullenchai__rapid-mlx-426"
+  ],
+  "exclusions_and_stops": {
+    "adaptive_budget_allowed": false,
+    "condition_specific_budget_allowed": false,
+    "infrastructure-or-contract-confound_action": "stop-before-next-provider-call",
+    "new-successor-required-after-any-outcome-access": true,
+    "partial_matrix_disposition": "inconclusive-diagnostic-only",
+    "post-outcome_exclusion_allowed": false,
+    "private-or-reference-material-in-agent-context": false,
+    "row_retry_replacement_or_resume_allowed": false,
+    "task_exclusion_after_preregistration_allowed": false
+  },
+  "next_gate": "qualify-public-membership-and-bind-admission-observation-before-task-package-materialization",
+  "predecessor_bindings": [
+    {
+      "content_hash": "sha256:adec1153d8eab532d118fe24d0f60247385d154dbcc840db8dc24167c0c1cb94",
+      "file_bytes": 7255,
+      "file_sha256": "sha256:086b9fc56ab5eca3ae23cd367243d9b71c3805d7f3edd3613afdb73a34bbf359",
+      "path": "experiments/lean-harness-fresh-acquisition-preregistration-20260817-v1.json",
+      "role": "preserved-unsatisfied-acquisition-preregistration"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 47368,
+      "file_sha256": "sha256:e8cf14ca9dabebcc03c3522e400dfcb79606541e9b11e59f49510ea5c40bebed",
+      "path": "data/dataset-manifest.yaml",
+      "role": "current-consumed-task-manifest"
+    },
+    {
+      "content_hash": "sha256:945e8e9ff1df60a255d20fb406ca7b7ab20ca16a3b50da5cbce12f2fb38a6521",
+      "file_bytes": 10375,
+      "file_sha256": "sha256:999fa9e42f010b03b96013d089f662ad3f50b1c5c6469b2aa8ddb901c522391e",
+      "path": "reports/heldout-ac/artifacts/heldout-ac-r16-campaign-complete-r1.json",
+      "role": "consumed-unblinded-panel-evidence"
+    },
+    {
+      "content_hash": "sha256:b0f28eb86eb8463c389708af500dede582048c3f7910876dac5aa9d610768226",
+      "file_bytes": 72420,
+      "file_sha256": "sha256:7104310a700822bde8343b7ed37facdb3fa09709ced41540cb9ccb431642fdab",
+      "path": "experiments/lean-harness-runtime-source-qualification-20260817-v1.json",
+      "role": "public-mock-qualified-lean-harness-source"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 15689,
+      "file_sha256": "sha256:fb947e2e6ba227f1993fe41a625ab5fac028d38b4e9ec42a7e859101c85e6e1a",
+      "path": "reports/fresh-panel/artifacts/fresh-all-cross-search-observation-v1.json",
+      "role": "exploratory-public-task-search-observation"
+    },
+    {
+      "content_hash": null,
+      "file_bytes": 21512,
+      "file_sha256": "sha256:b0e489931259f8643a94d47b6b52d9b3e467571c0ad3bcf80d97f0c5069b2527",
+      "path": "reports/fresh-panel/raw/harbor-swe-rebench-07-2026-r1-membership.json",
+      "role": "exact-public-harbor-membership-response"
+    }
+  ],
+  "preregistration_id": "lean-harness-fresh-all-cross-ac-20260818-v1",
+  "runtime_and_cost": {
+    "condition_specific_resource_relief_allowed": false,
+    "conditions": [
+      "no_memory",
+      "structured"
+    ],
+    "equal_condition_budget_required": true,
+    "expected_rows": 48,
+    "full_schedule_planning_reserve_usd": 57.6,
+    "hard_cap_usd": 60.0,
+    "harness": "lean-harness-v1",
+    "input_token_limit": 1000000,
+    "maximum_output_tokens_per_request": 25000,
+    "memory_policy": "fixed-d110-bundle-v1",
+    "model": "gpt-5.4-mini-2026-03-17",
+    "model_call_limit": 240,
+    "only_treatment_difference": "memory",
+    "output_token_limit": 100000,
+    "per_row_cost_reserve_usd": 1.2,
+    "phase_evidence": "phase-evidence-v12",
+    "price_drift_disposition": "block-candidate-and-require-successor-cost-binding",
+    "price_nanos_per_token": {
+      "cache_write_input": 750,
+      "cached_input": 75,
+      "output": 4500,
+      "uncached_input": 750
+    },
+    "price_refresh_required_before_candidate": true,
+    "repetitions_per_task": 2,
+    "tool_call_limit": 400,
+    "tool_schema": "v7",
+    "total_token_limit": 1100000,
+    "typed_token_terminals_score_zero": true,
+    "wall_time_limit_seconds": 3600
+  },
+  "schema_version": "lean-fresh-all-cross-preregistration-v1",
+  "status": "PREREGISTERED_EXACT_ALL_CROSS_PANEL_EXECUTION_CLOSED"
+}

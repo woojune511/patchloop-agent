@@ -1,0 +1,76 @@
+{
+  "schema_version": "lean-harness-ordered-correction-successor-spec-v1",
+  "spec_id": "lean-harness-ordered-correction-successor-20260824-v1",
+  "status": "offline-design-frozen",
+  "official": false,
+  "diagnostic_source": {
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-completion-policy-20260823-r8-public-trace-diagnosis-v2.json",
+    "file_sha256": "sha256:419b42b8188f0efbaa228f711a1d963e8c945d56936d7a95c519f87b6480dddf",
+    "content_hash": "sha256:021af168a0fb1fb699641a6689fb5089c5f91780065cf215d5c95552ea682898",
+    "hidden_assertions_used": false,
+    "reference_patch_used": false,
+    "reasoning_text_used": false
+  },
+  "inputs": [
+    "public task check order",
+    "public current-diff phase evidence",
+    "durable public tool success and failure metadata",
+    "public agent-visible context",
+    "existing cumulative split-token and model-call limits"
+  ],
+  "outputs": {
+    "runtime_policy_version": "lean-harness-v8",
+    "tool_schema_version": "v12",
+    "context_policy_version": "phase-evidence-v18",
+    "completion_policy_version": "ordered-check-refresh-structured-correction-v1",
+    "correction_context_policy_version": "latest-public-edit-correction-once-v1",
+    "provider_terminal_attribution_policy_version": "explicit-terminal-before-accounting-v1"
+  },
+  "state_sequence": [
+    "after each mutation run the next public check in declared order",
+    "after a failed check read one current relevant source range",
+    "after the fresh read permit one structured correction",
+    "after an edit rejection require another current read",
+    "preserve already passing check IDs and gate the later check on the earlier pass",
+    "after all checks pass review the complete diff and then submit"
+  ],
+  "request_limits": {
+    "visible_check_max_output_tokens": 2048,
+    "correction_inspection_max_output_tokens": 4096,
+    "corrective_mutation_max_output_tokens": 8192,
+    "diff_review_max_output_tokens": 2048,
+    "submission_max_output_tokens": 2048,
+    "parallel_tool_calls": false,
+    "one_tool_call_per_response": true,
+    "one_check_per_response": true
+  },
+  "failure_modes": [
+    "task check order and current-diff evidence mismatch fails before provider dispatch",
+    "a response containing more than one tool call fails before tool dispatch",
+    "a run_check ID different from the request-bound public check fails before tool dispatch",
+    "a failed check without a later current-diff read cannot expose a mutation tool",
+    "an edit rejection invalidates the prior read and requires a fresh read",
+    "explicit provider incomplete status remains primary even when accounting also mismatches",
+    "legacy V7 evidence remains immutable and is not requalified"
+  ],
+  "authority_boundary": {
+    "workspace_mutation_authorized_by_spec": false,
+    "provider_calls_authorized": false,
+    "docker_calls_authorized": false,
+    "evaluator_calls_authorized": false,
+    "paid_execution_authorized": false,
+    "live_candidate_requires_fresh_qualification_and_two_byte_identical_rehearsals": true
+  },
+  "acceptance_cases": [
+    "the next public check is bound into a one-value run_check enum",
+    "failed check evidence exposes read_file only",
+    "a fresh post-failure read exposes apply_structured_edit only",
+    "an edit rejection returns to read_file only",
+    "a passing targeted check exposes the next public check while preserving prior pass evidence",
+    "all passing checks expose get_diff and a presented review exposes finish_task",
+    "only the latest public edit correction body appears once in the request context",
+    "explicit incomplete provider state is attributed before token-accounting mismatch",
+    "V8 request evidence binds task check order, decision, tool surface, instruction and token ceiling",
+    "offline qualification performs zero provider, Docker and evaluator calls"
+  ]
+}

@@ -1,0 +1,272 @@
+{
+  "schema_version": "rapid-public-development-candidate-v29",
+  "candidate_revision": 29,
+  "experiment_id": "rapid-public-dev-anyio-v5-v25-mechanical-activation-20260830-r21",
+  "purpose": "rapid-public-development",
+  "official": false,
+  "design_kind": "single-arm-mechanical-activation-smoke",
+  "config_path": "experiments/rapid-public-development-anyio-v5-v25-mechanical-activation-20260830-r21.yaml",
+  "config_file_sha256": "sha256:25f8d47ec9a49e67d7e4e4174089aabb961129f4298c6e4df74f2a8039dce5a9",
+  "config_semantic_hash": "sha256:608787a3e82201318c55b606a5bb916884077cc40d6d86d394a02f3682c08efb",
+  "selection_evidence": {
+    "schema_version": "rapid-anyio-v5-v25-mechanical-activation-selection-v1",
+    "policy_version": "qualified-public-v25-anyio-v5-mechanical-activation-v1",
+    "official": false,
+    "public_development_history_only": true,
+    "heldout_outcomes_used": false,
+    "private_evidence_used": false,
+    "hidden_failure_cause_used": false,
+    "reference_patch_used": false,
+    "consumed_r20": {
+      "candidate": {
+        "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-v5-self-directed-bounded-ab-20260830-r20-candidate-v28.json",
+        "file_bytes": 18496,
+        "file_sha256": "sha256:55be9827a9a54cf9e74bef76cd6ca22dc37e175ad3686764a568ded7d35bfc01",
+        "content_hash": "sha256:cbc934984246b3fc6d3916d94ef488985a71c22b55837963af711d51946fb4ae",
+        "execution_hash": "sha256:d7710f25ffd24dda4f5c7265f2f0239d05aad7a898db47350b260502fa482daf"
+      },
+      "result": {
+        "path": "reports/rapid-development/rapid-public-dev-anyio-v5-self-directed-bounded-ab-20260830-r20-d7710f25ffd2.jsonl",
+        "file_bytes": 40871,
+        "file_sha256": "sha256:95e2e0cc7616cfad7e461a8458cbd330340c0d19e36f52aee826a0e0da3a655a",
+        "final_event_content_hash": "sha256:4577480a45f778701c9a8b87f269d8d8466693ecb5b3954cc65cd69fac7516db",
+        "execution_hash": "sha256:d7710f25ffd24dda4f5c7265f2f0239d05aad7a898db47350b260502fa482daf",
+        "event": "batch-completed",
+        "reason_codes": [
+          "SCHEDULE_EXHAUSTED_AFTER_SETTLED_TERMINAL"
+        ],
+        "terminal_row_count": 6,
+        "not_started_row_count": 0,
+        "accrued_cost_nanos": 1629505500
+      },
+      "public_diagnosis": {
+        "path": "reports/rapid-development/rapid-workflow-diagnosis-r20-d7710f25ffd2.json",
+        "file_bytes": 16140,
+        "file_sha256": "sha256:0d05e847661a026dd513720d6508705a01eef3e8c8bd0b678350ae95fe41ea75",
+        "content_hash": "sha256:740e73dde73543e8b12ad70dc7aab580be27034b799d4fc7fff594c1a7ecb26d"
+      },
+      "retry_allowed": false,
+      "historical_result_reclassified": false
+    },
+    "terminal_state_parity_qualification": {
+      "path": "experiments/rapid-terminal-state-parity-public-qualification-20260827-v1.json",
+      "file_bytes": 3920,
+      "file_sha256": "sha256:d992159b613c9de86c1c1319eceaac29b54a5ad2adee0d94562e8df6f21de0d6",
+      "content_hash": "sha256:c316e23c0a295f6c4e5b913104e1db6e6c2f15055b4348b60822527399bc53bd",
+      "policy_version": "append-only-row-settlement-driver-v2"
+    },
+    "treatment_lean_v25": {
+      "qualification": {
+        "path": "experiments/lean-harness-plan-contract-compatibility-public-qualification-20260830-v1.json",
+        "file_bytes": 5493,
+        "file_sha256": "sha256:b22700a13fe823a270c439c9972e21d21eb8d1d53ae6a0431452fc77f8cbc4a9",
+        "content_hash": "sha256:c6c075746ef7557a620860acaedb9fc202f674a32be11e9cb49e2507172a8453"
+      },
+      "activation_review": {
+        "path": "experiments/lean-harness-plan-contract-compatibility-activation-review-20260830-v1.json",
+        "file_bytes": 6839,
+        "file_sha256": "sha256:2c2ca0ae927d42cee7cae6ce3461d55d33d767cdaac54fcb84a5031ada5feae4",
+        "content_hash": "sha256:70012506d6c0571e18dce4e159c752eb37e00ddee23d126ae52a70e64785e31d",
+        "candidate_preparation_ready": true
+      },
+      "runtime_identity": {
+        "compatibility_policy_version": "trigger-bound-plan-contract-compatibility-v1",
+        "context_policy_version": "phase-evidence-v35",
+        "request_evidence_schema": "lean-harness-request-evidence-v25",
+        "runtime_policy_version": "lean-harness-v25",
+        "tool_schema_version": "v26"
+      }
+    },
+    "activation_decision": {
+      "adopted": true,
+      "design_kind": "single-arm-mechanical-activation-smoke",
+      "row_count": 3,
+      "control_rows": 0,
+      "reason": "test-live-crossing-of-known-r20-plan-contract-blocker",
+      "comparative_effect_claim_allowed": false,
+      "quality_improvement_established": false,
+      "generalization_established": false
+    }
+  },
+  "selection_evidence_hash": "sha256:87b7c1efa306ab17a37549437fe15c7e664e05390079c938de533a938a6674c4",
+  "runtime_build_schema": "rapid-runtime-build-v1",
+  "runtime_build_hash": "sha256:6720ba977fbdc82f3a4fa3b490af3a5556751ad91454f379b63dd6ca892bb07d",
+  "model_contract": {
+    "provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "transport_max_retries": 0,
+    "temperature": 0.0,
+    "max_output_tokens": 25000
+  },
+  "predecessor_candidate": {
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-v5-self-directed-bounded-ab-20260830-r20-candidate-v28.json",
+    "file_bytes": 18496,
+    "file_sha256": "sha256:55be9827a9a54cf9e74bef76cd6ca22dc37e175ad3686764a568ded7d35bfc01"
+  },
+  "predecessor_result": {
+    "path": "reports/rapid-development/rapid-public-dev-anyio-v5-self-directed-bounded-ab-20260830-r20-d7710f25ffd2.jsonl",
+    "file_bytes": 40871,
+    "file_sha256": "sha256:95e2e0cc7616cfad7e461a8458cbd330340c0d19e36f52aee826a0e0da3a655a"
+  },
+  "variant_contracts": {
+    "lean-harness-v25": {
+      "tool_schema_version": "v26",
+      "context_policy_version": "phase-evidence-v35",
+      "runtime_policy_version": "lean-harness-v25",
+      "request_evidence_schema": "lean-harness-request-evidence-v25",
+      "completion_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "record_work_plan_policy_version": "gateway-owned-public-exploration-closure-v1",
+      "pre_mutation_plan_policy_version": "eligible-public-evidence-plan-gate-v2",
+      "iterative_plan_revision_policy_version": "epoch-work-plan-revision-v1",
+      "plan_admission_recovery_policy_version": "work-plan-admission-recovery-v1",
+      "evidence_catalog_schema_version": "eligible-plan-evidence-catalog-v2",
+      "recorded_work_plan_schema_version": "recorded-work-plan-v2",
+      "active_work_state_schema_version": "active-work-state-v1",
+      "finalization_workflow_surface_policy_version": "workflow-surface-retained-through-reserve-v1",
+      "required_trigger_pin_policy_version": "required-failed-check-trigger-pinned-v1",
+      "semantic_progress_policy_version": "public-failure-signature-no-progress-reset-v1",
+      "semantic_progress_state_schema_version": "public-semantic-progress-state-v1",
+      "candidate_binding_policy_version": "same-path-public-read-binding-normalization-v1",
+      "causal_activation_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "causal_alternative_policy_version": "bounded-public-causal-alternative-gate-v1",
+      "causal_plan_projection_policy_version": "server-owned-public-causal-plan-projection-v1",
+      "causal_plan_projection_activation_policy_version": "gateway-owned-causal-plan-projection-v1",
+      "exploration_gate_policy_version": "public-boundary-and-unknown-closure-v1",
+      "exploration_gate_activation_policy_version": "gateway-owned-public-exploration-closure-v1",
+      "semantic_progress_event_domain_policy_version": "post-restore-semantic-progress-epoch-parity-v1",
+      "workflow_instruction_schema_version": "lean-workflow-instruction-v6",
+      "protocol_recovery_policy_version": "shared-model-action-contract-recovery-v1",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1",
+      "search_glob_policy_version": "recursive-file-glob-normalization-v1",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "edit_correction_policy_version": "bounded-public-current-source-v2",
+      "correction_context_policy_version": "bounded-investigation-current-read-v1",
+      "provider_terminal_policy_version": "explicit-terminal-before-accounting-v1",
+      "parallel_tool_calls": false,
+      "one_tool_call_per_response": true,
+      "plan_gate_liveness_policy_version": "pinned-plan-gate-liveness-v1",
+      "plan_admission_feedback_projection_policy_version": "bounded-plan-admission-feedback-v1",
+      "self_directed_exploration_policy_version": "bounded-self-directed-exploration-v1",
+      "exact_pre_plan_surface_policy_version": "exact-self-directed-pre-plan-surface-v1",
+      "bounded_request_context_policy_version": "bounded-public-investigation-request-context-v1",
+      "compatibility_policy_version": "trigger-bound-plan-contract-compatibility-v1"
+    }
+  },
+  "driver_contract": {
+    "contract_schema": "rapid-append-only-batch-driver-contract-v1",
+    "event_schema": "rapid-append-only-batch-driver-event-v1",
+    "policy_version": "append-only-row-settlement-driver-v2",
+    "qualification_path": "experiments/rapid-terminal-state-parity-public-qualification-20260827-v1.json",
+    "qualification_file_sha256": "sha256:d992159b613c9de86c1c1319eceaac29b54a5ad2adee0d94562e8df6f21de0d6",
+    "qualification_content_hash": "sha256:c316e23c0a295f6c4e5b913104e1db6e6c2f15055b4348b60822527399bc53bd",
+    "row_advance_owner": "append-only-driver"
+  },
+  "task_bindings": [
+    {
+      "task_path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+      "public_spec_hash": "sha256:5c6bdd04c82e7014a795c42f9f7ebbf41e440deb41ce19720652283b62716839",
+      "private_spec_hash": "sha256:a9aaa4d4a4b0de9b181b575677ac132669bb272b00f01bd3360fe76a9eab983a",
+      "evaluator_image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "evaluator_image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "package_file_count": 6,
+      "package_inventory_hash": "sha256:e90c6d53cdf4358dd4ea7d412d258917073c69547b0ea67c5421952b2b1d7a31",
+      "visible_check_ids": [
+        "public-interrupt-runner-lifecycle",
+        "public-ordinary-failure-preservation",
+        "upstream-pytest-plugin-regression"
+      ],
+      "visible_check_command_hashes": [
+        "sha256:c0ef4f062b90676734637a3b4966b1206870c847ae0f4dd2c74754250bf0a034",
+        "sha256:eec2ca90c5a2be9d962243d6ca257d593b665e700735ca1a805767ced18a932a",
+        "sha256:965d00d50dede491672c1a53762e4b6aa3d78ff58583cc062fdfdb8f56c9548c"
+      ],
+      "task_successor_opt_in": true,
+      "frozen_dataset_member": false,
+      "qualification_binding_hash": "sha256:87b7c1efa306ab17a37549437fe15c7e664e05390079c938de533a938a6674c4"
+    }
+  ],
+  "schedule": [
+    {
+      "order": 1,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v25",
+      "tool_schema_version": "v26",
+      "context_policy_version": "phase-evidence-v35",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:6b78489f04d65a790187c9c04423efcc5d94de671aeeb10522e77fd4b1297402"
+    },
+    {
+      "order": 2,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v25",
+      "tool_schema_version": "v26",
+      "context_policy_version": "phase-evidence-v35",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:34837178acc4133765cf2cd4cc4a7e841c3c970277101e6d09568a5eb2848e37"
+    },
+    {
+      "order": 3,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v5/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 5,
+      "variant": "lean-harness-v25",
+      "tool_schema_version": "v26",
+      "context_policy_version": "phase-evidence-v35",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:90898d0cf63d870dcd9d8d3e22345671cadbd2be3864739c0819b17a98c652df"
+    }
+  ],
+  "schedule_hash": "sha256:690bfb10f8fe13c79de00e10d4413847d3791f683cc341803ab8ae975cf13832",
+  "promotion_criteria": {
+    "harness_or_admission_failure_rows_max": 0,
+    "contract_error_rows_max": 0,
+    "plan_admission_budget_terminal_rows_max": 0,
+    "valid_initial_plan_rows_min": 2,
+    "first_mutation_rows_min": 2,
+    "evaluator_reached_rows_min": 2,
+    "promote_scope": "public-development-default-only",
+    "quality_claim_allowed": false,
+    "generalization_claim_allowed": false
+  },
+  "cost_control": {
+    "per_run_reserve_nanos": 1200000000,
+    "full_schedule_reserve_nanos": 3600000000,
+    "hard_cap_nanos": 3750000000,
+    "pricing_nanos_per_token": {
+      "uncached_input": 750,
+      "cached_input": 75,
+      "cache_write_input": 750,
+      "output": 4500
+    },
+    "scheduled_run_count": 3,
+    "cost_censoring_allowed": false,
+    "official": false
+  },
+  "cost_control_hash": "sha256:6a8ac964165a756c9f2b6eec37dfae5966e9aff5c516740855b5e77f48f6d26d",
+  "execution_hash": "sha256:590bbd602a34d208256d98b78ea4690f7a4d3a8f8593bd59e30b6173c9a089f4",
+  "source_qualified": true,
+  "execution_authorized": false,
+  "provider_calls_made": 0,
+  "docker_calls_made": 0,
+  "added_model_cost_usd": 0.0,
+  "approval_required": true,
+  "rehearsal_required": true,
+  "content_hash": "sha256:3a3118c40a96412c0938277baa6af6c826ede9a61c90e02b83fae12bacfd7ae2"
+}

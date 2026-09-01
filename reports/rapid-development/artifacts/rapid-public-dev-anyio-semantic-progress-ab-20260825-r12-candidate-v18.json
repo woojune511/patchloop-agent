@@ -1,0 +1,651 @@
+{
+  "schema_version": "rapid-public-development-candidate-v18",
+  "candidate_revision": 18,
+  "experiment_id": "rapid-public-dev-anyio-semantic-progress-ab-20260825-r12",
+  "purpose": "rapid-public-development",
+  "official": false,
+  "config_path": "experiments/rapid-public-development-anyio-semantic-progress-ab-20260825-r12.yaml",
+  "config_file_sha256": "sha256:ae5e7b3b5cdcfa558a86b2edb4a161acea5569ccf220d2fc121f335a9e7de62d",
+  "config_semantic_hash": "sha256:6b08f224ed6d3b63cc1eb8142771b29cb6ed75c68bb9664183f77399379f696e",
+  "selection_evidence": {
+    "schema_version": "rapid-anyio-semantic-progress-ab-selection-evidence-v1",
+    "policy_version": "qualified-public-v8-v15-semantic-progress-ab-v1",
+    "official": false,
+    "heldout_outcomes_used": false,
+    "private_evidence_used": false,
+    "pdm_task_included": false,
+    "reference_result_role": "check-admission-only-not-task-semantic-authority",
+    "public_contract_source": "public-task-description-and-upstream-public-behavior",
+    "qualification_v5": {
+      "path": "reports/rapid-development/artifacts/pdm-anyio-public-behavior-check-qualification-result-v5.json",
+      "file_bytes": 9828,
+      "file_sha256": "sha256:57ac80b98f26970aba4927157c91eba6964a20b9326cca5470bfa28b4a5b54e4",
+      "content_hash": "sha256:71bb74dfbae3346549a6cc8912aa9c85990db1b2e9ea9cf10f022464150cc1b8",
+      "execution_hash": "sha256:f7b0159d622ee6329db6560ab253d117187e6a05a5e7bb630ba325588eb211b3"
+    },
+    "retention_v7": {
+      "path": "reports/rapid-development/artifacts/pdm-public-behavior-check-qualification-result-v7.json",
+      "file_bytes": 6558,
+      "file_sha256": "sha256:57756c0b4d51c800ae179a4078573e623b9b2cf0f37c12650969d2d79fca3f9f",
+      "content_hash": "sha256:4f6dcde9743c8afd0cd59b31d3ba6533d00fa0a245aaec1720fe8c435c7dbd12",
+      "execution_hash": "sha256:bb0a182325cfeb66fe030251b244d4528ca84777758ba0a6c41a2de431a28f20"
+    },
+    "retained_anyio": {
+      "base_row_hash": "sha256:850ff7a3af99cf6d60bd85bd88783f20e2ed25b908a0923a29a60983f8dacf2b",
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "image_identity_hash": "sha256:1ec0739eef629e229001d3870f7e5769dfd9a6343e4ae357842cc48361dc4980",
+      "raw_output_persisted": false,
+      "reference_row_hash": "sha256:b37d01908cf8f65be630240223d54fe912219f883fca40e72079359a1c5ff94e",
+      "schema_version": "retained-public-task-qualification-v1",
+      "status": "QUALIFIED_FROM_CONSUMED_V5_ROWS",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4
+    },
+    "finalization_successor": {
+      "path": "experiments/lean-harness-finalization-successor-public-qualification-20260822-v1.json",
+      "file_bytes": 10944,
+      "file_sha256": "sha256:3dc973ec737058b6dd964de1c652f174c6274e060eabc8ace29c3b77694604f1",
+      "content_hash": "sha256:a3146592d6482405eac27f7bbb003ae57982983eabe814a5d86f0aba2e2a3aeb",
+      "qualification_id": "anyio-r4-finalization-successor-20260822-v1",
+      "runtime_policy_version": "lean-harness-v4",
+      "tool_schema_version": "v9",
+      "context_policy_version": "phase-evidence-v14",
+      "completion_policy_version": "completion-driven-current-diff-v2",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "runtime_activation_authorized": false
+    },
+    "mechanical_successor": {
+      "path": "experiments/lean-harness-mechanical-friction-public-qualification-20260823-v1.json",
+      "file_bytes": 7282,
+      "file_sha256": "sha256:7d622124874b561f8f8447cdfbb180433cb56d0ff484fae3299bcaf2fe9b0b68",
+      "content_hash": "sha256:0053adbd4ae2d0b4aed0aac3f7885af13e2021c00a75eed892ab72f0f79c5e32",
+      "qualification_id": "lean-harness-mechanical-friction-public-20260823-v1",
+      "scenario_set_hash": "sha256:8483b1265da38b881622c38652f58d4c2630466cb4dfe7617d0154a6054372c0",
+      "runtime_policy_version": "lean-harness-v5",
+      "tool_schema_version": "v10",
+      "context_policy_version": "phase-evidence-v15",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "incomplete_recovery_policy_version": "reasoning-only-single-retry-split-reserved-v1",
+      "runtime_activation_authorized": false
+    },
+    "event_role_successor": {
+      "path": "experiments/lean-harness-event-descriptor-role-public-qualification-20260823-v1.json",
+      "file_bytes": 3917,
+      "file_sha256": "sha256:5b12e5f14428fc6be83ed7da581c0c9b345af0eeae3cdb43a98f6e263e8a9d35",
+      "content_hash": "sha256:b946531d9b19597f059370a40b0204d44e404de8e1ece78caa9fc1b51e31e5f2",
+      "qualification_id": "lean-harness-event-descriptor-role-public-20260823-v1",
+      "scenario_set_hash": "sha256:8234062503735fa13615bd74c3bf85b5e62ca9ba5d6e0b9134b58fa63444361c",
+      "source_execution_hash": "sha256:d977b523f672e6b2d2d01674ad7909197ad797b109f39b69cdc39ab9b02c3c66",
+      "runtime_policy_version": "lean-harness-v6",
+      "tool_schema_version": "v10",
+      "context_policy_version": "phase-evidence-v16",
+      "compaction_schema_version": "lean-harness-context-event-compaction-v2",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "runtime_activation_authorized": false,
+      "r6_retry_authorized": false,
+      "quality_improvement_established": false
+    },
+    "ordered_correction_successor": {
+      "path": "experiments/lean-harness-ordered-correction-public-qualification-20260824-v2.json",
+      "file_bytes": 7367,
+      "file_sha256": "sha256:a77cd1ab7462d2a6a11bf61e30e15d946d665cae468494730560b5c4b15bf86a",
+      "content_hash": "sha256:e329aef73b98a879eb20de70e46c6ed17dda82ac3e92f826f345fa88a6010370",
+      "qualification_id": "lean-harness-ordered-correction-public-20260824-v2",
+      "scenario_set_hash": "sha256:8258e9bf5c9208f00f200caa133a96a23ca58d5fa50e37169e37ab1b10e635e2",
+      "runtime_policy_version": "lean-harness-v8",
+      "tool_schema_version": "v12",
+      "context_policy_version": "phase-evidence-v18",
+      "completion_policy_version": "ordered-check-refresh-structured-correction-v1",
+      "correction_context_policy_version": "latest-public-edit-correction-once-v1",
+      "provider_terminal_attribution_policy_version": "explicit-terminal-before-accounting-v1",
+      "runtime_activation_authorized": false,
+      "quality_improvement_established": false
+    },
+    "semantic_progress_activation": {
+      "path": "experiments/lean-harness-semantic-progress-rapid-activation-qualification-20260825-v1.json",
+      "file_bytes": 9899,
+      "file_sha256": "sha256:93b2b239d030cfe33ba3771f312977a68a6a4c2c705eb30fe0b03ebab289f72a",
+      "content_hash": "sha256:c1d71caf106094f8b4d4c877d813825c62ed0621a0bfef8ffba54e497e47c9e2",
+      "predecessor_qualification": {
+        "bytes": 6703,
+        "content_hash": "sha256:d3e578271060144513c2e49978a6e5fc2acf38888a180729bfb93c5b801e8ca1",
+        "file_sha256": "sha256:c13b4e6cf4c80b4eaa9c9d1016ab5e3bbdae881341c6a751a611266bb33fe7f0",
+        "path": "experiments/lean-harness-semantic-progress-public-qualification-20260825-v1.json"
+      },
+      "current_virtual_qualification": {
+        "content_hash": "sha256:e51e1a90f2104f63ff70aec73745c0b9aa990228065889a2263d9366ac9c31d3",
+        "scenario_set_hash": "sha256:ca03c1e4a54a3bfcb563c0c3962289216417d024b3f6399a694bba4fedb5fca1",
+        "source_files": [
+          {
+            "bytes": 22690,
+            "file_sha256": "sha256:a060e99b0c71506a236cc5550ce5e079aa2d1d4dbdaf10925f0739406de8acb7",
+            "path": "patchloop/agent/workflow_semantic_progress_successor.py"
+          },
+          {
+            "bytes": 23471,
+            "file_sha256": "sha256:14d42793a27c9ebff7b68a682e153dbac3d5703509ada0ce79189b0be0e36585",
+            "path": "patchloop/agent/workflow_semantic_progress_successor_qualification.py"
+          },
+          {
+            "bytes": 142019,
+            "file_sha256": "sha256:005a81d87b63194d85a4361f13cc1de6c32d84b6c313985b87fb0ea6e9c5f35b",
+            "path": "patchloop/agent/lean_runtime.py"
+          },
+          {
+            "bytes": 320949,
+            "file_sha256": "sha256:def25e215b954770ebcd7781ab0ddc9377dc73172c8037d7872e7326fae434a6",
+            "path": "patchloop/agent/runner.py"
+          },
+          {
+            "bytes": 273848,
+            "file_sha256": "sha256:be78c36c22e7826aab4366e028d7e125b82f164d562bb3d414dff9b323c21ece",
+            "path": "patchloop/agent/tools.py"
+          },
+          {
+            "bytes": 173679,
+            "file_sha256": "sha256:c1796f7eb658d3531796ae9204275925e9ca0c72446edd99b2d971b66ba4cb16",
+            "path": "patchloop/contracts.py"
+          },
+          {
+            "bytes": 3173,
+            "file_sha256": "sha256:b6448a46f34df57110f5b7ce07c0e2d435dd9ff56b39d47d663e6c58606af0e7",
+            "path": "patchloop/errors.py"
+          },
+          {
+            "bytes": 16050,
+            "file_sha256": "sha256:31e213d3e2b2e48af8a083ea38f3ef6dbfa52cd8be4df9897fb5731c3dee6a91",
+            "path": "patchloop/evals/rapid_semantic_progress_diagnosis.py"
+          },
+          {
+            "bytes": 579,
+            "file_sha256": "sha256:d1d4f434396ea30626fc18b645c3d93933de93b7e0abf5edb67d757d760710b0",
+            "path": "scripts/build_lean_harness_semantic_progress_qualification.py"
+          },
+          {
+            "bytes": 808,
+            "file_sha256": "sha256:27e4e0c5990e439d7dde799a3d200e61b3ab42aef40122757e48660aa8a0ae64",
+            "path": "scripts/build_rapid_semantic_progress_diagnosis.py"
+          },
+          {
+            "bytes": 11562,
+            "file_sha256": "sha256:a78a920297e1ba8f4f4e6e6d883f1a8dd9b2fc2d949aeba41fa1e1e84f6de09c",
+            "path": "tests/test_workflow_semantic_progress_successor.py"
+          },
+          {
+            "bytes": 25239,
+            "file_sha256": "sha256:9ebce2f4483cfb8089e59570613beacd956bc1956c06f67aaecce3173c0f9817",
+            "path": "tests/test_workflow_successor_v2_runner.py"
+          },
+          {
+            "bytes": 3783,
+            "file_sha256": "sha256:7959f2ab6133e796614e0c85504c93d3507f158d83434fa91cce28f4298e9c31",
+            "path": "tests/test_workflow_semantic_progress_successor_qualification.py"
+          },
+          {
+            "bytes": 3199,
+            "file_sha256": "sha256:9dc251e733383626a02f026f4bbf58a42832fc3fd48874f3d0d8557b63e6e683",
+            "path": "tests/test_rapid_semantic_progress_diagnosis.py"
+          }
+        ]
+      },
+      "semantic_progress_contract": {
+        "contamination_disclosed": true,
+        "context_policy_version": "phase-evidence-v25",
+        "excluded_fixture_content_used": false,
+        "predecessor_runtime": "lean-harness-v14",
+        "successor_runtime": "lean-harness-v15",
+        "tool_schema_version": "v19",
+        "workflow_policy_version": "public-failure-signature-no-progress-reset-v1"
+      },
+      "source_transition": {
+        "change_role": "r12-manifest-opt-in-and-predecessor-audit-only",
+        "observed_changed_paths": [
+          "patchloop/contracts.py",
+          "tests/test_workflow_semantic_progress_successor_qualification.py"
+        ],
+        "permitted_changed_paths": [
+          "patchloop/contracts.py",
+          "tests/test_workflow_semantic_progress_successor_qualification.py"
+        ],
+        "qualified_behavior_unchanged": true,
+        "rows": [
+          {
+            "changed": false,
+            "current_bytes": 22690,
+            "current_file_sha256": "sha256:a060e99b0c71506a236cc5550ce5e079aa2d1d4dbdaf10925f0739406de8acb7",
+            "path": "patchloop/agent/workflow_semantic_progress_successor.py",
+            "predecessor_bytes": 22690,
+            "predecessor_file_sha256": "sha256:a060e99b0c71506a236cc5550ce5e079aa2d1d4dbdaf10925f0739406de8acb7"
+          },
+          {
+            "changed": false,
+            "current_bytes": 23471,
+            "current_file_sha256": "sha256:14d42793a27c9ebff7b68a682e153dbac3d5703509ada0ce79189b0be0e36585",
+            "path": "patchloop/agent/workflow_semantic_progress_successor_qualification.py",
+            "predecessor_bytes": 23471,
+            "predecessor_file_sha256": "sha256:14d42793a27c9ebff7b68a682e153dbac3d5703509ada0ce79189b0be0e36585"
+          },
+          {
+            "changed": false,
+            "current_bytes": 142019,
+            "current_file_sha256": "sha256:005a81d87b63194d85a4361f13cc1de6c32d84b6c313985b87fb0ea6e9c5f35b",
+            "path": "patchloop/agent/lean_runtime.py",
+            "predecessor_bytes": 142019,
+            "predecessor_file_sha256": "sha256:005a81d87b63194d85a4361f13cc1de6c32d84b6c313985b87fb0ea6e9c5f35b"
+          },
+          {
+            "changed": false,
+            "current_bytes": 320949,
+            "current_file_sha256": "sha256:def25e215b954770ebcd7781ab0ddc9377dc73172c8037d7872e7326fae434a6",
+            "path": "patchloop/agent/runner.py",
+            "predecessor_bytes": 320949,
+            "predecessor_file_sha256": "sha256:def25e215b954770ebcd7781ab0ddc9377dc73172c8037d7872e7326fae434a6"
+          },
+          {
+            "changed": false,
+            "current_bytes": 273848,
+            "current_file_sha256": "sha256:be78c36c22e7826aab4366e028d7e125b82f164d562bb3d414dff9b323c21ece",
+            "path": "patchloop/agent/tools.py",
+            "predecessor_bytes": 273848,
+            "predecessor_file_sha256": "sha256:be78c36c22e7826aab4366e028d7e125b82f164d562bb3d414dff9b323c21ece"
+          },
+          {
+            "changed": true,
+            "current_bytes": 173679,
+            "current_file_sha256": "sha256:c1796f7eb658d3531796ae9204275925e9ca0c72446edd99b2d971b66ba4cb16",
+            "path": "patchloop/contracts.py",
+            "predecessor_bytes": 172573,
+            "predecessor_file_sha256": "sha256:773f6a34b99e41784d217b3b7d1c18004b75a3f2574a8dff7fbdb9f9b4397724"
+          },
+          {
+            "changed": false,
+            "current_bytes": 3173,
+            "current_file_sha256": "sha256:b6448a46f34df57110f5b7ce07c0e2d435dd9ff56b39d47d663e6c58606af0e7",
+            "path": "patchloop/errors.py",
+            "predecessor_bytes": 3173,
+            "predecessor_file_sha256": "sha256:b6448a46f34df57110f5b7ce07c0e2d435dd9ff56b39d47d663e6c58606af0e7"
+          },
+          {
+            "changed": false,
+            "current_bytes": 16050,
+            "current_file_sha256": "sha256:31e213d3e2b2e48af8a083ea38f3ef6dbfa52cd8be4df9897fb5731c3dee6a91",
+            "path": "patchloop/evals/rapid_semantic_progress_diagnosis.py",
+            "predecessor_bytes": 16050,
+            "predecessor_file_sha256": "sha256:31e213d3e2b2e48af8a083ea38f3ef6dbfa52cd8be4df9897fb5731c3dee6a91"
+          },
+          {
+            "changed": false,
+            "current_bytes": 579,
+            "current_file_sha256": "sha256:d1d4f434396ea30626fc18b645c3d93933de93b7e0abf5edb67d757d760710b0",
+            "path": "scripts/build_lean_harness_semantic_progress_qualification.py",
+            "predecessor_bytes": 579,
+            "predecessor_file_sha256": "sha256:d1d4f434396ea30626fc18b645c3d93933de93b7e0abf5edb67d757d760710b0"
+          },
+          {
+            "changed": false,
+            "current_bytes": 808,
+            "current_file_sha256": "sha256:27e4e0c5990e439d7dde799a3d200e61b3ab42aef40122757e48660aa8a0ae64",
+            "path": "scripts/build_rapid_semantic_progress_diagnosis.py",
+            "predecessor_bytes": 808,
+            "predecessor_file_sha256": "sha256:27e4e0c5990e439d7dde799a3d200e61b3ab42aef40122757e48660aa8a0ae64"
+          },
+          {
+            "changed": false,
+            "current_bytes": 11562,
+            "current_file_sha256": "sha256:a78a920297e1ba8f4f4e6e6d883f1a8dd9b2fc2d949aeba41fa1e1e84f6de09c",
+            "path": "tests/test_workflow_semantic_progress_successor.py",
+            "predecessor_bytes": 11562,
+            "predecessor_file_sha256": "sha256:a78a920297e1ba8f4f4e6e6d883f1a8dd9b2fc2d949aeba41fa1e1e84f6de09c"
+          },
+          {
+            "changed": false,
+            "current_bytes": 25239,
+            "current_file_sha256": "sha256:9ebce2f4483cfb8089e59570613beacd956bc1956c06f67aaecce3173c0f9817",
+            "path": "tests/test_workflow_successor_v2_runner.py",
+            "predecessor_bytes": 25239,
+            "predecessor_file_sha256": "sha256:9ebce2f4483cfb8089e59570613beacd956bc1956c06f67aaecce3173c0f9817"
+          },
+          {
+            "changed": true,
+            "current_bytes": 3783,
+            "current_file_sha256": "sha256:7959f2ab6133e796614e0c85504c93d3507f158d83434fa91cce28f4298e9c31",
+            "path": "tests/test_workflow_semantic_progress_successor_qualification.py",
+            "predecessor_bytes": 3678,
+            "predecessor_file_sha256": "sha256:b2abbffa95253e8e47300884332db92b68fa4a166b6ffd04e9f4b6b603af9280"
+          },
+          {
+            "changed": false,
+            "current_bytes": 3199,
+            "current_file_sha256": "sha256:9dc251e733383626a02f026f4bbf58a42832fc3fd48874f3d0d8557b63e6e683",
+            "path": "tests/test_rapid_semantic_progress_diagnosis.py",
+            "predecessor_bytes": 3199,
+            "predecessor_file_sha256": "sha256:9dc251e733383626a02f026f4bbf58a42832fc3fd48874f3d0d8557b63e6e683"
+          }
+        ],
+        "schema_version": "lean-semantic-progress-source-transition-v1"
+      },
+      "runtime_build_hash": "sha256:34599cb84d6c2560ba15f5ebf3958fea8f07c509b2c4da20e1752138b88bbbd5",
+      "verifier_descriptor_hash": "sha256:1e36070954000d4775b286442ac9b64d7b5296fc0b2708dddffe8990506d97bb",
+      "runtime_activation_authorized": false,
+      "quality_improvement_established": false
+    },
+    "source_transition": {
+      "schema_version": "workflow-successor-qualification-to-live-activation-v1",
+      "qualified_snapshot_preserved": true,
+      "unchanged_workflow_source_count": 14,
+      "permitted_changed_paths": [],
+      "activation_change_role": "r12-candidate-and-verifier-registration-only",
+      "source_rows": [
+        {
+          "path": "patchloop/agent/workflow_semantic_progress_successor.py",
+          "qualified_file_bytes": 22690,
+          "qualified_file_sha256": "sha256:a060e99b0c71506a236cc5550ce5e079aa2d1d4dbdaf10925f0739406de8acb7",
+          "current_file_bytes": 22690,
+          "current_file_sha256": "sha256:a060e99b0c71506a236cc5550ce5e079aa2d1d4dbdaf10925f0739406de8acb7",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/workflow_semantic_progress_successor_qualification.py",
+          "qualified_file_bytes": 23471,
+          "qualified_file_sha256": "sha256:14d42793a27c9ebff7b68a682e153dbac3d5703509ada0ce79189b0be0e36585",
+          "current_file_bytes": 23471,
+          "current_file_sha256": "sha256:14d42793a27c9ebff7b68a682e153dbac3d5703509ada0ce79189b0be0e36585",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/lean_runtime.py",
+          "qualified_file_bytes": 142019,
+          "qualified_file_sha256": "sha256:005a81d87b63194d85a4361f13cc1de6c32d84b6c313985b87fb0ea6e9c5f35b",
+          "current_file_bytes": 142019,
+          "current_file_sha256": "sha256:005a81d87b63194d85a4361f13cc1de6c32d84b6c313985b87fb0ea6e9c5f35b",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/runner.py",
+          "qualified_file_bytes": 320949,
+          "qualified_file_sha256": "sha256:def25e215b954770ebcd7781ab0ddc9377dc73172c8037d7872e7326fae434a6",
+          "current_file_bytes": 320949,
+          "current_file_sha256": "sha256:def25e215b954770ebcd7781ab0ddc9377dc73172c8037d7872e7326fae434a6",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/tools.py",
+          "qualified_file_bytes": 273848,
+          "qualified_file_sha256": "sha256:be78c36c22e7826aab4366e028d7e125b82f164d562bb3d414dff9b323c21ece",
+          "current_file_bytes": 273848,
+          "current_file_sha256": "sha256:be78c36c22e7826aab4366e028d7e125b82f164d562bb3d414dff9b323c21ece",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/contracts.py",
+          "qualified_file_bytes": 173679,
+          "qualified_file_sha256": "sha256:c1796f7eb658d3531796ae9204275925e9ca0c72446edd99b2d971b66ba4cb16",
+          "current_file_bytes": 173679,
+          "current_file_sha256": "sha256:c1796f7eb658d3531796ae9204275925e9ca0c72446edd99b2d971b66ba4cb16",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/errors.py",
+          "qualified_file_bytes": 3173,
+          "qualified_file_sha256": "sha256:b6448a46f34df57110f5b7ce07c0e2d435dd9ff56b39d47d663e6c58606af0e7",
+          "current_file_bytes": 3173,
+          "current_file_sha256": "sha256:b6448a46f34df57110f5b7ce07c0e2d435dd9ff56b39d47d663e6c58606af0e7",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/evals/rapid_semantic_progress_diagnosis.py",
+          "qualified_file_bytes": 16050,
+          "qualified_file_sha256": "sha256:31e213d3e2b2e48af8a083ea38f3ef6dbfa52cd8be4df9897fb5731c3dee6a91",
+          "current_file_bytes": 16050,
+          "current_file_sha256": "sha256:31e213d3e2b2e48af8a083ea38f3ef6dbfa52cd8be4df9897fb5731c3dee6a91",
+          "unchanged": true
+        },
+        {
+          "path": "scripts/build_lean_harness_semantic_progress_qualification.py",
+          "qualified_file_bytes": 579,
+          "qualified_file_sha256": "sha256:d1d4f434396ea30626fc18b645c3d93933de93b7e0abf5edb67d757d760710b0",
+          "current_file_bytes": 579,
+          "current_file_sha256": "sha256:d1d4f434396ea30626fc18b645c3d93933de93b7e0abf5edb67d757d760710b0",
+          "unchanged": true
+        },
+        {
+          "path": "scripts/build_rapid_semantic_progress_diagnosis.py",
+          "qualified_file_bytes": 808,
+          "qualified_file_sha256": "sha256:27e4e0c5990e439d7dde799a3d200e61b3ab42aef40122757e48660aa8a0ae64",
+          "current_file_bytes": 808,
+          "current_file_sha256": "sha256:27e4e0c5990e439d7dde799a3d200e61b3ab42aef40122757e48660aa8a0ae64",
+          "unchanged": true
+        },
+        {
+          "path": "tests/test_workflow_semantic_progress_successor.py",
+          "qualified_file_bytes": 11562,
+          "qualified_file_sha256": "sha256:a78a920297e1ba8f4f4e6e6d883f1a8dd9b2fc2d949aeba41fa1e1e84f6de09c",
+          "current_file_bytes": 11562,
+          "current_file_sha256": "sha256:a78a920297e1ba8f4f4e6e6d883f1a8dd9b2fc2d949aeba41fa1e1e84f6de09c",
+          "unchanged": true
+        },
+        {
+          "path": "tests/test_workflow_successor_v2_runner.py",
+          "qualified_file_bytes": 25239,
+          "qualified_file_sha256": "sha256:9ebce2f4483cfb8089e59570613beacd956bc1956c06f67aaecce3173c0f9817",
+          "current_file_bytes": 25239,
+          "current_file_sha256": "sha256:9ebce2f4483cfb8089e59570613beacd956bc1956c06f67aaecce3173c0f9817",
+          "unchanged": true
+        },
+        {
+          "path": "tests/test_workflow_semantic_progress_successor_qualification.py",
+          "qualified_file_bytes": 3783,
+          "qualified_file_sha256": "sha256:7959f2ab6133e796614e0c85504c93d3507f158d83434fa91cce28f4298e9c31",
+          "current_file_bytes": 3783,
+          "current_file_sha256": "sha256:7959f2ab6133e796614e0c85504c93d3507f158d83434fa91cce28f4298e9c31",
+          "unchanged": true
+        },
+        {
+          "path": "tests/test_rapid_semantic_progress_diagnosis.py",
+          "qualified_file_bytes": 3199,
+          "qualified_file_sha256": "sha256:9dc251e733383626a02f026f4bbf58a42832fc3fd48874f3d0d8557b63e6e683",
+          "current_file_bytes": 3199,
+          "current_file_sha256": "sha256:9dc251e733383626a02f026f4bbf58a42832fc3fd48874f3d0d8557b63e6e683",
+          "unchanged": true
+        }
+      ]
+    }
+  },
+  "selection_evidence_hash": "sha256:6fb736b8a838cf9db5e57fe0a28e5945e467f2d1302bdadbc57bdf6d584245df",
+  "runtime_build_schema": "rapid-runtime-build-v1",
+  "runtime_build_hash": "sha256:34599cb84d6c2560ba15f5ebf3958fea8f07c509b2c4da20e1752138b88bbbd5",
+  "model_contract": {
+    "provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "transport_max_retries": 0,
+    "temperature": 0.0,
+    "max_output_tokens": 25000
+  },
+  "predecessor_candidate": {
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-workflow-revision-ab-20260825-r11-candidate-v17.json",
+    "file_bytes": 21582,
+    "file_sha256": "sha256:31ab3c6e63c29c72ed1900c15855c182e34df1aba861cdf0d480a3ae449a5407"
+  },
+  "predecessor_result": {
+    "path": "reports/rapid-development/rapid-public-dev-anyio-workflow-revision-ab-20260825-r11-c64654b6bdba.jsonl",
+    "file_bytes": 9586,
+    "file_sha256": "sha256:66fed2b61499f5d58b4812228591b45cba75390c6ddbe8f9bfe4612191734424"
+  },
+  "variant_contracts": {
+    "lean-harness-v8": {
+      "tool_schema_version": "v12",
+      "context_policy_version": "phase-evidence-v18",
+      "runtime_policy_version": "lean-harness-v8",
+      "completion_policy_version": "ordered-check-refresh-structured-correction-v1",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1",
+      "search_glob_policy_version": "recursive-file-glob-normalization-v1",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "edit_correction_policy_version": "bounded-public-current-source-v1",
+      "correction_context_policy_version": "latest-public-edit-correction-once-v1",
+      "provider_terminal_policy_version": "explicit-terminal-before-accounting-v1",
+      "parallel_tool_calls": false,
+      "one_tool_call_per_response": true
+    },
+    "lean-harness-v15": {
+      "tool_schema_version": "v19",
+      "context_policy_version": "phase-evidence-v25",
+      "runtime_policy_version": "lean-harness-v15",
+      "completion_policy_version": "bounded-correction-review-repair-v1",
+      "pre_mutation_plan_policy_version": "eligible-public-evidence-plan-gate-v2",
+      "iterative_plan_revision_policy_version": "epoch-work-plan-revision-v1",
+      "plan_admission_recovery_policy_version": "work-plan-admission-recovery-v1",
+      "evidence_catalog_schema_version": "eligible-plan-evidence-catalog-v2",
+      "recorded_work_plan_schema_version": "recorded-work-plan-v2",
+      "active_work_state_schema_version": "active-work-state-v1",
+      "workflow_finalization_policy_version": "workflow-surface-retained-through-reserve-v1",
+      "required_trigger_policy_version": "required-failed-check-trigger-pinned-v1",
+      "semantic_progress_policy_version": "public-failure-signature-no-progress-reset-v1",
+      "semantic_progress_state_schema_version": "public-semantic-progress-state-v1",
+      "workflow_instruction_schema_version": "lean-workflow-instruction-v3",
+      "protocol_recovery_policy_version": "shared-model-action-contract-recovery-v1",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1",
+      "search_glob_policy_version": "recursive-file-glob-normalization-v1",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "edit_correction_policy_version": "bounded-public-current-source-v2",
+      "correction_context_policy_version": "bounded-investigation-current-read-v1",
+      "provider_terminal_policy_version": "explicit-terminal-before-accounting-v1",
+      "parallel_tool_calls": false,
+      "one_tool_call_per_response": true
+    }
+  },
+  "task_bindings": [
+    {
+      "task_path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+      "public_spec_hash": "sha256:ac32db22e505caf61dac267a590870f8c6a4dc39d7f83ce589342a729d7968e6",
+      "private_spec_hash": "sha256:cb95ced3ad387ea2fc76304145f803904f577e62ff17b7b6972219d9d7a1e8b4",
+      "evaluator_image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "evaluator_image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "package_file_count": 6,
+      "package_inventory_hash": "sha256:60fab6e3fc3a56fef5ad8a7eee2c410f66e4a67a2eed7b8b57e3b58888f92fd4",
+      "visible_check_ids": [
+        "public-interrupt-runner-lifecycle",
+        "upstream-pytest-plugin-regression"
+      ],
+      "visible_check_command_hashes": [
+        "sha256:c0ef4f062b90676734637a3b4966b1206870c847ae0f4dd2c74754250bf0a034",
+        "sha256:965d00d50dede491672c1a53762e4b6aa3d78ff58583cc062fdfdb8f56c9548c"
+      ],
+      "task_successor_opt_in": true,
+      "frozen_dataset_member": false,
+      "qualification_binding_hash": "sha256:6fb736b8a838cf9db5e57fe0a28e5945e467f2d1302bdadbc57bdf6d584245df"
+    }
+  ],
+  "schedule": [
+    {
+      "order": 1,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v8",
+      "tool_schema_version": "v12",
+      "context_policy_version": "phase-evidence-v18",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:164b546817ef91f4b391139ca3624fcff715f898c121fb8597755611540b80c4"
+    },
+    {
+      "order": 2,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v15",
+      "tool_schema_version": "v19",
+      "context_policy_version": "phase-evidence-v25",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:63ebcef7d9842daca86dec953ad7cb12131eb26be516b23d16b7c506461df1a8"
+    },
+    {
+      "order": 3,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v15",
+      "tool_schema_version": "v19",
+      "context_policy_version": "phase-evidence-v25",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:6ed8a0678ca16b61813b4fc41a9e9bed03b9153b2a0e59f823367f01a2826ae3"
+    },
+    {
+      "order": 4,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v8",
+      "tool_schema_version": "v12",
+      "context_policy_version": "phase-evidence-v18",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:ffddd3a5ca76890016a396e1d94c7af8bcfc82d1ccadac6c8a1ae16e1882ea99"
+    },
+    {
+      "order": 5,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v8",
+      "tool_schema_version": "v12",
+      "context_policy_version": "phase-evidence-v18",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:c957e03b57f0656881ceb2c15d32fcd2f2e2fdd25cdf8fa4bd5b07646deb44ff"
+    },
+    {
+      "order": 6,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v15",
+      "tool_schema_version": "v19",
+      "context_policy_version": "phase-evidence-v25",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:36aa8127a3b7f8ff99f9cb34b21a35b2265aac535d011c8d1e82ec8fa63984a0"
+    }
+  ],
+  "schedule_hash": "sha256:dc20df7b4d4010d45001d4865ef506afb83249c879331bafbf9cc9f6ce66ef4a",
+  "cost_control": {
+    "per_run_reserve_nanos": 1200000000,
+    "full_schedule_reserve_nanos": 7200000000,
+    "hard_cap_nanos": 7500000000,
+    "pricing_nanos_per_token": {
+      "uncached_input": 750,
+      "cached_input": 75,
+      "cache_write_input": 750,
+      "output": 4500
+    },
+    "scheduled_run_count": 6,
+    "cost_censoring_allowed": false,
+    "official": false
+  },
+  "cost_control_hash": "sha256:a7bc2f24b7ec0ecb501130ef310f958b790108d5788d51dfad958c2cf4691605",
+  "execution_hash": "sha256:4d4fbf5839ed3a498c99fe513c11c83fa3b90e2a75452c8bebd10ed0c572ac20",
+  "source_qualified": true,
+  "execution_authorized": false,
+  "provider_calls_made": 0,
+  "docker_calls_made": 0,
+  "added_model_cost_usd": 0.0,
+  "approval_required": true,
+  "rehearsal_required": true,
+  "content_hash": "sha256:ce41bb9572131ccd10617b16489224440b536550ffc79a6812314a1b858368ce"
+}

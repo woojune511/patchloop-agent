@@ -640,7 +640,8 @@ def validate_fixed_memory_request_artifact(
         "context_build",
         "fixed_memory_delivery",
     }
-    expected_keys = required_keys | ({"worker_claim"} if "worker_claim" in artifact else set())
+    optional_keys = {key for key in ("worker_claim", "lean_harness_request") if key in artifact}
+    expected_keys = required_keys | optional_keys
     if set(artifact) != expected_keys:
         raise ContractError("fixed-memory request artifact fields differ")
     if artifact.get("schema_version") != "model-request-evidence-v1":

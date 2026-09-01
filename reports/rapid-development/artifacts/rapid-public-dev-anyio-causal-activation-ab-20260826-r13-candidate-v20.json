@@ -1,0 +1,675 @@
+{
+  "schema_version": "rapid-public-development-candidate-v20",
+  "candidate_revision": 20,
+  "experiment_id": "rapid-public-dev-anyio-causal-activation-ab-20260826-r13",
+  "purpose": "rapid-public-development",
+  "official": false,
+  "config_path": "experiments/rapid-public-development-anyio-causal-activation-ab-20260826-r13.yaml",
+  "config_file_sha256": "sha256:a69468fa5614acdcc02bb04205f2306ec862082296c10eb78c0c19604cf0d68f",
+  "config_semantic_hash": "sha256:528a263ce4ed3eb35ff302e1d5fb1d295d799405a5626508f3d6107702ed630c",
+  "selection_evidence": {
+    "schema_version": "rapid-anyio-causal-activation-ab-selection-evidence-v1",
+    "policy_version": "qualified-public-v8-v17-causal-activation-ab-v1",
+    "official": false,
+    "heldout_outcomes_used": false,
+    "private_evidence_used": false,
+    "pdm_task_included": false,
+    "reference_result_role": "check-admission-only-not-task-semantic-authority",
+    "public_contract_source": "public-task-description-and-upstream-public-behavior",
+    "qualification_v5": {
+      "path": "reports/rapid-development/artifacts/pdm-anyio-public-behavior-check-qualification-result-v5.json",
+      "file_bytes": 9828,
+      "file_sha256": "sha256:57ac80b98f26970aba4927157c91eba6964a20b9326cca5470bfa28b4a5b54e4",
+      "content_hash": "sha256:71bb74dfbae3346549a6cc8912aa9c85990db1b2e9ea9cf10f022464150cc1b8",
+      "execution_hash": "sha256:f7b0159d622ee6329db6560ab253d117187e6a05a5e7bb630ba325588eb211b3"
+    },
+    "retention_v7": {
+      "path": "reports/rapid-development/artifacts/pdm-public-behavior-check-qualification-result-v7.json",
+      "file_bytes": 6558,
+      "file_sha256": "sha256:57756c0b4d51c800ae179a4078573e623b9b2cf0f37c12650969d2d79fca3f9f",
+      "content_hash": "sha256:4f6dcde9743c8afd0cd59b31d3ba6533d00fa0a245aaec1720fe8c435c7dbd12",
+      "execution_hash": "sha256:bb0a182325cfeb66fe030251b244d4528ca84777758ba0a6c41a2de431a28f20"
+    },
+    "retained_anyio": {
+      "base_row_hash": "sha256:850ff7a3af99cf6d60bd85bd88783f20e2ed25b908a0923a29a60983f8dacf2b",
+      "image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "image_identity_hash": "sha256:1ec0739eef629e229001d3870f7e5769dfd9a6343e4ae357842cc48361dc4980",
+      "raw_output_persisted": false,
+      "reference_row_hash": "sha256:b37d01908cf8f65be630240223d54fe912219f883fca40e72079359a1c5ff94e",
+      "schema_version": "retained-public-task-qualification-v1",
+      "status": "QUALIFIED_FROM_CONSUMED_V5_ROWS",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4
+    },
+    "finalization_successor": {
+      "path": "experiments/lean-harness-finalization-successor-public-qualification-20260822-v1.json",
+      "file_bytes": 10944,
+      "file_sha256": "sha256:3dc973ec737058b6dd964de1c652f174c6274e060eabc8ace29c3b77694604f1",
+      "content_hash": "sha256:a3146592d6482405eac27f7bbb003ae57982983eabe814a5d86f0aba2e2a3aeb",
+      "qualification_id": "anyio-r4-finalization-successor-20260822-v1",
+      "runtime_policy_version": "lean-harness-v4",
+      "tool_schema_version": "v9",
+      "context_policy_version": "phase-evidence-v14",
+      "completion_policy_version": "completion-driven-current-diff-v2",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "runtime_activation_authorized": false
+    },
+    "mechanical_successor": {
+      "path": "experiments/lean-harness-mechanical-friction-public-qualification-20260823-v1.json",
+      "file_bytes": 7282,
+      "file_sha256": "sha256:7d622124874b561f8f8447cdfbb180433cb56d0ff484fae3299bcaf2fe9b0b68",
+      "content_hash": "sha256:0053adbd4ae2d0b4aed0aac3f7885af13e2021c00a75eed892ab72f0f79c5e32",
+      "qualification_id": "lean-harness-mechanical-friction-public-20260823-v1",
+      "scenario_set_hash": "sha256:8483b1265da38b881622c38652f58d4c2630466cb4dfe7617d0154a6054372c0",
+      "runtime_policy_version": "lean-harness-v5",
+      "tool_schema_version": "v10",
+      "context_policy_version": "phase-evidence-v15",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "incomplete_recovery_policy_version": "reasoning-only-single-retry-split-reserved-v1",
+      "runtime_activation_authorized": false
+    },
+    "event_role_successor": {
+      "path": "experiments/lean-harness-event-descriptor-role-public-qualification-20260823-v1.json",
+      "file_bytes": 3917,
+      "file_sha256": "sha256:5b12e5f14428fc6be83ed7da581c0c9b345af0eeae3cdb43a98f6e263e8a9d35",
+      "content_hash": "sha256:b946531d9b19597f059370a40b0204d44e404de8e1ece78caa9fc1b51e31e5f2",
+      "qualification_id": "lean-harness-event-descriptor-role-public-20260823-v1",
+      "scenario_set_hash": "sha256:8234062503735fa13615bd74c3bf85b5e62ca9ba5d6e0b9134b58fa63444361c",
+      "source_execution_hash": "sha256:d977b523f672e6b2d2d01674ad7909197ad797b109f39b69cdc39ab9b02c3c66",
+      "runtime_policy_version": "lean-harness-v6",
+      "tool_schema_version": "v10",
+      "context_policy_version": "phase-evidence-v16",
+      "compaction_schema_version": "lean-harness-context-event-compaction-v2",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "runtime_activation_authorized": false,
+      "r6_retry_authorized": false,
+      "quality_improvement_established": false
+    },
+    "ordered_correction_successor": {
+      "path": "experiments/lean-harness-ordered-correction-public-qualification-20260824-v2.json",
+      "file_bytes": 7367,
+      "file_sha256": "sha256:a77cd1ab7462d2a6a11bf61e30e15d946d665cae468494730560b5c4b15bf86a",
+      "content_hash": "sha256:e329aef73b98a879eb20de70e46c6ed17dda82ac3e92f826f345fa88a6010370",
+      "qualification_id": "lean-harness-ordered-correction-public-20260824-v2",
+      "scenario_set_hash": "sha256:8258e9bf5c9208f00f200caa133a96a23ca58d5fa50e37169e37ab1b10e635e2",
+      "runtime_policy_version": "lean-harness-v8",
+      "tool_schema_version": "v12",
+      "context_policy_version": "phase-evidence-v18",
+      "completion_policy_version": "ordered-check-refresh-structured-correction-v1",
+      "correction_context_policy_version": "latest-public-edit-correction-once-v1",
+      "provider_terminal_attribution_policy_version": "explicit-terminal-before-accounting-v1",
+      "runtime_activation_authorized": false,
+      "quality_improvement_established": false
+    },
+    "causal_activation": {
+      "path": "experiments/lean-harness-causal-alternative-rapid-activation-qualification-20260826-v2.json",
+      "file_bytes": 10735,
+      "file_sha256": "sha256:073000189b6cd5466e5d1cce849af9477bfc710aa6034680b354728e11e803ff",
+      "content_hash": "sha256:2e404ef926633a2398a263a037601e08713a6e66db322aab340d102d15f6747c",
+      "predecessor_qualification": {
+        "bytes": 5235,
+        "content_hash": "sha256:45f469b256c50b7259b7c1df6a59e3b4fe8f598f67733ef93a96733b72191f85",
+        "file_sha256": "sha256:72576cdcf05a9337bcee415d3200bfe76f04fd8b13b3231b02140fb6b2cd448e",
+        "path": "experiments/lean-harness-causal-alternative-activation-public-qualification-20260826-v1.json"
+      },
+      "current_virtual_qualification": {
+        "content_hash": "sha256:9c01faecbdeccf67a23d772d1822f51e457cd1ac1cf57753aca3ec5507e6a7d3",
+        "scenario_set_hash": "sha256:6129462aadecf3841f2dd1a3c396b695522cc3be6f0dcf152746ab4fcffa40be",
+        "source_files": [
+          {
+            "bytes": 30705,
+            "file_sha256": "sha256:008da86c8fce1b8a1b6ecd1aee9719d8edea6f977dcb8a14fc64246dfeb345f6",
+            "path": "patchloop/agent/workflow_causal_alternative_activation.py"
+          },
+          {
+            "bytes": 19669,
+            "file_sha256": "sha256:8e6eec721dc27ad8120325f9827dcaa45bc4b1502daac798e36f9ce72233ca41",
+            "path": "patchloop/agent/workflow_causal_alternative_activation_qualification.py"
+          },
+          {
+            "bytes": 54511,
+            "file_sha256": "sha256:b28e83598bf8c2c048993e8d71fb72738345aca43940604f546ff23e2f5ea037",
+            "path": "patchloop/agent/workflow_causal_alternative_successor.py"
+          },
+          {
+            "bytes": 22817,
+            "file_sha256": "sha256:5fd0c56b478fa22f8c5b14e4465a63dcc8e5eb38d16df07e2cc5017a97b64931",
+            "path": "patchloop/agent/workflow_semantic_progress_successor.py"
+          },
+          {
+            "bytes": 162081,
+            "file_sha256": "sha256:67b0ddbb6130614eb1d22058a522b6032e8842077305ddf3624781cb6176ab27",
+            "path": "patchloop/agent/lean_runtime.py"
+          },
+          {
+            "bytes": 304402,
+            "file_sha256": "sha256:fa08d5badf81c739af4c461a5a591c5dfaae42ade101af2ab3c6f550555e8d35",
+            "path": "patchloop/agent/tools.py"
+          },
+          {
+            "bytes": 328001,
+            "file_sha256": "sha256:19119e1d15e35386fe673f2bb624c1bc8baef73577d87a4e6a6ba26a4e95aa0d",
+            "path": "patchloop/agent/runner.py"
+          },
+          {
+            "bytes": 175247,
+            "file_sha256": "sha256:2b9b3f08280ff0347609f8e0d35cf9c890cf243c9628fc87b395e5b1c77c7054",
+            "path": "patchloop/contracts.py"
+          },
+          {
+            "bytes": 681,
+            "file_sha256": "sha256:5bb55e03b545ff10cfa43ac4a190a0e1a9685d97f65a3152acfde02fe719b3f9",
+            "path": "scripts/build_lean_harness_causal_alternative_activation_qualification.py"
+          },
+          {
+            "bytes": 164530,
+            "file_sha256": "sha256:455187c293c3fcf5a334025a2ace9181e121c64a610ddc1f8e108d5ce5739c41",
+            "path": "tests/test_tool_gateway.py"
+          },
+          {
+            "bytes": 4473,
+            "file_sha256": "sha256:bd01b32992656c2ce783d932f0f5ea4e4d8cd0745fb5ed0d510208fb8ed43cb6",
+            "path": "tests/test_workflow_causal_alternative_activation_qualification.py"
+          },
+          {
+            "bytes": 42737,
+            "file_sha256": "sha256:32b89f5759f4c976f378f50031e674608dd3155ca41277d31523e63ab7d34dda",
+            "path": "tests/test_workflow_successor_v2_runner.py"
+          }
+        ]
+      },
+      "runtime_identity": {
+        "activation_policy_version": "gateway-owned-causal-baseline-reset-v1",
+        "context_policy_version": "phase-evidence-v27",
+        "request_evidence_schema": "lean-harness-request-evidence-v17",
+        "runtime_policy_version": "lean-harness-v17",
+        "tool_schema_version": "v21"
+      },
+      "generic_plan_surface": {
+        "causal_mechanism_keys": [
+          "summary",
+          "causal_path",
+          "mutation_site_rationale",
+          "expected_observable_effect",
+          "falsification_condition"
+        ],
+        "current_source_dynamic_enum": [
+          "pev:10",
+          "pev:11",
+          "pev:12"
+        ],
+        "exception_specific_key_present": false,
+        "task_specific_field_names": [],
+        "top_level_keys": [
+          "observation_status",
+          "hypothesis",
+          "foundation_evidence_ids",
+          "supporting_evidence_ids",
+          "candidate_files",
+          "intended_change",
+          "expected_behavior",
+          "unknowns",
+          "prior_causal_mechanism_hash",
+          "alternative_causal_mechanism"
+        ]
+      },
+      "restore_trigger": {
+        "active_at_restored_baseline": true,
+        "baseline_projection_hash": "sha256:db0734c7fdf3ba0c190bc23cff24792fde89aa39871237c1154451f6396eca59",
+        "epoch_event_count_after_restore": 0,
+        "failure_events_deleted": false,
+        "restore_receipt_hash": "sha256:4b0409c1fbefb07a8f37a69ed08316cb74182a36949456dfad75a9a771522f86",
+        "semantic_state_round_trip_exact": true,
+        "trigger_cleared_after_mutation": true,
+        "trigger_hash": "sha256:783490a05d5d2e907bcccccfdbaa61bef002a55704a1f77a3a45697aeb693a5c"
+      },
+      "bounded_workflow": {
+        "after_plan_allowed_tools": [
+          "apply_structured_edit"
+        ],
+        "after_read_allowed_tools": [
+          "search_files"
+        ],
+        "after_read_search_target": "revise-work-plan",
+        "correction_limit_changed": false,
+        "initial_allowed_tools": [
+          "search_files",
+          "read_file"
+        ],
+        "initial_plus_corrective_mutation_limit": "1+3",
+        "review_correction_limit_changed": false,
+        "third_plan_dispatch_blocked": true
+      },
+      "source_transition": {
+        "change_role": "r13-manifest-opt-in-and-predecessor-audit-only",
+        "observed_changed_paths": [
+          "patchloop/contracts.py",
+          "tests/test_workflow_causal_alternative_activation_qualification.py"
+        ],
+        "permitted_changed_paths": [
+          "patchloop/contracts.py",
+          "tests/test_workflow_causal_alternative_activation_qualification.py"
+        ],
+        "qualified_behavior_unchanged": true,
+        "rows": [
+          {
+            "changed": false,
+            "current_bytes": 30705,
+            "current_file_sha256": "sha256:008da86c8fce1b8a1b6ecd1aee9719d8edea6f977dcb8a14fc64246dfeb345f6",
+            "path": "patchloop/agent/workflow_causal_alternative_activation.py",
+            "predecessor_bytes": 30705,
+            "predecessor_file_sha256": "sha256:008da86c8fce1b8a1b6ecd1aee9719d8edea6f977dcb8a14fc64246dfeb345f6"
+          },
+          {
+            "changed": false,
+            "current_bytes": 19669,
+            "current_file_sha256": "sha256:8e6eec721dc27ad8120325f9827dcaa45bc4b1502daac798e36f9ce72233ca41",
+            "path": "patchloop/agent/workflow_causal_alternative_activation_qualification.py",
+            "predecessor_bytes": 19669,
+            "predecessor_file_sha256": "sha256:8e6eec721dc27ad8120325f9827dcaa45bc4b1502daac798e36f9ce72233ca41"
+          },
+          {
+            "changed": false,
+            "current_bytes": 54511,
+            "current_file_sha256": "sha256:b28e83598bf8c2c048993e8d71fb72738345aca43940604f546ff23e2f5ea037",
+            "path": "patchloop/agent/workflow_causal_alternative_successor.py",
+            "predecessor_bytes": 54511,
+            "predecessor_file_sha256": "sha256:b28e83598bf8c2c048993e8d71fb72738345aca43940604f546ff23e2f5ea037"
+          },
+          {
+            "changed": false,
+            "current_bytes": 22817,
+            "current_file_sha256": "sha256:5fd0c56b478fa22f8c5b14e4465a63dcc8e5eb38d16df07e2cc5017a97b64931",
+            "path": "patchloop/agent/workflow_semantic_progress_successor.py",
+            "predecessor_bytes": 22817,
+            "predecessor_file_sha256": "sha256:5fd0c56b478fa22f8c5b14e4465a63dcc8e5eb38d16df07e2cc5017a97b64931"
+          },
+          {
+            "changed": false,
+            "current_bytes": 162081,
+            "current_file_sha256": "sha256:67b0ddbb6130614eb1d22058a522b6032e8842077305ddf3624781cb6176ab27",
+            "path": "patchloop/agent/lean_runtime.py",
+            "predecessor_bytes": 162081,
+            "predecessor_file_sha256": "sha256:67b0ddbb6130614eb1d22058a522b6032e8842077305ddf3624781cb6176ab27"
+          },
+          {
+            "changed": false,
+            "current_bytes": 304402,
+            "current_file_sha256": "sha256:fa08d5badf81c739af4c461a5a591c5dfaae42ade101af2ab3c6f550555e8d35",
+            "path": "patchloop/agent/tools.py",
+            "predecessor_bytes": 304402,
+            "predecessor_file_sha256": "sha256:fa08d5badf81c739af4c461a5a591c5dfaae42ade101af2ab3c6f550555e8d35"
+          },
+          {
+            "changed": false,
+            "current_bytes": 328001,
+            "current_file_sha256": "sha256:19119e1d15e35386fe673f2bb624c1bc8baef73577d87a4e6a6ba26a4e95aa0d",
+            "path": "patchloop/agent/runner.py",
+            "predecessor_bytes": 328001,
+            "predecessor_file_sha256": "sha256:19119e1d15e35386fe673f2bb624c1bc8baef73577d87a4e6a6ba26a4e95aa0d"
+          },
+          {
+            "changed": true,
+            "current_bytes": 175247,
+            "current_file_sha256": "sha256:2b9b3f08280ff0347609f8e0d35cf9c890cf243c9628fc87b395e5b1c77c7054",
+            "path": "patchloop/contracts.py",
+            "predecessor_bytes": 174197,
+            "predecessor_file_sha256": "sha256:1c937270b473c9e61694ee0327e149b3816487f865a34f745aa00ebfa05738fa"
+          },
+          {
+            "changed": false,
+            "current_bytes": 681,
+            "current_file_sha256": "sha256:5bb55e03b545ff10cfa43ac4a190a0e1a9685d97f65a3152acfde02fe719b3f9",
+            "path": "scripts/build_lean_harness_causal_alternative_activation_qualification.py",
+            "predecessor_bytes": 681,
+            "predecessor_file_sha256": "sha256:5bb55e03b545ff10cfa43ac4a190a0e1a9685d97f65a3152acfde02fe719b3f9"
+          },
+          {
+            "changed": false,
+            "current_bytes": 164530,
+            "current_file_sha256": "sha256:455187c293c3fcf5a334025a2ace9181e121c64a610ddc1f8e108d5ce5739c41",
+            "path": "tests/test_tool_gateway.py",
+            "predecessor_bytes": 164530,
+            "predecessor_file_sha256": "sha256:455187c293c3fcf5a334025a2ace9181e121c64a610ddc1f8e108d5ce5739c41"
+          },
+          {
+            "changed": true,
+            "current_bytes": 4473,
+            "current_file_sha256": "sha256:bd01b32992656c2ce783d932f0f5ea4e4d8cd0745fb5ed0d510208fb8ed43cb6",
+            "path": "tests/test_workflow_causal_alternative_activation_qualification.py",
+            "predecessor_bytes": 4422,
+            "predecessor_file_sha256": "sha256:07a2cd4f23c9b1eff3dcd42d022420b78f17660761ccbf2d3d01e36e48a41bb5"
+          },
+          {
+            "changed": false,
+            "current_bytes": 42737,
+            "current_file_sha256": "sha256:32b89f5759f4c976f378f50031e674608dd3155ca41277d31523e63ab7d34dda",
+            "path": "tests/test_workflow_successor_v2_runner.py",
+            "predecessor_bytes": 42737,
+            "predecessor_file_sha256": "sha256:32b89f5759f4c976f378f50031e674608dd3155ca41277d31523e63ab7d34dda"
+          }
+        ],
+        "schema_version": "lean-causal-alternative-source-transition-v1"
+      },
+      "runtime_build_hash": "sha256:87576db9ca01d9f1b3fc82d6453585d99116bc7d3fc9359d01ce662d905bcf80",
+      "verifier_descriptor_hash": "sha256:7c7a74c9d6b54a77faa6c21f0c5d6cdfbf24025eef2ddfbf54145d339761f872",
+      "evidence_boundary": {
+        "added_model_cost_usd": "0",
+        "docker_calls": 0,
+        "evaluator_calls": 0,
+        "provider_calls": 0,
+        "task_calls": 0,
+        "visible_check_calls": 0
+      },
+      "runtime_activation_authorized": false,
+      "quality_improvement_established": false
+    },
+    "source_transition": {
+      "schema_version": "workflow-successor-qualification-to-live-activation-v1",
+      "qualified_snapshot_preserved": true,
+      "unchanged_workflow_source_count": 12,
+      "permitted_changed_paths": [],
+      "activation_change_role": "r13-candidate-and-verifier-registration-only",
+      "source_rows": [
+        {
+          "path": "patchloop/agent/workflow_causal_alternative_activation.py",
+          "qualified_file_bytes": 30705,
+          "qualified_file_sha256": "sha256:008da86c8fce1b8a1b6ecd1aee9719d8edea6f977dcb8a14fc64246dfeb345f6",
+          "current_file_bytes": 30705,
+          "current_file_sha256": "sha256:008da86c8fce1b8a1b6ecd1aee9719d8edea6f977dcb8a14fc64246dfeb345f6",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/workflow_causal_alternative_activation_qualification.py",
+          "qualified_file_bytes": 19669,
+          "qualified_file_sha256": "sha256:8e6eec721dc27ad8120325f9827dcaa45bc4b1502daac798e36f9ce72233ca41",
+          "current_file_bytes": 19669,
+          "current_file_sha256": "sha256:8e6eec721dc27ad8120325f9827dcaa45bc4b1502daac798e36f9ce72233ca41",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/workflow_causal_alternative_successor.py",
+          "qualified_file_bytes": 54511,
+          "qualified_file_sha256": "sha256:b28e83598bf8c2c048993e8d71fb72738345aca43940604f546ff23e2f5ea037",
+          "current_file_bytes": 54511,
+          "current_file_sha256": "sha256:b28e83598bf8c2c048993e8d71fb72738345aca43940604f546ff23e2f5ea037",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/workflow_semantic_progress_successor.py",
+          "qualified_file_bytes": 22817,
+          "qualified_file_sha256": "sha256:5fd0c56b478fa22f8c5b14e4465a63dcc8e5eb38d16df07e2cc5017a97b64931",
+          "current_file_bytes": 22817,
+          "current_file_sha256": "sha256:5fd0c56b478fa22f8c5b14e4465a63dcc8e5eb38d16df07e2cc5017a97b64931",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/lean_runtime.py",
+          "qualified_file_bytes": 162081,
+          "qualified_file_sha256": "sha256:67b0ddbb6130614eb1d22058a522b6032e8842077305ddf3624781cb6176ab27",
+          "current_file_bytes": 162081,
+          "current_file_sha256": "sha256:67b0ddbb6130614eb1d22058a522b6032e8842077305ddf3624781cb6176ab27",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/tools.py",
+          "qualified_file_bytes": 304402,
+          "qualified_file_sha256": "sha256:fa08d5badf81c739af4c461a5a591c5dfaae42ade101af2ab3c6f550555e8d35",
+          "current_file_bytes": 304402,
+          "current_file_sha256": "sha256:fa08d5badf81c739af4c461a5a591c5dfaae42ade101af2ab3c6f550555e8d35",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/agent/runner.py",
+          "qualified_file_bytes": 328001,
+          "qualified_file_sha256": "sha256:19119e1d15e35386fe673f2bb624c1bc8baef73577d87a4e6a6ba26a4e95aa0d",
+          "current_file_bytes": 328001,
+          "current_file_sha256": "sha256:19119e1d15e35386fe673f2bb624c1bc8baef73577d87a4e6a6ba26a4e95aa0d",
+          "unchanged": true
+        },
+        {
+          "path": "patchloop/contracts.py",
+          "qualified_file_bytes": 175247,
+          "qualified_file_sha256": "sha256:2b9b3f08280ff0347609f8e0d35cf9c890cf243c9628fc87b395e5b1c77c7054",
+          "current_file_bytes": 175247,
+          "current_file_sha256": "sha256:2b9b3f08280ff0347609f8e0d35cf9c890cf243c9628fc87b395e5b1c77c7054",
+          "unchanged": true
+        },
+        {
+          "path": "scripts/build_lean_harness_causal_alternative_activation_qualification.py",
+          "qualified_file_bytes": 681,
+          "qualified_file_sha256": "sha256:5bb55e03b545ff10cfa43ac4a190a0e1a9685d97f65a3152acfde02fe719b3f9",
+          "current_file_bytes": 681,
+          "current_file_sha256": "sha256:5bb55e03b545ff10cfa43ac4a190a0e1a9685d97f65a3152acfde02fe719b3f9",
+          "unchanged": true
+        },
+        {
+          "path": "tests/test_tool_gateway.py",
+          "qualified_file_bytes": 164530,
+          "qualified_file_sha256": "sha256:455187c293c3fcf5a334025a2ace9181e121c64a610ddc1f8e108d5ce5739c41",
+          "current_file_bytes": 164530,
+          "current_file_sha256": "sha256:455187c293c3fcf5a334025a2ace9181e121c64a610ddc1f8e108d5ce5739c41",
+          "unchanged": true
+        },
+        {
+          "path": "tests/test_workflow_causal_alternative_activation_qualification.py",
+          "qualified_file_bytes": 4473,
+          "qualified_file_sha256": "sha256:bd01b32992656c2ce783d932f0f5ea4e4d8cd0745fb5ed0d510208fb8ed43cb6",
+          "current_file_bytes": 4473,
+          "current_file_sha256": "sha256:bd01b32992656c2ce783d932f0f5ea4e4d8cd0745fb5ed0d510208fb8ed43cb6",
+          "unchanged": true
+        },
+        {
+          "path": "tests/test_workflow_successor_v2_runner.py",
+          "qualified_file_bytes": 42737,
+          "qualified_file_sha256": "sha256:32b89f5759f4c976f378f50031e674608dd3155ca41277d31523e63ab7d34dda",
+          "current_file_bytes": 42737,
+          "current_file_sha256": "sha256:32b89f5759f4c976f378f50031e674608dd3155ca41277d31523e63ab7d34dda",
+          "unchanged": true
+        }
+      ]
+    }
+  },
+  "selection_evidence_hash": "sha256:0a1e1e3fc2818c3e72996d68eff23a5fb41a0ed58a0308ff1e4ca85a84e34adc",
+  "runtime_build_schema": "rapid-runtime-build-v1",
+  "runtime_build_hash": "sha256:87576db9ca01d9f1b3fc82d6453585d99116bc7d3fc9359d01ce662d905bcf80",
+  "model_contract": {
+    "provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "transport_max_retries": 0,
+    "temperature": 0.0,
+    "max_output_tokens": 25000
+  },
+  "predecessor_candidate": {
+    "path": "reports/rapid-development/artifacts/rapid-public-dev-anyio-causal-activation-ab-20260826-r13-candidate-v19.json",
+    "file_bytes": 33703,
+    "file_sha256": "sha256:490701a56d7f00e204593df9fa74b9e36b64b2e3b8024f87ae163d3aff9f270e"
+  },
+  "predecessor_result": {
+    "path": "reports/rapid-development/rapid-public-dev-anyio-semantic-progress-ab-20260825-r12-4d4fbf5839ed.jsonl",
+    "file_bytes": 9575,
+    "file_sha256": "sha256:da653feb1578ffca9234fd6b976f6d62a1518dd73b0a5397bef5f5b820f4ca16"
+  },
+  "variant_contracts": {
+    "lean-harness-v8": {
+      "tool_schema_version": "v12",
+      "context_policy_version": "phase-evidence-v18",
+      "runtime_policy_version": "lean-harness-v8",
+      "completion_policy_version": "ordered-check-refresh-structured-correction-v1",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1",
+      "search_glob_policy_version": "recursive-file-glob-normalization-v1",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "edit_correction_policy_version": "bounded-public-current-source-v1",
+      "correction_context_policy_version": "latest-public-edit-correction-once-v1",
+      "provider_terminal_policy_version": "explicit-terminal-before-accounting-v1",
+      "parallel_tool_calls": false,
+      "one_tool_call_per_response": true
+    },
+    "lean-harness-v17": {
+      "tool_schema_version": "v21",
+      "context_policy_version": "phase-evidence-v27",
+      "runtime_policy_version": "lean-harness-v17",
+      "request_evidence_schema": "lean-harness-request-evidence-v17",
+      "completion_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "record_work_plan_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "pre_mutation_plan_policy_version": "eligible-public-evidence-plan-gate-v2",
+      "iterative_plan_revision_policy_version": "epoch-work-plan-revision-v1",
+      "plan_admission_recovery_policy_version": "work-plan-admission-recovery-v1",
+      "evidence_catalog_schema_version": "eligible-plan-evidence-catalog-v2",
+      "recorded_work_plan_schema_version": "recorded-work-plan-v2",
+      "active_work_state_schema_version": "active-work-state-v1",
+      "finalization_workflow_surface_policy_version": "workflow-surface-retained-through-reserve-v1",
+      "required_trigger_pin_policy_version": "required-failed-check-trigger-pinned-v1",
+      "semantic_progress_policy_version": "public-failure-signature-no-progress-reset-v1",
+      "semantic_progress_state_schema_version": "public-semantic-progress-state-v1",
+      "candidate_binding_policy_version": "same-path-public-read-binding-normalization-v1",
+      "causal_activation_policy_version": "gateway-owned-causal-baseline-reset-v1",
+      "causal_alternative_policy_version": "bounded-public-causal-alternative-gate-v1",
+      "workflow_instruction_schema_version": "lean-workflow-instruction-v4",
+      "protocol_recovery_policy_version": "shared-model-action-contract-recovery-v1",
+      "patch_normalization_policy_version": "safe-raw-diff-normalization-v1",
+      "search_glob_policy_version": "recursive-file-glob-normalization-v1",
+      "finalization_allowance_policy_version": "configured-ceiling-split-bounded-v1",
+      "structured_edit_policy_version": "gateway-fresh-preimage-unique-text-v1",
+      "check_outcome_policy_version": "invocation-vs-behavior-v1",
+      "event_descriptor_role_policy_version": "typed-distinct-input-role-v1",
+      "edit_correction_policy_version": "bounded-public-current-source-v2",
+      "correction_context_policy_version": "bounded-investigation-current-read-v1",
+      "provider_terminal_policy_version": "explicit-terminal-before-accounting-v1",
+      "parallel_tool_calls": false,
+      "one_tool_call_per_response": true
+    }
+  },
+  "task_bindings": [
+    {
+      "task_path": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+      "public_spec_hash": "sha256:ac32db22e505caf61dac267a590870f8c6a4dc39d7f83ce589342a729d7968e6",
+      "private_spec_hash": "sha256:cb95ced3ad387ea2fc76304145f803904f577e62ff17b7b6972219d9d7a1e8b4",
+      "evaluator_image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "evaluator_image_digest": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "package_file_count": 6,
+      "package_inventory_hash": "sha256:60fab6e3fc3a56fef5ad8a7eee2c410f66e4a67a2eed7b8b57e3b58888f92fd4",
+      "visible_check_ids": [
+        "public-interrupt-runner-lifecycle",
+        "upstream-pytest-plugin-regression"
+      ],
+      "visible_check_command_hashes": [
+        "sha256:c0ef4f062b90676734637a3b4966b1206870c847ae0f4dd2c74754250bf0a034",
+        "sha256:965d00d50dede491672c1a53762e4b6aa3d78ff58583cc062fdfdb8f56c9548c"
+      ],
+      "task_successor_opt_in": true,
+      "frozen_dataset_member": false,
+      "qualification_binding_hash": "sha256:0a1e1e3fc2818c3e72996d68eff23a5fb41a0ed58a0308ff1e4ca85a84e34adc"
+    }
+  ],
+  "schedule": [
+    {
+      "order": 1,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v8",
+      "tool_schema_version": "v12",
+      "context_policy_version": "phase-evidence-v18",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:164b546817ef91f4b391139ca3624fcff715f898c121fb8597755611540b80c4"
+    },
+    {
+      "order": 2,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v17",
+      "tool_schema_version": "v21",
+      "context_policy_version": "phase-evidence-v27",
+      "repetition": 1,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:1418ede3e6c8fa3546de4ecb65fbf3328a224c6f1d420ac936f3f94e1507e74c"
+    },
+    {
+      "order": 3,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v17",
+      "tool_schema_version": "v21",
+      "context_policy_version": "phase-evidence-v27",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:6ae49cbeb9b1129b5c719124d56fdd2fb1fad78cf43c85b4da023f575ab488eb"
+    },
+    {
+      "order": 4,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v8",
+      "tool_schema_version": "v12",
+      "context_policy_version": "phase-evidence-v18",
+      "repetition": 2,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:ffddd3a5ca76890016a396e1d94c7af8bcfc82d1ccadac6c8a1ae16e1882ea99"
+    },
+    {
+      "order": 5,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v8",
+      "tool_schema_version": "v12",
+      "context_policy_version": "phase-evidence-v18",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:c957e03b57f0656881ceb2c15d32fcd2f2e2fdd25cdf8fa4bd5b07646deb44ff"
+    },
+    {
+      "order": 6,
+      "task": "fixtures/task-packages/anyio-interrupt-runner-cleanup-v4/public.yaml",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "task_version": 4,
+      "variant": "lean-harness-v17",
+      "tool_schema_version": "v21",
+      "context_policy_version": "phase-evidence-v27",
+      "repetition": 3,
+      "memory_condition": "no_memory",
+      "schedule_row_id": "sha256:f1a3211474854d3193582aacf2d05fd5c559f232d8c9f1789cc6103eba9299dc"
+    }
+  ],
+  "schedule_hash": "sha256:f4d0a4b372429ab039baba540ef6b7f6eddb4d08019d2a526a6d249424e26d48",
+  "cost_control": {
+    "per_run_reserve_nanos": 1200000000,
+    "full_schedule_reserve_nanos": 7200000000,
+    "hard_cap_nanos": 7500000000,
+    "pricing_nanos_per_token": {
+      "uncached_input": 750,
+      "cached_input": 75,
+      "cache_write_input": 750,
+      "output": 4500
+    },
+    "scheduled_run_count": 6,
+    "cost_censoring_allowed": false,
+    "official": false
+  },
+  "cost_control_hash": "sha256:a7bc2f24b7ec0ecb501130ef310f958b790108d5788d51dfad958c2cf4691605",
+  "execution_hash": "sha256:4799bfa0afaba2aeff57ae33d06eb676b4272251847c087515b4a3280fc936b3",
+  "source_qualified": true,
+  "execution_authorized": false,
+  "provider_calls_made": 0,
+  "docker_calls_made": 0,
+  "added_model_cost_usd": 0.0,
+  "approval_required": true,
+  "rehearsal_required": true,
+  "content_hash": "sha256:28e36bdafeaba1e2c901598195611054f64201de20228c7a0a0600b684fe1c0d"
+}

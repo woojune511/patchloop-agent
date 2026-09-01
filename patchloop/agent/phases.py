@@ -58,6 +58,7 @@ def diff_bound_evidence(
     structured_review_required: bool = False,
     coverage_review_required: bool = False,
     probe_available: bool = False,
+    completion_driven: bool = False,
 ) -> EvidenceState:
     """Derive latest-check and final-review readiness without private data."""
 
@@ -213,7 +214,45 @@ def diff_bound_evidence(
         if structured_review_required and probe_available
         else ()
     )
-    if not mutation_present:
+    attempted_pending_checks = tuple(
+        check_id for check_id in pending if check_id in latest_checks
+    )
+    if completion_driven and mutation_present and pending:
+        if attempted_pending_checks:
+            allowed = (
+                "apply_patch",
+                "read_file",
+                "search_files",
+                *optional_probe,
+            )
+        else:
+            # A successful mutation invalidates all prior check evidence.  The
+            # successor policy therefore makes the next current-diff action a
+            # registered visible check instead of another investigation turn.
+            allowed = ("run_check",)
+    elif completion_driven and mutation_present and (
+        review_event is None or not review_presented
+    ):
+        allowed = ("get_diff",)
+    elif (
+        completion_driven
+        and mutation_present
+        and structured_review_required
+        and (task_review_event is None or not task_review_presented)
+    ):
+        allowed = ("review_task",)
+    elif completion_driven and mutation_present and (
+        coverage_review_required and not task_review_coverage_complete
+    ):
+        allowed = (
+            "apply_patch",
+            "read_file",
+            "search_files",
+            *optional_probe,
+        )
+    elif completion_driven and mutation_present:
+        allowed = ("finish_task",)
+    elif not mutation_present:
         allowed = (
             "apply_patch",
             "run_check",

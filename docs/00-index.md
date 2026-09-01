@@ -38,3 +38,9 @@ code/artifacts.
 
 The pre-reorganization D-121 documentation snapshot is under
 `archive/snapshots/d121/`. Its manifest records original paths, sizes and SHA-256 values.
+
+Rapid workflow decisions and run chronology through consumed R20 are summarized in
+`archive/rapid-workflow-history-20260830.md`. It is audit-only and does not create current authority.
+
+Consumed R21, R22's closed prestart attempt and the halted partial R23/R24 executions are in `current-status.md` and
+`09-evidence.md`; none grants retry, resume or new execution.
