@@ -1,42 +1,49 @@
 # PatchLoop
 
-PatchLoop is a recoverable single coding agent and evaluation harness for scope-compliant software repair. The agent
-is the product; hidden evaluation, recovery state and cross-run memory evidence are supporting layers.
+PatchLoop is a single coding agent. The active product path is one mutable,
+unofficial development runtime named `dev-head`; task loading, constrained tools,
+recovery state, sandboxing, and private evaluation support that agent.
 
-## Current direction
+The old Rapid, candidate, qualification, activation, adoption, and claim runners
+are not part of the current checkout. Their code is recoverable from Git history,
+and their immutable results remain under `experiments/`, `reports/`, and
+`docs/archive/`.
 
-A/B/C/D is deferred. Held-out R16's A/C difference is `-1/24`, not causal/general. Rapid R1-R24 are immutable
-`official=false`; their completion/cost signals establish neither quality nor generalization. Exact current evidence
-and limitations are in `docs/current-status.md` and `docs/09-evidence.md`.
+## Fast local loop
 
-## Implemented path
-
-- INTAKE → REPRODUCE → PLAN → IMPLEMENT → VERIFY → REVIEW with constrained tools, append-only recovery and accounting
-- Separate hidden evaluator with receipt-bound v2, opaque controls and authenticated completion
-- Audited A-null/C-D110 design; candidate-bound schedule/runtime/cost and exact historical replay
-
-Evaluator-v1 still assigns literal safety PASS. Historical authority is consumed; no pull, paid/B/D authority or
-general memory claim exists. R22 candidate-v30 was stopped before batch start over an image-inspection count mismatch.
-R23 halted after two settled rows for `$0.16285425`. R24 then halted after 3/6 settled rows for `$0.927549`; none reached
-the evaluator and no V25/V27 comparison follows. Both are consumed and cannot retry/resume. Next offline work is in
-`docs/current-status.md`.
-
-## Offline quickstart
+Use an external state directory. Mock mode forbids credentials and cost options.
 
 ```powershell
-$docsBasetemp = Join-Path (Get-Location) ('.pd-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
-uv run --offline --frozen pytest -q -p no:cacheprovider --basetemp $docsBasetemp tests/test_documentation_structure.py
-git diff --check
+$env:PATCHLOOP_STATE_ROOT = 'C:\patchloop-state'
+uv run ruff check patchloop tests
+uv run pytest tests
+uv run patchloop dev `
+  --provider mock `
+  --task tasks/smoke/csv-quoted-newline/public.yaml `
+  --model mock-dev `
+  --repeat 1
 ```
 
-실행 trace는 provider/Docker 호출 없이 localhost에서 볼 수 있다.
+## One-row live development
 
 ```powershell
-uv run --offline patchloop serve --host 127.0.0.1 --port 8000
+$env:PATCHLOOP_STATE_ROOT = 'C:\patchloop-state'
+uv run patchloop dev `
+  --provider openai `
+  --task tasks/dev-train/<task>/public.yaml `
+  --model gpt-5.4-mini-2026-03-17 `
+  --reasoning-effort medium `
+  --env-file <credential-file> `
+  --max-cost-usd <positive-decimal> `
+  --repeat 1
 ```
 
-`http://127.0.0.1:8000`은 task, 토큰·비용, LLM 입출력, tool 호출과 task 결과만 표시한다.
-qualification, checkpoint와 evaluator-private 원문은 이 화면에 투영하지 않는다.
+That exact invocation is the approval for its provider, task, model, repetition
+count, and total cap. Live mode accepts only `dev-train`, requires a local
+digest-pinned evaluator image, never pulls or builds an image, and uses zero SDK
+transport retries. A run remains `official=false` even when its private evaluator
+passes.
 
-Checks make no paid call. Execution needs qualified admission/runtime, a candidate, no-call output and exact approval.
-Use `docs/00-index.md`; history lives under `docs/archive/`.
+Start at [docs/00-index.md](docs/00-index.md). Current behavior is owned by
+[docs/current-status.md](docs/current-status.md); measured facts and explicit
+non-results are in [docs/09-evidence.md](docs/09-evidence.md).

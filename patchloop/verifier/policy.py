@@ -88,11 +88,7 @@ def _is_test_path(path: str) -> bool:
 
 
 def verify_test_tampering(summary: DiffSummary) -> PolicyOutcome:
-    changed = [
-        path
-        for path in summary.changed_files
-        if _is_test_path(path)
-    ]
+    changed = [path for path in summary.changed_files if _is_test_path(path)]
     violations = [f"test files changed: {', '.join(changed)}"] if changed else []
     return PolicyOutcome(not violations, violations, {"test_files": changed})
 

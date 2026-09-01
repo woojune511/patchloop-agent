@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import os
-from collections.abc import Iterator
-from contextlib import contextmanager
 from pathlib import Path
 
 from patchloop.errors import ContractError
@@ -42,11 +39,7 @@ def _parse_exact_openai_api_key(path: str | Path) -> str:
             raise ContractError("credential file contains duplicate OPENAI_API_KEY assignments")
 
         candidate = candidate.strip()
-        if (
-            len(candidate) >= 2
-            and candidate[0] in {'"', "'"}
-            and candidate[-1] == candidate[0]
-        ):
+        if len(candidate) >= 2 and candidate[0] in {'"', "'"} and candidate[-1] == candidate[0]:
             candidate = candidate[1:-1]
         if not candidate:
             raise ContractError("credential file contains an empty OPENAI_API_KEY")
@@ -59,31 +52,11 @@ def _parse_exact_openai_api_key(path: str | Path) -> str:
     return value
 
 
-def exact_openai_api_key_present(path: str | Path) -> bool:
-    """Validate the exact credential file without mutating the process environment.
+def load_exact_openai_api_key(path: str | Path) -> str:
+    """Return the validated key for direct SDK injection only.
 
-    The parsed value remains local to this call and is deliberately not returned.
-    This is the credential-membership boundary used by no-call preflight checks so
-    Git and Docker observation subprocesses cannot inherit the file credential.
+    The caller must never place this value in ``os.environ``: repository and
+    evaluator subprocesses run in the same process and must not inherit it.
     """
 
-    _parse_exact_openai_api_key(path)
-    return True
-
-
-@contextmanager
-def exact_openai_api_key_environment(path: str | Path) -> Iterator[None]:
-    """Temporarily load the sole allowed key, then restore the parent environment."""
-
-    value = _parse_exact_openai_api_key(path)
-    sentinel = object()
-    previous: str | object = os.environ.get(OPENAI_API_KEY, sentinel)
-    os.environ[OPENAI_API_KEY] = value
-    try:
-        yield
-    finally:
-        if previous is sentinel:
-            os.environ.pop(OPENAI_API_KEY, None)
-        else:
-            assert isinstance(previous, str)
-            os.environ[OPENAI_API_KEY] = previous
+    return _parse_exact_openai_api_key(path)

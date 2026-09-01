@@ -1,5 +1,5 @@
-"""Coding-agent runtime and constrained tools."""
+"""Provider adapter boundary used by the development runtime."""
 
-from patchloop.agent.runner import AgentRunner
+from patchloop.agent.model import ModelAdapter, OpenAIResponsesAdapter
 
-__all__ = ["AgentRunner"]
+__all__ = ["ModelAdapter", "OpenAIResponsesAdapter"]

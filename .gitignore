@@ -6,6 +6,13 @@
 /tmp*/
 /.tmp-*/
 /.pytest-tmp-*/
+/.pytest-*/
+/.p[0-9]*/
+/.pr[0-9]*/
+/.debug-*/
+/.cpp-reg-*/
+/.d[0-9]*/
+/.codex-test-tmp/
 /row-claim-debug-*/
 /rcd-*/
 __pycache__/

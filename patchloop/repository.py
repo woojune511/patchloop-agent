@@ -108,9 +108,7 @@ class WorkspaceManager:
             raise ContractError(f"workspace already exists: {target}")
         run_root.mkdir(parents=True, exist_ok=True)
         if staging.is_symlink():
-            raise ContractError(
-                f"workspace staging path is an unexpected symlink: {staging}"
-            )
+            raise ContractError(f"workspace staging path is an unexpected symlink: {staging}")
         if staging.exists():
             shutil.rmtree(staging)
         try:
@@ -120,8 +118,7 @@ class WorkspaceManager:
                     or re.fullmatch(r"[0-9a-f]{40}", expected_revision) is None
                 ):
                     raise ContractError(
-                        "remote repository revision must be a full "
-                        "40-character commit"
+                        "remote repository revision must be a full 40-character commit"
                     )
                 initialize = subprocess.run(
                     ["git", "init", "--quiet", str(staging)],
@@ -165,9 +162,7 @@ class WorkspaceManager:
                     )
             else:
                 if not repository_url.startswith("snapshot://"):
-                    raise ContractError(
-                        f"repository URL is not allowlisted: {repository_url}"
-                    )
+                    raise ContractError(f"repository URL is not allowlisted: {repository_url}")
                 source = self.resolve_repository(repository_url)
                 actual_revision = directory_hash(source)
                 if expected_revision and expected_revision != actual_revision:
@@ -215,9 +210,7 @@ class WorkspaceManager:
             "--untracked-files=all",
         ).stdout
         if status:
-            raise ContractError(
-                "pre-checkpoint workspace is not a clean base checkout"
-            )
+            raise ContractError("pre-checkpoint workspace is not a clean base checkout")
         if repository_url.startswith("snapshot://"):
             actual_revision = directory_hash(resolved)
         elif repository_url in ALLOWED_REMOTE_REPOSITORIES:
@@ -227,9 +220,7 @@ class WorkspaceManager:
                 "HEAD",
             ).stdout.strip()
         else:
-            raise ContractError(
-                f"repository URL is not allowlisted: {repository_url}"
-            )
+            raise ContractError(f"repository URL is not allowlisted: {repository_url}")
         if actual_revision != expected_revision:
             raise ContractError(
                 "pre-checkpoint workspace does not match the immutable "
@@ -249,38 +240,20 @@ class WorkspaceManager:
             raise ContractError(
                 "workspace root is outside the managed workspace directory"
             ) from exc
-        if (
-            len(relative.parts) != 2
-            or relative.parts[-1] != "repo"
-        ):
-            raise ContractError(
-                "workspace root does not have the managed run layout"
-            )
+        if len(relative.parts) != 2 or relative.parts[-1] != "repo":
+            raise ContractError("workspace root does not have the managed run layout")
         cursor = self.workspace_root
-        root_is_junction = bool(
-            getattr(cursor, "is_junction", lambda: False)()
-        )
+        root_is_junction = bool(getattr(cursor, "is_junction", lambda: False)())
         if cursor.is_symlink() or root_is_junction:
-            raise ContractError(
-                "managed workspace root is a symlink or junction"
-            )
+            raise ContractError("managed workspace root is a symlink or junction")
         for part in relative.parts:
             cursor = cursor / part
-            is_junction = bool(
-                getattr(cursor, "is_junction", lambda: False)()
-            )
+            is_junction = bool(getattr(cursor, "is_junction", lambda: False)())
             if cursor.is_symlink() or is_junction:
-                raise ContractError(
-                    "workspace path contains a symlink or junction"
-                )
+                raise ContractError("workspace path contains a symlink or junction")
         resolved = target.resolve()
-        if (
-            not resolved.is_dir()
-            or not resolved.is_relative_to(self.workspace_root)
-        ):
-            raise ContractError(
-                "workspace root is outside the managed workspace directory"
-            )
+        if not resolved.is_dir() or not resolved.is_relative_to(self.workspace_root):
+            raise ContractError("workspace root is outside the managed workspace directory")
         return resolved
 
     def read_base_file(
@@ -304,8 +277,7 @@ class WorkspaceManager:
         if result.returncode != 0:
             detail = result.stderr.decode("utf-8", errors="replace").strip()
             raise ContractError(
-                "public review base revision file is unavailable: "
-                f"{normalized!r}: {detail}"
+                f"public review base revision file is unavailable: {normalized!r}: {detail}"
             )
         return result.stdout
 
@@ -329,11 +301,7 @@ class WorkspaceManager:
     @staticmethod
     def untracked_files(workspace: Path) -> list[str]:
         output = _git(workspace, "ls-files", "--others", "-z").stdout
-        return sorted(
-            path.replace("\\", "/")
-            for path in output.split("\0")
-            if path
-        )
+        return sorted(path.replace("\\", "/") for path in output.split("\0") if path)
 
     @staticmethod
     def diff_summary(workspace: Path) -> DiffSummary:

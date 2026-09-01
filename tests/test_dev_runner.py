@@ -1,0 +1,298 @@
+from __future__ import annotations
+
+import json
+import os
+from decimal import Decimal
+from pathlib import Path
+
+import pytest
+
+import patchloop.dev.runner as runner
+from patchloop.dev.contracts import DevModelTurn, DevRunRequest, RequestedTool
+from patchloop.dev.model import MockDevAdapter
+from patchloop.errors import ContractError
+from patchloop.repository import WorkspaceManager as RealWorkspaceManager
+from patchloop.runtime import repository_root
+from patchloop.sandbox import LocalSandbox
+from patchloop.task_loader import load_task_package
+
+
+def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeypatch) -> None:
+    contexts: list[str] = []
+
+    class CapturingMock(MockDevAdapter):
+        def next_turn(self, context, tools):
+            contexts.append(context)
+            return super().next_turn(context, tools)
+
+    monkeypatch.setattr(runner, "MockDevAdapter", CapturingMock)
+    request = DevRunRequest(
+        provider="mock",
+        task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
+        model="mock-dev",
+        state_root=tmp_path,
+    )
+    result = runner.run_dev(request)
+    run = result["runs"][0]
+    assert run["terminal"] == "EVALUATOR_PASS"
+    assert run["evaluator"] == {"status": "PASS", "failure_class": None}
+    assert run["call_counts"] == {"model": 4, "input_count": 0, "tool": 5}
+    assert run["accepted_mutations"] == 1
+    assert all("hidden-multiline-csv" not in context for context in contexts)
+    assert all("reference_patch" not in context for context in contexts)
+    context_keys = {
+        "public_task",
+        "current_diff",
+        "source_spans",
+        "recent_checks",
+        "last_successful_mutation",
+        "recent_attempt_result_next_question",
+    }
+    assert all(set(json.loads(context)) == context_keys for context in contexts)
+    projected = [
+        json.loads(context)["current_diff"]
+        for context in contexts
+        if json.loads(context)["current_diff"]["patch"]
+    ]
+    assert projected
+    assert all(item["truncated"] is False for item in projected)
+
+    journal_path = tmp_path / "runs" / f"{run['run_id']}.jsonl"
+    rows = [json.loads(line) for line in journal_path.read_text(encoding="utf-8").splitlines()]
+    assert all(row["schema_version"] == "dev-run-v1" for row in rows)
+    assert all(row["official"] is False for row in rows)
+    states = [row["payload"].get("to") for row in rows if row["event_type"] == "state_changed"]
+    assert "VERIFY" in states and "REVIEW" in states and "SUBMITTED" in states
+    evaluator = next(row for row in rows if row["event_type"] == "evaluator_finished")
+    assert evaluator["payload"]["agent_context_reinjected"] is False
+    workspace_roots = [path for path in (tmp_path / "workspaces").iterdir() if path.is_dir()]
+    assert len(workspace_roots) == 2
+
+
+def test_unexpected_tool_gateway_failure_writes_terminal(tmp_path, monkeypatch) -> None:
+    class ExplodingGateway(runner.DevToolGateway):
+        def execute_batch(self, calls):
+            del calls
+            raise RuntimeError("simulated gateway crash")
+
+    monkeypatch.setattr(runner, "DevToolGateway", ExplodingGateway)
+    request = DevRunRequest(
+        provider="mock",
+        task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
+        model="mock-dev",
+        state_root=tmp_path,
+    )
+    result = runner.run_dev(request)
+    run = result["runs"][0]
+    assert run["terminal"] == "TASK_FAILED"
+
+    journal_path = tmp_path / "runs" / f"{run['run_id']}.jsonl"
+    rows = [json.loads(line) for line in journal_path.read_text(encoding="utf-8").splitlines()]
+    terminal = [row for row in rows if row["event_type"] == "terminal"]
+    assert len(terminal) == 1
+    assert terminal[0]["payload"]["message"] == "tool gateway failed: RuntimeError"
+
+
+def test_invalid_tool_batch_gets_one_correction_then_stops(tmp_path, monkeypatch) -> None:
+    class InvalidBatchMock:
+        calls = 0
+
+        def __init__(self, task_id) -> None:
+            del task_id
+
+        def next_turn(self, context, tools):
+            del context, tools
+            self.calls += 1
+            return DevModelTurn(
+                tool_calls=[
+                    RequestedTool(
+                        name="read_file",
+                        action_id=f"bad-read-{self.calls}",
+                        arguments={"path": "mini_data_utils/csvlite.py"},
+                    ),
+                    RequestedTool(
+                        name="run_check",
+                        action_id=f"bad-check-{self.calls}",
+                        arguments={"check_id": "existing-unit-tests"},
+                    ),
+                ]
+            )
+
+    monkeypatch.setattr(runner, "MockDevAdapter", InvalidBatchMock)
+    request = DevRunRequest(
+        provider="mock",
+        task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
+        model="mock-dev",
+        state_root=tmp_path,
+    )
+    result = runner.run_dev(request)
+    run = result["runs"][0]
+    assert run["terminal"] == "PROTOCOL_VIOLATION"
+    assert run["call_counts"] == {"model": 2, "input_count": 0, "tool": 0}
+
+    journal_path = tmp_path / "runs" / f"{run['run_id']}.jsonl"
+    rows = [json.loads(line) for line in journal_path.read_text(encoding="utf-8").splitlines()]
+    assert len([row for row in rows if row["event_type"] == "protocol_correction"]) == 1
+
+
+def test_live_rejects_non_dev_train_before_credential_or_provider(tmp_path) -> None:
+    env_file = tmp_path / "credential.env"
+    env_file.write_text("OPENAI_API_KEY=not-used\n", encoding="utf-8")
+    request = DevRunRequest(
+        provider="openai",
+        task=(
+            repository_root()
+            / "tasks"
+            / "dev-validation"
+            / "babel-strict-grouped-decimal-trailing-zeroes-v2"
+            / "public.yaml"
+        ),
+        model="gpt-5.4-mini-2026-03-17",
+        env_file=env_file,
+        max_cost_usd=Decimal("0.01"),
+        state_root=tmp_path / "state",
+    )
+    with pytest.raises(ContractError, match="dev-train"):
+        runner.run_dev(request)
+
+
+def test_live_missing_local_image_stops_before_provider(tmp_path, monkeypatch) -> None:
+    env_file = tmp_path / "credential.env"
+    env_file.write_text("OPENAI_API_KEY=test-only-sentinel\n", encoding="utf-8")
+    monkeypatch.setattr(runner.DockerSandbox, "available", staticmethod(lambda: True))
+    monkeypatch.setattr(runner.DockerSandbox, "image_identity", lambda self: None)
+    request = DevRunRequest(
+        provider="openai",
+        task=(
+            repository_root()
+            / "tasks"
+            / "dev-train"
+            / "anyio-interrupt-runner-cleanup"
+            / "public.yaml"
+        ),
+        model="gpt-5.4-mini-2026-03-17",
+        env_file=env_file,
+        max_cost_usd=Decimal("0.01"),
+        state_root=tmp_path / "state",
+    )
+    with pytest.raises(ContractError, match="image is not local"):
+        runner.run_dev(request)
+
+
+class _SnapshotWorkspaceManager:
+    smoke = load_task_package(repository_root() / "tasks" / "smoke" / "csv-quoted-newline")
+
+    def __init__(self, fixture_root, workspace_root) -> None:
+        self.delegate = RealWorkspaceManager(fixture_root, workspace_root)
+
+    def create(self, run_id, repository_url, expected_revision=None):
+        del repository_url, expected_revision
+        return self.delegate.create(
+            run_id,
+            self.smoke.public.repository.url,
+            self.smoke.public.repository.base_commit,
+        )
+
+    def validate_managed_workspace(self, workspace):
+        return self.delegate.validate_managed_workspace(workspace)
+
+
+def _live_request(tmp_path: Path, *, repeat: int = 3, cap: str = "0.01") -> DevRunRequest:
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    env_file = tmp_path / "credential.env"
+    env_file.write_text("OPENAI_API_KEY=test-only-sentinel\n", encoding="utf-8")
+    return DevRunRequest(
+        provider="openai",
+        task=(
+            repository_root()
+            / "tasks"
+            / "dev-train"
+            / "anyio-interrupt-runner-cleanup"
+            / "public.yaml"
+        ),
+        model="gpt-5.4-mini-2026-03-17",
+        env_file=env_file,
+        max_cost_usd=Decimal(cap),
+        repeat=repeat,
+        state_root=tmp_path / "state",
+    )
+
+
+def _patch_live_boundaries(monkeypatch) -> None:
+    monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda package: LocalSandbox())
+    monkeypatch.setattr(runner, "WorkspaceManager", _SnapshotWorkspaceManager)
+
+
+def test_provider_timeout_stops_remaining_repetitions(tmp_path, monkeypatch) -> None:
+    calls = {"create": 0}
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    class TimeoutAdapter:
+        def __init__(self, config, *, api_key) -> None:
+            del config
+            assert api_key == "test-only-sentinel"
+            assert "OPENAI_API_KEY" not in os.environ
+
+        def request_payload(self, context, tools, *, system_prompt):
+            return {"context": context, "tools": tools, "system": system_prompt}
+
+        def count_input_tokens_v2(self, request, *, timeout_seconds):
+            del request
+            assert timeout_seconds > 0
+            return 100
+
+        def execute_request(self, request, *, requested_input_tokens, timeout_seconds):
+            del request, requested_input_tokens
+            assert timeout_seconds > 0
+            calls["create"] += 1
+            raise TimeoutError("ambiguous provider timeout")
+
+    _patch_live_boundaries(monkeypatch)
+    monkeypatch.setattr(runner, "OpenAIResponsesAdapter", TimeoutAdapter)
+    result = runner.run_dev(_live_request(tmp_path))
+    assert result["completed_repetitions"] == 1
+    assert result["runs"][0]["terminal"] == "PROVIDER_TIMEOUT_OR_UNKNOWN"
+    assert calls["create"] == 1
+
+
+def test_count_timeout_and_cost_cap_stop_without_generation(tmp_path, monkeypatch) -> None:
+    class CountTimeoutAdapter:
+        execute_calls = 0
+
+        def __init__(self, config, *, api_key) -> None:
+            del config, api_key
+
+        def request_payload(self, context, tools, *, system_prompt):
+            return {"context": context, "tools": tools, "system": system_prompt}
+
+        def count_input_tokens_v2(self, request, *, timeout_seconds):
+            del request
+            assert timeout_seconds > 0
+            raise TimeoutError("count timeout")
+
+        def execute_request(self, request, *, requested_input_tokens, timeout_seconds):
+            del request, requested_input_tokens, timeout_seconds
+            self.execute_calls += 1
+
+    _patch_live_boundaries(monkeypatch)
+    monkeypatch.setattr(runner, "OpenAIResponsesAdapter", CountTimeoutAdapter)
+    timed_out = runner.run_dev(_live_request(tmp_path / "count"))
+    assert timed_out["completed_repetitions"] == 1
+    assert timed_out["runs"][0]["terminal"] == "COUNT_TIMEOUT_OR_UNKNOWN"
+
+    class TooExpensiveAdapter(CountTimeoutAdapter):
+        create_calls = 0
+
+        def count_input_tokens_v2(self, request, *, timeout_seconds):
+            del request
+            assert timeout_seconds > 0
+            return 1_000_000
+
+        def execute_request(self, request, *, requested_input_tokens, timeout_seconds):
+            del request, requested_input_tokens, timeout_seconds
+            self.create_calls += 1
+            raise AssertionError("generation must not be dispatched")
+
+    monkeypatch.setattr(runner, "OpenAIResponsesAdapter", TooExpensiveAdapter)
+    capped = runner.run_dev(_live_request(tmp_path / "cap", cap="0.0001"))
+    assert capped["runs"][0]["terminal"] == "COST_CAP_REACHED"

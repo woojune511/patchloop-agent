@@ -28,17 +28,11 @@ class ArtifactStore:
             try:
                 existing = path.read_bytes()
             except OSError as exc:
-                raise RecoveryError(
-                    f"content-addressed artifact is unreadable: {digest}"
-                ) from exc
+                raise RecoveryError(f"content-addressed artifact is unreadable: {digest}") from exc
             if sha256_bytes(existing) != digest:
-                raise RecoveryError(
-                    f"content-addressed artifact failed integrity check: {digest}"
-                )
+                raise RecoveryError(f"content-addressed artifact failed integrity check: {digest}")
         else:
-            temporary = path.with_name(
-                f".{path.name}.{uuid.uuid4().hex}.tmp"
-            )
+            temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
             try:
                 with temporary.open("xb") as stream:
                     stream.write(content)
@@ -66,12 +60,8 @@ class ArtifactStore:
     def read_bytes(self, artifact: Artifact) -> bytes:
         hex_digest = artifact.content_hash.removeprefix("sha256:")
         if len(hex_digest) != 64:
-            raise RecoveryError(
-                f"artifact has an invalid content identity: {artifact.artifact_id}"
-            )
-        expected_path = (
-            self.objects / hex_digest[:2] / hex_digest[2:]
-        ).resolve()
+            raise RecoveryError(f"artifact has an invalid content identity: {artifact.artifact_id}")
+        expected_path = (self.objects / hex_digest[:2] / hex_digest[2:]).resolve()
         try:
             actual_path = Path(artifact.path).resolve()
         except OSError as exc:
@@ -85,16 +75,9 @@ class ArtifactStore:
         try:
             content = actual_path.read_bytes()
         except OSError as exc:
-            raise RecoveryError(
-                f"artifact is unavailable: {artifact.artifact_id}"
-            ) from exc
-        if (
-            len(content) != artifact.size_bytes
-            or sha256_bytes(content) != artifact.content_hash
-        ):
-            raise RecoveryError(
-                f"artifact failed integrity verification: {artifact.artifact_id}"
-            )
+            raise RecoveryError(f"artifact is unavailable: {artifact.artifact_id}") from exc
+        if len(content) != artifact.size_bytes or sha256_bytes(content) != artifact.content_hash:
+            raise RecoveryError(f"artifact failed integrity verification: {artifact.artifact_id}")
         return content
 
     def write_bytes_atomic(
@@ -109,17 +92,11 @@ class ArtifactStore:
             root = self.root.resolve()
             resolved = target.resolve()
         except OSError as exc:
-            raise RecoveryError(
-                "derived artifact path cannot be resolved"
-            ) from exc
+            raise RecoveryError("derived artifact path cannot be resolved") from exc
         if not resolved.is_relative_to(root) or target.is_symlink():
-            raise RecoveryError(
-                "derived artifact path escapes the artifact root"
-            )
+            raise RecoveryError("derived artifact path escapes the artifact root")
         target.parent.mkdir(parents=True, exist_ok=True)
-        temporary = target.with_name(
-            f".{target.name}.{uuid.uuid4().hex}.tmp"
-        )
+        temporary = target.with_name(f".{target.name}.{uuid.uuid4().hex}.tmp")
         try:
             with temporary.open("xb") as stream:
                 stream.write(content)

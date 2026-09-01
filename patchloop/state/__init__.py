@@ -1,6 +1,5 @@
-"""Persistent run state."""
+"""Active append-only state boundary."""
 
-from patchloop.state.ownership import RunOwnershipCoordinator, WorkerIdentity
-from patchloop.state.store import StateStore
+from patchloop.dev.state import DevJournal
 
-__all__ = ["RunOwnershipCoordinator", "StateStore", "WorkerIdentity"]
+__all__ = ["DevJournal"]

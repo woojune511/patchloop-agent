@@ -1,8 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Experiments · PatchLoop{% endblock %}
-{% block content %}
-<h1>Experiments</h1>
-<table><thead><tr><th>Experiment</th><th>Completed</th><th>Expected</th><th>Infrastructure errors</th></tr></thead><tbody>
-{% for item in experiments %}<tr><td><a href="/experiments/{{ item.experiment_id }}">{{ item.experiment_id }}</a></td><td>{{ item.completed_runs }}</td><td>{{ item.expected_runs }}</td><td>{{ item.infrastructure_errors }}</td></tr>{% else %}<tr><td colspan="4">No experiment records.</td></tr>{% endfor %}
-</tbody></table>
-{% endblock %}

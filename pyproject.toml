@@ -5,27 +5,22 @@ build-backend = "hatchling.build"
 [project]
 name = "patchloop"
 version = "0.1.0"
-description = "Trace-driven coding agent reliability harness"
+description = "Mutable single-agent development and evaluation harness"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "fastapi>=0.116,<1",
-  "jinja2>=3.1,<4",
+  "httpx>=0.28,<1",
   "openai>=2.47,<3",
   "pydantic>=2.11,<3",
   "pyyaml>=6.0,<7",
   "typer>=0.16,<1",
-  "uvicorn>=0.35,<1",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "httpx>=0.28,<1",
   "pytest>=8.4,<9",
-  "pytest-cov>=6.2,<7",
   "ruff>=0.12,<1",
 ]
-memory = ["sentence-transformers>=3.4,<6"]
 
 [project.scripts]
 patchloop = "patchloop.cli:app"
@@ -34,17 +29,13 @@ patchloop = "patchloop.cli:app"
 packages = ["patchloop"]
 
 [tool.pytest.ini_options]
-addopts = "-q"
+addopts = "-q -p no:cacheprovider"
 testpaths = ["tests"]
-markers = [
-  "docker: requires a running Docker engine",
-  "live: requires external credentials and may incur cost",
-]
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-exclude = [".patchloop", "fixtures", "tasks"]
+exclude = ["fixtures", "tasks"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]

@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  fast-dev-head:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,7 +13,14 @@ jobs:
         with:
           python-version: "3.12"
       - run: uv sync --extra dev
-      - run: uv run ruff check .
-      - run: uv run pytest
+      - run: uv run ruff check patchloop tests
+      - run: uv run pytest tests
       - run: uv run patchloop task validate tasks/smoke/csv-quoted-newline
-      - run: uv run patchloop run --task tasks/smoke/csv-quoted-newline/public.yaml --model mock
+      - run: >-
+          uv run patchloop dev
+          --provider mock
+          --task tasks/smoke/csv-quoted-newline/public.yaml
+          --model mock-dev
+          --repeat 1
+        env:
+          PATCHLOOP_STATE_ROOT: ${{ runner.temp }}/patchloop-state

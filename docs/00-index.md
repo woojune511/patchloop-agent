@@ -1,46 +1,17 @@
 # Documentation index
 
-## Authority order
+The active documentation describes only `dev-head`.
 
-1. Checked-in source code, task manifests and machine-readable artifacts
-2. `docs/current-status.md`
-3. Topic-specific active documents in this directory
-4. Historical snapshots under `docs/archive/`
+1. [current-status.md](current-status.md) — current authority and measured status
+2. [01-project-spec.md](01-project-spec.md) — product and development goal
+3. [02-architecture.md](02-architecture.md) — active runtime composition
+4. [03-contracts.md](03-contracts.md) — tool, mutation, state, and cost contracts
+5. [04-evaluation-protocol.md](04-evaluation-protocol.md) — visible/private evaluation boundary
+6. [05-implementation-plan.md](05-implementation-plan.md) — next small development seams
+7. [06-decisions.md](06-decisions.md) — reset decisions
+8. [07-reproduction.md](07-reproduction.md) — local and live runbook
+9. [08-limitations.md](08-limitations.md) — known gaps and prohibited claims
+10. [09-evidence.md](09-evidence.md) — exact evidence and non-results
 
-Archive prose explains how a decision was reached. It does not reopen an old gate or override current
-code/artifacts.
-
-## Active documents
-
-| File | Owns |
-| --- | --- |
-| `current-status.md` | Current checkpoint, priority, next gates and closed authority |
-| `01-project-spec.md` | Product question and durable scope |
-| `02-architecture.md` | Effective runtime architecture |
-| `03-contracts.md` | Current contract map and invariants |
-| `04-evaluation-protocol.md` | Dataset roles, A/C readiness design and analysis rules |
-| `05-implementation-plan.md` | Ordered remaining work |
-| `06-decisions.md` | Effective decisions and open questions |
-| `07-reproduction.md` | Supported offline validation commands |
-| `08-limitations.md` | Claims that remain unsupported |
-| `09-evidence.md` | Index into canonical machine artifacts |
-
-## Documentation rules
-
-- `reports/` canonically owns exact IDs and hashes; repeated active prose must match that evidence.
-- `docs/current-status.md` canonically owns the current checkpoint and next authority; other active docs may
-  summarize them without creating independent authority.
-- Milestone narratives do not accumulate in active topic documents.
-- A superseded detail remains discoverable through the archive and Git history.
-- New active documents should normally stay below 300 lines.
-
-## Historical snapshot
-
-The pre-reorganization D-121 documentation snapshot is under
-`archive/snapshots/d121/`. Its manifest records original paths, sizes and SHA-256 values.
-
-Rapid workflow decisions and run chronology through consumed R20 are summarized in
-`archive/rapid-workflow-history-20260830.md`. It is audit-only and does not create current authority.
-
-Consumed R21, R22's closed prestart attempt and the halted partial R23/R24 executions are in `current-status.md` and
-`09-evidence.md`; none grants retry, resume or new execution.
+Use `docs/archive/` only for a historical audit. It does not define current code,
+authority, commands, or next work.
