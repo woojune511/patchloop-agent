@@ -18,16 +18,40 @@ On 2026-09-01, after the Rapid Dev Reset:
 
 These are local observations, not provider or claim results.
 
+## First live development observation
+
+On 2026-09-02, one separately approved row used:
+
+- task `loguru-invalid-format-feedback` from the checked-in `dev-train` split
+- model `gpt-5.4-mini-2026-03-17` with medium reasoning
+- one repetition under a $1.20 invocation-wide cap
+- external state root `C:\patchloop-live-20260902-loguru-r1`
+
+Run `run_dev_e89e940c0715474e` wrote a valid 455-event hash chain ending at
+`sha256:36a3e266f769197203f04870d49e92411a62bbcf7cc7daf43bc97af250167f9a`.
+It reached `LIMIT_REACHED` (`tool-action limit reached`) in 141.147 seconds.
+All 39 provider calls completed with the requested model and no unmatched call
+start. Recorded usage was 91,907 input tokens, including 17,408 cached tokens,
+and 4,866 output tokens, including 1,384 reasoning tokens. Recorded cost was
+$0.07907685.
+
+The agent made 76 searches and 23 reads, all successful, but used only 26 distinct
+action input hashes. One successful `KeyError` search repeated 33 times and one
+successful `format(` search repeated 18 times. No plan, edit, check, mutation,
+submission, artifact, or evaluator result was produced. This is live development
+evidence of a duplicate-inspection completion failure, not task correctness or
+quality evidence.
+
 ## Not executed
 
-- no OpenAI generation or provider input-count request
-- no Docker command, image inspection, pull, build, or container run
-- no remote repository fetch
-- no live `dev-train` row
+- no second repetition, transport retry, or follow-up paid run
+- no image pull, image build, or automatic Docker Desktop start
+- no mutation, visible check, submission, private evaluator, or evaluator container
 - no claim, qualification, activation, adoption, or held-out evaluation
 
-The under-two-minute validation target is locally supported. The 30-minute live
-target remains unverified.
+The under-two-minute validation target is locally supported. A durable live terminal
+was observed within 30 minutes, but the full operational target remains unverified
+because no evaluator summary was reached.
 
 ## Known limitations
 
