@@ -4,7 +4,7 @@ import subprocess
 
 from patchloop.dev.contracts import RequestedTool
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MOCK_MUTATIONS
-from patchloop.dev.tools import dev_tool_schemas
+from patchloop.dev.tools import DevToolGateway, dev_tool_schemas
 from patchloop.sandbox.runner import SandboxResult
 from patchloop.util import sha256_bytes, sha256_json
 
@@ -95,6 +95,15 @@ def test_mutation_tool_contract_requires_unwrapped_raw_git_diff() -> None:
     assert "When last_failed_mutation is present" in DEV_SYSTEM_PROMPT
 
 
+def test_mutation_error_location_parses_git_diagnostics() -> None:
+    assert DevToolGateway._mutation_error_location(  # noqa: SLF001
+        "git apply check failed: error: corrupt patch at <stdin>:27"
+    ) == {"patch_line": 27}
+    assert DevToolGateway._mutation_error_location(  # noqa: SLF001
+        "git apply check failed: error: patch failed: mini_data_utils/csvlite.py:1"
+    ) == {"path": "mini_data_utils/csvlite.py", "line": 1}
+
+
 def test_patch_wrapper_from_live_transcript_fails_with_exact_git_diff_guidance(
     gateway_factory,
 ) -> None:
@@ -125,7 +134,7 @@ def test_failed_mutation_persists_across_reads_and_restart_then_clears_on_succes
     gateway.execute_batch(read_calls())
     malformed = mutation_call(gateway, action_id="malformed-mutation")
     malformed.arguments["git_diff"] = malformed.arguments["git_diff"].replace(
-        "@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@"
+        " import csv\n", " import csv_missing\n"
     )
 
     failed = gateway.execute(malformed)
@@ -142,7 +151,7 @@ def test_failed_mutation_persists_across_reads_and_restart_then_clears_on_succes
     assert pending["expected_behavior"] == malformed.arguments["expected_behavior"]
     assert pending["edit_anchor"] == malformed.arguments["edit_anchor"]
     assert pending["error_code"] == "CONTRACT_ERROR"
-    assert pending["error_location"]["patch_line"] > 0
+    assert pending["error_location"] == {"path": "mini_data_utils/csvlite.py", "line": 1}
     assert "Repair or explicitly replace" in pending["next_action"]
 
     read_after_failure = gateway.execute(
@@ -170,7 +179,7 @@ def test_failed_mutation_persists_across_reads_and_restart_then_clears_on_succes
 
     replacement = mutation_call(restarted, action_id="replacement-failed-mutation")
     replacement.arguments["git_diff"] = replacement.arguments["git_diff"].replace(
-        "@@ -1,13 +1,11 @@", "@@ -1,13 +1,9 @@"
+        " import csv\n", " import csv_still_missing\n"
     )
     assert restarted.execute(replacement).status == "failed"
     assert restarted.last_failed_mutation["action_id"] == "replacement-failed-mutation"
@@ -179,6 +188,89 @@ def test_failed_mutation_persists_across_reads_and_restart_then_clears_on_succes
     accepted = restarted.execute(mutation_call(restarted, action_id="repaired-mutation"))
     assert accepted.status == "succeeded"
     assert restarted.last_failed_mutation is None
+
+
+def test_git_apply_recounts_hunks_but_keeps_context_fail_closed(gateway_factory) -> None:
+    gateway, _, _ = gateway_factory()
+    gateway.execute_batch(read_calls())
+    recounted = mutation_call(gateway, action_id="recounted-mutation")
+    recounted.arguments["git_diff"] = recounted.arguments["git_diff"].replace(
+        "@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@"
+    )
+
+    accepted = gateway.execute(recounted)
+
+    assert accepted.status == "succeeded"
+    assert accepted.output["patch_hash"] == sha256_bytes(
+        recounted.arguments["git_diff"].encode("utf-8")
+    )
+    assert accepted.output["worktree_diff_hash"] == gateway.current_diff_hash
+
+    stale_gateway, _, stale_workspace = gateway_factory()
+    stale_gateway.execute_batch(read_calls())
+    stale = mutation_call(stale_gateway, action_id="stale-context-mutation")
+    stale.arguments["git_diff"] = stale.arguments["git_diff"].replace(
+        " import csv\n", " import csv_missing\n"
+    )
+
+    rejected = stale_gateway.execute(stale)
+
+    assert rejected.status == "failed"
+    assert "patch failed: mini_data_utils/csvlite.py:1" in rejected.message
+    assert stale_gateway.current_diff.changed_files == []
+    assert subprocess.run(
+        ["git", "status", "--short"],
+        cwd=stale_workspace,
+        capture_output=True,
+        check=True,
+        text=True,
+    ).stdout == ""
+
+
+def test_recounted_out_of_scope_mutation_rolls_back_cleanly(gateway_factory) -> None:
+    gateway, _, workspace = gateway_factory()
+    gateway.public_task = gateway.public_task.model_copy(
+        update={
+            "constraints": gateway.public_task.constraints.model_copy(
+                update={"max_diff_lines": 1}
+            )
+        }
+    )
+    gateway.execute_batch(read_calls())
+    mutation = mutation_call(gateway, action_id="recounted-scope-rollback")
+    mutation.arguments["git_diff"] = mutation.arguments["git_diff"].replace(
+        "@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@"
+    )
+
+    rejected = gateway.execute(mutation)
+
+    assert rejected.status == "failed"
+    assert "diff-size constraints" in rejected.message
+    assert gateway.current_diff.changed_files == []
+    assert (
+        subprocess.run(
+            ["git", "diff", "--exit-code"],
+            cwd=workspace,
+            capture_output=True,
+            check=False,
+        ).returncode
+        == 0
+    )
+    worktree_blob = subprocess.run(
+        ["git", "hash-object", "mini_data_utils/csvlite.py"],
+        cwd=workspace,
+        capture_output=True,
+        check=True,
+        text=True,
+    ).stdout.strip()
+    head_blob = subprocess.run(
+        ["git", "rev-parse", "HEAD:mini_data_utils/csvlite.py"],
+        cwd=workspace,
+        capture_output=True,
+        check=True,
+        text=True,
+    ).stdout.strip()
+    assert worktree_blob == head_blob
 
 
 def test_failed_mutation_diff_projection_is_bounded(gateway_factory) -> None:
@@ -370,6 +462,9 @@ def test_action_replay_and_crash_reconciliation_do_not_duplicate_mutation(
     assert replay.replayed is True
 
     call = mutation_call(gateway, action_id="crash-mutation")
+    call.arguments["git_diff"] = call.arguments["git_diff"].replace(
+        "@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@"
+    )
     input_hash = sha256_json({"tool": call.name, "arguments": call.arguments})
     journal.append(
         "action_started",
@@ -383,7 +478,7 @@ def test_action_replay_and_crash_reconciliation_do_not_duplicate_mutation(
         },
     )
     applied = subprocess.run(
-        ["git", "apply", "--whitespace=nowarn", "-"],
+        ["git", "apply", "--whitespace=nowarn", "--recount", "-"],
         cwd=workspace,
         input=call.arguments["git_diff"].encode("utf-8"),
         capture_output=True,

@@ -776,7 +776,7 @@ class DevToolGateway:
 
     def _run_git_apply(self, patch: str, *extra: str) -> subprocess.CompletedProcess[bytes]:
         return subprocess.run(
-            ["git", "apply", "--whitespace=nowarn", *extra, "-"],
+            ["git", "apply", "--whitespace=nowarn", "--recount", *extra, "-"],
             cwd=self.workspace,
             input=patch.encode("utf-8"),
             capture_output=True,

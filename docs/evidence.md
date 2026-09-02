@@ -38,6 +38,14 @@ Following the Rapid Dev Reset, local checkpoints recorded:
   isolated `EVALUATOR_PASS` with task acceptance PASS and safety NOT_RUN. A read-only
   hydration of the third live journal recovered its failed diff hash, hypothesis,
   public anchor, and patch line 27 without changing that immutable run.
+- The hunk-recount checkpoint passed Ruff and all 62 tests in 55.10 seconds.
+  Focused tests verify that incorrect hunk totals are accepted while invalid
+  source context is rejected, scope rollback restores the exact HEAD blob, and crash
+  reconciliation recognizes an already-applied recounted patch. Recount is shared by
+  check, apply, rollback, and reverse-check paths; it does not bypass the existing
+  tracked-path, anchor, scope, or final-diff contracts. Mock run
+  `run_dev_8ba03a7965a048c5` reached `EVALUATOR_PASS` through one accepted mutation with
+  task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero model cost.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -119,12 +127,41 @@ was reported correctly for one turn, but the unresolved repair target was displa
 by subsequent bounded attempt cards. It does not justify a hard repeated-evidence
 terminal or establish task acceptance, safety, or general coding quality.
 
+## Fourth live development observation
+
+After failed-mutation continuation was implemented, a fourth separately approved row
+again used `loguru-invalid-format-feedback`, `gpt-5.4-mini-2026-03-17`, medium
+reasoning, one repetition, the $1.20 cap, and external state root
+`C:\\patchloop-state`. Run `run_dev_dd7c981c6d024bcf` wrote a valid 537-event hash
+chain ending at
+`sha256:3e6674cbcaa7491bff9715926f64fff7e5c9a4c4f5b4ddc8ffe6cb097b96e91d`.
+It reached `LIMIT_REACHED` (`model-call limit reached`) after 293.264 active seconds
+and 298 seconds of run age. All 40 provider dispatches recorded durable completions;
+one incomplete response used the single protocol correction. Recorded usage was
+262,346 input tokens including 12,800 cached tokens and 34,439 output tokens including
+16,473 reasoning tokens. Recorded cost was $0.343095.
+
+The run made 44 searches, 15 reads, and 13 `apply_git_diff` calls; 21 read/search
+actions were cache hits. Every failed mutation's exact action and error appeared in
+the immediately following context, and `last_failed_mutation` was present in all 23
+turn contexts after the first failure. The agent repeatedly repaired or replaced the
+diff instead of abandoning mutation for the rest of the row. This confirms the
+bounded continuation behavior in a live loop.
+
+None of the 13 mutation attempts applied. Every diff contained at least one hunk whose
+declared pre- or post-image total differed from its body; strict Git reported 12
+`corrupt patch` failures and one `patch fragment without header` failure. A read-only
+`git apply --check --recount` against the retained isolated workspace accepted all 13
+exact diffs without modifying it. This isolates hunk-total arithmetic as the current
+wire boundary, but does not show that any patch is semantically correct. No mutation,
+visible check, submission, evaluator, task acceptance, or safety result was produced.
+
 ## Not executed
 
-- no fourth repetition, transport retry, or follow-up paid run after the third row
+- no fifth repetition, transport retry, or follow-up paid run after the fourth row
 - no image pull, image build, or automatic Docker Desktop start
 - no accepted mutation, visible check, submission, private evaluator, or evaluator
-  container in any live row
+  container in any of the four live rows
 - no claim, qualification, activation, adoption, or held-out evaluation
 
 The under-two-minute validation target is locally supported. A durable live terminal
@@ -146,8 +183,9 @@ because no evaluator summary was reached.
 - Deleted historical executables require Git history to replay.
 - Only runs with the new immutable envelope can resume; older journals remain
   read-only evidence.
-- One live row shows that the provider can emit the `apply_git_diff` raw-diff shape,
-  but its single malformed patch does not establish reliable mutation or submission.
+- Two live rows show that the provider can emit the `apply_git_diff` raw-diff shape,
+  and the fourth shows persistent failed-mutation repair. None establishes reliable
+  mutation or submission; deterministic hunk recount is locally tested only.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

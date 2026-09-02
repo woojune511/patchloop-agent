@@ -79,6 +79,11 @@ counting follows the official
 The mutation tool is `apply_git_diff`. Its `git_diff` value must start exactly with
 `diff --git a/<path> b/<path>` and contain a raw Git unified diff. Codex-style
 `*** Begin Patch` / `*** Update File` wrappers are rejected rather than converted.
+Declared hunk line totals are recounted deterministically from the raw hunk body for
+check, apply, rollback, and crash reconciliation. Invalid hunk syntax or source
+context still fails closed, as do stale anchors, non-tracked paths, and scope
+violations. The requested patch hash remains evidence, while visible checks and
+submission bind the canonical diff produced by the resulting worktree.
 If a valid mutation call fails, its bounded public diff and intent remain in
 `last_failed_mutation` across later reads and resume. The agent may read/search when
 needed for repair, but a successful mutation is required to clear that repair target.

@@ -38,7 +38,11 @@ the exact current diff; the next context already contains the complete diff.
 
 Every `apply_git_diff` requires `git_diff` to begin exactly with
 `diff --git a/<path> b/<path>`. Patch wrappers such as `*** Begin Patch` and
-`*** Update File` are rejected. The mutation also requires:
+`*** Update File` are rejected. Git recounts each hunk's declared line totals from
+the raw body before check, apply, rollback, and crash reconciliation. Recount does
+not relax hunk syntax, source context, tracked-path, anchor, or scope validation;
+the resulting canonical worktree diff remains the submission authority. The
+mutation also requires:
 
 - `hypothesis`
 - `expected_behavior`
@@ -136,16 +140,19 @@ exposed an ambiguous mutation encoding contract. The third live row confirmed th
 the provider can call `apply_git_diff` with the raw-diff prefix, then exposed the next
 boundary: one invalid hunk count was reported exactly on the next turn, after which
 the agent returned to read/search for the remaining 37 turns instead of repairing
-the mutation.
+the mutation. The fourth live row confirmed that failed-mutation continuation fixed
+that visibility problem: all 13 failures appeared exactly in the next context and
+the repair card remained present in all 23 later turns. All 13 replacement diffs
+still contained incorrect hunk totals, while a read-only `git apply --check --recount`
+accepted each one against the retained isolated workspace.
 
-Keep repeated-evidence detection diagnostic-only; the third row emitted just three
-soft signals and they did not block execution. Bounded failed-mutation continuation
-is now implemented locally without adding a hard workflow gate: valid tool failures
-remain execution evidence rather than being relabeled as protocol failures, and the
-repair target survives unrelated read/search cards and resume until replacement or
-success. Any fourth live row remains separately authorized. Confirmatory design
-review waits for three distinct harness/contract-clean submissions with at least two
-private passes; that threshold itself proves no quality or generalization benefit.
+Keep repeated-evidence detection diagnostic-only. The bounded continuation evidence
+does not support a hard workflow gate or a replacement mutation DSL. The smaller
+current correction uses Git's deterministic recount for hunk totals while preserving
+all existing mutation and submission checks. Any fifth live row remains separately
+authorized. Confirmatory design review waits for three distinct harness/contract-clean
+submissions with at least two private passes; that threshold itself proves no quality
+or generalization benefit.
 
 ## Validation checklist
 

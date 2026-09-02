@@ -83,7 +83,7 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
         )
     )
     mutation = MOCK_MUTATIONS["csv-quoted-newline"]
-    malformed_patch = mutation.patch.replace("@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@")
+    malformed_patch = mutation.patch.replace(" import csv\n", " import csv_missing\n")
     failed = gateway.execute(
         RequestedTool(
             name="apply_git_diff",
@@ -155,7 +155,9 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
     )
 
     assert context["last_failed_mutation"]["git_diff"] == malformed_patch
-    assert "corrupt patch" in context["last_failed_mutation"]["error_message"]
+    assert "patch failed: mini_data_utils/csvlite.py:1" in context[
+        "last_failed_mutation"
+    ]["error_message"]
     assert all(
         card["attempt"] not in {"apply_git_diff", "protocol"}
         for card in context["recent_attempt_result_next_question"]
