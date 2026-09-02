@@ -15,6 +15,11 @@ On 2026-09-01, after the Rapid Dev Reset:
   are enforced by the fast suite.
 - After the first-live diagnosis, the context-projection checkpoint passed Ruff,
   29 tests in 16.45 seconds, and mock `EVALUATOR_PASS`. This is local evidence only.
+- The resume checkpoint adds provider-free fault injection across decision, mutation,
+  check, and batch boundaries; it verifies exact mismatch rejection, terminal
+  idempotency, durable cost/counter restoration, and no repeated mocked provider
+  dispatch. Ruff passed, 39 tests passed in 35.15 seconds, and mock smoke reached
+  `EVALUATOR_PASS`. This remains local contract evidence, not provider acceptance.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -67,6 +72,8 @@ because no evaluator summary was reached.
   and static policies, so development results are not official claim evidence.
 - Long-horizon memory is disabled; only bounded current-run public evidence is projected.
 - Deleted historical executables require Git history to replay.
+- Only runs with the new immutable envelope can resume; older journals remain
+  read-only evidence.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

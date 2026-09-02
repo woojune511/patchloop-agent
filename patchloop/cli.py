@@ -68,6 +68,10 @@ def dev(
         typer.Option("--max-cost-usd"),
     ] = None,
     repeat: Annotated[int, typer.Option("--repeat", min=1, max=6)] = 1,
+    resume_run_id: Annotated[
+        str | None,
+        typer.Option("--resume-run-id"),
+    ] = None,
 ) -> None:
     """Run the unofficial mutable dev-head lane."""
 
@@ -84,6 +88,7 @@ def dev(
                 env_file=env_file,
                 max_cost_usd=_parse_cost(max_cost_usd),
                 repeat=repeat,
+                resume_run_id=resume_run_id,
             )
         )
     )

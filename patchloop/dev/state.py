@@ -10,11 +10,19 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from patchloop.dev.contracts import DEV_RUN_SCHEMA, DevToolResult
+from patchloop.dev.contracts import DEV_RUN_SCHEMA, DevRunEnvelope, DevToolResult
 from patchloop.errors import ActionConflict, RecoveryError
 from patchloop.util import canonical_json, sha256_json, utc_now
 
 _PROCESS_LOCK = threading.RLock()
+_ACTIVE_EXECUTIONS: set[str] = set()
+_UNIQUE_TURN_EVENTS = {
+    "turn_decision_recorded",
+    "tool_batch_started",
+    "tool_batch_finished",
+    "protocol_correction",
+}
+_UNIQUE_ACTION_EVENTS = {"attempt_card"}
 
 
 @contextmanager
@@ -56,8 +64,86 @@ class DevJournal:
         self.run_id = run_id
         self.run_dir = self.root / "runs"
         self.path = self.run_dir / f"{run_id}.jsonl"
+        self.envelope_path = self.run_dir / f"{run_id}.envelope.json"
         self.lock_path = self.run_dir / f".{run_id}.lock"
+        self.execution_lock_path = self.run_dir / f".{run_id}.execution.lock"
         self.run_dir.mkdir(parents=True, exist_ok=True)
+
+    @contextmanager
+    def execution_lock(self) -> Iterator[None]:
+        key = str(self.execution_lock_path)
+        with _PROCESS_LOCK:
+            if key in _ACTIVE_EXECUTIONS:
+                raise RecoveryError("development run is already active")
+            _ACTIVE_EXECUTIONS.add(key)
+        stream = None
+        acquired = False
+        try:
+            self.execution_lock_path.parent.mkdir(parents=True, exist_ok=True)
+            stream = self.execution_lock_path.open("a+b")
+            if stream.tell() == 0:
+                stream.write(b"\0")
+                stream.flush()
+            stream.seek(0)
+            try:
+                if os.name == "nt":
+                    import msvcrt
+
+                    msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as exc:
+                raise RecoveryError("development run is already active") from exc
+            acquired = True
+            yield
+        finally:
+            if stream is not None:
+                if acquired:
+                    stream.seek(0)
+                    if os.name == "nt":
+                        import msvcrt
+
+                        msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
+                    else:
+                        import fcntl
+
+                        fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+                stream.close()
+            with _PROCESS_LOCK:
+                _ACTIVE_EXECUTIONS.discard(key)
+
+    def write_envelope(self, envelope: DevRunEnvelope) -> None:
+        if envelope.run_id != self.run_id:
+            raise RecoveryError("run envelope identity does not match its journal")
+        encoded = (canonical_json(envelope.model_dump(mode="json")) + "\n").encode("utf-8")
+        if self.envelope_path.exists():
+            existing = self.load_envelope()
+            if existing != envelope:
+                raise RecoveryError("development run envelope is immutable")
+            return
+        temporary = self.envelope_path.with_name(f".{self.envelope_path.name}.tmp")
+        try:
+            with temporary.open("xb") as stream:
+                stream.write(encoded)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, self.envelope_path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    def load_envelope(self) -> DevRunEnvelope:
+        if not self.envelope_path.is_file() or self.envelope_path.is_symlink():
+            raise RecoveryError("development run predates resumable envelopes")
+        try:
+            raw = json.loads(self.envelope_path.read_text(encoding="utf-8"))
+            envelope = DevRunEnvelope.model_validate(raw)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            raise RecoveryError("development run envelope is invalid") from exc
+        if envelope.run_id != self.run_id:
+            raise RecoveryError("development run envelope identity mismatch")
+        return envelope
 
     def events(self) -> list[dict[str, Any]]:
         if not self.path.exists():
@@ -92,6 +178,34 @@ class DevJournal:
         with _PROCESS_LOCK, _exclusive_file_lock(self.lock_path):
             events = self.events()
             normalized_payload = payload or {}
+            if event_type in _UNIQUE_TURN_EVENTS:
+                turn_id = normalized_payload.get("turn_id")
+                if not isinstance(turn_id, str) or not turn_id:
+                    raise RecoveryError(f"{event_type} requires a turn ID")
+                recorded = [
+                    event
+                    for event in events
+                    if event["event_type"] == event_type
+                    and event["payload"].get("turn_id") == turn_id
+                ]
+                if recorded:
+                    if recorded[-1]["payload"] != normalized_payload:
+                        raise ActionConflict(f"turn {turn_id} has conflicting {event_type}")
+                    return recorded[-1]
+            if event_type in _UNIQUE_ACTION_EVENTS:
+                action_id = normalized_payload.get("action_id")
+                if not isinstance(action_id, str) or not action_id:
+                    raise RecoveryError(f"{event_type} requires an action ID")
+                recorded = [
+                    event
+                    for event in events
+                    if event["event_type"] == event_type
+                    and event["payload"].get("action_id") == action_id
+                ]
+                if recorded:
+                    if recorded[-1]["payload"] != normalized_payload:
+                        raise ActionConflict(f"action {action_id} has conflicting {event_type}")
+                    return recorded[-1]
             if event_type == "provider_call_finished":
                 call_id = normalized_payload.get("call_id")
                 if not isinstance(call_id, str) or not call_id:
@@ -195,3 +309,35 @@ class DevJournal:
         if len(call_ids) != len(set(call_ids)):
             raise RecoveryError("development journal contains duplicate provider usage")
         return rows
+
+    def latest_active_elapsed_ms(self) -> int:
+        values = [
+            event["payload"].get("active_elapsed_ms")
+            for event in self.events()
+            if type(event["payload"].get("active_elapsed_ms")) is int
+        ]
+        if any(value < 0 for value in values):
+            raise RecoveryError("development journal has invalid active elapsed time")
+        return max(values, default=0)
+
+    def latest_tool_batch_results(self) -> list[DevToolResult]:
+        batches = [
+            event for event in self.events() if event["event_type"] == "tool_batch_finished"
+        ]
+        if not batches:
+            return []
+        action_ids = batches[-1]["payload"].get("action_ids")
+        if not isinstance(action_ids, list) or not all(
+            isinstance(action_id, str) for action_id in action_ids
+        ):
+            raise RecoveryError("tool batch action IDs are invalid")
+        results: dict[str, DevToolResult] = {}
+        for event in self.events():
+            if event["event_type"] != "action_finished":
+                continue
+            result = DevToolResult.model_validate(event["payload"]["result"])
+            if result.action_id in action_ids:
+                results[result.action_id] = result
+        if set(results) != set(action_ids):
+            raise RecoveryError("completed tool batch is missing an action result")
+        return [results[action_id] for action_id in action_ids]

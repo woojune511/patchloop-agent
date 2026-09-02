@@ -19,3 +19,7 @@ class ActionConflict(ContractError):
 
 class RecoveryError(PatchLoopError):
     code = "RECOVERY_ERROR"
+
+
+class ResumeContractMismatch(ContractError):
+    code = "RESUME_CONTRACT_MISMATCH"

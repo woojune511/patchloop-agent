@@ -18,8 +18,8 @@ from patchloop.contracts import ModelConfig, RunManifest, VerdictState
 from patchloop.dev.contracts import (
     DEV_RUNTIME_ID,
     DevModelTurn,
+    DevRunEnvelope,
     DevRunRequest,
-    DevState,
     DevTerminal,
     DevToolResult,
     RequestedTool,
@@ -35,7 +35,12 @@ from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway, dev_tool_schemas, validate_tool_batch
 from patchloop.environment import load_exact_openai_api_key
-from patchloop.errors import ContractError, PatchLoopError
+from patchloop.errors import (
+    ContractError,
+    PatchLoopError,
+    RecoveryError,
+    ResumeContractMismatch,
+)
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import git_commit, make_run_id, repository_root
 from patchloop.sandbox import DockerSandbox, LocalSandbox
@@ -299,6 +304,7 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
 def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, Any]:
     if result.status == "failed":
         return {
+            "action_id": result.action_id,
             "attempt": result.tool,
             "result": result.error_code or "failed",
             "next_question": (
@@ -330,6 +336,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             }
         )
         return {
+            "action_id": result.action_id,
             "attempt": result.tool,
             "input": request,
             "result": {
@@ -349,6 +356,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
         }
     if result.tool == "apply_patch":
         return {
+            "action_id": result.action_id,
             "attempt": "mutation",
             "result": result.output["worktree_diff_hash"],
             "next_question": (
@@ -357,6 +365,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
         }
     if result.tool == "run_check":
         return {
+            "action_id": result.action_id,
             "attempt": f"check:{result.output['check_id']}",
             "result": "PASS" if result.output["passed"] else result.output["failure_signature"],
             "next_question": (
@@ -366,16 +375,11 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             ),
         }
     return {
+        "action_id": result.action_id,
         "attempt": "finish_task",
         "result": result.output.get("patch_hash", "submitted"),
         "next_question": "Run the isolated private evaluator.",
     }
-
-
-def _transition(journal: DevJournal, current: DevState, target: DevState) -> DevState:
-    if target != current:
-        journal.append("state_changed", {"from": current.value, "to": target.value})
-    return target
 
 
 def _evaluator_summary(result: Any) -> dict[str, Any]:
@@ -451,6 +455,8 @@ def _terminal(
     evaluator: dict[str, Any] | None = None,
     artifacts: dict[str, str] | None = None,
     message: str | None = None,
+    active_elapsed_ms: int | None = None,
+    run_age_seconds: int | None = None,
 ) -> dict[str, Any]:
     existing = journal.terminal()
     if existing is None:
@@ -469,6 +475,23 @@ def _terminal(
             "evaluator": evaluator,
             "artifact_hashes": artifacts or {},
             "message": message,
+            "active_elapsed_ms": (
+                journal.latest_active_elapsed_ms()
+                if active_elapsed_ms is None
+                else active_elapsed_ms
+            ),
+            "run_age_seconds": (
+                max(
+                    0,
+                    int(
+                        (
+                            utc_now() - journal.load_envelope().created_at
+                        ).total_seconds()
+                    ),
+                )
+                if run_age_seconds is None
+                else run_age_seconds
+            ),
         }
         existing = journal.append("terminal", payload)
     return existing["payload"]
@@ -488,24 +511,333 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
     }
 
 
+def _credential_file_path_hash(request: DevRunRequest) -> str | None:
+    if request.env_file is None:
+        return None
+    return sha256_bytes(str(request.env_file.resolve()).encode("utf-8"))
+
+
+def _run_envelope(
+    *,
+    request: DevRunRequest,
+    task_dir: Path,
+    package: Any,
+    run_id: str,
+    runtime_hash: str,
+    model_hash: str,
+    cost_ledger: DevCostLedger | None,
+    cost_start_nanos: int,
+    created_at: Any | None = None,
+) -> DevRunEnvelope:
+    return DevRunEnvelope(
+        run_id=run_id,
+        provider=request.provider,
+        task_path=str((task_dir / "public.yaml").resolve()),
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        split=package.public.split,
+        base_commit=package.public.repository.base_commit,
+        public_spec_hash=package.public_spec_hash,
+        private_spec_hash=package.private_spec_hash,
+        runtime_hash=runtime_hash,
+        model_hash=model_hash,
+        model=request.model,
+        reasoning_effort=request.reasoning_effort,
+        credential_file_path_hash=_credential_file_path_hash(request),
+        max_cost_nanos=cost_ledger.cap_nanos if cost_ledger else 0,
+        cost_start_nanos=cost_start_nanos,
+        limits=request.limits,
+        sandbox_backend="docker" if request.provider == "openai" else "local",
+        evaluator_image_digest=(package.environment.image_digest if package.environment else None),
+        created_at=created_at or utc_now(),
+    )
+
+
+def _validate_resume_envelope(actual: DevRunEnvelope, expected: DevRunEnvelope) -> None:
+    if actual.model_dump(mode="json") != expected.model_dump(mode="json"):
+        raise ResumeContractMismatch("run configuration or runtime changed")
+
+
+def _restore_counters(journal: DevJournal) -> _RunCounters:
+    events = journal.events()
+    return _RunCounters(
+        model_calls=sum(
+            event["event_type"] in {"provider_call_started", "model_call_finished"}
+            for event in events
+        ),
+        tool_actions=sum(
+            len(event["payload"].get("tool_calls", []))
+            for event in events
+            if event["event_type"] == "tool_batch_started"
+        ),
+        input_count_calls=sum(
+            event["event_type"] == "input_count_started" for event in events
+        ),
+        protocol_recoveries=sum(
+            event["event_type"] == "protocol_correction" for event in events
+        ),
+    )
+
+
+def _validate_resumed_workspace(workspace: Path, journal: DevJournal) -> None:
+    summary = WorkspaceManager.diff_summary(workspace)
+    if summary.untracked_files:
+        raise ResumeContractMismatch("workspace contains non-ignored untracked files")
+    expected_diff_hash = sha256_bytes(b"")
+    pending: dict[str, Any] | None = None
+    for event in journal.events():
+        payload = event["payload"]
+        if event["event_type"] == "action_started":
+            pending = payload
+        elif event["event_type"] == "action_finished":
+            if pending is not None and payload.get("action_id") == pending.get("action_id"):
+                pending = None
+            result = DevToolResult.model_validate(payload["result"])
+            if result.status == "succeeded" and result.tool == "apply_patch":
+                expected_diff_hash = str(result.output["worktree_diff_hash"])
+    if pending is not None and pending.get("tool") == "apply_patch":
+        if pending.get("baseline_diff_hash") != expected_diff_hash:
+            raise ResumeContractMismatch("pending mutation baseline does not match the journal")
+        return
+    if summary.patch_hash != expected_diff_hash:
+        raise ResumeContractMismatch("workspace diff does not match durable mutation history")
+
+
+def _recover_unrecorded_decision(journal: DevJournal) -> None:
+    events = journal.events()
+    recorded = {
+        event["payload"].get("turn_id")
+        for event in events
+        if event["event_type"] == "turn_decision_recorded"
+    }
+    for event in reversed(events):
+        if event["event_type"] not in {"provider_call_finished", "model_call_finished"}:
+            continue
+        payload = event["payload"]
+        turn_id = payload.get("turn_id")
+        if not isinstance(turn_id, str) or turn_id in recorded:
+            continue
+        tool_calls = payload.get("tool_calls")
+        if not isinstance(tool_calls, list):
+            continue
+        journal.append(
+            "turn_decision_recorded",
+            {
+                "turn_id": turn_id,
+                "tool_calls": tool_calls,
+                "error_code": payload.get("error_code"),
+            },
+        )
+        return
+
+
+def _unresolved_decision(
+    journal: DevJournal,
+) -> tuple[str, list[RequestedTool], str | None, bool] | None:
+    events = journal.events()
+    completed = {
+        event["payload"].get("turn_id")
+        for event in events
+        if event["event_type"] == "tool_batch_finished"
+    }
+    corrected = {
+        event["payload"].get("turn_id")
+        for event in events
+        if event["event_type"] == "protocol_correction"
+    }
+    started = {
+        event["payload"].get("turn_id")
+        for event in events
+        if event["event_type"] == "tool_batch_started"
+    }
+    for event in reversed(events):
+        if event["event_type"] != "turn_decision_recorded":
+            continue
+        payload = event["payload"]
+        turn_id = payload.get("turn_id")
+        if not isinstance(turn_id, str) or turn_id in completed or turn_id in corrected:
+            continue
+        calls = [RequestedTool.model_validate(value) for value in payload.get("tool_calls", [])]
+        error_code = payload.get("error_code")
+        if error_code is not None and not isinstance(error_code, str):
+            raise RecoveryError("recorded model decision has an invalid error code")
+        return turn_id, calls, error_code, turn_id in started
+    return None
+
+
+def _record_tool_batch(
+    *,
+    journal: DevJournal,
+    gateway: DevToolGateway,
+    turn_id: str,
+    results: list[DevToolResult],
+    active_elapsed_ms: int,
+) -> tuple[DevToolResult | None, dict[str, str] | None]:
+    finish_result: DevToolResult | None = None
+    for result in results:
+        journal.append("attempt_card", _attempt_card(result, gateway))
+        if result.tool == "finish_task" and result.status == "succeeded":
+            finish_result = result
+    journal.append(
+        "tool_batch_finished",
+        {
+            "turn_id": turn_id,
+            "action_ids": [result.action_id for result in results],
+            "result_fingerprints": [
+                sha256_json(result.model_dump(mode="json")) for result in results
+            ],
+            "active_elapsed_ms": active_elapsed_ms,
+        },
+    )
+    correction = None
+    if all(result.status == "failed" for result in results):
+        correction = {
+            "code": results[0].error_code or "TOOL_FAILED",
+            "message": results[0].message or "Use current public evidence and retry safely.",
+        }
+    return finish_result, correction
+
+
 def _run_one(
     *,
     request: DevRunRequest,
     task_dir: Path,
     package: Any,
     state_root: Path,
-    sandbox: Any,
     pricing: ModelPricing | None,
     cost_ledger: DevCostLedger | None,
-    api_key: str | None,
     runtime_hash: str,
     model_hash: str,
 ) -> _OneRunResult:
-    run_id = make_run_id("dev")
+    run_id = request.resume_run_id or make_run_id("dev")
     journal = DevJournal(state_root, run_id)
+    with journal.execution_lock():
+        resuming = request.resume_run_id is not None
+        if resuming:
+            envelope = journal.load_envelope()
+            expected = _run_envelope(
+                request=request,
+                task_dir=task_dir,
+                package=package,
+                run_id=run_id,
+                runtime_hash=runtime_hash,
+                model_hash=model_hash,
+                cost_ledger=cost_ledger,
+                cost_start_nanos=envelope.cost_start_nanos,
+                created_at=envelope.created_at,
+            )
+            _validate_resume_envelope(envelope, expected)
+            if cost_ledger is not None:
+                cost_ledger.restore_settled_usage(
+                    journal.provider_usage(),
+                    base_spent_nanos=envelope.cost_start_nanos,
+                )
+            existing_terminal = journal.terminal()
+            if existing_terminal is not None:
+                return _OneRunResult(
+                    _public_result(run_id, existing_terminal["payload"]),
+                    False,
+                )
+        else:
+            cost_start_nanos = cost_ledger.spent_nanos if cost_ledger else 0
+            envelope = _run_envelope(
+                request=request,
+                task_dir=task_dir,
+                package=package,
+                run_id=run_id,
+                runtime_hash=runtime_hash,
+                model_hash=model_hash,
+                cost_ledger=cost_ledger,
+                cost_start_nanos=cost_start_nanos,
+            )
+            journal.write_envelope(envelope)
+            journal.append(
+                "run_started",
+                {
+                    "runtime": DEV_RUNTIME_ID,
+                    "provider": request.provider,
+                    "task_id": package.public.task_id,
+                    "task_version": package.public.task_version,
+                    "split": package.public.split,
+                    "runtime_hash": runtime_hash,
+                    "task_hash": sha256_json(
+                        {
+                            "public": package.public_spec_hash,
+                            "private": package.private_spec_hash,
+                        }
+                    ),
+                    "model_hash": model_hash,
+                },
+            )
+
+        hashes = {
+            "runtime_hash": runtime_hash,
+            "task_hash": sha256_json(
+                {
+                    "public": package.public_spec_hash,
+                    "private": package.private_spec_hash,
+                }
+            ),
+            "model_hash": model_hash,
+        }
+        counters = _restore_counters(journal) if resuming else _RunCounters()
+        if journal.unresolved_provider_call() is not None:
+            terminal = _terminal(
+                journal=journal,
+                terminal=DevTerminal.PROVIDER_TIMEOUT_OR_UNKNOWN,
+                counters=counters,
+                cost_ledger=cost_ledger,
+                cost_start_nanos=envelope.cost_start_nanos,
+                hashes=hashes,
+                message="an earlier provider dispatch has no durable usage record",
+            )
+            return _OneRunResult(_public_result(run_id, terminal), True)
+        if cost_ledger is not None and cost_ledger.spent_nanos > cost_ledger.cap_nanos:
+            terminal = _terminal(
+                journal=journal,
+                terminal=DevTerminal.PROVIDER_TIMEOUT_OR_UNKNOWN,
+                counters=counters,
+                cost_ledger=cost_ledger,
+                cost_start_nanos=envelope.cost_start_nanos,
+                hashes=hashes,
+                message="durable provider usage exceeded the invocation cap",
+            )
+            return _OneRunResult(_public_result(run_id, terminal), True)
+
+        return _run_one_locked(
+            request=request,
+            task_dir=task_dir,
+            package=package,
+            state_root=state_root,
+            pricing=pricing,
+            cost_ledger=cost_ledger,
+            runtime_hash=runtime_hash,
+            model_hash=model_hash,
+            run_id=run_id,
+            journal=journal,
+            envelope=envelope,
+            resuming=resuming,
+        )
+
+
+def _run_one_locked(
+    *,
+    request: DevRunRequest,
+    task_dir: Path,
+    package: Any,
+    state_root: Path,
+    pricing: ModelPricing | None,
+    cost_ledger: DevCostLedger | None,
+    runtime_hash: str,
+    model_hash: str,
+    run_id: str,
+    journal: DevJournal,
+    envelope: DevRunEnvelope,
+    resuming: bool,
+) -> _OneRunResult:
     artifact_store = ArtifactStore(state_root / "artifacts")
-    counters = _RunCounters()
-    cost_start_nanos = cost_ledger.spent_nanos if cost_ledger else 0
+    counters = _restore_counters(journal) if resuming else _RunCounters()
+    cost_start_nanos = envelope.cost_start_nanos
     hashes = {
         "runtime_hash": runtime_hash,
         "task_hash": sha256_json(
@@ -516,35 +848,14 @@ def _run_one(
         ),
         "model_hash": model_hash,
     }
-    journal.append(
-        "run_started",
-        {
-            "runtime": DEV_RUNTIME_ID,
-            "provider": request.provider,
-            "task_id": package.public.task_id,
-            "task_version": package.public.task_version,
-            "split": package.public.split,
-            **hashes,
-        },
-    )
-    if journal.unresolved_provider_call() is not None:
-        terminal = _terminal(
-            journal=journal,
-            terminal=DevTerminal.PROVIDER_TIMEOUT_OR_UNKNOWN,
-            counters=counters,
-            cost_ledger=cost_ledger,
-            cost_start_nanos=cost_start_nanos,
-            hashes=hashes,
-            message="an earlier provider dispatch has no durable usage record",
-        )
-        return _OneRunResult(_public_result(run_id, terminal), True)
-
     workspace_manager = WorkspaceManager(
         repository_root() / "fixtures" / "repositories",
         state_root / "workspaces",
     )
     workspace_path = state_root / "workspaces" / run_id / "repo"
     try:
+        if resuming and not workspace_path.exists():
+            raise RecoveryError("resumable development workspace is missing")
         workspace = (
             workspace_manager.validate_managed_workspace(workspace_path)
             if workspace_path.exists()
@@ -554,6 +865,41 @@ def _run_one(
                 package.public.repository.base_commit,
             )
         )
+    except PatchLoopError as exc:
+        if resuming:
+            raise
+        terminal = _terminal(
+            journal=journal,
+            terminal=DevTerminal.PREFLIGHT_FAILED,
+            counters=counters,
+            cost_ledger=cost_ledger,
+            cost_start_nanos=cost_start_nanos,
+            hashes=hashes,
+            message=str(exc)[:1_000],
+        )
+        return _OneRunResult(_public_result(run_id, terminal), False)
+
+    if resuming:
+        _validate_resumed_workspace(workspace, journal)
+        journal.append(
+            "run_resumed",
+            {
+                "active_elapsed_ms": journal.latest_active_elapsed_ms(),
+                "run_age_seconds": max(
+                    0,
+                    int((utc_now() - envelope.created_at).total_seconds()),
+                ),
+            },
+        )
+
+    api_key: str | None = None
+    try:
+        if request.provider == "openai":
+            assert request.env_file is not None
+            api_key = load_exact_openai_api_key(request.env_file)
+            sandbox = _live_sandbox_preflight(package)
+        else:
+            sandbox = LocalSandbox()
     except PatchLoopError as exc:
         terminal = _terminal(
             journal=journal,
@@ -573,10 +919,17 @@ def _run_one(
         journal=journal,
         limits=request.limits,
     )
-    state = DevState.WORK
     correction: dict[str, str] | None = None
-    latest_tool_results: list[DevToolResult] = []
+    latest_tool_results = journal.latest_tool_batch_results() if resuming else []
+    active_base_ms = journal.latest_active_elapsed_ms() if resuming else 0
     started = monotonic()
+
+    def active_elapsed_ms() -> int:
+        return active_base_ms + int((monotonic() - started) * 1_000)
+
+    def remaining_active_seconds() -> float:
+        return request.limits.wall_time_seconds - (active_elapsed_ms() / 1_000)
+
     mock_adapter = MockDevAdapter(package.public.task_id) if request.provider == "mock" else None
     openai_adapter: OpenAIResponsesAdapter | None = None
     if request.provider == "openai":
@@ -603,15 +956,103 @@ def _run_one(
                 cost_start_nanos=cost_start_nanos,
                 hashes=hashes,
                 message=f"provider adapter initialization failed: {type(exc).__name__}",
+                active_elapsed_ms=active_elapsed_ms(),
             )
             return _OneRunResult(_public_result(run_id, terminal), False)
 
     terminal_code: DevTerminal | None = None
     terminal_message: str | None = None
     stop_remaining = False
-    finish_result: DevToolResult | None = None
+    finish_result = next(
+        (
+            result
+            for result in latest_tool_results
+            if result.tool == "finish_task" and result.status == "succeeded"
+        ),
+        None,
+    )
+    if resuming:
+        _recover_unrecorded_decision(journal)
+        pending_decision = _unresolved_decision(journal)
+        if pending_decision is not None:
+            pending_turn_id, pending_calls, pending_error, batch_started = pending_decision
+            if pending_error == "input_token_count_mismatch":
+                terminal_code = DevTerminal.PROVIDER_TIMEOUT_OR_UNKNOWN
+                terminal_message = "provider usage disagreed with the pre-dispatch input count"
+                stop_remaining = True
+            elif pending_error is not None:
+                if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
+                    terminal_code = DevTerminal.INCOMPLETE_RESPONSE
+                    terminal_message = pending_error
+                else:
+                    counters.protocol_recoveries += 1
+                    correction = {
+                        "turn_id": pending_turn_id,
+                        "code": pending_error,
+                        "message": "Return one valid dev-head tool-call shape.",
+                    }
+                    journal.append("protocol_correction", correction)
+            else:
+                try:
+                    validate_tool_batch(
+                        pending_calls,
+                        max_parallel_reads=request.limits.max_parallel_reads,
+                    )
+                except ContractError as exc:
+                    if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
+                        terminal_code = DevTerminal.PROTOCOL_VIOLATION
+                        terminal_message = str(exc)
+                    else:
+                        counters.protocol_recoveries += 1
+                        correction = {
+                            "turn_id": pending_turn_id,
+                            "code": "INVALID_TOOL_BATCH",
+                            "message": (
+                                "Use up to four reads/searches only, or exactly one check, "
+                                "mutation, or finish."
+                            ),
+                        }
+                        journal.append("protocol_correction", correction)
+                else:
+                    if not batch_started:
+                        if (
+                            counters.tool_actions + len(pending_calls)
+                            > request.limits.max_tool_actions
+                        ):
+                            terminal_code = DevTerminal.LIMIT_REACHED
+                            terminal_message = "tool-action limit reached before recovered batch"
+                        else:
+                            journal.append(
+                                "tool_batch_started",
+                                {
+                                    "turn_id": pending_turn_id,
+                                    "tool_calls": [
+                                        call.model_dump(mode="json") for call in pending_calls
+                                    ],
+                                    "active_elapsed_ms": active_elapsed_ms(),
+                                },
+                            )
+                            counters.tool_actions += len(pending_calls)
+                    if terminal_code is None:
+                        try:
+                            recovered_results = gateway.execute_batch(pending_calls)
+                        except Exception as exc:
+                            terminal_code = DevTerminal.TASK_FAILED
+                            terminal_message = (
+                                f"tool gateway failed during resume: {type(exc).__name__}"
+                            )
+                        else:
+                            recovered_finish, correction = _record_tool_batch(
+                                journal=journal,
+                                gateway=gateway,
+                                turn_id=pending_turn_id,
+                                results=recovered_results,
+                                active_elapsed_ms=active_elapsed_ms(),
+                            )
+                            latest_tool_results = recovered_results
+                            finish_result = recovered_finish
     while terminal_code is None and finish_result is None:
-        if monotonic() - started >= request.limits.wall_time_seconds:
+        if remaining_active_seconds() <= 0:
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "row wall-time limit reached"
             break
@@ -619,7 +1060,7 @@ def _run_one(
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "model-call limit reached"
             break
-        elapsed_seconds = monotonic() - started
+        elapsed_seconds = active_elapsed_ms() / 1_000
         context = _build_context(
             package=package,
             gateway=gateway,
@@ -667,7 +1108,14 @@ def _run_one(
                 break
             journal.append(
                 "model_call_finished",
-                {"provider": "mock", "tool_call_count": len(turn.tool_calls)},
+                {
+                    "provider": "mock",
+                    "turn_id": turn_id,
+                    "tool_call_count": len(turn.tool_calls),
+                    "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
+                    "error_code": turn.error_code,
+                    "active_elapsed_ms": active_elapsed_ms(),
+                },
             )
         else:
             assert openai_adapter is not None and cost_ledger is not None
@@ -685,11 +1133,16 @@ def _run_one(
             count_id = f"count_{uuid.uuid4().hex}"
             journal.append(
                 "input_count_started",
-                {"count_id": count_id, "request_hash": sha256_json(request_payload)},
+                {
+                    "count_id": count_id,
+                    "turn_id": turn_id,
+                    "request_hash": sha256_json(request_payload),
+                    "active_elapsed_ms": active_elapsed_ms(),
+                },
             )
             counters.input_count_calls += 1
             try:
-                count_timeout = request.limits.wall_time_seconds - (monotonic() - started)
+                count_timeout = remaining_active_seconds()
                 if count_timeout <= 0:
                     terminal_code = DevTerminal.LIMIT_REACHED
                     terminal_message = "row wall-time limit reached before input counting"
@@ -705,7 +1158,12 @@ def _run_one(
                 break
             journal.append(
                 "input_count_finished",
-                {"count_id": count_id, "input_tokens": input_tokens},
+                {
+                    "count_id": count_id,
+                    "turn_id": turn_id,
+                    "input_tokens": input_tokens,
+                    "active_elapsed_ms": active_elapsed_ms(),
+                },
             )
             admission = cost_ledger.admit(input_tokens)
             if admission is None:
@@ -719,15 +1177,17 @@ def _run_one(
                 "provider_call_started",
                 {
                     "call_id": call_id,
+                    "turn_id": turn_id,
                     "request_hash": sha256_json(request_payload),
                     "input_tokens": input_tokens,
                     "output_ceiling": admission.output_ceiling,
                     "reserved_cost_nanos": admission.reserved_cost_nanos,
+                    "active_elapsed_ms": active_elapsed_ms(),
                 },
             )
             counters.model_calls += 1
             try:
-                dispatch_timeout = request.limits.wall_time_seconds - (monotonic() - started)
+                dispatch_timeout = remaining_active_seconds()
                 if dispatch_timeout <= 0:
                     terminal_code = DevTerminal.LIMIT_REACHED
                     terminal_message = "row wall-time limit reached before provider dispatch"
@@ -758,6 +1218,7 @@ def _run_one(
                 "provider_call_finished",
                 {
                     "call_id": call_id,
+                    "turn_id": turn_id,
                     "response_id": turn.response_id,
                     "response_model": turn.response_model,
                     "response_status": turn.response_status,
@@ -768,8 +1229,19 @@ def _run_one(
                     "cost_nanos": cost_nanos,
                     "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
                     "error_code": turn.error_code,
+                    "active_elapsed_ms": active_elapsed_ms(),
                 },
             )
+        journal.append(
+            "turn_decision_recorded",
+            {
+                "turn_id": turn_id,
+                "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
+                "error_code": turn.error_code,
+            },
+        )
+        if request.provider == "openai":
+            assert cost_ledger is not None
             if cost_ledger.spent_nanos > cost_ledger.cap_nanos:
                 terminal_code = DevTerminal.PROVIDER_TIMEOUT_OR_UNKNOWN
                 terminal_message = "observed provider usage exceeded the reserved invocation cap"
@@ -780,26 +1252,19 @@ def _run_one(
                 terminal_message = "provider usage disagreed with the pre-dispatch input count"
                 stop_remaining = True
                 break
-            if turn.error_code is not None:
-                if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
-                    terminal_code = DevTerminal.INCOMPLETE_RESPONSE
-                    terminal_message = turn.error_code
-                    break
-                counters.protocol_recoveries += 1
-                correction = {
-                    "code": turn.error_code,
-                    "message": "Return one valid dev-head tool-call shape.",
-                }
-                continue
-
-        journal.append(
-            "turn_decision_recorded",
-            {
+        if turn.error_code is not None:
+            if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
+                terminal_code = DevTerminal.INCOMPLETE_RESPONSE
+                terminal_message = turn.error_code
+                break
+            counters.protocol_recoveries += 1
+            correction = {
                 "turn_id": turn_id,
-                "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
-                "error_code": turn.error_code,
-            },
-        )
+                "code": turn.error_code,
+                "message": "Return one valid dev-head tool-call shape.",
+            }
+            journal.append("protocol_correction", correction)
+            continue
         try:
             validate_tool_batch(
                 turn.tool_calls,
@@ -812,6 +1277,7 @@ def _run_one(
                 break
             counters.protocol_recoveries += 1
             correction = {
+                "turn_id": turn_id,
                 "code": "INVALID_TOOL_BATCH",
                 "message": (
                     "Use up to four reads/searches only, or exactly one check, mutation, or finish."
@@ -823,6 +1289,14 @@ def _run_one(
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "tool-action limit reached"
             break
+        journal.append(
+            "tool_batch_started",
+            {
+                "turn_id": turn_id,
+                "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
+                "active_elapsed_ms": active_elapsed_ms(),
+            },
+        )
         counters.tool_actions += len(turn.tool_calls)
         try:
             results = gateway.execute_batch(turn.tool_calls)
@@ -830,37 +1304,16 @@ def _run_one(
             terminal_code = DevTerminal.TASK_FAILED
             terminal_message = f"tool gateway failed: {type(exc).__name__}"
             break
-        for result in results:
-            journal.append("attempt_card", _attempt_card(result, gateway))
-            if result.tool == "run_check":
-                state = _transition(journal, state, DevState.VERIFY)
-                state = _transition(
-                    journal,
-                    state,
-                    DevState.REVIEW if gateway.visible_checks_pass() else DevState.WORK,
-                )
-            elif result.tool == "apply_patch" and result.status == "succeeded":
-                state = _transition(journal, state, DevState.WORK)
-            elif result.tool == "finish_task" and result.status == "succeeded":
-                state = _transition(journal, state, DevState.SUBMITTED)
-                finish_result = result
-        latest_tool_results = results
-        journal.append(
-            "tool_batch_finished",
-            {
-                "turn_id": turn_id,
-                "action_ids": [result.action_id for result in results],
-                "result_fingerprints": [
-                    sha256_json(result.model_dump(mode="json")) for result in results
-                ],
-            },
+        batch_finish, correction = _record_tool_batch(
+            journal=journal,
+            gateway=gateway,
+            turn_id=turn_id,
+            results=results,
+            active_elapsed_ms=active_elapsed_ms(),
         )
-        if all(result.status == "failed" for result in results):
-            # Tool-contract failures are recoverable through the normal next model turn.
-            correction = {
-                "code": results[0].error_code or "TOOL_FAILED",
-                "message": results[0].message or "Use current public evidence and retry safely.",
-            }
+        if batch_finish is not None:
+            finish_result = batch_finish
+        latest_tool_results = results
 
     if finish_result is None:
         terminal = _terminal(
@@ -871,6 +1324,7 @@ def _run_one(
             cost_start_nanos=cost_start_nanos,
             hashes=hashes,
             message=terminal_message,
+            active_elapsed_ms=active_elapsed_ms(),
         )
         return _OneRunResult(_public_result(run_id, terminal), stop_remaining)
 
@@ -927,6 +1381,7 @@ def _run_one(
             "evaluator_summary": evaluator_hash,
         },
         message=terminal_message,
+        active_elapsed_ms=active_elapsed_ms(),
     )
     return _OneRunResult(_public_result(run_id, terminal), False)
 
@@ -948,16 +1403,11 @@ def run_dev(request: DevRunRequest) -> dict[str, Any]:
 
     pricing: ModelPricing | None = None
     cost_ledger: DevCostLedger | None = None
-    api_key: str | None = None
     if request.provider == "openai":
         _live_task_is_admitted(task_dir, package)
-        assert request.env_file is not None and request.max_cost_usd is not None
-        api_key = load_exact_openai_api_key(request.env_file)
+        assert request.max_cost_usd is not None
         pricing = pricing_for_model(request.model)
         cost_ledger = DevCostLedger(request.max_cost_usd, pricing)
-        sandbox = _live_sandbox_preflight(package)
-    else:
-        sandbox = LocalSandbox()
 
     runtime_hash = _runtime_hash()
     model_hash = _model_hash(request, pricing)
@@ -968,10 +1418,8 @@ def run_dev(request: DevRunRequest) -> dict[str, Any]:
             task_dir=task_dir,
             package=package,
             state_root=state_root,
-            sandbox=sandbox,
             pricing=pricing,
             cost_ledger=cost_ledger,
-            api_key=api_key,
             runtime_hash=runtime_hash,
             model_hash=model_hash,
         )

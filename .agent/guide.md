@@ -66,6 +66,14 @@ replays the durable result, conflicting reuse fails closed, and an admitted
 mutation is reconciled after a crash instead of applied twice. A provider start
 without durable usage is uncertain and must not be retried automatically.
 
+New runs also own one immutable `dev-run-envelope-v1`. `--resume-run-id` requires
+`repeat=1` and an exact match for provider, task, runtime, model, reasoning,
+credential path hash, cost cap, limits, and sandbox identity. Pre-envelope runs
+cannot resume. A run-lifetime OS lock rejects concurrent execution. Generic turn
+and tool-batch events recover a durable model decision without another provider
+call; counters, settled cost, latest batch, and active execution time are rebuilt
+from unique journal events. Process downtime contributes only to run age.
+
 ## Live and evaluation boundary
 
 Live mode accepts only checked-in `dev-train` tasks and requires an explicit model,
@@ -104,7 +112,7 @@ only PASS/FAIL and a safe failure class. Every result remains `official=false`.
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-The next local seam is exact run resume followed by stronger provenance and typed
+The next local seam is stronger content provenance and typed task-acceptance versus
 safety evidence. A second live row remains separately authorized. Confirmatory
 design review waits for three distinct harness/contract-clean submissions with at
 least two private passes; that threshold itself proves no quality or generalization

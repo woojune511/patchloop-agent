@@ -136,12 +136,17 @@ class DevCostLedger:
         self.spent_nanos += cost
         return cost
 
-    def restore_settled_usage(self, usage_rows: list[dict[str, object]]) -> None:
-        self.spent_nanos = 0
+    def restore_settled_usage(
+        self,
+        usage_rows: list[dict[str, object]],
+        *,
+        base_spent_nanos: int = 0,
+    ) -> None:
+        if type(base_spent_nanos) is not int or not 0 <= base_spent_nanos <= self.cap_nanos:
+            raise ContractError("durable base cost is invalid")
+        self.spent_nanos = base_spent_nanos
         for row in usage_rows:
             cost = row.get("cost_nanos")
             if type(cost) is not int or cost < 0:
                 raise ContractError("durable provider usage is invalid")
-            if self.spent_nanos + cost > self.cap_nanos:
-                raise ContractError("durable provider usage exceeds the invocation cap")
             self.spent_nanos += cost

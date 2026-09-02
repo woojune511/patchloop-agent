@@ -57,6 +57,13 @@ def test_cost_cap_is_checked_before_dispatch_and_can_lower_output_ceiling() -> N
     cost = ledger.settle(input_tokens=1_000, cached_input_tokens=0, output_tokens=100)
     assert 0 < cost <= ledger.cap_nanos
 
+    restored = DevCostLedger(Decimal("0.01"), pricing)
+    restored.restore_settled_usage(
+        [{"call_id": "call-resumed", "cost_nanos": cost}],
+        base_spent_nanos=123,
+    )
+    assert restored.spent_nanos == 123 + cost
+
 
 def test_provider_options_fail_closed() -> None:
     task = Path("tasks/smoke/csv-quoted-newline/public.yaml")
@@ -91,6 +98,14 @@ def test_provider_options_fail_closed() -> None:
         )
     with pytest.raises(ValidationError):
         DevRunRequest(provider="mock", task=task, model="mock-dev", repeat=7)
+    with pytest.raises(ValidationError, match="--repeat 1"):
+        DevRunRequest(
+            provider="mock",
+            task=task,
+            model="mock-dev",
+            repeat=2,
+            resume_run_id="run_dev_existing0001",
+        )
 
 
 def test_cli_exposes_only_dev_doctor_and_task_commands() -> None:
@@ -100,6 +115,22 @@ def test_cli_exposes_only_dev_doctor_and_task_commands() -> None:
     assert "rapid" not in result.stdout
     assert "evaluate" not in result.stdout
     assert "resume" not in result.stdout
+
+    dev_help = CliRunner().invoke(
+        app,
+        [
+            "dev",
+            "--provider",
+            "mock",
+            "--task",
+            "tasks/smoke/csv-quoted-newline/public.yaml",
+            "--model",
+            "mock-dev",
+            "--help",
+        ],
+    )
+    assert dev_help.exit_code == 0
+    assert "--resume-run-id" in dev_help.stdout
 
 
 @pytest.mark.parametrize(

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import pytest
+
 from patchloop.dev.contracts import DevToolResult
 from patchloop.dev.state import DevJournal
-from patchloop.errors import ActionConflict
+from patchloop.errors import ActionConflict, RecoveryError
 
 
 def test_jsonl_is_append_only_hash_chained_and_action_idempotent(tmp_path) -> None:
@@ -59,3 +61,15 @@ def test_recorded_provider_usage_is_idempotent_and_never_double_counted(tmp_path
         pass
     else:
         raise AssertionError("conflicting durable provider usage must fail")
+
+
+def test_run_lifetime_execution_lock_is_non_reentrant_and_released(tmp_path) -> None:
+    journal = DevJournal(tmp_path, "run_dev_state00000004")
+    with (
+        journal.execution_lock(),
+        pytest.raises(RecoveryError, match="already active"),
+        journal.execution_lock(),
+    ):
+        raise AssertionError("nested run execution must not acquire the lock")
+    with journal.execution_lock():
+        pass

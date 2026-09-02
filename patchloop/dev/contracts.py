@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
@@ -15,13 +16,6 @@ DEV_RUNTIME_ID = "dev-head"
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
-
-class DevState(StrEnum):
-    WORK = "WORK"
-    VERIFY = "VERIFY"
-    REVIEW = "REVIEW"
-    SUBMITTED = "SUBMITTED"
 
 
 class DevTerminal(StrEnum):
@@ -111,6 +105,10 @@ class DevRunRequest(StrictModel):
     env_file: Path | None = None
     max_cost_usd: Decimal | None = None
     repeat: int = Field(default=1, ge=1, le=6)
+    resume_run_id: str | None = Field(
+        default=None,
+        pattern=r"^run_dev_[a-zA-Z0-9_-]+$",
+    )
     state_root: Path | None = None
     limits: DevLimits = Field(default_factory=DevLimits)
 
@@ -123,4 +121,66 @@ class DevRunRequest(StrictModel):
                 raise ValueError("--provider openai requires a positive --max-cost-usd")
         elif self.env_file is not None or self.max_cost_usd is not None:
             raise ValueError("--provider mock forbids --env-file and --max-cost-usd")
+        if self.resume_run_id is not None and self.repeat != 1:
+            raise ValueError("--resume-run-id requires --repeat 1")
+        return self
+
+
+class DevRunEnvelope(StrictModel):
+    schema_version: Literal["dev-run-envelope-v1"] = "dev-run-envelope-v1"
+    official: Literal[False] = False
+    runtime_id: Literal["dev-head"] = "dev-head"
+    run_id: str = Field(pattern=r"^run_dev_[a-zA-Z0-9_-]+$")
+    provider: Literal["mock", "openai"]
+    task_path: str
+    task_id: str
+    task_version: int = Field(ge=1)
+    split: Literal[
+        "smoke",
+        "dev-train",
+        "dev-validation",
+        "same-repo-heldout",
+        "cross-repo-heldout",
+    ]
+    base_commit: str
+    public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    runtime_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    model: str
+    reasoning_effort: Literal["none", "low", "medium", "high", "xhigh"]
+    credential_file_path_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+    max_cost_nanos: int = Field(ge=0)
+    cost_start_nanos: int = Field(ge=0)
+    limits: DevLimits
+    sandbox_backend: Literal["local", "docker"]
+    evaluator_image_digest: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+    created_at: datetime
+
+    @model_validator(mode="after")
+    def provider_boundary_is_exact(self) -> DevRunEnvelope:
+        if self.cost_start_nanos > self.max_cost_nanos:
+            raise ValueError("run envelope cost start exceeds its invocation cap")
+        if self.provider == "openai":
+            if (
+                self.credential_file_path_hash is None
+                or self.max_cost_nanos <= 0
+                or self.sandbox_backend != "docker"
+                or self.evaluator_image_digest is None
+            ):
+                raise ValueError("live run envelope is missing an exact execution boundary")
+        elif (
+            self.credential_file_path_hash is not None
+            or self.max_cost_nanos != 0
+            or self.cost_start_nanos != 0
+            or self.sandbox_backend != "local"
+            or self.evaluator_image_digest is not None
+        ):
+            raise ValueError("mock run envelope contains a live execution boundary")
         return self

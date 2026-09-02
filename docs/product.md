@@ -55,7 +55,9 @@ current source spans form a small recency-ordered working set.
 ## Scope
 
 Current development includes public source inspection, constrained edits, visible
-checks, action recovery, cost enforcement, external run state, and isolated
-private evaluation. It excludes memory experiments, held-out tuning, claim runs,
+checks, exact-envelope run resume, action recovery, cost enforcement, external run
+state, and isolated private evaluation. Resume derives the current workflow gate
+from the workspace and durable check evidence; it does not restore a decorative
+workflow state. It excludes memory experiments, held-out tuning, claim runs,
 automatic provider retries, Docker startup, image pull/build, and compatibility
-with deleted historical runners.
+with deleted historical runners or pre-envelope journals.

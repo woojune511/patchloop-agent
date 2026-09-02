@@ -81,5 +81,36 @@ failure class.
 
 Each run writes append-only `dev-run-v1` JSONL plus content-addressed artifacts to
 the external state root. Operational acceptance requires a durable terminal and
-evaluator summary within 30 minutes. Preserve the run directory and do not edit
-or replay it.
+evaluator summary within 30 minutes. Preserve the run directory and do not edit it.
+
+## Resume an interrupted run
+
+Only runs created with a `dev-run-envelope-v1` envelope can resume. Reissue the
+original command against the same external state root, add the exact run ID, and
+set one repetition:
+
+```powershell
+uv run patchloop dev `
+  --provider openai `
+  --task tasks/dev-train/<task>/public.yaml `
+  --model gpt-5.4-mini-2026-03-17 `
+  --reasoning-effort medium `
+  --env-file <same-credential-file> `
+  --max-cost-usd <same-positive-decimal> `
+  --repeat 1 `
+  --resume-run-id run_dev_<id>
+```
+
+Provider, task, model, reasoning effort, resolved credential-file path, invocation
+cap, limits, runtime content, sandbox identity, and task identities must match the
+stored envelope exactly. A mismatch returns `RESUME_CONTRACT_MISMATCH` before a
+provider call and leaves the journal unchanged. Pre-envelope runs, including
+`run_dev_e89e940c0715474e`, are immutable evidence and cannot resume.
+
+Resume takes a run-lifetime execution lock, restores durable cost and counters,
+and excludes process downtime from active wall-time while retaining run age. A
+recorded model decision continues with the same tool calls; completed actions use
+`action_id + input_hash` replay, and pending mutations use reconciliation. An
+unmatched provider dispatch is never retried and becomes one
+`PROVIDER_TIMEOUT_OR_UNKNOWN` terminal. Resuming a terminal run is a read-only,
+idempotent return of its existing public result.
