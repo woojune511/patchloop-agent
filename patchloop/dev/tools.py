@@ -34,6 +34,9 @@ SINGLE_ACTION_TOOLS = DEV_SINGLE_ACTION_TOOLS
 ALL_DEV_TOOLS = READ_TOOLS | SINGLE_ACTION_TOOLS
 _PATCH_PATH = re.compile(r"^diff --git a/(.+) b/(.+)$", re.MULTILINE)
 _MAX_MUTATION_HUNK_CHARS = 24_000
+_MAX_FAILED_MUTATION_DIFF_CHARS = 24_000
+_PATCH_ERROR_LINE = re.compile(r"corrupt patch at (?:<stdin>:|line )(\d+)")
+_PATCH_SOURCE_LINE = re.compile(r"patch failed: ([^:\r\n]+):(\d+)")
 
 
 def dev_tool_schemas(*, finish_enabled: bool) -> list[dict[str, Any]]:
@@ -207,26 +210,134 @@ class DevToolGateway:
         self.requires_alternative = False
         self.accepted_mutations = 0
         self.last_successful_mutation: dict[str, Any] | None = None
+        self.last_failed_mutation: dict[str, Any] | None = None
         self._hydrate()
 
     def _hydrate(self) -> None:
+        mutation_starts: dict[str, dict[str, Any]] = {}
         for event in self.journal.events():
+            if event["event_type"] == "action_started":
+                payload = event["payload"]
+                if payload.get("tool") == "apply_git_diff" and isinstance(
+                    payload.get("action_id"), str
+                ):
+                    mutation_starts[payload["action_id"]] = payload
+                continue
             if event["event_type"] != "action_finished":
                 continue
             result = DevToolResult.model_validate(event["payload"]["result"])
+            if result.tool == "apply_git_diff":
+                if result.status == "failed":
+                    started = mutation_starts.get(result.action_id)
+                    if started is not None and isinstance(started.get("arguments"), dict):
+                        self.last_failed_mutation = self._failed_mutation_context(
+                            arguments=started["arguments"],
+                            action_id=result.action_id,
+                            input_hash=result.input_hash,
+                            baseline_diff_hash=started.get("baseline_diff_hash"),
+                            result=result,
+                        )
+                    continue
+                self.accepted_mutations += 1
+                self.last_successful_mutation = result.output.get("mutation")
+                self.last_failed_mutation = None
+                self._invalidate_spans(result.output.get("changed_files", []))
+                if result.output.get("alternative_requirement_satisfied") is True:
+                    self.requires_alternative = False
+                continue
             if result.status != "succeeded":
                 continue
             if result.tool in READ_TOOLS:
                 self._restore_read_result(result)
-            elif result.tool == "apply_git_diff":
-                self.accepted_mutations += 1
-                self.last_successful_mutation = result.output.get("mutation")
-                self._invalidate_spans(result.output.get("changed_files", []))
-                if result.output.get("alternative_requirement_satisfied") is True:
-                    self.requires_alternative = False
             elif result.tool == "run_check":
                 self._reset_evidence_progress()
                 self._remember_check(result.output)
+
+    @staticmethod
+    def _bounded_string(value: Any, limit: int) -> str | None:
+        return value[:limit] if isinstance(value, str) else None
+
+    @staticmethod
+    def _mutation_error_location(message: str | None) -> dict[str, Any] | None:
+        if not message:
+            return None
+        patch_line = _PATCH_ERROR_LINE.search(message)
+        if patch_line is not None:
+            return {"patch_line": int(patch_line.group(1))}
+        source_line = _PATCH_SOURCE_LINE.search(message)
+        if source_line is not None:
+            return {"path": source_line.group(1), "line": int(source_line.group(2))}
+        return None
+
+    @classmethod
+    def _failed_mutation_context(
+        cls,
+        *,
+        arguments: dict[str, Any],
+        action_id: str,
+        input_hash: str,
+        baseline_diff_hash: Any,
+        result: DevToolResult,
+    ) -> dict[str, Any]:
+        patch = arguments.get("git_diff")
+        patch_text = patch if isinstance(patch, str) else None
+        anchor_value = arguments.get("edit_anchor")
+        anchor = None
+        if isinstance(anchor_value, dict):
+            occurrence = anchor_value.get("occurrence")
+            anchor = {
+                "path": cls._bounded_string(anchor_value.get("path"), 1_000),
+                "old_text": cls._bounded_string(anchor_value.get("old_text"), 20_000),
+                "occurrence": occurrence
+                if type(occurrence) is int and 1 <= occurrence <= 100
+                else None,
+            }
+        evidence_span_ids = arguments.get("evidence_span_ids")
+        if not isinstance(evidence_span_ids, list):
+            evidence_span_ids = []
+        return {
+            "action_id": action_id,
+            "input_hash": input_hash,
+            "baseline_diff_hash": (
+                baseline_diff_hash if isinstance(baseline_diff_hash, str) else None
+            ),
+            "git_diff": (
+                patch_text[:_MAX_FAILED_MUTATION_DIFF_CHARS]
+                if patch_text is not None
+                else None
+            ),
+            "git_diff_hash": (
+                sha256_bytes(patch_text.encode("utf-8")) if patch_text is not None else None
+            ),
+            "git_diff_truncated": (
+                len(patch_text) > _MAX_FAILED_MUTATION_DIFF_CHARS
+                if patch_text is not None
+                else False
+            ),
+            "hypothesis": cls._bounded_string(arguments.get("hypothesis"), 1_500),
+            "expected_behavior": cls._bounded_string(
+                arguments.get("expected_behavior"), 1_500
+            ),
+            "evidence_span_ids": [
+                value[:500]
+                for value in evidence_span_ids[:8]
+                if isinstance(value, str)
+            ],
+            "edit_anchor": anchor,
+            "falsified_prior_hypothesis": cls._bounded_string(
+                arguments.get("falsified_prior_hypothesis"), 1_500
+            ),
+            "alternative_mechanism": cls._bounded_string(
+                arguments.get("alternative_mechanism"), 1_500
+            ),
+            "error_code": result.error_code,
+            "error_message": result.message,
+            "error_location": cls._mutation_error_location(result.message),
+            "next_action": (
+                "Repair or explicitly replace this failed mutation. Use read/search only "
+                "when needed for that repair."
+            ),
+        }
 
     @staticmethod
     def _cache_key(input_hash: str, workspace_diff_hash: str) -> tuple[str, str]:
@@ -430,12 +541,21 @@ class DevToolGateway:
             if result.tool == "apply_git_diff":
                 self.accepted_mutations += 1
                 self.last_successful_mutation = result.output["mutation"]
+                self.last_failed_mutation = None
                 self._invalidate_spans(result.output.get("changed_files", []))
                 if result.output.get("alternative_requirement_satisfied") is True:
                     self.requires_alternative = False
             elif result.tool == "run_check":
                 self._reset_evidence_progress()
                 self._remember_check(result.output)
+        elif result.tool == "apply_git_diff":
+            self.last_failed_mutation = self._failed_mutation_context(
+                arguments=call.arguments,
+                action_id=result.action_id,
+                input_hash=result.input_hash,
+                baseline_diff_hash=baseline,
+                result=result,
+            )
         return result
 
     def _perform(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:

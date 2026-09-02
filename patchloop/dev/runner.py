@@ -321,6 +321,7 @@ def _build_context(
         "source_spans": gateway.context_spans(exclude=latest_span_ids),
         "recent_checks": _recent_checks(gateway),
         "last_successful_mutation": gateway.last_successful_mutation,
+        "last_failed_mutation": gateway.last_failed_mutation,
         "recent_attempt_result_next_question": _cards(journal, correction),
         "workflow_gate": workflow_gate,
         "remaining_budget": {
@@ -367,7 +368,10 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "attempt": result.tool,
             "result": result.error_code or "failed",
             "next_question": (
-                "What current public evidence or corrected contract resolves this failure?"
+                "Repair or explicitly replace last_failed_mutation; use read/search only "
+                "when needed for that repair."
+                if result.tool == "apply_git_diff"
+                else "What current public evidence or corrected contract resolves this failure?"
             ),
         }
     if result.tool in {"read_file", "search_files"}:
@@ -771,13 +775,8 @@ def _record_tool_batch(
             "active_elapsed_ms": active_elapsed_ms,
         },
     )
-    correction = None
-    if all(result.status == "failed" for result in results):
-        correction = {
-            "code": results[0].error_code or "TOOL_FAILED",
-            "message": results[0].message or "Use current public evidence and retry safely.",
-        }
-    return finish_result, correction
+    # Valid tool calls that fail are execution evidence, not model protocol failures.
+    return finish_result, None
 
 
 def _run_one(

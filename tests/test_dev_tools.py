@@ -6,7 +6,7 @@ from patchloop.dev.contracts import RequestedTool
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MOCK_MUTATIONS
 from patchloop.dev.tools import dev_tool_schemas
 from patchloop.sandbox.runner import SandboxResult
-from patchloop.util import sha256_json
+from patchloop.util import sha256_bytes, sha256_json
 
 
 class CountingFailSandbox:
@@ -92,6 +92,7 @@ def test_mutation_tool_contract_requires_unwrapped_raw_git_diff() -> None:
     assert "*** Begin Patch" in mutation["description"]
     assert "apply_git_diff git_diff" in DEV_SYSTEM_PROMPT
     assert "Never use \"*** Begin Patch\"" in DEV_SYSTEM_PROMPT
+    assert "When last_failed_mutation is present" in DEV_SYSTEM_PROMPT
 
 
 def test_patch_wrapper_from_live_transcript_fails_with_exact_git_diff_guidance(
@@ -115,6 +116,87 @@ def test_patch_wrapper_from_live_transcript_fails_with_exact_git_diff_guidance(
     assert result.error_code == "CONTRACT_ERROR"
     assert "must begin exactly with 'diff --git a/<path> b/<path>'" in result.message
     assert gateway.accepted_mutations == 0
+
+
+def test_failed_mutation_persists_across_reads_and_restart_then_clears_on_success(
+    gateway_factory,
+) -> None:
+    gateway, journal, workspace = gateway_factory()
+    gateway.execute_batch(read_calls())
+    malformed = mutation_call(gateway, action_id="malformed-mutation")
+    malformed.arguments["git_diff"] = malformed.arguments["git_diff"].replace(
+        "@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@"
+    )
+
+    failed = gateway.execute(malformed)
+
+    assert failed.status == "failed"
+    pending = gateway.last_failed_mutation
+    assert pending is not None
+    assert pending["git_diff"] == malformed.arguments["git_diff"]
+    assert pending["git_diff_hash"] == sha256_bytes(
+        malformed.arguments["git_diff"].encode("utf-8")
+    )
+    assert pending["git_diff_truncated"] is False
+    assert pending["hypothesis"] == malformed.arguments["hypothesis"]
+    assert pending["expected_behavior"] == malformed.arguments["expected_behavior"]
+    assert pending["edit_anchor"] == malformed.arguments["edit_anchor"]
+    assert pending["error_code"] == "CONTRACT_ERROR"
+    assert pending["error_location"]["patch_line"] > 0
+    assert "Repair or explicitly replace" in pending["next_action"]
+
+    read_after_failure = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="read-after-failed-mutation",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": 1,
+                "end_line": 20,
+            },
+        )
+    )
+    assert read_after_failure.status == "succeeded"
+    assert gateway.last_failed_mutation == pending
+
+    restarted = type(gateway)(
+        workspace=workspace,
+        public_task=gateway.public_task,
+        sandbox=gateway.sandbox,
+        journal=journal,
+        limits=gateway.limits,
+    )
+    assert restarted.last_failed_mutation == pending
+
+    replacement = mutation_call(restarted, action_id="replacement-failed-mutation")
+    replacement.arguments["git_diff"] = replacement.arguments["git_diff"].replace(
+        "@@ -1,13 +1,11 @@", "@@ -1,13 +1,9 @@"
+    )
+    assert restarted.execute(replacement).status == "failed"
+    assert restarted.last_failed_mutation["action_id"] == "replacement-failed-mutation"
+    assert restarted.last_failed_mutation["git_diff_hash"] != pending["git_diff_hash"]
+
+    accepted = restarted.execute(mutation_call(restarted, action_id="repaired-mutation"))
+    assert accepted.status == "succeeded"
+    assert restarted.last_failed_mutation is None
+
+
+def test_failed_mutation_diff_projection_is_bounded(gateway_factory) -> None:
+    gateway, _, _ = gateway_factory()
+    gateway.execute_batch(read_calls())
+    oversized = mutation_call(gateway, action_id="oversized-failed-mutation")
+    oversized.arguments["git_diff"] += "+" + ("x" * 25_000) + "\n"
+
+    failed = gateway.execute(oversized)
+
+    assert failed.status == "failed"
+    pending = gateway.last_failed_mutation
+    assert pending is not None
+    assert len(pending["git_diff"]) == 24_000
+    assert pending["git_diff_truncated"] is True
+    assert pending["git_diff_hash"] == sha256_bytes(
+        oversized.arguments["git_diff"].encode("utf-8")
+    )
 
 
 def test_parallel_read_mutation_check_and_finish(gateway_factory) -> None:

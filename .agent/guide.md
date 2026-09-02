@@ -55,10 +55,13 @@ mutation additionally requires `falsified_prior_hypothesis` and
 
 Model context contains only the public task, current full diff, the exact latest
 tool batch, a recency-ordered current-source working set, recent visible checks,
-bounded `last_successful_mutation`, remaining budget, and the latest three
-attempt-result-next-question cards. Identical evidence may be cached and signaled
-but is not hard-blocked. Never add raw reasoning, private task material, hidden
-tests, reference patches, or evaluator details.
+bounded `last_successful_mutation`, bounded `last_failed_mutation`, remaining
+budget, and the latest three attempt-result-next-question cards. A failed mutation
+retains its public diff excerpt, full diff hash, intent, anchor, evidence IDs, error,
+and parsed error location across later reads and process resume. A later failed
+mutation replaces it; a successful mutation clears it. Identical evidence may be
+cached and signaled but is not hard-blocked. Never add raw reasoning, private task
+material, hidden tests, reference patches, or evaluator details.
 
 ## State and recovery
 
@@ -136,12 +139,13 @@ the agent returned to read/search for the remaining 37 turns instead of repairin
 the mutation.
 
 Keep repeated-evidence detection diagnostic-only; the third row emitted just three
-soft signals and they did not block execution. The next implementation seam is a
-bounded persistent failed-mutation repair card or equivalent gate evidence that
-survives unrelated read/search cards until correction or terminal. Any fourth live
-row remains separately authorized. Confirmatory design review waits for three
-distinct harness/contract-clean submissions with at least two private passes; that
-threshold itself proves no quality or generalization benefit.
+soft signals and they did not block execution. Bounded failed-mutation continuation
+is now implemented locally without adding a hard workflow gate: valid tool failures
+remain execution evidence rather than being relabeled as protocol failures, and the
+repair target survives unrelated read/search cards and resume until replacement or
+success. Any fourth live row remains separately authorized. Confirmatory design
+review waits for three distinct harness/contract-clean submissions with at least two
+private passes; that threshold itself proves no quality or generalization benefit.
 
 ## Validation checklist
 

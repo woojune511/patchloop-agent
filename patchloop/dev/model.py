@@ -22,6 +22,9 @@ checks must pass on the current diff before finish_task is available. The comple
 current diff is projected in
 context; do not request get_diff. Do not emit raw chain-of-thought. Private tests,
 reference patches, and evaluator details are unavailable and must not be inferred.
+When last_failed_mutation is present, it is an unresolved public mutation from a
+prior stateless turn. Repair or explicitly replace that mutation before unrelated
+exploration. Read/search remains available when it is needed for the repair.
 """
 
 

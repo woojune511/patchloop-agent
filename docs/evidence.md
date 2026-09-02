@@ -31,6 +31,13 @@ Following the Rapid Dev Reset, local checkpoints recorded:
   and mock smoke reached isolated `EVALUATOR_PASS` through one accepted
   `apply_git_diff` mutation. This verifies the local tool/recovery wiring only; it
   did not by itself show that a provider would emit the new wire format.
+- The failed-mutation continuation checkpoint passed Ruff and 59 tests in 50.51 seconds.
+  Focused tests retain a bounded failed mutation across four later read cards and a
+  gateway restart, replace it with a later mutation, clear it only on success, and
+  keep tool failure separate from protocol correction. Mock smoke still reaches
+  isolated `EVALUATOR_PASS` with task acceptance PASS and safety NOT_RUN. A read-only
+  hydration of the third live journal recovered its failed diff hash, hypothesis,
+  public anchor, and patch line 27 without changing that immutable run.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 

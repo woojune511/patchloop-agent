@@ -13,7 +13,7 @@ import patchloop.dev.runner as runner
 from patchloop.agent.model import ModelTurn
 from patchloop.agent.model import RequestedTool as ProviderRequestedTool
 from patchloop.dev.contracts import DevLimits, DevModelTurn, DevRunRequest, RequestedTool
-from patchloop.dev.model import MockDevAdapter
+from patchloop.dev.model import MOCK_MUTATIONS, MockDevAdapter
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError, RecoveryError, ResumeContractMismatch
 from patchloop.repository import WorkspaceManager as RealWorkspaceManager
@@ -66,6 +66,102 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     assert len(context["source_spans"]) == 8
 
 
+def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label(
+    gateway_factory,
+    smoke_package,
+) -> None:
+    gateway, journal, _ = gateway_factory()
+    source = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="failed-mutation-source",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": 1,
+                "end_line": 20,
+            },
+        )
+    )
+    mutation = MOCK_MUTATIONS["csv-quoted-newline"]
+    malformed_patch = mutation.patch.replace("@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@")
+    failed = gateway.execute(
+        RequestedTool(
+            name="apply_git_diff",
+            action_id="failed-mutation",
+            arguments={
+                "git_diff": malformed_patch,
+                "hypothesis": mutation.hypothesis,
+                "expected_behavior": mutation.expected_behavior,
+                "evidence_span_ids": [source.output["spans"][0]["span_id"]],
+                "edit_anchor": {
+                    "path": mutation.path,
+                    "old_text": mutation.anchor,
+                    "occurrence": 1,
+                },
+                "falsified_prior_hypothesis": None,
+                "alternative_mechanism": None,
+            },
+        )
+    )
+    _, correction = runner._record_tool_batch(  # noqa: SLF001 - context contract test
+        journal=journal,
+        gateway=gateway,
+        turn_id="failed-mutation-turn",
+        results=[failed],
+        active_elapsed_ms=1,
+    )
+    assert correction is None
+
+    reads = gateway.execute_batch(
+        [
+            RequestedTool(
+                name="read_file",
+                action_id=f"read-after-failure-{index}",
+                arguments={
+                    "path": "mini_data_utils/csvlite.py",
+                    "start_line": index,
+                    "end_line": index + 5,
+                },
+            )
+            for index in range(1, 5)
+        ]
+    )
+    runner._record_tool_batch(  # noqa: SLF001 - displace the bounded attempt cards
+        journal=journal,
+        gateway=gateway,
+        turn_id="read-after-failure-turn",
+        results=reads,
+        active_elapsed_ms=2,
+    )
+    context = json.loads(
+        runner._build_context(  # noqa: SLF001 - direct context contract test
+            package=smoke_package,
+            gateway=gateway,
+            journal=journal,
+            correction=None,
+            latest_tool_results=reads,
+            counters=runner._RunCounters(),  # noqa: SLF001
+            elapsed_seconds=0,
+            limits=DevRunRequest(
+                provider="mock",
+                task=repository_root()
+                / "tasks"
+                / "smoke"
+                / "csv-quoted-newline"
+                / "public.yaml",
+                model="mock-dev",
+            ).limits,
+        )
+    )
+
+    assert context["last_failed_mutation"]["git_diff"] == malformed_patch
+    assert "corrupt patch" in context["last_failed_mutation"]["error_message"]
+    assert all(
+        card["attempt"] not in {"apply_git_diff", "protocol"}
+        for card in context["recent_attempt_result_next_question"]
+    )
+
+
 def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeypatch) -> None:
     contexts: list[str] = []
 
@@ -101,6 +197,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "source_spans",
         "recent_checks",
         "last_successful_mutation",
+        "last_failed_mutation",
         "recent_attempt_result_next_question",
         "workflow_gate",
         "remaining_budget",

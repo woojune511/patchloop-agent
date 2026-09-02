@@ -32,7 +32,10 @@ seconds. The provenance/safety checkpoint passes 54 tests in 50.43 seconds and
 reaches mock `EVALUATOR_PASS` with task acceptance PASS and safety NOT_RUN. The
 post-live mutation-encoding checkpoint passes Ruff and 56 tests in 50.92 seconds;
 mock smoke reaches the same evaluator boundary through one accepted
-`apply_git_diff` mutation. The first live row ran on 2026-09-02:
+`apply_git_diff` mutation. The failed-mutation continuation checkpoint passes Ruff
+and 59 tests in 50.51 seconds; mock smoke still reaches that boundary. Read-only hydration
+of the third live journal recovers its full failed-diff hash, hypothesis,
+`loguru/_handler.py` anchor, and patch line 27. The first live row ran on 2026-09-02:
 `loguru-invalid-format-feedback`, `gpt-5.4-mini-2026-03-17`, medium reasoning,
 one repetition, and a $1.20 invocation cap. Run `run_dev_e89e940c0715474e`
 reached a durable `LIMIT_REACHED` terminal in 141.147 seconds after 39 model
@@ -83,10 +86,14 @@ obligation after later read/search cards displaced it.
 The next seam is therefore failed-mutation recovery, not a stronger repeated-read
 terminal. Exact-request caching already avoided 31 filesystem rescans in the third
 row, while only three diagnostic stagnation cards fired and none blocked execution.
-A subsequent change should keep a bounded failed-mutation error and repair target
-visible until a corrected mutation succeeds or the run terminates. Repetition
-detection remains soft evidence; varied searches should not be treated as proof that
-the same mechanism is repeating.
+The local correction now keeps a bounded failed-mutation error and repair target
+visible after the failure. A later failed mutation replaces the record; a successful
+mutation clears it. The failed public diff excerpt, full hash, intent, anchor,
+evidence IDs, and error survive later reads and process resume. Repetition detection
+remains soft evidence; varied searches are not treated as proof that the same
+mechanism is repeating. This adds no hard workflow gate, error taxonomy, or
+replacement mutation interface. Valid tool failures are no longer duplicated as
+`protocol` cards.
 
 Operational resume uses an immutable envelope, exact contract comparison,
 run-lifetime locking, journal-derived counters and cost, durable tool-decision replay,
