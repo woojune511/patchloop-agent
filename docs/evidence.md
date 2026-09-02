@@ -30,7 +30,7 @@ Following the Rapid Dev Reset, local checkpoints recorded:
   passed 29 tests in 44.52 seconds. Full Ruff and 56 tests passed in 50.92 seconds,
   and mock smoke reached isolated `EVALUATOR_PASS` through one accepted
   `apply_git_diff` mutation. This verifies the local tool/recovery wiring only; it
-  does not show that a provider will emit the new wire format.
+  did not by itself show that a provider would emit the new wire format.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -83,12 +83,41 @@ no visible check, submission, or evaluator followed. This is live evidence that 
 latest-batch projection defect was not the direct terminal cause in this row; it is
 not evidence of task acceptance, safety, or general coding quality.
 
+## Third live development observation
+
+After the raw-diff tool contract was made explicit, a third separately approved row
+again used `loguru-invalid-format-feedback`, `gpt-5.4-mini-2026-03-17`, medium
+reasoning, one repetition, the $1.20 cap, and external state root
+`C:\patchloop-state`. Run `run_dev_ef58e14b40834f0b` wrote a valid 604-event hash
+chain ending at
+`sha256:ed9915e6dbbb48aa4fc6cdeccd45e479df1aa1e3c92fd441110c8fba69efe7cf`.
+It reached `LIMIT_REACHED` (`model-call limit reached`) after 172.780 active seconds
+and 174 seconds of run age. All 40 provider dispatches recorded durable completions.
+Recorded usage was 249,211 input tokens, 12,666 output tokens including 8,325
+reasoning tokens, and $0.24390525 of cost.
+
+The run made 74 searches, 19 reads, and one `apply_git_diff` call. On turn 3 the
+provider emitted a raw Git diff beginning with the required `diff --git` header. Its
+first hunk declared 20 post-image lines while containing 21, so fail-closed
+`git apply --check` rejected it with `corrupt patch at <stdin>:27` before applying
+anything. The next context artifact contained that exact tool result and remained at
+the `needs_mutation` gate. The following 37 turns nevertheless used only read/search
+actions. Of 93 read/search actions, 31 were cache hits, 59 returned no new span, and
+three emitted a soft stagnation signal. No signal blocked execution. No mutation was
+accepted, no visible check or submission occurred, and no evaluator ran.
+
+This row is bounded live evidence that the renamed schema and raw-diff prefix are
+provider-compatible. It also isolates a later failure boundary: a malformed mutation
+was reported correctly for one turn, but the unresolved repair target was displaced
+by subsequent bounded attempt cards. It does not justify a hard repeated-evidence
+terminal or establish task acceptance, safety, or general coding quality.
+
 ## Not executed
 
-- no third repetition, transport retry, or follow-up paid run after the second row
+- no fourth repetition, transport retry, or follow-up paid run after the third row
 - no image pull, image build, or automatic Docker Desktop start
 - no accepted mutation, visible check, submission, private evaluator, or evaluator
-  container in either live row
+  container in any live row
 - no claim, qualification, activation, adoption, or held-out evaluation
 
 The under-two-minute validation target is locally supported. A durable live terminal
@@ -110,8 +139,8 @@ because no evaluator summary was reached.
 - Deleted historical executables require Git history to replay.
 - Only runs with the new immutable envelope can resume; older journals remain
   read-only evidence.
-- The renamed `apply_git_diff` schema and wrapper-rejection regression are local
-  evidence until another exact live row is separately approved.
+- One live row shows that the provider can emit the `apply_git_diff` raw-diff shape,
+  but its single malformed patch does not establish reliable mutation or submission.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

@@ -20,8 +20,8 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The two live observations below
-were separately authorized. Neither authorized an image pull/build, automatic
+Repository policy alone never initiates paid work. The three live observations below
+were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
 ## Evidence state
@@ -49,6 +49,17 @@ evidence cache. Unlike the first row, the agent attempted mutation twice, on tur
 the runtime required a raw Git diff. It accepted no mutation, submitted nothing,
 and ran no evaluator.
 
+After the mutation wire contract was made explicit, a third separately approved
+row again used the same task, model, reasoning, repetition, and $1.20 cap. Run
+`run_dev_ef58e14b40834f0b` reached durable `LIMIT_REACHED` after 172.780 active
+seconds, 40 model calls, and 94 tool actions, recording $0.24390525. On turn 3 the
+agent called `apply_git_diff` with the required raw Git-diff prefix, so the renamed
+provider tool contract was accepted. The first hunk declared 20 post-image lines
+but contained 21, and fail-closed `git apply --check` rejected it at the following
+hunk header with `corrupt patch at <stdin>:27`. That exact failure appeared in the
+next canonical context. The remaining 37 turns returned to read/search only. No
+mutation was accepted, nothing was submitted, and no evaluator ran.
+
 The terminal arrived within 30 minutes, but the operational target still remains
 unverified because there was no evaluator summary. See
 [Evidence and limitations](evidence.md) for the exact observation and limits.
@@ -63,20 +74,25 @@ The first live failure exposed a context-projection defect: successful reads wer
 selected by lexicographic span hash, so requested source could disappear from the
 next stateless request and trigger repeated inspection. The second live row provides
 bounded evidence that complete latest-batch projection and exact-request caching now
-operate in a live loop. It does not establish submission reliability: the next
-failure boundary was an ambiguous mutation wire format. The public mutation tool is
-now `apply_git_diff`; its `git_diff` field explicitly requires a raw Git unified diff
-beginning with `diff --git a/<path> b/<path>` and rejects patch wrappers. This is a
-local correction until another separately approved row exercises it. The focused
-mutation/resume set passes 29 tests in 44.52 seconds, the full suite passes 56 tests
-in 50.92 seconds, and mock smoke reaches isolated `EVALUATOR_PASS` with one accepted
-mutation; none of those results is provider acceptance.
+operate in a live loop. The third row then confirmed that the provider can select
+`apply_git_diff` and emit its required raw-diff prefix, but it did not establish
+submission reliability: the generated hunk counts were invalid. The exact tool
+failure was visible on the next turn, yet it was not retained as an unresolved repair
+obligation after later read/search cards displaced it.
+
+The next seam is therefore failed-mutation recovery, not a stronger repeated-read
+terminal. Exact-request caching already avoided 31 filesystem rescans in the third
+row, while only three diagnostic stagnation cards fired and none blocked execution.
+A subsequent change should keep a bounded failed-mutation error and repair target
+visible until a corrected mutation succeeds or the run terminates. Repetition
+detection remains soft evidence; varied searches should not be treated as proof that
+the same mechanism is repeating.
 
 Operational resume uses an immutable envelope, exact contract comparison,
 run-lifetime locking, journal-derived counters and cost, durable tool-decision replay,
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
-acceptance and safety remain separate typed axes. No third live row is authorized.
+acceptance and safety remain separate typed axes. No fourth live row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

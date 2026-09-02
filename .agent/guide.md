@@ -129,12 +129,19 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 The context, resume, provenance, and typed-safety seams are locally implemented.
 The second live row confirmed exact latest-batch projection and cache reuse but
-exposed an ambiguous mutation encoding contract: two wrapped patch attempts were
-rejected before mutation. `apply_git_diff` now makes the required wire format
-explicit. Any third live row remains separately authorized and is not implied by
-this local correction. Confirmatory design review waits for three distinct
-harness/contract-clean submissions with at least two private passes; that threshold
-itself proves no quality or generalization benefit.
+exposed an ambiguous mutation encoding contract. The third live row confirmed that
+the provider can call `apply_git_diff` with the raw-diff prefix, then exposed the next
+boundary: one invalid hunk count was reported exactly on the next turn, after which
+the agent returned to read/search for the remaining 37 turns instead of repairing
+the mutation.
+
+Keep repeated-evidence detection diagnostic-only; the third row emitted just three
+soft signals and they did not block execution. The next implementation seam is a
+bounded persistent failed-mutation repair card or equivalent gate evidence that
+survives unrelated read/search cards until correction or terminal. Any fourth live
+row remains separately authorized. Confirmatory design review waits for three
+distinct harness/contract-clean submissions with at least two private passes; that
+threshold itself proves no quality or generalization benefit.
 
 ## Validation checklist
 
