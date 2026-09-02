@@ -146,13 +146,22 @@ the repair card remained present in all 23 later turns. All 13 replacement diffs
 still contained incorrect hunk totals, while a read-only `git apply --check --recount`
 accepted each one against the retained isolated workspace.
 
+A provider-free retrospective then replayed the first exact diff through the current
+gateway. Recount accepted it, version-1 visible checks passed, and the exact submitted
+artifact failed task acceptance while Docker safety passed. This moves the active
+development boundary beyond mutation transport: the version-1 checks did not execute
+the central missing-key behavior. Preserve that package as version 1. Version 2 adds
+one public black-box check for actionable missing-key diagnostics, available keys,
+the canonical `logger.bind()` / `{extra[key]}` pairing, and both catch modes. Do not
+project evaluator details or derive further assertions from hidden output.
+
 Keep repeated-evidence detection diagnostic-only. The bounded continuation evidence
 does not support a hard workflow gate or a replacement mutation DSL. The smaller
 current correction uses Git's deterministic recount for hunk totals while preserving
 all existing mutation and submission checks. Any fifth live row remains separately
-authorized. Confirmatory design review waits for three distinct harness/contract-clean
-submissions with at least two private passes; that threshold itself proves no quality
-or generalization benefit.
+authorized and must name the exact task version/content identity. Confirmatory design
+review waits for three distinct harness/contract-clean submissions with at least two
+private passes; that threshold itself proves no quality or generalization benefit.
 
 ## Validation checklist
 

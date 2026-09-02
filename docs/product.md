@@ -40,6 +40,14 @@ runtime-version switch, memory retrieval path, or candidate/qualification workfl
 The exact latest tool batch is guaranteed in the next stateless request; older
 current source spans form a small recency-ordered working set.
 
+Visible checks are executable public examples, not the private acceptance oracle.
+They should exercise the central behavior already promised by the issue while
+remaining black-box: assert observable inputs and outputs, not an implementation
+shape, reference patch, hidden input, or exact sentence unless the public contract
+requires it. Hidden evaluation remains separate and tests unexposed variations.
+When a development task's public contract changes materially, preserve the old
+package and create a new task version/content identity.
+
 ## Main components
 
 - `patchloop/dev/runner.py` composes the mutable loop.

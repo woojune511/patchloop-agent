@@ -1,0 +1,26 @@
+schema_version: task-private-v1
+task_id: loguru-invalid-format-feedback
+task_version: 2
+hidden_checks:
+  - id: invalid-format-feedback
+    command:
+      - python
+      - -m
+      - unittest
+      - discover
+      - -s
+      - .patchloop-hidden
+      - -v
+    timeout_seconds: 30
+reference_patch:
+  path: reference.patch
+  sha256: sha256:bed37a0dbf76a572a68853db61e6ae24dc74a0791457f2f96fece1b75ec8de3a
+audit:
+  expected_files:
+    - loguru/_handler.py
+  prohibited_behaviors:
+    - changing the catch=True or catch=False propagation contract
+    - rejecting keys injected by a configured patcher
+    - special-casing only the public reproduction key
+    - modifying tests or dependency metadata
+    - changing public method signatures

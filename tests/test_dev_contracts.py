@@ -164,6 +164,33 @@ def test_task_identity_hashes_survive_reset(
     assert package.private_spec_hash == private_hash
 
 
+def test_loguru_feedback_v2_preserves_v1_and_adds_public_contract() -> None:
+    root = repository_root() / "tasks" / "dev-train"
+    original = load_task_package(root / "loguru-invalid-format-feedback")
+    revised = load_task_package(root / "loguru-invalid-format-feedback-v2")
+
+    assert original.public.task_id == revised.public.task_id
+    assert original.public.task_version == original.private.task_version == 1
+    assert revised.public.task_version == revised.private.task_version == 2
+    assert original.task_content_hash == (
+        "sha256:3032f1b36e3089479a612805c0681e73991c445c131275f75b8ecc35ba929579"
+    )
+    assert revised.task_content_hash == (
+        "sha256:61704553b8ba733bad7350561eec397a7a6c04365a56ef61854a9e12cefe259d"
+    )
+    assert [check.id for check in original.public.visible_checks] == [
+        "upstream-format-regression",
+        "basic-format-regression",
+        "patcher-field-regression",
+    ]
+    assert [check.id for check in revised.public.visible_checks] == [
+        "invalid-format-feedback-contract",
+        "upstream-format-regression",
+        "basic-format-regression",
+        "patcher-field-regression",
+    ]
+
+
 def test_v1_task_content_hash_binds_hidden_bytes(tmp_path) -> None:
     source = repository_root() / "tasks" / "smoke" / "csv-quoted-newline"
     copied = tmp_path / "task"

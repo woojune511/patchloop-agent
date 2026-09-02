@@ -46,6 +46,26 @@ Following the Rapid Dev Reset, local checkpoints recorded:
   tracked-path, anchor, scope, or final-diff contracts. Mock run
   `run_dev_8ba03a7965a048c5` reached `EVALUATOR_PASS` through one accepted mutation with
   task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero model cost.
+- Provider-free retrospective run `run_dev_replay_d1d2519dbd9644f9` replayed the
+  fourth live row's first exact raw diff through the current gateway in external
+  state root `C:\patchloop-replay-880c0a55`. The mutation was accepted, all three
+  version-1 visible checks passed, and `finish_task` submitted canonical diff
+  `sha256:317ac609a2a9e555d0c38a5bf489c1dc68edd9c81457f598dbbf81fe3570d8c7`.
+  The isolated evaluator applied the same hash and completed with task acceptance
+  FAIL, failure class `PRIVATE_EVALUATION_FAILED`, and safety PASS. The source run
+  remained byte-identical. There were zero provider calls and no image pull/build.
+- The original `loguru-invalid-format-feedback` package remains version 1. A separate
+  `-v2` package adds one public black-box check for the issue's missing-key feedback,
+  available-key guidance, canonical `logger.bind()` / `{extra[key]}` usage, and
+  `catch=True` / `catch=False` behavior. Its task content hash is
+  `sha256:61704553b8ba733bad7350561eec397a7a6c04365a56ef61854a9e12cefe259d`.
+  Provider-free run `run_dev_v2check_7084999308874e66` showed that the clean base and
+  retrospectively replayed patch fail this new check, while an independently derived
+  temporary public correction passes all four visible checks and reaches
+  `finish_task`. It ran no hidden evaluator and makes no acceptance claim. Ruff
+  and all 63 tests passed in 54.28 seconds; mock run
+  `run_dev_99bbb59c944d4c37` reached `EVALUATOR_PASS` with task acceptance PASS,
+  safety NOT_RUN, `claim_eligible=false`, and zero model cost.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -163,6 +183,7 @@ visible check, submission, evaluator, task acceptance, or safety result was prod
 - no accepted mutation, visible check, submission, private evaluator, or evaluator
   container in any of the four live rows
 - no claim, qualification, activation, adoption, or held-out evaluation
+- no hidden evaluation of the temporary version-2 validation candidate
 
 The under-two-minute validation target is locally supported. A durable live terminal
 was observed within 30 minutes, but the full operational target remains unverified
@@ -177,15 +198,17 @@ because no evaluator summary was reached.
   attestation.
 - Mock fixtures do not prove remote checkout, provider schema acceptance, model
   behavior, or production billing.
-- Local/mock evaluation intentionally reports Docker safety as NOT_RUN. The typed
-  Docker safety path is locally simulated but has not been live-executed here.
+- Local/mock evaluation intentionally reports Docker safety as NOT_RUN. The
+  provider-free retrospective executed the pinned Docker policy path and reported
+  safety PASS; no paid live row has reached that evaluator boundary.
 - Long-horizon memory is disabled; only bounded current-run public evidence is projected.
 - Deleted historical executables require Git history to replay.
 - Only runs with the new immutable envelope can resume; older journals remain
   read-only evidence.
 - Two live rows show that the provider can emit the `apply_git_diff` raw-diff shape,
-  and the fourth shows persistent failed-mutation repair. None establishes reliable
-  mutation or submission; deterministic hunk recount is locally tested only.
+  and the fourth shows persistent failed-mutation repair. Provider-free replay proves
+  that recount accepts one exact emitted diff and preserves submission identity, but
+  no post-recount paid row establishes live mutation or submission reliability.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

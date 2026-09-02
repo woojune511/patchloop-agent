@@ -37,6 +37,21 @@ and 59 tests in 50.51 seconds; mock smoke still reaches that boundary. The hunk-
 checkpoint passes Ruff and 62 tests in 55.10 seconds. Mock run
 `run_dev_8ba03a7965a048c5` reaches `EVALUATOR_PASS` through one accepted mutation with
 task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero model cost.
+Provider-free retrospective run `run_dev_replay_d1d2519dbd9644f9` replayed the
+fourth live row's first exact raw diff through the current gateway. Recount accepted
+the mutation, all three version-1 visible checks passed on canonical diff
+`sha256:317ac609a2a9e555d0c38a5bf489c1dc68edd9c81457f598dbbf81fe3570d8c7`,
+and the isolated evaluator applied that same diff. Task acceptance failed with
+`PRIVATE_EVALUATION_FAILED` while safety passed. This separates mutation transport
+from semantic task acceptance; it is not a fifth live row or a provider result.
+A preserved version-1 task and new `loguru-invalid-format-feedback` version 2 now
+make the central public behavior executable. In provider-free Docker validation,
+the clean base and the retrospectively replayed patch both failed the new public
+contract check, while a temporary public-contract correction passed all four
+visible checks and reached `finish_task`. No hidden evaluator ran for that
+validation. Ruff and all 63 tests pass in 54.28 seconds. Mock run
+`run_dev_99bbb59c944d4c37` reaches `EVALUATOR_PASS` with task acceptance PASS,
+safety NOT_RUN, `claim_eligible=false`, and zero model cost.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -97,12 +112,22 @@ failed-mutation displacement. The fourth row shows that displacement is fixed: t
 agent kept seeing the exact failed diff and attempted 13 replacements. The remaining
 failure was mechanical hunk-total arithmetic in every replacement.
 
-The next seam is therefore deterministic hunk recount, not a stronger repeated-read
-terminal or a replacement mutation interface. The local tool now uses Git recount
-consistently for preview, application, rollback, and crash reconciliation.
-Only declared totals are inferred from the hunk body; invalid syntax or source
-context, stale evidence and anchors, forbidden or new paths, scope violations, and
-final diff identity still fail closed. Repetition detection remains soft evidence.
+Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
+repeated-read terminal or replacement mutation interface. The retrospective replay
+now confirms that it accepts one exact provider-emitted diff while preserving the
+canonical submission identity. That patch passed all version-1 visible checks but
+failed task acceptance, exposing a later public-feedback boundary: those checks
+covered valid-format regressions but did not execute the issue's missing-key and
+catch behavior.
+
+Task version 2 preserves version 1 and adds one black-box visible check derived only
+from the public issue and repository API. It exercises actionable missing-key
+feedback, available record-key reporting, the canonical `logger.bind()` /
+`{extra[key]}` guidance, and both catch modes without requiring an implementation
+shape or exact full sentence. Its task content hash is
+`sha256:61704553b8ba733bad7350561eec397a7a6c04365a56ef61854a9e12cefe259d`.
+Any future live row must name this exact revised task and remains separately
+authorized; no fifth live row is authorized.
 
 Operational resume uses an immutable envelope, exact contract comparison,
 run-lifetime locking, journal-derived counters and cost, durable tool-decision replay,
