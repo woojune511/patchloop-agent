@@ -134,13 +134,15 @@ class EvaluationEngine:
         started = time.monotonic()
         patch_hash = self.workspace_manager.apply_patch(workspace, patch_path)
 
+        # Capture the submitted public diff before evaluator-private files are introduced.
+        summary = self.workspace_manager.diff_summary(workspace)
+
         # Evaluator-private files appear only after submission and only in this workspace.
         hidden_source = Path(package.root) / "hidden"
         hidden_target = workspace / ".patchloop-hidden"
         if hidden_source.exists():
             shutil.copytree(hidden_source, hidden_target)
 
-        summary = self.workspace_manager.diff_summary(workspace)
         results = self._run_checks(
             manifest.run_id,
             workspace,

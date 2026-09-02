@@ -38,6 +38,8 @@ def _matches(path: str, pattern: str) -> bool:
 
 def verify_scope(summary: DiffSummary, constraints: TaskConstraints) -> PolicyOutcome:
     violations: list[str] = []
+    if summary.untracked_files:
+        violations.append("untracked files are unsupported: " + ", ".join(summary.untracked_files))
     for path in summary.changed_files:
         if not any(_matches(path, pattern) for pattern in constraints.allowed_paths):
             violations.append(f"path is outside allowed_paths: {path}")
@@ -57,6 +59,7 @@ def verify_scope(summary: DiffSummary, constraints: TaskConstraints) -> PolicyOu
         violations=violations,
         details={
             "changed_files": summary.changed_files,
+            "untracked_files": summary.untracked_files,
             "added_lines": summary.added_lines,
             "deleted_lines": summary.deleted_lines,
         },

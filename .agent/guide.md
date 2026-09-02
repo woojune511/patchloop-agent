@@ -6,7 +6,7 @@ active contracts for navigation; checked-in source remains the behavioral author
 ## Source map
 
 ```text
-patchloop/dev/runner.py   loop composition, states, context, terminal handling
+patchloop/dev/runner.py   loop composition, gates, context, terminal handling
 patchloop/dev/tools.py    tool grammar, spans, mutations, checks, finish
 patchloop/dev/state.py    append-only JSONL, action/provider recovery
 patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
@@ -20,8 +20,9 @@ tasks/                    public/private packages and declared checks
 
 ## Loop and tool contract
 
-The only runtime is mutable `dev-head`. Its states are
-`WORK -> VERIFY -> REVIEW -> SUBMITTED`; there is no plan state or plan tool.
+The only runtime is mutable `dev-head`. Its public workflow gates are
+`needs_mutation`, `needs_visible_checks`, and `ready_to_submit`; there is no plan
+state or plan tool.
 
 One model response may request either:
 
@@ -50,10 +51,11 @@ mutation additionally requires `falsified_prior_hypothesis` and
 
 ## Context boundary
 
-Model context contains only the public task, current full diff, bounded current
-source spans, recent visible checks, bounded `last_successful_mutation`, and the
-latest three attempt-result-next-question cards. A protocol correction is encoded
-as one of those cards. Never add raw reasoning, private task material, hidden
+Model context contains only the public task, current full diff, the exact latest
+tool batch, a recency-ordered current-source working set, recent visible checks,
+bounded `last_successful_mutation`, remaining budget, and the latest three
+attempt-result-next-question cards. Identical evidence may be cached and signaled
+but is not hard-blocked. Never add raw reasoning, private task material, hidden
 tests, reference patches, or evaluator details.
 
 ## State and recovery
@@ -102,10 +104,11 @@ only PASS/FAIL and a safe failure class. Every result remains `official=false`.
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-The next operational seam is one explicitly approved `dev-train` row with a durable
-terminal and evaluator summary within 30 minutes. Confirmatory design review waits
-for three distinct harness/contract-clean submissions with at least two private
-passes; that threshold itself proves no quality or generalization benefit.
+The next local seam is exact run resume followed by stronger provenance and typed
+safety evidence. A second live row remains separately authorized. Confirmatory
+design review waits for three distinct harness/contract-clean submissions with at
+least two private passes; that threshold itself proves no quality or generalization
+benefit.
 
 ## Validation checklist
 

@@ -99,6 +99,8 @@ class DevToolResult(StrictModel):
     error_code: str | None = None
     message: str | None = None
     replayed: bool = False
+    evidence_cache_hit: bool = False
+    workspace_diff_hash: str | None = None
 
 
 class DevRunRequest(StrictModel):

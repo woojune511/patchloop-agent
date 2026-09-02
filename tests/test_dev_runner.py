@@ -17,6 +17,50 @@ from patchloop.sandbox import LocalSandbox
 from patchloop.task_loader import load_task_package
 
 
+def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke_package) -> None:
+    gateway, journal, _ = gateway_factory()
+    for index in range(12):
+        gateway.spans[f"span_ffffffffffff{index:04d}"] = {
+            "span_id": f"span_ffffffffffff{index:04d}",
+            "path": "mini_data_utils/csvlite.py",
+            "start_line": 1,
+            "end_line": 1,
+            "content": f"old-{index}",
+            "file_hash": "sha256:" + "0" * 64,
+            "last_observed_seq": index + 1,
+        }
+    latest = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="latest-read",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": 1,
+                "end_line": 13,
+            },
+        )
+    )
+    context = json.loads(
+        runner._build_context(  # noqa: SLF001 - direct context contract test
+            package=smoke_package,
+            gateway=gateway,
+            journal=journal,
+            correction=None,
+            latest_tool_results=[latest],
+            counters=runner._RunCounters(),  # noqa: SLF001
+            elapsed_seconds=0,
+            limits=DevRunRequest(
+                provider="mock",
+                task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
+                model="mock-dev",
+            ).limits,
+        )
+    )
+    projected = context["latest_tool_results"][0]["output"]["spans"]
+    assert projected[0]["span_id"] == latest.output["spans"][0]["span_id"]
+    assert len(context["source_spans"]) == 8
+
+
 def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeypatch) -> None:
     contexts: list[str] = []
 
@@ -43,10 +87,13 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     context_keys = {
         "public_task",
         "current_diff",
+        "latest_tool_results",
         "source_spans",
         "recent_checks",
         "last_successful_mutation",
         "recent_attempt_result_next_question",
+        "workflow_gate",
+        "remaining_budget",
     }
     assert all(set(json.loads(context)) == context_keys for context in contexts)
     projected = [
@@ -63,6 +110,14 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     assert all(row["official"] is False for row in rows)
     states = [row["payload"].get("to") for row in rows if row["event_type"] == "state_changed"]
     assert "VERIFY" in states and "REVIEW" in states and "SUBMITTED" in states
+    turns = [row for row in rows if row["event_type"] == "turn_started"]
+    assert len(turns) == 4
+    assert all(row["payload"]["context_hash"].startswith("sha256:") for row in turns)
+    assert any(
+        result["output"].get("spans")
+        for context in contexts[1:]
+        for result in json.loads(context)["latest_tool_results"]
+    )
     evaluator = next(row for row in rows if row["event_type"] == "evaluator_finished")
     assert evaluator["payload"]["agent_context_reinjected"] is False
     workspace_roots = [path for path in (tmp_path / "workspaces").iterdir() if path.is_dir()]

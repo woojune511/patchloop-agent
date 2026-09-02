@@ -34,9 +34,11 @@ public task ──> dev-head ──> constrained model/tool loop
                           PASS/FAIL + public failure class
 ```
 
-`dev-head` has four states: `WORK -> VERIFY -> REVIEW -> SUBMITTED`. There is no
-separate planning phase, runtime-version switch, memory retrieval path, or
-candidate/qualification workflow.
+`dev-head` derives its next gate from public execution facts: `needs_mutation`,
+`needs_visible_checks`, or `ready_to_submit`. There is no separate planning phase,
+runtime-version switch, memory retrieval path, or candidate/qualification workflow.
+The exact latest tool batch is guaranteed in the next stateless request; older
+current source spans form a small recency-ordered working set.
 
 ## Main components
 

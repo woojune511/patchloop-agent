@@ -13,6 +13,8 @@ On 2026-09-01, after the Rapid Dev Reset:
 - Active legacy Rapid/import references were absent.
 - The visible-doc allowlist, hidden agent guide, and current local Markdown links
   are enforced by the fast suite.
+- After the first-live diagnosis, the context-projection checkpoint passed Ruff,
+  29 tests in 16.45 seconds, and mock `EVALUATOR_PASS`. This is local evidence only.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -39,8 +41,8 @@ The agent made 76 searches and 23 reads, all successful, but used only 26 distin
 action input hashes. One successful `KeyError` search repeated 33 times and one
 successful `format(` search repeated 18 times. No plan, edit, check, mutation,
 submission, artifact, or evaluator result was produced. This is live development
-evidence of a duplicate-inspection completion failure, not task correctness or
-quality evidence.
+evidence of a context-projection failure expressed as duplicate inspection, not
+task correctness or quality evidence.
 
 ## Not executed
 

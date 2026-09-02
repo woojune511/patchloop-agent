@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import uuid
 from dataclasses import dataclass
@@ -223,9 +224,24 @@ def _build_context(
     gateway: DevToolGateway,
     journal: DevJournal,
     correction: dict[str, str] | None,
+    latest_tool_results: list[DevToolResult],
+    counters: _RunCounters,
+    elapsed_seconds: float,
+    limits: Any,
 ) -> str:
     summary = gateway.current_diff
-    spans = sorted(gateway.spans.values(), key=lambda item: item["span_id"])[-8:]
+    latest_span_ids = {
+        span["span_id"]
+        for result in latest_tool_results
+        for span in result.output.get("spans", [])
+        if isinstance(span, dict) and isinstance(span.get("span_id"), str)
+    }
+    if not summary.patch or summary.untracked_files:
+        workflow_gate = "needs_mutation"
+    elif gateway.visible_checks_pass():
+        workflow_gate = "ready_to_submit"
+    else:
+        workflow_gate = "needs_visible_checks"
     payload = {
         "public_task": package.public.model_dump(mode="json"),
         "current_diff": {
@@ -234,12 +250,27 @@ def _build_context(
             "changed_files": summary.changed_files,
             "added_lines": summary.added_lines,
             "deleted_lines": summary.deleted_lines,
+            "untracked_files": summary.untracked_files,
             "truncated": False,
         },
-        "source_spans": spans,
+        "latest_tool_results": [result.model_dump(mode="json") for result in latest_tool_results],
+        "source_spans": gateway.context_spans(exclude=latest_span_ids),
         "recent_checks": _recent_checks(gateway),
         "last_successful_mutation": gateway.last_successful_mutation,
         "recent_attempt_result_next_question": _cards(journal, correction),
+        "workflow_gate": workflow_gate,
+        "remaining_budget": {
+            "model_calls": max(0, limits.max_model_calls - counters.model_calls),
+            "tool_actions": max(0, limits.max_tool_actions - counters.tool_actions),
+            "accepted_mutations": max(
+                0,
+                limits.max_accepted_mutations - gateway.accepted_mutations,
+            ),
+            "active_wall_time_seconds": max(
+                0,
+                int(limits.wall_time_seconds - elapsed_seconds),
+            ),
+        },
     }
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
@@ -275,10 +306,46 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             ),
         }
     if result.tool in {"read_file", "search_files"}:
+        spans = result.output.get("spans", [])
+        findings = [
+            {
+                "path": span.get("path"),
+                "range": [span.get("start_line"), span.get("end_line")],
+            }
+            for span in spans
+            if isinstance(span, dict)
+        ]
+        request = (
+            {
+                "path": result.output.get("path"),
+                "range": [
+                    result.output.get("start_line"),
+                    result.output.get("end_line"),
+                ],
+            }
+            if result.tool == "read_file"
+            else {
+                "query": result.output.get("query"),
+                "path_glob": result.output.get("path_glob"),
+            }
+        )
         return {
             "attempt": result.tool,
-            "result": f"recorded {len(result.output.get('spans', []))} source spans",
-            "next_question": "Which exact source anchor supports the smallest causal mutation?",
+            "input": request,
+            "result": {
+                "span_count": len(spans),
+                "new_span_count": result.output.get("new_span_count", 0),
+                "findings": findings,
+                "evidence_fingerprint": result.output.get("evidence_fingerprint"),
+                "evidence_cache_hit": result.evidence_cache_hit,
+                "stagnation_signal": result.output.get("stagnation_signal", False),
+            },
+            "next_question": (
+                "This exact evidence is already visible; choose a materially different query, "
+                "range, check, or mutation."
+                if result.output.get("stagnation_signal")
+                else "Which exact source anchor supports the smallest causal mutation?"
+            ),
         }
     if result.tool == "apply_patch":
         return {
@@ -398,9 +465,7 @@ def _terminal(
                 "tool": counters.tool_actions,
             },
             "accepted_mutations": len(_milestones(journal)["edit"]),
-            "cost_nanos": (
-                cost_ledger.spent_nanos - cost_start_nanos if cost_ledger else 0
-            ),
+            "cost_nanos": (cost_ledger.spent_nanos - cost_start_nanos if cost_ledger else 0),
             "evaluator": evaluator,
             "artifact_hashes": artifacts or {},
             "message": message,
@@ -438,6 +503,7 @@ def _run_one(
 ) -> _OneRunResult:
     run_id = make_run_id("dev")
     journal = DevJournal(state_root, run_id)
+    artifact_store = ArtifactStore(state_root / "artifacts")
     counters = _RunCounters()
     cost_start_nanos = cost_ledger.spent_nanos if cost_ledger else 0
     hashes = {
@@ -509,6 +575,7 @@ def _run_one(
     )
     state = DevState.WORK
     correction: dict[str, str] | None = None
+    latest_tool_results: list[DevToolResult] = []
     started = monotonic()
     mock_adapter = MockDevAdapter(package.public.task_id) if request.provider == "mock" else None
     openai_adapter: OpenAIResponsesAdapter | None = None
@@ -552,11 +619,40 @@ def _run_one(
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "model-call limit reached"
             break
+        elapsed_seconds = monotonic() - started
         context = _build_context(
             package=package,
             gateway=gateway,
             journal=journal,
             correction=correction,
+            latest_tool_results=latest_tool_results,
+            counters=counters,
+            elapsed_seconds=elapsed_seconds,
+            limits=request.limits,
+        )
+        context_payload = json.loads(context)
+        context_artifact = artifact_store.put_text(context, "application/json")
+        turn_id = f"turn_{uuid.uuid4().hex}"
+        journal.append(
+            "turn_started",
+            {
+                "turn_id": turn_id,
+                "context_artifact": context_artifact.model_dump(mode="json"),
+                "context_hash": context_artifact.content_hash,
+                "projected_span_ids": [
+                    span["span_id"]
+                    for span in [
+                        *context_payload["source_spans"],
+                        *[
+                            span
+                            for result in context_payload["latest_tool_results"]
+                            for span in result.get("output", {}).get("spans", [])
+                        ],
+                    ]
+                    if isinstance(span, dict) and isinstance(span.get("span_id"), str)
+                ],
+                "active_elapsed_ms": int(elapsed_seconds * 1_000),
+            },
         )
         schemas = dev_tool_schemas(finish_enabled=gateway.visible_checks_pass())
         correction = None
@@ -696,6 +792,14 @@ def _run_one(
                 }
                 continue
 
+        journal.append(
+            "turn_decision_recorded",
+            {
+                "turn_id": turn_id,
+                "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
+                "error_code": turn.error_code,
+            },
+        )
         try:
             validate_tool_batch(
                 turn.tool_calls,
@@ -740,6 +844,17 @@ def _run_one(
             elif result.tool == "finish_task" and result.status == "succeeded":
                 state = _transition(journal, state, DevState.SUBMITTED)
                 finish_result = result
+        latest_tool_results = results
+        journal.append(
+            "tool_batch_finished",
+            {
+                "turn_id": turn_id,
+                "action_ids": [result.action_id for result in results],
+                "result_fingerprints": [
+                    sha256_json(result.model_dump(mode="json")) for result in results
+                ],
+            },
+        )
         if all(result.status == "failed" for result in results):
             # Tool-contract failures are recoverable through the normal next model turn.
             correction = {
@@ -759,7 +874,6 @@ def _run_one(
         )
         return _OneRunResult(_public_result(run_id, terminal), stop_remaining)
 
-    artifact_store = ArtifactStore(state_root / "artifacts")
     patch = finish_result.output["patch"]
     submitted = artifact_store.put_text(patch, "text/x-diff")
     manifest = _manifest(

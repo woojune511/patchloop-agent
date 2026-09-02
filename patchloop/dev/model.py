@@ -83,10 +83,15 @@ class MockDevAdapter:
             payload = json.loads(context)
         except (TypeError, json.JSONDecodeError) as exc:
             raise ContractError("dev-head mock received invalid public context") from exc
-        spans = payload.get("source_spans", [])
+        latest_spans = [
+            span
+            for result in payload.get("latest_tool_results", [])
+            for span in result.get("output", {}).get("spans", [])
+        ]
+        spans = [*latest_spans, *payload.get("source_spans", [])]
         current_diff = payload.get("current_diff", {})
         recent_checks = payload.get("recent_checks", [])
-        if not spans:
+        if not spans and not current_diff.get("patch"):
             return DevModelTurn(
                 tool_calls=[
                     RequestedTool(
@@ -106,11 +111,7 @@ class MockDevAdapter:
                 ]
             )
         if not current_diff.get("patch"):
-            spans = [
-                item["span_id"]
-                for item in spans
-                if item.get("path") == self.mutation.path
-            ]
+            spans = [item["span_id"] for item in spans if item.get("path") == self.mutation.path]
             if not spans:
                 raise ContractError("mock mutation requires a current source span")
             return DevModelTurn(

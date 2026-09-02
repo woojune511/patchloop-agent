@@ -99,6 +99,7 @@ def test_parallel_read_mutation_check_and_finish(gateway_factory) -> None:
 def test_allowed_path_and_stale_evidence_fail_closed(gateway_factory) -> None:
     gateway, _, _ = gateway_factory()
     gateway.execute_batch(read_calls())
+    stale_call = mutation_call(gateway, action_id="stale-mutation")
     forbidden_read = gateway.execute(
         RequestedTool(
             name="read_file",
@@ -139,9 +140,70 @@ def test_allowed_path_and_stale_evidence_fail_closed(gateway_factory) -> None:
     assert forbidden.error_code == "CONTRACT_ERROR"
 
     assert gateway.execute(mutation_call(gateway, action_id="valid-mutation")).status == "succeeded"
-    stale = gateway.execute(mutation_call(gateway, action_id="stale-mutation"))
+    assert stale_call.arguments["evidence_span_ids"][0] not in gateway.spans
+    stale = gateway.execute(stale_call)
     assert stale.status == "failed"
     assert "stale" in stale.message
+
+
+def test_read_cache_promotes_evidence_and_resets_after_mutation(gateway_factory) -> None:
+    gateway, _, _ = gateway_factory()
+    first_call = read_calls()[1]
+    first = gateway.execute(first_call)
+    repeated = gateway.execute(first_call.model_copy(update={"action_id": "read-source-again"}))
+    assert first.evidence_cache_hit is False
+    assert repeated.evidence_cache_hit is True
+    assert repeated.output["new_span_count"] == 0
+    assert repeated.output["evidence_repetition"] == 2
+    assert repeated.output["stagnation_signal"] is True
+
+    assert gateway.execute(mutation_call(gateway)).status == "succeeded"
+    refreshed = gateway.execute(
+        first_call.model_copy(update={"action_id": "read-source-after-mutation"})
+    )
+    assert refreshed.evidence_cache_hit is False
+    assert refreshed.output["new_span_count"] == 1
+
+
+def test_new_files_and_untracked_submission_fail_closed(gateway_factory) -> None:
+    gateway, _, workspace = gateway_factory()
+    gateway.public_task = gateway.public_task.model_copy(
+        update={
+            "constraints": gateway.public_task.constraints.model_copy(
+                update={"allowed_paths": ["mini_data_utils/**"], "max_changed_files": 2}
+            )
+        }
+    )
+    gateway.execute_batch(read_calls())
+    mutation = mutation_call(gateway, action_id="mixed-new-file")
+    mutation.arguments["patch"] += (
+        "diff --git a/mini_data_utils/new_helper.py b/mini_data_utils/new_helper.py\n"
+        "new file mode 100644\n"
+        "--- /dev/null\n"
+        "+++ b/mini_data_utils/new_helper.py\n"
+        "@@ -0,0 +1 @@\n"
+        "+VALUE = 1\n"
+    )
+    rejected = gateway.execute(mutation)
+    assert rejected.status == "failed"
+    assert "tracked public file" in rejected.message
+    assert not (workspace / "mini_data_utils" / "new_helper.py").exists()
+
+    assert gateway.execute(mutation_call(gateway, action_id="tracked-only")).status == "succeeded"
+    check = gateway.execute(
+        RequestedTool(
+            name="run_check",
+            action_id="untracked-visible-check",
+            arguments={"check_id": "existing-unit-tests"},
+        )
+    )
+    assert check.output["passed"] is True
+    (workspace / "unexpected.txt").write_text("not submitted\n", encoding="utf-8")
+    finish = gateway.execute(
+        RequestedTool(name="finish_task", action_id="untracked-finish", arguments={})
+    )
+    assert finish.status == "failed"
+    assert "untracked files" in finish.message
 
 
 def test_repeated_signature_across_two_diffs_requires_alternative(gateway_factory) -> None:

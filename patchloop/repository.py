@@ -52,6 +52,7 @@ class DiffSummary:
     added_lines: int
     deleted_lines: int
     patch: str
+    untracked_files: list[str]
 
     @property
     def diff_lines(self) -> int:
@@ -300,7 +301,13 @@ class WorkspaceManager:
 
     @staticmethod
     def untracked_files(workspace: Path) -> list[str]:
-        output = _git(workspace, "ls-files", "--others", "-z").stdout
+        output = _git(
+            workspace,
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z",
+        ).stdout
         return sorted(path.replace("\\", "/") for path in output.split("\0") if path)
 
     @staticmethod
@@ -322,4 +329,10 @@ class WorkspaceManager:
                 added += int(add_text)
             if delete_text.isdigit():
                 deleted += int(delete_text)
-        return DiffSummary(changed_files, added, deleted, patch)
+        return DiffSummary(
+            changed_files,
+            added,
+            deleted,
+            patch,
+            WorkspaceManager.untracked_files(workspace),
+        )
