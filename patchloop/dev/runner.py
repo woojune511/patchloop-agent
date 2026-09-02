@@ -413,7 +413,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                 else "Which exact source anchor supports the smallest causal mutation?"
             ),
         }
-    if result.tool == "apply_patch":
+    if result.tool == "apply_git_diff":
         return {
             "action_id": result.action_id,
             "attempt": "mutation",
@@ -480,7 +480,7 @@ def _milestones(journal: DevJournal) -> dict[str, Any]:
         if result["status"] != "succeeded":
             continue
         output = result["output"]
-        if result["tool"] == "apply_patch":
+        if result["tool"] == "apply_git_diff":
             mutation = output["mutation"]
             plans.append(
                 {
@@ -675,9 +675,9 @@ def _validate_resumed_workspace(workspace: Path, journal: DevJournal) -> None:
             if pending is not None and payload.get("action_id") == pending.get("action_id"):
                 pending = None
             result = DevToolResult.model_validate(payload["result"])
-            if result.status == "succeeded" and result.tool == "apply_patch":
+            if result.status == "succeeded" and result.tool == "apply_git_diff":
                 expected_diff_hash = str(result.output["worktree_diff_hash"])
-    if pending is not None and pending.get("tool") == "apply_patch":
+    if pending is not None and pending.get("tool") == "apply_git_diff":
         if pending.get("baseline_diff_hash") != expected_diff_hash:
             raise ResumeContractMismatch("pending mutation baseline does not match the journal")
         return

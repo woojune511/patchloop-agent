@@ -464,7 +464,8 @@ def test_mock_resume_replays_durable_work_without_duplicate_mutation(
             monkeypatch,
             event_type="action_finished",
             when="before",
-            predicate=lambda payload: payload.get("result", {}).get("tool") == "apply_patch",
+            predicate=lambda payload: payload.get("result", {}).get("tool")
+            == "apply_git_diff",
         )
     elif crash_case == "check_result_recorded":
         _crash_journal_once(
@@ -503,7 +504,7 @@ def test_mock_resume_replays_durable_work_without_duplicate_mutation(
         for row in journal.events()
         if row["event_type"] == "action_finished"
     ]
-    mutation_results = [row for row in action_results if row["tool"] == "apply_patch"]
+    mutation_results = [row for row in action_results if row["tool"] == "apply_git_diff"]
     assert len(mutation_results) == 1
     assert len([row for row in journal.events() if row["event_type"] == "run_resumed"]) == 1
 

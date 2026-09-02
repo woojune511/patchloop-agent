@@ -11,12 +11,15 @@ from patchloop.errors import ContractError
 DEV_SYSTEM_PROMPT = """You are PatchLoop dev-head, a constrained coding agent.
 Use only the supplied tools. There is no separate planning phase or planning tool.
 You may request either 1-4 search_files/read_file calls in one response, or exactly
-one run_check, apply_patch, or finish_task call. Never mix those shapes. run_check is
+one run_check, apply_git_diff, or finish_task call. Never mix those shapes. run_check is
 available immediately. Every mutation must include a concise hypothesis, expected
 behavior, current evidence span IDs, and an exact source anchor. If the public context
 requires a causal alternative, the next mutation must also state which prior hypothesis
-was falsified and a materially different mechanism. All visible checks must pass on the
-current diff before finish_task is available. The complete current diff is projected in
+was falsified and a materially different mechanism. The apply_git_diff git_diff value
+must be a raw Git unified diff beginning exactly with "diff --git a/<path> b/<path>".
+Never use "*** Begin Patch", "*** Update File", or another patch wrapper. All visible
+checks must pass on the current diff before finish_task is available. The complete
+current diff is projected in
 context; do not request get_diff. Do not emit raw chain-of-thought. Private tests,
 reference patches, and evaluator details are unavailable and must not be inferred.
 """
@@ -117,10 +120,10 @@ class MockDevAdapter:
             return DevModelTurn(
                 tool_calls=[
                     RequestedTool(
-                        name="apply_patch",
+                        name="apply_git_diff",
                         action_id="mock-apply-mutation",
                         arguments={
-                            "patch": self.mutation.patch,
+                            "git_diff": self.mutation.patch,
                             "hypothesis": self.mutation.hypothesis,
                             "expected_behavior": self.mutation.expected_behavior,
                             "evidence_span_ids": spans[:2],

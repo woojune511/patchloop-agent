@@ -26,6 +26,11 @@ Following the Rapid Dev Reset, local checkpoints recorded:
   evidence to PASS, FAIL, and ERROR; and preserve policy hashes after an injected
   evaluator error. Mock smoke reports task acceptance PASS, safety NOT_RUN, and
   `claim_eligible=false`.
+- After the second-live mutation-format diagnosis, the focused mutation/resume set
+  passed 29 tests in 44.52 seconds. Full Ruff and 56 tests passed in 50.92 seconds,
+  and mock smoke reached isolated `EVALUATOR_PASS` through one accepted
+  `apply_git_diff` mutation. This verifies the local tool/recovery wiring only; it
+  does not show that a provider will emit the new wire format.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -55,11 +60,35 @@ submission, artifact, or evaluator result was produced. This is live development
 evidence of a context-projection failure expressed as duplicate inspection, not
 task correctness or quality evidence.
 
+## Second live development observation
+
+After the local context, resume, provenance, and safety changes, a separately
+approved row repeated the first row's task, model, reasoning, repetition, and $1.20
+cap with external state root `C:\patchloop-state`. Run
+`run_dev_9939bd27c5d04819` wrote a valid 597-event hash chain ending at
+`sha256:2b19997707abab44bcd1f3795c5e73a7975a2e245569ec0e6722f583fd132916`.
+It reached `LIMIT_REACHED` (`model-call limit reached`) after 209.250 active seconds
+and 214 seconds of run age. All 40 provider dispatches recorded durable completions;
+one incomplete response used the single protocol correction. Recorded usage was
+215,705 input tokens, including 3,584 cached tokens, and 22,116 output tokens,
+including 16,172 reasoning tokens. Recorded cost was $0.25888155.
+
+The run made 69 searches, 21 reads, and two mutation attempts. Across all 39
+turn-to-turn transitions, every action ID from the prior parallel batch appeared in
+the next canonical context artifact. Thirty-nine repeated exact requests were cache
+hits and only soft stagnation signals were emitted. The mutation attempts on turns
+36 and 39 both supplied Codex-style `*** Begin Patch` wrappers; the fail-closed tool
+rejected them because it accepted only a raw Git diff. No mutation was admitted, so
+no visible check, submission, or evaluator followed. This is live evidence that the
+latest-batch projection defect was not the direct terminal cause in this row; it is
+not evidence of task acceptance, safety, or general coding quality.
+
 ## Not executed
 
-- no second repetition, transport retry, or follow-up paid run
+- no third repetition, transport retry, or follow-up paid run after the second row
 - no image pull, image build, or automatic Docker Desktop start
-- no mutation, visible check, submission, private evaluator, or evaluator container
+- no accepted mutation, visible check, submission, private evaluator, or evaluator
+  container in either live row
 - no claim, qualification, activation, adoption, or held-out evaluation
 
 The under-two-minute validation target is locally supported. A durable live terminal
@@ -81,6 +110,8 @@ because no evaluator summary was reached.
 - Deleted historical executables require Git history to replay.
 - Only runs with the new immutable envelope can resume; older journals remain
   read-only evidence.
+- The renamed `apply_git_diff` schema and wrapper-rejection regression are local
+  evidence until another exact live row is separately approved.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

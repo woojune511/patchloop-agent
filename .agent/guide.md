@@ -27,7 +27,7 @@ state or plan tool.
 One model response may request either:
 
 - 1–4 parallel `search_files` and/or `read_file` calls, or
-- exactly one `apply_patch`, `run_check`, or `finish_task` call.
+- exactly one `apply_git_diff`, `run_check`, or `finish_task` call.
 
 Mixed, empty, duplicate-action, and oversized batches receive one short correction.
 A second protocol/incomplete violation terminates the row. `run_check` is available
@@ -36,7 +36,9 @@ the exact current diff; the next context already contains the complete diff.
 
 ## Mutation and causal pivot
 
-Every `apply_patch` requires a raw Git diff plus:
+Every `apply_git_diff` requires `git_diff` to begin exactly with
+`diff --git a/<path> b/<path>`. Patch wrappers such as `*** Begin Patch` and
+`*** Update File` are rejected. The mutation also requires:
 
 - `hypothesis`
 - `expected_behavior`
@@ -126,10 +128,13 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 - Keep confirmatory work in a future, separately frozen lane.
 
 The context, resume, provenance, and typed-safety seams are locally implemented.
-A second live row remains separately authorized and is not implied by local
-completion. Confirmatory design review waits for three distinct harness/contract-
-clean submissions with at least two private passes; that threshold itself proves
-no quality or generalization benefit.
+The second live row confirmed exact latest-batch projection and cache reuse but
+exposed an ambiguous mutation encoding contract: two wrapped patch attempts were
+rejected before mutation. `apply_git_diff` now makes the required wire format
+explicit. Any third live row remains separately authorized and is not implied by
+this local correction. Confirmatory design review waits for three distinct
+harness/contract-clean submissions with at least two private passes; that threshold
+itself proves no quality or generalization benefit.
 
 ## Validation checklist
 

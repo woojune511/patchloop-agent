@@ -85,16 +85,27 @@ def dev_tool_schemas(*, finish_enabled: bool) -> list[dict[str, Any]]:
         },
         {
             "type": "function",
-            "name": "apply_patch",
+            "name": "apply_git_diff",
             "description": (
-                "Apply one scoped Git diff. The minimal plan, fresh evidence, and exact current "
-                "source anchor are part of this mutation; there is no separate planning tool."
+                "Apply one scoped raw Git unified diff. git_diff must begin exactly with "
+                "'diff --git a/<path> b/<path>'. Never use '*** Begin Patch', "
+                "'*** Update File', or another patch wrapper. The minimal plan, fresh "
+                "evidence, and exact current source anchor are part of this mutation; "
+                "there is no separate planning tool."
             ),
             "strict": True,
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "patch": {"type": "string", "minLength": 1},
+                    "git_diff": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^diff --git a/",
+                        "description": (
+                            "Raw Git unified diff starting with "
+                            "'diff --git a/<path> b/<path>'; no patch wrapper markers."
+                        ),
+                    },
                     "hypothesis": {"type": "string", "minLength": 1},
                     "expected_behavior": {"type": "string", "minLength": 1},
                     "evidence_span_ids": {
@@ -117,7 +128,7 @@ def dev_tool_schemas(*, finish_enabled: bool) -> list[dict[str, Any]]:
                     "alternative_mechanism": {"type": ["string", "null"]},
                 },
                 "required": [
-                    "patch",
+                    "git_diff",
                     "hypothesis",
                     "expected_behavior",
                     "evidence_span_ids",
@@ -207,7 +218,7 @@ class DevToolGateway:
                 continue
             if result.tool in READ_TOOLS:
                 self._restore_read_result(result)
-            elif result.tool == "apply_patch":
+            elif result.tool == "apply_git_diff":
                 self.accepted_mutations += 1
                 self.last_successful_mutation = result.output.get("mutation")
                 self._invalidate_spans(result.output.get("changed_files", []))
@@ -347,7 +358,7 @@ class DevToolGateway:
         preflight_error: Exception | None = None
         mutation_admitted: bool | None = None
         if pending is None:
-            if call.name == "apply_patch":
+            if call.name == "apply_git_diff":
                 try:
                     self._validate_intent(call.arguments)
                     mutation_admitted = True
@@ -368,7 +379,7 @@ class DevToolGateway:
         try:
             if preflight_error is not None:
                 raise preflight_error
-            if pending is not None and call.name == "apply_patch":
+            if pending is not None and call.name == "apply_git_diff":
                 output = self._reconcile_or_apply(call.arguments, pending)
                 evidence_cache_hit = False
             elif call.name in READ_TOOLS:
@@ -416,7 +427,7 @@ class DevToolGateway:
             },
         )
         if result.status == "succeeded":
-            if result.tool == "apply_patch":
+            if result.tool == "apply_git_diff":
                 self.accepted_mutations += 1
                 self.last_successful_mutation = result.output["mutation"]
                 self._invalidate_spans(result.output.get("changed_files", []))
@@ -432,8 +443,8 @@ class DevToolGateway:
             return self._read_file(**arguments)
         if name == "search_files":
             return self._search_files(**arguments)
-        if name == "apply_patch":
-            return self._apply_patch(arguments)
+        if name == "apply_git_diff":
+            return self._apply_git_diff(arguments)
         if name == "run_check":
             return self._run_check(**arguments)
         if name == "finish_task":
@@ -536,10 +547,13 @@ class DevToolGateway:
 
     def _patch_paths(self, patch: str) -> list[str]:
         if not isinstance(patch, str) or not patch.startswith("diff --git "):
-            raise ContractError("apply_patch requires a raw Git unified diff")
+            raise ContractError(
+                "apply_git_diff git_diff must begin exactly with "
+                "'diff --git a/<path> b/<path>'; patch wrapper markers are not accepted"
+            )
         matches = _PATCH_PATH.findall(patch)
         if not matches:
-            raise ContractError("apply_patch has no Git diff header")
+            raise ContractError("apply_git_diff has no Git diff header")
         paths: list[str] = []
         for before, after in matches:
             if before != after:
@@ -596,11 +610,11 @@ class DevToolGateway:
         return hunk
 
     def _validate_intent(self, arguments: dict[str, Any]) -> tuple[str, MutationIntent, list[str]]:
-        patch = arguments.get("patch")
+        patch = arguments.get("git_diff")
         if not isinstance(patch, str):
-            raise ContractError("apply_patch patch must be a string")
+            raise ContractError("apply_git_diff git_diff must be a string")
         intent = MutationIntent.model_validate(
-            {key: value for key, value in arguments.items() if key != "patch"}
+            {key: value for key, value in arguments.items() if key != "git_diff"}
         )
         if self.requires_alternative and (
             intent.falsified_prior_hypothesis is None or intent.alternative_mechanism is None
@@ -653,7 +667,7 @@ class DevToolGateway:
     def _git_apply_error(result: subprocess.CompletedProcess[bytes]) -> str:
         return result.stderr.decode("utf-8", errors="replace").strip()[:800]
 
-    def _apply_patch(self, arguments: dict[str, Any]) -> dict[str, Any]:
+    def _apply_git_diff(self, arguments: dict[str, Any]) -> dict[str, Any]:
         if self.accepted_mutations >= self.limits.max_accepted_mutations:
             raise ContractError("accepted mutation limit reached")
         patch, intent, paths = self._validate_intent(arguments)
@@ -701,14 +715,14 @@ class DevToolGateway:
         baseline = pending.get("baseline_diff_hash")
         current = self.current_diff_hash
         if current == baseline:
-            return self._apply_patch(arguments)
+            return self._apply_git_diff(arguments)
         if pending.get("mutation_admitted") is not True:
             raise RecoveryError("pending mutation was not admitted before the crash")
-        patch = arguments.get("patch")
+        patch = arguments.get("git_diff")
         if not isinstance(patch, str):
             raise RecoveryError("pending mutation patch is invalid")
         intent = MutationIntent.model_validate(
-            {key: value for key, value in arguments.items() if key != "patch"}
+            {key: value for key, value in arguments.items() if key != "git_diff"}
         )
         paths = self._patch_paths(patch)
         changed_hunk = self._changed_hunk(

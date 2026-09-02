@@ -3,7 +3,8 @@ from __future__ import annotations
 import subprocess
 
 from patchloop.dev.contracts import RequestedTool
-from patchloop.dev.model import MOCK_MUTATIONS
+from patchloop.dev.model import DEV_SYSTEM_PROMPT, MOCK_MUTATIONS
+from patchloop.dev.tools import dev_tool_schemas
 from patchloop.sandbox.runner import SandboxResult
 from patchloop.util import sha256_json
 
@@ -52,10 +53,10 @@ def mutation_call(gateway, *, action_id: str = "mutation-1", alternative: bool =
     mutation = MOCK_MUTATIONS["csv-quoted-newline"]
     spans = [item["span_id"] for item in gateway.spans.values() if item["path"] == mutation.path]
     return RequestedTool(
-        name="apply_patch",
+        name="apply_git_diff",
         action_id=action_id,
         arguments={
-            "patch": mutation.patch,
+            "git_diff": mutation.patch,
             "hypothesis": mutation.hypothesis,
             "expected_behavior": mutation.expected_behavior,
             "evidence_span_ids": spans[:2],
@@ -74,6 +75,46 @@ def mutation_call(gateway, *, action_id: str = "mutation-1", alternative: bool =
             ),
         },
     )
+
+
+def test_mutation_tool_contract_requires_unwrapped_raw_git_diff() -> None:
+    schemas = dev_tool_schemas(finish_enabled=False)
+    mutation = next(schema for schema in schemas if schema["name"] == "apply_git_diff")
+
+    assert all(schema["name"] != "apply_patch" for schema in schemas)
+    assert mutation["parameters"]["required"][0] == "git_diff"
+    assert mutation["parameters"]["properties"]["git_diff"]["pattern"] == "^diff --git a/"
+    assert set(mutation["parameters"]["required"]) == set(
+        mutation["parameters"]["properties"]
+    )
+    assert mutation["parameters"]["additionalProperties"] is False
+    assert "diff --git a/<path> b/<path>" in mutation["description"]
+    assert "*** Begin Patch" in mutation["description"]
+    assert "apply_git_diff git_diff" in DEV_SYSTEM_PROMPT
+    assert "Never use \"*** Begin Patch\"" in DEV_SYSTEM_PROMPT
+
+
+def test_patch_wrapper_from_live_transcript_fails_with_exact_git_diff_guidance(
+    gateway_factory,
+) -> None:
+    gateway, _, _ = gateway_factory()
+    gateway.execute_batch(read_calls())
+    mutation = mutation_call(gateway, action_id="wrapped-live-mutation")
+    mutation.arguments["git_diff"] = (
+        "*** Begin Patch\n"
+        "*** Update File: mini_data_utils/csvlite.py\n"
+        "@@\n"
+        "-    return rows\n"
+        "+    return list(csv.reader(io.StringIO(text)))\n"
+        "*** End Patch"
+    )
+
+    result = gateway.execute(mutation)
+
+    assert result.status == "failed"
+    assert result.error_code == "CONTRACT_ERROR"
+    assert "must begin exactly with 'diff --git a/<path> b/<path>'" in result.message
+    assert gateway.accepted_mutations == 0
 
 
 def test_parallel_read_mutation_check_and_finish(gateway_factory) -> None:
@@ -110,10 +151,10 @@ def test_allowed_path_and_stale_evidence_fail_closed(gateway_factory) -> None:
     test_span = forbidden_read.output["spans"][0]["span_id"]
     forbidden = gateway.execute(
         RequestedTool(
-            name="apply_patch",
+            name="apply_git_diff",
             action_id="forbidden-mutation",
             arguments={
-                "patch": (
+                "git_diff": (
                     "diff --git a/tests/test_csvlite.py b/tests/test_csvlite.py\n"
                     "--- a/tests/test_csvlite.py\n"
                     "+++ b/tests/test_csvlite.py\n"
@@ -176,7 +217,7 @@ def test_new_files_and_untracked_submission_fail_closed(gateway_factory) -> None
     )
     gateway.execute_batch(read_calls())
     mutation = mutation_call(gateway, action_id="mixed-new-file")
-    mutation.arguments["patch"] += (
+    mutation.arguments["git_diff"] += (
         "diff --git a/mini_data_utils/new_helper.py b/mini_data_utils/new_helper.py\n"
         "new file mode 100644\n"
         "--- /dev/null\n"
@@ -262,7 +303,7 @@ def test_action_replay_and_crash_reconciliation_do_not_duplicate_mutation(
     applied = subprocess.run(
         ["git", "apply", "--whitespace=nowarn", "-"],
         cwd=workspace,
-        input=call.arguments["patch"].encode("utf-8"),
+        input=call.arguments["git_diff"].encode("utf-8"),
         capture_output=True,
         check=False,
     )

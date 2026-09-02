@@ -15,7 +15,7 @@ from patchloop.util import sha256_json
 DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
 DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
-DEV_SINGLE_ACTION_TOOLS = frozenset({"apply_patch", "run_check", "finish_task"})
+DEV_SINGLE_ACTION_TOOLS = frozenset({"apply_git_diff", "run_check", "finish_task"})
 
 
 def dev_tool_surface_hash() -> str:

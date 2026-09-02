@@ -76,6 +76,10 @@ counting follows the official
 
 ## Submission and evaluation
 
+The mutation tool is `apply_git_diff`. Its `git_diff` value must start exactly with
+`diff --git a/<path> b/<path>` and contain a raw Git unified diff. Codex-style
+`*** Begin Patch` / `*** Update File` wrappers are rejected rather than converted.
+
 `finish_task` becomes available only after every visible check passes on the
 current diff. The full submitted patch is stored by content hash. A separate
 manifest is atomically recorded before evaluator execution and binds the exact
