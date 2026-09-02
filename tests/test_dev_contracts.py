@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from decimal import Decimal
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from patchloop.dev.contracts import DevRunRequest, MutationIntent, RequestedTool
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
 from patchloop.dev.tools import validate_tool_batch
 from patchloop.errors import ContractError
-from patchloop.runtime import repository_root
+from patchloop.runtime import repository_root, runtime_content_hash, runtime_content_paths
 from patchloop.task_loader import load_task_package
 
 
@@ -161,3 +162,45 @@ def test_task_identity_hashes_survive_reset(
     package = load_task_package(repository_root() / "tasks" / relative_path)
     assert package.public_spec_hash == public_hash
     assert package.private_spec_hash == private_hash
+
+
+def test_v1_task_content_hash_binds_hidden_bytes(tmp_path) -> None:
+    source = repository_root() / "tasks" / "smoke" / "csv-quoted-newline"
+    copied = tmp_path / "task"
+    shutil.copytree(source, copied)
+    before = load_task_package(copied)
+    hidden = copied / "hidden" / "test_multiline.py"
+    hidden.write_text(hidden.read_text(encoding="utf-8") + "\n# content drift\n", encoding="utf-8")
+    after = load_task_package(copied)
+    assert after.public_spec_hash == before.public_spec_hash
+    assert after.private_spec_hash == before.private_spec_hash
+    assert after.task_content_hash != before.task_content_hash
+
+
+def test_task_content_hash_binds_raw_yaml_bytes_not_only_normalized_values(tmp_path) -> None:
+    source = repository_root() / "tasks" / "smoke" / "csv-quoted-newline"
+    copied = tmp_path / "task"
+    shutil.copytree(source, copied)
+    before = load_task_package(copied)
+    public = copied / "public.yaml"
+    public.write_text(
+        public.read_text(encoding="utf-8") + "\n# byte-only change\n",
+        encoding="utf-8",
+    )
+    after = load_task_package(copied)
+    assert after.public_spec_hash == before.public_spec_hash
+    assert after.private_spec_hash == before.private_spec_hash
+    assert after.task_content_hash != before.task_content_hash
+
+
+def test_runtime_content_hash_covers_all_python_and_lock_inputs() -> None:
+    root = repository_root()
+    paths = runtime_content_paths(root)
+    expected_python = {
+        path.relative_to(root).as_posix()
+        for path in (root / "patchloop").rglob("*.py")
+        if path.is_file()
+    }
+    assert expected_python.issubset(paths)
+    assert {"pyproject.toml", "uv.lock"}.issubset(paths)
+    assert runtime_content_hash(root).startswith("sha256:")

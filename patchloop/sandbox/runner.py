@@ -40,6 +40,7 @@ class SandboxResult:
 
 class Sandbox(Protocol):
     official: bool
+    backend: str
 
     def run_check(self, workspace: Path, check: RegisteredCheck) -> SandboxResult: ...
 
@@ -84,6 +85,7 @@ class LocalSandbox:
     """Deterministic non-official backend used only by tests and mock smoke."""
 
     official = False
+    backend = "local"
 
     def run_check(self, workspace: Path, check: RegisteredCheck) -> SandboxResult:
         workdir = workspace if check.working_directory == "." else ensure_within(
@@ -136,6 +138,7 @@ class DockerSandbox:
     """Digest-pinned, no-network registered checks; never pulls or builds images."""
 
     official = False
+    backend = "docker"
 
     def __init__(self, image: str) -> None:
         self.image = image

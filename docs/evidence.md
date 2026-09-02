@@ -2,7 +2,7 @@
 
 ## Current local evidence
 
-On 2026-09-01, after the Rapid Dev Reset:
+Following the Rapid Dev Reset, local checkpoints recorded:
 
 - `uv run ruff check patchloop tests` passed.
 - The locked fast suite passed 26 tests in 10.46 seconds after documentation consolidation.
@@ -20,6 +20,12 @@ On 2026-09-01, after the Rapid Dev Reset:
   idempotency, durable cost/counter restoration, and no repeated mocked provider
   dispatch. Ruff passed, 39 tests passed in 35.15 seconds, and mock smoke reached
   `EVALUATOR_PASS`. This remains local contract evidence, not provider acceptance.
+- The provenance/safety checkpoint passed Ruff and 54 tests in 50.43 seconds.
+  Provider-free evaluator tests reject task, image, and patch mismatches before
+  workspace creation; map synthetic Docker policy match, violation, and missing
+  evidence to PASS, FAIL, and ERROR; and preserve policy hashes after an injected
+  evaluator error. Mock smoke reports task acceptance PASS, safety NOT_RUN, and
+  `claim_eligible=false`.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -65,11 +71,12 @@ because no evaluator summary was reached.
 - The price registry accepts only reviewed model IDs; unknown models fail closed.
 - Input counting and generation are separate provider operations. Timeout after
   either boundary can make billing uncertain, so the invocation stops.
-- Digest and requested sandbox policy are recorded, but they are not host-level attestation.
+- Digest and requested sandbox policy are content-bound, but they are not host-level
+  attestation.
 - Mock fixtures do not prove remote checkout, provider schema acceptance, model
   behavior, or production billing.
-- The evaluator currently records literal safety PASS after constrained execution
-  and static policies, so development results are not official claim evidence.
+- Local/mock evaluation intentionally reports Docker safety as NOT_RUN. The typed
+  Docker safety path is locally simulated but has not been live-executed here.
 - Long-horizon memory is disabled; only bounded current-run public evidence is projected.
 - Deleted historical executables require Git history to replay.
 - Only runs with the new immutable envelope can resume; older journals remain

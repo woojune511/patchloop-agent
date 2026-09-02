@@ -19,9 +19,32 @@ from patchloop.errors import ContractError
 from patchloop.util import (
     ensure_within,
     load_unique_yaml,
+    raw_file_set_hash,
     require_yaml_scalar_type_identity,
     sha256_bytes,
 )
+
+
+def _task_content_paths(root: Path, private: PrivateTask) -> list[str]:
+    paths = {"public.yaml", "private.yaml", private.reference_patch.path}
+    if (root / "environment.yaml").is_file():
+        paths.add("environment.yaml")
+    hidden_root = root / "hidden"
+    if hidden_root.exists():
+        if hidden_root.is_symlink():
+            raise ContractError("task hidden content cannot be a symlink")
+        for path in hidden_root.rglob("*"):
+            if path.is_symlink():
+                raise ContractError("task hidden content cannot contain symlinks")
+            if path.is_file():
+                paths.add(path.relative_to(root).as_posix())
+    return sorted(paths)
+
+
+def task_package_content_paths(package: TaskPackage) -> list[str]:
+    """Return the private internal pathset used for checkout preflight only."""
+
+    return _task_content_paths(Path(package.root), package.private)
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
@@ -104,6 +127,7 @@ def load_task_package(task_dir: str | Path) -> TaskPackage:
                 )
 
     public_spec_hash, private_spec_hash = task_package_spec_hashes(public, private)
+    task_content_hash = raw_file_set_hash(root, _task_content_paths(root, private))
 
     try:
         return TaskPackage(
@@ -113,6 +137,7 @@ def load_task_package(task_dir: str | Path) -> TaskPackage:
             root=str(root),
             public_spec_hash=public_spec_hash,
             private_spec_hash=private_spec_hash,
+            task_content_hash=task_content_hash,
         )
     except ValidationError as exc:
         raise ContractError(f"task package identity validation failed: {exc}") from exc

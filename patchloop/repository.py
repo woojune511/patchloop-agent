@@ -44,6 +44,7 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/tobymao/sqlglot.git",
     "https://github.com/tobymao/sqlglot",
 }
+_PATCH_PATH = re.compile(r"^diff --git a/(.+) b/(.+)$", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -298,6 +299,22 @@ class WorkspaceManager:
         if result.returncode != 0:
             raise ContractError(f"patch application failed: {result.stderr.strip()}")
         return digest
+
+    @staticmethod
+    def patch_changed_files(patch: bytes) -> list[str]:
+        try:
+            text = patch.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise ContractError("submitted patch is not UTF-8") from exc
+        matches = _PATCH_PATH.findall(text)
+        if not matches:
+            raise ContractError("submitted patch contains no Git diff paths")
+        paths: list[str] = []
+        for before, after in matches:
+            if before != after:
+                raise ContractError("submitted patch renames are unsupported")
+            paths.append(safe_relative_path(after, field_name="submitted patch path"))
+        return sorted(set(paths))
 
     @staticmethod
     def untracked_files(workspace: Path) -> list[str]:

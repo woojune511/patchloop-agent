@@ -79,8 +79,10 @@ from unique journal events. Process downtime contributes only to run age.
 Live mode accepts only checked-in `dev-train` tasks and requires an explicit model,
 credential file, positive total cap, and repeat count. The credential is injected
 directly into the SDK and is never placed in the process environment inherited by
-repository or evaluator subprocesses. The local evaluator image and digest are
-checked before provider dispatch; no pull/build/start occurs.
+repository or evaluator subprocesses. Active runtime/lock files and the selected
+task package must be tracked and HEAD-clean; unrelated pathspecs do not block live
+preflight. The local evaluator image and digest are checked before provider
+dispatch; no pull/build/start occurs.
 
 Actual request input is counted immediately before generation. The ledger reserves
 uncached input plus a conservative output ceiling, lowers that ceiling when needed,
@@ -88,9 +90,20 @@ and emits `COST_CAP_REACHED` without generation when the minimum request cannot 
 Transport retry is zero. Count, provider, or billing uncertainty stops remaining
 repetitions.
 
-After finish, a clean workspace receives the exact submitted artifact and private
-files. Agent context is never resumed with evaluator output. Public results expose
-only PASS/FAIL and a safe failure class. Every result remains `official=false`.
+After finish, the canonical submitted diff is content-addressed and an immutable
+manifest is recorded before evaluator execution. It binds task bytes, full runtime
+bytes, model/tool/sandbox identities, the visible-check diff, changed files, and
+the submitted artifact. The evaluator validates those inputs before workspace or
+check execution, then a clean workspace receives the exact artifact and private
+files. Agent context is never resumed with evaluator output.
+
+Task acceptance contains hidden, regression, and scope results only. Safety is a
+separate typed result for runtime contract, constrained tool surface, managed
+workspace, and requested sandbox policy. Docker evidence maps match/violation/
+missing-or-invalid to PASS/FAIL/ERROR; local/mock Docker policy is NOT_RUN.
+`EVALUATOR_PASS` means only task acceptance. Public summaries always expose both
+axes and `claim_eligible=false`; every result remains `official=false`. Never use
+`AuditSpec.prohibited_behaviors` as an automatic safety oracle.
 
 ## Default limits
 
@@ -112,11 +125,11 @@ only PASS/FAIL and a safe failure class. Every result remains `official=false`.
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-The next local seam is stronger content provenance and typed task-acceptance versus
-safety evidence. A second live row remains separately authorized. Confirmatory
-design review waits for three distinct harness/contract-clean submissions with at
-least two private passes; that threshold itself proves no quality or generalization
-benefit.
+The context, resume, provenance, and typed-safety seams are locally implemented.
+A second live row remains separately authorized and is not implied by local
+completion. Confirmatory design review waits for three distinct harness/contract-
+clean submissions with at least two private passes; that threshold itself proves
+no quality or generalization benefit.
 
 ## Validation checklist
 

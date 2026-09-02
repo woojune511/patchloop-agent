@@ -55,8 +55,11 @@ uv run patchloop dev `
 
 That exact command is the development approval for its provider, task, model,
 credential file, repeat count, and invocation-wide cap. Live mode accepts only
-checked-in `dev-train` tasks. The credential file may contain only one
-`OPENAI_API_KEY=...` assignment and must stay outside the repository.
+checked-in `dev-train` tasks. Every active `patchloop/**/*.py`, `pyproject.toml`,
+`uv.lock`, and selected task-package input must be tracked and match HEAD;
+unrelated scratch or untracked paths outside those pathspecs are ignored. The
+credential file may contain only one `OPENAI_API_KEY=...` assignment and must stay
+outside the repository.
 
 The required evaluator image must already exist locally at the declared digest.
 PatchLoop never starts Docker Desktop or pulls/builds an image. Unknown model
@@ -75,9 +78,24 @@ counting follows the official
 
 `finish_task` becomes available only after every visible check passes on the
 current diff. The full submitted patch is stored by content hash. A separate
-workspace receives that artifact and private evaluator files; those details are
-never returned to the agent. The public result contains only PASS/FAIL and a safe
-failure class.
+manifest is atomically recorded before evaluator execution and binds the exact
+task bytes, full runtime bytes, model/tool/sandbox identities, visible-check diff,
+submitted patch, and changed files. A separate workspace receives that artifact
+and private evaluator files; those details are never returned to the agent.
+
+Before creating its workspace, the evaluator compares task ID/version, base,
+public/private/content hashes, runtime and tool surface, sandbox backend/image,
+and submitted artifact against the manifest. Public summaries expose
+`task_acceptance`, `safety_state`, a safe `failure_class`, and
+`claim_eligible=false`. `EVALUATOR_PASS` means task acceptance only; it does not
+mean an official run or safety PASS.
+
+Task acceptance combines hidden checks, public regression, and scope policies.
+Safety is a separate typed axis covering runtime contract, constrained tool
+surface, managed workspace, and requested Docker execution policy. Complete
+matching Docker evidence is `PASS`, an observed policy violation is `FAIL`,
+missing or invalid required evidence is `ERROR`, and an unexecuted local/mock
+Docker policy is `NOT_RUN`. Free-form audit prose is not an automatic safety rule.
 
 Each run writes append-only `dev-run-v1` JSONL plus content-addressed artifacts to
 the external state root. Operational acceptance requires a durable terminal and
@@ -102,10 +120,10 @@ uv run patchloop dev `
 ```
 
 Provider, task, model, reasoning effort, resolved credential-file path, invocation
-cap, limits, runtime content, sandbox identity, and task identities must match the
-stored envelope exactly. A mismatch returns `RESUME_CONTRACT_MISMATCH` before a
-provider call and leaves the journal unchanged. Pre-envelope runs, including
-`run_dev_e89e940c0715474e`, are immutable evidence and cannot resume.
+cap, limits, runtime content, sandbox identity, and full task-content identity must
+match the stored envelope exactly. A mismatch returns `RESUME_CONTRACT_MISMATCH`
+before a provider call and leaves the journal unchanged. Pre-envelope runs,
+including `run_dev_e89e940c0715474e`, are immutable evidence and cannot resume.
 
 Resume takes a run-lifetime execution lock, restores durable cost and counters,
 and excludes process downtime from active wall-time while retaining run age. A

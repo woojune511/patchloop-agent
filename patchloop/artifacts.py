@@ -112,3 +112,22 @@ class ArtifactStore:
         content: str,
     ) -> None:
         self.write_bytes_atomic(path, content.encode("utf-8"))
+
+    def write_text_immutable(
+        self,
+        path: str | Path,
+        content: str,
+    ) -> None:
+        target = Path(path)
+        encoded = content.encode("utf-8")
+        if target.exists():
+            if target.is_symlink():
+                raise RecoveryError("immutable artifact path is a symlink")
+            try:
+                existing = target.read_bytes()
+            except OSError as exc:
+                raise RecoveryError("immutable artifact is unreadable") from exc
+            if existing != encoded:
+                raise RecoveryError("immutable artifact conflicts with durable content")
+            return
+        self.write_bytes_atomic(target, encoded)

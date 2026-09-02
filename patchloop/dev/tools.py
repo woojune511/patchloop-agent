@@ -14,7 +14,14 @@ from typing import Any
 from pydantic import ValidationError
 
 from patchloop.contracts import PublicTask
-from patchloop.dev.contracts import DevLimits, DevToolResult, MutationIntent, RequestedTool
+from patchloop.dev.contracts import (
+    DEV_READ_TOOLS,
+    DEV_SINGLE_ACTION_TOOLS,
+    DevLimits,
+    DevToolResult,
+    MutationIntent,
+    RequestedTool,
+)
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
 from patchloop.repository import WorkspaceManager
@@ -22,8 +29,8 @@ from patchloop.sandbox.runner import Sandbox
 from patchloop.util import ensure_within, safe_relative_path, sha256_bytes, sha256_json
 from patchloop.verifier.policy import verify_scope
 
-READ_TOOLS = frozenset({"search_files", "read_file"})
-SINGLE_ACTION_TOOLS = frozenset({"apply_patch", "run_check", "finish_task"})
+READ_TOOLS = DEV_READ_TOOLS
+SINGLE_ACTION_TOOLS = DEV_SINGLE_ACTION_TOOLS
 ALL_DEV_TOOLS = READ_TOOLS | SINGLE_ACTION_TOOLS
 _PATCH_PATH = re.compile(r"^diff --git a/(.+) b/(.+)$", re.MULTILINE)
 _MAX_MUTATION_HUNK_CHARS = 24_000
@@ -743,6 +750,11 @@ class DevToolGateway:
         diff_hash = self.current_diff_hash
         outcome = self.sandbox.run_check(self.workspace, check)
         passed = not outcome.timed_out and outcome.exit_code in check.expected_exit_codes
+        execution_policy_hash = (
+            sha256_json(outcome.execution_policy)
+            if outcome.execution_policy is not None
+            else None
+        )
         signature = sha256_json(
             {
                 "check_id": check_id,
@@ -762,6 +774,8 @@ class DevToolGateway:
             "truncated": outcome.truncated,
             "stdout": outcome.stdout[-12_000:],
             "stderr": outcome.stderr[-12_000:],
+            "execution_policy": outcome.execution_policy,
+            "execution_policy_hash": execution_policy_hash,
         }
 
     def _remember_check(self, output: dict[str, Any]) -> None:

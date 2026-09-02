@@ -10,8 +10,26 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from patchloop.util import sha256_json
+
 DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
+DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
+DEV_SINGLE_ACTION_TOOLS = frozenset({"apply_patch", "run_check", "finish_task"})
+
+
+def dev_tool_surface_hash() -> str:
+    return sha256_json(
+        {
+            "schema_version": "dev-tool-surface-v1",
+            "reads": sorted(DEV_READ_TOOLS),
+            "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
+            "max_parallel_reads": 4,
+            "mixed_batches": False,
+            "unrestricted_shell": False,
+            "new_files": False,
+        }
+    )
 
 
 class StrictModel(BaseModel):
@@ -145,8 +163,10 @@ class DevRunEnvelope(StrictModel):
     base_commit: str
     public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    task_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     runtime_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     model: str
     reasoning_effort: Literal["none", "low", "medium", "high", "xhigh"]
     credential_file_path_hash: str | None = Field(

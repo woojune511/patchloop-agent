@@ -31,7 +31,7 @@ public task ──> dev-head ──> constrained model/tool loop
                             separate private evaluator
                                         │
                                         v
-                          PASS/FAIL + public failure class
+                     task acceptance + separate safety state
 ```
 
 `dev-head` derives its next gate from public execution facts: `needs_mutation`,
@@ -52,11 +52,17 @@ current source spans form a small recency-ordered working set.
 - `patchloop/sandbox/runner.py` runs registered checks locally or in a pinned image.
 - `patchloop/verifier/core.py` evaluates the submitted artifact in a separate workspace.
 
+The run envelope and manifest have different lifetimes. The immutable envelope is
+written when a run starts and makes interruption recovery exact. The manifest is
+written only after submission and makes evaluator inputs exact. Both bind hashes,
+not private task paths or contents, into public run provenance.
+
 ## Scope
 
 Current development includes public source inspection, constrained edits, visible
 checks, exact-envelope run resume, action recovery, cost enforcement, external run
-state, and isolated private evaluation. Resume derives the current workflow gate
+state, content-bound manifests, typed safety evidence, and isolated private
+evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
 workflow state. It excludes memory experiments, held-out tuning, claim runs,
 automatic provider retries, Docker startup, image pull/build, and compatibility

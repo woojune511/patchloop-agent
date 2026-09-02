@@ -23,6 +23,7 @@ _UNIQUE_TURN_EVENTS = {
     "protocol_correction",
 }
 _UNIQUE_ACTION_EVENTS = {"attempt_card"}
+_UNIQUE_RUN_EVENTS = {"manifest_recorded", "submission_recorded", "evaluator_finished"}
 
 
 @contextmanager
@@ -178,6 +179,12 @@ class DevJournal:
         with _PROCESS_LOCK, _exclusive_file_lock(self.lock_path):
             events = self.events()
             normalized_payload = payload or {}
+            if event_type in _UNIQUE_RUN_EVENTS:
+                recorded = [event for event in events if event["event_type"] == event_type]
+                if recorded:
+                    if recorded[-1]["payload"] != normalized_payload:
+                        raise ActionConflict(f"run has conflicting {event_type}")
+                    return recorded[-1]
             if event_type in _UNIQUE_TURN_EVENTS:
                 turn_id = normalized_payload.get("turn_id")
                 if not isinstance(turn_id, str) or not turn_id:

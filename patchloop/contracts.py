@@ -191,6 +191,7 @@ class TaskPackage(StrictModel):
     root: str
     public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    task_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
     @model_validator(mode="after")
     def matching_identity(self) -> TaskPackage:
@@ -252,6 +253,14 @@ class RunManifest(StrictModel):
     base_commit: str
     public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    task_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    runtime_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    tool_surface_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    submitted_patch_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    visible_check_diff_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    submitted_changed_files: list[str] = Field(min_length=1)
     harness_git_commit: str = "uncommitted"
     model: ModelConfig
     max_model_calls: int = Field(default=40, ge=1)
@@ -261,8 +270,29 @@ class RunManifest(StrictModel):
     protocol_recovery_limit: int = Field(default=1, ge=0)
     memory_enabled: Literal[False] = False
     sandbox_backend: Literal["local", "docker"] = "local"
-    evaluator_image_digest: str | None = None
+    evaluator_image_digest: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
     created_at: datetime
+
+    @field_validator("submitted_changed_files")
+    @classmethod
+    def validate_submitted_paths(cls, values: list[str]) -> list[str]:
+        normalized = [safe_relative_path(value, field_name="submitted path") for value in values]
+        if normalized != sorted(set(normalized)):
+            raise ValueError("submitted changed files must be unique and sorted")
+        return normalized
+
+    @model_validator(mode="after")
+    def sandbox_identity_is_complete(self) -> RunManifest:
+        if self.submitted_patch_content_hash != self.visible_check_diff_hash:
+            raise ValueError("submitted patch must equal the visibly checked diff")
+        if self.sandbox_backend == "docker" and self.evaluator_image_digest is None:
+            raise ValueError("Docker manifests require an evaluator image digest")
+        if self.sandbox_backend == "local" and self.evaluator_image_digest is not None:
+            raise ValueError("local manifests cannot claim an evaluator image digest")
+        return self
 
 
 class VerdictState(StrEnum):
@@ -270,6 +300,29 @@ class VerdictState(StrEnum):
     FAIL = "fail"
     ERROR = "error"
     NOT_RUN = "not_run"
+
+
+class SafetyControl(StrEnum):
+    RUNTIME_CONTRACT = "runtime_contract"
+    CONSTRAINED_TOOL_SURFACE = "constrained_tool_surface"
+    MANAGED_WORKSPACE = "managed_workspace"
+    REQUESTED_SANDBOX_POLICY = "requested_sandbox_policy"
+
+
+class SafetyEvidence(StrictModel):
+    schema_version: Literal["dev-safety-evidence-v1"] = "dev-safety-evidence-v1"
+    control: SafetyControl
+    state: VerdictState
+    evidence_artifact_ids: list[str] = Field(default_factory=list)
+    evidence_hashes: list[str] = Field(default_factory=list)
+    details: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("evidence_hashes")
+    @classmethod
+    def validate_evidence_hashes(cls, values: list[str]) -> list[str]:
+        if any(re.fullmatch(r"sha256:[0-9a-f]{64}", value) is None for value in values):
+            raise ValueError("safety evidence hashes must be SHA-256 identities")
+        return values
 
 
 class Artifact(StrictModel):
@@ -325,3 +378,4 @@ class RunResult(StrictModel):
     usage: Usage = Field(default_factory=Usage)
     submitted_patch_artifact_id: str | None = None
     verifier_results: list[VerifierResult] = Field(default_factory=list)
+    safety_evidence: list[SafetyEvidence] = Field(default_factory=list)

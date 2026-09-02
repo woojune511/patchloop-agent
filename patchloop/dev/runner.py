@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +24,7 @@ from patchloop.dev.contracts import (
     DevTerminal,
     DevToolResult,
     RequestedTool,
+    dev_tool_surface_hash,
 )
 from patchloop.dev.cost import (
     PRICING_SOURCE,
@@ -42,9 +44,15 @@ from patchloop.errors import (
     ResumeContractMismatch,
 )
 from patchloop.repository import WorkspaceManager
-from patchloop.runtime import git_commit, make_run_id, repository_root
+from patchloop.runtime import (
+    git_commit,
+    make_run_id,
+    repository_root,
+    runtime_content_hash,
+    runtime_content_paths,
+)
 from patchloop.sandbox import DockerSandbox, LocalSandbox
-from patchloop.task_loader import load_task_package
+from patchloop.task_loader import load_task_package, task_package_content_paths
 from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
 from patchloop.verifier import EvaluationEngine
 
@@ -79,11 +87,7 @@ def default_state_root() -> Path:
 
 
 def _runtime_hash() -> str:
-    root = Path(__file__).resolve().parent
-    rows = []
-    for path in sorted(root.glob("*.py")):
-        rows.append({"path": path.name, "sha256": sha256_bytes(path.read_bytes())})
-    return sha256_json({"runtime": DEV_RUNTIME_ID, "sources": rows})
+    return runtime_content_hash()
 
 
 def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
@@ -128,6 +132,44 @@ def _live_task_is_admitted(task_dir: Path, package: Any) -> None:
         raise ContractError("live dev-head task is missing environment.yaml")
 
 
+def _require_tracked_clean_paths(root: Path, relative_paths: list[str]) -> None:
+    expected = sorted(set(relative_paths))
+    tracked = subprocess.run(
+        ["git", "ls-files", "-z", "--", *expected],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    if tracked.returncode != 0:
+        raise ContractError("cannot inspect live source tracking state")
+    actual = sorted(path for path in tracked.stdout.split("\0") if path)
+    if actual != expected:
+        raise ContractError("live runtime and task inputs must all be tracked")
+    status = subprocess.run(
+        ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all", "--", *expected],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    if status.returncode != 0:
+        raise ContractError("cannot inspect live source modification state")
+    if status.stdout:
+        raise ContractError("live runtime and task inputs must match HEAD exactly")
+
+
+def _live_source_preflight(task_dir: Path, package: Any) -> None:
+    root = repository_root().resolve()
+    task_paths = [
+        (task_dir / relative).resolve().relative_to(root).as_posix()
+        for relative in task_package_content_paths(package)
+    ]
+    _require_tracked_clean_paths(root, [*runtime_content_paths(root), *task_paths])
+
+
 def _live_sandbox_preflight(package: Any) -> DockerSandbox:
     environment = package.environment
     if environment is None:
@@ -152,6 +194,11 @@ def _manifest(
     run_id: str,
     sandbox_backend: str,
     pricing: ModelPricing | None,
+    runtime_hash: str,
+    model_hash: str,
+    submitted_patch_hash: str,
+    submitted_changed_files: list[str],
+    created_at: Any,
 ) -> RunManifest:
     return RunManifest(
         run_id=run_id,
@@ -160,6 +207,14 @@ def _manifest(
         base_commit=package.public.repository.base_commit,
         public_spec_hash=package.public_spec_hash,
         private_spec_hash=package.private_spec_hash,
+        task_content_hash=package.task_content_hash,
+        runtime_content_hash=runtime_hash,
+        model_hash=model_hash,
+        tool_surface_hash=dev_tool_surface_hash(),
+        sandbox_identity_hash=_sandbox_identity_hash(request, package),
+        submitted_patch_content_hash=submitted_patch_hash,
+        visible_check_diff_hash=submitted_patch_hash,
+        submitted_changed_files=sorted(submitted_changed_files),
         harness_git_commit=git_commit(),
         model=ModelConfig(
             provider=request.provider,
@@ -181,8 +236,12 @@ def _manifest(
         wall_time_seconds=request.limits.wall_time_seconds,
         protocol_recovery_limit=request.limits.max_protocol_recoveries,
         sandbox_backend=sandbox_backend,
-        evaluator_image_digest=(package.environment.image_digest if package.environment else None),
-        created_at=utc_now(),
+        evaluator_image_digest=(
+            package.environment.image_digest
+            if sandbox_backend == "docker" and package.environment
+            else None
+        ),
+        created_at=created_at,
     )
 
 
@@ -384,19 +443,29 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
 
 def _evaluator_summary(result: Any) -> dict[str, Any]:
     verdicts = result.verdicts
-    if result.scope_compliant_success:
-        return {"status": "PASS", "failure_class": None}
-    if verdicts.scope_policy != VerdictState.PASS:
+    task_acceptance = "PASS" if result.scope_compliant_success else "FAIL"
+    if task_acceptance == "FAIL" and verdicts.scope_policy != VerdictState.PASS:
         failure = "SCOPE_POLICY_FAILED"
-    elif verdicts.regression_tests != VerdictState.PASS:
+    elif task_acceptance == "FAIL" and verdicts.regression_tests != VerdictState.PASS:
         failure = "PUBLIC_REGRESSION_FAILED"
-    elif verdicts.hidden_tests != VerdictState.PASS:
+    elif task_acceptance == "FAIL" and verdicts.hidden_tests != VerdictState.PASS:
         failure = "PRIVATE_EVALUATION_FAILED"
     elif verdicts.safety_policy != VerdictState.PASS:
-        failure = "SAFETY_POLICY_FAILED"
+        failure = (
+            "SAFETY_EVIDENCE_ERROR"
+            if verdicts.safety_policy == VerdictState.ERROR
+            else "SAFETY_POLICY_FAILED"
+            if verdicts.safety_policy == VerdictState.FAIL
+            else None
+        )
     else:
-        failure = "EVALUATION_FAILED"
-    return {"status": "FAIL", "failure_class": failure}
+        failure = None
+    return {
+        "task_acceptance": task_acceptance,
+        "safety_state": verdicts.safety_policy.value.upper(),
+        "failure_class": failure,
+        "claim_eligible": False,
+    }
 
 
 def _milestones(journal: DevJournal) -> dict[str, Any]:
@@ -517,6 +586,17 @@ def _credential_file_path_hash(request: DevRunRequest) -> str | None:
     return sha256_bytes(str(request.env_file.resolve()).encode("utf-8"))
 
 
+def _sandbox_identity_hash(request: DevRunRequest, package: Any) -> str:
+    environment = package.environment if request.provider == "openai" else None
+    return sha256_json(
+        {
+            "backend": "docker" if request.provider == "openai" else "local",
+            "evaluator_image": environment.evaluator_image if environment else None,
+            "image_digest": environment.image_digest if environment else None,
+        }
+    )
+
+
 def _run_envelope(
     *,
     request: DevRunRequest,
@@ -539,8 +619,10 @@ def _run_envelope(
         base_commit=package.public.repository.base_commit,
         public_spec_hash=package.public_spec_hash,
         private_spec_hash=package.private_spec_hash,
+        task_content_hash=package.task_content_hash,
         runtime_hash=runtime_hash,
         model_hash=model_hash,
+        sandbox_identity_hash=_sandbox_identity_hash(request, package),
         model=request.model,
         reasoning_effort=request.reasoning_effort,
         credential_file_path_hash=_credential_file_path_hash(request),
@@ -760,24 +842,14 @@ def _run_one(
                     "task_version": package.public.task_version,
                     "split": package.public.split,
                     "runtime_hash": runtime_hash,
-                    "task_hash": sha256_json(
-                        {
-                            "public": package.public_spec_hash,
-                            "private": package.private_spec_hash,
-                        }
-                    ),
+                    "task_hash": package.task_content_hash,
                     "model_hash": model_hash,
                 },
             )
 
         hashes = {
             "runtime_hash": runtime_hash,
-            "task_hash": sha256_json(
-                {
-                    "public": package.public_spec_hash,
-                    "private": package.private_spec_hash,
-                }
-            ),
+            "task_hash": package.task_content_hash,
             "model_hash": model_hash,
         }
         counters = _restore_counters(journal) if resuming else _RunCounters()
@@ -840,12 +912,7 @@ def _run_one_locked(
     cost_start_nanos = envelope.cost_start_nanos
     hashes = {
         "runtime_hash": runtime_hash,
-        "task_hash": sha256_json(
-            {
-                "public": package.public_spec_hash,
-                "private": package.private_spec_hash,
-            }
-        ),
+        "task_hash": package.task_content_hash,
         "model_hash": model_hash,
     }
     workspace_manager = WorkspaceManager(
@@ -1330,12 +1397,38 @@ def _run_one_locked(
 
     patch = finish_result.output["patch"]
     submitted = artifact_store.put_text(patch, "text/x-diff")
+    if submitted.content_hash != finish_result.output["patch_hash"]:
+        raise RecoveryError("submitted artifact differs from the visibly checked diff")
+    journal.append(
+        "submission_recorded",
+        {
+            "patch_hash": submitted.content_hash,
+            "visible_check_diff_hash": finish_result.output["patch_hash"],
+            "changed_files": finish_result.output["changed_files"],
+        },
+    )
     manifest = _manifest(
         request=request,
         package=package,
         run_id=run_id,
         sandbox_backend="docker" if request.provider == "openai" else "local",
         pricing=pricing,
+        runtime_hash=runtime_hash,
+        model_hash=model_hash,
+        submitted_patch_hash=submitted.content_hash,
+        submitted_changed_files=finish_result.output["changed_files"],
+        created_at=envelope.created_at,
+    )
+    manifest_text = canonical_json(manifest.model_dump(mode="json")) + "\n"
+    manifest_artifact = artifact_store.put_text(manifest_text, "application/json")
+    run_artifact_dir = Path(artifact_store.root) / "runs" / run_id
+    artifact_store.write_text_immutable(run_artifact_dir / "manifest.json", manifest_text)
+    journal.append(
+        "manifest_recorded",
+        {
+            "manifest_content_hash": manifest_artifact.content_hash,
+            "submitted_patch_content_hash": submitted.content_hash,
+        },
     )
     evaluator = EvaluationEngine(workspace_manager, sandbox, artifact_store)
     try:
@@ -1346,20 +1439,30 @@ def _run_one_locked(
             submitted_patch_artifact=submitted,
         )
         evaluator_summary = _evaluator_summary(evaluation)
-        evaluator_hash = sha256_json(evaluator_summary)
         terminal_code = (
             DevTerminal.EVALUATOR_PASS
-            if evaluator_summary["status"] == "PASS"
+            if evaluator_summary["task_acceptance"] == "PASS"
             else DevTerminal.EVALUATOR_FAIL
         )
     except Exception as exc:
         evaluator_summary = {
-            "status": "ERROR",
+            "task_acceptance": "ERROR",
+            "safety_state": "ERROR",
             "failure_class": "EVALUATOR_INFRA_FAILURE",
+            "claim_eligible": False,
         }
-        evaluator_hash = sha256_json(evaluator_summary)
         terminal_code = DevTerminal.EVALUATOR_ERROR
         terminal_message = f"isolated evaluator failed: {type(exc).__name__}"
+    evaluator_hash = sha256_json(evaluator_summary)
+    evaluator_summary_artifact = artifact_store.put_json(evaluator_summary)
+    evaluator_provenance_path = run_artifact_dir / "provenance.json"
+    evaluator_provenance_hash = None
+    if evaluator_provenance_path.is_file() and not evaluator_provenance_path.is_symlink():
+        evaluator_provenance = artifact_store.put_bytes(
+            evaluator_provenance_path.read_bytes(),
+            "application/json",
+        )
+        evaluator_provenance_hash = evaluator_provenance.content_hash
     journal.append(
         "evaluator_finished",
         {
@@ -1367,6 +1470,24 @@ def _run_one_locked(
             "summary_hash": evaluator_hash,
             "agent_context_reinjected": False,
         },
+    )
+    terminal_provenance = artifact_store.put_json(
+        {
+            "schema_version": "dev-terminal-provenance-v1",
+            "official": False,
+            "terminal": terminal_code.value,
+            "manifest_content_hash": manifest_artifact.content_hash,
+            "submitted_patch_content_hash": submitted.content_hash,
+            "evaluator_summary_hash": evaluator_hash,
+            "evaluator_provenance_content_hash": evaluator_provenance_hash,
+            "runtime_content_hash": runtime_hash,
+            "task_content_hash": package.task_content_hash,
+            "model_hash": model_hash,
+        }
+    )
+    artifact_store.write_bytes_atomic(
+        run_artifact_dir / "terminal-provenance.json",
+        artifact_store.read_bytes(terminal_provenance),
     )
     terminal = _terminal(
         journal=journal,
@@ -1378,7 +1499,14 @@ def _run_one_locked(
         evaluator=evaluator_summary,
         artifacts={
             "submitted_patch": submitted.content_hash,
-            "evaluator_summary": evaluator_hash,
+            "manifest": manifest_artifact.content_hash,
+            "evaluator_summary": evaluator_summary_artifact.content_hash,
+            "terminal_provenance": terminal_provenance.content_hash,
+            **(
+                {"evaluator_provenance": evaluator_provenance_hash}
+                if evaluator_provenance_hash is not None
+                else {}
+            ),
         },
         message=terminal_message,
         active_elapsed_ms=active_elapsed_ms(),
@@ -1405,6 +1533,7 @@ def run_dev(request: DevRunRequest) -> dict[str, Any]:
     cost_ledger: DevCostLedger | None = None
     if request.provider == "openai":
         _live_task_is_admitted(task_dir, package)
+        _live_source_preflight(task_dir, package)
         assert request.max_cost_usd is not None
         pricing = pricing_for_model(request.model)
         cost_ledger = DevCostLedger(request.max_cost_usd, pricing)

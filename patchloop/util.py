@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path, PurePosixPath
@@ -147,6 +147,30 @@ def directory_hash(root: Path) -> str:
         content = path.read_bytes()
         digest.update(len(relative).to_bytes(8, "big"))
         digest.update(relative)
+        digest.update(len(content).to_bytes(8, "big"))
+        digest.update(content)
+    return f"sha256:{digest.hexdigest()}"
+
+
+def raw_file_set_hash(root: Path, relative_paths: Iterable[str]) -> str:
+    """Hash a sorted, explicitly named set of regular files by path and raw bytes."""
+
+    resolved_root = root.resolve()
+    normalized = [
+        safe_relative_path(value, field_name="content file path")
+        for value in relative_paths
+    ]
+    if len(normalized) != len(set(normalized)):
+        raise ContractError("content file set contains duplicate paths")
+    digest = hashlib.sha256()
+    for relative in sorted(normalized):
+        path = ensure_within(resolved_root, relative)
+        if not path.is_file() or path.is_symlink():
+            raise ContractError(f"content file is not a regular file: {relative}")
+        name = relative.encode("utf-8")
+        content = path.read_bytes()
+        digest.update(len(name).to_bytes(8, "big"))
+        digest.update(name)
         digest.update(len(content).to_bytes(8, "big"))
         digest.update(content)
     return f"sha256:{digest.hexdigest()}"

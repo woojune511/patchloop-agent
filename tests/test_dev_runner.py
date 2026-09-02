@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import subprocess
 from decimal import Decimal
 from pathlib import Path
 
@@ -82,7 +84,12 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     result = runner.run_dev(request)
     run = result["runs"][0]
     assert run["terminal"] == "EVALUATOR_PASS"
-    assert run["evaluator"] == {"status": "PASS", "failure_class": None}
+    assert run["evaluator"] == {
+        "task_acceptance": "PASS",
+        "safety_state": "NOT_RUN",
+        "failure_class": None,
+        "claim_eligible": False,
+    }
     assert run["call_counts"] == {"model": 4, "input_count": 0, "tool": 5}
     assert run["accepted_mutations"] == 1
     assert all("hidden-multiline-csv" not in context for context in contexts)
@@ -132,10 +139,24 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     )
     evaluator = next(row for row in rows if row["event_type"] == "evaluator_finished")
     assert evaluator["payload"]["agent_context_reinjected"] is False
+    event_types = [row["event_type"] for row in rows]
+    assert event_types.index("submission_recorded") < event_types.index("manifest_recorded")
+    assert event_types.index("manifest_recorded") < event_types.index("evaluator_finished")
     envelope_path = tmp_path / "runs" / f"{run['run_id']}.envelope.json"
-    assert json.loads(envelope_path.read_text(encoding="utf-8"))["schema_version"] == (
-        "dev-run-envelope-v1"
+    envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+    assert envelope["schema_version"] == "dev-run-envelope-v1"
+    manifest = json.loads(
+        (tmp_path / "artifacts" / "runs" / run["run_id"] / "manifest.json").read_text(
+            encoding="utf-8"
+        )
     )
+    assert manifest["task_content_hash"] == envelope["task_content_hash"]
+    assert manifest["runtime_content_hash"] == envelope["runtime_hash"]
+    assert manifest["submitted_patch_content_hash"] == run["artifact_hashes"][
+        "submitted_patch"
+    ]
+    assert manifest["visible_check_diff_hash"] == manifest["submitted_patch_content_hash"]
+    assert manifest["submitted_changed_files"] == ["mini_data_utils/csvlite.py"]
     workspace_roots = [path for path in (tmp_path / "workspaces").iterdir() if path.is_dir()]
     assert len(workspace_roots) == 2
 
@@ -162,6 +183,58 @@ def test_unexpected_tool_gateway_failure_writes_terminal(tmp_path, monkeypatch) 
     terminal = [row for row in rows if row["event_type"] == "terminal"]
     assert len(terminal) == 1
     assert terminal[0]["payload"]["message"] == "tool gateway failed: RuntimeError"
+
+
+def test_manifest_submission_and_terminal_provenance_survive_evaluator_error(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    observed = {"called": False}
+
+    def fail_after_manifest(
+        self,
+        task_dir,
+        patch_path,
+        manifest,
+        usage=None,
+        submitted_patch_artifact=None,
+    ):
+        del task_dir, usage
+        observed["called"] = True
+        manifest_path = self.artifact_store.root / "runs" / manifest.run_id / "manifest.json"
+        assert manifest_path.is_file()
+        assert submitted_patch_artifact is not None
+        assert Path(patch_path).read_bytes() == self.artifact_store.read_bytes(
+            submitted_patch_artifact
+        )
+        raise RuntimeError("simulated evaluator failure")
+
+    monkeypatch.setattr(runner.EvaluationEngine, "evaluate", fail_after_manifest)
+    request = DevRunRequest(
+        provider="mock",
+        task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
+        model="mock-dev",
+        state_root=tmp_path,
+    )
+    result = runner.run_dev(request)
+    run = result["runs"][0]
+    assert observed["called"] is True
+    assert run["terminal"] == "EVALUATOR_ERROR"
+    assert run["evaluator"] == {
+        "task_acceptance": "ERROR",
+        "safety_state": "ERROR",
+        "failure_class": "EVALUATOR_INFRA_FAILURE",
+        "claim_eligible": False,
+    }
+    run_artifacts = tmp_path / "artifacts" / "runs" / run["run_id"]
+    assert (run_artifacts / "manifest.json").is_file()
+    assert (run_artifacts / "terminal-provenance.json").is_file()
+    manifest_text = (run_artifacts / "manifest.json").read_text(encoding="utf-8")
+    assert "hidden-multiline-csv" not in manifest_text
+    assert "reference.patch" not in manifest_text
+    assert {"submitted_patch", "manifest", "terminal_provenance"}.issubset(
+        run["artifact_hashes"]
+    )
 
 
 def test_invalid_tool_batch_gets_one_correction_then_stops(tmp_path, monkeypatch) -> None:
@@ -227,11 +300,45 @@ def test_live_rejects_non_dev_train_before_credential_or_provider(tmp_path) -> N
         runner.run_dev(request)
 
 
+def test_live_source_preflight_scopes_cleanliness_to_relevant_tracked_paths(tmp_path) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "patchloop@example.invalid"],
+        cwd=repository,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "PatchLoop Test"],
+        cwd=repository,
+        check=True,
+    )
+    runtime_file = repository / "patchloop" / "runtime.py"
+    runtime_file.parent.mkdir()
+    runtime_file.write_text("VALUE = 1\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-qm", "base"], cwd=repository, check=True)
+
+    scratch = repository / "scratch" / "untracked.txt"
+    scratch.parent.mkdir()
+    scratch.write_text("ignored by the selected pathspec\n", encoding="utf-8")
+    runner._require_tracked_clean_paths(repository, ["patchloop/runtime.py"])
+
+    runtime_file.write_text("VALUE = 2\n", encoding="utf-8")
+    with pytest.raises(ContractError, match="match HEAD"):
+        runner._require_tracked_clean_paths(repository, ["patchloop/runtime.py"])
+
+    with pytest.raises(ContractError, match="must all be tracked"):
+        runner._require_tracked_clean_paths(repository, ["missing.py"])
+
+
 def test_live_missing_local_image_stops_before_provider(tmp_path, monkeypatch) -> None:
     env_file = tmp_path / "credential.env"
     env_file.write_text("OPENAI_API_KEY=test-only-sentinel\n", encoding="utf-8")
     monkeypatch.setattr(runner.DockerSandbox, "available", staticmethod(lambda: True))
     monkeypatch.setattr(runner.DockerSandbox, "image_identity", lambda self: None)
+    monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package: None)
     request = DevRunRequest(
         provider="openai",
         task=(
@@ -292,6 +399,7 @@ def _live_request(tmp_path: Path, *, repeat: int = 3, cap: str = "0.01") -> DevR
 
 
 def _patch_live_boundaries(monkeypatch) -> None:
+    monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package: None)
     monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda package: LocalSandbox())
     monkeypatch.setattr(runner, "WorkspaceManager", _SnapshotWorkspaceManager)
 
@@ -472,6 +580,43 @@ def test_runtime_mismatch_and_pre_envelope_run_fail_before_journal_change(
     assert old.path.read_bytes() == old_before
 
 
+def test_resume_rejects_raw_task_content_drift_without_journal_change(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    task_dir = tmp_path / "copied-task"
+    shutil.copytree(
+        repository_root() / "tasks" / "smoke" / "csv-quoted-newline",
+        task_dir,
+    )
+    state_root = tmp_path / "state"
+    _crash_journal_once(
+        monkeypatch,
+        event_type="turn_decision_recorded",
+        when="after",
+    )
+    request = DevRunRequest(
+        provider="mock",
+        task=task_dir / "public.yaml",
+        model="mock-dev",
+        state_root=state_root,
+    )
+    with pytest.raises(_SimulatedCrash):
+        runner.run_dev(request)
+    run_id = _enveloped_run_id(state_root)
+    journal = DevJournal(state_root, run_id)
+    before = journal.path.read_bytes()
+    public = task_dir / "public.yaml"
+    public.write_text(
+        public.read_text(encoding="utf-8") + "\n# raw task drift\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ResumeContractMismatch):
+        runner.run_dev(request.model_copy(update={"resume_run_id": run_id}))
+    assert journal.path.read_bytes() == before
+
+
 def test_terminal_resume_is_read_only_and_does_not_reenter_model(tmp_path, monkeypatch) -> None:
     request = DevRunRequest(
         provider="mock",
@@ -582,6 +727,7 @@ def test_unfinished_provider_dispatch_becomes_one_unknown_terminal(tmp_path, mon
         calls["preflight"] += 1
         return LocalSandbox()
 
+    monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package: None)
     monkeypatch.setattr(runner, "_live_sandbox_preflight", preflight)
     monkeypatch.setattr(runner, "WorkspaceManager", _SnapshotWorkspaceManager)
     monkeypatch.setattr(runner, "OpenAIResponsesAdapter", NeverExecutedAdapter)

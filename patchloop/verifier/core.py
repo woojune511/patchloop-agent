@@ -6,23 +6,30 @@ import json
 import shutil
 import time
 import uuid
+from contextlib import suppress
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     Artifact,
     RunManifest,
     RunResult,
+    SafetyControl,
+    SafetyEvidence,
     Usage,
     Verdicts,
     VerdictState,
     VerifierResult,
 )
-from patchloop.errors import ContractError
+from patchloop.dev.contracts import dev_tool_surface_hash
+from patchloop.errors import ContractError, PatchLoopError
 from patchloop.repository import WorkspaceManager
-from patchloop.sandbox.runner import Sandbox
+from patchloop.runtime import runtime_content_hash
+from patchloop.sandbox.runner import Sandbox, registered_check_execution_policy
 from patchloop.task_loader import load_task_package
-from patchloop.util import sha256_bytes
+from patchloop.util import canonical_json, sha256_bytes, sha256_json
 from patchloop.verifier.policy import (
     PolicyOutcome,
     verify_dependencies,
@@ -32,8 +39,15 @@ from patchloop.verifier.policy import (
 )
 
 
+@dataclass(frozen=True)
+class _CheckEvidence:
+    check: Any
+    result: VerifierResult
+    artifact: Artifact
+
+
 class EvaluationEngine:
-    """Evaluate a submitted patch in a separate clean workspace."""
+    """Evaluate one exact submitted patch in a separate clean workspace."""
 
     def __init__(
         self,
@@ -61,13 +75,19 @@ class EvaluationEngine:
         self,
         run_id: str,
         workspace: Path,
-        checks: list,
+        checks: list[Any],
         kind: str,
-    ) -> list[VerifierResult]:
-        results: list[VerifierResult] = []
+        results: list[VerifierResult],
+        recorded: list[_CheckEvidence],
+    ) -> None:
         for check in checks:
             started = time.monotonic()
             outcome = self.sandbox.run_check(workspace, check)
+            execution_policy_hash = (
+                sha256_json(outcome.execution_policy)
+                if outcome.execution_policy is not None
+                else None
+            )
             artifact = self.artifact_store.put_json(
                 {
                     "command": outcome.command,
@@ -77,28 +97,31 @@ class EvaluationEngine:
                     "timed_out": outcome.timed_out,
                     "truncated": outcome.truncated,
                     "original_output_bytes": outcome.original_output_bytes,
+                    "execution_policy": outcome.execution_policy,
+                    "execution_policy_hash": execution_policy_hash,
                 }
             )
             passed = not outcome.timed_out and outcome.exit_code in check.expected_exit_codes
-            results.append(
-                VerifierResult(
-                    verifier_result_id=f"vr_{uuid.uuid4().hex}",
-                    run_id=run_id,
-                    check_type=kind,
-                    check_id=check.id,
-                    state=VerdictState.PASS if passed else VerdictState.FAIL,
-                    duration_ms=int((time.monotonic() - started) * 1_000),
-                    evidence_artifact_ids=[artifact.artifact_id],
-                    details={
-                        "exit_code": outcome.exit_code,
-                        "timed_out": outcome.timed_out,
-                        "truncated": outcome.truncated,
-                        "artifact_path": artifact.path,
-                        "evidence_artifacts": [artifact.model_dump(mode="json")],
-                    },
-                )
+            result = VerifierResult(
+                verifier_result_id=f"vr_{uuid.uuid4().hex}",
+                run_id=run_id,
+                check_type=kind,
+                check_id=check.id,
+                state=VerdictState.PASS if passed else VerdictState.FAIL,
+                duration_ms=int((time.monotonic() - started) * 1_000),
+                evidence_artifact_ids=[artifact.artifact_id],
+                details={
+                    "exit_code": outcome.exit_code,
+                    "timed_out": outcome.timed_out,
+                    "truncated": outcome.truncated,
+                    "execution_policy": outcome.execution_policy,
+                    "execution_policy_hash": execution_policy_hash,
+                    "artifact_path": artifact.path,
+                    "evidence_artifacts": [artifact.model_dump(mode="json")],
+                },
             )
-        return results
+            results.append(result)
+            recorded.append(_CheckEvidence(check, result, artifact))
 
     @staticmethod
     def _aggregate(results: list[VerifierResult], check_type: str) -> VerdictState:
@@ -111,6 +134,197 @@ class EvaluationEngine:
             return VerdictState.FAIL
         return VerdictState.PASS
 
+    def _safety_evidence(
+        self,
+        control: SafetyControl,
+        state: VerdictState,
+        *,
+        details: dict[str, Any],
+        source_hashes: list[str] | None = None,
+    ) -> SafetyEvidence:
+        hashes = sorted(set(source_hashes or []))
+        artifact = self.artifact_store.put_json(
+            {
+                "schema_version": "dev-safety-evidence-v1",
+                "control": control.value,
+                "state": state.value,
+                "source_hashes": hashes,
+                "details": details,
+            }
+        )
+        return SafetyEvidence(
+            control=control,
+            state=state,
+            evidence_artifact_ids=[artifact.artifact_id],
+            evidence_hashes=[*hashes, artifact.content_hash],
+            details=details,
+        )
+
+    def _sandbox_policy_evidence(
+        self,
+        manifest: RunManifest,
+        expected_checks: list[Any],
+        recorded: list[_CheckEvidence],
+    ) -> SafetyEvidence:
+        if manifest.sandbox_backend == "local":
+            return self._safety_evidence(
+                SafetyControl.REQUESTED_SANDBOX_POLICY,
+                VerdictState.NOT_RUN,
+                details={"reason": "local backend has no Docker policy execution"},
+            )
+
+        image = getattr(self.sandbox, "image", None)
+        integrity_errors: list[str] = []
+        violations: list[str] = []
+        source_hashes: list[str] = []
+        if not isinstance(image, str):
+            integrity_errors.append("Docker sandbox image identity is missing")
+        if len(recorded) != len(expected_checks):
+            integrity_errors.append("one or more Docker check policy records are missing")
+
+        for item in recorded:
+            actual = item.result.details.get("execution_policy")
+            actual_hash = item.result.details.get("execution_policy_hash")
+            source_hashes.append(item.artifact.content_hash)
+            if not isinstance(actual, dict) or not isinstance(actual_hash, str):
+                integrity_errors.append(f"{item.result.check_id}: execution policy is missing")
+                continue
+            if sha256_json(actual) != actual_hash:
+                integrity_errors.append(f"{item.result.check_id}: execution policy hash mismatch")
+                continue
+            try:
+                raw = self.artifact_store.read_bytes(item.artifact)
+                artifact_payload = json.loads(raw.decode("utf-8"))
+            except (PatchLoopError, OSError, UnicodeDecodeError, json.JSONDecodeError):
+                integrity_errors.append(f"{item.result.check_id}: evidence artifact is invalid")
+                continue
+            if (
+                artifact_payload.get("execution_policy") != actual
+                or artifact_payload.get("execution_policy_hash") != actual_hash
+            ):
+                integrity_errors.append(f"{item.result.check_id}: policy artifact disagrees")
+                continue
+            source_hashes.append(actual_hash)
+            working_directory = "/workspace"
+            if item.check.working_directory != ".":
+                working_directory += f"/{item.check.working_directory}"
+            if isinstance(image, str):
+                expected = registered_check_execution_policy(
+                    image=image,
+                    working_directory=working_directory,
+                    timeout_seconds=item.check.timeout_seconds,
+                    output_limit_bytes=item.check.output_limit_bytes,
+                )
+                if actual != expected:
+                    violations.append(f"{item.result.check_id}: requested policy was violated")
+
+        if integrity_errors:
+            state = VerdictState.ERROR
+        elif violations:
+            state = VerdictState.FAIL
+        else:
+            state = VerdictState.PASS
+        return self._safety_evidence(
+            SafetyControl.REQUESTED_SANDBOX_POLICY,
+            state,
+            details={
+                "expected_check_count": len(expected_checks),
+                "recorded_policy_count": len(recorded),
+                "integrity_errors": integrity_errors,
+                "violations": violations,
+            },
+            source_hashes=source_hashes,
+        )
+
+    @staticmethod
+    def _aggregate_safety(evidence: list[SafetyEvidence]) -> VerdictState:
+        states = [item.state for item in evidence]
+        if any(state == VerdictState.ERROR for state in states):
+            return VerdictState.ERROR
+        if any(state == VerdictState.FAIL for state in states):
+            return VerdictState.FAIL
+        if any(state == VerdictState.NOT_RUN for state in states):
+            return VerdictState.NOT_RUN
+        return VerdictState.PASS
+
+    def _sandbox_identity(self) -> tuple[str, str | None, str]:
+        backend = getattr(self.sandbox, "backend", None)
+        if backend not in {"local", "docker"}:
+            raise ContractError("evaluator sandbox has no typed backend identity")
+        image = getattr(self.sandbox, "image", None) if backend == "docker" else None
+        digest = None
+        if backend == "docker" and isinstance(image, str) and "@" in image:
+            digest = image.rsplit("@", 1)[1]
+        identity_hash = sha256_json(
+            {
+                "backend": backend,
+                "evaluator_image": image,
+                "image_digest": digest,
+            }
+        )
+        return backend, digest, identity_hash
+
+    def _validate_manifest_inputs(
+        self,
+        task_dir: str | Path,
+        patch_path: str | Path,
+        manifest: RunManifest,
+        submitted_patch_artifact: Artifact | None,
+    ) -> tuple[Any, bytes]:
+        package = load_task_package(task_dir)
+        manifest_path = Path(self.artifact_store.root) / "runs" / manifest.run_id / "manifest.json"
+        expected_manifest = (
+            canonical_json(manifest.model_dump(mode="json")) + "\n"
+        ).encode("utf-8")
+        if (
+            not manifest_path.is_file()
+            or manifest_path.is_symlink()
+            or manifest_path.read_bytes() != expected_manifest
+        ):
+            raise ContractError("evaluator manifest is missing or differs from its input")
+        if submitted_patch_artifact is None:
+            raise ContractError("evaluator requires the accepted submitted patch artifact")
+        patch_bytes = self.artifact_store.read_bytes(submitted_patch_artifact)
+        try:
+            same_path = Path(patch_path).resolve() == Path(submitted_patch_artifact.path).resolve()
+        except OSError as exc:
+            raise ContractError("evaluator patch path cannot be resolved") from exc
+        if not same_path or Path(patch_path).read_bytes() != patch_bytes:
+            raise ContractError("evaluator input differs from the accepted patch artifact")
+
+        backend, image_digest, sandbox_identity_hash = self._sandbox_identity()
+        expected_image_digest = (
+            package.environment.image_digest
+            if backend == "docker" and package.environment is not None
+            else None
+        )
+        patch_hash = sha256_bytes(patch_bytes)
+        actual = {
+            "task_id": package.public.task_id,
+            "task_version": package.public.task_version,
+            "base_commit": package.public.repository.base_commit,
+            "public_spec_hash": package.public_spec_hash,
+            "private_spec_hash": package.private_spec_hash,
+            "task_content_hash": package.task_content_hash,
+            "runtime_content_hash": runtime_content_hash(),
+            "tool_surface_hash": dev_tool_surface_hash(),
+            "sandbox_backend": backend,
+            "evaluator_image_digest": image_digest,
+            "sandbox_identity_hash": sandbox_identity_hash,
+            "submitted_patch_content_hash": patch_hash,
+            "visible_check_diff_hash": patch_hash,
+            "submitted_changed_files": WorkspaceManager.patch_changed_files(patch_bytes),
+        }
+        declared = {key: getattr(manifest, key) for key in actual}
+        mismatches = sorted(key for key in actual if declared[key] != actual[key])
+        if expected_image_digest != image_digest:
+            mismatches.append("task_evaluator_image_digest")
+        if mismatches:
+            raise ContractError(
+                "evaluator manifest input mismatch: " + ", ".join(sorted(set(mismatches)))
+            )
+        return package, patch_bytes
+
     def evaluate(
         self,
         task_dir: str | Path,
@@ -119,116 +333,210 @@ class EvaluationEngine:
         usage: Usage | None = None,
         submitted_patch_artifact: Artifact | None = None,
     ) -> RunResult:
-        package = load_task_package(task_dir)
-        patch_bytes = Path(patch_path).read_bytes()
-        if (
-            submitted_patch_artifact is not None
-            and sha256_bytes(patch_bytes) != submitted_patch_artifact.content_hash
-        ):
-            raise ContractError("evaluator input differs from the accepted patch artifact")
-        workspace = self.workspace_manager.create(
-            f"eval_{uuid.uuid4().hex}",
-            package.public.repository.url,
-            package.public.repository.base_commit,
+        run_dir = Path(self.artifact_store.root) / "runs" / manifest.run_id
+        manifest_hash = sha256_bytes(
+            (canonical_json(manifest.model_dump(mode="json")) + "\n").encode("utf-8")
         )
+        evaluation_status = "error"
+        failure_class: str | None = None
+        applied_patch_hash: str | None = None
+        diff_hash: str | None = None
+        changed_files: list[str] = []
+        results: list[VerifierResult] = []
+        recorded_checks: list[_CheckEvidence] = []
+        safety_evidence: list[SafetyEvidence] = []
+        expected_checks: list[Any] = []
+        sandbox_policy_recorded = False
         started = time.monotonic()
-        patch_hash = self.workspace_manager.apply_patch(workspace, patch_path)
+        try:
+            package, _ = self._validate_manifest_inputs(
+                task_dir,
+                patch_path,
+                manifest,
+                submitted_patch_artifact,
+            )
+            safety_evidence.extend(
+                [
+                    self._safety_evidence(
+                        SafetyControl.RUNTIME_CONTRACT,
+                        VerdictState.PASS,
+                        details={
+                            "runtime_content_hash": manifest.runtime_content_hash,
+                            "task_content_hash": manifest.task_content_hash,
+                            "manifest_content_hash": manifest_hash,
+                        },
+                        source_hashes=[
+                            manifest.runtime_content_hash,
+                            manifest.task_content_hash,
+                            manifest_hash,
+                        ],
+                    ),
+                    self._safety_evidence(
+                        SafetyControl.CONSTRAINED_TOOL_SURFACE,
+                        VerdictState.PASS,
+                        details={"tool_surface_hash": manifest.tool_surface_hash},
+                        source_hashes=[manifest.tool_surface_hash],
+                    ),
+                ]
+            )
+            workspace = self.workspace_manager.create(
+                f"eval_{uuid.uuid4().hex}",
+                package.public.repository.url,
+                package.public.repository.base_commit,
+            )
+            try:
+                workspace = self.workspace_manager.validate_managed_workspace(workspace)
+            except PatchLoopError as exc:
+                safety_evidence.append(
+                    self._safety_evidence(
+                        SafetyControl.MANAGED_WORKSPACE,
+                        VerdictState.FAIL,
+                        details={"violation": type(exc).__name__},
+                    )
+                )
+                raise
+            safety_evidence.append(
+                self._safety_evidence(
+                    SafetyControl.MANAGED_WORKSPACE,
+                    VerdictState.PASS,
+                    details={"workspace_separate": True},
+                )
+            )
+            applied_patch_hash = self.workspace_manager.apply_patch(workspace, patch_path)
+            summary = self.workspace_manager.diff_summary(workspace)
+            diff_hash = summary.patch_hash
+            changed_files = summary.changed_files
+            if (
+                applied_patch_hash != manifest.submitted_patch_content_hash
+                or summary.patch_hash != manifest.submitted_patch_content_hash
+                or summary.changed_files != manifest.submitted_changed_files
+                or summary.untracked_files
+            ):
+                raise ContractError("evaluator workspace differs from the submitted artifact")
 
-        # Capture the submitted public diff before evaluator-private files are introduced.
-        summary = self.workspace_manager.diff_summary(workspace)
+            hidden_source = Path(package.root) / "hidden"
+            hidden_target = workspace / ".patchloop-hidden"
+            if hidden_source.exists():
+                shutil.copytree(hidden_source, hidden_target)
 
-        # Evaluator-private files appear only after submission and only in this workspace.
-        hidden_source = Path(package.root) / "hidden"
-        hidden_target = workspace / ".patchloop-hidden"
-        if hidden_source.exists():
-            shutil.copytree(hidden_source, hidden_target)
-
-        results = self._run_checks(
-            manifest.run_id,
-            workspace,
-            package.public.visible_checks,
-            "regression",
-        )
-        results.extend(
+            expected_checks = [*package.public.visible_checks, *package.private.hidden_checks]
+            self._run_checks(
+                manifest.run_id,
+                workspace,
+                package.public.visible_checks,
+                "regression",
+                results,
+                recorded_checks,
+            )
             self._run_checks(
                 manifest.run_id,
                 workspace,
                 package.private.hidden_checks,
                 "hidden",
+                results,
+                recorded_checks,
             )
-        )
-        policies = {
-            "scope": verify_scope(summary, package.public.constraints),
-            "dependency": verify_dependencies(summary, package.public.constraints),
-            "test_tampering": verify_test_tampering(summary),
-            "public_api": verify_public_api(summary, package.public.constraints, workspace),
-        }
-        results.extend(
-            self._policy_result(manifest.run_id, check_id, outcome)
-            for check_id, outcome in policies.items()
-        )
+            policies = {
+                "scope": verify_scope(summary, package.public.constraints),
+                "dependency": verify_dependencies(summary, package.public.constraints),
+                "test_tampering": verify_test_tampering(summary),
+                "public_api": verify_public_api(
+                    summary,
+                    package.public.constraints,
+                    workspace,
+                ),
+            }
+            results.extend(
+                self._policy_result(manifest.run_id, check_id, outcome)
+                for check_id, outcome in policies.items()
+            )
 
-        hidden_state = self._aggregate(results, "hidden")
-        regression_state = self._aggregate(results, "regression")
-        policy_results = [result for result in results if result.check_type == "policy"]
-        scope_state = (
-            VerdictState.PASS
-            if policy_results
-            and all(result.state == VerdictState.PASS for result in policy_results)
-            else VerdictState.FAIL
-        )
-        verdicts = Verdicts(
-            hidden_tests=hidden_state,
-            regression_tests=regression_state,
-            scope_policy=scope_state,
-            safety_policy=VerdictState.PASS,
-        )
-        success = all(
-            state == VerdictState.PASS
-            for state in (
-                hidden_state,
-                regression_state,
-                scope_state,
-                VerdictState.PASS,
+            safety_evidence.append(
+                self._sandbox_policy_evidence(manifest, expected_checks, recorded_checks)
             )
-        )
-        patch_artifact = submitted_patch_artifact or self.artifact_store.put_text(
-            summary.patch,
-            "text/x-diff",
-        )
-        final_usage = usage.model_copy(deep=True) if usage is not None else Usage()
-        final_usage.wall_clock_ms += int((time.monotonic() - started) * 1_000)
-        result = RunResult(
-            run_id=manifest.run_id,
-            agent_submission_status="completed",
-            evaluation_status="completed",
-            scope_compliant_success=success,
-            official=False,
-            verdicts=verdicts,
-            usage=final_usage,
-            submitted_patch_artifact_id=patch_artifact.artifact_id,
-            verifier_results=results,
-        )
-        run_dir = Path(self.artifact_store.root) / "runs" / manifest.run_id
-        self.artifact_store.write_text_atomic(
-            run_dir / "manifest.json",
-            manifest.model_dump_json(indent=2),
-        )
-        self.artifact_store.write_text_atomic(
-            run_dir / "result.json",
-            result.model_dump_json(indent=2),
-        )
-        self.artifact_store.write_text_atomic(
-            run_dir / "provenance.json",
-            json.dumps(
-                {
-                    "official": False,
-                    "patch_hash": patch_hash,
-                    "diff_hash": summary.patch_hash,
-                    "submitted_patch_content_hash": patch_artifact.content_hash,
-                    "evaluator_workspace_separate": True,
-                },
-                indent=2,
-            ),
-        )
-        return result
+            sandbox_policy_recorded = True
+            hidden_state = self._aggregate(results, "hidden")
+            regression_state = self._aggregate(results, "regression")
+            policy_results = [result for result in results if result.check_type == "policy"]
+            scope_state = (
+                VerdictState.PASS
+                if policy_results
+                and all(result.state == VerdictState.PASS for result in policy_results)
+                else VerdictState.FAIL
+            )
+            safety_state = self._aggregate_safety(safety_evidence)
+            verdicts = Verdicts(
+                hidden_tests=hidden_state,
+                regression_tests=regression_state,
+                scope_policy=scope_state,
+                safety_policy=safety_state,
+            )
+            task_accepted = all(
+                state == VerdictState.PASS
+                for state in (hidden_state, regression_state, scope_state)
+            )
+            final_usage = usage.model_copy(deep=True) if usage is not None else Usage()
+            final_usage.wall_clock_ms += int((time.monotonic() - started) * 1_000)
+            result = RunResult(
+                run_id=manifest.run_id,
+                agent_submission_status="completed",
+                evaluation_status="completed",
+                scope_compliant_success=task_accepted,
+                official=False,
+                verdicts=verdicts,
+                usage=final_usage,
+                submitted_patch_artifact_id=submitted_patch_artifact.artifact_id,
+                verifier_results=results,
+                safety_evidence=safety_evidence,
+            )
+            self.artifact_store.write_text_atomic(
+                run_dir / "result.json",
+                result.model_dump_json(indent=2),
+            )
+            evaluation_status = "completed"
+            return result
+        except BaseException as exc:
+            failure_class = type(exc).__name__
+            raise
+        finally:
+            if not sandbox_policy_recorded:
+                with suppress(Exception):
+                    safety_evidence.append(
+                        self._sandbox_policy_evidence(
+                            manifest,
+                            expected_checks,
+                            recorded_checks,
+                        )
+                    )
+            provenance = {
+                "schema_version": "dev-evaluator-provenance-v1",
+                "official": False,
+                "evaluation_status": evaluation_status,
+                "failure_class": failure_class,
+                "manifest_content_hash": manifest_hash,
+                "task_content_hash": manifest.task_content_hash,
+                "runtime_content_hash": manifest.runtime_content_hash,
+                "model_hash": manifest.model_hash,
+                "tool_surface_hash": manifest.tool_surface_hash,
+                "sandbox_identity_hash": manifest.sandbox_identity_hash,
+                "submitted_patch_content_hash": manifest.submitted_patch_content_hash,
+                "applied_patch_hash": applied_patch_hash,
+                "diff_hash": diff_hash,
+                "changed_files": changed_files,
+                "evaluator_workspace_separate": True,
+                "execution_policy_hashes": sorted(
+                    {
+                        value
+                        for item in recorded_checks
+                        if isinstance(
+                            value := item.result.details.get("execution_policy_hash"),
+                            str,
+                        )
+                    }
+                ),
+                "safety_evidence": [item.model_dump(mode="json") for item in safety_evidence],
+            }
+            self.artifact_store.write_text_atomic(
+                run_dir / "provenance.json",
+                json.dumps(provenance, indent=2, sort_keys=True),
+            )

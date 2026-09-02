@@ -107,6 +107,7 @@ def validate_task(task_dir: Annotated[Path, typer.Argument(exists=True, file_oka
             "split": package.public.split,
             "public_spec_hash": package.public_spec_hash,
             "private_spec_hash": package.private_spec_hash,
+            "task_content_hash": package.task_content_hash,
         }
 
     _guarded(operation)
