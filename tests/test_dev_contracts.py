@@ -246,6 +246,61 @@ def test_loguru_feedback_v3_preserves_v2_and_aligns_private_oracle() -> None:
     assert "self.assertRegex(feedback, BINDING_GUIDANCE)" in successor_hidden
 
 
+def test_pyfakefs_parent_traversal_v2_preserves_v1_and_adds_public_contract() -> None:
+    root = repository_root() / "tasks" / "dev-train"
+    predecessor_root = root / "pyfakefs-makedirs-parent-traversal"
+    successor_root = root / "pyfakefs-makedirs-parent-traversal-v2"
+    predecessor = load_task_package(predecessor_root)
+    successor = load_task_package(successor_root)
+
+    assert predecessor.public.task_version == predecessor.private.task_version == 1
+    assert successor.public.task_version == successor.private.task_version == 2
+    assert predecessor.task_content_hash == (
+        "sha256:91361d0f68e98968e31d5902797dd7aeadb59777804e6342257ff8121991d141"
+    )
+    assert successor.task_content_hash == (
+        "sha256:276b791c4c0cb1c18fa8659f6518a172f0d05b239526c0f21a7d0d2c378def87"
+    )
+    assert [check.id for check in predecessor.public.visible_checks] == [
+        "upstream-fake-os-regression"
+    ]
+    assert [check.id for check in successor.public.visible_checks] == [
+        "parent-traversal-contract",
+        "upstream-fake-os-regression",
+    ]
+
+    predecessor_public = predecessor.public.model_dump(mode="json")
+    successor_public = successor.public.model_dump(mode="json")
+    predecessor_public.pop("task_version")
+    successor_public.pop("task_version")
+    predecessor_checks = predecessor_public.pop("visible_checks")
+    successor_checks = successor_public.pop("visible_checks")
+    assert successor_public == predecessor_public
+    assert successor_checks[1:] == predecessor_checks
+
+    predecessor_private = predecessor.private.model_dump(mode="json")
+    successor_private = successor.private.model_dump(mode="json")
+    predecessor_private.pop("task_version")
+    successor_private.pop("task_version")
+    assert successor_private == predecessor_private
+
+    predecessor_paths = {
+        path.relative_to(predecessor_root).as_posix()
+        for path in predecessor_root.rglob("*")
+        if path.is_file()
+    }
+    successor_paths = {
+        path.relative_to(successor_root).as_posix()
+        for path in successor_root.rglob("*")
+        if path.is_file()
+    }
+    assert successor_paths == predecessor_paths
+    for relative_path in predecessor_paths - {"public.yaml", "private.yaml"}:
+        assert (successor_root / relative_path).read_bytes() == (
+            predecessor_root / relative_path
+        ).read_bytes()
+
+
 def test_v1_task_content_hash_binds_hidden_bytes(tmp_path) -> None:
     source = repository_root() / "tasks" / "smoke" / "csv-quoted-newline"
     copied = tmp_path / "task"

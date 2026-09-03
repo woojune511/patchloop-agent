@@ -1,0 +1,27 @@
+diff --git a/pyfakefs/fake_os.py b/pyfakefs/fake_os.py
+--- a/pyfakefs/fake_os.py
++++ b/pyfakefs/fake_os.py
+@@ -931,7 +931,22 @@ class FakeOsModule:
+         """
+         if exist_ok is None:
+             exist_ok = False
+-        self.filesystem.makedirs(name, mode, exist_ok)
++        head, tail = self.filesystem.splitpath(name)
++        if not tail:
++            head, tail = self.filesystem.splitpath(head)
++        if head and tail and not self.filesystem.exists(head):
++            self.makedirs(head, exist_ok=exist_ok)
++            cdir = self.filesystem.cwd
++            if isinstance(tail, bytes):
++                if tail == bytes(cdir, "ASCII"):
++                    return
++            elif tail == cdir:
++                return
++        try:
++            self.mkdir(name, mode)
++        except OSError:
++            if not exist_ok or not self.filesystem.isdir(name):
++                raise
+ 
+     def _path_with_dir_fd(
+         self,

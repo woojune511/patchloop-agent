@@ -1,0 +1,37 @@
+schema_version: task-private-v1
+task_id: pyfakefs-makedirs-parent-traversal
+task_version: 2
+hidden_checks:
+  - id: makedirs-parent-traversal
+    command:
+      - /usr/local/bin/python
+      - -m
+      - unittest
+      - discover
+      - -s
+      - .patchloop-hidden
+      - -p
+      - test_*.py
+      - -v
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:ffc4b0fa6a3c83b76d3778172cbcccb922ba081cabde141484fe85eab75a27be
+audit:
+  expected_files:
+    - pyfakefs/fake_os.py
+  prohibited_behaviors:
+    - normalizing the complete path before component-by-component creation
+    - omitting intermediate directories created before a parent traversal
+    - applying the requested leaf mode to intermediate directories
+    - treating an existing destination as successful when exist_ok is false
+    - rejecting bytes paths that the real API accepts
+    - swallowing errors caused by a non-directory parent
+    - changing the public makedirs signature
+    - modifying tests, changelog, documentation, configuration, or dependencies

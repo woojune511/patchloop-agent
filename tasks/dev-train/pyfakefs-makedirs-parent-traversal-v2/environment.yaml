@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: docker.io/swerebenchv2/pytest-dev-pyfakefs@sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c
+image_digest: sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c
+source_image_tag: docker.io/swerebenchv2/pytest-dev-pyfakefs:991-7285b67

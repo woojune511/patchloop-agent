@@ -82,6 +82,18 @@ Following the Rapid Dev Reset, local checkpoints recorded:
   The focused contract set passed 13 tests, Ruff passed, and the final full suite
   passed 70 tests in 73.38 seconds. Mock run `run_dev_db9548d402084112` reached isolated
   `EVALUATOR_PASS` with task acceptance PASS, safety NOT_RUN, and zero model cost.
+- The import-contract checkpoint made the `patchloop.dev` and `patchloop.verifier`
+  package exports lazy while preserving their public names. Fresh-process tests cover
+  lightweight package imports and both formerly failing submodule orders. Ruff and
+  all 73 tests passed in 70.71 seconds; mock run `run_dev_d309590128764086` reached
+  isolated `EVALUATOR_PASS` with zero recorded cost.
+- `pyfakefs-makedirs-parent-traversal` version 2 preserves the version-1 task and adds
+  one public black-box parent-traversal check. Task validation reports content hash
+  `sha256:276b791c4c0cb1c18fa8659f6518a172f0d05b239526c0f21a7d0d2c378def87`.
+  The provider-free Docker matrix accepted the reference only and rejected the clean
+  base plus all nine known-bad cases. A manifest-bound reference evaluation reported
+  every task and safety axis PASS. Ruff and all 74 tests passed in 73.40 seconds;
+  mock run `run_dev_55d5e74e1bd743d1` reached isolated `EVALUATOR_PASS` with zero cost.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -295,12 +307,47 @@ declared known-bad patches were rejected: four failed behavior checks, the forbi
 path also failed scope, and the no-op had no submission. This guards against fixing
 the version-2 false negative by making the oracle vacuous.
 
-The first matrix harness attempt also exposed a separate, reproducible import edge:
-a fresh interpreter importing `patchloop.verifier.policy` first enters a circular
-import through the eager `patchloop.verifier` and `patchloop.dev` package exports.
-Importing through the production runner order succeeds, and the production evaluator
-run above is unaffected. This is a local module-import contract defect to fix
-separately, not task-acceptance evidence.
+The first matrix harness attempt also exposed a separate, reproducible import edge.
+That local defect is now fixed: both package roots resolve their public exports lazily,
+the runner imports the concrete evaluator module, and fresh-process regressions cover
+both import orders. The production evaluator result above was unaffected.
+
+## Pyfakefs version-2 provider-free contract validation
+
+The original `pyfakefs-makedirs-parent-traversal` package remains version 1. The
+separate `-v2` successor changes only the public/private task versions and adds one
+visible check derived from the public issue. The check calls repository APIs without
+inspecting source shape and exercises ordered traversal in POSIX and Windows modes,
+bytes paths, and separation of intermediate-directory mode from the requested leaf
+mode. Environment, hidden evaluator, reference patch, nine known-bad patches, and
+task audit bytes remain identical to version 1. Its identities are:
+
+- public spec: `sha256:1b9865bf7cfbd6937ebc17ef9257112b7d63868431f38eeac62a603a68a0db6a`
+- private spec: `sha256:540ea69225bd3410626f7db27933396220562f6743bd9f39df9ed233c6f5253f`
+- task content: `sha256:276b791c4c0cb1c18fa8659f6518a172f0d05b239526c0f21a7d0d2c378def87`
+
+The already-local digest-pinned image was used with `--pull never`, network disabled,
+and a read-only workspace mount. In the successful 11-case matrix under
+`C:\pl-pyf-v2-matrix-99fac9de`, the clean base failed the new public behavior check
+and private acceptance, the reference passed every visible/private/policy axis, and
+all nine declared known-bad cases were rejected. The new visible check itself rejects
+the normalization, parent-mode propagation, string-only, early-return, and uncaught
+parent variants; other partials are rejected by upstream or private behavior checks,
+and the forbidden-path case also fails scope and test-tampering policy.
+
+The first ad hoc matrix attempt copied hidden files into the workspace before taking
+the submitted diff summary. That made `.patchloop-hidden` appear as an untracked scope
+violation and falsely marked every case, including the reference, as scope FAIL. The
+attempt was interrupted and supports no task conclusion. The corrected harness first
+freezes the submission diff and policy inputs, then injects hidden files, matching the
+ordering in `EvaluationEngine`.
+
+Manifest-bound evaluator run `run_dev_pyfakefsv2reference` under external root
+`C:\pl-pyf-v2-eval-47e71bf5` applied canonical reference artifact
+`sha256:ffc4b0fa6a3c83b76d3778172cbcccb922ba081cabde141484fe85eab75a27be`.
+Hidden, regression, scope, and typed Docker safety all reported PASS. The run is
+`official=false`, used no provider, and is task-contract evidence rather than a live
+coding-agent observation.
 
 ## Not executed
 
@@ -308,7 +355,8 @@ separately, not task-acceptance evidence.
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
-- no hidden evaluation of the temporary version-2 validation candidate
+- no live or provider execution for the pyfakefs version-2 successor
+- no hidden evaluation of the temporary Loguru version-2 public correction
 
 The under-two-minute focused-validation target remains locally supported. The sixth
 row reached a durable evaluator summary within 30 minutes, verifying the operational
@@ -330,9 +378,6 @@ path but exposing an invalid acceptance oracle rather than producing task accept
 - Deleted historical executables require Git history to replay.
 - Only runs with the new immutable envelope can resume; older journals remain
   read-only evidence.
-- Standalone `patchloop.verifier.policy` import currently depends on import order
-  because the `patchloop.dev` and `patchloop.verifier` packages eagerly re-export
-  runtime objects; the production runner path is covered and passes.
 - The third through sixth live rows show that the provider can emit the
   `apply_git_diff` raw-diff shape, and the fourth and sixth show failed-mutation
   continuation through later attempts. The sixth establishes live submission and

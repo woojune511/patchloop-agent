@@ -79,6 +79,16 @@ heavy module and that both `dev.contracts`-first and `verifier.policy`-first ord
 work while preserving the public exports. Ruff and all 73 tests pass in 70.71 seconds;
 mock run `run_dev_d309590128764086` reaches `EVALUATOR_PASS` with task acceptance
 PASS, safety NOT_RUN, `claim_eligible=false`, and zero recorded cost.
+A preserved `pyfakefs-makedirs-parent-traversal` version 1 and new version 2 now
+make the issue's POSIX, Windows, bytes-path, and leaf-mode traversal behavior visible
+through a black-box repository API check. All environment, hidden, reference,
+known-bad, and audit bytes are unchanged. Version 2 has task content hash
+`sha256:276b791c4c0cb1c18fa8659f6518a172f0d05b239526c0f21a7d0d2c378def87`.
+A provider-free 11-case Docker matrix made the clean base fail, accepted only the
+reference, and rejected all nine declared known-bad cases. Manifest-bound evaluator
+run `run_dev_pyfakefsv2reference` reported hidden, regression, scope, and safety PASS
+for the same reference artifact. Ruff and all 74 tests pass in 73.40 seconds; mock
+run `run_dev_55d5e74e1bd743d1` reaches `EVALUATOR_PASS` with zero recorded cost.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -215,6 +225,12 @@ eagerly imports the development runner or evaluator core, while the existing
 first access. The runner imports the concrete evaluator module directly. Fresh-process
 tests cover both formerly order-dependent imports; no task, evaluator rule, or live
 evidence changed.
+
+The first distinct post-Loguru task is now provider-free ready:
+`pyfakefs-makedirs-parent-traversal` version 2 preserves version 1, exposes its core
+public behavior as a visible check, and passes the reference/known-bad contract
+matrix. This is task-contract evidence only. A live row on this task would be the
+next observation, but no such row is currently authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

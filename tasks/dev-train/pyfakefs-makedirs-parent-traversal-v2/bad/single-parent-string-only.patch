@@ -1,0 +1,18 @@
+diff --git a/pyfakefs/fake_os.py b/pyfakefs/fake_os.py
+--- a/pyfakefs/fake_os.py
++++ b/pyfakefs/fake_os.py
+@@ -931,7 +931,14 @@ class FakeOsModule:
+         """
+         if exist_ok is None:
+             exist_ok = False
++        separator = self.filesystem.path_separator
++        parts = name.split(separator)
++        if ".." in parts:
++            parent_index = parts.index("..")
++            walked_parent = separator.join(parts[:parent_index])
++            if walked_parent:
++                self.filesystem.makedirs(walked_parent, mode, True)
+         self.filesystem.makedirs(name, mode, exist_ok)
+ 
+     def _path_with_dir_fd(
+         self,

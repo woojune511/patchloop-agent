@@ -1,0 +1,13 @@
+diff --git a/pyfakefs/fake_os.py b/pyfakefs/fake_os.py
+--- a/pyfakefs/fake_os.py
++++ b/pyfakefs/fake_os.py
+@@ -931,7 +931,8 @@ class FakeOsModule:
+         """
+         if exist_ok is None:
+             exist_ok = False
+-        self.filesystem.makedirs(name, mode, exist_ok)
++        normalized = self.filesystem.absnormpath(name)
++        self.filesystem.makedirs(normalized, mode, exist_ok)
+ 
+     def _path_with_dir_fd(
+         self,

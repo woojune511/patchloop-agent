@@ -195,10 +195,17 @@ The separate local API defect is fixed as a small import-contract change. The
 resolve them lazily, and the runner depends directly on the evaluator core. A
 fresh-process regression verifies lightweight package imports and both formerly
 order-dependent submodule import orders. This changes no task or evaluator semantics.
-Any seventh live row remains separately authorized and must name the exact task
-version/content identity. Confirmatory design review waits for three distinct
-harness/contract-clean submissions with at least two private passes; that threshold
-itself proves no quality or generalization benefit.
+
+The preserved `pyfakefs-makedirs-parent-traversal` version 1 had only an upstream
+regression visible check. Version 2 adds a public black-box contract for POSIX,
+Windows, bytes-path, and leaf-mode parent traversal while preserving every hidden,
+reference, known-bad, environment, and audit byte. Its clean/reference/nine-known-bad
+Docker matrix and manifest-bound reference evaluation pass provider-free. The next
+evidence-bearing seam is one separately authorized live row on this exact version-2
+content identity, not another harness change. Any seventh live row remains separately
+authorized. Confirmatory design review waits for three distinct harness/contract-clean
+submissions with at least two private passes; that threshold itself proves no quality
+or generalization benefit.
 
 ## Validation checklist
 
