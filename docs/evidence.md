@@ -224,18 +224,48 @@ seconds. This result was intentionally not appended to the immutable live journa
 it proves only that the missing public check passes on the retained diff. No hidden
 evaluator ran.
 
+## Sixth live development observation
+
+After required tool choice, complete check-status projection, output-shape metadata,
+and structured stop were implemented, a sixth separately approved row used task
+version 2, `gpt-5.4-mini-2026-03-17`, medium reasoning, one repetition, the $1.20 cap,
+and external state root `C:\\patchloop-state`. Run `run_dev_f1bb02f3e3154bb8` wrote a
+valid 513-event hash chain ending at
+`sha256:503a30a884ec0257bb35a12b454aab2da8c9dd8ba4b6ad5be23a30f4eea0bcc6`.
+It reached `EVALUATOR_FAIL` after 227.735 active seconds and 229 seconds of run age.
+Usage was 269,693 input tokens including 9,856 cached tokens and 15,535 output tokens
+including 8,183 reasoning tokens. Recorded cost was $0.26552445.
+
+All 38 provider responses contained at least one function call; the recorded shapes
+comprised 38 reasoning items and 68 function calls. The agent made 45 searches, 13
+reads, five mutation attempts, four visible checks, and one finish call. Twenty exact
+read/search requests were cache hits. Four mutation actions failed before one was
+accepted; the run then passed all four registered visible checks. The visible-check
+diff, submitted artifact, and evaluator-applied patch were identical at
+`sha256:e55b934c407a36807344f2f9e378c54c10283e407b063033972183ea0f43254f`.
+This is live evidence that the aligned tool requirement, complete check projection,
+mutation recovery, submission identity, and evaluator handoff can complete together.
+
+Evaluation completed with regression PASS, scope PASS, typed Docker safety PASS,
+and task acceptance FAIL (`PRIVATE_EVALUATION_FAILED`). The failure was caused by a
+private literal-phrase assertion stricter than the public version-2 contract, which
+explicitly allowed semantically equivalent guidance rather than one exact sentence.
+The private wording and test body remain outside coding-agent context. This mismatch
+invalidates the result as a negative coding-agent verdict; it does not turn the row
+into task acceptance or a quality claim. Version 2 remains immutable evidence, and
+any oracle correction must use a versioned successor.
+
 ## Not executed
 
-- no sixth repetition, transport retry, or follow-up paid run after the fifth row
+- no seventh repetition, transport retry, or follow-up paid run after the sixth row
 - no image pull, image build, or automatic Docker Desktop start
-- no submission, private evaluator, or evaluator container in any of the five live
-  rows; only the fifth row admitted a mutation and ran visible checks
-- no claim, qualification, activation, adoption, or held-out evaluation
+- no contract-valid task acceptance, claim, qualification, activation, adoption, or
+  held-out evaluation
 - no hidden evaluation of the temporary version-2 validation candidate
 
-The under-two-minute validation target is locally supported. A durable live terminal
-was observed within 30 minutes, but the full operational target remains unverified
-because no evaluator summary was reached.
+The under-two-minute focused-validation target remains locally supported. The sixth
+row reached a durable evaluator summary within 30 minutes, verifying the operational
+path but exposing an invalid acceptance oracle rather than producing task acceptance.
 
 ## Known limitations
 
@@ -247,16 +277,17 @@ because no evaluator summary was reached.
 - Mock fixtures do not prove remote checkout, provider schema acceptance, model
   behavior, or production billing.
 - Local/mock evaluation intentionally reports Docker safety as NOT_RUN. The
-  provider-free retrospective executed the pinned Docker policy path and reported
-  safety PASS; no paid live row has reached that evaluator boundary.
+  provider-free retrospective and sixth paid live row executed the pinned Docker
+  policy path and reported safety PASS.
 - Long-horizon memory is disabled; only bounded current-run public evidence is projected.
 - Deleted historical executables require Git history to replay.
 - Only runs with the new immutable envelope can resume; older journals remain
   read-only evidence.
-- The third through fifth live rows show that the provider can emit the
-  `apply_git_diff` raw-diff shape, and the fourth shows persistent failed-mutation
-  repair. The fifth establishes one post-recount live mutation and three public-check
-  passes, but no paid row establishes submission or evaluator reliability.
+- The third through sixth live rows show that the provider can emit the
+  `apply_git_diff` raw-diff shape, and the fourth and sixth show failed-mutation
+  continuation through later attempts. The sixth establishes live submission and
+  evaluator handoff, but version 2's stricter private literal assertion prevents a
+  contract-valid task-acceptance conclusion.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

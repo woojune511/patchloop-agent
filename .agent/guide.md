@@ -170,12 +170,23 @@ submission or evaluator. The old journal cannot reveal whether those responses w
 reasoning, messages, or another non-tool item because their output shape was not
 recorded.
 
+The sixth separately authorized live row used the aligned tool contract and the same
+version-2 task identity. Every one of 38 completed provider responses contained a
+function call. The agent recovered from four rejected mutation actions, accepted one
+mutation, passed all four visible checks on one canonical diff, and submitted that
+same diff to the isolated evaluator. Task acceptance failed while typed Docker safety
+passed. The private oracle enforced a literal example spelling that the public
+contract explicitly did not require, so this is public/private contract-mismatch
+evidence rather than a sound negative coding-agent verdict. Keep the hidden wording
+out of agent context and preserve version 2 unchanged.
+
 Keep repeated-evidence detection diagnostic-only. The bounded continuation evidence
 does not support a hard workflow gate or a replacement mutation DSL. The smaller
 current correction uses Git's deterministic recount for hunk totals while preserving
-all existing mutation and submission checks. The next seam is to validate the aligned
-tool requirement and complete check-status projection provider-free; any sixth live
-row remains separately authorized and must name the exact task version/content
+all existing mutation and submission checks. The next seam is a versioned successor
+task package whose private oracle accepts the semantic behavior exposed by the public
+contract, followed by provider-free base/candidate/evaluator validation. Any seventh
+live row remains separately authorized and must name the exact task version/content
 identity. Confirmatory design review waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.

@@ -20,7 +20,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The five live observations below
+Repository policy alone never initiates paid work. The six live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -56,6 +56,12 @@ The post-fifth-row tool-alignment checkpoint passes Ruff and all 69 tests in
 69.15 seconds. Mock run `run_dev_6374b31034c44427` reaches the same isolated
 `EVALUATOR_PASS` boundary through one accepted mutation; this is provider-free
 contract evidence only.
+The sixth live row reached submission and isolated Docker evaluation. All four
+visible checks, the submitted artifact, and the evaluator-applied patch shared diff
+`sha256:e55b934c407a36807344f2f9e378c54c10283e407b063033972183ea0f43254f`.
+Task acceptance reported FAIL while safety reported PASS, but the failure came from
+a private literal-phrase assertion stricter than the public version-2 contract. This
+is evaluator-contract evidence, not a valid negative coding-agent verdict.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -109,8 +115,20 @@ provider-free run of that exact remaining public check against the retained diff
 passed 20 tests. This is public check evidence only; it is not part of the immutable
 live run and is not task acceptance.
 
-The terminal arrived within 30 minutes, but the operational target still remains
-unverified because there was no evaluator summary. See
+After the tool contract was aligned, a sixth separately approved row used the same
+version-2 task, model, reasoning, repetition, $1.20 cap, and external state root.
+Run `run_dev_f1bb02f3e3154bb8` reached durable `EVALUATOR_FAIL` after 227.735 active
+seconds and 229 seconds of run age. It made 38 model calls and 68 tool actions,
+accepted one mutation, submitted one changed file, and recorded $0.26552445. All
+provider responses contained at least one function call. All four visible checks
+passed on the submitted diff, and the evaluator applied that identical artifact.
+Regression and scope passed and typed Docker safety was PASS. Task acceptance failed
+only because the private oracle required a particular example spelling even though
+the public contract explicitly allowed equivalent wording. Version 2 therefore has
+an acceptance-oracle mismatch and remains frozen as evidence.
+
+The end-to-end live path reached an evaluator summary within the 30-minute row limit;
+it did not produce a contract-valid task-acceptance result. See
 [Evidence and limitations](evidence.md) for the exact observation and limits.
 
 Historical executables are recoverable at checkpoint `b71ddeee`; immutable
@@ -127,7 +145,10 @@ operate in a live loop. The third row confirmed raw-diff tool selection but expo
 failed-mutation displacement. The fourth row shows that displacement is fixed: the
 agent kept seeing the exact failed diff and attempted 13 replacements. The fifth row
 then confirmed live mutation and three public-check passes, but stopped before the
-fourth public check and submission.
+fourth public check and submission. The sixth row confirms required tool selection,
+complete visible-check traversal, submission identity, evaluator execution, and typed
+safety in one live path. Its task-acceptance failure instead exposes a version-2
+public/private oracle mismatch.
 
 Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
 repeated-read terminal or replacement mutation interface. The retrospective replay
@@ -143,9 +164,13 @@ feedback, available record-key reporting, the canonical `logger.bind()` /
 `{extra[key]}` guidance, and both catch modes without requiring an implementation
 shape or exact full sentence. Its task content hash is
 `sha256:61704553b8ba733bad7350561eec397a7a6c04365a56ef61854a9e12cefe259d`.
-The fifth row used this exact identity. No sixth live row or retry is authorized.
+The fifth and sixth rows used this exact identity. Preserve version 2 unchanged; a
+future correction must be a versioned successor whose private oracle accepts the
+semantics promised publicly rather than one literal phrasing. No seventh live row or
+retry is authorized.
 
-Its terminal label described the application's tool-batch boundary, but the stored
+The fifth row's terminal label described the application's tool-batch boundary, but
+the stored
 evidence did not establish that the provider response itself was malformed. Both
 zero-tool responses completed and consumed output tokens, while the old adapter
 discarded non-function output without recording its shape. More importantly, the
