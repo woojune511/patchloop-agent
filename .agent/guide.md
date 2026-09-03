@@ -42,7 +42,10 @@ smaller batch grammar above. Mixed, empty, duplicate-action, and oversized batch
 receive one short correction. A second consecutive protocol/incomplete violation
 terminates the row; any valid completed tool batch resets the correction allowance.
 Optional inspection remains available only while both model-call and tool-action
-budgets exceed the minimum path through mutation, all required checks, and finish.
+budgets exceed the minimum path through mutation, all required checks, and finish plus
+one reserve for repairing a rejected first mutation. That reserve is consumed after a
+mutation failure. `completion_possible` separately reports whether the actual remaining
+budgets can still cover the best-case path; it is not an alias for mutation capacity.
 With one optional turn left, expose reads with `last_opportunity` and tell the model
 they close next; with none, remove them and record/project `tool_policy_transition`.
 Reopen them through the same transition when a changed gate restores slack. A first
@@ -164,7 +167,8 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 - 1,800 seconds per row
 - one consecutive protocol/incomplete recovery
 - four parallel reads
-- completion-slack inspection with one warned final opportunity
+- completion-slack inspection with one warned final opportunity and one first-mutation
+  repair reserve
 - legacy 24-turn and three-repair-read fields retained as telemetry only
 - 25,000 desired output tokens per provider call, reduced by cost admission
 - one repetition by default, six maximum
@@ -296,21 +300,24 @@ row. The old journal omitted `incomplete_details.reason`, so ceiling exhaustion 
 strong usage-based inference rather than a stored exact provider reason.
 
 The first post-tenth provider-free correction raised the desired output ceiling to
-25,000 under unchanged invocation-wide cost admission and preserved future incomplete
-reasons. The current successor addresses the structural cause that ceiling alone
-could not fix. OpenAI turns now retain and replay only provider-encrypted reasoning;
-reasoning-only incomplete turns continue at the next correction, and corrupt or absent
-ciphertext fails closed. Fixed 24/3 inspection leases no longer control the action
-space. Actual completion slack drives `open`, warned `last_opportunity`, and `closed`
-states, with every close/reopen transition journaled and corrections derived from the
-real allowed tools. The 24/3 counters remain observation-only. Provider-free evidence
-does not establish live API acceptance or agent success. Ruff and all 86 tests pass in
-111.40 seconds with a short external temp root. Mock run
-`run_dev_e961ed4d987e43b1` reaches isolated `EVALUATOR_PASS` through one accepted
-mutation with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
-provider cost. Snapshot setup supplies commit identity only to its one base commit,
-removing two redundant Git processes without changing workspace content or provenance.
-Do not run an eleventh paid row without separate authorization.
+25,000, retained and replayed provider-encrypted reasoning, and replaced the fixed 24/3
+action gates with completion slack. The separately authorized eleventh row,
+`run_dev_36d200ed199d4377`, confirmed those mechanisms live: all 39 continuation edges
+linked, the last inspection opportunity was announced, and execution-only policy
+elicited mutation calls whose 12,128- and 7,469-token responses completed. The first
+diff failed on a bare `@@`; the next turn repaired it, and the accepted one-file diff
+passed both visible checks. The row nevertheless reached 40 model calls before finish,
+with 94 tool actions, $0.449133 cost, no submission, and no evaluator.
+
+That row exposed one narrower scheduler defect. The horizon reserved only the four-call
+best-case mutation/check/check/finish path, and `completion_possible` tested mutation
+capacity without remaining budgets. The current provider-free successor holds one
+additional first-mutation repair call, consumes it after failure, and reports actual
+best-case budget feasibility. A scheduler regression reproduces the eleventh-row shape
+through finish at call 40 while retaining the 40/100 global limits. Ruff and all 87
+tests pass in 88.79 seconds; provider-free mock run `run_dev_22a91101f0224925` reaches
+isolated `EVALUATOR_PASS` through one accepted mutation with zero provider cost. Do not
+run a paid retry or twelfth row without separate authorization.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.

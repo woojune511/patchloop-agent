@@ -11,8 +11,8 @@ claim commands are absent.
 - default one-row live limit: 1,800 seconds
 - 40 model calls, 100 tool actions, and 4 accepted mutations
 - one consecutive protocol/incomplete correction and at most 4 parallel reads
-- completion-slack inspection with one warned final opportunity; legacy 24/3 counters
-  are telemetry only
+- completion-slack inspection with one warned final opportunity and one first-mutation
+  repair reserve; legacy 24/3 counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
 ## Authority
@@ -22,7 +22,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The ten live observations below
+Repository policy alone never initiates paid work. The eleven live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -181,22 +181,43 @@ short external temp root. Mock run `run_dev_5e032eaf91ec4177` reached
 `EVALUATOR_PASS` in four model turns and five tool actions through one accepted
 mutation, with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
 model cost. No eleventh-row authority follows from this correction.
-The current provider-free successor keeps that 25,000-token ceiling but fixes the two
-structural boundaries exposed by the same trace. With `store=false`, OpenAI responses
-now request, durably store, and replay provider-encrypted reasoning in original output
-order with matching calls and public results. The journal contains hashes and counts,
-not ciphertext or plaintext reasoning. Missing, corrupt, reordered, or action-mismatched
-continuation ends at `PROVIDER_CONTINUATION_ERROR` before another provider or tool call.
-The fixed 24/3 inspection leases are no longer action gates: actual model/tool completion
-slack drives `open`, warned `last_opportunity`, and `closed` states, and each close or
-reopen is journaled and projected once. Corrections are generated from the actual
-allowed tools. The old counters remain envelope-compatible telemetry. This is local
-contract evidence only and grants no eleventh-row authority. Ruff and all 86 tests
-pass; the full suite completed in 111.40 seconds (112.09 seconds wall time) with a
-short external temp root. Provider-free mock run `run_dev_e961ed4d987e43b1` reached
-isolated `EVALUATOR_PASS` in four model turns and five tool actions through one accepted
+The post-tenth provider-free successor kept that 25,000-token ceiling while fixing the
+two structural boundaries exposed by the same trace. With `store=false`, OpenAI
+responses request, durably store, and replay provider-encrypted reasoning in original
+output order with matching calls and public results. The journal contains hashes and
+counts, not ciphertext or plaintext reasoning. Missing, corrupt, reordered, or
+action-mismatched continuation ends at `PROVIDER_CONTINUATION_ERROR` before another
+provider or tool call. Fixed 24/3 inspection leases ceased to be action gates: actual
+model/tool completion slack drives `open`, warned `last_opportunity`, and `closed`
+states. Before live execution, Ruff and all 86 tests passed; the full suite completed
+in 111.40 seconds (112.09 seconds wall time), and provider-free mock run
+`run_dev_e961ed4d987e43b1` reached isolated `EVALUATOR_PASS`.
+The separately authorized eleventh row used the same pyfakefs version-2 task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+and a $1.20 cap. Run `run_dev_36d200ed199d4377` ended at durable `LIMIT_REACHED`
+after 412.811 active seconds, 40 provider calls, 94 tool actions, one accepted mutation,
+and $0.449133. All 40 responses stored one encrypted reasoning item; all 39 next-turn
+replays preserved reasoning, function-call, and result linkage, while the journal and
+public contexts contained no ciphertext. Turns 37 and 38 completed with 12,128 and
+7,469 output tokens respectively, including 11,235 and 6,402 reasoning tokens, and
+both emitted mutation calls rather than repeating the tenth row's 4,096-token boundary.
+After 90 read/search actions, turn 36 advertised `last_opportunity` and turn 37
+recorded the `inspection_open` to `execution_only` transition. Its first diff
+contained an invalid bare `@@` separator and failed closed; the exact failure was
+projected next, and turn 38 emitted a complete diff changing only
+`pyfakefs/fake_os.py`. Both `parent-traversal-contract` and
+`upstream-fake-os-regression` passed on that diff in turns 39 and 40. No model call
+remained for `finish_task`, so there was no submission or evaluator execution.
+The current provider-free correction leaves the 40/100 limits unchanged. Before a
+required mutation it reserves one additional call for repairing a rejected first diff,
+consumes that reserve after failure, and computes `completion_possible` from actual
+remaining model/tool budgets as well as mutation capacity. The exact eleventh-row shape
+now reaches repair, two checks, and finish at call 40 in the scheduler regression. Ruff
+and all 87 tests pass; the final full suite completed in 88.79 seconds with a short
+external temp root. Provider-free mock run `run_dev_22a91101f0224925` reached isolated
+`EVALUATOR_PASS` in four model turns and five tool actions through one accepted
 mutation, with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
-provider cost.
+provider cost. No paid retry or twelfth row is authorized.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -295,6 +316,12 @@ once reads were removed, three reasoning-only responses each consumed the comple
 4,096-token ceiling before a tool call, with one valid public-check batch between them.
 The new encrypted continuation and completion-slack policy directly replace those two
 structural mechanisms; increasing the ceiling remains only auxiliary headroom.
+The eleventh row confirms both replacements live: every continuation edge linked, reads
+remained available beyond turn 24, the last opportunity was announced, and the closed
+tool surface elicited a mutation rather than another incomplete response. Its first
+malformed diff was repaired on the next turn and both visible checks passed. The new
+failure boundary is narrower: the horizon retained only the best-case four-call path,
+so that one repair consumed the call needed for finish.
 
 Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
 repeated-read terminal or replacement mutation interface. The retrospective replay
@@ -313,9 +340,9 @@ shape or exact full sentence. Its task content hash is
 The fifth and sixth rows used this exact identity. Version 3 preserves version 2 and
 accepts the semantics promised publicly rather than one literal phrasing. The sixth
 row's submitted patch passes the version-3 evaluator provider-free, but that does not
-retroactively change the version-2 terminal. The eighth through tenth live observations
-used the separate pyfakefs task described below. The tenth row is terminal and no
-retry or eleventh live row is authorized.
+retroactively change the version-2 terminal. The eighth through eleventh live
+observations used the separate pyfakefs task described below. The eleventh row is
+terminal and no retry or twelfth live row is authorized.
 
 The fifth row's terminal label described the application's tool-batch boundary, but
 the stored evidence did not establish that the provider response itself was
@@ -336,7 +363,7 @@ Operational resume uses an immutable envelope, exact contract comparison,
 run-lifetime locking, journal-derived counters and cost, durable tool-decision replay,
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
-acceptance and safety remain separate typed axes. No retry or eleventh live row is
+acceptance and safety remain separate typed axes. No retry or twelfth live row is
 authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
@@ -370,8 +397,9 @@ successful 24/3 paths as history, not as a sufficient-information rule. The tent
 exercises the old general lease and exposes the separate 4,096-token response ceiling.
 The active provider-free successor keeps the 25,000-token desired ceiling under the
 existing cost admission, records exact future incomplete reasons, replays encrypted
-reasoning across stateless turns, and derives inspection availability solely from
-completion slack. No paid retry or eleventh row is authorized.
+reasoning across stateless turns, and derives inspection availability from completion
+slack with one first-mutation repair reserve. `completion_possible` now includes actual
+model/tool capacity. No paid retry or twelfth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

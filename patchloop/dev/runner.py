@@ -90,6 +90,8 @@ class _ToolPolicy:
     check_ids: tuple[str, ...]
     max_parallel_reads: int
     minimum_completion_calls: int
+    completion_budget_calls: int
+    mutation_repair_reserve_calls: int
     completion_possible: bool
     exploration_allowed: bool
     exploration_state: str
@@ -360,8 +362,6 @@ def _tool_policy(
     minimum_completion_calls = _minimum_completion_calls(gateway, workflow_gate)
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
-    model_slack = remaining_model_calls - minimum_completion_calls
-    tool_slack = remaining_tool_actions - minimum_completion_calls
     summary = gateway.current_diff
     current_check_failed = any(
         row["status"] == "FAIL" for row in gateway.visible_check_status()
@@ -373,11 +373,26 @@ def _tool_policy(
     requires_mutation_for_completion = (
         workflow_gate == "needs_mutation" or current_check_failed
     )
-    completion_possible = not requires_mutation_for_completion or mutation_capacity
+    mutation_repair_reserve_calls = int(
+        requires_mutation_for_completion
+        and mutation_capacity
+        and not counters.failed_mutation_pending
+    )
+    completion_budget_calls = (
+        minimum_completion_calls + mutation_repair_reserve_calls
+    )
+    model_slack = remaining_model_calls - completion_budget_calls
+    tool_slack = remaining_tool_actions - completion_budget_calls
+    completion_possible = (
+        remaining_model_calls >= minimum_completion_calls
+        and remaining_tool_actions >= minimum_completion_calls
+        and (not requires_mutation_for_completion or mutation_capacity)
+    )
     exploration_allowed = model_slack > 0 and tool_slack > 0 and completion_possible
     required_inspection_for_completion = (
         requires_mutation_for_completion
         and mutation_capacity
+        and completion_possible
         and not bool(gateway.spans)
     )
     if exploration_allowed:
@@ -434,6 +449,8 @@ def _tool_policy(
         check_ids=unrun_checks,
         max_parallel_reads=max_parallel_reads,
         minimum_completion_calls=minimum_completion_calls,
+        completion_budget_calls=completion_budget_calls,
+        mutation_repair_reserve_calls=mutation_repair_reserve_calls,
         completion_possible=completion_possible,
         exploration_allowed=exploration_allowed,
         exploration_state=exploration_state,
@@ -644,6 +661,10 @@ def _build_context(
         "available_tool_names": sorted(active_policy.allowed_tools),
         "action_horizon": {
             "minimum_completion_calls": active_policy.minimum_completion_calls,
+            "completion_budget_calls": active_policy.completion_budget_calls,
+            "mutation_repair_reserve_calls": (
+                active_policy.mutation_repair_reserve_calls
+            ),
             "completion_possible": active_policy.completion_possible,
             "exploration_allowed": active_policy.exploration_allowed,
             "exploration_state": active_policy.exploration_state,
@@ -2168,6 +2189,11 @@ def _run_one_locked(
                 "workflow_gate": policy.workflow_gate,
                 "max_parallel_reads": policy.max_parallel_reads,
                 "minimum_completion_calls": policy.minimum_completion_calls,
+                "completion_budget_calls": policy.completion_budget_calls,
+                "mutation_repair_reserve_calls": (
+                    policy.mutation_repair_reserve_calls
+                ),
+                "completion_possible": policy.completion_possible,
                 "exploration_state": policy.exploration_state,
                 "closure_reason": policy.closure_reason,
                 "projected_span_ids": [

@@ -100,11 +100,36 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         limits,
     )
     assert horizon.minimum_completion_calls == 3
+    assert horizon.mutation_repair_reserve_calls == 1
+    assert horizon.completion_budget_calls == 4
+    assert horizon.completion_possible is True
     assert horizon.exploration_allowed is False
     assert horizon.exploration_state == "closed"
     assert horizon.closure_reason == "completion_horizon"
     assert horizon.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
     assert horizon.max_parallel_reads == 0
+
+    impossible = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
+        gateway,
+        runner._RunCounters(  # noqa: SLF001
+            model_calls=limits.max_model_calls - horizon.minimum_completion_calls + 1,
+        ),
+        limits,
+    )
+    assert impossible.completion_possible is False
+    assert impossible.closure_reason == "completion_impossible"
+
+    tool_impossible = runner._tool_policy(  # noqa: SLF001
+        gateway,
+        runner._RunCounters(  # noqa: SLF001
+            tool_actions=(
+                limits.max_tool_actions - horizon.minimum_completion_calls + 1
+            ),
+        ),
+        limits,
+    )
+    assert tool_impossible.completion_possible is False
+    assert tool_impossible.closure_reason == "completion_impossible"
 
     legacy_limit_reached = runner._tool_policy(  # noqa: SLF001
         gateway,
@@ -134,6 +159,8 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         limits,
     )
     assert {"read_file", "search_files"}.issubset(repair.allowed_tools)
+    assert repair.mutation_repair_reserve_calls == 0
+    assert repair.completion_budget_calls == repair.minimum_completion_calls
     exhausted_repair = runner._tool_policy(  # noqa: SLF001
         gateway,
         runner._RunCounters(  # noqa: SLF001
@@ -149,7 +176,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     last_opportunity = runner._tool_policy(  # noqa: SLF001
         gateway,
         runner._RunCounters(  # noqa: SLF001
-            model_calls=limits.max_model_calls - horizon.minimum_completion_calls - 1,
+            model_calls=limits.max_model_calls - horizon.completion_budget_calls - 1,
         ),
         limits,
     )
@@ -231,6 +258,10 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         )
     )
     assert projected_transition["action_horizon"]["tool_policy_transition"] == transition
+    assert projected_transition["action_horizon"]["minimum_completion_calls"] == 3
+    assert projected_transition["action_horizon"]["completion_budget_calls"] == 4
+    assert projected_transition["action_horizon"]["mutation_repair_reserve_calls"] == 1
+    assert projected_transition["action_horizon"]["completion_possible"] is True
 
     correction = runner._protocol_correction(  # noqa: SLF001
         turn_id="turn-after-horizon",
@@ -1209,6 +1240,132 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     resumed = runner.run_dev(request.model_copy(update={"resume_run_id": run["run_id"]}))
     assert resumed["runs"][0] == run
     assert journal_path.read_bytes() == journal_before_resume
+
+
+def test_completion_reserve_absorbs_one_failed_mutation_at_model_limit() -> None:
+    class PolicyGateway:
+        def __init__(self) -> None:
+            self.current_diff = SimpleNamespace(patch="", untracked_files=[])
+            self.spans = {"source-span": {}}
+            self.public_task = SimpleNamespace(
+                visible_checks=[
+                    SimpleNamespace(id="contract-check"),
+                    SimpleNamespace(id="regression-check"),
+                ]
+            )
+            self.accepted_mutations = 0
+            self.passed_checks: set[str] = set()
+
+        def visible_check_status(self):
+            return [
+                {
+                    "check_id": check.id,
+                    "status": "PASS" if check.id in self.passed_checks else "NOT_RUN",
+                }
+                for check in self.public_task.visible_checks
+            ]
+
+        def remaining_visible_check_ids(self):
+            return [
+                check.id
+                for check in self.public_task.visible_checks
+                if check.id not in self.passed_checks
+            ]
+
+        def unrun_visible_check_ids(self):
+            return self.remaining_visible_check_ids()
+
+        def ready_to_submit(self):
+            return bool(self.current_diff.patch) and not self.remaining_visible_check_ids()
+
+    gateway = PolicyGateway()
+    limits = DevLimits(max_model_calls=40)
+    counters = runner._RunCounters(  # noqa: SLF001
+        model_calls=34,
+        tool_actions=34,
+        inspection_turns_at_diff=34,
+    )
+
+    last_inspection = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert last_inspection.exploration_state == "last_opportunity"
+    assert last_inspection.minimum_completion_calls == 4
+    assert last_inspection.mutation_repair_reserve_calls == 1
+    assert last_inspection.completion_budget_calls == 5
+
+    read_result = DevToolResult(
+        action_id="last-inspection",
+        input_hash=sha256_json("last-inspection"),
+        tool="read_file",
+        status="succeeded",
+    )
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    runner._update_inspection_counters(counters, [read_result])  # noqa: SLF001
+
+    execution_only = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert execution_only.exploration_state == "closed"
+    assert execution_only.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
+    assert execution_only.completion_possible is True
+
+    failed_mutation = DevToolResult(
+        action_id="invalid-mutation",
+        input_hash=sha256_json("invalid-mutation"),
+        tool="apply_git_diff",
+        status="failed",
+        error_code="CONTRACT_ERROR",
+    )
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    runner._update_inspection_counters(counters, [failed_mutation])  # noqa: SLF001
+
+    repair = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert limits.max_model_calls - counters.model_calls == 4
+    assert repair.minimum_completion_calls == 4
+    assert repair.mutation_repair_reserve_calls == 0
+    assert repair.completion_budget_calls == 4
+    assert repair.completion_possible is True
+    assert repair.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
+
+    successful_mutation = DevToolResult(
+        action_id="repaired-mutation",
+        input_hash=sha256_json("repaired-mutation"),
+        tool="apply_git_diff",
+        status="succeeded",
+    )
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    runner._update_inspection_counters(counters, [successful_mutation])  # noqa: SLF001
+    gateway.current_diff.patch = "diff --git a/source.py b/source.py"
+    gateway.accepted_mutations = 1
+
+    first_check = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert first_check.workflow_gate == "needs_visible_checks"
+    assert first_check.minimum_completion_calls == 3
+    assert first_check.completion_possible is True
+    assert "run_check" in first_check.allowed_tools
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    gateway.passed_checks.add("contract-check")
+
+    second_check = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert second_check.minimum_completion_calls == 2
+    assert second_check.completion_possible is True
+    assert second_check.check_ids == ("regression-check",)
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    gateway.passed_checks.add("regression-check")
+
+    finish = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert limits.max_model_calls - counters.model_calls == 1
+    assert finish.workflow_gate == "ready_to_submit"
+    assert finish.minimum_completion_calls == 1
+    assert finish.completion_possible is True
+    assert finish.allowed_tools == frozenset({"finish_task", "stop_task"})
+    counters.model_calls += 1
+    counters.tool_actions += 1
+
+    assert counters.model_calls == limits.max_model_calls == 40
+    assert counters.tool_actions == 40
 
 
 def test_unexpected_tool_gateway_failure_writes_terminal(tmp_path, monkeypatch) -> None:

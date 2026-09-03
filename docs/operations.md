@@ -113,13 +113,16 @@ operational read cache remains keyed only by the executable request and current 
 
 Tool availability is derived from the workflow gate, current evidence, unexecuted
 visible checks, and remaining model/tool budget. Optional inspection stays open while
-both budgets have calls beyond the minimum mutation, check, and finish path. At one
-remaining optional turn, the context marks `last_opportunity` and names the inspection
-tools that will close next; at zero slack they are removed. A source read that is
-strictly required to establish the first mutation anchor is included in the minimum
-path rather than treated as optional exploration. The legacy 24-turn and three-repair-
-read fields remain envelope-compatible telemetry and do not remove tools. Cached or
-repeated evidence remains diagnostic-only, and `stop_task` is always available.
+both budgets have calls beyond the minimum mutation, check, and finish path plus one
+first-mutation repair reserve. At one remaining optional turn, the context marks
+`last_opportunity` and names the inspection tools that will close next; at zero slack
+they are removed. The repair reserve is consumed once a mutation fails. A source read
+that is strictly required to establish the first mutation anchor is included in the
+minimum path rather than treated as optional exploration. `completion_possible`
+requires both remaining budgets to cover the best-case minimum path as well as any
+required mutation capacity. The legacy 24-turn and three-repair-read fields remain
+envelope-compatible telemetry and do not remove tools. Cached or repeated evidence
+remains diagnostic-only, and `stop_task` is always available.
 Every inspection close or reopen is journaled as `tool_policy_transition` and projected
 once in the public context.
 One consecutive invalid or incomplete model response receives a correction that

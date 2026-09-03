@@ -68,6 +68,10 @@ Inspection availability is based on completion slack rather than a fixed number 
 earlier reads. When only one optional inspection turn remains, the context warns that
 `read_file` and `search_files` will close next. At zero slack they close so mutation,
 remaining visible checks, submission, or an explicit stop retain the required calls.
+When mutation is required, the horizon also holds one call for repairing a rejected
+first mutation; that reserve is consumed after such a failure. Whether completion is
+possible reflects the actual remaining model and tool budgets, not merely the presence
+of another mutation slot.
 Every such change is journaled and projected once; corrections name only tools that are
 actually present in that turn's action space.
 

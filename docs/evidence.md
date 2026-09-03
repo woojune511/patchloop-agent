@@ -630,10 +630,10 @@ A required first anchor read is part of the minimum path. Every close or reopen 
 from the actual allowed-tool set, so they cannot recommend a removed tool; a diagnostic
 `run_check` is explicitly not presented as satisfying `needs_mutation`.
 
-This is provider-free contract and recovery evidence only. It does not show that the
-live provider accepts the wire representation, that continuation improves model
-behavior, or that the agent mutates, checks, and submits. No provider call, Docker
-startup, image pull/build, or eleventh live row was executed or authorized.
+At this checkpoint the evidence was provider-free only. It did not yet show that the
+live provider accepted the wire representation, that continuation improved model
+behavior, or that the agent mutated, checked, and submitted. No provider call, Docker
+startup, image pull/build, or eleventh live row occurred in that change.
 
 Ruff and all 86 tests pass. The complete suite used a short external temp root and
 finished in 111.40 seconds (112.09 seconds invocation wall time), below the two-minute
@@ -644,15 +644,67 @@ identity commands became one commit-local configuration. Provider-free mock run
 five tool actions through one accepted mutation. Task acceptance was PASS, safety was
 NOT_RUN, `claim_eligible=false`, and provider cost was zero.
 
+## Eleventh live development observation
+
+The separately authorized eleventh row used `pyfakefs-makedirs-parent-traversal`
+version 2, `gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one
+repetition, a $1.20 invocation cap, and external state root `C:\patchloop-state`.
+Run `run_dev_36d200ed199d4377` wrote a durable `LIMIT_REACHED` terminal after
+412.811 active seconds and 419 seconds of run age. It completed 40 provider calls and
+input counts, 94 tool actions, one accepted mutation, and $0.449133 of provider cost.
+
+Every provider response stored a continuation reference containing one encrypted
+reasoning item. Read-only artifact comparison found zero semantic replay mismatches
+across all 39 next-turn edges: reasoning IDs and ciphertext, function-call ordering,
+and matching public function outputs were preserved. Neither the journal nor any
+canonical public context contained `encrypted_content`. No response was incomplete.
+Turns 37 and 38 completed with 12,128 and 7,469 output tokens, including 11,235 and
+6,402 reasoning tokens, and both emitted one `apply_git_diff` call. This confirms live
+wire acceptance and removes the tenth row's 4,096-token response boundary; it does not
+by itself attribute better problem solving to continuation.
+
+The run made 32 reads and 58 searches. Turn 36 projected `last_opportunity` with both
+inspection tools still available. Turn 37 recorded a `completion_horizon` transition
+from `inspection_open` to `execution_only` and exposed only mutation and stop. The
+first mutation used an invalid bare `@@` separator, so `git apply --check --recount`
+rejected it at patch line 8. The next context retained the exact failed diff, hypothesis,
+anchor, and error; turn 38 emitted a complete replacement diff, changing only
+`pyfakefs/fake_os.py`. `parent-traversal-contract` and
+`upstream-fake-os-regression` both passed on diff
+`sha256:cd233801193f75f169f7e0ce5bc24c5ada2cb81f8c821499a67eb7a15a36d4a3`.
+Calls 39 and 40 ran those checks, leaving no call for `finish_task`. Nothing was
+submitted and no evaluator or safety check ran.
+
+## Post-eleventh repair-reserve correction
+
+The live trace showed that completion slack protected only the best-case four-call
+mutation/check/check/finish path. One rejected first mutation consumed the finish call.
+It also showed that `completion_possible` meant only that mutation capacity remained;
+it stayed true even when three model calls remained for a four-call minimum path.
+
+The provider-free successor keeps the 40-model/100-tool limits. It adds one explicit
+first-mutation repair call to the completion budget and consumes that reserve after a
+mutation failure. The best-case minimum remains separately visible, while
+`completion_possible` now also requires both remaining budgets to cover it. The
+scheduler regression reconstructs the live shape at calls 35–40: final inspection,
+failed mutation, repaired mutation, two checks, and finish. Invalid bare `@@` syntax
+remains fail-closed rather than being guessed or normalized.
+
+Ruff and all 87 tests pass. The complete suite used a short external temp root and
+finished in 88.79 seconds. Provider-free mock run `run_dev_22a91101f0224925` reached
+isolated `EVALUATOR_PASS` in four model turns and five tool actions through one accepted
+mutation. Task acceptance was PASS, safety was NOT_RUN, `claim_eligible=false`, and
+provider cost was zero. This validates the local contract, not another live row.
+
 ## Not executed
 
-- no transport retry or follow-up paid run after the tenth row
+- no transport retry or follow-up paid run after the eleventh row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no mutation, submission, or evaluator execution in the seventh through tenth
-  pyfakefs version-2 live rows; only the tenth ran a visible check, which failed on the
-  unchanged empty diff
+  pyfakefs version-2 live rows; the eleventh mutated and passed both visible checks but
+  did not submit or invoke the evaluator
 - no hidden evaluation of the temporary Loguru version-2 public correction
 
 The under-two-minute focused-validation target remains locally supported. The sixth
