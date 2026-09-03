@@ -42,6 +42,11 @@ current source spans form a small recency-ordered working set. The current diff'
 complete visible-check status and exact remaining check IDs are projected separately
 from the bounded recent output. `ready_to_submit` additionally requires a non-empty
 diff and no non-ignored untracked files.
+A successful mutation replaces stale pre-image spans for each edited file with a
+bounded post-image span bound to the current file and diff hashes. This lets a failed
+public check lead directly to an overlapping same-file repair without reopening
+inspection, while edits outside that post-image still require current read/search
+evidence.
 
 For OpenAI runs, stateless continuity also carries the provider-encrypted reasoning
 items returned by the immediately preceding response. Their ciphertext and output
@@ -68,10 +73,11 @@ Inspection availability is based on completion slack rather than a fixed number 
 earlier reads. When only one optional inspection turn remains, the context warns that
 `read_file` and `search_files` will close next. At zero slack they close so mutation,
 remaining visible checks, submission, or an explicit stop retain the required calls.
-When mutation is required, the horizon also holds one call for repairing a rejected
-first mutation; that reserve is consumed after such a failure. Whether completion is
-possible reflects the actual remaining model and tool budgets, not merely the presence
-of another mutation slot.
+Until the first recoverable feedback event, the horizon also holds two calls for a
+repair and its recheck. The allowance survives an accepted mutation so it covers either
+a rejected patch or the first failed public check, and is then consumed. Best-path and
+protected-path feasibility both reflect actual remaining model and tool budgets, not
+merely the presence of another mutation slot.
 Every such change is journaled and projected once; corrections name only tools that are
 actually present in that turn's action space.
 

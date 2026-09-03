@@ -102,6 +102,11 @@ submission bind the canonical diff produced by the resulting worktree.
 If a valid mutation call fails, its bounded public diff and intent remain in
 `last_failed_mutation` across later reads and resume. The agent may read/search when
 needed for repair, but a successful mutation is required to clear that repair target.
+After success, edited-file pre-image spans are invalidated and one bounded post-image
+span is registered with the current file and diff hashes. Its ID is retained in
+`last_successful_mutation`. The gateway may bind it for a follow-up edit only when the
+exact current anchor overlaps that same-file span; other anchors still need a current
+read/search span.
 Tool execution failures are not counted or presented as model protocol violations.
 Every tool call must include one bounded public `turn_decision` containing `mode`,
 `basis`, and an `evidence_goal` only for inspection. Its mode must match the actual
@@ -114,13 +119,17 @@ operational read cache remains keyed only by the executable request and current 
 Tool availability is derived from the workflow gate, current evidence, unexecuted
 visible checks, and remaining model/tool budget. Optional inspection stays open while
 both budgets have calls beyond the minimum mutation, check, and finish path plus one
-first-mutation repair reserve. At one remaining optional turn, the context marks
+bounded two-call repair/recheck allowance. At one remaining optional turn, the context marks
 `last_opportunity` and names the inspection tools that will close next; at zero slack
-they are removed. The repair reserve is consumed once a mutation fails. A source read
-that is strictly required to establish the first mutation anchor is included in the
-minimum path rather than treated as optional exploration. `completion_possible`
-requires both remaining budgets to cover the best-case minimum path as well as any
-required mutation capacity. The legacy 24-turn and three-repair-read fields remain
+they are removed. The allowance survives a successful mutation and is consumed by the
+first rejected mutation or failed check. A source read that is strictly required to
+establish a mutation anchor is included in the minimum path rather than treated as
+optional exploration. The scheduler recognizes mutation evidence only when a span's
+tracked, allowed file hash is current, matching mutation validation rather than merely
+testing whether any span exists. `completion_possible` requires both remaining budgets
+to cover the best-case minimum path and required mutation capacity;
+`protected_completion_possible` includes the unused feedback allowance. The legacy
+24-turn and three-repair-read fields remain
 envelope-compatible telemetry and do not remove tools. Cached or repeated evidence
 remains diagnostic-only, and `stop_task` is always available.
 Every inspection close or reopen is journaled as `tool_policy_transition` and projected

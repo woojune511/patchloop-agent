@@ -696,15 +696,51 @@ isolated `EVALUATOR_PASS` in four model turns and five tool actions through one 
 mutation. Task acceptance was PASS, safety was NOT_RUN, `claim_eligible=false`, and
 provider cost was zero. This validates the local contract, not another live row.
 
+## Post-twelfth post-image and feedback-recovery correction
+
+The twelfth row's accepted mutation invalidated the only current source span for its
+edited file. Its exact bounded hunk remained in `last_successful_mutation`, but the
+validator did not recognize that representation as evidence. The scheduler separately
+treated any remaining span as sufficient to expose mutation, even when every such span
+was stale or belonged to a non-editable file. Its single repair call also covered a
+rejected patch but not the longer accepted-mutation, failed-check, repair, recheck path.
+
+The provider-free successor records a bounded post-image span after each accepted
+mutation. It binds the span to current file and diff hashes, references it from
+`last_successful_mutation`, restores it after resume, and promotes it into the same
+recency-ordered working set as read/search evidence. Automatic repair binding is limited
+to an exact current anchor overlapping that post-image in the same file; stale hashes
+and outside-hunk anchors fail closed. Tool scheduling now asks the gateway for an
+allowed, tracked, current-hash evidence path, so its mutation action and validator use
+the same feasibility boundary.
+
+Completion slack now protects two calls for one feedback-recovery episode. The reserve
+survives an accepted mutation, covers repair plus recheck after a failed public check,
+and is consumed by the first rejected mutation or failed check. That fact is reconstructed
+from durable action batches on resume. A scheduler regression reproduces calls 34–40 as
+final inspection, accepted mutation, failed first check, repair, two passing checks, and
+finish under the unchanged 40/100 limits.
+
+Before implementation, a separate provider-free Docker replay applied the twelfth
+row's exact rejected one-line repair to a copy of its retained workspace. The public
+parent-traversal contract passed, and the upstream regression reported 517 passed and
+570 skipped. No hidden evaluator ran, so this is public semantic evidence only.
+After implementation, Ruff and all 90 tests passed; the full suite finished in
+110.58 seconds with an external short temp root. Provider-free mock run
+`run_dev_6979578141064297` reached isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation. Task acceptance was PASS, safety was
+NOT_RUN, `claim_eligible=false`, and provider cost was zero.
+
 ## Not executed
 
-- no transport retry or follow-up paid run after the eleventh row
+- no transport retry or follow-up paid run after the twelfth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no mutation, submission, or evaluator execution in the seventh through tenth
-  pyfakefs version-2 live rows; the eleventh mutated and passed both visible checks but
-  did not submit or invoke the evaluator
+  pyfakefs version-2 live rows; the eleventh mutated and passed both visible checks,
+  while the twelfth mutated and reached one failed visible check; neither submitted nor
+  invoked the evaluator
 - no hidden evaluation of the temporary Loguru version-2 public correction
 
 The under-two-minute focused-validation target remains locally supported. The sixth

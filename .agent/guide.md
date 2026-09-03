@@ -43,9 +43,12 @@ receive one short correction. A second consecutive protocol/incomplete violation
 terminates the row; any valid completed tool batch resets the correction allowance.
 Optional inspection remains available only while both model-call and tool-action
 budgets exceed the minimum path through mutation, all required checks, and finish plus
-one reserve for repairing a rejected first mutation. That reserve is consumed after a
-mutation failure. `completion_possible` separately reports whether the actual remaining
-budgets can still cover the best-case path; it is not an alias for mutation capacity.
+one bounded two-call allowance for repair and recheck after mutation/check feedback.
+That allowance remains held after the first mutation and is consumed by the first
+rejected mutation or failed check. `completion_possible` separately reports whether
+the actual remaining budgets cover the best-case path;
+`protected_completion_possible` includes the unused allowance. Neither is an alias
+for mutation capacity.
 With one optional turn left, expose reads with `last_opportunity` and tell the model
 they close next; with none, remove them and record/project `tool_policy_transition`.
 Reopen them through the same transition when a changed gate restores slack. A first
@@ -75,9 +78,13 @@ mutation also requires:
 - current `evidence_span_ids`
 - exact `edit_anchor.path`, `old_text`, and occurrence
 
-Anchors and spans must still match current source. Resulting paths, file count,
-line count, dependencies, tests, and public API remain constrained by the public
-task. If one public failure signature repeats across two distinct diffs, the next
+Anchors and spans must still match current source. A successful mutation invalidates
+the edited file's pre-image spans and immediately registers one bounded post-image span
+bound to the current file and diff hashes. That span can authorize a same-file repair
+only when the exact current anchor overlaps it; an edit elsewhere still requires a
+current read/search span. Resulting paths, file count, line count, dependencies, tests,
+and public API remain constrained by the public task. If one public failure signature
+repeats across two distinct diffs, the next
 mutation additionally requires `falsified_prior_hypothesis` and
 `alternative_mechanism`; this never creates a separate planning turn.
 
@@ -167,8 +174,8 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 - 1,800 seconds per row
 - one consecutive protocol/incomplete recovery
 - four parallel reads
-- completion-slack inspection with one warned final opportunity and one first-mutation
-  repair reserve
+- completion-slack inspection with one warned final opportunity and one bounded
+  two-call feedback-recovery reserve
 - legacy 24-turn and three-repair-read fields retained as telemetry only
 - 25,000 desired output tokens per provider call, reduced by cost admission
 - one repetition by default, six maximum
@@ -328,12 +335,15 @@ though `last_successful_mutation` retained the exact current hunk. Three calls a
 could not cover the repair, two checks, and finish. The row deliberately stopped at
 turn 39 after 76 tool actions and $0.3471675, with no submission or evaluator.
 
-Fix this provider-free by accepting the current-diff-bound successful-mutation hunk as
-anchor evidence only for an overlapping repair in that same file, while retaining
-current-span validation everywhere else. Reserve one bounded failed-check repair and
-recheck path before inspection closes; do not raise the global 40/100 limits. Regress
-the exact twelfth-row sequence through repair, both checks, and finish. Do not run a
-paid retry or thirteenth row without separate authorization.
+The provider-free successor accepts a current-diff-bound successful-mutation post-image
+as anchor evidence only for an overlapping repair in that same file, while retaining
+current-span validation everywhere else. Scheduler and validator share one actionable-
+evidence predicate, and the horizon protects one repair/recheck episode without raising
+the global 40/100 limits. The scheduler regression reaches finish at call 40 after an
+accepted mutation and failed first check. Ruff and all 90 tests pass in 110.58
+seconds; mock run `run_dev_6979578141064297` reaches isolated `EVALUATOR_PASS` with
+zero provider cost. Do not run a paid retry or thirteenth row without separate
+authorization.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.

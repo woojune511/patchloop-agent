@@ -11,8 +11,8 @@ claim commands are absent.
 - default one-row live limit: 1,800 seconds
 - 40 model calls, 100 tool actions, and 4 accepted mutations
 - one consecutive protocol/incomplete correction and at most 4 parallel reads
-- completion-slack inspection with one warned final opportunity and one first-mutation
-  repair reserve; legacy 24/3 counters are telemetry only
+- completion-slack inspection with one warned final opportunity and one bounded
+  two-call feedback-recovery reserve; legacy 24/3 counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
 ## Authority
@@ -22,7 +22,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The eleven live observations below
+Repository policy alone never initiates paid work. The twelve live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -237,6 +237,23 @@ be allowed to use the current-diff-bound `last_successful_mutation` hunk as exac
 anchor evidence, and the horizon must reserve one bounded failed-check repair and
 recheck path rather than only a rejected-patch repair. Keep current-span validation
 fail-closed for edits outside that hunk. No paid retry or thirteenth row is authorized.
+The provider-free successor now emits a bounded `mutation_evidence` post-image with
+the accepted mutation's current file hash and diff hash, restores it after resume, and
+references its span ID from `last_successful_mutation`. A follow-up mutation may bind
+that evidence automatically only when its exact current anchor overlaps the same-file
+post-image; stale hashes and anchors outside the hunk still fail closed. Scheduler and
+validator now share the same test for an allowed, tracked, current-hash mutation span,
+so an unrelated span cannot expose an unusable mutation action. Completion slack holds
+two calls for one recoverable mutation/check feedback event: repair plus recheck. The
+reserve survives the first accepted mutation, is consumed by a rejected mutation or
+failed check, and is reconstructed from durable batch results on resume.
+A regression reconstructs calls 34–40 as final inspection, mutation, failed check,
+repair, two passing checks, and finish. Ruff and all 90 tests pass; the complete suite
+finished in 110.58 seconds with an external short temp root. Provider-free mock run
+`run_dev_6979578141064297` reached isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation, with task acceptance PASS, safety
+NOT_RUN, `claim_eligible=false`, and zero provider cost. No hidden evaluator was run
+against the twelfth-row repair, and no live authority follows from this correction.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -347,8 +364,9 @@ visible check. That check exposed a semantic permission defect. The model then f
 a bounded one-line repair, but the gateway required a current source span that its own
 successful mutation had invalidated and could no longer be reread. Even if admitted,
 three remaining calls could not cover repair, both checks, and finish. The next seam
-is therefore current-hunk repair evidence plus one bounded failed-check recovery path,
-not a larger global token or turn limit.
+was therefore current-hunk repair evidence plus one bounded failed-check recovery path,
+not a larger global token or turn limit. The provider-free successor now implements
+that seam while leaving the global limits unchanged.
 
 Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
 repeated-read terminal or replacement mutation interface. The retrospective replay
@@ -425,10 +443,11 @@ exercises the old general lease and exposes the separate 4,096-token response ce
 The active provider-free successor keeps the 25,000-token desired ceiling under the
 existing cost admission, records exact future incomplete reasons, replays encrypted
 reasoning across stateless turns, and derives inspection availability from completion
-slack with one first-mutation repair reserve. `completion_possible` now includes actual
-model/tool capacity. The twelfth row confirmed those mechanisms but exposed the
-post-check repair evidence and horizon boundary described above. No paid retry or
-thirteenth row is authorized.
+slack with one bounded two-call feedback-recovery reserve. `completion_possible`
+reports the best path, while `protected_completion_possible` reports whether that path
+plus the unused recovery allowance still fits. The twelfth row exposed the post-check
+repair evidence and horizon boundary; the current provider-free successor closes both
+as described above. No paid retry or thirteenth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

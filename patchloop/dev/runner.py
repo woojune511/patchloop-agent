@@ -75,6 +75,7 @@ class _RunCounters:
     inspection_turns_at_diff: int = 0
     failed_mutation_repair_turns: int = 0
     failed_mutation_pending: bool = False
+    feedback_recovery_used: bool = False
 
 
 @dataclass
@@ -91,8 +92,9 @@ class _ToolPolicy:
     max_parallel_reads: int
     minimum_completion_calls: int
     completion_budget_calls: int
-    mutation_repair_reserve_calls: int
+    feedback_recovery_reserve_calls: int
     completion_possible: bool
+    protected_completion_possible: bool
     exploration_allowed: bool
     exploration_state: str
     model_turns_available_for_exploration: int
@@ -342,8 +344,13 @@ def _workflow_gate(gateway: DevToolGateway, *, summary: Any | None = None) -> st
     return "needs_visible_checks"
 
 
-def _minimum_completion_calls(gateway: DevToolGateway, workflow_gate: str) -> int:
-    mutation_calls = 1 + (0 if gateway.spans else 1)
+def _minimum_completion_calls(
+    gateway: DevToolGateway,
+    workflow_gate: str,
+    *,
+    has_current_mutation_evidence: bool,
+) -> int:
+    mutation_calls = 1 + (0 if has_current_mutation_evidence else 1)
     if workflow_gate == "needs_mutation":
         return mutation_calls + len(gateway.public_task.visible_checks) + 1
     if workflow_gate == "needs_visible_checks":
@@ -359,7 +366,12 @@ def _tool_policy(
     limits: Any,
 ) -> _ToolPolicy:
     workflow_gate = _workflow_gate(gateway)
-    minimum_completion_calls = _minimum_completion_calls(gateway, workflow_gate)
+    has_current_mutation_evidence = gateway.has_current_mutation_evidence()
+    minimum_completion_calls = _minimum_completion_calls(
+        gateway,
+        workflow_gate,
+        has_current_mutation_evidence=has_current_mutation_evidence,
+    )
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
     summary = gateway.current_diff
@@ -373,13 +385,21 @@ def _tool_policy(
     requires_mutation_for_completion = (
         workflow_gate == "needs_mutation" or current_check_failed
     )
-    mutation_repair_reserve_calls = int(
-        requires_mutation_for_completion
+    feedback_already_observed = (
+        counters.feedback_recovery_used
+        or current_check_failed
+        or gateway.last_failed_mutation is not None
+    )
+    feedback_can_still_require_repair = (
+        requires_mutation_for_completion or bool(gateway.unrun_visible_check_ids())
+    )
+    feedback_recovery_reserve_calls = 2 * int(
+        feedback_can_still_require_repair
         and mutation_capacity
-        and not counters.failed_mutation_pending
+        and not feedback_already_observed
     )
     completion_budget_calls = (
-        minimum_completion_calls + mutation_repair_reserve_calls
+        minimum_completion_calls + feedback_recovery_reserve_calls
     )
     model_slack = remaining_model_calls - completion_budget_calls
     tool_slack = remaining_tool_actions - completion_budget_calls
@@ -388,12 +408,17 @@ def _tool_policy(
         and remaining_tool_actions >= minimum_completion_calls
         and (not requires_mutation_for_completion or mutation_capacity)
     )
+    protected_completion_possible = (
+        remaining_model_calls >= completion_budget_calls
+        and remaining_tool_actions >= completion_budget_calls
+        and (not requires_mutation_for_completion or mutation_capacity)
+    )
     exploration_allowed = model_slack > 0 and tool_slack > 0 and completion_possible
     required_inspection_for_completion = (
         requires_mutation_for_completion
         and mutation_capacity
         and completion_possible
-        and not bool(gateway.spans)
+        and not has_current_mutation_evidence
     )
     if exploration_allowed:
         max_parallel_reads = min(limits.max_parallel_reads, tool_slack)
@@ -440,7 +465,7 @@ def _tool_policy(
             allowed.add("run_check")
         if (
             mutation_capacity
-            and bool(gateway.spans)
+            and has_current_mutation_evidence
         ):
             allowed.add("apply_git_diff")
     return _ToolPolicy(
@@ -450,8 +475,9 @@ def _tool_policy(
         max_parallel_reads=max_parallel_reads,
         minimum_completion_calls=minimum_completion_calls,
         completion_budget_calls=completion_budget_calls,
-        mutation_repair_reserve_calls=mutation_repair_reserve_calls,
+        feedback_recovery_reserve_calls=feedback_recovery_reserve_calls,
         completion_possible=completion_possible,
+        protected_completion_possible=protected_completion_possible,
         exploration_allowed=exploration_allowed,
         exploration_state=exploration_state,
         model_turns_available_for_exploration=max(0, model_slack),
@@ -635,6 +661,12 @@ def _build_context(
         for span in result.output.get("spans", [])
         if isinstance(span, dict) and isinstance(span.get("span_id"), str)
     }
+    latest_span_ids.update(
+        evidence["span_id"]
+        for result in latest_tool_results
+        if isinstance((evidence := result.output.get("mutation_evidence")), dict)
+        and isinstance(evidence.get("span_id"), str)
+    )
     payload = {
         "public_task": package.public.model_dump(mode="json"),
         "current_diff": {
@@ -662,10 +694,13 @@ def _build_context(
         "action_horizon": {
             "minimum_completion_calls": active_policy.minimum_completion_calls,
             "completion_budget_calls": active_policy.completion_budget_calls,
-            "mutation_repair_reserve_calls": (
-                active_policy.mutation_repair_reserve_calls
+            "feedback_recovery_reserve_calls": (
+                active_policy.feedback_recovery_reserve_calls
             ),
             "completion_possible": active_policy.completion_possible,
+            "protected_completion_possible": (
+                active_policy.protected_completion_possible
+            ),
             "exploration_allowed": active_policy.exploration_allowed,
             "exploration_state": active_policy.exploration_state,
             "model_turns_available_for_exploration": (
@@ -1525,15 +1560,23 @@ def _update_inspection_counters(
         if counters.failed_mutation_pending:
             counters.failed_mutation_repair_turns += 1
         return
-    if len(results) != 1 or results[0].tool != "apply_git_diff":
+    if len(results) != 1:
         return
-    if results[0].status == "succeeded":
+    result = results[0]
+    if result.tool == "run_check":
+        if result.status != "succeeded" or result.output.get("passed") is not True:
+            counters.feedback_recovery_used = True
+        return
+    if result.tool != "apply_git_diff":
+        return
+    if result.status == "succeeded":
         counters.inspection_turns_at_diff = 0
         counters.failed_mutation_repair_turns = 0
         counters.failed_mutation_pending = False
     else:
         counters.failed_mutation_repair_turns = 0
         counters.failed_mutation_pending = True
+        counters.feedback_recovery_used = True
 
 
 def _validate_resumed_workspace(workspace: Path, journal: DevJournal) -> None:
@@ -2147,6 +2190,13 @@ def _run_one_locked(
                 tool_policy_transition=policy_transition,
             )
             context_payload = json.loads(context)
+            projected_spans = list(context_payload["source_spans"])
+            for projected_result in context_payload["latest_tool_results"]:
+                output = projected_result.get("output", {})
+                projected_spans.extend(output.get("spans", []))
+                mutation_evidence = output.get("mutation_evidence")
+                if isinstance(mutation_evidence, dict):
+                    projected_spans.append(mutation_evidence)
             context_artifact = artifact_store.put_text(context, "application/json")
             model_input = _build_model_input(
                 journal=journal,
@@ -2190,22 +2240,18 @@ def _run_one_locked(
                 "max_parallel_reads": policy.max_parallel_reads,
                 "minimum_completion_calls": policy.minimum_completion_calls,
                 "completion_budget_calls": policy.completion_budget_calls,
-                "mutation_repair_reserve_calls": (
-                    policy.mutation_repair_reserve_calls
+                "feedback_recovery_reserve_calls": (
+                    policy.feedback_recovery_reserve_calls
                 ),
                 "completion_possible": policy.completion_possible,
+                "protected_completion_possible": (
+                    policy.protected_completion_possible
+                ),
                 "exploration_state": policy.exploration_state,
                 "closure_reason": policy.closure_reason,
                 "projected_span_ids": [
                     span["span_id"]
-                    for span in [
-                        *context_payload["source_spans"],
-                        *[
-                            span
-                            for result in context_payload["latest_tool_results"]
-                            for span in result.get("output", {}).get("spans", [])
-                        ],
-                    ]
+                    for span in projected_spans
                     if isinstance(span, dict) and isinstance(span.get("span_id"), str)
                 ],
                 "active_elapsed_ms": int(elapsed_seconds * 1_000),

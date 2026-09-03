@@ -100,9 +100,10 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         limits,
     )
     assert horizon.minimum_completion_calls == 3
-    assert horizon.mutation_repair_reserve_calls == 1
-    assert horizon.completion_budget_calls == 4
+    assert horizon.feedback_recovery_reserve_calls == 2
+    assert horizon.completion_budget_calls == 5
     assert horizon.completion_possible is True
+    assert horizon.protected_completion_possible is False
     assert horizon.exploration_allowed is False
     assert horizon.exploration_state == "closed"
     assert horizon.closure_reason == "completion_horizon"
@@ -159,7 +160,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         limits,
     )
     assert {"read_file", "search_files"}.issubset(repair.allowed_tools)
-    assert repair.mutation_repair_reserve_calls == 0
+    assert repair.feedback_recovery_reserve_calls == 0
     assert repair.completion_budget_calls == repair.minimum_completion_calls
     exhausted_repair = runner._tool_policy(  # noqa: SLF001
         gateway,
@@ -172,6 +173,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         limits,
     )
     assert {"read_file", "search_files"}.issubset(exhausted_repair.allowed_tools)
+    gateway.last_failed_mutation = None
 
     last_opportunity = runner._tool_policy(  # noqa: SLF001
         gateway,
@@ -188,6 +190,20 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
 
     saved_spans = dict(gateway.spans)
     gateway.spans.clear()
+    unrelated_evidence = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="read-non-mutable-test-evidence",
+            arguments={
+                "path": "tests/test_csvlite.py",
+                "start_line": 1,
+                "end_line": 20,
+            },
+            turn_decision=inspection_decision("non-mutable-test-evidence"),
+        )
+    )
+    assert unrelated_evidence.status == "succeeded"
+    assert gateway.has_current_mutation_evidence() is False
     required_read = runner._tool_policy(  # noqa: SLF001
         gateway,
         runner._RunCounters(  # noqa: SLF001
@@ -204,6 +220,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     assert required_read.required_inspection_for_completion is True
     assert required_read.max_parallel_reads == 1
     assert {"read_file", "search_files"}.issubset(required_read.allowed_tools)
+    assert "apply_git_diff" not in required_read.allowed_tools
     gateway.spans.update(saved_spans)
 
     journal.append(
@@ -259,9 +276,13 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     )
     assert projected_transition["action_horizon"]["tool_policy_transition"] == transition
     assert projected_transition["action_horizon"]["minimum_completion_calls"] == 3
-    assert projected_transition["action_horizon"]["completion_budget_calls"] == 4
-    assert projected_transition["action_horizon"]["mutation_repair_reserve_calls"] == 1
+    assert projected_transition["action_horizon"]["completion_budget_calls"] == 5
+    assert projected_transition["action_horizon"]["feedback_recovery_reserve_calls"] == 2
     assert projected_transition["action_horizon"]["completion_possible"] is True
+    assert (
+        projected_transition["action_horizon"]["protected_completion_possible"]
+        is False
+    )
 
     correction = runner._protocol_correction(  # noqa: SLF001
         turn_id="turn-after-horizon",
@@ -1018,6 +1039,28 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
         )
     )
     assert applied.status == "succeeded"
+    postimage_span_id = applied.output["mutation_evidence"]["span_id"]
+    post_mutation_context = json.loads(
+        runner._build_context(  # noqa: SLF001 - direct context contract test
+            package=smoke_package,
+            gateway=gateway,
+            journal=journal,
+            correction=None,
+            latest_tool_results=[applied],
+            counters=runner._RunCounters(),  # noqa: SLF001
+            elapsed_seconds=0,
+            limits=DevLimits(),
+        )
+    )
+    assert post_mutation_context["latest_tool_results"][0]["output"][
+        "mutation_evidence"
+    ]["span_id"] == postimage_span_id
+    assert post_mutation_context["last_successful_mutation"][
+        "postimage_evidence_span_id"
+    ] == postimage_span_id
+    assert postimage_span_id not in {
+        span["span_id"] for span in post_mutation_context["source_spans"]
+    }
 
     original_check = smoke_package.public.visible_checks[0]
     check_ids = ["contract", "basic-regression", "field-regression", "upstream-regression"]
@@ -1242,7 +1285,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     assert journal_path.read_bytes() == journal_before_resume
 
 
-def test_completion_reserve_absorbs_one_failed_mutation_at_model_limit() -> None:
+def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> None:
     class PolicyGateway:
         def __init__(self) -> None:
             self.current_diff = SimpleNamespace(patch="", untracked_files=[])
@@ -1254,13 +1297,17 @@ def test_completion_reserve_absorbs_one_failed_mutation_at_model_limit() -> None
                 ]
             )
             self.accepted_mutations = 0
-            self.passed_checks: set[str] = set()
+            self.check_states: dict[str, str] = {}
+            self.last_failed_mutation = None
+
+        def has_current_mutation_evidence(self):
+            return True
 
         def visible_check_status(self):
             return [
                 {
                     "check_id": check.id,
-                    "status": "PASS" if check.id in self.passed_checks else "NOT_RUN",
+                    "status": self.check_states.get(check.id, "NOT_RUN"),
                 }
                 for check in self.public_task.visible_checks
             ]
@@ -1269,11 +1316,15 @@ def test_completion_reserve_absorbs_one_failed_mutation_at_model_limit() -> None
             return [
                 check.id
                 for check in self.public_task.visible_checks
-                if check.id not in self.passed_checks
+                if self.check_states.get(check.id) != "PASS"
             ]
 
         def unrun_visible_check_ids(self):
-            return self.remaining_visible_check_ids()
+            return [
+                check.id
+                for check in self.public_task.visible_checks
+                if check.id not in self.check_states
+            ]
 
         def ready_to_submit(self):
             return bool(self.current_diff.patch) and not self.remaining_visible_check_ids()
@@ -1281,16 +1332,17 @@ def test_completion_reserve_absorbs_one_failed_mutation_at_model_limit() -> None
     gateway = PolicyGateway()
     limits = DevLimits(max_model_calls=40)
     counters = runner._RunCounters(  # noqa: SLF001
-        model_calls=34,
-        tool_actions=34,
-        inspection_turns_at_diff=34,
+        model_calls=33,
+        tool_actions=33,
+        inspection_turns_at_diff=33,
     )
 
     last_inspection = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert last_inspection.exploration_state == "last_opportunity"
     assert last_inspection.minimum_completion_calls == 4
-    assert last_inspection.mutation_repair_reserve_calls == 1
-    assert last_inspection.completion_budget_calls == 5
+    assert last_inspection.feedback_recovery_reserve_calls == 2
+    assert last_inspection.completion_budget_calls == 6
+    assert last_inspection.protected_completion_possible is True
 
     read_result = DevToolResult(
         action_id="last-inspection",
@@ -1307,28 +1359,9 @@ def test_completion_reserve_absorbs_one_failed_mutation_at_model_limit() -> None
     assert execution_only.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
     assert execution_only.completion_possible is True
 
-    failed_mutation = DevToolResult(
-        action_id="invalid-mutation",
-        input_hash=sha256_json("invalid-mutation"),
-        tool="apply_git_diff",
-        status="failed",
-        error_code="CONTRACT_ERROR",
-    )
-    counters.model_calls += 1
-    counters.tool_actions += 1
-    runner._update_inspection_counters(counters, [failed_mutation])  # noqa: SLF001
-
-    repair = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
-    assert limits.max_model_calls - counters.model_calls == 4
-    assert repair.minimum_completion_calls == 4
-    assert repair.mutation_repair_reserve_calls == 0
-    assert repair.completion_budget_calls == 4
-    assert repair.completion_possible is True
-    assert repair.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
-
     successful_mutation = DevToolResult(
-        action_id="repaired-mutation",
-        input_hash=sha256_json("repaired-mutation"),
+        action_id="initial-mutation",
+        input_hash=sha256_json("initial-mutation"),
         tool="apply_git_diff",
         status="succeeded",
     )
@@ -1338,6 +1371,50 @@ def test_completion_reserve_absorbs_one_failed_mutation_at_model_limit() -> None
     gateway.current_diff.patch = "diff --git a/source.py b/source.py"
     gateway.accepted_mutations = 1
 
+    before_check = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert limits.max_model_calls - counters.model_calls == 5
+    assert before_check.minimum_completion_calls == 3
+    assert before_check.feedback_recovery_reserve_calls == 2
+    assert before_check.completion_budget_calls == 5
+    assert before_check.protected_completion_possible is True
+    assert before_check.allowed_tools == frozenset(
+        {"apply_git_diff", "run_check", "stop_task"}
+    )
+
+    failed_check = DevToolResult(
+        action_id="failed-contract-check",
+        input_hash=sha256_json("failed-contract-check"),
+        tool="run_check",
+        status="succeeded",
+        output={"passed": False},
+    )
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    gateway.check_states["contract-check"] = "FAIL"
+    runner._update_inspection_counters(counters, [failed_check])  # noqa: SLF001
+
+    repair = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert limits.max_model_calls - counters.model_calls == 4
+    assert repair.minimum_completion_calls == 4
+    assert repair.feedback_recovery_reserve_calls == 0
+    assert repair.completion_budget_calls == 4
+    assert repair.completion_possible is True
+    assert repair.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
+    assert counters.feedback_recovery_used is True
+
+    repaired_mutation = DevToolResult(
+        action_id="repaired-mutation",
+        input_hash=sha256_json("repaired-mutation"),
+        tool="apply_git_diff",
+        status="succeeded",
+    )
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    runner._update_inspection_counters(counters, [repaired_mutation])  # noqa: SLF001
+    gateway.current_diff.patch = "diff --git a/source.py b/source.py\n+repair"
+    gateway.accepted_mutations = 2
+    gateway.check_states.clear()
+
     first_check = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert first_check.workflow_gate == "needs_visible_checks"
     assert first_check.minimum_completion_calls == 3
@@ -1345,7 +1422,7 @@ def test_completion_reserve_absorbs_one_failed_mutation_at_model_limit() -> None
     assert "run_check" in first_check.allowed_tools
     counters.model_calls += 1
     counters.tool_actions += 1
-    gateway.passed_checks.add("contract-check")
+    gateway.check_states["contract-check"] = "PASS"
 
     second_check = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert second_check.minimum_completion_calls == 2
@@ -1353,7 +1430,7 @@ def test_completion_reserve_absorbs_one_failed_mutation_at_model_limit() -> None
     assert second_check.check_ids == ("regression-check",)
     counters.model_calls += 1
     counters.tool_actions += 1
-    gateway.passed_checks.add("regression-check")
+    gateway.check_states["regression-check"] = "PASS"
 
     finish = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert limits.max_model_calls - counters.model_calls == 1
@@ -1595,6 +1672,33 @@ def test_resume_counter_restores_only_corrections_since_last_valid_batch(tmp_pat
     counters = runner._restore_counters(journal)  # noqa: SLF001 - resume contract test
 
     assert counters.protocol_recoveries == 1
+
+
+def test_resume_counter_restores_consumed_check_failure_recovery(tmp_path) -> None:
+    journal = DevJournal(tmp_path, "run_dev_failed_check01")
+    result = DevToolResult(
+        action_id="failed-visible-check",
+        input_hash=sha256_json("failed-visible-check"),
+        tool="run_check",
+        status="succeeded",
+        output={"passed": False},
+    )
+    journal.append(
+        "action_finished",
+        {
+            "action_id": result.action_id,
+            "input_hash": result.input_hash,
+            "result": result.model_dump(mode="json"),
+        },
+    )
+    journal.append(
+        "tool_batch_finished",
+        {"turn_id": "turn-failed-check", "action_ids": [result.action_id]},
+    )
+
+    counters = runner._restore_counters(journal)  # noqa: SLF001 - resume contract test
+
+    assert counters.feedback_recovery_used is True
 
 
 def test_resume_recovers_the_exact_incomplete_reason(tmp_path) -> None:

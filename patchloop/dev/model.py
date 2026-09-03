@@ -23,8 +23,11 @@ why you are taking that action now, after the preceding public tool results, rat
 than promising a future action.
 Use stop_task when no available public action supports safe progress; provide a concise
 conclusion, not chain-of-thought. Every mutation must include a concise hypothesis,
-expected behavior, current evidence span IDs, and an exact source anchor. If the public
-context requires a causal alternative, the next mutation must also state which prior
+expected behavior, current evidence span IDs, and an exact source anchor. An accepted
+mutation's bounded post-image is current evidence for a same-file repair, including
+when its span ID is projected through last_successful_mutation; cite that span when it
+covers the repair anchor. If the public context requires a causal alternative, the
+next mutation must also state which prior
 hypothesis was falsified and a materially different mechanism. The apply_git_diff
 git_diff value must be a raw Git unified diff beginning exactly with
 "diff --git a/<path> b/<path>". Never use "*** Begin Patch", "*** Update File", or
