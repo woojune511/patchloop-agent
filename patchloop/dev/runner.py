@@ -13,6 +13,10 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from patchloop.agent.model import (
+    EncryptedReasoningContinuationItem as ProviderReasoningItem,
+)
+from patchloop.agent.model import FunctionCallContinuationRef as ProviderFunctionCallRef
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import ModelConfig, RunManifest, VerdictState
@@ -23,6 +27,10 @@ from patchloop.dev.contracts import (
     DevRunRequest,
     DevTerminal,
     DevToolResult,
+    EncryptedReasoningContinuationItem,
+    FunctionCallContinuationRef,
+    ProviderContinuationArtifact,
+    ProviderContinuationRef,
     RequestedTool,
     dev_tool_surface_hash,
 )
@@ -84,7 +92,16 @@ class _ToolPolicy:
     minimum_completion_calls: int
     completion_possible: bool
     exploration_allowed: bool
-    inspection_lease_available: bool
+    exploration_state: str
+    model_turns_available_for_exploration: int
+    tool_actions_available_for_exploration: int
+    closure_reason: str | None
+    tools_closing_after_this_turn: tuple[str, ...]
+    required_inspection_for_completion: bool
+
+
+class _ProviderContinuationError(RecoveryError):
+    pass
 
 
 def default_state_root() -> Path:
@@ -116,6 +133,14 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
             "max_output_tokens": DEFAULT_OUTPUT_CEILING,
+            "reasoning_continuation": (
+                "encrypted-v1" if request.provider == "openai" else "none"
+            ),
+            "response_include": (
+                ["reasoning.encrypted_content"]
+                if request.provider == "openai"
+                else []
+            ),
             "pricing_source": PRICING_SOURCE if pricing else None,
             "pricing_verified_on": PRICING_VERIFIED_ON if pricing else None,
             "pricing": (
@@ -237,6 +262,9 @@ def _manifest(
             provider=request.provider,
             model_id=request.model,
             reasoning_effort=request.reasoning_effort,
+            reasoning_continuation=(
+                "encrypted-v1" if request.provider == "openai" else "none"
+            ),
             transport_max_retries=0 if request.provider == "openai" else None,
             max_output_tokens=DEFAULT_OUTPUT_CEILING,
             input_price_per_million_usd=(float(pricing.input_per_million_usd) if pricing else None),
@@ -347,20 +375,39 @@ def _tool_policy(
     )
     completion_possible = not requires_mutation_for_completion or mutation_capacity
     exploration_allowed = model_slack > 0 and tool_slack > 0 and completion_possible
-    if gateway.last_failed_mutation is not None:
-        inspection_lease_available = (
-            counters.failed_mutation_repair_turns
-            < limits.max_failed_mutation_repair_turns
-        )
+    required_inspection_for_completion = (
+        requires_mutation_for_completion
+        and mutation_capacity
+        and not bool(gateway.spans)
+    )
+    if exploration_allowed:
+        max_parallel_reads = min(limits.max_parallel_reads, tool_slack)
+    elif required_inspection_for_completion:
+        max_parallel_reads = 1
     else:
-        inspection_lease_available = (
-            counters.inspection_turns_at_diff
-            < limits.max_consecutive_inspection_turns
-        )
-    max_parallel_reads = (
-        min(limits.max_parallel_reads, tool_slack)
-        if exploration_allowed and inspection_lease_available
-        else 0
+        max_parallel_reads = 0
+
+    exploration_capacity = max(0, min(model_slack, tool_slack))
+    if exploration_allowed and exploration_capacity == 1:
+        exploration_state = "last_opportunity"
+    elif exploration_allowed:
+        exploration_state = "open"
+    elif required_inspection_for_completion:
+        exploration_state = "last_opportunity"
+    else:
+        exploration_state = "closed"
+    if exploration_state != "closed":
+        closure_reason = None
+    elif workflow_gate == "ready_to_submit":
+        closure_reason = "workflow_ready_to_submit"
+    elif not completion_possible:
+        closure_reason = "completion_impossible"
+    else:
+        closure_reason = "completion_horizon"
+    tools_closing_after_this_turn = (
+        tuple(sorted({"read_file", "search_files"}))
+        if exploration_state == "last_opportunity" and max_parallel_reads > 0
+        else ()
     )
 
     allowed = {"stop_task"}
@@ -389,8 +436,89 @@ def _tool_policy(
         minimum_completion_calls=minimum_completion_calls,
         completion_possible=completion_possible,
         exploration_allowed=exploration_allowed,
-        inspection_lease_available=inspection_lease_available,
+        exploration_state=exploration_state,
+        model_turns_available_for_exploration=max(0, model_slack),
+        tool_actions_available_for_exploration=max(0, tool_slack),
+        closure_reason=closure_reason,
+        tools_closing_after_this_turn=tools_closing_after_this_turn,
+        required_inspection_for_completion=required_inspection_for_completion,
     )
+
+
+def _tool_policy_transition(
+    journal: DevJournal,
+    policy: _ToolPolicy,
+) -> dict[str, Any] | None:
+    events = journal.events()
+    latest_decision = next(
+        (
+            event
+            for event in reversed(events)
+            if event["event_type"] == "turn_decision_recorded"
+        ),
+        None,
+    )
+    if latest_decision is None:
+        return None
+    prior_turn_id = latest_decision["payload"].get("turn_id")
+    prior_start = next(
+        (
+            event
+            for event in reversed(events)
+            if event["event_type"] == "turn_started"
+            and event["payload"].get("turn_id") == prior_turn_id
+        ),
+        None,
+    )
+    if prior_start is None:
+        raise RecoveryError("latest model decision has no recorded tool policy")
+    previous_raw = prior_start["payload"].get("available_tool_names")
+    if not isinstance(previous_raw, list) or not all(
+        isinstance(name, str) for name in previous_raw
+    ):
+        raise RecoveryError("latest model decision has an invalid tool policy")
+    previous = frozenset(previous_raw)
+    current = policy.allowed_tools
+    if previous == current:
+        return None
+    read_tools = {"read_file", "search_files"}
+    previous_inspection = bool(previous & read_tools)
+    current_inspection = bool(current & read_tools)
+    if current_inspection:
+        reason = (
+            "inspection_reopened"
+            if not previous_inspection
+            else (
+                "workflow_gate"
+                if prior_start["payload"].get("workflow_gate")
+                != policy.workflow_gate
+                else "evidence_changed"
+            )
+        )
+        from_state = (
+            "execution_only" if not previous_inspection else "inspection_open"
+        )
+        to_state = "inspection_open"
+    elif previous_inspection:
+        reason = policy.closure_reason or "workflow_gate"
+        from_state = "inspection_open"
+        to_state = "execution_only"
+    else:
+        reason = (
+            "workflow_gate"
+            if prior_start["payload"].get("workflow_gate") != policy.workflow_gate
+            else "evidence_changed"
+        )
+        from_state = "execution_only"
+        to_state = "execution_only"
+    return {
+        "from": from_state,
+        "to": to_state,
+        "reason": reason,
+        "removed_tools": sorted(previous - current),
+        "added_tools": sorted(current - previous),
+        "remaining_tools": sorted(current),
+    }
 
 
 def _protocol_correction(
@@ -399,28 +527,73 @@ def _protocol_correction(
     code: str,
     issue: str,
     gateway: DevToolGateway,
+    policy: _ToolPolicy,
 ) -> dict[str, Any]:
-    gate = _workflow_gate(gateway)
+    gate = policy.workflow_gate
     remaining = gateway.remaining_visible_check_ids()
+    allowed = policy.allowed_tools
     if gate == "needs_mutation":
-        guidance = (
-            "Current gate is needs_mutation. Read public source as needed, apply one safe "
-            "scoped mutation, or call stop_task if no safe progress is possible."
-        )
+        actions: list[str] = []
+        if {"read_file", "search_files"} & allowed:
+            if policy.required_inspection_for_completion:
+                actions.append(
+                    "Use read_file or search_files once to obtain the public source anchor "
+                    "required for mutation; these inspection tools close after this turn."
+                )
+            elif policy.exploration_state == "last_opportunity":
+                actions.append(
+                    "This is the last inspection opportunity: use read_file or search_files "
+                    "only for the final unresolved public evidence gap."
+                )
+            else:
+                actions.append(
+                    "Use read_file or search_files only for a concrete unresolved public "
+                    "evidence gap."
+                )
+        if "apply_git_diff" in allowed:
+            actions.append("Use projected public evidence to call apply_git_diff.")
+        if "run_check" in allowed:
+            actions.append(
+                "run_check may measure the current workspace but does not satisfy "
+                "needs_mutation."
+            )
+        actions.append("Call stop_task if no safe scoped mutation is justified.")
+        guidance = f"Current gate is needs_mutation. {' '.join(actions)}"
     elif gate == "needs_visible_checks":
+        actions = []
+        if "run_check" in allowed:
+            actions.append("Run one remaining check with run_check.")
+        if {"read_file", "search_files"} & allowed:
+            suffix = (
+                " This is the last inspection opportunity."
+                if policy.exploration_state == "last_opportunity"
+                else ""
+            )
+            actions.append(
+                "Use read_file or search_files only if the public result requires another "
+                f"mutation.{suffix}"
+            )
+        if "apply_git_diff" in allowed:
+            actions.append("Call apply_git_diff only when public evidence requires a repair.")
+        actions.append("Call stop_task if no safe progress is possible.")
         guidance = (
             "Current gate is needs_visible_checks. Remaining visible checks for the current "
-            f"diff: {', '.join(remaining)}. Run one remaining check, or inspect and mutate only "
-            "when public evidence requires it."
+            f"diff: {', '.join(remaining)}. {' '.join(actions)}"
         )
     else:
-        guidance = "Current gate is ready_to_submit. Call finish_task or stop_task."
+        actions = []
+        if "finish_task" in allowed:
+            actions.append("Call finish_task to submit the visibly checked diff.")
+        actions.append("Call stop_task if submission is not safe.")
+        guidance = f"Current gate is ready_to_submit. {' '.join(actions)}"
     return {
         "turn_id": turn_id,
         "code": code,
         "message": f"{issue} {guidance}",
         "workflow_gate": gate,
         "remaining_visible_check_ids": remaining,
+        "available_tool_names": sorted(allowed),
+        "exploration_state": policy.exploration_state,
     }
 
 
@@ -435,6 +608,7 @@ def _build_context(
     elapsed_seconds: float,
     limits: Any,
     policy: _ToolPolicy | None = None,
+    tool_policy_transition: dict[str, Any] | None = None,
 ) -> str:
     summary = gateway.current_diff
     active_policy = policy or _tool_policy(gateway, counters, limits)
@@ -472,13 +646,24 @@ def _build_context(
             "minimum_completion_calls": active_policy.minimum_completion_calls,
             "completion_possible": active_policy.completion_possible,
             "exploration_allowed": active_policy.exploration_allowed,
+            "exploration_state": active_policy.exploration_state,
+            "model_turns_available_for_exploration": (
+                active_policy.model_turns_available_for_exploration
+            ),
+            "tool_actions_available_for_exploration": (
+                active_policy.tool_actions_available_for_exploration
+            ),
+            "closure_reason": active_policy.closure_reason,
+            "tools_closing_after_this_turn": list(
+                active_policy.tools_closing_after_this_turn
+            ),
+            "required_inspection_for_completion": (
+                active_policy.required_inspection_for_completion
+            ),
+            "tool_policy_transition": tool_policy_transition,
             "max_parallel_reads_this_turn": active_policy.max_parallel_reads,
             "inspection_turns_at_current_diff": counters.inspection_turns_at_diff,
-            "inspection_turn_limit": limits.max_consecutive_inspection_turns,
             "failed_mutation_repair_turns": counters.failed_mutation_repair_turns,
-            "failed_mutation_repair_turn_limit": (
-                limits.max_failed_mutation_repair_turns
-            ),
         },
         "remaining_budget": {
             "model_calls": max(0, limits.max_model_calls - counters.model_calls),
@@ -523,6 +708,34 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
             calls = []
             conversion_error = "invalid_dev_tool_contract"
             break
+    continuation_items: list[
+        EncryptedReasoningContinuationItem | FunctionCallContinuationRef
+    ] = []
+    for item in turn.provider_continuation:
+        if isinstance(item, ProviderReasoningItem):
+            continuation_items.append(
+                EncryptedReasoningContinuationItem(
+                    id=item.id,
+                    encrypted_content=item.encrypted_content,
+                    status=item.status,
+                )
+            )
+        elif isinstance(item, ProviderFunctionCallRef) and conversion_error is None:
+            continuation_items.append(
+                FunctionCallContinuationRef(action_id=item.action_id)
+            )
+        elif isinstance(item, ProviderFunctionCallRef):
+            continue
+        else:
+            conversion_error = "provider_continuation_error"
+            calls = []
+            continuation_items = []
+            break
+    provider_continuation = (
+        ProviderContinuationArtifact(output_order=continuation_items)
+        if continuation_items
+        else None
+    )
     return DevModelTurn(
         tool_calls=calls,
         requested_input_tokens=turn.requested_input_tokens,
@@ -539,7 +752,95 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
         non_tool_output_item_count=turn.non_tool_output_item_count,
         output_item_types=list(turn.output_item_types),
         output_shape_hash=turn.output_shape_hash,
+        provider_continuation=provider_continuation,
     )
+
+
+def _continuation_order_hash(continuation: ProviderContinuationArtifact) -> str:
+    identity: list[dict[str, str]] = []
+    for item in continuation.output_order:
+        if isinstance(item, EncryptedReasoningContinuationItem):
+            identity.append({"type": item.type, "id": item.id})
+        else:
+            identity.append({"type": item.type, "action_id": item.action_id})
+    return sha256_json(identity)
+
+
+def _store_provider_continuation(
+    artifact_store: ArtifactStore,
+    continuation: ProviderContinuationArtifact,
+) -> ProviderContinuationRef:
+    artifact = artifact_store.put_json(continuation.model_dump(mode="json"))
+    reasoning_count = sum(
+        isinstance(item, EncryptedReasoningContinuationItem)
+        for item in continuation.output_order
+    )
+    return ProviderContinuationRef(
+        artifact=artifact,
+        item_count=len(continuation.output_order),
+        reasoning_item_count=reasoning_count,
+        order_hash=_continuation_order_hash(continuation),
+    )
+
+
+def _load_provider_continuation(
+    artifact_store: ArtifactStore,
+    reference: ProviderContinuationRef,
+) -> ProviderContinuationArtifact:
+    try:
+        encoded = artifact_store.read_bytes(reference.artifact)
+        raw = json.loads(encoded.decode("utf-8"))
+        continuation = ProviderContinuationArtifact.model_validate(raw)
+    except (
+        OSError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+        ValidationError,
+        RecoveryError,
+    ) as exc:
+        raise _ProviderContinuationError(
+            "provider continuation artifact is unavailable or invalid"
+        ) from exc
+    reasoning_count = sum(
+        isinstance(item, EncryptedReasoningContinuationItem)
+        for item in continuation.output_order
+    )
+    if (
+        len(continuation.output_order) != reference.item_count
+        or reasoning_count != reference.reasoning_item_count
+        or _continuation_order_hash(continuation) != reference.order_hash
+    ):
+        raise _ProviderContinuationError(
+            "provider continuation artifact metadata does not match"
+        )
+    return continuation
+
+
+def _continuation_ref_from_payload(payload: dict[str, Any]) -> ProviderContinuationRef | None:
+    raw = payload.get("continuation_ref")
+    if raw is None:
+        return None
+    try:
+        return ProviderContinuationRef.model_validate(raw)
+    except ValidationError as exc:
+        raise _ProviderContinuationError(
+            "recorded provider continuation reference is invalid"
+        ) from exc
+
+
+def _validate_continuation_action_order(
+    continuation: ProviderContinuationArtifact,
+    calls: list[RequestedTool],
+) -> None:
+    action_ids = [
+        item.action_id
+        for item in continuation.output_order
+        if isinstance(item, FunctionCallContinuationRef)
+    ]
+    if action_ids != [call.action_id for call in calls]:
+        raise _ProviderContinuationError(
+            "provider continuation actions do not match the recorded decision"
+        )
 
 
 def _model_error_message(error_code: str, incomplete_reason: str | None) -> str:
@@ -565,37 +866,37 @@ def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
     return arguments
 
 
+def _provider_rejected_call_arguments(call: RequestedTool) -> dict[str, Any]:
+    arguments = dict(call.arguments)
+    if call.turn_decision is not None:
+        arguments["turn_decision"] = call.turn_decision.model_dump(mode="json")
+    return arguments
+
+
 def _build_model_input(
     *,
     journal: DevJournal,
+    artifact_store: ArtifactStore,
     context: str,
     latest_tool_results: list[DevToolResult],
 ) -> list[dict[str, Any]]:
-    """Build one bounded native tool continuation from public durable records."""
+    """Build one bounded provider continuation from durable public records."""
 
     system_item = {"role": "system", "content": DEV_SYSTEM_PROMPT}
-    if not latest_tool_results:
-        return [system_item, {"role": "user", "content": context}]
     events = journal.events()
-    batch = next(
-        (event for event in reversed(events) if event["event_type"] == "tool_batch_finished"),
-        None,
-    )
-    if batch is None:
-        raise RecoveryError("latest tool results have no completed batch")
-    turn_id = batch["payload"].get("turn_id")
-    action_ids = batch["payload"].get("action_ids")
-    if not isinstance(turn_id, str) or not isinstance(action_ids, list):
-        raise RecoveryError("latest completed batch has an invalid identity")
     decision = next(
         (
             event
             for event in reversed(events)
             if event["event_type"] == "turn_decision_recorded"
-            and event["payload"].get("turn_id") == turn_id
         ),
         None,
     )
+    if decision is None:
+        return [system_item, {"role": "user", "content": context}]
+    turn_id = decision["payload"].get("turn_id")
+    if not isinstance(turn_id, str):
+        raise RecoveryError("latest model decision has an invalid turn identity")
     started = next(
         (
             event
@@ -605,12 +906,113 @@ def _build_model_input(
         ),
         None,
     )
-    if decision is None or started is None:
-        raise RecoveryError("latest completed batch is missing its public turn records")
+    if started is None:
+        raise RecoveryError("latest model decision is missing its public turn boundary")
     calls = [
         RequestedTool.model_validate(value)
         for value in decision["payload"].get("tool_calls", [])
     ]
+    continuation_ref = _continuation_ref_from_payload(decision["payload"])
+    continuation = (
+        _load_provider_continuation(artifact_store, continuation_ref)
+        if continuation_ref is not None
+        else None
+    )
+    batch = next(
+        (
+            event
+            for event in reversed(events)
+            if event["event_type"] == "tool_batch_finished"
+            and event["payload"].get("turn_id") == turn_id
+        ),
+        None,
+    )
+    if batch is None:
+        if not calls and continuation is None:
+            return [system_item, {"role": "user", "content": context}]
+        if continuation is not None:
+            _validate_continuation_action_order(continuation, calls)
+            calls_by_id = {call.action_id: call for call in calls}
+            prior_output_items: list[dict[str, Any]] = []
+            for item in continuation.output_order:
+                if isinstance(item, EncryptedReasoningContinuationItem):
+                    prior_output_items.append(
+                        {
+                            "type": "reasoning",
+                            "id": item.id,
+                            "encrypted_content": item.encrypted_content,
+                            "summary": [],
+                            **({"status": item.status} if item.status is not None else {}),
+                        }
+                    )
+                else:
+                    call = calls_by_id[item.action_id]
+                    prior_output_items.append(
+                        {
+                            "type": "function_call",
+                            "call_id": call.action_id,
+                            "name": call.name,
+                            "arguments": canonical_json(
+                                _provider_rejected_call_arguments(call)
+                            ),
+                        }
+                    )
+        else:
+            prior_output_items = [
+                {
+                    "type": "function_call",
+                    "call_id": call.action_id,
+                    "name": call.name,
+                    "arguments": canonical_json(_provider_rejected_call_arguments(call)),
+                }
+                for call in calls
+            ]
+        rejection_items: list[dict[str, Any]] = []
+        if calls:
+            correction = next(
+                (
+                    event["payload"]
+                    for event in reversed(events)
+                    if event["event_type"] == "protocol_correction"
+                    and event["payload"].get("turn_id") == turn_id
+                ),
+                None,
+            )
+            if correction is None:
+                raise RecoveryError(
+                    "unexecuted provider tool calls have no public rejection result"
+                )
+            for call in calls:
+                rejection_items.append(
+                    {
+                        "type": "function_call_output",
+                        "call_id": call.action_id,
+                        "output": canonical_json(
+                            {
+                                "action_id": call.action_id,
+                                "status": "rejected",
+                                "error_code": correction.get("code"),
+                                "message": correction.get("message"),
+                                "available_tool_names": correction.get(
+                                    "available_tool_names",
+                                    [],
+                                ),
+                            }
+                        ),
+                    }
+                )
+        return [
+            system_item,
+            *prior_output_items,
+            *rejection_items,
+            {"role": "user", "content": context},
+        ]
+
+    action_ids = batch["payload"].get("action_ids")
+    if not isinstance(action_ids, list) or not all(
+        isinstance(action_id, str) for action_id in action_ids
+    ):
+        raise RecoveryError("latest completed batch has an invalid identity")
     if [call.action_id for call in calls] != action_ids:
         raise RecoveryError("latest public tool calls do not match the completed batch")
     results_by_id = {result.action_id: result for result in latest_tool_results}
@@ -623,22 +1025,41 @@ def _build_model_input(
         "format": "preceding_function_call_output_items",
         "action_ids": action_ids,
     }
-    marker = canonical_json(
-        {
-            "continuation": "immediately_preceding_public_tool_batch",
-            "prior_turn_id": turn_id,
-            "prior_context_hash": started["payload"].get("context_hash"),
-        }
-    )
-    call_items = [
-        {
-            "type": "function_call",
-            "call_id": call.action_id,
-            "name": call.name,
-            "arguments": canonical_json(_provider_tool_arguments(call)),
-        }
-        for call in calls
-    ]
+    calls_by_id = {call.action_id: call for call in calls}
+    if continuation is not None:
+        _validate_continuation_action_order(continuation, calls)
+        prior_output_items: list[dict[str, Any]] = []
+        for item in continuation.output_order:
+            if isinstance(item, EncryptedReasoningContinuationItem):
+                prior_output_items.append(
+                    {
+                        "type": "reasoning",
+                        "id": item.id,
+                        "encrypted_content": item.encrypted_content,
+                        "summary": [],
+                        **({"status": item.status} if item.status is not None else {}),
+                    }
+                )
+            else:
+                call = calls_by_id[item.action_id]
+                prior_output_items.append(
+                    {
+                        "type": "function_call",
+                        "call_id": call.action_id,
+                        "name": call.name,
+                        "arguments": canonical_json(_provider_tool_arguments(call)),
+                    }
+                )
+    else:
+        prior_output_items = [
+            {
+                "type": "function_call",
+                "call_id": call.action_id,
+                "name": call.name,
+                "arguments": canonical_json(_provider_tool_arguments(call)),
+            }
+            for call in calls
+        ]
     output_items = [
         {
             "type": "function_call_output",
@@ -651,8 +1072,7 @@ def _build_model_input(
     ]
     return [
         system_item,
-        {"role": "user", "content": marker},
-        *call_items,
+        *prior_output_items,
         *output_items,
         {"role": "user", "content": canonical_json(current_payload)},
     ]
@@ -1149,6 +1569,7 @@ def _recover_unrecorded_decision(journal: DevJournal) -> None:
                 ),
                 "output_item_types": payload.get("output_item_types", []),
                 "output_shape_hash": payload.get("output_shape_hash"),
+                "continuation_ref": payload.get("continuation_ref"),
             },
         )
         return
@@ -1164,6 +1585,8 @@ def _unresolved_decision(
     bool,
     frozenset[str],
     int,
+    ProviderContinuationRef | None,
+    tuple[str, ...],
 ] | None:
     events = journal.events()
     completed = {
@@ -1195,6 +1618,12 @@ def _unresolved_decision(
         incomplete_reason = payload.get("incomplete_reason")
         if incomplete_reason is not None and not isinstance(incomplete_reason, str):
             raise RecoveryError("recorded model decision has an invalid incomplete reason")
+        continuation_ref = _continuation_ref_from_payload(payload)
+        output_item_types = payload.get("output_item_types", [])
+        if not isinstance(output_item_types, list) or not all(
+            isinstance(item_type, str) for item_type in output_item_types
+        ):
+            raise RecoveryError("recorded model decision has invalid output item types")
         turn_start = next(
             (
                 row
@@ -1223,6 +1652,8 @@ def _unresolved_decision(
             turn_id in started,
             frozenset(available),
             max_parallel_reads,
+            continuation_ref,
+            tuple(output_item_types),
         )
     return None
 
@@ -1489,6 +1920,7 @@ def _run_one_locked(
             provider="openai",
             model_id=request.model,
             reasoning_effort=request.reasoning_effort,
+            reasoning_continuation="encrypted-v1",
             transport_max_retries=0,
             max_output_tokens=DEFAULT_OUTPUT_CEILING,
             input_price_per_million_usd=float(pricing.input_per_million_usd),
@@ -1542,8 +1974,32 @@ def _run_one_locked(
                 batch_started,
                 pending_allowed_tools,
                 pending_max_parallel_reads,
+                pending_continuation_ref,
+                pending_output_item_types,
             ) = pending_decision
-            if pending_error == "input_token_count_mismatch":
+            try:
+                if request.provider == "openai" and "reasoning" in pending_output_item_types:
+                    if pending_continuation_ref is None:
+                        raise _ProviderContinuationError(
+                            "reasoning output has no durable provider continuation"
+                        )
+                    pending_continuation = _load_provider_continuation(
+                        artifact_store,
+                        pending_continuation_ref,
+                    )
+                    _validate_continuation_action_order(
+                        pending_continuation,
+                        pending_calls if pending_error is None else [],
+                    )
+            except _ProviderContinuationError as exc:
+                terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
+                terminal_message = str(exc)
+            if terminal_code is not None:
+                pass
+            elif pending_error == "provider_continuation_error":
+                terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
+                terminal_message = "provider reasoning continuation is unavailable"
+            elif pending_error == "input_token_count_mismatch":
                 terminal_code = DevTerminal.PROVIDER_TIMEOUT_OR_UNKNOWN
                 terminal_message = "provider usage disagreed with the pre-dispatch input count"
                 stop_remaining = True
@@ -1556,6 +2012,7 @@ def _run_one_locked(
                     )
                 else:
                     counters.protocol_recoveries += 1
+                    next_policy = _tool_policy(gateway, counters, request.limits)
                     correction = _protocol_correction(
                         turn_id=pending_turn_id,
                         code=pending_error,
@@ -1564,6 +2021,7 @@ def _run_one_locked(
                             pending_incomplete_reason,
                         ),
                         gateway=gateway,
+                        policy=next_policy,
                     )
                     journal.append("protocol_correction", correction)
             else:
@@ -1579,6 +2037,7 @@ def _run_one_locked(
                         terminal_message = str(exc)
                     else:
                         counters.protocol_recoveries += 1
+                        next_policy = _tool_policy(gateway, counters, request.limits)
                         correction = _protocol_correction(
                             turn_id=pending_turn_id,
                             code=(
@@ -1588,6 +2047,7 @@ def _run_one_locked(
                             ),
                             issue=str(exc),
                             gateway=gateway,
+                            policy=next_policy,
                         )
                         journal.append("protocol_correction", correction)
                 else:
@@ -1650,32 +2110,47 @@ def _run_one_locked(
             break
         elapsed_seconds = active_elapsed_ms() / 1_000
         policy = _tool_policy(gateway, counters, request.limits)
-        context = _build_context(
-            package=package,
-            gateway=gateway,
-            journal=journal,
-            correction=correction,
-            latest_tool_results=latest_tool_results,
-            counters=counters,
-            elapsed_seconds=elapsed_seconds,
-            limits=request.limits,
-            policy=policy,
-        )
-        context_payload = json.loads(context)
-        context_artifact = artifact_store.put_text(context, "application/json")
-        model_input = _build_model_input(
-            journal=journal,
-            context=context,
-            latest_tool_results=latest_tool_results,
-        )
-        model_input_text = canonical_json(model_input)
-        model_input_artifact = artifact_store.put_text(model_input_text, "application/json")
+        turn_id = f"turn_{uuid.uuid4().hex}"
+        try:
+            policy_transition = _tool_policy_transition(journal, policy)
+            context = _build_context(
+                package=package,
+                gateway=gateway,
+                journal=journal,
+                correction=correction,
+                latest_tool_results=latest_tool_results,
+                counters=counters,
+                elapsed_seconds=elapsed_seconds,
+                limits=request.limits,
+                policy=policy,
+                tool_policy_transition=policy_transition,
+            )
+            context_payload = json.loads(context)
+            context_artifact = artifact_store.put_text(context, "application/json")
+            model_input = _build_model_input(
+                journal=journal,
+                artifact_store=artifact_store,
+                context=context,
+                latest_tool_results=latest_tool_results,
+            )
+            model_input_text = canonical_json(model_input)
+            model_input_artifact = artifact_store.put_text(
+                model_input_text,
+                "application/json",
+            )
+        except _ProviderContinuationError as exc:
+            terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
+            terminal_message = str(exc)
+            break
+        except RecoveryError as exc:
+            terminal_code = DevTerminal.TASK_FAILED
+            terminal_message = str(exc)
+            break
         schemas = dev_tool_schemas(
             finish_enabled="finish_task" in policy.allowed_tools,
             check_ids=policy.check_ids,
             allowed_tools=policy.allowed_tools,
         )
-        turn_id = f"turn_{uuid.uuid4().hex}"
         journal.append(
             "turn_started",
             {
@@ -1690,8 +2165,11 @@ def _run_one_locked(
                     if item.get("type") == "function_call_output"
                 ],
                 "available_tool_names": sorted(policy.allowed_tools),
+                "workflow_gate": policy.workflow_gate,
                 "max_parallel_reads": policy.max_parallel_reads,
                 "minimum_completion_calls": policy.minimum_completion_calls,
+                "exploration_state": policy.exploration_state,
+                "closure_reason": policy.closure_reason,
                 "projected_span_ids": [
                     span["span_id"]
                     for span in [
@@ -1707,6 +2185,11 @@ def _run_one_locked(
                 "active_elapsed_ms": int(elapsed_seconds * 1_000),
             },
         )
+        if policy_transition is not None:
+            journal.append(
+                "tool_policy_transition",
+                {"turn_id": turn_id, **policy_transition},
+            )
         correction = None
         if request.provider == "mock":
             assert mock_adapter is not None
@@ -1831,6 +2314,34 @@ def _run_one_locked(
                 terminal_message = str(exc)
                 stop_remaining = True
                 break
+            continuation_failure: str | None = None
+            continuation_ref: ProviderContinuationRef | None = None
+            if (
+                "reasoning" in turn.output_item_types
+                and turn.provider_continuation is None
+                and turn.error_code != "input_token_count_mismatch"
+            ):
+                continuation_failure = (
+                    "provider reasoning output has no encrypted continuation"
+                )
+                turn = turn.model_copy(
+                    update={"error_code": "provider_continuation_error"}
+                )
+            elif turn.provider_continuation is not None:
+                try:
+                    continuation_ref = _store_provider_continuation(
+                        artifact_store,
+                        turn.provider_continuation,
+                    )
+                except (OSError, RecoveryError):
+                    continuation_failure = (
+                        "provider reasoning continuation could not be stored durably"
+                    )
+                    turn = turn.model_copy(
+                        update={"error_code": "provider_continuation_error"}
+                    )
+            if continuation_ref is not None:
+                turn = turn.model_copy(update={"continuation_ref": continuation_ref})
             journal.append(
                 "provider_call_finished",
                 {
@@ -1851,6 +2362,11 @@ def _run_one_locked(
                     "non_tool_output_item_count": turn.non_tool_output_item_count,
                     "output_item_types": turn.output_item_types,
                     "output_shape_hash": turn.output_shape_hash,
+                    "continuation_ref": (
+                        continuation_ref.model_dump(mode="json")
+                        if continuation_ref is not None
+                        else None
+                    ),
                     "active_elapsed_ms": active_elapsed_ms(),
                 },
             )
@@ -1865,6 +2381,11 @@ def _run_one_locked(
                 "non_tool_output_item_count": turn.non_tool_output_item_count,
                 "output_item_types": turn.output_item_types,
                 "output_shape_hash": turn.output_shape_hash,
+                "continuation_ref": (
+                    turn.continuation_ref.model_dump(mode="json")
+                    if turn.continuation_ref is not None
+                    else None
+                ),
             },
         )
         if request.provider == "openai":
@@ -1879,6 +2400,13 @@ def _run_one_locked(
                 terminal_message = "provider usage disagreed with the pre-dispatch input count"
                 stop_remaining = True
                 break
+            if turn.error_code == "provider_continuation_error":
+                terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
+                terminal_message = (
+                    continuation_failure
+                    or "provider reasoning continuation is unavailable"
+                )
+                break
         if turn.error_code is not None:
             if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
                 terminal_code = DevTerminal.INCOMPLETE_RESPONSE
@@ -1888,11 +2416,13 @@ def _run_one_locked(
                 )
                 break
             counters.protocol_recoveries += 1
+            next_policy = _tool_policy(gateway, counters, request.limits)
             correction = _protocol_correction(
                 turn_id=turn_id,
                 code=turn.error_code,
                 issue=_model_error_issue(turn.error_code, turn.incomplete_reason),
                 gateway=gateway,
+                policy=next_policy,
             )
             journal.append("protocol_correction", correction)
             continue
@@ -1908,11 +2438,13 @@ def _run_one_locked(
                 terminal_message = str(exc)
                 break
             counters.protocol_recoveries += 1
+            next_policy = _tool_policy(gateway, counters, request.limits)
             correction = _protocol_correction(
                 turn_id=turn_id,
                 code="MISSING_REQUIRED_TOOL" if not turn.tool_calls else "INVALID_TOOL_BATCH",
                 issue=str(exc),
                 gateway=gateway,
+                policy=next_policy,
             )
             journal.append("protocol_correction", correction)
             continue

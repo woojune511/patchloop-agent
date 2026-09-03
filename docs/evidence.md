@@ -485,7 +485,8 @@ preserved. Raw reasoning, message content, private specs, hidden paths, evaluato
 details, and reference patches are not persisted or replayed. Both the canonical
 context and exact model-input sequence are content-addressed at the turn boundary.
 
-Tool exposure now derives from workflow evidence and remaining capacity. The runner
+At that checkpoint, tool exposure derived from workflow evidence and remaining
+capacity. The runner
 reserves the calls and tool actions needed for mutation, all checks on the resulting
 diff, and finish; a current failed check correctly includes another mutation and full
 check rerun in that horizon. The default inspection lease is 24 turns per unchanged
@@ -539,7 +540,7 @@ provider interface.
 
 ## Post-ninth parallel-decision correction
 
-The active contract now requires only the enforceable common property: every call in a
+That post-ninth contract required only the enforceable common property: every call in a
 parallel read/search batch has `mode=inspect`. Each call may carry the distinct bounded
 `basis` and `evidence_goal` appropriate to its query or range. The batch attempt card
 stores every action's corresponding decision instead of projecting only the first.
@@ -584,7 +585,7 @@ inference rather than an exact historical provider field. This row therefore val
 the action horizon and inspection lease while exposing a distinct output-budget and
 provenance boundary.
 
-## Post-tenth output-budget correction
+## First post-tenth output-budget correction
 
 The desired dev-head output ceiling is now 25,000 tokens. This is an internal,
 previously exercised project setting, not an API recommendation. Per-dispatch cost
@@ -595,14 +596,53 @@ ceiling remains in `provider_call_started`.
 
 Future provider `incomplete_details.reason` metadata is retained in
 `provider_call_finished` and `turn_decision_recorded`, copied by decision recovery,
-named in the next bounded correction, and included in terminal provenance. Response
-text and reasoning remain unstored. Provider-free tests cover full-ceiling admission,
-cap-driven reduction, typed adapter extraction, durable propagation, terminal wording,
+named in the next bounded correction, and included in terminal provenance. At that
+first correction, response text and reasoning remained unstored. Provider-free tests
+cover full-ceiling admission, cap-driven reduction, typed adapter extraction, durable
+propagation, terminal wording,
 and recovery without another provider dispatch. Ruff passes, and all 83 tests pass in
 about 85.5 seconds with a short external temp root. Mock run
 `run_dev_5e032eaf91ec4177` reaches isolated `EVALUATOR_PASS` through one accepted
 mutation with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
 provider cost. No eleventh-row authority follows.
+
+## Encrypted-continuation and completion-slack correction
+
+The current provider-free successor keeps the 25,000-token ceiling while changing the
+two mechanisms implicated by the tenth row. OpenAI requests remain stateless with
+`store=false`, but now request `reasoning.encrypted_content`. The immediately preceding
+encrypted reasoning items and their original ordering with function calls are stored
+in the external content-addressed artifact store. Journal events retain only artifact
+metadata and hashes. The next input replays that encrypted state, matching calls and
+public results before the latest public context. This includes reasoning-only
+incomplete responses and bounded public rejection results for function calls rejected
+by the local protocol. Tests verify that plaintext reasoning and summaries do not enter
+the continuation artifact or journal. Missing, corrupt, reordered, or action-mismatched
+continuation evidence reaches `PROVIDER_CONTINUATION_ERROR` without another provider
+or tool call.
+
+The 24 unchanged-diff and three repair-read fields remain parseable and recoverable,
+but are now telemetry only. Inspection is available while both remaining model calls
+and tool actions exceed the minimum mutation/check/finish path. One remaining optional
+turn is announced as `last_opportunity`; zero closes `read_file` and `search_files`.
+A required first anchor read is part of the minimum path. Every close or reopen records
+`tool_policy_transition`, and the next context projects it once. Corrections are built
+from the actual allowed-tool set, so they cannot recommend a removed tool; a diagnostic
+`run_check` is explicitly not presented as satisfying `needs_mutation`.
+
+This is provider-free contract and recovery evidence only. It does not show that the
+live provider accepts the wire representation, that continuation improves model
+behavior, or that the agent mutates, checks, and submits. No provider call, Docker
+startup, image pull/build, or eleventh live row was executed or authorized.
+
+Ruff and all 86 tests pass. The complete suite used a short external temp root and
+finished in 111.40 seconds (112.09 seconds invocation wall time), below the two-minute
+target. To keep that bound without dropping recovery evidence, terminal-resume reused
+the terminal produced by the existing mock E2E test, and two redundant persistent Git
+identity commands became one commit-local configuration. Provider-free mock run
+`run_dev_e961ed4d987e43b1` reached isolated `EVALUATOR_PASS` in four model turns and
+five tool actions through one accepted mutation. Task acceptance was PASS, safety was
+NOT_RUN, `claim_eligible=false`, and provider cost was zero.
 
 ## Not executed
 

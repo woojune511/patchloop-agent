@@ -41,6 +41,15 @@ The provider request uses required tool choice, and the application validates th
 smaller batch grammar above. Mixed, empty, duplicate-action, and oversized batches
 receive one short correction. A second consecutive protocol/incomplete violation
 terminates the row; any valid completed tool batch resets the correction allowance.
+Optional inspection remains available only while both model-call and tool-action
+budgets exceed the minimum path through mutation, all required checks, and finish.
+With one optional turn left, expose reads with `last_opportunity` and tell the model
+they close next; with none, remove them and record/project `tool_policy_transition`.
+Reopen them through the same transition when a changed gate restores slack. A first
+source read required to establish a mutation anchor belongs to the minimum path. The
+legacy 24/3 counters are telemetry, never an action mask. Corrections must be generated
+from the actual allowed-tool set and must not name a missing tool.
+
 An unexecuted `run_check` may be available on the first turn while the action horizon
 has slack; on a changed diff it is direct completion work. A check that already failed
 is not offered again on the same diff. `finish_task` is exposed only for a non-empty
@@ -103,9 +112,15 @@ credential path hash, cost cap, limits, and sandbox identity. Pre-envelope runs
 cannot resume. A run-lifetime OS lock rejects concurrent execution. Generic turn
 and tool-batch events recover a durable model decision without another provider
 call; exact per-turn tool availability and native call/output linkage are stored at
-the turn boundary. Counters, inspection leases, settled cost, latest batch, and active
-execution time are rebuilt from unique journal events. Process downtime contributes
-only to run age.
+the turn boundary. OpenAI turns additionally store provider-encrypted reasoning and
+its output ordering in the external content-addressed artifact store; journal rows
+contain only its reference, counts, and order hash. The next stateless request replays
+that reasoning with matching calls and public results. Plaintext reasoning and
+summaries are never retained. Missing, damaged, reordered, or action-mismatched
+continuation evidence ends at `PROVIDER_CONTINUATION_ERROR` before another tool or
+provider call. Counters, legacy inspection telemetry, settled cost, latest batch, and
+active execution time are rebuilt from unique journal events. Process downtime
+contributes only to run age.
 
 ## Live and evaluation boundary
 
@@ -122,8 +137,9 @@ uncached input plus a conservative output ceiling, lowers that ceiling when need
 and emits `COST_CAP_REACHED` without generation when the minimum request cannot fit.
 Transport retry is zero. Count, provider, or billing uncertainty stops remaining
 repetitions. Provider completion records structural output evidence only: item
-count, non-tool count, item types, and a shape hash. Never persist response text or
-raw reasoning for protocol diagnosis.
+count, non-tool count, item types, a shape hash, and an encrypted-continuation artifact
+reference. Request `reasoning.encrypted_content` with `store=false`; never persist
+response text, plaintext reasoning, or a reasoning summary for protocol diagnosis.
 
 After finish, the canonical submitted diff is content-addressed and an immutable
 manifest is recorded before evaluator execution. It binds task bytes, full runtime
@@ -148,8 +164,8 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 - 1,800 seconds per row
 - one consecutive protocol/incomplete recovery
 - four parallel reads
-- 24 inspection turns per unchanged diff
-- three repair-specific inspection turns after a failed mutation
+- completion-slack inspection with one warned final opportunity
+- legacy 24-turn and three-repair-read fields retained as telemetry only
 - 25,000 desired output tokens per provider call, reduced by cost admission
 - one repetition by default, six maximum
 
@@ -264,10 +280,10 @@ rationales and evidence goals. The first rejection was present in the following 
 context, yet the same application-only equality constraint failed again. Native call
 and result linkage worked; the inspection lease was not exercised.
 
-The current provider-free correction removes only that cross-call free-text equality.
+The post-ninth provider-free correction removed only that cross-call free-text equality.
 Parallel reads still share enforced `inspect` mode, and each call-specific decision is
-retained in its batch card. Keep the completion horizon, 24/3 leases, and diagnostic-only
-stagnation behavior unchanged.
+retained in its batch card. At that checkpoint the completion horizon, 24/3 leases, and
+diagnostic-only stagnation behavior remained unchanged.
 
 The separately authorized tenth row used the same pyfakefs version-2 tuple. Run
 `run_dev_8efe75f7c8c14cbd` ended at `INCOMPLETE_RESPONSE` after 28 provider calls,
@@ -279,12 +295,21 @@ for reasoning and emitted no tool call; the last two were consecutive and closed
 row. The old journal omitted `incomplete_details.reason`, so ceiling exhaustion is a
 strong usage-based inference rather than a stored exact provider reason.
 
-The current provider-free correction raises the desired output ceiling to 25,000 under
-the unchanged invocation-wide cost admission, and binds that value into model identity
-and the manifest. It also preserves future incomplete reasons through provider events,
-decision recovery, bounded correction, and terminal provenance without retaining raw
-reasoning. Ruff and all 83 tests pass in about 85.5 seconds; mock run
-`run_dev_5e032eaf91ec4177` reaches isolated `EVALUATOR_PASS` with zero provider cost.
+The first post-tenth provider-free correction raised the desired output ceiling to
+25,000 under unchanged invocation-wide cost admission and preserved future incomplete
+reasons. The current successor addresses the structural cause that ceiling alone
+could not fix. OpenAI turns now retain and replay only provider-encrypted reasoning;
+reasoning-only incomplete turns continue at the next correction, and corrupt or absent
+ciphertext fails closed. Fixed 24/3 inspection leases no longer control the action
+space. Actual completion slack drives `open`, warned `last_opportunity`, and `closed`
+states, with every close/reopen transition journaled and corrections derived from the
+real allowed tools. The 24/3 counters remain observation-only. Provider-free evidence
+does not establish live API acceptance or agent success. Ruff and all 86 tests pass in
+111.40 seconds with a short external temp root. Mock run
+`run_dev_e961ed4d987e43b1` reaches isolated `EVALUATOR_PASS` through one accepted
+mutation with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
+provider cost. Snapshot setup supplies commit identity only to its one base commit,
+removing two redundant Git processes without changing workspace content or provenance.
 Do not run an eleventh paid row without separate authorization.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality

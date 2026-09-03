@@ -22,6 +22,7 @@ _UNIQUE_TURN_EVENTS = {
     "tool_batch_started",
     "tool_batch_finished",
     "protocol_correction",
+    "tool_policy_transition",
 }
 _UNIQUE_ACTION_EVENTS = {"attempt_card"}
 _UNIQUE_RUN_EVENTS = {"manifest_recorded", "submission_recorded", "evaluator_finished"}

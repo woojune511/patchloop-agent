@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 import httpx
 from openai import OpenAI
@@ -30,6 +30,23 @@ class ModelTurnError:
 
 
 @dataclass(frozen=True)
+class EncryptedReasoningContinuationItem:
+    id: str
+    encrypted_content: str = field(repr=False)
+    status: Literal["in_progress", "completed", "incomplete"] | None = None
+
+
+@dataclass(frozen=True)
+class FunctionCallContinuationRef:
+    action_id: str
+
+
+ProviderContinuationItem = (
+    EncryptedReasoningContinuationItem | FunctionCallContinuationRef
+)
+
+
+@dataclass(frozen=True)
 class ModelTurn:
     tool_calls: list[RequestedTool] = field(default_factory=list)
     requested_input_tokens: int | None = None
@@ -46,6 +63,10 @@ class ModelTurn:
     non_tool_output_item_count: int = 0
     output_item_types: tuple[str, ...] = ()
     output_shape_hash: str | None = None
+    provider_continuation: tuple[ProviderContinuationItem, ...] = field(
+        default=(),
+        repr=False,
+    )
 
 
 class ModelAdapter(Protocol):
@@ -80,6 +101,10 @@ class OpenAIResponsesAdapter:
     ) -> None:
         if config.provider != "openai" or config.transport_max_retries != 0:
             raise ContractError("OpenAI dev-head adapter requires provider=openai and retries=0")
+        if config.reasoning_continuation != "encrypted-v1":
+            raise ContractError(
+                "OpenAI dev-head adapter requires encrypted stateless reasoning continuation"
+            )
         if client is not None and getattr(client, "max_retries", 0) != 0:
             raise ContractError("injected OpenAI client does not enforce zero retries")
         self.config = config
@@ -114,6 +139,7 @@ class OpenAIResponsesAdapter:
             "tool_choice": "required",
             "parallel_tool_calls": True,
             "store": False,
+            "include": ["reasoning.encrypted_content"],
             "reasoning": reasoning,
             "service_tier": self.config.service_tier,
             "max_output_tokens": self.config.max_output_tokens,
@@ -197,27 +223,65 @@ class OpenAIResponsesAdapter:
             }
         )
         calls: list[RequestedTool] = []
-        if error is None:
-            for item in output_items:
-                if getattr(item, "type", None) != "function_call":
-                    continue
-                try:
-                    arguments = json.loads(item.arguments)
-                except (json.JSONDecodeError, TypeError):
-                    error = ModelTurnError(
-                        "invalid_tool_arguments_json",
-                        "provider tool arguments were not valid JSON",
-                    )
+        continuation: list[ProviderContinuationItem] = []
+        for item in output_items:
+            item_type = getattr(item, "type", None)
+            if item_type == "reasoning":
+                item_id = getattr(item, "id", None)
+                encrypted_content = getattr(item, "encrypted_content", None)
+                status = getattr(item, "status", None)
+                if (
+                    not isinstance(item_id, str)
+                    or not item_id
+                    or not isinstance(encrypted_content, str)
+                    or not encrypted_content
+                    or status not in {None, "in_progress", "completed", "incomplete"}
+                ):
+                    if error is None or error.code != "input_token_count_mismatch":
+                        error = ModelTurnError(
+                            "provider_continuation_error",
+                            "provider reasoning output is missing a valid encrypted continuation",
+                        )
+                    continuation = []
                     break
-                if not isinstance(arguments, dict):
-                    error = ModelTurnError(
-                        "invalid_tool_arguments_type",
-                        "provider tool arguments were not an object",
+                continuation.append(
+                    EncryptedReasoningContinuationItem(
+                        id=item_id,
+                        encrypted_content=encrypted_content,
+                        status=status,
                     )
-                    break
-                calls.append(RequestedTool(item.name, item.call_id, arguments))
+                )
+                continue
+            if item_type != "function_call" or error is not None:
+                continue
+            try:
+                arguments = json.loads(item.arguments)
+            except (json.JSONDecodeError, TypeError):
+                error = ModelTurnError(
+                    "invalid_tool_arguments_json",
+                    "provider tool arguments were not valid JSON",
+                )
+                break
+            if not isinstance(arguments, dict):
+                error = ModelTurnError(
+                    "invalid_tool_arguments_type",
+                    "provider tool arguments were not an object",
+                )
+                break
+            calls.append(RequestedTool(item.name, item.call_id, arguments))
+            continuation.append(FunctionCallContinuationRef(action_id=item.call_id))
         if error is not None:
             calls = []
+            if error.code != "provider_continuation_error":
+                continuation = [
+                    item
+                    for item in continuation
+                    if isinstance(item, EncryptedReasoningContinuationItem)
+                ]
+        if not any(
+            isinstance(item, EncryptedReasoningContinuationItem) for item in continuation
+        ):
+            continuation = []
         return ModelTurn(
             tool_calls=calls,
             requested_input_tokens=requested_input_tokens,
@@ -236,6 +300,7 @@ class OpenAIResponsesAdapter:
             ),
             output_item_types=output_item_types,
             output_shape_hash=output_shape_hash,
+            provider_continuation=tuple(continuation),
         )
 
     def next_turn(self, context: str, tools: list[dict[str, Any]]) -> ModelTurn:

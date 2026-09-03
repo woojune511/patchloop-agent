@@ -11,14 +11,22 @@ from types import SimpleNamespace
 import pytest
 
 import patchloop.dev.runner as runner
+from patchloop.agent.model import (
+    EncryptedReasoningContinuationItem as ProviderReasoningItem,
+)
+from patchloop.agent.model import FunctionCallContinuationRef as ProviderFunctionCallRef
 from patchloop.agent.model import ModelTurn, ModelTurnError, OpenAIResponsesAdapter
 from patchloop.agent.model import RequestedTool as ProviderRequestedTool
+from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import ModelConfig
 from patchloop.dev.contracts import (
     DevLimits,
     DevModelTurn,
     DevRunRequest,
     DevToolResult,
+    EncryptedReasoningContinuationItem,
+    FunctionCallContinuationRef,
+    ProviderContinuationArtifact,
     PublicTurnDecision,
     RequestedTool,
 )
@@ -93,10 +101,12 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     )
     assert horizon.minimum_completion_calls == 3
     assert horizon.exploration_allowed is False
+    assert horizon.exploration_state == "closed"
+    assert horizon.closure_reason == "completion_horizon"
     assert horizon.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
     assert horizon.max_parallel_reads == 0
 
-    leased = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
+    legacy_limit_reached = runner._tool_policy(  # noqa: SLF001
         gateway,
         runner._RunCounters(  # noqa: SLF001
             model_calls=24,
@@ -104,11 +114,11 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         ),
         limits,
     )
-    assert leased.exploration_allowed is True
-    assert leased.inspection_lease_available is False
-    assert {"read_file", "search_files"}.isdisjoint(leased.allowed_tools)
-    assert "apply_git_diff" in leased.allowed_tools
-    assert "stop_task" in leased.allowed_tools
+    assert legacy_limit_reached.exploration_allowed is True
+    assert legacy_limit_reached.exploration_state == "open"
+    assert {"read_file", "search_files"}.issubset(
+        legacy_limit_reached.allowed_tools
+    )
 
     gateway.last_failed_mutation = {"action_id": "failed-mutation"}
     repair = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
@@ -134,7 +144,144 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         ),
         limits,
     )
-    assert {"read_file", "search_files"}.isdisjoint(exhausted_repair.allowed_tools)
+    assert {"read_file", "search_files"}.issubset(exhausted_repair.allowed_tools)
+
+    last_opportunity = runner._tool_policy(  # noqa: SLF001
+        gateway,
+        runner._RunCounters(  # noqa: SLF001
+            model_calls=limits.max_model_calls - horizon.minimum_completion_calls - 1,
+        ),
+        limits,
+    )
+    assert last_opportunity.exploration_state == "last_opportunity"
+    assert last_opportunity.tools_closing_after_this_turn == (
+        "read_file",
+        "search_files",
+    )
+
+    saved_spans = dict(gateway.spans)
+    gateway.spans.clear()
+    required_read = runner._tool_policy(  # noqa: SLF001
+        gateway,
+        runner._RunCounters(  # noqa: SLF001
+            model_calls=limits.max_model_calls - 4,
+        ),
+        limits.model_copy(
+            update={
+                "max_consecutive_inspection_turns": 0,
+                "max_failed_mutation_repair_turns": 0,
+            }
+        ),
+    )
+    assert required_read.exploration_allowed is False
+    assert required_read.required_inspection_for_completion is True
+    assert required_read.max_parallel_reads == 1
+    assert {"read_file", "search_files"}.issubset(required_read.allowed_tools)
+    gateway.spans.update(saved_spans)
+
+    journal.append(
+        "turn_started",
+        {
+            "turn_id": "turn-before-horizon",
+            "available_tool_names": [
+                "apply_git_diff",
+                "read_file",
+                "search_files",
+                "stop_task",
+            ],
+        },
+    )
+    journal.append(
+        "turn_decision_recorded",
+        {"turn_id": "turn-before-horizon", "tool_calls": []},
+    )
+    transition = runner._tool_policy_transition(  # noqa: SLF001
+        journal,
+        horizon,
+    )
+    assert transition == {
+        "from": "inspection_open",
+        "to": "execution_only",
+        "reason": "completion_horizon",
+        "removed_tools": ["read_file", "search_files"],
+        "added_tools": [],
+        "remaining_tools": ["apply_git_diff", "stop_task"],
+    }
+    journal.append(
+        "tool_policy_transition",
+        {"turn_id": "turn-after-horizon", **transition},
+    )
+    assert sum(
+        row["event_type"] == "tool_policy_transition" for row in journal.events()
+    ) == 1
+    projected_transition = json.loads(
+        runner._build_context(  # noqa: SLF001
+            package=smoke_package,
+            gateway=gateway,
+            journal=journal,
+            correction=None,
+            latest_tool_results=[],
+            counters=runner._RunCounters(  # noqa: SLF001
+                model_calls=limits.max_model_calls - 3,
+            ),
+            elapsed_seconds=0,
+            limits=limits,
+            policy=horizon,
+            tool_policy_transition=transition,
+        )
+    )
+    assert projected_transition["action_horizon"]["tool_policy_transition"] == transition
+
+    correction = runner._protocol_correction(  # noqa: SLF001
+        turn_id="turn-after-horizon",
+        code="MISSING_REQUIRED_TOOL",
+        issue="A tool call is required.",
+        gateway=gateway,
+        policy=horizon,
+    )
+    assert correction["available_tool_names"] == ["apply_git_diff", "stop_task"]
+    assert "read_file" not in correction["message"]
+    assert "search_files" not in correction["message"]
+    last_correction = runner._protocol_correction(  # noqa: SLF001
+        turn_id="turn-last-inspection",
+        code="MISSING_REQUIRED_TOOL",
+        issue="A tool call is required.",
+        gateway=gateway,
+        policy=last_opportunity,
+    )
+    assert "last inspection opportunity" in last_correction["message"]
+
+    open_policy = runner._tool_policy(  # noqa: SLF001
+        gateway,
+        runner._RunCounters(),  # noqa: SLF001
+        limits,
+    )
+    journal.append(
+        "turn_started",
+        {
+            "turn_id": "turn-before-anchor",
+            "workflow_gate": "needs_mutation",
+            "available_tool_names": [
+                "read_file",
+                "run_check",
+                "search_files",
+                "stop_task",
+            ],
+        },
+    )
+    journal.append(
+        "turn_decision_recorded",
+        {"turn_id": "turn-before-anchor", "tool_calls": []},
+    )
+    evidence_transition = runner._tool_policy_transition(  # noqa: SLF001
+        journal,
+        open_policy,
+    )
+    assert evidence_transition is not None
+    assert evidence_transition["from"] == "inspection_open"
+    assert evidence_transition["to"] == "inspection_open"
+    assert evidence_transition["reason"] == "evidence_changed"
+    assert evidence_transition["added_tools"] == ["apply_git_diff"]
 
 
 def test_turn_decision_is_bound_to_cache_action_and_projected_once_per_batch(
@@ -269,7 +416,13 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
                 status="completed",
                 incomplete_details=None,
                 output=[
-                    SimpleNamespace(type="reasoning", content="private-reasoning-sentinel"),
+                    SimpleNamespace(
+                        type="reasoning",
+                        id="reasoning-shape-only",
+                        encrypted_content="encrypted-shape-only-sentinel",
+                        status="completed",
+                        content="private-reasoning-sentinel",
+                    ),
                     SimpleNamespace(type="message", content="public-message-sentinel"),
                 ],
                 usage=SimpleNamespace(
@@ -285,6 +438,7 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
         ModelConfig(
             provider="openai",
             model_id="gpt-5.4-mini-2026-03-17",
+            reasoning_continuation="encrypted-v1",
             transport_max_retries=0,
             max_output_tokens=DEFAULT_OUTPUT_CEILING,
         ),
@@ -298,6 +452,8 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
     )
 
     assert request["tool_choice"] == "required"
+    assert request["store"] is False
+    assert request["include"] == ["reasoning.encrypted_content"]
     assert request["max_output_tokens"] == DEFAULT_OUTPUT_CEILING == 25_000
     native_input = [
         {"role": "system", "content": "test prompt"},
@@ -316,6 +472,7 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
     assert native_request["input"] == native_input
     assert adapter.count_input_tokens_v2(request) == 17
     assert observed["count"]["tool_choice"] == "required"
+    assert "include" not in observed["count"]
 
     turn = adapter.execute_request(request, requested_input_tokens=17)
 
@@ -330,9 +487,11 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
     )
     assert "private-reasoning-sentinel" not in repr(turn)
     assert "public-message-sentinel" not in repr(turn)
+    assert "encrypted-shape-only-sentinel" not in repr(turn)
+    assert len(turn.provider_continuation) == 1
 
 
-def test_openai_incomplete_reason_remains_typed_metadata() -> None:
+def test_openai_incomplete_reason_remains_typed_metadata(tmp_path) -> None:
     class FakeInputTokens:
         def count(self, **payload):
             del payload
@@ -348,7 +507,15 @@ def test_openai_incomplete_reason_remains_typed_metadata() -> None:
                 model="gpt-5.4-mini-2026-03-17",
                 status="incomplete",
                 incomplete_details={"reason": "max_output_tokens"},
-                output=[SimpleNamespace(type="reasoning", content="not persisted")],
+                output=[
+                    SimpleNamespace(
+                        type="reasoning",
+                        id="reasoning-incomplete",
+                        encrypted_content="encrypted-incomplete-sentinel",
+                        status="incomplete",
+                        content="not persisted",
+                    )
+                ],
                 usage=SimpleNamespace(
                     input_tokens=17,
                     input_tokens_details=SimpleNamespace(cached_tokens=0),
@@ -363,6 +530,7 @@ def test_openai_incomplete_reason_remains_typed_metadata() -> None:
         ModelConfig(
             provider="openai",
             model_id="gpt-5.4-mini-2026-03-17",
+            reasoning_continuation="encrypted-v1",
             transport_max_retries=0,
             max_output_tokens=DEFAULT_OUTPUT_CEILING,
         ),
@@ -383,6 +551,257 @@ def test_openai_incomplete_reason_remains_typed_metadata() -> None:
     assert turn.output_tokens == turn.reasoning_output_tokens == DEFAULT_OUTPUT_CEILING
     assert turn.tool_calls == []
     assert "not persisted" not in repr(turn)
+    assert "encrypted-incomplete-sentinel" not in repr(turn)
+    assert turn.provider_continuation is not None
+    reference = runner._store_provider_continuation(  # noqa: SLF001
+        ArtifactStore(tmp_path / "artifacts"),
+        turn.provider_continuation,
+    )
+    artifact_text = Path(reference.artifact.path).read_text(encoding="utf-8")
+    assert "not persisted" not in artifact_text
+    assert "encrypted-incomplete-sentinel" in artifact_text
+
+
+def test_encrypted_reasoning_and_parallel_calls_replay_in_provider_order(tmp_path) -> None:
+    store = ArtifactStore(tmp_path / "artifacts")
+    journal = DevJournal(tmp_path, "run_dev_reasoning_order")
+    turn_id = "turn-reasoning-order"
+    calls = [
+        RequestedTool(
+            name="read_file",
+            action_id="read-a",
+            arguments={"path": "a.py", "start_line": 1, "end_line": 2},
+            turn_decision=inspection_decision("read-a"),
+        ),
+        RequestedTool(
+            name="search_files",
+            action_id="search-b",
+            arguments={"query": "needle", "path": "."},
+            turn_decision=inspection_decision("search-b"),
+        ),
+    ]
+    continuation = ProviderContinuationArtifact(
+        output_order=[
+            EncryptedReasoningContinuationItem(
+                id="reasoning-a",
+                encrypted_content="encrypted-order-a",
+                status="completed",
+            ),
+            FunctionCallContinuationRef(action_id="read-a"),
+            EncryptedReasoningContinuationItem(
+                id="reasoning-b",
+                encrypted_content="encrypted-order-b",
+                status="completed",
+            ),
+            FunctionCallContinuationRef(action_id="search-b"),
+        ]
+    )
+    reference = runner._store_provider_continuation(  # noqa: SLF001
+        store,
+        continuation,
+    )
+    journal.append(
+        "turn_started",
+        {"turn_id": turn_id, "context_hash": "sha256:" + "0" * 64},
+    )
+    journal.append(
+        "turn_decision_recorded",
+        {
+            "turn_id": turn_id,
+            "tool_calls": [call.model_dump(mode="json") for call in calls],
+            "error_code": None,
+            "output_item_types": [
+                "reasoning",
+                "function_call",
+                "reasoning",
+                "function_call",
+            ],
+            "continuation_ref": reference.model_dump(mode="json"),
+        },
+    )
+    journal.append(
+        "tool_batch_finished",
+        {"turn_id": turn_id, "action_ids": ["read-a", "search-b"]},
+    )
+    results = [
+        DevToolResult(
+            action_id="read-a",
+            input_hash="sha256:" + "1" * 64,
+            tool="read_file",
+            status="succeeded",
+            output={"spans": []},
+        ),
+        DevToolResult(
+            action_id="search-b",
+            input_hash="sha256:" + "2" * 64,
+            tool="search_files",
+            status="succeeded",
+            output={"spans": []},
+        ),
+    ]
+    context = json.dumps(
+        {"latest_tool_results": [result.model_dump(mode="json") for result in results]}
+    )
+
+    model_input = runner._build_model_input(  # noqa: SLF001
+        journal=journal,
+        artifact_store=store,
+        context=context,
+        latest_tool_results=results,
+    )
+
+    replayed = [
+        item
+        for item in model_input
+        if item.get("type") in {"reasoning", "function_call", "function_call_output"}
+    ]
+    assert [item["type"] for item in replayed] == [
+        "reasoning",
+        "function_call",
+        "reasoning",
+        "function_call",
+        "function_call_output",
+        "function_call_output",
+    ]
+    assert [item.get("id") for item in replayed if item["type"] == "reasoning"] == [
+        "reasoning-a",
+        "reasoning-b",
+    ]
+    assert all(
+        item["summary"] == [] for item in replayed if item["type"] == "reasoning"
+    )
+    assert "encrypted-order-a" not in journal.path.read_text(encoding="utf-8")
+    artifact_text = reference.artifact.path
+    assert "encrypted-order-a" in Path(artifact_text).read_text(encoding="utf-8")
+
+
+def test_protocol_rejection_preserves_reasoning_and_call_linkage(tmp_path) -> None:
+    store = ArtifactStore(tmp_path / "artifacts")
+    journal = DevJournal(tmp_path, "run_dev_reasoning_rejection")
+    turn_id = "turn-reasoning-rejection"
+    call = RequestedTool(
+        name="read_file",
+        action_id="rejected-read",
+        arguments={"path": "a.py", "start_line": 1, "end_line": 2},
+        turn_decision=inspection_decision("rejected-read"),
+    )
+    reference = runner._store_provider_continuation(  # noqa: SLF001
+        store,
+        ProviderContinuationArtifact(
+            output_order=[
+                EncryptedReasoningContinuationItem(
+                    id="reasoning-rejected",
+                    encrypted_content="encrypted-rejected-sentinel",
+                    status="completed",
+                ),
+                FunctionCallContinuationRef(action_id=call.action_id),
+            ]
+        ),
+    )
+    journal.append(
+        "turn_started",
+        {"turn_id": turn_id, "context_hash": "sha256:" + "0" * 64},
+    )
+    journal.append(
+        "turn_decision_recorded",
+        {
+            "turn_id": turn_id,
+            "tool_calls": [call.model_dump(mode="json")],
+            "continuation_ref": reference.model_dump(mode="json"),
+        },
+    )
+    journal.append(
+        "protocol_correction",
+        {
+            "turn_id": turn_id,
+            "code": "INVALID_TOOL_BATCH",
+            "message": "The requested read is not currently available.",
+            "available_tool_names": ["apply_git_diff", "stop_task"],
+        },
+    )
+
+    model_input = runner._build_model_input(  # noqa: SLF001
+        journal=journal,
+        artifact_store=store,
+        context=json.dumps({"latest_tool_results": []}),
+        latest_tool_results=[],
+    )
+
+    assert [item.get("type") for item in model_input[1:-1]] == [
+        "reasoning",
+        "function_call",
+        "function_call_output",
+    ]
+    rejection = json.loads(model_input[-2]["output"])
+    assert rejection == {
+        "action_id": "rejected-read",
+        "available_tool_names": ["apply_git_diff", "stop_task"],
+        "error_code": "INVALID_TOOL_BATCH",
+        "message": "The requested read is not currently available.",
+        "status": "rejected",
+    }
+    mismatched = ProviderContinuationArtifact(
+        output_order=[
+            EncryptedReasoningContinuationItem(
+                id="reasoning-mismatch",
+                encrypted_content="encrypted-mismatch",
+                status="completed",
+            ),
+            FunctionCallContinuationRef(action_id="different-action"),
+        ]
+    )
+    with pytest.raises(
+        runner._ProviderContinuationError,  # noqa: SLF001
+        match="actions do not match",
+    ):
+        runner._validate_continuation_action_order(  # noqa: SLF001
+            mismatched,
+            [call],
+        )
+
+
+def test_missing_encrypted_reasoning_is_a_typed_provider_error() -> None:
+    class FakeInputTokens:
+        def count(self, **payload):
+            del payload
+            return SimpleNamespace(input_tokens=5)
+
+    class FakeResponses:
+        input_tokens = FakeInputTokens()
+
+        def create(self, **payload):
+            del payload
+            return SimpleNamespace(
+                id="response-missing-encrypted-reasoning",
+                model="gpt-5.4-mini-2026-03-17",
+                status="completed",
+                incomplete_details=None,
+                output=[SimpleNamespace(type="reasoning", id="reasoning-missing")],
+                usage=SimpleNamespace(
+                    input_tokens=5,
+                    input_tokens_details=SimpleNamespace(cached_tokens=0),
+                    output_tokens=3,
+                    output_tokens_details=SimpleNamespace(reasoning_tokens=3),
+                ),
+            )
+
+    adapter = OpenAIResponsesAdapter(
+        ModelConfig(
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            reasoning_continuation="encrypted-v1",
+            transport_max_retries=0,
+        ),
+        api_key="unused-test-key",
+        client=SimpleNamespace(max_retries=0, responses=FakeResponses()),
+    )
+    request = adapter.request_payload("{}", [], system_prompt="test prompt")
+
+    turn = adapter.execute_request(request, requested_input_tokens=5)
+
+    assert turn.error is not None
+    assert turn.error.code == "provider_continuation_error"
+    assert turn.provider_continuation == ()
 
 
 def test_invalid_provider_turn_decision_becomes_bounded_protocol_error() -> None:
@@ -770,6 +1189,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     assert manifest["task_content_hash"] == envelope["task_content_hash"]
     assert manifest["runtime_content_hash"] == envelope["runtime_hash"]
     assert manifest["model"]["max_output_tokens"] == DEFAULT_OUTPUT_CEILING
+    assert manifest["model"]["reasoning_continuation"] == "none"
     assert manifest["submitted_patch_content_hash"] == run["artifact_hashes"][
         "submitted_patch"
     ]
@@ -777,6 +1197,18 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     assert manifest["submitted_changed_files"] == ["mini_data_utils/csvlite.py"]
     workspace_roots = [path for path in (tmp_path / "workspaces").iterdir() if path.is_dir()]
     assert len(workspace_roots) == 2
+
+    journal_before_resume = journal_path.read_bytes()
+
+    class ForbiddenAdapter:
+        def __init__(self, task_id):
+            del task_id
+            raise AssertionError("terminal resume must not initialize the model")
+
+    monkeypatch.setattr(runner, "MockDevAdapter", ForbiddenAdapter)
+    resumed = runner.run_dev(request.model_copy(update={"resume_run_id": run["run_id"]}))
+    assert resumed["runs"][0] == run
+    assert journal_path.read_bytes() == journal_before_resume
 
 
 def test_unexpected_tool_gateway_failure_writes_terminal(tmp_path, monkeypatch) -> None:
@@ -1167,16 +1599,23 @@ def test_model_hash_binds_the_configured_output_ceiling(tmp_path, monkeypatch) -
     assert runner._model_hash(request, pricing) != initial  # noqa: SLF001
 
 
-def test_live_output_ceiling_and_incomplete_reason_are_durable(tmp_path, monkeypatch) -> None:
+def test_live_output_ceiling_replay_and_missing_continuation_are_durable(
+    tmp_path,
+    monkeypatch,
+) -> None:
     configured_ceilings: list[int] = []
+    configured_continuations: list[str] = []
+    model_inputs: list[list[dict]] = []
     execute_calls = 0
 
     class IncompleteAdapter:
         def __init__(self, config, *, api_key) -> None:
             assert api_key == "test-only-sentinel"
             configured_ceilings.append(config.max_output_tokens)
+            configured_continuations.append(config.reasoning_continuation)
 
         def request_payload(self, context, tools, *, system_prompt):
+            model_inputs.append(context)
             return {"context": context, "tools": tools, "system": system_prompt}
 
         def count_input_tokens_v2(self, request, *, timeout_seconds):
@@ -1189,6 +1628,22 @@ def test_live_output_ceiling_and_incomplete_reason_are_durable(tmp_path, monkeyp
             assert timeout_seconds > 0
             assert request["max_output_tokens"] == DEFAULT_OUTPUT_CEILING
             execute_calls += 1
+            if execute_calls == 2:
+                return ModelTurn(
+                    requested_input_tokens=requested_input_tokens,
+                    input_tokens=requested_input_tokens,
+                    output_tokens=3,
+                    reasoning_output_tokens=3,
+                    response_id="response-missing-continuation",
+                    response_model="gpt-5.4-mini-2026-03-17",
+                    response_status="completed",
+                    output_item_count=1,
+                    non_tool_output_item_count=1,
+                    output_item_types=("reasoning",),
+                    output_shape_hash=sha256_json(
+                        {"item_count": 1, "item_types": ("reasoning",)}
+                    ),
+                )
             return ModelTurn(
                 requested_input_tokens=requested_input_tokens,
                 input_tokens=requested_input_tokens,
@@ -1208,6 +1663,13 @@ def test_live_output_ceiling_and_incomplete_reason_are_durable(tmp_path, monkeyp
                 output_shape_hash=sha256_json(
                     {"item_count": 1, "item_types": ("reasoning",)}
                 ),
+                provider_continuation=(
+                    ProviderReasoningItem(
+                        id=f"reasoning-incomplete-{execute_calls}",
+                        encrypted_content=f"encrypted-incomplete-{execute_calls}",
+                        status="incomplete",
+                    ),
+                ),
             )
 
     _patch_live_boundaries(monkeypatch)
@@ -1219,10 +1681,26 @@ def test_live_output_ceiling_and_incomplete_reason_are_durable(tmp_path, monkeyp
     result = runner.run_dev(request)
     run = result["runs"][0]
 
-    assert run["terminal"] == "INCOMPLETE_RESPONSE"
+    assert run["terminal"] == "PROVIDER_CONTINUATION_ERROR"
     assert run["call_counts"] == {"model": 2, "input_count": 2, "tool": 0}
     assert configured_ceilings == [DEFAULT_OUTPUT_CEILING]
+    assert configured_continuations == ["encrypted-v1"]
     assert execute_calls == 2
+    replayed_reasoning = [
+        item for item in model_inputs[1] if item.get("type") == "reasoning"
+    ]
+    assert replayed_reasoning == [
+        {
+            "type": "reasoning",
+            "id": "reasoning-incomplete-1",
+            "encrypted_content": "encrypted-incomplete-1",
+            "summary": [],
+            "status": "incomplete",
+        }
+    ]
+    assert not any(
+        item.get("type") == "function_call_output" for item in model_inputs[1]
+    )
     journal = DevJournal(request.state_root, run["run_id"])
     events = journal.events()
     starts = [row["payload"] for row in events if row["event_type"] == "provider_call_started"]
@@ -1240,10 +1718,19 @@ def test_live_output_ceiling_and_incomplete_reason_are_durable(tmp_path, monkeyp
         DEFAULT_OUTPUT_CEILING,
         DEFAULT_OUTPUT_CEILING,
     ]
-    assert all(row["incomplete_reason"] == "max_output_tokens" for row in provider_turns)
-    assert all(row["incomplete_reason"] == "max_output_tokens" for row in decisions)
+    assert provider_turns[0]["incomplete_reason"] == "max_output_tokens"
+    assert provider_turns[0]["continuation_ref"] is not None
+    assert provider_turns[1]["incomplete_reason"] is None
+    assert provider_turns[1]["continuation_ref"] is None
+    assert provider_turns[1]["error_code"] == "provider_continuation_error"
+    assert decisions[0]["incomplete_reason"] == "max_output_tokens"
+    assert decisions[1]["error_code"] == "provider_continuation_error"
+    assert "encrypted-incomplete" not in journal.path.read_text(encoding="utf-8")
     assert "max_output_tokens" in correction["message"]
-    assert terminal["message"] == "incomplete_response: max_output_tokens"
+    assert terminal["message"] == "provider reasoning output has no encrypted continuation"
+    assert not any(
+        row["event_type"] == "tool_batch_started" for row in events
+    )
 
 
 class _SimulatedCrash(BaseException):
@@ -1463,29 +1950,6 @@ def test_resume_rejects_raw_task_content_drift_without_journal_change(
     assert journal.path.read_bytes() == before
 
 
-def test_terminal_resume_is_read_only_and_does_not_reenter_model(tmp_path, monkeypatch) -> None:
-    request = DevRunRequest(
-        provider="mock",
-        task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
-        model="mock-dev",
-        state_root=tmp_path,
-    )
-    first = runner.run_dev(request)
-    run_id = first["runs"][0]["run_id"]
-    journal = DevJournal(tmp_path, run_id)
-    before = journal.path.read_bytes()
-
-    class ForbiddenAdapter:
-        def __init__(self, task_id):
-            del task_id
-            raise AssertionError("terminal resume must not initialize the model")
-
-    monkeypatch.setattr(runner, "MockDevAdapter", ForbiddenAdapter)
-    resumed = runner.run_dev(request.model_copy(update={"resume_run_id": run_id}))
-    assert resumed["runs"][0] == first["runs"][0]
-    assert journal.path.read_bytes() == before
-
-
 def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkeypatch) -> None:
     calls = {"execute": 0}
 
@@ -1537,6 +2001,14 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
                         "item_types": ("reasoning", "function_call"),
                     }
                 ),
+                provider_continuation=(
+                    ProviderReasoningItem(
+                        id="reasoning-provider-stop",
+                        encrypted_content="encrypted-provider-stop",
+                        status="completed",
+                    ),
+                    ProviderFunctionCallRef(action_id="provider-stop-once"),
+                ),
             )
 
     _patch_live_boundaries(monkeypatch)
@@ -1568,6 +2040,7 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
         assert payload["non_tool_output_item_count"] == 1
         assert payload["output_item_types"] == ["reasoning", "function_call"]
         assert payload["output_shape_hash"].startswith("sha256:")
+        assert payload["continuation_ref"]["order_hash"].startswith("sha256:")
     decision = next(
         row["payload"]
         for row in journal.events()
@@ -1584,10 +2057,109 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
     )
 
 
-def test_unfinished_provider_dispatch_becomes_one_unknown_terminal(tmp_path, monkeypatch) -> None:
+def test_resume_rejects_tampered_reasoning_before_tool_or_provider_call(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    calls = {"execute": 0}
+
+    class OneStopAdapter:
+        def __init__(self, config, *, api_key) -> None:
+            del config, api_key
+
+        def request_payload(self, context, tools, *, system_prompt):
+            return {"context": context, "tools": tools, "system": system_prompt}
+
+        def count_input_tokens_v2(self, request, *, timeout_seconds):
+            del request
+            assert timeout_seconds > 0
+            return 100
+
+        def execute_request(self, request, *, requested_input_tokens, timeout_seconds):
+            del request
+            assert timeout_seconds > 0
+            calls["execute"] += 1
+            return ModelTurn(
+                tool_calls=[
+                    ProviderRequestedTool(
+                        name="stop_task",
+                        action_id="tamper-stop",
+                        arguments={
+                            "reason_code": "insufficient_public_evidence",
+                            "summary": "Stop after the integrity test.",
+                            "evidence_span_ids": [],
+                            "turn_decision": PublicTurnDecision(
+                                mode="stop",
+                                basis="The integrity test uses one bounded action.",
+                            ).model_dump(mode="json"),
+                        },
+                    )
+                ],
+                requested_input_tokens=requested_input_tokens,
+                input_tokens=requested_input_tokens,
+                output_tokens=2,
+                reasoning_output_tokens=1,
+                response_id="response-tamper",
+                response_status="completed",
+                output_item_count=2,
+                non_tool_output_item_count=1,
+                output_item_types=("reasoning", "function_call"),
+                output_shape_hash=sha256_json(
+                    {
+                        "item_count": 2,
+                        "item_types": ("reasoning", "function_call"),
+                    }
+                ),
+                provider_continuation=(
+                    ProviderReasoningItem(
+                        id="reasoning-tamper",
+                        encrypted_content="encrypted-tamper",
+                        status="completed",
+                    ),
+                    ProviderFunctionCallRef(action_id="tamper-stop"),
+                ),
+            )
+
+    _patch_live_boundaries(monkeypatch)
+    monkeypatch.setattr(runner, "OpenAIResponsesAdapter", OneStopAdapter)
+    _crash_journal_once(
+        monkeypatch,
+        event_type="provider_call_finished",
+        when="after",
+    )
+    request = _live_request(tmp_path, repeat=1, cap="0.10").model_copy(
+        update={"limits": DevLimits(max_model_calls=1)}
+    )
+    with pytest.raises(_SimulatedCrash):
+        runner.run_dev(request)
+    run_id = _enveloped_run_id(request.state_root)
+    journal = DevJournal(request.state_root, run_id)
+    provider = next(
+        row["payload"]
+        for row in journal.events()
+        if row["event_type"] == "provider_call_finished"
+    )
+    continuation_path = Path(provider["continuation_ref"]["artifact"]["path"])
+    continuation_path.write_text("tampered", encoding="utf-8")
+
+    resumed = runner.run_dev(request.model_copy(update={"resume_run_id": run_id}))
+    run = resumed["runs"][0]
+
+    assert run["terminal"] == "PROVIDER_CONTINUATION_ERROR"
+    assert run["call_counts"] == {"model": 1, "input_count": 1, "tool": 0}
+    assert calls["execute"] == 1
+    assert not any(
+        row["event_type"] == "tool_batch_started" for row in journal.events()
+    )
+
+
+def test_unfinished_provider_dispatch_with_orphan_continuation_is_unknown(
+    tmp_path,
+    monkeypatch,
+) -> None:
     calls = {"adapter": 0, "preflight": 0, "execute": 0}
 
-    class NeverExecutedAdapter:
+    class ReasoningAdapter:
         def __init__(self, config, *, api_key) -> None:
             del config, api_key
             calls["adapter"] += 1
@@ -1601,9 +2173,35 @@ def test_unfinished_provider_dispatch_becomes_one_unknown_terminal(tmp_path, mon
             return 100
 
         def execute_request(self, request, *, requested_input_tokens, timeout_seconds):
-            del request, requested_input_tokens, timeout_seconds
+            del request
+            assert timeout_seconds > 0
             calls["execute"] += 1
-            raise AssertionError("crash occurs before dispatch")
+            return ModelTurn(
+                requested_input_tokens=requested_input_tokens,
+                input_tokens=requested_input_tokens,
+                output_tokens=5,
+                reasoning_output_tokens=5,
+                response_id="response-orphan-continuation",
+                response_status="incomplete",
+                response_incomplete_reason="max_output_tokens",
+                error=ModelTurnError(
+                    "incomplete_response",
+                    "provider response was incomplete: max_output_tokens",
+                ),
+                output_item_count=1,
+                non_tool_output_item_count=1,
+                output_item_types=("reasoning",),
+                output_shape_hash=sha256_json(
+                    {"item_count": 1, "item_types": ("reasoning",)}
+                ),
+                provider_continuation=(
+                    ProviderReasoningItem(
+                        id="reasoning-orphan",
+                        encrypted_content="encrypted-orphan",
+                        status="incomplete",
+                    ),
+                ),
+            )
 
     def preflight(package):
         del package
@@ -1613,11 +2211,11 @@ def test_unfinished_provider_dispatch_becomes_one_unknown_terminal(tmp_path, mon
     monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package: None)
     monkeypatch.setattr(runner, "_live_sandbox_preflight", preflight)
     monkeypatch.setattr(runner, "WorkspaceManager", _SnapshotWorkspaceManager)
-    monkeypatch.setattr(runner, "OpenAIResponsesAdapter", NeverExecutedAdapter)
+    monkeypatch.setattr(runner, "OpenAIResponsesAdapter", ReasoningAdapter)
     _crash_journal_once(
         monkeypatch,
-        event_type="provider_call_started",
-        when="after",
+        event_type="provider_call_finished",
+        when="before",
     )
     request = _live_request(tmp_path, repeat=1, cap="0.10").model_copy(
         update={"limits": DevLimits(max_model_calls=1)}
@@ -1625,6 +2223,12 @@ def test_unfinished_provider_dispatch_becomes_one_unknown_terminal(tmp_path, mon
     with pytest.raises(_SimulatedCrash):
         runner.run_dev(request)
     run_id = _enveloped_run_id(request.state_root)
+    object_files = [
+        path
+        for path in (request.state_root / "artifacts" / "objects" / "sha256").rglob("*")
+        if path.is_file()
+    ]
+    assert any(b"encrypted-orphan" in path.read_bytes() for path in object_files)
 
     resumed = runner.run_dev(request.model_copy(update={"resume_run_id": run_id}))
     assert resumed["runs"][0]["terminal"] == "PROVIDER_TIMEOUT_OR_UNKNOWN"
@@ -1633,7 +2237,7 @@ def test_unfinished_provider_dispatch_becomes_one_unknown_terminal(tmp_path, mon
         "input_count": 1,
         "tool": 0,
     }
-    assert calls == {"adapter": 1, "preflight": 1, "execute": 0}
+    assert calls == {"adapter": 1, "preflight": 1, "execute": 1}
     journal = DevJournal(request.state_root, run_id)
     assert len([row for row in journal.events() if row["event_type"] == "terminal"]) == 1
 

@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from patchloop.contracts import Artifact
 from patchloop.util import sha256_json
 
 DEV_RUN_SCHEMA = "dev-run-v1"
@@ -52,6 +53,7 @@ class DevTerminal(StrEnum):
     COST_CAP_REACHED = "COST_CAP_REACHED"
     PROTOCOL_VIOLATION = "PROTOCOL_VIOLATION"
     INCOMPLETE_RESPONSE = "INCOMPLETE_RESPONSE"
+    PROVIDER_CONTINUATION_ERROR = "PROVIDER_CONTINUATION_ERROR"
     PROVIDER_TIMEOUT_OR_UNKNOWN = "PROVIDER_TIMEOUT_OR_UNKNOWN"
     COUNT_TIMEOUT_OR_UNKNOWN = "COUNT_TIMEOUT_OR_UNKNOWN"
     LIMIT_REACHED = "LIMIT_REACHED"
@@ -127,6 +129,52 @@ class RequestedTool(StrictModel):
     turn_decision: PublicTurnDecision | None = None
 
 
+class EncryptedReasoningContinuationItem(StrictModel):
+    type: Literal["reasoning"] = "reasoning"
+    id: str = Field(min_length=1, max_length=500)
+    encrypted_content: str = Field(min_length=1, repr=False)
+    status: Literal["in_progress", "completed", "incomplete"] | None = None
+
+
+class FunctionCallContinuationRef(StrictModel):
+    type: Literal["function_call_ref"] = "function_call_ref"
+    action_id: str = Field(min_length=1, max_length=500)
+
+
+class ProviderContinuationArtifact(StrictModel):
+    schema_version: Literal["openai-stateless-reasoning-v1"] = (
+        "openai-stateless-reasoning-v1"
+    )
+    output_order: list[
+        EncryptedReasoningContinuationItem | FunctionCallContinuationRef
+    ] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def contains_reasoning(self) -> ProviderContinuationArtifact:
+        if not any(
+            isinstance(item, EncryptedReasoningContinuationItem)
+            for item in self.output_order
+        ):
+            raise ValueError("provider continuation must contain encrypted reasoning")
+        return self
+
+
+class ProviderContinuationRef(StrictModel):
+    schema_version: Literal["provider-continuation-ref-v1"] = (
+        "provider-continuation-ref-v1"
+    )
+    artifact: Artifact
+    item_count: int = Field(ge=1)
+    reasoning_item_count: int = Field(ge=1)
+    order_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def counts_are_possible(self) -> ProviderContinuationRef:
+        if self.reasoning_item_count > self.item_count:
+            raise ValueError("reasoning continuation count exceeds total item count")
+        return self
+
+
 class DevModelTurn(StrictModel):
     tool_calls: list[RequestedTool] = Field(default_factory=list)
     requested_input_tokens: int | None = None
@@ -146,6 +194,12 @@ class DevModelTurn(StrictModel):
         default=None,
         pattern=r"^sha256:[0-9a-f]{64}$",
     )
+    provider_continuation: ProviderContinuationArtifact | None = Field(
+        default=None,
+        exclude=True,
+        repr=False,
+    )
+    continuation_ref: ProviderContinuationRef | None = None
 
 
 class DevToolResult(StrictModel):

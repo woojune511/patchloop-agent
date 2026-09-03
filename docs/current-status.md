@@ -11,7 +11,8 @@ claim commands are absent.
 - default one-row live limit: 1,800 seconds
 - 40 model calls, 100 tool actions, and 4 accepted mutations
 - one consecutive protocol/incomplete correction and at most 4 parallel reads
-- 24 inspection turns per unchanged diff and 3 repair reads after a failed mutation
+- completion-slack inspection with one warned final opportunity; legacy 24/3 counters
+  are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
 ## Authority
@@ -127,11 +128,11 @@ current working states, and one model call remaining.
 The post-eighth action-coupling checkpoint replaces that non-binding per-call future
 state with typed decisions for the actual calls. Its initial parallel-read contract
 required complete decisions to match, and each mode had to match its tool family.
-OpenAI input now reconstructs the
-immediately preceding public function calls and exact outputs with call-ID linkage
-while retaining `store=false` and excluding raw reasoning and private material. Tool
-schemas are derived from the current gate, unexecuted checks, a completion horizon,
-and bounded inspection leases. Repeated evidence remains diagnostic-only; no
+At that checkpoint, OpenAI input reconstructed the immediately preceding public
+function calls and exact outputs with call-ID linkage while retaining `store=false`
+and excluding raw reasoning and private material. Tool schemas were derived from the
+current gate, unexecuted checks, a completion horizon, and bounded inspection leases.
+Repeated evidence remains diagnostic-only; no
 stagnation terminal was added. Per-fingerprint counts now survive unrelated new spans
 and checks at the same diff. This was provider-free implementation evidence and did
 not itself grant ninth-row authority.
@@ -171,7 +172,7 @@ The immutable journal records each incomplete status, ceiling, usage, output sha
 and generic error code, but not the provider's `incomplete_details.reason`; therefore
 output-ceiling exhaustion is a strong trace-based inference, not a directly preserved
 historical field.
-The post-tenth provider-free correction raises the desired per-call output ceiling to
+The first post-tenth provider-free correction raised the desired per-call output ceiling to
 25,000, while retaining pre-dispatch reduction against the invocation-wide cost cap.
 That ceiling is now part of model identity and the manifest. Future incomplete reasons
 are preserved in provider, decision-recovery, correction, and terminal provenance.
@@ -180,6 +181,22 @@ short external temp root. Mock run `run_dev_5e032eaf91ec4177` reached
 `EVALUATOR_PASS` in four model turns and five tool actions through one accepted
 mutation, with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
 model cost. No eleventh-row authority follows from this correction.
+The current provider-free successor keeps that 25,000-token ceiling but fixes the two
+structural boundaries exposed by the same trace. With `store=false`, OpenAI responses
+now request, durably store, and replay provider-encrypted reasoning in original output
+order with matching calls and public results. The journal contains hashes and counts,
+not ciphertext or plaintext reasoning. Missing, corrupt, reordered, or action-mismatched
+continuation ends at `PROVIDER_CONTINUATION_ERROR` before another provider or tool call.
+The fixed 24/3 inspection leases are no longer action gates: actual model/tool completion
+slack drives `open`, warned `last_opportunity`, and `closed` states, and each close or
+reopen is journaled and projected once. Corrections are generated from the actual
+allowed tools. The old counters remain envelope-compatible telemetry. This is local
+contract evidence only and grants no eleventh-row authority. Ruff and all 86 tests
+pass; the full suite completed in 111.40 seconds (112.09 seconds wall time) with a
+short external temp root. Provider-free mock run `run_dev_e961ed4d987e43b1` reached
+isolated `EVALUATOR_PASS` in four model turns and five tool actions through one accepted
+mutation, with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
+provider cost.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -272,10 +289,12 @@ exercise mutation, checks, submission, evaluation, or safety.
 The eighth row confirms that failure persists even when the model's own bounded
 decision is projected exactly into the next turn. The ninth row did not retest that
 behavior because a cross-call free-text equality rule terminated first. The tenth row
-confirms that native continuation, the completion horizon, and the 24-turn inspection
-lease operate live. Its failure moved to the provider-response budget: once reads were
-removed, three reasoning-only responses each consumed the complete 4,096-token ceiling
-before a tool call, with one valid public-check batch between them.
+confirms that the then-current public call/result continuation, completion horizon,
+and 24-turn inspection lease operated live. Its failure moved to the response boundary:
+once reads were removed, three reasoning-only responses each consumed the complete
+4,096-token ceiling before a tool call, with one valid public-check batch between them.
+The new encrypted continuation and completion-slack policy directly replace those two
+structural mechanisms; increasing the ceiling remains only auxiliary headroom.
 
 Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
 repeated-read terminal or replacement mutation interface. The retrospective replay
@@ -340,16 +359,19 @@ actions were reads/searches even though 35 recorded decisions explicitly contemp
 mutation. Nine cache hits and 21 zero-new-span results produced no stagnation signal;
 that remains a secondary observability defect, not the cause or grounds for a hard
 terminal. The provider-free correction couples each typed decision to its actual tool
-family, replays the preceding public tool exchange as native Responses items, and
-removes exploration tools when they would consume the completion horizon or exceed the
-inspection lease. The ninth row confirms native continuation but exposes the separate
-mistake of requiring distinct parallel actions to duplicate free text exactly. That
+family, replays the preceding public tool exchange as native Responses items, and at
+that checkpoint removed exploration tools at either the completion horizon or the
+inspection lease. The ninth row confirms public call/result continuation but exposes
+the separate mistake of requiring distinct parallel actions to duplicate the same
+free text exactly. That
 relational check is now removed while common `inspect` mode and all action-level
 decisions are retained. Local trace/policy verification still preserves the observed
-successful 24/3 paths. The tenth row exercises that general lease and exposes the
-separate 4,096-token response ceiling. The active provider-free correction restores a
-25,000-token desired ceiling under the existing cost admission and records exact future
-incomplete reasons. No paid retry or eleventh row is authorized.
+successful 24/3 paths as history, not as a sufficient-information rule. The tenth row
+exercises the old general lease and exposes the separate 4,096-token response ceiling.
+The active provider-free successor keeps the 25,000-token desired ceiling under the
+existing cost admission, records exact future incomplete reasons, replays encrypted
+reasoning across stateless turns, and derives inspection availability solely from
+completion slack. No paid retry or eleventh row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

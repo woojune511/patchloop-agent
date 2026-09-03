@@ -235,6 +235,7 @@ class ModelConfig(StrictModel):
     model_id: str = Field(min_length=1)
     reasoning_effort: Literal["none", "low", "medium", "high", "xhigh"] = "medium"
     reasoning_mode: Literal["standard", "pro"] = "standard"
+    reasoning_continuation: Literal["none", "encrypted-v1"] = "none"
     service_tier: Literal["default", "flex", "priority"] = "default"
     transport_max_retries: Literal[0] | None = None
     max_output_tokens: int = Field(default=4096, ge=1)

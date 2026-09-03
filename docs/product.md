@@ -43,16 +43,33 @@ complete visible-check status and exact remaining check IDs are projected separa
 from the bounded recent output. `ready_to_submit` additionally requires a non-empty
 diff and no non-ignored untracked files.
 
+For OpenAI runs, stateless continuity also carries the provider-encrypted reasoning
+items returned by the immediately preceding response. Their ciphertext and output
+order live in the external content-addressed store; the journal carries only the
+artifact hash, item counts, and order hash. The next request replays those items with
+the matching function calls and public results before the new public context. Plaintext reasoning,
+reasoning summaries, private task material, and evaluator details are never retained
+or projected. Missing or damaged continuation evidence stops the run before another
+provider or tool call.
+
 Every read/search decision carries a bounded public working state: the current causal
 hypothesis, one evidence gap addressed by that operation, and the decision to take
 after its result. The state is returned with the result in the next stateless request
-and retained in its attempt card. It preserves decision continuity without storing or
-replaying model reasoning and does not create a planning phase or execution gate.
+and retained in its attempt card. This public state remains independently inspectable;
+it does not expose the separately replayed encrypted reasoning or create a planning
+phase or execution gate.
 
 Every model response must call at least one constrained tool. Besides inspection,
 mutation, checking, and finish, `stop_task` provides an explicit unsuccessful exit
 when the public evidence cannot support safe progress. It records a bounded public
 conclusion and does not create a submission or run the evaluator.
+
+Inspection availability is based on completion slack rather than a fixed number of
+earlier reads. When only one optional inspection turn remains, the context warns that
+`read_file` and `search_files` will close next. At zero slack they close so mutation,
+remaining visible checks, submission, or an explicit stop retain the required calls.
+Every such change is journaled and projected once; corrections name only tools that are
+actually present in that turn's action space.
 
 Visible checks are executable public examples, not the private acceptance oracle.
 They should exercise the central behavior already promised by the issue while

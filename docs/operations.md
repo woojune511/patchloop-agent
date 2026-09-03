@@ -65,16 +65,19 @@ or committed.
 The required evaluator image must already exist locally at the declared digest.
 PatchLoop never starts Docker Desktop or pulls/builds an image. Unknown model
 pricing fails before dispatch. The adapter counts the actual request immediately
-before generation. The desired response ceiling is 25,000 tokens. Responses counts
-both reasoning and visible output against it; pre-dispatch admission lowers that
+before generation. The desired response ceiling is 25,000 tokens. The Responses API
+counts both reasoning and visible output against it; pre-dispatch admission lowers that
 ceiling when necessary to stay inside the invocation-wide cap. Every admitted ceiling
 is journaled. The adapter uses zero SDK transport retries and stops all remaining
 repetitions when count, transport, or billing state is uncertain. Generation and input
 counting use the same
 `tool_choice=required` contract, so the provider request and the runner's non-empty
 tool-batch requirement agree. From the second turn onward, the request reconstructs
-the immediately preceding public function calls and their matching outputs as native
-Responses input items. Raw reasoning and non-tool response content are not replayed.
+the immediately preceding provider-encrypted reasoning items, public function calls,
+and their matching outputs as native Responses input items, in original output order,
+before the latest public context. PatchLoop requests
+`reasoning.encrypted_content` while retaining `store=false`. Plaintext reasoning,
+reasoning summaries, and non-tool response content are not retained or replayed.
 The application still enforces its smaller grammar: up to four reads/searches, or
 exactly one mutation, check, finish, or stop.
 
@@ -109,22 +112,30 @@ unseen result or stored raw reasoning. Action identity binds each decision, whil
 operational read cache remains keyed only by the executable request and current diff.
 
 Tool availability is derived from the workflow gate, current evidence, unexecuted
-visible checks, remaining model/tool budget, and an inspection lease. The default
-lease allows 24 inspection turns per unchanged diff and three repair-specific inspection
-turns after a failed mutation. Reads disappear before they would consume calls needed
-for mutation, checks, and finish. This is a resource horizon, not repeated-evidence
-classification; cached or repeated evidence remains diagnostic-only, and `stop_task`
-is always available. Repetition counts are per evidence fingerprint at the unchanged
-diff and are not globally reset by an unrelated new span or check.
+visible checks, and remaining model/tool budget. Optional inspection stays open while
+both budgets have calls beyond the minimum mutation, check, and finish path. At one
+remaining optional turn, the context marks `last_opportunity` and names the inspection
+tools that will close next; at zero slack they are removed. A source read that is
+strictly required to establish the first mutation anchor is included in the minimum
+path rather than treated as optional exploration. The legacy 24-turn and three-repair-
+read fields remain envelope-compatible telemetry and do not remove tools. Cached or
+repeated evidence remains diagnostic-only, and `stop_task` is always available.
+Every inspection close or reopen is journaled as `tool_policy_transition` and projected
+once in the public context.
 One consecutive invalid or incomplete model response receives a correction that
-names the current workflow gate and remaining public checks. A valid tool batch
-resets that correction allowance. Provider journals retain only output item counts,
-types, a shape hash, and typed incomplete-reason metadata for diagnosis; response text
-and model reasoning are not stored. The same incomplete reason survives decision
-recovery and is named in correction and terminal provenance. If no public read, check,
-or safe scoped mutation can make progress, the agent may call `stop_task` with a bounded
-reason. This produces `AGENT_STOPPED`
-without submission or evaluation.
+names the current workflow gate, remaining public checks, and only the tools actually
+available on that correction turn. If rejected function calls carried encrypted
+reasoning, bounded public rejection outputs preserve their call-ID linkage for the
+next request. A valid tool batch resets that correction allowance. Provider journals
+retain only output item counts,
+types, a shape hash, typed incomplete-reason metadata, and a continuation artifact
+reference for diagnosis. Ciphertext is stored only in the external content-addressed
+artifact store. Missing, malformed, reordered, or action-mismatched continuation
+evidence produces `PROVIDER_CONTINUATION_ERROR` before another provider or tool call.
+The same incomplete reason survives decision recovery and is named in correction and
+terminal provenance. If no public read, check, or safe scoped mutation can make
+progress, the agent may call `stop_task` with a bounded reason. This produces
+`AGENT_STOPPED` without submission or evaluation.
 
 `finish_task` becomes available only after every visible check passes on the
 current non-empty diff and no non-ignored untracked file remains. The context lists
@@ -182,10 +193,13 @@ including `run_dev_e89e940c0715474e`, are immutable evidence and cannot resume.
 
 Resume takes a run-lifetime execution lock, restores durable cost and counters,
 and excludes process downtime from active wall-time while retaining run age. A
-recorded model decision continues with the same tool calls; completed actions use
-`action_id + input_hash` replay, and pending mutations use reconciliation. An
-unmatched provider dispatch is never retried and becomes one
-`PROVIDER_TIMEOUT_OR_UNKNOWN` terminal. Resuming a terminal run is a read-only,
+recorded model decision continues with the exact stored tool policy and same tool
+calls; its encrypted continuation artifact is verified before any tool execution.
+Completed actions use `action_id + input_hash` replay, and pending mutations use
+reconciliation. A missing or damaged continuation becomes
+`PROVIDER_CONTINUATION_ERROR`; an unmatched provider dispatch is never retried and
+becomes one `PROVIDER_TIMEOUT_OR_UNKNOWN` terminal. Resuming a terminal run is a
+read-only,
 idempotent return of its existing public result. The restored protocol counter is
 the consecutive corrections since the latest completed valid tool batch, not a
 lifetime total.

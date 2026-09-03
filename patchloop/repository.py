@@ -177,18 +177,19 @@ class WorkspaceManager:
                 _git(staging, "init", "-q")
                 _git(
                     staging,
-                    "config",
-                    "user.email",
-                    "patchloop@example.invalid",
+                    "add",
+                    ".",
                 )
                 _git(
                     staging,
-                    "config",
-                    "user.name",
-                    "PatchLoop Evaluator",
+                    "-c",
+                    "user.email=patchloop@example.invalid",
+                    "-c",
+                    "user.name=PatchLoop Evaluator",
+                    "commit",
+                    "-qm",
+                    "audited base snapshot",
                 )
-                _git(staging, "add", ".")
-                _git(staging, "commit", "-qm", "audited base snapshot")
             os.replace(staging, target)
         except BaseException:
             if staging.exists() and not staging.is_symlink():
