@@ -58,8 +58,9 @@ credential file, repeat count, and invocation-wide cap. Live mode accepts only
 checked-in `dev-train` tasks. Every active `patchloop/**/*.py`, `pyproject.toml`,
 `uv.lock`, and selected task-package input must be tracked and match HEAD;
 unrelated scratch or untracked paths outside those pathspecs are ignored. The
-credential file may contain only one `OPENAI_API_KEY=...` assignment and must stay
-outside the repository.
+credential file may contain only one `OPENAI_API_KEY=...` assignment. It may be the
+ignored repository-root `.env` or an exact external path, but it must never be tracked
+or committed.
 
 The required evaluator image must already exist locally at the declared digest.
 PatchLoop never starts Docker Desktop or pulls/builds an image. Unknown model

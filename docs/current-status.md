@@ -107,6 +107,13 @@ a bounded protocol error without discarding completed usage. Ruff and all 78 tes
 pass in 83.55 seconds. Mock run `run_dev_6c167fa301ac40c3` reaches
 `EVALUATOR_PASS` with one accepted mutation, zero cost, task acceptance PASS, safety
 NOT_RUN, and `claim_eligible=false`.
+A subsequent no-call preflight validates the ignored, untracked repository-root `.env`
+without exposing its value, confirms the version-2 task content hash
+`sha256:276b791c4c0cb1c18fa8659f6518a172f0d05b239526c0f21a7d0d2c378def87`,
+and matches the local evaluator image to digest
+`sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c`.
+Runtime and selected task paths match HEAD, Docker is available, and model pricing is
+registered. This preflight grants no provider or eighth-row authority.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:

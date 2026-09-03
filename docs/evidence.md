@@ -416,6 +416,17 @@ safety was NOT_RUN, and `claim_eligible=false`. This proves only local contract 
 context continuity. It does not show that a provider model will follow the recorded
 decision or improve live task completion.
 
+The follow-up no-call preflight used the proposed eighth-row parameters without
+dispatching them. `patchloop doctor` found Python, uv, Git, the Docker CLI, and the
+Docker server available. The version-2 task validated at content hash
+`sha256:276b791c4c0cb1c18fa8659f6518a172f0d05b239526c0f21a7d0d2c378def87`;
+the runtime and selected task paths matched HEAD; model pricing was registered; and
+the required local image matched
+`sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c`.
+The repository-root `.env` was both ignored and untracked, and its exact one-key
+format validated without printing the credential. This is readiness evidence only,
+not authorization or a live result.
+
 ## Not executed
 
 - no eighth repetition, transport retry, or follow-up paid run after the seventh row
