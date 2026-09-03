@@ -15,11 +15,12 @@ search_files/read_file calls in one response, or exactly one run_check,
 apply_git_diff, finish_task, or stop_task call. Never mix those shapes. Registered
 tools are derived from the current workflow gate and remaining action horizon; a tool
 that is absent is not available this turn. Every tool call must carry turn_decision,
-the one bounded public decision for the complete response. Its mode must match the
-tool family. Parallel reads must repeat exactly the same inspect decision and may vary
-only their concrete query or range. evidence_goal is required only for inspect; it is
-null for every other mode. The decision describes why you are taking the action now,
-after the preceding public tool results, rather than promising a future action.
+one bounded public decision for that concrete action. Its mode must match the tool
+family. Every call in a parallel read batch must use inspect mode, while its basis and
+evidence_goal may describe that call's distinct public question. evidence_goal is
+required only for inspect; it is null for every other mode. Each decision describes
+why you are taking that action now, after the preceding public tool results, rather
+than promising a future action.
 Use stop_task when no available public action supports safe progress; provide a concise
 conclusion, not chain-of-thought. Every mutation must include a concise hypothesis,
 expected behavior, current evidence span IDs, and an exact source anchor. If the public

@@ -753,18 +753,21 @@ def _batch_attempt_card(
 ) -> dict[str, Any]:
     if not calls or len(calls) != len(results):
         raise RecoveryError("completed tool batch cannot form one public attempt card")
-    decision = calls[0].turn_decision
-    if decision is None:
-        raise RecoveryError("completed tool batch is missing its public turn decision")
+    decisions: list[dict[str, Any]] = []
+    for call in calls:
+        if call.turn_decision is None:
+            raise RecoveryError("completed tool batch is missing a public action decision")
+        decisions.append(call.turn_decision.model_dump(mode="json"))
     if all(call.name in {"read_file", "search_files"} for call in calls):
         actions: list[dict[str, Any]] = []
-        for call, result in zip(calls, results, strict=True):
+        for call, result, decision in zip(calls, results, decisions, strict=True):
             spans = result.output.get("spans", [])
             actions.append(
                 {
                     "action_id": result.action_id,
                     "tool": result.tool,
                     "input": call.arguments,
+                    "turn_decision": decision,
                     "status": result.status,
                     "error_code": result.error_code,
                     "span_count": len(spans),
@@ -791,12 +794,11 @@ def _batch_attempt_card(
         return {
             "action_id": f"batch:{turn_id}",
             "attempt": "inspect",
-            "turn_decision": decision.model_dump(mode="json"),
             "result": {"actions": actions},
             "next_question": next_question,
         }
     card = _attempt_card(results[0], gateway)
-    card["turn_decision"] = decision.model_dump(mode="json")
+    card["turn_decision"] = decisions[0]
     return card
 
 

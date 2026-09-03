@@ -23,7 +23,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset(
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v4",
+            "schema_version": "dev-tool-surface-v5",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -35,6 +35,7 @@ def dev_tool_surface_hash() -> str:
                 "basis",
                 "evidence_goal",
             ],
+            "parallel_read_decisions": "shared_inspect_mode_with_call_specific_rationale",
             "dynamic_workflow_tools": True,
         }
     )
@@ -104,7 +105,7 @@ class StopIntent(StrictModel):
 
 
 class PublicTurnDecision(StrictModel):
-    """One bounded public action decision for a complete model turn."""
+    """One bounded public action decision for one requested tool call."""
 
     mode: Literal["inspect", "mutate", "verify", "finish", "stop"]
     basis: str = Field(min_length=1, max_length=800)

@@ -45,8 +45,9 @@ def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
     return {
         "type": "object",
         "description": (
-            "The one concise public action decision for this complete model turn; "
-            "not private data or chain-of-thought. Parallel reads must repeat it exactly."
+            "The concise public action decision for this tool call; not private data or "
+            "chain-of-thought. Parallel reads share inspect mode but may have different "
+            "call-specific rationales and evidence goals."
         ),
         "properties": {
             "mode": {"type": "string", "enum": [mode]},
@@ -288,9 +289,6 @@ def validate_tool_batch(
     if all(name in READ_TOOLS for name in names):
         if len(calls) > max_parallel_reads:
             raise ContractError(f"a read batch may contain at most {max_parallel_reads} calls")
-        decisions = [call.turn_decision.model_dump(mode="json") for call in calls]
-        if any(decision != decisions[0] for decision in decisions[1:]):
-            raise ContractError("parallel reads must share one identical turn_decision")
         return "parallel_read"
     if len(calls) == 1 and names[0] in SINGLE_ACTION_TOOLS:
         return "single_action"

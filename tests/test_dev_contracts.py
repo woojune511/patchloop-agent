@@ -73,20 +73,65 @@ def test_tool_batch_contract_is_small_and_unmixed() -> None:
                 )
             ]
         )
-    conflicting = call("search_files", 1)
-    conflicting.turn_decision = PublicTurnDecision(
+    call_specific = call("search_files", 1)
+    call_specific.turn_decision = PublicTurnDecision(
         mode="inspect",
-        basis="different batch decision",
-        evidence_goal="different question",
+        basis="Search for a distinct helper used by the source body.",
+        evidence_goal="Locate the helper definition and its callers.",
     )
-    with pytest.raises(ContractError, match="one identical"):
-        validate_tool_batch([call("read_file"), conflicting])
+    assert validate_tool_batch([call("read_file"), call_specific]) == "parallel_read"
     with pytest.raises(ContractError, match="unavailable"):
         validate_tool_batch(
             [call("read_file")],
             allowed_tools=frozenset({"stop_task"}),
             max_parallel_reads=0,
         )
+
+
+def test_live_parallel_inspection_shape_allows_call_specific_decisions() -> None:
+    calls = [
+        RequestedTool(
+            name="read_file",
+            action_id="live-read-shape",
+            arguments={
+                "path": "pyfakefs/fake_os.py",
+                "start_line": 917,
+                "end_line": 1040,
+            },
+            turn_decision=PublicTurnDecision(
+                mode="inspect",
+                basis=(
+                    "Need to inspect the full makedirs implementation and nearby helpers "
+                    "to locate where parent traversal loses side effects before mutating."
+                ),
+                evidence_goal=(
+                    "Capture the complete makedirs body and adjacent path-normalization/"
+                    "creation helpers that influence parent-directory traversal semantics."
+                ),
+            ),
+        ),
+        RequestedTool(
+            name="search_files",
+            action_id="live-search-shape",
+            arguments={
+                "path_glob": "pyfakefs/fake_os.py",
+                "query": "parent directory component",
+            },
+            turn_decision=PublicTurnDecision(
+                mode="inspect",
+                basis=(
+                    "Need to search for any existing comments or helpers explicitly dealing "
+                    "with parent-directory traversal in fake_os before deciding the patch site."
+                ),
+                evidence_goal=(
+                    "Find references to parent traversal, normalization, or recursive parent "
+                    "creation behavior in fake_os."
+                ),
+            ),
+        ),
+    ]
+
+    assert validate_tool_batch(calls) == "parallel_read"
 
 
 def test_mutation_contract_requires_minimal_plan_and_pairs_alternative() -> None:

@@ -21,7 +21,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The seven live observations below
+Repository policy alone never initiates paid work. The nine live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -125,15 +125,16 @@ action if their evidence condition was met, yet the next model turns continued t
 select only reads and searches. The final context still had gate `needs_mutation`, two
 current working states, and one model call remaining.
 The post-eighth action-coupling checkpoint replaces that non-binding per-call future
-state with one typed decision for the actual batch. Parallel reads must share it, and
-its mode must match the requested tool family. OpenAI input now reconstructs the
+state with typed decisions for the actual calls. Its initial parallel-read contract
+required complete decisions to match, and each mode had to match its tool family.
+OpenAI input now reconstructs the
 immediately preceding public function calls and exact outputs with call-ID linkage
 while retaining `store=false` and excluding raw reasoning and private material. Tool
 schemas are derived from the current gate, unexecuted checks, a completion horizon,
 and bounded inspection leases. Repeated evidence remains diagnostic-only; no
 stagnation terminal was added. Per-fingerprint counts now survive unrelated new spans
-and checks at the same diff. This is provider-free implementation evidence and grants
-no ninth-row authority.
+and checks at the same diff. This was provider-free implementation evidence and did
+not itself grant ninth-row authority.
 Ruff and all 78 tests pass; the full suite completed in 114.69 seconds with an external
 short temp root. Mock run `run_dev_198843ed55274f09` reached `EVALUATOR_PASS` in four
 model turns and five tool actions through one accepted mutation, with task acceptance
@@ -141,6 +142,22 @@ PASS, safety NOT_RUN, `claim_eligible=false`, and zero model cost. Read-only his
 trace inspection found 23 inspection batches before the first mutation in both the
 fifth and sixth rows, and a maximum of three repair reads between failed mutations on
 the sixth row. The 24/3 leases preserve those observed successful paths.
+The separately approved ninth row used the same pyfakefs version-2 task, model,
+reasoning, `.env`, repetition, and $1.20 cap. Run `run_dev_b79d22f70ae44854`
+ended at durable `PROTOCOL_VIOLATION` after three model calls, one successful search,
+no mutation, and $0.0077223. Native function-call/result linkage worked on the second
+request. Both the second and third responses then returned valid parallel inspect calls
+whose call-specific rationales differed, violating the application's exact free-text
+equality rule. The first correction was present in the third public context. This is a
+contract terminal before the completion horizon or inspection lease was exercised.
+The post-ninth provider-free correction retains enforced `inspect` mode across parallel
+reads but permits each call's bounded rationale and evidence goal to differ, preserving
+all of them on the batch card. No tenth-row authority follows from this correction.
+Ruff and all 79 tests pass; the final full suite completed in 113.24 seconds with a
+short external temp root. Mock run `run_dev_a7724af70efb4984` reached
+`EVALUATOR_PASS` in four model turns and five tool actions through one accepted
+mutation, with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
+model cost.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -231,7 +248,8 @@ public/private oracle mismatch. The seventh row then exposed a distinct
 action-selection/commitment failure after sufficient public evidence; it did not
 exercise mutation, checks, submission, evaluation, or safety.
 The eighth row confirms that failure persists even when the model's own bounded
-decision is projected exactly into the next turn.
+decision is projected exactly into the next turn. The ninth row did not retest that
+behavior because a cross-call free-text equality rule terminated first.
 
 Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
 repeated-read terminal or replacement mutation interface. The retrospective replay
@@ -250,8 +268,9 @@ shape or exact full sentence. Its task content hash is
 The fifth and sixth rows used this exact identity. Version 3 preserves version 2 and
 accepts the semantics promised publicly rather than one literal phrasing. The sixth
 row's submitted patch passes the version-3 evaluator provider-free, but that does not
-retroactively change the version-2 terminal. The eighth live observation used the
-separate pyfakefs task described below. No retry or ninth live row is authorized.
+retroactively change the version-2 terminal. The eighth and ninth live observations
+used the separate pyfakefs task described below. The ninth row is terminal and no
+retry or tenth live row is authorized.
 
 The fifth row's terminal label described the application's tool-batch boundary, but
 the stored evidence did not establish that the provider response itself was
@@ -272,7 +291,7 @@ Operational resume uses an immutable envelope, exact contract comparison,
 run-lifetime locking, journal-derived counters and cost, durable tool-decision replay,
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
-acceptance and safety remain separate typed axes. No retry or ninth live row is
+acceptance and safety remain separate typed axes. No retry or tenth live row is
 authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
@@ -294,12 +313,14 @@ eighth row proved the projection works live but did not change tool selection: a
 actions were reads/searches even though 35 recorded decisions explicitly contemplated
 mutation. Nine cache hits and 21 zero-new-span results produced no stagnation signal;
 that remains a secondary observability defect, not the cause or grounds for a hard
-terminal. The provider-free correction now couples a typed batch decision to its tool
+terminal. The provider-free correction couples each typed decision to its actual tool
 family, replays the preceding public tool exchange as native Responses items, and
 removes exploration tools when they would consume the completion horizon or exceed the
-inspection lease. Local trace/policy verification preserves the observed successful
-24/3 paths. Remaining uncertainty is provider behavior, not a pending task revision or
-stronger repetition terminal. No paid retry or ninth row is authorized.
+inspection lease. The ninth row confirms native continuation but exposes the separate
+mistake of requiring distinct parallel actions to duplicate free text exactly. That
+relational check is now removed while common `inspect` mode and all action-level
+decisions are retained. Local trace/policy verification still preserves the observed
+successful 24/3 paths. No paid retry or tenth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

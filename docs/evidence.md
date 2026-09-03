@@ -99,6 +99,13 @@ Following the Rapid Dev Reset, local checkpoints recorded:
   reached isolated `EVALUATOR_PASS` in four model turns and five tool actions through
   one accepted mutation, with task acceptance PASS, safety NOT_RUN,
   `claim_eligible=false`, and zero cost. This is provider-free contract evidence only.
+- The ninth live row exposed a cross-call contract mismatch before the new action
+  horizon could be exercised. Its provider responses and the subsequent provider-free
+  correction are recorded below. Ruff and all 79 tests pass in 113.24 seconds with a
+  short external temp root. Mock run `run_dev_a7724af70efb4984` reaches isolated
+  `EVALUATOR_PASS` through one accepted mutation with task acceptance PASS, safety
+  NOT_RUN, `claim_eligible=false`, and zero cost. This is provider-free contract
+  evidence, not task-acceptance evidence for the ninth row.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -465,9 +472,10 @@ paid row, or any quality claim.
 
 The provider-free correction retires per-read `working_state` from the active tool
 contract. Every current tool call instead carries one typed public `turn_decision`.
-Its mode must match the actual tool family, and every call in a parallel read batch
-must repeat the same decision. Attempt cards are now batch-level, so one observation
-batch cannot project several conflicting future actions.
+Its mode must match the actual tool family. The initial version also required every
+call in a parallel read batch to repeat the complete decision exactly. Attempt cards
+became batch-level so one observation batch could not project several conflicting
+future actions.
 
 The OpenAI request remains `store=false`, but it is no longer represented solely as a
 fresh system-plus-user snapshot. From the second turn onward, a bounded journal-derived
@@ -490,7 +498,8 @@ fingerprint for the unchanged diff, so an unrelated newly discovered span or vis
 check no longer erases evidence that an exact read was repeated.
 
 This checkpoint is implementation and provider-free contract evidence only. It does
-not show that a provider will change tool selection, and it authorizes no ninth row.
+not show that a provider will change tool selection. At that checkpoint it did not
+authorize a ninth row.
 Read-only replay characterization found 23 inspection batches before the first mutation
 in both the fifth and sixth rows. The sixth row used at most three repair reads between
 failed mutations before its accepted mutation on turn 33 and completed finish on turn
@@ -499,14 +508,58 @@ observed successful trajectories. Applied to the eighth row's unchanged-diff cou
 the policy removes read/search after its 24th completed inspection batch; this is a
 deterministic policy simulation, not another provider execution.
 
+## Ninth live development observation
+
+One separately approved invocation used external state root `C:\patchloop-state`,
+`pyfakefs-makedirs-parent-traversal` version 2,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+and the $1.20 invocation cap. No retry followed, and PatchLoop did not start Docker or
+pull/build an image.
+
+Run `run_dev_b79d22f70ae44854` ended at durable `PROTOCOL_VIOLATION` after 14.234
+active seconds, three completed provider calls and input counts, one successful search,
+no accepted mutation, and $0.0077223. No visible check, submission, evaluator, or safety
+execution occurred.
+
+The first search located `fake_os.makedirs`. The next request contained that exact
+function call and public output with matching call ID, establishing that native result
+continuation operated in the live request. The second response returned one
+`read_file` and one `search_files`, both structurally valid and both in `inspect` mode.
+Their call-specific `basis` and `evidence_goal` text differed, so the application's
+cross-call equality validator rejected the complete batch. The correction appeared in
+the next public attempt card. The third response again returned two valid inspect calls
+with distinct concrete rationales, and the consecutive-correction limit closed the row.
+
+This is a harness contract terminal, not evidence that the agent rejected mutation or
+exhausted the inspection lease. Tool JSON Schemas constrain each call independently and
+cannot express equality between arbitrary free-text fields in sibling calls. The local
+tests had proved the application validator and used one reused decision object in mock
+success paths; they did not establish that this relational constraint was a stable
+provider interface.
+
+## Post-ninth parallel-decision correction
+
+The active contract now requires only the enforceable common property: every call in a
+parallel read/search batch has `mode=inspect`. Each call may carry the distinct bounded
+`basis` and `evidence_goal` appropriate to its query or range. The batch attempt card
+stores every action's corresponding decision instead of projecting only the first.
+The exact two-call shape from the ninth row is a provider-free regression case. Mixed
+tool families, wrong decision modes, missing decisions, duplicate action IDs, and
+oversized batches still fail closed. The native continuation, completion horizon,
+24/3 inspection leases, and diagnostic-only stagnation policy are unchanged.
+Ruff passes, the complete 79-test suite passes in 113.24 seconds using a short external
+temp root, and mock run `run_dev_a7724af70efb4984` reaches isolated `EVALUATOR_PASS`
+through one accepted mutation. Its task acceptance is PASS, safety is NOT_RUN,
+`claim_eligible=false`, and provider cost is zero. No tenth-row authority follows.
+
 ## Not executed
 
-- no ninth repetition, transport retry, or follow-up paid run after the eighth row
+- no transport retry or follow-up paid run after the ninth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
-- no mutation, visible check, submission, or evaluator execution in either pyfakefs
-  version-2 live row
+- no mutation, visible check, submission, or evaluator execution in the seventh,
+  eighth, or ninth pyfakefs version-2 live row
 - no hidden evaluation of the temporary Loguru version-2 public correction
 
 The under-two-minute focused-validation target remains locally supported. The sixth
@@ -537,7 +590,9 @@ path but exposing an invalid acceptance oracle rather than producing task accept
   passes provider-free evaluation only. The seventh and eighth rows exercised only
   read/search and therefore add no mutation, check, submission, evaluator, or safety
   evidence. The eighth additionally proves live working-state projection, not
-  compliance with the projected decision.
+  compliance with the projected decision. The ninth proves native continuation for one
+  completed search, then exposes a cross-call free-text equality mismatch before the
+  action horizon or inspection lease is exercised.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

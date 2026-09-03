@@ -99,11 +99,11 @@ needed for repair, but a successful mutation is required to clear that repair ta
 Tool execution failures are not counted or presented as model protocol violations.
 Every tool call must include one bounded public `turn_decision` containing `mode`,
 `basis`, and an `evidence_goal` only for inspection. Its mode must match the actual
-tool family. Parallel reads must repeat the same decision, so one batch cannot declare
-conflicting next actions. The decision records the action selected after the preceding
-public result; it is not a promise about an unseen result or stored raw reasoning.
-Action identity binds the decision, while the operational read cache remains keyed
-only by the executable request and current diff.
+tool family. Parallel reads all use `inspect` mode, while their `basis` and
+`evidence_goal` may describe different concrete queries or ranges. Each decision
+records its action after the preceding public result; it is not a promise about an
+unseen result or stored raw reasoning. Action identity binds each decision, while the
+operational read cache remains keyed only by the executable request and current diff.
 
 Tool availability is derived from the workflow gate, current evidence, unexecuted
 visible checks, remaining model/tool budget, and an inspection lease. The default

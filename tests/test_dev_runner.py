@@ -206,10 +206,24 @@ def test_turn_decision_is_bound_to_cache_action_and_projected_once_per_batch(
     assert revised.output["read_request_hash"] == first.output["read_request_hash"]
     assert "turn_decision" not in revised.output
     assert "turn_decision" not in context["latest_tool_results"][0]["output"]
-    assert context["recent_attempt_result_next_question"][-1]["turn_decision"] == expected
+    card = context["recent_attempt_result_next_question"][-1]
+    assert "turn_decision" not in card
+    assert card["result"]["actions"][0]["turn_decision"] == expected
+    parallel_card = runner._batch_attempt_card(  # noqa: SLF001 - context contract test
+        turn_id="call-specific-parallel-turn",
+        calls=[first_call, revised_call],
+        results=[first, revised],
+        gateway=gateway,
+    )
+    assert [
+        action["turn_decision"] for action in parallel_card["result"]["actions"]
+    ] == [
+        first_decision.model_dump(mode="json"),
+        revised_decision.model_dump(mode="json"),
+    ]
 
 
-def test_failed_read_batch_retains_one_bounded_turn_decision(gateway_factory) -> None:
+def test_failed_read_batch_retains_its_bounded_action_decision(gateway_factory) -> None:
     gateway, _, _ = gateway_factory()
     decision = inspection_decision("failed-read")
     call = RequestedTool(
@@ -228,7 +242,10 @@ def test_failed_read_batch_retains_one_bounded_turn_decision(gateway_factory) ->
 
     assert result.status == "failed"
     assert "turn_decision" not in result.output
-    assert card["turn_decision"] == decision.model_dump(mode="json")
+    assert "turn_decision" not in card
+    assert card["result"]["actions"][0]["turn_decision"] == decision.model_dump(
+        mode="json"
+    )
     assert card["result"]["actions"][0]["status"] == "failed"
 
 

@@ -139,7 +139,8 @@ def test_mutation_tool_contract_requires_unwrapped_raw_git_diff() -> None:
     assert "Every response must request at least one supplied tool" in DEV_SYSTEM_PROMPT
     assert "Use stop_task when no available public action" in DEV_SYSTEM_PROMPT
     assert "Every tool call must carry turn_decision" in DEV_SYSTEM_PROMPT
-    assert "Parallel reads must repeat exactly the same inspect decision" in DEV_SYSTEM_PROMPT
+    assert "Every call in a parallel read batch must use inspect mode" in DEV_SYSTEM_PROMPT
+    assert "may describe that call's distinct public question" in DEV_SYSTEM_PROMPT
     gate_schemas = dev_tool_schemas(
         finish_enabled=False,
         check_ids=(),

@@ -32,9 +32,10 @@ current gate and action horizon:
 
 Every call requires one bounded public `turn_decision` with `mode`, `basis`, and an
 `evidence_goal` only for inspection. Mode must match the requested tool family.
-Parallel reads repeat the same decision exactly, so the batch has one decision even
-when its concrete queries differ. This is the action selected from preceding public
-evidence, not a promise about an unseen result, a plan phase, or a reasoning transcript.
+Parallel reads all use `inspect` mode, while each call may state the distinct rationale
+and evidence goal for its concrete query or range. These are actions selected from
+preceding public evidence, not promises about unseen results, a plan phase, or a
+reasoning transcript.
 
 The provider request uses required tool choice, and the application validates the
 smaller batch grammar above. Mixed, empty, duplicate-action, and oversized batches
@@ -82,10 +83,11 @@ mutation replaces it; a successful mutation clears it. From turn two onward, the
 actual model input carries the immediately preceding calls and exact public results as
 native `function_call` / `function_call_output` items, followed by current derived
 state without duplicating those results. One content-addressed model-input artifact
-binds that sequence. Only the batch card carries its decision once. Identical evidence
-is counted per fingerprint at the unchanged diff even when another read finds a new
-span; it may be cached and signaled but is not hard-blocked. Never add raw reasoning, private
-task material, hidden tests, reference patches, or evaluator details.
+binds that sequence. Each read action in the batch card carries its corresponding
+decision once. Identical evidence is counted per fingerprint at the unchanged diff
+even when another read finds a new span; it may be cached and signaled but is not
+hard-blocked. Never add raw reasoning, private task material, hidden tests, reference
+patches, or evaluator details.
 
 ## State and recovery
 
@@ -246,15 +248,25 @@ decisions explicitly contemplated mutation/edit/patch/apply, but subsequent tool
 selection remained read/search, including the final turn. Treat this as a live
 decision-to-action coupling failure, not a context projection failure.
 
-The current provider-free correction retires that per-call future-decision contract.
-It reconstructs one bounded native public tool continuation, records one typed decision
-per batch, validates its mode against the actual tool family, and derives the exposed
-tools from workflow evidence and a completion horizon. At unchanged diff, general
-inspection leases 24 turns; a failed mutation replaces that with three repair reads.
-When the remaining calls are needed for mutation/check/finish, reads disappear while
-safe progress actions and `stop_task` remain. This does not classify repeated evidence
-or add a hard stagnation terminal. Validate this seam locally; do not run a ninth paid
-row without separate authorization.
+The post-eighth provider-free correction retired that future-decision contract. It
+reconstructed one bounded native public tool continuation, validated typed decisions
+against the actual tool family, and derived exposed tools from workflow evidence and a
+completion horizon. At unchanged diff, general inspection leases 24 turns; a failed
+mutation replaces that with three repair reads. It initially also required every
+parallel read to repeat the complete free-text decision exactly.
+
+The separately authorized ninth row used the same pyfakefs version-2 tuple. Run
+`run_dev_b79d22f70ae44854` ended at `PROTOCOL_VIOLATION` after three model calls, one
+successful search, no mutation, and $0.0077223. The next two responses each contained
+valid read/search calls in `inspect` mode but gave those distinct actions different
+rationales and evidence goals. The first rejection was present in the following public
+context, yet the same application-only equality constraint failed again. Native call
+and result linkage worked; the inspection lease was not exercised.
+
+The current provider-free correction removes only that cross-call free-text equality.
+Parallel reads still share enforced `inspect` mode, and each call-specific decision is
+retained in its batch card. Keep the completion horizon, 24/3 leases, and diagnostic-only
+stagnation behavior unchanged. Do not run a tenth paid row without separate authorization.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.
