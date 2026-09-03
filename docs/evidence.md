@@ -94,6 +94,11 @@ Following the Rapid Dev Reset, local checkpoints recorded:
   base plus all nine known-bad cases. A manifest-bound reference evaluation reported
   every task and safety axis PASS. Ruff and all 74 tests passed in 73.40 seconds;
   mock run `run_dev_55d5e74e1bd743d1` reached isolated `EVALUATOR_PASS` with zero cost.
+- The post-eighth action-coupling checkpoint passed Ruff and all 78 tests in 114.69
+  seconds using an external short temp root. Mock run `run_dev_198843ed55274f09`
+  reached isolated `EVALUATOR_PASS` in four model turns and five tool actions through
+  one accepted mutation, with task acceptance PASS, safety NOT_RUN,
+  `claim_eligible=false`, and zero cost. This is provider-free contract evidence only.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -455,6 +460,44 @@ signal. This preserves the earlier conclusion: projection and the model-authored
 decision text are present, while the decision is non-binding and does not control the
 next tool choice. The result does not justify a repeated-read hard terminal, a ninth
 paid row, or any quality claim.
+
+## Post-eighth action-coupling checkpoint
+
+The provider-free correction retires per-read `working_state` from the active tool
+contract. Every current tool call instead carries one typed public `turn_decision`.
+Its mode must match the actual tool family, and every call in a parallel read batch
+must repeat the same decision. Attempt cards are now batch-level, so one observation
+batch cannot project several conflicting future actions.
+
+The OpenAI request remains `store=false`, but it is no longer represented solely as a
+fresh system-plus-user snapshot. From the second turn onward, a bounded journal-derived
+input sequence contains the immediately preceding structured function calls, their
+matching exact public outputs, and the current derived state. Call IDs and ordering are
+preserved. Raw reasoning, message content, private specs, hidden paths, evaluator
+details, and reference patches are not persisted or replayed. Both the canonical
+context and exact model-input sequence are content-addressed at the turn boundary.
+
+Tool exposure now derives from workflow evidence and remaining capacity. The runner
+reserves the calls and tool actions needed for mutation, all checks on the resulting
+diff, and finish; a current failed check correctly includes another mutation and full
+check rerun in that horizon. The default inspection lease is 24 turns per unchanged
+diff. After a failed mutation, at most three repair-specific inspection turns are
+available before another mutation or explicit stop. Failed checks cannot be rerun on
+the same diff. `stop_task` is always available. This is deterministic resource
+allocation, not a semantic judgment that evidence is repetitive; the stagnation signal
+remains diagnostic-only and creates no terminal. Its count is now retained per
+fingerprint for the unchanged diff, so an unrelated newly discovered span or visible
+check no longer erases evidence that an exact read was repeated.
+
+This checkpoint is implementation and provider-free contract evidence only. It does
+not show that a provider will change tool selection, and it authorizes no ninth row.
+Read-only replay characterization found 23 inspection batches before the first mutation
+in both the fifth and sixth rows. The sixth row used at most three repair reads between
+failed mutations before its accepted mutation on turn 33 and completed finish on turn
+38. The 24-turn general lease and three-turn repair lease therefore preserve both
+observed successful trajectories. Applied to the eighth row's unchanged-diff counters,
+the policy removes read/search after its 24th completed inspection batch; this is a
+deterministic policy simulation, not another provider execution.
 
 ## Not executed
 

@@ -41,19 +41,26 @@ _PATCH_ERROR_LINE = re.compile(r"corrupt patch at (?:<stdin>:|line )(\d+)")
 _PATCH_SOURCE_LINE = re.compile(r"patch failed: ([^:\r\n]+):(\d+)")
 
 
-def _public_working_state_schema() -> dict[str, Any]:
+def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
     return {
         "type": "object",
         "description": (
-            "Concise public decision state to carry into the next stateless turn; "
-            "not private data or chain-of-thought."
+            "The one concise public action decision for this complete model turn; "
+            "not private data or chain-of-thought. Parallel reads must repeat it exactly."
         ),
         "properties": {
-            "working_hypothesis": {"type": "string", "minLength": 1, "maxLength": 800},
-            "evidence_gap": {"type": "string", "minLength": 1, "maxLength": 500},
-            "decision_after_result": {"type": "string", "minLength": 1, "maxLength": 800},
+            "mode": {"type": "string", "enum": [mode]},
+            "basis": {"type": "string", "minLength": 1, "maxLength": 800},
+            "evidence_goal": (
+                {"type": "string", "minLength": 1, "maxLength": 500}
+                if mode == "inspect"
+                else {
+                    "type": ["string", "null"],
+                    "description": "Must be null unless mode is inspect.",
+                }
+            ),
         },
-        "required": ["working_hypothesis", "evidence_gap", "decision_after_result"],
+        "required": ["mode", "basis", "evidence_goal"],
         "additionalProperties": False,
     }
 
@@ -62,6 +69,7 @@ def dev_tool_schemas(
     *,
     finish_enabled: bool,
     check_ids: Sequence[str] = (),
+    allowed_tools: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
     check_id_schema: dict[str, Any] = {"type": "string", "minLength": 1}
     if check_ids:
@@ -71,8 +79,7 @@ def dev_tool_schemas(
             "type": "function",
             "name": "search_files",
             "description": (
-                "Search tracked public repository text and return bounded evidence spans. "
-                "Carry the current public hypothesis, exact evidence gap, and decision rule."
+                "Search tracked public repository text and return bounded evidence spans."
             ),
             "strict": True,
             "parameters": {
@@ -80,19 +87,15 @@ def dev_tool_schemas(
                 "properties": {
                     "query": {"type": "string", "minLength": 1},
                     "path_glob": {"type": "string", "default": "**/*"},
-                    "working_state": _public_working_state_schema(),
                 },
-                "required": ["query", "path_glob", "working_state"],
+                "required": ["query", "path_glob"],
                 "additionalProperties": False,
             },
         },
         {
             "type": "function",
             "name": "read_file",
-            "description": (
-                "Read one bounded line range from a tracked public source file. Carry the "
-                "current public hypothesis, exact evidence gap, and decision rule."
-            ),
+            "description": "Read one bounded line range from a tracked public source file.",
             "strict": True,
             "parameters": {
                 "type": "object",
@@ -100,9 +103,8 @@ def dev_tool_schemas(
                     "path": {"type": "string", "minLength": 1},
                     "start_line": {"type": "integer", "minimum": 1},
                     "end_line": {"type": "integer", "minimum": 1},
-                    "working_state": _public_working_state_schema(),
                 },
-                "required": ["path", "start_line", "end_line", "working_state"],
+                "required": ["path", "start_line", "end_line"],
                 "additionalProperties": False,
             },
         },
@@ -223,10 +225,42 @@ def dev_tool_schemas(
                 },
             }
         )
-    return schemas
+    decision_modes = {
+        "search_files": "inspect",
+        "read_file": "inspect",
+        "run_check": "verify",
+        "apply_git_diff": "mutate",
+        "finish_task": "finish",
+        "stop_task": "stop",
+    }
+    enabled = (
+        set(allowed_tools)
+        if allowed_tools is not None
+        else {schema["name"] for schema in schemas}
+    )
+    unknown = enabled - ALL_DEV_TOOLS
+    if unknown:
+        raise ContractError(f"unknown tools requested for schema: {sorted(unknown)}")
+    projected: list[dict[str, Any]] = []
+    for schema in schemas:
+        name = schema["name"]
+        if name not in enabled:
+            continue
+        parameters = schema["parameters"]
+        parameters["properties"]["turn_decision"] = _public_turn_decision_schema(
+            decision_modes[name]
+        )
+        parameters["required"].append("turn_decision")
+        projected.append(schema)
+    return projected
 
 
-def validate_tool_batch(calls: list[RequestedTool], *, max_parallel_reads: int = 4) -> str:
+def validate_tool_batch(
+    calls: list[RequestedTool],
+    *,
+    max_parallel_reads: int = 4,
+    allowed_tools: set[str] | frozenset[str] | None = None,
+) -> str:
     """Return ``parallel_read`` or ``single_action``; reject every mixed shape."""
 
     if not calls:
@@ -237,15 +271,28 @@ def validate_tool_batch(calls: list[RequestedTool], *, max_parallel_reads: int =
         raise ContractError("one model response cannot reuse an action ID")
     if any(name not in ALL_DEV_TOOLS for name in names):
         raise ContractError("model response requested an unknown dev-head tool")
+    if allowed_tools is not None and any(name not in allowed_tools for name in names):
+        raise ContractError("model response requested a tool unavailable at the current gate")
+    if any(call.turn_decision is None for call in calls):
+        raise ContractError("every tool call requires one bounded public turn_decision")
+    expected_modes = {
+        "search_files": "inspect",
+        "read_file": "inspect",
+        "run_check": "verify",
+        "apply_git_diff": "mutate",
+        "finish_task": "finish",
+        "stop_task": "stop",
+    }
+    if any(call.turn_decision.mode != expected_modes[call.name] for call in calls):
+        raise ContractError("turn_decision mode must match the requested tool family")
     if all(name in READ_TOOLS for name in names):
         if len(calls) > max_parallel_reads:
             raise ContractError(f"a read batch may contain at most {max_parallel_reads} calls")
-        if any(call.working_state is None for call in calls):
-            raise ContractError("every read/search call requires bounded public working_state")
+        decisions = [call.turn_decision.model_dump(mode="json") for call in calls]
+        if any(decision != decisions[0] for decision in decisions[1:]):
+            raise ContractError("parallel reads must share one identical turn_decision")
         return "parallel_read"
     if len(calls) == 1 and names[0] in SINGLE_ACTION_TOOLS:
-        if calls[0].working_state is not None:
-            raise ContractError("working_state is allowed only on read/search calls")
         return "single_action"
     raise ContractError(
         "a response must contain only up to four reads/searches or exactly one action"
@@ -317,7 +364,6 @@ class DevToolGateway:
             if result.tool in READ_TOOLS:
                 self._restore_read_result(result)
             elif result.tool == "run_check":
-                self._reset_evidence_progress()
                 self._remember_check(result.output)
 
     @staticmethod
@@ -413,12 +459,9 @@ class DevToolGateway:
     @staticmethod
     def _cacheable_read_output(output: dict[str, Any]) -> dict[str, Any]:
         cached = copy.deepcopy(output)
+        # Older development journals may contain this retired projection field.
         cached.pop("working_state", None)
         return cached
-
-    def _reset_evidence_progress(self) -> None:
-        with self._lock:
-            self._evidence_repetitions.clear()
 
     def _restore_read_result(self, result: DevToolResult) -> None:
         spans = result.output.get("spans", [])
@@ -431,8 +474,6 @@ class DevToolGateway:
                 restored["last_observed_seq"] = self._observation_seq
                 self.spans[restored["span_id"]] = restored
             fingerprint = result.output.get("evidence_fingerprint")
-            if result.output.get("new_span_count", 0):
-                self._evidence_repetitions.clear()
             if isinstance(fingerprint, str):
                 self._evidence_repetitions[fingerprint] = (
                     self._evidence_repetitions.get(fingerprint, 0) + 1
@@ -475,8 +516,6 @@ class DevToolGateway:
                     "span_ids": span_ids,
                 }
             )
-            if new_count:
-                self._evidence_repetitions.clear()
             repetition = self._evidence_repetitions.get(fingerprint, 0) + 1
             self._evidence_repetitions[fingerprint] = repetition
         decorated.update(
@@ -558,6 +597,13 @@ class DevToolGateway:
             if row["status"] != "PASS"
         ]
 
+    def unrun_visible_check_ids(self) -> list[str]:
+        return [
+            row["check_id"]
+            for row in self.visible_check_status()
+            if row["status"] == "NOT_RUN"
+        ]
+
     def ready_to_submit(self) -> bool:
         summary = self.current_diff
         return bool(summary.patch) and not summary.untracked_files and self.visible_checks_pass()
@@ -571,13 +617,15 @@ class DevToolGateway:
             return [future.result() for future in futures]
 
     def execute(self, call: RequestedTool) -> DevToolResult:
-        working_state = (
-            call.working_state.model_dump(mode="json") if call.working_state is not None else None
+        turn_decision = (
+            call.turn_decision.model_dump(mode="json")
+            if call.turn_decision is not None
+            else None
         )
         executable_input = {"tool": call.name, "arguments": call.arguments}
         action_input = dict(executable_input)
-        if working_state is not None:
-            action_input["working_state"] = working_state
+        if turn_decision is not None:
+            action_input["turn_decision"] = turn_decision
         input_hash = sha256_json(action_input)
         read_request_hash = sha256_json(executable_input)
         replay = self.journal.action_result(call.action_id, input_hash)
@@ -604,7 +652,7 @@ class DevToolGateway:
                     "input_hash": input_hash,
                     "tool": call.name,
                     "arguments": call.arguments,
-                    "working_state": working_state,
+                    "turn_decision": turn_decision,
                     "baseline_diff_hash": baseline,
                     "mutation_admitted": mutation_admitted,
                 },
@@ -629,8 +677,6 @@ class DevToolGateway:
                 )
                 with self._lock:
                     self._read_cache[cache_key] = self._cacheable_read_output(output)
-                if working_state is not None:
-                    output["working_state"] = working_state
             else:
                 output = self._perform(call.name, call.arguments)
                 evidence_cache_hit = False
@@ -648,8 +694,6 @@ class DevToolGateway:
             failure_output = {}
             if call.name in READ_TOOLS:
                 failure_output["read_request_hash"] = read_request_hash
-                if working_state is not None:
-                    failure_output["working_state"] = working_state
             result = DevToolResult(
                 action_id=call.action_id,
                 input_hash=input_hash,
@@ -676,7 +720,6 @@ class DevToolGateway:
                 if result.output.get("alternative_requirement_satisfied") is True:
                     self.requires_alternative = False
             elif result.tool == "run_check":
-                self._reset_evidence_progress()
                 self._remember_check(result.output)
         elif result.tool == "apply_git_diff":
             self.last_failed_mutation = self._failed_mutation_context(

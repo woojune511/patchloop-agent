@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
-from patchloop.dev.contracts import DevModelTurn, PublicWorkingState, RequestedTool
+from patchloop.dev.contracts import DevModelTurn, PublicTurnDecision, RequestedTool
 from patchloop.errors import ContractError
 
 DEV_SYSTEM_PROMPT = """You are PatchLoop dev-head, a constrained coding agent.
@@ -13,26 +13,26 @@ Use only the supplied tools. There is no separate planning phase or planning too
 Every response must request at least one supplied tool. Request either 1-4
 search_files/read_file calls in one response, or exactly one run_check,
 apply_git_diff, finish_task, or stop_task call. Never mix those shapes. Registered
-run_check tools are available immediately. Use stop_task only when no valid public
-read, check, or safe scoped mutation can make progress; provide a concise conclusion,
-not chain-of-thought. Every mutation must include a concise hypothesis, expected
-behavior, current evidence span IDs, and an exact source anchor. If the public context
-requires a causal alternative, the next mutation must also state which prior hypothesis
-was falsified and a materially different mechanism. The apply_git_diff git_diff value
-must be a raw Git unified diff beginning exactly with "diff --git a/<path> b/<path>".
-Never use "*** Begin Patch", "*** Update File", or another patch wrapper. All visible
-checks must pass on the current diff before finish_task is available. The complete
-current diff is projected in
-context; do not request get_diff. Do not emit raw chain-of-thought. Private tests,
-reference patches, and evaluator details are unavailable and must not be inferred.
-Every read/search call must carry bounded public working_state. State the current
-causal working_hypothesis, one exact evidence_gap that this call can resolve, and a
-concrete decision_after_result. This is a concise execution decision, not
-chain-of-thought. Update it from the latest public result. When the stated evidence
-gap is resolved, follow the recorded decision by mutating or stopping instead of
-re-reading the same source.
+tools are derived from the current workflow gate and remaining action horizon; a tool
+that is absent is not available this turn. Every tool call must carry turn_decision,
+the one bounded public decision for the complete response. Its mode must match the
+tool family. Parallel reads must repeat exactly the same inspect decision and may vary
+only their concrete query or range. evidence_goal is required only for inspect; it is
+null for every other mode. The decision describes why you are taking the action now,
+after the preceding public tool results, rather than promising a future action.
+Use stop_task when no available public action supports safe progress; provide a concise
+conclusion, not chain-of-thought. Every mutation must include a concise hypothesis,
+expected behavior, current evidence span IDs, and an exact source anchor. If the public
+context requires a causal alternative, the next mutation must also state which prior
+hypothesis was falsified and a materially different mechanism. The apply_git_diff
+git_diff value must be a raw Git unified diff beginning exactly with
+"diff --git a/<path> b/<path>". Never use "*** Begin Patch", "*** Update File", or
+another patch wrapper. All visible checks must pass on the current diff before
+finish_task is available. The complete current diff is projected in context; do not
+request get_diff. Do not emit raw chain-of-thought. Private tests, reference patches,
+and evaluator details are unavailable and must not be inferred.
 When last_failed_mutation is present, it is an unresolved public mutation from a
-prior stateless turn. Repair or explicitly replace that mutation before unrelated
+prior tool turn. Repair or explicitly replace that mutation before unrelated
 exploration. Read/search remains available when it is needed for the repair.
 """
 
@@ -107,23 +107,18 @@ class MockDevAdapter:
         current_diff = payload.get("current_diff", {})
         remaining_check_ids = payload.get("remaining_visible_check_ids", [])
         if not spans and not current_diff.get("patch"):
+            decision = PublicTurnDecision(
+                mode="inspect",
+                basis="Locate and inspect the public parser implementation once.",
+                evidence_goal="Identify the parser lifetime and exact mutation anchor.",
+            )
             return DevModelTurn(
                 tool_calls=[
                     RequestedTool(
                         name="search_files",
                         action_id="mock-search-source",
                         arguments={"query": "def parse_rows", "path_glob": "**/*.py"},
-                        working_state=PublicWorkingState(
-                            working_hypothesis=(
-                                "The parser likely loses logical records by iterating "
-                                "physical lines."
-                            ),
-                            evidence_gap="Locate the parser implementation.",
-                            decision_after_result=(
-                                "Read the located parser body, then mutate if it confirms "
-                                "per-line parsing."
-                            ),
-                        ),
+                        turn_decision=decision,
                     ),
                     RequestedTool(
                         name="read_file",
@@ -133,18 +128,7 @@ class MockDevAdapter:
                             "start_line": 1,
                             "end_line": 80,
                         },
-                        working_state=PublicWorkingState(
-                            working_hypothesis=(
-                                "The parser likely loses logical records by iterating "
-                                "physical lines."
-                            ),
-                            evidence_gap="Inspect the complete parser body and its return path.",
-                            decision_after_result=(
-                                "Apply the smallest parser-lifetime mutation if the body confirms "
-                                "the "
-                                "hypothesis; otherwise inspect its direct caller."
-                            ),
-                        ),
+                        turn_decision=decision,
                     ),
                 ]
             )
@@ -170,6 +154,14 @@ class MockDevAdapter:
                             "falsified_prior_hypothesis": None,
                             "alternative_mechanism": None,
                         },
+                        turn_decision=PublicTurnDecision(
+                            mode="mutate",
+                            basis=(
+                                "The public source confirms that physical-line iteration resets "
+                                "the CSV parser."
+                            ),
+                            evidence_goal=None,
+                        ),
                     )
                 ]
             )
@@ -181,6 +173,11 @@ class MockDevAdapter:
                         name="run_check",
                         action_id=f"mock-visible-check-{check_id}",
                         arguments={"check_id": check_id},
+                        turn_decision=PublicTurnDecision(
+                            mode="verify",
+                            basis="Run the next unexecuted visible check on the current diff.",
+                            evidence_goal=None,
+                        ),
                     )
                 ]
             )
@@ -190,6 +187,11 @@ class MockDevAdapter:
                     name="finish_task",
                     action_id="mock-finish",
                     arguments={},
+                    turn_decision=PublicTurnDecision(
+                        mode="finish",
+                        basis="Every visible check passed on the projected current diff.",
+                        evidence_goal=None,
+                    ),
                 )
             ]
         )

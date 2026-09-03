@@ -12,7 +12,7 @@ from patchloop.cli import app
 from patchloop.dev.contracts import (
     DevRunRequest,
     MutationIntent,
-    PublicWorkingState,
+    PublicTurnDecision,
     RequestedTool,
 )
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
@@ -23,20 +23,24 @@ from patchloop.task_loader import load_task_package
 
 
 def call(name: str, index: int = 0) -> RequestedTool:
-    working_state = (
-        PublicWorkingState(
-            working_hypothesis=f"hypothesis-{index}",
-            evidence_gap=f"gap-{index}",
-            decision_after_result=f"decision-{index}",
-        )
-        if name in {"read_file", "search_files"}
-        else None
-    )
+    modes = {
+        "read_file": "inspect",
+        "search_files": "inspect",
+        "run_check": "verify",
+        "apply_git_diff": "mutate",
+        "finish_task": "finish",
+        "stop_task": "stop",
+    }
+    mode = modes.get(name, "inspect")
     return RequestedTool(
         name=name,
         action_id=f"a-{index}",
         arguments={},
-        working_state=working_state,
+        turn_decision=PublicTurnDecision(
+            mode=mode,
+            basis="shared inspection basis" if mode == "inspect" else f"basis-{name}",
+            evidence_goal="one shared source question" if mode == "inspect" else None,
+        ),
     )
 
 
@@ -50,24 +54,38 @@ def test_tool_batch_contract_is_small_and_unmixed() -> None:
         validate_tool_batch([call("read_file", item) for item in range(5)])
     with pytest.raises(ContractError):
         validate_tool_batch([call("read_file"), call("search_files")])
-    with pytest.raises(ContractError, match="working_state"):
+    with pytest.raises(ContractError, match="turn_decision"):
         validate_tool_batch(
-            [RequestedTool(name="read_file", action_id="missing-state", arguments={})]
+            [RequestedTool(name="read_file", action_id="missing-decision", arguments={})]
         )
-    with pytest.raises(ContractError, match="only on read/search"):
+    with pytest.raises(ContractError, match="mode"):
         validate_tool_batch(
             [
                 RequestedTool(
                     name="run_check",
-                    action_id="unexpected-state",
+                    action_id="wrong-mode",
                     arguments={},
-                    working_state=PublicWorkingState(
-                        working_hypothesis="hypothesis",
-                        evidence_gap="gap",
-                        decision_after_result="decision",
+                    turn_decision=PublicTurnDecision(
+                        mode="inspect",
+                        basis="wrong family",
+                        evidence_goal="not a check decision",
                     ),
                 )
             ]
+        )
+    conflicting = call("search_files", 1)
+    conflicting.turn_decision = PublicTurnDecision(
+        mode="inspect",
+        basis="different batch decision",
+        evidence_goal="different question",
+    )
+    with pytest.raises(ContractError, match="one identical"):
+        validate_tool_batch([call("read_file"), conflicting])
+    with pytest.raises(ContractError, match="unavailable"):
+        validate_tool_batch(
+            [call("read_file")],
+            allowed_tools=frozenset({"stop_task"}),
+            max_parallel_reads=0,
         )
 
 
@@ -87,26 +105,30 @@ def test_mutation_contract_requires_minimal_plan_and_pairs_alternative() -> None
         )
 
 
-def test_public_working_state_is_bounded_and_strict() -> None:
-    valid = PublicWorkingState(
-        working_hypothesis="current public cause",
-        evidence_gap="one missing source fact",
-        decision_after_result="mutate if confirmed, otherwise inspect the caller",
+def test_public_turn_decision_is_bounded_strict_and_mode_specific() -> None:
+    valid = PublicTurnDecision(
+        mode="inspect",
+        basis="current public evidence requires one source fact",
+        evidence_goal="locate the direct caller",
     )
-    assert valid.working_hypothesis == "current public cause"
+    assert valid.mode == "inspect"
     with pytest.raises(ValidationError):
-        PublicWorkingState(
-            working_hypothesis="x" * 801,
-            evidence_gap="gap",
-            decision_after_result="decision",
+        PublicTurnDecision(
+            mode="inspect",
+            basis="x" * 801,
+            evidence_goal="gap",
         )
     with pytest.raises(ValidationError):
-        PublicWorkingState(
-            working_hypothesis="hypothesis",
-            evidence_gap="gap",
-            decision_after_result="decision",
+        PublicTurnDecision(
+            mode="inspect",
+            basis="hypothesis",
+            evidence_goal="gap",
             raw_reasoning="not an allowed field",
         )
+    with pytest.raises(ValidationError, match="require one evidence_goal"):
+        PublicTurnDecision(mode="inspect", basis="missing goal")
+    with pytest.raises(ValidationError, match="only inspect"):
+        PublicTurnDecision(mode="mutate", basis="ready", evidence_goal="extra")
 
 
 def test_cost_cap_is_checked_before_dispatch_and_can_lower_output_ceiling() -> None:

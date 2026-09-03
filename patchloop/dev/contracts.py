@@ -23,18 +23,19 @@ DEV_SINGLE_ACTION_TOOLS = frozenset(
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v3",
+            "schema_version": "dev-tool-surface-v4",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
             "mixed_batches": False,
             "unrestricted_shell": False,
             "new_files": False,
-            "read_working_state": [
-                "working_hypothesis",
-                "evidence_gap",
-                "decision_after_result",
+            "turn_decision": [
+                "mode",
+                "basis",
+                "evidence_goal",
             ],
+            "dynamic_workflow_tools": True,
         }
     )
 
@@ -65,6 +66,8 @@ class DevLimits(StrictModel):
     wall_time_seconds: int = Field(default=1_800, ge=1)
     max_protocol_recoveries: int = Field(default=1, ge=0, le=1)
     max_parallel_reads: int = Field(default=4, ge=1, le=4)
+    max_consecutive_inspection_turns: int = Field(default=24, ge=0)
+    max_failed_mutation_repair_turns: int = Field(default=3, ge=0)
 
 
 class EditAnchor(StrictModel):
@@ -100,19 +103,27 @@ class StopIntent(StrictModel):
     evidence_span_ids: list[str] = Field(default_factory=list, max_length=8)
 
 
-class PublicWorkingState(StrictModel):
-    """Bounded public decision state carried by a read/search action."""
+class PublicTurnDecision(StrictModel):
+    """One bounded public action decision for a complete model turn."""
 
-    working_hypothesis: str = Field(min_length=1, max_length=800)
-    evidence_gap: str = Field(min_length=1, max_length=500)
-    decision_after_result: str = Field(min_length=1, max_length=800)
+    mode: Literal["inspect", "mutate", "verify", "finish", "stop"]
+    basis: str = Field(min_length=1, max_length=800)
+    evidence_goal: str | None = Field(default=None, min_length=1, max_length=500)
+
+    @model_validator(mode="after")
+    def evidence_goal_matches_mode(self) -> PublicTurnDecision:
+        if self.mode == "inspect" and self.evidence_goal is None:
+            raise ValueError("inspect decisions require one evidence_goal")
+        if self.mode != "inspect" and self.evidence_goal is not None:
+            raise ValueError("only inspect decisions may carry an evidence_goal")
+        return self
 
 
 class RequestedTool(StrictModel):
     name: str
     action_id: str = Field(min_length=1, max_length=500)
     arguments: dict[str, Any] = Field(default_factory=dict)
-    working_state: PublicWorkingState | None = None
+    turn_decision: PublicTurnDecision | None = None
 
 
 class DevModelTurn(StrictModel):

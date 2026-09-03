@@ -10,7 +10,7 @@ patchloop/dev/runner.py   loop composition, gates, context, terminal handling
 patchloop/dev/tools.py    tool grammar, spans, mutations, checks, finish
 patchloop/dev/state.py    append-only JSONL, action/provider recovery
 patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
-patchloop/agent/model.py  stateless Responses adapter, zero retries
+patchloop/agent/model.py  journal-managed Responses adapter, zero retries
 patchloop/repository.py   audited checkout, workspace, full diff
 patchloop/sandbox/        registered local/Docker checks
 patchloop/verifier/       separate private evaluation and static policy
@@ -24,24 +24,28 @@ The only runtime is mutable `dev-head`. Its public workflow gates are
 `needs_mutation`, `needs_visible_checks`, and `ready_to_submit`; there is no plan
 state or plan tool.
 
-One model response may request either:
+One model response may request either, when that tool family is exposed by the
+current gate and action horizon:
 
 - 1–4 parallel `search_files` and/or `read_file` calls, or
 - exactly one `apply_git_diff`, `run_check`, `finish_task`, or `stop_task` call.
 
-Each read/search call also requires bounded public `working_state` with
-`working_hypothesis`, `evidence_gap`, and `decision_after_result`. This is the
-model's concise public execution decision, not a plan phase or reasoning transcript.
+Every call requires one bounded public `turn_decision` with `mode`, `basis`, and an
+`evidence_goal` only for inspection. Mode must match the requested tool family.
+Parallel reads repeat the same decision exactly, so the batch has one decision even
+when its concrete queries differ. This is the action selected from preceding public
+evidence, not a promise about an unseen result, a plan phase, or a reasoning transcript.
 
 The provider request uses required tool choice, and the application validates the
 smaller batch grammar above. Mixed, empty, duplicate-action, and oversized batches
 receive one short correction. A second consecutive protocol/incomplete violation
 terminates the row; any valid completed tool batch resets the correction allowance.
-`run_check` is available on the first turn and its schema enumerates only the public
-registered IDs. `finish_task` is exposed only for a non-empty diff with no untracked
-files after all visible checks pass on that exact diff. `stop_task` is an explicit
-unsuccessful terminal when no public action can support safe progress; it never
-submits or evaluates.
+An unexecuted `run_check` may be available on the first turn while the action horizon
+has slack; on a changed diff it is direct completion work. A check that already failed
+is not offered again on the same diff. `finish_task` is exposed only for a non-empty
+diff with no untracked files after all visible checks pass on that exact diff.
+`stop_task` is always exposed as an explicit unsuccessful terminal; it never submits
+or evaluates.
 
 ## Mutation and causal pivot
 
@@ -66,20 +70,22 @@ mutation additionally requires `falsified_prior_hypothesis` and
 
 ## Context boundary
 
-Model context contains only the public task, current full diff, the exact latest
-tool batch, a recency-ordered current-source working set, recent visible-check
+The canonical context artifact contains only the public task, current full diff, the
+exact latest tool batch, a recency-ordered current-source working set, recent visible-check
 output, the complete current-diff check status, exact remaining check IDs, bounded
 `last_successful_mutation`, bounded `last_failed_mutation`, remaining budget, and
-the latest three attempt-result-next-question cards. A successful check card names
+the latest three batch-level attempt-result-next-question cards. A successful check card names
 the next remaining check instead of treating PASS as a failure. A failed mutation
 retains its public diff excerpt, full diff hash, intent, anchor, evidence IDs, error,
 and parsed error location across later reads and process resume. A later failed
-mutation replaces it; a successful mutation clears it. Each read result returns the
-call's current public working state exactly in the next latest batch and its attempt
-card; cached file evidence is reused independently of that state, so a revised
-hypothesis cannot receive stale decision text. Identical evidence may be cached and
-signaled but is not hard-blocked. Never add raw reasoning, private task material,
-hidden tests, reference patches, or evaluator details.
+mutation replaces it; a successful mutation clears it. From turn two onward, the
+actual model input carries the immediately preceding calls and exact public results as
+native `function_call` / `function_call_output` items, followed by current derived
+state without duplicating those results. One content-addressed model-input artifact
+binds that sequence. Only the batch card carries its decision once. Identical evidence
+is counted per fingerprint at the unchanged diff even when another read finds a new
+span; it may be cached and signaled but is not hard-blocked. Never add raw reasoning, private
+task material, hidden tests, reference patches, or evaluator details.
 
 ## State and recovery
 
@@ -94,8 +100,10 @@ New runs also own one immutable `dev-run-envelope-v1`. `--resume-run-id` require
 credential path hash, cost cap, limits, and sandbox identity. Pre-envelope runs
 cannot resume. A run-lifetime OS lock rejects concurrent execution. Generic turn
 and tool-batch events recover a durable model decision without another provider
-call; counters, settled cost, latest batch, and active execution time are rebuilt
-from unique journal events. Process downtime contributes only to run age.
+call; exact per-turn tool availability and native call/output linkage are stored at
+the turn boundary. Counters, inspection leases, settled cost, latest batch, and active
+execution time are rebuilt from unique journal events. Process downtime contributes
+only to run age.
 
 ## Live and evaluation boundary
 
@@ -138,6 +146,8 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 - 1,800 seconds per row
 - one consecutive protocol/incomplete recovery
 - four parallel reads
+- 24 inspection turns per unchanged diff
+- three repair-specific inspection turns after a failed mutation
 - one repetition by default, six maximum
 
 ## Development decisions and next seam
@@ -218,7 +228,7 @@ failure after sufficient public evidence, not another projection, task-contract,
 tool-transport failure. The soft repeated-evidence detector emitted no signal because
 interleaved newly observed spans clear all fingerprint counts.
 
-The provider-free correction preserves the model's bounded public
+The post-seventh provider-free correction preserved the model's bounded public
 `working_hypothesis`, `evidence_gap`, and `decision_after_result` on every read/search
 result and attempt card. Action identity binds the state, while the operational read
 hash remains the cache key; a cache hit therefore returns current decision state, not
@@ -234,9 +244,17 @@ reasoning, one repetition, and $1.20 cap. Run `run_dev_07ad1af07d22489c` reached
 context after the first projected all latest working states. Thirty-five per-call
 decisions explicitly contemplated mutation/edit/patch/apply, but subsequent tool
 selection remained read/search, including the final turn. Treat this as a live
-decision-to-action coupling failure, not a context projection failure. The next seam
-is provider-free characterization of that coupling; do not add a repeated-read hard
-terminal or run a ninth paid row without separate authorization.
+decision-to-action coupling failure, not a context projection failure.
+
+The current provider-free correction retires that per-call future-decision contract.
+It reconstructs one bounded native public tool continuation, records one typed decision
+per batch, validates its mode against the actual tool family, and derives the exposed
+tools from workflow evidence and a completion horizon. At unchanged diff, general
+inspection leases 24 turns; a failed mutation replaces that with three repair reads.
+When the remaining calls are needed for mutation/check/finish, reads disappear while
+safe progress actions and `stop_task` remain. This does not classify repeated evidence
+or add a hard stagnation terminal. Validate this seam locally; do not run a ninth paid
+row without separate authorization.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.

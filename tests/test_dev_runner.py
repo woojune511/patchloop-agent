@@ -19,7 +19,7 @@ from patchloop.dev.contracts import (
     DevModelTurn,
     DevRunRequest,
     DevToolResult,
-    PublicWorkingState,
+    PublicTurnDecision,
     RequestedTool,
 )
 from patchloop.dev.model import MOCK_MUTATIONS, MockDevAdapter
@@ -33,11 +33,11 @@ from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes, sha256_json
 
 
-def working_state(label: str) -> PublicWorkingState:
-    return PublicWorkingState(
-        working_hypothesis=f"hypothesis-{label}",
-        evidence_gap=f"gap-{label}",
-        decision_after_result=f"decision-{label}",
+def inspection_decision(label: str) -> PublicTurnDecision:
+    return PublicTurnDecision(
+        mode="inspect",
+        basis=f"basis-{label}",
+        evidence_goal=f"goal-{label}",
     )
 
 
@@ -53,8 +53,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
             "file_hash": "sha256:" + "0" * 64,
             "last_observed_seq": index + 1,
         }
-    latest = gateway.execute(
-        RequestedTool(
+    latest_call = RequestedTool(
             name="read_file",
             action_id="latest-read",
             arguments={
@@ -62,9 +61,9 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
                 "start_line": 1,
                 "end_line": 13,
             },
-            working_state=working_state("latest-read"),
+            turn_decision=inspection_decision("latest-read"),
         )
-    )
+    latest = gateway.execute(latest_call)
     context = json.loads(
         runner._build_context(  # noqa: SLF001 - direct context contract test
             package=smoke_package,
@@ -85,8 +84,59 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     assert projected[0]["span_id"] == latest.output["spans"][0]["span_id"]
     assert len(context["source_spans"]) == 8
 
+    limits = DevLimits()
+    horizon = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
+        gateway,
+        runner._RunCounters(model_calls=limits.max_model_calls - 3),  # noqa: SLF001
+        limits,
+    )
+    assert horizon.minimum_completion_calls == 3
+    assert horizon.exploration_allowed is False
+    assert horizon.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
+    assert horizon.max_parallel_reads == 0
 
-def test_read_working_state_survives_cache_and_next_context(
+    leased = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
+        gateway,
+        runner._RunCounters(  # noqa: SLF001
+            model_calls=24,
+            inspection_turns_at_diff=limits.max_consecutive_inspection_turns,
+        ),
+        limits,
+    )
+    assert leased.exploration_allowed is True
+    assert leased.inspection_lease_available is False
+    assert {"read_file", "search_files"}.isdisjoint(leased.allowed_tools)
+    assert "apply_git_diff" in leased.allowed_tools
+    assert "stop_task" in leased.allowed_tools
+
+    gateway.last_failed_mutation = {"action_id": "failed-mutation"}
+    repair = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
+        gateway,
+        runner._RunCounters(  # noqa: SLF001
+            model_calls=24,
+            inspection_turns_at_diff=limits.max_consecutive_inspection_turns,
+            failed_mutation_repair_turns=(
+                limits.max_failed_mutation_repair_turns - 1
+            ),
+            failed_mutation_pending=True,
+        ),
+        limits,
+    )
+    assert {"read_file", "search_files"}.issubset(repair.allowed_tools)
+    exhausted_repair = runner._tool_policy(  # noqa: SLF001
+        gateway,
+        runner._RunCounters(  # noqa: SLF001
+            model_calls=24,
+            inspection_turns_at_diff=limits.max_consecutive_inspection_turns,
+            failed_mutation_repair_turns=limits.max_failed_mutation_repair_turns,
+            failed_mutation_pending=True,
+        ),
+        limits,
+    )
+    assert {"read_file", "search_files"}.isdisjoint(exhausted_repair.allowed_tools)
+
+
+def test_turn_decision_is_bound_to_cache_action_and_projected_once_per_batch(
     gateway_factory,
     smoke_package,
 ) -> None:
@@ -96,40 +146,40 @@ def test_read_working_state_survives_cache_and_next_context(
         "start_line": 1,
         "end_line": 13,
     }
-    first_state = working_state("initial-cause")
-    first = gateway.execute(
-        RequestedTool(
+    first_decision = inspection_decision("initial-cause")
+    first_call = RequestedTool(
             name="read_file",
             action_id="working-state-first",
             arguments=arguments,
-            working_state=first_state,
+            turn_decision=first_decision,
         )
-    )
+    first = gateway.execute(first_call)
     runner._record_tool_batch(  # noqa: SLF001 - direct context contract test
         journal=journal,
         gateway=gateway,
         turn_id="working-state-first-turn",
+        calls=[first_call],
         results=[first],
         active_elapsed_ms=1,
     )
 
-    revised_state = PublicWorkingState(
-        working_hypothesis="The visible loop confirms physical-line parsing.",
-        evidence_gap="Confirm that replacing the loop preserves the return type.",
-        decision_after_result="Mutate the parser if the return type remains a list of rows.",
+    revised_decision = PublicTurnDecision(
+        mode="inspect",
+        basis="The visible loop confirms physical-line parsing.",
+        evidence_goal="Confirm that replacing the loop preserves the return type.",
     )
-    revised = gateway.execute(
-        RequestedTool(
+    revised_call = RequestedTool(
             name="read_file",
             action_id="working-state-revised",
             arguments=arguments,
-            working_state=revised_state,
+            turn_decision=revised_decision,
         )
-    )
+    revised = gateway.execute(revised_call)
     runner._record_tool_batch(  # noqa: SLF001 - direct context contract test
         journal=journal,
         gateway=gateway,
         turn_id="working-state-revised-turn",
+        calls=[revised_call],
         results=[revised],
         active_elapsed_ms=2,
     )
@@ -149,37 +199,37 @@ def test_read_working_state_survives_cache_and_next_context(
             ).limits,
         )
     )
-    expected = revised_state.model_dump(mode="json")
+    expected = revised_decision.model_dump(mode="json")
 
     assert revised.evidence_cache_hit is True
     assert revised.input_hash != first.input_hash
     assert revised.output["read_request_hash"] == first.output["read_request_hash"]
-    assert revised.output["working_state"] == expected
-    assert context["latest_tool_results"][0]["output"]["working_state"] == expected
-    assert context["recent_attempt_result_next_question"][-1]["working_state"] == expected
-    assert (
-        context["recent_attempt_result_next_question"][-1]["next_question"]
-        == revised_state.decision_after_result
-    )
+    assert "turn_decision" not in revised.output
+    assert "turn_decision" not in context["latest_tool_results"][0]["output"]
+    assert context["recent_attempt_result_next_question"][-1]["turn_decision"] == expected
 
 
-def test_failed_read_retains_bounded_working_state(gateway_factory) -> None:
+def test_failed_read_batch_retains_one_bounded_turn_decision(gateway_factory) -> None:
     gateway, _, _ = gateway_factory()
-    state = working_state("failed-read")
-    result = gateway.execute(
-        RequestedTool(
+    decision = inspection_decision("failed-read")
+    call = RequestedTool(
             name="read_file",
             action_id="working-state-failed-read",
             arguments={"path": "missing.py", "start_line": 1, "end_line": 10},
-            working_state=state,
+            turn_decision=decision,
         )
+    result = gateway.execute(call)
+    card = runner._batch_attempt_card(  # noqa: SLF001 - context contract test
+        turn_id="failed-read-turn",
+        calls=[call],
+        results=[result],
+        gateway=gateway,
     )
-    card = runner._attempt_card(result, gateway)  # noqa: SLF001 - context contract test
 
     assert result.status == "failed"
-    assert result.output["working_state"] == state.model_dump(mode="json")
-    assert card["working_state"] == state.model_dump(mode="json")
-    assert card["next_question"] == state.decision_after_result
+    assert "turn_decision" not in result.output
+    assert card["turn_decision"] == decision.model_dump(mode="json")
+    assert card["result"]["actions"][0]["status"] == "failed"
 
 
 def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
@@ -229,6 +279,21 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
     )
 
     assert request["tool_choice"] == "required"
+    native_input = [
+        {"role": "system", "content": "test prompt"},
+        {
+            "type": "function_call_output",
+            "call_id": "call-public",
+            "output": "{}",
+        },
+        {"role": "user", "content": "{}"},
+    ]
+    native_request = adapter.request_payload(
+        native_input,
+        dev_tool_schemas(finish_enabled=False, check_ids=["public-check"]),
+        system_prompt="test prompt",
+    )
+    assert native_request["input"] == native_input
     assert adapter.count_input_tokens_v2(request) == 17
     assert observed["count"]["tool_choice"] == "required"
 
@@ -247,7 +312,7 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
     assert "public-message-sentinel" not in repr(turn)
 
 
-def test_invalid_provider_working_state_becomes_bounded_protocol_error() -> None:
+def test_invalid_provider_turn_decision_becomes_bounded_protocol_error() -> None:
     raw = ModelTurn(
         tool_calls=[
             ProviderRequestedTool(
@@ -257,10 +322,10 @@ def test_invalid_provider_working_state_becomes_bounded_protocol_error() -> None
                     "path": "mini_data_utils/csvlite.py",
                     "start_line": 1,
                     "end_line": 10,
-                    "working_state": {
-                        "working_hypothesis": "x" * 801,
-                        "evidence_gap": "gap",
-                        "decision_after_result": "decision",
+                    "turn_decision": {
+                        "mode": "inspect",
+                        "basis": "x" * 801,
+                        "evidence_goal": "gap",
                     },
                 },
             )
@@ -306,8 +371,7 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
     )
     mutation = MOCK_MUTATIONS["csv-quoted-newline"]
     malformed_patch = mutation.patch.replace(" import csv\n", " import csv_missing\n")
-    failed = gateway.execute(
-        RequestedTool(
+    failed_call = RequestedTool(
             name="apply_git_diff",
             action_id="failed-mutation",
             arguments={
@@ -323,19 +387,25 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
                 "falsified_prior_hypothesis": None,
                 "alternative_mechanism": None,
             },
+            turn_decision=PublicTurnDecision(
+                mode="mutate",
+                basis="The public source supplies the mutation anchor.",
+                evidence_goal=None,
+            ),
         )
-    )
+    failed = gateway.execute(failed_call)
     _, correction = runner._record_tool_batch(  # noqa: SLF001 - context contract test
         journal=journal,
         gateway=gateway,
         turn_id="failed-mutation-turn",
+        calls=[failed_call],
         results=[failed],
         active_elapsed_ms=1,
     )
     assert correction is None
 
-    reads = gateway.execute_batch(
-        [
+    repair_decision = inspection_decision("failed-mutation-repair")
+    read_calls = [
             RequestedTool(
                 name="read_file",
                 action_id=f"read-after-failure-{index}",
@@ -344,15 +414,16 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
                     "start_line": index,
                     "end_line": index + 5,
                 },
-                working_state=working_state(f"read-after-failure-{index}"),
+                turn_decision=repair_decision,
             )
             for index in range(1, 5)
         ]
-    )
+    reads = gateway.execute_batch(read_calls)
     runner._record_tool_batch(  # noqa: SLF001 - displace the bounded attempt cards
         journal=journal,
         gateway=gateway,
         turn_id="read-after-failure-turn",
+        calls=read_calls,
         results=reads,
         active_elapsed_ms=2,
     )
@@ -381,10 +452,10 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
     assert "patch failed: mini_data_utils/csvlite.py:1" in context[
         "last_failed_mutation"
     ]["error_message"]
-    assert all(
-        card["attempt"] not in {"apply_git_diff", "protocol"}
-        for card in context["recent_attempt_result_next_question"]
-    )
+    assert [
+        card["attempt"] for card in context["recent_attempt_result_next_question"]
+    ] == ["apply_git_diff", "inspect"]
+    assert len(context["recent_attempt_result_next_question"][-1]["result"]["actions"]) == 4
 
 
 def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
@@ -500,10 +571,12 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
 
 def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeypatch) -> None:
     contexts: list[str] = []
+    tool_names: list[list[str]] = []
 
     class CapturingMock(MockDevAdapter):
         def next_turn(self, context, tools):
             contexts.append(context)
+            tool_names.append([tool["name"] for tool in tools])
             return super().next_turn(context, tools)
 
     monkeypatch.setattr(runner, "MockDevAdapter", CapturingMock)
@@ -538,9 +611,14 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "last_failed_mutation",
         "recent_attempt_result_next_question",
         "workflow_gate",
+        "available_tool_names",
+        "action_horizon",
         "remaining_budget",
     }
     assert all(set(json.loads(context)) == context_keys for context in contexts)
+    assert [sorted(names) for names in tool_names] == [
+        json.loads(context)["available_tool_names"] for context in contexts
+    ]
     projected = [
         json.loads(context)["current_diff"]
         for context in contexts
@@ -560,6 +638,10 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "needs_visible_checks",
         "ready_to_submit",
     ]
+    assert [
+        json.loads(context)["action_horizon"]["inspection_turns_at_current_diff"]
+        for context in contexts
+    ] == [0, 1, 0, 0]
     assert len([row for row in rows if row["event_type"] == "turn_decision_recorded"]) == 4
     assert len([row for row in rows if row["event_type"] == "tool_batch_finished"]) == 4
     terminal = next(row for row in rows if row["event_type"] == "terminal")
@@ -567,6 +649,33 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     turns = [row for row in rows if row["event_type"] == "turn_started"]
     assert len(turns) == 4
     assert all(row["payload"]["context_hash"].startswith("sha256:") for row in turns)
+    assert all(row["payload"]["model_input_hash"].startswith("sha256:") for row in turns)
+    second_input_path = Path(turns[1]["payload"]["model_input_artifact"]["path"])
+    second_input = json.loads(second_input_path.read_text(encoding="utf-8"))
+    assert sha256_bytes(second_input_path.read_bytes()) == turns[1]["payload"][
+        "model_input_hash"
+    ]
+    function_calls = [item for item in second_input if item.get("type") == "function_call"]
+    function_outputs = [
+        item for item in second_input if item.get("type") == "function_call_output"
+    ]
+    assert [item["call_id"] for item in function_calls] == [
+        item["call_id"] for item in function_outputs
+    ]
+    assert [item["call_id"] for item in function_outputs] == turns[1]["payload"][
+        "transcript_action_ids"
+    ]
+    prior_results = json.loads(contexts[1])["latest_tool_results"]
+    assert [json.loads(item["output"]) for item in function_outputs] == prior_results
+    current_input_context = json.loads(second_input[-1]["content"])
+    assert current_input_context["latest_tool_results"] == []
+    assert current_input_context["latest_tool_results_delivery"] == {
+        "format": "preceding_function_call_output_items",
+        "action_ids": turns[1]["payload"]["transcript_action_ids"],
+    }
+    assert "working_state" not in json.dumps(second_input)
+    assert "hidden-multiline-csv" not in json.dumps(second_input)
+    assert "reference_patch" not in json.dumps(second_input)
     assert any(
         result["output"].get("spans")
         for context in contexts[1:]
@@ -737,11 +846,17 @@ def test_protocol_correction_limit_is_consecutive_and_stop_is_structured(
                                 "start_line": 1,
                                 "end_line": 20,
                             },
+                            turn_decision=inspection_decision("invalid-mixed"),
                         ),
                         RequestedTool(
                             name="run_check",
                             action_id=f"mixed-check-{self.calls}",
                             arguments={"check_id": "existing-unit-tests"},
+                            turn_decision=PublicTurnDecision(
+                                mode="verify",
+                                basis="invalid mixed batch",
+                                evidence_goal=None,
+                            ),
                         ),
                     ]
                 )
@@ -756,7 +871,9 @@ def test_protocol_correction_limit_is_consecutive_and_stop_is_structured(
                                 "start_line": 1,
                                 "end_line": 20,
                             },
-                            working_state=working_state("valid-between-corrections"),
+                            turn_decision=inspection_decision(
+                                "valid-between-corrections"
+                            ),
                         )
                     ]
                 )
@@ -770,6 +887,11 @@ def test_protocol_correction_limit_is_consecutive_and_stop_is_structured(
                             "summary": "No additional public evidence supports a safe edit.",
                             "evidence_span_ids": [],
                         },
+                        turn_decision=PublicTurnDecision(
+                            mode="stop",
+                            basis="No further safe public action is available.",
+                            evidence_goal=None,
+                        ),
                     )
                 ]
             )
@@ -1199,15 +1321,17 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
             return ModelTurn(
                 tool_calls=[
                     ProviderRequestedTool(
-                        name="read_file",
-                        action_id="provider-read-once",
+                        name="stop_task",
+                        action_id="provider-stop-once",
                         arguments={
-                            "path": "mini_data_utils/csvlite.py",
-                            "start_line": 1,
-                            "end_line": 20,
-                            "working_state": working_state("provider-read-once").model_dump(
-                                mode="json"
-                            ),
+                            "reason_code": "insufficient_public_evidence",
+                            "summary": "Stop at the one-call test horizon.",
+                            "evidence_span_ids": [],
+                            "turn_decision": PublicTurnDecision(
+                                mode="stop",
+                                basis="Only an explicit stop fits the current horizon.",
+                                evidence_goal=None,
+                            ).model_dump(mode="json"),
                         },
                     )
                 ],
@@ -1244,7 +1368,7 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
 
     resumed = runner.run_dev(request.model_copy(update={"resume_run_id": run_id}))
     run = resumed["runs"][0]
-    assert run["terminal"] == "LIMIT_REACHED"
+    assert run["terminal"] == "AGENT_STOPPED"
     assert run["call_counts"] == {"model": 1, "input_count": 1, "tool": 1}
     assert run["cost_nanos"] > 0
     assert calls["execute"] == 1
@@ -1263,8 +1387,12 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
         if row["event_type"] == "turn_decision_recorded"
     )
     recorded_call = decision["tool_calls"][0]
-    assert "working_state" not in recorded_call["arguments"]
-    assert recorded_call["working_state"] == working_state("provider-read-once").model_dump(
+    assert "turn_decision" not in recorded_call["arguments"]
+    assert recorded_call["turn_decision"] == PublicTurnDecision(
+        mode="stop",
+        basis="Only an explicit stop fits the current horizon.",
+        evidence_goal=None,
+    ).model_dump(
         mode="json"
     )
 

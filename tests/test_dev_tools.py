@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from patchloop.dev.contracts import PublicWorkingState, RequestedTool
+from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MOCK_MUTATIONS
 from patchloop.dev.tools import DevToolGateway, dev_tool_schemas
 from patchloop.sandbox.runner import SandboxResult
@@ -30,21 +30,22 @@ class CountingFailSandbox:
         )
 
 
-def working_state(label: str) -> PublicWorkingState:
-    return PublicWorkingState(
-        working_hypothesis=f"hypothesis-{label}",
-        evidence_gap=f"gap-{label}",
-        decision_after_result=f"decision-{label}",
+def inspection_decision(label: str = "source") -> PublicTurnDecision:
+    return PublicTurnDecision(
+        mode="inspect",
+        basis=f"inspect-basis-{label}",
+        evidence_goal=f"inspect-goal-{label}",
     )
 
 
 def read_calls() -> list[RequestedTool]:
+    decision = inspection_decision()
     return [
         RequestedTool(
             name="search_files",
             action_id="search-source",
             arguments={"query": "def parse_rows", "path_glob": "**/*.py"},
-            working_state=working_state("search-source"),
+            turn_decision=decision,
         ),
         RequestedTool(
             name="read_file",
@@ -54,7 +55,7 @@ def read_calls() -> list[RequestedTool]:
                 "start_line": 1,
                 "end_line": 80,
             },
-            working_state=working_state("read-source"),
+            turn_decision=decision,
         ),
     ]
 
@@ -84,6 +85,11 @@ def mutation_call(gateway, *, action_id: str = "mutation-1", alternative: bool =
                 else None
             ),
         },
+        turn_decision=PublicTurnDecision(
+            mode="mutate",
+            basis="The inspected public source supports this scoped mutation.",
+            evidence_goal=None,
+        ),
     )
 
 
@@ -115,20 +121,34 @@ def test_mutation_tool_contract_requires_unwrapped_raw_git_diff() -> None:
     assert mutation["parameters"]["additionalProperties"] is False
     assert "diff --git a/<path> b/<path>" in mutation["description"]
     assert "*** Begin Patch" in mutation["description"]
-    for read in reads:
-        state = read["parameters"]["properties"]["working_state"]
-        assert "working_state" in read["parameters"]["required"]
-        assert set(state["required"]) == set(state["properties"])
-        assert state["additionalProperties"] is False
-        assert state["properties"]["working_hypothesis"]["maxLength"] == 800
-        assert state["properties"]["evidence_gap"]["maxLength"] == 500
-        assert state["properties"]["decision_after_result"]["maxLength"] == 800
-    assert "apply_git_diff git_diff" in DEV_SYSTEM_PROMPT
+    for schema in schemas:
+        decision = schema["parameters"]["properties"]["turn_decision"]
+        assert "turn_decision" in schema["parameters"]["required"]
+        assert set(decision["required"]) == set(decision["properties"])
+        assert decision["additionalProperties"] is False
+        assert decision["properties"]["basis"]["maxLength"] == 800
+        expected_mode = "inspect" if schema in reads else {
+            "run_check": "verify",
+            "apply_git_diff": "mutate",
+            "stop_task": "stop",
+        }[schema["name"]]
+        assert decision["properties"]["mode"]["enum"] == [expected_mode]
+    assert "git_diff value must be a raw Git unified diff" in DEV_SYSTEM_PROMPT
     assert "Never use \"*** Begin Patch\"" in DEV_SYSTEM_PROMPT
     assert "When last_failed_mutation is present" in DEV_SYSTEM_PROMPT
     assert "Every response must request at least one supplied tool" in DEV_SYSTEM_PROMPT
-    assert "Use stop_task only when no valid public" in DEV_SYSTEM_PROMPT
-    assert "Every read/search call must carry bounded public working_state" in DEV_SYSTEM_PROMPT
+    assert "Use stop_task when no available public action" in DEV_SYSTEM_PROMPT
+    assert "Every tool call must carry turn_decision" in DEV_SYSTEM_PROMPT
+    assert "Parallel reads must repeat exactly the same inspect decision" in DEV_SYSTEM_PROMPT
+    gate_schemas = dev_tool_schemas(
+        finish_enabled=False,
+        check_ids=(),
+        allowed_tools=frozenset({"apply_git_diff", "stop_task"}),
+    )
+    assert [schema["name"] for schema in gate_schemas] == [
+        "apply_git_diff",
+        "stop_task",
+    ]
 
 
 def test_empty_diff_is_never_ready_even_with_remembered_passing_checks(
@@ -461,19 +481,35 @@ def test_read_cache_promotes_evidence_and_resets_after_mutation(gateway_factory)
     assert repeated.output["evidence_repetition"] == 2
     assert repeated.output["stagnation_signal"] is True
 
-    reframed_state = working_state("reframed-after-result")
+    interleaved = gateway.execute(
+        first_call.model_copy(
+            update={
+                "action_id": "interleaved-new-range",
+                "arguments": {
+                    "path": "mini_data_utils/csvlite.py",
+                    "start_line": 2,
+                    "end_line": 7,
+                },
+            }
+        )
+    )
+    assert interleaved.output["new_span_count"] == 1
+
+    reframed_decision = inspection_decision("reframed-after-result")
     reframed = gateway.execute(
         first_call.model_copy(
             update={
                 "action_id": "read-source-with-reframed-state",
-                "working_state": reframed_state,
+                "turn_decision": reframed_decision,
             }
         )
     )
     assert reframed.evidence_cache_hit is True
     assert reframed.input_hash != first.input_hash
     assert reframed.output["read_request_hash"] == first.output["read_request_hash"]
-    assert reframed.output["working_state"] == reframed_state.model_dump(mode="json")
+    assert reframed.output["evidence_repetition"] == 3
+    assert reframed.output["stagnation_signal"] is True
+    assert "turn_decision" not in reframed.output
 
     restarted = type(gateway)(
         workspace=gateway.workspace,
@@ -482,17 +518,17 @@ def test_read_cache_promotes_evidence_and_resets_after_mutation(gateway_factory)
         journal=gateway.journal,
         limits=gateway.limits,
     )
-    resumed_state = working_state("reframed-after-restart")
+    resumed_decision = inspection_decision("reframed-after-restart")
     resumed = restarted.execute(
         first_call.model_copy(
             update={
                 "action_id": "read-source-after-restart",
-                "working_state": resumed_state,
+                "turn_decision": resumed_decision,
             }
         )
     )
     assert resumed.evidence_cache_hit is True
-    assert resumed.output["working_state"] == resumed_state.model_dump(mode="json")
+    assert "turn_decision" not in resumed.output
 
     assert gateway.execute(mutation_call(gateway)).status == "succeeded"
     refreshed = gateway.execute(
@@ -587,14 +623,21 @@ def test_action_replay_and_crash_reconciliation_do_not_duplicate_mutation(
     call.arguments["git_diff"] = call.arguments["git_diff"].replace(
         "@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@"
     )
-    input_hash = sha256_json({"tool": call.name, "arguments": call.arguments})
+    input_hash = sha256_json(
+        {
+            "tool": call.name,
+            "arguments": call.arguments,
+            "turn_decision": call.turn_decision.model_dump(mode="json"),
+        }
+    )
     journal.append(
         "action_started",
         {
             "action_id": call.action_id,
             "input_hash": input_hash,
-            "tool": call.name,
-            "arguments": call.arguments,
+                "tool": call.name,
+                "arguments": call.arguments,
+                "turn_decision": call.turn_decision.model_dump(mode="json"),
             "baseline_diff_hash": gateway.current_diff_hash,
             "mutation_admitted": True,
         },

@@ -69,8 +69,11 @@ before generation, reserves a conservative output allowance, uses zero SDK
 transport retries, and stops all remaining repetitions when count, transport, or
 billing state is uncertain. Generation and input counting use the same
 `tool_choice=required` contract, so the provider request and the runner's non-empty
-tool-batch requirement agree. The application still enforces its smaller grammar:
-up to four reads/searches, or exactly one mutation, check, finish, or stop.
+tool-batch requirement agree. From the second turn onward, the request reconstructs
+the immediately preceding public function calls and their matching outputs as native
+Responses input items. Raw reasoning and non-tool response content are not replayed.
+The application still enforces its smaller grammar: up to four reads/searches, or
+exactly one mutation, check, finish, or stop.
 
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against
 the official [API pricing](https://developers.openai.com/api/docs/pricing) and
@@ -94,16 +97,22 @@ If a valid mutation call fails, its bounded public diff and intent remain in
 `last_failed_mutation` across later reads and resume. The agent may read/search when
 needed for repair, but a successful mutation is required to clear that repair target.
 Tool execution failures are not counted or presented as model protocol violations.
-Every read/search call must include bounded `working_hypothesis`, `evidence_gap`, and
-`decision_after_result` values inside its public `working_state`. PatchLoop separates
-that state from the executable path/query arguments, binds both to the durable action
-input, and keys the read cache only by the executable request plus current diff. The
-current call's state is attached after cache lookup, so a cache hit cannot replay a
-stale hypothesis. Successful and failed read results both carry the bounded state
-into the next canonical context. It is an execution summary, not stored raw model
-reasoning, and it creates no hard transition or separate plan tool. Invalid provider
-state is converted to a protocol error only after completed response usage remains
-available for settlement and durable recording.
+Every tool call must include one bounded public `turn_decision` containing `mode`,
+`basis`, and an `evidence_goal` only for inspection. Its mode must match the actual
+tool family. Parallel reads must repeat the same decision, so one batch cannot declare
+conflicting next actions. The decision records the action selected after the preceding
+public result; it is not a promise about an unseen result or stored raw reasoning.
+Action identity binds the decision, while the operational read cache remains keyed
+only by the executable request and current diff.
+
+Tool availability is derived from the workflow gate, current evidence, unexecuted
+visible checks, remaining model/tool budget, and an inspection lease. The default
+lease allows 24 inspection turns per unchanged diff and three repair-specific inspection
+turns after a failed mutation. Reads disappear before they would consume calls needed
+for mutation, checks, and finish. This is a resource horizon, not repeated-evidence
+classification; cached or repeated evidence remains diagnostic-only, and `stop_task`
+is always available. Repetition counts are per evidence fingerprint at the unchanged
+diff and are not globally reset by an unrelated new span or check.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate and remaining public checks. A valid tool batch
 resets that correction allowance. Provider journals retain only output item counts,
@@ -115,7 +124,9 @@ without submission or evaluation.
 `finish_task` becomes available only after every visible check passes on the
 current non-empty diff and no non-ignored untracked file remains. The context lists
 every current-diff check as PASS, FAIL, or NOT_RUN and separately names remaining
-IDs; the `run_check` schema accepts only those registered public IDs. The full
+IDs; the `run_check` schema exposes only public checks not yet executed on that exact
+diff. A failed check therefore requires a mutation or stop rather than a same-diff
+rerun. The full
 submitted patch is stored by content hash. A separate
 manifest is atomically recorded before evaluator execution and binds the exact
 task bytes, full runtime bytes, model/tool/sandbox identities, visible-check diff,

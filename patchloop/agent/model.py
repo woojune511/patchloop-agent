@@ -1,4 +1,4 @@
-"""Stateless model adapter with zero SDK transport retries."""
+"""Journal-managed model adapter with zero SDK transport retries."""
 
 from __future__ import annotations
 
@@ -69,7 +69,7 @@ def create_openai_client(config: ModelConfig, *, api_key: str) -> OpenAI:
 
 
 class OpenAIResponsesAdapter:
-    """One stateless Responses request per turn with exact input counting."""
+    """One journal-managed Responses request per turn with exact input counting."""
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class OpenAIResponsesAdapter:
 
     def request_payload(
         self,
-        context: str,
+        context: str | list[dict[str, Any]],
         tools: list[dict[str, Any]],
         *,
         system_prompt: str,
@@ -95,12 +95,21 @@ class OpenAIResponsesAdapter:
         reasoning: dict[str, str] = {"effort": self.config.reasoning_effort}
         if self.config.model_id.startswith("gpt-5.6"):
             reasoning.update({"mode": self.config.reasoning_mode, "context": "current_turn"})
-        return {
-            "model": self.config.model_id,
-            "input": [
+        input_items = (
+            [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": context},
-            ],
+            ]
+            if isinstance(context, str)
+            else context
+        )
+        if not isinstance(input_items, list) or not all(
+            isinstance(item, dict) for item in input_items
+        ):
+            raise ContractError("dev-head model input must be a list of public input items")
+        return {
+            "model": self.config.model_id,
+            "input": input_items,
             "tools": tools,
             "tool_choice": "required",
             "parallel_tool_calls": True,

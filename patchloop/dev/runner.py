@@ -63,12 +63,27 @@ class _RunCounters:
     tool_actions: int = 0
     input_count_calls: int = 0
     protocol_recoveries: int = 0
+    inspection_turns_at_diff: int = 0
+    failed_mutation_repair_turns: int = 0
+    failed_mutation_pending: bool = False
 
 
 @dataclass
 class _OneRunResult:
     public: dict[str, Any]
     stop_remaining: bool
+
+
+@dataclass(frozen=True)
+class _ToolPolicy:
+    workflow_gate: str
+    allowed_tools: frozenset[str]
+    check_ids: tuple[str, ...]
+    max_parallel_reads: int
+    minimum_completion_calls: int
+    completion_possible: bool
+    exploration_allowed: bool
+    inspection_lease_available: bool
 
 
 def default_state_root() -> Path:
@@ -295,6 +310,87 @@ def _workflow_gate(gateway: DevToolGateway, *, summary: Any | None = None) -> st
     return "needs_visible_checks"
 
 
+def _minimum_completion_calls(gateway: DevToolGateway, workflow_gate: str) -> int:
+    mutation_calls = 1 + (0 if gateway.spans else 1)
+    if workflow_gate == "needs_mutation":
+        return mutation_calls + len(gateway.public_task.visible_checks) + 1
+    if workflow_gate == "needs_visible_checks":
+        if any(row["status"] == "FAIL" for row in gateway.visible_check_status()):
+            return mutation_calls + len(gateway.public_task.visible_checks) + 1
+        return len(gateway.remaining_visible_check_ids()) + 1
+    return 1
+
+
+def _tool_policy(
+    gateway: DevToolGateway,
+    counters: _RunCounters,
+    limits: Any,
+) -> _ToolPolicy:
+    workflow_gate = _workflow_gate(gateway)
+    minimum_completion_calls = _minimum_completion_calls(gateway, workflow_gate)
+    remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
+    remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
+    model_slack = remaining_model_calls - minimum_completion_calls
+    tool_slack = remaining_tool_actions - minimum_completion_calls
+    summary = gateway.current_diff
+    current_check_failed = any(
+        row["status"] == "FAIL" for row in gateway.visible_check_status()
+    )
+    mutation_capacity = (
+        gateway.accepted_mutations < limits.max_accepted_mutations
+        and not summary.untracked_files
+    )
+    requires_mutation_for_completion = (
+        workflow_gate == "needs_mutation" or current_check_failed
+    )
+    completion_possible = not requires_mutation_for_completion or mutation_capacity
+    exploration_allowed = model_slack > 0 and tool_slack > 0 and completion_possible
+    if gateway.last_failed_mutation is not None:
+        inspection_lease_available = (
+            counters.failed_mutation_repair_turns
+            < limits.max_failed_mutation_repair_turns
+        )
+    else:
+        inspection_lease_available = (
+            counters.inspection_turns_at_diff
+            < limits.max_consecutive_inspection_turns
+        )
+    max_parallel_reads = (
+        min(limits.max_parallel_reads, tool_slack)
+        if exploration_allowed and inspection_lease_available
+        else 0
+    )
+
+    allowed = {"stop_task"}
+    unrun_checks = tuple(gateway.unrun_visible_check_ids())
+    if workflow_gate == "ready_to_submit":
+        allowed.add("finish_task")
+    else:
+        if max_parallel_reads > 0:
+            allowed.update({"read_file", "search_files"})
+        # A base check is diagnostic evidence and may use only genuine horizon slack.
+        # On a non-empty diff, each not-yet-run check is direct completion work.
+        if unrun_checks and (
+            (bool(summary.patch) and not current_check_failed) or exploration_allowed
+        ):
+            allowed.add("run_check")
+        if (
+            mutation_capacity
+            and bool(gateway.spans)
+        ):
+            allowed.add("apply_git_diff")
+    return _ToolPolicy(
+        workflow_gate=workflow_gate,
+        allowed_tools=frozenset(allowed),
+        check_ids=unrun_checks,
+        max_parallel_reads=max_parallel_reads,
+        minimum_completion_calls=minimum_completion_calls,
+        completion_possible=completion_possible,
+        exploration_allowed=exploration_allowed,
+        inspection_lease_available=inspection_lease_available,
+    )
+
+
 def _protocol_correction(
     *,
     turn_id: str,
@@ -336,15 +432,16 @@ def _build_context(
     counters: _RunCounters,
     elapsed_seconds: float,
     limits: Any,
+    policy: _ToolPolicy | None = None,
 ) -> str:
     summary = gateway.current_diff
+    active_policy = policy or _tool_policy(gateway, counters, limits)
     latest_span_ids = {
         span["span_id"]
         for result in latest_tool_results
         for span in result.output.get("spans", [])
         if isinstance(span, dict) and isinstance(span.get("span_id"), str)
     }
-    workflow_gate = _workflow_gate(gateway, summary=summary)
     payload = {
         "public_task": package.public.model_dump(mode="json"),
         "current_diff": {
@@ -356,7 +453,10 @@ def _build_context(
             "untracked_files": summary.untracked_files,
             "truncated": False,
         },
-        "latest_tool_results": [result.model_dump(mode="json") for result in latest_tool_results],
+        "latest_tool_results": [
+            result.model_dump(mode="json", exclude={"replayed"})
+            for result in latest_tool_results
+        ],
         "source_spans": gateway.context_spans(exclude=latest_span_ids),
         "recent_checks": _recent_checks(gateway),
         "visible_check_status": gateway.visible_check_status(),
@@ -364,7 +464,20 @@ def _build_context(
         "last_successful_mutation": gateway.last_successful_mutation,
         "last_failed_mutation": gateway.last_failed_mutation,
         "recent_attempt_result_next_question": _cards(journal, correction),
-        "workflow_gate": workflow_gate,
+        "workflow_gate": active_policy.workflow_gate,
+        "available_tool_names": sorted(active_policy.allowed_tools),
+        "action_horizon": {
+            "minimum_completion_calls": active_policy.minimum_completion_calls,
+            "completion_possible": active_policy.completion_possible,
+            "exploration_allowed": active_policy.exploration_allowed,
+            "max_parallel_reads_this_turn": active_policy.max_parallel_reads,
+            "inspection_turns_at_current_diff": counters.inspection_turns_at_diff,
+            "inspection_turn_limit": limits.max_consecutive_inspection_turns,
+            "failed_mutation_repair_turns": counters.failed_mutation_repair_turns,
+            "failed_mutation_repair_turn_limit": (
+                limits.max_failed_mutation_repair_turns
+            ),
+        },
         "remaining_budget": {
             "model_calls": max(0, limits.max_model_calls - counters.model_calls),
             "tool_actions": max(0, limits.max_tool_actions - counters.tool_actions),
@@ -389,12 +502,12 @@ def _build_context(
 
 def _requested_tool_from_openai(call: Any) -> RequestedTool:
     arguments = dict(call.arguments)
-    working_state = arguments.pop("working_state", None)
+    turn_decision = arguments.pop("turn_decision", None)
     return RequestedTool(
         name=call.name,
         action_id=call.action_id,
         arguments=arguments,
-        working_state=working_state,
+        turn_decision=turn_decision,
     )
 
 
@@ -427,35 +540,124 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
     )
 
 
+def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
+    arguments = dict(call.arguments)
+    if call.turn_decision is None:
+        raise RecoveryError("public tool transcript is missing its turn decision")
+    arguments["turn_decision"] = call.turn_decision.model_dump(mode="json")
+    return arguments
+
+
+def _build_model_input(
+    *,
+    journal: DevJournal,
+    context: str,
+    latest_tool_results: list[DevToolResult],
+) -> list[dict[str, Any]]:
+    """Build one bounded native tool continuation from public durable records."""
+
+    system_item = {"role": "system", "content": DEV_SYSTEM_PROMPT}
+    if not latest_tool_results:
+        return [system_item, {"role": "user", "content": context}]
+    events = journal.events()
+    batch = next(
+        (event for event in reversed(events) if event["event_type"] == "tool_batch_finished"),
+        None,
+    )
+    if batch is None:
+        raise RecoveryError("latest tool results have no completed batch")
+    turn_id = batch["payload"].get("turn_id")
+    action_ids = batch["payload"].get("action_ids")
+    if not isinstance(turn_id, str) or not isinstance(action_ids, list):
+        raise RecoveryError("latest completed batch has an invalid identity")
+    decision = next(
+        (
+            event
+            for event in reversed(events)
+            if event["event_type"] == "turn_decision_recorded"
+            and event["payload"].get("turn_id") == turn_id
+        ),
+        None,
+    )
+    started = next(
+        (
+            event
+            for event in reversed(events)
+            if event["event_type"] == "turn_started"
+            and event["payload"].get("turn_id") == turn_id
+        ),
+        None,
+    )
+    if decision is None or started is None:
+        raise RecoveryError("latest completed batch is missing its public turn records")
+    calls = [
+        RequestedTool.model_validate(value)
+        for value in decision["payload"].get("tool_calls", [])
+    ]
+    if [call.action_id for call in calls] != action_ids:
+        raise RecoveryError("latest public tool calls do not match the completed batch")
+    results_by_id = {result.action_id: result for result in latest_tool_results}
+    if set(results_by_id) != set(action_ids):
+        raise RecoveryError("latest public tool results do not match the completed batch")
+
+    current_payload = json.loads(context)
+    current_payload["latest_tool_results"] = []
+    current_payload["latest_tool_results_delivery"] = {
+        "format": "preceding_function_call_output_items",
+        "action_ids": action_ids,
+    }
+    marker = canonical_json(
+        {
+            "continuation": "immediately_preceding_public_tool_batch",
+            "prior_turn_id": turn_id,
+            "prior_context_hash": started["payload"].get("context_hash"),
+        }
+    )
+    call_items = [
+        {
+            "type": "function_call",
+            "call_id": call.action_id,
+            "name": call.name,
+            "arguments": canonical_json(_provider_tool_arguments(call)),
+        }
+        for call in calls
+    ]
+    output_items = [
+        {
+            "type": "function_call_output",
+            "call_id": action_id,
+            "output": canonical_json(
+                results_by_id[action_id].model_dump(mode="json", exclude={"replayed"})
+            ),
+        }
+        for action_id in action_ids
+    ]
+    return [
+        system_item,
+        {"role": "user", "content": marker},
+        *call_items,
+        *output_items,
+        {"role": "user", "content": canonical_json(current_payload)},
+    ]
+
+
 def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, Any]:
-    working_state = result.output.get("working_state")
-    if not isinstance(working_state, dict):
-        working_state = None
     if result.status == "failed":
         next_question = (
-            working_state["decision_after_result"]
-            if result.tool in {"read_file", "search_files"} and working_state is not None
-            else (
-                "Repair or explicitly replace last_failed_mutation; use read/search only "
-                "when needed for that repair."
-                if result.tool == "apply_git_diff"
-                else "What current public evidence or corrected contract resolves this failure?"
-            )
+            "Repair or explicitly replace last_failed_mutation; use read/search only "
+            "when needed for that repair."
+            if result.tool == "apply_git_diff"
+            else "What available public action resolves this failure?"
         )
-        card = {
+        return {
             "action_id": result.action_id,
             "attempt": result.tool,
             "result": result.error_code or "failed",
             "next_question": next_question,
         }
-        if result.tool in {"read_file", "search_files"}:
-            card["working_state"] = working_state
-        return card
     if result.tool in {"read_file", "search_files"}:
         spans = result.output.get("spans", [])
-        if working_state is not None:
-            next_question = working_state["decision_after_result"]
-        elif result.output.get("stagnation_signal"):
+        if result.output.get("stagnation_signal"):
             next_question = (
                 "This exact evidence is already visible; choose a materially different query, "
                 "range, check, or mutation."
@@ -488,7 +690,6 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "action_id": result.action_id,
             "attempt": result.tool,
             "input": request,
-            "working_state": working_state,
             "result": {
                 "span_count": len(spans),
                 "new_span_count": result.output.get("new_span_count", 0),
@@ -541,6 +742,62 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
         "result": result.output.get("patch_hash", "submitted"),
         "next_question": "Run the isolated private evaluator.",
     }
+
+
+def _batch_attempt_card(
+    *,
+    turn_id: str,
+    calls: list[RequestedTool],
+    results: list[DevToolResult],
+    gateway: DevToolGateway,
+) -> dict[str, Any]:
+    if not calls or len(calls) != len(results):
+        raise RecoveryError("completed tool batch cannot form one public attempt card")
+    decision = calls[0].turn_decision
+    if decision is None:
+        raise RecoveryError("completed tool batch is missing its public turn decision")
+    if all(call.name in {"read_file", "search_files"} for call in calls):
+        actions: list[dict[str, Any]] = []
+        for call, result in zip(calls, results, strict=True):
+            spans = result.output.get("spans", [])
+            actions.append(
+                {
+                    "action_id": result.action_id,
+                    "tool": result.tool,
+                    "input": call.arguments,
+                    "status": result.status,
+                    "error_code": result.error_code,
+                    "span_count": len(spans),
+                    "new_span_count": result.output.get("new_span_count", 0),
+                    "evidence_fingerprint": result.output.get("evidence_fingerprint"),
+                    "evidence_cache_hit": result.evidence_cache_hit,
+                    "stagnation_signal": result.output.get("stagnation_signal", False),
+                    "findings": [
+                        {
+                            "path": span.get("path"),
+                            "range": [span.get("start_line"), span.get("end_line")],
+                        }
+                        for span in spans
+                        if isinstance(span, dict)
+                    ],
+                }
+            )
+        if any(result.status == "failed" for result in results):
+            next_question = "Resolve the failed read or choose another available public action."
+        elif any(action["stagnation_signal"] for action in actions):
+            next_question = "Choose a materially different available action from this evidence."
+        else:
+            next_question = "Choose the next available action from this completed batch evidence."
+        return {
+            "action_id": f"batch:{turn_id}",
+            "attempt": "inspect",
+            "turn_decision": decision.model_dump(mode="json"),
+            "result": {"actions": actions},
+            "next_question": next_question,
+        }
+    card = _attempt_card(results[0], gateway)
+    card["turn_decision"] = decision.model_dump(mode="json")
+    return card
 
 
 def _evaluator_summary(result: Any) -> dict[str, Any]:
@@ -765,7 +1022,7 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             consecutive_protocol_recoveries += 1
         elif event["event_type"] == "tool_batch_finished":
             consecutive_protocol_recoveries = 0
-    return _RunCounters(
+    counters = _RunCounters(
         model_calls=sum(
             event["event_type"] in {"provider_call_started", "model_call_finished"}
             for event in events
@@ -780,6 +1037,43 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
         ),
         protocol_recoveries=consecutive_protocol_recoveries,
     )
+    action_results: dict[str, DevToolResult] = {}
+    for event in events:
+        if event["event_type"] == "action_finished":
+            result = DevToolResult.model_validate(event["payload"]["result"])
+            action_results[result.action_id] = result
+        elif event["event_type"] == "tool_batch_finished":
+            action_ids = event["payload"].get("action_ids", [])
+            if not isinstance(action_ids, list) or not action_ids:
+                continue
+            results = [action_results.get(str(action_id)) for action_id in action_ids]
+            if any(result is None for result in results):
+                raise RecoveryError("completed tool batch is missing durable action results")
+            _update_inspection_counters(
+                counters,
+                [result for result in results if result is not None],
+            )
+    return counters
+
+
+def _update_inspection_counters(
+    counters: _RunCounters,
+    results: list[DevToolResult],
+) -> None:
+    if results and all(result.tool in {"read_file", "search_files"} for result in results):
+        counters.inspection_turns_at_diff += 1
+        if counters.failed_mutation_pending:
+            counters.failed_mutation_repair_turns += 1
+        return
+    if len(results) != 1 or results[0].tool != "apply_git_diff":
+        return
+    if results[0].status == "succeeded":
+        counters.inspection_turns_at_diff = 0
+        counters.failed_mutation_repair_turns = 0
+        counters.failed_mutation_pending = False
+    else:
+        counters.failed_mutation_repair_turns = 0
+        counters.failed_mutation_pending = True
 
 
 def _validate_resumed_workspace(workspace: Path, journal: DevJournal) -> None:
@@ -842,7 +1136,7 @@ def _recover_unrecorded_decision(journal: DevJournal) -> None:
 
 def _unresolved_decision(
     journal: DevJournal,
-) -> tuple[str, list[RequestedTool], str | None, bool] | None:
+) -> tuple[str, list[RequestedTool], str | None, bool, frozenset[str], int] | None:
     events = journal.events()
     completed = {
         event["payload"].get("turn_id")
@@ -870,7 +1164,34 @@ def _unresolved_decision(
         error_code = payload.get("error_code")
         if error_code is not None and not isinstance(error_code, str):
             raise RecoveryError("recorded model decision has an invalid error code")
-        return turn_id, calls, error_code, turn_id in started
+        turn_start = next(
+            (
+                row
+                for row in reversed(events)
+                if row["event_type"] == "turn_started"
+                and row["payload"].get("turn_id") == turn_id
+            ),
+            None,
+        )
+        if turn_start is None:
+            raise RecoveryError("recorded model decision has no turn boundary")
+        available = turn_start["payload"].get("available_tool_names")
+        max_parallel_reads = turn_start["payload"].get("max_parallel_reads")
+        if (
+            not isinstance(available, list)
+            or not all(isinstance(name, str) for name in available)
+            or type(max_parallel_reads) is not int
+            or max_parallel_reads < 0
+        ):
+            raise RecoveryError("recorded model decision has no exact tool policy")
+        return (
+            turn_id,
+            calls,
+            error_code,
+            turn_id in started,
+            frozenset(available),
+            max_parallel_reads,
+        )
     return None
 
 
@@ -879,14 +1200,23 @@ def _record_tool_batch(
     journal: DevJournal,
     gateway: DevToolGateway,
     turn_id: str,
+    calls: list[RequestedTool],
     results: list[DevToolResult],
     active_elapsed_ms: int,
 ) -> tuple[DevToolResult | None, dict[str, str] | None]:
     completion_result: DevToolResult | None = None
     for result in results:
-        journal.append("attempt_card", _attempt_card(result, gateway))
         if result.tool in {"finish_task", "stop_task"} and result.status == "succeeded":
             completion_result = result
+    journal.append(
+        "attempt_card",
+        _batch_attempt_card(
+            turn_id=turn_id,
+            calls=calls,
+            results=results,
+            gateway=gateway,
+        ),
+    )
     journal.append(
         "tool_batch_finished",
         {
@@ -1172,7 +1502,14 @@ def _run_one_locked(
         _recover_unrecorded_decision(journal)
         pending_decision = _unresolved_decision(journal)
         if pending_decision is not None:
-            pending_turn_id, pending_calls, pending_error, batch_started = pending_decision
+            (
+                pending_turn_id,
+                pending_calls,
+                pending_error,
+                batch_started,
+                pending_allowed_tools,
+                pending_max_parallel_reads,
+            ) = pending_decision
             if pending_error == "input_token_count_mismatch":
                 terminal_code = DevTerminal.PROVIDER_TIMEOUT_OR_UNKNOWN
                 terminal_message = "provider usage disagreed with the pre-dispatch input count"
@@ -1194,7 +1531,8 @@ def _run_one_locked(
                 try:
                     validate_tool_batch(
                         pending_calls,
-                        max_parallel_reads=request.limits.max_parallel_reads,
+                        max_parallel_reads=pending_max_parallel_reads,
+                        allowed_tools=pending_allowed_tools,
                     )
                 except ContractError as exc:
                     if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
@@ -1246,9 +1584,11 @@ def _run_one_locked(
                                 journal=journal,
                                 gateway=gateway,
                                 turn_id=pending_turn_id,
+                                calls=pending_calls,
                                 results=recovered_results,
                                 active_elapsed_ms=active_elapsed_ms(),
                             )
+                            _update_inspection_counters(counters, recovered_results)
                             counters.protocol_recoveries = 0
                             latest_tool_results = recovered_results
                             if recovered_completion is not None:
@@ -1265,7 +1605,12 @@ def _run_one_locked(
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "model-call limit reached"
             break
+        if counters.tool_actions >= request.limits.max_tool_actions:
+            terminal_code = DevTerminal.LIMIT_REACHED
+            terminal_message = "tool-action limit reached"
+            break
         elapsed_seconds = active_elapsed_ms() / 1_000
+        policy = _tool_policy(gateway, counters, request.limits)
         context = _build_context(
             package=package,
             gateway=gateway,
@@ -1275,9 +1620,22 @@ def _run_one_locked(
             counters=counters,
             elapsed_seconds=elapsed_seconds,
             limits=request.limits,
+            policy=policy,
         )
         context_payload = json.loads(context)
         context_artifact = artifact_store.put_text(context, "application/json")
+        model_input = _build_model_input(
+            journal=journal,
+            context=context,
+            latest_tool_results=latest_tool_results,
+        )
+        model_input_text = canonical_json(model_input)
+        model_input_artifact = artifact_store.put_text(model_input_text, "application/json")
+        schemas = dev_tool_schemas(
+            finish_enabled="finish_task" in policy.allowed_tools,
+            check_ids=policy.check_ids,
+            allowed_tools=policy.allowed_tools,
+        )
         turn_id = f"turn_{uuid.uuid4().hex}"
         journal.append(
             "turn_started",
@@ -1285,6 +1643,16 @@ def _run_one_locked(
                 "turn_id": turn_id,
                 "context_artifact": context_artifact.model_dump(mode="json"),
                 "context_hash": context_artifact.content_hash,
+                "model_input_artifact": model_input_artifact.model_dump(mode="json"),
+                "model_input_hash": model_input_artifact.content_hash,
+                "transcript_action_ids": [
+                    item["call_id"]
+                    for item in model_input
+                    if item.get("type") == "function_call_output"
+                ],
+                "available_tool_names": sorted(policy.allowed_tools),
+                "max_parallel_reads": policy.max_parallel_reads,
+                "minimum_completion_calls": policy.minimum_completion_calls,
                 "projected_span_ids": [
                     span["span_id"]
                     for span in [
@@ -1299,10 +1667,6 @@ def _run_one_locked(
                 ],
                 "active_elapsed_ms": int(elapsed_seconds * 1_000),
             },
-        )
-        schemas = dev_tool_schemas(
-            finish_enabled=gateway.ready_to_submit(),
-            check_ids=[check.id for check in package.public.visible_checks],
         )
         correction = None
         if request.provider == "mock":
@@ -1333,7 +1697,7 @@ def _run_one_locked(
             assert openai_adapter is not None and cost_ledger is not None
             try:
                 request_payload = openai_adapter.request_payload(
-                    context,
+                    model_input,
                     schemas,
                     system_prompt=DEV_SYSTEM_PROMPT,
                 )
@@ -1490,7 +1854,8 @@ def _run_one_locked(
         try:
             validate_tool_batch(
                 turn.tool_calls,
-                max_parallel_reads=request.limits.max_parallel_reads,
+                max_parallel_reads=policy.max_parallel_reads,
+                allowed_tools=policy.allowed_tools,
             )
         except ContractError as exc:
             if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
@@ -1529,9 +1894,11 @@ def _run_one_locked(
             journal=journal,
             gateway=gateway,
             turn_id=turn_id,
+            calls=turn.tool_calls,
             results=results,
             active_elapsed_ms=active_elapsed_ms(),
         )
+        _update_inspection_counters(counters, results)
         counters.protocol_recoveries = 0
         if batch_completion is not None:
             if batch_completion.tool == "finish_task":

@@ -11,6 +11,7 @@ claim commands are absent.
 - default one-row live limit: 1,800 seconds
 - 40 model calls, 100 tool actions, and 4 accepted mutations
 - one consecutive protocol/incomplete correction and at most 4 parallel reads
+- 24 inspection turns per unchanged diff and 3 repair reads after a failed mutation
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
 ## Authority
@@ -97,7 +98,7 @@ $0.27031725. Public `makedirs` source evidence was present in every context afte
 first turn, including the final context with gate `needs_mutation` and one model call
 remaining. The agent attempted no mutation or visible check, submitted nothing, and
 ran no evaluator.
-The post-seventh-row working-state checkpoint now requires every read/search decision
+The post-seventh-row working-state checkpoint introduced a requirement for every read/search decision
 to carry a bounded public hypothesis, one evidence gap, and its decision after the
 result. The state is bound to action identity but excluded from the operational read
 cache key, then reattached after cache lookup so revised decisions cannot receive stale
@@ -123,6 +124,23 @@ of the 60 per-call decisions explicitly proposed a mutation, edit, patch, or app
 action if their evidence condition was met, yet the next model turns continued to
 select only reads and searches. The final context still had gate `needs_mutation`, two
 current working states, and one model call remaining.
+The post-eighth action-coupling checkpoint replaces that non-binding per-call future
+state with one typed decision for the actual batch. Parallel reads must share it, and
+its mode must match the requested tool family. OpenAI input now reconstructs the
+immediately preceding public function calls and exact outputs with call-ID linkage
+while retaining `store=false` and excluding raw reasoning and private material. Tool
+schemas are derived from the current gate, unexecuted checks, a completion horizon,
+and bounded inspection leases. Repeated evidence remains diagnostic-only; no
+stagnation terminal was added. Per-fingerprint counts now survive unrelated new spans
+and checks at the same diff. This is provider-free implementation evidence and grants
+no ninth-row authority.
+Ruff and all 78 tests pass; the full suite completed in 114.69 seconds with an external
+short temp root. Mock run `run_dev_198843ed55274f09` reached `EVALUATOR_PASS` in four
+model turns and five tool actions through one accepted mutation, with task acceptance
+PASS, safety NOT_RUN, `claim_eligible=false`, and zero model cost. Read-only historical
+trace inspection found 23 inspection batches before the first mutation in both the
+fifth and sixth rows, and a maximum of three repair reads between failed mutations on
+the sixth row. The 24/3 leases preserve those observed successful paths.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -270,15 +288,18 @@ public behavior as a visible check, and passes the reference/known-bad contract
 matrix. Its seventh live row nevertheless spent all 40 model calls on successful
 read/search actions and ended before mutation. The exact source remained visible, so
 the next seam was turn-to-turn decision continuity, not another task revision. That
-provider-free seam carries `working_hypothesis`, `evidence_gap`, and
+post-seventh provider-free seam carried `working_hypothesis`, `evidence_gap`, and
 `decision_after_result` through successful, failed, cached, and resumed reads. The
 eighth row proved the projection works live but did not change tool selection: all 60
 actions were reads/searches even though 35 recorded decisions explicitly contemplated
 mutation. Nine cache hits and 21 zero-new-span results produced no stagnation signal;
 that remains a secondary observability defect, not the cause or grounds for a hard
-terminal. The next seam is provider-free characterization of how a satisfied public
-decision should affect tool choice without storing raw reasoning or blocking useful
-reads. No paid retry or ninth row is authorized.
+terminal. The provider-free correction now couples a typed batch decision to its tool
+family, replays the preceding public tool exchange as native Responses items, and
+removes exploration tools when they would consume the completion horizon or exceed the
+inspection lease. Local trace/policy verification preserves the observed successful
+24/3 paths. Remaining uncertainty is provider behavior, not a pending task revision or
+stronger repetition terminal. No paid retry or ninth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a
