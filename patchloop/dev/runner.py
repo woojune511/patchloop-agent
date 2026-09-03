@@ -387,12 +387,29 @@ def _build_context(
     return canonical_json(payload)
 
 
+def _requested_tool_from_openai(call: Any) -> RequestedTool:
+    arguments = dict(call.arguments)
+    working_state = arguments.pop("working_state", None)
+    return RequestedTool(
+        name=call.name,
+        action_id=call.action_id,
+        arguments=arguments,
+        working_state=working_state,
+    )
+
+
 def _turn_from_openai(turn: Any) -> DevModelTurn:
+    calls: list[RequestedTool] = []
+    conversion_error: str | None = None
+    for call in turn.tool_calls:
+        try:
+            calls.append(_requested_tool_from_openai(call))
+        except (TypeError, ValueError, ValidationError):
+            calls = []
+            conversion_error = "invalid_dev_tool_contract"
+            break
     return DevModelTurn(
-        tool_calls=[
-            RequestedTool(name=call.name, action_id=call.action_id, arguments=call.arguments)
-            for call in turn.tool_calls
-        ],
+        tool_calls=calls,
         requested_input_tokens=turn.requested_input_tokens,
         input_tokens=turn.input_tokens,
         cached_input_tokens=turn.cached_input_tokens,
@@ -402,7 +419,7 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
         response_model=turn.response_model,
         response_status=turn.response_status,
         incomplete_reason=turn.response_incomplete_reason,
-        error_code=turn.error.code if turn.error else None,
+        error_code=turn.error.code if turn.error else conversion_error,
         output_item_count=turn.output_item_count,
         non_tool_output_item_count=turn.non_tool_output_item_count,
         output_item_types=list(turn.output_item_types),
@@ -411,20 +428,40 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
 
 
 def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, Any]:
+    working_state = result.output.get("working_state")
+    if not isinstance(working_state, dict):
+        working_state = None
     if result.status == "failed":
-        return {
-            "action_id": result.action_id,
-            "attempt": result.tool,
-            "result": result.error_code or "failed",
-            "next_question": (
+        next_question = (
+            working_state["decision_after_result"]
+            if result.tool in {"read_file", "search_files"} and working_state is not None
+            else (
                 "Repair or explicitly replace last_failed_mutation; use read/search only "
                 "when needed for that repair."
                 if result.tool == "apply_git_diff"
                 else "What current public evidence or corrected contract resolves this failure?"
-            ),
+            )
+        )
+        card = {
+            "action_id": result.action_id,
+            "attempt": result.tool,
+            "result": result.error_code or "failed",
+            "next_question": next_question,
         }
+        if result.tool in {"read_file", "search_files"}:
+            card["working_state"] = working_state
+        return card
     if result.tool in {"read_file", "search_files"}:
         spans = result.output.get("spans", [])
+        if working_state is not None:
+            next_question = working_state["decision_after_result"]
+        elif result.output.get("stagnation_signal"):
+            next_question = (
+                "This exact evidence is already visible; choose a materially different query, "
+                "range, check, or mutation."
+            )
+        else:
+            next_question = "Which exact source anchor supports the smallest causal mutation?"
         findings = [
             {
                 "path": span.get("path"),
@@ -451,6 +488,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "action_id": result.action_id,
             "attempt": result.tool,
             "input": request,
+            "working_state": working_state,
             "result": {
                 "span_count": len(spans),
                 "new_span_count": result.output.get("new_span_count", 0),
@@ -459,12 +497,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                 "evidence_cache_hit": result.evidence_cache_hit,
                 "stagnation_signal": result.output.get("stagnation_signal", False),
             },
-            "next_question": (
-                "This exact evidence is already visible; choose a materially different query, "
-                "range, check, or mutation."
-                if result.output.get("stagnation_signal")
-                else "Which exact source anchor supports the smallest causal mutation?"
-            ),
+            "next_question": next_question,
         }
     if result.tool == "apply_git_diff":
         return {

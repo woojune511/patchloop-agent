@@ -93,6 +93,16 @@ If a valid mutation call fails, its bounded public diff and intent remain in
 `last_failed_mutation` across later reads and resume. The agent may read/search when
 needed for repair, but a successful mutation is required to clear that repair target.
 Tool execution failures are not counted or presented as model protocol violations.
+Every read/search call must include bounded `working_hypothesis`, `evidence_gap`, and
+`decision_after_result` values inside its public `working_state`. PatchLoop separates
+that state from the executable path/query arguments, binds both to the durable action
+input, and keys the read cache only by the executable request plus current diff. The
+current call's state is attached after cache lookup, so a cache hit cannot replay a
+stale hypothesis. Successful and failed read results both carry the bounded state
+into the next canonical context. It is an execution summary, not stored raw model
+reasoning, and it creates no hard transition or separate plan tool. Invalid provider
+state is converted to a protocol error only after completed response usage remains
+available for settlement and durable recording.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate and remaining public checks. A valid tool batch
 resets that correction allowance. Provider journals retain only output item counts,

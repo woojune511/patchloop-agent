@@ -388,6 +388,34 @@ single row does not justify a repeated-read hard terminal or removal of read too
 the observability and action-selection seams should be characterized provider-free
 before another live invocation.
 
+## Post-seventh working-state checkpoint
+
+The provider-free correction gives each read/search call a strict bounded public
+`working_state`: `working_hypothesis` is limited to 800 characters, `evidence_gap` to
+500, and `decision_after_result` to 800. The provider adapter separates that state
+from executable path/query arguments. Durable action identity hashes both, while a
+separate operational read hash keys evidence caching by tool, executable arguments,
+and current diff. The result then receives the current call's state after cache lookup.
+This prevents an earlier cached hypothesis from replacing a revised one.
+
+Focused tests cover required/strict schemas, bounds, non-read rejection, cache reuse
+across revised state, successful and failed result projection, process hydration, and
+provider-decision resume without another provider call. Attempt cards prefer the
+recorded `decision_after_result`; the existing stagnation value remains visible only
+as a diagnostic result field. No tool was removed and no transition or terminal was
+added. Invalid or over-length provider state becomes a bounded protocol error while
+the completed response's token fields remain available for durable usage settlement.
+Ruff and all 78 tests pass in 83.55 seconds.
+
+Provider-free mock run `run_dev_6c167fa301ac40c3` under external root
+`C:\pl-working-state-smoke-commit-20260903` reached `EVALUATOR_PASS` in four model
+turns and five tool actions with one accepted mutation and zero cost. Its second
+canonical context contained both first-turn working states; neither private-test
+identity nor a reference-patch field appeared. Task acceptance was PASS, Docker
+safety was NOT_RUN, and `claim_eligible=false`. This proves only local contract and
+context continuity. It does not show that a provider model will follow the recorded
+decision or improve live task completion.
+
 ## Not executed
 
 - no eighth repetition, transport retry, or follow-up paid run after the seventh row

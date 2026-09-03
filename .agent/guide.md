@@ -29,6 +29,10 @@ One model response may request either:
 - 1–4 parallel `search_files` and/or `read_file` calls, or
 - exactly one `apply_git_diff`, `run_check`, `finish_task`, or `stop_task` call.
 
+Each read/search call also requires bounded public `working_state` with
+`working_hypothesis`, `evidence_gap`, and `decision_after_result`. This is the
+model's concise public execution decision, not a plan phase or reasoning transcript.
+
 The provider request uses required tool choice, and the application validates the
 smaller batch grammar above. Mixed, empty, duplicate-action, and oversized batches
 receive one short correction. A second consecutive protocol/incomplete violation
@@ -70,9 +74,12 @@ the latest three attempt-result-next-question cards. A successful check card nam
 the next remaining check instead of treating PASS as a failure. A failed mutation
 retains its public diff excerpt, full diff hash, intent, anchor, evidence IDs, error,
 and parsed error location across later reads and process resume. A later failed
-mutation replaces it; a successful mutation clears it. Identical evidence may be
-cached and signaled but is not hard-blocked. Never add raw reasoning, private task
-material, hidden tests, reference patches, or evaluator details.
+mutation replaces it; a successful mutation clears it. Each read result returns the
+call's current public working state exactly in the next latest batch and its attempt
+card; cached file evidence is reused independently of that state, so a revised
+hypothesis cannot receive stale decision text. Identical evidence may be cached and
+signaled but is not hard-blocked. Never add raw reasoning, private task material,
+hidden tests, reference patches, or evaluator details.
 
 ## State and recovery
 
@@ -209,9 +216,17 @@ in every context from turn 2 onward, and the final context still said
 `needs_mutation` with one model call remaining. Treat this as a mutation-commitment
 failure after sufficient public evidence, not another projection, task-contract, or
 tool-transport failure. The soft repeated-evidence detector emitted no signal because
-interleaved newly observed spans clear all fingerprint counts. Fix or characterize
-that observability seam provider-free, but do not turn it into a hard terminal or
-remove useful reads based on one row. No retry or eighth live row is authorized.
+interleaved newly observed spans clear all fingerprint counts.
+
+The provider-free correction preserves the model's bounded public
+`working_hypothesis`, `evidence_gap`, and `decision_after_result` on every read/search
+result and attempt card. Action identity binds the state, while the operational read
+hash remains the cache key; a cache hit therefore returns current decision state, not
+the text from the call that populated the cache. Failed reads and process hydration
+retain the same contract. The recorded decision takes precedence over diagnostic
+stagnation wording, but no read is blocked and no new terminal exists. Local and mock
+tests establish wire, cache, context, and recovery behavior only; they do not establish
+live model compliance. No retry or eighth live row is authorized.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.

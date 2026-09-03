@@ -43,6 +43,12 @@ complete visible-check status and exact remaining check IDs are projected separa
 from the bounded recent output. `ready_to_submit` additionally requires a non-empty
 diff and no non-ignored untracked files.
 
+Every read/search decision carries a bounded public working state: the current causal
+hypothesis, one evidence gap addressed by that operation, and the decision to take
+after its result. The state is returned with the result in the next stateless request
+and retained in its attempt card. It preserves decision continuity without storing or
+replaying model reasoning and does not create a planning phase or execution gate.
+
 Every model response must call at least one constrained tool. Besides inspection,
 mutation, checking, and finish, `stop_task` provides an explicit unsuccessful exit
 when the public evidence cannot support safe progress. It records a bounded public

@@ -9,7 +9,12 @@ from pydantic import ValidationError
 from typer.testing import CliRunner
 
 from patchloop.cli import app
-from patchloop.dev.contracts import DevRunRequest, MutationIntent, RequestedTool
+from patchloop.dev.contracts import (
+    DevRunRequest,
+    MutationIntent,
+    PublicWorkingState,
+    RequestedTool,
+)
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
 from patchloop.dev.tools import validate_tool_batch
 from patchloop.errors import ContractError
@@ -18,7 +23,21 @@ from patchloop.task_loader import load_task_package
 
 
 def call(name: str, index: int = 0) -> RequestedTool:
-    return RequestedTool(name=name, action_id=f"a-{index}", arguments={})
+    working_state = (
+        PublicWorkingState(
+            working_hypothesis=f"hypothesis-{index}",
+            evidence_gap=f"gap-{index}",
+            decision_after_result=f"decision-{index}",
+        )
+        if name in {"read_file", "search_files"}
+        else None
+    )
+    return RequestedTool(
+        name=name,
+        action_id=f"a-{index}",
+        arguments={},
+        working_state=working_state,
+    )
 
 
 def test_tool_batch_contract_is_small_and_unmixed() -> None:
@@ -31,6 +50,25 @@ def test_tool_batch_contract_is_small_and_unmixed() -> None:
         validate_tool_batch([call("read_file", item) for item in range(5)])
     with pytest.raises(ContractError):
         validate_tool_batch([call("read_file"), call("search_files")])
+    with pytest.raises(ContractError, match="working_state"):
+        validate_tool_batch(
+            [RequestedTool(name="read_file", action_id="missing-state", arguments={})]
+        )
+    with pytest.raises(ContractError, match="only on read/search"):
+        validate_tool_batch(
+            [
+                RequestedTool(
+                    name="run_check",
+                    action_id="unexpected-state",
+                    arguments={},
+                    working_state=PublicWorkingState(
+                        working_hypothesis="hypothesis",
+                        evidence_gap="gap",
+                        decision_after_result="decision",
+                    ),
+                )
+            ]
+        )
 
 
 def test_mutation_contract_requires_minimal_plan_and_pairs_alternative() -> None:
@@ -46,6 +84,28 @@ def test_mutation_contract_requires_minimal_plan_and_pairs_alternative() -> None
     with pytest.raises(ValidationError):
         MutationIntent.model_validate(
             {key: value for key, value in base.items() if key != "hypothesis"}
+        )
+
+
+def test_public_working_state_is_bounded_and_strict() -> None:
+    valid = PublicWorkingState(
+        working_hypothesis="current public cause",
+        evidence_gap="one missing source fact",
+        decision_after_result="mutate if confirmed, otherwise inspect the caller",
+    )
+    assert valid.working_hypothesis == "current public cause"
+    with pytest.raises(ValidationError):
+        PublicWorkingState(
+            working_hypothesis="x" * 801,
+            evidence_gap="gap",
+            decision_after_result="decision",
+        )
+    with pytest.raises(ValidationError):
+        PublicWorkingState(
+            working_hypothesis="hypothesis",
+            evidence_gap="gap",
+            decision_after_result="decision",
+            raw_reasoning="not an allowed field",
         )
 
 

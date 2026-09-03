@@ -19,6 +19,7 @@ from patchloop.dev.contracts import (
     DevModelTurn,
     DevRunRequest,
     DevToolResult,
+    PublicWorkingState,
     RequestedTool,
 )
 from patchloop.dev.model import MOCK_MUTATIONS, MockDevAdapter
@@ -30,6 +31,14 @@ from patchloop.runtime import repository_root
 from patchloop.sandbox import LocalSandbox
 from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes, sha256_json
+
+
+def working_state(label: str) -> PublicWorkingState:
+    return PublicWorkingState(
+        working_hypothesis=f"hypothesis-{label}",
+        evidence_gap=f"gap-{label}",
+        decision_after_result=f"decision-{label}",
+    )
 
 
 def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke_package) -> None:
@@ -53,6 +62,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
                 "start_line": 1,
                 "end_line": 13,
             },
+            working_state=working_state("latest-read"),
         )
     )
     context = json.loads(
@@ -74,6 +84,102 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     projected = context["latest_tool_results"][0]["output"]["spans"]
     assert projected[0]["span_id"] == latest.output["spans"][0]["span_id"]
     assert len(context["source_spans"]) == 8
+
+
+def test_read_working_state_survives_cache_and_next_context(
+    gateway_factory,
+    smoke_package,
+) -> None:
+    gateway, journal, _ = gateway_factory()
+    arguments = {
+        "path": "mini_data_utils/csvlite.py",
+        "start_line": 1,
+        "end_line": 13,
+    }
+    first_state = working_state("initial-cause")
+    first = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="working-state-first",
+            arguments=arguments,
+            working_state=first_state,
+        )
+    )
+    runner._record_tool_batch(  # noqa: SLF001 - direct context contract test
+        journal=journal,
+        gateway=gateway,
+        turn_id="working-state-first-turn",
+        results=[first],
+        active_elapsed_ms=1,
+    )
+
+    revised_state = PublicWorkingState(
+        working_hypothesis="The visible loop confirms physical-line parsing.",
+        evidence_gap="Confirm that replacing the loop preserves the return type.",
+        decision_after_result="Mutate the parser if the return type remains a list of rows.",
+    )
+    revised = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="working-state-revised",
+            arguments=arguments,
+            working_state=revised_state,
+        )
+    )
+    runner._record_tool_batch(  # noqa: SLF001 - direct context contract test
+        journal=journal,
+        gateway=gateway,
+        turn_id="working-state-revised-turn",
+        results=[revised],
+        active_elapsed_ms=2,
+    )
+    context = json.loads(
+        runner._build_context(  # noqa: SLF001 - direct context contract test
+            package=smoke_package,
+            gateway=gateway,
+            journal=journal,
+            correction=None,
+            latest_tool_results=[revised],
+            counters=runner._RunCounters(),  # noqa: SLF001
+            elapsed_seconds=0,
+            limits=DevRunRequest(
+                provider="mock",
+                task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
+                model="mock-dev",
+            ).limits,
+        )
+    )
+    expected = revised_state.model_dump(mode="json")
+
+    assert revised.evidence_cache_hit is True
+    assert revised.input_hash != first.input_hash
+    assert revised.output["read_request_hash"] == first.output["read_request_hash"]
+    assert revised.output["working_state"] == expected
+    assert context["latest_tool_results"][0]["output"]["working_state"] == expected
+    assert context["recent_attempt_result_next_question"][-1]["working_state"] == expected
+    assert (
+        context["recent_attempt_result_next_question"][-1]["next_question"]
+        == revised_state.decision_after_result
+    )
+
+
+def test_failed_read_retains_bounded_working_state(gateway_factory) -> None:
+    gateway, _, _ = gateway_factory()
+    state = working_state("failed-read")
+    result = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="working-state-failed-read",
+            arguments={"path": "missing.py", "start_line": 1, "end_line": 10},
+            working_state=state,
+        )
+    )
+    card = runner._attempt_card(result, gateway)  # noqa: SLF001 - context contract test
+
+    assert result.status == "failed"
+    assert result.output["working_state"] == state.model_dump(mode="json")
+    assert card["working_state"] == state.model_dump(mode="json")
+    assert card["next_question"] == state.decision_after_result
 
 
 def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
@@ -141,6 +247,47 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
     assert "public-message-sentinel" not in repr(turn)
 
 
+def test_invalid_provider_working_state_becomes_bounded_protocol_error() -> None:
+    raw = ModelTurn(
+        tool_calls=[
+            ProviderRequestedTool(
+                name="read_file",
+                action_id="invalid-provider-state",
+                arguments={
+                    "path": "mini_data_utils/csvlite.py",
+                    "start_line": 1,
+                    "end_line": 10,
+                    "working_state": {
+                        "working_hypothesis": "x" * 801,
+                        "evidence_gap": "gap",
+                        "decision_after_result": "decision",
+                    },
+                },
+            )
+        ],
+        requested_input_tokens=17,
+        input_tokens=17,
+        output_tokens=5,
+        reasoning_output_tokens=2,
+        response_id="invalid-state-response",
+        response_status="completed",
+        output_item_count=2,
+        non_tool_output_item_count=1,
+        output_item_types=("reasoning", "function_call"),
+        output_shape_hash=sha256_json(
+            {"item_count": 2, "item_types": ("reasoning", "function_call")}
+        ),
+    )
+
+    converted = runner._turn_from_openai(raw)  # noqa: SLF001 - provider boundary test
+
+    assert converted.error_code == "invalid_dev_tool_contract"
+    assert converted.tool_calls == []
+    assert converted.input_tokens == 17
+    assert converted.output_tokens == 5
+    assert converted.output_item_types == ["reasoning", "function_call"]
+
+
 def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label(
     gateway_factory,
     smoke_package,
@@ -197,6 +344,7 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
                     "start_line": index,
                     "end_line": index + 5,
                 },
+                working_state=working_state(f"read-after-failure-{index}"),
             )
             for index in range(1, 5)
         ]
@@ -608,6 +756,7 @@ def test_protocol_correction_limit_is_consecutive_and_stop_is_structured(
                                 "start_line": 1,
                                 "end_line": 20,
                             },
+                            working_state=working_state("valid-between-corrections"),
                         )
                     ]
                 )
@@ -1056,6 +1205,9 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
                             "path": "mini_data_utils/csvlite.py",
                             "start_line": 1,
                             "end_line": 20,
+                            "working_state": working_state("provider-read-once").model_dump(
+                                mode="json"
+                            ),
                         },
                     )
                 ],
@@ -1105,6 +1257,16 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
         assert payload["non_tool_output_item_count"] == 1
         assert payload["output_item_types"] == ["reasoning", "function_call"]
         assert payload["output_shape_hash"].startswith("sha256:")
+    decision = next(
+        row["payload"]
+        for row in journal.events()
+        if row["event_type"] == "turn_decision_recorded"
+    )
+    recorded_call = decision["tool_calls"][0]
+    assert "working_state" not in recorded_call["arguments"]
+    assert recorded_call["working_state"] == working_state("provider-read-once").model_dump(
+        mode="json"
+    )
 
 
 def test_unfinished_provider_dispatch_becomes_one_unknown_terminal(tmp_path, monkeypatch) -> None:

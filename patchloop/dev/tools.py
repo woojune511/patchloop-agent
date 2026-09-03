@@ -41,6 +41,23 @@ _PATCH_ERROR_LINE = re.compile(r"corrupt patch at (?:<stdin>:|line )(\d+)")
 _PATCH_SOURCE_LINE = re.compile(r"patch failed: ([^:\r\n]+):(\d+)")
 
 
+def _public_working_state_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "description": (
+            "Concise public decision state to carry into the next stateless turn; "
+            "not private data or chain-of-thought."
+        ),
+        "properties": {
+            "working_hypothesis": {"type": "string", "minLength": 1, "maxLength": 800},
+            "evidence_gap": {"type": "string", "minLength": 1, "maxLength": 500},
+            "decision_after_result": {"type": "string", "minLength": 1, "maxLength": 800},
+        },
+        "required": ["working_hypothesis", "evidence_gap", "decision_after_result"],
+        "additionalProperties": False,
+    }
+
+
 def dev_tool_schemas(
     *,
     finish_enabled: bool,
@@ -54,7 +71,8 @@ def dev_tool_schemas(
             "type": "function",
             "name": "search_files",
             "description": (
-                "Search tracked public repository text and return bounded evidence spans."
+                "Search tracked public repository text and return bounded evidence spans. "
+                "Carry the current public hypothesis, exact evidence gap, and decision rule."
             ),
             "strict": True,
             "parameters": {
@@ -62,15 +80,19 @@ def dev_tool_schemas(
                 "properties": {
                     "query": {"type": "string", "minLength": 1},
                     "path_glob": {"type": "string", "default": "**/*"},
+                    "working_state": _public_working_state_schema(),
                 },
-                "required": ["query", "path_glob"],
+                "required": ["query", "path_glob", "working_state"],
                 "additionalProperties": False,
             },
         },
         {
             "type": "function",
             "name": "read_file",
-            "description": "Read one bounded line range from a tracked public source file.",
+            "description": (
+                "Read one bounded line range from a tracked public source file. Carry the "
+                "current public hypothesis, exact evidence gap, and decision rule."
+            ),
             "strict": True,
             "parameters": {
                 "type": "object",
@@ -78,8 +100,9 @@ def dev_tool_schemas(
                     "path": {"type": "string", "minLength": 1},
                     "start_line": {"type": "integer", "minimum": 1},
                     "end_line": {"type": "integer", "minimum": 1},
+                    "working_state": _public_working_state_schema(),
                 },
-                "required": ["path", "start_line", "end_line"],
+                "required": ["path", "start_line", "end_line", "working_state"],
                 "additionalProperties": False,
             },
         },
@@ -217,8 +240,12 @@ def validate_tool_batch(calls: list[RequestedTool], *, max_parallel_reads: int =
     if all(name in READ_TOOLS for name in names):
         if len(calls) > max_parallel_reads:
             raise ContractError(f"a read batch may contain at most {max_parallel_reads} calls")
+        if any(call.working_state is None for call in calls):
+            raise ContractError("every read/search call requires bounded public working_state")
         return "parallel_read"
     if len(calls) == 1 and names[0] in SINGLE_ACTION_TOOLS:
+        if calls[0].working_state is not None:
+            raise ContractError("working_state is allowed only on read/search calls")
         return "single_action"
     raise ContractError(
         "a response must contain only up to four reads/searches or exactly one action"
@@ -383,6 +410,12 @@ class DevToolGateway:
     def _cache_key(input_hash: str, workspace_diff_hash: str) -> tuple[str, str]:
         return input_hash, workspace_diff_hash
 
+    @staticmethod
+    def _cacheable_read_output(output: dict[str, Any]) -> dict[str, Any]:
+        cached = copy.deepcopy(output)
+        cached.pop("working_state", None)
+        return cached
+
     def _reset_evidence_progress(self) -> None:
         with self._lock:
             self._evidence_repetitions.clear()
@@ -405,9 +438,11 @@ class DevToolGateway:
                     self._evidence_repetitions.get(fingerprint, 0) + 1
                 )
             if result.workspace_diff_hash is not None:
-                self._read_cache[self._cache_key(result.input_hash, result.workspace_diff_hash)] = (
-                    copy.deepcopy(result.output)
-                )
+                read_request_hash = result.output.get("read_request_hash", result.input_hash)
+                if isinstance(read_request_hash, str):
+                    self._read_cache[
+                        self._cache_key(read_request_hash, result.workspace_diff_hash)
+                    ] = self._cacheable_read_output(result.output)
 
     def _decorate_read_output(
         self,
@@ -447,6 +482,7 @@ class DevToolGateway:
         decorated.update(
             {
                 "new_span_count": new_count,
+                "read_request_hash": input_hash,
                 "evidence_fingerprint": fingerprint,
                 "evidence_repetition": repetition,
                 "stagnation_signal": repetition >= 2 and new_count == 0,
@@ -535,7 +571,15 @@ class DevToolGateway:
             return [future.result() for future in futures]
 
     def execute(self, call: RequestedTool) -> DevToolResult:
-        input_hash = sha256_json({"tool": call.name, "arguments": call.arguments})
+        working_state = (
+            call.working_state.model_dump(mode="json") if call.working_state is not None else None
+        )
+        executable_input = {"tool": call.name, "arguments": call.arguments}
+        action_input = dict(executable_input)
+        if working_state is not None:
+            action_input["working_state"] = working_state
+        input_hash = sha256_json(action_input)
+        read_request_hash = sha256_json(executable_input)
         replay = self.journal.action_result(call.action_id, input_hash)
         if replay is not None:
             if replay.status == "succeeded" and replay.tool in READ_TOOLS:
@@ -560,6 +604,7 @@ class DevToolGateway:
                     "input_hash": input_hash,
                     "tool": call.name,
                     "arguments": call.arguments,
+                    "working_state": working_state,
                     "baseline_diff_hash": baseline,
                     "mutation_admitted": mutation_admitted,
                 },
@@ -571,19 +616,21 @@ class DevToolGateway:
                 output = self._reconcile_or_apply(call.arguments, pending)
                 evidence_cache_hit = False
             elif call.name in READ_TOOLS:
-                cache_key = self._cache_key(input_hash, baseline)
+                cache_key = self._cache_key(read_request_hash, baseline)
                 with self._lock:
                     cached = copy.deepcopy(self._read_cache.get(cache_key))
                 evidence_cache_hit = cached is not None
                 output = cached if cached is not None else self._perform(call.name, call.arguments)
                 output = self._decorate_read_output(
                     tool=call.name,
-                    input_hash=input_hash,
+                    input_hash=read_request_hash,
                     workspace_diff_hash=baseline,
                     output=output,
                 )
                 with self._lock:
-                    self._read_cache[cache_key] = copy.deepcopy(output)
+                    self._read_cache[cache_key] = self._cacheable_read_output(output)
+                if working_state is not None:
+                    output["working_state"] = working_state
             else:
                 output = self._perform(call.name, call.arguments)
                 evidence_cache_hit = False
@@ -598,11 +645,17 @@ class DevToolGateway:
             )
         except (PatchLoopError, ValidationError, ValueError, OSError, RuntimeError) as exc:
             code = exc.code if isinstance(exc, PatchLoopError) else "TOOL_CONTRACT_ERROR"
+            failure_output = {}
+            if call.name in READ_TOOLS:
+                failure_output["read_request_hash"] = read_request_hash
+                if working_state is not None:
+                    failure_output["working_state"] = working_state
             result = DevToolResult(
                 action_id=call.action_id,
                 input_hash=input_hash,
                 tool=call.name,
                 status="failed",
+                output=failure_output,
                 error_code=code,
                 message=str(exc)[:1_000],
             )

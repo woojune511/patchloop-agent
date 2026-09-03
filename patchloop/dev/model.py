@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
-from patchloop.dev.contracts import DevModelTurn, RequestedTool
+from patchloop.dev.contracts import DevModelTurn, PublicWorkingState, RequestedTool
 from patchloop.errors import ContractError
 
 DEV_SYSTEM_PROMPT = """You are PatchLoop dev-head, a constrained coding agent.
@@ -25,6 +25,12 @@ checks must pass on the current diff before finish_task is available. The comple
 current diff is projected in
 context; do not request get_diff. Do not emit raw chain-of-thought. Private tests,
 reference patches, and evaluator details are unavailable and must not be inferred.
+Every read/search call must carry bounded public working_state. State the current
+causal working_hypothesis, one exact evidence_gap that this call can resolve, and a
+concrete decision_after_result. This is a concise execution decision, not
+chain-of-thought. Update it from the latest public result. When the stated evidence
+gap is resolved, follow the recorded decision by mutating or stopping instead of
+re-reading the same source.
 When last_failed_mutation is present, it is an unresolved public mutation from a
 prior stateless turn. Repair or explicitly replace that mutation before unrelated
 exploration. Read/search remains available when it is needed for the repair.
@@ -107,6 +113,17 @@ class MockDevAdapter:
                         name="search_files",
                         action_id="mock-search-source",
                         arguments={"query": "def parse_rows", "path_glob": "**/*.py"},
+                        working_state=PublicWorkingState(
+                            working_hypothesis=(
+                                "The parser likely loses logical records by iterating "
+                                "physical lines."
+                            ),
+                            evidence_gap="Locate the parser implementation.",
+                            decision_after_result=(
+                                "Read the located parser body, then mutate if it confirms "
+                                "per-line parsing."
+                            ),
+                        ),
                     ),
                     RequestedTool(
                         name="read_file",
@@ -116,6 +133,18 @@ class MockDevAdapter:
                             "start_line": 1,
                             "end_line": 80,
                         },
+                        working_state=PublicWorkingState(
+                            working_hypothesis=(
+                                "The parser likely loses logical records by iterating "
+                                "physical lines."
+                            ),
+                            evidence_gap="Inspect the complete parser body and its return path.",
+                            decision_after_result=(
+                                "Apply the smallest parser-lifetime mutation if the body confirms "
+                                "the "
+                                "hypothesis; otherwise inspect its direct caller."
+                            ),
+                        ),
                     ),
                 ]
             )

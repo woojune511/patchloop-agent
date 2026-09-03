@@ -97,6 +97,16 @@ $0.27031725. Public `makedirs` source evidence was present in every context afte
 first turn, including the final context with gate `needs_mutation` and one model call
 remaining. The agent attempted no mutation or visible check, submitted nothing, and
 ran no evaluator.
+The post-seventh-row working-state checkpoint now requires every read/search decision
+to carry a bounded public hypothesis, one evidence gap, and its decision after the
+result. The state is bound to action identity but excluded from the operational read
+cache key, then reattached after cache lookup so revised decisions cannot receive stale
+text. It survives failed reads and resume, and its decision takes precedence over the
+diagnostic stagnation wording without becoming a gate. Invalid provider state becomes
+a bounded protocol error without discarding completed usage. Ruff and all 78 tests
+pass in 83.55 seconds. Mock run `run_dev_6c167fa301ac40c3` reaches
+`EVALUATOR_PASS` with one accepted mutation, zero cost, task acceptance PASS, safety
+NOT_RUN, and `claim_eligible=false`.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -241,11 +251,13 @@ The first distinct post-Loguru task is provider-free validated:
 public behavior as a visible check, and passes the reference/known-bad contract
 matrix. Its seventh live row nevertheless spent all 40 model calls on successful
 read/search actions and ended before mutation. The exact source remained visible, so
-the next seam is provider-free diagnosis of mutation commitment and progress
-signaling, not another task revision or paid retry. The current soft repeated-evidence
-counter also misses interleaved repeats because any newly observed span clears all
-fingerprint counts; this is a secondary observability defect, not the cause of the
-terminal and not grounds for a new hard terminal by itself.
+the next seam was turn-to-turn decision continuity, not another task revision. That
+provider-free seam now carries `working_hypothesis`, `evidence_gap`, and
+`decision_after_result` through successful, failed, cached, and resumed reads. The
+current soft repeated-evidence counter remains unchanged and can still miss
+interleaved repeats; it is a secondary observability defect, not the cause of the
+terminal or grounds for a hard terminal. Local and mock validation cannot establish
+that the model will act on the new state. No paid retry or eighth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

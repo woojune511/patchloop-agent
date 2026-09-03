@@ -23,13 +23,18 @@ DEV_SINGLE_ACTION_TOOLS = frozenset(
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v2",
+            "schema_version": "dev-tool-surface-v3",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
             "mixed_batches": False,
             "unrestricted_shell": False,
             "new_files": False,
+            "read_working_state": [
+                "working_hypothesis",
+                "evidence_gap",
+                "decision_after_result",
+            ],
         }
     )
 
@@ -95,10 +100,19 @@ class StopIntent(StrictModel):
     evidence_span_ids: list[str] = Field(default_factory=list, max_length=8)
 
 
+class PublicWorkingState(StrictModel):
+    """Bounded public decision state carried by a read/search action."""
+
+    working_hypothesis: str = Field(min_length=1, max_length=800)
+    evidence_gap: str = Field(min_length=1, max_length=500)
+    decision_after_result: str = Field(min_length=1, max_length=800)
+
+
 class RequestedTool(StrictModel):
     name: str
     action_id: str = Field(min_length=1, max_length=500)
     arguments: dict[str, Any] = Field(default_factory=dict)
+    working_state: PublicWorkingState | None = None
 
 
 class DevModelTurn(StrictModel):
