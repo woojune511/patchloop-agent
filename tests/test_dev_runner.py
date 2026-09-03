@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import pytest
 
 import patchloop.dev.runner as runner
-from patchloop.agent.model import ModelTurn, OpenAIResponsesAdapter
+from patchloop.agent.model import ModelTurn, ModelTurnError, OpenAIResponsesAdapter
 from patchloop.agent.model import RequestedTool as ProviderRequestedTool
 from patchloop.contracts import ModelConfig
 from patchloop.dev.contracts import (
@@ -22,6 +22,7 @@ from patchloop.dev.contracts import (
     PublicTurnDecision,
     RequestedTool,
 )
+from patchloop.dev.cost import DEFAULT_OUTPUT_CEILING, pricing_for_model
 from patchloop.dev.model import MOCK_MUTATIONS, MockDevAdapter
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import dev_tool_schemas
@@ -285,6 +286,7 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
             provider="openai",
             model_id="gpt-5.4-mini-2026-03-17",
             transport_max_retries=0,
+            max_output_tokens=DEFAULT_OUTPUT_CEILING,
         ),
         api_key="unused-test-key",
         client=fake_client,
@@ -296,6 +298,7 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
     )
 
     assert request["tool_choice"] == "required"
+    assert request["max_output_tokens"] == DEFAULT_OUTPUT_CEILING == 25_000
     native_input = [
         {"role": "system", "content": "test prompt"},
         {
@@ -327,6 +330,59 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
     )
     assert "private-reasoning-sentinel" not in repr(turn)
     assert "public-message-sentinel" not in repr(turn)
+
+
+def test_openai_incomplete_reason_remains_typed_metadata() -> None:
+    class FakeInputTokens:
+        def count(self, **payload):
+            del payload
+            return SimpleNamespace(input_tokens=17)
+
+    class FakeResponses:
+        input_tokens = FakeInputTokens()
+
+        def create(self, **payload):
+            del payload
+            return SimpleNamespace(
+                id="response-incomplete",
+                model="gpt-5.4-mini-2026-03-17",
+                status="incomplete",
+                incomplete_details={"reason": "max_output_tokens"},
+                output=[SimpleNamespace(type="reasoning", content="not persisted")],
+                usage=SimpleNamespace(
+                    input_tokens=17,
+                    input_tokens_details=SimpleNamespace(cached_tokens=0),
+                    output_tokens=DEFAULT_OUTPUT_CEILING,
+                    output_tokens_details=SimpleNamespace(
+                        reasoning_tokens=DEFAULT_OUTPUT_CEILING
+                    ),
+                ),
+            )
+
+    adapter = OpenAIResponsesAdapter(
+        ModelConfig(
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            transport_max_retries=0,
+            max_output_tokens=DEFAULT_OUTPUT_CEILING,
+        ),
+        api_key="unused-test-key",
+        client=SimpleNamespace(max_retries=0, responses=FakeResponses()),
+    )
+    request = adapter.request_payload(
+        "{}",
+        dev_tool_schemas(finish_enabled=False, check_ids=["public-check"]),
+        system_prompt="test prompt",
+    )
+
+    raw = adapter.execute_request(request, requested_input_tokens=17)
+    turn = runner._turn_from_openai(raw)  # noqa: SLF001 - provider boundary test
+
+    assert turn.error_code == "incomplete_response"
+    assert turn.incomplete_reason == "max_output_tokens"
+    assert turn.output_tokens == turn.reasoning_output_tokens == DEFAULT_OUTPUT_CEILING
+    assert turn.tool_calls == []
+    assert "not persisted" not in repr(turn)
 
 
 def test_invalid_provider_turn_decision_becomes_bounded_protocol_error() -> None:
@@ -713,6 +769,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     )
     assert manifest["task_content_hash"] == envelope["task_content_hash"]
     assert manifest["runtime_content_hash"] == envelope["runtime_hash"]
+    assert manifest["model"]["max_output_tokens"] == DEFAULT_OUTPUT_CEILING
     assert manifest["submitted_patch_content_hash"] == run["artifact_hashes"][
         "submitted_patch"
     ]
@@ -951,6 +1008,30 @@ def test_resume_counter_restores_only_corrections_since_last_valid_batch(tmp_pat
     assert counters.protocol_recoveries == 1
 
 
+def test_resume_recovers_the_exact_incomplete_reason(tmp_path) -> None:
+    journal = DevJournal(tmp_path, "run_dev_incomplete_reason")
+    journal.append(
+        "provider_call_finished",
+        {
+            "call_id": "call-incomplete",
+            "turn_id": "turn-incomplete",
+            "tool_calls": [],
+            "error_code": "incomplete_response",
+            "incomplete_reason": "max_output_tokens",
+        },
+    )
+
+    runner._recover_unrecorded_decision(journal)  # noqa: SLF001 - recovery contract test
+
+    decision = next(
+        row["payload"]
+        for row in journal.events()
+        if row["event_type"] == "turn_decision_recorded"
+    )
+    assert decision["error_code"] == "incomplete_response"
+    assert decision["incomplete_reason"] == "max_output_tokens"
+
+
 def test_live_rejects_non_dev_train_before_credential_or_provider(tmp_path) -> None:
     env_file = tmp_path / "credential.env"
     env_file.write_text("OPENAI_API_KEY=not-used\n", encoding="utf-8")
@@ -1074,6 +1155,95 @@ def _patch_live_boundaries(monkeypatch) -> None:
     monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package: None)
     monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda package: LocalSandbox())
     monkeypatch.setattr(runner, "WorkspaceManager", _SnapshotWorkspaceManager)
+
+
+def test_model_hash_binds_the_configured_output_ceiling(tmp_path, monkeypatch) -> None:
+    request = _live_request(tmp_path, repeat=1, cap="1.20")
+    pricing = pricing_for_model(request.model)
+    initial = runner._model_hash(request, pricing)  # noqa: SLF001 - model identity test
+
+    monkeypatch.setattr(runner, "DEFAULT_OUTPUT_CEILING", DEFAULT_OUTPUT_CEILING + 1)
+
+    assert runner._model_hash(request, pricing) != initial  # noqa: SLF001
+
+
+def test_live_output_ceiling_and_incomplete_reason_are_durable(tmp_path, monkeypatch) -> None:
+    configured_ceilings: list[int] = []
+    execute_calls = 0
+
+    class IncompleteAdapter:
+        def __init__(self, config, *, api_key) -> None:
+            assert api_key == "test-only-sentinel"
+            configured_ceilings.append(config.max_output_tokens)
+
+        def request_payload(self, context, tools, *, system_prompt):
+            return {"context": context, "tools": tools, "system": system_prompt}
+
+        def count_input_tokens_v2(self, request, *, timeout_seconds):
+            del request
+            assert timeout_seconds > 0
+            return 100
+
+        def execute_request(self, request, *, requested_input_tokens, timeout_seconds):
+            nonlocal execute_calls
+            assert timeout_seconds > 0
+            assert request["max_output_tokens"] == DEFAULT_OUTPUT_CEILING
+            execute_calls += 1
+            return ModelTurn(
+                requested_input_tokens=requested_input_tokens,
+                input_tokens=requested_input_tokens,
+                output_tokens=DEFAULT_OUTPUT_CEILING,
+                reasoning_output_tokens=DEFAULT_OUTPUT_CEILING,
+                response_id=f"response-incomplete-{execute_calls}",
+                response_model="gpt-5.4-mini-2026-03-17",
+                response_status="incomplete",
+                response_incomplete_reason="max_output_tokens",
+                error=ModelTurnError(
+                    "incomplete_response",
+                    "provider response was incomplete: max_output_tokens",
+                ),
+                output_item_count=1,
+                non_tool_output_item_count=1,
+                output_item_types=("reasoning",),
+                output_shape_hash=sha256_json(
+                    {"item_count": 1, "item_types": ("reasoning",)}
+                ),
+            )
+
+    _patch_live_boundaries(monkeypatch)
+    monkeypatch.setattr(runner, "OpenAIResponsesAdapter", IncompleteAdapter)
+    request = _live_request(tmp_path, repeat=1, cap="0.30").model_copy(
+        update={"limits": DevLimits(max_model_calls=2)}
+    )
+
+    result = runner.run_dev(request)
+    run = result["runs"][0]
+
+    assert run["terminal"] == "INCOMPLETE_RESPONSE"
+    assert run["call_counts"] == {"model": 2, "input_count": 2, "tool": 0}
+    assert configured_ceilings == [DEFAULT_OUTPUT_CEILING]
+    assert execute_calls == 2
+    journal = DevJournal(request.state_root, run["run_id"])
+    events = journal.events()
+    starts = [row["payload"] for row in events if row["event_type"] == "provider_call_started"]
+    provider_turns = [
+        row["payload"] for row in events if row["event_type"] == "provider_call_finished"
+    ]
+    decisions = [
+        row["payload"] for row in events if row["event_type"] == "turn_decision_recorded"
+    ]
+    correction = next(
+        row["payload"] for row in events if row["event_type"] == "protocol_correction"
+    )
+    terminal = next(row["payload"] for row in events if row["event_type"] == "terminal")
+    assert [row["output_ceiling"] for row in starts] == [
+        DEFAULT_OUTPUT_CEILING,
+        DEFAULT_OUTPUT_CEILING,
+    ]
+    assert all(row["incomplete_reason"] == "max_output_tokens" for row in provider_turns)
+    assert all(row["incomplete_reason"] == "max_output_tokens" for row in decisions)
+    assert "max_output_tokens" in correction["message"]
+    assert terminal["message"] == "incomplete_response: max_output_tokens"
 
 
 class _SimulatedCrash(BaseException):

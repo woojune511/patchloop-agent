@@ -27,6 +27,7 @@ from patchloop.dev.contracts import (
     dev_tool_surface_hash,
 )
 from patchloop.dev.cost import (
+    DEFAULT_OUTPUT_CEILING,
     PRICING_SOURCE,
     PRICING_VERIFIED_ON,
     DevCostLedger,
@@ -114,6 +115,7 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
+            "max_output_tokens": DEFAULT_OUTPUT_CEILING,
             "pricing_source": PRICING_SOURCE if pricing else None,
             "pricing_verified_on": PRICING_VERIFIED_ON if pricing else None,
             "pricing": (
@@ -236,7 +238,7 @@ def _manifest(
             model_id=request.model,
             reasoning_effort=request.reasoning_effort,
             transport_max_retries=0 if request.provider == "openai" else None,
-            max_output_tokens=4096,
+            max_output_tokens=DEFAULT_OUTPUT_CEILING,
             input_price_per_million_usd=(float(pricing.input_per_million_usd) if pricing else None),
             cached_input_price_per_million_usd=(
                 float(pricing.cached_input_per_million_usd) if pricing else None
@@ -538,6 +540,21 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
         output_item_types=list(turn.output_item_types),
         output_shape_hash=turn.output_shape_hash,
     )
+
+
+def _model_error_message(error_code: str, incomplete_reason: str | None) -> str:
+    if error_code == "incomplete_response" and incomplete_reason:
+        return f"{error_code}: {incomplete_reason}"
+    return error_code
+
+
+def _model_error_issue(error_code: str, incomplete_reason: str | None) -> str:
+    if error_code == "incomplete_response" and incomplete_reason:
+        return (
+            f"Provider response was incomplete ({incomplete_reason}). "
+            "Return one valid dev-head tool-call shape."
+        )
+    return "Return one valid dev-head tool-call shape."
 
 
 def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
@@ -1125,6 +1142,7 @@ def _recover_unrecorded_decision(journal: DevJournal) -> None:
                 "turn_id": turn_id,
                 "tool_calls": tool_calls,
                 "error_code": payload.get("error_code"),
+                "incomplete_reason": payload.get("incomplete_reason"),
                 "output_item_count": payload.get("output_item_count", 0),
                 "non_tool_output_item_count": payload.get(
                     "non_tool_output_item_count", 0
@@ -1138,7 +1156,15 @@ def _recover_unrecorded_decision(journal: DevJournal) -> None:
 
 def _unresolved_decision(
     journal: DevJournal,
-) -> tuple[str, list[RequestedTool], str | None, bool, frozenset[str], int] | None:
+) -> tuple[
+    str,
+    list[RequestedTool],
+    str | None,
+    str | None,
+    bool,
+    frozenset[str],
+    int,
+] | None:
     events = journal.events()
     completed = {
         event["payload"].get("turn_id")
@@ -1166,6 +1192,9 @@ def _unresolved_decision(
         error_code = payload.get("error_code")
         if error_code is not None and not isinstance(error_code, str):
             raise RecoveryError("recorded model decision has an invalid error code")
+        incomplete_reason = payload.get("incomplete_reason")
+        if incomplete_reason is not None and not isinstance(incomplete_reason, str):
+            raise RecoveryError("recorded model decision has an invalid incomplete reason")
         turn_start = next(
             (
                 row
@@ -1190,6 +1219,7 @@ def _unresolved_decision(
             turn_id,
             calls,
             error_code,
+            incomplete_reason,
             turn_id in started,
             frozenset(available),
             max_parallel_reads,
@@ -1460,7 +1490,7 @@ def _run_one_locked(
             model_id=request.model,
             reasoning_effort=request.reasoning_effort,
             transport_max_retries=0,
-            max_output_tokens=4096,
+            max_output_tokens=DEFAULT_OUTPUT_CEILING,
             input_price_per_million_usd=float(pricing.input_per_million_usd),
             cached_input_price_per_million_usd=float(pricing.cached_input_per_million_usd),
             output_price_per_million_usd=float(pricing.output_per_million_usd),
@@ -1508,6 +1538,7 @@ def _run_one_locked(
                 pending_turn_id,
                 pending_calls,
                 pending_error,
+                pending_incomplete_reason,
                 batch_started,
                 pending_allowed_tools,
                 pending_max_parallel_reads,
@@ -1519,13 +1550,19 @@ def _run_one_locked(
             elif pending_error is not None:
                 if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
                     terminal_code = DevTerminal.INCOMPLETE_RESPONSE
-                    terminal_message = pending_error
+                    terminal_message = _model_error_message(
+                        pending_error,
+                        pending_incomplete_reason,
+                    )
                 else:
                     counters.protocol_recoveries += 1
                     correction = _protocol_correction(
                         turn_id=pending_turn_id,
                         code=pending_error,
-                        issue="Return one valid dev-head tool-call shape.",
+                        issue=_model_error_issue(
+                            pending_error,
+                            pending_incomplete_reason,
+                        ),
                         gateway=gateway,
                     )
                     journal.append("protocol_correction", correction)
@@ -1688,6 +1725,7 @@ def _run_one_locked(
                     "tool_call_count": len(turn.tool_calls),
                     "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
                     "error_code": turn.error_code,
+                    "incomplete_reason": turn.incomplete_reason,
                     "output_item_count": turn.output_item_count,
                     "non_tool_output_item_count": turn.non_tool_output_item_count,
                     "output_item_types": turn.output_item_types,
@@ -1808,6 +1846,7 @@ def _run_one_locked(
                     "cost_nanos": cost_nanos,
                     "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
                     "error_code": turn.error_code,
+                    "incomplete_reason": turn.incomplete_reason,
                     "output_item_count": turn.output_item_count,
                     "non_tool_output_item_count": turn.non_tool_output_item_count,
                     "output_item_types": turn.output_item_types,
@@ -1821,6 +1860,7 @@ def _run_one_locked(
                 "turn_id": turn_id,
                 "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
                 "error_code": turn.error_code,
+                "incomplete_reason": turn.incomplete_reason,
                 "output_item_count": turn.output_item_count,
                 "non_tool_output_item_count": turn.non_tool_output_item_count,
                 "output_item_types": turn.output_item_types,
@@ -1842,13 +1882,16 @@ def _run_one_locked(
         if turn.error_code is not None:
             if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
                 terminal_code = DevTerminal.INCOMPLETE_RESPONSE
-                terminal_message = turn.error_code
+                terminal_message = _model_error_message(
+                    turn.error_code,
+                    turn.incomplete_reason,
+                )
                 break
             counters.protocol_recoveries += 1
             correction = _protocol_correction(
                 turn_id=turn_id,
                 code=turn.error_code,
-                issue="Return one valid dev-head tool-call shape.",
+                issue=_model_error_issue(turn.error_code, turn.incomplete_reason),
                 gateway=gateway,
             )
             journal.append("protocol_correction", correction)

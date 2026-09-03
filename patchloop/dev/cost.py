@@ -9,7 +9,11 @@ from patchloop.errors import ContractError
 
 NANOS_PER_USD = Decimal("1000000000")
 TOKENS_PER_MILLION = Decimal("1000000")
-DEFAULT_OUTPUT_CEILING = 4096
+# Responses counts reasoning tokens against this ceiling. Medium-reasoning coding
+# turns have repeatedly exhausted 4,096 tokens before emitting a required tool call,
+# while this project has prior live completion evidence at 25,000.
+# The invocation-wide cost ledger still lowers this value before every dispatch.
+DEFAULT_OUTPUT_CEILING = 25_000
 MINIMUM_OUTPUT_CEILING = 128
 PRICING_SOURCE = "https://developers.openai.com/api/docs/pricing"
 PRICING_VERIFIED_ON = "2026-09-01"

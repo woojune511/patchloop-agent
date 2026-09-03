@@ -15,7 +15,7 @@ from patchloop.dev.contracts import (
     PublicTurnDecision,
     RequestedTool,
 )
-from patchloop.dev.cost import DevCostLedger, pricing_for_model
+from patchloop.dev.cost import DEFAULT_OUTPUT_CEILING, DevCostLedger, pricing_for_model
 from patchloop.dev.tools import validate_tool_batch
 from patchloop.errors import ContractError
 from patchloop.runtime import repository_root, runtime_content_hash, runtime_content_paths
@@ -182,9 +182,13 @@ def test_cost_cap_is_checked_before_dispatch_and_can_lower_output_ceiling() -> N
     ledger = DevCostLedger(Decimal("0.01"), pricing)
     admission = ledger.admit(1_000)
     assert admission is not None
-    assert 128 <= admission.output_ceiling < 4_096
+    assert 128 <= admission.output_ceiling < DEFAULT_OUTPUT_CEILING
     cost = ledger.settle(input_tokens=1_000, cached_input_tokens=0, output_tokens=100)
     assert 0 < cost <= ledger.cap_nanos
+
+    full = DevCostLedger(Decimal("1.20"), pricing).admit(1_000)
+    assert full is not None
+    assert full.output_ceiling == DEFAULT_OUTPUT_CEILING == 25_000
 
     restored = DevCostLedger(Decimal("0.01"), pricing)
     restored.restore_settled_usage(

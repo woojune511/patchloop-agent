@@ -21,7 +21,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The nine live observations below
+Repository policy alone never initiates paid work. The ten live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -158,6 +158,28 @@ short external temp root. Mock run `run_dev_a7724af70efb4984` reached
 `EVALUATOR_PASS` in four model turns and five tool actions through one accepted
 mutation, with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
 model cost.
+The separately approved tenth row used the same pyfakefs version-2 tuple. Run
+`run_dev_8efe75f7c8c14cbd` ended at durable `INCOMPLETE_RESPONSE` after 271.046
+active seconds, 28 completed provider calls and input counts, 58 tool actions, no
+accepted mutation, and $0.27773415. The first 24 inspection turns completed 23 reads
+and 34 searches; the lease then removed both tools exactly as configured. Turn 25
+used all 4,096 output tokens as reasoning without a tool call. The correction was
+followed by a valid but expected-to-fail public check on the empty diff, which reset
+the consecutive correction count. Turns 27 and 28 again used all 4,096 output tokens
+as reasoning, and the latter closed the row. There was no submission or evaluator.
+The immutable journal records each incomplete status, ceiling, usage, output shape,
+and generic error code, but not the provider's `incomplete_details.reason`; therefore
+output-ceiling exhaustion is a strong trace-based inference, not a directly preserved
+historical field.
+The post-tenth provider-free correction raises the desired per-call output ceiling to
+25,000, while retaining pre-dispatch reduction against the invocation-wide cost cap.
+That ceiling is now part of model identity and the manifest. Future incomplete reasons
+are preserved in provider, decision-recovery, correction, and terminal provenance.
+Ruff and all 83 tests pass; the full suite completed in about 85.5 seconds with a
+short external temp root. Mock run `run_dev_5e032eaf91ec4177` reached
+`EVALUATOR_PASS` in four model turns and five tool actions through one accepted
+mutation, with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
+model cost. No eleventh-row authority follows from this correction.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -249,7 +271,11 @@ action-selection/commitment failure after sufficient public evidence; it did not
 exercise mutation, checks, submission, evaluation, or safety.
 The eighth row confirms that failure persists even when the model's own bounded
 decision is projected exactly into the next turn. The ninth row did not retest that
-behavior because a cross-call free-text equality rule terminated first.
+behavior because a cross-call free-text equality rule terminated first. The tenth row
+confirms that native continuation, the completion horizon, and the 24-turn inspection
+lease operate live. Its failure moved to the provider-response budget: once reads were
+removed, three reasoning-only responses each consumed the complete 4,096-token ceiling
+before a tool call, with one valid public-check batch between them.
 
 Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
 repeated-read terminal or replacement mutation interface. The retrospective replay
@@ -268,9 +294,9 @@ shape or exact full sentence. Its task content hash is
 The fifth and sixth rows used this exact identity. Version 3 preserves version 2 and
 accepts the semantics promised publicly rather than one literal phrasing. The sixth
 row's submitted patch passes the version-3 evaluator provider-free, but that does not
-retroactively change the version-2 terminal. The eighth and ninth live observations
-used the separate pyfakefs task described below. The ninth row is terminal and no
-retry or tenth live row is authorized.
+retroactively change the version-2 terminal. The eighth through tenth live observations
+used the separate pyfakefs task described below. The tenth row is terminal and no
+retry or eleventh live row is authorized.
 
 The fifth row's terminal label described the application's tool-batch boundary, but
 the stored evidence did not establish that the provider response itself was
@@ -291,7 +317,7 @@ Operational resume uses an immutable envelope, exact contract comparison,
 run-lifetime locking, journal-derived counters and cost, durable tool-decision replay,
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
-acceptance and safety remain separate typed axes. No retry or tenth live row is
+acceptance and safety remain separate typed axes. No retry or eleventh live row is
 authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
@@ -320,7 +346,10 @@ inspection lease. The ninth row confirms native continuation but exposes the sep
 mistake of requiring distinct parallel actions to duplicate free text exactly. That
 relational check is now removed while common `inspect` mode and all action-level
 decisions are retained. Local trace/policy verification still preserves the observed
-successful 24/3 paths. No paid retry or tenth row is authorized.
+successful 24/3 paths. The tenth row exercises that general lease and exposes the
+separate 4,096-token response ceiling. The active provider-free correction restores a
+25,000-token desired ceiling under the existing cost admission and records exact future
+incomplete reasons. No paid retry or eleventh row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

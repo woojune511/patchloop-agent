@@ -552,14 +552,67 @@ temp root, and mock run `run_dev_a7724af70efb4984` reaches isolated `EVALUATOR_P
 through one accepted mutation. Its task acceptance is PASS, safety is NOT_RUN,
 `claim_eligible=false`, and provider cost is zero. No tenth-row authority follows.
 
+## Tenth live development observation
+
+One separately approved invocation used external state root `C:\patchloop-state`,
+`pyfakefs-makedirs-parent-traversal` version 2,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+and the $1.20 invocation cap. No retry followed, and PatchLoop did not start Docker or
+pull/build an image.
+
+Run `run_dev_8efe75f7c8c14cbd` wrote a valid 363-event hash chain ending at durable
+`INCOMPLETE_RESPONSE` after 271.046 active seconds. All 28 provider calls and input
+counts completed, and durable provider costs sum exactly to the terminal's
+$0.27773415. It completed 23 `read_file` and 34 `search_files` actions, then one
+`parent-traversal-contract` check on the empty diff. That check failed as the public
+contract requires; no mutation, submission, evaluator, or safety execution followed.
+
+The first 24 unchanged-diff inspection turns completed normally. Starting with turn
+25, the public tool surface contained only mutation, check, and stop actions, so the
+completion horizon and 24-turn inspection lease operated as designed. Turn 25 returned
+an incomplete reasoning-only response after using its full 4,096-token output ceiling.
+The next turn issued the valid public check, whose completed batch reset the consecutive
+correction allowance. Turns 27 and 28 again returned incomplete reasoning-only
+responses using exactly 4,096 output and 4,096 reasoning tokens; the second consecutive
+one produced the terminal.
+
+The immutable event stream preserved response status, ceiling, token usage, item shape,
+and the generic `incomplete_response` code, but omitted the adapter's parsed
+`incomplete_details.reason`. Equal ceiling, output, and reasoning counts on all three
+events make output-ceiling exhaustion the supported explanation, but it remains an
+inference rather than an exact historical provider field. This row therefore validates
+the action horizon and inspection lease while exposing a distinct output-budget and
+provenance boundary.
+
+## Post-tenth output-budget correction
+
+The desired dev-head output ceiling is now 25,000 tokens. This is an internal,
+previously exercised project setting, not an API recommendation. Per-dispatch cost
+admission still lowers it when the remaining invocation-wide cap cannot reserve the
+full amount, and refuses a call that cannot reserve the minimum. The configured ceiling
+is included in model identity and the submission manifest; every actual admitted
+ceiling remains in `provider_call_started`.
+
+Future provider `incomplete_details.reason` metadata is retained in
+`provider_call_finished` and `turn_decision_recorded`, copied by decision recovery,
+named in the next bounded correction, and included in terminal provenance. Response
+text and reasoning remain unstored. Provider-free tests cover full-ceiling admission,
+cap-driven reduction, typed adapter extraction, durable propagation, terminal wording,
+and recovery without another provider dispatch. Ruff passes, and all 83 tests pass in
+about 85.5 seconds with a short external temp root. Mock run
+`run_dev_5e032eaf91ec4177` reaches isolated `EVALUATOR_PASS` through one accepted
+mutation with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
+provider cost. No eleventh-row authority follows.
+
 ## Not executed
 
-- no transport retry or follow-up paid run after the ninth row
+- no transport retry or follow-up paid run after the tenth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
-- no mutation, visible check, submission, or evaluator execution in the seventh,
-  eighth, or ninth pyfakefs version-2 live row
+- no mutation, submission, or evaluator execution in the seventh through tenth
+  pyfakefs version-2 live rows; only the tenth ran a visible check, which failed on the
+  unchanged empty diff
 - no hidden evaluation of the temporary Loguru version-2 public correction
 
 The under-two-minute focused-validation target remains locally supported. The sixth
@@ -592,7 +645,10 @@ path but exposing an invalid acceptance oracle rather than producing task accept
   evidence. The eighth additionally proves live working-state projection, not
   compliance with the projected decision. The ninth proves native continuation for one
   completed search, then exposes a cross-call free-text equality mismatch before the
-  action horizon or inspection lease is exercised.
+  action horizon or inspection lease is exercised. The tenth proves that horizon and
+  lease operate live, then ends on three reasoning-only responses at the old 4,096-token
+  ceiling. Its exact incomplete reason was not durably recorded and is inferred from
+  the preserved status and token counts.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

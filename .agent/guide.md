@@ -150,6 +150,7 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 - four parallel reads
 - 24 inspection turns per unchanged diff
 - three repair-specific inspection turns after a failed mutation
+- 25,000 desired output tokens per provider call, reduced by cost admission
 - one repetition by default, six maximum
 
 ## Development decisions and next seam
@@ -266,7 +267,25 @@ and result linkage worked; the inspection lease was not exercised.
 The current provider-free correction removes only that cross-call free-text equality.
 Parallel reads still share enforced `inspect` mode, and each call-specific decision is
 retained in its batch card. Keep the completion horizon, 24/3 leases, and diagnostic-only
-stagnation behavior unchanged. Do not run a tenth paid row without separate authorization.
+stagnation behavior unchanged.
+
+The separately authorized tenth row used the same pyfakefs version-2 tuple. Run
+`run_dev_8efe75f7c8c14cbd` ended at `INCOMPLETE_RESPONSE` after 28 provider calls,
+58 tool actions, no accepted mutation, and $0.27773415. The general inspection lease
+removed reads after 24 turns, establishing that native continuation, completion horizon,
+and lease all operated live. A valid public check on the unchanged empty diff failed as
+expected. Three other responses used their complete 4,096-token output allocation only
+for reasoning and emitted no tool call; the last two were consecutive and closed the
+row. The old journal omitted `incomplete_details.reason`, so ceiling exhaustion is a
+strong usage-based inference rather than a stored exact provider reason.
+
+The current provider-free correction raises the desired output ceiling to 25,000 under
+the unchanged invocation-wide cost admission, and binds that value into model identity
+and the manifest. It also preserves future incomplete reasons through provider events,
+decision recovery, bounded correction, and terminal provenance without retaining raw
+reasoning. Ruff and all 83 tests pass in about 85.5 seconds; mock run
+`run_dev_5e032eaf91ec4177` reaches isolated `EVALUATOR_PASS` with zero provider cost.
+Do not run an eleventh paid row without separate authorization.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.

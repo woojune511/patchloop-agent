@@ -65,9 +65,12 @@ or committed.
 The required evaluator image must already exist locally at the declared digest.
 PatchLoop never starts Docker Desktop or pulls/builds an image. Unknown model
 pricing fails before dispatch. The adapter counts the actual request immediately
-before generation, reserves a conservative output allowance, uses zero SDK
-transport retries, and stops all remaining repetitions when count, transport, or
-billing state is uncertain. Generation and input counting use the same
+before generation. The desired response ceiling is 25,000 tokens. Responses counts
+both reasoning and visible output against it; pre-dispatch admission lowers that
+ceiling when necessary to stay inside the invocation-wide cap. Every admitted ceiling
+is journaled. The adapter uses zero SDK transport retries and stops all remaining
+repetitions when count, transport, or billing state is uncertain. Generation and input
+counting use the same
 `tool_choice=required` contract, so the provider request and the runner's non-empty
 tool-batch requirement agree. From the second turn onward, the request reconstructs
 the immediately preceding public function calls and their matching outputs as native
@@ -116,9 +119,11 @@ diff and are not globally reset by an unrelated new span or check.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate and remaining public checks. A valid tool batch
 resets that correction allowance. Provider journals retain only output item counts,
-types, and a shape hash for diagnosis; response text and model reasoning are not
-stored. If no public read, check, or safe scoped mutation can make progress, the
-agent may call `stop_task` with a bounded reason. This produces `AGENT_STOPPED`
+types, a shape hash, and typed incomplete-reason metadata for diagnosis; response text
+and model reasoning are not stored. The same incomplete reason survives decision
+recovery and is named in correction and terminal provenance. If no public read, check,
+or safe scoped mutation can make progress, the agent may call `stop_task` with a bounded
+reason. This produces `AGENT_STOPPED`
 without submission or evaluation.
 
 `finish_task` becomes available only after every visible check passes on the
