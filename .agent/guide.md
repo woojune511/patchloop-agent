@@ -183,13 +183,21 @@ out of agent context and preserve version 2 unchanged.
 Keep repeated-evidence detection diagnostic-only. The bounded continuation evidence
 does not support a hard workflow gate or a replacement mutation DSL. The smaller
 current correction uses Git's deterministic recount for hunk totals while preserving
-all existing mutation and submission checks. The next seam is a versioned successor
-task package whose private oracle accepts the semantic behavior exposed by the public
-contract, followed by provider-free base/candidate/evaluator validation. Any seventh
-live row remains separately authorized and must name the exact task version/content
-identity. Confirmatory design review waits for three distinct harness/contract-clean
-submissions with at least two private passes; that threshold itself proves no quality
-or generalization benefit.
+all existing mutation and submission checks. Version 3 now preserves version 2 while
+replacing its literal private phrasing assertion with a semantic call-and-reference
+pairing. Provider-free Docker validation makes the clean base fail, the reference and
+the sixth-row exact candidate pass, and every declared known-bad patch fail acceptance.
+Both passing patches also pass the full manifest-bound evaluator with all task and
+safety axes PASS. This does not rewrite the immutable version-2 live result.
+
+A separate local API defect remains: importing `patchloop.verifier.policy` first in a
+fresh interpreter enters the eager `patchloop.dev` / `patchloop.verifier` re-export
+cycle, while the production import order and evaluator path work. Fix that only as a
+small import-contract change with a fresh-process regression; do not mix it into task
+acceptance. Any seventh live row remains separately authorized and must name the exact
+task version/content identity. Confirmatory design review waits for three distinct
+harness/contract-clean submissions with at least two private passes; that threshold
+itself proves no quality or generalization benefit.
 
 ## Validation checklist
 

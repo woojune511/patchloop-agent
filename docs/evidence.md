@@ -75,6 +75,13 @@ Following the Rapid Dev Reset, local checkpoints recorded:
   run `run_dev_6374b31034c44427` reached isolated `EVALUATOR_PASS` through one
   accepted mutation with task acceptance PASS, safety NOT_RUN,
   `claim_eligible=false`, and zero model cost.
+- Version 3 preserves version 2 and replaces only its private literal-phrase oracle
+  with semantic `logger.bind(...)` then `{extra[...]}` recognition. Task validation
+  reports content hash
+  `sha256:21f5f668c4f6ef85a2c1a45f4371cbd050de0e73dfcf8605a3c398413374c15b`.
+  The focused contract set passed 13 tests, Ruff passed, and the final full suite
+  passed 70 tests in 73.38 seconds. Mock run `run_dev_db9548d402084112` reached isolated
+  `EVALUATOR_PASS` with task acceptance PASS, safety NOT_RUN, and zero model cost.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -255,12 +262,52 @@ invalidates the result as a negative coding-agent verdict; it does not turn the 
 into task acceptance or a quality claim. Version 2 remains immutable evidence, and
 any oracle correction must use a versioned successor.
 
+## Version-3 provider-free oracle validation
+
+The successor package `loguru-invalid-format-feedback-v3` changes the task version,
+private semantic assertion, and task audit while preserving the version-2 public
+behavior and all reference/known-bad/environment fixture bytes. Versions 1 and 2
+remain unchanged. Its identities are:
+
+- public spec: `sha256:40039f93b0955260a1942808adcae72b14d813db6c791feed686e5d0f5125a9a`
+- private spec: `sha256:eafeb4fd0355972cd9da67983dfacf20bbe854bdf3da9501dc6f5752705f29ee`
+- task content: `sha256:21f5f668c4f6ef85a2c1a45f4371cbd050de0e73dfcf8605a3c398413374c15b`
+
+Provider-free evaluator run `run_dev_v3candidate_f1bb` used the already-local pinned
+image and the sixth live row's exact submitted patch
+`sha256:e55b934c407a36807344f2f9e378c54c10283e407b063033972183ea0f43254f`.
+The manifest, submitted artifact, applied patch, and resulting diff remained bound to
+that identity. All four visible checks, the semantic hidden check, four scope/policy
+checks, and all four typed safety controls passed. The result, manifest, and
+provenance are retained under external root `C:\patchloop-v3-eval-f1bb`; the run is
+`official=false`, used no provider, and cannot retroactively alter the sixth row.
+
+Provider-free evaluator run `run_dev_v3reference` separately bound and applied the
+byte-identical reference patch
+`sha256:bed37a0dbf76a572a68853db61e6ae24dc74a0791457f2f96fece1b75ec8de3a`.
+Hidden, regression, scope, and safety all passed; its artifacts remain under
+`C:\patchloop-v3-eval-reference`.
+
+A separate Docker matrix cloned the same exact base locally and used `--pull never`.
+The clean base failed both public and private missing-key behavior checks and had no
+submission. The reference patch passed visible, hidden, and scope acceptance. All six
+declared known-bad patches were rejected: four failed behavior checks, the forbidden
+path also failed scope, and the no-op had no submission. This guards against fixing
+the version-2 false negative by making the oracle vacuous.
+
+The first matrix harness attempt also exposed a separate, reproducible import edge:
+a fresh interpreter importing `patchloop.verifier.policy` first enters a circular
+import through the eager `patchloop.verifier` and `patchloop.dev` package exports.
+Importing through the production runner order succeeds, and the production evaluator
+run above is unaffected. This is a local module-import contract defect to fix
+separately, not task-acceptance evidence.
+
 ## Not executed
 
 - no seventh repetition, transport retry, or follow-up paid run after the sixth row
 - no image pull, image build, or automatic Docker Desktop start
-- no contract-valid task acceptance, claim, qualification, activation, adoption, or
-  held-out evaluation
+- no contract-valid paid/live task acceptance, claim, qualification, activation,
+  adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no hidden evaluation of the temporary version-2 validation candidate
 
 The under-two-minute focused-validation target remains locally supported. The sixth
@@ -283,11 +330,15 @@ path but exposing an invalid acceptance oracle rather than producing task accept
 - Deleted historical executables require Git history to replay.
 - Only runs with the new immutable envelope can resume; older journals remain
   read-only evidence.
+- Standalone `patchloop.verifier.policy` import currently depends on import order
+  because the `patchloop.dev` and `patchloop.verifier` packages eagerly re-export
+  runtime objects; the production runner path is covered and passes.
 - The third through sixth live rows show that the provider can emit the
   `apply_git_diff` raw-diff shape, and the fourth and sixth show failed-mutation
   continuation through later attempts. The sixth establishes live submission and
   evaluator handoff, but version 2's stricter private literal assertion prevents a
-  contract-valid task-acceptance conclusion.
+  contract-valid live task-acceptance conclusion. Version 3 corrects that oracle and
+  passes provider-free evaluation only.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

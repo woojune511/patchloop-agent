@@ -62,6 +62,16 @@ visible checks, the submitted artifact, and the evaluator-applied patch shared d
 Task acceptance reported FAIL while safety reported PASS, but the failure came from
 a private literal-phrase assertion stricter than the public version-2 contract. This
 is evaluator-contract evidence, not a valid negative coding-agent verdict.
+Version 3 preserves every version-2 public behavior and unchanged fixture while
+replacing only the private literal oracle with a semantic call-and-reference check.
+Its task content hash is
+`sha256:21f5f668c4f6ef85a2c1a45f4371cbd050de0e73dfcf8605a3c398413374c15b`.
+Provider-free evaluator run `run_dev_v3candidate_f1bb` applied the sixth row's exact
+submitted diff and reported hidden, regression, scope, and safety PASS. A separate
+evaluator run `run_dev_v3reference` reports the same four-axis PASS for the reference.
+A Docker matrix made the clean base fail and all six declared known-bad patches fail
+acceptance. Ruff and all 70 tests pass; mock run
+`run_dev_db9548d402084112` reaches `EVALUATOR_PASS` with zero model cost.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -164,14 +174,15 @@ feedback, available record-key reporting, the canonical `logger.bind()` /
 `{extra[key]}` guidance, and both catch modes without requiring an implementation
 shape or exact full sentence. Its task content hash is
 `sha256:61704553b8ba733bad7350561eec397a7a6c04365a56ef61854a9e12cefe259d`.
-The fifth and sixth rows used this exact identity. Preserve version 2 unchanged; a
-future correction must be a versioned successor whose private oracle accepts the
-semantics promised publicly rather than one literal phrasing. No seventh live row or
-retry is authorized.
+The fifth and sixth rows used this exact identity. Version 3 preserves version 2 and
+accepts the semantics promised publicly rather than one literal phrasing. The sixth
+row's submitted patch passes the version-3 evaluator provider-free, but that does not
+retroactively change the version-2 terminal or create a new live observation. No
+seventh live row or retry is authorized.
 
 The fifth row's terminal label described the application's tool-batch boundary, but
-the stored
-evidence did not establish that the provider response itself was malformed. Both
+the stored evidence did not establish that the provider response itself was
+malformed. Both
 zero-tool responses completed and consumed output tokens, while the old adapter
 discarded non-function output without recording its shape. More importantly, the
 request allowed a zero-tool response even though the runner rejected one; the
@@ -190,6 +201,12 @@ and mutation reconciliation. Pre-envelope runs remain immutable and non-resumabl
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. No additional live row is
 authorized.
+
+One unrelated local import edge remains. A fresh interpreter cannot import
+`patchloop.verifier.policy` first because eager package re-exports form a circular
+import; the production runner import order, evaluator path, and 70-test suite pass.
+The bounded fix is to remove or lazily resolve the eager re-export and add a
+fresh-process import regression, without changing task or evaluator semantics.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

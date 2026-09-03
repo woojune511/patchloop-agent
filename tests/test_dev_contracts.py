@@ -192,6 +192,60 @@ def test_loguru_feedback_v2_preserves_v1_and_adds_public_contract() -> None:
     ]
 
 
+def test_loguru_feedback_v3_preserves_v2_and_aligns_private_oracle() -> None:
+    root = repository_root() / "tasks" / "dev-train"
+    predecessor_root = root / "loguru-invalid-format-feedback-v2"
+    successor_root = root / "loguru-invalid-format-feedback-v3"
+    predecessor = load_task_package(predecessor_root)
+    successor = load_task_package(successor_root)
+
+    assert predecessor.public.task_version == predecessor.private.task_version == 2
+    assert successor.public.task_version == successor.private.task_version == 3
+    assert predecessor.task_content_hash == (
+        "sha256:61704553b8ba733bad7350561eec397a7a6c04365a56ef61854a9e12cefe259d"
+    )
+    assert successor.task_content_hash == (
+        "sha256:21f5f668c4f6ef85a2c1a45f4371cbd050de0e73dfcf8605a3c398413374c15b"
+    )
+
+    predecessor_public = predecessor.public.model_dump(mode="json")
+    successor_public = successor.public.model_dump(mode="json")
+    predecessor_public.pop("task_version")
+    successor_public.pop("task_version")
+    assert successor_public == predecessor_public
+
+    predecessor_private = predecessor.private.model_dump(mode="json")
+    successor_private = successor.private.model_dump(mode="json")
+    predecessor_private.pop("task_version")
+    successor_private.pop("task_version")
+    assert successor_private == predecessor_private
+
+    preserved_paths = {
+        "environment.yaml",
+        "reference.patch",
+        "bad/catch-true-only.patch",
+        "bad/forbidden-path.patch",
+        "bad/generic-message.patch",
+        "bad/hardcoded-reproduction.patch",
+        "bad/noop.patch",
+        "bad/swallow-catch-false.patch",
+    }
+    for relative_path in preserved_paths:
+        assert (successor_root / relative_path).read_bytes() == (
+            predecessor_root / relative_path
+        ).read_bytes()
+
+    predecessor_hidden = (predecessor_root / "hidden/test_invalid_format_feedback.py").read_text(
+        encoding="utf-8"
+    )
+    successor_hidden = (successor_root / "hidden/test_invalid_format_feedback.py").read_text(
+        encoding="utf-8"
+    )
+    assert 'self.assertIn("logger.bind(key=value)", feedback)' in predecessor_hidden
+    assert 'self.assertIn("logger.bind(key=value)", feedback)' not in successor_hidden
+    assert "self.assertRegex(feedback, BINDING_GUIDANCE)" in successor_hidden
+
+
 def test_v1_task_content_hash_binds_hidden_bytes(tmp_path) -> None:
     source = repository_root() / "tasks" / "smoke" / "csv-quoted-newline"
     copied = tmp_path / "task"
