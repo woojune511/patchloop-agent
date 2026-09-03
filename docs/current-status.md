@@ -217,7 +217,26 @@ and all 87 tests pass; the final full suite completed in 88.79 seconds with a sh
 external temp root. Provider-free mock run `run_dev_22a91101f0224925` reached isolated
 `EVALUATOR_PASS` in four model turns and five tool actions through one accepted
 mutation, with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero
-provider cost. No paid retry or twelfth row is authorized.
+provider cost.
+The separately authorized twelfth row used the same pyfakefs version-2 task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+and a $1.20 cap. Run `run_dev_2e95d3d85fd84e2d` ended at durable `AGENT_STOPPED`
+after 281.422 active seconds, 39 provider calls, 76 tool actions, one accepted
+mutation, and $0.3471675. All 39 responses stored encrypted reasoning and all 38
+next-turn requests carried the linked continuation; no response was incomplete.
+Turn 35 advertised the final inspection opportunity and turn 36 closed inspection
+with five calls reserved. The turn-36 mutation applied, then
+`parent-traversal-contract` failed on its public permissions assertion in turn 37.
+Turn 38 proposed a one-line repair in `pyfakefs/fake_os.py`, but the mutation contract
+rejected it because no current source span covered that file: accepting the preceding
+mutation had invalidated its source span, while the exact current hunk remained only
+in `last_successful_mutation` and inspection was closed. The agent explicitly stopped
+in turn 39. There was no submission or evaluator execution.
+This is a new harness boundary, not task-acceptance evidence. A post-check repair must
+be allowed to use the current-diff-bound `last_successful_mutation` hunk as exact
+anchor evidence, and the horizon must reserve one bounded failed-check repair and
+recheck path rather than only a rejected-patch repair. Keep current-span validation
+fail-closed for edits outside that hunk. No paid retry or thirteenth row is authorized.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -322,6 +341,14 @@ tool surface elicited a mutation rather than another incomplete response. Its fi
 malformed diff was repaired on the next turn and both visible checks passed. The new
 failure boundary is narrower: the horizon retained only the best-case four-call path,
 so that one repair consumed the call needed for finish.
+The twelfth row confirms the added rejected-patch reserve itself live: inspection
+closed at turn 36, the first mutation applied, and the next turn ran the central
+visible check. That check exposed a semantic permission defect. The model then formed
+a bounded one-line repair, but the gateway required a current source span that its own
+successful mutation had invalidated and could no longer be reread. Even if admitted,
+three remaining calls could not cover repair, both checks, and finish. The next seam
+is therefore current-hunk repair evidence plus one bounded failed-check recovery path,
+not a larger global token or turn limit.
 
 Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
 repeated-read terminal or replacement mutation interface. The retrospective replay
@@ -340,9 +367,9 @@ shape or exact full sentence. Its task content hash is
 The fifth and sixth rows used this exact identity. Version 3 preserves version 2 and
 accepts the semantics promised publicly rather than one literal phrasing. The sixth
 row's submitted patch passes the version-3 evaluator provider-free, but that does not
-retroactively change the version-2 terminal. The eighth through eleventh live
-observations used the separate pyfakefs task described below. The eleventh row is
-terminal and no retry or twelfth live row is authorized.
+retroactively change the version-2 terminal. The eighth through twelfth live
+observations used the separate pyfakefs task described below. The twelfth row is
+terminal and no retry or thirteenth live row is authorized.
 
 The fifth row's terminal label described the application's tool-batch boundary, but
 the stored evidence did not establish that the provider response itself was
@@ -363,7 +390,7 @@ Operational resume uses an immutable envelope, exact contract comparison,
 run-lifetime locking, journal-derived counters and cost, durable tool-decision replay,
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
-acceptance and safety remain separate typed axes. No retry or twelfth live row is
+acceptance and safety remain separate typed axes. No retry or thirteenth live row is
 authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
@@ -399,7 +426,9 @@ The active provider-free successor keeps the 25,000-token desired ceiling under 
 existing cost admission, records exact future incomplete reasons, replays encrypted
 reasoning across stateless turns, and derives inspection availability from completion
 slack with one first-mutation repair reserve. `completion_possible` now includes actual
-model/tool capacity. No paid retry or twelfth row is authorized.
+model/tool capacity. The twelfth row confirmed those mechanisms but exposed the
+post-check repair evidence and horizon boundary described above. No paid retry or
+thirteenth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

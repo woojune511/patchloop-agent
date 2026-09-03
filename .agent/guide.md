@@ -316,8 +316,24 @@ additional first-mutation repair call, consumes it after failure, and reports ac
 best-case budget feasibility. A scheduler regression reproduces the eleventh-row shape
 through finish at call 40 while retaining the 40/100 global limits. Ruff and all 87
 tests pass in 88.79 seconds; provider-free mock run `run_dev_22a91101f0224925` reaches
-isolated `EVALUATOR_PASS` through one accepted mutation with zero provider cost. Do not
-run a paid retry or twelfth row without separate authorization.
+isolated `EVALUATOR_PASS` through one accepted mutation with zero provider cost.
+
+The separately authorized twelfth row, `run_dev_2e95d3d85fd84e2d`, confirmed encrypted
+continuation on all 38 edges and closed inspection at turn 36 with five calls left. Its
+first mutation applied, and the central visible check then failed on the public
+intermediate-directory permission assertion. The next turn proposed a one-line repair,
+but mutation validation rejected it because the successful mutation had invalidated
+the only current span for `pyfakefs/fake_os.py`; read/search were already closed even
+though `last_successful_mutation` retained the exact current hunk. Three calls also
+could not cover the repair, two checks, and finish. The row deliberately stopped at
+turn 39 after 76 tool actions and $0.3471675, with no submission or evaluator.
+
+Fix this provider-free by accepting the current-diff-bound successful-mutation hunk as
+anchor evidence only for an overlapping repair in that same file, while retaining
+current-span validation everywhere else. Reserve one bounded failed-check repair and
+recheck path before inspection closes; do not raise the global 40/100 limits. Regress
+the exact twelfth-row sequence through repair, both checks, and finish. Do not run a
+paid retry or thirteenth row without separate authorization.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.
