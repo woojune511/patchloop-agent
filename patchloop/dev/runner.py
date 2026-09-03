@@ -65,6 +65,8 @@ from patchloop.task_loader import load_task_package, task_package_content_paths
 from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
 from patchloop.verifier.core import EvaluationEngine
 
+_SOFT_COMMITMENT_NO_GAIN_TURNS = 2
+
 
 @dataclass
 class _RunCounters:
@@ -75,7 +77,9 @@ class _RunCounters:
     inspection_turns_at_diff: int = 0
     failed_mutation_repair_turns: int = 0
     failed_mutation_pending: bool = False
-    feedback_recovery_used: bool = False
+    mutation_recovery_used: bool = False
+    check_recovery_used: bool = False
+    consecutive_no_evidence_gain_turns: int = 0
 
 
 @dataclass
@@ -92,7 +96,8 @@ class _ToolPolicy:
     max_parallel_reads: int
     minimum_completion_calls: int
     completion_budget_calls: int
-    feedback_recovery_reserve_calls: int
+    mutation_recovery_reserve_calls: int
+    check_recovery_reserve_calls: int
     completion_possible: bool
     protected_completion_possible: bool
     exploration_allowed: bool
@@ -102,6 +107,10 @@ class _ToolPolicy:
     closure_reason: str | None
     tools_closing_after_this_turn: tuple[str, ...]
     required_inspection_for_completion: bool
+
+    @property
+    def feedback_recovery_reserve_calls(self) -> int:
+        return self.mutation_recovery_reserve_calls + self.check_recovery_reserve_calls
 
 
 class _ProviderContinuationError(RecoveryError):
@@ -385,21 +394,25 @@ def _tool_policy(
     requires_mutation_for_completion = (
         workflow_gate == "needs_mutation" or current_check_failed
     )
-    feedback_already_observed = (
-        counters.feedback_recovery_used
-        or current_check_failed
-        or gateway.last_failed_mutation is not None
-    )
     feedback_can_still_require_repair = (
         requires_mutation_for_completion or bool(gateway.unrun_visible_check_ids())
     )
-    feedback_recovery_reserve_calls = 2 * int(
+    mutation_recovery_reserve_calls = 2 * int(
         feedback_can_still_require_repair
         and mutation_capacity
-        and not feedback_already_observed
+        and not counters.mutation_recovery_used
+        and gateway.last_failed_mutation is None
+    )
+    check_recovery_reserve_calls = 2 * int(
+        bool(gateway.unrun_visible_check_ids())
+        and mutation_capacity
+        and not counters.check_recovery_used
+        and not current_check_failed
     )
     completion_budget_calls = (
-        minimum_completion_calls + feedback_recovery_reserve_calls
+        minimum_completion_calls
+        + mutation_recovery_reserve_calls
+        + check_recovery_reserve_calls
     )
     model_slack = remaining_model_calls - completion_budget_calls
     tool_slack = remaining_tool_actions - completion_budget_calls
@@ -475,7 +488,8 @@ def _tool_policy(
         max_parallel_reads=max_parallel_reads,
         minimum_completion_calls=minimum_completion_calls,
         completion_budget_calls=completion_budget_calls,
-        feedback_recovery_reserve_calls=feedback_recovery_reserve_calls,
+        mutation_recovery_reserve_calls=mutation_recovery_reserve_calls,
+        check_recovery_reserve_calls=check_recovery_reserve_calls,
         completion_possible=completion_possible,
         protected_completion_possible=protected_completion_possible,
         exploration_allowed=exploration_allowed,
@@ -486,6 +500,31 @@ def _tool_policy(
         tools_closing_after_this_turn=tools_closing_after_this_turn,
         required_inspection_for_completion=required_inspection_for_completion,
     )
+
+
+def _commitment_signal(
+    gateway: DevToolGateway,
+    counters: _RunCounters,
+    policy: _ToolPolicy,
+) -> dict[str, Any] | None:
+    no_gain_turns = counters.consecutive_no_evidence_gain_turns
+    if (
+        no_gain_turns < _SOFT_COMMITMENT_NO_GAIN_TURNS
+        or "apply_git_diff" not in policy.allowed_tools
+        or not gateway.has_current_mutation_evidence()
+    ):
+        return None
+    return {
+        "state": "mutation_or_stop_recommended",
+        "reason": "consecutive_inspection_without_new_public_evidence",
+        "consecutive_no_evidence_gain_turns": no_gain_turns,
+        "hard_gate": False,
+        "message": (
+            "Recent inspection produced no new public source spans. Use current "
+            "actionable evidence for apply_git_diff, or stop_task if it cannot justify "
+            "a safe mutation; inspect again only for a materially different evidence gap."
+        ),
+    }
 
 
 def _tool_policy_transition(
@@ -655,6 +694,7 @@ def _build_context(
 ) -> str:
     summary = gateway.current_diff
     active_policy = policy or _tool_policy(gateway, counters, limits)
+    commitment_signal = _commitment_signal(gateway, counters, active_policy)
     latest_span_ids = {
         span["span_id"]
         for result in latest_tool_results
@@ -686,9 +726,10 @@ def _build_context(
         "recent_checks": _recent_checks(gateway),
         "visible_check_status": gateway.visible_check_status(),
         "remaining_visible_check_ids": gateway.remaining_visible_check_ids(),
-        "last_successful_mutation": gateway.last_successful_mutation,
+        "last_successful_mutation": gateway.actionable_last_successful_mutation(),
         "last_failed_mutation": gateway.last_failed_mutation,
         "recent_attempt_result_next_question": _cards(journal, correction),
+        "commitment_signal": commitment_signal,
         "workflow_gate": active_policy.workflow_gate,
         "available_tool_names": sorted(active_policy.allowed_tools),
         "action_horizon": {
@@ -696,6 +737,12 @@ def _build_context(
             "completion_budget_calls": active_policy.completion_budget_calls,
             "feedback_recovery_reserve_calls": (
                 active_policy.feedback_recovery_reserve_calls
+            ),
+            "mutation_recovery_reserve_calls": (
+                active_policy.mutation_recovery_reserve_calls
+            ),
+            "check_recovery_reserve_calls": (
+                active_policy.check_recovery_reserve_calls
             ),
             "completion_possible": active_policy.completion_possible,
             "protected_completion_possible": (
@@ -719,6 +766,9 @@ def _build_context(
             "tool_policy_transition": tool_policy_transition,
             "max_parallel_reads_this_turn": active_policy.max_parallel_reads,
             "inspection_turns_at_current_diff": counters.inspection_turns_at_diff,
+            "consecutive_no_evidence_gain_inspection_turns": (
+                counters.consecutive_no_evidence_gain_turns
+            ),
             "failed_mutation_repair_turns": counters.failed_mutation_repair_turns,
         },
         "remaining_budget": {
@@ -1337,11 +1387,21 @@ def _milestones(journal: DevJournal) -> dict[str, Any]:
         output = result["output"]
         if result["tool"] == "apply_git_diff":
             mutation = output["mutation"]
+            actionable_evidence_span_ids = mutation.get(
+                "actionable_evidence_span_ids"
+            )
+            if not isinstance(actionable_evidence_span_ids, list):
+                postimage_span_id = mutation.get("postimage_evidence_span_id")
+                actionable_evidence_span_ids = (
+                    [postimage_span_id]
+                    if isinstance(postimage_span_id, str)
+                    else mutation.get("evidence_span_ids", [])
+                )
             plans.append(
                 {
                     "hypothesis_hash": sha256_json(mutation["hypothesis"]),
                     "expected_behavior_hash": sha256_json(mutation["expected_behavior"]),
-                    "evidence_span_ids": mutation["evidence_span_ids"],
+                    "actionable_evidence_span_ids": actionable_evidence_span_ids,
                 }
             )
             edits.append(
@@ -1557,15 +1617,28 @@ def _update_inspection_counters(
 ) -> None:
     if results and all(result.tool in {"read_file", "search_files"} for result in results):
         counters.inspection_turns_at_diff += 1
+        if all(result.status == "succeeded" for result in results):
+            evidence_gain = sum(
+                value if type(value) is int and value > 0 else 0
+                for result in results
+                for value in [result.output.get("new_span_count")]
+            )
+            if evidence_gain == 0:
+                counters.consecutive_no_evidence_gain_turns += 1
+            else:
+                counters.consecutive_no_evidence_gain_turns = 0
+        else:
+            counters.consecutive_no_evidence_gain_turns = 0
         if counters.failed_mutation_pending:
             counters.failed_mutation_repair_turns += 1
         return
+    counters.consecutive_no_evidence_gain_turns = 0
     if len(results) != 1:
         return
     result = results[0]
     if result.tool == "run_check":
         if result.status != "succeeded" or result.output.get("passed") is not True:
-            counters.feedback_recovery_used = True
+            counters.check_recovery_used = True
         return
     if result.tool != "apply_git_diff":
         return
@@ -1576,7 +1649,7 @@ def _update_inspection_counters(
     else:
         counters.failed_mutation_repair_turns = 0
         counters.failed_mutation_pending = True
-        counters.feedback_recovery_used = True
+        counters.mutation_recovery_used = True
 
 
 def _validate_resumed_workspace(workspace: Path, journal: DevJournal) -> None:
@@ -2243,12 +2316,26 @@ def _run_one_locked(
                 "feedback_recovery_reserve_calls": (
                     policy.feedback_recovery_reserve_calls
                 ),
+                "mutation_recovery_reserve_calls": (
+                    policy.mutation_recovery_reserve_calls
+                ),
+                "check_recovery_reserve_calls": (
+                    policy.check_recovery_reserve_calls
+                ),
                 "completion_possible": policy.completion_possible,
                 "protected_completion_possible": (
                     policy.protected_completion_possible
                 ),
                 "exploration_state": policy.exploration_state,
                 "closure_reason": policy.closure_reason,
+                "commitment_signal": _commitment_signal(
+                    gateway,
+                    counters,
+                    policy,
+                ),
+                "consecutive_no_evidence_gain_inspection_turns": (
+                    counters.consecutive_no_evidence_gain_turns
+                ),
                 "projected_span_ids": [
                     span["span_id"]
                     for span in projected_spans

@@ -100,8 +100,10 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         limits,
     )
     assert horizon.minimum_completion_calls == 3
-    assert horizon.feedback_recovery_reserve_calls == 2
-    assert horizon.completion_budget_calls == 5
+    assert horizon.mutation_recovery_reserve_calls == 2
+    assert horizon.check_recovery_reserve_calls == 2
+    assert horizon.feedback_recovery_reserve_calls == 4
+    assert horizon.completion_budget_calls == 7
     assert horizon.completion_possible is True
     assert horizon.protected_completion_possible is False
     assert horizon.exploration_allowed is False
@@ -160,8 +162,10 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         limits,
     )
     assert {"read_file", "search_files"}.issubset(repair.allowed_tools)
-    assert repair.feedback_recovery_reserve_calls == 0
-    assert repair.completion_budget_calls == repair.minimum_completion_calls
+    assert repair.mutation_recovery_reserve_calls == 0
+    assert repair.check_recovery_reserve_calls == 2
+    assert repair.feedback_recovery_reserve_calls == 2
+    assert repair.completion_budget_calls == repair.minimum_completion_calls + 2
     exhausted_repair = runner._tool_policy(  # noqa: SLF001
         gateway,
         runner._RunCounters(  # noqa: SLF001
@@ -276,8 +280,10 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     )
     assert projected_transition["action_horizon"]["tool_policy_transition"] == transition
     assert projected_transition["action_horizon"]["minimum_completion_calls"] == 3
-    assert projected_transition["action_horizon"]["completion_budget_calls"] == 5
-    assert projected_transition["action_horizon"]["feedback_recovery_reserve_calls"] == 2
+    assert projected_transition["action_horizon"]["completion_budget_calls"] == 7
+    assert projected_transition["action_horizon"]["feedback_recovery_reserve_calls"] == 4
+    assert projected_transition["action_horizon"]["mutation_recovery_reserve_calls"] == 2
+    assert projected_transition["action_horizon"]["check_recovery_reserve_calls"] == 2
     assert projected_transition["action_horizon"]["completion_possible"] is True
     assert (
         projected_transition["action_horizon"]["protected_completion_possible"]
@@ -334,6 +340,80 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     assert evidence_transition["to"] == "inspection_open"
     assert evidence_transition["reason"] == "evidence_changed"
     assert evidence_transition["added_tools"] == ["apply_git_diff"]
+
+
+def test_repeated_zero_gain_inspection_adds_only_a_soft_commitment_signal(
+    gateway_factory,
+    smoke_package,
+) -> None:
+    gateway, journal, _ = gateway_factory()
+    gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="commitment-source",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": 1,
+                "end_line": 20,
+            },
+            turn_decision=inspection_decision("commitment-source"),
+        )
+    )
+    counters = runner._RunCounters()  # noqa: SLF001
+    zero_gain = DevToolResult(
+        action_id="zero-gain-read",
+        input_hash=sha256_json("zero-gain-read"),
+        tool="read_file",
+        status="succeeded",
+        output={"new_span_count": 0},
+    )
+
+    runner._update_inspection_counters(counters, [zero_gain])  # noqa: SLF001
+    assert counters.consecutive_no_evidence_gain_turns == 1
+    first_policy = runner._tool_policy(gateway, counters, DevLimits())  # noqa: SLF001
+    assert runner._commitment_signal(gateway, counters, first_policy) is None  # noqa: SLF001
+
+    runner._update_inspection_counters(counters, [zero_gain])  # noqa: SLF001
+    policy = runner._tool_policy(gateway, counters, DevLimits())  # noqa: SLF001
+    context = json.loads(
+        runner._build_context(  # noqa: SLF001
+            package=smoke_package,
+            gateway=gateway,
+            journal=journal,
+            correction=None,
+            latest_tool_results=[],
+            counters=counters,
+            elapsed_seconds=0,
+            limits=DevLimits(),
+            policy=policy,
+        )
+    )
+
+    assert {"read_file", "search_files"}.issubset(policy.allowed_tools)
+    assert context["commitment_signal"] == {
+        "state": "mutation_or_stop_recommended",
+        "reason": "consecutive_inspection_without_new_public_evidence",
+        "consecutive_no_evidence_gain_turns": 2,
+        "hard_gate": False,
+        "message": (
+            "Recent inspection produced no new public source spans. Use current "
+            "actionable evidence for apply_git_diff, or stop_task if it cannot justify "
+            "a safe mutation; inspect again only for a materially different evidence gap."
+        ),
+    }
+    assert context["action_horizon"][
+        "consecutive_no_evidence_gain_inspection_turns"
+    ] == 2
+
+    evidence_gain = zero_gain.model_copy(
+        update={
+            "action_id": "new-evidence-read",
+            "input_hash": sha256_json("new-evidence-read"),
+            "output": {"new_span_count": 1},
+        }
+    )
+    runner._update_inspection_counters(counters, [evidence_gain])  # noqa: SLF001
+    assert counters.consecutive_no_evidence_gain_turns == 0
 
 
 def test_turn_decision_is_bound_to_cache_action_and_projected_once_per_batch(
@@ -1058,6 +1138,24 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
     assert post_mutation_context["last_successful_mutation"][
         "postimage_evidence_span_id"
     ] == postimage_span_id
+    assert post_mutation_context["last_successful_mutation"][
+        "actionable_evidence_span_ids"
+    ] == [postimage_span_id]
+    assert "evidence_span_ids" not in post_mutation_context[
+        "last_successful_mutation"
+    ]
+    assert "anchor_evidence_span_id" not in post_mutation_context[
+        "last_successful_mutation"
+    ]
+    assert "edit_anchor" not in post_mutation_context["last_successful_mutation"]
+    projected_result_mutation = post_mutation_context["latest_tool_results"][0][
+        "output"
+    ]["mutation"]
+    assert projected_result_mutation["actionable_evidence_span_ids"] == [
+        postimage_span_id
+    ]
+    assert "evidence_span_ids" not in projected_result_mutation
+    assert "anchor_evidence_span_id" not in projected_result_mutation
     assert postimage_span_id not in {
         span["span_id"] for span in post_mutation_context["source_spans"]
     }
@@ -1173,10 +1271,11 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "recent_checks",
         "visible_check_status",
         "remaining_visible_check_ids",
-        "last_successful_mutation",
-        "last_failed_mutation",
-        "recent_attempt_result_next_question",
-        "workflow_gate",
+            "last_successful_mutation",
+            "last_failed_mutation",
+            "recent_attempt_result_next_question",
+            "commitment_signal",
+            "workflow_gate",
         "available_tool_names",
         "action_horizon",
         "remaining_budget",
@@ -1332,16 +1431,18 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     gateway = PolicyGateway()
     limits = DevLimits(max_model_calls=40)
     counters = runner._RunCounters(  # noqa: SLF001
-        model_calls=33,
-        tool_actions=33,
-        inspection_turns_at_diff=33,
+        model_calls=31,
+        tool_actions=31,
+        inspection_turns_at_diff=31,
     )
 
     last_inspection = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert last_inspection.exploration_state == "last_opportunity"
     assert last_inspection.minimum_completion_calls == 4
-    assert last_inspection.feedback_recovery_reserve_calls == 2
-    assert last_inspection.completion_budget_calls == 6
+    assert last_inspection.mutation_recovery_reserve_calls == 2
+    assert last_inspection.check_recovery_reserve_calls == 2
+    assert last_inspection.feedback_recovery_reserve_calls == 4
+    assert last_inspection.completion_budget_calls == 8
     assert last_inspection.protected_completion_possible is True
 
     read_result = DevToolResult(
@@ -1349,6 +1450,7 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
         input_hash=sha256_json("last-inspection"),
         tool="read_file",
         status="succeeded",
+        output={"new_span_count": 0},
     )
     counters.model_calls += 1
     counters.tool_actions += 1
@@ -1358,6 +1460,38 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     assert execution_only.exploration_state == "closed"
     assert execution_only.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
     assert execution_only.completion_possible is True
+
+    failed_mutation = DevToolResult(
+        action_id="rejected-mutation",
+        input_hash=sha256_json("rejected-mutation"),
+        tool="apply_git_diff",
+        status="failed",
+        error_code="CONTRACT_ERROR",
+        message="simulated patch rejection",
+    )
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    gateway.last_failed_mutation = {"action_id": failed_mutation.action_id}
+    runner._update_inspection_counters(counters, [failed_mutation])  # noqa: SLF001
+
+    mutation_recovery = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert mutation_recovery.mutation_recovery_reserve_calls == 0
+    assert mutation_recovery.check_recovery_reserve_calls == 2
+    assert mutation_recovery.feedback_recovery_reserve_calls == 2
+    assert mutation_recovery.exploration_state == "last_opportunity"
+    assert counters.mutation_recovery_used is True
+    assert counters.check_recovery_used is False
+
+    recovery_read = DevToolResult(
+        action_id="mutation-recovery-read",
+        input_hash=sha256_json("mutation-recovery-read"),
+        tool="read_file",
+        status="succeeded",
+        output={"new_span_count": 1},
+    )
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    runner._update_inspection_counters(counters, [recovery_read])  # noqa: SLF001
 
     successful_mutation = DevToolResult(
         action_id="initial-mutation",
@@ -1370,10 +1504,13 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     runner._update_inspection_counters(counters, [successful_mutation])  # noqa: SLF001
     gateway.current_diff.patch = "diff --git a/source.py b/source.py"
     gateway.accepted_mutations = 1
+    gateway.last_failed_mutation = None
 
     before_check = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert limits.max_model_calls - counters.model_calls == 5
     assert before_check.minimum_completion_calls == 3
+    assert before_check.mutation_recovery_reserve_calls == 0
+    assert before_check.check_recovery_reserve_calls == 2
     assert before_check.feedback_recovery_reserve_calls == 2
     assert before_check.completion_budget_calls == 5
     assert before_check.protected_completion_possible is True
@@ -1396,11 +1533,14 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     repair = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert limits.max_model_calls - counters.model_calls == 4
     assert repair.minimum_completion_calls == 4
+    assert repair.mutation_recovery_reserve_calls == 0
+    assert repair.check_recovery_reserve_calls == 0
     assert repair.feedback_recovery_reserve_calls == 0
     assert repair.completion_budget_calls == 4
     assert repair.completion_possible is True
     assert repair.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
-    assert counters.feedback_recovery_used is True
+    assert counters.mutation_recovery_used is True
+    assert counters.check_recovery_used is True
 
     repaired_mutation = DevToolResult(
         action_id="repaired-mutation",
@@ -1698,7 +1838,64 @@ def test_resume_counter_restores_consumed_check_failure_recovery(tmp_path) -> No
 
     counters = runner._restore_counters(journal)  # noqa: SLF001 - resume contract test
 
-    assert counters.feedback_recovery_used is True
+    assert counters.check_recovery_used is True
+    assert counters.mutation_recovery_used is False
+
+
+def test_resume_counter_restores_separate_recovery_and_no_gain_state(tmp_path) -> None:
+    journal = DevJournal(tmp_path, "run_dev_recovery_state01")
+    results = [
+        DevToolResult(
+            action_id="failed-mutation",
+            input_hash=sha256_json("failed-mutation"),
+            tool="apply_git_diff",
+            status="failed",
+            error_code="CONTRACT_ERROR",
+            message="simulated rejection",
+        ),
+        DevToolResult(
+            action_id="failed-check",
+            input_hash=sha256_json("failed-check"),
+            tool="run_check",
+            status="succeeded",
+            output={"passed": False},
+        ),
+        DevToolResult(
+            action_id="zero-gain-read-one",
+            input_hash=sha256_json("zero-gain-read-one"),
+            tool="read_file",
+            status="succeeded",
+            output={"new_span_count": 0},
+        ),
+        DevToolResult(
+            action_id="zero-gain-read-two",
+            input_hash=sha256_json("zero-gain-read-two"),
+            tool="search_files",
+            status="succeeded",
+            output={"new_span_count": 0},
+        ),
+    ]
+    for index, result in enumerate(results, start=1):
+        journal.append(
+            "action_finished",
+            {
+                "action_id": result.action_id,
+                "input_hash": result.input_hash,
+                "result": result.model_dump(mode="json"),
+            },
+        )
+        journal.append(
+            "tool_batch_finished",
+            {"turn_id": f"turn-{index}", "action_ids": [result.action_id]},
+        )
+
+    counters = runner._restore_counters(journal)  # noqa: SLF001
+
+    assert counters.mutation_recovery_used is True
+    assert counters.check_recovery_used is True
+    assert counters.failed_mutation_pending is True
+    assert counters.failed_mutation_repair_turns == 2
+    assert counters.consecutive_no_evidence_gain_turns == 2
 
 
 def test_resume_recovers_the_exact_incomplete_reason(tmp_path) -> None:

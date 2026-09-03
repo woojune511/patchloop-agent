@@ -154,8 +154,10 @@ def dev_tool_schemas(
                         "minItems": 1,
                         "maxItems": 8,
                         "description": (
-                            "Current public evidence span IDs. For a same-file repair, "
-                            "prefer last_successful_mutation.postimage_evidence_span_id."
+                            "Current actionable public evidence span IDs only. For a "
+                            "same-file repair, use an ID listed in "
+                            "last_successful_mutation.actionable_evidence_span_ids; "
+                            "earlier pre-image IDs are provenance and do not authorize edits."
                         ),
                     },
                     "edit_anchor": {
@@ -328,6 +330,7 @@ class DevToolGateway:
         self.requires_alternative = False
         self.accepted_mutations = 0
         self.last_successful_mutation: dict[str, Any] | None = None
+        self._latest_historical_evidence_span_ids: set[str] = set()
         self.last_failed_mutation: dict[str, Any] | None = None
         self._hydrate()
 
@@ -356,7 +359,17 @@ class DevToolGateway:
                             result=result,
                         )
                     continue
-                self._accept_successful_mutation(result.output)
+                started = mutation_starts.get(result.action_id, {})
+                arguments = started.get("arguments", {})
+                historical_ids = (
+                    arguments.get("evidence_span_ids", [])
+                    if isinstance(arguments, dict)
+                    else []
+                )
+                self._accept_successful_mutation(
+                    result.output,
+                    historical_evidence_span_ids=historical_ids,
+                )
                 continue
             if result.status != "succeeded":
                 continue
@@ -494,9 +507,24 @@ class DevToolGateway:
             restored["last_observed_seq"] = self._observation_seq
             self.spans[restored["span_id"]] = restored
 
-    def _accept_successful_mutation(self, output: dict[str, Any]) -> None:
+    def _accept_successful_mutation(
+        self,
+        output: dict[str, Any],
+        *,
+        historical_evidence_span_ids: Any = (),
+    ) -> None:
         self.accepted_mutations += 1
         self.last_successful_mutation = output.get("mutation")
+        evidence_values = (
+            historical_evidence_span_ids
+            if isinstance(historical_evidence_span_ids, (list, tuple, set))
+            else ()
+        )
+        self._latest_historical_evidence_span_ids = {
+            span_id
+            for span_id in evidence_values
+            if isinstance(span_id, str)
+        }
         self.last_failed_mutation = None
         self._invalidate_spans(output.get("changed_files", []))
         self._restore_mutation_evidence(output)
@@ -595,6 +623,25 @@ class DevToolGateway:
     def has_current_mutation_evidence(self) -> bool:
         return bool(self.current_mutation_evidence_paths())
 
+    def actionable_last_successful_mutation(self) -> dict[str, Any] | None:
+        """Project current repair evidence without stale pre-image identifiers."""
+
+        if not isinstance(self.last_successful_mutation, dict):
+            return None
+        projected = copy.deepcopy(self.last_successful_mutation)
+        projected.pop("evidence_span_ids", None)
+        projected.pop("anchor_evidence_span_id", None)
+        projected.pop("edit_anchor", None)
+        postimage = self._current_postimage_evidence()
+        actionable_ids = (
+            [str(postimage["span_id"])] if postimage is not None else []
+        )
+        projected["postimage_evidence_span_id"] = (
+            actionable_ids[0] if actionable_ids else None
+        )
+        projected["actionable_evidence_span_ids"] = actionable_ids
+        return projected
+
     @property
     def current_diff(self):
         return WorkspaceManager.diff_summary(self.workspace)
@@ -684,12 +731,19 @@ class DevToolGateway:
         preflight_error: Exception | None = None
         mutation_admitted: bool | None = None
         mutation_anchor_evidence_span_id: str | None = None
+        mutation_actionable_evidence_span_ids: list[str] = []
+        mutation_ignored_historical_evidence_span_ids: list[str] = []
         if pending is None:
             if call.name == "apply_git_diff":
                 try:
-                    _, _, _, mutation_anchor_evidence_span_id = self._validate_intent(
-                        call.arguments
-                    )
+                    (
+                        _,
+                        _,
+                        _,
+                        mutation_anchor_evidence_span_id,
+                        mutation_actionable_evidence_span_ids,
+                        mutation_ignored_historical_evidence_span_ids,
+                    ) = self._validate_intent(call.arguments)
                     mutation_admitted = True
                 except (PatchLoopError, ValidationError, ValueError, OSError) as exc:
                     preflight_error = exc
@@ -706,6 +760,12 @@ class DevToolGateway:
                     "mutation_admitted": mutation_admitted,
                     "mutation_anchor_evidence_span_id": (
                         mutation_anchor_evidence_span_id
+                    ),
+                    "mutation_actionable_evidence_span_ids": (
+                        mutation_actionable_evidence_span_ids
+                    ),
+                    "mutation_ignored_historical_evidence_span_ids": (
+                        mutation_ignored_historical_evidence_span_ids
                     ),
                 },
             )
@@ -765,7 +825,12 @@ class DevToolGateway:
         )
         if result.status == "succeeded":
             if result.tool == "apply_git_diff":
-                self._accept_successful_mutation(result.output)
+                self._accept_successful_mutation(
+                    result.output,
+                    historical_evidence_span_ids=call.arguments.get(
+                        "evidence_span_ids", []
+                    ),
+                )
             elif result.tool == "run_check":
                 self._remember_check(result.output)
         elif result.tool == "apply_git_diff":
@@ -951,12 +1016,7 @@ class DevToolGateway:
             raise ContractError("changed hunk exceeds the bounded mutation context limit")
         return hunk
 
-    def _accepted_mutation_anchor_evidence_id(
-        self,
-        *,
-        anchor_path: str,
-        anchor_text: str,
-    ) -> str | None:
+    def _current_postimage_evidence(self) -> dict[str, Any] | None:
         latest = self.last_successful_mutation or {}
         expected_span_id = latest.get("postimage_evidence_span_id")
         current_diff_hash = self.current_diff_hash
@@ -966,30 +1026,43 @@ class DevToolGateway:
         ):
             return None
         with self._lock:
-            candidates = sorted(
-                (dict(span) for span in self.spans.values()),
-                key=lambda span: int(span.get("last_observed_seq", 0)),
-                reverse=True,
-            )
-        for span in candidates:
-            if (
-                span.get("origin") != "accepted_mutation"
-                or span.get("span_id") != expected_span_id
-                or span.get("source_diff_hash") != current_diff_hash
-                or span.get("path") != anchor_path
-                or not isinstance(span.get("content"), str)
-                or anchor_text not in span["content"]
-                or not isinstance(span.get("file_hash"), str)
-                or not isinstance(span.get("span_id"), str)
-            ):
-                continue
-            try:
-                _, current = self._tracked_path(anchor_path)
-                if sha256_bytes(current.read_bytes()) == span["file_hash"]:
-                    return str(span["span_id"])
-            except (PatchLoopError, OSError):
-                continue
+            raw = self.spans.get(expected_span_id)
+            span = dict(raw) if isinstance(raw, dict) else None
+        if (
+            span is None
+            or span.get("origin") != "accepted_mutation"
+            or span.get("span_id") != expected_span_id
+            or span.get("source_diff_hash") != current_diff_hash
+            or not isinstance(span.get("path"), str)
+            or not isinstance(span.get("content"), str)
+            or not isinstance(span.get("file_hash"), str)
+        ):
+            return None
+        try:
+            _, current = self._tracked_path(str(span["path"]))
+            if sha256_bytes(current.read_bytes()) == span["file_hash"]:
+                return span
+        except (PatchLoopError, OSError):
+            pass
         return None
+
+    def _accepted_mutation_anchor_evidence_id(
+        self,
+        *,
+        anchor_path: str,
+        anchor_text: str,
+    ) -> str | None:
+        span = self._current_postimage_evidence()
+        if (
+            span is not None
+            and span.get("path") == anchor_path
+            and anchor_text in str(span["content"])
+        ):
+            return str(span["span_id"])
+        return None
+
+    def _historical_mutation_evidence_ids(self) -> set[str]:
+        return set(self._latest_historical_evidence_span_ids)
 
     def _mutation_postimage_evidence(
         self,
@@ -1057,7 +1130,7 @@ class DevToolGateway:
 
     def _validate_intent(
         self, arguments: dict[str, Any]
-    ) -> tuple[str, MutationIntent, list[str], str]:
+    ) -> tuple[str, MutationIntent, list[str], str, list[str], list[str]]:
         patch = arguments.get("git_diff")
         if not isinstance(patch, str):
             raise ContractError("apply_git_diff git_diff must be a string")
@@ -1087,13 +1160,21 @@ class DevToolGateway:
         if len(positions) < intent.edit_anchor.occurrence:
             raise ContractError("exact edit anchor is stale or absent from the current source")
         evidence: list[dict[str, Any]] = []
+        ignored_historical_ids: list[str] = []
+        historical_ids = self._historical_mutation_evidence_ids()
         with self._lock:
             for span_id in intent.evidence_span_ids:
                 span = self.spans.get(span_id)
                 if span is None:
+                    if span_id in historical_ids:
+                        ignored_historical_ids.append(span_id)
+                        continue
                     raise ContractError(f"unknown evidence span: {span_id}")
                 _, current = self._tracked_path(span["path"])
                 if sha256_bytes(current.read_bytes()) != span["file_hash"]:
+                    if span_id in historical_ids:
+                        ignored_historical_ids.append(span_id)
+                        continue
                     raise ContractError(f"evidence span is stale: {span_id}")
                 evidence.append(span)
         matching_ids = [
@@ -1109,7 +1190,22 @@ class DevToolGateway:
             raise ContractError(
                 "at least one current evidence span must cover the edit-anchor file"
             )
-        return patch, intent, paths, anchor_evidence_span_id
+        actionable_ids = list(
+            dict.fromkeys(
+                [
+                    *(str(span["span_id"]) for span in evidence),
+                    anchor_evidence_span_id,
+                ]
+            )
+        )
+        return (
+            patch,
+            intent,
+            paths,
+            anchor_evidence_span_id,
+            actionable_ids,
+            ignored_historical_ids,
+        )
 
     def _mutation_result_output(
         self,
@@ -1119,7 +1215,8 @@ class DevToolGateway:
         paths: list[str],
         changed_hunk: str,
         summary: Any,
-        anchor_evidence_span_id: str | None,
+        actionable_evidence_span_ids: list[str],
+        ignored_historical_evidence_span_ids: list[str],
         recovered_after_crash: bool = False,
     ) -> dict[str, Any]:
         anchor_path = safe_relative_path(intent.edit_anchor.path)
@@ -1137,12 +1234,18 @@ class DevToolGateway:
             "hypothesis": intent.hypothesis,
             "expected_behavior": intent.expected_behavior,
             "plan_hash": sha256_json(intent.model_dump(mode="json")),
-            "evidence_span_ids": intent.evidence_span_ids,
-            "anchor_evidence_span_id": anchor_evidence_span_id,
             "postimage_evidence_span_id": (
                 mutation_evidence["span_id"] if mutation_evidence is not None else None
             ),
-            "edit_anchor": intent.edit_anchor.model_dump(mode="json"),
+            "actionable_evidence_span_ids": (
+                [str(mutation_evidence["span_id"])]
+                if mutation_evidence is not None
+                else []
+            ),
+            "input_evidence_counts": {
+                "current": len(actionable_evidence_span_ids),
+                "historical_ignored": len(ignored_historical_evidence_span_ids),
+            },
             "changed_hunk": changed_hunk,
             "falsified_prior_hypothesis": intent.falsified_prior_hypothesis,
             "alternative_mechanism": intent.alternative_mechanism,
@@ -1177,7 +1280,14 @@ class DevToolGateway:
     def _apply_git_diff(self, arguments: dict[str, Any]) -> dict[str, Any]:
         if self.accepted_mutations >= self.limits.max_accepted_mutations:
             raise ContractError("accepted mutation limit reached")
-        patch, intent, paths, anchor_evidence_span_id = self._validate_intent(arguments)
+        (
+            patch,
+            intent,
+            paths,
+            _,
+            actionable_evidence_span_ids,
+            ignored_historical_evidence_span_ids,
+        ) = self._validate_intent(arguments)
         changed_hunk = self._changed_hunk(
             patch,
             safe_relative_path(intent.edit_anchor.path),
@@ -1202,7 +1312,10 @@ class DevToolGateway:
             paths=paths,
             changed_hunk=changed_hunk,
             summary=summary,
-            anchor_evidence_span_id=anchor_evidence_span_id,
+            actionable_evidence_span_ids=actionable_evidence_span_ids,
+            ignored_historical_evidence_span_ids=(
+                ignored_historical_evidence_span_ids
+            ),
         )
 
     def _reconcile_or_apply(
@@ -1242,13 +1355,41 @@ class DevToolGateway:
                     ),
                     None,
                 )
+        actionable_evidence_span_ids = pending.get(
+            "mutation_actionable_evidence_span_ids"
+        )
+        if not isinstance(actionable_evidence_span_ids, list) or not all(
+            isinstance(span_id, str) for span_id in actionable_evidence_span_ids
+        ):
+            actionable_evidence_span_ids = [
+                span_id
+                for span_id in intent.evidence_span_ids
+                if isinstance(span_id, str) and span_id in self.spans
+            ]
+            if isinstance(anchor_evidence_span_id, str):
+                actionable_evidence_span_ids = list(
+                    dict.fromkeys(
+                        [*actionable_evidence_span_ids, anchor_evidence_span_id]
+                    )
+                )
+        ignored_historical_evidence_span_ids = pending.get(
+            "mutation_ignored_historical_evidence_span_ids"
+        )
+        if not isinstance(ignored_historical_evidence_span_ids, list) or not all(
+            isinstance(span_id, str)
+            for span_id in ignored_historical_evidence_span_ids
+        ):
+            ignored_historical_evidence_span_ids = []
         return self._mutation_result_output(
             patch=patch,
             intent=intent,
             paths=paths,
             changed_hunk=changed_hunk,
             summary=summary,
-            anchor_evidence_span_id=anchor_evidence_span_id,
+            actionable_evidence_span_ids=actionable_evidence_span_ids,
+            ignored_historical_evidence_span_ids=(
+                ignored_historical_evidence_span_ids
+            ),
             recovered_after_crash=True,
         )
 

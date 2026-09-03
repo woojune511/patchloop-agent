@@ -46,7 +46,10 @@ A successful mutation replaces stale pre-image spans for each edited file with a
 bounded post-image span bound to the current file and diff hashes. This lets a failed
 public check lead directly to an overlapping same-file repair without reopening
 inspection, while edits outside that post-image still require current read/search
-evidence.
+evidence. The exact pre-image IDs used for the accepted mutation remain historical
+provenance in the append-only action record, but they are not projected as current
+repair evidence. `last_successful_mutation.actionable_evidence_span_ids` contains only
+the validated current post-image ID.
 
 For OpenAI runs, stateless continuity also carries the provider-encrypted reasoning
 items returned by the immediately preceding response. Their ciphertext and output
@@ -73,11 +76,14 @@ Inspection availability is based on completion slack rather than a fixed number 
 earlier reads. When only one optional inspection turn remains, the context warns that
 `read_file` and `search_files` will close next. At zero slack they close so mutation,
 remaining visible checks, submission, or an explicit stop retain the required calls.
-Until the first recoverable feedback event, the horizon also holds two calls for a
-repair and its recheck. The allowance survives an accepted mutation so it covers either
-a rejected patch or the first failed public check, and is then consumed. Best-path and
-protected-path feasibility both reflect actual remaining model and tool budgets, not
-merely the presence of another mutation slot.
+The horizon holds two independent bounded allowances: two calls for one rejected-
+mutation recovery and two calls for one failed-visible-check recovery. Consuming one
+does not erase the other. Best-path and protected-path feasibility both reflect actual
+remaining model and tool budgets, not merely the presence of another mutation slot.
+After two consecutive successful inspection batches produce no new public span, the
+context adds a soft `commitment_signal` recommending mutation or explicit stop. It does
+not remove read/search; a materially different evidence gap may still justify another
+inspection while completion slack remains.
 Every such change is journaled and projected once; corrections name only tools that are
 actually present in that turn's action space.
 

@@ -26,7 +26,11 @@ conclusion, not chain-of-thought. Every mutation must include a concise hypothes
 expected behavior, current evidence span IDs, and an exact source anchor. An accepted
 mutation's bounded post-image is current evidence for a same-file repair, including
 when its span ID is projected through last_successful_mutation; cite that span when it
-covers the repair anchor. If the public context requires a causal alternative, the
+appears in actionable_evidence_span_ids and covers the repair anchor. Earlier
+pre-image IDs are provenance, not current mutation evidence. A commitment_signal is
+soft guidance, not a tool restriction: when active, use current actionable evidence
+to mutate or stop unless one materially different public evidence gap remains. If the
+public context requires a causal alternative, the
 next mutation must also state which prior
 hypothesis was falsified and a materially different mechanism. The apply_git_diff
 git_diff value must be a raw Git unified diff beginning exactly with

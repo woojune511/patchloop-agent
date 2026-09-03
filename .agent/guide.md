@@ -43,9 +43,9 @@ receive one short correction. A second consecutive protocol/incomplete violation
 terminates the row; any valid completed tool batch resets the correction allowance.
 Optional inspection remains available only while both model-call and tool-action
 budgets exceed the minimum path through mutation, all required checks, and finish plus
-one bounded two-call allowance for repair and recheck after mutation/check feedback.
-That allowance remains held after the first mutation and is consumed by the first
-rejected mutation or failed check. `completion_possible` separately reports whether
+two independent bounded allowances: two calls for rejected-mutation recovery and two
+calls for failed-visible-check recovery. Each remains held until its matching failure;
+consuming one does not erase the other. `completion_possible` separately reports whether
 the actual remaining budgets cover the best-case path;
 `protected_completion_possible` includes the unused allowance. Neither is an alias
 for mutation capacity.
@@ -55,6 +55,9 @@ Reopen them through the same transition when a changed gate restores slack. A fi
 source read required to establish a mutation anchor belongs to the minimum path. The
 legacy 24/3 counters are telemetry, never an action mask. Corrections must be generated
 from the actual allowed-tool set and must not name a missing tool.
+After two consecutive successful inspection batches yield zero new public spans, add a
+soft mutation-or-stop recommendation to context and `turn_started`. Never remove tools
+because of that signal; reset it on new evidence or a non-inspection action.
 
 An unexecuted `run_check` may be available on the first turn while the action horizon
 has slack; on a changed diff it is direct completion work. A check that already failed
@@ -82,7 +85,11 @@ Anchors and spans must still match current source. A successful mutation invalid
 the edited file's pre-image spans and immediately registers one bounded post-image span
 bound to the current file and diff hashes. That span can authorize a same-file repair
 only when the exact current anchor overlaps it; an edit elsewhere still requires a
-current read/search span. Resulting paths, file count, line count, dependencies, tests,
+current read/search span. Project only that validated post-image under
+`last_successful_mutation.actionable_evidence_span_ids`; retain the accepted action's
+input IDs solely in the append-only `action_started` provenance. Known stale input IDs
+may be ignored on a later retry only when separate current evidence authorizes its exact
+anchor. Resulting paths, file count, line count, dependencies, tests,
 and public API remain constrained by the public task. If one public failure signature
 repeats across two distinct diffs, the next
 mutation additionally requires `falsified_prior_hypothesis` and
@@ -94,7 +101,9 @@ The canonical context artifact contains only the public task, current full diff,
 exact latest tool batch, a recency-ordered current-source working set, recent visible-check
 output, the complete current-diff check status, exact remaining check IDs, bounded
 `last_successful_mutation`, bounded `last_failed_mutation`, remaining budget, and
-the latest three batch-level attempt-result-next-question cards. A successful check card names
+the latest three batch-level attempt-result-next-question cards. The successful-mutation
+projection separates current actionable post-image evidence from historical action
+inputs. A successful check card names
 the next remaining check instead of treating PASS as a failure. A failed mutation
 retains its public diff excerpt, full diff hash, intent, anchor, evidence IDs, error,
 and parsed error location across later reads and process resume. A later failed
@@ -174,8 +183,10 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 - 1,800 seconds per row
 - one consecutive protocol/incomplete recovery
 - four parallel reads
-- completion-slack inspection with one warned final opportunity and one bounded
-  two-call feedback-recovery reserve
+- completion-slack inspection with one warned final opportunity and independent
+  two-call mutation-failure and check-failure recovery reserves
+- a soft mutation-or-stop signal after two consecutive zero-new-span inspections;
+  it never changes the tool surface
 - legacy 24-turn and three-repair-read fields retained as telemetry only
 - 25,000 desired output tokens per provider call, reduced by cost admission
 - one repetition by default, six maximum
@@ -335,15 +346,24 @@ though `last_successful_mutation` retained the exact current hunk. Three calls a
 could not cover the repair, two checks, and finish. The row deliberately stopped at
 turn 39 after 76 tool actions and $0.3471675, with no submission or evaluator.
 
-The provider-free successor accepts a current-diff-bound successful-mutation post-image
-as anchor evidence only for an overlapping repair in that same file, while retaining
-current-span validation everywhere else. Scheduler and validator share one actionable-
-evidence predicate, and the horizon protects one repair/recheck episode without raising
-the global 40/100 limits. The scheduler regression reaches finish at call 40 after an
-accepted mutation and failed first check. Ruff and all 90 tests pass in 110.58
-seconds; mock run `run_dev_6979578141064297` reaches isolated `EVALUATOR_PASS` with
-zero provider cost. Do not run a paid retry or thirteenth row without separate
-authorization.
+The next provider-free successor accepted a current-diff-bound successful-mutation
+post-image as anchor evidence only for an overlapping repair in that same file, while
+retaining current-span validation everywhere else. The separately authorized
+thirteenth row, `run_dev_8ce8603c45e646a9`, reached one accepted mutation and one
+failed public check, then rejected the final targeted repair because its evidence list
+mixed the valid current post-image with two stale pre-image IDs retained as if current.
+Its earlier mutation-format failure had also consumed the single shared recovery
+allowance. The row ended at `LIMIT_REACHED` after 40 calls and 76 actions, with no
+submission or evaluator.
+
+The current provider-free seam projects only validated
+`actionable_evidence_span_ids`, retains exact mutation inputs as journal provenance,
+and tolerates known historical IDs only when independent current evidence covers the
+exact anchor. Mutation-failure and check-failure reserves are independent. Repeated
+zero-gain inspection produces only a soft commitment signal. Do not run a paid retry
+or fourteenth row without separate authorization.
+Ruff and all 92 tests pass under the two-minute provider-free target; mock run
+`run_dev_7fc6bc7e982343e4` reaches isolated `EVALUATOR_PASS` with zero provider cost.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.

@@ -122,7 +122,10 @@ def test_mutation_tool_contract_requires_unwrapped_raw_git_diff() -> None:
     assert "diff --git a/<path> b/<path>" in mutation["description"]
     assert "*** Begin Patch" in mutation["description"]
     assert "bounded post-image" in mutation["description"]
-    assert "postimage_evidence_span_id" in mutation["parameters"]["properties"][
+    assert "actionable_evidence_span_ids" in mutation["parameters"]["properties"][
+        "evidence_span_ids"
+    ]["description"]
+    assert "provenance" in mutation["parameters"]["properties"][
         "evidence_span_ids"
     ]["description"]
     for schema in schemas:
@@ -512,6 +515,14 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
     assert restarted.current_mutation_evidence_paths() == (
         "mini_data_utils/csvlite.py",
     )
+    projected_mutation = restarted.actionable_last_successful_mutation()
+    assert projected_mutation is not None
+    assert projected_mutation["actionable_evidence_span_ids"] == [
+        postimage["span_id"]
+    ]
+    assert "evidence_span_ids" not in projected_mutation
+    assert "anchor_evidence_span_id" not in projected_mutation
+    assert "edit_anchor" not in projected_mutation
     unrelated = restarted.execute(
         RequestedTool(
             name="read_file",
@@ -524,6 +535,7 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
         )
     )
     unrelated_span_id = unrelated.output["spans"][0]["span_id"]
+    historical_span_id = sorted(old_source_span_ids)[0]
     repair = RequestedTool(
         name="apply_git_diff",
         action_id="same-hunk-repair",
@@ -543,7 +555,11 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
             ),
             "hypothesis": "The stream newline override causes the public check failure.",
             "expected_behavior": "The parser keeps one stream without the override.",
-            "evidence_span_ids": [unrelated_span_id],
+            "evidence_span_ids": [
+                postimage["span_id"],
+                historical_span_id,
+                unrelated_span_id,
+            ],
             "edit_anchor": {
                 "path": "mini_data_utils/csvlite.py",
                 "old_text": '    return list(csv.reader(io.StringIO(text, newline="")))',
@@ -554,11 +570,50 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
         },
     )
 
+    unknown = repair.model_copy(
+        update={
+            "action_id": "unknown-evidence-repair",
+            "arguments": {
+                **repair.arguments,
+                "evidence_span_ids": [postimage["span_id"], "span_unknown"],
+            },
+        }
+    )
+    rejected = restarted.execute(unknown)
+    assert rejected.status == "failed"
+    assert "unknown evidence span" in rejected.message
+
     repaired = restarted.execute(repair)
 
     assert repaired.status == "succeeded"
-    assert repaired.output["mutation"]["anchor_evidence_span_id"] == postimage["span_id"]
-    assert unrelated_span_id in repaired.output["mutation"]["evidence_span_ids"]
+    repaired_mutation = repaired.output["mutation"]
+    repaired_postimage_id = repaired.output["mutation_evidence"]["span_id"]
+    assert repaired_mutation["actionable_evidence_span_ids"] == [
+        repaired_postimage_id
+    ]
+    assert repaired_mutation["input_evidence_counts"] == {
+        "current": 2,
+        "historical_ignored": 1,
+    }
+    assert "evidence_span_ids" not in repaired_mutation
+    assert "anchor_evidence_span_id" not in repaired_mutation
+    started = next(
+        event["payload"]
+        for event in journal.events()
+        if event["event_type"] == "action_started"
+        and event["payload"]["action_id"] == repair.action_id
+    )
+    assert started["mutation_anchor_evidence_span_id"] == postimage["span_id"]
+    assert set(started["mutation_actionable_evidence_span_ids"]) == {
+        postimage["span_id"],
+        unrelated_span_id,
+    }
+    assert started["mutation_ignored_historical_evidence_span_ids"] == [
+        historical_span_id
+    ]
+    assert started["arguments"]["evidence_span_ids"] == repair.arguments[
+        "evidence_span_ids"
+    ]
 
 
 def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(

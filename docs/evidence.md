@@ -731,16 +731,71 @@ After implementation, Ruff and all 90 tests passed; the full suite finished in
 five tool actions through one accepted mutation. Task acceptance was PASS, safety was
 NOT_RUN, `claim_eligible=false`, and provider cost was zero.
 
+## Thirteenth live development observation
+
+The separately authorized thirteenth row used `pyfakefs-makedirs-parent-traversal`
+version 2, `gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one
+repetition, a $1.20 invocation cap, and external state root `C:\patchloop-state`.
+Run `run_dev_8ce8603c45e646a9` wrote a durable `LIMIT_REACHED` terminal after
+358.811 active seconds and 360 seconds of run age. It completed 40 provider calls,
+76 tool actions, one accepted mutation, and $0.39132225 of provider cost. Recorded
+usage was 339,195 input tokens and 30,428 output tokens, including 20,678 reasoning
+tokens. All 40 responses stored continuation references, no response was incomplete,
+and the largest response used 8,503 output tokens.
+
+The row contained 35 inspection batches and 71 read/search actions. Nine inspection
+batches returned zero new spans, with a longest consecutive sequence of three. It made
+four mutation calls: the first failed Git applicability, the second failed the public
+paired-alternative field contract, and the third applied. The first visible check then
+failed. The final targeted repair supplied three evidence IDs: the accepted mutation's
+current post-image and two pre-image IDs from that mutation's historical input. The
+gateway rejected the first absent pre-image ID as unknown before considering the valid
+post-image. No patch was submitted and no evaluator or safety check ran.
+
+## Post-thirteenth evidence-role and recovery-budget correction
+
+The trace separates three causes. First, `last_successful_mutation` mixed historical
+input provenance with current repair authority. Second, the single feedback reserve was
+already consumed by mutation failure when the later visible check failed. Third,
+repeated zero-gain inspection remained observable but provided no direct commitment
+cue. These are harness classification and accounting defects; the row does not show
+that the global 40-call limit alone was too low.
+
+The provider-free successor keeps exact mutation arguments in append-only
+`action_started` records but projects only the current, hash-validated post-image under
+`actionable_evidence_span_ids`. A retry may carry known historical IDs for compatibility,
+but they are ignored only when a separate current span or the current post-image covers
+the exact anchor. Arbitrary unknown IDs, stale anchors, and edits outside the post-image
+remain fail-closed. Terminal plan milestones likewise summarize only actionable IDs,
+with a fallback for reading older journal formats.
+
+The completion horizon now holds independent two-call allowances for rejected-mutation
+and failed-visible-check recovery. Each has its own durable consumed state, so the first
+failure cannot erase the second path. Two consecutive successful inspection batches
+with zero new spans add a soft mutation-or-stop recommendation to the next public
+context and `turn_started`; read/search remain available whenever completion slack
+allows them. This deliberately avoids turning stagnation telemetry into another hard
+gate.
+
+Ruff and all 92 tests pass. The complete suite used the external short temp root
+`C:\patchloop-test\three-fixes-full` and remained under the two-minute target.
+Provider-free mock run `run_dev_7fc6bc7e982343e4` reached isolated
+`EVALUATOR_PASS` in four model calls and five tool actions through one accepted
+mutation. Task acceptance was PASS, safety was NOT_RUN, `claim_eligible=false`, and
+provider cost was zero. This validates the local contracts only; it is not a fourteenth
+live row.
+
 ## Not executed
 
-- no transport retry or follow-up paid run after the twelfth row
+- no transport retry or follow-up paid run after the thirteenth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no mutation, submission, or evaluator execution in the seventh through tenth
   pyfakefs version-2 live rows; the eleventh mutated and passed both visible checks,
-  while the twelfth mutated and reached one failed visible check; neither submitted nor
-  invoked the evaluator
+  while the eleventh through thirteenth mutated; the eleventh passed both visible
+  checks, and the twelfth and thirteenth reached one failed visible check. None of those
+  three submitted or invoked the evaluator
 - no hidden evaluation of the temporary Loguru version-2 public correction
 
 The under-two-minute focused-validation target remains locally supported. The sixth
