@@ -114,6 +114,15 @@ and matches the local evaluator image to digest
 `sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c`.
 Runtime and selected task paths match HEAD, Docker is available, and model pricing is
 registered. This preflight grants no provider or eighth-row authority.
+One subsequent, separately approved eighth row used those exact inputs. Run
+`run_dev_07ad1af07d22489c` reached durable `LIMIT_REACHED` after 299.562 active
+seconds, 40 model calls, and 60 successful read/search actions, recording
+$0.34786650. It accepted no mutation and ran no check, submission, or evaluator.
+Every context after the first carried working state on every latest result. Thirty-five
+of the 60 per-call decisions explicitly proposed a mutation, edit, patch, or apply
+action if their evidence condition was met, yet the next model turns continued to
+select only reads and searches. The final context still had gate `needs_mutation`, two
+current working states, and one model call remaining.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -203,6 +212,8 @@ safety in one live path. Its task-acceptance failure instead exposes a version-2
 public/private oracle mismatch. The seventh row then exposed a distinct
 action-selection/commitment failure after sufficient public evidence; it did not
 exercise mutation, checks, submission, evaluation, or safety.
+The eighth row confirms that failure persists even when the model's own bounded
+decision is projected exactly into the next turn.
 
 Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
 repeated-read terminal or replacement mutation interface. The retrospective replay
@@ -221,8 +232,8 @@ shape or exact full sentence. Its task content hash is
 The fifth and sixth rows used this exact identity. Version 3 preserves version 2 and
 accepts the semantics promised publicly rather than one literal phrasing. The sixth
 row's submitted patch passes the version-3 evaluator provider-free, but that does not
-retroactively change the version-2 terminal or create a new live observation. No
-retry or eighth live row is authorized.
+retroactively change the version-2 terminal. The eighth live observation used the
+separate pyfakefs task described below. No retry or ninth live row is authorized.
 
 The fifth row's terminal label described the application's tool-batch boundary, but
 the stored evidence did not establish that the provider response itself was
@@ -243,7 +254,7 @@ Operational resume uses an immutable envelope, exact contract comparison,
 run-lifetime locking, journal-derived counters and cost, durable tool-decision replay,
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
-acceptance and safety remain separate typed axes. No retry or eighth live row is
+acceptance and safety remain separate typed axes. No retry or ninth live row is
 authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
@@ -259,12 +270,15 @@ public behavior as a visible check, and passes the reference/known-bad contract
 matrix. Its seventh live row nevertheless spent all 40 model calls on successful
 read/search actions and ended before mutation. The exact source remained visible, so
 the next seam was turn-to-turn decision continuity, not another task revision. That
-provider-free seam now carries `working_hypothesis`, `evidence_gap`, and
+provider-free seam carries `working_hypothesis`, `evidence_gap`, and
 `decision_after_result` through successful, failed, cached, and resumed reads. The
-current soft repeated-evidence counter remains unchanged and can still miss
-interleaved repeats; it is a secondary observability defect, not the cause of the
-terminal or grounds for a hard terminal. Local and mock validation cannot establish
-that the model will act on the new state. No paid retry or eighth row is authorized.
+eighth row proved the projection works live but did not change tool selection: all 60
+actions were reads/searches even though 35 recorded decisions explicitly contemplated
+mutation. Nine cache hits and 21 zero-new-span results produced no stagnation signal;
+that remains a secondary observability defect, not the cause or grounds for a hard
+terminal. The next seam is provider-free characterization of how a satisfied public
+decision should affect tool choice without storing raw reasoning or blocking useful
+reads. No paid retry or ninth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

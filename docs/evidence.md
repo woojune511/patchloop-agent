@@ -427,13 +427,42 @@ The repository-root `.env` was both ignored and untracked, and its exact one-key
 format validated without printing the credential. This is readiness evidence only,
 not authorization or a live result.
 
+## Eighth live development observation
+
+One separately approved invocation used external state root `C:\patchloop-state`,
+`pyfakefs-makedirs-parent-traversal` version 2,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+and the $1.20 invocation cap. PatchLoop did not start Docker Desktop or pull/build an
+image, and no retry followed.
+
+Run `run_dev_07ad1af07d22489c` wrote a valid 500-event hash chain ending at durable
+`LIMIT_REACHED` after 299.562 active seconds. All 40 provider calls and input counts
+completed; durable provider costs sum exactly to the terminal's $0.34786650. Two
+4096-output-token incomplete responses at turns 9 and 22 received the allowed
+non-consecutive corrections and were followed by valid tool batches. They were not
+the terminal cause.
+
+All 60 tool actions succeeded: 30 `read_file` and 30 `search_files`. No mutation,
+visible check, submission, evaluator, or safety execution occurred. Every canonical
+context from turn 2 through turn 40 projected working state on every latest result.
+Thirty-five of the 60 `decision_after_result` values explicitly used mutation,
+editing, patching, or applying language, but each later tool selection remained a
+read/search. The final context still reported `needs_mutation`, carried both latest
+working states, and showed one model call remaining.
+
+There were nine evidence-cache hits and 21 results with no new span, but no stagnation
+signal. This preserves the earlier conclusion: projection and the model-authored
+decision text are present, while the decision is non-binding and does not control the
+next tool choice. The result does not justify a repeated-read hard terminal, a ninth
+paid row, or any quality claim.
+
 ## Not executed
 
-- no eighth repetition, transport retry, or follow-up paid run after the seventh row
+- no ninth repetition, transport retry, or follow-up paid run after the eighth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
-- no mutation, visible check, submission, or evaluator execution in the pyfakefs
+- no mutation, visible check, submission, or evaluator execution in either pyfakefs
   version-2 live row
 - no hidden evaluation of the temporary Loguru version-2 public correction
 
@@ -462,8 +491,10 @@ path but exposing an invalid acceptance oracle rather than producing task accept
   continuation through later attempts. The sixth establishes live submission and
   evaluator handoff, but version 2's stricter private literal assertion prevents a
   contract-valid live task-acceptance conclusion. Version 3 corrects that oracle and
-  passes provider-free evaluation only. The seventh row exercised only read/search
-  and therefore adds no mutation, check, submission, evaluator, or safety evidence.
+  passes provider-free evaluation only. The seventh and eighth rows exercised only
+  read/search and therefore add no mutation, check, submission, evaluator, or safety
+  evidence. The eighth additionally proves live working-state projection, not
+  compliance with the projected decision.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

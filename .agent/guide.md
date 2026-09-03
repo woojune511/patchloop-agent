@@ -226,7 +226,17 @@ the text from the call that populated the cache. Failed reads and process hydrat
 retain the same contract. The recorded decision takes precedence over diagnostic
 stagnation wording, but no read is blocked and no new terminal exists. Local and mock
 tests establish wire, cache, context, and recovery behavior only; they do not establish
-live model compliance. No retry or eighth live row is authorized.
+live model compliance.
+
+The separately authorized eighth row used the same version-2 task, model, medium
+reasoning, one repetition, and $1.20 cap. Run `run_dev_07ad1af07d22489c` reached the
+40-call limit after 60 successful reads/searches, no mutation, and $0.34786650. Every
+context after the first projected all latest working states. Thirty-five per-call
+decisions explicitly contemplated mutation/edit/patch/apply, but subsequent tool
+selection remained read/search, including the final turn. Treat this as a live
+decision-to-action coupling failure, not a context projection failure. The next seam
+is provider-free characterization of that coupling; do not add a repeated-read hard
+terminal or run a ninth paid row without separate authorization.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.
