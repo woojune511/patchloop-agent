@@ -20,7 +20,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The six live observations below
+Repository policy alone never initiates paid work. The seven live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -89,6 +89,14 @@ reference, and rejected all nine declared known-bad cases. Manifest-bound evalua
 run `run_dev_pyfakefsv2reference` reported hidden, regression, scope, and safety PASS
 for the same reference artifact. Ruff and all 74 tests pass in 73.40 seconds; mock
 run `run_dev_55d5e74e1bd743d1` reaches `EVALUATOR_PASS` with zero recorded cost.
+The seventh separately approved row used that exact pyfakefs version-2 identity,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, one repetition, and a $1.20 cap. Run
+`run_dev_42d9c3c06c6a4be9` reached durable `LIMIT_REACHED` after 198.531 active
+seconds, 40 model calls, and 86 successful read/search actions, recording
+$0.27031725. Public `makedirs` source evidence was present in every context after the
+first turn, including the final context with gate `needs_mutation` and one model call
+remaining. The agent attempted no mutation or visible check, submitted nothing, and
+ran no evaluator.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -175,7 +183,9 @@ then confirmed live mutation and three public-check passes, but stopped before t
 fourth public check and submission. The sixth row confirms required tool selection,
 complete visible-check traversal, submission identity, evaluator execution, and typed
 safety in one live path. Its task-acceptance failure instead exposes a version-2
-public/private oracle mismatch.
+public/private oracle mismatch. The seventh row then exposed a distinct
+action-selection/commitment failure after sufficient public evidence; it did not
+exercise mutation, checks, submission, evaluation, or safety.
 
 Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
 repeated-read terminal or replacement mutation interface. The retrospective replay
@@ -195,7 +205,7 @@ The fifth and sixth rows used this exact identity. Version 3 preserves version 2
 accepts the semantics promised publicly rather than one literal phrasing. The sixth
 row's submitted patch passes the version-3 evaluator provider-free, but that does not
 retroactively change the version-2 terminal or create a new live observation. No
-seventh live row or retry is authorized.
+retry or eighth live row is authorized.
 
 The fifth row's terminal label described the application's tool-batch boundary, but
 the stored evidence did not establish that the provider response itself was
@@ -216,7 +226,7 @@ Operational resume uses an immutable envelope, exact contract comparison,
 run-lifetime locking, journal-derived counters and cost, durable tool-decision replay,
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
-acceptance and safety remain separate typed axes. No additional live row is
+acceptance and safety remain separate typed axes. No retry or eighth live row is
 authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
@@ -226,11 +236,16 @@ first access. The runner imports the concrete evaluator module directly. Fresh-p
 tests cover both formerly order-dependent imports; no task, evaluator rule, or live
 evidence changed.
 
-The first distinct post-Loguru task is now provider-free ready:
+The first distinct post-Loguru task is provider-free validated:
 `pyfakefs-makedirs-parent-traversal` version 2 preserves version 1, exposes its core
 public behavior as a visible check, and passes the reference/known-bad contract
-matrix. This is task-contract evidence only. A live row on this task would be the
-next observation, but no such row is currently authorized.
+matrix. Its seventh live row nevertheless spent all 40 model calls on successful
+read/search actions and ended before mutation. The exact source remained visible, so
+the next seam is provider-free diagnosis of mutation commitment and progress
+signaling, not another task revision or paid retry. The current soft repeated-evidence
+counter also misses interleaved repeats because any newly observed span clears all
+fingerprint counts; this is a secondary observability defect, not the cause of the
+terminal and not grounds for a new hard terminal by itself.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

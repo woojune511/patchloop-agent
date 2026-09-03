@@ -349,13 +349,53 @@ Hidden, regression, scope, and typed Docker safety all reported PASS. The run is
 `official=false`, used no provider, and is task-contract evidence rather than a live
 coding-agent observation.
 
+## Seventh live development observation
+
+After the repository-root `.env` was restored from the exact external path to which
+it had previously been moved, its format was validated without exposing the value.
+One separately approved invocation then used
+`pyfakefs-makedirs-parent-traversal` version 2,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, one repetition, the $1.20 invocation cap,
+and external state root `C:\patchloop-state`. No image was pulled or built, Docker
+Desktop was not started by PatchLoop, and no retry followed.
+
+Run `run_dev_42d9c3c06c6a4be9` wrote a valid 580-event hash chain ending at
+`sha256:fe975460f70726dc59be36b7c5c54153ab81d355df8154495137d50d0fdcedfb`.
+It reached `LIMIT_REACHED` (`model-call limit reached`) after 198.531 active seconds
+and 203 seconds of run age. Usage was 287,487 input tokens, 12,156 output tokens
+including 8,800 reasoning tokens, and $0.27031725 of recorded cost. All 40 provider
+responses completed and recorded a reasoning item plus at least one function call.
+
+The 86 successful actions comprised 44 reads and 42 searches. Twenty-five exact
+requests were cache hits, 34 results added no source span, and no tool action failed.
+The `makedirs` source appeared in every canonical context from turn 2 through turn
+40. The final context artifact was
+`sha256:003f43c75f10af0283222e45e31da34006c4c146a1c88309c94320e49c78ee7d`;
+it projected the latest three results plus eight working spans, gate
+`needs_mutation`, both visible checks as `NOT_RUN`, and one remaining model call.
+Despite that evidence, the last decision repeated a cached search for
+`def makedirs(`. No mutation, check, submission, or evaluator occurred. The row is
+therefore evidence of an action-selection/commitment failure after sufficient public
+source visibility, not task acceptance, safety evidence, or a hidden/public contract
+mismatch.
+
+The diagnostic stagnation flag was false for every action. Its current counter is
+global-resetting: whenever any interleaved read discovers a new span, it clears every
+fingerprint repetition count. Overlapping reads can also receive distinct span IDs.
+That explains why the soft card missed this repeated exploration. It did not cause
+the terminal or block mutation, because the flag has no execution-gate effect. This
+single row does not justify a repeated-read hard terminal or removal of read tools;
+the observability and action-selection seams should be characterized provider-free
+before another live invocation.
+
 ## Not executed
 
-- no seventh repetition, transport retry, or follow-up paid run after the sixth row
+- no eighth repetition, transport retry, or follow-up paid run after the seventh row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
-- no live or provider execution for the pyfakefs version-2 successor
+- no mutation, visible check, submission, or evaluator execution in the pyfakefs
+  version-2 live row
 - no hidden evaluation of the temporary Loguru version-2 public correction
 
 The under-two-minute focused-validation target remains locally supported. The sixth
@@ -383,7 +423,8 @@ path but exposing an invalid acceptance oracle rather than producing task accept
   continuation through later attempts. The sixth establishes live submission and
   evaluator handoff, but version 2's stricter private literal assertion prevents a
   contract-valid live task-acceptance conclusion. Version 3 corrects that oracle and
-  passes provider-free evaluation only.
+  passes provider-free evaluation only. The seventh row exercised only read/search
+  and therefore adds no mutation, check, submission, evaluator, or safety evidence.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

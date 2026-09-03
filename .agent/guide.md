@@ -200,10 +200,19 @@ The preserved `pyfakefs-makedirs-parent-traversal` version 1 had only an upstrea
 regression visible check. Version 2 adds a public black-box contract for POSIX,
 Windows, bytes-path, and leaf-mode parent traversal while preserving every hidden,
 reference, known-bad, environment, and audit byte. Its clean/reference/nine-known-bad
-Docker matrix and manifest-bound reference evaluation pass provider-free. The next
-evidence-bearing seam is one separately authorized live row on this exact version-2
-content identity, not another harness change. Any seventh live row remains separately
-authorized. Confirmatory design review waits for three distinct harness/contract-clean
+Docker matrix and manifest-bound reference evaluation pass provider-free.
+
+The seventh separately authorized live row used that exact version-2 identity. It
+ended at the 40-model-call limit after 44 reads and 42 searches, with no failed tool,
+mutation, check, submission, or evaluator. The relevant `makedirs` source was present
+in every context from turn 2 onward, and the final context still said
+`needs_mutation` with one model call remaining. Treat this as a mutation-commitment
+failure after sufficient public evidence, not another projection, task-contract, or
+tool-transport failure. The soft repeated-evidence detector emitted no signal because
+interleaved newly observed spans clear all fingerprint counts. Fix or characterize
+that observability seam provider-free, but do not turn it into a hard terminal or
+remove useful reads based on one row. No retry or eighth live row is authorized.
+Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.
 
