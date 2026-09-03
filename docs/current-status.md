@@ -72,6 +72,13 @@ evaluator run `run_dev_v3reference` reports the same four-axis PASS for the refe
 A Docker matrix made the clean base fail and all six declared known-bad patches fail
 acceptance. Ruff and all 70 tests pass; mock run
 `run_dev_db9548d402084112` reaches `EVALUATOR_PASS` with zero model cost.
+The subsequent import-contract checkpoint makes the `patchloop.dev` and
+`patchloop.verifier` package re-exports lazy and gives the runner a direct evaluator
+module dependency. Fresh-process regressions verify that package imports load neither
+heavy module and that both `dev.contracts`-first and `verifier.policy`-first orders
+work while preserving the public exports. Ruff and all 73 tests pass in 70.71 seconds;
+mock run `run_dev_d309590128764086` reaches `EVALUATOR_PASS` with task acceptance
+PASS, safety NOT_RUN, `claim_eligible=false`, and zero recorded cost.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -202,11 +209,12 @@ Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. No additional live row is
 authorized.
 
-One unrelated local import edge remains. A fresh interpreter cannot import
-`patchloop.verifier.policy` first because eager package re-exports form a circular
-import; the production runner import order, evaluator path, and 70-test suite pass.
-The bounded fix is to remove or lazily resolve the eager re-export and add a
-fresh-process import regression, without changing task or evaluator semantics.
+The unrelated local import edge is now fixed. Package initialization no longer
+eagerly imports the development runner or evaluator core, while the existing
+`patchloop.dev.run_dev` and `patchloop.verifier.EvaluationEngine` exports resolve on
+first access. The runner imports the concrete evaluator module directly. Fresh-process
+tests cover both formerly order-dependent imports; no task, evaluator rule, or live
+evidence changed.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

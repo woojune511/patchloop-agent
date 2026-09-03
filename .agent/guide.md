@@ -190,12 +190,13 @@ the sixth-row exact candidate pass, and every declared known-bad patch fail acce
 Both passing patches also pass the full manifest-bound evaluator with all task and
 safety axes PASS. This does not rewrite the immutable version-2 live result.
 
-A separate local API defect remains: importing `patchloop.verifier.policy` first in a
-fresh interpreter enters the eager `patchloop.dev` / `patchloop.verifier` re-export
-cycle, while the production import order and evaluator path work. Fix that only as a
-small import-contract change with a fresh-process regression; do not mix it into task
-acceptance. Any seventh live row remains separately authorized and must name the exact
-task version/content identity. Confirmatory design review waits for three distinct
+The separate local API defect is fixed as a small import-contract change. The
+`patchloop.dev` and `patchloop.verifier` package roots retain their public exports but
+resolve them lazily, and the runner depends directly on the evaluator core. A
+fresh-process regression verifies lightweight package imports and both formerly
+order-dependent submodule import orders. This changes no task or evaluator semantics.
+Any seventh live row remains separately authorized and must name the exact task
+version/content identity. Confirmatory design review waits for three distinct
 harness/contract-clean submissions with at least two private passes; that threshold
 itself proves no quality or generalization benefit.
 

@@ -54,7 +54,7 @@ from patchloop.runtime import (
 from patchloop.sandbox import DockerSandbox, LocalSandbox
 from patchloop.task_loader import load_task_package, task_package_content_paths
 from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
-from patchloop.verifier import EvaluationEngine
+from patchloop.verifier.core import EvaluationEngine
 
 
 @dataclass
