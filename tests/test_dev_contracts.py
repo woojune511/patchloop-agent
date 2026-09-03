@@ -24,6 +24,7 @@ def call(name: str, index: int = 0) -> RequestedTool:
 def test_tool_batch_contract_is_small_and_unmixed() -> None:
     assert validate_tool_batch([call("read_file"), call("search_files", 1)]) == "parallel_read"
     assert validate_tool_batch([call("run_check")]) == "single_action"
+    assert validate_tool_batch([call("stop_task")]) == "single_action"
     with pytest.raises(ContractError):
         validate_tool_batch([call("read_file"), call("run_check", 1)])
     with pytest.raises(ContractError):

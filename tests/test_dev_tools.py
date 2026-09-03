@@ -78,10 +78,24 @@ def mutation_call(gateway, *, action_id: str = "mutation-1", alternative: bool =
 
 
 def test_mutation_tool_contract_requires_unwrapped_raw_git_diff() -> None:
-    schemas = dev_tool_schemas(finish_enabled=False)
+    schemas = dev_tool_schemas(
+        finish_enabled=False,
+        check_ids=["contract-check", "regression-check"],
+    )
     mutation = next(schema for schema in schemas if schema["name"] == "apply_git_diff")
+    check = next(schema for schema in schemas if schema["name"] == "run_check")
+    stop = next(schema for schema in schemas if schema["name"] == "stop_task")
 
     assert all(schema["name"] != "apply_patch" for schema in schemas)
+    assert all(schema["name"] != "finish_task" for schema in schemas)
+    assert check["parameters"]["properties"]["check_id"]["enum"] == [
+        "contract-check",
+        "regression-check",
+    ]
+    assert set(stop["parameters"]["required"]) == set(
+        stop["parameters"]["properties"]
+    )
+    assert stop["parameters"]["additionalProperties"] is False
     assert mutation["parameters"]["required"][0] == "git_diff"
     assert mutation["parameters"]["properties"]["git_diff"]["pattern"] == "^diff --git a/"
     assert set(mutation["parameters"]["required"]) == set(
@@ -93,6 +107,61 @@ def test_mutation_tool_contract_requires_unwrapped_raw_git_diff() -> None:
     assert "apply_git_diff git_diff" in DEV_SYSTEM_PROMPT
     assert "Never use \"*** Begin Patch\"" in DEV_SYSTEM_PROMPT
     assert "When last_failed_mutation is present" in DEV_SYSTEM_PROMPT
+    assert "Every response must request at least one supplied tool" in DEV_SYSTEM_PROMPT
+    assert "Use stop_task only when no valid public" in DEV_SYSTEM_PROMPT
+
+
+def test_empty_diff_is_never_ready_even_with_remembered_passing_checks(
+    gateway_factory,
+) -> None:
+    gateway, _, _ = gateway_factory()
+    gateway._remember_check(  # noqa: SLF001 - reconstruct impossible stale evidence
+        {
+            "check_id": "existing-unit-tests",
+            "diff_hash": gateway.current_diff_hash,
+            "passed": True,
+            "failure_signature": None,
+        }
+    )
+
+    assert gateway.visible_checks_pass() is True
+    assert gateway.ready_to_submit() is False
+    schemas = dev_tool_schemas(finish_enabled=gateway.ready_to_submit())
+    assert all(schema["name"] != "finish_task" for schema in schemas)
+
+
+def test_stop_task_is_structured_and_rejects_unknown_public_evidence(
+    gateway_factory,
+) -> None:
+    gateway, _, _ = gateway_factory()
+    unknown = gateway.execute(
+        RequestedTool(
+            name="stop_task",
+            action_id="stop-with-unknown-evidence",
+            arguments={
+                "reason_code": "insufficient_public_evidence",
+                "summary": "The cited evidence is unavailable.",
+                "evidence_span_ids": ["span_unknown"],
+            },
+        )
+    )
+    stopped = gateway.execute(
+        RequestedTool(
+            name="stop_task",
+            action_id="stop-without-submission",
+            arguments={
+                "reason_code": "no_safe_scoped_mutation",
+                "summary": "No safe mutation follows from the public evidence.",
+                "evidence_span_ids": [],
+            },
+        )
+    )
+
+    assert unknown.status == "failed"
+    assert "unknown or stale public span" in unknown.message
+    assert stopped.status == "succeeded"
+    assert stopped.output["reason_code"] == "no_safe_scoped_mutation"
+    assert stopped.output["diff_hash"] == gateway.current_diff_hash
 
 
 def test_mutation_error_location_parses_git_diagnostics() -> None:

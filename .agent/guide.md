@@ -27,12 +27,17 @@ state or plan tool.
 One model response may request either:
 
 - 1–4 parallel `search_files` and/or `read_file` calls, or
-- exactly one `apply_git_diff`, `run_check`, or `finish_task` call.
+- exactly one `apply_git_diff`, `run_check`, `finish_task`, or `stop_task` call.
 
-Mixed, empty, duplicate-action, and oversized batches receive one short correction.
-A second protocol/incomplete violation terminates the row. `run_check` is available
-on the first turn. `finish_task` is exposed only after all visible checks pass on
-the exact current diff; the next context already contains the complete diff.
+The provider request uses required tool choice, and the application validates the
+smaller batch grammar above. Mixed, empty, duplicate-action, and oversized batches
+receive one short correction. A second consecutive protocol/incomplete violation
+terminates the row; any valid completed tool batch resets the correction allowance.
+`run_check` is available on the first turn and its schema enumerates only the public
+registered IDs. `finish_task` is exposed only for a non-empty diff with no untracked
+files after all visible checks pass on that exact diff. `stop_task` is an explicit
+unsuccessful terminal when no public action can support safe progress; it never
+submits or evaluates.
 
 ## Mutation and causal pivot
 
@@ -58,9 +63,11 @@ mutation additionally requires `falsified_prior_hypothesis` and
 ## Context boundary
 
 Model context contains only the public task, current full diff, the exact latest
-tool batch, a recency-ordered current-source working set, recent visible checks,
-bounded `last_successful_mutation`, bounded `last_failed_mutation`, remaining
-budget, and the latest three attempt-result-next-question cards. A failed mutation
+tool batch, a recency-ordered current-source working set, recent visible-check
+output, the complete current-diff check status, exact remaining check IDs, bounded
+`last_successful_mutation`, bounded `last_failed_mutation`, remaining budget, and
+the latest three attempt-result-next-question cards. A successful check card names
+the next remaining check instead of treating PASS as a failure. A failed mutation
 retains its public diff excerpt, full diff hash, intent, anchor, evidence IDs, error,
 and parsed error location across later reads and process resume. A later failed
 mutation replaces it; a successful mutation clears it. Identical evidence may be
@@ -97,7 +104,9 @@ Actual request input is counted immediately before generation. The ledger reserv
 uncached input plus a conservative output ceiling, lowers that ceiling when needed,
 and emits `COST_CAP_REACHED` without generation when the minimum request cannot fit.
 Transport retry is zero. Count, provider, or billing uncertainty stops remaining
-repetitions.
+repetitions. Provider completion records structural output evidence only: item
+count, non-tool count, item types, and a shape hash. Never persist response text or
+raw reasoning for protocol diagnosis.
 
 After finish, the canonical submitted diff is content-addressed and an immutable
 manifest is recorded before evaluator execution. It binds task bytes, full runtime
@@ -120,7 +129,7 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 - 100 tool actions
 - 4 accepted mutations
 - 1,800 seconds per row
-- one protocol/incomplete recovery
+- one consecutive protocol/incomplete recovery
 - four parallel reads
 - one repetition by default, six maximum
 
@@ -153,15 +162,23 @@ development boundary beyond mutation transport: the version-1 checks did not exe
 the central missing-key behavior. Preserve that package as version 1. Version 2 adds
 one public black-box check for actionable missing-key diagnostics, available keys,
 the canonical `logger.bind()` / `{extra[key]}` pairing, and both catch modes. Do not
-project evaluator details or derive further assertions from hidden output.
+project evaluator details or derive further assertions from hidden output. The fifth
+live row used version 2, accepted one mutation, and passed three visible checks. It
+then produced two completed responses with no function call before invoking the
+remaining `upstream-format-regression`, ending at `PROTOCOL_VIOLATION` with no
+submission or evaluator. The old journal cannot reveal whether those responses were
+reasoning, messages, or another non-tool item because their output shape was not
+recorded.
 
 Keep repeated-evidence detection diagnostic-only. The bounded continuation evidence
 does not support a hard workflow gate or a replacement mutation DSL. The smaller
 current correction uses Git's deterministic recount for hunk totals while preserving
-all existing mutation and submission checks. Any fifth live row remains separately
-authorized and must name the exact task version/content identity. Confirmatory design
-review waits for three distinct harness/contract-clean submissions with at least two
-private passes; that threshold itself proves no quality or generalization benefit.
+all existing mutation and submission checks. The next seam is to validate the aligned
+tool requirement and complete check-status projection provider-free; any sixth live
+row remains separately authorized and must name the exact task version/content
+identity. Confirmatory design review waits for three distinct harness/contract-clean
+submissions with at least two private passes; that threshold itself proves no quality
+or generalization benefit.
 
 ## Validation checklist
 

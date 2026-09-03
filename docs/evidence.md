@@ -66,6 +66,15 @@ Following the Rapid Dev Reset, local checkpoints recorded:
   and all 63 tests passed in 54.28 seconds; mock run
   `run_dev_99bbb59c944d4c37` reached `EVALUATOR_PASS` with task acceptance PASS,
   safety NOT_RUN, `claim_eligible=false`, and zero model cost.
+- After the fifth-row diagnosis, the tool-alignment checkpoint passed focused
+  context/tool/runner tests, Ruff, and all 69 tests in 69.15 seconds. The tests
+  cover required tool choice in both generation and input counting, content-free
+  output-shape provenance, complete four-check projection, correct PASS guidance,
+  registered check enums, a non-empty submission gate, consecutive correction
+  reset including resume reconstruction, and structured unsuccessful stop. Mock
+  run `run_dev_6374b31034c44427` reached isolated `EVALUATOR_PASS` through one
+  accepted mutation with task acceptance PASS, safety NOT_RUN,
+  `claim_eligible=false`, and zero model cost.
 - The reset changed no tracked bytes under `reports/`, `experiments/`, or
   `docs/archive/` relative to checkpoint `b71ddeee`.
 
@@ -176,12 +185,51 @@ exact diffs without modifying it. This isolates hunk-total arithmetic as the cur
 wire boundary, but does not show that any patch is semantically correct. No mutation,
 visible check, submission, evaluator, task acceptance, or safety result was produced.
 
+## Fifth live development observation
+
+After deterministic hunk recount and the version-2 public contract were implemented,
+a fifth separately approved row used task version 2,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, one repetition, the $1.20 cap, and
+external state root `C:\patchloop-state`. Run `run_dev_329131da9a4940c3` wrote a
+valid 396-event hash chain ending at
+`sha256:1044b780d95813be4fd927c8c4ec95a10f6a2ffd1838c0993ffd7c8b499b4261`.
+It reached `PROTOCOL_VIOLATION` (`model response must request at least one tool`)
+after 140.703 active seconds and 142 seconds of run age. All 29 provider dispatches
+recorded durable completions. Usage was 177,028 input tokens including 7,168 cached
+tokens and 10,320 output tokens including 7,088 reasoning tokens. Recorded cost was
+$0.1743726.
+
+The run made 37 searches, 14 reads, one accepted `apply_git_diff`, and three passing
+checks: `invalid-format-feedback-contract`, `basic-format-regression`, and
+`patcher-field-regression`. It thereby establishes a post-recount live mutation and
+public-check execution, but not submission or acceptance. On turns 27 and 29 the
+provider responses completed with 303/149 and 228/83 output/reasoning tokens
+respectively, but their recorded tool-call lists were empty. The old adapter did not
+retain output item types, so the journal cannot establish whether the discarded
+items were messages, reasoning, or another non-function shape.
+
+Both corresponding contexts had gate `needs_visible_checks` and listed all four
+public checks in the task. However, bounded `recent_checks` contained only the two
+then three completed checks, did not name the remaining
+`upstream-format-regression`, and every PASS attempt card incorrectly asked what the
+public “failure” had falsified. The request itself did not require a tool even though
+the application rejected an empty tool batch. The terminal is therefore evidence of
+an application-level request/context mismatch, not proof of a malformed provider
+response or failed task patch.
+
+After the run, one provider-free Docker invocation used the retained exact diff,
+the already-local pinned image, `--pull never`, a read-only workspace mount, and the
+registered `upstream-format-regression` command. It passed all 20 tests in 0.26
+seconds. This result was intentionally not appended to the immutable live journal;
+it proves only that the missing public check passes on the retained diff. No hidden
+evaluator ran.
+
 ## Not executed
 
-- no fifth repetition, transport retry, or follow-up paid run after the fourth row
+- no sixth repetition, transport retry, or follow-up paid run after the fifth row
 - no image pull, image build, or automatic Docker Desktop start
-- no accepted mutation, visible check, submission, private evaluator, or evaluator
-  container in any of the four live rows
+- no submission, private evaluator, or evaluator container in any of the five live
+  rows; only the fifth row admitted a mutation and ran visible checks
 - no claim, qualification, activation, adoption, or held-out evaluation
 - no hidden evaluation of the temporary version-2 validation candidate
 
@@ -205,10 +253,10 @@ because no evaluator summary was reached.
 - Deleted historical executables require Git history to replay.
 - Only runs with the new immutable envelope can resume; older journals remain
   read-only evidence.
-- Two live rows show that the provider can emit the `apply_git_diff` raw-diff shape,
-  and the fourth shows persistent failed-mutation repair. Provider-free replay proves
-  that recount accepts one exact emitted diff and preserves submission identity, but
-  no post-recount paid row establishes live mutation or submission reliability.
+- The third through fifth live rows show that the provider can emit the
+  `apply_git_diff` raw-diff shape, and the fourth shows persistent failed-mutation
+  repair. The fifth establishes one post-recount live mutation and three public-check
+  passes, but no paid row establishes submission or evaluator reliability.
 
 A development PASS does not establish comparative quality, generalization,
 causality, or memory benefit. A future confirmatory lane needs separate frozen

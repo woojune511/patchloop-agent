@@ -15,13 +15,15 @@ from patchloop.util import sha256_json
 DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
 DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
-DEV_SINGLE_ACTION_TOOLS = frozenset({"apply_git_diff", "run_check", "finish_task"})
+DEV_SINGLE_ACTION_TOOLS = frozenset(
+    {"apply_git_diff", "run_check", "finish_task", "stop_task"}
+)
 
 
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v1",
+            "schema_version": "dev-tool-surface-v2",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -48,6 +50,7 @@ class DevTerminal(StrEnum):
     LIMIT_REACHED = "LIMIT_REACHED"
     TASK_FAILED = "TASK_FAILED"
     PREFLIGHT_FAILED = "PREFLIGHT_FAILED"
+    AGENT_STOPPED = "AGENT_STOPPED"
 
 
 class DevLimits(StrictModel):
@@ -82,6 +85,16 @@ class MutationIntent(StrictModel):
         return self
 
 
+class StopIntent(StrictModel):
+    reason_code: Literal[
+        "insufficient_public_evidence",
+        "no_safe_scoped_mutation",
+        "public_task_conflict",
+    ]
+    summary: str = Field(min_length=1, max_length=1_000)
+    evidence_span_ids: list[str] = Field(default_factory=list, max_length=8)
+
+
 class RequestedTool(StrictModel):
     name: str
     action_id: str = Field(min_length=1, max_length=500)
@@ -100,6 +113,13 @@ class DevModelTurn(StrictModel):
     response_status: str | None = None
     incomplete_reason: str | None = None
     error_code: str | None = None
+    output_item_count: int = Field(default=0, ge=0)
+    non_tool_output_item_count: int = Field(default=0, ge=0)
+    output_item_types: list[str] = Field(default_factory=list)
+    output_shape_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
 
 
 class DevToolResult(StrictModel):

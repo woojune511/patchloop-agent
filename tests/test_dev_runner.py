@@ -6,20 +6,30 @@ import shutil
 import subprocess
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 import patchloop.dev.runner as runner
-from patchloop.agent.model import ModelTurn
+from patchloop.agent.model import ModelTurn, OpenAIResponsesAdapter
 from patchloop.agent.model import RequestedTool as ProviderRequestedTool
-from patchloop.dev.contracts import DevLimits, DevModelTurn, DevRunRequest, RequestedTool
+from patchloop.contracts import ModelConfig
+from patchloop.dev.contracts import (
+    DevLimits,
+    DevModelTurn,
+    DevRunRequest,
+    DevToolResult,
+    RequestedTool,
+)
 from patchloop.dev.model import MOCK_MUTATIONS, MockDevAdapter
 from patchloop.dev.state import DevJournal
+from patchloop.dev.tools import dev_tool_schemas
 from patchloop.errors import ContractError, RecoveryError, ResumeContractMismatch
 from patchloop.repository import WorkspaceManager as RealWorkspaceManager
 from patchloop.runtime import repository_root
 from patchloop.sandbox import LocalSandbox
 from patchloop.task_loader import load_task_package
+from patchloop.util import sha256_bytes, sha256_json
 
 
 def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke_package) -> None:
@@ -64,6 +74,71 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     projected = context["latest_tool_results"][0]["output"]["spans"]
     assert projected[0]["span_id"] == latest.output["spans"][0]["span_id"]
     assert len(context["source_spans"]) == 8
+
+
+def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
+    observed: dict[str, dict] = {}
+
+    class FakeInputTokens:
+        def count(self, **payload):
+            observed["count"] = payload
+            return SimpleNamespace(input_tokens=17)
+
+    class FakeResponses:
+        input_tokens = FakeInputTokens()
+
+        def create(self, **payload):
+            observed["create"] = payload
+            return SimpleNamespace(
+                id="response-shape-only",
+                model="gpt-5.4-mini-2026-03-17",
+                status="completed",
+                incomplete_details=None,
+                output=[
+                    SimpleNamespace(type="reasoning", content="private-reasoning-sentinel"),
+                    SimpleNamespace(type="message", content="public-message-sentinel"),
+                ],
+                usage=SimpleNamespace(
+                    input_tokens=17,
+                    input_tokens_details=SimpleNamespace(cached_tokens=3),
+                    output_tokens=5,
+                    output_tokens_details=SimpleNamespace(reasoning_tokens=2),
+                ),
+            )
+
+    fake_client = SimpleNamespace(max_retries=0, responses=FakeResponses())
+    adapter = OpenAIResponsesAdapter(
+        ModelConfig(
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            transport_max_retries=0,
+        ),
+        api_key="unused-test-key",
+        client=fake_client,
+    )
+    request = adapter.request_payload(
+        "{}",
+        dev_tool_schemas(finish_enabled=False, check_ids=["public-check"]),
+        system_prompt="test prompt",
+    )
+
+    assert request["tool_choice"] == "required"
+    assert adapter.count_input_tokens_v2(request) == 17
+    assert observed["count"]["tool_choice"] == "required"
+
+    turn = adapter.execute_request(request, requested_input_tokens=17)
+
+    assert observed["create"]["tool_choice"] == "required"
+    assert turn.error is None
+    assert turn.tool_calls == []
+    assert turn.output_item_count == 2
+    assert turn.non_tool_output_item_count == 2
+    assert turn.output_item_types == ("reasoning", "message")
+    assert turn.output_shape_hash == sha256_json(
+        {"item_count": 2, "item_types": ("reasoning", "message")}
+    )
+    assert "private-reasoning-sentinel" not in repr(turn)
+    assert "public-message-sentinel" not in repr(turn)
 
 
 def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label(
@@ -164,6 +239,117 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
     )
 
 
+def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
+    gateway_factory,
+    smoke_package,
+) -> None:
+    gateway, journal, _ = gateway_factory()
+    source = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="four-check-source",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": 1,
+                "end_line": 20,
+            },
+        )
+    )
+    mutation = MOCK_MUTATIONS["csv-quoted-newline"]
+    applied = gateway.execute(
+        RequestedTool(
+            name="apply_git_diff",
+            action_id="four-check-mutation",
+            arguments={
+                "git_diff": mutation.patch,
+                "hypothesis": mutation.hypothesis,
+                "expected_behavior": mutation.expected_behavior,
+                "evidence_span_ids": [source.output["spans"][0]["span_id"]],
+                "edit_anchor": {
+                    "path": mutation.path,
+                    "old_text": mutation.anchor,
+                    "occurrence": 1,
+                },
+                "falsified_prior_hypothesis": None,
+                "alternative_mechanism": None,
+            },
+        )
+    )
+    assert applied.status == "succeeded"
+
+    original_check = smoke_package.public.visible_checks[0]
+    check_ids = ["contract", "basic-regression", "field-regression", "upstream-regression"]
+    public = smoke_package.public.model_copy(
+        update={
+            "visible_checks": [
+                original_check.model_copy(update={"id": check_id}) for check_id in check_ids
+            ]
+        }
+    )
+    gateway.public_task = public
+    diff_hash = gateway.current_diff_hash
+    for check_id in check_ids[:3]:
+        gateway._remember_check(  # noqa: SLF001 - reconstruct current public evidence
+            {
+                "check_id": check_id,
+                "diff_hash": diff_hash,
+                "passed": True,
+                "failure_signature": None,
+            }
+        )
+    last_pass = DevToolResult(
+        action_id="third-visible-pass",
+        input_hash=sha256_json("third-visible-pass"),
+        tool="run_check",
+        status="succeeded",
+        output={
+            "check_id": check_ids[2],
+            "diff_hash": diff_hash,
+            "passed": True,
+            "failure_signature": None,
+        },
+    )
+
+    context = json.loads(
+        runner._build_context(  # noqa: SLF001 - direct context contract test
+            package=SimpleNamespace(public=public),
+            gateway=gateway,
+            journal=journal,
+            correction=None,
+            latest_tool_results=[last_pass],
+            counters=runner._RunCounters(),  # noqa: SLF001
+            elapsed_seconds=0,
+            limits=DevRunRequest(
+                provider="mock",
+                task=repository_root()
+                / "tasks"
+                / "smoke"
+                / "csv-quoted-newline"
+                / "public.yaml",
+                model="mock-dev",
+            ).limits,
+        )
+    )
+    card = runner._attempt_card(last_pass, gateway)  # noqa: SLF001
+
+    assert [row["check_id"] for row in context["visible_check_status"]] == check_ids
+    assert [row["status"] for row in context["visible_check_status"]] == [
+        "PASS",
+        "PASS",
+        "PASS",
+        "NOT_RUN",
+    ]
+    assert context["remaining_visible_check_ids"] == ["upstream-regression"]
+    assert context["workflow_gate"] == "needs_visible_checks"
+    assert card["next_question"] == (
+        "Run one remaining visible check for the current diff: upstream-regression"
+    )
+    assert "failure" not in card["next_question"].lower()
+    encoded = json.dumps(context)
+    assert "hidden-multiline-csv" not in encoded
+    assert "reference_patch" not in encoded
+
+
 def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeypatch) -> None:
     contexts: list[str] = []
 
@@ -198,6 +384,8 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "latest_tool_results",
         "source_spans",
         "recent_checks",
+        "visible_check_status",
+        "remaining_visible_check_ids",
         "last_successful_mutation",
         "last_failed_mutation",
         "recent_attempt_result_next_question",
@@ -376,6 +564,103 @@ def test_invalid_tool_batch_gets_one_correction_then_stops(tmp_path, monkeypatch
     journal_path = tmp_path / "runs" / f"{run['run_id']}.jsonl"
     rows = [json.loads(line) for line in journal_path.read_text(encoding="utf-8").splitlines()]
     assert len([row for row in rows if row["event_type"] == "protocol_correction"]) == 1
+
+
+def test_protocol_correction_limit_is_consecutive_and_stop_is_structured(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class AlternatingBatchMock:
+        def __init__(self, task_id) -> None:
+            del task_id
+            self.calls = 0
+
+        def next_turn(self, context, tools):
+            del context, tools
+            self.calls += 1
+            if self.calls in {1, 3}:
+                return DevModelTurn(
+                    tool_calls=[
+                        RequestedTool(
+                            name="read_file",
+                            action_id=f"mixed-read-{self.calls}",
+                            arguments={
+                                "path": "mini_data_utils/csvlite.py",
+                                "start_line": 1,
+                                "end_line": 20,
+                            },
+                        ),
+                        RequestedTool(
+                            name="run_check",
+                            action_id=f"mixed-check-{self.calls}",
+                            arguments={"check_id": "existing-unit-tests"},
+                        ),
+                    ]
+                )
+            if self.calls == 2:
+                return DevModelTurn(
+                    tool_calls=[
+                        RequestedTool(
+                            name="read_file",
+                            action_id="valid-read-between-corrections",
+                            arguments={
+                                "path": "mini_data_utils/csvlite.py",
+                                "start_line": 1,
+                                "end_line": 20,
+                            },
+                        )
+                    ]
+                )
+            return DevModelTurn(
+                tool_calls=[
+                    RequestedTool(
+                        name="stop_task",
+                        action_id="structured-stop",
+                        arguments={
+                            "reason_code": "insufficient_public_evidence",
+                            "summary": "No additional public evidence supports a safe edit.",
+                            "evidence_span_ids": [],
+                        },
+                    )
+                ]
+            )
+
+    monkeypatch.setattr(runner, "MockDevAdapter", AlternatingBatchMock)
+    request = DevRunRequest(
+        provider="mock",
+        task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
+        model="mock-dev",
+        state_root=tmp_path,
+    )
+
+    run = runner.run_dev(request)["runs"][0]
+
+    assert run["terminal"] == "AGENT_STOPPED"
+    assert run["call_counts"] == {"model": 4, "input_count": 0, "tool": 2}
+    assert run["accepted_mutations"] == 0
+    assert run["agent_stop"] == {
+        "reason_code": "insufficient_public_evidence",
+        "summary": "No additional public evidence supports a safe edit.",
+        "evidence_span_ids": [],
+        "diff_hash": sha256_bytes(b""),
+    }
+    journal = DevJournal(tmp_path, run["run_id"])
+    rows = journal.events()
+    assert len([row for row in rows if row["event_type"] == "protocol_correction"]) == 2
+    assert len([row for row in rows if row["event_type"] == "tool_batch_finished"]) == 2
+    assert not any(row["event_type"] == "submission_recorded" for row in rows)
+    assert not any(row["event_type"] == "evaluator_finished" for row in rows)
+
+
+def test_resume_counter_restores_only_corrections_since_last_valid_batch(tmp_path) -> None:
+    journal = DevJournal(tmp_path, "run_dev_consecutive01")
+    journal.append("protocol_correction", {"turn_id": "turn-invalid-before"})
+    journal.append("tool_batch_finished", {"turn_id": "turn-valid"})
+    journal.append("protocol_correction", {"turn_id": "turn-invalid-after"})
+
+    counters = runner._restore_counters(journal)  # noqa: SLF001 - resume contract test
+
+    assert counters.protocol_recoveries == 1
 
 
 def test_live_rejects_non_dev_train_before_credential_or_provider(tmp_path) -> None:
@@ -578,7 +863,10 @@ def test_mock_resume_replays_durable_work_without_duplicate_mutation(
             monkeypatch,
             event_type="tool_batch_finished",
             when="before",
-            predicate=lambda payload: "mock-visible-check" in payload.get("action_ids", []),
+            predicate=lambda payload: any(
+                action_id.startswith("mock-visible-check-")
+                for action_id in payload.get("action_ids", [])
+            ),
         )
 
     request = DevRunRequest(
@@ -777,6 +1065,15 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
                 response_id="response-once",
                 response_model="mocked-provider",
                 response_status="completed",
+                output_item_count=2,
+                non_tool_output_item_count=1,
+                output_item_types=("reasoning", "function_call"),
+                output_shape_hash=sha256_json(
+                    {
+                        "item_count": 2,
+                        "item_types": ("reasoning", "function_call"),
+                    }
+                ),
             )
 
     _patch_live_boundaries(monkeypatch)
@@ -799,6 +1096,15 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
     assert run["call_counts"] == {"model": 1, "input_count": 1, "tool": 1}
     assert run["cost_nanos"] > 0
     assert calls["execute"] == 1
+    journal = DevJournal(request.state_root, run_id)
+    for event_type in {"provider_call_finished", "turn_decision_recorded"}:
+        payload = next(
+            row["payload"] for row in journal.events() if row["event_type"] == event_type
+        )
+        assert payload["output_item_count"] == 2
+        assert payload["non_tool_output_item_count"] == 1
+        assert payload["output_item_types"] == ["reasoning", "function_call"]
+        assert payload["output_shape_hash"].startswith("sha256:")
 
 
 def test_unfinished_provider_dispatch_becomes_one_unknown_terminal(tmp_path, monkeypatch) -> None:

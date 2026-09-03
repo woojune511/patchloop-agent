@@ -11,6 +11,7 @@ from openai import OpenAI
 
 from patchloop.contracts import ModelConfig
 from patchloop.errors import ContractError
+from patchloop.util import sha256_json
 
 OFFICIAL_API_BASE_URL = "https://api.openai.com/v1"
 
@@ -41,6 +42,10 @@ class ModelTurn:
     response_status: str | None = None
     response_incomplete_reason: str | None = None
     error: ModelTurnError | None = None
+    output_item_count: int = 0
+    non_tool_output_item_count: int = 0
+    output_item_types: tuple[str, ...] = ()
+    output_shape_hash: str | None = None
 
 
 class ModelAdapter(Protocol):
@@ -97,6 +102,7 @@ class OpenAIResponsesAdapter:
                 {"role": "user", "content": context},
             ],
             "tools": tools,
+            "tool_choice": "required",
             "parallel_tool_calls": True,
             "store": False,
             "reasoning": reasoning,
@@ -111,6 +117,7 @@ class OpenAIResponsesAdapter:
             "model",
             "input",
             "tools",
+            "tool_choice",
             "reasoning",
             "truncation",
             "parallel_tool_calls",
@@ -169,9 +176,20 @@ class OpenAIResponsesAdapter:
                 "incomplete_response",
                 f"provider response was incomplete: {incomplete_reason or response_status}",
             )
+        output_items = list(response.output or [])
+        output_item_types = tuple(
+            item_type if isinstance(item_type := getattr(item, "type", None), str) else "unknown"
+            for item in output_items
+        )
+        output_shape_hash = sha256_json(
+            {
+                "item_count": len(output_items),
+                "item_types": output_item_types,
+            }
+        )
         calls: list[RequestedTool] = []
         if error is None:
-            for item in response.output or []:
+            for item in output_items:
                 if getattr(item, "type", None) != "function_call":
                     continue
                 try:
@@ -203,6 +221,12 @@ class OpenAIResponsesAdapter:
             response_status=response_status,
             response_incomplete_reason=incomplete_reason,
             error=error,
+            output_item_count=len(output_items),
+            non_tool_output_item_count=sum(
+                item_type != "function_call" for item_type in output_item_types
+            ),
+            output_item_types=output_item_types,
+            output_shape_hash=output_shape_hash,
         )
 
     def next_turn(self, context: str, tools: list[dict[str, Any]]) -> ModelTurn:

@@ -10,7 +10,7 @@ claim commands are absent.
 - focused local validation: under 2 minutes
 - default one-row live limit: 1,800 seconds
 - 40 model calls, 100 tool actions, and 4 accepted mutations
-- one protocol/incomplete correction and at most 4 parallel reads
+- one consecutive protocol/incomplete correction and at most 4 parallel reads
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
 ## Authority
@@ -20,7 +20,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The four live observations below
+Repository policy alone never initiates paid work. The five live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -52,6 +52,10 @@ visible checks and reached `finish_task`. No hidden evaluator ran for that
 validation. Ruff and all 63 tests pass in 54.28 seconds. Mock run
 `run_dev_99bbb59c944d4c37` reaches `EVALUATOR_PASS` with task acceptance PASS,
 safety NOT_RUN, `claim_eligible=false`, and zero model cost.
+The post-fifth-row tool-alignment checkpoint passes Ruff and all 69 tests in
+69.15 seconds. Mock run `run_dev_6374b31034c44427` reaches the same isolated
+`EVALUATOR_PASS` boundary through one accepted mutation; this is provider-free
+contract evidence only.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -93,6 +97,18 @@ still had incorrect hunk totals and none applied. A read-only
 isolated workspace; that establishes structural applicability after recount, not
 semantic correctness. No visible check, submission, or evaluator ran.
 
+After hunk recount and the version-2 public contract were implemented, a fifth
+separately approved row used the same model, reasoning, repetition, and $1.20 cap
+on task version 2. Run `run_dev_329131da9a4940c3` reached durable
+`PROTOCOL_VIOLATION` after 140.703 active seconds, 29 model calls, 55 tool actions,
+one accepted mutation, and $0.1743726 of recorded cost. The contract, basic-format,
+and patcher-field checks passed on that diff. The remaining
+`upstream-format-regression` was not called before two completed provider responses
+contained no function call, so no submission or evaluator followed. A later
+provider-free run of that exact remaining public check against the retained diff
+passed 20 tests. This is public check evidence only; it is not part of the immutable
+live run and is not task acceptance.
+
 The terminal arrived within 30 minutes, but the operational target still remains
 unverified because there was no evaluator summary. See
 [Evidence and limitations](evidence.md) for the exact observation and limits.
@@ -109,8 +125,9 @@ next stateless request and trigger repeated inspection. The second live row prov
 bounded evidence that complete latest-batch projection and exact-request caching now
 operate in a live loop. The third row confirmed raw-diff tool selection but exposed
 failed-mutation displacement. The fourth row shows that displacement is fixed: the
-agent kept seeing the exact failed diff and attempted 13 replacements. The remaining
-failure was mechanical hunk-total arithmetic in every replacement.
+agent kept seeing the exact failed diff and attempted 13 replacements. The fifth row
+then confirmed live mutation and three public-check passes, but stopped before the
+fourth public check and submission.
 
 Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
 repeated-read terminal or replacement mutation interface. The retrospective replay
@@ -126,14 +143,28 @@ feedback, available record-key reporting, the canonical `logger.bind()` /
 `{extra[key]}` guidance, and both catch modes without requiring an implementation
 shape or exact full sentence. Its task content hash is
 `sha256:61704553b8ba733bad7350561eec397a7a6c04365a56ef61854a9e12cefe259d`.
-Any future live row must name this exact revised task and remains separately
-authorized; no fifth live row is authorized.
+The fifth row used this exact identity. No sixth live row or retry is authorized.
+
+Its terminal label described the application's tool-batch boundary, but the stored
+evidence did not establish that the provider response itself was malformed. Both
+zero-tool responses completed and consumed output tokens, while the old adapter
+discarded non-function output without recording its shape. More importantly, the
+request allowed a zero-tool response even though the runner rejected one; the
+context exposed only three recent checks rather than a complete current-diff status,
+and every successful-check card incorrectly asked what the public “failure” had
+falsified. The correction therefore aligns the request and runner with required
+tool choice, projects all current check states and the exact remaining IDs, fixes
+PASS guidance, records content-free response-shape metadata, and provides a
+structured unsuccessful `stop_task`. Protocol recovery now counts consecutive
+violations and resets after a valid tool batch. None of these changes reinterpret
+the fifth row as a submission or evaluator result.
 
 Operational resume uses an immutable envelope, exact contract comparison,
 run-lifetime locking, journal-derived counters and cost, durable tool-decision replay,
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
-acceptance and safety remain separate typed axes. No fifth live row is authorized.
+acceptance and safety remain separate typed axes. No additional live row is
+authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

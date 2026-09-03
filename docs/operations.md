@@ -66,13 +66,18 @@ PatchLoop never starts Docker Desktop or pulls/builds an image. Unknown model
 pricing fails before dispatch. The adapter counts the actual request immediately
 before generation, reserves a conservative output allowance, uses zero SDK
 transport retries, and stops all remaining repetitions when count, transport, or
-billing state is uncertain.
+billing state is uncertain. Generation and input counting use the same
+`tool_choice=required` contract, so the provider request and the runner's non-empty
+tool-batch requirement agree. The application still enforces its smaller grammar:
+up to four reads/searches, or exactly one mutation, check, finish, or stop.
 
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against
 the official [API pricing](https://developers.openai.com/api/docs/pricing) and
 [model page](https://developers.openai.com/api/docs/models/gpt-5.4-mini). Input
 counting follows the official
 [token-counting guide](https://developers.openai.com/api/docs/guides/token-counting).
+Required tool choice follows the official
+[Responses create contract](https://developers.openai.com/api/reference/resources/responses/methods/create).
 
 ## Submission and evaluation
 
@@ -88,9 +93,19 @@ If a valid mutation call fails, its bounded public diff and intent remain in
 `last_failed_mutation` across later reads and resume. The agent may read/search when
 needed for repair, but a successful mutation is required to clear that repair target.
 Tool execution failures are not counted or presented as model protocol violations.
+One consecutive invalid or incomplete model response receives a correction that
+names the current workflow gate and remaining public checks. A valid tool batch
+resets that correction allowance. Provider journals retain only output item counts,
+types, and a shape hash for diagnosis; response text and model reasoning are not
+stored. If no public read, check, or safe scoped mutation can make progress, the
+agent may call `stop_task` with a bounded reason. This produces `AGENT_STOPPED`
+without submission or evaluation.
 
 `finish_task` becomes available only after every visible check passes on the
-current diff. The full submitted patch is stored by content hash. A separate
+current non-empty diff and no non-ignored untracked file remains. The context lists
+every current-diff check as PASS, FAIL, or NOT_RUN and separately names remaining
+IDs; the `run_check` schema accepts only those registered public IDs. The full
+submitted patch is stored by content hash. A separate
 manifest is atomically recorded before evaluator execution and binds the exact
 task bytes, full runtime bytes, model/tool/sandbox identities, visible-check diff,
 submitted patch, and changed files. A separate workspace receives that artifact
@@ -144,4 +159,6 @@ recorded model decision continues with the same tool calls; completed actions us
 `action_id + input_hash` replay, and pending mutations use reconciliation. An
 unmatched provider dispatch is never retried and becomes one
 `PROVIDER_TIMEOUT_OR_UNKNOWN` terminal. Resuming a terminal run is a read-only,
-idempotent return of its existing public result.
+idempotent return of its existing public result. The restored protocol counter is
+the consecutive corrections since the latest completed valid tool batch, not a
+lifetime total.

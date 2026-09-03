@@ -38,7 +38,15 @@ public task ──> dev-head ──> constrained model/tool loop
 `needs_visible_checks`, or `ready_to_submit`. There is no separate planning phase,
 runtime-version switch, memory retrieval path, or candidate/qualification workflow.
 The exact latest tool batch is guaranteed in the next stateless request; older
-current source spans form a small recency-ordered working set.
+current source spans form a small recency-ordered working set. The current diff's
+complete visible-check status and exact remaining check IDs are projected separately
+from the bounded recent output. `ready_to_submit` additionally requires a non-empty
+diff and no non-ignored untracked files.
+
+Every model response must call at least one constrained tool. Besides inspection,
+mutation, checking, and finish, `stop_task` provides an explicit unsuccessful exit
+when the public evidence cannot support safe progress. It records a bounded public
+conclusion and does not create a submission or run the evaluator.
 
 Visible checks are executable public examples, not the private acceptance oracle.
 They should exercise the central behavior already promised by the issue while
@@ -51,8 +59,8 @@ package and create a new task version/content identity.
 ## Main components
 
 - `patchloop/dev/runner.py` composes the mutable loop.
-- `patchloop/dev/tools.py` provides registered read, search, mutation, check, and
-  finish tools.
+- `patchloop/dev/tools.py` provides registered read, search, mutation, check, finish,
+  and unsuccessful-stop tools.
 - `patchloop/dev/state.py` stores append-only, hash-chained run events.
 - `patchloop/dev/cost.py` performs provider cost admission immediately before dispatch.
 - `patchloop/agent/model.py` owns stateless model requests with zero SDK retries.

@@ -10,9 +10,12 @@ from patchloop.errors import ContractError
 
 DEV_SYSTEM_PROMPT = """You are PatchLoop dev-head, a constrained coding agent.
 Use only the supplied tools. There is no separate planning phase or planning tool.
-You may request either 1-4 search_files/read_file calls in one response, or exactly
-one run_check, apply_git_diff, or finish_task call. Never mix those shapes. run_check is
-available immediately. Every mutation must include a concise hypothesis, expected
+Every response must request at least one supplied tool. Request either 1-4
+search_files/read_file calls in one response, or exactly one run_check,
+apply_git_diff, finish_task, or stop_task call. Never mix those shapes. Registered
+run_check tools are available immediately. Use stop_task only when no valid public
+read, check, or safe scoped mutation can make progress; provide a concise conclusion,
+not chain-of-thought. Every mutation must include a concise hypothesis, expected
 behavior, current evidence span IDs, and an exact source anchor. If the public context
 requires a causal alternative, the next mutation must also state which prior hypothesis
 was falsified and a materially different mechanism. The apply_git_diff git_diff value
@@ -96,7 +99,7 @@ class MockDevAdapter:
         ]
         spans = [*latest_spans, *payload.get("source_spans", [])]
         current_diff = payload.get("current_diff", {})
-        recent_checks = payload.get("recent_checks", [])
+        remaining_check_ids = payload.get("remaining_visible_check_ids", [])
         if not spans and not current_diff.get("patch"):
             return DevModelTurn(
                 tool_calls=[
@@ -141,15 +144,14 @@ class MockDevAdapter:
                     )
                 ]
             )
-        current_hash = current_diff.get("patch_hash")
-        current_checks = [row for row in recent_checks if row.get("diff_hash") == current_hash]
-        if not current_checks or not all(row.get("passed") is True for row in current_checks):
+        if remaining_check_ids:
+            check_id = remaining_check_ids[0]
             return DevModelTurn(
                 tool_calls=[
                     RequestedTool(
                         name="run_check",
-                        action_id="mock-visible-check",
-                        arguments={"check_id": "existing-unit-tests"},
+                        action_id=f"mock-visible-check-{check_id}",
+                        arguments={"check_id": check_id},
                     )
                 ]
             )

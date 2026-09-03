@@ -7,6 +7,7 @@ import fnmatch
 import re
 import subprocess
 import threading
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,7 @@ from patchloop.dev.contracts import (
     DevToolResult,
     MutationIntent,
     RequestedTool,
+    StopIntent,
 )
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
@@ -39,7 +41,14 @@ _PATCH_ERROR_LINE = re.compile(r"corrupt patch at (?:<stdin>:|line )(\d+)")
 _PATCH_SOURCE_LINE = re.compile(r"patch failed: ([^:\r\n]+):(\d+)")
 
 
-def dev_tool_schemas(*, finish_enabled: bool) -> list[dict[str, Any]]:
+def dev_tool_schemas(
+    *,
+    finish_enabled: bool,
+    check_ids: Sequence[str] = (),
+) -> list[dict[str, Any]]:
+    check_id_schema: dict[str, Any] = {"type": "string", "minLength": 1}
+    if check_ids:
+        check_id_schema["enum"] = list(check_ids)
     schemas: list[dict[str, Any]] = [
         {
             "type": "function",
@@ -81,7 +90,7 @@ def dev_tool_schemas(*, finish_enabled: bool) -> list[dict[str, Any]]:
             "strict": True,
             "parameters": {
                 "type": "object",
-                "properties": {"check_id": {"type": "string", "minLength": 1}},
+                "properties": {"check_id": check_id_schema},
                 "required": ["check_id"],
                 "additionalProperties": False,
             },
@@ -139,6 +148,37 @@ def dev_tool_schemas(*, finish_enabled: bool) -> list[dict[str, Any]]:
                     "falsified_prior_hypothesis",
                     "alternative_mechanism",
                 ],
+                "additionalProperties": False,
+            },
+        },
+        {
+            "type": "function",
+            "name": "stop_task",
+            "description": (
+                "End the run without submission only when no registered read, check, or "
+                "safe scoped mutation can make progress. Give a concise public conclusion, "
+                "not chain-of-thought."
+            ),
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "reason_code": {
+                        "type": "string",
+                        "enum": [
+                            "insufficient_public_evidence",
+                            "no_safe_scoped_mutation",
+                            "public_task_conflict",
+                        ],
+                    },
+                    "summary": {"type": "string", "minLength": 1, "maxLength": 1_000},
+                    "evidence_span_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "maxItems": 8,
+                    },
+                },
+                "required": ["reason_code", "summary", "evidence_span_ids"],
                 "additionalProperties": False,
             },
         },
@@ -449,6 +489,43 @@ class DevToolGateway:
         rows = self.checks_by_diff.get(self.current_diff_hash, {})
         return expected == {check_id for check_id, row in rows.items() if row.get("passed") is True}
 
+    def visible_check_status(self) -> list[dict[str, Any]]:
+        diff_hash = self.current_diff_hash
+        rows = self.checks_by_diff.get(diff_hash, {})
+        status: list[dict[str, Any]] = []
+        for check in self.public_task.visible_checks:
+            row = rows.get(check.id)
+            if row is None:
+                status.append(
+                    {
+                        "check_id": check.id,
+                        "diff_hash": diff_hash,
+                        "status": "NOT_RUN",
+                        "failure_signature": None,
+                    }
+                )
+                continue
+            status.append(
+                {
+                    "check_id": check.id,
+                    "diff_hash": diff_hash,
+                    "status": "PASS" if row.get("passed") is True else "FAIL",
+                    "failure_signature": row.get("failure_signature"),
+                }
+            )
+        return status
+
+    def remaining_visible_check_ids(self) -> list[str]:
+        return [
+            row["check_id"]
+            for row in self.visible_check_status()
+            if row["status"] != "PASS"
+        ]
+
+    def ready_to_submit(self) -> bool:
+        summary = self.current_diff
+        return bool(summary.patch) and not summary.untracked_files and self.visible_checks_pass()
+
     def execute_batch(self, calls: list[RequestedTool]) -> list[DevToolResult]:
         shape = validate_tool_batch(calls, max_parallel_reads=self.limits.max_parallel_reads)
         if shape == "single_action":
@@ -569,6 +646,8 @@ class DevToolGateway:
             return self._run_check(**arguments)
         if name == "finish_task":
             return self._finish_task(arguments)
+        if name == "stop_task":
+            return self._stop_task(arguments)
         raise ContractError(f"unknown dev-head tool: {name}")
 
     def _tracked_path(self, relative: str) -> tuple[str, Path]:
@@ -942,4 +1021,14 @@ class DevToolGateway:
             "added_lines": summary.added_lines,
             "deleted_lines": summary.deleted_lines,
             "untracked_files": summary.untracked_files,
+        }
+
+    def _stop_task(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        intent = StopIntent.model_validate(arguments)
+        unknown = [span_id for span_id in intent.evidence_span_ids if span_id not in self.spans]
+        if unknown:
+            raise ContractError("stop_task evidence contains an unknown or stale public span")
+        return {
+            **intent.model_dump(mode="json"),
+            "diff_hash": self.current_diff_hash,
         }
