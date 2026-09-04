@@ -748,9 +748,9 @@ batches returned zero new spans, with a longest consecutive sequence of three. I
 four mutation calls: the first failed Git applicability, the second failed the public
 paired-alternative field contract, and the third applied. The first visible check then
 failed. The final targeted repair supplied three evidence IDs: the accepted mutation's
-current post-image and two pre-image IDs from that mutation's historical input. The
-gateway rejected the first absent pre-image ID as unknown before considering the valid
-post-image. No patch was submitted and no evaluator or safety check ran.
+current post-image and two IDs from that mutation's historical input. The gateway
+rejected the first absent ID as unknown before considering the valid post-image. No
+patch was submitted and no evaluator or safety check ran.
 
 ## Post-thirteenth evidence-role and recovery-budget correction
 
@@ -785,6 +785,38 @@ mutation. Task acceptance was PASS, safety was NOT_RUN, `claim_eligible=false`, 
 provider cost was zero. This validates the local contracts only; it is not a fourteenth
 live row.
 
+## Exact thirteenth-row repair replay
+
+A provider-free retrospective copied the immutable thirteenth-row journal and retained
+workspace to `C:\patchloop-test\r13-exact-replay-f81d3f60`. The source journal SHA-256
+remained `4BE568FA61D10B5252D95855511B9A0FFF15BE7A8A82B799AAB905E23CC3EB4F`,
+and its workspace remained at diff
+`sha256:da7adc4db03823f47048083cd6910503c5387eda7f470d2651e6e73e47d75f73`.
+Only the copy was mutated.
+
+The new gateway accepted the exact final arguments, whose canonical hash is
+`sha256:e028b39659724aba8633b76928ea6e50c9e77eda95697d7b92944a0512ce2fff`.
+The call contained the projected current post-image. Validation classified two IDs as
+currently valid and ignored one known historical stale ID. The resulting one-file diff
+was `sha256:9ea4efc3b82e7456ce7c4956e8b291ac6b1ba4b28b522a1aa267637cf765fa40`,
+with no untracked files. This is exact evidence that the former unknown-ID rejection
+was a harness false negative.
+
+The existing Docker image matched the required digest
+`sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c`.
+Both registered public checks then ran with pull disabled and network disabled.
+`parent-traversal-contract` passed. `upstream-fake-os-regression` failed with 8 failed,
+509 passed, and 570 skipped. The failures preserve public upstream expectations for
+broken-link and file parents, empty paths, and trailing separators. `finish_task`
+correctly rejected the diff because not all visible checks passed.
+
+This sharpens the conclusion: separating historical provenance from actionable
+evidence fixes a real admission defect, but the rejected repair itself was not
+submission-ready. It fixed intermediate-directory permissions while the preceding
+broad `makedirs` rewrite still changed unrelated error semantics. No hidden evaluator,
+provider call, image pull/build, or original-state mutation occurred. The result is not
+a reason to weaken the upstream check, add unbounded recovery, or claim task success.
+
 ## Not executed
 
 - no transport retry or follow-up paid run after the thirteenth row
@@ -792,10 +824,9 @@ live row.
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no mutation, submission, or evaluator execution in the seventh through tenth
-  pyfakefs version-2 live rows; the eleventh mutated and passed both visible checks,
-  while the eleventh through thirteenth mutated; the eleventh passed both visible
-  checks, and the twelfth and thirteenth reached one failed visible check. None of those
-  three submitted or invoked the evaluator
+  pyfakefs version-2 live rows. The eleventh through thirteenth mutated; the eleventh
+  passed both visible checks, while the twelfth and thirteenth reached one failed
+  visible check. None of those three live rows submitted or invoked the evaluator
 - no hidden evaluation of the temporary Loguru version-2 public correction
 
 The under-two-minute focused-validation target remains locally supported. The sixth

@@ -268,8 +268,8 @@ three.
 Four mutation calls followed. The first patch did not apply, the second violated the
 paired causal-alternative fields, and the third applied. The first public check then
 failed. The final repair cited the accepted mutation's current post-image together with
-two pre-image IDs copied from its historical input. The old validator treated every ID
-as current and stopped at an `unknown evidence span` before using the valid post-image.
+two IDs copied from its historical input. The old validator treated every ID as current
+and stopped at an `unknown evidence span` before using the valid post-image.
 There was no submission or evaluator execution.
 The current provider-free successor separates those roles. Exact mutation inputs remain
 in append-only `action_started` provenance, while the agent-facing successful-mutation
@@ -285,6 +285,21 @@ external short temp root. Provider-free mock run `run_dev_7fc6bc7e982343e4` reac
 isolated `EVALUATOR_PASS` in four model calls and five tool actions through one
 accepted mutation, with task acceptance PASS, safety NOT_RUN, `claim_eligible=false`,
 and zero provider cost. This is local contract evidence, not another live row.
+A later provider-free retrospective copied the thirteenth run's journal and retained
+workspace to `C:\patchloop-test\r13-exact-replay-f81d3f60`; the original journal and
+diff hashes remained unchanged. The new gateway accepted the exact final mutation
+arguments (`sha256:e028b39659724aba8633b76928ea6e50c9e77eda95697d7b92944a0512ce2fff`),
+classified two input IDs as currently valid and one known historical ID as stale, and
+produced one-file diff
+`sha256:9ea4efc3b82e7456ce7c4956e8b291ac6b1ba4b28b522a1aa267637cf765fa40`
+with no untracked files. This confirms the evidence-role false negative is fixed.
+Against the locally present digest-pinned Docker image, `parent-traversal-contract`
+passed, but `upstream-fake-os-regression` reported 8 failed, 509 passed, and 570
+skipped. The failures cover existing error behavior for broken links, file parents,
+empty paths, and trailing separators. `finish_task` therefore failed closed. The old
+gateway had blocked a semantically relevant repair, but not a submission-ready one;
+this result warrants no further harness relaxation. No hidden evaluator or provider
+call ran, and no fourteenth-row authority follows.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:

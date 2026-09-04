@@ -351,7 +351,7 @@ post-image as anchor evidence only for an overlapping repair in that same file, 
 retaining current-span validation everywhere else. The separately authorized
 thirteenth row, `run_dev_8ce8603c45e646a9`, reached one accepted mutation and one
 failed public check, then rejected the final targeted repair because its evidence list
-mixed the valid current post-image with two stale pre-image IDs retained as if current.
+mixed the valid current post-image with IDs retained from the prior mutation input.
 Its earlier mutation-format failure had also consumed the single shared recovery
 allowance. The row ended at `LIMIT_REACHED` after 40 calls and 76 actions, with no
 submission or evaluator.
@@ -364,6 +364,12 @@ zero-gain inspection produces only a soft commitment signal. Do not run a paid r
 or fourteenth row without separate authorization.
 Ruff and all 92 tests pass under the two-minute provider-free target; mock run
 `run_dev_7fc6bc7e982343e4` reaches isolated `EVALUATOR_PASS` with zero provider cost.
+A provider-free exact replay then admitted the thirteenth row's final repair under the
+new evidence classification. The central public check passed, but the digest-pinned
+Docker upstream check reported 8 failures, 509 passes, and 570 skips; `finish_task`
+failed closed. Treat the original rejection as a fixed harness false negative and the
+replayed patch as non-submittable agent output. Do not weaken checks or add recovery
+solely to make that historical patch pass.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.
