@@ -18,7 +18,7 @@ from patchloop.agent.model import FunctionCallContinuationRef as ProviderFunctio
 from patchloop.agent.model import ModelTurn, ModelTurnError, OpenAIResponsesAdapter
 from patchloop.agent.model import RequestedTool as ProviderRequestedTool
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import ModelConfig
+from patchloop.contracts import ModelConfig, RegisteredCheck
 from patchloop.dev.contracts import (
     DevLimits,
     DevModelTurn,
@@ -1529,6 +1529,84 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
     assert "reference_patch" not in encoded
 
 
+def test_context_keeps_mapped_public_failure_after_intervening_read(
+    gateway_factory,
+) -> None:
+    gateway, journal, _ = gateway_factory()
+    source = "value = 0\nassert value == 1\nlater_behavior = True"
+    check = RegisteredCheck(
+        id="inline-failure-focus",
+        command=["python", "-c", source],
+    )
+    public = gateway.public_task.model_copy(update={"visible_checks": [check]})
+    gateway.public_task = public
+    diff_hash = gateway.current_diff_hash
+    stderr = (
+        "Traceback (most recent call last):\n"
+        '  File "<string>", line 2, in <module>\n'
+        "AssertionError\n"
+    )
+    signature = sha256_json({"stderr": stderr})
+    failure = gateway._public_check_failure(  # noqa: SLF001 - context projection contract
+        check=check,
+        diff_hash=diff_hash,
+        failure_signature=signature,
+        stdout="",
+        stderr=stderr,
+    )
+    gateway._remember_check(  # noqa: SLF001 - reconstruct one public check result
+        {
+            "check_id": check.id,
+            "diff_hash": diff_hash,
+            "passed": False,
+            "failure_signature": signature,
+            "exit_code": 1,
+            "timed_out": False,
+            "stdout": "",
+            "stderr": stderr,
+            "public_check_failure": failure,
+        }
+    )
+    read = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="read-after-public-failure",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": 1,
+                "end_line": 20,
+            },
+            turn_decision=inspection_decision("failure-repair"),
+        )
+    )
+    context_text = runner._build_context(  # noqa: SLF001 - direct context contract test
+        package=SimpleNamespace(public=public),
+        gateway=gateway,
+        journal=journal,
+        correction=None,
+        latest_tool_results=[read],
+        counters=runner._RunCounters(),  # noqa: SLF001
+        elapsed_seconds=0,
+        limits=DevLimits(),
+    )
+    context = json.loads(context_text)
+
+    assert context["latest_tool_results"][0]["tool"] == "read_file"
+    assert context["current_public_failure"]["public_location"] == {
+        "source": "<string>",
+        "source_hash": sha256_bytes(source.encode("utf-8")),
+        "line": 2,
+        "scope": "<module>",
+        "statement": "assert value == 1",
+    }
+    assert context["current_public_failure"]["phase"] == "repair_current_diff"
+    assert context_text.index('"current_public_failure"') < context_text.index(
+        '"mutation_readiness"'
+    )
+    assert "hidden-multiline-csv" not in context_text
+    assert "reference_patch" not in context_text
+
+
 def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeypatch) -> None:
     contexts: list[str] = []
     tool_names: list[list[str]] = []
@@ -1581,6 +1659,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "workflow_gate",
         "available_tool_names",
         "action_horizon",
+        "current_public_failure",
         "remaining_budget",
         "mutation_readiness",
         "mutation_scope_budget",

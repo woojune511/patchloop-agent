@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The sixteen live observations below
+Repository policy alone never initiates paid work. The seventeen live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -399,12 +399,48 @@ that binding. A recovery key also limits targeted-read repair to once per baseli
 failed anchor instead of once per repeated rejection. Tool-surface identity is `v8`;
 old envelopes and journals remain immutable. This addresses the two deterministic
 harness losses seen before the accepted patch while leaving its semantic check failure
-as agent output. No paid retry or seventeenth live row is authorized.
+as agent output. That change itself authorized no paid retry; the later seventeenth row
+was separately authorized.
 Ruff and all 105 provider-free tests pass; the final full suite completed in 80.787
 seconds with external temp root `C:\pt\pl-v8-full-0905-c`. Mock run
 `run_dev_32428b48e6b341d8` reaches isolated `EVALUATOR_PASS` in four model calls and
 five tool actions through one accepted mutation. Task acceptance is PASS, safety is
 NOT_RUN, `claim_eligible=false`, and provider cost is zero.
+
+The separately authorized seventeenth row used the same pyfakefs version-2 task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+and a $1.20 cap at `C:\patchloop-state`. Run `run_dev_4b32848a5621473e` ended at
+durable `LIMIT_REACHED` after 320.531 active seconds and 321 seconds of run age, with
+34 model/input-count calls, 42 tool actions, four accepted mutations, and $0.393104700
+of provider cost. It performed 18 reads, 16 searches, four mutations, and four failed
+public checks. All four mutations used the new gateway-selected current observation;
+there was no evidence-ID, mutation-format, scope, provider, or continuation failure.
+
+The first patch failed the public inline check at line 12 on `/visible/build`. The
+second patch moved the first failure to line 23, the public assertion that intermediate
+`/permissions/transient` has mode `0o755`. The final implementation instead passed the
+requested leaf mode `0o700` to every created path component. The third and fourth
+mutations changed path joining and Windows-separator handling even though line 23
+continued to fail and the later Windows section had not run. Four accepted mutations
+were then exhausted; the pre-dispatch horizon correctly stopped with six model calls
+and 58 tool actions remaining against a five-call path blocked by mutation capacity.
+There was no submission or evaluator.
+
+This row isolates a public failure-localization and causal-pivot boundary. Raw stderr
+was durable, but `<string>:23`, its exact public assertion, recurrence across diffs,
+unobserved later source, and remaining mutation pressure were not joined into one
+prominent state. Tool surface `v9` adds that bounded `current_public_failure` focus for
+safely mapped inline Python checks, retains raw signatures separately, compares semantic
+sites across diffs, survives reads and resume, and grounds causal guidance in the
+current public statement. It makes no task-specific mode inference and adds no semantic
+hard gate. No Docker operation, provider call, eighteenth live row, submission, or
+hidden evaluation is authorized by this provider-free change.
+Ruff and the focused 74-test tool/runner suite pass. All 109 provider-free tests pass
+in approximately 70.5 seconds with external temp root `C:\pt\pl-v9-full-a`. Mock run
+`run_dev_dd14cc24d3fa46ef` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation; task acceptance is PASS, safety is
+NOT_RUN, `claim_eligible=false`, and provider cost is zero. This verifies local wiring,
+not a provider causal pivot or task-quality improvement.
 
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
@@ -574,8 +610,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth through sixteenth rows were separately authorized and are now
-terminal. No seventeenth row is authorized.
+the later thirteenth through seventeenth rows were separately authorized and are now
+terminal. No eighteenth row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -627,7 +663,10 @@ dispatch when minimum completion resources are unavailable. The sixteenth row ex
 these progress, scope-feedback, and pre-dispatch horizon contracts: the horizon stopped
 correctly, while model-selected evidence IDs still wasted four calls before mutation.
 Tool surface `v8` removes that join key and prevents the same failure lineage from
-replenishing targeted reads. No paid retry or seventeenth row is authorized.
+replenishing targeted reads. The separately authorized seventeenth row confirmed that
+binding on all four mutations, then exposed the public failure-localization and causal-
+pivot boundary now addressed by tool surface `v9`. No paid retry or eighteenth row is
+authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

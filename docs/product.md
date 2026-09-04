@@ -46,6 +46,15 @@ semantic-solution judgment. The current diff's
 complete visible-check status and exact remaining check IDs are projected separately
 from the bounded recent output. `ready_to_submit` additionally requires a non-empty
 diff and no non-ignored untracked files.
+A failed public check also creates a bounded `current_public_failure` focus. For a
+registered inline Python command, the gateway maps an unhandled `<string>` traceback
+line back to the exact public command statement without reading another file. It keeps
+the raw-output failure signature for provenance and derives a separate semantic site
+fingerprint for comparisons across diffs. The focus survives intervening inspection
+and restart, distinguishes the same mapped site from a conservatively proven later
+module-level location, reports unobserved later source lines, and remains active through
+the repair until a recheck passes or replaces it. Unmapped or nested traces stay
+explicitly uncertain rather than receiving a guessed execution order.
 A successful mutation revalidates unchanged, uniquely occurring pre-image spans in an
 edited file and adds a bounded replacement post-image span, all bound to the current
 file and diff hashes. This preserves nearby imports or symbols without treating changed
@@ -105,7 +114,11 @@ Mutation uses one exact `old_text` to `new_text` replacement in an existing trac
 allowed file. The gateway validates the current anchor and constructs the Git diff, so
 the model does not spend turns serializing hunk headers or line counts. After a failed
 visible check, one `read_file` turn is restricted to the changed or currently evidenced
-paths before mutation is offered again.
+paths before mutation is offered again. The system prompt directs the next hypothesis
+and any required `causal_revision` to the mapped current public statement. A repeated
+site is strong guidance that the preceding edit did not affect that counterexample;
+it does not let the gateway pretend to validate arbitrary program semantics or create
+a new terminal.
 Scope rejection returns the restored baseline and rejected complete candidate arithmetic
 instead of only a generic message. Scope and replacement-contract failures stay in
 mutation-or-stop mode; stale anchor/evidence failures get one targeted reread of their

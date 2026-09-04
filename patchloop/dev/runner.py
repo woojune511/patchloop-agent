@@ -336,6 +336,8 @@ def _recent_checks(gateway: DevToolGateway) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for diff_hash, checks in gateway.checks_by_diff.items():
         for value in checks.values():
+            failure = value.get("public_check_failure")
+            location = failure.get("public_location") if isinstance(failure, dict) else None
             rows.append(
                 {
                     "check_id": value["check_id"],
@@ -344,6 +346,14 @@ def _recent_checks(gateway: DevToolGateway) -> list[dict[str, Any]]:
                     "failure_signature": value.get("failure_signature"),
                     "exit_code": value.get("exit_code"),
                     "timed_out": value.get("timed_out"),
+                    "failure_site_fingerprint": (
+                        failure.get("failure_site_fingerprint")
+                        if isinstance(failure, dict)
+                        else None
+                    ),
+                    "public_failure_line": (
+                        location.get("line") if isinstance(location, dict) else None
+                    ),
                     "stdout": value.get("stdout", "")[-4_000:],
                     "stderr": value.get("stderr", "")[-4_000:],
                 }
@@ -955,6 +965,9 @@ def _build_context(
                 counters.commitment_diff_hash == summary.patch_hash
             ),
         },
+        "current_public_failure": gateway.current_public_failure(
+            diff_hash=summary.patch_hash
+        ),
         "mutation_readiness": gateway.mutation_readiness(
             current_paths=active_snapshot.mutation_evidence_paths
         ),
@@ -1450,9 +1463,29 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
         }
     if result.tool == "run_check":
         if result.output["passed"] is not True:
-            next_question = (
-                "What does this public failure falsify, and what mechanism should change next?"
+            failure = result.output.get("public_check_failure")
+            comparison = (
+                failure.get("comparison_with_previous_failure")
+                if isinstance(failure, dict)
+                else None
             )
+            if (
+                isinstance(comparison, dict)
+                and comparison.get("relation") == "same_public_failure_site"
+            ):
+                next_question = (
+                    "The mapped public failure site did not move. What prior hypothesis is "
+                    "falsified, and what mechanism directly explains the current statement?"
+                )
+            elif isinstance(failure, dict) and failure.get("mapping_status") != "unmapped":
+                next_question = (
+                    "What mechanism directly explains current_public_failure's mapped public "
+                    "statement, and what prior hypothesis does it falsify?"
+                )
+            else:
+                next_question = (
+                    "What does this public failure falsify, and what mechanism should change next?"
+                )
         elif gateway.ready_to_submit():
             next_question = "Submit the projected diff."
         else:

@@ -36,7 +36,13 @@ soft guidance, not a tool restriction: when active, use current actionable evide
 to mutate or stop unless one materially different public evidence gap remains. If the
 public context requires a causal alternative, the next mutation must also state which
 prior hypothesis was falsified and a materially different mechanism in
-causal_revision. Do not write a Git diff or patch wrapper. All visible checks must pass
+causal_revision. When current_public_failure is present, treat its mapped public
+statement as the current counterexample. A same_public_failure_site comparison means
+the prior edit did not move that public failure; a later public source location means
+only that the earlier failure no longer stopped this execution first. Tie the next
+hypothesis and causal_revision directly to that statement. If later_source_lines_observed
+is false, do not use later checks or platform sections as evidence because this execution
+did not reach them. Do not write a Git diff or patch wrapper. All visible checks must pass
 on the current diff before
 finish_task is available. The complete current diff is projected in context; do not
 request get_diff. Do not emit raw chain-of-thought. Private tests, reference patches,

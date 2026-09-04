@@ -125,7 +125,8 @@ unseen result or stored raw reasoning. Action identity binds each decision, whil
 operational read cache remains keyed only by the executable request and current diff.
 
 The public context presents the workflow gate, budget, action horizon, mutation
-readiness, mutation scope budget, and evidence ledger before the larger task payload.
+readiness, mutation scope budget, evidence ledger, and any active mapped public-check
+failure before the larger task payload.
 Immediately before a new model turn, the scheduler captures one coherent public state
 snapshot containing the complete diff, current evidence paths, and visible-check state.
 Policy derivation and context projection share that snapshot rather than independently
@@ -175,7 +176,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v7`; prior
+These output and scheduler semantics are bound by tool-surface identity `v9`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually
@@ -200,8 +201,21 @@ diff. A failed check therefore requires a mutation or stop rather than a same-di
 rerun. Before mutation becomes available again, the scheduler exposes exactly one
 `read_file` action restricted to the changed and currently evidenced paths. Its
 three-call reserve accounts for that targeted read, the repair, and the failed check
-that must be rerun after all current-diff check results are invalidated. The full
-submitted patch is stored by content hash. A separate
+that must be rerun after all current-diff check results are invalidated.
+
+For a failed registered `python -c` check, `run_check` parses only the already-public
+command and bounded public output. A valid `<string>` frame is mapped to its exact
+statement and hashed as a semantic failure site; the original stdout/stderr signature
+remains unchanged for provenance. A single module-level unhandled frame can establish
+that later source lines were not observed. Nested or unmapped traces do not receive a
+directional claim. Across distinct diffs, the context labels the same site, a safely
+ordered later or earlier location, or an incomparable change. The resulting
+`current_public_failure` survives a targeted read and journal hydration, includes the
+remaining accepted-mutation count, and clears when the relevant recheck passes. No
+private task bytes, hidden path, evaluator output, local-variable capture, or inferred
+reasoning enters this card.
+
+The full submitted patch is stored by content hash. A separate
 manifest is atomically recorded before evaluator execution and binds the exact
 task bytes, full runtime bytes, model/tool/sandbox identities, visible-check diff,
 submitted patch, and changed files. A separate workspace receives that artifact

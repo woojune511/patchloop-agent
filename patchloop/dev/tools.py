@@ -16,7 +16,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from patchloop.contracts import PublicTask
+from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.dev.contracts import (
     DEV_READ_TOOLS,
     DEV_SINGLE_ACTION_TOOLS,
@@ -39,6 +39,11 @@ ALL_DEV_TOOLS = READ_TOOLS | SINGLE_ACTION_TOOLS
 _MAX_MUTATION_HUNK_CHARS = 24_000
 _PATCH_ERROR_LINE = re.compile(r"corrupt patch at (?:<stdin>:|line )(\d+)")
 _PATCH_SOURCE_LINE = re.compile(r"patch failed: ([^:\r\n]+):(\d+)")
+_INLINE_PYTHON = re.compile(r"python(?:\d+(?:\.\d+)*)?(?:\.exe)?", re.IGNORECASE)
+_INLINE_PYTHON_FRAME = re.compile(
+    r'File "<string>", line (?P<line>\d+)(?:, in (?P<scope>[^\r\n]+))?'
+)
+_TRACEBACK_EXCEPTION = re.compile(r"^(?P<type>[A-Za-z_][A-Za-z0-9_.]*)(?::.*)?$")
 _MUTATION_TOOLS = frozenset({"replace_text", "apply_git_diff"})
 
 
@@ -375,6 +380,8 @@ class DevToolGateway:
         self._ledger_seq = 0
         self.checks_by_diff: dict[str, dict[str, dict[str, Any]]] = {}
         self.failure_diffs: dict[str, set[str]] = {}
+        self._failed_check_history: list[dict[str, Any]] = []
+        self._active_failed_check: dict[str, Any] | None = None
         self.requires_alternative = False
         self.accepted_mutations = 0
         self.last_successful_mutation: dict[str, Any] | None = None
@@ -428,6 +435,199 @@ class DevToolGateway:
         if source_line is not None:
             return {"path": source_line.group(1), "line": int(source_line.group(2))}
         return None
+
+    @staticmethod
+    def _inline_python_source(check: RegisteredCheck) -> str | None:
+        command = check.command
+        try:
+            marker = command.index("-c")
+        except ValueError:
+            return None
+        if marker == 0 or marker + 1 >= len(command):
+            return None
+        executable = command[marker - 1].replace("\\", "/").rsplit("/", 1)[-1]
+        if _INLINE_PYTHON.fullmatch(executable) is None:
+            return None
+        return command[marker + 1]
+
+    @staticmethod
+    def _exception_type(stdout: str, stderr: str) -> str | None:
+        for stream in (stderr, stdout):
+            for raw_line in reversed(stream.splitlines()):
+                if raw_line != raw_line.strip():
+                    continue
+                match = _TRACEBACK_EXCEPTION.fullmatch(raw_line)
+                if match is not None:
+                    return match.group("type")[:200]
+        return None
+
+    def _previous_failed_check(self, check_id: str) -> dict[str, Any] | None:
+        for output in reversed(self._failed_check_history):
+            if output.get("check_id") == check_id:
+                return output
+        return None
+
+    @staticmethod
+    def _failure_identity(output: dict[str, Any]) -> str | None:
+        focus = output.get("public_check_failure")
+        if isinstance(focus, dict):
+            site = focus.get("failure_site_fingerprint")
+            if isinstance(site, str):
+                return f"site:{site}"
+        signature = output.get("failure_signature")
+        return f"raw:{signature}" if isinstance(signature, str) else None
+
+    @staticmethod
+    def _failure_comparison(
+        previous: dict[str, Any] | None,
+        current: dict[str, Any],
+    ) -> dict[str, Any]:
+        if previous is None:
+            return {
+                "relation": "first_observation",
+                "previous_diff_hash": None,
+                "previous_public_line": None,
+                "inference": "No earlier failed execution of this public check is recorded.",
+            }
+        prior_focus = previous.get("public_check_failure")
+        if not isinstance(prior_focus, dict):
+            return {
+                "relation": "not_comparable",
+                "previous_diff_hash": previous.get("diff_hash"),
+                "previous_public_line": None,
+                "inference": "The earlier failure has no mapped public failure site.",
+            }
+        prior_site = prior_focus.get("failure_site_fingerprint")
+        current_site = current.get("failure_site_fingerprint")
+        prior_location = prior_focus.get("public_location")
+        current_location = current.get("public_location")
+        prior_boundary = prior_focus.get("execution_boundary")
+        current_boundary = current.get("execution_boundary")
+        prior_line = (
+            prior_location.get("line") if isinstance(prior_location, dict) else None
+        )
+        current_line = (
+            current_location.get("line") if isinstance(current_location, dict) else None
+        )
+        if isinstance(prior_site, str) and prior_site == current_site:
+            relation = "same_public_failure_site"
+            inference = "The changed diff did not move the mapped public failure site."
+        elif (
+            isinstance(prior_location, dict)
+            and isinstance(current_location, dict)
+            and prior_location.get("source_hash") == current_location.get("source_hash")
+            and isinstance(prior_line, int)
+            and isinstance(current_line, int)
+            and isinstance(prior_boundary, dict)
+            and prior_boundary.get("later_source_lines_observed") is False
+            and isinstance(current_boundary, dict)
+            and current_boundary.get("later_source_lines_observed") is False
+        ):
+            if current_line > prior_line:
+                relation = "public_failure_location_moved_later"
+                inference = (
+                    "The earlier mapped location no longer stopped this execution before "
+                    "the current public line."
+                )
+            elif current_line < prior_line:
+                relation = "public_failure_location_moved_earlier"
+                inference = "This execution stopped at an earlier mapped public line."
+            else:
+                relation = "different_public_failure_site"
+                inference = (
+                    "The mapped public statement changed at the same source line; causal "
+                    "direction is not established."
+                )
+        else:
+            relation = "different_or_unmapped_public_failure"
+            inference = "The failures do not have comparable mapped public locations."
+        return {
+            "relation": relation,
+            "previous_diff_hash": previous.get("diff_hash"),
+            "previous_public_line": prior_line,
+            "inference": inference,
+        }
+
+    def _public_check_failure(
+        self,
+        *,
+        check: RegisteredCheck,
+        diff_hash: str,
+        failure_signature: str,
+        stdout: str,
+        stderr: str,
+    ) -> dict[str, Any]:
+        exception_type = self._exception_type(stdout, stderr)
+        focus: dict[str, Any] = {
+            "check_id": check.id,
+            "diff_hash": diff_hash,
+            "failure_signature": failure_signature,
+            "exception_type": exception_type,
+            "mapping_status": "unmapped",
+            "failure_site_fingerprint": None,
+            "public_location": None,
+            "execution_boundary": {
+                "later_source_lines_observed": None,
+                "reason": "No safe public inline-source execution boundary was mapped.",
+            },
+        }
+        source = self._inline_python_source(check)
+        diagnostic = stderr if "<string>" in stderr else stdout
+        frames = list(_INLINE_PYTHON_FRAME.finditer(diagnostic))
+        if source is not None and frames:
+            lines = source.splitlines()
+            frame = frames[-1]
+            line = int(frame.group("line"))
+            scope = (frame.group("scope") or "").strip() or None
+            if 1 <= line <= len(lines):
+                source_hash = sha256_bytes(source.encode("utf-8"))
+                statement = lines[line - 1].strip()[:1_000]
+                site = sha256_json(
+                    {
+                        "check_id": check.id,
+                        "source_hash": source_hash,
+                        "line": line,
+                        "statement": statement,
+                        "exception_type": exception_type,
+                    }
+                )
+                module_boundary = len(frames) == 1 and scope == "<module>"
+                focus.update(
+                    {
+                        "mapping_status": "mapped_public_inline_python",
+                        "failure_site_fingerprint": site,
+                        "public_location": {
+                            "source": "<string>",
+                            "source_hash": source_hash,
+                            "line": line,
+                            "scope": scope,
+                            "statement": statement,
+                        },
+                        "execution_boundary": {
+                            "later_source_lines_observed": False if module_boundary else None,
+                            "reason": (
+                                "An uncaught exception stopped this single-frame module-level "
+                                "public script at the mapped line."
+                                if module_boundary
+                                else (
+                                    "Nested inline frames do not prove which later source "
+                                    "lines ran."
+                                )
+                            ),
+                        },
+                    }
+                )
+        previous = self._previous_failed_check(check.id)
+        focus["comparison_with_previous_failure"] = self._failure_comparison(previous, focus)
+        identity = (
+            f"site:{focus['failure_site_fingerprint']}"
+            if isinstance(focus.get("failure_site_fingerprint"), str)
+            else f"raw:{failure_signature}"
+        )
+        focus["recurrence_across_distinct_diffs"] = len(
+            self.failure_diffs.get(identity, set()) | {diff_hash}
+        )
+        return focus
 
     @classmethod
     def _failed_mutation_context(
@@ -1122,6 +1322,43 @@ class DevToolGateway:
                 }
             )
         return status
+
+    def current_public_failure(self, *, diff_hash: str | None = None) -> dict[str, Any] | None:
+        """Return the active public counterexample through inspection and repair turns."""
+
+        if self._active_failed_check is None:
+            return None
+        stored = self._active_failed_check.get("public_check_failure")
+        if not isinstance(stored, dict):
+            return None
+        projected = copy.deepcopy(stored)
+        current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
+        failure_hash = projected.get("diff_hash")
+        projected["current_diff_hash"] = current_hash
+        projected["phase"] = (
+            "repair_current_diff" if failure_hash == current_hash else "awaiting_recheck"
+        )
+        comparison = projected.get("comparison_with_previous_failure")
+        same_site = (
+            isinstance(comparison, dict)
+            and comparison.get("relation") == "same_public_failure_site"
+        )
+        remaining = max(0, self.limits.max_accepted_mutations - self.accepted_mutations)
+        boundary = projected.get("execution_boundary")
+        later_observed = (
+            boundary.get("later_source_lines_observed") if isinstance(boundary, dict) else None
+        )
+        projected["mutation_pressure"] = {
+            "same_public_failure_site": same_site,
+            "accepted_mutations_remaining": remaining,
+            "guidance": (
+                "Address the mapped current public statement or stop; later source behavior "
+                "was not observed in this execution."
+                if later_observed is False
+                else "Address the current public failure or stop before unrelated changes."
+            ),
+        }
+        return projected
 
     def remaining_visible_check_ids(self, *, diff_hash: str | None = None) -> list[str]:
         return [
@@ -1854,7 +2091,7 @@ class DevToolGateway:
                 "stderr": outcome.stderr[-8_000:],
             }
         )
-        return {
+        output = {
             "check_id": check_id,
             "diff_hash": diff_hash,
             "passed": passed,
@@ -1867,14 +2104,34 @@ class DevToolGateway:
             "execution_policy": outcome.execution_policy,
             "execution_policy_hash": execution_policy_hash,
         }
+        if not passed:
+            output["public_check_failure"] = self._public_check_failure(
+                check=check,
+                diff_hash=diff_hash,
+                failure_signature=signature,
+                stdout=outcome.stdout[-12_000:],
+                stderr=outcome.stderr[-12_000:],
+            )
+        return output
 
     def _remember_check(self, output: dict[str, Any]) -> None:
         diff_hash = str(output["diff_hash"])
         check_id = str(output["check_id"])
         self.checks_by_diff.setdefault(diff_hash, {})[check_id] = output
-        signature = output.get("failure_signature")
-        if isinstance(signature, str):
-            diffs = self.failure_diffs.setdefault(signature, set())
+        if output.get("passed") is True:
+            if (
+                self._active_failed_check is not None
+                and self._active_failed_check.get("check_id") == check_id
+            ):
+                self._active_failed_check = None
+                self.requires_alternative = False
+            return
+        stored = copy.deepcopy(output)
+        self._failed_check_history.append(stored)
+        self._active_failed_check = stored
+        identity = self._failure_identity(output)
+        if identity is not None:
+            diffs = self.failure_diffs.setdefault(identity, set())
             diffs.add(diff_hash)
             if len(diffs) >= 2:
                 self.requires_alternative = True

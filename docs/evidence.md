@@ -1020,16 +1020,65 @@ used external temp root `C:\pt\pl-v8-full-0905-c` and completed in 80.787 second
 five tool actions through one accepted mutation; task acceptance was PASS, safety was
 NOT_RUN, `claim_eligible=false`, and provider cost was zero.
 
+## Seventeenth live observation and public failure focus
+
+One separately authorized seventeenth row used the version-2 pyfakefs task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+a $1.20 invocation cap, and external state root `C:\patchloop-state`. Immutable run
+`run_dev_4b32848a5621473e` ended at `LIMIT_REACHED` after 320.531 active seconds,
+321 seconds of run age, 34 model and input-count calls, 42 tool actions, four accepted
+mutations, and $0.393104700. Its actions were 18 reads, 16 searches, four mutations,
+and four public checks. No submission or evaluator execution occurred.
+
+All four mutations reported `evidence_binding=gateway_current_observation`; none failed
+the mutation wire, evidence, scope, provider, or continuation contract. The first diff
+failed `parent-traversal-contract` at public inline line 12, where `/visible/build` was
+still missing. The second diff advanced the first failure to inline line 23:
+the public assertion that `/permissions/transient` has mode `0o755`. The next two diffs
+failed at the same line and exact raw signature. Their hypotheses nevertheless moved to
+path joining and Windows separator handling. The Windows section follows the failing
+assertion and was not executed in those runs.
+
+Read-only inspection of the final public diff identifies the direct semantic defect:
+the prefix loop passed the requested final-directory `mode=0o700` to every component.
+Real `makedirs` semantics use the default creation mode, subject to umask, for
+intermediate components and the requested mode only for the final leaf. Thus the
+intermediate `transient` directory was `0o700`, not the publicly required `0o755`.
+After the fourth accepted mutation, completion was blocked by the mutation limit even
+though six model calls and 58 tool actions remained; the five-call minimum path could
+not create another accepted repair. The pre-dispatch horizon therefore stopped
+correctly.
+
+The active provider-free successor does not encode that task-specific diagnosis. It
+maps a safe single-frame `<string>` traceback to its exact registered public command
+statement, gives that site a semantic fingerprint separate from the raw-output
+signature, and projects a bounded `current_public_failure`. The focus survives a read
+and restart, distinguishes a repeated site from a conservatively proven later source
+location, states when later source lines were unobserved, and reports remaining
+mutation pressure. Nested or unmapped traces remain uncertain. System guidance ties
+the next hypothesis and existing `causal_revision` to this public counterexample, but
+no semantic hard gate or new terminal is added. A provider-free regression reproduces
+the row's public line 12 to 23 to 23 sequence and projects the intermediate-mode
+assertion without hidden task material.
+
+Ruff and the focused 74-test tool/runner suite pass. All 109 provider-free tests pass
+in approximately 70.5 seconds with external temp root `C:\pt\pl-v9-full-a`. Mock run
+`run_dev_dd14cc24d3fa46ef` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation. Task acceptance is PASS, safety is
+NOT_RUN, `claim_eligible=false`, and provider cost is zero. This is local harness
+evidence only; it does not establish that a provider will use the mapped statement to
+select the correct repair.
+
 ## Not executed
 
-- no transport retry or follow-up paid run after the sixteenth row
+- no transport retry or follow-up paid run after the seventeenth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no mutation, submission, or evaluator execution in the seventh through tenth
-  pyfakefs version-2 live rows. The eleventh through sixteenth mutated; the eleventh
-  passed both visible checks, while the twelfth through sixteenth each reached a failed
-  visible check. None of those six live rows submitted or invoked the evaluator
+  pyfakefs version-2 live rows. The eleventh through seventeenth mutated; the eleventh
+  passed both visible checks, while the twelfth through seventeenth each reached a failed
+  visible check. None of those seven live rows submitted or invoked the evaluator
 - no hidden evaluation of the temporary Loguru version-2 public correction
 - no hidden evaluation of the fourteenth-row final patch or its provider-free
   one-identifier repair

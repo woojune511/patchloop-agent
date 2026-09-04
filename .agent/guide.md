@@ -487,12 +487,41 @@ the most recent current covering observation itself, keeps the selected ID only 
 journal provenance, and applies one targeted-read allowance per failed-anchor lineage.
 This removes the mechanical join-key failure without weakening current-file, range,
 scope, rollback, or submission checks. No Docker operation, provider call, or
-seventeenth live row is authorized by this change.
+seventeenth live row was authorized by that change; the later row required separate
+authority.
 Ruff and all 105 provider-free tests pass; the final full suite completed in 80.787
 seconds with external temp root `C:\pt\pl-v8-full-0905-c`. Mock run
 `run_dev_32428b48e6b341d8` reaches isolated `EVALUATOR_PASS` in four model calls and
 five tool actions through one accepted mutation, with task acceptance PASS, safety
 NOT_RUN, `claim_eligible=false`, and zero provider cost.
+
+The separately authorized seventeenth row, `run_dev_4b32848a5621473e`, confirmed the
+v8 evidence binding on all four accepted mutations, then ended at `LIMIT_REACHED`
+after 34 model calls, 42 tool actions, and $0.393104700. The first public inline failure
+was line 12. The second moved to line 23, the public intermediate-directory `0o755`
+assertion, and the last two remained there. The final code used the requested leaf
+`mode=0o700` for all path components, but the later mutations instead targeted path
+joining and Windows separators; that later Windows block had not executed. Mutation
+capacity, not model/tool call capacity, then blocked completion. There was no
+submission or evaluator.
+
+Tool surface `v9` keeps raw check-output signatures for provenance and adds a separate
+semantic site fingerprint for safely mapped registered `python -c` failures. Its
+bounded `current_public_failure` joins the exact public statement, conservative
+cross-diff location comparison, unobserved-later-source status, and remaining mutation
+pressure. It survives intervening reads and restart until a relevant pass clears it.
+Nested and unmapped traces remain uncertain, and no local variables, hidden paths,
+private bytes, reasoning, task-specific semantic rule, new terminal, or semantic hard
+gate are added. Ground the existing mutation hypothesis and `causal_revision` in this
+card. Provider-free regression must preserve the row-17 public `12 -> 23 -> 23`
+sequence. No Docker operation, provider call, or eighteenth row is authorized by this
+change.
+Ruff and the focused 74-test tool/runner suite pass. All 109 provider-free tests pass
+in approximately 70.5 seconds using external temp root `C:\pt\pl-v9-full-a`. Mock run
+`run_dev_dd14cc24d3fa46ef` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation, with task acceptance PASS, safety
+NOT_RUN, `claim_eligible=false`, and zero provider cost. This is local wiring evidence,
+not live evidence that the model makes the intended causal pivot.
 
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality

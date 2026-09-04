@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import subprocess
 
+from patchloop.contracts import RegisteredCheck
 from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MOCK_MUTATIONS
 from patchloop.dev.tools import DevToolGateway, dev_tool_schemas
 from patchloop.repository import DiffSummary, WorkspaceManager
+from patchloop.runtime import repository_root
 from patchloop.sandbox.runner import SandboxResult
+from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes, sha256_json
 
 
@@ -28,6 +31,30 @@ class CountingFailSandbox:
             timed_out=False,
             truncated=False,
             original_output_bytes=19,
+        )
+
+
+class InlineFailureSandbox:
+    official = False
+
+    def __init__(self, line: int) -> None:
+        self.line = line
+
+    def run_check(self, workspace, check):
+        del workspace, check
+        return SandboxResult(
+            command=["python", "-c", "public-check"],
+            exit_code=1,
+            stdout="",
+            stderr=(
+                "Traceback (most recent call last):\n"
+                f'  File "<string>", line {self.line}, in <module>\n'
+                "AssertionError\n"
+            ),
+            duration_ms=1,
+            timed_out=False,
+            truncated=False,
+            original_output_bytes=96,
         )
 
 
@@ -144,6 +171,9 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
     assert "may describe that call's distinct public question" in DEV_SYSTEM_PROMPT
     assert "Do not select or serialize evidence span IDs" in DEV_SYSTEM_PROMPT
     assert "most recently observed current" in DEV_SYSTEM_PROMPT
+    assert "current_public_failure" in DEV_SYSTEM_PROMPT
+    assert "same_public_failure_site" in DEV_SYSTEM_PROMPT
+    assert "later_source_lines_observed" in DEV_SYSTEM_PROMPT
     gate_schemas = dev_tool_schemas(
         finish_enabled=False,
         check_ids=(),
@@ -1102,6 +1132,192 @@ def test_repeated_signature_across_two_diffs_requires_alternative(gateway_factor
     )
     assert accepted.status == "succeeded"
     assert gateway.requires_alternative is False
+
+
+def test_inline_public_failure_is_mapped_and_survives_read_and_restart(
+    gateway_factory,
+) -> None:
+    gateway, journal, workspace = gateway_factory(sandbox=InlineFailureSandbox(2))
+    source = "value = 0\nassert value == 1\nnot_reached = True"
+    check = RegisteredCheck(
+        id="inline-contract",
+        command=["/usr/local/bin/python", "-c", source],
+    )
+    public = gateway.public_task.model_copy(update={"visible_checks": [check]})
+    gateway.public_task = public
+
+    failed = gateway.execute(
+        RequestedTool(
+            name="run_check",
+            action_id="inline-failure",
+            arguments={"check_id": check.id},
+        )
+    )
+    focus = failed.output["public_check_failure"]
+    assert focus["mapping_status"] == "mapped_public_inline_python"
+    assert focus["public_location"]["line"] == 2
+    assert focus["public_location"]["statement"] == "assert value == 1"
+    assert focus["execution_boundary"]["later_source_lines_observed"] is False
+    assert focus["comparison_with_previous_failure"]["relation"] == "first_observation"
+    assert focus["recurrence_across_distinct_diffs"] == 1
+
+    read = gateway.execute(read_calls()[1])
+    assert read.status == "succeeded"
+    projected = gateway.current_public_failure()
+    assert projected is not None
+    assert projected["phase"] == "repair_current_diff"
+    assert projected["public_location"]["statement"] == "assert value == 1"
+    assert projected["mutation_pressure"] == {
+        "same_public_failure_site": False,
+        "accepted_mutations_remaining": 4,
+        "guidance": (
+            "Address the mapped current public statement or stop; later source behavior "
+            "was not observed in this execution."
+        ),
+    }
+
+    restarted = DevToolGateway(
+        workspace=workspace,
+        public_task=public,
+        sandbox=InlineFailureSandbox(2),
+        journal=journal,
+        limits=gateway.limits,
+    )
+    assert restarted.current_public_failure() == projected
+    restarted._remember_check(  # noqa: SLF001 - successful recheck clears active focus
+        {
+            "check_id": check.id,
+            "diff_hash": restarted.current_diff_hash,
+            "passed": True,
+            "failure_signature": None,
+        }
+    )
+    assert restarted.current_public_failure() is None
+
+
+def test_public_failure_progress_and_recurrence_use_mapped_site(gateway_factory) -> None:
+    gateway, _, _ = gateway_factory()
+    source = (
+        "first = 0\n"
+        "assert first == 1\n"
+        "second = 0\n"
+        "assert second == 1\n"
+        "windows_behavior_not_reached = True"
+    )
+    check = RegisteredCheck(id="inline-progress", command=["python", "-c", source])
+
+    def remember(diff_hash: str, line: int) -> dict:
+        stderr = (
+            "Traceback (most recent call last):\n"
+            f'  File "<string>", line {line}, in <module>\n'
+            "AssertionError\n"
+        )
+        signature = sha256_json({"diff_hash": diff_hash, "stderr": stderr})
+        focus = gateway._public_check_failure(  # noqa: SLF001 - focused mapping contract
+            check=check,
+            diff_hash=diff_hash,
+            failure_signature=signature,
+            stdout="",
+            stderr=stderr,
+        )
+        gateway._remember_check(  # noqa: SLF001 - construct durable check history
+            {
+                "check_id": check.id,
+                "diff_hash": diff_hash,
+                "passed": False,
+                "failure_signature": signature,
+                "public_check_failure": focus,
+            }
+        )
+        return focus
+
+    first = remember("sha256:diff-one", 2)
+    later = remember("sha256:diff-two", 4)
+    repeated = remember("sha256:diff-three", 4)
+
+    assert first["comparison_with_previous_failure"]["relation"] == "first_observation"
+    assert (
+        later["comparison_with_previous_failure"]["relation"]
+        == "public_failure_location_moved_later"
+    )
+    assert later["comparison_with_previous_failure"]["previous_public_line"] == 2
+    assert later["recurrence_across_distinct_diffs"] == 1
+    assert (
+        repeated["comparison_with_previous_failure"]["relation"]
+        == "same_public_failure_site"
+    )
+    assert repeated["recurrence_across_distinct_diffs"] == 2
+    assert gateway.requires_alternative is True
+    projected = gateway.current_public_failure(diff_hash="sha256:diff-three")
+    assert projected is not None
+    assert projected["mutation_pressure"]["same_public_failure_site"] is True
+
+
+def test_row_seventeen_public_failure_pattern_localizes_causal_pivot(
+    gateway_factory,
+) -> None:
+    gateway, _, _ = gateway_factory()
+    package = load_task_package(
+        repository_root()
+        / "tasks"
+        / "dev-train"
+        / "pyfakefs-makedirs-parent-traversal-v2"
+    )
+    check = next(
+        item for item in package.public.visible_checks if item.id == "parent-traversal-contract"
+    )
+    gateway.public_task = package.public
+
+    def remember(diff_hash: str, line: int) -> dict:
+        stderr = (
+            "Traceback (most recent call last):\n"
+            f'  File "<string>", line {line}, in <module>\n'
+            "AssertionError\n"
+        )
+        signature = sha256_json({"diff_hash": diff_hash, "stderr": stderr})
+        focus = gateway._public_check_failure(  # noqa: SLF001 - live-pattern regression
+            check=check,
+            diff_hash=diff_hash,
+            failure_signature=signature,
+            stdout="",
+            stderr=stderr,
+        )
+        gateway._remember_check(  # noqa: SLF001 - reconstruct public check sequence
+            {
+                "check_id": check.id,
+                "diff_hash": diff_hash,
+                "passed": False,
+                "failure_signature": signature,
+                "public_check_failure": focus,
+            }
+        )
+        return focus
+
+    traversal_failure = remember("sha256:row17-diff-one", 12)
+    mode_failure = remember("sha256:row17-diff-two", 23)
+    repeated_mode_failure = remember("sha256:row17-diff-three", 23)
+
+    assert traversal_failure["public_location"]["statement"] == (
+        "assert fake_os.path.isdir(path), path"
+    )
+    assert mode_failure["public_location"]["statement"] == (
+        'assert stat.S_IMODE(fake_os.stat("/permissions/transient").st_mode) == 0o755'
+    )
+    assert (
+        mode_failure["comparison_with_previous_failure"]["relation"]
+        == "public_failure_location_moved_later"
+    )
+    assert (
+        repeated_mode_failure["comparison_with_previous_failure"]["relation"]
+        == "same_public_failure_site"
+    )
+    assert repeated_mode_failure["recurrence_across_distinct_diffs"] == 2
+    assert repeated_mode_failure["execution_boundary"]["later_source_lines_observed"] is False
+    projected = gateway.current_public_failure(diff_hash="sha256:row17-diff-three")
+    assert projected is not None
+    assert projected["mutation_pressure"]["guidance"].startswith(
+        "Address the mapped current public statement"
+    )
 
 
 def test_action_replay_and_crash_reconciliation_do_not_duplicate_mutation(
