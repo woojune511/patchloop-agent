@@ -38,15 +38,18 @@ public task ──> dev-head ──> constrained model/tool loop
 `needs_visible_checks`, or `ready_to_submit`. There is no separate planning phase,
 runtime-version switch, memory retrieval path, or candidate/qualification workflow.
 The exact latest tool batch is guaranteed in the next stateless request; older
-current source spans form a small recency-ordered working set. The current diff's
+current source spans form a small recency-ordered working set. Before the larger task
+text, the prompt presents the current gate, remaining horizon, mutation readiness, and
+a bounded ledger of covered ranges and canonical searches. The current diff's
 complete visible-check status and exact remaining check IDs are projected separately
 from the bounded recent output. `ready_to_submit` additionally requires a non-empty
 diff and no non-ignored untracked files.
-A successful mutation replaces stale pre-image spans for each edited file with a
-bounded post-image span bound to the current file and diff hashes. This lets a failed
-public check lead directly to an overlapping same-file repair without reopening
-inspection, while edits outside that post-image still require current read/search
-evidence. The exact pre-image IDs used for the accepted mutation remain historical
+A successful mutation revalidates unchanged, uniquely occurring pre-image spans in an
+edited file and adds a bounded replacement post-image span, all bound to the current
+file and diff hashes. This preserves nearby imports or symbols without treating changed
+text as current evidence. It lets a failed public check lead directly to an overlapping
+same-file repair, while edits outside current spans still require read/search evidence.
+The exact pre-image IDs used for the accepted mutation remain historical
 provenance in the append-only action record, but they are not projected as current
 repair evidence. `last_successful_mutation.actionable_evidence_span_ids` contains only
 the validated current post-image ID.
@@ -77,15 +80,24 @@ earlier reads. When only one optional inspection turn remains, the context warns
 `read_file` and `search_files` will close next. At zero slack they close so mutation,
 remaining visible checks, submission, or an explicit stop retain the required calls.
 The horizon holds two independent bounded allowances: two calls for one rejected-
-mutation recovery and two calls for one failed-visible-check recovery. Consuming one
+mutation recovery and at least three calls for one failed-visible-check recovery. The
+latter preserves one targeted read before replacement and recheck, plus reruns of checks
+that passed earlier on the invalidated diff. Consuming one allowance
 does not erase the other. Best-path and protected-path feasibility both reflect actual
 remaining model and tool budgets, not merely the presence of another mutation slot.
-After two consecutive successful inspection batches produce no new public span, the
-context adds a soft `commitment_signal` recommending mutation or explicit stop. It does
-not remove read/search; a materially different evidence gap may still justify another
-inspection while completion slack remains.
+After two consecutive successful inspection batches add no non-overlapping coverage in
+an editable task path, the context adds a soft `commitment_signal` recommending
+mutation or explicit stop. A shifted or contained range can have a new span hash without
+being new evidence. The signal does not remove read/search; a materially different
+evidence gap may still justify another inspection while completion slack remains.
 Every such change is journaled and projected once; corrections name only tools that are
 actually present in that turn's action space.
+
+Mutation uses one exact `old_text` to `new_text` replacement in an existing tracked,
+allowed file. The gateway validates the current anchor and constructs the Git diff, so
+the model does not spend turns serializing hunk headers or line counts. After a failed
+visible check, one `read_file` turn is restricted to the changed or currently evidenced
+paths before mutation is offered again.
 
 Visible checks are executable public examples, not the private acceptance oracle.
 They should exercise the central behavior already promised by the issue while

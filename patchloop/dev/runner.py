@@ -79,6 +79,8 @@ class _RunCounters:
     failed_mutation_pending: bool = False
     mutation_recovery_used: bool = False
     check_recovery_used: bool = False
+    failed_check_pending: bool = False
+    failed_check_repair_read_used: bool = False
     consecutive_no_evidence_gain_turns: int = 0
 
 
@@ -107,6 +109,8 @@ class _ToolPolicy:
     closure_reason: str | None
     tools_closing_after_this_turn: tuple[str, ...]
     required_inspection_for_completion: bool
+    targeted_check_repair_inspection: bool
+    targeted_read_paths: tuple[str, ...]
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -146,13 +150,9 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
             "max_output_tokens": DEFAULT_OUTPUT_CEILING,
-            "reasoning_continuation": (
-                "encrypted-v1" if request.provider == "openai" else "none"
-            ),
+            "reasoning_continuation": ("encrypted-v1" if request.provider == "openai" else "none"),
             "response_include": (
-                ["reasoning.encrypted_content"]
-                if request.provider == "openai"
-                else []
+                ["reasoning.encrypted_content"] if request.provider == "openai" else []
             ),
             "pricing_source": PRICING_SOURCE if pricing else None,
             "pricing_verified_on": PRICING_VERIFIED_ON if pricing else None,
@@ -275,9 +275,7 @@ def _manifest(
             provider=request.provider,
             model_id=request.model,
             reasoning_effort=request.reasoning_effort,
-            reasoning_continuation=(
-                "encrypted-v1" if request.provider == "openai" else "none"
-            ),
+            reasoning_continuation=("encrypted-v1" if request.provider == "openai" else "none"),
             transport_max_retries=0 if request.provider == "openai" else None,
             max_output_tokens=DEFAULT_OUTPUT_CEILING,
             input_price_per_million_usd=(float(pricing.input_per_million_usd) if pricing else None),
@@ -317,9 +315,7 @@ def _cards(
                 "result": correction["code"],
                 "next_question": correction["message"],
                 "workflow_gate": correction["workflow_gate"],
-                "remaining_visible_check_ids": correction[
-                    "remaining_visible_check_ids"
-                ],
+                "remaining_visible_check_ids": correction["remaining_visible_check_ids"],
             }
         )
     return cards[-3:]
@@ -358,13 +354,19 @@ def _minimum_completion_calls(
     workflow_gate: str,
     *,
     has_current_mutation_evidence: bool,
+    targeted_check_repair_inspection: bool = False,
 ) -> int:
     mutation_calls = 1 + (0 if has_current_mutation_evidence else 1)
     if workflow_gate == "needs_mutation":
         return mutation_calls + len(gateway.public_task.visible_checks) + 1
     if workflow_gate == "needs_visible_checks":
         if any(row["status"] == "FAIL" for row in gateway.visible_check_status()):
-            return mutation_calls + len(gateway.public_task.visible_checks) + 1
+            return (
+                int(targeted_check_repair_inspection)
+                + mutation_calls
+                + len(gateway.public_task.visible_checks)
+                + 1
+            )
         return len(gateway.remaining_visible_check_ids()) + 1
     return 1
 
@@ -376,26 +378,27 @@ def _tool_policy(
 ) -> _ToolPolicy:
     workflow_gate = _workflow_gate(gateway)
     has_current_mutation_evidence = gateway.has_current_mutation_evidence()
+    current_check_failed = any(row["status"] == "FAIL" for row in gateway.visible_check_status())
+    targeted_check_repair_requested = (
+        current_check_failed
+        and counters.failed_check_pending
+        and not counters.failed_check_repair_read_used
+    )
     minimum_completion_calls = _minimum_completion_calls(
         gateway,
         workflow_gate,
         has_current_mutation_evidence=has_current_mutation_evidence,
+        targeted_check_repair_inspection=targeted_check_repair_requested,
     )
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
     summary = gateway.current_diff
-    current_check_failed = any(
-        row["status"] == "FAIL" for row in gateway.visible_check_status()
-    )
     mutation_capacity = (
-        gateway.accepted_mutations < limits.max_accepted_mutations
-        and not summary.untracked_files
+        gateway.accepted_mutations < limits.max_accepted_mutations and not summary.untracked_files
     )
-    requires_mutation_for_completion = (
-        workflow_gate == "needs_mutation" or current_check_failed
-    )
-    feedback_can_still_require_repair = (
-        requires_mutation_for_completion or bool(gateway.unrun_visible_check_ids())
+    requires_mutation_for_completion = workflow_gate == "needs_mutation" or current_check_failed
+    feedback_can_still_require_repair = requires_mutation_for_completion or bool(
+        gateway.unrun_visible_check_ids()
     )
     mutation_recovery_reserve_calls = 2 * int(
         feedback_can_still_require_repair
@@ -403,16 +406,15 @@ def _tool_policy(
         and not counters.mutation_recovery_used
         and gateway.last_failed_mutation is None
     )
-    check_recovery_reserve_calls = 2 * int(
+    passed_check_count = sum(row["status"] == "PASS" for row in gateway.visible_check_status())
+    check_recovery_reserve_calls = (3 + passed_check_count) * int(
         bool(gateway.unrun_visible_check_ids())
         and mutation_capacity
         and not counters.check_recovery_used
         and not current_check_failed
     )
     completion_budget_calls = (
-        minimum_completion_calls
-        + mutation_recovery_reserve_calls
-        + check_recovery_reserve_calls
+        minimum_completion_calls + mutation_recovery_reserve_calls + check_recovery_reserve_calls
     )
     model_slack = remaining_model_calls - completion_budget_calls
     tool_slack = remaining_tool_actions - completion_budget_calls
@@ -426,14 +428,19 @@ def _tool_policy(
         and remaining_tool_actions >= completion_budget_calls
         and (not requires_mutation_for_completion or mutation_capacity)
     )
+    targeted_check_repair_inspection = (
+        targeted_check_repair_requested and mutation_capacity and completion_possible
+    )
     exploration_allowed = model_slack > 0 and tool_slack > 0 and completion_possible
-    required_inspection_for_completion = (
+    required_inspection_for_completion = targeted_check_repair_inspection or (
         requires_mutation_for_completion
         and mutation_capacity
         and completion_possible
         and not has_current_mutation_evidence
     )
-    if exploration_allowed:
+    if targeted_check_repair_inspection:
+        max_parallel_reads = 1
+    elif exploration_allowed:
         max_parallel_reads = min(limits.max_parallel_reads, tool_slack)
     elif required_inspection_for_completion:
         max_parallel_reads = 1
@@ -441,7 +448,7 @@ def _tool_policy(
         max_parallel_reads = 0
 
     exploration_capacity = max(0, min(model_slack, tool_slack))
-    if exploration_allowed and exploration_capacity == 1:
+    if targeted_check_repair_inspection or (exploration_allowed and exploration_capacity == 1):
         exploration_state = "last_opportunity"
     elif exploration_allowed:
         exploration_state = "open"
@@ -458,7 +465,7 @@ def _tool_policy(
     else:
         closure_reason = "completion_horizon"
     tools_closing_after_this_turn = (
-        tuple(sorted({"read_file", "search_files"}))
+        (("read_file",) if targeted_check_repair_inspection else ("read_file", "search_files"))
         if exploration_state == "last_opportunity" and max_parallel_reads > 0
         else ()
     )
@@ -469,7 +476,9 @@ def _tool_policy(
         allowed.add("finish_task")
     else:
         if max_parallel_reads > 0:
-            allowed.update({"read_file", "search_files"})
+            allowed.add("read_file")
+            if not targeted_check_repair_inspection:
+                allowed.add("search_files")
         # A base check is diagnostic evidence and may use only genuine horizon slack.
         # On a non-empty diff, each not-yet-run check is direct completion work.
         if unrun_checks and (
@@ -479,8 +488,16 @@ def _tool_policy(
         if (
             mutation_capacity
             and has_current_mutation_evidence
+            and not targeted_check_repair_inspection
         ):
-            allowed.add("apply_git_diff")
+            allowed.add("replace_text")
+    evidence_paths_method = getattr(gateway, "current_evidence_paths", None)
+    repair_evidence_paths = evidence_paths_method() if callable(evidence_paths_method) else ()
+    targeted_read_paths = (
+        tuple(sorted({*summary.changed_files, *repair_evidence_paths}))
+        if targeted_check_repair_inspection
+        else ()
+    )
     return _ToolPolicy(
         workflow_gate=workflow_gate,
         allowed_tools=frozenset(allowed),
@@ -499,6 +516,8 @@ def _tool_policy(
         closure_reason=closure_reason,
         tools_closing_after_this_turn=tools_closing_after_this_turn,
         required_inspection_for_completion=required_inspection_for_completion,
+        targeted_check_repair_inspection=targeted_check_repair_inspection,
+        targeted_read_paths=targeted_read_paths,
     )
 
 
@@ -510,19 +529,20 @@ def _commitment_signal(
     no_gain_turns = counters.consecutive_no_evidence_gain_turns
     if (
         no_gain_turns < _SOFT_COMMITMENT_NO_GAIN_TURNS
-        or "apply_git_diff" not in policy.allowed_tools
+        or "replace_text" not in policy.allowed_tools
         or not gateway.has_current_mutation_evidence()
     ):
         return None
     return {
         "state": "mutation_or_stop_recommended",
-        "reason": "consecutive_inspection_without_new_public_evidence",
+        "reason": "consecutive_inspection_without_marginal_public_evidence",
         "consecutive_no_evidence_gain_turns": no_gain_turns,
         "hard_gate": False,
         "message": (
-            "Recent inspection produced no new public source spans. Use current "
-            "actionable evidence for apply_git_diff, or stop_task if it cannot justify "
-            "a safe mutation; inspect again only for a materially different evidence gap."
+            "Recent inspection added no uncovered task-relevant lines or new canonical "
+            "search result. Use current actionable evidence for replace_text, or stop_task "
+            "if it cannot justify a safe mutation; inspect again only for a specific "
+            "uncovered range or unresolved public symbol."
         ),
     }
 
@@ -533,11 +553,7 @@ def _tool_policy_transition(
 ) -> dict[str, Any] | None:
     events = journal.events()
     latest_decision = next(
-        (
-            event
-            for event in reversed(events)
-            if event["event_type"] == "turn_decision_recorded"
-        ),
+        (event for event in reversed(events) if event["event_type"] == "turn_decision_recorded"),
         None,
     )
     if latest_decision is None:
@@ -572,14 +588,11 @@ def _tool_policy_transition(
             if not previous_inspection
             else (
                 "workflow_gate"
-                if prior_start["payload"].get("workflow_gate")
-                != policy.workflow_gate
+                if prior_start["payload"].get("workflow_gate") != policy.workflow_gate
                 else "evidence_changed"
             )
         )
-        from_state = (
-            "execution_only" if not previous_inspection else "inspection_open"
-        )
+        from_state = "execution_only" if not previous_inspection else "inspection_open"
         to_state = "inspection_open"
     elif previous_inspection:
         reason = policy.closure_reason or "workflow_gate"
@@ -632,12 +645,11 @@ def _protocol_correction(
                     "Use read_file or search_files only for a concrete unresolved public "
                     "evidence gap."
                 )
-        if "apply_git_diff" in allowed:
-            actions.append("Use projected public evidence to call apply_git_diff.")
+        if "replace_text" in allowed:
+            actions.append("Use projected public evidence to call replace_text.")
         if "run_check" in allowed:
             actions.append(
-                "run_check may measure the current workspace but does not satisfy "
-                "needs_mutation."
+                "run_check may measure the current workspace but does not satisfy needs_mutation."
             )
         actions.append("Call stop_task if no safe scoped mutation is justified.")
         guidance = f"Current gate is needs_mutation. {' '.join(actions)}"
@@ -645,7 +657,12 @@ def _protocol_correction(
         actions = []
         if "run_check" in allowed:
             actions.append("Run one remaining check with run_check.")
-        if {"read_file", "search_files"} & allowed:
+        if policy.targeted_check_repair_inspection:
+            actions.append(
+                "Use the single targeted read_file opportunity on one listed changed file "
+                "to recover exact repair context; search_files is unavailable."
+            )
+        elif {"read_file", "search_files"} & allowed:
             suffix = (
                 " This is the last inspection opportunity."
                 if policy.exploration_state == "last_opportunity"
@@ -655,8 +672,8 @@ def _protocol_correction(
                 "Use read_file or search_files only if the public result requires another "
                 f"mutation.{suffix}"
             )
-        if "apply_git_diff" in allowed:
-            actions.append("Call apply_git_diff only when public evidence requires a repair.")
+        if "replace_text" in allowed:
+            actions.append("Call replace_text only when public evidence requires a repair.")
         actions.append("Call stop_task if no safe progress is possible.")
         guidance = (
             "Current gate is needs_visible_checks. Remaining visible checks for the current "
@@ -708,69 +725,7 @@ def _build_context(
         and isinstance(evidence.get("span_id"), str)
     )
     payload = {
-        "public_task": package.public.model_dump(mode="json"),
-        "current_diff": {
-            "patch": summary.patch,
-            "patch_hash": summary.patch_hash,
-            "changed_files": summary.changed_files,
-            "added_lines": summary.added_lines,
-            "deleted_lines": summary.deleted_lines,
-            "untracked_files": summary.untracked_files,
-            "truncated": False,
-        },
-        "latest_tool_results": [
-            result.model_dump(mode="json", exclude={"replayed"})
-            for result in latest_tool_results
-        ],
-        "source_spans": gateway.context_spans(exclude=latest_span_ids),
-        "recent_checks": _recent_checks(gateway),
-        "visible_check_status": gateway.visible_check_status(),
-        "remaining_visible_check_ids": gateway.remaining_visible_check_ids(),
-        "last_successful_mutation": gateway.actionable_last_successful_mutation(),
-        "last_failed_mutation": gateway.last_failed_mutation,
-        "recent_attempt_result_next_question": _cards(journal, correction),
-        "commitment_signal": commitment_signal,
         "workflow_gate": active_policy.workflow_gate,
-        "available_tool_names": sorted(active_policy.allowed_tools),
-        "action_horizon": {
-            "minimum_completion_calls": active_policy.minimum_completion_calls,
-            "completion_budget_calls": active_policy.completion_budget_calls,
-            "feedback_recovery_reserve_calls": (
-                active_policy.feedback_recovery_reserve_calls
-            ),
-            "mutation_recovery_reserve_calls": (
-                active_policy.mutation_recovery_reserve_calls
-            ),
-            "check_recovery_reserve_calls": (
-                active_policy.check_recovery_reserve_calls
-            ),
-            "completion_possible": active_policy.completion_possible,
-            "protected_completion_possible": (
-                active_policy.protected_completion_possible
-            ),
-            "exploration_allowed": active_policy.exploration_allowed,
-            "exploration_state": active_policy.exploration_state,
-            "model_turns_available_for_exploration": (
-                active_policy.model_turns_available_for_exploration
-            ),
-            "tool_actions_available_for_exploration": (
-                active_policy.tool_actions_available_for_exploration
-            ),
-            "closure_reason": active_policy.closure_reason,
-            "tools_closing_after_this_turn": list(
-                active_policy.tools_closing_after_this_turn
-            ),
-            "required_inspection_for_completion": (
-                active_policy.required_inspection_for_completion
-            ),
-            "tool_policy_transition": tool_policy_transition,
-            "max_parallel_reads_this_turn": active_policy.max_parallel_reads,
-            "inspection_turns_at_current_diff": counters.inspection_turns_at_diff,
-            "consecutive_no_evidence_gain_inspection_turns": (
-                counters.consecutive_no_evidence_gain_turns
-            ),
-            "failed_mutation_repair_turns": counters.failed_mutation_repair_turns,
-        },
         "remaining_budget": {
             "model_calls": max(0, limits.max_model_calls - counters.model_calls),
             "tool_actions": max(0, limits.max_tool_actions - counters.tool_actions),
@@ -787,10 +742,65 @@ def _build_context(
                 limits.max_protocol_recoveries - counters.protocol_recoveries,
             ),
         },
+        "action_horizon": {
+            "minimum_completion_calls": active_policy.minimum_completion_calls,
+            "completion_budget_calls": active_policy.completion_budget_calls,
+            "feedback_recovery_reserve_calls": (active_policy.feedback_recovery_reserve_calls),
+            "mutation_recovery_reserve_calls": (active_policy.mutation_recovery_reserve_calls),
+            "check_recovery_reserve_calls": (active_policy.check_recovery_reserve_calls),
+            "completion_possible": active_policy.completion_possible,
+            "protected_completion_possible": (active_policy.protected_completion_possible),
+            "exploration_allowed": active_policy.exploration_allowed,
+            "exploration_state": active_policy.exploration_state,
+            "model_turns_available_for_exploration": (
+                active_policy.model_turns_available_for_exploration
+            ),
+            "tool_actions_available_for_exploration": (
+                active_policy.tool_actions_available_for_exploration
+            ),
+            "closure_reason": active_policy.closure_reason,
+            "tools_closing_after_this_turn": list(active_policy.tools_closing_after_this_turn),
+            "required_inspection_for_completion": (
+                active_policy.required_inspection_for_completion
+            ),
+            "targeted_check_repair_inspection": (active_policy.targeted_check_repair_inspection),
+            "targeted_read_paths": list(active_policy.targeted_read_paths),
+            "tool_policy_transition": tool_policy_transition,
+            "max_parallel_reads_this_turn": active_policy.max_parallel_reads,
+            "inspection_turns_at_current_diff": counters.inspection_turns_at_diff,
+            "consecutive_no_marginal_evidence_gain_inspection_turns": (
+                counters.consecutive_no_evidence_gain_turns
+            ),
+            "failed_mutation_repair_turns": counters.failed_mutation_repair_turns,
+        },
+        "mutation_readiness": gateway.mutation_readiness(),
+        "evidence_ledger": gateway.evidence_ledger(),
+        "commitment_signal": commitment_signal,
+        "available_tool_names": sorted(active_policy.allowed_tools),
+        "last_failed_mutation": gateway.last_failed_mutation,
+        "last_successful_mutation": gateway.actionable_last_successful_mutation(),
+        "current_diff": {
+            "patch": summary.patch,
+            "patch_hash": summary.patch_hash,
+            "changed_files": summary.changed_files,
+            "added_lines": summary.added_lines,
+            "deleted_lines": summary.deleted_lines,
+            "untracked_files": summary.untracked_files,
+            "truncated": False,
+        },
+        "visible_check_status": gateway.visible_check_status(),
+        "remaining_visible_check_ids": gateway.remaining_visible_check_ids(),
+        "recent_checks": _recent_checks(gateway),
+        "latest_tool_results": [
+            result.model_dump(mode="json", exclude={"replayed"}) for result in latest_tool_results
+        ],
+        "source_spans": gateway.context_spans(exclude=latest_span_ids),
+        "recent_attempt_result_next_question": _cards(journal, correction),
+        "public_task": package.public.model_dump(mode="json"),
     }
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
-    return canonical_json(payload)
+    return json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
 
 
 def _requested_tool_from_openai(call: Any) -> RequestedTool:
@@ -814,9 +824,7 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
             calls = []
             conversion_error = "invalid_dev_tool_contract"
             break
-    continuation_items: list[
-        EncryptedReasoningContinuationItem | FunctionCallContinuationRef
-    ] = []
+    continuation_items: list[EncryptedReasoningContinuationItem | FunctionCallContinuationRef] = []
     for item in turn.provider_continuation:
         if isinstance(item, ProviderReasoningItem):
             continuation_items.append(
@@ -827,9 +835,7 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
                 )
             )
         elif isinstance(item, ProviderFunctionCallRef) and conversion_error is None:
-            continuation_items.append(
-                FunctionCallContinuationRef(action_id=item.action_id)
-            )
+            continuation_items.append(FunctionCallContinuationRef(action_id=item.action_id))
         elif isinstance(item, ProviderFunctionCallRef):
             continue
         else:
@@ -878,8 +884,7 @@ def _store_provider_continuation(
 ) -> ProviderContinuationRef:
     artifact = artifact_store.put_json(continuation.model_dump(mode="json"))
     reasoning_count = sum(
-        isinstance(item, EncryptedReasoningContinuationItem)
-        for item in continuation.output_order
+        isinstance(item, EncryptedReasoningContinuationItem) for item in continuation.output_order
     )
     return ProviderContinuationRef(
         artifact=artifact,
@@ -908,17 +913,14 @@ def _load_provider_continuation(
             "provider continuation artifact is unavailable or invalid"
         ) from exc
     reasoning_count = sum(
-        isinstance(item, EncryptedReasoningContinuationItem)
-        for item in continuation.output_order
+        isinstance(item, EncryptedReasoningContinuationItem) for item in continuation.output_order
     )
     if (
         len(continuation.output_order) != reference.item_count
         or reasoning_count != reference.reasoning_item_count
         or _continuation_order_hash(continuation) != reference.order_hash
     ):
-        raise _ProviderContinuationError(
-            "provider continuation artifact metadata does not match"
-        )
+        raise _ProviderContinuationError("provider continuation artifact metadata does not match")
     return continuation
 
 
@@ -991,11 +993,7 @@ def _build_model_input(
     system_item = {"role": "system", "content": DEV_SYSTEM_PROMPT}
     events = journal.events()
     decision = next(
-        (
-            event
-            for event in reversed(events)
-            if event["event_type"] == "turn_decision_recorded"
-        ),
+        (event for event in reversed(events) if event["event_type"] == "turn_decision_recorded"),
         None,
     )
     if decision is None:
@@ -1007,16 +1005,14 @@ def _build_model_input(
         (
             event
             for event in reversed(events)
-            if event["event_type"] == "turn_started"
-            and event["payload"].get("turn_id") == turn_id
+            if event["event_type"] == "turn_started" and event["payload"].get("turn_id") == turn_id
         ),
         None,
     )
     if started is None:
         raise RecoveryError("latest model decision is missing its public turn boundary")
     calls = [
-        RequestedTool.model_validate(value)
-        for value in decision["payload"].get("tool_calls", [])
+        RequestedTool.model_validate(value) for value in decision["payload"].get("tool_calls", [])
     ]
     continuation_ref = _continuation_ref_from_payload(decision["payload"])
     continuation = (
@@ -1058,9 +1054,7 @@ def _build_model_input(
                             "type": "function_call",
                             "call_id": call.action_id,
                             "name": call.name,
-                            "arguments": canonical_json(
-                                _provider_rejected_call_arguments(call)
-                            ),
+                            "arguments": canonical_json(_provider_rejected_call_arguments(call)),
                         }
                     )
         else:
@@ -1180,7 +1174,10 @@ def _build_model_input(
         system_item,
         *prior_output_items,
         *output_items,
-        {"role": "user", "content": canonical_json(current_payload)},
+        {
+            "role": "user",
+            "content": json.dumps(current_payload, separators=(",", ":"), ensure_ascii=False),
+        },
     ]
 
 
@@ -1189,7 +1186,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
         next_question = (
             "Repair or explicitly replace last_failed_mutation; use read/search only "
             "when needed for that repair."
-            if result.tool == "apply_git_diff"
+            if result.tool == "replace_text"
             else "What available public action resolves this failure?"
         )
         return {
@@ -1200,10 +1197,11 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
         }
     if result.tool in {"read_file", "search_files"}:
         spans = result.output.get("spans", [])
-        if result.output.get("stagnation_signal"):
+        gain = result.output.get("evidence_gain")
+        if isinstance(gain, dict) and gain.get("marginal_evidence_gain") is False:
             next_question = (
-                "This exact evidence is already visible; choose a materially different query, "
-                "range, check, or mutation."
+                "This inspection added no uncovered task-relevant range or new canonical "
+                "search result; name a specific unresolved gap or mutate."
             )
         else:
             next_question = "Which exact source anchor supports the smallest causal mutation?"
@@ -1236,6 +1234,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "result": {
                 "span_count": len(spans),
                 "new_span_count": result.output.get("new_span_count", 0),
+                "evidence_gain": result.output.get("evidence_gain"),
                 "findings": findings,
                 "evidence_fingerprint": result.output.get("evidence_fingerprint"),
                 "evidence_cache_hit": result.evidence_cache_hit,
@@ -1243,7 +1242,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             },
             "next_question": next_question,
         }
-    if result.tool == "apply_git_diff":
+    if result.tool == "replace_text":
         return {
             "action_id": result.action_id,
             "attempt": "mutation",
@@ -1315,6 +1314,7 @@ def _batch_attempt_card(
                     "error_code": result.error_code,
                     "span_count": len(spans),
                     "new_span_count": result.output.get("new_span_count", 0),
+                    "evidence_gain": result.output.get("evidence_gain"),
                     "evidence_fingerprint": result.output.get("evidence_fingerprint"),
                     "evidence_cache_hit": result.evidence_cache_hit,
                     "stagnation_signal": result.output.get("stagnation_signal", False),
@@ -1330,8 +1330,15 @@ def _batch_attempt_card(
             )
         if any(result.status == "failed" for result in results):
             next_question = "Resolve the failed read or choose another available public action."
-        elif any(action["stagnation_signal"] for action in actions):
-            next_question = "Choose a materially different available action from this evidence."
+        elif all(
+            isinstance(action.get("evidence_gain"), dict)
+            and action["evidence_gain"].get("marginal_evidence_gain") is False
+            for action in actions
+        ):
+            next_question = (
+                "This batch added no marginal public evidence; name a specific uncovered "
+                "range or unresolved symbol, mutate, or stop."
+            )
         else:
             next_question = "Choose the next available action from this completed batch evidence."
         return {
@@ -1385,11 +1392,9 @@ def _milestones(journal: DevJournal) -> dict[str, Any]:
         if result["status"] != "succeeded":
             continue
         output = result["output"]
-        if result["tool"] == "apply_git_diff":
+        if result["tool"] == "replace_text":
             mutation = output["mutation"]
-            actionable_evidence_span_ids = mutation.get(
-                "actionable_evidence_span_ids"
-            )
+            actionable_evidence_span_ids = mutation.get("actionable_evidence_span_ids")
             if not isinstance(actionable_evidence_span_ids, list):
                 postimage_span_id = mutation.get("postimage_evidence_span_id")
                 actionable_evidence_span_ids = (
@@ -1480,11 +1485,7 @@ def _terminal(
             "run_age_seconds": (
                 max(
                     0,
-                    int(
-                        (
-                            utc_now() - journal.load_envelope().created_at
-                        ).total_seconds()
-                    ),
+                    int((utc_now() - journal.load_envelope().created_at).total_seconds()),
                 )
                 if run_age_seconds is None
                 else run_age_seconds
@@ -1587,9 +1588,7 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             for event in events
             if event["event_type"] == "tool_batch_started"
         ),
-        input_count_calls=sum(
-            event["event_type"] == "input_count_started" for event in events
-        ),
+        input_count_calls=sum(event["event_type"] == "input_count_started" for event in events),
         protocol_recoveries=consecutive_protocol_recoveries,
     )
     action_results: dict[str, DevToolResult] = {}
@@ -1617,11 +1616,20 @@ def _update_inspection_counters(
 ) -> None:
     if results and all(result.tool in {"read_file", "search_files"} for result in results):
         counters.inspection_turns_at_diff += 1
+        if counters.failed_check_pending:
+            counters.failed_check_repair_read_used = True
         if all(result.status == "succeeded" for result in results):
             evidence_gain = sum(
-                value if type(value) is int and value > 0 else 0
+                (
+                    int(bool(gain.get("marginal_evidence_gain")))
+                    if isinstance(gain, dict)
+                    else int(
+                        type(result.output.get("new_span_count")) is int
+                        and result.output.get("new_span_count", 0) > 0
+                    )
+                )
                 for result in results
-                for value in [result.output.get("new_span_count")]
+                for gain in [result.output.get("evidence_gain")]
             )
             if evidence_gain == 0:
                 counters.consecutive_no_evidence_gain_turns += 1
@@ -1639,13 +1647,17 @@ def _update_inspection_counters(
     if result.tool == "run_check":
         if result.status != "succeeded" or result.output.get("passed") is not True:
             counters.check_recovery_used = True
+            counters.failed_check_pending = True
+            counters.failed_check_repair_read_used = False
         return
-    if result.tool != "apply_git_diff":
+    if result.tool != "replace_text":
         return
     if result.status == "succeeded":
         counters.inspection_turns_at_diff = 0
         counters.failed_mutation_repair_turns = 0
         counters.failed_mutation_pending = False
+        counters.failed_check_pending = False
+        counters.failed_check_repair_read_used = False
     else:
         counters.failed_mutation_repair_turns = 0
         counters.failed_mutation_pending = True
@@ -1666,9 +1678,9 @@ def _validate_resumed_workspace(workspace: Path, journal: DevJournal) -> None:
             if pending is not None and payload.get("action_id") == pending.get("action_id"):
                 pending = None
             result = DevToolResult.model_validate(payload["result"])
-            if result.status == "succeeded" and result.tool == "apply_git_diff":
+            if result.status == "succeeded" and result.tool == "replace_text":
                 expected_diff_hash = str(result.output["worktree_diff_hash"])
-    if pending is not None and pending.get("tool") == "apply_git_diff":
+    if pending is not None and pending.get("tool") == "replace_text":
         if pending.get("baseline_diff_hash") != expected_diff_hash:
             raise ResumeContractMismatch("pending mutation baseline does not match the journal")
         return
@@ -1701,9 +1713,7 @@ def _recover_unrecorded_decision(journal: DevJournal) -> None:
                 "error_code": payload.get("error_code"),
                 "incomplete_reason": payload.get("incomplete_reason"),
                 "output_item_count": payload.get("output_item_count", 0),
-                "non_tool_output_item_count": payload.get(
-                    "non_tool_output_item_count", 0
-                ),
+                "non_tool_output_item_count": payload.get("non_tool_output_item_count", 0),
                 "output_item_types": payload.get("output_item_types", []),
                 "output_shape_hash": payload.get("output_shape_hash"),
                 "continuation_ref": payload.get("continuation_ref"),
@@ -1714,17 +1724,21 @@ def _recover_unrecorded_decision(journal: DevJournal) -> None:
 
 def _unresolved_decision(
     journal: DevJournal,
-) -> tuple[
-    str,
-    list[RequestedTool],
-    str | None,
-    str | None,
-    bool,
-    frozenset[str],
-    int,
-    ProviderContinuationRef | None,
-    tuple[str, ...],
-] | None:
+) -> (
+    tuple[
+        str,
+        list[RequestedTool],
+        str | None,
+        str | None,
+        bool,
+        frozenset[str],
+        int,
+        tuple[str, ...],
+        ProviderContinuationRef | None,
+        tuple[str, ...],
+    ]
+    | None
+):
     events = journal.events()
     completed = {
         event["payload"].get("turn_id")
@@ -1765,8 +1779,7 @@ def _unresolved_decision(
             (
                 row
                 for row in reversed(events)
-                if row["event_type"] == "turn_started"
-                and row["payload"].get("turn_id") == turn_id
+                if row["event_type"] == "turn_started" and row["payload"].get("turn_id") == turn_id
             ),
             None,
         )
@@ -1774,11 +1787,14 @@ def _unresolved_decision(
             raise RecoveryError("recorded model decision has no turn boundary")
         available = turn_start["payload"].get("available_tool_names")
         max_parallel_reads = turn_start["payload"].get("max_parallel_reads")
+        targeted_read_paths = turn_start["payload"].get("targeted_read_paths", [])
         if (
             not isinstance(available, list)
             or not all(isinstance(name, str) for name in available)
             or type(max_parallel_reads) is not int
             or max_parallel_reads < 0
+            or not isinstance(targeted_read_paths, list)
+            or not all(isinstance(path, str) for path in targeted_read_paths)
         ):
             raise RecoveryError("recorded model decision has no exact tool policy")
         return (
@@ -1789,6 +1805,7 @@ def _unresolved_decision(
             turn_id in started,
             frozenset(available),
             max_parallel_reads,
+            tuple(targeted_read_paths),
             continuation_ref,
             tuple(output_item_types),
         )
@@ -2111,6 +2128,7 @@ def _run_one_locked(
                 batch_started,
                 pending_allowed_tools,
                 pending_max_parallel_reads,
+                pending_targeted_read_paths,
                 pending_continuation_ref,
                 pending_output_item_types,
             ) = pending_decision
@@ -2167,6 +2185,7 @@ def _run_one_locked(
                         pending_calls,
                         max_parallel_reads=pending_max_parallel_reads,
                         allowed_tools=pending_allowed_tools,
+                        allowed_read_paths=pending_targeted_read_paths,
                     )
                 except ContractError as exc:
                     if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
@@ -2294,6 +2313,7 @@ def _run_one_locked(
             finish_enabled="finish_task" in policy.allowed_tools,
             check_ids=policy.check_ids,
             allowed_tools=policy.allowed_tools,
+            read_paths=policy.targeted_read_paths,
         )
         journal.append(
             "turn_started",
@@ -2311,29 +2331,23 @@ def _run_one_locked(
                 "available_tool_names": sorted(policy.allowed_tools),
                 "workflow_gate": policy.workflow_gate,
                 "max_parallel_reads": policy.max_parallel_reads,
+                "targeted_read_paths": list(policy.targeted_read_paths),
                 "minimum_completion_calls": policy.minimum_completion_calls,
                 "completion_budget_calls": policy.completion_budget_calls,
-                "feedback_recovery_reserve_calls": (
-                    policy.feedback_recovery_reserve_calls
-                ),
-                "mutation_recovery_reserve_calls": (
-                    policy.mutation_recovery_reserve_calls
-                ),
-                "check_recovery_reserve_calls": (
-                    policy.check_recovery_reserve_calls
-                ),
+                "feedback_recovery_reserve_calls": (policy.feedback_recovery_reserve_calls),
+                "mutation_recovery_reserve_calls": (policy.mutation_recovery_reserve_calls),
+                "check_recovery_reserve_calls": (policy.check_recovery_reserve_calls),
                 "completion_possible": policy.completion_possible,
-                "protected_completion_possible": (
-                    policy.protected_completion_possible
-                ),
+                "protected_completion_possible": (policy.protected_completion_possible),
                 "exploration_state": policy.exploration_state,
                 "closure_reason": policy.closure_reason,
+                "targeted_check_repair_inspection": (policy.targeted_check_repair_inspection),
                 "commitment_signal": _commitment_signal(
                     gateway,
                     counters,
                     policy,
                 ),
-                "consecutive_no_evidence_gain_inspection_turns": (
+                "consecutive_no_marginal_evidence_gain_inspection_turns": (
                     counters.consecutive_no_evidence_gain_turns
                 ),
                 "projected_span_ids": [
@@ -2480,12 +2494,8 @@ def _run_one_locked(
                 and turn.provider_continuation is None
                 and turn.error_code != "input_token_count_mismatch"
             ):
-                continuation_failure = (
-                    "provider reasoning output has no encrypted continuation"
-                )
-                turn = turn.model_copy(
-                    update={"error_code": "provider_continuation_error"}
-                )
+                continuation_failure = "provider reasoning output has no encrypted continuation"
+                turn = turn.model_copy(update={"error_code": "provider_continuation_error"})
             elif turn.provider_continuation is not None:
                 try:
                     continuation_ref = _store_provider_continuation(
@@ -2496,9 +2506,7 @@ def _run_one_locked(
                     continuation_failure = (
                         "provider reasoning continuation could not be stored durably"
                     )
-                    turn = turn.model_copy(
-                        update={"error_code": "provider_continuation_error"}
-                    )
+                    turn = turn.model_copy(update={"error_code": "provider_continuation_error"})
             if continuation_ref is not None:
                 turn = turn.model_copy(update={"continuation_ref": continuation_ref})
             journal.append(
@@ -2562,8 +2570,7 @@ def _run_one_locked(
             if turn.error_code == "provider_continuation_error":
                 terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
                 terminal_message = (
-                    continuation_failure
-                    or "provider reasoning continuation is unavailable"
+                    continuation_failure or "provider reasoning continuation is unavailable"
                 )
                 break
         if turn.error_code is not None:
@@ -2590,6 +2597,7 @@ def _run_one_locked(
                 turn.tool_calls,
                 max_parallel_reads=policy.max_parallel_reads,
                 allowed_tools=policy.allowed_tools,
+                allowed_read_paths=policy.targeted_read_paths,
             )
         except ContractError as exc:
             if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
@@ -2651,9 +2659,7 @@ def _run_one_locked(
             cost_ledger=cost_ledger,
             cost_start_nanos=cost_start_nanos,
             hashes=hashes,
-            message=(
-                f"{stop_result.output['reason_code']}: {stop_result.output['summary']}"
-            ),
+            message=(f"{stop_result.output['reason_code']}: {stop_result.output['summary']}"),
             active_elapsed_ms=active_elapsed_ms(),
         )
         return _OneRunResult(_public_result(run_id, terminal), False)

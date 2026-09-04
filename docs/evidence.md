@@ -879,11 +879,45 @@ serialization then consumed three extra repair turns after exact feedback; and a
 the failed check the current context no longer contained `fake_os.py`'s import block
 while inspection was closed. It did contain other-file spans using
 `helpers.PERM_DEF`, which made the final namespace error locally plausible. Merely
-raising 40 calls would mask these boundaries. The next provider-free design seam is
-to measure inspection gain by non-overlapping relevant coverage, replace model-counted
-raw hunks with a bounded exact-anchor replacement contract, and reserve a targeted
-read plus repair and recheck after a failed visible check. No fifteenth live row is
-authorized by this evidence.
+raising 40 calls would mask these boundaries. The provider-free successor measures
+inspection gain by non-overlapping relevant coverage, replaces model-counted raw hunks
+with a bounded exact-anchor replacement contract, and reserves a targeted read plus
+repair and recheck after a failed visible check. No fifteenth live row is authorized by
+this evidence.
+
+## Post-fourteenth evidence and mutation-interface correction
+
+`new_span_count` remains available as syntax-level telemetry, but the commitment signal
+now consumes a current-diff evidence ledger. Reads merge path/line coverage, shifted or
+contained ranges add only their uncovered lines, and the first canonical observation of
+a search is distinguished from its repeats. The prompt projects this ledger and a
+mutation-readiness boundary before the larger public task body. No repeated evidence is
+turned into a terminal or hard tool mask.
+
+The active mutation tool is `replace_text`: one exact current occurrence in one tracked,
+existing, allowed file. The gateway, rather than the model, generates the bounded Git
+diff and validates the canonical worktree diff. It preserves evidence and scope gates,
+pre-image rollback, action-id replay, and expected-post-image crash reconciliation.
+After mutation it rebinds unchanged, uniquely occurring spans to the new file hash and
+adds a focused post-image span; changed or ambiguous content is not revalidated.
+
+A failed visible check now consumes a separate reserve of at least three calls, growing
+by the number of checks already passed on the current diff. Before another mutation is
+offered, exactly one `read_file` turn is exposed and restricted to the changed or
+currently evidenced paths. The resulting completion path includes targeted read,
+repair, every visible check on the new diff, and finish. This directly covers the
+fourteenth row's missing import/symbol context without granting general exploration in
+the protected tail.
+
+Focused tests covering replacement, stale anchors, rollback, crash recovery, shifted
+coverage, cached zero-match searches, unchanged-span revalidation, targeted-read
+schemas, context order, and exact 40-call recovery pass 76 cases in 82.29 seconds.
+`uv run ruff check patchloop tests` passes, and the full 95-test suite passes in 87.75
+seconds with external temp root `C:\patchloop-test\r14-seam-full-c`. Provider-free mock
+run `run_dev_c185114854c54ad6` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted replacement. Task acceptance is PASS, safety is
+NOT_RUN, `claim_eligible=false`, and cost is zero. No Docker execution, paid provider
+call, or fifteenth live row ran for this checkpoint.
 
 ## Not executed
 

@@ -12,7 +12,7 @@ DEV_SYSTEM_PROMPT = """You are PatchLoop dev-head, a constrained coding agent.
 Use only the supplied tools. There is no separate planning phase or planning tool.
 Every response must request at least one supplied tool. Request either 1-4
 search_files/read_file calls in one response, or exactly one run_check,
-apply_git_diff, finish_task, or stop_task call. Never mix those shapes. Registered
+replace_text, finish_task, or stop_task call. Never mix those shapes. Registered
 tools are derived from the current workflow gate and remaining action horizon; a tool
 that is absent is not available this turn. Every tool call must carry turn_decision,
 one bounded public decision for that concrete action. Its mode must match the tool
@@ -22,20 +22,22 @@ required only for inspect; it is null for every other mode. Each decision descri
 why you are taking that action now, after the preceding public tool results, rather
 than promising a future action.
 Use stop_task when no available public action supports safe progress; provide a concise
-conclusion, not chain-of-thought. Every mutation must include a concise hypothesis,
-expected behavior, current evidence span IDs, and an exact source anchor. An accepted
+conclusion, not chain-of-thought. Treat mutation_readiness.state=ready_to_attempt as a
+commitment boundary: another read must name a specific uncovered range or unresolved
+public symbol in evidence_goal; otherwise prefer replace_text or stop_task. Every
+mutation must include a concise hypothesis, expected behavior, current evidence span
+IDs, and one exact old_text/new_text replacement. The gateway, not you, constructs the
+canonical Git diff. An accepted
 mutation's bounded post-image is current evidence for a same-file repair, including
 when its span ID is projected through last_successful_mutation; cite that span when it
 appears in actionable_evidence_span_ids and covers the repair anchor. Earlier
 pre-image IDs are provenance, not current mutation evidence. A commitment_signal is
 soft guidance, not a tool restriction: when active, use current actionable evidence
 to mutate or stop unless one materially different public evidence gap remains. If the
-public context requires a causal alternative, the
-next mutation must also state which prior
-hypothesis was falsified and a materially different mechanism. The apply_git_diff
-git_diff value must be a raw Git unified diff beginning exactly with
-"diff --git a/<path> b/<path>". Never use "*** Begin Patch", "*** Update File", or
-another patch wrapper. All visible checks must pass on the current diff before
+public context requires a causal alternative, the next mutation must also state which
+prior hypothesis was falsified and a materially different mechanism in
+causal_revision. Do not write a Git diff or patch wrapper. All visible checks must pass
+on the current diff before
 finish_task is available. The complete current diff is projected in context; do not
 request get_diff. Do not emit raw chain-of-thought. Private tests, reference patches,
 and evaluator details are unavailable and must not be inferred.
@@ -48,40 +50,35 @@ exploration. Read/search remains available when it is needed for the repair.
 @dataclass(frozen=True)
 class MockMutation:
     path: str
-    anchor: str
-    patch: str
+    old_text: str
+    new_text: str
     hypothesis: str
     expected_behavior: str
 
 
 _CSV_MUTATION = MockMutation(
     path="mini_data_utils/csvlite.py",
-    anchor=(
+    old_text=(
+        "import csv\n"
+        "\n"
+        "\n"
+        "def parse_rows(text: str) -> list[list[str]]:\n"
+        '    """Parse CSV text into rows while preserving quoted values."""\n'
+        "\n"
         "    rows: list[list[str]] = []\n"
         "    for physical_line in text.splitlines():\n"
         "        rows.extend(csv.reader([physical_line]))\n"
         "    return rows"
     ),
-    patch=(
-        "diff --git a/mini_data_utils/csvlite.py b/mini_data_utils/csvlite.py\n"
-        "--- a/mini_data_utils/csvlite.py\n"
-        "+++ b/mini_data_utils/csvlite.py\n"
-        "@@ -1,13 +1,11 @@\n"
-        ' """A deliberately small CSV reader with one audited defect."""\n'
-        " \n"
-        " import csv\n"
-        "+import io\n"
-        " \n"
-        " \n"
-        " def parse_rows(text: str) -> list[list[str]]:\n"
-        '     """Parse CSV text into rows while preserving quoted values."""\n'
-        " \n"
-        "-    rows: list[list[str]] = []\n"
-        "-    for physical_line in text.splitlines():\n"
-        "-        rows.extend(csv.reader([physical_line]))\n"
-        "-    return rows\n"
-        '+    return list(csv.reader(io.StringIO(text, newline="")))\n'
-        " \n"
+    new_text=(
+        "import csv\n"
+        "import io\n"
+        "\n"
+        "\n"
+        "def parse_rows(text: str) -> list[list[str]]:\n"
+        '    """Parse CSV text into rows while preserving quoted values."""\n'
+        "\n"
+        '    return list(csv.reader(io.StringIO(text, newline="")))'
     ),
     hypothesis="Physical-line splitting resets the CSV parser inside a quoted record.",
     expected_behavior="One csv.reader over a text stream preserves quoted embedded newlines.",
@@ -147,20 +144,17 @@ class MockDevAdapter:
             return DevModelTurn(
                 tool_calls=[
                     RequestedTool(
-                        name="apply_git_diff",
+                        name="replace_text",
                         action_id="mock-apply-mutation",
                         arguments={
-                            "git_diff": self.mutation.patch,
+                            "path": self.mutation.path,
+                            "old_text": self.mutation.old_text,
+                            "new_text": self.mutation.new_text,
+                            "occurrence": 1,
                             "hypothesis": self.mutation.hypothesis,
                             "expected_behavior": self.mutation.expected_behavior,
                             "evidence_span_ids": spans[:2],
-                            "edit_anchor": {
-                                "path": self.mutation.path,
-                                "old_text": self.mutation.anchor,
-                                "occurrence": 1,
-                            },
-                            "falsified_prior_hypothesis": None,
-                            "alternative_mechanism": None,
+                            "causal_revision": None,
                         },
                         turn_decision=PublicTurnDecision(
                             mode="mutate",

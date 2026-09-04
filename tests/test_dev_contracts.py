@@ -11,9 +11,9 @@ from typer.testing import CliRunner
 from patchloop.cli import app
 from patchloop.dev.contracts import (
     DevRunRequest,
-    MutationIntent,
     PublicTurnDecision,
     RequestedTool,
+    TextReplacementIntent,
 )
 from patchloop.dev.cost import DEFAULT_OUTPUT_CEILING, DevCostLedger, pricing_for_model
 from patchloop.dev.tools import validate_tool_batch
@@ -27,7 +27,7 @@ def call(name: str, index: int = 0) -> RequestedTool:
         "read_file": "inspect",
         "search_files": "inspect",
         "run_check": "verify",
-        "apply_git_diff": "mutate",
+        "replace_text": "mutate",
         "finish_task": "finish",
         "stop_task": "stop",
     }
@@ -86,6 +86,17 @@ def test_tool_batch_contract_is_small_and_unmixed() -> None:
             allowed_tools=frozenset({"stop_task"}),
             max_parallel_reads=0,
         )
+    targeted = call("read_file")
+    targeted.arguments = {
+        "path": "src/other.py",
+        "start_line": 1,
+        "end_line": 10,
+    }
+    with pytest.raises(ContractError, match="targeted repair"):
+        validate_tool_batch(
+            [targeted],
+            allowed_read_paths=("src/changed.py",),
+        )
 
 
 def test_live_parallel_inspection_shape_allows_call_specific_decisions() -> None:
@@ -134,20 +145,34 @@ def test_live_parallel_inspection_shape_allows_call_specific_decisions() -> None
     assert validate_tool_batch(calls) == "parallel_read"
 
 
-def test_mutation_contract_requires_minimal_plan_and_pairs_alternative() -> None:
+def test_mutation_contract_requires_exact_replacement_and_typed_alternative() -> None:
     base = {
+        "path": "src/a.py",
+        "old_text": "old",
+        "new_text": "new",
+        "occurrence": 1,
         "hypothesis": "state is reset too early",
         "expected_behavior": "state survives through cleanup",
         "evidence_span_ids": ["span_a"],
-        "edit_anchor": {"path": "src/a.py", "old_text": "old", "occurrence": 1},
+        "causal_revision": None,
     }
-    assert MutationIntent.model_validate(base).alternative_mechanism is None
+    assert TextReplacementIntent.model_validate(base).causal_revision is None
     with pytest.raises(ValidationError):
-        MutationIntent.model_validate({**base, "alternative_mechanism": "different owner"})
+        TextReplacementIntent.model_validate({**base, "new_text": "old"})
     with pytest.raises(ValidationError):
-        MutationIntent.model_validate(
+        TextReplacementIntent.model_validate(
             {key: value for key, value in base.items() if key != "hypothesis"}
         )
+    revision = TextReplacementIntent.model_validate(
+        {
+            **base,
+            "causal_revision": {
+                "falsified_prior_hypothesis": "the state reset was not causal",
+                "alternative_mechanism": "the caller discards the state",
+            },
+        }
+    )
+    assert revision.causal_revision is not None
 
 
 def test_public_turn_decision_is_bounded_strict_and_mode_specific() -> None:

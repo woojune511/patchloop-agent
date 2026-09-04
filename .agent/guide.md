@@ -28,7 +28,7 @@ One model response may request either, when that tool family is exposed by the
 current gate and action horizon:
 
 - 1–4 parallel `search_files` and/or `read_file` calls, or
-- exactly one `apply_git_diff`, `run_check`, `finish_task`, or `stop_task` call.
+- exactly one `replace_text`, `run_check`, `finish_task`, or `stop_task` call.
 
 Every call requires one bounded public `turn_decision` with `mode`, `basis`, and an
 `evidence_goal` only for inspection. Mode must match the requested tool family.
@@ -43,8 +43,10 @@ receive one short correction. A second consecutive protocol/incomplete violation
 terminates the row; any valid completed tool batch resets the correction allowance.
 Optional inspection remains available only while both model-call and tool-action
 budgets exceed the minimum path through mutation, all required checks, and finish plus
-two independent bounded allowances: two calls for rejected-mutation recovery and two
-calls for failed-visible-check recovery. Each remains held until its matching failure;
+two independent bounded allowances: two calls for rejected-mutation recovery and at
+least three calls for failed-visible-check recovery. The latter covers one targeted
+read, one replacement, the failed check that must be rerun, and any current-diff checks
+already passed before a later check fails. Each remains held until its matching failure;
 consuming one does not erase the other. `completion_possible` separately reports whether
 the actual remaining budgets cover the best-case path;
 `protected_completion_possible` includes the unused allowance. Neither is an alias
@@ -55,9 +57,11 @@ Reopen them through the same transition when a changed gate restores slack. A fi
 source read required to establish a mutation anchor belongs to the minimum path. The
 legacy 24/3 counters are telemetry, never an action mask. Corrections must be generated
 from the actual allowed-tool set and must not name a missing tool.
-After two consecutive successful inspection batches yield zero new public spans, add a
-soft mutation-or-stop recommendation to context and `turn_started`. Never remove tools
-because of that signal; reset it on new evidence or a non-inspection action.
+After two consecutive successful inspection batches yield no marginal task-relevant
+coverage, add a soft mutation-or-stop recommendation to context and `turn_started`.
+`new_span_count` remains syntactic telemetry: shifted or contained ranges do not reset
+the signal merely because they have a new span hash. Never remove tools because of the
+signal; reset it on real coverage gain or a non-inspection action.
 
 An unexecuted `run_check` may be available on the first turn while the action horizon
 has slack; on a changed diff it is direct completion work. A check that already failed
@@ -68,24 +72,25 @@ or evaluates.
 
 ## Mutation and causal pivot
 
-Every `apply_git_diff` requires `git_diff` to begin exactly with
-`diff --git a/<path> b/<path>`. Patch wrappers such as `*** Begin Patch` and
-`*** Update File` are rejected. Git recounts each hunk's declared line totals from
-the raw body before check, apply, rollback, and crash reconciliation. Recount does
-not relax hunk syntax, source context, tracked-path, anchor, or scope validation;
-the resulting canonical worktree diff remains the submission authority. The
-mutation also requires:
+`replace_text` accepts one exact occurrence of `old_text` and its `new_text` in one
+tracked, existing, allowed public file. The model never serializes patch headers or
+hunk counts. The gateway verifies the current file and evidence anchor, performs the
+replacement, then derives the bounded Git diff and canonical full worktree diff used
+by checks and submission. It rejects stale or out-of-range occurrences, newline ambiguity,
+untracked files, new paths, and scope violations, and restores the exact pre-image on
+failure. The mutation also requires:
 
 - `hypothesis`
 - `expected_behavior`
 - current `evidence_span_ids`
-- exact `edit_anchor.path`, `old_text`, and occurrence
+- exact `path`, `old_text`, `new_text`, and occurrence
 
-Anchors and spans must still match current source. A successful mutation invalidates
-the edited file's pre-image spans and immediately registers one bounded post-image span
-bound to the current file and diff hashes. That span can authorize a same-file repair
-only when the exact current anchor overlaps it; an edit elsewhere still requires a
-current read/search span. Project only that validated post-image under
+Anchors and spans must still match current source. Before invalidating edited-file
+pre-image spans, a successful mutation revalidates any unchanged, uniquely occurring
+span against the post-image hash. It also registers one bounded replacement post-image
+span bound to the current file and diff hashes. Those spans can authorize a same-file
+repair only when the exact current anchor overlaps one; an edit elsewhere still
+requires a current read/search span. Project only the validated replacement post-image under
 `last_successful_mutation.actionable_evidence_span_ids`; retain the accepted action's
 input IDs solely in the append-only `action_started` provenance. Known stale input IDs
 may be ignored on a later retry only when separate current evidence authorizes its exact
@@ -97,24 +102,30 @@ mutation additionally requires `falsified_prior_hypothesis` and
 
 ## Context boundary
 
-The canonical context artifact contains only the public task, current full diff, the
-exact latest tool batch, a recency-ordered current-source working set, recent visible-check
-output, the complete current-diff check status, exact remaining check IDs, bounded
-`last_successful_mutation`, bounded `last_failed_mutation`, remaining budget, and
-the latest three batch-level attempt-result-next-question cards. The successful-mutation
+The deterministic context artifact puts current workflow gate, remaining budget,
+action horizon, mutation readiness, and the bounded evidence ledger before the larger
+task text. It also contains the public task, current full diff, the exact latest tool
+batch, a recency-ordered current-source working set, recent visible-check output, the
+complete current-diff check status, exact remaining check IDs, bounded
+`last_successful_mutation`, bounded `last_failed_mutation`, and the latest three
+batch-level attempt-result-next-question cards. The ledger merges covered line ranges
+per path and records canonical search observations and the latest public inspection
+intent; it stores neither raw reasoning nor semantic claims inferred by the harness.
+The successful-mutation
 projection separates current actionable post-image evidence from historical action
 inputs. A successful check card names
 the next remaining check instead of treating PASS as a failure. A failed mutation
-retains its public diff excerpt, full diff hash, intent, anchor, evidence IDs, error,
-and parsed error location across later reads and process resume. A later failed
+retains its bounded exact replacement, full replacement hash, intent, anchor, evidence
+IDs, error, and parsed error location across later reads and process resume. A later failed
 mutation replaces it; a successful mutation clears it. From turn two onward, the
 actual model input carries the immediately preceding calls and exact public results as
 native `function_call` / `function_call_output` items, followed by current derived
 state without duplicating those results. One content-addressed model-input artifact
 binds that sequence. Each read action in the batch card carries its corresponding
-decision once. Identical evidence is counted per fingerprint at the unchanged diff
-even when another read finds a new span; it may be cached and signaled but is not
-hard-blocked. Never add raw reasoning, private task material, hidden tests, reference
+decision once. Identical evidence is counted per fingerprint at the unchanged diff.
+A cache hit still costs one tool action, but its observation-level gain is recalculated
+against the current coverage ledger. It may be signaled but is not hard-blocked. Never
+add raw reasoning, private task material, hidden tests, reference
 patches, or evaluator details.
 
 ## State and recovery
@@ -383,15 +394,23 @@ recheck. An external copy with only that identifier corrected passes both public
 checks, including 517 upstream passes and 570 skips. No submission or hidden evaluator
 ran.
 
-The next seam is provider-free. Treat new-span count as syntactic telemetry and derive
-soft inspection gain from non-overlapping, task-relevant coverage. Replace the
-model-counted raw-hunk mutation wire with a bounded exact-anchor replacement whose
-canonical Git diff is constructed by the gateway while preserving current hash, path,
-scope, and postimage checks. After a failed visible check, reserve and expose one
-targeted read before repair and recheck so stale-span invalidation cannot remove needed
-same-file symbol/import context. Do not merely raise the 40-call limit, silently repair
-arbitrary patches, weaken a check, or run a paid retry/fifteenth row without separate
-authorization.
+The active provider-free successor implements that seam. New-span count is syntactic
+telemetry; soft inspection gain comes from non-overlapping coverage in editable task
+paths plus the first canonical observation of a search. `replace_text` moves diff
+serialization into the gateway while preserving current hash, tracked-path, scope,
+rollback, recovery, and post-image contracts. A failed visible check consumes its
+separate minimum three-call reserve and exposes exactly one targeted `read_file` turn over the
+changed/current-evidence paths before replacement, full recheck, and finish. Unchanged,
+uniquely occurring spans are revalidated across mutation so nearby import or symbol
+evidence is not discarded solely because another line changed. Do not merely raise the
+40-call limit, silently repair arbitrary model intent, weaken a check, or run a paid
+retry/fifteenth row without separate authorization.
+Focused contract tests pass 76 cases in 82.29 seconds. Ruff and all 95 tests pass in
+87.75 seconds with an external short temp root. Provider-free mock run
+`run_dev_c185114854c54ad6` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted `replace_text` mutation; task acceptance is
+PASS, safety is NOT_RUN, `claim_eligible=false`, and provider cost is zero. This proves
+local wiring and recovery only, not provider behavior or a fifteenth live row.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.

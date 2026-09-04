@@ -63,15 +63,15 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
             "last_observed_seq": index + 1,
         }
     latest_call = RequestedTool(
-            name="read_file",
-            action_id="latest-read",
-            arguments={
-                "path": "mini_data_utils/csvlite.py",
-                "start_line": 1,
-                "end_line": 13,
-            },
-            turn_decision=inspection_decision("latest-read"),
-        )
+        name="read_file",
+        action_id="latest-read",
+        arguments={
+            "path": "mini_data_utils/csvlite.py",
+            "start_line": 1,
+            "end_line": 13,
+        },
+        turn_decision=inspection_decision("latest-read"),
+    )
     latest = gateway.execute(latest_call)
     context = json.loads(
         runner._build_context(  # noqa: SLF001 - direct context contract test
@@ -101,15 +101,15 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     )
     assert horizon.minimum_completion_calls == 3
     assert horizon.mutation_recovery_reserve_calls == 2
-    assert horizon.check_recovery_reserve_calls == 2
-    assert horizon.feedback_recovery_reserve_calls == 4
-    assert horizon.completion_budget_calls == 7
+    assert horizon.check_recovery_reserve_calls == 3
+    assert horizon.feedback_recovery_reserve_calls == 5
+    assert horizon.completion_budget_calls == 8
     assert horizon.completion_possible is True
     assert horizon.protected_completion_possible is False
     assert horizon.exploration_allowed is False
     assert horizon.exploration_state == "closed"
     assert horizon.closure_reason == "completion_horizon"
-    assert horizon.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
+    assert horizon.allowed_tools == frozenset({"replace_text", "stop_task"})
     assert horizon.max_parallel_reads == 0
 
     impossible = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
@@ -125,9 +125,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     tool_impossible = runner._tool_policy(  # noqa: SLF001
         gateway,
         runner._RunCounters(  # noqa: SLF001
-            tool_actions=(
-                limits.max_tool_actions - horizon.minimum_completion_calls + 1
-            ),
+            tool_actions=(limits.max_tool_actions - horizon.minimum_completion_calls + 1),
         ),
         limits,
     )
@@ -144,9 +142,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     )
     assert legacy_limit_reached.exploration_allowed is True
     assert legacy_limit_reached.exploration_state == "open"
-    assert {"read_file", "search_files"}.issubset(
-        legacy_limit_reached.allowed_tools
-    )
+    assert {"read_file", "search_files"}.issubset(legacy_limit_reached.allowed_tools)
 
     gateway.last_failed_mutation = {"action_id": "failed-mutation"}
     repair = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
@@ -154,18 +150,16 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         runner._RunCounters(  # noqa: SLF001
             model_calls=24,
             inspection_turns_at_diff=limits.max_consecutive_inspection_turns,
-            failed_mutation_repair_turns=(
-                limits.max_failed_mutation_repair_turns - 1
-            ),
+            failed_mutation_repair_turns=(limits.max_failed_mutation_repair_turns - 1),
             failed_mutation_pending=True,
         ),
         limits,
     )
     assert {"read_file", "search_files"}.issubset(repair.allowed_tools)
     assert repair.mutation_recovery_reserve_calls == 0
-    assert repair.check_recovery_reserve_calls == 2
-    assert repair.feedback_recovery_reserve_calls == 2
-    assert repair.completion_budget_calls == repair.minimum_completion_calls + 2
+    assert repair.check_recovery_reserve_calls == 3
+    assert repair.feedback_recovery_reserve_calls == 3
+    assert repair.completion_budget_calls == repair.minimum_completion_calls + 3
     exhausted_repair = runner._tool_policy(  # noqa: SLF001
         gateway,
         runner._RunCounters(  # noqa: SLF001
@@ -224,7 +218,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     assert required_read.required_inspection_for_completion is True
     assert required_read.max_parallel_reads == 1
     assert {"read_file", "search_files"}.issubset(required_read.allowed_tools)
-    assert "apply_git_diff" not in required_read.allowed_tools
+    assert "replace_text" not in required_read.allowed_tools
     gateway.spans.update(saved_spans)
 
     journal.append(
@@ -232,7 +226,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         {
             "turn_id": "turn-before-horizon",
             "available_tool_names": [
-                "apply_git_diff",
+                "replace_text",
                 "read_file",
                 "search_files",
                 "stop_task",
@@ -253,15 +247,13 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         "reason": "completion_horizon",
         "removed_tools": ["read_file", "search_files"],
         "added_tools": [],
-        "remaining_tools": ["apply_git_diff", "stop_task"],
+        "remaining_tools": ["replace_text", "stop_task"],
     }
     journal.append(
         "tool_policy_transition",
         {"turn_id": "turn-after-horizon", **transition},
     )
-    assert sum(
-        row["event_type"] == "tool_policy_transition" for row in journal.events()
-    ) == 1
+    assert sum(row["event_type"] == "tool_policy_transition" for row in journal.events()) == 1
     projected_transition = json.loads(
         runner._build_context(  # noqa: SLF001
             package=smoke_package,
@@ -280,15 +272,12 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     )
     assert projected_transition["action_horizon"]["tool_policy_transition"] == transition
     assert projected_transition["action_horizon"]["minimum_completion_calls"] == 3
-    assert projected_transition["action_horizon"]["completion_budget_calls"] == 7
-    assert projected_transition["action_horizon"]["feedback_recovery_reserve_calls"] == 4
+    assert projected_transition["action_horizon"]["completion_budget_calls"] == 8
+    assert projected_transition["action_horizon"]["feedback_recovery_reserve_calls"] == 5
     assert projected_transition["action_horizon"]["mutation_recovery_reserve_calls"] == 2
-    assert projected_transition["action_horizon"]["check_recovery_reserve_calls"] == 2
+    assert projected_transition["action_horizon"]["check_recovery_reserve_calls"] == 3
     assert projected_transition["action_horizon"]["completion_possible"] is True
-    assert (
-        projected_transition["action_horizon"]["protected_completion_possible"]
-        is False
-    )
+    assert projected_transition["action_horizon"]["protected_completion_possible"] is False
 
     correction = runner._protocol_correction(  # noqa: SLF001
         turn_id="turn-after-horizon",
@@ -297,7 +286,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         gateway=gateway,
         policy=horizon,
     )
-    assert correction["available_tool_names"] == ["apply_git_diff", "stop_task"]
+    assert correction["available_tool_names"] == ["replace_text", "stop_task"]
     assert "read_file" not in correction["message"]
     assert "search_files" not in correction["message"]
     last_correction = runner._protocol_correction(  # noqa: SLF001
@@ -339,7 +328,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     assert evidence_transition["from"] == "inspection_open"
     assert evidence_transition["to"] == "inspection_open"
     assert evidence_transition["reason"] == "evidence_changed"
-    assert evidence_transition["added_tools"] == ["apply_git_diff"]
+    assert evidence_transition["added_tools"] == ["replace_text"]
 
 
 def test_repeated_zero_gain_inspection_adds_only_a_soft_commitment_signal(
@@ -365,7 +354,13 @@ def test_repeated_zero_gain_inspection_adds_only_a_soft_commitment_signal(
         input_hash=sha256_json("zero-gain-read"),
         tool="read_file",
         status="succeeded",
-        output={"new_span_count": 0},
+        output={
+            "new_span_count": 1,
+            "evidence_gain": {
+                "marginal_evidence_gain": False,
+                "marginal_evidence_gain_units": 0,
+            },
+        },
     )
 
     runner._update_inspection_counters(counters, [zero_gain])  # noqa: SLF001
@@ -392,18 +387,17 @@ def test_repeated_zero_gain_inspection_adds_only_a_soft_commitment_signal(
     assert {"read_file", "search_files"}.issubset(policy.allowed_tools)
     assert context["commitment_signal"] == {
         "state": "mutation_or_stop_recommended",
-        "reason": "consecutive_inspection_without_new_public_evidence",
+        "reason": "consecutive_inspection_without_marginal_public_evidence",
         "consecutive_no_evidence_gain_turns": 2,
         "hard_gate": False,
         "message": (
-            "Recent inspection produced no new public source spans. Use current "
-            "actionable evidence for apply_git_diff, or stop_task if it cannot justify "
-            "a safe mutation; inspect again only for a materially different evidence gap."
+            "Recent inspection added no uncovered task-relevant lines or new canonical "
+            "search result. Use current actionable evidence for replace_text, or stop_task "
+            "if it cannot justify a safe mutation; inspect again only for a specific "
+            "uncovered range or unresolved public symbol."
         ),
     }
-    assert context["action_horizon"][
-        "consecutive_no_evidence_gain_inspection_turns"
-    ] == 2
+    assert context["action_horizon"]["consecutive_no_marginal_evidence_gain_inspection_turns"] == 2
 
     evidence_gain = zero_gain.model_copy(
         update={
@@ -428,11 +422,11 @@ def test_turn_decision_is_bound_to_cache_action_and_projected_once_per_batch(
     }
     first_decision = inspection_decision("initial-cause")
     first_call = RequestedTool(
-            name="read_file",
-            action_id="working-state-first",
-            arguments=arguments,
-            turn_decision=first_decision,
-        )
+        name="read_file",
+        action_id="working-state-first",
+        arguments=arguments,
+        turn_decision=first_decision,
+    )
     first = gateway.execute(first_call)
     runner._record_tool_batch(  # noqa: SLF001 - direct context contract test
         journal=journal,
@@ -449,11 +443,11 @@ def test_turn_decision_is_bound_to_cache_action_and_projected_once_per_batch(
         evidence_goal="Confirm that replacing the loop preserves the return type.",
     )
     revised_call = RequestedTool(
-            name="read_file",
-            action_id="working-state-revised",
-            arguments=arguments,
-            turn_decision=revised_decision,
-        )
+        name="read_file",
+        action_id="working-state-revised",
+        arguments=arguments,
+        turn_decision=revised_decision,
+    )
     revised = gateway.execute(revised_call)
     runner._record_tool_batch(  # noqa: SLF001 - direct context contract test
         journal=journal,
@@ -495,9 +489,7 @@ def test_turn_decision_is_bound_to_cache_action_and_projected_once_per_batch(
         results=[first, revised],
         gateway=gateway,
     )
-    assert [
-        action["turn_decision"] for action in parallel_card["result"]["actions"]
-    ] == [
+    assert [action["turn_decision"] for action in parallel_card["result"]["actions"]] == [
         first_decision.model_dump(mode="json"),
         revised_decision.model_dump(mode="json"),
     ]
@@ -507,11 +499,11 @@ def test_failed_read_batch_retains_its_bounded_action_decision(gateway_factory) 
     gateway, _, _ = gateway_factory()
     decision = inspection_decision("failed-read")
     call = RequestedTool(
-            name="read_file",
-            action_id="working-state-failed-read",
-            arguments={"path": "missing.py", "start_line": 1, "end_line": 10},
-            turn_decision=decision,
-        )
+        name="read_file",
+        action_id="working-state-failed-read",
+        arguments={"path": "missing.py", "start_line": 1, "end_line": 10},
+        turn_decision=decision,
+    )
     result = gateway.execute(call)
     card = runner._batch_attempt_card(  # noqa: SLF001 - context contract test
         turn_id="failed-read-turn",
@@ -523,9 +515,7 @@ def test_failed_read_batch_retains_its_bounded_action_decision(gateway_factory) 
     assert result.status == "failed"
     assert "turn_decision" not in result.output
     assert "turn_decision" not in card
-    assert card["result"]["actions"][0]["turn_decision"] == decision.model_dump(
-        mode="json"
-    )
+    assert card["result"]["actions"][0]["turn_decision"] == decision.model_dump(mode="json")
     assert card["result"]["actions"][0]["status"] == "failed"
 
 
@@ -652,9 +642,7 @@ def test_openai_incomplete_reason_remains_typed_metadata(tmp_path) -> None:
                     input_tokens=17,
                     input_tokens_details=SimpleNamespace(cached_tokens=0),
                     output_tokens=DEFAULT_OUTPUT_CEILING,
-                    output_tokens_details=SimpleNamespace(
-                        reasoning_tokens=DEFAULT_OUTPUT_CEILING
-                    ),
+                    output_tokens_details=SimpleNamespace(reasoning_tokens=DEFAULT_OUTPUT_CEILING),
                 ),
             )
 
@@ -799,9 +787,7 @@ def test_encrypted_reasoning_and_parallel_calls_replay_in_provider_order(tmp_pat
         "reasoning-a",
         "reasoning-b",
     ]
-    assert all(
-        item["summary"] == [] for item in replayed if item["type"] == "reasoning"
-    )
+    assert all(item["summary"] == [] for item in replayed if item["type"] == "reasoning")
     assert "encrypted-order-a" not in journal.path.read_text(encoding="utf-8")
     artifact_text = reference.artifact.path
     assert "encrypted-order-a" in Path(artifact_text).read_text(encoding="utf-8")
@@ -848,7 +834,7 @@ def test_protocol_rejection_preserves_reasoning_and_call_linkage(tmp_path) -> No
             "turn_id": turn_id,
             "code": "INVALID_TOOL_BATCH",
             "message": "The requested read is not currently available.",
-            "available_tool_names": ["apply_git_diff", "stop_task"],
+            "available_tool_names": ["replace_text", "stop_task"],
         },
     )
 
@@ -867,7 +853,7 @@ def test_protocol_rejection_preserves_reasoning_and_call_linkage(tmp_path) -> No
     rejection = json.loads(model_input[-2]["output"])
     assert rejection == {
         "action_id": "rejected-read",
-        "available_tool_names": ["apply_git_diff", "stop_task"],
+        "available_tool_names": ["replace_text", "stop_task"],
         "error_code": "INVALID_TOOL_BATCH",
         "message": "The requested read is not currently available.",
         "status": "rejected",
@@ -994,29 +980,26 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
         )
     )
     mutation = MOCK_MUTATIONS["csv-quoted-newline"]
-    malformed_patch = mutation.patch.replace(" import csv\n", " import csv_missing\n")
+    malformed_anchor = mutation.old_text.replace("import csv\n", "import csv_missing\n")
     failed_call = RequestedTool(
-            name="apply_git_diff",
-            action_id="failed-mutation",
-            arguments={
-                "git_diff": malformed_patch,
-                "hypothesis": mutation.hypothesis,
-                "expected_behavior": mutation.expected_behavior,
-                "evidence_span_ids": [source.output["spans"][0]["span_id"]],
-                "edit_anchor": {
-                    "path": mutation.path,
-                    "old_text": mutation.anchor,
-                    "occurrence": 1,
-                },
-                "falsified_prior_hypothesis": None,
-                "alternative_mechanism": None,
-            },
-            turn_decision=PublicTurnDecision(
-                mode="mutate",
-                basis="The public source supplies the mutation anchor.",
-                evidence_goal=None,
-            ),
-        )
+        name="replace_text",
+        action_id="failed-mutation",
+        arguments={
+            "path": mutation.path,
+            "old_text": malformed_anchor,
+            "new_text": mutation.new_text,
+            "occurrence": 1,
+            "hypothesis": mutation.hypothesis,
+            "expected_behavior": mutation.expected_behavior,
+            "evidence_span_ids": [source.output["spans"][0]["span_id"]],
+            "causal_revision": None,
+        },
+        turn_decision=PublicTurnDecision(
+            mode="mutate",
+            basis="The public source supplies the mutation anchor.",
+            evidence_goal=None,
+        ),
+    )
     failed = gateway.execute(failed_call)
     _, correction = runner._record_tool_batch(  # noqa: SLF001 - context contract test
         journal=journal,
@@ -1030,18 +1013,18 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
 
     repair_decision = inspection_decision("failed-mutation-repair")
     read_calls = [
-            RequestedTool(
-                name="read_file",
-                action_id=f"read-after-failure-{index}",
-                arguments={
-                    "path": "mini_data_utils/csvlite.py",
-                    "start_line": index,
-                    "end_line": index + 5,
-                },
-                turn_decision=repair_decision,
-            )
-            for index in range(1, 5)
-        ]
+        RequestedTool(
+            name="read_file",
+            action_id=f"read-after-failure-{index}",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": index,
+                "end_line": index + 5,
+            },
+            turn_decision=repair_decision,
+        )
+        for index in range(1, 5)
+    ]
     reads = gateway.execute_batch(read_calls)
     runner._record_tool_batch(  # noqa: SLF001 - displace the bounded attempt cards
         journal=journal,
@@ -1062,23 +1045,18 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
             elapsed_seconds=0,
             limits=DevRunRequest(
                 provider="mock",
-                task=repository_root()
-                / "tasks"
-                / "smoke"
-                / "csv-quoted-newline"
-                / "public.yaml",
+                task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
                 model="mock-dev",
             ).limits,
         )
     )
 
-    assert context["last_failed_mutation"]["git_diff"] == malformed_patch
-    assert "patch failed: mini_data_utils/csvlite.py:1" in context[
-        "last_failed_mutation"
-    ]["error_message"]
-    assert [
-        card["attempt"] for card in context["recent_attempt_result_next_question"]
-    ] == ["apply_git_diff", "inspect"]
+    assert context["last_failed_mutation"]["replacement"]["old_text"] == malformed_anchor
+    assert "exact edit anchor is stale" in context["last_failed_mutation"]["error_message"]
+    assert [card["attempt"] for card in context["recent_attempt_result_next_question"]] == [
+        "replace_text",
+        "inspect",
+    ]
     assert len(context["recent_attempt_result_next_question"][-1]["result"]["actions"]) == 4
 
 
@@ -1101,20 +1079,17 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
     mutation = MOCK_MUTATIONS["csv-quoted-newline"]
     applied = gateway.execute(
         RequestedTool(
-            name="apply_git_diff",
+            name="replace_text",
             action_id="four-check-mutation",
             arguments={
-                "git_diff": mutation.patch,
+                "path": mutation.path,
+                "old_text": mutation.old_text,
+                "new_text": mutation.new_text,
+                "occurrence": 1,
                 "hypothesis": mutation.hypothesis,
                 "expected_behavior": mutation.expected_behavior,
                 "evidence_span_ids": [source.output["spans"][0]["span_id"]],
-                "edit_anchor": {
-                    "path": mutation.path,
-                    "old_text": mutation.anchor,
-                    "occurrence": 1,
-                },
-                "falsified_prior_hypothesis": None,
-                "alternative_mechanism": None,
+                "causal_revision": None,
             },
         )
     )
@@ -1132,28 +1107,24 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
             limits=DevLimits(),
         )
     )
-    assert post_mutation_context["latest_tool_results"][0]["output"][
-        "mutation_evidence"
-    ]["span_id"] == postimage_span_id
-    assert post_mutation_context["last_successful_mutation"][
-        "postimage_evidence_span_id"
-    ] == postimage_span_id
-    assert post_mutation_context["last_successful_mutation"][
-        "actionable_evidence_span_ids"
-    ] == [postimage_span_id]
-    assert "evidence_span_ids" not in post_mutation_context[
-        "last_successful_mutation"
-    ]
-    assert "anchor_evidence_span_id" not in post_mutation_context[
-        "last_successful_mutation"
-    ]
-    assert "edit_anchor" not in post_mutation_context["last_successful_mutation"]
-    projected_result_mutation = post_mutation_context["latest_tool_results"][0][
-        "output"
-    ]["mutation"]
-    assert projected_result_mutation["actionable_evidence_span_ids"] == [
+    assert (
+        post_mutation_context["latest_tool_results"][0]["output"]["mutation_evidence"]["span_id"]
+        == postimage_span_id
+    )
+    assert (
+        post_mutation_context["last_successful_mutation"]["postimage_evidence_span_id"]
+        == postimage_span_id
+    )
+    assert post_mutation_context["last_successful_mutation"]["actionable_evidence_span_ids"] == [
         postimage_span_id
     ]
+    assert "evidence_span_ids" not in post_mutation_context["last_successful_mutation"]
+    assert "anchor_evidence_span_id" not in post_mutation_context["last_successful_mutation"]
+    assert "edit_anchor" not in post_mutation_context["last_successful_mutation"]
+    projected_result_mutation = post_mutation_context["latest_tool_results"][0]["output"][
+        "mutation"
+    ]
+    assert projected_result_mutation["actionable_evidence_span_ids"] == [postimage_span_id]
     assert "evidence_span_ids" not in projected_result_mutation
     assert "anchor_evidence_span_id" not in projected_result_mutation
     assert postimage_span_id not in {
@@ -1204,11 +1175,7 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
             elapsed_seconds=0,
             limits=DevRunRequest(
                 provider="mock",
-                task=repository_root()
-                / "tasks"
-                / "smoke"
-                / "csv-quoted-newline"
-                / "public.yaml",
+                task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
                 model="mock-dev",
             ).limits,
         )
@@ -1263,6 +1230,13 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     assert run["accepted_mutations"] == 1
     assert all("hidden-multiline-csv" not in context for context in contexts)
     assert all("reference_patch" not in context for context in contexts)
+    assert all(
+        context.index('"workflow_gate"')
+        < context.index('"evidence_ledger"')
+        < context.index('"source_spans"')
+        < context.index('"public_task"')
+        for context in contexts
+    )
     context_keys = {
         "public_task",
         "current_diff",
@@ -1271,14 +1245,16 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "recent_checks",
         "visible_check_status",
         "remaining_visible_check_ids",
-            "last_successful_mutation",
-            "last_failed_mutation",
-            "recent_attempt_result_next_question",
-            "commitment_signal",
-            "workflow_gate",
+        "last_successful_mutation",
+        "last_failed_mutation",
+        "recent_attempt_result_next_question",
+        "commitment_signal",
+        "workflow_gate",
         "available_tool_names",
         "action_horizon",
         "remaining_budget",
+        "mutation_readiness",
+        "evidence_ledger",
     }
     assert all(set(json.loads(context)) == context_keys for context in contexts)
     assert [sorted(names) for names in tool_names] == [
@@ -1317,13 +1293,9 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     assert all(row["payload"]["model_input_hash"].startswith("sha256:") for row in turns)
     second_input_path = Path(turns[1]["payload"]["model_input_artifact"]["path"])
     second_input = json.loads(second_input_path.read_text(encoding="utf-8"))
-    assert sha256_bytes(second_input_path.read_bytes()) == turns[1]["payload"][
-        "model_input_hash"
-    ]
+    assert sha256_bytes(second_input_path.read_bytes()) == turns[1]["payload"]["model_input_hash"]
     function_calls = [item for item in second_input if item.get("type") == "function_call"]
-    function_outputs = [
-        item for item in second_input if item.get("type") == "function_call_output"
-    ]
+    function_outputs = [item for item in second_input if item.get("type") == "function_call_output"]
     assert [item["call_id"] for item in function_calls] == [
         item["call_id"] for item in function_outputs
     ]
@@ -1363,9 +1335,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     assert manifest["runtime_content_hash"] == envelope["runtime_hash"]
     assert manifest["model"]["max_output_tokens"] == DEFAULT_OUTPUT_CEILING
     assert manifest["model"]["reasoning_continuation"] == "none"
-    assert manifest["submitted_patch_content_hash"] == run["artifact_hashes"][
-        "submitted_patch"
-    ]
+    assert manifest["submitted_patch_content_hash"] == run["artifact_hashes"]["submitted_patch"]
     assert manifest["visible_check_diff_hash"] == manifest["submitted_patch_content_hash"]
     assert manifest["submitted_changed_files"] == ["mini_data_utils/csvlite.py"]
     workspace_roots = [path for path in (tmp_path / "workspaces").iterdir() if path.is_dir()]
@@ -1387,7 +1357,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
 def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> None:
     class PolicyGateway:
         def __init__(self) -> None:
-            self.current_diff = SimpleNamespace(patch="", untracked_files=[])
+            self.current_diff = SimpleNamespace(patch="", untracked_files=[], changed_files=[])
             self.spans = {"source-span": {}}
             self.public_task = SimpleNamespace(
                 visible_checks=[
@@ -1431,18 +1401,18 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     gateway = PolicyGateway()
     limits = DevLimits(max_model_calls=40)
     counters = runner._RunCounters(  # noqa: SLF001
-        model_calls=31,
-        tool_actions=31,
-        inspection_turns_at_diff=31,
+        model_calls=30,
+        tool_actions=30,
+        inspection_turns_at_diff=30,
     )
 
     last_inspection = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert last_inspection.exploration_state == "last_opportunity"
     assert last_inspection.minimum_completion_calls == 4
     assert last_inspection.mutation_recovery_reserve_calls == 2
-    assert last_inspection.check_recovery_reserve_calls == 2
-    assert last_inspection.feedback_recovery_reserve_calls == 4
-    assert last_inspection.completion_budget_calls == 8
+    assert last_inspection.check_recovery_reserve_calls == 3
+    assert last_inspection.feedback_recovery_reserve_calls == 5
+    assert last_inspection.completion_budget_calls == 9
     assert last_inspection.protected_completion_possible is True
 
     read_result = DevToolResult(
@@ -1458,13 +1428,13 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
 
     execution_only = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert execution_only.exploration_state == "closed"
-    assert execution_only.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
+    assert execution_only.allowed_tools == frozenset({"replace_text", "stop_task"})
     assert execution_only.completion_possible is True
 
     failed_mutation = DevToolResult(
         action_id="rejected-mutation",
         input_hash=sha256_json("rejected-mutation"),
-        tool="apply_git_diff",
+        tool="replace_text",
         status="failed",
         error_code="CONTRACT_ERROR",
         message="simulated patch rejection",
@@ -1476,8 +1446,8 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
 
     mutation_recovery = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert mutation_recovery.mutation_recovery_reserve_calls == 0
-    assert mutation_recovery.check_recovery_reserve_calls == 2
-    assert mutation_recovery.feedback_recovery_reserve_calls == 2
+    assert mutation_recovery.check_recovery_reserve_calls == 3
+    assert mutation_recovery.feedback_recovery_reserve_calls == 3
     assert mutation_recovery.exploration_state == "last_opportunity"
     assert counters.mutation_recovery_used is True
     assert counters.check_recovery_used is False
@@ -1496,27 +1466,26 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     successful_mutation = DevToolResult(
         action_id="initial-mutation",
         input_hash=sha256_json("initial-mutation"),
-        tool="apply_git_diff",
+        tool="replace_text",
         status="succeeded",
     )
     counters.model_calls += 1
     counters.tool_actions += 1
     runner._update_inspection_counters(counters, [successful_mutation])  # noqa: SLF001
     gateway.current_diff.patch = "diff --git a/source.py b/source.py"
+    gateway.current_diff.changed_files = ["source.py"]
     gateway.accepted_mutations = 1
     gateway.last_failed_mutation = None
 
     before_check = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
-    assert limits.max_model_calls - counters.model_calls == 5
+    assert limits.max_model_calls - counters.model_calls == 6
     assert before_check.minimum_completion_calls == 3
     assert before_check.mutation_recovery_reserve_calls == 0
-    assert before_check.check_recovery_reserve_calls == 2
-    assert before_check.feedback_recovery_reserve_calls == 2
-    assert before_check.completion_budget_calls == 5
+    assert before_check.check_recovery_reserve_calls == 3
+    assert before_check.feedback_recovery_reserve_calls == 3
+    assert before_check.completion_budget_calls == 6
     assert before_check.protected_completion_possible is True
-    assert before_check.allowed_tools == frozenset(
-        {"apply_git_diff", "run_check", "stop_task"}
-    )
+    assert before_check.allowed_tools == frozenset({"replace_text", "run_check", "stop_task"})
 
     failed_check = DevToolResult(
         action_id="failed-contract-check",
@@ -1531,21 +1500,40 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     runner._update_inspection_counters(counters, [failed_check])  # noqa: SLF001
 
     repair = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
-    assert limits.max_model_calls - counters.model_calls == 4
-    assert repair.minimum_completion_calls == 4
+    assert limits.max_model_calls - counters.model_calls == 5
+    assert repair.minimum_completion_calls == 5
     assert repair.mutation_recovery_reserve_calls == 0
     assert repair.check_recovery_reserve_calls == 0
     assert repair.feedback_recovery_reserve_calls == 0
-    assert repair.completion_budget_calls == 4
+    assert repair.completion_budget_calls == 5
     assert repair.completion_possible is True
-    assert repair.allowed_tools == frozenset({"apply_git_diff", "stop_task"})
+    assert repair.targeted_check_repair_inspection is True
+    assert repair.targeted_read_paths == ("source.py",)
+    assert repair.allowed_tools == frozenset({"read_file", "stop_task"})
     assert counters.mutation_recovery_used is True
     assert counters.check_recovery_used is True
+
+    targeted_read = DevToolResult(
+        action_id="failed-check-context-read",
+        input_hash=sha256_json("failed-check-context-read"),
+        tool="read_file",
+        status="succeeded",
+        output={"new_span_count": 0},
+    )
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    runner._update_inspection_counters(counters, [targeted_read])  # noqa: SLF001
+
+    repair_action = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert limits.max_model_calls - counters.model_calls == 4
+    assert repair_action.minimum_completion_calls == 4
+    assert repair_action.targeted_check_repair_inspection is False
+    assert repair_action.allowed_tools == frozenset({"replace_text", "stop_task"})
 
     repaired_mutation = DevToolResult(
         action_id="repaired-mutation",
         input_hash=sha256_json("repaired-mutation"),
-        tool="apply_git_diff",
+        tool="replace_text",
         status="succeeded",
     )
     counters.model_calls += 1
@@ -1583,6 +1571,63 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
 
     assert counters.model_calls == limits.max_model_calls == 40
     assert counters.tool_actions == 40
+
+
+def test_failed_check_reserve_includes_prior_current_diff_passes() -> None:
+    class PolicyGateway:
+        current_diff = SimpleNamespace(
+            patch="diff --git a/source.py b/source.py",
+            untracked_files=[],
+            changed_files=["source.py"],
+        )
+        public_task = SimpleNamespace(
+            visible_checks=[
+                SimpleNamespace(id="first-check"),
+                SimpleNamespace(id="second-check"),
+                SimpleNamespace(id="third-check"),
+            ]
+        )
+        accepted_mutations = 1
+        last_failed_mutation = None
+
+        @staticmethod
+        def has_current_mutation_evidence():
+            return True
+
+        @staticmethod
+        def visible_check_status():
+            return [
+                {"check_id": "first-check", "status": "PASS"},
+                {"check_id": "second-check", "status": "NOT_RUN"},
+                {"check_id": "third-check", "status": "NOT_RUN"},
+            ]
+
+        @staticmethod
+        def remaining_visible_check_ids():
+            return ["second-check", "third-check"]
+
+        @staticmethod
+        def unrun_visible_check_ids():
+            return ["second-check", "third-check"]
+
+        @staticmethod
+        def ready_to_submit():
+            return False
+
+        @staticmethod
+        def current_evidence_paths():
+            return ("source.py",)
+
+    policy = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
+        PolicyGateway(),
+        runner._RunCounters(),  # noqa: SLF001
+        DevLimits(),
+    )
+
+    assert policy.minimum_completion_calls == 3
+    assert policy.mutation_recovery_reserve_calls == 2
+    assert policy.check_recovery_reserve_calls == 4
+    assert policy.completion_budget_calls == 9
 
 
 def test_unexpected_tool_gateway_failure_writes_terminal(tmp_path, monkeypatch) -> None:
@@ -1656,9 +1701,7 @@ def test_manifest_submission_and_terminal_provenance_survive_evaluator_error(
     manifest_text = (run_artifacts / "manifest.json").read_text(encoding="utf-8")
     assert "hidden-multiline-csv" not in manifest_text
     assert "reference.patch" not in manifest_text
-    assert {"submitted_patch", "manifest", "terminal_provenance"}.issubset(
-        run["artifact_hashes"]
-    )
+    assert {"submitted_patch", "manifest", "terminal_provenance"}.issubset(run["artifact_hashes"])
 
 
 def test_invalid_tool_batch_gets_one_correction_then_stops(tmp_path, monkeypatch) -> None:
@@ -1751,9 +1794,7 @@ def test_protocol_correction_limit_is_consecutive_and_stop_is_structured(
                                 "start_line": 1,
                                 "end_line": 20,
                             },
-                            turn_decision=inspection_decision(
-                                "valid-between-corrections"
-                            ),
+                            turn_decision=inspection_decision("valid-between-corrections"),
                         )
                     ]
                 )
@@ -1848,7 +1889,7 @@ def test_resume_counter_restores_separate_recovery_and_no_gain_state(tmp_path) -
         DevToolResult(
             action_id="failed-mutation",
             input_hash=sha256_json("failed-mutation"),
-            tool="apply_git_diff",
+            tool="replace_text",
             status="failed",
             error_code="CONTRACT_ERROR",
             message="simulated rejection",
@@ -1914,9 +1955,7 @@ def test_resume_recovers_the_exact_incomplete_reason(tmp_path) -> None:
     runner._recover_unrecorded_decision(journal)  # noqa: SLF001 - recovery contract test
 
     decision = next(
-        row["payload"]
-        for row in journal.events()
-        if row["event_type"] == "turn_decision_recorded"
+        row["payload"] for row in journal.events() if row["event_type"] == "turn_decision_recorded"
     )
     assert decision["error_code"] == "incomplete_response"
     assert decision["incomplete_reason"] == "max_output_tokens"
@@ -2098,9 +2137,7 @@ def test_live_output_ceiling_replay_and_missing_continuation_are_durable(
                     output_item_count=1,
                     non_tool_output_item_count=1,
                     output_item_types=("reasoning",),
-                    output_shape_hash=sha256_json(
-                        {"item_count": 1, "item_types": ("reasoning",)}
-                    ),
+                    output_shape_hash=sha256_json({"item_count": 1, "item_types": ("reasoning",)}),
                 )
             return ModelTurn(
                 requested_input_tokens=requested_input_tokens,
@@ -2118,9 +2155,7 @@ def test_live_output_ceiling_replay_and_missing_continuation_are_durable(
                 output_item_count=1,
                 non_tool_output_item_count=1,
                 output_item_types=("reasoning",),
-                output_shape_hash=sha256_json(
-                    {"item_count": 1, "item_types": ("reasoning",)}
-                ),
+                output_shape_hash=sha256_json({"item_count": 1, "item_types": ("reasoning",)}),
                 provider_continuation=(
                     ProviderReasoningItem(
                         id=f"reasoning-incomplete-{execute_calls}",
@@ -2144,9 +2179,7 @@ def test_live_output_ceiling_replay_and_missing_continuation_are_durable(
     assert configured_ceilings == [DEFAULT_OUTPUT_CEILING]
     assert configured_continuations == ["encrypted-v1"]
     assert execute_calls == 2
-    replayed_reasoning = [
-        item for item in model_inputs[1] if item.get("type") == "reasoning"
-    ]
+    replayed_reasoning = [item for item in model_inputs[1] if item.get("type") == "reasoning"]
     assert replayed_reasoning == [
         {
             "type": "reasoning",
@@ -2156,18 +2189,14 @@ def test_live_output_ceiling_replay_and_missing_continuation_are_durable(
             "status": "incomplete",
         }
     ]
-    assert not any(
-        item.get("type") == "function_call_output" for item in model_inputs[1]
-    )
+    assert not any(item.get("type") == "function_call_output" for item in model_inputs[1])
     journal = DevJournal(request.state_root, run["run_id"])
     events = journal.events()
     starts = [row["payload"] for row in events if row["event_type"] == "provider_call_started"]
     provider_turns = [
         row["payload"] for row in events if row["event_type"] == "provider_call_finished"
     ]
-    decisions = [
-        row["payload"] for row in events if row["event_type"] == "turn_decision_recorded"
-    ]
+    decisions = [row["payload"] for row in events if row["event_type"] == "turn_decision_recorded"]
     correction = next(
         row["payload"] for row in events if row["event_type"] == "protocol_correction"
     )
@@ -2186,9 +2215,7 @@ def test_live_output_ceiling_replay_and_missing_continuation_are_durable(
     assert "encrypted-incomplete" not in journal.path.read_text(encoding="utf-8")
     assert "max_output_tokens" in correction["message"]
     assert terminal["message"] == "provider reasoning output has no encrypted continuation"
-    assert not any(
-        row["event_type"] == "tool_batch_started" for row in events
-    )
+    assert not any(row["event_type"] == "tool_batch_started" for row in events)
 
 
 class _SimulatedCrash(BaseException):
@@ -2251,8 +2278,7 @@ def test_mock_resume_replays_durable_work_without_duplicate_mutation(
             monkeypatch,
             event_type="action_finished",
             when="before",
-            predicate=lambda payload: payload.get("result", {}).get("tool")
-            == "apply_git_diff",
+            predicate=lambda payload: payload.get("result", {}).get("tool") == "replace_text",
         )
     elif crash_case == "check_result_recorded":
         _crash_journal_once(
@@ -2294,7 +2320,7 @@ def test_mock_resume_replays_durable_work_without_duplicate_mutation(
         for row in journal.events()
         if row["event_type"] == "action_finished"
     ]
-    mutation_results = [row for row in action_results if row["tool"] == "apply_git_diff"]
+    mutation_results = [row for row in action_results if row["tool"] == "replace_text"]
     assert len(mutation_results) == 1
     assert len([row for row in journal.events() if row["event_type"] == "run_resumed"]) == 1
 
@@ -2322,9 +2348,7 @@ def test_resume_contract_and_workspace_mismatch_do_not_change_journal(
 
     with pytest.raises(ResumeContractMismatch):
         runner.run_dev(
-            request.model_copy(
-                update={"resume_run_id": run_id, "model": "different-mock-model"}
-            )
+            request.model_copy(update={"resume_run_id": run_id, "model": "different-mock-model"})
         )
     assert journal.path.read_bytes() == before
 
@@ -2365,9 +2389,7 @@ def test_runtime_mismatch_and_pre_envelope_run_fail_before_journal_change(
     old.append("run_started", {"runtime": "dev-head"})
     old_before = old.path.read_bytes()
     with pytest.raises(RecoveryError, match="predates resumable envelopes"):
-        runner.run_dev(
-            request.model_copy(update={"resume_run_id": "run_dev_oldformat0001"})
-        )
+        runner.run_dev(request.model_copy(update={"resume_run_id": "run_dev_oldformat0001"}))
     assert old.path.read_bytes() == old_before
 
 
@@ -2500,9 +2522,7 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
         assert payload["output_shape_hash"].startswith("sha256:")
         assert payload["continuation_ref"]["order_hash"].startswith("sha256:")
     decision = next(
-        row["payload"]
-        for row in journal.events()
-        if row["event_type"] == "turn_decision_recorded"
+        row["payload"] for row in journal.events() if row["event_type"] == "turn_decision_recorded"
     )
     recorded_call = decision["tool_calls"][0]
     assert "turn_decision" not in recorded_call["arguments"]
@@ -2510,9 +2530,7 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
         mode="stop",
         basis="Only an explicit stop fits the current horizon.",
         evidence_goal=None,
-    ).model_dump(
-        mode="json"
-    )
+    ).model_dump(mode="json")
 
 
 def test_resume_rejects_tampered_reasoning_before_tool_or_provider_call(
@@ -2593,9 +2611,7 @@ def test_resume_rejects_tampered_reasoning_before_tool_or_provider_call(
     run_id = _enveloped_run_id(request.state_root)
     journal = DevJournal(request.state_root, run_id)
     provider = next(
-        row["payload"]
-        for row in journal.events()
-        if row["event_type"] == "provider_call_finished"
+        row["payload"] for row in journal.events() if row["event_type"] == "provider_call_finished"
     )
     continuation_path = Path(provider["continuation_ref"]["artifact"]["path"])
     continuation_path.write_text("tampered", encoding="utf-8")
@@ -2606,9 +2622,7 @@ def test_resume_rejects_tampered_reasoning_before_tool_or_provider_call(
     assert run["terminal"] == "PROVIDER_CONTINUATION_ERROR"
     assert run["call_counts"] == {"model": 1, "input_count": 1, "tool": 0}
     assert calls["execute"] == 1
-    assert not any(
-        row["event_type"] == "tool_batch_started" for row in journal.events()
-    )
+    assert not any(row["event_type"] == "tool_batch_started" for row in journal.events())
 
 
 def test_unfinished_provider_dispatch_with_orphan_continuation_is_unknown(
@@ -2649,9 +2663,7 @@ def test_unfinished_provider_dispatch_with_orphan_continuation_is_unknown(
                 output_item_count=1,
                 non_tool_output_item_count=1,
                 output_item_types=("reasoning",),
-                output_shape_hash=sha256_json(
-                    {"item_count": 1, "item_types": ("reasoning",)}
-                ),
+                output_shape_hash=sha256_json({"item_count": 1, "item_types": ("reasoning",)}),
                 provider_continuation=(
                     ProviderReasoningItem(
                         id="reasoning-orphan",

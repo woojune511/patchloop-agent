@@ -12,8 +12,8 @@ claim commands are absent.
 - 40 model calls, 100 tool actions, and 4 accepted mutations
 - one consecutive protocol/incomplete correction and at most 4 parallel reads
 - completion-slack inspection with one warned final opportunity, independent bounded
-  two-call mutation/check recovery reserves, and a non-blocking zero-gain commitment
-  signal; legacy 24/3 counters are telemetry only
+  two-call mutation and minimum three-call failed-check recovery reserves, and a non-blocking
+  marginal-coverage commitment signal; legacy 24/3 counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
 ## Authority
@@ -321,10 +321,19 @@ The final repair used undefined `helpers.PERM_DEF` even though `fake_os.py` impo
 registered public checks then passed, including 517 upstream passes and 570 skips.
 No hidden evaluator ran, so this is public repair evidence rather than task acceptance.
 The trace confirms encrypted continuation and announced tool-policy transitions, while
-exposing three remaining product boundaries: syntactically novel overlapping spans
-rarely trigger the soft commitment cue, raw unified-diff serialization still wastes
-recovery turns, and failed-check repair can lose same-file symbol/import context while
-inspection is closed. No paid retry or fifteenth row is authorized.
+exposing three product boundaries at that checkpoint: syntactically novel overlapping
+spans rarely triggered the soft commitment cue, raw unified-diff serialization wasted
+recovery turns, and failed-check repair could lose same-file symbol/import context while
+inspection was closed. The active provider-free successor now addresses those three
+boundaries with a coverage ledger, exact replacement mutation, unchanged-span
+revalidation, and one reserved targeted read. No paid retry or fifteenth row is authorized.
+Focused contract tests pass 76 cases in 82.29 seconds. Ruff and all 95 tests pass in
+87.75 seconds using external temp root `C:\patchloop-test\r14-seam-full-c`. Provider-free
+mock run `run_dev_c185114854c54ad6` reaches isolated `EVALUATOR_PASS` in four model
+calls and five tool actions through one accepted `replace_text` mutation, with task
+acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero provider cost. This
+validates local contracts only; it does not establish that a provider will use the new
+evidence or mutation interface effectively.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -449,13 +458,16 @@ zero-gain signal addresses repeated inspection as guidance rather than a new ter
 tool mask. The evidence therefore points to evidence-role classification and recovery-
 budget accounting, not a need to raise the global 40-call limit.
 
-Deterministic hunk recount remains the correct mutation-wire fix, not a stronger
-repeated-read terminal or replacement mutation interface. The retrospective replay
-now confirms that it accepts one exact provider-emitted diff while preserving the
-canonical submission identity. That patch passed all version-1 visible checks but
-failed task acceptance, exposing a later public-feedback boundary: those checks
-covered valid-format regressions but did not execute the issue's missing-key and
-catch behavior.
+Deterministic hunk recount was the correct narrow fix for the malformed line totals in
+the earlier Loguru rows: the retrospective replay confirms that it accepts one exact
+provider-emitted diff while preserving canonical submission identity. The fourteenth
+row supplies different evidence. Even with recount and exact failure feedback, the
+model spent three tail turns reserializing corrupt hunks. The active interface therefore
+moves mechanical diff construction into the gateway as `replace_text`; this is not a
+stronger repeated-read terminal and does not repair arbitrary model intent. The replayed
+Loguru patch passed all version-1 visible checks but failed task acceptance, exposing a
+separate public-feedback boundary: those checks covered valid-format regressions but did
+not execute the issue's missing-key and catch behavior.
 
 Task version 2 preserves version 1 and adds one black-box visible check derived only
 from the public issue and repository API. It exercises actionable missing-key
@@ -533,7 +545,12 @@ and the single shared allowance. The current provider-free successor separates b
 evidence roles and failure reserves, and adds only a soft zero-gain commitment signal.
 The fourteenth row confirms those two corrections but exposes the narrower mutation-
 wire, evidence-saturation, and failed-check repair-context boundaries described above.
-No paid retry or fifteenth row is authorized.
+The current provider-free successor treats hash-new spans as telemetry, projects merged
+task-relevant coverage and mutation readiness before the task body, replaces exact text
+while deriving the Git diff in the gateway, revalidates unchanged spans after mutation,
+and protects one targeted read after a failed visible check. These are harness-contract
+changes only until exercised by a separately authorized live row. No paid retry or
+fifteenth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

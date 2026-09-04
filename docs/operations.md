@@ -91,19 +91,20 @@ Required tool choice follows the official
 
 ## Submission and evaluation
 
-The mutation tool is `apply_git_diff`. Its `git_diff` value must start exactly with
-`diff --git a/<path> b/<path>` and contain a raw Git unified diff. Codex-style
-`*** Begin Patch` / `*** Update File` wrappers are rejected rather than converted.
-Declared hunk line totals are recounted deterministically from the raw hunk body for
-check, apply, rollback, and crash reconciliation. Invalid hunk syntax or source
-context still fails closed, as do stale anchors, non-tracked paths, and scope
-violations. The requested patch hash remains evidence, while visible checks and
-submission bind the canonical diff produced by the resulting worktree.
-If a valid mutation call fails, its bounded public diff and intent remain in
-`last_failed_mutation` across later reads and resume. The agent may read/search when
-needed for repair, but a successful mutation is required to clear that repair target.
-After success, edited-file pre-image spans are invalidated and one bounded post-image
-span is registered with the current file and diff hashes. Its ID is retained in
+The mutation tool is `replace_text`. It names one tracked, existing, allowed path, one
+exact current `old_text` occurrence, and the desired `new_text`; it does not accept Git
+diff syntax. The gateway checks that current public evidence covers that anchor,
+constructs a bounded Git diff, writes the replacement, and then derives the canonical
+full worktree diff used by visible checks and submission. Stale or out-of-range occurrences,
+mixed newline styles, non-tracked paths, untracked files, and scope violations fail
+closed. A failure after the write restores the exact pre-image, while a crash after an
+admitted write is reconciled from its expected post-image hash and admitted path set.
+If a valid mutation call fails, its bounded exact replacement, replacement hash, intent,
+evidence IDs, and error location remain in `last_failed_mutation` across later reads and
+resume. The agent may read/search when needed for repair, but a successful mutation is
+required to clear that repair target. After success, unchanged uniquely occurring
+edited-file spans are rebound to the post-image hash, changed pre-image spans are
+invalidated, and one bounded replacement post-image span is registered. Its ID is retained in
 `last_successful_mutation.actionable_evidence_span_ids`. The accepted action's exact
 input IDs remain in `action_started` as historical provenance and are not projected as
 current repair evidence. For compatibility, a retry that includes those known stale
@@ -118,11 +119,18 @@ records its action after the preceding public result; it is not a promise about 
 unseen result or stored raw reasoning. Action identity binds each decision, while the
 operational read cache remains keyed only by the executable request and current diff.
 
+The public context presents the workflow gate, budget, action horizon, mutation
+readiness, and evidence ledger before the larger task payload. The ledger is bounded
+and deterministic: it merges covered line ranges by path, retains canonical search
+observations and the latest public inspection intent, and is rebuilt from durable tool
+results on resume. It does not contain private evaluator data or inferred chain-of-thought.
+
 Tool availability is derived from the workflow gate, current evidence, unexecuted
 visible checks, and remaining model/tool budget. Optional inspection stays open while
 both budgets have calls beyond the minimum mutation, check, and finish path plus two
-independent bounded allowances: two calls for rejected-mutation recovery and two for
-failed-check recovery. At one remaining optional turn, the context marks
+independent bounded allowances: two calls for rejected-mutation recovery and at least
+three for failed-check recovery. The latter grows by the number of checks already passed
+on the current diff because a repair invalidates and reruns them. At one remaining optional turn, the context marks
 `last_opportunity` and names the inspection tools that will close next; at zero slack
 they are removed. Each allowance is consumed only by its corresponding failure, and
 both states are reconstructed from durable batches on resume. A source read that is strictly required to
@@ -134,10 +142,12 @@ to cover the best-case minimum path and required mutation capacity;
 `protected_completion_possible` includes the unused recovery allowances. The legacy
 24-turn and three-repair-read fields remain
 envelope-compatible telemetry and do not remove tools. Cached or repeated evidence
-remains diagnostic-only. Two consecutive successful inspection batches with zero new
-spans add a soft `commitment_signal` to the next context and turn journal, recommending
-mutation or `stop_task` unless a materially different evidence gap remains. The signal
-does not change the allowed-tool set, and `stop_task` is always available.
+remains diagnostic-only. `new_span_count` is syntactic telemetry; the action signal is
+based on newly covered, non-overlapping lines in editable task paths plus the first
+canonical observation of a search. Two consecutive successful inspection batches with
+no such gain add a soft `commitment_signal` to the next context and turn journal,
+recommending mutation or `stop_task` unless a materially different evidence gap remains.
+The signal does not change the allowed-tool set, and `stop_task` is always available.
 Every inspection close or reopen is journaled as `tool_policy_transition` and projected
 once in the public context.
 One consecutive invalid or incomplete model response receives a correction that
@@ -160,7 +170,10 @@ current non-empty diff and no non-ignored untracked file remains. The context li
 every current-diff check as PASS, FAIL, or NOT_RUN and separately names remaining
 IDs; the `run_check` schema exposes only public checks not yet executed on that exact
 diff. A failed check therefore requires a mutation or stop rather than a same-diff
-rerun. The full
+rerun. Before mutation becomes available again, the scheduler exposes exactly one
+`read_file` action restricted to the changed and currently evidenced paths. Its
+three-call reserve accounts for that targeted read, the repair, and the failed check
+that must be rerun after all current-diff check results are invalidated. The full
 submitted patch is stored by content hash. A separate
 manifest is atomically recorded before evaluator execution and binds the exact
 task bytes, full runtime bytes, model/tool/sandbox identities, visible-check diff,

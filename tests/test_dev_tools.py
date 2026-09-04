@@ -64,23 +64,23 @@ def mutation_call(gateway, *, action_id: str = "mutation-1", alternative: bool =
     mutation = MOCK_MUTATIONS["csv-quoted-newline"]
     spans = [item["span_id"] for item in gateway.spans.values() if item["path"] == mutation.path]
     return RequestedTool(
-        name="apply_git_diff",
+        name="replace_text",
         action_id=action_id,
         arguments={
-            "git_diff": mutation.patch,
+            "path": mutation.path,
+            "old_text": mutation.old_text,
+            "new_text": mutation.new_text,
+            "occurrence": 1,
             "hypothesis": mutation.hypothesis,
             "expected_behavior": mutation.expected_behavior,
             "evidence_span_ids": spans[:2],
-            "edit_anchor": {
-                "path": mutation.path,
-                "old_text": mutation.anchor,
-                "occurrence": 1,
-            },
-            "falsified_prior_hypothesis": (
-                "physical line handling was the only cause" if alternative else None
-            ),
-            "alternative_mechanism": (
-                "parser lifetime, not line normalization, owns record boundaries"
+            "causal_revision": (
+                {
+                    "falsified_prior_hypothesis": ("physical line handling was the only cause"),
+                    "alternative_mechanism": (
+                        "parser lifetime, not line normalization, owns record boundaries"
+                    ),
+                }
                 if alternative
                 else None
             ),
@@ -93,55 +93,54 @@ def mutation_call(gateway, *, action_id: str = "mutation-1", alternative: bool =
     )
 
 
-def test_mutation_tool_contract_requires_unwrapped_raw_git_diff() -> None:
+def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> None:
     schemas = dev_tool_schemas(
         finish_enabled=False,
         check_ids=["contract-check", "regression-check"],
     )
-    mutation = next(schema for schema in schemas if schema["name"] == "apply_git_diff")
+    mutation = next(schema for schema in schemas if schema["name"] == "replace_text")
     reads = [schema for schema in schemas if schema["name"] in {"read_file", "search_files"}]
     check = next(schema for schema in schemas if schema["name"] == "run_check")
     stop = next(schema for schema in schemas if schema["name"] == "stop_task")
 
-    assert all(schema["name"] != "apply_patch" for schema in schemas)
+    assert all(schema["name"] not in {"apply_patch", "apply_git_diff"} for schema in schemas)
     assert all(schema["name"] != "finish_task" for schema in schemas)
     assert check["parameters"]["properties"]["check_id"]["enum"] == [
         "contract-check",
         "regression-check",
     ]
-    assert set(stop["parameters"]["required"]) == set(
-        stop["parameters"]["properties"]
-    )
+    assert set(stop["parameters"]["required"]) == set(stop["parameters"]["properties"])
     assert stop["parameters"]["additionalProperties"] is False
-    assert mutation["parameters"]["required"][0] == "git_diff"
-    assert mutation["parameters"]["properties"]["git_diff"]["pattern"] == "^diff --git a/"
-    assert set(mutation["parameters"]["required"]) == set(
-        mutation["parameters"]["properties"]
-    )
+    assert mutation["parameters"]["required"][0] == "path"
+    assert "git_diff" not in mutation["parameters"]["properties"]
+    assert set(mutation["parameters"]["required"]) == set(mutation["parameters"]["properties"])
     assert mutation["parameters"]["additionalProperties"] is False
-    assert "diff --git a/<path> b/<path>" in mutation["description"]
-    assert "*** Begin Patch" in mutation["description"]
+    assert "constructs the canonical Git diff" in mutation["description"]
+    assert "never provide diff syntax" in mutation["description"]
     assert "bounded post-image" in mutation["description"]
-    assert "actionable_evidence_span_ids" in mutation["parameters"]["properties"][
-        "evidence_span_ids"
-    ]["description"]
-    assert "provenance" in mutation["parameters"]["properties"][
-        "evidence_span_ids"
-    ]["description"]
+    assert (
+        "actionable_evidence_span_ids"
+        in mutation["parameters"]["properties"]["evidence_span_ids"]["description"]
+    )
+    assert "provenance" in mutation["parameters"]["properties"]["evidence_span_ids"]["description"]
     for schema in schemas:
         decision = schema["parameters"]["properties"]["turn_decision"]
         assert "turn_decision" in schema["parameters"]["required"]
         assert set(decision["required"]) == set(decision["properties"])
         assert decision["additionalProperties"] is False
         assert decision["properties"]["basis"]["maxLength"] == 800
-        expected_mode = "inspect" if schema in reads else {
-            "run_check": "verify",
-            "apply_git_diff": "mutate",
-            "stop_task": "stop",
-        }[schema["name"]]
+        expected_mode = (
+            "inspect"
+            if schema in reads
+            else {
+                "run_check": "verify",
+                "replace_text": "mutate",
+                "stop_task": "stop",
+            }[schema["name"]]
+        )
         assert decision["properties"]["mode"]["enum"] == [expected_mode]
-    assert "git_diff value must be a raw Git unified diff" in DEV_SYSTEM_PROMPT
-    assert "Never use \"*** Begin Patch\"" in DEV_SYSTEM_PROMPT
+    assert "gateway, not you, constructs the" in DEV_SYSTEM_PROMPT
+    assert "Do not write a Git diff or patch wrapper" in DEV_SYSTEM_PROMPT
     assert "When last_failed_mutation is present" in DEV_SYSTEM_PROMPT
     assert "Every response must request at least one supplied tool" in DEV_SYSTEM_PROMPT
     assert "Use stop_task when no available public action" in DEV_SYSTEM_PROMPT
@@ -152,11 +151,21 @@ def test_mutation_tool_contract_requires_unwrapped_raw_git_diff() -> None:
     gate_schemas = dev_tool_schemas(
         finish_enabled=False,
         check_ids=(),
-        allowed_tools=frozenset({"apply_git_diff", "stop_task"}),
+        allowed_tools=frozenset({"replace_text", "stop_task"}),
     )
     assert [schema["name"] for schema in gate_schemas] == [
-        "apply_git_diff",
+        "replace_text",
         "stop_task",
+    ]
+
+    targeted = dev_tool_schemas(
+        finish_enabled=False,
+        allowed_tools=frozenset({"read_file", "stop_task"}),
+        read_paths=("mini_data_utils/csvlite.py",),
+    )
+    targeted_read = next(schema for schema in targeted if schema["name"] == "read_file")
+    assert targeted_read["parameters"]["properties"]["path"]["enum"] == [
+        "mini_data_utils/csvlite.py"
     ]
 
 
@@ -222,26 +231,19 @@ def test_mutation_error_location_parses_git_diagnostics() -> None:
     ) == {"path": "mini_data_utils/csvlite.py", "line": 1}
 
 
-def test_patch_wrapper_from_live_transcript_fails_with_exact_git_diff_guidance(
+def test_legacy_patch_argument_is_rejected_by_exact_replacement_contract(
     gateway_factory,
 ) -> None:
     gateway, _, _ = gateway_factory()
     gateway.execute_batch(read_calls())
     mutation = mutation_call(gateway, action_id="wrapped-live-mutation")
-    mutation.arguments["git_diff"] = (
-        "*** Begin Patch\n"
-        "*** Update File: mini_data_utils/csvlite.py\n"
-        "@@\n"
-        "-    return rows\n"
-        "+    return list(csv.reader(io.StringIO(text)))\n"
-        "*** End Patch"
-    )
+    mutation.arguments["git_diff"] = "*** Begin Patch\n*** End Patch"
 
     result = gateway.execute(mutation)
 
     assert result.status == "failed"
-    assert result.error_code == "CONTRACT_ERROR"
-    assert "must begin exactly with 'diff --git a/<path> b/<path>'" in result.message
+    assert result.error_code == "TOOL_CONTRACT_ERROR"
+    assert "Extra inputs are not permitted" in result.message
     assert gateway.accepted_mutations == 0
 
 
@@ -251,8 +253,8 @@ def test_failed_mutation_persists_across_reads_and_restart_then_clears_on_succes
     gateway, journal, workspace = gateway_factory()
     gateway.execute_batch(read_calls())
     malformed = mutation_call(gateway, action_id="malformed-mutation")
-    malformed.arguments["git_diff"] = malformed.arguments["git_diff"].replace(
-        " import csv\n", " import csv_missing\n"
+    malformed.arguments["old_text"] = malformed.arguments["old_text"].replace(
+        "import csv\n", "import csv_missing\n"
     )
 
     failed = gateway.execute(malformed)
@@ -260,16 +262,21 @@ def test_failed_mutation_persists_across_reads_and_restart_then_clears_on_succes
     assert failed.status == "failed"
     pending = gateway.last_failed_mutation
     assert pending is not None
-    assert pending["git_diff"] == malformed.arguments["git_diff"]
-    assert pending["git_diff_hash"] == sha256_bytes(
-        malformed.arguments["git_diff"].encode("utf-8")
+    assert pending["replacement"]["old_text"] == malformed.arguments["old_text"]
+    assert pending["replacement_hash"] == sha256_json(
+        {
+            "path": malformed.arguments["path"],
+            "old_text": malformed.arguments["old_text"],
+            "new_text": malformed.arguments["new_text"],
+            "occurrence": malformed.arguments["occurrence"],
+        }
     )
-    assert pending["git_diff_truncated"] is False
+    assert pending["replacement_truncated"] is False
     assert pending["hypothesis"] == malformed.arguments["hypothesis"]
     assert pending["expected_behavior"] == malformed.arguments["expected_behavior"]
-    assert pending["edit_anchor"] == malformed.arguments["edit_anchor"]
+    assert pending["replacement"]["path"] == malformed.arguments["path"]
     assert pending["error_code"] == "CONTRACT_ERROR"
-    assert pending["error_location"] == {"path": "mini_data_utils/csvlite.py", "line": 1}
+    assert pending["error_location"] == {"path": "mini_data_utils/csvlite.py"}
     assert "Repair or explicitly replace" in pending["next_action"]
 
     read_after_failure = gateway.execute(
@@ -296,69 +303,69 @@ def test_failed_mutation_persists_across_reads_and_restart_then_clears_on_succes
     assert restarted.last_failed_mutation == pending
 
     replacement = mutation_call(restarted, action_id="replacement-failed-mutation")
-    replacement.arguments["git_diff"] = replacement.arguments["git_diff"].replace(
-        " import csv\n", " import csv_still_missing\n"
+    replacement.arguments["old_text"] = replacement.arguments["old_text"].replace(
+        "import csv\n", "import csv_still_missing\n"
     )
     assert restarted.execute(replacement).status == "failed"
     assert restarted.last_failed_mutation["action_id"] == "replacement-failed-mutation"
-    assert restarted.last_failed_mutation["git_diff_hash"] != pending["git_diff_hash"]
+    assert restarted.last_failed_mutation["replacement_hash"] != pending["replacement_hash"]
 
     accepted = restarted.execute(mutation_call(restarted, action_id="repaired-mutation"))
     assert accepted.status == "succeeded"
     assert restarted.last_failed_mutation is None
 
 
-def test_git_apply_recounts_hunks_but_keeps_context_fail_closed(gateway_factory) -> None:
+def test_gateway_generates_canonical_diff_and_keeps_stale_anchor_fail_closed(
+    gateway_factory,
+) -> None:
     gateway, _, _ = gateway_factory()
     gateway.execute_batch(read_calls())
-    recounted = mutation_call(gateway, action_id="recounted-mutation")
-    recounted.arguments["git_diff"] = recounted.arguments["git_diff"].replace(
-        "@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@"
-    )
+    replacement = mutation_call(gateway, action_id="generated-diff-mutation")
 
-    accepted = gateway.execute(recounted)
+    accepted = gateway.execute(replacement)
 
     assert accepted.status == "succeeded"
     assert accepted.output["patch_hash"] == sha256_bytes(
-        recounted.arguments["git_diff"].encode("utf-8")
+        accepted.output["mutation"]["changed_hunk"].encode("utf-8")
+    )
+    assert accepted.output["mutation"]["changed_hunk"].startswith(
+        "diff --git a/mini_data_utils/csvlite.py b/mini_data_utils/csvlite.py\n"
     )
     assert accepted.output["worktree_diff_hash"] == gateway.current_diff_hash
 
     stale_gateway, _, stale_workspace = gateway_factory()
     stale_gateway.execute_batch(read_calls())
     stale = mutation_call(stale_gateway, action_id="stale-context-mutation")
-    stale.arguments["git_diff"] = stale.arguments["git_diff"].replace(
-        " import csv\n", " import csv_missing\n"
+    stale.arguments["old_text"] = stale.arguments["old_text"].replace(
+        "import csv\n", "import csv_missing\n"
     )
 
     rejected = stale_gateway.execute(stale)
 
     assert rejected.status == "failed"
-    assert "patch failed: mini_data_utils/csvlite.py:1" in rejected.message
+    assert "exact edit anchor is stale" in rejected.message
     assert stale_gateway.current_diff.changed_files == []
-    assert subprocess.run(
-        ["git", "status", "--short"],
-        cwd=stale_workspace,
-        capture_output=True,
-        check=True,
-        text=True,
-    ).stdout == ""
+    assert (
+        subprocess.run(
+            ["git", "status", "--short"],
+            cwd=stale_workspace,
+            capture_output=True,
+            check=True,
+            text=True,
+        ).stdout
+        == ""
+    )
 
 
-def test_recounted_out_of_scope_mutation_rolls_back_cleanly(gateway_factory) -> None:
+def test_out_of_scope_replacement_rolls_back_cleanly(gateway_factory) -> None:
     gateway, _, workspace = gateway_factory()
     gateway.public_task = gateway.public_task.model_copy(
         update={
-            "constraints": gateway.public_task.constraints.model_copy(
-                update={"max_diff_lines": 1}
-            )
+            "constraints": gateway.public_task.constraints.model_copy(update={"max_diff_lines": 1})
         }
     )
     gateway.execute_batch(read_calls())
-    mutation = mutation_call(gateway, action_id="recounted-scope-rollback")
-    mutation.arguments["git_diff"] = mutation.arguments["git_diff"].replace(
-        "@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@"
-    )
+    mutation = mutation_call(gateway, action_id="replacement-scope-rollback")
 
     rejected = gateway.execute(mutation)
 
@@ -395,18 +402,36 @@ def test_failed_mutation_diff_projection_is_bounded(gateway_factory) -> None:
     gateway, _, _ = gateway_factory()
     gateway.execute_batch(read_calls())
     oversized = mutation_call(gateway, action_id="oversized-failed-mutation")
-    oversized.arguments["git_diff"] += "+" + ("x" * 25_000) + "\n"
+    oversized.arguments["new_text"] = "x" * 25_000
 
     failed = gateway.execute(oversized)
 
     assert failed.status == "failed"
     pending = gateway.last_failed_mutation
     assert pending is not None
-    assert len(pending["git_diff"]) == 24_000
-    assert pending["git_diff_truncated"] is True
-    assert pending["git_diff_hash"] == sha256_bytes(
-        oversized.arguments["git_diff"].encode("utf-8")
+    assert len(pending["replacement"]["new_text"]) == 20_000
+    assert pending["replacement_truncated"] is True
+    assert pending["replacement_hash"] == sha256_json(
+        {
+            "path": oversized.arguments["path"],
+            "old_text": oversized.arguments["old_text"],
+            "new_text": oversized.arguments["new_text"],
+            "occurrence": oversized.arguments["occurrence"],
+        }
     )
+
+    combined = mutation_call(gateway, action_id="combined-oversized-failed-mutation")
+    combined.arguments["old_text"] = "o" * 20_000
+    combined.arguments["new_text"] = "n" * 20_000
+    assert gateway.execute(combined).status == "failed"
+    bounded = gateway.last_failed_mutation
+    assert bounded is not None
+    assert len(bounded["replacement"]["old_text"]) == 20_000
+    assert len(bounded["replacement"]["new_text"]) == 4_000
+    assert (
+        len(bounded["replacement"]["old_text"]) + len(bounded["replacement"]["new_text"]) == 24_000
+    )
+    assert bounded["replacement_truncated"] is True
 
 
 def test_parallel_read_mutation_check_and_finish(gateway_factory) -> None:
@@ -443,29 +468,17 @@ def test_allowed_path_and_stale_evidence_fail_closed(gateway_factory) -> None:
     test_span = forbidden_read.output["spans"][0]["span_id"]
     forbidden = gateway.execute(
         RequestedTool(
-            name="apply_git_diff",
+            name="replace_text",
             action_id="forbidden-mutation",
             arguments={
-                "git_diff": (
-                    "diff --git a/tests/test_csvlite.py b/tests/test_csvlite.py\n"
-                    "--- a/tests/test_csvlite.py\n"
-                    "+++ b/tests/test_csvlite.py\n"
-                    "@@ -1,3 +1,4 @@\n"
-                    " import unittest\n"
-                    "+# forbidden\n"
-                    " \n"
-                    " from mini_data_utils import parse_rows\n"
-                ),
+                "path": "tests/test_csvlite.py",
+                "old_text": "import unittest",
+                "new_text": "import unittest\n# forbidden",
+                "occurrence": 1,
                 "hypothesis": "tests need a bypass",
                 "expected_behavior": "tests change",
                 "evidence_span_ids": [test_span],
-                "edit_anchor": {
-                    "path": "tests/test_csvlite.py",
-                    "old_text": "import unittest",
-                    "occurrence": 1,
-                },
-                "falsified_prior_hypothesis": None,
-                "alternative_mechanism": None,
+                "causal_revision": None,
             },
         )
     )
@@ -498,9 +511,7 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
     assert postimage["file_hash"] == sha256_bytes(
         (workspace / "mini_data_utils" / "csvlite.py").read_bytes()
     )
-    assert postimage["span_id"] == accepted.output["mutation"][
-        "postimage_evidence_span_id"
-    ]
+    assert postimage["span_id"] == accepted.output["mutation"]["postimage_evidence_span_id"]
     assert old_source_span_ids.isdisjoint(gateway.spans)
     assert postimage["span_id"] in gateway.spans
 
@@ -512,14 +523,10 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
         limits=gateway.limits,
     )
     assert postimage["span_id"] in restarted.spans
-    assert restarted.current_mutation_evidence_paths() == (
-        "mini_data_utils/csvlite.py",
-    )
+    assert restarted.current_mutation_evidence_paths() == ("mini_data_utils/csvlite.py",)
     projected_mutation = restarted.actionable_last_successful_mutation()
     assert projected_mutation is not None
-    assert projected_mutation["actionable_evidence_span_ids"] == [
-        postimage["span_id"]
-    ]
+    assert projected_mutation["actionable_evidence_span_ids"] == [postimage["span_id"]]
     assert "evidence_span_ids" not in projected_mutation
     assert "anchor_evidence_span_id" not in projected_mutation
     assert "edit_anchor" not in projected_mutation
@@ -537,22 +544,13 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
     unrelated_span_id = unrelated.output["spans"][0]["span_id"]
     historical_span_id = sorted(old_source_span_ids)[0]
     repair = RequestedTool(
-        name="apply_git_diff",
+        name="replace_text",
         action_id="same-hunk-repair",
         arguments={
-            "git_diff": (
-                "diff --git a/mini_data_utils/csvlite.py "
-                "b/mini_data_utils/csvlite.py\n"
-                "--- a/mini_data_utils/csvlite.py\n"
-                "+++ b/mini_data_utils/csvlite.py\n"
-                "@@ -7,5 +7,5 @@\n"
-                " def parse_rows(text: str) -> list[list[str]]:\n"
-                '     """Parse CSV text into rows while preserving quoted values."""\n'
-                " \n"
-                '-    return list(csv.reader(io.StringIO(text, newline="")))\n'
-                "+    return list(csv.reader(io.StringIO(text)))\n"
-                " \n"
-            ),
+            "path": "mini_data_utils/csvlite.py",
+            "old_text": '    return list(csv.reader(io.StringIO(text, newline="")))',
+            "new_text": "    return list(csv.reader(io.StringIO(text)))",
+            "occurrence": 1,
             "hypothesis": "The stream newline override causes the public check failure.",
             "expected_behavior": "The parser keeps one stream without the override.",
             "evidence_span_ids": [
@@ -560,13 +558,7 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
                 historical_span_id,
                 unrelated_span_id,
             ],
-            "edit_anchor": {
-                "path": "mini_data_utils/csvlite.py",
-                "old_text": '    return list(csv.reader(io.StringIO(text, newline="")))',
-                "occurrence": 1,
-            },
-            "falsified_prior_hypothesis": None,
-            "alternative_mechanism": None,
+            "causal_revision": None,
         },
     )
 
@@ -588,9 +580,7 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
     assert repaired.status == "succeeded"
     repaired_mutation = repaired.output["mutation"]
     repaired_postimage_id = repaired.output["mutation_evidence"]["span_id"]
-    assert repaired_mutation["actionable_evidence_span_ids"] == [
-        repaired_postimage_id
-    ]
+    assert repaired_mutation["actionable_evidence_span_ids"] == [repaired_postimage_id]
     assert repaired_mutation["input_evidence_counts"] == {
         "current": 2,
         "historical_ignored": 1,
@@ -608,12 +598,8 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
         postimage["span_id"],
         unrelated_span_id,
     }
-    assert started["mutation_ignored_historical_evidence_span_ids"] == [
-        historical_span_id
-    ]
-    assert started["arguments"]["evidence_span_ids"] == repair.arguments[
-        "evidence_span_ids"
-    ]
+    assert started["mutation_ignored_historical_evidence_span_ids"] == [historical_span_id]
+    assert started["arguments"]["evidence_span_ids"] == repair.arguments["evidence_span_ids"]
 
 
 def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
@@ -627,32 +613,17 @@ def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
         if span["path"] == "mini_data_utils/csvlite.py"
     ]
     narrow_mutation = RequestedTool(
-        name="apply_git_diff",
+        name="replace_text",
         action_id="narrow-mutation",
         arguments={
-            "git_diff": (
-                "diff --git a/mini_data_utils/csvlite.py "
-                "b/mini_data_utils/csvlite.py\n"
-                "--- a/mini_data_utils/csvlite.py\n"
-                "+++ b/mini_data_utils/csvlite.py\n"
-                "@@ -9,5 +9,5 @@\n"
-                "     rows: list[list[str]] = []\n"
-                "     for physical_line in text.splitlines():\n"
-                "         rows.extend(csv.reader([physical_line]))\n"
-                "-    return rows\n"
-                "+    return list(rows)\n"
-                " \n"
-            ),
+            "path": "mini_data_utils/csvlite.py",
+            "old_text": "    return rows",
+            "new_text": "    return list(rows)",
+            "occurrence": 1,
             "hypothesis": "Materialize the return value.",
             "expected_behavior": "The public return type remains a list.",
             "evidence_span_ids": source_span_ids[:1],
-            "edit_anchor": {
-                "path": "mini_data_utils/csvlite.py",
-                "old_text": "    return rows",
-                "occurrence": 1,
-            },
-            "falsified_prior_hypothesis": None,
-            "alternative_mechanism": None,
+            "causal_revision": None,
         },
     )
     assert gateway.execute(narrow_mutation).status == "succeeded"
@@ -669,35 +640,24 @@ def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
     )
     unrelated_span_id = unrelated.output["spans"][0]["span_id"]
     uncovered = RequestedTool(
-        name="apply_git_diff",
+        name="replace_text",
         action_id="uncovered-anchor",
         arguments={
-            "git_diff": (
-                "diff --git a/mini_data_utils/csvlite.py "
-                "b/mini_data_utils/csvlite.py\n"
-                "--- a/mini_data_utils/csvlite.py\n"
-                "+++ b/mini_data_utils/csvlite.py\n"
-                "@@ -3 +3 @@\n"
-                "-import csv\n"
-                "+import csv as csv_module\n"
-            ),
+            "path": "mini_data_utils/csvlite.py",
+            "old_text": "import csv",
+            "new_text": "import csv as csv_module",
+            "occurrence": 1,
             "hypothesis": "The import name should be explicit.",
             "expected_behavior": "The module alias is available.",
             "evidence_span_ids": [unrelated_span_id],
-            "edit_anchor": {
-                "path": "mini_data_utils/csvlite.py",
-                "old_text": "import csv",
-                "occurrence": 1,
-            },
-            "falsified_prior_hypothesis": None,
-            "alternative_mechanism": None,
+            "causal_revision": None,
         },
     )
 
     rejected = gateway.execute(uncovered)
 
     assert rejected.status == "failed"
-    assert "current evidence span must cover the edit-anchor file" in rejected.message
+    assert "current evidence span must cover the exact replacement anchor" in rejected.message
 
 
 def test_read_cache_promotes_evidence_and_resets_after_mutation(gateway_factory) -> None:
@@ -766,9 +726,152 @@ def test_read_cache_promotes_evidence_and_resets_after_mutation(gateway_factory)
     )
     assert refreshed.evidence_cache_hit is False
     assert refreshed.output["new_span_count"] == 0
-    assert refreshed.output["spans"][0]["span_id"] == gateway.last_successful_mutation[
-        "postimage_evidence_span_id"
+    assert (
+        refreshed.output["spans"][0]["span_id"]
+        == gateway.last_successful_mutation["postimage_evidence_span_id"]
+    )
+
+
+def test_evidence_ledger_counts_uncovered_ranges_and_zero_result_search_once(
+    gateway_factory,
+) -> None:
+    gateway, journal, workspace = gateway_factory()
+
+    def read(action_id: str, start: int, end: int):
+        return gateway.execute(
+            RequestedTool(
+                name="read_file",
+                action_id=action_id,
+                arguments={
+                    "path": "mini_data_utils/csvlite.py",
+                    "start_line": start,
+                    "end_line": end,
+                },
+                turn_decision=inspection_decision(action_id),
+            )
+        )
+
+    first = read("coverage-first", 1, 8)
+    shifted = read("coverage-shifted", 2, 9)
+    contained = read("coverage-contained", 3, 8)
+
+    assert first.output["evidence_gain"]["new_task_relevant_line_count"] == 8
+    assert shifted.output["new_span_count"] == 1
+    assert shifted.output["evidence_gain"]["new_task_relevant_line_count"] == 1
+    assert contained.output["new_span_count"] == 1
+    assert contained.output["evidence_gain"]["marginal_evidence_gain"] is False
+
+    search = RequestedTool(
+        name="search_files",
+        action_id="zero-search-first",
+        arguments={"query": "definitely-not-present", "path_glob": "**/*.py"},
+        turn_decision=inspection_decision("zero-search-first"),
+    )
+    first_zero = gateway.execute(search)
+    repeated_zero = gateway.execute(search.model_copy(update={"action_id": "zero-search-repeat"}))
+    assert first_zero.output["spans"] == []
+    assert first_zero.output["evidence_gain"]["first_search_observation"] is True
+    assert first_zero.output["evidence_gain"]["marginal_evidence_gain"] is True
+    assert repeated_zero.evidence_cache_hit is True
+    assert repeated_zero.output["evidence_gain"]["first_search_observation"] is False
+    assert repeated_zero.output["evidence_gain"]["marginal_evidence_gain"] is False
+
+    ledger = gateway.evidence_ledger()
+    source = next(
+        row for row in ledger["covered_files"] if row["path"] == "mini_data_utils/csvlite.py"
+    )
+    assert source["ranges"] == [[1, 9]]
+    assert source["covered_line_count"] == 9
+    assert ledger["canonical_searches"] == [
+        {
+            "query": "definitely-not-present",
+            "path_glob": "**/*.py",
+            "span_count": 0,
+            "zero_match": True,
+            "truncated": False,
+            "findings": [],
+        }
     ]
+
+    restarted = DevToolGateway(
+        workspace=workspace,
+        public_task=gateway.public_task,
+        sandbox=gateway.sandbox,
+        journal=journal,
+        limits=gateway.limits,
+    )
+    assert restarted.evidence_ledger() == ledger
+
+
+def test_mutation_revalidates_unchanged_unique_source_spans(gateway_factory) -> None:
+    gateway, journal, workspace = gateway_factory()
+    unchanged = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="read-unchanged-import",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": 1,
+                "end_line": 4,
+            },
+            turn_decision=inspection_decision("unchanged-import"),
+        )
+    ).output["spans"][0]
+    anchor = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="read-narrow-return",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": 8,
+                "end_line": 13,
+            },
+            turn_decision=inspection_decision("narrow-return"),
+        )
+    ).output["spans"][0]
+    accepted = gateway.execute(
+        RequestedTool(
+            name="replace_text",
+            action_id="narrow-revalidation-mutation",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "old_text": "    return rows",
+                "new_text": "    return list(rows)",
+                "occurrence": 1,
+                "hypothesis": "Materializing the result preserves the declared return type.",
+                "expected_behavior": "The parser returns a concrete list.",
+                "evidence_span_ids": [anchor["span_id"]],
+                "causal_revision": None,
+            },
+            turn_decision=PublicTurnDecision(
+                mode="mutate",
+                basis="The exact return anchor is visible.",
+                evidence_goal=None,
+            ),
+        )
+    )
+
+    assert accepted.status == "succeeded"
+    assert unchanged["span_id"] not in gateway.spans
+    rebound = next(
+        span
+        for span in accepted.output["revalidated_spans"]
+        if span["content"] == unchanged["content"]
+    )
+    assert rebound["origin"] == "revalidated_after_mutation"
+    assert rebound["file_hash"] == sha256_bytes(
+        (workspace / "mini_data_utils" / "csvlite.py").read_bytes()
+    )
+    assert rebound["span_id"] in gateway.spans
+
+    restarted = DevToolGateway(
+        workspace=workspace,
+        public_task=gateway.public_task,
+        sandbox=gateway.sandbox,
+        journal=journal,
+        limits=gateway.limits,
+    )
+    assert rebound["span_id"] in restarted.spans
 
 
 def test_new_files_and_untracked_submission_fail_closed(gateway_factory) -> None:
@@ -782,13 +885,12 @@ def test_new_files_and_untracked_submission_fail_closed(gateway_factory) -> None
     )
     gateway.execute_batch(read_calls())
     mutation = mutation_call(gateway, action_id="mixed-new-file")
-    mutation.arguments["git_diff"] += (
-        "diff --git a/mini_data_utils/new_helper.py b/mini_data_utils/new_helper.py\n"
-        "new file mode 100644\n"
-        "--- /dev/null\n"
-        "+++ b/mini_data_utils/new_helper.py\n"
-        "@@ -0,0 +1 @@\n"
-        "+VALUE = 1\n"
+    mutation.arguments.update(
+        {
+            "path": "mini_data_utils/new_helper.py",
+            "old_text": "VALUE = 0",
+            "new_text": "VALUE = 1",
+        }
     )
     rejected = gateway.execute(mutation)
     assert rejected.status == "failed"
@@ -853,9 +955,7 @@ def test_action_replay_and_crash_reconciliation_do_not_duplicate_mutation(
     assert replay.replayed is True
 
     call = mutation_call(gateway, action_id="crash-mutation")
-    call.arguments["git_diff"] = call.arguments["git_diff"].replace(
-        "@@ -1,13 +1,11 @@", "@@ -1,13 +1,10 @@"
-    )
+    validated = gateway._validate_replacement_intent(call.arguments)  # noqa: SLF001
     input_hash = sha256_json(
         {
             "tool": call.name,
@@ -868,21 +968,21 @@ def test_action_replay_and_crash_reconciliation_do_not_duplicate_mutation(
         {
             "action_id": call.action_id,
             "input_hash": input_hash,
-                "tool": call.name,
-                "arguments": call.arguments,
-                "turn_decision": call.turn_decision.model_dump(mode="json"),
+            "tool": call.name,
+            "arguments": call.arguments,
+            "turn_decision": call.turn_decision.model_dump(mode="json"),
             "baseline_diff_hash": gateway.current_diff_hash,
             "mutation_admitted": True,
+            "mutation_target_path": validated.path,
+            "mutation_expected_postimage_file_hash": sha256_bytes(validated.after_bytes),
+            "mutation_generated_patch": validated.generated_patch,
+            "mutation_postimage_start_line": validated.postimage_start_line,
+            "mutation_anchor_evidence_span_id": (validated.actionable_evidence_span_ids[0]),
+            "mutation_actionable_evidence_span_ids": (validated.actionable_evidence_span_ids),
+            "mutation_ignored_historical_evidence_span_ids": [],
         },
     )
-    applied = subprocess.run(
-        ["git", "apply", "--whitespace=nowarn", "--recount", "-"],
-        cwd=workspace,
-        input=call.arguments["git_diff"].encode("utf-8"),
-        capture_output=True,
-        check=False,
-    )
-    assert applied.returncode == 0
+    (workspace / validated.path).write_bytes(validated.after_bytes)
 
     restarted, _, _ = gateway_factory()
     # Rebind to the durable workspace/journal to simulate a process restart.

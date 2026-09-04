@@ -16,15 +16,13 @@ from patchloop.util import sha256_json
 DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
 DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
-DEV_SINGLE_ACTION_TOOLS = frozenset(
-    {"apply_git_diff", "run_check", "finish_task", "stop_task"}
-)
+DEV_SINGLE_ACTION_TOOLS = frozenset({"replace_text", "run_check", "finish_task", "stop_task"})
 
 
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v5",
+            "schema_version": "dev-tool-surface-v6",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -38,6 +36,8 @@ def dev_tool_surface_hash() -> str:
             ],
             "parallel_read_decisions": "shared_inspect_mode_with_call_specific_rationale",
             "dynamic_workflow_tools": True,
+            "mutation_wire": "single-exact-anchor-replacement-v1",
+            "inspection_gain": "non-overlapping-current-diff-coverage-v1",
         }
     )
 
@@ -73,26 +73,25 @@ class DevLimits(StrictModel):
     max_failed_mutation_repair_turns: int = Field(default=3, ge=0)
 
 
-class EditAnchor(StrictModel):
+class CausalRevision(StrictModel):
+    falsified_prior_hypothesis: str = Field(min_length=1, max_length=1_500)
+    alternative_mechanism: str = Field(min_length=1, max_length=1_500)
+
+
+class TextReplacementIntent(StrictModel):
     path: str = Field(min_length=1, max_length=1_000)
     old_text: str = Field(min_length=1, max_length=20_000)
+    new_text: str = Field(max_length=20_000)
     occurrence: int = Field(default=1, ge=1, le=100)
-
-
-class MutationIntent(StrictModel):
     hypothesis: str = Field(min_length=1, max_length=1_500)
     expected_behavior: str = Field(min_length=1, max_length=1_500)
     evidence_span_ids: list[str] = Field(min_length=1, max_length=8)
-    edit_anchor: EditAnchor
-    falsified_prior_hypothesis: str | None = Field(default=None, min_length=1, max_length=1_500)
-    alternative_mechanism: str | None = Field(default=None, min_length=1, max_length=1_500)
+    causal_revision: CausalRevision | None = None
 
     @model_validator(mode="after")
-    def alternative_fields_are_paired(self) -> MutationIntent:
-        if (self.falsified_prior_hypothesis is None) != (self.alternative_mechanism is None):
-            raise ValueError(
-                "falsified_prior_hypothesis and alternative_mechanism must be supplied together"
-            )
+    def replacement_changes_source(self) -> TextReplacementIntent:
+        if self.old_text == self.new_text:
+            raise ValueError("old_text and new_text must differ")
         return self
 
 
@@ -142,27 +141,22 @@ class FunctionCallContinuationRef(StrictModel):
 
 
 class ProviderContinuationArtifact(StrictModel):
-    schema_version: Literal["openai-stateless-reasoning-v1"] = (
-        "openai-stateless-reasoning-v1"
+    schema_version: Literal["openai-stateless-reasoning-v1"] = "openai-stateless-reasoning-v1"
+    output_order: list[EncryptedReasoningContinuationItem | FunctionCallContinuationRef] = Field(
+        min_length=1
     )
-    output_order: list[
-        EncryptedReasoningContinuationItem | FunctionCallContinuationRef
-    ] = Field(min_length=1)
 
     @model_validator(mode="after")
     def contains_reasoning(self) -> ProviderContinuationArtifact:
         if not any(
-            isinstance(item, EncryptedReasoningContinuationItem)
-            for item in self.output_order
+            isinstance(item, EncryptedReasoningContinuationItem) for item in self.output_order
         ):
             raise ValueError("provider continuation must contain encrypted reasoning")
         return self
 
 
 class ProviderContinuationRef(StrictModel):
-    schema_version: Literal["provider-continuation-ref-v1"] = (
-        "provider-continuation-ref-v1"
-    )
+    schema_version: Literal["provider-continuation-ref-v1"] = "provider-continuation-ref-v1"
     artifact: Artifact
     item_count: int = Field(ge=1)
     reasoning_item_count: int = Field(ge=1)
