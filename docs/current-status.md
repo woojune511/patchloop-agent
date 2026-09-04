@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirteen live observations below
+Repository policy alone never initiates paid work. The fourteen live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -279,7 +279,7 @@ anchor; arbitrary unknown IDs and uncovered anchors still fail closed. The sched
 now holds independent two-call reserves for rejected-mutation and failed-check recovery,
 and reconstructs both from durable batches. Two consecutive successful zero-new-span
 inspection batches add a soft mutation-or-stop recommendation without changing the tool
-surface. No paid retry or fourteenth live row is authorized.
+surface. At that checkpoint, no paid retry or fourteenth live row was authorized.
 Ruff and all 92 tests pass with the full provider-free suite under two minutes using an
 external short temp root. Provider-free mock run `run_dev_7fc6bc7e982343e4` reached
 isolated `EVALUATOR_PASS` in four model calls and five tool actions through one
@@ -300,6 +300,31 @@ empty paths, and trailing separators. `finish_task` therefore failed closed. The
 gateway had blocked a semantically relevant repair, but not a submission-ready one;
 this result warrants no further harness relaxation. No hidden evaluator or provider
 call ran, and no fourteenth-row authority follows.
+
+The later separately authorized fourteenth row used the same version-2 task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+and a $1.20 cap. Run `run_dev_86ccd39d36ab4379` ended at durable `LIMIT_REACHED`
+after 352.610 active seconds and 353 seconds of run age, with 40 provider calls,
+70 tool actions, two accepted mutations, and $0.42157950 of provider cost. All 40
+responses completed with encrypted-continuation references; none was incomplete or
+reported a provider error. It used 331,742 input tokens and 38,394 output tokens,
+including 28,758 reasoning tokens; the largest response used 13,921 output tokens.
+The row spent its first 32 turns inspecting. Turn 32 advertised the last inspection
+opportunity and turn 33 closed inspection as promised. A mutation-contract failure
+reopened one warned inspection turn, after which three raw Git diffs failed structural
+application before turn 38 accepted the first patch. The central public check failed
+on intermediate-directory mode. Turn 40 accepted a one-line repair but no model call
+remained to recheck or finish, so there was no submission or evaluator execution.
+The final repair used undefined `helpers.PERM_DEF` even though `fake_os.py` imports
+`PERM_DEF` directly. A provider-free copy at
+`C:\patchloop-test\r14-final-repair-e84b5ab9` changed only that identifier. Both
+registered public checks then passed, including 517 upstream passes and 570 skips.
+No hidden evaluator ran, so this is public repair evidence rather than task acceptance.
+The trace confirms encrypted continuation and announced tool-policy transitions, while
+exposing three remaining product boundaries: syntactically novel overlapping spans
+rarely trigger the soft commitment cue, raw unified-diff serialization still wastes
+recovery turns, and failed-check repair can lose same-file symbol/import context while
+inspection is closed. No paid retry or fifteenth row is authorized.
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -441,9 +466,9 @@ shape or exact full sentence. Its task content hash is
 The fifth and sixth rows used this exact identity. Version 3 preserves version 2 and
 accepts the semantics promised publicly rather than one literal phrasing. The sixth
 row's submitted patch passes the version-3 evaluator provider-free, but that does not
-retroactively change the version-2 terminal. The eighth through thirteenth live
-observations used the separate pyfakefs task described below. The thirteenth row is
-terminal and no retry or fourteenth live row is authorized.
+retroactively change the version-2 terminal. The eighth through fourteenth live
+observations used the separate pyfakefs task described below. The fourteenth row is
+terminal and no retry or fifteenth live row is authorized.
 
 The fifth row's terminal label described the application's tool-batch boundary, but
 the stored evidence did not establish that the provider response itself was
@@ -465,8 +490,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth row was separately authorized and is now terminal. No fourteenth
-row is authorized.
+the later thirteenth and fourteenth rows were separately authorized and are now
+terminal. No fifteenth row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -506,7 +531,9 @@ allowances still fits. The twelfth row exposed the post-check repair evidence an
 horizon boundary. The thirteenth then exposed stale provenance in the actionable list
 and the single shared allowance. The current provider-free successor separates both
 evidence roles and failure reserves, and adds only a soft zero-gain commitment signal.
-No paid retry or fourteenth row is authorized.
+The fourteenth row confirms those two corrections but exposes the narrower mutation-
+wire, evidence-saturation, and failed-check repair-context boundaries described above.
+No paid retry or fifteenth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

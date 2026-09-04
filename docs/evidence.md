@@ -817,17 +817,87 @@ broad `makedirs` rewrite still changed unrelated error semantics. No hidden eval
 provider call, image pull/build, or original-state mutation occurred. The result is not
 a reason to weaken the upstream check, add unbounded recovery, or claim task success.
 
+## Fourteenth live development observation
+
+The separately authorized fourteenth row used `pyfakefs-makedirs-parent-traversal`
+version 2, `gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one
+repetition, a $1.20 invocation cap, and external state root `C:\patchloop-state`.
+Provider-free preflight validated task content hash
+`sha256:276b791c4c0cb1c18fa8659f6518a172f0d05b239526c0f21a7d0d2c378def87`,
+an available Docker server, and the already-local image digest
+`sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c`.
+No image was pulled or built and Docker Desktop was not started by PatchLoop.
+
+Run `run_dev_86ccd39d36ab4379` wrote a durable `LIMIT_REACHED` terminal after
+352.610 active seconds and 353 seconds of run age. It completed 40 provider calls,
+70 tool actions, two accepted mutations, and $0.42157950 of provider cost. Recorded
+usage was 331,742 input tokens and 38,394 output tokens, including 28,758 reasoning
+tokens. All 40 provider calls completed, all stored one continuation reference, none
+was incomplete or reported a provider error, and the largest response used 13,921
+output tokens. The terminal journal SHA-256 is
+`C364BBB9731543DF89677300CF9C31B400E970B68FC60EC6BE258B3124BA22AF`.
+
+The row contained 33 inspection batches and 63 read/search actions. Nine batches
+returned zero new spans, but the longest consecutive sequence was two, so the soft
+commitment cue appeared only on turn 30. Slightly different overlapping reads and
+searches continued to count as new spans and reset that cue. Turn 32 projected
+`last_opportunity` with both inspection tools listed under
+`tools_closing_after_this_turn`; turn 33 recorded the corresponding
+`completion_horizon` transition. The first mutation failed the paired-alternative
+contract, and the policy reopened one warned inspection turn before closing again.
+This is affirmative live evidence that encrypted continuation, action-space warning,
+closure, and failure-triggered reopening worked as implemented.
+
+Six mutation calls followed in total. The first failed the typed mutation contract.
+The next three failed `git apply --check --recount` with exact corrupt-patch locations
+at lines 29, 29, and 32. Each next public context retained the bounded failed diff,
+hypothesis, anchor, error text, and patch line; the repeated failures therefore were
+not caused by missing failure feedback. Turn 38 accepted a 28-line insertion in
+`pyfakefs/fake_os.py`, and turn 39 ran `parent-traversal-contract`. It failed at the
+public intermediate-directory permission assertion. Turn 40 accepted a one-line mode
+repair, producing final one-file diff
+`sha256:ffca520baa1c42d554affe7bf6ca8a355f8d59f6e93e0a33d291b7aa711bea64`
+with no untracked files. The model-call limit then ended the row before recheck,
+submission, or evaluation.
+
+The retained final workspace failed the same public contract with
+`NameError: name 'helpers' is not defined`: the repair emitted
+`helpers.PERM_DEF`, while `fake_os.py` already imports `PERM_DEF` directly. After the
+run, only an external copy at `C:\patchloop-test\r14-final-repair-e84b5ab9` was
+changed from `helpers.PERM_DEF` to `PERM_DEF`. Its canonical one-file diff is
+`sha256:85ff7fba6d22c77e4150977f4d8ef9cef126d92ea7a691c3726c80eb760f95a8`.
+Under the same digest-pinned, no-network, read-only Docker policy,
+`parent-traversal-contract` passed and `upstream-fake-os-regression` reported 517
+passed and 570 skipped. No hidden evaluator ran. This establishes that the final
+agent direction was one identifier away from public-check readiness, not that the
+live row submitted or passed task acceptance.
+
+The remaining failure is not a reasoning-output ceiling, continuation loss, sudden
+tool disappearance, or a low cost cap. It is a compounded completion-path problem:
+32 initial inspection turns left only the protected best-case tail; raw unified-diff
+serialization then consumed three extra repair turns after exact feedback; and after
+the failed check the current context no longer contained `fake_os.py`'s import block
+while inspection was closed. It did contain other-file spans using
+`helpers.PERM_DEF`, which made the final namespace error locally plausible. Merely
+raising 40 calls would mask these boundaries. The next provider-free design seam is
+to measure inspection gain by non-overlapping relevant coverage, replace model-counted
+raw hunks with a bounded exact-anchor replacement contract, and reserve a targeted
+read plus repair and recheck after a failed visible check. No fifteenth live row is
+authorized by this evidence.
+
 ## Not executed
 
-- no transport retry or follow-up paid run after the thirteenth row
+- no transport retry or follow-up paid run after the fourteenth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no mutation, submission, or evaluator execution in the seventh through tenth
-  pyfakefs version-2 live rows. The eleventh through thirteenth mutated; the eleventh
-  passed both visible checks, while the twelfth and thirteenth reached one failed
-  visible check. None of those three live rows submitted or invoked the evaluator
+  pyfakefs version-2 live rows. The eleventh through fourteenth mutated; the eleventh
+  passed both visible checks, while the twelfth through fourteenth reached one failed
+  visible check. None of those four live rows submitted or invoked the evaluator
 - no hidden evaluation of the temporary Loguru version-2 public correction
+- no hidden evaluation of the fourteenth-row final patch or its provider-free
+  one-identifier repair
 
 The under-two-minute focused-validation target remains locally supported. The sixth
 row reached a durable evaluator summary within 30 minutes, verifying the operational

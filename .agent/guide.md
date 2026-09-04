@@ -360,8 +360,8 @@ The current provider-free seam projects only validated
 `actionable_evidence_span_ids`, retains exact mutation inputs as journal provenance,
 and tolerates known historical IDs only when independent current evidence covers the
 exact anchor. Mutation-failure and check-failure reserves are independent. Repeated
-zero-gain inspection produces only a soft commitment signal. Do not run a paid retry
-or fourteenth row without separate authorization.
+zero-gain inspection produces only a soft commitment signal. The later fourteenth row
+required and received separate authorization.
 Ruff and all 92 tests pass under the two-minute provider-free target; mock run
 `run_dev_7fc6bc7e982343e4` reaches isolated `EVALUATOR_PASS` with zero provider cost.
 A provider-free exact replay then admitted the thirteenth row's final repair under the
@@ -370,6 +370,28 @@ Docker upstream check reported 8 failures, 509 passes, and 570 skips; `finish_ta
 failed closed. Treat the original rejection as a fixed harness false negative and the
 replayed patch as non-submittable agent output. Do not weaken checks or add recovery
 solely to make that historical patch pass.
+
+The separately authorized fourteenth row, `run_dev_86ccd39d36ab4379`, confirms the
+encrypted-continuation and action-space contracts: all 40 calls completed with
+continuation references, turn 32 warned that inspection would close, turn 33 closed
+it, and a failed mutation reopened one final inspection turn. It nevertheless ended
+at `LIMIT_REACHED` after 70 actions and two accepted mutations. One typed-contract
+failure and three structurally corrupt raw diffs consumed the protected tail before
+the first patch applied. A public check failed, and the final repair used undefined
+`helpers.PERM_DEF` instead of the directly imported `PERM_DEF`; no turn remained to
+recheck. An external copy with only that identifier corrected passes both public
+checks, including 517 upstream passes and 570 skips. No submission or hidden evaluator
+ran.
+
+The next seam is provider-free. Treat new-span count as syntactic telemetry and derive
+soft inspection gain from non-overlapping, task-relevant coverage. Replace the
+model-counted raw-hunk mutation wire with a bounded exact-anchor replacement whose
+canonical Git diff is constructed by the gateway while preserving current hash, path,
+scope, and postimage checks. After a failed visible check, reserve and expose one
+targeted read before repair and recheck so stale-span invalidation cannot remove needed
+same-file symbol/import context. Do not merely raise the 40-call limit, silently repair
+arbitrary patches, weaken a check, or run a paid retry/fifteenth row without separate
+authorization.
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.
