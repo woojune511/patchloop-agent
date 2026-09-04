@@ -22,7 +22,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({"replace_text", "run_check", "finish_task",
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v9",
+            "schema_version": "dev-tool-surface-v10",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -44,6 +44,7 @@ def dev_tool_surface_hash() -> str:
             "public_check_failure_focus": "inline-python-public-source-v1",
             "public_failure_recurrence": "semantic-site-with-raw-fallback-v1",
             "causal_revision_guidance": "current-public-failure-grounded-v1",
+            "failed_check_repair_action_space": "optional-read-with-current-evidence-v1",
         }
     )
 

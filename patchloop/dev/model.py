@@ -47,6 +47,11 @@ on the current diff before
 finish_task is available. The complete current diff is projected in context; do not
 request get_diff. Do not emit raw chain-of-thought. Private tests, reference patches,
 and evaluator details are unavailable and must not be inferred.
+After a failed visible check, current exact mutation evidence keeps replace_text
+available. A targeted read_file may also be offered, but it is optional when the mapped
+public failure and current post-image already justify an exact repair. It is required
+only when current exact anchor evidence is absent. Do not perform a ceremonial read
+when replace_text is already justified.
 When last_failed_mutation is present, it is an unresolved public mutation from a
 prior tool turn. Repair or explicitly replace that mutation before unrelated
 exploration. A scope or replacement-contract failure must be repaired from its

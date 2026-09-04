@@ -146,8 +146,9 @@ Tool availability is derived from the workflow gate, current evidence, unexecute
 visible checks, and remaining model/tool budget. Optional inspection stays open while
 both budgets have calls beyond the minimum mutation, check, and finish path plus two
 independent bounded allowances: two calls for rejected-mutation recovery and at least
-three for failed-check recovery. The latter grows by the number of checks already passed
-on the current diff because a repair invalidates and reruns them. At one remaining optional turn, the context marks
+three for failed-check recovery. The latter conservatively covers a missing-anchor read,
+repair, and failed-check rerun, and grows by the number of checks already passed on the
+current diff because a repair invalidates and reruns them. At one remaining optional turn, the context marks
 `last_opportunity` and names the inspection tools that will close next; at zero slack
 they are removed. Each allowance is consumed only by its corresponding failure, and
 both states are reconstructed from durable batches on resume. A source read that is strictly required to
@@ -176,7 +177,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v9`; prior
+These output and scheduler semantics are bound by tool-surface identity `v10`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually
@@ -198,10 +199,13 @@ current non-empty diff and no non-ignored untracked file remains. The context li
 every current-diff check as PASS, FAIL, or NOT_RUN and separately names remaining
 IDs; the `run_check` schema exposes only public checks not yet executed on that exact
 diff. A failed check therefore requires a mutation or stop rather than a same-diff
-rerun. Before mutation becomes available again, the scheduler exposes exactly one
-`read_file` action restricted to the changed and currently evidenced paths. Its
-three-call reserve accounts for that targeted read, the repair, and the failed check
-that must be rerun after all current-diff check results are invalidated.
+rerun. If a bounded current mutation post-image still supplies an exact anchor, the
+scheduler exposes `replace_text` immediately and may expose one restricted `read_file`
+alongside it only while completion slack remains. That read is optional and should serve
+only a concrete unresolved public gap. If no current anchor evidence exists, the same
+restricted read is required before mutation and is counted in the best completion path.
+The conservative failed-check reserve covers that worst case, the repair, and the failed
+check that must be rerun after all current-diff check results are invalidated.
 
 For a failed registered `python -c` check, `run_check` parses only the already-public
 command and bounded public output. A valid `<string>` frame is mapped to its exact

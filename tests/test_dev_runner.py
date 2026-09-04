@@ -306,6 +306,9 @@ def test_latest_tool_result_is_not_evicted_by_working_set(
     assert projected_transition["action_horizon"]["check_recovery_reserve_calls"] == 3
     assert projected_transition["action_horizon"]["completion_possible"] is True
     assert projected_transition["action_horizon"]["protected_completion_possible"] is False
+    assert (
+        projected_transition["action_horizon"]["targeted_check_repair_required"] is False
+    )
 
     correction = runner._protocol_correction(  # noqa: SLF001
         turn_id="turn-after-horizon",
@@ -1881,7 +1884,7 @@ def test_resume_replays_pending_batch_before_completion_horizon(
     assert actions[0]["payload"]["result"]["status"] == "failed"
 
 
-def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> None:
+def test_check_failure_exposes_repair_with_optional_targeted_read() -> None:
     class PolicyGateway:
         def __init__(self) -> None:
             self.current_diff = SimpleNamespace(patch="", untracked_files=[], changed_files=[])
@@ -1895,9 +1898,10 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
             self.accepted_mutations = 0
             self.check_states: dict[str, str] = {}
             self.last_failed_mutation = None
+            self.current_mutation_evidence = True
 
         def has_current_mutation_evidence(self):
-            return True
+            return self.current_mutation_evidence
 
         def visible_check_status(self):
             return [
@@ -2023,17 +2027,75 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
 
     repair = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert limits.max_model_calls - counters.model_calls == 6
-    assert repair.minimum_completion_calls == 5
+    assert repair.minimum_completion_calls == 4
     assert repair.mutation_recovery_reserve_calls == 0
     assert repair.check_recovery_reserve_calls == 0
     assert repair.feedback_recovery_reserve_calls == 0
-    assert repair.completion_budget_calls == 5
+    assert repair.completion_budget_calls == 4
     assert repair.completion_possible is True
     assert repair.targeted_check_repair_inspection is True
+    assert repair.targeted_check_repair_required is False
+    assert repair.required_inspection_for_completion is False
     assert repair.targeted_read_paths == ("source.py",)
-    assert repair.allowed_tools == frozenset({"read_file", "stop_task"})
+    assert repair.allowed_tools == frozenset({"read_file", "replace_text", "stop_task"})
     assert counters.mutation_recovery_used is True
     assert counters.check_recovery_used is True
+
+    correction = runner._protocol_correction(  # noqa: SLF001
+        turn_id="failed-check-repair",
+        code="MISSING_REQUIRED_TOOL",
+        issue="A tool call is required.",
+        gateway=gateway,
+        policy=repair,
+    )
+    assert "Current mutation evidence permits replace_text now" in correction["message"]
+    assert "optional" in correction["message"]
+
+    exact_path_counters = runner._RunCounters(  # noqa: SLF001
+        model_calls=limits.max_model_calls - 4,
+        tool_actions=limits.max_tool_actions - 4,
+        mutation_recovery_used=True,
+        check_recovery_used=True,
+        failed_check_pending=True,
+    )
+    exact_path = runner._tool_policy(  # noqa: SLF001
+        gateway,
+        exact_path_counters,
+        limits,
+    )
+    assert exact_path.minimum_completion_calls == 4
+    assert exact_path.targeted_check_repair_inspection is False
+    assert exact_path.targeted_check_repair_required is False
+    assert exact_path.allowed_tools == frozenset({"replace_text", "stop_task"})
+
+    gateway.current_mutation_evidence = False
+    missing_evidence_counters = runner._RunCounters(  # noqa: SLF001
+        model_calls=limits.max_model_calls - 5,
+        tool_actions=limits.max_tool_actions - 5,
+        mutation_recovery_used=True,
+        check_recovery_used=True,
+        failed_check_pending=True,
+    )
+    missing_evidence = runner._tool_policy(  # noqa: SLF001
+        gateway,
+        missing_evidence_counters,
+        limits,
+    )
+    assert missing_evidence.minimum_completion_calls == 5
+    assert missing_evidence.targeted_check_repair_inspection is True
+    assert missing_evidence.targeted_check_repair_required is True
+    assert missing_evidence.required_inspection_for_completion is True
+    assert missing_evidence.allowed_tools == frozenset({"read_file", "stop_task"})
+    required_correction = runner._protocol_correction(  # noqa: SLF001
+        turn_id="failed-check-missing-evidence",
+        code="MISSING_REQUIRED_TOOL",
+        issue="A tool call is required.",
+        gateway=gateway,
+        policy=missing_evidence,
+    )
+    assert "required single targeted read_file" in required_correction["message"]
+    assert "replace_text" not in required_correction["available_tool_names"]
+    gateway.current_mutation_evidence = True
 
     targeted_read = DevToolResult(
         action_id="failed-check-context-read",
@@ -2050,6 +2112,7 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     assert limits.max_model_calls - counters.model_calls == 5
     assert repair_action.minimum_completion_calls == 4
     assert repair_action.targeted_check_repair_inspection is False
+    assert repair_action.targeted_check_repair_required is False
     assert repair_action.allowed_tools == frozenset({"replace_text", "stop_task"})
 
     repaired_mutation = DevToolResult(
@@ -2403,6 +2466,8 @@ def test_resume_counter_restores_consumed_check_failure_recovery(tmp_path) -> No
 
     assert counters.check_recovery_used is True
     assert counters.mutation_recovery_used is False
+    assert counters.failed_check_pending is True
+    assert counters.failed_check_repair_read_used is False
 
 
 def test_resume_counter_restores_separate_recovery_and_no_gain_state(tmp_path) -> None:
@@ -2457,6 +2522,8 @@ def test_resume_counter_restores_separate_recovery_and_no_gain_state(tmp_path) -
     assert counters.mutation_recovery_used is True
     assert counters.check_recovery_used is True
     assert counters.failed_mutation_pending is True
+    assert counters.failed_check_pending is True
+    assert counters.failed_check_repair_read_used is True
     assert counters.failed_mutation_repair_turns == 2
     assert counters.consecutive_no_evidence_gain_turns == 2
 

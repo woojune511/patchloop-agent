@@ -901,13 +901,13 @@ pre-image rollback, action-id replay, and expected-post-image crash reconciliati
 After mutation it rebinds unchanged, uniquely occurring spans to the new file hash and
 adds a focused post-image span; changed or ambiguous content is not revalidated.
 
-A failed visible check now consumes a separate reserve of at least three calls, growing
-by the number of checks already passed on the current diff. Before another mutation is
-offered, exactly one `read_file` turn is exposed and restricted to the changed or
-currently evidenced paths. The resulting completion path includes targeted read,
-repair, every visible check on the new diff, and finish. This directly covers the
-fourteenth row's missing import/symbol context without granting general exploration in
-the protected tail.
+At that checkpoint, a failed visible check consumed a separate reserve of at least
+three calls, growing by the number of checks already passed on the current diff. Before
+another mutation was offered, exactly one `read_file` turn was exposed and restricted
+to the changed or currently evidenced paths. The resulting completion path included a
+targeted read, repair, every visible check on the new diff, and finish. This directly
+covered the fourteenth row's missing import/symbol context without granting general
+exploration in the protected tail.
 
 Focused tests covering replacement, stale anchors, rollback, crash recovery, shifted
 coverage, cached zero-match searches, unchanged-span revalidation, targeted-read
@@ -1069,16 +1069,60 @@ NOT_RUN, `claim_eligible=false`, and provider cost is zero. This is local harnes
 evidence only; it does not establish that a provider will use the mapped statement to
 select the correct repair.
 
+## Eighteenth live observation and failed-check action mask
+
+One separately authorized eighteenth row used the version-2 pyfakefs task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+a $1.20 invocation cap, and external state root `C:\patchloop-state`. Immutable run
+`run_dev_092cb8494e254124` ended at `AGENT_STOPPED` after 62.563 active seconds,
+63 seconds of run age, nine model and input-count calls, 16 tool actions, one accepted
+mutation, and $0.078825000. Its actions were six reads, seven searches, one mutation,
+one public check, and one stop. No submission or evaluator execution occurred.
+
+The failed `parent-traversal-contract` check produced `FileExistsError` at mapped public
+inline line 10, the call `fake_os.makedirs("/visible/build/deep/../../release")`. The v9
+`current_public_failure` card retained that exact statement, and the accepted mutation's
+bounded post-image remained current mutation evidence. In the final stop summary, the
+model correctly explained that its component walk had already created the normalized
+leaf before the wrapper called `FakeFilesystem.makedirs(normalized_path)` again. It
+named removal or conditional execution of that redundant final call as the repair.
+
+The model could not perform that repair on the decisive turn. The failed-check policy
+reported `targeted_check_repair_inspection=true` and exposed only `read_file` and
+`stop_task`, despite `mutation_readiness=ready_to_attempt`, current post-image evidence,
+and three remaining mutation slots. The system prompt simultaneously required a
+concrete unresolved public gap for another read. Thus stop was consistent with the
+available action mask. This isolates a scheduler contradiction: v9 localized the public
+failure and the model made the causal pivot, but the harness hid its mutation action.
+
+Tool surface `v10` separates two facts that v9 represented with one boolean. A
+path-restricted targeted read may be available after a failed check, but it is required
+only when no current exact mutation anchor remains. When current post-image evidence is
+available, `replace_text` remains visible immediately; the read appears alongside it
+only when there is protected completion slack and is described as optional. At the exact
+best-path horizon, the optional read is withheld so it cannot consume a required repair,
+check, or finish call. Missing evidence still yields `read_file` plus `stop_task` until
+the exact anchor is reacquired. Existing fail-closed evidence, scope, rollback, check,
+and submission contracts are unchanged, and no pyfakefs-specific repair is embedded.
+Ruff and the focused 74-test tool/runner suite pass. All 109 provider-free tests pass in
+71.998 seconds with external temp root `C:\pt\pl-v10-full-a`. The regression covers
+immediate mutation plus optional targeted read, mandatory read when current evidence is
+absent, and suppression of the optional read at the exact best-path horizon. Mock run
+`run_dev_b5d5b2473d6a414f` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation. Task acceptance is PASS, safety is
+NOT_RUN, `claim_eligible=false`, and provider cost is zero. This is provider-free harness
+evidence, not proof that a live model will take the repair.
+
 ## Not executed
 
-- no transport retry or follow-up paid run after the seventeenth row
+- no transport retry or follow-up paid run after the eighteenth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no mutation, submission, or evaluator execution in the seventh through tenth
-  pyfakefs version-2 live rows. The eleventh through seventeenth mutated; the eleventh
-  passed both visible checks, while the twelfth through seventeenth each reached a failed
-  visible check. None of those seven live rows submitted or invoked the evaluator
+  pyfakefs version-2 live rows. The eleventh through eighteenth mutated; the eleventh
+  passed both visible checks, while the twelfth through eighteenth each reached a failed
+  visible check. None of those eight live rows submitted or invoked the evaluator
 - no hidden evaluation of the temporary Loguru version-2 public correction
 - no hidden evaluation of the fourteenth-row final patch or its provider-free
   one-identifier repair

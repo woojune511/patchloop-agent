@@ -120,6 +120,7 @@ class _ToolPolicy:
     tools_closing_after_this_turn: tuple[str, ...]
     required_inspection_for_completion: bool
     targeted_check_repair_inspection: bool
+    targeted_check_repair_required: bool
     targeted_mutation_repair_inspection: bool
     targeted_read_paths: tuple[str, ...]
 
@@ -376,13 +377,13 @@ def _minimum_completion_calls(
     visible_check_status: tuple[dict[str, Any], ...],
     remaining_visible_check_ids: tuple[str, ...],
     has_current_mutation_evidence: bool,
-    targeted_check_repair_inspection: bool = False,
+    targeted_check_repair_required: bool = False,
     targeted_mutation_repair_inspection: bool = False,
     failed_mutation_pending: bool = False,
 ) -> int:
     mutation_inspection_calls = int(
         targeted_mutation_repair_inspection
-        or (not has_current_mutation_evidence and not targeted_check_repair_inspection)
+        or (not has_current_mutation_evidence and not targeted_check_repair_required)
     )
     mutation_calls = 1 + mutation_inspection_calls
     if workflow_gate == "needs_mutation":
@@ -392,7 +393,7 @@ def _minimum_completion_calls(
             row["status"] == "FAIL" for row in visible_check_status
         ):
             return (
-                int(targeted_check_repair_inspection)
+                int(targeted_check_repair_required)
                 + mutation_calls
                 + len(gateway.public_task.visible_checks)
                 + 1
@@ -461,13 +462,16 @@ def _tool_policy(
         and counters.failed_check_pending
         and not counters.failed_check_repair_read_used
     )
+    targeted_check_repair_requires_read = (
+        targeted_check_repair_requested and not has_current_mutation_evidence
+    )
     minimum_completion_calls = _minimum_completion_calls(
         gateway,
         workflow_gate,
         visible_check_status=visible_status,
         remaining_visible_check_ids=remaining_check_ids,
         has_current_mutation_evidence=has_current_mutation_evidence,
-        targeted_check_repair_inspection=targeted_check_repair_requested,
+        targeted_check_repair_required=targeted_check_repair_requires_read,
         targeted_mutation_repair_inspection=targeted_mutation_repair_requested,
         failed_mutation_pending=failed_mutation,
     )
@@ -510,8 +514,17 @@ def _tool_policy(
         and remaining_tool_actions >= completion_budget_calls
         and (not requires_mutation_for_completion or mutation_capacity)
     )
+    targeted_check_repair_required = (
+        targeted_check_repair_requires_read and mutation_capacity and completion_possible
+    )
     targeted_check_repair_inspection = (
-        targeted_check_repair_requested and mutation_capacity and completion_possible
+        targeted_check_repair_requested
+        and mutation_capacity
+        and completion_possible
+        and (
+            targeted_check_repair_required
+            or (model_slack > 0 and tool_slack > 0)
+        )
     )
     targeted_mutation_repair_inspection = (
         targeted_mutation_repair_requested and mutation_capacity and completion_possible
@@ -524,7 +537,7 @@ def _tool_policy(
         and not counters.failed_check_pending
     )
     required_inspection_for_completion = (
-        targeted_check_repair_inspection
+        targeted_check_repair_required
         or targeted_mutation_repair_inspection
         or (
             requires_mutation_for_completion
@@ -601,7 +614,7 @@ def _tool_policy(
         if (
             mutation_capacity
             and has_current_mutation_evidence
-            and not targeted_check_repair_inspection
+            and not targeted_check_repair_required
             and not targeted_mutation_repair_inspection
         ):
             allowed.add("replace_text")
@@ -631,6 +644,7 @@ def _tool_policy(
         tools_closing_after_this_turn=tools_closing_after_this_turn,
         required_inspection_for_completion=required_inspection_for_completion,
         targeted_check_repair_inspection=targeted_check_repair_inspection,
+        targeted_check_repair_required=targeted_check_repair_required,
         targeted_mutation_repair_inspection=targeted_mutation_repair_inspection,
         targeted_read_paths=targeted_read_paths,
     )
@@ -832,10 +846,18 @@ def _protocol_correction(
                 "to refresh its invalid anchor or evidence; search_files is unavailable."
             )
         elif policy.targeted_check_repair_inspection:
-            actions.append(
-                "Use the single targeted read_file opportunity on one listed changed file "
-                "to recover exact repair context; search_files is unavailable."
-            )
+            if policy.targeted_check_repair_required:
+                actions.append(
+                    "Use the required single targeted read_file opportunity on one listed "
+                    "changed file to recover an exact current repair anchor; search_files is "
+                    "unavailable."
+                )
+            else:
+                actions.append(
+                    "Current mutation evidence permits replace_text now. The single targeted "
+                    "read_file opportunity is optional and should be used only for a concrete "
+                    "unresolved public gap; search_files is unavailable."
+                )
         elif {"read_file", "search_files"} & allowed:
             suffix = (
                 " This is the last inspection opportunity."
@@ -950,6 +972,7 @@ def _build_context(
                 active_policy.required_inspection_for_completion
             ),
             "targeted_check_repair_inspection": (active_policy.targeted_check_repair_inspection),
+            "targeted_check_repair_required": (active_policy.targeted_check_repair_required),
             "targeted_mutation_repair_inspection": (
                 active_policy.targeted_mutation_repair_inspection
             ),
@@ -2650,6 +2673,7 @@ def _run_one_locked(
                 "exploration_state": policy.exploration_state,
                 "closure_reason": policy.closure_reason,
                 "targeted_check_repair_inspection": (policy.targeted_check_repair_inspection),
+                "targeted_check_repair_required": (policy.targeted_check_repair_required),
                 "targeted_mutation_repair_inspection": (
                     policy.targeted_mutation_repair_inspection
                 ),

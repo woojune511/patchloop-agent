@@ -174,6 +174,8 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
     assert "current_public_failure" in DEV_SYSTEM_PROMPT
     assert "same_public_failure_site" in DEV_SYSTEM_PROMPT
     assert "later_source_lines_observed" in DEV_SYSTEM_PROMPT
+    assert "current exact mutation evidence keeps replace_text" in DEV_SYSTEM_PROMPT
+    assert "Do not perform a ceremonial read" in DEV_SYSTEM_PROMPT
     gate_schemas = dev_tool_schemas(
         finish_enabled=False,
         check_ids=(),

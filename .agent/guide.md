@@ -44,10 +44,13 @@ terminates the row; any valid completed tool batch resets the correction allowan
 Optional inspection remains available only while both model-call and tool-action
 budgets exceed the minimum path through mutation, all required checks, and finish plus
 two independent bounded allowances: two calls for rejected-mutation recovery and at
-least three calls for failed-visible-check recovery. The latter covers one targeted
-read, one replacement, the failed check that must be rerun, and any current-diff checks
-already passed before a later check fails. Each remains held until its matching failure;
-consuming one does not erase the other. `completion_possible` separately reports whether
+least three calls for failed-visible-check recovery. The latter conservatively covers a
+missing-anchor targeted read, one replacement, the failed check that must be rerun, and
+any current-diff checks already passed before a later check fails. After failure, retain
+`replace_text` immediately when current post-image evidence exists; offer the restricted
+read beside it only with optional slack. Require the read only when that current exact
+anchor is absent. Each allowance remains held until its matching failure; consuming one
+does not erase the other. `completion_possible` separately reports whether
 the actual remaining budgets cover the best-case path;
 `protected_completion_possible` includes the unused allowance. Neither is an alias
 for mutation capacity.
@@ -68,7 +71,10 @@ Never remove tools because of this signal.
 
 An unexecuted `run_check` may be available on the first turn while the action horizon
 has slack; on a changed diff it is direct completion work. A check that already failed
-is not offered again on the same diff. `finish_task` is exposed only for a non-empty
+is not offered again on the same diff. A failed check with current exact mutation evidence
+offers `replace_text` immediately and, if protected slack remains, one optional
+path-restricted `read_file`; `targeted_check_repair_required` is true only when the
+current anchor must first be reacquired. `finish_task` is exposed only for a non-empty
 diff with no untracked files after all visible checks pass on that exact diff.
 `stop_task` is always exposed as an explicit unsuccessful terminal; it never submits
 or evaluates.
@@ -522,6 +528,31 @@ in approximately 70.5 seconds using external temp root `C:\pt\pl-v9-full-a`. Moc
 five tool actions through one accepted mutation, with task acceptance PASS, safety
 NOT_RUN, `claim_eligible=false`, and zero provider cost. This is local wiring evidence,
 not live evidence that the model makes the intended causal pivot.
+
+The separately authorized eighteenth row, `run_dev_092cb8494e254124`, ended at
+`AGENT_STOPPED` after nine model calls, 16 tool actions, one accepted mutation, one
+failed public check, and $0.078825000. Tool surface v9 mapped the `FileExistsError` to
+public inline line 10 and retained the current mutation post-image. The model explicitly
+diagnosed the redundant final `FakeFilesystem.makedirs(normalized_path)` call and named
+the appropriate repair, but the scheduler exposed only `read_file` and `stop_task`.
+The old `targeted_check_repair_inspection` state conflated a restricted read opportunity
+with a required predecessor, while the prompt correctly discouraged a read without an
+unresolved public gap. The resulting stop is a harness action-mask contradiction, not
+missing failure evidence or a failed causal pivot.
+
+Tool surface `v10` adds `targeted_check_repair_required` as the distinct prerequisite.
+When a failed check still has current exact mutation evidence, expose `replace_text`
+immediately and expose one path-restricted read beside it only when protected completion
+slack remains. At the exact best-path horizon, omit that optional read. When the anchor
+is absent, keep the targeted read mandatory and count it in the minimum path. Corrections
+must describe those two states distinctly. Preserve gateway evidence validation, scope,
+rollback, resume reconstruction, and same-diff check suppression. This change authorizes
+no Docker operation, provider call, or nineteenth live row.
+Ruff and the focused 74-test tool/runner suite pass. All 109 provider-free tests pass in
+71.998 seconds with external temp root `C:\pt\pl-v10-full-a`. Mock run
+`run_dev_b5d5b2473d6a414f` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation, with task acceptance PASS, safety
+NOT_RUN, `claim_eligible=false`, and zero provider cost.
 
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality

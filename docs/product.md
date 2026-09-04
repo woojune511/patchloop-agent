@@ -96,10 +96,14 @@ model context. This keeps the prompt and action mask coherent without caching st
 across mutations, checks, or recovery boundaries.
 The horizon holds two independent bounded allowances: two calls for one rejected-
 mutation recovery and at least three calls for one failed-visible-check recovery. The
-latter preserves one targeted read before replacement and recheck, plus reruns of checks
-that passed earlier on the invalidated diff. Consuming one allowance
-does not erase the other. Best-path and protected-path feasibility both reflect actual
-remaining model and tool budgets, not merely the presence of another mutation slot.
+latter conservatively covers the missing-anchor case: one targeted read, replacement,
+recheck, and reruns of checks that passed earlier on the invalidated diff. After a check
+fails, current exact post-image evidence keeps replacement available immediately; a
+restricted read is optional and appears alongside it only when completion slack remains.
+Only missing current anchor evidence makes that targeted read a required step in the
+minimum path. Consuming one allowance does not erase the other. Best-path and protected-
+path feasibility both reflect actual remaining model and tool budgets, not merely the
+presence of another mutation slot.
 After two consecutive successful inspection batches add no non-overlapping coverage in
 any tracked public source while a current mutation anchor exists, the context adds a
 soft `commitment_signal` recommending mutation or explicit stop. A new query, shifted

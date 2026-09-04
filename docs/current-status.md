@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The seventeen live observations below
+Repository policy alone never initiates paid work. The eighteen live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -442,6 +442,37 @@ five tool actions through one accepted mutation; task acceptance is PASS, safety
 NOT_RUN, `claim_eligible=false`, and provider cost is zero. This verifies local wiring,
 not a provider causal pivot or task-quality improvement.
 
+The separately authorized eighteenth row used the same pyfakefs version-2 task, model,
+reasoning, credential path, repetition, cap, and external state root. Immutable run
+`run_dev_092cb8494e254124` ended at `AGENT_STOPPED` after 62.563 active seconds and
+63 seconds of run age, with nine model/input-count calls, 16 tool actions, one accepted
+mutation, one failed public check, and $0.078825000 of provider cost. It performed six
+reads, seven searches, one mutation, one check, and one stop. There was no provider or
+continuation error, submission, or evaluator execution.
+
+Tool surface `v9` correctly mapped the failure to public inline line 10 and preserved
+the current mutation post-image. The model then explicitly identified the redundant
+final `FakeFilesystem.makedirs(normalized_path)` call as the cause of `FileExistsError`
+and proposed removing or conditioning it. The scheduler nevertheless exposed only
+`read_file` and `stop_task`: one old boolean treated a targeted read opportunity as a
+mandatory predecessor and hid `replace_text`. Because no unresolved public evidence gap
+remained, the system prompt made the ceremonial read unjustified and stop was a coherent
+choice. This is a deterministic action-policy contradiction, not a failure of v9 failure
+localization or missing model insight.
+
+Tool surface `v10` separates targeted-read availability from required inspection. With
+current exact mutation evidence, `replace_text` is immediately available and one
+path-restricted `read_file` is merely optional when protected completion slack remains.
+Without current anchor evidence, the restricted read remains required and is counted in
+the minimum completion path. The gateway still validates exact current evidence, scope,
+rollback, checks, and submission fail-closed; no task-specific repair is encoded.
+Ruff and the focused 74-test tool/runner suite pass. All 109 provider-free tests pass in
+71.998 seconds with external temp root `C:\pt\pl-v10-full-a`. Mock run
+`run_dev_b5d5b2473d6a414f` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation; task acceptance is PASS, safety is
+NOT_RUN, `claim_eligible=false`, and provider cost is zero. This validates local action-
+space wiring, not live use of the newly exposed repair.
+
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -610,8 +641,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth through seventeenth rows were separately authorized and are now
-terminal. No eighteenth row is authorized.
+the later thirteenth through eighteenth rows were separately authorized and are now
+terminal. No nineteenth row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -665,7 +696,10 @@ correctly, while model-selected evidence IDs still wasted four calls before muta
 Tool surface `v8` removes that join key and prevents the same failure lineage from
 replenishing targeted reads. The separately authorized seventeenth row confirmed that
 binding on all four mutations, then exposed the public failure-localization and causal-
-pivot boundary now addressed by tool surface `v9`. No paid retry or eighteenth row is
+pivot boundary now addressed by tool surface `v9`. The separately authorized eighteenth
+row confirmed that focus and the model's correct repair diagnosis, then exposed the
+mandatory-read action mask. Tool surface `v10` makes that read optional when current
+post-image evidence already supports `replace_text`. No paid retry or nineteenth row is
 authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
