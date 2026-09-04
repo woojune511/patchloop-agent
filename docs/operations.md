@@ -126,6 +126,12 @@ operational read cache remains keyed only by the executable request and current 
 
 The public context presents the workflow gate, budget, action horizon, mutation
 readiness, mutation scope budget, and evidence ledger before the larger task payload.
+Immediately before a new model turn, the scheduler captures one coherent public state
+snapshot containing the complete diff, current evidence paths, and visible-check state.
+Policy derivation and context projection share that snapshot rather than independently
+rerunning Git inspection. Evidence validation groups spans by path and hashes each
+observed file once. The snapshot is not retained across a tool batch, mutation, check,
+or resume reconciliation; the next decision captures fresh workspace state.
 `ready_to_attempt` means that a current exact anchor exists, not that the semantic
 solution is sufficient. Scope headroom describes the current complete diff; it is not
 the replacement line count. The ledger is bounded and deterministic: it merges covered

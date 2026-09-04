@@ -81,6 +81,9 @@ Inspection availability is based on completion slack rather than a fixed number 
 earlier reads. When only one optional inspection turn remains, the context warns that
 `read_file` and `search_files` will close next. At zero slack they close so mutation,
 remaining visible checks, submission, or an explicit stop retain the required calls.
+Each decision uses one fresh public workspace snapshot for both its action policy and
+model context. This keeps the prompt and action mask coherent without caching state
+across mutations, checks, or recovery boundaries.
 The horizon holds two independent bounded allowances: two calls for one rejected-
 mutation recovery and at least three calls for one failed-visible-check recovery. The
 latter preserves one targeted read before replacement and recheck, plus reruns of checks

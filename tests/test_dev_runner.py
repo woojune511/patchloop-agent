@@ -50,7 +50,11 @@ def inspection_decision(label: str) -> PublicTurnDecision:
     )
 
 
-def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke_package) -> None:
+def test_latest_tool_result_is_not_evicted_by_working_set(
+    gateway_factory,
+    smoke_package,
+    monkeypatch,
+) -> None:
     gateway, journal, _ = gateway_factory()
     for index in range(12):
         gateway.spans[f"span_ffffffffffff{index:04d}"] = {
@@ -73,6 +77,24 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         turn_decision=inspection_decision("latest-read"),
     )
     latest = gateway.execute(latest_call)
+    observations = {"diff": 0, "tracked_path": 0}
+    original_diff_summary = RealWorkspaceManager.diff_summary
+    original_tracked_path = gateway._tracked_path  # noqa: SLF001
+
+    def counted_diff_summary(workspace):
+        observations["diff"] += 1
+        return original_diff_summary(workspace)
+
+    def counted_tracked_path(path):
+        observations["tracked_path"] += 1
+        return original_tracked_path(path)
+
+    monkeypatch.setattr(
+        RealWorkspaceManager,
+        "diff_summary",
+        staticmethod(counted_diff_summary),
+    )
+    monkeypatch.setattr(gateway, "_tracked_path", counted_tracked_path)
     context = json.loads(
         runner._build_context(  # noqa: SLF001 - direct context contract test
             package=smoke_package,
@@ -92,6 +114,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     projected = context["latest_tool_results"][0]["output"]["spans"]
     assert projected[0]["span_id"] == latest.output["spans"][0]["span_id"]
     assert len(context["source_spans"]) == 8
+    assert observations == {"diff": 1, "tracked_path": 1}
 
     limits = DevLimits()
     horizon = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
@@ -523,25 +546,28 @@ def test_completion_horizon_becomes_impossible_after_a_failed_mutation() -> None
         )
         accepted_mutations = 0
         last_failed_mutation = None
+        check_failed = False
 
         @staticmethod
         def has_current_mutation_evidence():
             return True
 
-        @staticmethod
-        def visible_check_status():
+        def visible_check_status(self):
+            if self.check_failed:
+                return [
+                    {"check_id": "first", "status": "FAIL"},
+                    {"check_id": "second", "status": "PASS"},
+                ]
             return [
                 {"check_id": "first", "status": "NOT_RUN"},
                 {"check_id": "second", "status": "NOT_RUN"},
             ]
 
-        @staticmethod
-        def remaining_visible_check_ids():
-            return ["first", "second"]
+        def remaining_visible_check_ids(self):
+            return ["first"] if self.check_failed else ["first", "second"]
 
-        @staticmethod
-        def unrun_visible_check_ids():
-            return ["first", "second"]
+        def unrun_visible_check_ids(self):
+            return [] if self.check_failed else ["first", "second"]
 
         @staticmethod
         def ready_to_submit():
@@ -576,6 +602,25 @@ def test_completion_horizon_becomes_impossible_after_a_failed_mutation() -> None
         "minimum_completion_calls": 4,
         "blocking_resources": ["model_calls", "tool_actions"],
     }
+
+    gateway.last_failed_mutation = None
+    gateway.current_diff.patch = "diff --git a/source.py b/source.py\n"
+    gateway.current_diff.changed_files = ["source.py"]
+    gateway.accepted_mutations = limits.max_accepted_mutations
+    gateway.check_failed = True
+    no_mutation_capacity = runner._tool_policy(  # noqa: SLF001
+        gateway,
+        runner._RunCounters(),  # noqa: SLF001
+        limits,
+    )
+    assert no_mutation_capacity.workflow_gate == "needs_visible_checks"
+    assert no_mutation_capacity.completion_possible is False
+    assert runner._completion_horizon_payload(  # noqa: SLF001
+        gateway,
+        runner._RunCounters(),  # noqa: SLF001
+        limits,
+        no_mutation_capacity,
+    )["blocking_resources"] == ["accepted_mutations"]
 
 
 def test_failed_mutation_prevents_submitting_a_previously_checked_baseline() -> None:

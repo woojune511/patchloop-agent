@@ -28,7 +28,7 @@ from patchloop.dev.contracts import (
 )
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
-from patchloop.repository import WorkspaceManager
+from patchloop.repository import DiffSummary, WorkspaceManager
 from patchloop.sandbox.runner import Sandbox
 from patchloop.util import ensure_within, safe_relative_path, sha256_bytes, sha256_json
 from patchloop.verifier.policy import verify_scope
@@ -54,6 +54,19 @@ class _ValidatedReplacement:
     postimage_start_line: int
     actionable_evidence_span_ids: list[str]
     ignored_historical_evidence_span_ids: list[str]
+
+
+@dataclass(frozen=True)
+class DevGatewayStateSnapshot:
+    """One coherent public workspace observation for a model-turn decision."""
+
+    diff: DiffSummary
+    mutation_evidence_paths: tuple[str, ...]
+    evidence_paths: tuple[str, ...]
+    visible_check_status: tuple[dict[str, Any], ...]
+    remaining_visible_check_ids: tuple[str, ...]
+    unrun_visible_check_ids: tuple[str, ...]
+    ready_to_submit: bool
 
 
 def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
@@ -931,16 +944,18 @@ class DevToolGateway:
         candidates.sort(key=lambda span: int(span.get("last_observed_seq", 0)), reverse=True)
         return candidates[:8]
 
-    def evidence_ledger(self) -> dict[str, Any]:
+    def evidence_ledger(self, *, diff_hash: str | None = None) -> dict[str, Any]:
         """Project bounded, public, deterministic facts about observed evidence."""
 
-        diff_hash = self.current_diff_hash
+        current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
         with self._lock:
-            coverage = copy.deepcopy(self._coverage_by_diff.get(diff_hash, {}))
-            searches = copy.deepcopy(self._search_observations_by_diff.get(diff_hash, []))
-            canonical_searches = self._search_ledger_by_diff.get(diff_hash, {})
-            result_fingerprints = self._search_result_fingerprints_by_diff.get(diff_hash, set())
-            latest = copy.deepcopy(self._latest_inspection_by_diff.get(diff_hash))
+            coverage = copy.deepcopy(self._coverage_by_diff.get(current_hash, {}))
+            searches = copy.deepcopy(self._search_observations_by_diff.get(current_hash, []))
+            canonical_searches = self._search_ledger_by_diff.get(current_hash, {})
+            result_fingerprints = self._search_result_fingerprints_by_diff.get(
+                current_hash, set()
+            )
+            latest = copy.deepcopy(self._latest_inspection_by_diff.get(current_hash))
         covered_files = [
             {
                 "path": path,
@@ -970,19 +985,27 @@ class DevToolGateway:
         if latest is not None:
             latest.pop("last_observed_seq", None)
         return {
-            "diff_hash": diff_hash,
+            "diff_hash": current_hash,
             "covered_files": covered_files,
             "search_summary": aggregate_counts,
             "canonical_searches": searches[:12],
             "latest_inspection_intent": latest,
         }
 
-    def mutation_readiness(self) -> dict[str, Any]:
-        current_paths = list(self.current_mutation_evidence_paths())
+    def mutation_readiness(
+        self,
+        *,
+        current_paths: Sequence[str] | None = None,
+    ) -> dict[str, Any]:
+        paths = list(
+            self.current_mutation_evidence_paths()
+            if current_paths is None
+            else current_paths
+        )
         return {
-            "state": "ready_to_attempt" if current_paths else "needs_anchor_evidence",
+            "state": "ready_to_attempt" if paths else "needs_anchor_evidence",
             "readiness_basis": "current_exact_anchor_only",
-            "current_anchor_evidence_paths": current_paths,
+            "current_anchor_evidence_paths": paths,
             "visible_check_contract_available": bool(self.public_task.visible_checks),
             "rule": (
                 "ready_to_attempt means only that a current exact mutation anchor exists; it "
@@ -991,19 +1014,19 @@ class DevToolGateway:
             ),
         }
 
-    def mutation_scope_budget(self) -> dict[str, Any]:
-        summary = self.current_diff
+    def mutation_scope_budget(self, *, summary: DiffSummary | None = None) -> dict[str, Any]:
+        current = summary if summary is not None else self.current_diff
         constraints = self.public_task.constraints
         return {
-            "current_diff_lines": summary.diff_lines,
+            "current_diff_lines": current.diff_lines,
             "max_diff_lines": constraints.max_diff_lines,
             "remaining_diff_line_headroom": max(
-                0, constraints.max_diff_lines - summary.diff_lines
+                0, constraints.max_diff_lines - current.diff_lines
             ),
-            "current_changed_file_count": len(summary.changed_files),
+            "current_changed_file_count": len(current.changed_files),
             "max_changed_files": constraints.max_changed_files,
             "remaining_changed_file_headroom": max(
-                0, constraints.max_changed_files - len(summary.changed_files)
+                0, constraints.max_changed_files - len(current.changed_files)
             ),
             "rule": (
                 "Headroom is not the replacement line count; the gateway validates the "
@@ -1038,57 +1061,53 @@ class DevToolGateway:
     def current_mutation_evidence_paths(self) -> tuple[str, ...]:
         """Return allowed files backed by at least one current public evidence span."""
 
+        current = self._current_evidence_path_rows()
+        return tuple(sorted(path for _, path in current if self._path_allowed(path)))
+
+    def current_evidence_paths(self) -> tuple[str, ...]:
+        """Return a bounded set of current public files available for repair rereads."""
+
+        return tuple(sorted(path for _, path in self._current_evidence_path_rows()[:8]))
+
+    def _current_evidence_path_rows(self) -> list[tuple[int, str]]:
+        """Validate each observed path once, then rank its current observations."""
+
         with self._lock:
-            candidates = sorted(
-                (dict(span) for span in self.spans.values()),
-                key=lambda span: int(span.get("last_observed_seq", 0)),
-                reverse=True,
-            )
-        current_paths: set[str] = set()
+            candidates = [dict(span) for span in self.spans.values()]
+        observations_by_path: dict[str, list[tuple[str, int]]] = {}
         for span in candidates:
             path = span.get("path")
             file_hash = span.get("file_hash")
             if not isinstance(path, str) or not isinstance(file_hash, str):
                 continue
-            if not self._path_allowed(path) or path in current_paths:
-                continue
-            try:
-                normalized, current = self._tracked_path(path)
-                if sha256_bytes(current.read_bytes()) == file_hash:
-                    current_paths.add(normalized)
-            except (PatchLoopError, OSError):
-                continue
-        return tuple(sorted(current_paths))
-
-    def current_evidence_paths(self) -> tuple[str, ...]:
-        """Return a bounded set of current public files available for repair rereads."""
-
-        with self._lock:
-            candidates = sorted(
-                (dict(span) for span in self.spans.values()),
-                key=lambda span: int(span.get("last_observed_seq", 0)),
-                reverse=True,
+            observations_by_path.setdefault(path, []).append(
+                (file_hash, int(span.get("last_observed_seq", 0)))
             )
-        current_paths: list[str] = []
-        for span in candidates:
-            path = span.get("path")
-            file_hash = span.get("file_hash")
-            if not isinstance(path, str) or not isinstance(file_hash, str) or path in current_paths:
-                continue
+
+        current_paths: list[tuple[int, str]] = []
+        for path, observations in observations_by_path.items():
             try:
                 normalized, current = self._tracked_path(path)
-                if sha256_bytes(current.read_bytes()) == file_hash:
-                    current_paths.append(normalized)
+                current_hash = sha256_bytes(current.read_bytes())
             except (PatchLoopError, OSError):
                 continue
-            if len(current_paths) >= 8:
-                break
-        return tuple(sorted(current_paths))
+            current_sequences = [
+                sequence for file_hash, sequence in observations if file_hash == current_hash
+            ]
+            if current_sequences:
+                current_paths.append((max(current_sequences), normalized))
+
+        current_paths.sort(key=lambda item: (-item[0], item[1]))
+        return current_paths
 
     def has_current_mutation_evidence(self) -> bool:
         return bool(self.current_mutation_evidence_paths())
 
-    def actionable_last_successful_mutation(self) -> dict[str, Any] | None:
+    def actionable_last_successful_mutation(
+        self,
+        *,
+        diff_hash: str | None = None,
+    ) -> dict[str, Any] | None:
         """Project current repair evidence without stale pre-image identifiers."""
 
         if not isinstance(self.last_successful_mutation, dict):
@@ -1097,7 +1116,7 @@ class DevToolGateway:
         projected.pop("evidence_span_ids", None)
         projected.pop("anchor_evidence_span_id", None)
         projected.pop("edit_anchor", None)
-        postimage = self._current_postimage_evidence()
+        postimage = self._current_postimage_evidence(diff_hash=diff_hash)
         actionable_ids = [str(postimage["span_id"])] if postimage is not None else []
         projected["postimage_evidence_span_id"] = actionable_ids[0] if actionable_ids else None
         projected["actionable_evidence_span_ids"] = actionable_ids
@@ -1111,16 +1130,17 @@ class DevToolGateway:
     def current_diff_hash(self) -> str:
         return self.current_diff.patch_hash
 
-    def visible_checks_pass(self) -> bool:
+    def visible_checks_pass(self, *, diff_hash: str | None = None) -> bool:
         expected = {check.id for check in self.public_task.visible_checks}
         if not expected:
             return bool(self.current_diff.patch)
-        rows = self.checks_by_diff.get(self.current_diff_hash, {})
+        current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
+        rows = self.checks_by_diff.get(current_hash, {})
         return expected == {check_id for check_id, row in rows.items() if row.get("passed") is True}
 
-    def visible_check_status(self) -> list[dict[str, Any]]:
-        diff_hash = self.current_diff_hash
-        rows = self.checks_by_diff.get(diff_hash, {})
+    def visible_check_status(self, *, diff_hash: str | None = None) -> list[dict[str, Any]]:
+        current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
+        rows = self.checks_by_diff.get(current_hash, {})
         status: list[dict[str, Any]] = []
         for check in self.public_task.visible_checks:
             row = rows.get(check.id)
@@ -1128,7 +1148,7 @@ class DevToolGateway:
                 status.append(
                     {
                         "check_id": check.id,
-                        "diff_hash": diff_hash,
+                        "diff_hash": current_hash,
                         "status": "NOT_RUN",
                         "failure_signature": None,
                     }
@@ -1137,24 +1157,61 @@ class DevToolGateway:
             status.append(
                 {
                     "check_id": check.id,
-                    "diff_hash": diff_hash,
+                    "diff_hash": current_hash,
                     "status": "PASS" if row.get("passed") is True else "FAIL",
                     "failure_signature": row.get("failure_signature"),
                 }
             )
         return status
 
-    def remaining_visible_check_ids(self) -> list[str]:
-        return [row["check_id"] for row in self.visible_check_status() if row["status"] != "PASS"]
-
-    def unrun_visible_check_ids(self) -> list[str]:
+    def remaining_visible_check_ids(self, *, diff_hash: str | None = None) -> list[str]:
         return [
-            row["check_id"] for row in self.visible_check_status() if row["status"] == "NOT_RUN"
+            row["check_id"]
+            for row in self.visible_check_status(diff_hash=diff_hash)
+            if row["status"] != "PASS"
+        ]
+
+    def unrun_visible_check_ids(self, *, diff_hash: str | None = None) -> list[str]:
+        return [
+            row["check_id"]
+            for row in self.visible_check_status(diff_hash=diff_hash)
+            if row["status"] == "NOT_RUN"
         ]
 
     def ready_to_submit(self) -> bool:
         summary = self.current_diff
-        return bool(summary.patch) and not summary.untracked_files and self.visible_checks_pass()
+        return (
+            bool(summary.patch)
+            and not summary.untracked_files
+            and self.visible_checks_pass(diff_hash=summary.patch_hash)
+        )
+
+    def state_snapshot(self) -> DevGatewayStateSnapshot:
+        """Capture diff, evidence, and check state once for one scheduler decision."""
+
+        summary = self.current_diff
+        current_paths = self._current_evidence_path_rows()
+        mutation_paths = tuple(
+            sorted(path for _, path in current_paths if self._path_allowed(path))
+        )
+        evidence_paths = tuple(sorted(path for _, path in current_paths[:8]))
+        status = tuple(self.visible_check_status(diff_hash=summary.patch_hash))
+        remaining = tuple(row["check_id"] for row in status if row["status"] != "PASS")
+        unrun = tuple(row["check_id"] for row in status if row["status"] == "NOT_RUN")
+        ready = (
+            bool(summary.patch)
+            and not summary.untracked_files
+            and all(row["status"] == "PASS" for row in status)
+        )
+        return DevGatewayStateSnapshot(
+            diff=summary,
+            mutation_evidence_paths=mutation_paths,
+            evidence_paths=evidence_paths,
+            visible_check_status=status,
+            remaining_visible_check_ids=remaining,
+            unrun_visible_check_ids=unrun,
+            ready_to_submit=ready,
+        )
 
     def execute_batch(self, calls: list[RequestedTool]) -> list[DevToolResult]:
         shape = validate_tool_batch(calls, max_parallel_reads=self.limits.max_parallel_reads)
@@ -1463,10 +1520,14 @@ class DevToolGateway:
             raise ContractError("generated mutation diff exceeds the bounded context limit")
         return patch
 
-    def _current_postimage_evidence(self) -> dict[str, Any] | None:
+    def _current_postimage_evidence(
+        self,
+        *,
+        diff_hash: str | None = None,
+    ) -> dict[str, Any] | None:
         latest = self.last_successful_mutation or {}
         expected_span_id = latest.get("postimage_evidence_span_id")
-        current_diff_hash = self.current_diff_hash
+        current_diff_hash = diff_hash if diff_hash is not None else self.current_diff_hash
         if not isinstance(expected_span_id, str) or latest.get("diff_hash") != current_diff_hash:
             return None
         with self._lock:

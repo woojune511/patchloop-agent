@@ -360,12 +360,16 @@ returns typed baseline/candidate scope arithmetic, and writes a pre-dispatch
 `LIMIT_REACHED` terminal when the minimum path no longer fits. No sixteenth live row is
 authorized by this implementation.
 
-Current provider-free validation passes Ruff, the focused evidence/mutation/horizon
-regressions, and all 103 collected tests. The full suite used external temp root
-`C:\pt\final-v7` and completed in 195.256 seconds, so it exceeds the requested
-two-minute validation target by 75.256 seconds even though every test passed. Mock run
-`run_dev_bb4edb6c532e4fa5` reaches isolated `EVALUATOR_PASS` in four model calls and
-five tool actions through one accepted mutation, with task acceptance PASS, safety
+Initial provider-free validation passed all 103 tests but took 195.256 seconds. A
+profile of the slowest context test found 495 subprocesses: policy and context getters
+recomputed the same Git diff 76 times and validated the same evidence file once per
+span. The successor now groups evidence by path and captures one fresh public state
+snapshot per scheduler decision, shared by policy and context but never cached across
+tool or recovery boundaries. The focused 68-test tool/runner suite passes in 90.497
+seconds, and the full 103-test suite passes in 96.713 seconds with external temp root
+`C:\pt\snapshot-full-final`, restoring the two-minute target. Ruff passes. Current-code
+mock run `run_dev_030e46d9a4d84395` reaches isolated `EVALUATOR_PASS` in four model calls
+and five tool actions through one accepted mutation, with task acceptance PASS, safety
 NOT_RUN, `claim_eligible=false`, and zero provider cost. This is local harness evidence,
 not provider behavior or authority for a sixteenth live row.
 

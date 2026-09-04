@@ -44,7 +44,12 @@ from patchloop.dev.cost import (
 )
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.state import DevJournal
-from patchloop.dev.tools import DevToolGateway, dev_tool_schemas, validate_tool_batch
+from patchloop.dev.tools import (
+    DevGatewayStateSnapshot,
+    DevToolGateway,
+    dev_tool_schemas,
+    validate_tool_batch,
+)
 from patchloop.environment import load_exact_openai_api_key
 from patchloop.errors import (
     ContractError,
@@ -98,6 +103,7 @@ class _ToolPolicy:
     workflow_gate: str
     allowed_tools: frozenset[str]
     check_ids: tuple[str, ...]
+    remaining_check_ids: tuple[str, ...]
     max_parallel_reads: int
     minimum_completion_calls: int
     completion_budget_calls: int
@@ -344,11 +350,10 @@ def _recent_checks(gateway: DevToolGateway) -> list[dict[str, Any]]:
     return rows[-3:]
 
 
-def _workflow_gate(gateway: DevToolGateway, *, summary: Any | None = None) -> str:
-    current = summary if summary is not None else gateway.current_diff
-    if not current.patch or current.untracked_files:
+def _workflow_gate(summary: Any, *, ready_to_submit: bool) -> str:
+    if not summary.patch or summary.untracked_files:
         return "needs_mutation"
-    if gateway.ready_to_submit():
+    if ready_to_submit:
         return "ready_to_submit"
     return "needs_visible_checks"
 
@@ -357,6 +362,8 @@ def _minimum_completion_calls(
     gateway: DevToolGateway,
     workflow_gate: str,
     *,
+    visible_check_status: tuple[dict[str, Any], ...],
+    remaining_visible_check_ids: tuple[str, ...],
     has_current_mutation_evidence: bool,
     targeted_check_repair_inspection: bool = False,
     targeted_mutation_repair_inspection: bool = False,
@@ -371,7 +378,7 @@ def _minimum_completion_calls(
         return mutation_calls + len(gateway.public_task.visible_checks) + 1
     if workflow_gate == "needs_visible_checks":
         if failed_mutation_pending or any(
-            row["status"] == "FAIL" for row in gateway.visible_check_status()
+            row["status"] == "FAIL" for row in visible_check_status
         ):
             return (
                 int(targeted_check_repair_inspection)
@@ -379,7 +386,7 @@ def _minimum_completion_calls(
                 + len(gateway.public_task.visible_checks)
                 + 1
             )
-        return len(gateway.remaining_visible_check_ids()) + 1
+        return len(remaining_visible_check_ids) + 1
     return 1
 
 
@@ -387,10 +394,34 @@ def _tool_policy(
     gateway: DevToolGateway,
     counters: _RunCounters,
     limits: Any,
+    *,
+    snapshot: DevGatewayStateSnapshot | None = None,
 ) -> _ToolPolicy:
-    workflow_gate = _workflow_gate(gateway)
-    has_current_mutation_evidence = gateway.has_current_mutation_evidence()
-    current_check_failed = any(row["status"] == "FAIL" for row in gateway.visible_check_status())
+    if snapshot is None and isinstance(gateway, DevToolGateway):
+        snapshot = gateway.state_snapshot()
+    if snapshot is None:
+        summary = gateway.current_diff
+        visible_status = tuple(gateway.visible_check_status())
+        remaining_check_ids = tuple(gateway.remaining_visible_check_ids())
+        unrun_checks = tuple(gateway.unrun_visible_check_ids())
+        ready_to_submit = gateway.ready_to_submit()
+        mutation_evidence_paths: tuple[str, ...] = ()
+        has_current_mutation_evidence = gateway.has_current_mutation_evidence()
+        evidence_paths_method = getattr(gateway, "current_evidence_paths", None)
+        repair_evidence_paths = (
+            evidence_paths_method() if callable(evidence_paths_method) else ()
+        )
+    else:
+        summary = snapshot.diff
+        visible_status = snapshot.visible_check_status
+        remaining_check_ids = snapshot.remaining_visible_check_ids
+        unrun_checks = snapshot.unrun_visible_check_ids
+        ready_to_submit = snapshot.ready_to_submit
+        mutation_evidence_paths = snapshot.mutation_evidence_paths
+        has_current_mutation_evidence = bool(mutation_evidence_paths)
+        repair_evidence_paths = snapshot.evidence_paths
+    workflow_gate = _workflow_gate(summary, ready_to_submit=ready_to_submit)
+    current_check_failed = any(row["status"] == "FAIL" for row in visible_status)
     failed_mutation = gateway.last_failed_mutation is not None
     failure_class_method = getattr(gateway, "last_mutation_failure_class", None)
     failure_class = failure_class_method() if callable(failure_class_method) else None
@@ -402,7 +433,12 @@ def _tool_policy(
     if failed_mutation:
         workflow_gate = "needs_mutation"
     failed_path_method = getattr(gateway, "failed_mutation_target_path", None)
-    failed_mutation_path = failed_path_method() if callable(failed_path_method) else None
+    failed_mutation_path = (
+        failed_path_method()
+        if failure_class in {"anchor_invalid", "evidence_invalid"}
+        and callable(failed_path_method)
+        else None
+    )
     targeted_mutation_repair_requested = (
         failure_class in {"anchor_invalid", "evidence_invalid"}
         and counters.failed_mutation_repair_turns == 0
@@ -417,6 +453,8 @@ def _tool_policy(
     minimum_completion_calls = _minimum_completion_calls(
         gateway,
         workflow_gate,
+        visible_check_status=visible_status,
+        remaining_visible_check_ids=remaining_check_ids,
         has_current_mutation_evidence=has_current_mutation_evidence,
         targeted_check_repair_inspection=targeted_check_repair_requested,
         targeted_mutation_repair_inspection=targeted_mutation_repair_requested,
@@ -424,7 +462,6 @@ def _tool_policy(
     )
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
-    summary = gateway.current_diff
     mutation_capacity = (
         gateway.accepted_mutations < limits.max_accepted_mutations and not summary.untracked_files
     )
@@ -432,7 +469,7 @@ def _tool_policy(
         workflow_gate == "needs_mutation" or current_check_failed or failed_mutation
     )
     feedback_can_still_require_repair = requires_mutation_for_completion or bool(
-        gateway.unrun_visible_check_ids()
+        unrun_checks
     )
     mutation_recovery_reserve_calls = 2 * int(
         feedback_can_still_require_repair
@@ -440,9 +477,9 @@ def _tool_policy(
         and not counters.mutation_recovery_used
         and gateway.last_failed_mutation is None
     )
-    passed_check_count = sum(row["status"] == "PASS" for row in gateway.visible_check_status())
+    passed_check_count = sum(row["status"] == "PASS" for row in visible_status)
     check_recovery_reserve_calls = (3 + passed_check_count) * int(
-        bool(gateway.unrun_visible_check_ids())
+        bool(unrun_checks)
         and mutation_capacity
         and not counters.check_recovery_used
         and not current_check_failed
@@ -527,7 +564,6 @@ def _tool_policy(
     )
 
     allowed = {"stop_task"}
-    unrun_checks = tuple(gateway.unrun_visible_check_ids())
     if not completion_possible:
         pass
     elif workflow_gate == "ready_to_submit":
@@ -558,8 +594,6 @@ def _tool_policy(
             and not targeted_mutation_repair_inspection
         ):
             allowed.add("replace_text")
-    evidence_paths_method = getattr(gateway, "current_evidence_paths", None)
-    repair_evidence_paths = evidence_paths_method() if callable(evidence_paths_method) else ()
     if targeted_mutation_repair_inspection and failed_mutation_path is not None:
         targeted_read_paths = (failed_mutation_path,)
     elif targeted_check_repair_inspection:
@@ -570,6 +604,7 @@ def _tool_policy(
         workflow_gate=workflow_gate,
         allowed_tools=frozenset(allowed),
         check_ids=unrun_checks,
+        remaining_check_ids=remaining_check_ids,
         max_parallel_reads=max_parallel_reads,
         minimum_completion_calls=minimum_completion_calls,
         completion_budget_calls=completion_budget_calls,
@@ -594,11 +629,21 @@ def _commitment_signal(
     gateway: DevToolGateway,
     counters: _RunCounters,
     policy: _ToolPolicy,
+    *,
+    snapshot: DevGatewayStateSnapshot | None = None,
 ) -> dict[str, Any] | None:
     no_gain_turns = counters.consecutive_no_evidence_gain_turns
+    current_diff_hash = (
+        snapshot.diff.patch_hash if snapshot is not None else gateway.current_diff_hash
+    )
+    has_current_mutation_evidence = (
+        bool(snapshot.mutation_evidence_paths)
+        if snapshot is not None
+        else gateway.has_current_mutation_evidence()
+    )
     if (
-        counters.commitment_diff_hash != gateway.current_diff_hash
-        or not gateway.has_current_mutation_evidence()
+        counters.commitment_diff_hash != current_diff_hash
+        or not has_current_mutation_evidence
     ):
         return None
     return {
@@ -622,6 +667,8 @@ def _completion_horizon_payload(
     counters: _RunCounters,
     limits: Any,
     policy: _ToolPolicy,
+    *,
+    snapshot: DevGatewayStateSnapshot | None = None,
 ) -> dict[str, Any]:
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
@@ -630,12 +677,19 @@ def _completion_horizon_payload(
         blocking_resources.append("model_calls")
     if remaining_tool_actions < policy.minimum_completion_calls:
         blocking_resources.append("tool_actions")
-    current_check_failed = any(row["status"] == "FAIL" for row in gateway.visible_check_status())
+    current_diff = snapshot.diff if snapshot is not None else gateway.current_diff
+    visible_status = (
+        snapshot.visible_check_status
+        if snapshot is not None
+        else tuple(gateway.visible_check_status())
+    )
+    current_check_failed = any(row["status"] == "FAIL" for row in visible_status)
     if (
-        policy.workflow_gate == "needs_mutation" or current_check_failed
-    ) and gateway.accepted_mutations >= limits.max_accepted_mutations:
+        (policy.workflow_gate == "needs_mutation" or current_check_failed)
+        and gateway.accepted_mutations >= limits.max_accepted_mutations
+    ):
         blocking_resources.append("accepted_mutations")
-    if gateway.current_diff.untracked_files:
+    if current_diff.untracked_files:
         blocking_resources.append("workspace_scope")
     return {
         "workflow_gate": policy.workflow_gate,
@@ -724,7 +778,7 @@ def _protocol_correction(
     policy: _ToolPolicy,
 ) -> dict[str, Any]:
     gate = policy.workflow_gate
-    remaining = gateway.remaining_visible_check_ids()
+    remaining = list(policy.remaining_check_ids)
     allowed = policy.allowed_tools
     if gate == "needs_mutation":
         actions: list[str] = []
@@ -816,11 +870,23 @@ def _build_context(
     elapsed_seconds: float,
     limits: Any,
     policy: _ToolPolicy | None = None,
+    snapshot: DevGatewayStateSnapshot | None = None,
     tool_policy_transition: dict[str, Any] | None = None,
 ) -> str:
-    summary = gateway.current_diff
-    active_policy = policy or _tool_policy(gateway, counters, limits)
-    commitment_signal = _commitment_signal(gateway, counters, active_policy)
+    active_snapshot = snapshot or gateway.state_snapshot()
+    summary = active_snapshot.diff
+    active_policy = policy or _tool_policy(
+        gateway,
+        counters,
+        limits,
+        snapshot=active_snapshot,
+    )
+    commitment_signal = _commitment_signal(
+        gateway,
+        counters,
+        active_policy,
+        snapshot=active_snapshot,
+    )
     latest_span_ids = {
         span["span_id"]
         for result in latest_tool_results
@@ -888,13 +954,17 @@ def _build_context(
                 counters.commitment_diff_hash == summary.patch_hash
             ),
         },
-        "mutation_readiness": gateway.mutation_readiness(),
-        "mutation_scope_budget": gateway.mutation_scope_budget(),
-        "evidence_ledger": gateway.evidence_ledger(),
+        "mutation_readiness": gateway.mutation_readiness(
+            current_paths=active_snapshot.mutation_evidence_paths
+        ),
+        "mutation_scope_budget": gateway.mutation_scope_budget(summary=summary),
+        "evidence_ledger": gateway.evidence_ledger(diff_hash=summary.patch_hash),
         "commitment_signal": commitment_signal,
         "available_tool_names": sorted(active_policy.allowed_tools),
         "last_failed_mutation": gateway.last_failed_mutation,
-        "last_successful_mutation": gateway.actionable_last_successful_mutation(),
+        "last_successful_mutation": gateway.actionable_last_successful_mutation(
+            diff_hash=summary.patch_hash
+        ),
         "current_diff": {
             "patch": summary.patch,
             "patch_hash": summary.patch_hash,
@@ -904,8 +974,8 @@ def _build_context(
             "untracked_files": summary.untracked_files,
             "truncated": False,
         },
-        "visible_check_status": gateway.visible_check_status(),
-        "remaining_visible_check_ids": gateway.remaining_visible_check_ids(),
+        "visible_check_status": list(active_snapshot.visible_check_status),
+        "remaining_visible_check_ids": list(active_snapshot.remaining_visible_check_ids),
         "recent_checks": _recent_checks(gateway),
         "latest_tool_results": [
             result.model_dump(mode="json", exclude={"replayed"}) for result in latest_tool_results
@@ -2444,7 +2514,13 @@ def _run_one_locked(
             terminal_message = "row wall-time limit reached"
             break
         elapsed_seconds = active_elapsed_ms() / 1_000
-        policy = _tool_policy(gateway, counters, request.limits)
+        snapshot = gateway.state_snapshot()
+        policy = _tool_policy(
+            gateway,
+            counters,
+            request.limits,
+            snapshot=snapshot,
+        )
         if not policy.completion_possible:
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "completion horizon exhausted before provider dispatch"
@@ -2453,6 +2529,7 @@ def _run_one_locked(
                 counters,
                 request.limits,
                 policy,
+                snapshot=snapshot,
             )
             break
         turn_id = f"turn_{uuid.uuid4().hex}"
@@ -2468,6 +2545,7 @@ def _run_one_locked(
                 elapsed_seconds=elapsed_seconds,
                 limits=request.limits,
                 policy=policy,
+                snapshot=snapshot,
                 tool_policy_transition=policy_transition,
             )
             context_payload = json.loads(context)
@@ -2538,6 +2616,7 @@ def _run_one_locked(
                     gateway,
                     counters,
                     policy,
+                    snapshot=snapshot,
                 ),
                 "consecutive_no_marginal_evidence_gain_inspection_turns": (
                     counters.consecutive_no_evidence_gain_turns

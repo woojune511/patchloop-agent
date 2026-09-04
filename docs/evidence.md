@@ -957,14 +957,23 @@ minimum mutation/check/finish path cannot fit, the scheduler records existing
 Tool-surface identity is `v7`; old envelopes and journals remain immutable. No Docker
 operation, provider call, or sixteenth live row is authorized by this correction.
 
-Ruff and the focused evidence, typed-failure, rollback, restart, and pre-dispatch
-horizon regressions pass. All 103 collected provider-free tests pass with external temp
-root `C:\pt\final-v7`, but the measured 195.256 seconds misses the requested two-minute
-completion condition by 75.256 seconds. This is a remaining validation-performance
-issue rather than a functional failure. Current-code mock run
-`run_dev_bb4edb6c532e4fa5` reaches isolated `EVALUATOR_PASS` in four model calls and
-five tool actions through one accepted mutation; task acceptance is PASS, safety is
-NOT_RUN, `claim_eligible=false`, and provider cost is zero.
+The first complete provider-free run passed all 103 tests in 195.256 seconds but missed
+the two-minute target. Profiling the slowest context test found 495 subprocesses, 76
+complete diff reads, and per-span tracked-path checks for repeated observations of the
+same file. Workspace creation was only 1.96 seconds for eight isolated copies, so the
+root cause was repeated production state derivation rather than fixture cloning. The
+successor validates each evidence path once and shares one fresh diff/evidence/check
+snapshot between tool policy and context construction. A structural regression asserts
+one diff observation and one tracked-path validation for a context containing many
+same-file spans.
+
+Ruff passes. The focused 68-test tool/runner suite passes in 90.497 seconds, and all 103
+provider-free tests pass in 96.713 seconds with external temp root
+`C:\pt\snapshot-full-final`, meeting the two-minute target without removing or
+parallelizing tests. Current-code mock run `run_dev_030e46d9a4d84395` reaches isolated
+`EVALUATOR_PASS` in four model calls and five tool actions through one accepted
+mutation; task acceptance is PASS, safety is NOT_RUN, `claim_eligible=false`, and
+provider cost is zero.
 
 ## Not executed
 
@@ -981,10 +990,10 @@ NOT_RUN, `claim_eligible=false`, and provider cost is zero.
 - no hidden evaluation of the fourteenth-row final patch or its provider-free
   one-identifier repair
 
-Bounded focused checks remain below two minutes, but the current full provider-free
-suite does not: its measured 195.256 seconds is recorded above. The sixth row reached a
-durable evaluator summary within 30 minutes, verifying the operational path but
-exposing an invalid acceptance oracle rather than producing task acceptance.
+Both bounded focused checks and the current full provider-free suite complete below two
+minutes; the measured full result is recorded above. The sixth row reached a durable
+evaluator summary within 30 minutes, verifying the operational path but exposing an
+invalid acceptance oracle rather than producing task acceptance.
 
 ## Known limitations
 

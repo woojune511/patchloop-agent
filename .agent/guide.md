@@ -451,14 +451,21 @@ a triggered commitment sticky for its diff, reports complete typed scope arithme
 routes mutation failures by class, and terminates an impossible tail before dispatch.
 No Docker operation, provider call, or sixteenth live row is authorized by this seam.
 
-Ruff and all 103 collected provider-free tests pass on the current code. The full suite
-used external temp root `C:\pt\final-v7` and took 195.256 seconds, so the two-minute
-completion target remains unmet despite functional success. Mock run
-`run_dev_bb4edb6c532e4fa5` reaches isolated `EVALUATOR_PASS` in four model calls and
-five tool actions through one accepted mutation, with task acceptance PASS, safety
-NOT_RUN, `claim_eligible=false`, and zero provider cost. Treat the timing miss as an
-explicit remaining validation-performance issue, not as permission to trim coverage or
-run a paid row.
+The initial full run passed all 103 tests but took 195.256 seconds. Profiling showed the
+same turn state was being derived through 495 subprocesses in the slowest context test:
+76 repeated diff summaries plus span-by-span tracked-file validation. Do not address
+this with a long-lived workspace cache. Group current observations by path, capture one
+fresh `DevGatewayStateSnapshot` immediately before each scheduler decision, and share it
+between policy and context. Re-observe after every tool/recovery boundary.
+
+Ruff passes. The focused 68-test tool/runner suite now passes in 90.497 seconds and the
+full 103-test suite in 96.713 seconds with external temp root
+`C:\pt\snapshot-full-final`. Mock run `run_dev_030e46d9a4d84395` reaches isolated
+`EVALUATOR_PASS` in four model
+calls and five tool actions through one accepted mutation, with task acceptance PASS,
+safety NOT_RUN, `claim_eligible=false`, and zero provider cost. This restores the
+two-minute target without deleting or parallelizing tests and does not authorize a paid
+row.
 
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
