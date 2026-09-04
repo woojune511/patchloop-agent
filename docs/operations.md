@@ -100,7 +100,7 @@ mixed newline styles, non-tracked paths, untracked files, and scope violations f
 closed. A failure after the write restores the exact pre-image, while a crash after an
 admitted write is reconciled from its expected post-image hash and admitted path set.
 If a valid mutation call fails, its bounded exact replacement, replacement hash, intent,
-evidence IDs, and error location remain in `last_failed_mutation` across later reads and
+error location, and typed recovery lineage remain in `last_failed_mutation` across later reads and
 resume. Scope failure additionally returns the baseline and complete candidate diff
 hashes, line/file counts, their delta, typed actual/limit/overage violations, and
 `rolled_back=true`; the failed result's workspace hash is the restored baseline. A scope
@@ -109,12 +109,12 @@ or other replacement-contract failure exposes only viable `replace_text` and
 to the failed path before repair; it never reopens broad search. A successful mutation
 is required to clear that repair target. After success, unchanged uniquely occurring
 edited-file spans are rebound to the post-image hash, changed pre-image spans are
-invalidated, and one bounded replacement post-image span is registered. Its ID is retained in
-`last_successful_mutation.actionable_evidence_span_ids`. The accepted action's exact
-input IDs remain in `action_started` as historical provenance and are not projected as
-current repair evidence. For compatibility, a retry that includes those known stale
-IDs may ignore them only when another current span or the current post-image authorizes
-the exact anchor; arbitrary unknown IDs and uncovered anchors still fail closed.
+invalidated, and one bounded replacement post-image span is registered in the evidence
+store. `replace_text` has no model-supplied evidence-ID field: the gateway selects the
+most recent current observed span that covers the exact anchor and records that binding
+in `action_started`. Repeating the same failed anchor after its one targeted read does
+not open another read; changing the baseline or exact anchor starts a new recovery
+lineage. Stale file hashes and uncovered anchors still fail closed.
 Tool execution failures are not counted or presented as model protocol violations.
 Every tool call must include one bounded public `turn_decision` containing `mode`,
 `basis`, and an `evidence_goal` only for inspection. Its mode must match the actual

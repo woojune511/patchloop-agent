@@ -153,7 +153,6 @@ def test_mutation_contract_requires_exact_replacement_and_typed_alternative() ->
         "occurrence": 1,
         "hypothesis": "state is reset too early",
         "expected_behavior": "state survives through cleanup",
-        "evidence_span_ids": ["span_a"],
         "causal_revision": None,
     }
     assert TextReplacementIntent.model_validate(base).causal_revision is None
@@ -163,6 +162,8 @@ def test_mutation_contract_requires_exact_replacement_and_typed_alternative() ->
         TextReplacementIntent.model_validate(
             {key: value for key, value in base.items() if key != "hypothesis"}
         )
+    with pytest.raises(ValidationError):
+        TextReplacementIntent.model_validate({**base, "evidence_span_ids": ["span_a"]})
     revision = TextReplacementIntent.model_validate(
         {
             **base,

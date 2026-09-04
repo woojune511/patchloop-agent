@@ -484,11 +484,6 @@ def test_failed_mutation_policy_routes_scope_directly_and_stale_anchor_to_one_re
         ]
     )
     mutation = MOCK_MUTATIONS["csv-quoted-newline"]
-    evidence_ids = [
-        span_id
-        for span_id, span in gateway.spans.items()
-        if span["path"] == mutation.path
-    ]
 
     def replacement(action_id: str, old_text: str) -> RequestedTool:
         return RequestedTool(
@@ -501,7 +496,6 @@ def test_failed_mutation_policy_routes_scope_directly_and_stale_anchor_to_one_re
                 "occurrence": 1,
                 "hypothesis": mutation.hypothesis,
                 "expected_behavior": mutation.expected_behavior,
-                "evidence_span_ids": evidence_ids,
                 "causal_revision": None,
             },
             turn_decision=PublicTurnDecision(
@@ -536,6 +530,77 @@ def test_failed_mutation_policy_routes_scope_directly_and_stale_anchor_to_one_re
     assert scope_policy.targeted_mutation_repair_inspection is False
     assert scope_policy.targeted_read_paths == ()
     assert scope_policy.allowed_tools == frozenset({"replace_text", "stop_task"})
+
+
+def test_same_failed_mutation_lineage_does_not_rearm_targeted_read(
+    gateway_factory,
+) -> None:
+    gateway, _, _ = gateway_factory()
+    mutation = MOCK_MUTATIONS["csv-quoted-newline"]
+    stale_old_text = mutation.old_text.replace("import csv\n", "import stale_csv\n")
+
+    def stale_replacement(action_id: str, old_text: str = stale_old_text) -> RequestedTool:
+        return RequestedTool(
+            name="replace_text",
+            action_id=action_id,
+            arguments={
+                "path": mutation.path,
+                "old_text": old_text,
+                "new_text": mutation.new_text,
+                "occurrence": 1,
+                "hypothesis": mutation.hypothesis,
+                "expected_behavior": mutation.expected_behavior,
+                "causal_revision": None,
+            },
+            turn_decision=PublicTurnDecision(
+                mode="mutate",
+                basis="Exercise one failed mutation recovery lineage.",
+            ),
+        )
+
+    counters = runner._RunCounters()  # noqa: SLF001
+    first = gateway.execute(stale_replacement("lineage-first-failure"))
+    runner._update_inspection_counters(counters, [first], gateway)  # noqa: SLF001
+    first_key = first.output["mutation_failure"]["recovery_key"]
+    assert runner._tool_policy(  # noqa: SLF001
+        gateway, counters, DevLimits()
+    ).targeted_mutation_repair_inspection is True
+
+    repair_read = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="lineage-targeted-read",
+            arguments={
+                "path": mutation.path,
+                "start_line": 1,
+                "end_line": 20,
+            },
+            turn_decision=inspection_decision("lineage-targeted-read"),
+        )
+    )
+    runner._update_inspection_counters(counters, [repair_read], gateway)  # noqa: SLF001
+    assert counters.failed_mutation_repair_turns == 1
+
+    repeated = gateway.execute(stale_replacement("lineage-repeated-failure"))
+    runner._update_inspection_counters(counters, [repeated], gateway)  # noqa: SLF001
+    assert repeated.output["mutation_failure"]["recovery_key"] == first_key
+    assert counters.failed_mutation_repair_turns == 1
+    repeated_policy = runner._tool_policy(gateway, counters, DevLimits())  # noqa: SLF001
+    assert repeated_policy.targeted_mutation_repair_inspection is False
+    assert repeated_policy.allowed_tools == frozenset({"replace_text", "stop_task"})
+
+    revised = gateway.execute(
+        stale_replacement(
+            "lineage-revised-failure",
+            mutation.old_text.replace("import csv\n", "import another_stale_csv\n"),
+        )
+    )
+    runner._update_inspection_counters(counters, [revised], gateway)  # noqa: SLF001
+    assert revised.output["mutation_failure"]["recovery_key"] != first_key
+    assert counters.failed_mutation_repair_turns == 0
+    assert runner._tool_policy(  # noqa: SLF001
+        gateway, counters, DevLimits()
+    ).targeted_mutation_repair_inspection is True
 
 
 def test_completion_horizon_becomes_impossible_after_a_failed_mutation() -> None:
@@ -1227,7 +1292,7 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
     smoke_package,
 ) -> None:
     gateway, journal, _ = gateway_factory()
-    source = gateway.execute(
+    source_read = gateway.execute(
         RequestedTool(
             name="read_file",
             action_id="failed-mutation-source",
@@ -1238,6 +1303,7 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
             },
         )
     )
+    assert source_read.status == "succeeded"
     mutation = MOCK_MUTATIONS["csv-quoted-newline"]
     malformed_anchor = mutation.old_text.replace("import csv\n", "import csv_missing\n")
     failed_call = RequestedTool(
@@ -1250,7 +1316,6 @@ def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label
             "occurrence": 1,
             "hypothesis": mutation.hypothesis,
             "expected_behavior": mutation.expected_behavior,
-            "evidence_span_ids": [source.output["spans"][0]["span_id"]],
             "causal_revision": None,
         },
         turn_decision=PublicTurnDecision(
@@ -1324,7 +1389,7 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
     smoke_package,
 ) -> None:
     gateway, journal, _ = gateway_factory()
-    source = gateway.execute(
+    source_read = gateway.execute(
         RequestedTool(
             name="read_file",
             action_id="four-check-source",
@@ -1335,6 +1400,7 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
             },
         )
     )
+    assert source_read.status == "succeeded"
     mutation = MOCK_MUTATIONS["csv-quoted-newline"]
     applied = gateway.execute(
         RequestedTool(
@@ -1347,7 +1413,6 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
                 "occurrence": 1,
                 "hypothesis": mutation.hypothesis,
                 "expected_behavior": mutation.expected_behavior,
-                "evidence_span_ids": [source.output["spans"][0]["span_id"]],
                 "causal_revision": None,
             },
         )
@@ -1370,20 +1435,25 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
         post_mutation_context["latest_tool_results"][0]["output"]["mutation_evidence"]["span_id"]
         == postimage_span_id
     )
+    assert post_mutation_context["last_successful_mutation"][
+        "postimage_evidence_available"
+    ] is True
     assert (
-        post_mutation_context["last_successful_mutation"]["postimage_evidence_span_id"]
-        == postimage_span_id
+        "postimage_evidence_span_id"
+        not in post_mutation_context["last_successful_mutation"]
     )
-    assert post_mutation_context["last_successful_mutation"]["actionable_evidence_span_ids"] == [
-        postimage_span_id
-    ]
+    assert (
+        "actionable_evidence_span_ids"
+        not in post_mutation_context["last_successful_mutation"]
+    )
     assert "evidence_span_ids" not in post_mutation_context["last_successful_mutation"]
     assert "anchor_evidence_span_id" not in post_mutation_context["last_successful_mutation"]
     assert "edit_anchor" not in post_mutation_context["last_successful_mutation"]
     projected_result_mutation = post_mutation_context["latest_tool_results"][0]["output"][
         "mutation"
     ]
-    assert projected_result_mutation["actionable_evidence_span_ids"] == [postimage_span_id]
+    assert projected_result_mutation["evidence_binding"] == "gateway_current_observation"
+    assert "actionable_evidence_span_ids" not in projected_result_mutation
     assert "evidence_span_ids" not in projected_result_mutation
     assert "anchor_evidence_span_id" not in projected_result_mutation
     assert postimage_span_id not in {

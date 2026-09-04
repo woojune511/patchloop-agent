@@ -82,6 +82,7 @@ class _RunCounters:
     inspection_turns_at_diff: int = 0
     failed_mutation_repair_turns: int = 0
     failed_mutation_pending: bool = False
+    failed_mutation_recovery_key: str | None = None
     mutation_recovery_used: bool = False
     check_recovery_used: bool = False
     failed_check_pending: bool = False
@@ -1590,19 +1591,13 @@ def _milestones(journal: DevJournal) -> dict[str, Any]:
         output = result["output"]
         if result["tool"] == "replace_text":
             mutation = output["mutation"]
-            actionable_evidence_span_ids = mutation.get("actionable_evidence_span_ids")
-            if not isinstance(actionable_evidence_span_ids, list):
-                postimage_span_id = mutation.get("postimage_evidence_span_id")
-                actionable_evidence_span_ids = (
-                    [postimage_span_id]
-                    if isinstance(postimage_span_id, str)
-                    else mutation.get("evidence_span_ids", [])
-                )
             plans.append(
                 {
                     "hypothesis_hash": sha256_json(mutation["hypothesis"]),
                     "expected_behavior_hash": sha256_json(mutation["expected_behavior"]),
-                    "actionable_evidence_span_ids": actionable_evidence_span_ids,
+                    "evidence_binding": mutation.get(
+                        "evidence_binding", "legacy_model_selected"
+                    ),
                 }
             )
             edits.append(
@@ -1907,6 +1902,7 @@ def _update_inspection_counters(
         counters.inspection_turns_at_diff = 0
         counters.failed_mutation_repair_turns = 0
         counters.failed_mutation_pending = False
+        counters.failed_mutation_recovery_key = None
         counters.failed_check_pending = False
         counters.failed_check_repair_read_used = False
         next_diff_hash = result.output.get("worktree_diff_hash")
@@ -1915,8 +1911,20 @@ def _update_inspection_counters(
         ):
             counters.current_anchor_diff_hash = next_diff_hash
     else:
-        counters.failed_mutation_repair_turns = 0
+        mutation_failure = result.output.get("mutation_failure")
+        recovery_key = (
+            mutation_failure.get("recovery_key")
+            if isinstance(mutation_failure, dict)
+            and isinstance(mutation_failure.get("recovery_key"), str)
+            else None
+        )
+        if (
+            not counters.failed_mutation_pending
+            or recovery_key != counters.failed_mutation_recovery_key
+        ):
+            counters.failed_mutation_repair_turns = 0
         counters.failed_mutation_pending = True
+        counters.failed_mutation_recovery_key = recovery_key
         counters.mutation_recovery_used = True
 
 

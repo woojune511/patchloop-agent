@@ -975,17 +975,61 @@ parallelizing tests. Current-code mock run `run_dev_030e46d9a4d84395` reaches is
 mutation; task acceptance is PASS, safety is NOT_RUN, `claim_eligible=false`, and
 provider cost is zero.
 
+## Sixteenth live development observation and gateway evidence binding
+
+One separately authorized sixteenth row used the version-2 pyfakefs task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+a $1.20 invocation cap, and external state root `C:\patchloop-state`. Immutable run
+`run_dev_6c36a082c3264559` ended at `LIMIT_REACHED` after 389.391 active seconds,
+390 seconds of run age, 37 model calls, 44 tool actions, one accepted mutation, and
+$0.43578705. It performed 27 reads, 13 searches, three mutation attempts, and one
+public check. No submission or evaluator execution occurred.
+
+The run's first two mutation attempts failed evidence validation. A span covering the
+complete source anchor was already current and projected, but each call serialized a
+shorter overlapping ID. After the first targeted read, the native tool result contained
+the covering span before the public context, yet the next call again selected the older
+short ID. Because the old failure counter reset on every rejected mutation, that same
+failure also opened another targeted read. This is a deterministic model-to-gateway
+join-key loss; it is not missing public evidence, stale runtime code, encrypted-
+continuation loss, or proof that the 40-call ceiling is intrinsically too low.
+
+Turn 36 accepted a mutation on exact current bytes. The public
+`parent-traversal-contract` check then failed at `fake_os.py:948`: the proposed prefix
+loop passed an empty path into recursive directory creation. Three model calls remained
+against a five-call repair, complete-check, and finish path, so the pre-dispatch horizon
+correctly stopped without another paid call. The evidence-ID failures are harness
+mechanics; the empty-parent behavior is a separate agent semantic error caught by the
+visible public contract.
+
+Tool surface `v8` removes `evidence_span_ids` from `replace_text`. For each proposed
+exact replacement, the gateway now filters previously observed public spans by path,
+current file hash, and full anchor coverage, selects the most recent match with a stable
+tie-break, and records the selected ID and anchor range in `action_started`. Missing
+coverage still returns typed `evidence_invalid` with the required public path/range.
+A hash of baseline diff plus path, old text, and occurrence defines one failure recovery
+lineage, so repeating the same rejected anchor cannot replenish targeted reads. A new
+baseline or exact anchor can start a new lineage. Existing scope, rollback, crash
+reconciliation, check binding, and submission gates are unchanged.
+
+This is a provider-free correction only. No Docker operation, provider call, hidden
+evaluation, or seventeenth live row was authorized or executed by the change.
+Ruff and all 105 provider-free tests pass in the current tree. The final complete suite
+used external temp root `C:\pt\pl-v8-full-0905-c` and completed in 80.787 seconds. Mock run
+`run_dev_32428b48e6b341d8` reached isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation; task acceptance was PASS, safety was
+NOT_RUN, `claim_eligible=false`, and provider cost was zero.
+
 ## Not executed
 
-- no transport retry or follow-up paid run after the fifteenth row
+- no transport retry or follow-up paid run after the sixteenth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no mutation, submission, or evaluator execution in the seventh through tenth
-  pyfakefs version-2 live rows. The eleventh through fifteenth mutated; the eleventh
-  passed both visible checks, while the twelfth through fourteenth reached one failed
-  visible check and the fifteenth ran one failed visible check. None of those five live
-  rows submitted or invoked the evaluator
+  pyfakefs version-2 live rows. The eleventh through sixteenth mutated; the eleventh
+  passed both visible checks, while the twelfth through sixteenth each reached a failed
+  visible check. None of those six live rows submitted or invoked the evaluator
 - no hidden evaluation of the temporary Loguru version-2 public correction
 - no hidden evaluation of the fourteenth-row final patch or its provider-free
   one-identifier repair

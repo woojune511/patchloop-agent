@@ -51,10 +51,11 @@ edited file and adds a bounded replacement post-image span, all bound to the cur
 file and diff hashes. This preserves nearby imports or symbols without treating changed
 text as current evidence. It lets a failed public check lead directly to an overlapping
 same-file repair, while edits outside current spans still require read/search evidence.
-The exact pre-image IDs used for the accepted mutation remain historical
-provenance in the append-only action record, but they are not projected as current
-repair evidence. `last_successful_mutation.actionable_evidence_span_ids` contains only
-the validated current post-image ID.
+The model supplies the exact replacement but no evidence IDs. The gateway binds the
+most recent observed span whose current file hash and line range cover that replacement,
+and records the selected ID only as append-only action provenance. The public mutation
+summary reports whether post-image repair evidence is available; uncovered anchors
+still fail closed.
 
 For OpenAI runs, stateless continuity also carries the provider-encrypted reasoning
 items returned by the immediately preceding response. Their ciphertext and output

@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The fifteen live observations below
+Repository policy alone never initiates paid work. The sixteen live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -271,14 +271,15 @@ failed. The final repair cited the accepted mutation's current post-image togeth
 two IDs copied from its historical input. The old validator treated every ID as current
 and stopped at an `unknown evidence span` before using the valid post-image.
 There was no submission or evaluator execution.
-The current provider-free successor separates those roles. Exact mutation inputs remain
-in append-only `action_started` provenance, while the agent-facing successful-mutation
-projection contains only validated `actionable_evidence_span_ids`. Known historical
-IDs on a retry may be ignored only when separate current evidence authorizes the exact
-anchor; arbitrary unknown IDs and uncovered anchors still fail closed. The scheduler
-now holds independent two-call reserves for rejected-mutation and failed-check recovery,
-and reconstructs both from durable batches. Two consecutive successful zero-new-span
-inspection batches add a soft mutation-or-stop recommendation without changing the tool
+The then-current provider-free successor separated those roles. Exact mutation inputs
+remained in append-only `action_started` provenance, while the agent-facing
+successful-mutation projection contained only validated `actionable_evidence_span_ids`.
+Known historical IDs on a retry could be ignored only when separate current evidence
+authorized the exact anchor; arbitrary unknown IDs and uncovered anchors still failed
+closed. The scheduler held independent two-call reserves for rejected-mutation and
+failed-check recovery, and reconstructed both from durable batches. Two consecutive
+successful zero-new-span inspection batches added a soft mutation-or-stop recommendation
+without changing the tool
 surface. At that checkpoint, no paid retry or fourteenth live row was authorized.
 Ruff and all 92 tests pass with the full provider-free suite under two minutes using an
 external short temp root. Provider-free mock run `run_dev_7fc6bc7e982343e4` reached
@@ -372,6 +373,38 @@ mock run `run_dev_030e46d9a4d84395` reaches isolated `EVALUATOR_PASS` in four mo
 and five tool actions through one accepted mutation, with task acceptance PASS, safety
 NOT_RUN, `claim_eligible=false`, and zero provider cost. This is local harness evidence,
 not provider behavior or authority for a sixteenth live row.
+
+The later separately authorized sixteenth row used the same version-2 task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+and a $1.20 cap at `C:\patchloop-state`. Run `run_dev_6c36a082c3264559` ended at
+durable `LIMIT_REACHED` after 389.391 active seconds and 390 seconds of run age, with
+37 provider calls, 44 tool actions, one accepted mutation, and $0.43578705 of provider
+cost. It performed 27 reads, 13 searches, three mutation attempts, and one public check.
+All 37 responses stored encrypted continuation references; none was incomplete or a
+provider error.
+
+Before the first mutation, the projected context already contained a current span that
+covered the complete proposed source anchor. The model nevertheless supplied a shorter
+overlapping `evidence_span_ids` entry twice, and the old gateway considered only those
+IDs. Both attempts failed mechanically and each failure re-armed another targeted read.
+Turn 36 applied a mutation; the public check then failed at line 948 because the patch
+called recursive creation with an empty parent path. Three model calls remained while
+the measured repair/check/finish path required five, so the pre-dispatch completion
+horizon correctly terminated the run. There was no submission or evaluator execution.
+
+The active provider-free successor removes `evidence_span_ids` from the model-facing
+`replace_text` schema. The gateway now selects the most recently observed span whose
+path, current file hash, and line range cover the complete exact anchor, and journals
+that binding. A recovery key also limits targeted-read repair to once per baseline and
+failed anchor instead of once per repeated rejection. Tool-surface identity is `v8`;
+old envelopes and journals remain immutable. This addresses the two deterministic
+harness losses seen before the accepted patch while leaving its semantic check failure
+as agent output. No paid retry or seventeenth live row is authorized.
+Ruff and all 105 provider-free tests pass; the final full suite completed in 80.787
+seconds with external temp root `C:\pt\pl-v8-full-0905-c`. Mock run
+`run_dev_32428b48e6b341d8` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation. Task acceptance is PASS, safety is
+NOT_RUN, `claim_eligible=false`, and provider cost is zero.
 
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
@@ -541,8 +574,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth through fifteenth rows were separately authorized and are now
-terminal. No sixteenth row is authorized.
+the later thirteenth through sixteenth rows were separately authorized and are now
+terminal. No seventeenth row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -580,8 +613,8 @@ slack with bounded recovery reserves. `completion_possible` reports the best pat
 while `protected_completion_possible` reports whether that path plus unused recovery
 allowances still fits. The twelfth row exposed the post-check repair evidence and
 horizon boundary. The thirteenth then exposed stale provenance in the actionable list
-and the single shared allowance. The current provider-free successor separates both
-evidence roles and failure reserves, and adds only a soft zero-gain commitment signal.
+and the single shared allowance. The subsequent provider-free successor separated both
+evidence roles and failure reserves, and added only a soft zero-gain commitment signal.
 The fourteenth row confirms those two corrections but exposes the narrower mutation-
 wire, evidence-saturation, and failed-check repair-context boundaries described above.
 The fifteenth row confirms exact replacement and the targeted-check path, then exposes
@@ -590,9 +623,11 @@ scope-failure feedback, and mutation availability after the completion path was 
 impossible. The current provider-free successor measures only new public-source lines,
 separates editable from supporting coverage, keeps a same-diff commitment signal sticky,
 returns complete candidate scope arithmetic after rollback, and terminates before a new
-dispatch when minimum completion resources are unavailable. These remain harness-
-contract changes until another separately authorized row exercises them. No paid retry
-or sixteenth row is authorized.
+dispatch when minimum completion resources are unavailable. The sixteenth row exercised
+these progress, scope-feedback, and pre-dispatch horizon contracts: the horizon stopped
+correctly, while model-selected evidence IDs still wasted four calls before mutation.
+Tool surface `v8` removes that join key and prevents the same failure lineage from
+replenishing targeted reads. No paid retry or seventeenth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

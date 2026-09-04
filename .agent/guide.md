@@ -85,19 +85,22 @@ failure. The mutation also requires:
 
 - `hypothesis`
 - `expected_behavior`
-- current `evidence_span_ids`
 - exact `path`, `old_text`, `new_text`, and occurrence
 
-Anchors and spans must still match current source. Before invalidating edited-file
+The model does not select or serialize evidence IDs for mutation. The gateway finds
+all previously observed public spans whose path and file hash are current and whose
+line range covers the complete exact anchor, then deterministically binds the most
+recent one. It journals that span ID and the admitted anchor range, but projects only
+whether current post-image evidence remains available. No covering current span is an
+`evidence_invalid` failure with the required path/range; evidence validation remains
+fail-closed.
+
+Before invalidating edited-file
 pre-image spans, a successful mutation revalidates any unchanged, uniquely occurring
 span against the post-image hash. It also registers one bounded replacement post-image
 span bound to the current file and diff hashes. Those spans can authorize a same-file
 repair only when the exact current anchor overlaps one; an edit elsewhere still
-requires a current read/search span. Project only the validated replacement post-image under
-`last_successful_mutation.actionable_evidence_span_ids`; retain the accepted action's
-input IDs solely in the append-only `action_started` provenance. Known stale input IDs
-may be ignored on a later retry only when separate current evidence authorizes its exact
-anchor. Resulting paths, file count, line count, dependencies, tests,
+requires a current read/search span. Resulting paths, file count, line count, dependencies, tests,
 and public API remain constrained by the public task. If one public failure signature
 repeats across two distinct diffs, the next
 mutation additionally requires `falsified_prior_hypothesis` and
@@ -109,8 +112,10 @@ complete candidate violates scope, roll back first and return typed baseline, ca
 delta, actual, limit, and overage fields. Record the restored baseline as the failed
 result's workspace hash. A scope or general replacement-contract failure permits only a
 viable `replace_text` or `stop_task`; `anchor_invalid` and `evidence_invalid` permit one
-targeted read of the failed path before repair. Broad inspection never reopens solely
-because mutation failed.
+targeted read of the failed path before repair. A recovery key binds that opportunity
+to the baseline diff plus path, old text, and occurrence; repeating the same failed
+anchor does not re-arm it, while a materially different anchor starts a new lineage.
+Broad inspection never reopens solely because mutation failed.
 
 ## Context boundary
 
@@ -389,11 +394,11 @@ Its earlier mutation-format failure had also consumed the single shared recovery
 allowance. The row ended at `LIMIT_REACHED` after 40 calls and 76 actions, with no
 submission or evaluator.
 
-The current provider-free seam projects only validated
-`actionable_evidence_span_ids`, retains exact mutation inputs as journal provenance,
-and tolerates known historical IDs only when independent current evidence covers the
-exact anchor. Mutation-failure and check-failure reserves are independent. Repeated
-zero-gain inspection produces only a soft commitment signal. The later fourteenth row
+The then-current provider-free seam projected only validated
+`actionable_evidence_span_ids`, retained exact mutation inputs as journal provenance,
+and tolerated known historical IDs only when independent current evidence covered the
+exact anchor. Mutation-failure and check-failure reserves were independent. Repeated
+zero-gain inspection produced only a soft commitment signal. The later fourteenth row
 required and received separate authorization.
 Ruff and all 92 tests pass under the two-minute provider-free target; mock run
 `run_dev_7fc6bc7e982343e4` reaches isolated `EVALUATOR_PASS` with zero provider cost.
@@ -466,6 +471,28 @@ calls and five tool actions through one accepted mutation, with task acceptance 
 safety NOT_RUN, `claim_eligible=false`, and zero provider cost. This restores the
 two-minute target without deleting or parallelizing tests and does not authorize a paid
 row.
+
+The separately authorized sixteenth row, `run_dev_6c36a082c3264559`, ended at
+`LIMIT_REACHED` after 37 calls, 44 actions, one accepted mutation, and $0.43578705.
+All 37 responses carried encrypted continuation. Before the first mutation, a current
+span covering the complete proposed anchor was already projected, but the model twice
+serialized a shorter overlapping span ID and the old validator rejected both attempts.
+Each rejection re-armed another targeted read. Turn 36 finally applied a mutation;
+the public check then exposed an empty-parent-path `FileNotFoundError`. With three calls
+remaining versus a five-call repair/check/finish path, the pre-dispatch horizon correctly
+stopped the run. There was no submission or evaluator.
+
+Tool surface `v8` removes `evidence_span_ids` from `replace_text`. The gateway now binds
+the most recent current covering observation itself, keeps the selected ID only as
+journal provenance, and applies one targeted-read allowance per failed-anchor lineage.
+This removes the mechanical join-key failure without weakening current-file, range,
+scope, rollback, or submission checks. No Docker operation, provider call, or
+seventeenth live row is authorized by this change.
+Ruff and all 105 provider-free tests pass; the final full suite completed in 80.787
+seconds with external temp root `C:\pt\pl-v8-full-0905-c`. Mock run
+`run_dev_32428b48e6b341d8` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation, with task acceptance PASS, safety
+NOT_RUN, `claim_eligible=false`, and zero provider cost.
 
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality

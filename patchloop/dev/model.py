@@ -26,13 +26,12 @@ conclusion, not chain-of-thought. mutation_readiness.state=ready_to_attempt mean
 that a current exact mutation anchor exists; it does not claim that the semantic
 solution is sufficient. Another read must name a specific uncovered range or unresolved
 public symbol in evidence_goal; otherwise prefer replace_text or stop_task. Every
-mutation must include a concise hypothesis, expected behavior, current evidence span
-IDs, and one exact old_text/new_text replacement. The gateway, not you, constructs the
-canonical Git diff. An accepted
-mutation's bounded post-image is current evidence for a same-file repair, including
-when its span ID is projected through last_successful_mutation; cite that span when it
-appears in actionable_evidence_span_ids and covers the repair anchor. Earlier
-pre-image IDs are provenance, not current mutation evidence. A commitment_signal is
+mutation must include a concise hypothesis, expected behavior, and one exact
+old_text/new_text replacement. Do not select or serialize evidence span IDs for a
+mutation. The gateway binds the exact anchor to the most recently observed current
+public span that fully covers it and fails closed when no such span exists; it also
+constructs the canonical Git diff. An accepted mutation's bounded post-image becomes
+current evidence for a same-file repair automatically. A commitment_signal is
 soft guidance, not a tool restriction: when active, use current actionable evidence
 to mutate or stop unless one materially different public evidence gap remains. If the
 public context requires a causal alternative, the next mutation must also state which
@@ -142,8 +141,8 @@ class MockDevAdapter:
                 ]
             )
         if not current_diff.get("patch"):
-            spans = [item["span_id"] for item in spans if item.get("path") == self.mutation.path]
-            if not spans:
+            matching_spans = [item for item in spans if item.get("path") == self.mutation.path]
+            if not matching_spans:
                 raise ContractError("mock mutation requires a current source span")
             return DevModelTurn(
                 tool_calls=[
@@ -157,7 +156,6 @@ class MockDevAdapter:
                             "occurrence": 1,
                             "hypothesis": self.mutation.hypothesis,
                             "expected_behavior": self.mutation.expected_behavior,
-                            "evidence_span_ids": spans[:2],
                             "causal_revision": None,
                         },
                         turn_decision=PublicTurnDecision(

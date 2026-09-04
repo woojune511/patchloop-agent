@@ -22,7 +22,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({"replace_text", "run_check", "finish_task",
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v7",
+            "schema_version": "dev-tool-surface-v8",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -36,9 +36,10 @@ def dev_tool_surface_hash() -> str:
             ],
             "parallel_read_decisions": "shared_inspect_mode_with_call_specific_rationale",
             "dynamic_workflow_tools": True,
-            "mutation_wire": "single-exact-anchor-replacement-v1",
+            "mutation_wire": "gateway-bound-exact-anchor-replacement-v2",
+            "mutation_evidence_binding": "latest-current-public-covering-span-v1",
             "inspection_gain": "non-overlapping-public-coverage-v2",
-            "mutation_failure": "typed-scope-preview-v1",
+            "mutation_failure": "typed-scope-preview-recovery-lineage-v2",
             "completion_horizon": "pre-dispatch-best-path-v2",
         }
     )
@@ -87,7 +88,6 @@ class TextReplacementIntent(StrictModel):
     occurrence: int = Field(default=1, ge=1, le=100)
     hypothesis: str = Field(min_length=1, max_length=1_500)
     expected_behavior: str = Field(min_length=1, max_length=1_500)
-    evidence_span_ids: list[str] = Field(min_length=1, max_length=8)
     causal_revision: CausalRevision | None = None
 
     @model_validator(mode="after")

@@ -63,7 +63,6 @@ def read_calls() -> list[RequestedTool]:
 
 def mutation_call(gateway, *, action_id: str = "mutation-1", alternative: bool = False):
     mutation = MOCK_MUTATIONS["csv-quoted-newline"]
-    spans = [item["span_id"] for item in gateway.spans.values() if item["path"] == mutation.path]
     return RequestedTool(
         name="replace_text",
         action_id=action_id,
@@ -74,7 +73,6 @@ def mutation_call(gateway, *, action_id: str = "mutation-1", alternative: bool =
             "occurrence": 1,
             "hypothesis": mutation.hypothesis,
             "expected_behavior": mutation.expected_behavior,
-            "evidence_span_ids": spans[:2],
             "causal_revision": (
                 {
                     "falsified_prior_hypothesis": ("physical line handling was the only cause"),
@@ -119,11 +117,7 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
     assert "constructs the canonical Git diff" in mutation["description"]
     assert "never provide diff syntax" in mutation["description"]
     assert "bounded post-image" in mutation["description"]
-    assert (
-        "actionable_evidence_span_ids"
-        in mutation["parameters"]["properties"]["evidence_span_ids"]["description"]
-    )
-    assert "provenance" in mutation["parameters"]["properties"]["evidence_span_ids"]["description"]
+    assert "evidence_span_ids" not in mutation["parameters"]["properties"]
     for schema in schemas:
         decision = schema["parameters"]["properties"]["turn_decision"]
         assert "turn_decision" in schema["parameters"]["required"]
@@ -140,7 +134,7 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
             }[schema["name"]]
         )
         assert decision["properties"]["mode"]["enum"] == [expected_mode]
-    assert "gateway, not you, constructs the" in DEV_SYSTEM_PROMPT
+    assert "gateway binds the exact anchor" in DEV_SYSTEM_PROMPT
     assert "Do not write a Git diff or patch wrapper" in DEV_SYSTEM_PROMPT
     assert "When last_failed_mutation is present" in DEV_SYSTEM_PROMPT
     assert "Every response must request at least one supplied tool" in DEV_SYSTEM_PROMPT
@@ -148,7 +142,8 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
     assert "Every tool call must carry turn_decision" in DEV_SYSTEM_PROMPT
     assert "Every call in a parallel read batch must use inspect mode" in DEV_SYSTEM_PROMPT
     assert "may describe that call's distinct public question" in DEV_SYSTEM_PROMPT
-    assert "bounded post-image is current evidence" in DEV_SYSTEM_PROMPT
+    assert "Do not select or serialize evidence span IDs" in DEV_SYSTEM_PROMPT
+    assert "most recently observed current" in DEV_SYSTEM_PROMPT
     gate_schemas = dev_tool_schemas(
         finish_enabled=False,
         check_ids=(),
@@ -463,7 +458,10 @@ def test_scope_failure_reports_complete_49_to_56_candidate_and_survives_restart(
     assert rejected.status == "failed"
     assert target.read_bytes() == baseline_bytes
     assert rejected.workspace_diff_hash == baseline.patch_hash
-    assert rejected.output["mutation_failure"] == {
+    failure = rejected.output["mutation_failure"]
+    assert isinstance(failure["recovery_key"], str)
+    assert failure["recovery_key"].startswith("sha256:")
+    assert {key: value for key, value in failure.items() if key != "recovery_key"} == {
         "class": "scope_violation",
         "baseline": {
             "diff_hash": baseline.patch_hash,
@@ -551,7 +549,7 @@ def test_parallel_read_mutation_check_and_finish(gateway_factory) -> None:
     assert finish.output["patch_hash"] == gateway.current_diff_hash
 
 
-def test_allowed_path_and_stale_evidence_fail_closed(gateway_factory) -> None:
+def test_allowed_path_and_stale_anchor_fail_closed(gateway_factory) -> None:
     gateway, _, _ = gateway_factory()
     gateway.execute_batch(read_calls())
     stale_call = mutation_call(gateway, action_id="stale-mutation")
@@ -562,7 +560,7 @@ def test_allowed_path_and_stale_evidence_fail_closed(gateway_factory) -> None:
             arguments={"path": "tests/test_csvlite.py", "start_line": 1, "end_line": 20},
         )
     )
-    test_span = forbidden_read.output["spans"][0]["span_id"]
+    assert forbidden_read.status == "succeeded"
     forbidden = gateway.execute(
         RequestedTool(
             name="replace_text",
@@ -574,7 +572,6 @@ def test_allowed_path_and_stale_evidence_fail_closed(gateway_factory) -> None:
                 "occurrence": 1,
                 "hypothesis": "tests need a bypass",
                 "expected_behavior": "tests change",
-                "evidence_span_ids": [test_span],
                 "causal_revision": None,
             },
         )
@@ -583,7 +580,6 @@ def test_allowed_path_and_stale_evidence_fail_closed(gateway_factory) -> None:
     assert forbidden.error_code == "CONTRACT_ERROR"
 
     assert gateway.execute(mutation_call(gateway, action_id="valid-mutation")).status == "succeeded"
-    assert stale_call.arguments["evidence_span_ids"][0] not in gateway.spans
     stale = gateway.execute(stale_call)
     assert stale.status == "failed"
     assert "stale" in stale.message
@@ -623,23 +619,12 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
     assert restarted.current_mutation_evidence_paths() == ("mini_data_utils/csvlite.py",)
     projected_mutation = restarted.actionable_last_successful_mutation()
     assert projected_mutation is not None
-    assert projected_mutation["actionable_evidence_span_ids"] == [postimage["span_id"]]
+    assert projected_mutation["postimage_evidence_available"] is True
+    assert "postimage_evidence_span_id" not in projected_mutation
+    assert "actionable_evidence_span_ids" not in projected_mutation
     assert "evidence_span_ids" not in projected_mutation
     assert "anchor_evidence_span_id" not in projected_mutation
     assert "edit_anchor" not in projected_mutation
-    unrelated = restarted.execute(
-        RequestedTool(
-            name="read_file",
-            action_id="read-unrelated-allowed-source",
-            arguments={
-                "path": "mini_data_utils/__init__.py",
-                "start_line": 1,
-                "end_line": 40,
-            },
-        )
-    )
-    unrelated_span_id = unrelated.output["spans"][0]["span_id"]
-    historical_span_id = sorted(old_source_span_ids)[0]
     repair = RequestedTool(
         name="replace_text",
         action_id="same-hunk-repair",
@@ -650,38 +635,17 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
             "occurrence": 1,
             "hypothesis": "The stream newline override causes the public check failure.",
             "expected_behavior": "The parser keeps one stream without the override.",
-            "evidence_span_ids": [
-                postimage["span_id"],
-                historical_span_id,
-                unrelated_span_id,
-            ],
             "causal_revision": None,
         },
     )
-
-    unknown = repair.model_copy(
-        update={
-            "action_id": "unknown-evidence-repair",
-            "arguments": {
-                **repair.arguments,
-                "evidence_span_ids": [postimage["span_id"], "span_unknown"],
-            },
-        }
-    )
-    rejected = restarted.execute(unknown)
-    assert rejected.status == "failed"
-    assert "unknown evidence span" in rejected.message
 
     repaired = restarted.execute(repair)
 
     assert repaired.status == "succeeded"
     repaired_mutation = repaired.output["mutation"]
-    repaired_postimage_id = repaired.output["mutation_evidence"]["span_id"]
-    assert repaired_mutation["actionable_evidence_span_ids"] == [repaired_postimage_id]
-    assert repaired_mutation["input_evidence_counts"] == {
-        "current": 2,
-        "historical_ignored": 1,
-    }
+    assert repaired_mutation["evidence_binding"] == "gateway_current_observation"
+    assert "actionable_evidence_span_ids" not in repaired_mutation
+    assert "input_evidence_counts" not in repaired_mutation
     assert "evidence_span_ids" not in repaired_mutation
     assert "anchor_evidence_span_id" not in repaired_mutation
     started = next(
@@ -691,12 +655,48 @@ def test_mutation_postimage_is_current_repair_evidence_across_restart(
         and event["payload"]["action_id"] == repair.action_id
     )
     assert started["mutation_anchor_evidence_span_id"] == postimage["span_id"]
-    assert set(started["mutation_actionable_evidence_span_ids"]) == {
-        postimage["span_id"],
-        unrelated_span_id,
-    }
-    assert started["mutation_ignored_historical_evidence_span_ids"] == [historical_span_id]
-    assert started["arguments"]["evidence_span_ids"] == repair.arguments["evidence_span_ids"]
+    assert "evidence_span_ids" not in started["arguments"]
+
+
+def test_gateway_selects_a_covering_span_without_model_evidence_ids(
+    gateway_factory,
+) -> None:
+    gateway, journal, _ = gateway_factory()
+    full = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="read-complete-mutation-anchor",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": 1,
+                "end_line": 80,
+            },
+        )
+    ).output["spans"][0]
+    short = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="read-newer-short-anchor",
+            arguments={
+                "path": "mini_data_utils/csvlite.py",
+                "start_line": 1,
+                "end_line": 8,
+            },
+        )
+    ).output["spans"][0]
+
+    result = gateway.execute(mutation_call(gateway, action_id="auto-bound-mutation"))
+
+    assert result.status == "succeeded"
+    started = next(
+        event["payload"]
+        for event in journal.events()
+        if event["event_type"] == "action_started"
+        and event["payload"]["action_id"] == "auto-bound-mutation"
+    )
+    assert started["mutation_anchor_evidence_span_id"] == full["span_id"]
+    assert started["mutation_anchor_evidence_span_id"] != short["span_id"]
+    assert "evidence_span_ids" not in started["arguments"]
 
 
 def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
@@ -704,11 +704,6 @@ def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
 ) -> None:
     gateway, _, _ = gateway_factory()
     gateway.execute_batch(read_calls())
-    source_span_ids = [
-        span_id
-        for span_id, span in gateway.spans.items()
-        if span["path"] == "mini_data_utils/csvlite.py"
-    ]
     narrow_mutation = RequestedTool(
         name="replace_text",
         action_id="narrow-mutation",
@@ -719,7 +714,6 @@ def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
             "occurrence": 1,
             "hypothesis": "Materialize the return value.",
             "expected_behavior": "The public return type remains a list.",
-            "evidence_span_ids": source_span_ids[:1],
             "causal_revision": None,
         },
     )
@@ -735,7 +729,7 @@ def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
             },
         )
     )
-    unrelated_span_id = unrelated.output["spans"][0]["span_id"]
+    assert unrelated.status == "succeeded"
     uncovered = RequestedTool(
         name="replace_text",
         action_id="uncovered-anchor",
@@ -746,7 +740,6 @@ def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
             "occurrence": 1,
             "hypothesis": "The import name should be explicit.",
             "expected_behavior": "The module alias is available.",
-            "evidence_span_ids": [unrelated_span_id],
             "causal_revision": None,
         },
     )
@@ -754,7 +747,12 @@ def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
     rejected = gateway.execute(uncovered)
 
     assert rejected.status == "failed"
-    assert "current evidence span must cover the exact replacement anchor" in rejected.message
+    assert "current observed public evidence span covers" in rejected.message
+    assert rejected.output["mutation_failure"]["required_anchor"] == {
+        "path": "mini_data_utils/csvlite.py",
+        "start_line": 3,
+        "end_line": 3,
+    }
 
 
 def test_read_cache_promotes_evidence_and_resets_after_mutation(gateway_factory) -> None:
@@ -980,7 +978,7 @@ def test_mutation_revalidates_unchanged_unique_source_spans(gateway_factory) -> 
             turn_decision=inspection_decision("unchanged-import"),
         )
     ).output["spans"][0]
-    anchor = gateway.execute(
+    gateway.execute(
         RequestedTool(
             name="read_file",
             action_id="read-narrow-return",
@@ -991,7 +989,7 @@ def test_mutation_revalidates_unchanged_unique_source_spans(gateway_factory) -> 
             },
             turn_decision=inspection_decision("narrow-return"),
         )
-    ).output["spans"][0]
+    )
     accepted = gateway.execute(
         RequestedTool(
             name="replace_text",
@@ -1003,7 +1001,6 @@ def test_mutation_revalidates_unchanged_unique_source_spans(gateway_factory) -> 
                 "occurrence": 1,
                 "hypothesis": "Materializing the result preserves the declared return type.",
                 "expected_behavior": "The parser returns a concrete list.",
-                "evidence_span_ids": [anchor["span_id"]],
                 "causal_revision": None,
             },
             turn_decision=PublicTurnDecision(
@@ -1140,9 +1137,9 @@ def test_action_replay_and_crash_reconciliation_do_not_duplicate_mutation(
             "mutation_expected_postimage_file_hash": sha256_bytes(validated.after_bytes),
             "mutation_generated_patch": validated.generated_patch,
             "mutation_postimage_start_line": validated.postimage_start_line,
-            "mutation_anchor_evidence_span_id": (validated.actionable_evidence_span_ids[0]),
-            "mutation_actionable_evidence_span_ids": (validated.actionable_evidence_span_ids),
-            "mutation_ignored_historical_evidence_span_ids": [],
+            "mutation_anchor_evidence_span_id": validated.anchor_evidence_span_id,
+            "mutation_anchor_start_line": validated.anchor_start_line,
+            "mutation_anchor_end_line": validated.anchor_end_line,
         },
     )
     (workspace / validated.path).write_bytes(validated.after_bytes)
