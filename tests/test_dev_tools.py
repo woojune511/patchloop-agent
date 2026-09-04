@@ -5,6 +5,7 @@ import subprocess
 from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MOCK_MUTATIONS
 from patchloop.dev.tools import DevToolGateway, dev_tool_schemas
+from patchloop.repository import DiffSummary, WorkspaceManager
 from patchloop.sandbox.runner import SandboxResult
 from patchloop.util import sha256_bytes, sha256_json
 
@@ -277,7 +278,8 @@ def test_failed_mutation_persists_across_reads_and_restart_then_clears_on_succes
     assert pending["replacement"]["path"] == malformed.arguments["path"]
     assert pending["error_code"] == "CONTRACT_ERROR"
     assert pending["error_location"] == {"path": "mini_data_utils/csvlite.py"}
-    assert "Repair or explicitly replace" in pending["next_action"]
+    assert "targeted read_file opportunity" in pending["next_action"]
+    assert pending["mutation_failure"]["class"] == "anchor_invalid"
 
     read_after_failure = gateway.execute(
         RequestedTool(
@@ -370,7 +372,15 @@ def test_out_of_scope_replacement_rolls_back_cleanly(gateway_factory) -> None:
     rejected = gateway.execute(mutation)
 
     assert rejected.status == "failed"
-    assert "diff-size constraints" in rejected.message
+    assert "mutation violates scope" in rejected.message
+    failure = rejected.output["mutation_failure"]
+    assert failure["class"] == "scope_violation"
+    assert failure["candidate"]["diff_lines"] == 6
+    assert failure["violations"] == [
+        {"code": "max_diff_lines", "actual": 6, "limit": 1, "over_by": 5}
+    ]
+    assert failure["rolled_back"] is True
+    assert rejected.workspace_diff_hash == gateway.current_diff_hash
     assert gateway.current_diff.changed_files == []
     assert (
         subprocess.run(
@@ -396,6 +406,93 @@ def test_out_of_scope_replacement_rolls_back_cleanly(gateway_factory) -> None:
         text=True,
     ).stdout.strip()
     assert worktree_blob == head_blob
+
+
+def test_scope_failure_reports_complete_49_to_56_candidate_and_survives_restart(
+    gateway_factory,
+    monkeypatch,
+) -> None:
+    gateway, journal, workspace = gateway_factory()
+    gateway.public_task = gateway.public_task.model_copy(
+        update={
+            "constraints": gateway.public_task.constraints.model_copy(
+                update={"max_diff_lines": 50}
+            )
+        }
+    )
+    gateway.execute_batch(read_calls())
+    mutation = mutation_call(gateway, action_id="49-to-56-scope-failure")
+    target = workspace / "mini_data_utils" / "csvlite.py"
+    baseline_bytes = target.read_bytes()
+    baseline = DiffSummary(
+        changed_files=["mini_data_utils/csvlite.py"],
+        added_lines=49,
+        deleted_lines=0,
+        patch="baseline-49-lines",
+        untracked_files=[],
+    )
+    candidate = DiffSummary(
+        changed_files=["mini_data_utils/csvlite.py"],
+        added_lines=56,
+        deleted_lines=0,
+        patch="candidate-56-lines",
+        untracked_files=[],
+    )
+
+    def synthetic_summary(selected_workspace):
+        del selected_workspace
+        return baseline if target.read_bytes() == baseline_bytes else candidate
+
+    monkeypatch.setattr(WorkspaceManager, "diff_summary", staticmethod(synthetic_summary))
+
+    assert gateway.mutation_scope_budget() == {
+        "current_diff_lines": 49,
+        "max_diff_lines": 50,
+        "remaining_diff_line_headroom": 1,
+        "current_changed_file_count": 1,
+        "max_changed_files": 1,
+        "remaining_changed_file_headroom": 0,
+        "rule": (
+            "Headroom is not the replacement line count; the gateway validates the "
+            "complete candidate diff."
+        ),
+    }
+
+    rejected = gateway.execute(mutation)
+
+    assert rejected.status == "failed"
+    assert target.read_bytes() == baseline_bytes
+    assert rejected.workspace_diff_hash == baseline.patch_hash
+    assert rejected.output["mutation_failure"] == {
+        "class": "scope_violation",
+        "baseline": {
+            "diff_hash": baseline.patch_hash,
+            "diff_lines": 49,
+            "changed_files": ["mini_data_utils/csvlite.py"],
+        },
+        "candidate": {
+            "diff_hash": candidate.patch_hash,
+            "diff_lines": 56,
+            "changed_files": ["mini_data_utils/csvlite.py"],
+        },
+        "delta_from_baseline": {"diff_lines": 7, "changed_file_count": 0},
+        "violations": [
+            {"code": "max_diff_lines", "actual": 56, "limit": 50, "over_by": 6}
+        ],
+        "rolled_back": True,
+    }
+    assert gateway.last_failed_mutation["mutation_failure"] == rejected.output[
+        "mutation_failure"
+    ]
+
+    restarted = DevToolGateway(
+        workspace=workspace,
+        public_task=gateway.public_task,
+        sandbox=gateway.sandbox,
+        journal=journal,
+        limits=gateway.limits,
+    )
+    assert restarted.last_failed_mutation == gateway.last_failed_mutation
 
 
 def test_failed_mutation_diff_projection_is_bounded(gateway_factory) -> None:
@@ -771,7 +868,8 @@ def test_evidence_ledger_counts_uncovered_ranges_and_zero_result_search_once(
     repeated_zero = gateway.execute(search.model_copy(update={"action_id": "zero-search-repeat"}))
     assert first_zero.output["spans"] == []
     assert first_zero.output["evidence_gain"]["first_search_observation"] is True
-    assert first_zero.output["evidence_gain"]["marginal_evidence_gain"] is True
+    assert first_zero.output["evidence_gain"]["marginal_evidence_gain"] is False
+    assert first_zero.output["evidence_gain"]["marginal_evidence_gain_units"] == 0
     assert repeated_zero.evidence_cache_hit is True
     assert repeated_zero.output["evidence_gain"]["first_search_observation"] is False
     assert repeated_zero.output["evidence_gain"]["marginal_evidence_gain"] is False
@@ -782,16 +880,19 @@ def test_evidence_ledger_counts_uncovered_ranges_and_zero_result_search_once(
     )
     assert source["ranges"] == [[1, 9]]
     assert source["covered_line_count"] == 9
-    assert ledger["canonical_searches"] == [
-        {
-            "query": "definitely-not-present",
-            "path_glob": "**/*.py",
-            "span_count": 0,
-            "zero_match": True,
-            "truncated": False,
-            "findings": [],
-        }
-    ]
+    assert ledger["search_summary"] == {
+        "total_search_count": 2,
+        "unique_query_count": 1,
+        "zero_match_count": 2,
+        "covered_only_count": 0,
+        "new_coverage_count": 0,
+        "supporting_coverage_count": 0,
+        "unique_result_fingerprint_count": 1,
+    }
+    assert len(ledger["canonical_searches"]) == 2
+    assert all(row["outcome"] == "zero_match" for row in ledger["canonical_searches"])
+    assert all(row["evidence_goal"] for row in ledger["canonical_searches"])
+    assert len({row["result_fingerprint"] for row in ledger["canonical_searches"]}) == 1
 
     restarted = DevToolGateway(
         workspace=workspace,
@@ -801,6 +902,68 @@ def test_evidence_ledger_counts_uncovered_ranges_and_zero_result_search_once(
         limits=gateway.limits,
     )
     assert restarted.evidence_ledger() == ledger
+
+
+def test_evidence_gain_splits_editable_supporting_and_covered_only_searches(
+    gateway_factory,
+) -> None:
+    gateway, _, _ = gateway_factory()
+    supporting = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="supporting-public-source",
+            arguments={"path": "tests/test_csvlite.py", "start_line": 1, "end_line": 3},
+            turn_decision=inspection_decision("supporting-public-source"),
+        )
+    )
+    gain = supporting.output["evidence_gain"]
+    assert gain["new_covered_line_count"] == 3
+    assert gain["new_editable_line_count"] == 0
+    assert gain["new_supporting_line_count"] == 3
+    assert gain["new_task_relevant_line_count"] == 0
+    assert gain["marginal_evidence_gain"] is True
+
+    first = gateway.execute(
+        RequestedTool(
+            name="search_files",
+            action_id="first-query-same-result",
+            arguments={"query": "def parse_rows", "path_glob": "**/*.py"},
+            turn_decision=inspection_decision("first-query-same-result"),
+        )
+    )
+    second = gateway.execute(
+        RequestedTool(
+            name="search_files",
+            action_id="new-query-same-result",
+            arguments={"query": "def parse_rows(", "path_glob": "**/*.py"},
+            turn_decision=inspection_decision("new-query-same-result"),
+        )
+    )
+    assert first.output["evidence_gain"]["new_editable_line_count"] > 0
+    assert second.output["evidence_gain"]["first_search_observation"] is True
+    assert second.output["evidence_gain"]["new_covered_line_count"] == 0
+    assert second.output["evidence_gain"]["marginal_evidence_gain"] is False
+    assert gateway.evidence_ledger()["canonical_searches"][0]["outcome"] == "covered_only"
+
+
+def test_search_summary_outlives_the_twelve_item_recent_window(gateway_factory) -> None:
+    gateway, _, _ = gateway_factory()
+    for index in range(13):
+        gateway.execute(
+            RequestedTool(
+                name="search_files",
+                action_id=f"bounded-search-{index}",
+                arguments={"query": f"missing-public-symbol-{index}", "path_glob": "**/*.py"},
+                turn_decision=inspection_decision(f"bounded-search-{index}"),
+            )
+        )
+
+    ledger = gateway.evidence_ledger()
+    assert len(ledger["canonical_searches"]) == 12
+    assert ledger["search_summary"]["total_search_count"] == 13
+    assert ledger["search_summary"]["unique_query_count"] == 13
+    assert ledger["search_summary"]["zero_match_count"] == 13
+    assert ledger["search_summary"]["unique_result_fingerprint_count"] == 1
 
 
 def test_mutation_revalidates_unchanged_unique_source_spans(gateway_factory) -> None:

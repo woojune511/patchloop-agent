@@ -22,8 +22,9 @@ required only for inspect; it is null for every other mode. Each decision descri
 why you are taking that action now, after the preceding public tool results, rather
 than promising a future action.
 Use stop_task when no available public action supports safe progress; provide a concise
-conclusion, not chain-of-thought. Treat mutation_readiness.state=ready_to_attempt as a
-commitment boundary: another read must name a specific uncovered range or unresolved
+conclusion, not chain-of-thought. mutation_readiness.state=ready_to_attempt means only
+that a current exact mutation anchor exists; it does not claim that the semantic
+solution is sufficient. Another read must name a specific uncovered range or unresolved
 public symbol in evidence_goal; otherwise prefer replace_text or stop_task. Every
 mutation must include a concise hypothesis, expected behavior, current evidence span
 IDs, and one exact old_text/new_text replacement. The gateway, not you, constructs the
@@ -43,7 +44,10 @@ request get_diff. Do not emit raw chain-of-thought. Private tests, reference pat
 and evaluator details are unavailable and must not be inferred.
 When last_failed_mutation is present, it is an unresolved public mutation from a
 prior tool turn. Repair or explicitly replace that mutation before unrelated
-exploration. Read/search remains available when it is needed for the repair.
+exploration. A scope or replacement-contract failure must be repaired from its
+preserved exact replacement without broad inspection. An invalid anchor or evidence
+gets exactly one targeted read_file opportunity on the failed path; search_files is
+not available in that repair window.
 """
 
 

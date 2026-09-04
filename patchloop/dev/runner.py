@@ -82,6 +82,9 @@ class _RunCounters:
     failed_check_pending: bool = False
     failed_check_repair_read_used: bool = False
     consecutive_no_evidence_gain_turns: int = 0
+    current_anchor_diff_hash: str | None = None
+    commitment_diff_hash: str | None = None
+    commitment_trigger_no_gain_turns: int = 0
 
 
 @dataclass
@@ -110,6 +113,7 @@ class _ToolPolicy:
     tools_closing_after_this_turn: tuple[str, ...]
     required_inspection_for_completion: bool
     targeted_check_repair_inspection: bool
+    targeted_mutation_repair_inspection: bool
     targeted_read_paths: tuple[str, ...]
 
     @property
@@ -355,12 +359,20 @@ def _minimum_completion_calls(
     *,
     has_current_mutation_evidence: bool,
     targeted_check_repair_inspection: bool = False,
+    targeted_mutation_repair_inspection: bool = False,
+    failed_mutation_pending: bool = False,
 ) -> int:
-    mutation_calls = 1 + (0 if has_current_mutation_evidence else 1)
+    mutation_inspection_calls = int(
+        targeted_mutation_repair_inspection
+        or (not has_current_mutation_evidence and not targeted_check_repair_inspection)
+    )
+    mutation_calls = 1 + mutation_inspection_calls
     if workflow_gate == "needs_mutation":
         return mutation_calls + len(gateway.public_task.visible_checks) + 1
     if workflow_gate == "needs_visible_checks":
-        if any(row["status"] == "FAIL" for row in gateway.visible_check_status()):
+        if failed_mutation_pending or any(
+            row["status"] == "FAIL" for row in gateway.visible_check_status()
+        ):
             return (
                 int(targeted_check_repair_inspection)
                 + mutation_calls
@@ -379,8 +391,26 @@ def _tool_policy(
     workflow_gate = _workflow_gate(gateway)
     has_current_mutation_evidence = gateway.has_current_mutation_evidence()
     current_check_failed = any(row["status"] == "FAIL" for row in gateway.visible_check_status())
+    failed_mutation = gateway.last_failed_mutation is not None
+    failure_class_method = getattr(gateway, "last_mutation_failure_class", None)
+    failure_class = failure_class_method() if callable(failure_class_method) else None
+    if failed_mutation and failure_class is None:
+        failure_class = "replacement_contract"
+    # A rejected repair is unresolved even when its rollback baseline had already
+    # passed every visible check.  Submitting that baseline would silently discard
+    # the agent's latest causal revision, so force the repair/check/finish path.
+    if failed_mutation:
+        workflow_gate = "needs_mutation"
+    failed_path_method = getattr(gateway, "failed_mutation_target_path", None)
+    failed_mutation_path = failed_path_method() if callable(failed_path_method) else None
+    targeted_mutation_repair_requested = (
+        failure_class in {"anchor_invalid", "evidence_invalid"}
+        and counters.failed_mutation_repair_turns == 0
+        and failed_mutation_path is not None
+    )
     targeted_check_repair_requested = (
         current_check_failed
+        and not failed_mutation
         and counters.failed_check_pending
         and not counters.failed_check_repair_read_used
     )
@@ -389,6 +419,8 @@ def _tool_policy(
         workflow_gate,
         has_current_mutation_evidence=has_current_mutation_evidence,
         targeted_check_repair_inspection=targeted_check_repair_requested,
+        targeted_mutation_repair_inspection=targeted_mutation_repair_requested,
+        failed_mutation_pending=failed_mutation,
     )
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
@@ -396,7 +428,9 @@ def _tool_policy(
     mutation_capacity = (
         gateway.accepted_mutations < limits.max_accepted_mutations and not summary.untracked_files
     )
-    requires_mutation_for_completion = workflow_gate == "needs_mutation" or current_check_failed
+    requires_mutation_for_completion = (
+        workflow_gate == "needs_mutation" or current_check_failed or failed_mutation
+    )
     feedback_can_still_require_repair = requires_mutation_for_completion or bool(
         gateway.unrun_visible_check_ids()
     )
@@ -431,14 +465,28 @@ def _tool_policy(
     targeted_check_repair_inspection = (
         targeted_check_repair_requested and mutation_capacity and completion_possible
     )
-    exploration_allowed = model_slack > 0 and tool_slack > 0 and completion_possible
-    required_inspection_for_completion = targeted_check_repair_inspection or (
-        requires_mutation_for_completion
-        and mutation_capacity
-        and completion_possible
-        and not has_current_mutation_evidence
+    targeted_mutation_repair_inspection = (
+        targeted_mutation_repair_requested and mutation_capacity and completion_possible
     )
-    if targeted_check_repair_inspection:
+    exploration_allowed = (
+        model_slack > 0
+        and tool_slack > 0
+        and completion_possible
+        and not failed_mutation
+        and not counters.failed_check_pending
+    )
+    required_inspection_for_completion = (
+        targeted_check_repair_inspection
+        or targeted_mutation_repair_inspection
+        or (
+            requires_mutation_for_completion
+            and mutation_capacity
+            and completion_possible
+            and not has_current_mutation_evidence
+            and not failed_mutation
+        )
+    )
+    if targeted_check_repair_inspection or targeted_mutation_repair_inspection:
         max_parallel_reads = 1
     elif exploration_allowed:
         max_parallel_reads = min(limits.max_parallel_reads, tool_slack)
@@ -448,7 +496,11 @@ def _tool_policy(
         max_parallel_reads = 0
 
     exploration_capacity = max(0, min(model_slack, tool_slack))
-    if targeted_check_repair_inspection or (exploration_allowed and exploration_capacity == 1):
+    if (
+        targeted_check_repair_inspection
+        or targeted_mutation_repair_inspection
+        or (exploration_allowed and exploration_capacity == 1)
+    ):
         exploration_state = "last_opportunity"
     elif exploration_allowed:
         exploration_state = "open"
@@ -465,39 +517,55 @@ def _tool_policy(
     else:
         closure_reason = "completion_horizon"
     tools_closing_after_this_turn = (
-        (("read_file",) if targeted_check_repair_inspection else ("read_file", "search_files"))
+        (
+            ("read_file",)
+            if targeted_check_repair_inspection or targeted_mutation_repair_inspection
+            else ("read_file", "search_files")
+        )
         if exploration_state == "last_opportunity" and max_parallel_reads > 0
         else ()
     )
 
     allowed = {"stop_task"}
     unrun_checks = tuple(gateway.unrun_visible_check_ids())
-    if workflow_gate == "ready_to_submit":
+    if not completion_possible:
+        pass
+    elif workflow_gate == "ready_to_submit":
         allowed.add("finish_task")
     else:
         if max_parallel_reads > 0:
             allowed.add("read_file")
-            if not targeted_check_repair_inspection:
+            if not (
+                targeted_check_repair_inspection or targeted_mutation_repair_inspection
+            ):
                 allowed.add("search_files")
         # A base check is diagnostic evidence and may use only genuine horizon slack.
         # On a non-empty diff, each not-yet-run check is direct completion work.
-        if unrun_checks and (
+        if (
+            not failed_mutation
+            and not targeted_check_repair_inspection
+            and not targeted_mutation_repair_inspection
+            and unrun_checks
+            and (
             (bool(summary.patch) and not current_check_failed) or exploration_allowed
+            )
         ):
             allowed.add("run_check")
         if (
             mutation_capacity
             and has_current_mutation_evidence
             and not targeted_check_repair_inspection
+            and not targeted_mutation_repair_inspection
         ):
             allowed.add("replace_text")
     evidence_paths_method = getattr(gateway, "current_evidence_paths", None)
     repair_evidence_paths = evidence_paths_method() if callable(evidence_paths_method) else ()
-    targeted_read_paths = (
-        tuple(sorted({*summary.changed_files, *repair_evidence_paths}))
-        if targeted_check_repair_inspection
-        else ()
-    )
+    if targeted_mutation_repair_inspection and failed_mutation_path is not None:
+        targeted_read_paths = (failed_mutation_path,)
+    elif targeted_check_repair_inspection:
+        targeted_read_paths = tuple(sorted({*summary.changed_files, *repair_evidence_paths}))
+    else:
+        targeted_read_paths = ()
     return _ToolPolicy(
         workflow_gate=workflow_gate,
         allowed_tools=frozenset(allowed),
@@ -517,6 +585,7 @@ def _tool_policy(
         tools_closing_after_this_turn=tools_closing_after_this_turn,
         required_inspection_for_completion=required_inspection_for_completion,
         targeted_check_repair_inspection=targeted_check_repair_inspection,
+        targeted_mutation_repair_inspection=targeted_mutation_repair_inspection,
         targeted_read_paths=targeted_read_paths,
     )
 
@@ -528,22 +597,52 @@ def _commitment_signal(
 ) -> dict[str, Any] | None:
     no_gain_turns = counters.consecutive_no_evidence_gain_turns
     if (
-        no_gain_turns < _SOFT_COMMITMENT_NO_GAIN_TURNS
-        or "replace_text" not in policy.allowed_tools
+        counters.commitment_diff_hash != gateway.current_diff_hash
         or not gateway.has_current_mutation_evidence()
     ):
         return None
     return {
         "state": "mutation_or_stop_recommended",
-        "reason": "consecutive_inspection_without_marginal_public_evidence",
+        "reason": "consecutive_inspection_without_new_public_coverage",
         "consecutive_no_evidence_gain_turns": no_gain_turns,
+        "activated_after_consecutive_no_gain_turns": (
+            counters.commitment_trigger_no_gain_turns
+        ),
         "hard_gate": False,
         "message": (
-            "Recent inspection added no uncovered task-relevant lines or new canonical "
-            "search result. Use current actionable evidence for replace_text, or stop_task "
-            "if it cannot justify a safe mutation; inspect again only for a specific "
-            "uncovered range or unresolved public symbol."
+            "Two consecutive inspections added no uncovered public source lines. This "
+            "recommendation remains active for the current diff: use current actionable "
+            "evidence for replace_text, or stop_task if it cannot justify a safe mutation."
         ),
+    }
+
+
+def _completion_horizon_payload(
+    gateway: DevToolGateway,
+    counters: _RunCounters,
+    limits: Any,
+    policy: _ToolPolicy,
+) -> dict[str, Any]:
+    remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
+    remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
+    blocking_resources: list[str] = []
+    if remaining_model_calls < policy.minimum_completion_calls:
+        blocking_resources.append("model_calls")
+    if remaining_tool_actions < policy.minimum_completion_calls:
+        blocking_resources.append("tool_actions")
+    current_check_failed = any(row["status"] == "FAIL" for row in gateway.visible_check_status())
+    if (
+        policy.workflow_gate == "needs_mutation" or current_check_failed
+    ) and gateway.accepted_mutations >= limits.max_accepted_mutations:
+        blocking_resources.append("accepted_mutations")
+    if gateway.current_diff.untracked_files:
+        blocking_resources.append("workspace_scope")
+    return {
+        "workflow_gate": policy.workflow_gate,
+        "remaining_model_calls": remaining_model_calls,
+        "remaining_tool_actions": remaining_tool_actions,
+        "minimum_completion_calls": policy.minimum_completion_calls,
+        "blocking_resources": blocking_resources,
     }
 
 
@@ -629,7 +728,12 @@ def _protocol_correction(
     allowed = policy.allowed_tools
     if gate == "needs_mutation":
         actions: list[str] = []
-        if {"read_file", "search_files"} & allowed:
+        if policy.targeted_mutation_repair_inspection:
+            actions.append(
+                "Use the single targeted read_file opportunity on the failed mutation path "
+                "to refresh its invalid anchor or evidence; search_files is unavailable."
+            )
+        elif {"read_file", "search_files"} & allowed:
             if policy.required_inspection_for_completion:
                 actions.append(
                     "Use read_file or search_files once to obtain the public source anchor "
@@ -657,7 +761,12 @@ def _protocol_correction(
         actions = []
         if "run_check" in allowed:
             actions.append("Run one remaining check with run_check.")
-        if policy.targeted_check_repair_inspection:
+        if policy.targeted_mutation_repair_inspection:
+            actions.append(
+                "Use the single targeted read_file opportunity on the failed mutation path "
+                "to refresh its invalid anchor or evidence; search_files is unavailable."
+            )
+        elif policy.targeted_check_repair_inspection:
             actions.append(
                 "Use the single targeted read_file opportunity on one listed changed file "
                 "to recover exact repair context; search_files is unavailable."
@@ -764,6 +873,9 @@ def _build_context(
                 active_policy.required_inspection_for_completion
             ),
             "targeted_check_repair_inspection": (active_policy.targeted_check_repair_inspection),
+            "targeted_mutation_repair_inspection": (
+                active_policy.targeted_mutation_repair_inspection
+            ),
             "targeted_read_paths": list(active_policy.targeted_read_paths),
             "tool_policy_transition": tool_policy_transition,
             "max_parallel_reads_this_turn": active_policy.max_parallel_reads,
@@ -772,8 +884,12 @@ def _build_context(
                 counters.consecutive_no_evidence_gain_turns
             ),
             "failed_mutation_repair_turns": counters.failed_mutation_repair_turns,
+            "commitment_active_for_current_diff": (
+                counters.commitment_diff_hash == summary.patch_hash
+            ),
         },
         "mutation_readiness": gateway.mutation_readiness(),
+        "mutation_scope_budget": gateway.mutation_scope_budget(),
         "evidence_ledger": gateway.evidence_ledger(),
         "commitment_signal": commitment_signal,
         "available_tool_names": sorted(active_policy.allowed_tools),
@@ -1183,12 +1299,22 @@ def _build_model_input(
 
 def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, Any]:
     if result.status == "failed":
-        next_question = (
-            "Repair or explicitly replace last_failed_mutation; use read/search only "
-            "when needed for that repair."
-            if result.tool == "replace_text"
-            else "What available public action resolves this failure?"
+        mutation_failure = result.output.get("mutation_failure")
+        failure_class = (
+            mutation_failure.get("class") if isinstance(mutation_failure, dict) else None
         )
+        if failure_class in {"anchor_invalid", "evidence_invalid"}:
+            next_question = (
+                "Use the one targeted read of the failed path, then repair the preserved "
+                "replacement or stop."
+            )
+        elif result.tool == "replace_text":
+            next_question = (
+                "Use the typed failure and preserved replacement to make a viable "
+                "replace_text call, or stop."
+            )
+        else:
+            next_question = "What available public action resolves this failure?"
         return {
             "action_id": result.action_id,
             "attempt": result.tool,
@@ -1200,8 +1326,8 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
         gain = result.output.get("evidence_gain")
         if isinstance(gain, dict) and gain.get("marginal_evidence_gain") is False:
             next_question = (
-                "This inspection added no uncovered task-relevant range or new canonical "
-                "search result; name a specific unresolved gap or mutate."
+                "This inspection added no uncovered public source lines; query novelty is "
+                "not progress, so name a specific unresolved gap or mutate."
             )
         else:
             next_question = "Which exact source anchor supports the smallest causal mutation?"
@@ -1459,6 +1585,7 @@ def _terminal(
     message: str | None = None,
     active_elapsed_ms: int | None = None,
     run_age_seconds: int | None = None,
+    completion_horizon: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     existing = journal.terminal()
     if existing is None:
@@ -1491,12 +1618,14 @@ def _terminal(
                 else run_age_seconds
             ),
         }
+        if completion_horizon is not None:
+            payload["completion_horizon"] = completion_horizon
         existing = journal.append("terminal", payload)
     return existing["payload"]
 
 
 def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, Any]:
-    return {
+    result = {
         "schema_version": "dev-run-v1",
         "official": False,
         "run_id": run_id,
@@ -1508,6 +1637,9 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
         "artifact_hashes": terminal_payload.get("artifact_hashes", {}),
         "agent_stop": terminal_payload.get("milestones", {}).get("agent_stop"),
     }
+    if "completion_horizon" in terminal_payload:
+        result["completion_horizon"] = terminal_payload["completion_horizon"]
+    return result
 
 
 def _credential_file_path_hash(request: DevRunRequest) -> str | None:
@@ -1613,15 +1745,41 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
 def _update_inspection_counters(
     counters: _RunCounters,
     results: list[DevToolResult],
+    gateway: DevToolGateway | None = None,
 ) -> None:
     if results and all(result.tool in {"read_file", "search_files"} for result in results):
         counters.inspection_turns_at_diff += 1
         if counters.failed_check_pending:
             counters.failed_check_repair_read_used = True
         if all(result.status == "succeeded" for result in results):
+            batch_diff_hash = next(
+                (
+                    result.workspace_diff_hash
+                    for result in results
+                    if isinstance(result.workspace_diff_hash, str)
+                ),
+                None,
+            )
+            if gateway is not None and gateway.has_current_mutation_evidence():
+                counters.current_anchor_diff_hash = gateway.current_diff_hash
+            else:
+                for result in results:
+                    gain = result.output.get("evidence_gain")
+                    if not isinstance(gain, dict):
+                        continue
+                    editable_gain = gain.get(
+                        "new_editable_line_count",
+                        gain.get("new_task_relevant_line_count", 0),
+                    )
+                    if type(editable_gain) is int and editable_gain > 0:
+                        counters.current_anchor_diff_hash = result.workspace_diff_hash
+                        break
             evidence_gain = sum(
                 (
-                    int(bool(gain.get("marginal_evidence_gain")))
+                    int(gain.get("new_covered_line_count", 0) > 0)
+                    if isinstance(gain, dict)
+                    and type(gain.get("new_covered_line_count")) is int
+                    else int(bool(gain.get("marginal_evidence_gain")))
                     if isinstance(gain, dict)
                     else int(
                         type(result.output.get("new_span_count")) is int
@@ -1633,6 +1791,17 @@ def _update_inspection_counters(
             )
             if evidence_gain == 0:
                 counters.consecutive_no_evidence_gain_turns += 1
+                if (
+                    counters.commitment_diff_hash is None
+                    and batch_diff_hash is not None
+                    and counters.current_anchor_diff_hash == batch_diff_hash
+                    and counters.consecutive_no_evidence_gain_turns
+                    >= _SOFT_COMMITMENT_NO_GAIN_TURNS
+                ):
+                    counters.commitment_diff_hash = batch_diff_hash
+                    counters.commitment_trigger_no_gain_turns = (
+                        counters.consecutive_no_evidence_gain_turns
+                    )
             else:
                 counters.consecutive_no_evidence_gain_turns = 0
         else:
@@ -1640,24 +1809,41 @@ def _update_inspection_counters(
         if counters.failed_mutation_pending:
             counters.failed_mutation_repair_turns += 1
         return
-    counters.consecutive_no_evidence_gain_turns = 0
     if len(results) != 1:
+        counters.consecutive_no_evidence_gain_turns = 0
         return
     result = results[0]
     if result.tool == "run_check":
+        counters.consecutive_no_evidence_gain_turns = 0
+        counters.commitment_diff_hash = None
+        counters.commitment_trigger_no_gain_turns = 0
         if result.status != "succeeded" or result.output.get("passed") is not True:
             counters.check_recovery_used = True
             counters.failed_check_pending = True
             counters.failed_check_repair_read_used = False
         return
+    if result.tool in {"finish_task", "stop_task"}:
+        counters.consecutive_no_evidence_gain_turns = 0
+        counters.commitment_diff_hash = None
+        counters.commitment_trigger_no_gain_turns = 0
+        return
     if result.tool != "replace_text":
+        counters.consecutive_no_evidence_gain_turns = 0
         return
     if result.status == "succeeded":
+        counters.consecutive_no_evidence_gain_turns = 0
+        counters.commitment_diff_hash = None
+        counters.commitment_trigger_no_gain_turns = 0
         counters.inspection_turns_at_diff = 0
         counters.failed_mutation_repair_turns = 0
         counters.failed_mutation_pending = False
         counters.failed_check_pending = False
         counters.failed_check_repair_read_used = False
+        next_diff_hash = result.output.get("worktree_diff_hash")
+        if isinstance(next_diff_hash, str) and isinstance(
+            result.output.get("mutation_evidence"), dict
+        ):
+            counters.current_anchor_diff_hash = next_diff_hash
     else:
         counters.failed_mutation_repair_turns = 0
         counters.failed_mutation_pending = True
@@ -2099,6 +2285,7 @@ def _run_one_locked(
 
     terminal_code: DevTerminal | None = None
     terminal_message: str | None = None
+    terminal_completion_horizon: dict[str, Any] | None = None
     stop_remaining = False
     finish_result = next(
         (
@@ -2243,7 +2430,7 @@ def _run_one_locked(
                                 results=recovered_results,
                                 active_elapsed_ms=active_elapsed_ms(),
                             )
-                            _update_inspection_counters(counters, recovered_results)
+                            _update_inspection_counters(counters, recovered_results, gateway)
                             counters.protocol_recoveries = 0
                             latest_tool_results = recovered_results
                             if recovered_completion is not None:
@@ -2256,16 +2443,18 @@ def _run_one_locked(
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "row wall-time limit reached"
             break
-        if counters.model_calls >= request.limits.max_model_calls:
-            terminal_code = DevTerminal.LIMIT_REACHED
-            terminal_message = "model-call limit reached"
-            break
-        if counters.tool_actions >= request.limits.max_tool_actions:
-            terminal_code = DevTerminal.LIMIT_REACHED
-            terminal_message = "tool-action limit reached"
-            break
         elapsed_seconds = active_elapsed_ms() / 1_000
         policy = _tool_policy(gateway, counters, request.limits)
+        if not policy.completion_possible:
+            terminal_code = DevTerminal.LIMIT_REACHED
+            terminal_message = "completion horizon exhausted before provider dispatch"
+            terminal_completion_horizon = _completion_horizon_payload(
+                gateway,
+                counters,
+                request.limits,
+                policy,
+            )
+            break
         turn_id = f"turn_{uuid.uuid4().hex}"
         try:
             policy_transition = _tool_policy_transition(journal, policy)
@@ -2342,6 +2531,9 @@ def _run_one_locked(
                 "exploration_state": policy.exploration_state,
                 "closure_reason": policy.closure_reason,
                 "targeted_check_repair_inspection": (policy.targeted_check_repair_inspection),
+                "targeted_mutation_repair_inspection": (
+                    policy.targeted_mutation_repair_inspection
+                ),
                 "commitment_signal": _commitment_signal(
                     gateway,
                     counters,
@@ -2642,7 +2834,7 @@ def _run_one_locked(
             results=results,
             active_elapsed_ms=active_elapsed_ms(),
         )
-        _update_inspection_counters(counters, results)
+        _update_inspection_counters(counters, results, gateway)
         counters.protocol_recoveries = 0
         if batch_completion is not None:
             if batch_completion.tool == "finish_task":
@@ -2674,6 +2866,7 @@ def _run_one_locked(
             hashes=hashes,
             message=terminal_message,
             active_elapsed_ms=active_elapsed_ms(),
+            completion_horizon=terminal_completion_horizon,
         )
         return _OneRunResult(_public_result(run_id, terminal), stop_remaining)
 

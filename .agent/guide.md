@@ -57,11 +57,14 @@ Reopen them through the same transition when a changed gate restores slack. A fi
 source read required to establish a mutation anchor belongs to the minimum path. The
 legacy 24/3 counters are telemetry, never an action mask. Corrections must be generated
 from the actual allowed-tool set and must not name a missing tool.
-After two consecutive successful inspection batches yield no marginal task-relevant
-coverage, add a soft mutation-or-stop recommendation to context and `turn_started`.
-`new_span_count` remains syntactic telemetry: shifted or contained ranges do not reset
-the signal merely because they have a new span hash. Never remove tools because of the
-signal; reset it on real coverage gain or a non-inspection action.
+`first_search_observation` is query-novelty telemetry only. Marginal gain requires at
+least one newly covered line from a tracked public source and is split into editable and
+supporting coverage. A zero-match, covered-only, shifted, or contained observation is
+not progress merely because its query or span hash is new. When a current anchor exists,
+two consecutive zero-coverage inspection batches activate a soft mutation-or-stop
+recommendation in context and `turn_started`. Keep it active for the same diff despite
+later coverage; clear it after successful mutation or check/completion transition.
+Never remove tools because of this signal.
 
 An unexecuted `run_check` may be available on the first turn while the action horizon
 has slack; on a changed diff it is direct completion work. A check that already failed
@@ -100,11 +103,20 @@ repeats across two distinct diffs, the next
 mutation additionally requires `falsified_prior_hypothesis` and
 `alternative_mechanism`; this never creates a separate planning turn.
 
+Project `mutation_scope_budget` before mutation with complete current-diff lines/files,
+limits, and remaining headroom; headroom is not the replacement's line count. If the
+complete candidate violates scope, roll back first and return typed baseline, candidate,
+delta, actual, limit, and overage fields. Record the restored baseline as the failed
+result's workspace hash. A scope or general replacement-contract failure permits only a
+viable `replace_text` or `stop_task`; `anchor_invalid` and `evidence_invalid` permit one
+targeted read of the failed path before repair. Broad inspection never reopens solely
+because mutation failed.
+
 ## Context boundary
 
 The deterministic context artifact puts current workflow gate, remaining budget,
-action horizon, mutation readiness, and the bounded evidence ledger before the larger
-task text. It also contains the public task, current full diff, the exact latest tool
+action horizon, mutation readiness, mutation scope budget, and the bounded evidence
+ledger before the larger task text. It also contains the public task, current full diff, the exact latest tool
 batch, a recency-ordered current-source working set, recent visible-check output, the
 complete current-diff check status, exact remaining check IDs, bounded
 `last_successful_mutation`, bounded `last_failed_mutation`, and the latest three
@@ -116,8 +128,10 @@ projection separates current actionable post-image evidence from historical acti
 inputs. A successful check card names
 the next remaining check instead of treating PASS as a failure. A failed mutation
 retains its bounded exact replacement, full replacement hash, intent, anchor, evidence
-IDs, error, and parsed error location across later reads and process resume. A later failed
-mutation replaces it; a successful mutation clears it. From turn two onward, the
+IDs, error, parsed error location, failure class, and typed scope arithmetic across later
+reads and process resume. A later failed mutation replaces it; a successful mutation
+clears it. `mutation_readiness.state=ready_to_attempt` means only that current exact
+anchor evidence exists, not that the semantic fix is sufficient. From turn two onward, the
 actual model input carries the immediately preceding calls and exact public results as
 native `function_call` / `function_call_output` items, followed by current derived
 state without duplicating those results. One content-addressed model-input artifact
@@ -127,6 +141,14 @@ A cache hit still costs one tool action, but its observation-level gain is recal
 against the current coverage ledger. It may be signaled but is not hard-blocked. Never
 add raw reasoning, private task material, hidden tests, reference
 patches, or evaluator details.
+
+Before each new model turn, recompute best-path completion feasibility after replaying
+any pending durable batch. If mutation, all required checks, and finish cannot fit the
+remaining model/tool/mutation resources, expose only `stop_task` for introspection but
+do not dispatch it to the model. Record existing `LIMIT_REACHED` with
+`completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
+Terminal resume returns that same public result. These semantics are tool-surface `v7`;
+do not migrate old envelopes or journal bytes.
 
 ## State and recovery
 
@@ -394,9 +416,9 @@ recheck. An external copy with only that identifier corrected passes both public
 checks, including 517 upstream passes and 570 skips. No submission or hidden evaluator
 ran.
 
-The active provider-free successor implements that seam. New-span count is syntactic
-telemetry; soft inspection gain comes from non-overlapping coverage in editable task
-paths plus the first canonical observation of a search. `replace_text` moves diff
+The pre-fifteenth provider-free successor implemented that seam. New-span count was
+syntactic telemetry; soft inspection gain came from non-overlapping coverage in
+editable task paths plus the first canonical observation of a search. `replace_text` moves diff
 serialization into the gateway while preserving current hash, tracked-path, scope,
 rollback, recovery, and post-image contracts. A failed visible check consumes its
 separate minimum three-call reserve and exposes exactly one targeted `read_file` turn over the
@@ -411,6 +433,33 @@ Focused contract tests pass 76 cases in 82.29 seconds. Ruff and all 95 tests pas
 five tool actions through one accepted `replace_text` mutation; task acceptance is
 PASS, safety is NOT_RUN, `claim_eligible=false`, and provider cost is zero. This proves
 local wiring and recovery only, not provider behavior or a fifteenth live row.
+
+The separately authorized fifteenth row, `run_dev_6013912c916d4781`, ended at
+`LIMIT_REACHED` after 40 calls, 46 actions, two accepted mutations, and $0.4705068. Its
+first 49-line diff failed the public byte assertion. Four repairs each formed the same
+56-line candidate against the 50-line limit, but generic feedback hid the 49 to 56
+delta. Turn 40 accepted a different 48-line candidate without enough calls to check it.
+The trace had complete encrypted continuation, no provider/incomplete error, and a
+largest 11,133-token response. Seven of 17 searches added no coverage and four added
+supporting-only coverage, while first-seen queries still counted as gain. Turns 38 to 40
+reported `completion_possible=false` yet still offered mutation. Treat these as three
+harness defects: progress semantics, mutation-feedback loss, and unenforced completion
+horizon, not a reason to raise global limits.
+
+The current provider-free successor separates novelty from public line coverage, keeps
+a triggered commitment sticky for its diff, reports complete typed scope arithmetic,
+routes mutation failures by class, and terminates an impossible tail before dispatch.
+No Docker operation, provider call, or sixteenth live row is authorized by this seam.
+
+Ruff and all 103 collected provider-free tests pass on the current code. The full suite
+used external temp root `C:\pt\final-v7` and took 195.256 seconds, so the two-minute
+completion target remains unmet despite functional success. Mock run
+`run_dev_bb4edb6c532e4fa5` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation, with task acceptance PASS, safety
+NOT_RUN, `claim_eligible=false`, and zero provider cost. Treat the timing miss as an
+explicit remaining validation-performance issue, not as permission to trim coverage or
+run a paid row.
+
 Confirmatory design review still waits for three distinct harness/contract-clean
 submissions with at least two private passes; that threshold itself proves no quality
 or generalization benefit.

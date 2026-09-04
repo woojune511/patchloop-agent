@@ -121,6 +121,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     )
     assert impossible.completion_possible is False
     assert impossible.closure_reason == "completion_impossible"
+    assert impossible.allowed_tools == frozenset({"stop_task"})
 
     tool_impossible = runner._tool_policy(  # noqa: SLF001
         gateway,
@@ -131,6 +132,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     )
     assert tool_impossible.completion_possible is False
     assert tool_impossible.closure_reason == "completion_impossible"
+    assert tool_impossible.allowed_tools == frozenset({"stop_task"})
 
     legacy_limit_reached = runner._tool_policy(  # noqa: SLF001
         gateway,
@@ -144,7 +146,10 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
     assert legacy_limit_reached.exploration_state == "open"
     assert {"read_file", "search_files"}.issubset(legacy_limit_reached.allowed_tools)
 
-    gateway.last_failed_mutation = {"action_id": "failed-mutation"}
+    gateway.last_failed_mutation = {
+        "action_id": "failed-mutation",
+        "mutation_failure": {"class": "scope_violation"},
+    }
     repair = runner._tool_policy(  # noqa: SLF001 - direct scheduler contract test
         gateway,
         runner._RunCounters(  # noqa: SLF001
@@ -155,7 +160,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         ),
         limits,
     )
-    assert {"read_file", "search_files"}.issubset(repair.allowed_tools)
+    assert repair.allowed_tools == frozenset({"replace_text", "stop_task"})
     assert repair.mutation_recovery_reserve_calls == 0
     assert repair.check_recovery_reserve_calls == 3
     assert repair.feedback_recovery_reserve_calls == 3
@@ -170,7 +175,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(gateway_factory, smoke
         ),
         limits,
     )
-    assert {"read_file", "search_files"}.issubset(exhausted_repair.allowed_tools)
+    assert exhausted_repair.allowed_tools == frozenset({"replace_text", "stop_task"})
     gateway.last_failed_mutation = None
 
     last_opportunity = runner._tool_policy(  # noqa: SLF001
@@ -336,7 +341,7 @@ def test_repeated_zero_gain_inspection_adds_only_a_soft_commitment_signal(
     smoke_package,
 ) -> None:
     gateway, journal, _ = gateway_factory()
-    gateway.execute(
+    anchor = gateway.execute(
         RequestedTool(
             name="read_file",
             action_id="commitment-source",
@@ -348,27 +353,34 @@ def test_repeated_zero_gain_inspection_adds_only_a_soft_commitment_signal(
             turn_decision=inspection_decision("commitment-source"),
         )
     )
-    counters = runner._RunCounters()  # noqa: SLF001
-    zero_gain = DevToolResult(
-        action_id="zero-gain-read",
-        input_hash=sha256_json("zero-gain-read"),
-        tool="read_file",
-        status="succeeded",
-        output={
-            "new_span_count": 1,
-            "evidence_gain": {
-                "marginal_evidence_gain": False,
-                "marginal_evidence_gain_units": 0,
-            },
-        },
+    journal.append(
+        "tool_batch_finished",
+        {"turn_id": "commitment-anchor", "action_ids": [anchor.action_id]},
     )
+    counters = runner._RunCounters()  # noqa: SLF001
+    runner._update_inspection_counters(counters, [anchor], gateway)  # noqa: SLF001
 
-    runner._update_inspection_counters(counters, [zero_gain])  # noqa: SLF001
+    def zero_search(index: int) -> DevToolResult:
+        result = gateway.execute(
+            RequestedTool(
+                name="search_files",
+                action_id=f"zero-gain-search-{index}",
+                arguments={"query": f"missing-commitment-symbol-{index}", "path_glob": "**/*.py"},
+                turn_decision=inspection_decision(f"zero-gain-search-{index}"),
+            )
+        )
+        journal.append(
+            "tool_batch_finished",
+            {"turn_id": f"zero-gain-{index}", "action_ids": [result.action_id]},
+        )
+        return result
+
+    runner._update_inspection_counters(counters, [zero_search(1)], gateway)  # noqa: SLF001
     assert counters.consecutive_no_evidence_gain_turns == 1
     first_policy = runner._tool_policy(gateway, counters, DevLimits())  # noqa: SLF001
     assert runner._commitment_signal(gateway, counters, first_policy) is None  # noqa: SLF001
 
-    runner._update_inspection_counters(counters, [zero_gain])  # noqa: SLF001
+    runner._update_inspection_counters(counters, [zero_search(2)], gateway)  # noqa: SLF001
     policy = runner._tool_policy(gateway, counters, DevLimits())  # noqa: SLF001
     context = json.loads(
         runner._build_context(  # noqa: SLF001
@@ -387,27 +399,229 @@ def test_repeated_zero_gain_inspection_adds_only_a_soft_commitment_signal(
     assert {"read_file", "search_files"}.issubset(policy.allowed_tools)
     assert context["commitment_signal"] == {
         "state": "mutation_or_stop_recommended",
-        "reason": "consecutive_inspection_without_marginal_public_evidence",
+        "reason": "consecutive_inspection_without_new_public_coverage",
         "consecutive_no_evidence_gain_turns": 2,
+        "activated_after_consecutive_no_gain_turns": 2,
         "hard_gate": False,
         "message": (
-            "Recent inspection added no uncovered task-relevant lines or new canonical "
-            "search result. Use current actionable evidence for replace_text, or stop_task "
-            "if it cannot justify a safe mutation; inspect again only for a specific "
-            "uncovered range or unresolved public symbol."
+            "Two consecutive inspections added no uncovered public source lines. This "
+            "recommendation remains active for the current diff: use current actionable "
+            "evidence for replace_text, or stop_task if it cannot justify a safe mutation."
         ),
     }
     assert context["action_horizon"]["consecutive_no_marginal_evidence_gain_inspection_turns"] == 2
 
-    evidence_gain = zero_gain.model_copy(
+    evidence_gain = gateway.execute(
+        RequestedTool(
+            name="read_file",
+            action_id="new-supporting-evidence-read",
+            arguments={"path": "tests/test_csvlite.py", "start_line": 1, "end_line": 10},
+            turn_decision=inspection_decision("new-supporting-evidence-read"),
+        )
+    )
+    journal.append(
+        "tool_batch_finished",
+        {"turn_id": "new-supporting-evidence", "action_ids": [evidence_gain.action_id]},
+    )
+    runner._update_inspection_counters(counters, [evidence_gain], gateway)  # noqa: SLF001
+    assert counters.consecutive_no_evidence_gain_turns == 0
+    assert runner._commitment_signal(gateway, counters, policy) is not None  # noqa: SLF001
+
+    restored = runner._restore_counters(journal)  # noqa: SLF001
+    assert restored.commitment_diff_hash == counters.commitment_diff_hash
+    assert restored.commitment_trigger_no_gain_turns == 2
+
+    check = gateway.execute(
+        RequestedTool(
+            name="run_check",
+            action_id="commitment-reset-check",
+            arguments={"check_id": "existing-unit-tests"},
+        )
+    )
+    runner._update_inspection_counters(counters, [check], gateway)  # noqa: SLF001
+    assert counters.commitment_diff_hash is None
+
+
+def test_failed_mutation_policy_routes_scope_directly_and_stale_anchor_to_one_read(
+    gateway_factory,
+) -> None:
+    gateway, _, _ = gateway_factory()
+    gateway.execute_batch(
+        [
+            RequestedTool(
+                name="read_file",
+                action_id="failure-routing-anchor",
+                arguments={
+                    "path": "mini_data_utils/csvlite.py",
+                    "start_line": 1,
+                    "end_line": 20,
+                },
+                turn_decision=inspection_decision("failure-routing-anchor"),
+            )
+        ]
+    )
+    mutation = MOCK_MUTATIONS["csv-quoted-newline"]
+    evidence_ids = [
+        span_id
+        for span_id, span in gateway.spans.items()
+        if span["path"] == mutation.path
+    ]
+
+    def replacement(action_id: str, old_text: str) -> RequestedTool:
+        return RequestedTool(
+            name="replace_text",
+            action_id=action_id,
+            arguments={
+                "path": mutation.path,
+                "old_text": old_text,
+                "new_text": mutation.new_text,
+                "occurrence": 1,
+                "hypothesis": mutation.hypothesis,
+                "expected_behavior": mutation.expected_behavior,
+                "evidence_span_ids": evidence_ids,
+                "causal_revision": None,
+            },
+            turn_decision=PublicTurnDecision(
+                mode="mutate",
+                basis="Exercise the typed failure routing contract.",
+            ),
+        )
+
+    stale = gateway.execute(
+        replacement(
+            "failure-routing-stale",
+            mutation.old_text.replace("import csv\n", "import stale_csv\n"),
+        )
+    )
+    counters = runner._RunCounters()  # noqa: SLF001
+    runner._update_inspection_counters(counters, [stale], gateway)  # noqa: SLF001
+    stale_policy = runner._tool_policy(gateway, counters, DevLimits())  # noqa: SLF001
+    assert gateway.last_mutation_failure_class() == "anchor_invalid"
+    assert stale_policy.targeted_mutation_repair_inspection is True
+    assert stale_policy.targeted_read_paths == ("mini_data_utils/csvlite.py",)
+    assert stale_policy.allowed_tools == frozenset({"read_file", "stop_task"})
+
+    gateway.public_task = gateway.public_task.model_copy(
         update={
-            "action_id": "new-evidence-read",
-            "input_hash": sha256_json("new-evidence-read"),
-            "output": {"new_span_count": 1},
+            "constraints": gateway.public_task.constraints.model_copy(update={"max_diff_lines": 1})
         }
     )
-    runner._update_inspection_counters(counters, [evidence_gain])  # noqa: SLF001
-    assert counters.consecutive_no_evidence_gain_turns == 0
+    scope = gateway.execute(replacement("failure-routing-scope", mutation.old_text))
+    runner._update_inspection_counters(counters, [scope], gateway)  # noqa: SLF001
+    scope_policy = runner._tool_policy(gateway, counters, DevLimits())  # noqa: SLF001
+    assert gateway.last_mutation_failure_class() == "scope_violation"
+    assert scope_policy.targeted_mutation_repair_inspection is False
+    assert scope_policy.targeted_read_paths == ()
+    assert scope_policy.allowed_tools == frozenset({"replace_text", "stop_task"})
+
+
+def test_completion_horizon_becomes_impossible_after_a_failed_mutation() -> None:
+    class PolicyGateway:
+        current_diff = SimpleNamespace(patch="", untracked_files=[], changed_files=[])
+        public_task = SimpleNamespace(
+            visible_checks=[SimpleNamespace(id="first"), SimpleNamespace(id="second")]
+        )
+        accepted_mutations = 0
+        last_failed_mutation = None
+
+        @staticmethod
+        def has_current_mutation_evidence():
+            return True
+
+        @staticmethod
+        def visible_check_status():
+            return [
+                {"check_id": "first", "status": "NOT_RUN"},
+                {"check_id": "second", "status": "NOT_RUN"},
+            ]
+
+        @staticmethod
+        def remaining_visible_check_ids():
+            return ["first", "second"]
+
+        @staticmethod
+        def unrun_visible_check_ids():
+            return ["first", "second"]
+
+        @staticmethod
+        def ready_to_submit():
+            return False
+
+    gateway = PolicyGateway()
+    limits = DevLimits()
+    counters = runner._RunCounters(  # noqa: SLF001
+        model_calls=limits.max_model_calls - 4,
+        tool_actions=limits.max_tool_actions - 4,
+    )
+    before = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert before.minimum_completion_calls == 4
+    assert before.completion_possible is True
+    assert "replace_text" in before.allowed_tools
+
+    counters.model_calls += 1
+    counters.tool_actions += 1
+    gateway.last_failed_mutation = {
+        "mutation_failure": {"class": "scope_violation"}
+    }
+    after = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
+    assert after.minimum_completion_calls == 4
+    assert after.completion_possible is False
+    assert after.allowed_tools == frozenset({"stop_task"})
+    assert runner._completion_horizon_payload(  # noqa: SLF001
+        gateway, counters, limits, after
+    ) == {
+        "workflow_gate": "needs_mutation",
+        "remaining_model_calls": 3,
+        "remaining_tool_actions": 3,
+        "minimum_completion_calls": 4,
+        "blocking_resources": ["model_calls", "tool_actions"],
+    }
+
+
+def test_failed_mutation_prevents_submitting_a_previously_checked_baseline() -> None:
+    class PolicyGateway:
+        current_diff = SimpleNamespace(
+            patch="diff --git a/source.py b/source.py\n",
+            untracked_files=[],
+            changed_files=["source.py"],
+        )
+        public_task = SimpleNamespace(
+            visible_checks=[SimpleNamespace(id="first"), SimpleNamespace(id="second")]
+        )
+        accepted_mutations = 1
+        last_failed_mutation = {"mutation_failure": {"class": "scope_violation"}}
+
+        @staticmethod
+        def has_current_mutation_evidence():
+            return True
+
+        @staticmethod
+        def visible_check_status():
+            return [
+                {"check_id": "first", "status": "PASS"},
+                {"check_id": "second", "status": "PASS"},
+            ]
+
+        @staticmethod
+        def remaining_visible_check_ids():
+            return []
+
+        @staticmethod
+        def unrun_visible_check_ids():
+            return []
+
+        @staticmethod
+        def ready_to_submit():
+            return True
+
+    policy = runner._tool_policy(  # noqa: SLF001
+        PolicyGateway(), runner._RunCounters(), DevLimits()  # noqa: SLF001
+    )
+
+    assert policy.workflow_gate == "needs_mutation"
+    assert policy.minimum_completion_calls == 4
+    assert policy.allowed_tools == frozenset({"replace_text", "stop_task"})
+    assert "finish_task" not in policy.allowed_tools
 
 
 def test_turn_decision_is_bound_to_cache_action_and_projected_once_per_batch(
@@ -1254,6 +1468,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "action_horizon",
         "remaining_budget",
         "mutation_readiness",
+        "mutation_scope_budget",
         "evidence_ledger",
     }
     assert all(set(json.loads(context)) == context_keys for context in contexts)
@@ -1354,6 +1569,124 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
     assert journal_path.read_bytes() == journal_before_resume
 
 
+def test_impossible_completion_horizon_stops_before_a_new_model_call(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    calls = {"model": 0}
+
+    class ForbiddenMock:
+        def __init__(self, task_id) -> None:
+            del task_id
+
+        def next_turn(self, context, tools):
+            del context, tools
+            calls["model"] += 1
+            raise AssertionError("completion-impossible run must not dispatch a model turn")
+
+    monkeypatch.setattr(runner, "MockDevAdapter", ForbiddenMock)
+    request = DevRunRequest(
+        provider="mock",
+        task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
+        model="mock-dev",
+        state_root=tmp_path,
+        limits=DevLimits(max_model_calls=3),
+    )
+
+    run = runner.run_dev(request)["runs"][0]
+
+    assert calls["model"] == 0
+    assert run["terminal"] == "LIMIT_REACHED"
+    assert run["call_counts"] == {"model": 0, "input_count": 0, "tool": 0}
+    assert run["completion_horizon"] == {
+        "workflow_gate": "needs_mutation",
+        "remaining_model_calls": 3,
+        "remaining_tool_actions": 100,
+        "minimum_completion_calls": 4,
+        "blocking_resources": ["model_calls"],
+    }
+    journal_path = tmp_path / "runs" / f"{run['run_id']}.jsonl"
+    rows = [json.loads(line) for line in journal_path.read_text(encoding="utf-8").splitlines()]
+    terminal = next(row["payload"] for row in rows if row["event_type"] == "terminal")
+    assert terminal["message"] == "completion horizon exhausted before provider dispatch"
+    assert terminal["completion_horizon"] == run["completion_horizon"]
+    assert not any(row["event_type"] == "turn_started" for row in rows)
+
+    journal_before_resume = journal_path.read_bytes()
+    resumed = runner.run_dev(request.model_copy(update={"resume_run_id": run["run_id"]}))
+    assert resumed["runs"][0] == run
+    assert journal_path.read_bytes() == journal_before_resume
+
+
+def test_resume_replays_pending_batch_before_completion_horizon(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    calls = {"model": 0}
+
+    class OneInvalidReadMock:
+        def __init__(self, task_id) -> None:
+            del task_id
+
+        def next_turn(self, context, tools):
+            del context, tools
+            calls["model"] += 1
+            return DevModelTurn(
+                tool_calls=[
+                    RequestedTool(
+                        name="read_file",
+                        action_id="pending-invalid-read",
+                        arguments={
+                            "path": "missing-public-source.py",
+                            "start_line": 1,
+                            "end_line": 20,
+                        },
+                        turn_decision=inspection_decision("pending-invalid-read"),
+                    )
+                ]
+            )
+
+    monkeypatch.setattr(runner, "MockDevAdapter", OneInvalidReadMock)
+    _crash_journal_once(
+        monkeypatch,
+        event_type="turn_decision_recorded",
+        when="after",
+    )
+    request = DevRunRequest(
+        provider="mock",
+        task=repository_root() / "tasks" / "smoke" / "csv-quoted-newline" / "public.yaml",
+        model="mock-dev",
+        state_root=tmp_path,
+        limits=DevLimits(max_model_calls=4),
+    )
+
+    with pytest.raises(_SimulatedCrash):
+        runner.run_dev(request)
+    run_id = _enveloped_run_id(tmp_path)
+
+    run = runner.run_dev(request.model_copy(update={"resume_run_id": run_id}))["runs"][0]
+
+    assert calls["model"] == 1
+    assert run["terminal"] == "LIMIT_REACHED"
+    assert run["call_counts"] == {"model": 1, "input_count": 0, "tool": 1}
+    assert run["completion_horizon"] == {
+        "workflow_gate": "needs_mutation",
+        "remaining_model_calls": 3,
+        "remaining_tool_actions": 99,
+        "minimum_completion_calls": 4,
+        "blocking_resources": ["model_calls"],
+    }
+    journal = DevJournal(tmp_path, run_id)
+    actions = [
+        row
+        for row in journal.events()
+        if row["event_type"] == "action_finished"
+        and row["payload"]["action_id"] == "pending-invalid-read"
+    ]
+    assert len(actions) == 1
+    assert actions[0]["payload"]["result"]["status"] == "failed"
+
+
 def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> None:
     class PolicyGateway:
         def __init__(self) -> None:
@@ -1441,27 +1774,20 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     )
     counters.model_calls += 1
     counters.tool_actions += 1
-    gateway.last_failed_mutation = {"action_id": failed_mutation.action_id}
+    gateway.last_failed_mutation = {
+        "action_id": failed_mutation.action_id,
+        "mutation_failure": {"class": "replacement_contract"},
+    }
     runner._update_inspection_counters(counters, [failed_mutation])  # noqa: SLF001
 
     mutation_recovery = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
     assert mutation_recovery.mutation_recovery_reserve_calls == 0
     assert mutation_recovery.check_recovery_reserve_calls == 3
     assert mutation_recovery.feedback_recovery_reserve_calls == 3
-    assert mutation_recovery.exploration_state == "last_opportunity"
+    assert mutation_recovery.exploration_state == "closed"
+    assert mutation_recovery.allowed_tools == frozenset({"replace_text", "stop_task"})
     assert counters.mutation_recovery_used is True
     assert counters.check_recovery_used is False
-
-    recovery_read = DevToolResult(
-        action_id="mutation-recovery-read",
-        input_hash=sha256_json("mutation-recovery-read"),
-        tool="read_file",
-        status="succeeded",
-        output={"new_span_count": 1},
-    )
-    counters.model_calls += 1
-    counters.tool_actions += 1
-    runner._update_inspection_counters(counters, [recovery_read])  # noqa: SLF001
 
     successful_mutation = DevToolResult(
         action_id="initial-mutation",
@@ -1478,14 +1804,16 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     gateway.last_failed_mutation = None
 
     before_check = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
-    assert limits.max_model_calls - counters.model_calls == 6
+    assert limits.max_model_calls - counters.model_calls == 7
     assert before_check.minimum_completion_calls == 3
     assert before_check.mutation_recovery_reserve_calls == 0
     assert before_check.check_recovery_reserve_calls == 3
     assert before_check.feedback_recovery_reserve_calls == 3
     assert before_check.completion_budget_calls == 6
     assert before_check.protected_completion_possible is True
-    assert before_check.allowed_tools == frozenset({"replace_text", "run_check", "stop_task"})
+    assert before_check.allowed_tools == frozenset(
+        {"read_file", "search_files", "replace_text", "run_check", "stop_task"}
+    )
 
     failed_check = DevToolResult(
         action_id="failed-contract-check",
@@ -1500,7 +1828,7 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     runner._update_inspection_counters(counters, [failed_check])  # noqa: SLF001
 
     repair = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
-    assert limits.max_model_calls - counters.model_calls == 5
+    assert limits.max_model_calls - counters.model_calls == 6
     assert repair.minimum_completion_calls == 5
     assert repair.mutation_recovery_reserve_calls == 0
     assert repair.check_recovery_reserve_calls == 0
@@ -1525,7 +1853,7 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     runner._update_inspection_counters(counters, [targeted_read])  # noqa: SLF001
 
     repair_action = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
-    assert limits.max_model_calls - counters.model_calls == 4
+    assert limits.max_model_calls - counters.model_calls == 5
     assert repair_action.minimum_completion_calls == 4
     assert repair_action.targeted_check_repair_inspection is False
     assert repair_action.allowed_tools == frozenset({"replace_text", "stop_task"})
@@ -1561,7 +1889,7 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     gateway.check_states["regression-check"] = "PASS"
 
     finish = runner._tool_policy(gateway, counters, limits)  # noqa: SLF001
-    assert limits.max_model_calls - counters.model_calls == 1
+    assert limits.max_model_calls - counters.model_calls == 2
     assert finish.workflow_gate == "ready_to_submit"
     assert finish.minimum_completion_calls == 1
     assert finish.completion_possible is True
@@ -1569,8 +1897,8 @@ def test_completion_reserve_absorbs_check_failure_repair_at_model_limit() -> Non
     counters.model_calls += 1
     counters.tool_actions += 1
 
-    assert counters.model_calls == limits.max_model_calls == 40
-    assert counters.tool_actions == 40
+    assert counters.model_calls == limits.max_model_calls - 1 == 39
+    assert counters.tool_actions == 39
 
 
 def test_failed_check_reserve_includes_prior_current_diff_passes() -> None:
@@ -2168,7 +2496,7 @@ def test_live_output_ceiling_replay_and_missing_continuation_are_durable(
     _patch_live_boundaries(monkeypatch)
     monkeypatch.setattr(runner, "OpenAIResponsesAdapter", IncompleteAdapter)
     request = _live_request(tmp_path, repeat=1, cap="0.30").model_copy(
-        update={"limits": DevLimits(max_model_calls=2)}
+        update={"limits": DevLimits(max_model_calls=5)}
     )
 
     result = runner.run_dev(request)
@@ -2499,7 +2827,7 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
         when="after",
     )
     request = _live_request(tmp_path, repeat=1, cap="0.10").model_copy(
-        update={"limits": DevLimits(max_model_calls=1)}
+        update={"limits": DevLimits(max_model_calls=4)}
     )
     with pytest.raises(_SimulatedCrash):
         runner.run_dev(request)
@@ -2604,7 +2932,7 @@ def test_resume_rejects_tampered_reasoning_before_tool_or_provider_call(
         when="after",
     )
     request = _live_request(tmp_path, repeat=1, cap="0.10").model_copy(
-        update={"limits": DevLimits(max_model_calls=1)}
+        update={"limits": DevLimits(max_model_calls=4)}
     )
     with pytest.raises(_SimulatedCrash):
         runner.run_dev(request)
@@ -2688,7 +3016,7 @@ def test_unfinished_provider_dispatch_with_orphan_continuation_is_unknown(
         when="before",
     )
     request = _live_request(tmp_path, repeat=1, cap="0.10").model_copy(
-        update={"limits": DevLimits(max_model_calls=1)}
+        update={"limits": DevLimits(max_model_calls=4)}
     )
     with pytest.raises(_SimulatedCrash):
         runner.run_dev(request)

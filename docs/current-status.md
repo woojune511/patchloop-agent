@@ -12,8 +12,8 @@ claim commands are absent.
 - 40 model calls, 100 tool actions, and 4 accepted mutations
 - one consecutive protocol/incomplete correction and at most 4 parallel reads
 - completion-slack inspection with one warned final opportunity, independent bounded
-  two-call mutation and minimum three-call failed-check recovery reserves, and a non-blocking
-  marginal-coverage commitment signal; legacy 24/3 counters are telemetry only
+  two-call mutation and minimum three-call failed-check recovery reserves, and a sticky,
+  non-blocking public-coverage commitment signal; legacy 24/3 counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
 ## Authority
@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The fourteen live observations below
+Repository policy alone never initiates paid work. The fifteen live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -334,6 +334,41 @@ calls and five tool actions through one accepted `replace_text` mutation, with t
 acceptance PASS, safety NOT_RUN, `claim_eligible=false`, and zero provider cost. This
 validates local contracts only; it does not establish that a provider will use the new
 evidence or mutation interface effectively.
+
+The later separately authorized fifteenth row used the same version-2 task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+and a $1.20 cap at external state root `C:\patchloop-state`. Run
+`run_dev_6013912c916d4781` ended at durable `LIMIT_REACHED` after 449.030 active
+seconds and 450 seconds of run age, with 40 provider calls, 46 tool actions, two
+accepted mutations, and $0.4705068 of provider cost. The actions were 22 reads, 17
+searches, one visible check, and six mutation attempts. The first accepted mutation at
+turn 32 produced a 49-line diff; its public check failed at the first byte assertion on
+line 15. Four repair attempts then proposed the same complete 56-line candidate from
+that 49-line baseline, but the gateway returned only a generic scope error rather than
+the observed 49 to 56 delta and 50-line limit. Turn 40 accepted a different 48-line
+candidate, but no call remained to check or submit it. No evaluator ran.
+
+All 40 responses carried durable encrypted continuation and none was incomplete or a
+provider error; the largest output was 11,133 tokens under the 25,000 ceiling. The
+failure was therefore not reasoning-state loss or a response ceiling. Seventeen
+searches comprised seven zero-new-coverage observations, four supporting-only gains,
+and six editable gains, but query novelty was still counted as progress. In addition,
+turns 38 through 40 reported `completion_possible=false` while still exposing
+`replace_text`. The active provider-free successor separates query novelty from actual
+public-source coverage, keeps commitment active for the current diff once triggered,
+returns typed baseline/candidate scope arithmetic, and writes a pre-dispatch
+`LIMIT_REACHED` terminal when the minimum path no longer fits. No sixteenth live row is
+authorized by this implementation.
+
+Current provider-free validation passes Ruff, the focused evidence/mutation/horizon
+regressions, and all 103 collected tests. The full suite used external temp root
+`C:\pt\final-v7` and completed in 195.256 seconds, so it exceeds the requested
+two-minute validation target by 75.256 seconds even though every test passed. Mock run
+`run_dev_bb4edb6c532e4fa5` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation, with task acceptance PASS, safety
+NOT_RUN, `claim_eligible=false`, and zero provider cost. This is local harness evidence,
+not provider behavior or authority for a sixteenth live row.
+
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -502,8 +537,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth and fourteenth rows were separately authorized and are now
-terminal. No fifteenth row is authorized.
+the later thirteenth through fifteenth rows were separately authorized and are now
+terminal. No sixteenth row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -545,12 +580,15 @@ and the single shared allowance. The current provider-free successor separates b
 evidence roles and failure reserves, and adds only a soft zero-gain commitment signal.
 The fourteenth row confirms those two corrections but exposes the narrower mutation-
 wire, evidence-saturation, and failed-check repair-context boundaries described above.
-The current provider-free successor treats hash-new spans as telemetry, projects merged
-task-relevant coverage and mutation readiness before the task body, replaces exact text
-while deriving the Git diff in the gateway, revalidates unchanged spans after mutation,
-and protects one targeted read after a failed visible check. These are harness-contract
-changes only until exercised by a separately authorized live row. No paid retry or
-fifteenth row is authorized.
+The fifteenth row confirms exact replacement and the targeted-check path, then exposes
+three deterministic harness defects: query novelty masquerading as coverage, generic
+scope-failure feedback, and mutation availability after the completion path was already
+impossible. The current provider-free successor measures only new public-source lines,
+separates editable from supporting coverage, keeps a same-diff commitment signal sticky,
+returns complete candidate scope arithmetic after rollback, and terminates before a new
+dispatch when minimum completion resources are unavailable. These remain harness-
+contract changes until another separately authorized row exercises them. No paid retry
+or sixteenth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

@@ -22,7 +22,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({"replace_text", "run_check", "finish_task",
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v6",
+            "schema_version": "dev-tool-surface-v7",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -37,7 +37,9 @@ def dev_tool_surface_hash() -> str:
             "parallel_read_decisions": "shared_inspect_mode_with_call_specific_rationale",
             "dynamic_workflow_tools": True,
             "mutation_wire": "single-exact-anchor-replacement-v1",
-            "inspection_gain": "non-overlapping-current-diff-coverage-v1",
+            "inspection_gain": "non-overlapping-public-coverage-v2",
+            "mutation_failure": "typed-scope-preview-v1",
+            "completion_horizon": "pre-dispatch-best-path-v2",
         }
     )
 

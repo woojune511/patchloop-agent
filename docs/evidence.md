@@ -919,23 +919,72 @@ five tool actions through one accepted replacement. Task acceptance is PASS, saf
 NOT_RUN, `claim_eligible=false`, and cost is zero. No Docker execution, paid provider
 call, or fifteenth live row ran for this checkpoint.
 
+## Fifteenth live development observation
+
+One separately authorized fifteenth row used the version-2 pyfakefs task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+a $1.20 invocation cap, and external state root `C:\patchloop-state`. Immutable run
+`run_dev_6013912c916d4781` ended at `LIMIT_REACHED` after 449.030 active seconds,
+450 seconds of run age, 40 model calls, 46 tool actions, two accepted mutations, and
+$0.4705068. It performed 22 reads, 17 searches, one visible check, and six mutation
+attempts. No submission or evaluator execution occurred.
+
+Turn 32 accepted a 49-line diff. Its one public check failed at the first byte assertion
+on line 15. Four subsequent repair attempts each expanded that baseline to the same
+56-line complete candidate, six lines over the task's 50-line maximum. The scope policy
+internally observed 49, 56, and 50, but the tool output collapsed those values into a
+generic error. Turn 40 accepted a different 48-line candidate but could neither check
+nor finish it. Turns 38 through 40 already reported `completion_possible=false` while
+the action mask continued to offer mutation.
+
+All 40 responses stored encrypted continuation references; none was incomplete or a
+provider error, and the largest output was 11,133 tokens under the configured 25,000
+ceiling. Of 17 searches, seven added no coverage, four added only supporting-source
+coverage, and six added editable coverage. The then-current ledger nevertheless treated
+a first-seen query as marginal gain, so query vocabulary could repeatedly reset the
+commitment cue without increasing source evidence. These facts isolate three harness
+causes rather than a token-limit or continuation failure: progress semantics, lossy
+mutation failure feedback, and a non-enforced completion horizon.
+
+The provider-free successor uses first-search observation only as novelty telemetry.
+`marginal_evidence_gain` now means that at least one previously uncovered line from a
+tracked public source was returned, with editable and supporting lines reported
+separately. Two consecutive zero-coverage inspections with a current anchor activate a
+soft commitment that remains set for that diff. Scope rejection returns baseline,
+candidate, delta, typed actual/limit/overage values, and rollback state. Once the
+minimum mutation/check/finish path cannot fit, the scheduler records existing
+`LIMIT_REACHED` with bounded horizon arithmetic before input counting or dispatch.
+Tool-surface identity is `v7`; old envelopes and journals remain immutable. No Docker
+operation, provider call, or sixteenth live row is authorized by this correction.
+
+Ruff and the focused evidence, typed-failure, rollback, restart, and pre-dispatch
+horizon regressions pass. All 103 collected provider-free tests pass with external temp
+root `C:\pt\final-v7`, but the measured 195.256 seconds misses the requested two-minute
+completion condition by 75.256 seconds. This is a remaining validation-performance
+issue rather than a functional failure. Current-code mock run
+`run_dev_bb4edb6c532e4fa5` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation; task acceptance is PASS, safety is
+NOT_RUN, `claim_eligible=false`, and provider cost is zero.
+
 ## Not executed
 
-- no transport retry or follow-up paid run after the fourteenth row
+- no transport retry or follow-up paid run after the fifteenth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no mutation, submission, or evaluator execution in the seventh through tenth
-  pyfakefs version-2 live rows. The eleventh through fourteenth mutated; the eleventh
+  pyfakefs version-2 live rows. The eleventh through fifteenth mutated; the eleventh
   passed both visible checks, while the twelfth through fourteenth reached one failed
-  visible check. None of those four live rows submitted or invoked the evaluator
+  visible check and the fifteenth ran one failed visible check. None of those five live
+  rows submitted or invoked the evaluator
 - no hidden evaluation of the temporary Loguru version-2 public correction
 - no hidden evaluation of the fourteenth-row final patch or its provider-free
   one-identifier repair
 
-The under-two-minute focused-validation target remains locally supported. The sixth
-row reached a durable evaluator summary within 30 minutes, verifying the operational
-path but exposing an invalid acceptance oracle rather than producing task acceptance.
+Bounded focused checks remain below two minutes, but the current full provider-free
+suite does not: its measured 195.256 seconds is recorded above. The sixth row reached a
+durable evaluator summary within 30 minutes, verifying the operational path but
+exposing an invalid acceptance oracle rather than producing task acceptance.
 
 ## Known limitations
 

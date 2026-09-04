@@ -39,8 +39,10 @@ public task ──> dev-head ──> constrained model/tool loop
 runtime-version switch, memory retrieval path, or candidate/qualification workflow.
 The exact latest tool batch is guaranteed in the next stateless request; older
 current source spans form a small recency-ordered working set. Before the larger task
-text, the prompt presents the current gate, remaining horizon, mutation readiness, and
-a bounded ledger of covered ranges and canonical searches. The current diff's
+text, the prompt presents the current gate, remaining horizon, mutation readiness,
+complete-diff mutation scope budget, and a bounded ledger of covered ranges and recent
+searches. `ready_to_attempt` says only that a current exact anchor exists; it is not a
+semantic-solution judgment. The current diff's
 complete visible-check status and exact remaining check IDs are projected separately
 from the bounded recent output. `ready_to_submit` additionally requires a non-empty
 diff and no non-ignored untracked files.
@@ -86,10 +88,12 @@ that passed earlier on the invalidated diff. Consuming one allowance
 does not erase the other. Best-path and protected-path feasibility both reflect actual
 remaining model and tool budgets, not merely the presence of another mutation slot.
 After two consecutive successful inspection batches add no non-overlapping coverage in
-an editable task path, the context adds a soft `commitment_signal` recommending
-mutation or explicit stop. A shifted or contained range can have a new span hash without
-being new evidence. The signal does not remove read/search; a materially different
-evidence gap may still justify another inspection while completion slack remains.
+any tracked public source while a current mutation anchor exists, the context adds a
+soft `commitment_signal` recommending mutation or explicit stop. A new query, shifted
+span, or contained range can be novel telemetry without being new evidence. Editable
+and supporting coverage remain separate. Once activated, the signal stays active for
+the current diff even when a later inspection adds coverage; mutation or a check/
+completion transition resets it. The signal does not remove read/search.
 Every such change is journaled and projected once; corrections name only tools that are
 actually present in that turn's action space.
 
@@ -98,6 +102,12 @@ allowed file. The gateway validates the current anchor and constructs the Git di
 the model does not spend turns serializing hunk headers or line counts. After a failed
 visible check, one `read_file` turn is restricted to the changed or currently evidenced
 paths before mutation is offered again.
+Scope rejection returns the restored baseline and rejected complete candidate arithmetic
+instead of only a generic message. Scope and replacement-contract failures stay in
+mutation-or-stop mode; stale anchor/evidence failures get one targeted reread of their
+path, never broad search. If the minimum remaining mutation/check/finish path becomes
+mathematically impossible, the runtime records `LIMIT_REACHED` before another provider
+dispatch rather than offering actions that cannot reach submission.
 
 Visible checks are executable public examples, not the private acceptance oracle.
 They should exercise the central behavior already promised by the issue while

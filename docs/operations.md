@@ -101,8 +101,13 @@ closed. A failure after the write restores the exact pre-image, while a crash af
 admitted write is reconciled from its expected post-image hash and admitted path set.
 If a valid mutation call fails, its bounded exact replacement, replacement hash, intent,
 evidence IDs, and error location remain in `last_failed_mutation` across later reads and
-resume. The agent may read/search when needed for repair, but a successful mutation is
-required to clear that repair target. After success, unchanged uniquely occurring
+resume. Scope failure additionally returns the baseline and complete candidate diff
+hashes, line/file counts, their delta, typed actual/limit/overage violations, and
+`rolled_back=true`; the failed result's workspace hash is the restored baseline. A scope
+or other replacement-contract failure exposes only viable `replace_text` and
+`stop_task`. An invalid anchor or evidence exposes exactly one `read_file` restricted
+to the failed path before repair; it never reopens broad search. A successful mutation
+is required to clear that repair target. After success, unchanged uniquely occurring
 edited-file spans are rebound to the post-image hash, changed pre-image spans are
 invalidated, and one bounded replacement post-image span is registered. Its ID is retained in
 `last_successful_mutation.actionable_evidence_span_ids`. The accepted action's exact
@@ -120,10 +125,15 @@ unseen result or stored raw reasoning. Action identity binds each decision, whil
 operational read cache remains keyed only by the executable request and current diff.
 
 The public context presents the workflow gate, budget, action horizon, mutation
-readiness, and evidence ledger before the larger task payload. The ledger is bounded
-and deterministic: it merges covered line ranges by path, retains canonical search
-observations and the latest public inspection intent, and is rebuilt from durable tool
-results on resume. It does not contain private evaluator data or inferred chain-of-thought.
+readiness, mutation scope budget, and evidence ledger before the larger task payload.
+`ready_to_attempt` means that a current exact anchor exists, not that the semantic
+solution is sufficient. Scope headroom describes the current complete diff; it is not
+the replacement line count. The ledger is bounded and deterministic: it merges covered
+line ranges by path, retains the latest 12 search observations, adds an aggregate over
+the complete search history, and is rebuilt from durable tool results on resume. The
+aggregate separates total, zero-match, covered-only, new-coverage, and unique result-
+fingerprint counts. It contains neither private evaluator data nor inferred chain-of-
+thought.
 
 Tool availability is derived from the workflow gate, current evidence, unexecuted
 visible checks, and remaining model/tool budget. Optional inspection stays open while
@@ -140,16 +150,27 @@ tracked, allowed file hash is current, matching mutation validation rather than 
 testing whether any span exists. `completion_possible` requires both remaining budgets
 to cover the best-case minimum path and required mutation capacity;
 `protected_completion_possible` includes the unused recovery allowances. The legacy
-24-turn and three-repair-read fields remain
-envelope-compatible telemetry and do not remove tools. Cached or repeated evidence
-remains diagnostic-only. `new_span_count` is syntactic telemetry; the action signal is
-based on newly covered, non-overlapping lines in editable task paths plus the first
-canonical observation of a search. Two consecutive successful inspection batches with
-no such gain add a soft `commitment_signal` to the next context and turn journal,
-recommending mutation or `stop_task` unless a materially different evidence gap remains.
+24-turn and three-repair-read fields remain envelope-compatible telemetry and do not
+remove tools. Cached or repeated evidence remains diagnostic-only. `new_span_count` is
+syntactic telemetry, and `first_search_observation` records query novelty only.
+`marginal_evidence_gain` is true only when the result adds a previously uncovered line
+from any tracked public source; editable and supporting lines are reported separately,
+with the old task-relevant count retained as an editable-line alias. A zero-match or
+covered-only result is a negative observation, not progress. When a current mutation
+anchor exists, two consecutive zero-coverage inspection batches activate a soft
+`commitment_signal`. It remains active for that diff even if later inspection adds
+coverage, and clears only after successful mutation or a check/completion transition.
 The signal does not change the allowed-tool set, and `stop_task` is always available.
 Every inspection close or reopen is journaled as `tool_policy_transition` and projected
 once in the public context.
+If the best-case minimum path no longer fits the remaining model calls, tool actions,
+or mutation capacity, introspection exposes only `stop_task` and the scheduler does not
+create another model turn. It records existing `LIMIT_REACHED` with message
+`completion horizon exhausted before provider dispatch` and bounded gate, remaining-
+resource, minimum-call, and blocker fields. Resume first reconciles any already durable
+provider decision or pending batch, then applies this test before a new dispatch.
+These output and scheduler semantics are bound by tool-surface identity `v7`; prior
+envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually
 available on that correction turn. If rejected function calls carried encrypted

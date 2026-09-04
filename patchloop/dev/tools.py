@@ -368,6 +368,9 @@ class DevToolGateway:
         self._evidence_repetitions: dict[str, int] = {}
         self._coverage_by_diff: dict[str, dict[str, list[tuple[int, int]]]] = {}
         self._search_ledger_by_diff: dict[str, dict[str, dict[str, Any]]] = {}
+        self._recorded_search_actions_by_diff: dict[str, set[str]] = {}
+        self._search_observations_by_diff: dict[str, list[dict[str, Any]]] = {}
+        self._search_result_fingerprints_by_diff: dict[str, set[str]] = {}
         self._latest_inspection_by_diff: dict[str, dict[str, Any]] = {}
         self._ledger_seq = 0
         self.checks_by_diff: dict[str, dict[str, dict[str, Any]]] = {}
@@ -484,6 +487,20 @@ class DevToolGateway:
             "new_text": new_text,
             "occurrence": occurrence,
         }
+        mutation_failure = result.output.get("mutation_failure")
+        failure_class = (
+            mutation_failure.get("class") if isinstance(mutation_failure, dict) else None
+        )
+        if failure_class in {"anchor_invalid", "evidence_invalid"}:
+            next_action = (
+                "Use the one targeted read_file opportunity for this path, then repair or "
+                "replace the failed mutation."
+            )
+        else:
+            next_action = (
+                "Repair or explicitly replace this failed mutation using the preserved exact "
+                "replacement, or stop_task."
+            )
         return {
             "action_id": action_id,
             "input_hash": input_hash,
@@ -513,10 +530,10 @@ class DevToolGateway:
             "error_location": (
                 cls._mutation_error_location(result.message) or ({"path": path} if path else None)
             ),
-            "next_action": (
-                "Repair or explicitly replace this failed mutation. Use read/search only "
-                "when needed for that repair."
+            "mutation_failure": (
+                copy.deepcopy(mutation_failure) if isinstance(mutation_failure, dict) else None
             ),
+            "next_action": next_action,
         }
 
     @staticmethod
@@ -547,6 +564,29 @@ class DevToolGateway:
     def _range_size(ranges: Sequence[tuple[int, int]]) -> int:
         return sum(end - start + 1 for start, end in ranges)
 
+    @staticmethod
+    def _search_result_fingerprint(
+        spans: Sequence[dict[str, Any]], *, truncated: bool
+    ) -> str:
+        findings = sorted(
+            (
+                {
+                    "path": span.get("path"),
+                    "start_line": span.get("start_line"),
+                    "end_line": span.get("end_line"),
+                    "file_hash": span.get("file_hash"),
+                }
+                for span in spans
+            ),
+            key=lambda item: (
+                str(item["path"]),
+                int(item["start_line"] or 0),
+                int(item["end_line"] or 0),
+                str(item["file_hash"]),
+            ),
+        )
+        return sha256_json({"findings": findings, "truncated": truncated})
+
     def _record_read_ledger(
         self,
         *,
@@ -554,6 +594,7 @@ class DevToolGateway:
         workspace_diff_hash: str,
         output: dict[str, Any],
         turn_decision: dict[str, Any] | None,
+        action_id: str | None,
     ) -> dict[str, Any]:
         spans = [span for span in output.get("spans", []) if isinstance(span, dict)]
         with self._lock:
@@ -589,6 +630,8 @@ class DevToolGateway:
                     if editable:
                         relevant_new_files += 1
 
+            supporting_new_lines = new_lines - relevant_new_lines
+            supporting_new_files = new_files - relevant_new_files
             first_search_observation = False
             if tool == "search_files":
                 query = output.get("query")
@@ -597,22 +640,63 @@ class DevToolGateway:
                     search_key = sha256_json({"query": query, "path_glob": path_glob})
                     searches = self._search_ledger_by_diff.setdefault(workspace_diff_hash, {})
                     first_search_observation = search_key not in searches
-                    self._ledger_seq += 1
-                    searches[search_key] = {
-                        "query": query,
-                        "path_glob": path_glob,
-                        "span_count": len(spans),
-                        "zero_match": not spans,
-                        "truncated": bool(output.get("truncated")),
-                        "findings": [
-                            {
-                                "path": span.get("path"),
-                                "range": [span.get("start_line"), span.get("end_line")],
-                            }
-                            for span in spans[:20]
-                        ],
-                        "last_observed_seq": self._ledger_seq,
-                    }
+                    truncated = bool(output.get("truncated"))
+                    result_fingerprint = self._search_result_fingerprint(
+                        spans,
+                        truncated=truncated,
+                    )
+                    if not spans:
+                        outcome = "zero_match"
+                    elif new_lines == 0:
+                        outcome = "covered_only"
+                    elif relevant_new_lines == 0:
+                        outcome = "supporting_coverage"
+                    else:
+                        outcome = "new_coverage"
+                    recorded_actions = self._recorded_search_actions_by_diff.setdefault(
+                        workspace_diff_hash, set()
+                    )
+                    if action_id is None or action_id not in recorded_actions:
+                        if action_id is not None:
+                            recorded_actions.add(action_id)
+                        previous = searches.get(search_key, {})
+                        outcome_counts = copy.deepcopy(previous.get("outcome_counts", {}))
+                        outcome_counts[outcome] = int(outcome_counts.get(outcome, 0)) + 1
+                        self._ledger_seq += 1
+                        searches[search_key] = {
+                            "query": query,
+                            "path_glob": path_glob,
+                            "evidence_goal": self._bounded_string(
+                                (turn_decision or {}).get("evidence_goal"), 500
+                            ),
+                            "span_count": len(spans),
+                            "zero_match": not spans,
+                            "truncated": truncated,
+                            "result_fingerprint": result_fingerprint,
+                            "outcome": outcome,
+                            "outcome_counts": outcome_counts,
+                            "observation_count": int(previous.get("observation_count", 0)) + 1,
+                            "new_covered_line_count": new_lines,
+                            "new_editable_line_count": relevant_new_lines,
+                            "new_supporting_line_count": supporting_new_lines,
+                            "findings": [
+                                {
+                                    "path": span.get("path"),
+                                    "range": [span.get("start_line"), span.get("end_line")],
+                                }
+                                for span in spans[:20]
+                            ],
+                            "last_observed_seq": self._ledger_seq,
+                        }
+                        observation = copy.deepcopy(searches[search_key])
+                        observation.pop("outcome_counts", None)
+                        observation.pop("observation_count", None)
+                        self._search_observations_by_diff.setdefault(
+                            workspace_diff_hash, []
+                        ).append(observation)
+                        self._search_result_fingerprints_by_diff.setdefault(
+                            workspace_diff_hash, set()
+                        ).add(result_fingerprint)
             if turn_decision is not None:
                 self._ledger_seq += 1
                 self._latest_inspection_by_diff[workspace_diff_hash] = {
@@ -625,7 +709,7 @@ class DevToolGateway:
                     ],
                     "last_observed_seq": self._ledger_seq,
                 }
-        gain_units = relevant_new_lines + int(first_search_observation)
+        gain_units = new_lines
         if turn_decision is not None:
             with self._lock:
                 self._latest_inspection_by_diff[workspace_diff_hash]["marginal_evidence_gain"] = (
@@ -633,8 +717,12 @@ class DevToolGateway:
                 )
         return {
             "new_covered_line_count": new_lines,
+            "new_editable_line_count": relevant_new_lines,
+            "new_supporting_line_count": supporting_new_lines,
             "new_task_relevant_line_count": relevant_new_lines,
             "new_file_count": new_files,
+            "new_editable_file_count": relevant_new_files,
+            "new_supporting_file_count": supporting_new_files,
             "new_task_relevant_file_count": relevant_new_files,
             "first_search_observation": first_search_observation,
             "marginal_evidence_gain": gain_units > 0,
@@ -669,6 +757,7 @@ class DevToolGateway:
                 workspace_diff_hash=result.workspace_diff_hash,
                 output=result.output,
                 turn_decision=intent if isinstance(intent, dict) else None,
+                action_id=result.action_id,
             )
 
     def _restore_mutation_evidence(self, output: dict[str, Any]) -> None:
@@ -691,6 +780,7 @@ class DevToolGateway:
                 workspace_diff_hash=diff_hash,
                 output={"spans": restored_candidates},
                 turn_decision=None,
+                action_id=None,
             )
 
     def _accept_successful_mutation(
@@ -723,6 +813,7 @@ class DevToolGateway:
         workspace_diff_hash: str,
         output: dict[str, Any],
         turn_decision: dict[str, Any] | None,
+        action_id: str,
     ) -> dict[str, Any]:
         decorated = copy.deepcopy(output)
         spans = decorated.get("spans", [])
@@ -763,6 +854,7 @@ class DevToolGateway:
             workspace_diff_hash=workspace_diff_hash,
             output=decorated,
             turn_decision=turn_decision,
+            action_id=action_id,
         )
         if turn_decision is not None:
             decorated["inspection_intent"] = copy.deepcopy(turn_decision)
@@ -845,7 +937,9 @@ class DevToolGateway:
         diff_hash = self.current_diff_hash
         with self._lock:
             coverage = copy.deepcopy(self._coverage_by_diff.get(diff_hash, {}))
-            searches = copy.deepcopy(list(self._search_ledger_by_diff.get(diff_hash, {}).values()))
+            searches = copy.deepcopy(self._search_observations_by_diff.get(diff_hash, []))
+            canonical_searches = self._search_ledger_by_diff.get(diff_hash, {})
+            result_fingerprints = self._search_result_fingerprints_by_diff.get(diff_hash, set())
             latest = copy.deepcopy(self._latest_inspection_by_diff.get(diff_hash))
         covered_files = [
             {
@@ -857,6 +951,20 @@ class DevToolGateway:
             for path, ranges in sorted(coverage.items())[:16]
         ]
         searches.sort(key=lambda item: int(item.get("last_observed_seq", 0)), reverse=True)
+        aggregate_counts = {
+            "total_search_count": len(searches),
+            "unique_query_count": len(canonical_searches),
+            "zero_match_count": sum(item.get("outcome") == "zero_match" for item in searches),
+            "covered_only_count": sum(item.get("outcome") == "covered_only" for item in searches),
+            "new_coverage_count": sum(
+                item.get("outcome") in {"new_coverage", "supporting_coverage"}
+                for item in searches
+            ),
+            "supporting_coverage_count": sum(
+                item.get("outcome") == "supporting_coverage" for item in searches
+            ),
+            "unique_result_fingerprint_count": len(result_fingerprints),
+        }
         for item in searches:
             item.pop("last_observed_seq", None)
         if latest is not None:
@@ -864,6 +972,7 @@ class DevToolGateway:
         return {
             "diff_hash": diff_hash,
             "covered_files": covered_files,
+            "search_summary": aggregate_counts,
             "canonical_searches": searches[:12],
             "latest_inspection_intent": latest,
         }
@@ -872,14 +981,59 @@ class DevToolGateway:
         current_paths = list(self.current_mutation_evidence_paths())
         return {
             "state": "ready_to_attempt" if current_paths else "needs_anchor_evidence",
+            "readiness_basis": "current_exact_anchor_only",
             "current_anchor_evidence_paths": current_paths,
             "visible_check_contract_available": bool(self.public_task.visible_checks),
             "rule": (
-                "When an exact old_text anchor, a causal hypothesis, and expected public "
-                "behavior are known, prefer replace_text. Any further inspection must name "
-                "a specific uncovered range or unresolved public symbol."
+                "ready_to_attempt means only that a current exact mutation anchor exists; it "
+                "does not assert that the semantic solution is sufficient. When the causal "
+                "hypothesis and expected public behavior are also known, prefer replace_text."
             ),
         }
+
+    def mutation_scope_budget(self) -> dict[str, Any]:
+        summary = self.current_diff
+        constraints = self.public_task.constraints
+        return {
+            "current_diff_lines": summary.diff_lines,
+            "max_diff_lines": constraints.max_diff_lines,
+            "remaining_diff_line_headroom": max(
+                0, constraints.max_diff_lines - summary.diff_lines
+            ),
+            "current_changed_file_count": len(summary.changed_files),
+            "max_changed_files": constraints.max_changed_files,
+            "remaining_changed_file_headroom": max(
+                0, constraints.max_changed_files - len(summary.changed_files)
+            ),
+            "rule": (
+                "Headroom is not the replacement line count; the gateway validates the "
+                "complete candidate diff."
+            ),
+        }
+
+    def last_mutation_failure_class(self) -> str | None:
+        failure = (
+            self.last_failed_mutation.get("mutation_failure")
+            if isinstance(self.last_failed_mutation, dict)
+            else None
+        )
+        value = failure.get("class") if isinstance(failure, dict) else None
+        return value if isinstance(value, str) else None
+
+    def failed_mutation_target_path(self) -> str | None:
+        replacement = (
+            self.last_failed_mutation.get("replacement")
+            if isinstance(self.last_failed_mutation, dict)
+            else None
+        )
+        path = replacement.get("path") if isinstance(replacement, dict) else None
+        if not isinstance(path, str):
+            return None
+        try:
+            normalized, _ = self._tracked_path(path)
+        except (PatchLoopError, OSError):
+            return None
+        return normalized
 
     def current_mutation_evidence_paths(self) -> tuple[str, ...]:
         """Return allowed files backed by at least one current public evidence span."""
@@ -1111,6 +1265,7 @@ class DevToolGateway:
                     workspace_diff_hash=baseline,
                     output=output,
                     turn_decision=turn_decision,
+                    action_id=call.action_id,
                 )
                 with self._lock:
                     self._read_cache[cache_key] = self._cacheable_read_output(output)
@@ -1128,9 +1283,16 @@ class DevToolGateway:
             )
         except (PatchLoopError, ValidationError, ValueError, OSError, RuntimeError) as exc:
             code = exc.code if isinstance(exc, PatchLoopError) else "TOOL_CONTRACT_ERROR"
-            failure_output = {}
+            failure_output = (
+                copy.deepcopy(exc.details) if isinstance(exc, PatchLoopError) else {}
+            )
             if call.name in READ_TOOLS:
                 failure_output["read_request_hash"] = read_request_hash
+            elif call.name == "replace_text" and "mutation_failure" not in failure_output:
+                failure_output["mutation_failure"] = self._replacement_failure_details(
+                    message=str(exc),
+                    baseline=baseline_summary,
+                )
             result = DevToolResult(
                 action_id=call.action_id,
                 input_hash=input_hash,
@@ -1139,6 +1301,7 @@ class DevToolGateway:
                 output=failure_output,
                 error_code=code,
                 message=str(exc)[:1_000],
+                workspace_diff_hash=baseline,
             )
         self.journal.append(
             "action_finished",
@@ -1555,12 +1718,29 @@ class DevToolGateway:
         _, target = self._tracked_path(validated.path)
         if target.read_bytes() != validated.before_bytes:
             raise ContractError("exact replacement preimage changed before application")
+        baseline_summary = self.current_diff
         target.write_bytes(validated.after_bytes)
         try:
             summary = self.current_diff
             scope = verify_scope(summary, self.public_task.constraints)
             if not scope.passed:
-                raise ContractError("mutation violates allowed paths or diff-size constraints")
+                failure = {
+                    "class": "scope_violation",
+                    "baseline": self._bounded_diff_identity(baseline_summary),
+                    "candidate": self._bounded_diff_identity(summary),
+                    "delta_from_baseline": {
+                        "diff_lines": summary.diff_lines - baseline_summary.diff_lines,
+                        "changed_file_count": (
+                            len(summary.changed_files) - len(baseline_summary.changed_files)
+                        ),
+                    },
+                    "violations": copy.deepcopy(scope.details.get("typed_violations", [])),
+                    "rolled_back": False,
+                }
+                raise ContractError(
+                    "mutation violates scope: " + "; ".join(scope.violations),
+                    details={"mutation_failure": failure},
+                )
             output = self._mutation_result_output(
                 generated_patch=validated.generated_patch,
                 intent=validated.intent,
@@ -1572,10 +1752,46 @@ class DevToolGateway:
                     validated.ignored_historical_evidence_span_ids
                 ),
             )
-        except Exception:
+        except Exception as exc:
             target.write_bytes(validated.before_bytes)
+            if isinstance(exc, PatchLoopError):
+                failure = exc.details.get("mutation_failure")
+                if isinstance(failure, dict):
+                    failure["rolled_back"] = True
             raise
         return output
+
+    @staticmethod
+    def _bounded_diff_identity(summary: Any) -> dict[str, Any]:
+        return {
+            "diff_hash": summary.patch_hash,
+            "diff_lines": summary.diff_lines,
+            "changed_files": list(summary.changed_files)[:16],
+        }
+
+    @classmethod
+    def _replacement_failure_details(cls, *, message: str, baseline: Any) -> dict[str, Any]:
+        lowered = message.lower()
+        if any(
+            fragment in lowered
+            for fragment in ("anchor is stale", "anchor is absent", "preimage changed")
+        ):
+            failure_class = "anchor_invalid"
+        elif any(
+            fragment in lowered
+            for fragment in ("evidence span", "current evidence", "cover the exact replacement")
+        ):
+            failure_class = "evidence_invalid"
+        else:
+            failure_class = "replacement_contract"
+        return {
+            "class": failure_class,
+            "baseline": cls._bounded_diff_identity(baseline),
+            "candidate": None,
+            "delta_from_baseline": None,
+            "violations": [],
+            "rolled_back": True,
+        }
 
     def _reconcile_or_apply(
         self, arguments: dict[str, Any], pending: dict[str, Any]

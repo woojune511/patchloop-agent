@@ -38,21 +38,46 @@ def _matches(path: str, pattern: str) -> bool:
 
 def verify_scope(summary: DiffSummary, constraints: TaskConstraints) -> PolicyOutcome:
     violations: list[str] = []
+    typed_violations: list[dict] = []
     if summary.untracked_files:
         violations.append("untracked files are unsupported: " + ", ".join(summary.untracked_files))
+        typed_violations.append(
+            {
+                "code": "untracked_files",
+                "paths": summary.untracked_files,
+            }
+        )
     for path in summary.changed_files:
         if not any(_matches(path, pattern) for pattern in constraints.allowed_paths):
             violations.append(f"path is outside allowed_paths: {path}")
+            typed_violations.append({"code": "path_outside_allowed", "path": path})
         if any(_matches(path, pattern) for pattern in constraints.forbidden_paths):
             violations.append(f"path matches forbidden_paths: {path}")
+            typed_violations.append({"code": "path_forbidden", "path": path})
     if len(summary.changed_files) > constraints.max_changed_files:
         changed_file_count = len(summary.changed_files)
         violations.append(
             f"changed file count {changed_file_count} exceeds {constraints.max_changed_files}"
         )
+        typed_violations.append(
+            {
+                "code": "max_changed_files",
+                "actual": changed_file_count,
+                "limit": constraints.max_changed_files,
+                "over_by": changed_file_count - constraints.max_changed_files,
+            }
+        )
     if summary.diff_lines > constraints.max_diff_lines:
         violations.append(
             f"diff line count {summary.diff_lines} exceeds {constraints.max_diff_lines}"
+        )
+        typed_violations.append(
+            {
+                "code": "max_diff_lines",
+                "actual": summary.diff_lines,
+                "limit": constraints.max_diff_lines,
+                "over_by": summary.diff_lines - constraints.max_diff_lines,
+            }
         )
     return PolicyOutcome(
         passed=not violations,
@@ -60,8 +85,11 @@ def verify_scope(summary: DiffSummary, constraints: TaskConstraints) -> PolicyOu
         details={
             "changed_files": summary.changed_files,
             "untracked_files": summary.untracked_files,
+            "changed_file_count": len(summary.changed_files),
             "added_lines": summary.added_lines,
             "deleted_lines": summary.deleted_lines,
+            "diff_lines": summary.diff_lines,
+            "typed_violations": typed_violations,
         },
     )
 
