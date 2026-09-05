@@ -135,6 +135,9 @@ class _ToolPolicy:
     current_repair_read_reserve_calls: int = 0
     future_check_failure_slots: int = 0
     optional_mutation_completion_calls: int = 0
+    optional_mutation_protected_calls: int = 0
+    mutation_completion_possible: bool = False
+    mutation_protected_completion_possible: bool = False
     inspection_uses_repair_credit: bool = False
 
     @property
@@ -632,9 +635,10 @@ def _tool_policy(
     if required_inspection and not protected_completion_possible:
         max_parallel_reads = min(max_parallel_reads, 1)
 
-    # A discretionary edit can invalidate every current PASS. Account for the
-    # complete accepted successor before exposing it, including its remaining
-    # recoveries; a mandatory repair is already represented in the best path.
+    # A discretionary edit can invalidate every current PASS. Its successful
+    # minimum successor must fit; a recovery guarantee is reported separately,
+    # not required to make a viable edit executable. Optional inspection/probes
+    # still preserve the complete protected baseline path above/below.
     postmutation_state = replace(
         completion_state,
         remaining_check_count=completion_state.check_count,
@@ -645,7 +649,8 @@ def _tool_policy(
         repair_read_credit=False,
     )
     postmutation_budget = _completion_budget(postmutation_state)
-    optional_mutation_completion_calls = 1 + postmutation_budget.protected
+    optional_mutation_completion_calls = 1 + postmutation_budget.minimum
+    optional_mutation_protected_calls = 1 + postmutation_budget.protected
     mutation_allowed = (
         completion_possible
         and mutation_capacity
@@ -657,6 +662,11 @@ def _tool_policy(
                 and remaining_tool_actions >= optional_mutation_completion_calls
             )
         )
+    )
+    mutation_protected_completion_possible = (
+        mutation_allowed
+        and remaining_model_calls >= optional_mutation_protected_calls
+        and remaining_tool_actions >= optional_mutation_protected_calls
     )
     allowed = {"stop_task"}
     available_check_ids = unrun_checks
@@ -761,8 +771,29 @@ def _tool_policy(
         current_repair_read_reserve_calls=budget.current_read_reserve,
         future_check_failure_slots=budget.future_check_failures,
         optional_mutation_completion_calls=optional_mutation_completion_calls,
+        optional_mutation_protected_calls=optional_mutation_protected_calls,
+        mutation_completion_possible=mutation_allowed,
+        mutation_protected_completion_possible=mutation_protected_completion_possible,
         inspection_uses_repair_credit=inspection_uses_credit and inspection_allowed,
     )
+
+
+def _mutation_completion_horizon(policy: _ToolPolicy) -> dict[str, Any]:
+    """Conditional edit costs do not imply semantic success or protected recovery."""
+
+    return {
+        "minimum_calls": policy.optional_mutation_completion_calls,
+        "protected_calls": policy.optional_mutation_protected_calls,
+        "minimum_possible": policy.mutation_completion_possible,
+        "protected_possible": policy.mutation_protected_completion_possible,
+        "recovery_warning": (
+            "An edit, all checks, and finish fit if the edit succeeds; "
+            "full failure-recovery reserves do not fit."
+            if policy.mutation_completion_possible
+            and not policy.mutation_protected_completion_possible
+            else None
+        ),
+    }
 
 
 def _commitment_signal(
@@ -1047,6 +1078,7 @@ def _build_context(
             "inspection_uses_repair_credit": active_policy.inspection_uses_repair_credit,
             "completion_possible": active_policy.completion_possible,
             "protected_completion_possible": (active_policy.protected_completion_possible),
+            "mutation_completion_horizon": _mutation_completion_horizon(active_policy),
             "exploration_allowed": active_policy.exploration_allowed,
             "exploration_state": active_policy.exploration_state,
             "commitment_action_state": active_policy.commitment_action_state,
@@ -1656,8 +1688,8 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
         )
         if failure_class in {"anchor_invalid", "evidence_invalid"}:
             next_question = (
-                "Use the one targeted read of the failed path, then repair the preserved "
-                "replacement or stop."
+                "Correct the proposal using already delivered exact evidence. Inspect only "
+                "to acquire missing exact evidence while allowed, or abandon the proposal."
             )
         elif result.tool == "replace_text":
             next_question = (
@@ -3021,6 +3053,7 @@ def _run_one_locked(
                 "check_recovery_reserve_ids": list(policy.check_recovery_reserve_ids),
                 "completion_possible": policy.completion_possible,
                 "protected_completion_possible": (policy.protected_completion_possible),
+                "mutation_completion_horizon": _mutation_completion_horizon(policy),
                 "exploration_state": policy.exploration_state,
                 "commitment_action_state": policy.commitment_action_state,
                 "closure_reason": policy.closure_reason,

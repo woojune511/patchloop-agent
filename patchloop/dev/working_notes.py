@@ -146,7 +146,14 @@ def memory_update_schema() -> dict[str, Any]:
                             "maxLength": 30,
                             "description": "null creates; an existing note ID updates that note.",
                         },
-                        "statement": {"type": "string", "minLength": 1, "maxLength": 400},
+                        "statement": {
+                            "type": "string", "minLength": 1, "maxLength": 400,
+                            "description": (
+                                "A useful public mechanism, observation, or explicitly untested "
+                                "assumption; not just a repeated function location. Cite the "
+                                "behavior-bearing source or observed result."
+                            ),
+                        },
                         "evidence": {
                             "type": "array", "minItems": 1, "maxItems": 2,
                             "items": {"anyOf": [source, result]},
@@ -163,7 +170,13 @@ def memory_update_schema() -> dict[str, Any]:
                 },
                 "description": "Existing notes to remove; use [] to retain them.",
             },
-            "open_question": {"type": ["string", "null"], "maxLength": 500},
+            "open_question": {
+                "type": ["string", "null"], "maxLength": 500,
+                "description": (
+                    "The remaining uncertainty that could change an edit or experiment. "
+                    "Resolve an answered question with null, or replace it with the next one."
+                ),
+            },
         },
         "required": ["findings", "remove_note_ids", "open_question"],
         "additionalProperties": False,

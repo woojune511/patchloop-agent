@@ -27,7 +27,58 @@ Repository policy alone never initiates paid work. The twenty-three live observa
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v15
+## Current implementation: tool surface v16
+
+V16 fixes public search path matching and separates executable edit admission from
+full recovery protection. Search globs are case-sensitive and repository-rooted:
+`*`, `?`, and character classes stay in one component; a whole `**` matches zero or
+more directories. Thus `**/*` includes root files and `pkg/**/*.py` includes both
+direct and nested files. Queries remain literal. `searched_file_count` reports eligible,
+successfully decoded files actually searched before any output truncation, distinguishing
+an empty file selection from a missing string. Tracked/public admission, hidden-file
+exclusion, output limits, cache/replay, and task scope matching remain unchanged.
+
+An optional edit now requires its successful minimum successor: the edit, every
+invalidated visible check, and finish. Full failure-recovery reserves are reported
+separately in `action_horizon.mutation_completion_horizon` and the durable turn boundary.
+When that minimum fits but full protection does not, `replace_text` remains available
+with a bounded warning. Current-baseline completion and conditional post-edit completion
+are distinct. Inspection/probes still preserve their existing protected budget; a probe
+does not grant check credit, imply a semantic failure, or force mutation.
+
+Working-note `status=current` explicitly means cited evidence is current, not that the
+statement has been semantically revalidated. Each projected finding is labelled
+`interpretation_status=model_authored_unverified`; durable source bodies and lifecycle
+replay are unchanged. Guidance favors causal mechanisms, closing answered questions,
+behavior-bearing citations, reconsidering claims after an edit, and public experiments
+for new assumptions. Exact replacement guidance favors the smallest sufficient anchor
+without unchanged signatures/docstrings. An obsolete mandatory targeted-read sentence
+is removed from anchor-failure feedback. These are guidance changes, not a new planning
+tool, semantic oracle, blanket note expiry, fuzzy mutation admission, or read cap.
+
+The preceding diagnosis verified that row 23 retained the editable function throughout
+turns 3-29 and the normalization call from turn 8; repetition was not evidence eviction.
+It also found a real false-negative search at turn 3 and a latent policy disconnect:
+after a hypothetical final probe, eight calls remained for a four-call edit/check/finish
+path, but the old policy required twelve protected calls. No probe was attempted then,
+so that disconnect is not established as the cause of the recorded task failure.
+V16 addresses these defects without changing task bytes, global limits, output ceiling,
+tool names/input field shapes or order, or old envelopes. No twenty-fourth row is authorized.
+
+Verification passes 75 focused search/guidance/tool/note cases, 16 focused budget cases,
+and Ruff. The frozen complete suite passed 287 provider-free tests: 107 in 90.79 seconds
+and 180 in 104.29 seconds, concurrently with separate short external temporary roots.
+Three opt-in Docker tests were skipped. Both groups emitted only a pre-existing repository
+pytest-cache permission warning; no test failed. Mock `run_dev_ae0880944bfd4697`, under
+`C:\pt\pl16-smoke-355ec8`, reaches isolated `EVALUATOR_PASS` through one accepted mutation,
+four mock model turns and five actions in approximately five seconds. Task acceptance is
+PASS, safety NOT_RUN, cost zero, and `claim_eligible=false`. The regressions cover the
+eight-call diagnostic-to-edit path, exact minimum/tool/capacity boundaries, complete check
+invalidation, warning hydration, root/nested search and cache/restart, and the distinction
+between current citations and unverified interpretation. These are local contract tests,
+not evidence that the live model will explore less or produce a correct patch.
+
+### V15 implementation and validation checkpoint
 
 V15 repairs working-note lifecycle and makes annotation outcomes actionable. Notes retain
 up to 24,000 characters of actually observed source per note, independently of active
@@ -907,8 +958,11 @@ came on call 29 after an anchor rejection. Both visible checks passed, but the s
 guard missed a trailing-separator case. Further diagnosis should distinguish successful
 information delivery from the model's reuse of it and its testing of semantic boundaries;
 neither a harder read cap nor a larger token budget follows from this observation.
-Do not promote private cases into model prompts or infer causality from the row-22/23
-comparison. No twenty-fourth row or new implementation change is authorized by this result.
+V16 now fixes the confirmed search semantics and minimum-versus-protected edit admission,
+and clarifies mechanism notes and small exact anchors with provider-free coverage. A future
+separately approved row can observe those changes, but local verification does not authorize
+one. Do not promote private cases into model prompts or infer causality from the row-22/23
+comparison. No twenty-fourth row is authorized.
 Earlier decisions below are historical context.
 
 The first live failure exposed a context-projection defect: successful reads were

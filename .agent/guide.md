@@ -42,6 +42,12 @@ The provider request uses required tool choice, and the application validates th
 smaller batch grammar above. Mixed, empty, duplicate-action, and oversized batches
 receive one short correction. A second consecutive protocol/incomplete violation
 terminates the row; any valid completed tool batch resets the correction allowance.
+Search globs are case-sensitive, repository-rooted, and component-aware: `*`, `?`,
+and character classes stay within one component, while a whole `**` includes zero or
+more directories. Default `**/*` includes root files. Queries are literal strings.
+`searched_file_count` counts eligible decoded files actually searched before truncation;
+zero files is distinct from searching files but finding no text. Keep search matching
+separate from frozen task-scope matching and retain all public/tracked admission gates.
 Optional inspection remains available only while both model-call and tool-action
 budgets exceed the minimum path through mutation, all required checks, and finish plus
 bounded failure-recovery allowances limited by remaining accepted mutations. A single
@@ -54,6 +60,14 @@ optional proposal does not invalidate its rollback baseline or that baseline's c
 the actual remaining budgets cover the best-case path;
 `protected_completion_possible` includes the unused allowance. Neither is an alias
 for mutation capacity.
+An optional edit needs its minimum successful successor, not full recovery protection:
+one edit, every invalidated visible check, and finish must fit both resource budgets.
+`action_horizon.mutation_completion_horizon`, also stored at `turn_started`, reports
+minimum/protected calls and feasibility separately. An affordable edit remains exposed
+with a recovery warning when full protection does not fit. Neither semantic success nor
+a protected post-edit path follows from the current baseline being ready to submit.
+Probe failures do not become check failures or force repair; public evidence can motivate
+an optional edit without granting special repair credit. Inspection/probe P floors remain.
 With one optional turn left, expose reads with `last_opportunity` and tell the model
 they close next; with none, remove them and record/project `tool_policy_transition`.
 Reopen them through the same transition when a changed gate restores slack. A first
@@ -100,6 +114,12 @@ failure. The mutation also requires:
 - `hypothesis`
 - `expected_behavior`
 - exact `path`, `old_text`, `new_text`, and occurrence
+
+Prefer the smallest sufficient unique anchor; omit unchanged signatures/docstrings for
+an executable-line edit and preserve observed line breaks exactly. Do not replace exact
+admission with fuzzy matching. Anchor-failure feedback permits correcting from delivered
+evidence; acquire missing exact evidence only when needed and allowed, not by a compulsory
+one-read lease.
 
 The model does not select or serialize evidence IDs for mutation. The gateway finds
 all previously observed public spans whose actual returned content and file hash are
@@ -170,6 +190,11 @@ unchanged text rebinds; changed or ambiguous text expires without later resurrec
 `last_source_lifecycle` exposes only triggering action, rebound IDs, and expiry reasons.
 Old tool-result references remain historical.
 These are public run-local notes, not raw reasoning or cross-run memory retrieval.
+Each projected finding has `interpretation_status=model_authored_unverified`.
+Legacy `status=current` means only that its cited evidence is current; the harness does
+not revalidate the statement's meaning. Cite behavior-bearing source, retain the causal
+mechanism rather than repeated wrapper locations, and close answered questions. Revisit
+behavior claims against observed post-image evidence after edits even if citations survive.
 Notes may retain observed mechanisms, the chosen implementation approach, and untested
 behavior. The system prompt encourages reuse of existing responsibilities and asks
 whether another inspection can change the edit or next check. These remain optional
@@ -210,7 +235,7 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v15`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v16`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -325,7 +350,12 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: tool surface `v15` fixes independent source-body retention, atomic note
+Current seam: tool surface `v16` fixes recursive search-glob semantics and uses the
+minimum successful edit successor for mutation admission, with separate protected-recovery
+warnings. It keeps inspection/probe protection, exact evidence, check invalidation, and
+existing limits. Mechanism-oriented notes, evidence-only currency labels, small exact
+anchors, and non-compulsory anchor-repair feedback add no planning call or semantic oracle.
+The preceding tool surface `v15` fixes independent source-body retention, atomic note
 lifecycle replay, and action-associated note receipts. Source validation and nonblocking
 annotation failure remain; new planning calls, read caps, or cross-run memory are absent.
 The real two-unrelated-edit reproduction must retain the same note in uninterrupted and
@@ -389,8 +419,11 @@ isolation. Acceptance failed on a trailing-separator boundary: the new `head and
 guard skips traversal when the final split component is empty. Private diagnostics were
 not returned to the coding agent. There was no token-ceiling or protocol terminal.
 
-Next seam is evidence-first diagnosis of observation reuse and semantic boundary testing,
-not another speculative action mask or budget increase. The row comparison is descriptive,
+The subsequent read-only diagnosis found intact source projection, a false-negative
+recursive glob, and a latent probe-to-edit budget disconnect. V16 fixes the latter two
+and clarifies note/anchor guidance. Next seam after local verification is separately
+approved observation of evidence reuse and semantic boundary testing, not another
+speculative action mask or budget increase. The row comparison is descriptive,
 not proof of memory causality. Do not inject private test cases into future model contexts.
 All existing external evidence remains immutable; no twenty-fourth row is authorized.
 See `docs/current-status.md` for exact results and artifact identities.
@@ -746,9 +779,18 @@ Run only what the change needs, then broaden to:
 
 ```powershell
 uv run ruff check patchloop tests
-uv run pytest tests --basetemp <short-external-path>
+uv run pytest tests -p no:cacheprovider --basetemp <short-external-path>
 uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
 ```
+
+V16 passes 75 focused search/guidance/tool/note cases, 16 focused budget cases, and Ruff.
+All 287 provider-free tests pass in concurrent groups of 107 (90.79 seconds) and 180
+(104.29 seconds), with three real-Docker tests skipped. The only warnings were repository
+pytest-cache permissions; use `-p no:cacheprovider` or an external cache directory to avoid
+that unrelated cache write. Mock `run_dev_ae0880944bfd4697`, under
+`C:\pt\pl16-smoke-355ec8`, reaches isolated `EVALUATOR_PASS` through one mutation,
+four model turns and five actions in about five seconds: acceptance PASS, safety NOT_RUN,
+cost zero, and `claim_eligible=false`. No Docker or provider call ran for this change.
 
 V15 passes 54 focused note/context/input cases in 35.35 seconds and Ruff. Full-suite
 groups pass 64 in 90.67 seconds and 180 in 115.15 seconds concurrently: 244 provider-free
@@ -759,7 +801,8 @@ This verifies note lifecycle/receipt contracts locally, not better live model de
 
 Freeze runtime files while running the suite: content-hash provenance tests intentionally
 reject concurrent source edits. To stay near the two-minute full-cycle target, run
-`test_dev_runner.py` plus `test_dev_resume_v12.py` in one pytest process and every other
+`test_dev_runner.py`, `test_dev_resume_v12.py`, and the three new `test_dev_*_v16.py`
+files in one pytest process and every other
 `test*.py` file in another, using distinct new short external basetemps. Do not omit tests
 or share temporary roots. Then run mock smoke. V14 passed Ruff and 215 tests: 64 in
 84.63 seconds and 151 in 82.70 seconds, running concurrently. A final 500-character

@@ -2147,7 +2147,10 @@ def test_check_failure_preserves_budgeted_public_inspection_through_two_repairs(
     assert before_check.feedback_recovery_reserve_calls == 8
     assert before_check.completion_budget_calls == 11
     assert before_check.protected_completion_possible is True
-    assert before_check.allowed_tools == frozenset({"run_check", "stop_task"})
+    assert before_check.allowed_tools == frozenset({"replace_text", "run_check", "stop_task"})
+    assert before_check.optional_mutation_completion_calls == 4
+    assert before_check.optional_mutation_protected_calls == 12
+    assert before_check.mutation_protected_completion_possible is False
 
     failed_check = DevToolResult(
         action_id="failed-contract-check",

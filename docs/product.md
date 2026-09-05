@@ -74,6 +74,11 @@ empty EOF reads, and consistent CRLF normalization keep that coverage accurate. 
 summary reports whether post-image repair evidence is available; uncovered anchors
 still fail closed.
 
+Public searches use repository-rooted, case-sensitive globs: ordinary wildcards stay
+within one path component and `**` includes zero or more directories. This includes
+root files in the default `**/*` search. Queries are literal text; a searched-file
+count distinguishes an empty eligible file selection from a text search with no match.
+
 For OpenAI runs, stateless continuity also carries the provider-encrypted reasoning
 items returned by the immediately preceding response. Their ciphertext and output
 order live in the external content-addressed store; the journal carries only the
@@ -105,6 +110,10 @@ behavior still unverified. The prompt encourages reuse of existing functions' be
 and asks whether another inspection could change the edit or next check. These are
 short public observations and decisions; no extra model call, planning tool, or
 mandatory three-part plan is added. Citation validation does not prove an interpretation.
+Projected notes explicitly remain `model_authored_unverified`; `status=current` means
+their cited evidence is current, not that a behavior claim was checked after an edit.
+Guidance favors causal mechanisms, closing answered questions, and reconsidering claims
+against changed behavior rather than merely preserving repeated function locations.
 
 Every model response must call at least one constrained tool. Besides inspection,
 mutation, checking, and finish, `stop_task` provides an explicit unsuccessful exit
@@ -123,6 +132,12 @@ One completion model accounts for mutation, all invalidated checks, finish, and 
 failure-recovery allowances under the remaining model/tool/mutation budgets. It does not
 assume the model will run checks in their declared order. A rejected optional edit leaves
 its rollback baseline usable, including any checks already passed on that baseline.
+An optional edit remains executable when its minimum successful edit/check/finish path
+fits, even if full additional-failure recovery does not. The context reports conditional
+post-edit minimum/protected costs separately and warns when recovery is not fully covered.
+This lets an affordable diagnostic-driven revision follow already-passing checks without
+treating every failed experiment as a mandatory repair. Inspection/probes retain their
+existing protected-budget floor.
 Read/search remain available after mutation or check failure while the completion budget
 allows. Missing exact edit evidence may require a source read, but known evidence never
 requires a ceremonial reread. Coverage and commitment are advisory, including after a
@@ -187,8 +202,10 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v15` adds durable note-source lifecycles and distinct
-annotation feedback to stable note IDs, implementation-oriented guidance, opt-in public
+workflow state. Tool-surface `v16` adds component-aware search, minimum-path edit admission
+with separate recovery warnings, and explicit unverified note interpretations to durable
+note-source lifecycles, distinct annotation feedback, stable note IDs,
+implementation-oriented guidance, opt-in public
 experiments, and the existing source projection,
 advisory exploration, shared deadline/recovery accounting, and exact agreement
 between provider action schemas and internal decision validation. Bounded conversion

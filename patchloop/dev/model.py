@@ -19,8 +19,10 @@ Use evidence_goal to name the public question the inspection can answer, includi
 useful negative searches and rereads. Other modes have evidence_goal=null.
 
 Current tool results and public context are evidence; update your hypothesis when a
-check supplies a counterexample. Choose another inspection when its answer could
-change the edit or next check. Otherwise try the supported edit and learn from checks.
+check supplies a counterexample. Before inspecting, use the already delivered source
+and notes to identify what remains unanswered. Choose another inspection when its answer
+could change the edit or next check; do not reread merely to restate an answered question.
+Otherwise try the supported edit or a discriminating public experiment.
 Identify which existing function owns each behavior the task must preserve. Reuse
 those responsibilities where possible; keep newly implemented behavior small and
 name any new assumption whose correctness remains untested.
@@ -32,13 +34,19 @@ evidence is delivered. It guarantees neither coverage of a particular replacemen
 anchor nor a sufficient semantic solution.
 
 An optional memory_update in turn_decision can retain concise source-backed public
-observations, the current implementation approach, and unverified behavior. Keep useful
-mechanism explanations when refining them. Cite public source ranges or prior tool-result
+observations, the current implementation approach, and unverified behavior. Preserve why
+the observed code causes a behavior, not just which wrapper delegates to which function.
+Distinguish observations from proposed mechanisms and untested assumptions; close an
+answered open_question or replace it with the next uncertainty. Cite behavior-bearing
+public source ranges or prior tool-result
 action IDs. Update an existing note_id when refining a note even if its citations change;
 note_id=null creates a separate note. To consolidate duplicates, update one note and use
 remove_note_ids for the redundant IDs. Distinct facts may share a source. No update or
 three-part plan is required each turn. These are model-authored notes, not verified
-semantic facts or reasoning transcripts. memory_update=null preserves notes and the
+semantic facts or reasoning transcripts. A note's status=current only means its cited
+evidence is current; its interpretation remains unverified. After an edit, reconsider
+behavior claims against the post-image even if unchanged citations let the note survive.
+memory_update=null preserves notes and the
 question; within an update, open_question=null clears the question. Do not repeat an
 update across a parallel batch.
 The update is evaluated before the current batch executes. Before observing an
@@ -54,6 +62,8 @@ identify notes that expired; do not treat their former IDs as existing notes.
 A mutation requires hypothesis, expected_behavior, and one exact old_text/new_text
 replacement in an allowed existing file. The gateway binds observed current evidence
 and constructs the Git diff; do not supply evidence span IDs or a patch wrapper.
+Use the smallest sufficient unique exact anchor. Avoid copying unchanged signatures or
+docstrings for an executable-line edit; preserve the observed line breaks exactly.
 The complete current diff is in context. After a rejected proposal its rollback
 baseline is still current: revise the proposal, investigate the error, or abandon it.
 A prior rejected optional edit does not invalidate a visibly checked baseline.
@@ -70,7 +80,9 @@ All visible checks must pass on the submitted diff. An edit invalidates earlier
 checks; finish_task submits the currently checked baseline. When run_probe is supplied,
 use a small public behavior experiment to test a concrete uncertainty. Its output is
 diagnostic: probe success does not satisfy a visible check, and failure may be in the
-experiment itself. Distinguish behavior actually tested from remaining assumptions;
+experiment itself. Test assumptions introduced by new branches using public input
+variations, not just the examples already covered by registered checks.
+Distinguish behavior actually tested from remaining assumptions;
 passing the available tests does not establish correctness for all paths.
 Use stop_task when no
 available action supports progress. Keep decisions and findings concise; never emit

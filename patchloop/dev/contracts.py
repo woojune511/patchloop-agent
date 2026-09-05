@@ -24,7 +24,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v15",
+            "schema_version": "dev-tool-surface-v16",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -42,8 +42,12 @@ def dev_tool_surface_hash() -> str:
             "mutation_wire": "gateway-bound-exact-anchor-replacement-v2",
             "mutation_evidence_binding": "observed-current-source-union-v2",
             "inspection_gain": "non-overlapping-public-coverage-v2",
+            "source_search": "rooted-component-glob-double-star-zero-depth-v1",
+            "search_feedback": "eligible-decoded-file-count-v1",
             "mutation_failure": "typed-scope-preview-recovery-lineage-v2",
             "completion_horizon": "pre-dispatch-best-path-v2",
+            "optional_mutation_admission": "minimum-successor-with-protected-warning-v1",
+            "mutation_anchor_guidance": "smallest-sufficient-exact-observed-text-v1",
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_recurrence": "semantic-site-with-raw-fallback-v1",
             "causal_revision_guidance": "advisory-hypothesis-review-v2",
@@ -53,6 +57,7 @@ def dev_tool_surface_hash() -> str:
             "context_projection": "observed-priority-merged-24000-chars-v1",
             "working_notes": "stable-note-id-independent-body-durable-lifecycle-v3",
             "working_note_feedback": "action-associated-nonblocking-receipt-v1",
+            "working_note_interpretation": "evidence-currency-not-semantic-validation-v1",
             "working_note_source_body_chars": 24_000,
             "public_probe": "optional-clean-python-diagnostic-protected-budget-v1",
             "mutation_recovery": "atomic-complete-candidate-diff-v2",

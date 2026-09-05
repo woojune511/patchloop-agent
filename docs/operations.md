@@ -9,7 +9,7 @@ Windows paths to avoid temporary-directory permission and path-length failures.
 $testRoot = 'C:\patchloop-test-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
 uv sync --extra dev --locked
 uv run ruff check patchloop tests
-uv run pytest tests --basetemp $testRoot
+uv run pytest tests -p no:cacheprovider --basetemp $testRoot
 ```
 
 This path uses no provider or Docker call.
@@ -107,9 +107,18 @@ Required tool choice follows the official
 
 ## Submission and evaluation
 
+Public search uses literal queries and case-sensitive, repository-rooted path globs.
+Within a path component, `*`, `?`, and character classes match names; a whole `**`
+matches zero or more directory components. `**/*` includes root-level files and
+`pkg/**/*.py` includes `pkg/module.py` as well as nested Python files. Results retain
+the same public/tracked and output bounds. `searched_file_count` counts eligible files
+actually decoded and searched, not the total matching files when results are truncated.
+
 The mutation tool is `replace_text`. It names one tracked, existing, allowed path, one
 exact current `old_text` occurrence, and the desired `new_text`; it does not accept Git
-diff syntax. The gateway checks that current public evidence covers that anchor,
+diff syntax. Prefer a small sufficient unique executable-code anchor instead of copying
+unchanged signatures/docstrings; preserve its exact observed line breaks. The gateway
+checks that current public evidence covers that anchor,
 constructs a bounded Git diff, writes the replacement, and then derives the canonical
 full worktree diff used by visible checks and submission. Stale or out-of-range occurrences,
 mixed newline styles, non-tracked paths, untracked files, and scope violations fail
@@ -163,6 +172,10 @@ mutations atomically record rebound/expired note state in `action_finished`, out
 the public tool result. Resume replays that recorded state. Uniquely unchanged source
 rebinds; changed/ambiguous source expires without resurrection; old tool-result references
 are historical. Public `last_source_lifecycle` identifies the action and affected IDs.
+Finding `status=current` describes citation currency only; every projected finding has
+`interpretation_status=model_authored_unverified`. Prefer behavior-bearing citations and
+mechanism explanations, resolve answered questions, and revisit behavior claims after
+mutation even if unchanged citations let them survive. No semantic truth check is added.
 Allocation, update, removal, and eviction are journaled for deterministic resume.
 `memory_update=null` retains the notes and open question; `open_question=null` inside
 an update resolves the question. Notes can retain the mechanism, chosen approach, and
@@ -211,6 +224,15 @@ both states are reconstructed from durable batches on resume. A source read that
 establish a mutation anchor is included in the minimum path rather than treated as
 optional exploration. The scheduler recognizes mutation evidence only when a non-empty
 current observed source range is actually delivered, not merely present in gateway memory.
+Optional edits use the minimum successful post-edit path rather than the protected
+failure path: one edit, all invalidated visible checks, and finish must fit both budgets.
+`action_horizon.mutation_completion_horizon` separately reports `minimum_calls`,
+`protected_calls`, their feasibility with current evidence/capacity, and a warning when
+the edit is executable without full recovery protection. These values are also journaled
+at `turn_started`. A checked baseline may be fully protected while an optional edit is
+not; the two states are not interchangeable. A diagnostic probe's failure does not mark
+a required check failed or consume its repair allowance. The agent can choose an
+affordable edit based on public evidence without waiting for a registered check to fail.
 `completion_possible` requires both remaining budgets
 to cover the best-case minimum path and required mutation capacity;
 `protected_completion_possible` includes the unused recovery allowances. The legacy
@@ -232,7 +254,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v15`; prior
+These output and scheduler semantics are bound by tool-surface identity `v16`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually

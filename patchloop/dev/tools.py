@@ -35,6 +35,7 @@ from patchloop.dev.contracts import (
     StopIntent,
     TextReplacementIntent,
 )
+from patchloop.dev.source_glob import matches_source_glob
 from patchloop.dev.state import DevJournal
 from patchloop.dev.working_notes import (
     SourceNoteEvidence,
@@ -139,7 +140,14 @@ def dev_tool_schemas(
                 "type": "object",
                 "properties": {
                     "query": {"type": "string", "minLength": 1},
-                    "path_glob": {"type": "string", "default": "**/*"},
+                    "path_glob": {
+                        "type": "string", "default": "**/*",
+                        "description": (
+                            "Case-sensitive repository-rooted path glob. * and ? stay within "
+                            "one path component; a whole ** matches zero or more directories. "
+                            "**/* includes root files. Query matching is literal text."
+                        ),
+                    },
                 },
                 "required": ["query", "path_glob"],
                 "additionalProperties": False,
@@ -199,7 +207,10 @@ def dev_tool_schemas(
                         "minLength": 1,
                         "description": (
                             "Exact current source text to replace; it must be covered by "
-                            "current evidence for this file."
+                            "current evidence for this file. Prefer the smallest sufficient "
+                            "unique anchor; omit unchanged signatures or docstrings when "
+                            "only executable lines change. Copy the observed normalized text, "
+                            "including its line breaks; do not reconstruct the text."
                         ),
                         "maxLength": 20_000,
                     },
@@ -1718,6 +1729,7 @@ class DevToolGateway:
                 else:
                     current &= evidence.get("diff_hash") in {None, current_hash}
             finding["status"] = "current" if current else "historical"
+            finding["interpretation_status"] = "model_authored_unverified"
         return {
             "findings": findings,
             "open_question": self._working_open_question,
@@ -1732,7 +1744,10 @@ class DevToolGateway:
             "last_source_lifecycle": self.working_notes_lifecycle_receipt(),
             "interpretation": (
                 "Model-authored public observations, approach, and unverified behavior; "
-                "sources are validated, interpretations are not. Update an existing note_id "
+                "status=current means cited evidence is current, not that the statement "
+                "was revalidated. Sources are validated, interpretations are not. "
+                "Cite behavior-bearing lines for behavior claims and revisit them after edits. "
+                "Update an existing note_id "
                 "to refine it even when citations change; null creates a separate note."
             ),
         }
@@ -2369,6 +2384,7 @@ class DevToolGateway:
         pattern = safe_relative_path(path_glob, field_name="search path_glob")
         spans: list[dict[str, Any]] = []
         content_chars = 0
+        searched_file_count = 0
         truncated = False
         for selected in sorted(self.workspace.rglob("*")):
             if len(spans) >= 20 or content_chars >= 24_000:
@@ -2379,7 +2395,7 @@ class DevToolGateway:
             relative = selected.relative_to(self.workspace).as_posix()
             if ".git" in selected.relative_to(self.workspace).parts:
                 continue
-            if relative.startswith(".patchloop-hidden/") or not fnmatch.fnmatchcase(
+            if relative.startswith(".patchloop-hidden/") or not matches_source_glob(
                 relative, pattern
             ):
                 continue
@@ -2396,6 +2412,7 @@ class DevToolGateway:
                 text = raw.decode("utf-8")
             except (OSError, UnicodeDecodeError):
                 continue
+            searched_file_count += 1
             lines = source_lines(text)
             for index, line in enumerate(lines, start=1):
                 if query not in line:
@@ -2421,6 +2438,7 @@ class DevToolGateway:
         return {
             "query": query,
             "path_glob": pattern,
+            "searched_file_count": searched_file_count,
             "spans": spans,
             "truncated": truncated,
         }
