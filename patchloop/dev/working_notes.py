@@ -6,6 +6,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from patchloop.dev.verification_concerns import verification_updates_schema
+
 
 class _NoteModel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -39,6 +41,9 @@ class WorkingNotesUpdate(_NoteModel):
         Annotated[str, Field(pattern=r"^n[1-9][0-9]*$", max_length=30)]
     ] = Field(default_factory=list, max_length=6)
     open_question: str | None = Field(max_length=500)
+    # Independently validated annotations must not reject valid source findings
+    # or the focus question. Old durable/synthetic updates omit this field.
+    verification_updates: Any = Field(default_factory=list)
 
 
 _NOTE_FEEDBACK = {
@@ -174,10 +179,12 @@ def memory_update_schema() -> dict[str, Any]:
                 "type": ["string", "null"], "maxLength": 500,
                 "description": (
                     "The remaining uncertainty that could change an edit or experiment. "
-                    "Resolve an answered question with null, or replace it with the next one."
+                    "Resolve an answered question with null, or replace it with the next one. "
+                    "Changing focus does not address retained verification concerns."
                 ),
             },
+            "verification_updates": verification_updates_schema(),
         },
-        "required": ["findings", "remove_note_ids", "open_question"],
+        "required": ["findings", "remove_note_ids", "open_question", "verification_updates"],
         "additionalProperties": False,
     }

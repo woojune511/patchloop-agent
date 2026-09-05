@@ -27,7 +27,56 @@ Repository policy alone never initiates paid work. The twenty-four live observat
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v16
+## Current implementation: tool surface v17
+
+V17 separates the currently focused question from up to three run-local public
+verification concerns. Optional `memory_update.verification_updates` creates/revises a
+concern by stable `vN` ID, resolves it using already completed successful current-diff
+check/probe evidence and a short explanation, or explicitly dismisses it with a reason.
+Source-note expiry, focus changes, and unrelated check PASS do not erase these concerns.
+Decisions apply to their exact diff; an edit makes old resolutions/dismissals unresolved
+again, with their prior evidence marked historical. A baseline probe cannot resolve a
+concern on a later candidate. Provenance validation does not prove semantic relevance;
+all interpretations remain model-authored and unverified by the harness.
+
+Concern updates share the existing first-non-null batch owner and native annotation
+receipt. They are validated independently of ordinary findings/focus and never reject
+the main action. An unresolved concern is never silently evicted when the three-item
+working set is full. The journal stores the complete concern state and ID allocator;
+resume restores them without recomputing prior decisions from final source bytes.
+The current list is in `working_notes.verification`. Older check cards label their
+concern IDs as snapshots at that check's completion, not current resolution authority.
+
+After the last required visible check, feedback now invites reviewing remaining public
+concerns and choosing a useful available experiment or submission, instead of commanding
+immediate submission. Mutation feedback likewise allows a relevant check or experiment.
+No new tool, model step, mandatory experiment, finish blocker, budget reserve, or
+task-specific correctness oracle is introduced. The current gate and all tool/cost/time
+limits remain unchanged. Provider schemas explicitly include the new five-field operation
+objects; legacy local synthetic updates may omit the new array. Old run/envelope bytes
+are not migrated, and nonterminal runtime mismatch still rejects resume.
+
+The motivating read-only row-24 analysis found that source delivery was intact, but
+the model's explicit invalid-parent uncertainty was overwritten while fixing mode,
+and its only probe tested the baseline. The final context still offered inspection,
+probe, and mutation with eight model calls left, yet its latest check card said to
+submit. The cue's causal effect on the model was not experimentally established.
+V17 targets uncertainty tracking and feedback consistency, not a larger context or
+harder action mask. Existing task packages and the failed submission remain untouched.
+Provider-free verification passes 59 focused concern/note/guidance cases and Ruff.
+The frozen complete suite passes 336 tests in concurrent groups of 156 and 180, using
+separate short external temporary roots; three opt-in Docker tests were skipped.
+This full-suite invocation exceeded the two-minute target; it is not an under-two-minute
+full-cycle result. The integration mock exercises non-null concern updates, rejects
+same-batch resolution without rejecting the check, and resolves from its completed
+result on the existing finish turn, with no additional model calls. Separate mock
+`run_dev_36964c96d4834891`, under `C:\pt\pl-v17-smoke-4829`, reaches isolated
+`EVALUATOR_PASS` in 4.97 seconds through one mutation, four model turns and five actions:
+task acceptance PASS, safety NOT_RUN, cost zero, and `claim_eligible=false`.
+These tests verify memory/feedback contracts, not improved live model decisions.
+No provider/Docker execution or twenty-fifth live row is authorized by this change.
+
+### V16 implementation and validation checkpoint
 
 V16 fixes public search path matching and separates executable edit admission from
 full recovery protection. Search globs are case-sensitive and repository-rooted:
@@ -402,7 +451,7 @@ Task acceptance is PASS, safety NOT_RUN, `claim_eligible=false`, and provider co
 Fault regressions include reordered parallel-result hydration, same-action read replay,
 source-linked note upsert, unconsumed correction replay, complete-candidate crash recovery,
 deadline expiry before dispatch/evaluator work, and owned-container cleanup uncertainty.
-Earlier checkpoint counts and policies below describe history, not the current v16
+Earlier checkpoint counts and policies below describe history, not the current v17
 contract. No twenty-fifth live row is authorized.
 
 The separately authorized twentieth row used the same pyfakefs version-2 task,
@@ -1010,11 +1059,14 @@ permission failure and submits an identical checked artifact. Those working path
 establish efficient exploration or complete semantics: 16 of 31 inspections added no source
 coverage, the first edit came on call 27, and the submitted code returned the wrong error
 for a file-as-parent case. The only probe examined the baseline, not the edited behavior.
-The next useful step is read-only diagnosis of question reuse, broad anchors, and how the
-model validated the replacement's assumptions and exception behavior against public evidence.
+The subsequent read-only diagnosis identified lost unresolved concerns and unconditional
+submission feedback alongside the model's incomplete exception handling. V17 now implements
+independent concerns and current-diff evidence-backed decisions without adding hard gates.
+Local regressions can verify these contracts, not prove that the live model will use them
+well or solve the task. A future separately approved run can observe that behavior.
 Do not promote private cases into model prompts, infer causality from uncontrolled row
 comparisons, or default to a harder read cap or larger token budget. No twenty-fifth row
-or further implementation is authorized by this result.
+is authorized by implementation or local validation.
 Earlier decisions below are historical context.
 
 The first live failure exposed a context-projection defect: successful reads were

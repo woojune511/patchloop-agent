@@ -37,6 +37,11 @@ from patchloop.dev.contracts import (
 )
 from patchloop.dev.source_glob import matches_source_glob
 from patchloop.dev.state import DevJournal
+from patchloop.dev.verification_concerns import (
+    empty_verification_state,
+    project_verification_concerns,
+    update_verification_concerns,
+)
 from patchloop.dev.working_notes import (
     SourceNoteEvidence,
     WorkingNotesUpdate,
@@ -447,6 +452,7 @@ class DevToolGateway:
         self._working_note_source_bodies: dict[str, list[str | None]] = {}
         self._working_notes_lifecycle: dict[str, Any] | None = None
         self._working_open_question: str | None = None
+        self._verification_state = empty_verification_state()
         self._working_notes_turns: dict[str, dict[str, Any]] = {}
         self._next_working_note_id = 1
         self._legacy_working_note_ids: dict[str, str] = {}
@@ -1341,6 +1347,8 @@ class DevToolGateway:
         if not isinstance(turn_id, str) or turn_id in self._working_notes_turns:
             return
         self._working_notes_turns[turn_id] = copy.deepcopy(payload)
+        if "verification_state" in payload:
+            self._verification_state = copy.deepcopy(payload["verification_state"])
         removed = set(payload.get("removed_note_ids", []))
         self._working_findings = [
             finding for finding in self._working_findings
@@ -1606,6 +1614,26 @@ class DevToolGateway:
                 "applied" if not payload["diagnostics"]
                 else "partially_applied" if applied else "rejected"
             )
+        # Verification concerns have a separate lifetime and independent annotation
+        # validation. Changing focus or rejecting a source finding must not erase them.
+        if isinstance(selected, dict) and selected.get("verification_updates", []) != []:
+            prior_results = {
+                event["payload"]["result"]["action_id"]: event["payload"]["result"]
+                for event in self.journal.events()
+                if event["event_type"] == "action_finished"
+            }
+            state, verification_receipt = update_verification_concerns(
+                self._verification_state, selected["verification_updates"],
+                diff_hash=self.current_diff_hash, prior_results=prior_results,
+                turn_id=turn_id,
+            )
+            payload["verification_state"] = state
+            receipt["verification"] = verification_receipt
+            verification_status = verification_receipt["status"]
+            if verification_status in {"rejected", "partially_applied"}:
+                payload["diagnostics"].append("verification_update_rejected")
+            if verification_status != "not_requested" and verification_status != receipt["status"]:
+                receipt["status"] = "partially_applied"
         receipt["available_note_ids"] = list(payload["retained_note_ids"])
         receipt["removed_note_ids"] = list(payload["removed_note_ids"])
         receipt["evicted_note_ids"] = list(payload["evicted_note_ids"])
@@ -1709,6 +1737,14 @@ class DevToolGateway:
 
         return copy.deepcopy(self._working_notes_lifecycle)
 
+    def verification_concerns(self, *, diff_hash: str | None = None) -> dict[str, Any]:
+        """Project advisory concerns without refreshing/expiring source observations."""
+
+        return project_verification_concerns(
+            self._verification_state,
+            diff_hash=diff_hash if diff_hash is not None else self.current_diff_hash,
+        )
+
     def working_notes(self, *, diff_hash: str | None = None) -> dict[str, Any]:
         self._refresh_working_source_notes()
         current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
@@ -1733,6 +1769,7 @@ class DevToolGateway:
         return {
             "findings": findings,
             "open_question": self._working_open_question,
+            "verification": self.verification_concerns(diff_hash=current_hash),
             "last_update_diagnostics": (
                 list(self._working_notes_turns.values())[-1].get("diagnostics", [])[:3]
                 if self._working_notes_turns else []

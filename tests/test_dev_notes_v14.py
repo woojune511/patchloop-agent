@@ -21,7 +21,9 @@ def restore(gateway, tracked):
 
 def test_memory_wire_requires_explicit_identity_and_removals():
     schema = memory_update_schema()
-    assert set(schema["required"]) == {"findings", "remove_note_ids", "open_question"}
+    assert set(schema["required"]) == {
+        "findings", "remove_note_ids", "open_question", "verification_updates",
+    }
     finding = schema["properties"]["findings"]["items"]
     assert set(finding["required"]) == {"note_id", "statement", "evidence"}
     assert finding["properties"]["note_id"]["type"] == ["string", "null"]

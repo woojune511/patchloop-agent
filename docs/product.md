@@ -115,6 +115,16 @@ their cited evidence is current, not that a behavior claim was checked after an 
 Guidance favors causal mechanisms, closing answered questions, and reconsidering claims
 against changed behavior rather than merely preserving repeated function locations.
 
+A separate working set retains up to three unresolved public verification concerns,
+independent of the focused question and expiring source observations. The same optional
+memory update can create/revise one, resolve it with a completed successful current-diff
+check or experiment and a brief reason, or explicitly dismiss it. Earlier-diff evidence
+is historical, and later edits reopen retained resolved/dismissed concerns. These remain
+model judgments: the harness verifies evidence identity, not whether a test establishes
+the claimed behavior. The final visible-check PASS invites reviewing remaining concerns
+or submitting; it neither orders immediate submission nor introduces a mandatory review
+call, experiment, or finish blocker. Nothing is carried into another run.
+
 Every model response must call at least one constrained tool. Besides inspection,
 mutation, checking, and finish, `stop_task` provides an explicit unsuccessful exit
 when the public evidence cannot support safe progress. It records a bounded public

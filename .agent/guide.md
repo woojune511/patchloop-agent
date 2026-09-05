@@ -190,6 +190,22 @@ unchanged text rebinds; changed or ambiguous text expires without later resurrec
 `last_source_lifecycle` exposes only triggering action, rebound IDs, and expiry reasons.
 Old tool-result references remain historical.
 These are public run-local notes, not raw reasoning or cross-run memory retrieval.
+The separate `working_notes.verification` projection retains up to three model-authored
+public verification concerns. `memory_update.verification_updates` accepts at most three
+operations: `upsert`, `resolve`, or `dismiss`, each with explicit nullable concern_id,
+statement, evidence_action_id, and reason. Null ID creates a stable `vN` ID; revising a
+statement reopens it. Focus changes, source-note expiry, and check PASS never resolve
+unrelated concerns. Empty/omitted updates preserve them. Independent annotation parsing
+keeps valid findings/focus and the main action usable after a bad concern update.
+Resolution requires a prior completed successful current-diff public check/probe and a
+short reason. The gateway binds action/input/diff identity, not semantic coverage;
+dismissal is only model judgment. Both decisions become historical after a diff change
+and the retained concern reopens. When full, new concerns may replace currently resolved
+or dismissed entries, never silently evict unresolved ones. Journaled verification_state
+retains items and the ID allocator independently of source lifecycle snapshots. The same
+first-non-null batch owner receives one native verification receipt; no private evaluator
+result is admissible evidence. A final-PASS card invites affordable useful verification
+or submission, labels its concern IDs as a check-time snapshot, and adds no finish gate.
 Each projected finding has `interpretation_status=model_authored_unverified`.
 Legacy `status=current` means only that its cited evidence is current; the harness does
 not revalidate the statement's meaning. Cite behavior-bearing source, retain the causal
@@ -235,7 +251,7 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v16`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v17`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -350,7 +366,13 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: tool surface `v16` fixes recursive search-glob semantics and uses the
+Current seam: tool surface `v17` preserves independent unresolved public verification
+concerns, binds resolution evidence to the current diff, and replaces unconditional
+submission guidance with advisory review. Preserve source-note expiry, first-owner
+annotation receipts, exact replay, existing budgets, and finish availability. No task
+case or hidden oracle is added. Provider-free tests validate persistence and evidence
+identity, not improved model choices; the twenty-fifth live row remains unapproved.
+The preceding tool surface `v16` fixes recursive search-glob semantics and uses the
 minimum successful edit successor for mutation admission, with separate protected-recovery
 warnings. It keeps inspection/probe protection, exact evidence, check invalidation, and
 existing limits. Mechanism-oriented notes, evidence-only currency labels, small exact
@@ -436,8 +458,10 @@ errors, but their 20- and 15-line anchors were still broad. Both public checks p
 call 33 submitted; isolated acceptance reported incorrect file-parent error semantics.
 Sixteen of 31 inspections added no coverage, so faster evidence reuse is not established.
 Minimum-path edit admission remained visible with separate protection warnings, but a
-late-probe-to-repair sequence was not exercised. Next seam is read-only public-evidence
-diagnosis of repeated questions and candidate exception handling; do not copy private cases
+late-probe-to-repair sequence was not exercised. The subsequent read-only diagnosis found
+an invalid-parent concern replaced by mode/check questions, and an unconditional submit
+card. V17 addresses these workflow seams without treating their causal impact as proved.
+Do not copy private cases
 into future prompts or infer an action-mask/budget remedy from the final FAIL alone.
 All existing external evidence remains immutable; no twenty-fifth row is authorized.
 See `docs/current-status.md` for exact results and artifact identities.
@@ -797,6 +821,17 @@ uv run pytest tests -p no:cacheprovider --basetemp <short-external-path>
 uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
 ```
 
+V17 passes 59 focused concern/note/guidance cases, Ruff, and all 336 provider-free tests
+in two concurrent groups of 156 and 180 with separate short external roots. Three real
+Docker cases remain skipped. This full-suite invocation exceeded the two-minute target;
+do not report it as an under-two-minute full cycle. The annotation-aware integration mock
+checks pending-result rejection, current-result resolution on the existing finish turn,
+and once-only native receipt delivery without extra model calls. Separate mock
+`run_dev_36964c96d4834891` in `C:\pt\pl-v17-smoke-4829` reaches isolated `EVALUATOR_PASS`
+in 4.97 seconds: one mutation, four model turns, five actions, task acceptance PASS,
+safety NOT_RUN, cost zero, and `claim_eligible=false`. No live/provider/Docker execution
+ran for this change; the twenty-fifth live row remains separately unauthorized.
+
 V16 passes 75 focused search/guidance/tool/note cases, 16 focused budget cases, and Ruff.
 All 287 provider-free tests pass in concurrent groups of 107 (90.79 seconds) and 180
 (104.29 seconds), with three real-Docker tests skipped. The only warnings were repository
@@ -815,8 +850,8 @@ This verifies note lifecycle/receipt contracts locally, not better live model de
 
 Freeze runtime files while running the suite: content-hash provenance tests intentionally
 reject concurrent source edits. To stay near the two-minute full-cycle target, run
-`test_dev_runner.py`, `test_dev_resume_v12.py`, and the three new `test_dev_*_v16.py`
-files in one pytest process and every other
+`test_dev_runner.py`, `test_dev_resume_v12.py`, the three `test_dev_*_v16.py` files,
+and both `test_dev_verification_*_v17.py` files in one pytest process and every other
 `test*.py` file in another, using distinct new short external basetemps. Do not omit tests
 or share temporary roots. Then run mock smoke. V14 passed Ruff and 215 tests: 64 in
 84.63 seconds and 151 in 82.70 seconds, running concurrently. A final 500-character

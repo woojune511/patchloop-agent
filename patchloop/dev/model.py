@@ -49,6 +49,20 @@ behavior claims against the post-image even if unchanged citations let the note 
 memory_update=null preserves notes and the
 question; within an update, open_question=null clears the question. Do not repeat an
 update across a parallel batch.
+The focused open_question is separate from unresolved verification concerns. Use optional
+verification_updates to retain up to three concrete public behaviors whose preservation
+is uncertain, especially assumptions introduced by an edit. Do not fill a quota or
+repeat broad task descriptions. Use operation=upsert with concern_id=null and a statement
+to create a concern, or its returned vN ID to revise it. Changing the focused question,
+fixing a different failure, or source-note expiry does not resolve these concerns.
+Resolve a concern only after observing a successful check or probe on the current diff:
+use operation=resolve with its evidence_action_id and a short reason connecting the
+result to the concern. A baseline experiment cannot validate an edited candidate.
+Harness validation binds that evidence, not the truth or completeness of your
+interpretation. Operation=dismiss requires a reason why further verification is not
+useful; it is not test evidence. Resolve/dismiss decisions need reconsideration after
+the diff changes. Use [] to preserve concerns; errors here do not reject the main action.
+Unresolved concerns are advisory, never an extra required model step or finish blocker.
 The update is evaluated before the current batch executes. Before observing an
 answer, use findings=[] with open_question, or leave memory_update=null. Do not
 cite pending or a result from the batch you are requesting. After receiving a
@@ -84,6 +98,10 @@ experiment itself. Test assumptions introduced by new branches using public inpu
 variations, not just the examples already covered by registered checks.
 Distinguish behavior actually tested from remaining assumptions;
 passing the available tests does not establish correctness for all paths.
+After required checks pass, review the remaining public verification concerns against
+the current candidate. If an available experiment could change the decision, test that
+uncertainty; otherwise submit. Do not treat a check PASS or a focus change as automatically
+resolving unrelated concerns, and do not repeat a baseline-only probe as candidate proof.
 Use stop_task when no
 available action supports progress. Keep decisions and findings concise; never emit
 raw chain-of-thought. Private tests, reference patches, and evaluator details are

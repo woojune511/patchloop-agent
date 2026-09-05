@@ -1,0 +1,247 @@
+"""Bounded model-authored verification concerns, independent of source-note expiry."""
+
+from __future__ import annotations
+
+import copy
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+
+class _VerificationUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    operation: Literal["upsert", "resolve", "dismiss"]
+    concern_id: str | None = Field(pattern=r"^v[1-9][0-9]*$", max_length=30)
+    statement: str | None = Field(max_length=400)
+    evidence_action_id: str | None = Field(max_length=500)
+    reason: str | None = Field(max_length=400)
+
+
+_FEEDBACK = {
+    "invalid_verification_updates": "Use an array of at most three verification updates.",
+    "invalid_verification_update": "This verification update does not match its public schema.",
+    "unknown_concern_id": "Use an existing concern ID, or upsert with null to create one.",
+    "statement_required": "Upsert requires a nonempty public verification concern.",
+    "reason_required": "Resolve or dismiss requires a nonempty public reason.",
+    "concern_capacity": "Three unresolved concerns are already retained; update or address one.",
+    "unobserved_verification_result": (
+        "Resolve must cite an already completed public check or probe."
+    ),
+    "verification_result_not_current": (
+        "This result tested another diff; the concern remains unresolved."
+    ),
+    "verification_result_not_successful": (
+        "Resolve requires a successful current-diff check or healthy probe."
+    ),
+}
+
+
+def empty_verification_state() -> dict[str, Any]:
+    return {"next_id": 1, "items": []}
+
+
+def _effective_status(item: dict[str, Any], diff_hash: str) -> str:
+    decision = item.get("decision")
+    return (
+        decision["outcome"]
+        if decision is not None and decision["diff_hash"] == diff_hash
+        else "unresolved"
+    )
+
+
+def project_verification_concerns(
+    state: dict[str, Any], *, diff_hash: str,
+) -> dict[str, Any]:
+    """Evidence currency is checked; the model's interpretation is not certified."""
+
+    items = copy.deepcopy(state["items"])
+    for item in items:
+        item["status"] = _effective_status(item, diff_hash)
+        item["model_authored"] = True
+        item["interpretation_status"] = "model_authored_unverified"
+        decision = item.get("decision")
+        if decision is not None:
+            currency = "current" if decision["diff_hash"] == diff_hash else "historical"
+            decision["currency"] = currency
+            decision["basis"] = (
+                "model_dismissal" if decision["outcome"] == "dismissed"
+                else "model_interpretation_of_result"
+            )
+            if decision["evidence"] is not None:
+                decision["evidence"]["currency"] = currency
+    return {
+        "items": items,
+        "unresolved_ids": [item["concern_id"] for item in items if item["status"] == "unresolved"],
+        "interpretation": (
+            "Model-authored public verification concerns survive focus-question changes and "
+            "source-note expiry. Resolution binds a prior successful result to this diff; "
+            "it does not prove that the result addresses the concern. Dismissal records "
+            "the model's reason, not verification. Both decisions become historical and "
+            "the concern becomes unresolved when the diff changes. These are advisory, "
+            "not additional required checks or a finish gate."
+        ),
+    }
+
+
+def _resolution_evidence(
+    action_id: str | None, prior_results: dict[str, Any], diff_hash: str,
+) -> tuple[dict[str, Any] | None, str | None]:
+    result = prior_results.get(action_id) if action_id else None
+    if (
+        not isinstance(result, dict) or result.get("action_id") != action_id
+        or result.get("tool") not in {"run_check", "run_probe"}
+        or not isinstance(result.get("input_hash"), str) or not result["input_hash"]
+    ):
+        return None, "unobserved_verification_result"
+    output = result.get("output")
+    if not isinstance(output, dict):
+        return None, "verification_result_not_successful"
+    if (
+        output.get("diff_hash") != diff_hash
+        or result.get("workspace_diff_hash") != diff_hash
+    ):
+        return None, "verification_result_not_current"
+    healthy = not any(output.get(flag, False) for flag in (
+        "timed_out", "deadline_exhausted", "cleanup_failed",
+    ))
+    if result["tool"] == "run_check":
+        passed = output.get("passed") is True
+    else:
+        passed = (
+            output.get("status") == "passed" and type(output.get("exit_code")) is int
+            and output["exit_code"] == 0 and not output.get("truncated", False)
+        )
+    if result.get("status") != "succeeded" or not healthy or not passed:
+        return None, "verification_result_not_successful"
+    return {
+        "action_id": action_id, "input_hash": result["input_hash"],
+        "tool": result["tool"], "diff_hash": diff_hash,
+    }, None
+
+
+def update_verification_concerns(
+    state: dict[str, Any], updates: Any, *, diff_hash: str,
+    prior_results: dict[str, Any], turn_id: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Apply independent annotations; never raise for invalid model updates."""
+
+    updated = copy.deepcopy(state)
+    receipt: dict[str, Any] = {
+        "status": "not_requested", "updates": [], "diagnostics": [],
+        "evicted_concern_ids": [], "available_concern_ids": [], "unresolved_ids": [],
+    }
+
+    def finish() -> tuple[dict[str, Any], dict[str, Any]]:
+        receipt["available_concern_ids"] = [item["concern_id"] for item in updated["items"]]
+        receipt["unresolved_ids"] = project_verification_concerns(
+            updated, diff_hash=diff_hash,
+        )["unresolved_ids"]
+        return updated, receipt
+
+    if not isinstance(updates, list) or len(updates) > 3:
+        receipt["status"] = "rejected"
+        receipt["diagnostics"].append({
+            "code": "invalid_verification_updates",
+            "message": _FEEDBACK["invalid_verification_updates"],
+        })
+        return finish()
+    for index, raw in enumerate(updates):
+        entry: dict[str, Any] = {"update_index": index, "status": "rejected"}
+        receipt["updates"].append(entry)
+
+        def reject(code: str, target: dict[str, Any] = entry) -> None:
+            target.update(code=code, message=_FEEDBACK[code])
+
+        try:
+            update = _VerificationUpdate.model_validate(raw)
+        except ValidationError:
+            reject("invalid_verification_update")
+            continue
+        if update.concern_id is not None:
+            entry["concern_id"] = update.concern_id
+        existing = next((
+            item for item in updated["items"] if item["concern_id"] == update.concern_id
+        ), None)
+        if existing is None and (update.concern_id is not None or update.operation != "upsert"):
+            reject("unknown_concern_id")
+            continue
+        if update.operation == "upsert":
+            if not update.statement or not update.statement.strip():
+                reject("statement_required")
+                continue
+            if existing is None:
+                if len(updated["items"]) >= 3:
+                    evictable = next((
+                        item for item in updated["items"]
+                        if _effective_status(item, diff_hash) != "unresolved"
+                    ), None)
+                    if evictable is None:
+                        reject("concern_capacity")
+                        continue
+                    updated["items"].remove(evictable)
+                    receipt["evicted_concern_ids"].append(evictable["concern_id"])
+                existing = {
+                    "concern_id": f"v{updated['next_id']}", "created_turn_id": turn_id,
+                }
+                updated["next_id"] += 1
+                updated["items"].append(existing)
+                entry["concern_id"] = existing["concern_id"]
+            existing.update(statement=update.statement, updated_turn_id=turn_id, decision=None)
+        else:
+            if not update.reason or not update.reason.strip():
+                reject("reason_required")
+                continue
+            evidence = None
+            if update.operation == "resolve":
+                evidence, code = _resolution_evidence(
+                    update.evidence_action_id, prior_results, diff_hash,
+                )
+                if code is not None:
+                    reject(code)
+                    continue
+            existing.update(updated_turn_id=turn_id, decision={
+                "outcome": "resolved" if update.operation == "resolve" else "dismissed",
+                "diff_hash": diff_hash, "reason": update.reason,
+                "evidence": evidence, "turn_id": turn_id,
+            })
+        entry.update(status="applied", code=None, message="Verification concern update stored.")
+    if updates:
+        accepted = sum(entry["status"] == "applied" for entry in receipt["updates"])
+        receipt["status"] = (
+            "applied" if accepted == len(updates)
+            else "partially_applied" if accepted else "rejected"
+        )
+    return finish()
+
+
+def verification_updates_schema() -> dict[str, Any]:
+    return {
+        "type": "array", "maxItems": 3,
+        "description": (
+            "Public uncertainties that must not disappear when focus changes. Upsert with "
+            "null ID creates, an existing ID revises and reopens. Resolve an existing ID "
+            "with a prior successful current-diff check/probe and a reason; dismiss with "
+            "a reason when unnecessary. Neither proves semantic coverage. Use [] to retain."
+        ),
+        "items": {
+            "type": "object",
+            "properties": {
+                "operation": {"type": "string", "enum": ["upsert", "resolve", "dismiss"]},
+                "concern_id": {
+                    "type": ["string", "null"], "pattern": r"^v[1-9][0-9]*$", "maxLength": 30,
+                },
+                "statement": {
+                    "type": ["string", "null"], "maxLength": 400,
+                    "description": "Concise public untested behavior, not a reasoning transcript.",
+                },
+                "evidence_action_id": {"type": ["string", "null"], "maxLength": 500},
+                "reason": {
+                    "type": ["string", "null"], "maxLength": 400,
+                    "description": "Brief public resolution/dismissal basis, not raw reasoning.",
+                },
+            },
+            "required": ["operation", "concern_id", "statement", "evidence_action_id", "reason"],
+            "additionalProperties": False,
+        },
+    }

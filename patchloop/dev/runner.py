@@ -1757,10 +1757,12 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "attempt": "mutation",
             "result": result.output["worktree_diff_hash"],
             "next_question": (
-                "Which registered visible check most directly tests the expected behavior?"
+                "Which available check or experiment tests this edit's expected behavior "
+                "or an unresolved public verification concern?"
             ),
         }
     if result.tool == "run_check":
+        ready_for_submission = result.output["passed"] is True and gateway.ready_to_submit()
         if result.output["passed"] is not True:
             failure = result.output.get("public_check_failure")
             comparison = (
@@ -1787,8 +1789,12 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                     "What does this public failure support or contradict in the current "
                     "hypothesis, and what observation or repair would test it?"
                 )
-        elif gateway.ready_to_submit():
-            next_question = "Submit the projected diff."
+        elif ready_for_submission:
+            next_question = (
+                "Required visible checks passed. Review unresolved public verification "
+                "concerns on the current diff; use an available experiment if it could "
+                "change the decision, or submit. PASS does not resolve unrelated concerns."
+            )
         else:
             remaining = gateway.remaining_visible_check_ids()
             next_question = (
@@ -1796,12 +1802,19 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                 if remaining
                 else "Resolve the current workflow gate before submission."
             )
-        return {
+        card = {
             "action_id": result.action_id,
             "attempt": f"check:{result.output['check_id']}",
             "result": "PASS" if result.output["passed"] else result.output["failure_signature"],
             "next_question": next_question,
         }
+        if ready_for_submission:
+            card["unresolved_verification_concern_ids"] = gateway.verification_concerns()[
+                "unresolved_ids"
+            ]
+            card["verification_review_scope"] = "at_check_completion"
+            card["verification_review_diff_hash"] = result.output["diff_hash"]
+        return card
     if result.tool == "run_probe":
         return {
             "action_id": result.action_id,

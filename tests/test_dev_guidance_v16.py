@@ -67,7 +67,9 @@ def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
     }
     notes = memory_update_schema()
     assert notes["type"] == ["object", "null"]
-    assert set(notes["required"]) == {"findings", "remove_note_ids", "open_question"}
+    assert set(notes["required"]) == {
+        "findings", "remove_note_ids", "open_question", "verification_updates",
+    }
     statement = notes["properties"]["findings"]["items"]["properties"]["statement"]
     assert "behavior-bearing" in statement["description"]
     assert statement["maxLength"] == 400

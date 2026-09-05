@@ -98,6 +98,16 @@ do not establish candidate validation by probing; exact results are in `docs/cur
 No twenty-fifth live row is authorized by those results, the current implementation,
 or local validation.
 
+Tool surface v17 adds bounded run-local verification concerns inside the existing
+memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
+`memory_update_result.verification` for update outcomes. A source/focus update does not
+clear these items, a successful check does not automatically resolve unrelated items,
+and a baseline probe cannot resolve a later candidate's concern. Resolution/dismissal
+decisions are diff-bound model judgments, not added acceptance checks. Concern state and
+ID allocation replay from `working_notes_updated`; malformed annotations do not reject
+the main tool action. Old envelopes remain immutable and the exact runtime-match resume
+contract is unchanged. No new experiment is automatically executed after a check PASS.
+
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against
 the official [API pricing](https://developers.openai.com/api/docs/pricing) and
 [model page](https://developers.openai.com/api/docs/models/gpt-5.4-mini). Input
