@@ -371,7 +371,9 @@ concerns, binds resolution evidence to the current diff, and replaces unconditio
 submission guidance with advisory review. Preserve source-note expiry, first-owner
 annotation receipts, exact replay, existing budgets, and finish availability. No task
 case or hidden oracle is added. Provider-free tests validate persistence and evidence
-identity, not improved model choices; the twenty-fifth live row remains unapproved.
+identity, not improved model choices. The separately approved twenty-fifth live row
+below exercises concern persistence but fails before submission; no twenty-sixth row
+is approved.
 The preceding tool surface `v16` fixes recursive search-glob semantics and uses the
 minimum successful edit successor for mutation admission, with separate protected-recovery
 warnings. It keeps inspection/probe protection, exact evidence, check invalidation, and
@@ -463,7 +465,27 @@ an invalid-parent concern replaced by mode/check questions, and an unconditional
 card. V17 addresses these workflow seams without treating their causal impact as proved.
 Do not copy private cases
 into future prompts or infer an action-mask/budget remedy from the final FAIL alone.
-All existing external evidence remains immutable; no twenty-fifth row is authorized.
+That observation did not authorize the subsequent twenty-fifth row. All existing
+external evidence remains immutable.
+
+The separately approved twenty-fifth row, `run_dev_553ec14ad0d4441c`, used v17 commit
+`8e6eedcee705bab1fea5cad5d850e764ed14dae2` with the same task/model/medium/.env/repeat-1/
+$1.20/probe conditions. It ended `LIMIT_REACHED`: 37 model/input-count calls, 38 actions,
+three accepted mutations, $0.486200250, and 312.967 active seconds. Thirty inspections
+(18 zero-coverage, five cache hits) preceded the first edit on call 31. Subsequent edits
+fixed public bytes assembly and intermediate-mode failures; the public contract passed,
+but the required upstream regression failed on macOS broken-link/trailing-separator
+semantics. Three remaining model calls could not cover the four-call edit/check/check/
+finish path. There was no next provider dispatch, submission, or private evaluation.
+
+Concern v1 survived all 36 following contexts and edits, with 35 once-only annotation
+receipts verified. However, 30 upserts repeatedly rewrote one broad concern, and the one
+resolve attempt used a read, receiving a nonblocking rejection. No probe, successful
+current-diff resolution, or all-checks-PASS review occurred. Trace verification covered
+453 journal events, 111 artifact hashes, 36 continuation edges, and five check policies
+with cleanup confirmed. No output-ceiling or provider error occurred. Keep storage/
+feedback success separate from model decision quality; no final safety verdict exists.
+This observation authorizes neither a speculative runtime fix nor a twenty-sixth row.
 See `docs/current-status.md` for exact results and artifact identities.
 
 ## Historical checkpoints
@@ -830,7 +852,8 @@ and once-only native receipt delivery without extra model calls. Separate mock
 `run_dev_36964c96d4834891` in `C:\pt\pl-v17-smoke-4829` reaches isolated `EVALUATOR_PASS`
 in 4.97 seconds: one mutation, four model turns, five actions, task acceptance PASS,
 safety NOT_RUN, cost zero, and `claim_eligible=false`. No live/provider/Docker execution
-ran for this change; the twenty-fifth live row remains separately unauthorized.
+ran for this implementation checkpoint; the later twenty-fifth row was separately
+approved and is recorded above.
 
 V16 passes 75 focused search/guidance/tool/note cases, 16 focused budget cases, and Ruff.
 All 287 provider-free tests pass in concurrent groups of 107 (90.79 seconds) and 180

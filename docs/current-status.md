@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The twenty-four live observations below
+Repository policy alone never initiates paid work. The twenty-five live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -74,7 +74,61 @@ result on the existing finish turn, with no additional model calls. Separate moc
 `EVALUATOR_PASS` in 4.97 seconds through one mutation, four model turns and five actions:
 task acceptance PASS, safety NOT_RUN, cost zero, and `claim_eligible=false`.
 These tests verify memory/feedback contracts, not improved live model decisions.
-No provider/Docker execution or twenty-fifth live row is authorized by this change.
+That local checkpoint did not authorize the separately approved twenty-fifth live row below.
+
+### Twenty-fifth live row: public regression failure, completion horizon exhausted
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 run with
+`gpt-5.4-mini-2026-03-17`, medium reasoning, `.env`, repeat 1, a $1.20 invocation cap,
+and `--enable-probes` under `C:\patchloop-state`. Read-only preflight verified HEAD-clean
+tracked runtime/task inputs, credential format, the running Docker server, and both
+local pinned images. V17 commit `8e6eedcee705bab1fea5cad5d850e764ed14dae2` produced
+`run_dev_553ec14ad0d4441c`: `LIMIT_REACHED`, 37 model/input-count calls, 38 actions,
+three accepted mutations, $0.486200250, and 312.967 active seconds (314 seconds run age).
+No second invocation, resume, image pull/build, Docker startup, or automatic retry ran.
+
+Thirty inspections (18 reads, 12 searches) preceded the first mutation on call 31;
+18 added no source coverage and five were cache hits. Call 14 had reproduced the
+baseline failure of the public parent-traversal check. The first candidate then failed
+that check on bytes/str path assembly at call 32. Call 33 repaired the type-mixing error;
+call 34 exposed intermediate-directory permissions, which call 35 repaired. The same
+public contract passed at call 36. These are two successful local causal repairs after
+late initial exploration, not a more efficient episode.
+
+Call 37's required upstream regression reported 1 failed, 516 passed, and 570 skipped.
+Its public macOS broken-symlink-with-trailing-separator case now raised `FileExistsError`
+instead of completing. The new normalized whole-path existence check rejects the link
+before the original backend's trailing-separator/macOS handling can run. The remaining
+candidate is a 40-line diff (39 additions, one deletion) in `pyfakefs/fake_os.py`, hash
+`sha256:8274b62bfc5f492526b31564b713ddc8ec58107ed49f3163a55acd747a3c4e35`.
+It was not submitted. With three model calls and 62 tool actions left, recovery required
+at least four calls: edit, both invalidated checks, and finish. The runner recorded
+`completion horizon exhausted before provider dispatch`; the final failure was retained
+but there was no subsequent model turn. No private evaluation or final safety verdict ran.
+Do not label this result `EVALUATOR_FAIL`, task-acceptance FAIL, or safety PASS.
+
+Concern `v1` was created on call 1 and appeared unresolved in all 36 following contexts.
+The model repeatedly revised this single item (30 upserts) rather than maintaining
+separate concrete concerns. Its statement narrowed from broad preservation requirements
+to bytes assembly. Call 22's sole resolve attempt cited a read, not successful check/probe
+evidence; the annotation was rejected without rejecting the read, and its receipt arrived
+in the next model input. The concern remained unresolved through the three mutations.
+An unknown source-note ID was rejected on call 3; a first source finding was stored on
+call 11. Later note-ID/source-range errors also received nonblocking receipts. There
+were 35 note-update events and all 35 matched their once-only next native delivery.
+
+Probes were enabled but unused. The run never reached all-required-checks-PASS, so the
+new final-review cue and successful current-diff concern resolution were not exercised.
+Persistence and failure feedback worked, but meaningful uncertainty decomposition,
+candidate experiments, and earlier editing are not demonstrated by this observation.
+It does not establish that v17 caused the longer exploration or the task regression.
+No provider/protocol error or output-ceiling exhaustion occurred (maximum 10,974 output
+tokens versus the 25,000 desired ceiling). Read-only audit verified 453 journal events,
+111 context/input/continuation artifact hashes, all 36 continuation replay edges, and
+five public-check execution-policy hashes with cleanup confirmed. Journal bytes hash to
+`sha256:6ae215fdd26f709347c30eb0e578d5882255b231d227edec2ab9c5357859e5e0`.
+Prior row-24 bytes remain unchanged. All results remain `official=false`; no claim or
+twenty-sixth live row is authorized.
 
 ### V16 implementation and validation checkpoint
 
@@ -1052,6 +1106,18 @@ historical artifacts and `docs/archive/` remain preserved. Current checkout
 compatibility with those runners is intentionally unsupported.
 
 ## Next decision
+
+The twenty-fifth row confirms bounded concern persistence and nonblocking annotation
+feedback, but not effective use of those concerns: the single item was repeatedly
+rewritten, no probe ran, and the first edit was delayed until call 31. Public bytes and
+mode failures were repaired; a later public compatibility regression could not be
+recovered within the remaining completion horizon. Review source-note reuse, concrete
+uncertainty tracking, and preservation of existing backend responsibilities before
+proposing another change. Do not infer that a larger budget or harder inspection mask
+is the remedy, and do not convert this one uncontrolled observation into a causal claim.
+No automatic repair, retry, or twenty-sixth live row is authorized by this result.
+
+The preceding decision after row 24 was:
 
 The twenty-fourth row exercises the corrected recursive search, explicit note-interpretation
 labels, and minimum-versus-protected mutation admission. It also recovers from a public

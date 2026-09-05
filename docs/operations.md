@@ -95,8 +95,10 @@ It does not pull/build an image, start Docker Desktop, or fall back to the evalu
 The separately approved twenty-second through twenty-fourth rows enabled this opt-in;
 rows 22 and 24 used one baseline probe each, while row 23 did not. These observations
 do not establish candidate validation by probing; exact results are in `docs/current-status.md`.
-No twenty-fifth live row is authorized by those results, the current implementation,
-or local validation.
+The separately approved twenty-fifth row also enabled probes but did not invoke one.
+It terminated at the completion horizon after a public regression failure, without
+submission or private evaluation. No twenty-sixth live row is authorized by those
+results, the current implementation, or local validation.
 
 Tool surface v17 adds bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
