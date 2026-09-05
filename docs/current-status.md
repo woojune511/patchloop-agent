@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The twenty-two live observations below
+Repository policy alone never initiates paid work. The twenty-three live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -53,7 +53,8 @@ Git reproduction showed an unchanged note surviving one unrelated edit, disappea
 after a second, and resurrecting on resume. V15 fixes that storage/replay defect; it does
 not claim that the defect caused row 22's early errors or that better memory guarantees
 faster exploration. Changed or ambiguous cited text still expires, and unobserved sources
-are never accepted. V14 runs/envelopes remain immutable; no twenty-third row is authorized.
+are never accepted. V14 runs/envelopes remain immutable. The separately approved v15 row
+below does not authorize a twenty-fourth row.
 
 Validation passes Ruff, 54 focused note/context/input cases in 35.35 seconds, and all
 244 provider-free tests. The frozen full-suite groups ran concurrently: 64 passed in
@@ -64,8 +65,60 @@ Feedback regressions preserve parallel ownership, exact original calls, nonblock
 rejections, bounded private-free receipts, and normal call counts through mock evaluation.
 Final mock `run_dev_b4a45c26a2e84022`, under `C:\pt\pl-v15-smoke-0d2aaa`, reaches
 isolated `EVALUATOR_PASS` through one mutation, four mock model turns and five actions:
-task acceptance PASS, safety NOT_RUN, cost zero, and `claim_eligible=false`. No Docker
-or paid provider was executed for this change; model behavior with v15 remains untested live.
+task acceptance PASS, safety NOT_RUN, cost zero, and `claim_eligible=false`. This
+implementation validation made no Docker or provider call. The later approved live
+observation is recorded separately below.
+
+### Twenty-third live row: memory feedback observed, task acceptance FAIL
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 run with
+`gpt-5.4-mini-2026-03-17`, medium reasoning, `.env`, repeat 1, a $1.20 invocation cap,
+and `--enable-probes` under `C:\patchloop-state`. Preflight verified tracked, HEAD-clean
+runtime/task inputs, the credential format, Docker availability, and both fixed local
+image identities without starting, pulling, or building anything. On committed v15
+runtime `61dea7880eb11fa588f0b17a0b516215972bb089`, run `run_dev_ac4248e1b75e4ad2`
+ended at `EVALUATOR_FAIL`: task acceptance FAIL, safety PASS, `claim_eligible=false`,
+and `official=false`. It used 32 model/input-count calls, 34 actions, one accepted
+mutation, $0.361692000, and 340.828 active seconds (342 seconds of run age).
+Probes were enabled but the model did not invoke one. No retry or additional row ran.
+
+Call 4 created `n1`, before any mutation. Call 5 tried to revise it using an incompletely
+observed source range; the main read succeeded while the annotation was rejected with
+`unobserved_source_range` and a concrete repair instruction. Call 7 successfully updated
+the existing note. `n2` was created on call 16. There was no unknown-note-ID rejection.
+Call 22's parallel batch also produced the intended nonblocking additional-update
+diagnostic. All 22 note-update receipts were hash-verified against their exact next
+native tool output, with delivery references rather than duplicate receipts in that
+request's public context. At the accepted mutation, unchanged `n1` rebound and `n2`
+expired as `source_changed`; the next context agreed. This row had only one accepted
+mutation and no resume, so the multi-mutation/restart repair remains provider-free evidence.
+
+The first edit attempt still arrived on call 27 after 26 inspection turns (28 read/search
+actions). Its whole-method anchor accidentally joined two original docstring lines and
+was correctly rejected before a write. Call 28 read source and call 29 supplied a matching
+anchor with a revised recursive-parent implementation. The accepted diff added four lines
+in `pyfakefs/fake_os.py`. Calls 30 and 31 passed both visible checks, and call 32 submitted
+`sha256:938e6fdbe6ce41c12f30382fa620caf7622750ab5892fb6e63deb039d527451d`.
+Visible checks and isolated evaluation used that identical artifact. Regression and scope
+passed, but private acceptance reported one trailing-separator failure. The submitted
+`head and tail` guard skips parent creation when splitting a slash-terminated path yields
+an empty tail; the remaining delegate still loses the walked-directory side effect.
+This is a semantic boundary-case failure, not a stale submitted patch, token ceiling,
+or provider/protocol terminal. Private evaluation was not reinjected into agent context.
+
+Across the run, 17 of 29 inspections added no source coverage, including three cache hits.
+That zero-coverage count is unchanged from row 22 despite much earlier valid note creation;
+the first accepted edit moved from call 27 to call 29. Coverage alone does not establish
+that a read was useless, and these two rows are not a controlled memory-effect comparison.
+The result confirms live note admission/feedback delivery but not better exploration,
+semantic completeness, or agent success. Both long mutation responses completed below
+the unchanged 25,000-token ceiling, and no protocol correction was needed.
+
+Read-only verification passed the 389-event hash chain, all 96 context/input/continuation
+references, five terminal artifacts, three evaluator execution-policy evidence artifacts,
+34 unique completed actions, and the exact durable cost sum. There is no pending provider
+or action; owned check cleanup was confirmed. The journal and prior external run bytes
+were not changed by analysis. No twenty-fourth live row is authorized.
 
 ### V14 implementation and validation checkpoint
 
@@ -194,7 +247,7 @@ The journal's 390-event hash chain, all 99 context/input/continuation artifacts,
 terminal artifacts, 36 unique completed actions, and durable cost sum passed read-only
 integrity checks. All 33 responses carried continuation references; no provider or action
 remained pending. This is one development success on one task, not a generalization or
-official-quality claim. No twenty-third live row is authorized.
+official-quality claim. It authorized no subsequent row; row 23 required separate approval.
 
 The September 5 review found remaining harness defects, not evidence that model
 judgment alone explained unsuccessful runs. V12 corrects truncated/empty read evidence,
@@ -246,7 +299,7 @@ Fault regressions include reordered parallel-result hydration, same-action read 
 source-linked note upsert, unconsumed correction replay, complete-candidate crash recovery,
 deadline expiry before dispatch/evaluator work, and owned-container cleanup uncertainty.
 Earlier checkpoint counts and policies below describe history, not the current v15
-contract. No twenty-third live row is authorized.
+contract. No twenty-fourth live row is authorized.
 
 The separately authorized twentieth row used the same pyfakefs version-2 task,
 `gpt-5.4-mini-2026-03-17`, medium reasoning, `.env`, one repetition, a $1.20 cap,
@@ -847,14 +900,16 @@ compatibility with those runners is intentionally unsupported.
 
 ## Next decision
 
-The twenty-second row passed task acceptance and safety with a small recursive edit,
-correct recovery from the public permission failure, and one successful optional probe.
-Its first edit still came on call 27, and invalid early note references left working
-findings empty throughout initial exploration. The subsequent review identified the
-feedback and independent note-lifecycle defects now fixed provider-free in v15. A future
-separately approved live row should distinguish successful note creation/maintenance from
-inspection efficiency and task acceptance; the prior pass does not prove memory or probe
-causality. No twenty-third row is authorized. Earlier decisions below are historical context.
+The twenty-third row confirms early note creation, actionable nonblocking annotation
+feedback, and one mutation's note lifecycle in the live path. It does not show faster
+exploration: 17 of 29 inspections again added no coverage, and the first accepted edit
+came on call 29 after an anchor rejection. Both visible checks passed, but the submitted
+guard missed a trailing-separator case. Further diagnosis should distinguish successful
+information delivery from the model's reuse of it and its testing of semantic boundaries;
+neither a harder read cap nor a larger token budget follows from this observation.
+Do not promote private cases into model prompts or infer causality from the row-22/23
+comparison. No twenty-fourth row or new implementation change is authorized by this result.
+Earlier decisions below are historical context.
 
 The first live failure exposed a context-projection defect: successful reads were
 selected by lexicographic span hash, so requested source could disappear from the
@@ -949,8 +1004,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth through twenty-second rows were separately authorized and are now
-terminal. No twenty-third row is authorized.
+the later thirteenth through twenty-third rows were separately authorized and are now
+terminal. No twenty-fourth row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -1020,8 +1075,10 @@ and submitted, but still spent 26 turns inspecting before its first edit and cho
 manual path walker with publicly reproducible semantic gaps. This is evidence for better
 decision memory and edit-strategy guidance, not grounds for another hard action mask.
 The twenty-second row then passed with a recursive edit and correct mode repair, while
-still exposing repeated exploration and unsuccessful early note creation. No paid retry
-or twenty-third row is authorized.
+still exposing repeated exploration and unsuccessful early note creation. The twenty-third
+row exercised v15 note feedback successfully but retained repeated exploration and failed
+one semantic acceptance case after submission. No paid retry or twenty-fourth row is
+authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a
