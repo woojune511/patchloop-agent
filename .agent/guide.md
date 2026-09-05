@@ -176,7 +176,7 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v12`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v13`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -267,11 +267,14 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: tool surface `v12` uses accurate complete-line evidence, contiguous union
+Current seam: tool surface `v13` uses accurate complete-line evidence, contiguous union
 admission, pinned/merged context, optional run-local findings, advisory exploration,
 optional causal revision, exact candidate recovery, shared completion accounting, and
-propagated execution deadlines. The twentieth live row remains unapproved; local tests
-and mock evidence are not a model-quality claim.
+propagated execution deadlines. It additionally constrains every non-inspection
+`evidence_goal` to JSON `null`, matching `PublicTurnDecision`, and retains bounded
+tool-name/argument-hash/field/code diagnostics for local conversion failures. The
+twentieth row is terminal and no twenty-first row is approved; local tests and mock
+evidence are not a model-quality claim.
 
 ## Historical checkpoints
 
@@ -632,9 +635,11 @@ Freeze runtime files while running the suite: content-hash provenance tests inte
 reject concurrent source edits. To stay near the two-minute full-cycle target, run
 `test_dev_runner.py` plus `test_dev_resume_v12.py` in one pytest process and every other
 `test*.py` file in another, using distinct new short external basetemps. Do not omit tests
-or share temporary roots. Then run mock smoke. The final v12 cycle passes all 175 tests,
-Ruff, and mock isolated evaluation in approximately 110 seconds with this split; it is
-local/provider-free evidence, not a live agent-success result.
+or share temporary roots. Then run mock smoke. The current v13 patch passes seven focused
+schema/diagnostic/resume cases, Ruff, all 175 tests (64 in 80.06 seconds and 111 in 58.33
+seconds in parallel), and mock isolated evaluation in run
+`run_dev_d22310790c4a4696`. It is local/provider-free evidence, not a live agent-success
+result.
 
 Before handoff, confirm no private projection, repository-local run state, live
 call, Docker mutation, historical artifact edit, stale active-doc link, or invented

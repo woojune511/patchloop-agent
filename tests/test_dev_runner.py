@@ -1308,7 +1308,10 @@ def test_missing_encrypted_reasoning_is_a_typed_provider_error() -> None:
     assert turn.provider_continuation == ()
 
 
-def test_invalid_provider_turn_decision_becomes_bounded_protocol_error() -> None:
+def test_invalid_provider_turn_decision_becomes_bounded_protocol_error(
+    tmp_path,
+    gateway_factory,
+) -> None:
     raw = ModelTurn(
         tool_calls=[
             ProviderRequestedTool(
@@ -1347,6 +1350,67 @@ def test_invalid_provider_turn_decision_becomes_bounded_protocol_error() -> None
     assert converted.input_tokens == 17
     assert converted.output_tokens == 5
     assert converted.output_item_types == ["reasoning", "function_call"]
+    failure = converted.tool_contract_failure
+    assert failure is not None
+    assert failure.tool_name == "read_file"
+    assert failure.arguments_hash == sha256_json(raw.tool_calls[0].arguments)
+    assert failure.violations[0].field_path == "turn_decision.basis"
+    assert failure.violations[0].validation_code == "string_too_long"
+    assert "x" * 100 not in str(failure.model_dump(mode="json"))
+
+    gateway, _, _ = gateway_factory()
+    policy = runner._tool_policy(  # noqa: SLF001 - diagnostic contract test
+        gateway,
+        runner._RunCounters(),  # noqa: SLF001
+        DevLimits(),
+    )
+    issue = runner._model_error_issue(  # noqa: SLF001
+        converted.error_code,
+        converted.incomplete_reason,
+        failure,
+    )
+    correction = runner._protocol_correction(  # noqa: SLF001
+        turn_id="invalid-provider-turn",
+        code=converted.error_code,
+        issue=issue,
+        gateway=gateway,
+        policy=policy,
+        tool_contract_failure=failure,
+    )
+    assert "read_file failed validation at turn_decision.basis (string_too_long)" in issue
+    assert correction["tool_contract_failure"] == failure.model_dump(mode="json")
+
+    journal = DevJournal(tmp_path, "run_dev_invalid_tool_diagnostic")
+    journal.append(
+        "turn_started",
+        {
+            "turn_id": "invalid-provider-turn",
+            "available_tool_names": ["run_check", "stop_task"],
+            "max_parallel_reads": 0,
+            "targeted_read_paths": [],
+        },
+    )
+    journal.append(
+        "provider_call_finished",
+        {
+            "call_id": "provider-invalid-tool",
+            "turn_id": "invalid-provider-turn",
+            "tool_calls": [],
+            "error_code": converted.error_code,
+            "incomplete_reason": None,
+            "tool_contract_failure": failure.model_dump(mode="json"),
+        },
+    )
+    runner._recover_unrecorded_decision(journal)  # noqa: SLF001
+    recovered = next(
+        event["payload"]
+        for event in journal.events()
+        if event["event_type"] == "turn_decision_recorded"
+    )
+    assert recovered["tool_contract_failure"] == failure.model_dump(mode="json")
+    unresolved = runner._unresolved_decision(journal)  # noqa: SLF001
+    assert unresolved is not None
+    assert unresolved[4] == failure
 
 
 def test_failed_mutation_stays_projected_after_read_cards_without_protocol_label(

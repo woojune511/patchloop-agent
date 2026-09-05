@@ -104,8 +104,8 @@ def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
                 {"type": "string", "minLength": 1, "maxLength": 500}
                 if mode == "inspect"
                 else {
-                    "type": ["string", "null"],
-                    "description": "Must be null unless mode is inspect.",
+                    "type": "null",
+                    "description": "Exactly null unless mode is inspect.",
                 }
             ),
             "memory_update": memory_update_schema(),

@@ -205,16 +205,19 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v12`; prior
+These output and scheduler semantics are bound by tool-surface identity `v13`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually
 available on that correction turn. If rejected function calls carried encrypted
 reasoning, bounded public rejection outputs preserve their call-ID linkage for the
 next request. A valid tool batch resets that correction allowance. Provider journals
-retain only output item counts,
-types, a shape hash, typed incomplete-reason metadata, and a continuation artifact
-reference for diagnosis. Ciphertext is stored only in the external content-addressed
+retain output item counts, types, a shape hash, typed incomplete-reason metadata, and a
+continuation artifact reference for diagnosis. A local tool conversion failure additionally
+retains only the public tool name, canonical arguments hash, at most four validation field
+paths and codes, and a truncation flag. The correction repeats this bounded diagnostic;
+raw rejected arguments and validation inputs are not stored. Ciphertext is stored only in
+the external content-addressed
 artifact store. Missing, malformed, reordered, or action-mismatched continuation
 evidence produces `PROVIDER_CONTINUATION_ERROR` before another provider or tool call.
 The same incomplete reason survives decision recovery and is named in correction and

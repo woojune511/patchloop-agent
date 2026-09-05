@@ -163,8 +163,10 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v12` adds run-local working notes, accurate source projection,
-advisory exploration signals, and shared deadline/recovery accounting. It excludes cross-run
+workflow state. Tool-surface `v13` adds run-local working notes, accurate source projection,
+advisory exploration signals, shared deadline/recovery accounting, and exact agreement
+between provider action schemas and internal decision validation. Bounded conversion
+diagnostics retain hashes and field codes, never raw rejected arguments. It excludes cross-run
 memory experiments, held-out tuning, claim runs,
 automatic provider retries, Docker startup, image pull/build, and compatibility
 with deleted historical runners or pre-envelope journals.

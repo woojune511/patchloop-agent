@@ -23,11 +23,11 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The nineteen live observations below
+Repository policy alone never initiates paid work. The twenty live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v12
+## Current implementation: tool surface v13
 
 The September 5 review found remaining harness defects, not evidence that model
 judgment alone explained unsuccessful runs. V12 corrects truncated/empty read evidence,
@@ -46,6 +46,21 @@ atomic source replacement; recovery rejects other-file drift. A shared active de
 reaches visible checks and isolated evaluation, with label-verified owned Docker cleanup
 and partial provenance retained on timeout. Cleanup uncertainty stops all repetitions.
 
+V13 makes the provider function schema and internal decision validator identical for
+non-inspection actions: `evidence_goal` is now schema-constrained to exactly `null`.
+If a provider call still fails local conversion, the journal records its public tool
+name, canonical argument hash, at most four validation field paths and codes, and a
+truncation flag. It never stores rejected raw arguments or validation input. The same
+bounded diagnostic survives decision recovery and is included in the correction; a
+second violation's terminal message names the concrete tool, field, and code.
+
+V13 validation passes seven focused schema/diagnostic/resume cases, Ruff, and all 175
+provider-free tests. The independent full-suite groups pass 64 tests in 80.06 seconds
+and 111 tests in 58.33 seconds, completing concurrently in about 85 seconds. Mock run
+`run_dev_d22310790c4a4696` under `C:\pt\pl-v13-smoke-a` reaches isolated
+`EVALUATOR_PASS` through one accepted mutation, four mock model turns, and five actions;
+task acceptance is PASS, safety NOT_RUN, `claim_eligible=false`, and provider cost zero.
+
 A provider-free reconstruction of the nineteenth row's 39 public context boundaries
 compared recorded source observations with the new projector. Editable source coverage
 increased in 24 turns and decreased in none. Repeated line entries fell from 1,899 to 2;
@@ -54,7 +69,7 @@ source. Maximum retained source was 18,272 characters. At turn 12, visible edita
 coverage rose from 74 to 139 lines. This is an observation-selection comparison only:
 no model was asked to act on the reconstructed context and no success is implied.
 
-Final v12 validation passes Ruff and all 175 provider-free tests. Two independent pytest
+The v12 baseline validation passed Ruff and all 175 provider-free tests. Two independent pytest
 groups pass 64 tests in 77.86 seconds and 111 tests in 57.10 seconds; the final Ruff,
 parallel full suite, and mock cycle takes approximately 110 seconds including orchestration.
 Mock `run_dev_935f54a2c3b84b8c`, under `C:\pt\pl-v12-smoke-final-f`, reaches isolated
@@ -63,8 +78,27 @@ Task acceptance is PASS, safety NOT_RUN, `claim_eligible=false`, and provider co
 Fault regressions include reordered parallel-result hydration, same-action read replay,
 source-linked note upsert, unconsumed correction replay, complete-candidate crash recovery,
 deadline expiry before dispatch/evaluator work, and owned-container cleanup uncertainty.
-Earlier checkpoint counts and policies below describe history, not the current v12
-contract. No Docker execution, paid provider call, or twentieth live row was performed.
+Earlier checkpoint counts and policies below describe history, not the current v13
+contract. No twenty-first live row is authorized.
+
+The separately authorized twentieth row used the same pyfakefs version-2 task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, `.env`, one repetition, a $1.20 cap,
+and a new run under `C:\patchloop-state`. Provider-free preflight passed without an
+image operation. Immutable run `run_dev_7b604196d0924a0f` ended at
+`INCOMPLETE_RESPONSE` after 29 model/input-count calls, 35 actions, one accepted
+mutation, and $0.293222400. It performed 23 searches and 11 reads before mutating on
+call 27; seven searches were zero-match and six returned only covered lines. The model
+then returned completed `reasoning + function_call` responses twice, but local conversion
+discarded both calls as `invalid_dev_tool_contract`. No check, submission, or evaluator ran.
+
+Because v12 stored neither rejected arguments nor validation locations, the exact field
+in those two historical calls is unknowable. A provider-free reproduction found one
+concrete schema/validator mismatch consistent with the timing: `run_check` permitted a
+string `evidence_goal` in the provider schema while the internal model required `null`.
+V13 fixes that mismatch and makes any future conversion failure diagnosable; it does not
+reinterpret the twentieth row as proof of that field value or as an agent-quality result.
+The accepted edit also passed no visible check and recursively propagated the requested
+leaf mode to parents, so its semantic correctness is not claimed.
 
 ## Evidence state (historical checkpoints)
 
@@ -717,8 +751,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth through nineteenth rows were separately authorized and are now
-terminal. No twentieth row is authorized.
+the later thirteenth through twentieth rows were separately authorized and are now
+terminal. No twenty-first row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -780,10 +814,12 @@ nineteenth row confirmed that repair path, then exposed repeated investigation a
 single shared failed-check reserve. The initial `v11` response closed broad inspection
 after a warned zero-coverage batch and reserved recovery by check declaration order.
 The subsequent review did not establish that stronger action masking was the right
-remedy: it found projection, evidence, reservation, and recovery defects. Current `v12`
-replaces those policies with the working-memory and budget-only contracts above.
-Whether the corrected loop improves agent decisions still needs separate live evidence.
-No paid retry or twentieth row is authorized.
+remedy: it found projection, evidence, reservation, and recovery defects. `v12` replaced
+those policies with the working-memory and budget-only contracts above. The twentieth
+row exercised that context but exposed the provider-schema mismatch now fixed in `v13`.
+It also retained substantial pre-mutation exploration, which remains an agent-loop result
+to analyze rather than grounds for another hard action mask. No paid retry or twenty-first
+row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

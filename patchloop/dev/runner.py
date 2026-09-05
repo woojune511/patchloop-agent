@@ -28,6 +28,8 @@ from patchloop.dev.contracts import (
     DevRunEnvelope,
     DevRunRequest,
     DevTerminal,
+    DevToolContractFailure,
+    DevToolContractViolation,
     DevToolResult,
     EncryptedReasoningContinuationItem,
     FunctionCallContinuationRef,
@@ -907,6 +909,7 @@ def _protocol_correction(
     issue: str,
     gateway: DevToolGateway,
     policy: _ToolPolicy,
+    tool_contract_failure: DevToolContractFailure | None = None,
 ) -> dict[str, Any]:
     del gateway
     allowed = policy.allowed_tools
@@ -947,6 +950,11 @@ def _protocol_correction(
         "remaining_visible_check_ids": list(policy.remaining_check_ids),
         "available_tool_names": sorted(allowed),
         "exploration_state": policy.exploration_state,
+        "tool_contract_failure": (
+            tool_contract_failure.model_dump(mode="json")
+            if tool_contract_failure is not None
+            else None
+        ),
     }
 
 
@@ -1114,15 +1122,63 @@ def _requested_tool_from_openai(call: Any) -> RequestedTool:
     )
 
 
+def _tool_contract_failure(
+    call: Any,
+    error: TypeError | ValueError | ValidationError,
+) -> DevToolContractFailure:
+    """Keep bounded public failure identity without retaining raw tool arguments."""
+
+    if isinstance(error, ValidationError):
+        raw_violations = error.errors(
+            include_url=False,
+            include_context=False,
+            include_input=False,
+        )
+        violations = [
+            DevToolContractViolation(
+                field_path=(
+                    ".".join(str(part)[:100] for part in item.get("loc", ()))
+                    or "function_call"
+                )[:500],
+                validation_code=str(item.get("type") or "validation_error")[:200],
+            )
+            for item in raw_violations[:4]
+        ]
+        truncated = len(raw_violations) > len(violations)
+    else:
+        violations = [
+            DevToolContractViolation(
+                field_path="function_call",
+                validation_code=type(error).__name__[:200],
+            )
+        ]
+        truncated = False
+    try:
+        arguments_hash = sha256_json(call.arguments)
+    except (TypeError, ValueError, AttributeError):
+        arguments_hash = sha256_json(
+            {"unavailable_arguments_type": type(getattr(call, "arguments", None)).__name__}
+        )
+    tool_name = getattr(call, "name", None)
+    return DevToolContractFailure(
+        tool_name=(str(tool_name)[:200] if tool_name else "unknown_function"),
+        arguments_hash=arguments_hash,
+        violations=violations,
+        violations_truncated=truncated,
+    )
+
+
 def _turn_from_openai(turn: Any) -> DevModelTurn:
     calls: list[RequestedTool] = []
     conversion_error: str | None = None
+    contract_failure: DevToolContractFailure | None = None
     for call in turn.tool_calls:
         try:
             calls.append(_requested_tool_from_openai(call))
-        except (TypeError, ValueError, ValidationError):
+        except (TypeError, ValueError, ValidationError) as exc:
             calls = []
             conversion_error = "invalid_dev_tool_contract"
+            contract_failure = _tool_contract_failure(call, exc)
             break
     continuation_items: list[EncryptedReasoningContinuationItem | FunctionCallContinuationRef] = []
     for item in turn.provider_continuation:
@@ -1140,6 +1196,7 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
             continue
         else:
             conversion_error = "provider_continuation_error"
+            contract_failure = None
             calls = []
             continuation_items = []
             break
@@ -1164,6 +1221,7 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
         non_tool_output_item_count=turn.non_tool_output_item_count,
         output_item_types=list(turn.output_item_types),
         output_shape_hash=turn.output_shape_hash,
+        tool_contract_failure=contract_failure,
         provider_continuation=provider_continuation,
     )
 
@@ -1251,17 +1309,40 @@ def _validate_continuation_action_order(
         )
 
 
-def _model_error_message(error_code: str, incomplete_reason: str | None) -> str:
+def _tool_contract_failure_text(failure: DevToolContractFailure) -> str:
+    violation = failure.violations[0]
+    return (
+        f"{failure.tool_name} failed validation at {violation.field_path} "
+        f"({violation.validation_code})"
+    )
+
+
+def _model_error_message(
+    error_code: str,
+    incomplete_reason: str | None,
+    tool_contract_failure: DevToolContractFailure | None = None,
+) -> str:
     if error_code == "incomplete_response" and incomplete_reason:
         return f"{error_code}: {incomplete_reason}"
+    if error_code == "invalid_dev_tool_contract" and tool_contract_failure is not None:
+        return f"{error_code}: {_tool_contract_failure_text(tool_contract_failure)}"
     return error_code
 
 
-def _model_error_issue(error_code: str, incomplete_reason: str | None) -> str:
+def _model_error_issue(
+    error_code: str,
+    incomplete_reason: str | None,
+    tool_contract_failure: DevToolContractFailure | None = None,
+) -> str:
     if error_code == "incomplete_response" and incomplete_reason:
         return (
             f"Provider response was incomplete ({incomplete_reason}). "
             "Return one valid dev-head tool-call shape."
+        )
+    if error_code == "invalid_dev_tool_contract" and tool_contract_failure is not None:
+        return (
+            f"Tool call {_tool_contract_failure_text(tool_contract_failure)}. "
+            "Return one call matching the currently presented schema."
         )
     return "Return one valid dev-head tool-call shape."
 
@@ -2153,6 +2234,7 @@ def _recover_unrecorded_decision(journal: DevJournal) -> None:
                 "tool_calls": tool_calls,
                 "error_code": payload.get("error_code"),
                 "incomplete_reason": payload.get("incomplete_reason"),
+                "tool_contract_failure": payload.get("tool_contract_failure"),
                 "output_item_count": payload.get("output_item_count", 0),
                 "non_tool_output_item_count": payload.get("non_tool_output_item_count", 0),
                 "output_item_types": payload.get("output_item_types", []),
@@ -2171,6 +2253,7 @@ def _unresolved_decision(
         list[RequestedTool],
         str | None,
         str | None,
+        DevToolContractFailure | None,
         bool,
         frozenset[str],
         int,
@@ -2210,6 +2293,15 @@ def _unresolved_decision(
         incomplete_reason = payload.get("incomplete_reason")
         if incomplete_reason is not None and not isinstance(incomplete_reason, str):
             raise RecoveryError("recorded model decision has an invalid incomplete reason")
+        raw_contract_failure = payload.get("tool_contract_failure")
+        try:
+            tool_contract_failure = (
+                DevToolContractFailure.model_validate(raw_contract_failure)
+                if raw_contract_failure is not None
+                else None
+            )
+        except ValidationError as exc:
+            raise RecoveryError("recorded model decision has invalid tool failure details") from exc
         continuation_ref = _continuation_ref_from_payload(payload)
         output_item_types = payload.get("output_item_types", [])
         if not isinstance(output_item_types, list) or not all(
@@ -2243,6 +2335,7 @@ def _unresolved_decision(
             calls,
             error_code,
             incomplete_reason,
+            tool_contract_failure,
             turn_id in started,
             frozenset(available),
             max_parallel_reads,
@@ -2584,6 +2677,7 @@ def _run_one_locked(
                 pending_calls,
                 pending_error,
                 pending_incomplete_reason,
+                pending_tool_contract_failure,
                 batch_started,
                 pending_allowed_tools,
                 pending_max_parallel_reads,
@@ -2623,6 +2717,7 @@ def _run_one_locked(
                     terminal_message = _model_error_message(
                         pending_error,
                         pending_incomplete_reason,
+                        pending_tool_contract_failure,
                     )
                 else:
                     counters.protocol_recoveries += 1
@@ -2633,9 +2728,11 @@ def _run_one_locked(
                         issue=_model_error_issue(
                             pending_error,
                             pending_incomplete_reason,
+                            pending_tool_contract_failure,
                         ),
                         gateway=gateway,
                         policy=next_policy,
+                        tool_contract_failure=pending_tool_contract_failure,
                     )
                     journal.append("protocol_correction", correction)
             else:
@@ -2881,6 +2978,11 @@ def _run_one_locked(
                     "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
                     "error_code": turn.error_code,
                     "incomplete_reason": turn.incomplete_reason,
+                    "tool_contract_failure": (
+                        turn.tool_contract_failure.model_dump(mode="json")
+                        if turn.tool_contract_failure is not None
+                        else None
+                    ),
                     "output_item_count": turn.output_item_count,
                     "non_tool_output_item_count": turn.non_tool_output_item_count,
                     "output_item_types": turn.output_item_types,
@@ -3024,6 +3126,11 @@ def _run_one_locked(
                     "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
                     "error_code": turn.error_code,
                     "incomplete_reason": turn.incomplete_reason,
+                    "tool_contract_failure": (
+                        turn.tool_contract_failure.model_dump(mode="json")
+                        if turn.tool_contract_failure is not None
+                        else None
+                    ),
                     "output_item_count": turn.output_item_count,
                     "non_tool_output_item_count": turn.non_tool_output_item_count,
                     "output_item_types": turn.output_item_types,
@@ -3043,6 +3150,11 @@ def _run_one_locked(
                 "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
                 "error_code": turn.error_code,
                 "incomplete_reason": turn.incomplete_reason,
+                "tool_contract_failure": (
+                    turn.tool_contract_failure.model_dump(mode="json")
+                    if turn.tool_contract_failure is not None
+                    else None
+                ),
                 "output_item_count": turn.output_item_count,
                 "non_tool_output_item_count": turn.non_tool_output_item_count,
                 "output_item_types": turn.output_item_types,
@@ -3078,6 +3190,7 @@ def _run_one_locked(
                 terminal_message = _model_error_message(
                     turn.error_code,
                     turn.incomplete_reason,
+                    turn.tool_contract_failure,
                 )
                 break
             counters.protocol_recoveries += 1
@@ -3085,9 +3198,14 @@ def _run_one_locked(
             correction = _protocol_correction(
                 turn_id=turn_id,
                 code=turn.error_code,
-                issue=_model_error_issue(turn.error_code, turn.incomplete_reason),
+                issue=_model_error_issue(
+                    turn.error_code,
+                    turn.incomplete_reason,
+                    turn.tool_contract_failure,
+                ),
                 gateway=gateway,
                 policy=next_policy,
+                tool_contract_failure=turn.tool_contract_failure,
             )
             journal.append("protocol_correction", correction)
             continue

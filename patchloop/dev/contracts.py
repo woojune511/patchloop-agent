@@ -22,7 +22,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({"replace_text", "run_check", "finish_task",
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v12",
+            "schema_version": "dev-tool-surface-v13",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -53,6 +53,7 @@ def dev_tool_surface_hash() -> str:
             "mutation_recovery": "atomic-complete-candidate-diff-v2",
             "correction_recovery": "journal-derived-unconsumed-v2",
             "execution_deadline": "shared-active-deadline-owned-cleanup-v1",
+            "provider_tool_validation": "schema-exact-null-bounded-diagnostic-v1",
         }
     )
 
@@ -185,6 +186,18 @@ class ProviderContinuationRef(StrictModel):
         return self
 
 
+class DevToolContractViolation(StrictModel):
+    field_path: str = Field(min_length=1, max_length=500)
+    validation_code: str = Field(min_length=1, max_length=200)
+
+
+class DevToolContractFailure(StrictModel):
+    tool_name: str = Field(min_length=1, max_length=200)
+    arguments_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    violations: list[DevToolContractViolation] = Field(min_length=1, max_length=4)
+    violations_truncated: bool = False
+
+
 class DevModelTurn(StrictModel):
     tool_calls: list[RequestedTool] = Field(default_factory=list)
     requested_input_tokens: int | None = None
@@ -204,6 +217,7 @@ class DevModelTurn(StrictModel):
         default=None,
         pattern=r"^sha256:[0-9a-f]{64}$",
     )
+    tool_contract_failure: DevToolContractFailure | None = None
     provider_continuation: ProviderContinuationArtifact | None = Field(
         default=None,
         exclude=True,
