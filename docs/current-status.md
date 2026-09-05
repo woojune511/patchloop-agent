@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The twenty live observations below
+Repository policy alone never initiates paid work. The twenty-one live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -79,7 +79,7 @@ Fault regressions include reordered parallel-result hydration, same-action read 
 source-linked note upsert, unconsumed correction replay, complete-candidate crash recovery,
 deadline expiry before dispatch/evaluator work, and owned-container cleanup uncertainty.
 Earlier checkpoint counts and policies below describe history, not the current v13
-contract. No twenty-first live row is authorized.
+contract. No twenty-second live row is authorized.
 
 The separately authorized twentieth row used the same pyfakefs version-2 task,
 `gpt-5.4-mini-2026-03-17`, medium reasoning, `.env`, one repetition, a $1.20 cap,
@@ -99,6 +99,28 @@ V13 fixes that mismatch and makes any future conversion failure diagnosable; it 
 reinterpret the twentieth row as proof of that field value or as an agent-quality result.
 The accepted edit also passed no visible check and recursively propagated the requested
 leaf mode to parents, so its semantic correctness is not claimed.
+
+The separately authorized twenty-first row used the same exact task, model, reasoning,
+credential-file, repetition, cap, and external state root on committed v13 runtime
+`619d684f13ee9e06abd948cb7f3f1ee286d747b1`. Immutable run
+`run_dev_8ca863c580e54a18` reached submission and isolated evaluation without a provider
+or local tool-contract error. It ended at `EVALUATOR_FAIL` with task acceptance FAIL,
+safety PASS, `claim_eligible=false`, 34 model/input-count calls, 41 actions, two accepted
+mutations, and $0.532119000 cost. Both visible checks passed on submitted patch
+`sha256:7929e83dddafaf6089f06fef823c776f7257f29663864f5c75d111fd6d09cc25`.
+
+The row spent its first 26 model turns and 33 actions on inspection. Its first replacement
+was rejected for a stale anchor, then one read allowed the same proposal to apply. The
+public permission assertion failed, the model correctly changed non-final traversal
+directories from the requested mode to `PERM_DEF`, reran both checks, and submitted.
+This confirms the v13 schema repair and failed-check action path, but not task success.
+Provider-free probes derived only from the public real-`os.makedirs` contract demonstrate
+that the submitted manual component walker is incomplete: `/link/../leaf` follows the
+lexical parent instead of the symlink target's parent, and a trailing `/.` applies the
+requested mode to the preceding directory instead of the recursive default. These are
+public counterexamples to the patch; without inspecting hidden evaluator content, neither
+is claimed as the exact private failing case. The remaining concerns are semantic strategy
+selection and working-memory convergence, not another justification for a fixed read cap.
 
 ## Evidence state (historical checkpoints)
 
@@ -751,8 +773,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth through twentieth rows were separately authorized and are now
-terminal. No twenty-first row is authorized.
+the later thirteenth through twenty-first rows were separately authorized and are now
+terminal. No twenty-second row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -817,9 +839,11 @@ The subsequent review did not establish that stronger action masking was the rig
 remedy: it found projection, evidence, reservation, and recovery defects. `v12` replaced
 those policies with the working-memory and budget-only contracts above. The twentieth
 row exercised that context but exposed the provider-schema mismatch now fixed in `v13`.
-It also retained substantial pre-mutation exploration, which remains an agent-loop result
-to analyze rather than grounds for another hard action mask. No paid retry or twenty-first
-row is authorized.
+The twenty-first row crossed that repaired boundary, recovered from a public check failure,
+and submitted, but still spent 26 turns inspecting before its first edit and chose a broad
+manual path walker with publicly reproducible semantic gaps. This is evidence for better
+decision memory and edit-strategy guidance, not grounds for another hard action mask. No
+paid retry or twenty-second row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

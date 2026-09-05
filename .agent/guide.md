@@ -273,8 +273,10 @@ optional causal revision, exact candidate recovery, shared completion accounting
 propagated execution deadlines. It additionally constrains every non-inspection
 `evidence_goal` to JSON `null`, matching `PublicTurnDecision`, and retains bounded
 tool-name/argument-hash/field/code diagnostics for local conversion failures. The
-twentieth row is terminal and no twenty-first row is approved; local tests and mock
-evidence are not a model-quality claim.
+twenty-first row crossed that repaired boundary and reached evaluation, but task acceptance
+failed after 26 inspection turns and a broad manual path-walking edit with public semantic
+counterexamples. No twenty-second row is approved; local tests, mock evidence, and one
+failed live submission are not a model-quality claim.
 
 ## Historical checkpoints
 
