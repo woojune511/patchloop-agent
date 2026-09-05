@@ -496,5 +496,7 @@ def test_runtime_content_hash_covers_all_python_and_lock_inputs() -> None:
         if path.is_file()
     }
     assert expected_python.issubset(paths)
-    assert {"pyproject.toml", "uv.lock"}.issubset(paths)
+    assert {
+        "pyproject.toml", "uv.lock", "docker/probe_runner.py", "docker/Dockerfile.sandbox",
+    }.issubset(paths)
     assert runtime_content_hash(root).startswith("sha256:")

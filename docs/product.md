@@ -87,11 +87,20 @@ Each action carries a bounded public decision, with an evidence question for ins
 An optional `memory_update` on that same action records at most two concise findings
 citing already observed source ranges or prior public tool results and one open question.
 The first non-null update in a parallel batch is used; additional updates are diagnosed
-and ignored. Revised statements replace the same evidence-keyed finding. The run retains at most six
-model-authored findings, rebinds unchanged source or expires stale source notes, marks
-old tool-result references historical, and journals updates for
-resume. Invalid notes receive a diagnostic without rejecting the main action. This
-run-local working memory has no retrieval from prior runs and stores no reasoning transcript.
+and ignored. Each finding has a stable run-local ID such as `n3`, independent of its
+citations. `note_id=null` creates a finding; an existing ID updates it even when the
+cited range changes. The model can consolidate duplicates by updating one ID and
+listing the others in `remove_note_ids`. The run retains at most six model-authored
+findings, rebinds unchanged source or expires stale source notes, marks old tool-result
+references historical, and journals IDs and updates for resume. Invalid notes receive
+a diagnostic without rejecting the main action. This run-local working memory has no
+retrieval from prior runs and stores no reasoning transcript.
+
+Notes may retain the observed mechanism, the chosen implementation approach, and
+behavior still unverified. The prompt encourages reuse of existing functions' behavior
+and asks whether another inspection could change the edit or next check. These are
+short public observations and decisions; no extra model call, planning tool, or
+mandatory three-part plan is added. Citation validation does not prove an interpretation.
 
 Every model response must call at least one constrained tool. Besides inspection,
 mutation, checking, and finish, `stop_task` provides an explicit unsuccessful exit
@@ -139,16 +148,27 @@ requires it. Hidden evaluation remains separate and tests unexposed variations.
 When a development task's public contract changes materially, preserve the old
 package and create a new task version/content identity.
 
+An explicitly enabled `run_probe` lets the model test a concrete public uncertainty
+with a small Python program. It runs against a separate read-only export of current
+tracked public source in a pinned clean Python image. The host selects the image,
+mounts, command, execution limits, and trusted wrapper. The program and its output
+are diagnostic evidence: a successful probe grants no visible-check or submission
+credit, and a failure may be a defect in the experiment itself. Experiments are not
+included in the submitted patch. Each costs one model turn and one tool action and
+is available only when the remaining protected completion budget still fits afterward.
+The capability is off by default and requires explicit `--enable-probes` configuration.
+
 ## Main components
 
 - `patchloop/dev/runner.py` composes the mutable loop.
-- `patchloop/dev/tools.py` provides registered read, search, mutation, check, finish,
-  and unsuccessful-stop tools.
+- `patchloop/dev/tools.py` provides registered read, search, mutation, check, optional
+  probe, finish, and unsuccessful-stop tools.
 - `patchloop/dev/state.py` stores append-only, hash-chained run events.
 - `patchloop/dev/cost.py` performs provider cost admission immediately before dispatch.
 - `patchloop/agent/model.py` owns stateless model requests with zero SDK retries.
 - `patchloop/repository.py` creates isolated workspaces and full diffs.
 - `patchloop/sandbox/runner.py` runs registered checks locally or in a pinned image.
+- `patchloop/sandbox/probes.py` runs bounded experiments in a separate public snapshot.
 - `patchloop/verifier/core.py` evaluates the submitted artifact in a separate workspace.
 
 The run envelope and manifest have different lifetimes. The immutable envelope is
@@ -163,8 +183,9 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v13` adds run-local working notes, accurate source projection,
-advisory exploration signals, shared deadline/recovery accounting, and exact agreement
+workflow state. Tool-surface `v14` adds stable note IDs, implementation-oriented note
+guidance, and opt-in public experiments to the existing source projection,
+advisory exploration, shared deadline/recovery accounting, and exact agreement
 between provider action schemas and internal decision validation. Bounded conversion
 diagnostics retain hashes and field codes, never raw rejected arguments. It excludes cross-run
 memory experiments, held-out tuning, claim runs,

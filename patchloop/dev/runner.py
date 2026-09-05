@@ -19,7 +19,7 @@ from patchloop.agent.model import (
 from patchloop.agent.model import FunctionCallContinuationRef as ProviderFunctionCallRef
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import ModelConfig, RunManifest, VerdictState
+from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev.context import SourceProjection
 from patchloop.dev.contracts import (
@@ -70,6 +70,7 @@ from patchloop.runtime import (
     runtime_content_paths,
 )
 from patchloop.sandbox import DockerSandbox, LocalSandbox
+from patchloop.sandbox.probes import PROBE_IMAGE_DIGEST, DockerProbeSandbox, probe_profile_hash
 from patchloop.sandbox.runner import SandboxCleanupError
 from patchloop.task_loader import load_task_package, task_package_content_paths
 from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
@@ -343,6 +344,7 @@ def _manifest(
     submitted_patch_hash: str,
     submitted_changed_files: list[str],
     created_at: Any,
+    probe_evidence: list[Artifact] | None = None,
 ) -> RunManifest:
     return RunManifest(
         run_id=run_id,
@@ -356,6 +358,10 @@ def _manifest(
         model_hash=model_hash,
         tool_surface_hash=dev_tool_surface_hash(),
         sandbox_identity_hash=_sandbox_identity_hash(request, package),
+        probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
+        probe_profile_hash=probe_profile_hash() if request.enable_probes else None,
+        probe_evidence=probe_evidence or [],
+        probe_execution_count=len(probe_evidence or []),
         submitted_patch_content_hash=submitted_patch_hash,
         visible_check_diff_hash=submitted_patch_hash,
         submitted_changed_files=sorted(submitted_changed_files),
@@ -684,6 +690,11 @@ def _tool_policy(
             )
         if available_check_ids:
             allowed.add("run_check")
+        if (
+            getattr(gateway, "probe_sandbox", None) is not None
+            and min(remaining_model_calls, remaining_tool_actions) - 1 >= budget.protected
+        ):
+            allowed.add("run_probe")
 
     exploration_capacity = (
         max(0, min(inspection_model_slack, inspection_tool_slack))
@@ -939,6 +950,11 @@ def _protocol_correction(
         )
     if "finish_task" in allowed:
         actions.append("Use finish_task to submit the current visibly checked diff.")
+    if "run_probe" in allowed:
+        actions.append(
+            "Use run_probe for a small public behavior experiment when useful; it is "
+            "diagnostic only and never replaces required visible checks."
+        )
     if "stop_task" in allowed:
         actions.append("Use stop_task when no available action supports progress.")
     return {
@@ -1106,6 +1122,30 @@ def _build_context(
         "recent_attempt_result_next_question": _cards(journal, correction),
         "public_task": package.public.model_dump(mode="json"),
     }
+    if getattr(gateway, "probe_sandbox", None) is not None:
+        latest_ids = {result.action_id for result in latest_tool_results}
+        probes = [
+            event["payload"]["result"] for event in journal.events()
+            if event["event_type"] == "action_finished"
+            and event["payload"]["result"]["tool"] == "run_probe"
+        ]
+        payload["recent_probes"] = [
+            {
+                "action_id": result["action_id"],
+                "diff_hash": result["workspace_diff_hash"],
+                "historical": result["workspace_diff_hash"] != summary.patch_hash,
+                "diagnostic_only": True,
+                **({"delivery": "latest_tool_result"} if result["action_id"] in latest_ids else {
+                    "question": result["output"].get("question"),
+                    "status": result["output"].get("status", result["status"]),
+                    "exit_code": result["output"].get("exit_code"),
+                    "stdout": result["output"].get("stdout", "")[-2_000:],
+                    "stderr": result["output"].get("stderr", "")[-2_000:],
+                    "message": result.get("message"),
+                }),
+            }
+            for result in probes[-3:]
+        ]
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
     return json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
@@ -1531,6 +1571,10 @@ def _build_model_input(
                     for key in ("stdout", "stderr", "public_check_failure", "execution_policy"):
                         check.pop(key, None)
                     check.update(reference)
+        if result.tool == "run_probe":
+            for probe in current_payload.get("recent_probes", []):
+                if probe.get("action_id") == result.action_id:
+                    probe.update(reference)
     calls_by_id = {call.action_id: call for call in calls}
     if continuation is not None:
         _validate_continuation_action_order(continuation, calls)
@@ -1708,6 +1752,21 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "attempt": f"check:{result.output['check_id']}",
             "result": "PASS" if result.output["passed"] else result.output["failure_signature"],
             "next_question": next_question,
+        }
+    if result.tool == "run_probe":
+        return {
+            "action_id": result.action_id,
+            "attempt": "probe",
+            "result": {
+                "question": result.output.get("question"),
+                "status": result.output.get("status"),
+                "diff_hash": result.workspace_diff_hash,
+                "diagnostic_only": True,
+            },
+            "next_question": (
+                "Does this experiment change the implementation choice or an unverified "
+                "public behavior? Probe code and its assertions may themselves be wrong."
+            ),
         }
     if result.tool == "stop_task":
         return {
@@ -1961,6 +2020,10 @@ def _sandbox_identity_hash(request: DevRunRequest, package: Any) -> str:
             "backend": "docker" if request.provider == "openai" else "local",
             "evaluator_image": environment.evaluator_image if environment else None,
             "image_digest": environment.image_digest if environment else None,
+            **({
+                "probe_image_digest": PROBE_IMAGE_DIGEST,
+                "probe_profile_hash": probe_profile_hash(),
+            } if request.enable_probes else {}),
         }
     )
 
@@ -1991,6 +2054,8 @@ def _run_envelope(
         runtime_hash=runtime_hash,
         model_hash=model_hash,
         sandbox_identity_hash=_sandbox_identity_hash(request, package),
+        probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
+        probe_profile_hash=probe_profile_hash() if request.enable_probes else None,
         model=request.model,
         reasoning_effort=request.reasoning_effort,
         credential_file_path_hash=_credential_file_path_hash(request),
@@ -2354,7 +2419,7 @@ def _batch_execution_abort(results: list[DevToolResult]) -> tuple[DevTerminal | 
     ):
         return DevTerminal.TASK_FAILED, "tool recovery integrity check failed"
     if any(result.output.get("deadline_exhausted") for result in results):
-        return DevTerminal.LIMIT_REACHED, "active deadline exhausted during registered check"
+        return DevTerminal.LIMIT_REACHED, "active deadline exhausted during sandbox execution"
     return None, None
 
 
@@ -2575,6 +2640,7 @@ def _run_one_locked(
         )
 
     api_key: str | None = None
+    probe_sandbox = None
     try:
         if request.provider == "openai":
             assert request.env_file is not None
@@ -2582,6 +2648,14 @@ def _run_one_locked(
             sandbox = _live_sandbox_preflight(package)
         else:
             sandbox = LocalSandbox()
+        if request.enable_probes:
+            probe_sandbox = DockerProbeSandbox()
+            identity = probe_sandbox.preflight()
+            if identity != {
+                "image_digest": envelope.probe_image_digest,
+                "profile_hash": envelope.probe_profile_hash,
+            }:
+                raise ContractError("probe preflight identity differs from the admitted envelope")
     except PatchLoopError as exc:
         terminal = _terminal(
             journal=journal,
@@ -2607,6 +2681,7 @@ def _run_one_locked(
         journal=journal,
         limits=request.limits,
         deadline=deadline,
+        probe_sandbox=probe_sandbox,
     )
     correction: dict[str, Any] | None = _pending_protocol_correction(journal)
     latest_tool_results = journal.latest_tool_batch_results() if resuming else []
@@ -3277,6 +3352,24 @@ def _run_one_locked(
         if terminal_code == DevTerminal.TASK_FAILED:
             stop_remaining = True
 
+    probe_evidence = [
+        artifact_store.put_json({
+            **event["payload"]["result"]["output"],
+            "schema_version": "dev-probe-receipt-v1",
+            "run_id": run_id,
+            "action_id": event["payload"]["result"]["action_id"],
+            "input_hash": event["payload"]["result"]["input_hash"],
+            "workspace_diff_hash": event["payload"]["result"]["workspace_diff_hash"],
+        })
+        for event in journal.events()
+        if event["event_type"] == "action_finished"
+        and event["payload"]["result"]["tool"] == "run_probe"
+        and event["payload"]["result"]["output"].get("execution_policy") is not None
+    ]
+    probe_artifact_hashes = {
+        f"probe_receipt_{index + 1}": artifact.content_hash
+        for index, artifact in enumerate(probe_evidence)
+    }
     if stop_result is not None:
         terminal = _terminal(
             journal=journal,
@@ -3286,6 +3379,7 @@ def _run_one_locked(
             cost_start_nanos=cost_start_nanos,
             hashes=hashes,
             message=(f"{stop_result.output['reason_code']}: {stop_result.output['summary']}"),
+            artifacts=probe_artifact_hashes,
             active_elapsed_ms=active_elapsed_ms(),
         )
         return _OneRunResult(_public_result(run_id, terminal), False)
@@ -3301,6 +3395,7 @@ def _run_one_locked(
             message=terminal_message,
             active_elapsed_ms=active_elapsed_ms(),
             completion_horizon=terminal_completion_horizon,
+            artifacts=probe_artifact_hashes,
         )
         return _OneRunResult(_public_result(run_id, terminal), stop_remaining)
 
@@ -3327,6 +3422,7 @@ def _run_one_locked(
         submitted_patch_hash=submitted.content_hash,
         submitted_changed_files=finish_result.output["changed_files"],
         created_at=envelope.created_at,
+        probe_evidence=probe_evidence,
     )
     manifest_text = canonical_json(manifest.model_dump(mode="json")) + "\n"
     manifest_artifact = artifact_store.put_text(manifest_text, "application/json")
@@ -3422,6 +3518,7 @@ def _run_one_locked(
         hashes=hashes,
         evaluator=evaluator_summary,
         artifacts={
+            **probe_artifact_hashes,
             "submitted_patch": submitted.content_hash,
             "manifest": manifest_artifact.content_hash,
             "evaluator_summary": evaluator_summary_artifact.content_hash,

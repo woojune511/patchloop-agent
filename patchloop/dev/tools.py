@@ -39,11 +39,11 @@ from patchloop.dev.state import DevJournal
 from patchloop.dev.working_notes import (
     SourceNoteEvidence,
     WorkingNotesUpdate,
-    finding_identity,
     memory_update_schema,
 )
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
 from patchloop.repository import DiffSummary, WorkspaceManager
+from patchloop.sandbox.probes import DockerProbeSandbox
 from patchloop.sandbox.runner import Sandbox
 from patchloop.util import ensure_within, safe_relative_path, sha256_bytes, sha256_json
 from patchloop.verifier.policy import verify_scope
@@ -291,10 +291,30 @@ def dev_tool_schemas(
                 },
             }
         )
+    if allowed_tools is not None and "run_probe" in allowed_tools:
+        schemas.append({
+            "type": "function",
+            "name": "run_probe",
+            "description": (
+                "Run a small public Python experiment in clean isolated scratch space. "
+                "Results are model-authored diagnostics, not required visible-check verdicts."
+            ),
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "question": {"type": "string", "minLength": 1, "maxLength": 500},
+                    "python_source": {"type": "string", "minLength": 1, "maxLength": 8_000},
+                },
+                "required": ["question", "python_source"],
+                "additionalProperties": False,
+            },
+        })
     decision_modes = {
         "search_files": "inspect",
         "read_file": "inspect",
         "run_check": "verify",
+        "run_probe": "verify",
         "replace_text": "mutate",
         "finish_task": "finish",
         "stop_task": "stop",
@@ -344,6 +364,7 @@ def validate_tool_batch(
         "search_files": "inspect",
         "read_file": "inspect",
         "run_check": "verify",
+        "run_probe": "verify",
         "replace_text": "mutate",
         "finish_task": "finish",
         "stop_task": "stop",
@@ -378,6 +399,7 @@ class DevToolGateway:
         journal: DevJournal,
         limits: DevLimits,
         deadline: ExecutionDeadline | None = None,
+        probe_sandbox: DockerProbeSandbox | None = None,
     ) -> None:
         self.workspace = workspace.resolve()
         self.public_task = public_task
@@ -385,6 +407,7 @@ class DevToolGateway:
         self.journal = journal
         self.limits = limits
         self.deadline = deadline
+        self.probe_sandbox = probe_sandbox
         self._lock = threading.RLock()
         self.spans: dict[str, dict[str, Any]] = {}
         self._observation_seq = 0
@@ -410,6 +433,8 @@ class DevToolGateway:
         self._working_findings: list[dict[str, Any]] = []
         self._working_open_question: str | None = None
         self._working_notes_turns: dict[str, dict[str, Any]] = {}
+        self._next_working_note_id = 1
+        self._legacy_working_note_ids: dict[str, str] = {}
         self._hydrate()
 
     def _hydrate(self) -> None:
@@ -1288,14 +1313,39 @@ class DevToolGateway:
         if not isinstance(turn_id, str) or turn_id in self._working_notes_turns:
             return
         self._working_notes_turns[turn_id] = copy.deepcopy(payload)
+        removed = set(payload.get("removed_note_ids", []))
+        self._working_findings = [
+            finding for finding in self._working_findings
+            if finding.get("note_id") not in removed
+        ]
         for finding in payload.get("findings", []):
-            identity = finding.get("finding_id")
+            restored = copy.deepcopy(finding)
+            identity = restored.get("note_id")
+            if identity is None:
+                # Legacy journals remain read-only. Preserve their evidence upsert
+                # semantics while providing deterministic IDs in the projection.
+                legacy_id = restored.pop("finding_id", None)
+                identity = self._legacy_working_note_ids.get(legacy_id)
+                if identity is None:
+                    identity = f"n{self._next_working_note_id}"
+                    self._legacy_working_note_ids[legacy_id] = identity
+                restored["note_id"] = identity
+            self._next_working_note_id = max(self._next_working_note_id, int(identity[1:]) + 1)
             self._working_findings = [
                 previous for previous in self._working_findings
-                if previous.get("finding_id") != identity
+                if previous.get("note_id") != identity
             ]
-            self._working_findings.append(copy.deepcopy(finding))
-        self._working_findings = self._working_findings[-6:]
+            self._working_findings.append(restored)
+        evicted = set(payload.get("evicted_note_ids", []))
+        self._working_findings = [
+            finding for finding in self._working_findings
+            if finding.get("note_id") not in evicted
+        ][-6:]
+        if "retained_note_ids" in payload:
+            retained = set(payload["retained_note_ids"])
+            self._working_findings = [
+                finding for finding in self._working_findings if finding["note_id"] in retained
+            ]
         if payload.get("update_valid") is True:
             self._working_open_question = payload.get("open_question")
 
@@ -1314,10 +1364,15 @@ class DevToolGateway:
         ]
         if not updates:
             return {"status": "not_requested"}
+        self._refresh_working_source_notes()
         selected = updates[0]
         payload: dict[str, Any] = {
             "turn_id": turn_id,
             "findings": [],
+            "allocated_note_ids": [],
+            "removed_note_ids": [],
+            "evicted_note_ids": [],
+            "retained_note_ids": [note["note_id"] for note in self._working_findings],
             "open_question": None,
             "update_valid": False,
             "diagnostics": ["ignored_additional_memory_updates"] if len(updates) > 1 else [],
@@ -1329,6 +1384,10 @@ class DevToolGateway:
         else:
             payload["update_valid"] = True
             payload["open_question"] = update.open_question
+            existing_ids = {finding["note_id"] for finding in self._working_findings}
+            updated_ids: set[str] = set()
+            next_note_number = self._next_working_note_id
+            all_findings_valid = True
             spans = self._validated_source_spans()
             prior_results = {
                 event["payload"]["result"]["action_id"]: event["payload"]["result"]
@@ -1336,6 +1395,14 @@ class DevToolGateway:
                 if event["event_type"] == "action_finished"
             }
             for finding in update.findings:
+                if finding.note_id is not None and finding.note_id not in existing_ids:
+                    payload["diagnostics"].append("unknown_note_id")
+                    all_findings_valid = False
+                    continue
+                if finding.note_id in updated_ids:
+                    payload["diagnostics"].append("duplicate_note_update")
+                    all_findings_valid = False
+                    continue
                 bound: list[dict[str, Any]] = []
                 for evidence in finding.evidence:
                     if isinstance(evidence, SourceNoteEvidence):
@@ -1366,14 +1433,38 @@ class DevToolGateway:
                         })
                 if len(bound) != len(finding.evidence):
                     payload["diagnostics"].append("unobserved_public_evidence")
+                    all_findings_valid = False
                     continue
+                note_id = finding.note_id
+                if note_id is None:
+                    note_id = f"n{next_note_number}"
+                    next_note_number += 1
+                    payload["allocated_note_ids"].append(note_id)
+                updated_ids.add(note_id)
                 stored = {"statement": finding.statement, "evidence": bound}
                 payload["findings"].append({
-                    "finding_id": finding_identity(bound),
-                    "author": "model_public_observation",
+                    "note_id": note_id,
+                    "author": "model_public_note",
                     "model_authored": True,
                     **stored,
                 })
+            if update.remove_note_ids and not all_findings_valid:
+                payload["diagnostics"].append("removals_skipped_after_invalid_finding")
+            elif update.remove_note_ids:
+                for note_id in dict.fromkeys(update.remove_note_ids):
+                    if note_id not in existing_ids:
+                        payload["diagnostics"].append("unknown_remove_note_id")
+                    elif note_id in updated_ids:
+                        payload["diagnostics"].append("cannot_remove_updated_note")
+                    else:
+                        payload["removed_note_ids"].append(note_id)
+            removed = set(payload["removed_note_ids"])
+            resulting_ids = [
+                note["note_id"] for note in self._working_findings
+                if note["note_id"] not in updated_ids | removed
+            ] + [note["note_id"] for note in payload["findings"]]
+            payload["evicted_note_ids"] = resulting_ids[:-6]
+            payload["retained_note_ids"] = resulting_ids[-6:]
         self.journal.append("working_notes_updated", payload)
         self._restore_working_notes(payload)
         return copy.deepcopy(payload)
@@ -1431,7 +1522,6 @@ class DevToolGateway:
                     "end_line": start + content.count("\n"),
                 })
             if valid:
-                finding["finding_id"] = finding_identity(finding["evidence"])
                 retained.append(finding)
         self._working_findings = retained
 
@@ -1462,7 +1552,11 @@ class DevToolGateway:
                 list(self._working_notes_turns.values())[-1].get("diagnostics", [])[:3]
                 if self._working_notes_turns else []
             ),
-            "interpretation": "Model-authored public observations, not verified semantic facts.",
+            "interpretation": (
+                "Model-authored public observations, approach, and unverified behavior; "
+                "sources are validated, interpretations are not. Update an existing note_id "
+                "to refine it even when citations change; null creates a separate note."
+            ),
         }
 
     def context_spans(self, *, exclude: set[str] | None = None) -> list[dict[str, Any]]:
@@ -1854,7 +1948,7 @@ class DevToolGateway:
                     ),
                     "execution_identity": (
                         {"run_id": self.journal.run_id, "action_id": call.action_id}
-                        if call.name == "run_check" else None
+                        if call.name in {"run_check", "run_probe"} else None
                     ),
                     "mutation_admitted": mutation_admitted,
                     "mutation_anchor_evidence_span_id": (mutation_anchor_evidence_span_id),
@@ -1911,6 +2005,14 @@ class DevToolGateway:
             elif call.name == "run_check":
                 output = self._run_check(
                     call.arguments["check_id"],
+                    execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
+                )
+                evidence_cache_hit = False
+            elif call.name == "run_probe":
+                if pending is not None and pending["baseline_diff_hash"] != baseline:
+                    raise RecoveryError("pending probe workspace no longer matches admitted diff")
+                output = self._run_probe(
+                    **call.arguments,
                     execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
                 )
                 evidence_cache_hit = False
@@ -2633,6 +2735,30 @@ class DevToolGateway:
                 stderr=outcome.stderr[-12_000:],
             )
         return output
+
+    def _run_probe(
+        self, question: str, python_source: str, *, execution_identity: dict[str, str],
+    ) -> dict[str, Any]:
+        if self.probe_sandbox is None:
+            raise ContractError("public probes are disabled for this run")
+        if not isinstance(question, str) or not 1 <= len(question) <= 500:
+            raise ContractError("probe question must contain 1-500 characters")
+        if not isinstance(python_source, str) or not 1 <= len(python_source) <= 8_000:
+            raise ContractError("probe source must contain 1-8000 characters")
+        baseline = self.current_diff_hash
+        output = self.probe_sandbox.run_probe(
+            self.workspace, question, python_source,
+            deadline=self.deadline, execution_identity=execution_identity,
+        )
+        observed_diff_hash = self.current_diff_hash
+        receipt = {**output, "question": question, "diff_hash": baseline,
+                   "workspace_diff_hash": baseline}
+        if observed_diff_hash != baseline:
+            raise RecoveryError(
+                "managed workspace changed during probe execution",
+                details={**receipt, "observed_diff_hash": observed_diff_hash},
+            )
+        return receipt
 
     def _remember_check(self, output: dict[str, Any]) -> None:
         diff_hash = str(output["diff_hash"])

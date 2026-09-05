@@ -282,6 +282,10 @@ class RunManifest(StrictModel):
         default=None,
         pattern=r"^sha256:[0-9a-f]{64}$",
     )
+    probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
+    probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
+    probe_execution_count: int = Field(default=0, ge=0, le=100)
+    probe_evidence: list[Artifact] = Field(default_factory=list, max_length=100)
     created_at: datetime
 
     @field_validator("submitted_changed_files")
@@ -300,6 +304,8 @@ class RunManifest(StrictModel):
             raise ValueError("Docker manifests require an evaluator image digest")
         if self.sandbox_backend == "local" and self.evaluator_image_digest is not None:
             raise ValueError("local manifests cannot claim an evaluator image digest")
+        if (self.probe_image_digest is None) != (self.probe_profile_hash is None):
+            raise ValueError("probe manifests require both image and profile identities")
         return self
 
 

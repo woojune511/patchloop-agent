@@ -20,7 +20,9 @@ def runtime_content_paths(root: Path | None = None) -> list[str]:
         for path in (selected_root / "patchloop").rglob("*.py")
         if path.is_file()
     ]
-    paths.extend(["pyproject.toml", "uv.lock"])
+    paths.extend(
+        ["pyproject.toml", "uv.lock", "docker/probe_runner.py", "docker/Dockerfile.sandbox"]
+    )
     return sorted(paths)
 
 

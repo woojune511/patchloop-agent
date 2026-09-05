@@ -12,7 +12,7 @@ patchloop/dev/state.py    append-only JSONL, action/provider recovery
 patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
 patchloop/agent/model.py  journal-managed Responses adapter, zero retries
 patchloop/repository.py   audited checkout, workspace, full diff
-patchloop/sandbox/        registered local/Docker checks
+patchloop/sandbox/        registered checks and optional isolated public probes
 patchloop/verifier/       separate private evaluation and static policy
 patchloop/contracts.py    task, manifest, result, and evaluator models
 tasks/                    public/private packages and declared checks
@@ -28,7 +28,8 @@ One model response may request either, when that tool family is exposed by the
 current gate and action horizon:
 
 - 1–4 parallel `search_files` and/or `read_file` calls, or
-- exactly one `replace_text`, `run_check`, `finish_task`, or `stop_task` call.
+- exactly one `replace_text`, `run_check`, enabled `run_probe`, `finish_task`, or
+  `stop_task` call.
 
 Every call requires one bounded public `turn_decision` with `mode`, `basis`, an
 `evidence_goal` only for inspection, and nullable `memory_update`. Mode must match the tool family.
@@ -76,6 +77,15 @@ acquired. `finish_task` is exposed only for a non-empty
 diff with no untracked files after all visible checks pass on that exact diff.
 `stop_task` is always exposed as an explicit unsuccessful terminal; it never submits
 or evaluates.
+
+`run_probe` is default-disabled and appears only for `--enable-probes` runs with at
+least one model call and tool action beyond the protected completion budget. It uses
+`verify` decision mode with `evidence_goal=null`. It accepts one public question (500
+characters) and Python source (8,000 characters / 32,000 UTF-8 bytes), not a command,
+image, mount, or environment supplied by the model. A probe result is diagnostic:
+it never grants source-span coverage, visible-check PASS, or finish credit, and failure
+does not force mutation or consume a check-repair allowance. See
+[the probe runtime contract](../docker/README.md) for image and isolation details.
 
 ## Mutation and causal pivot
 
@@ -144,12 +154,21 @@ Native latest source, mutation content, and check output are not repeated in der
 `memory_update` adds at most two findings of 400 characters with one or two observed
 source-range or prior tool-result references and a 500-character open question or null.
 Only the first non-null update per batch is considered, before that batch executes;
-extra updates are diagnosed and ignored. Finding upsert identity is canonical evidence,
-not the statement text; accepted-mutation references bind the actual output diff.
-invalid shape/provenance yields a diagnostic without rejecting the action. Unique
-`working_notes_updated` events hydrate at most six model-authored findings. Source notes
+extra updates are diagnosed and ignored. Stable IDs (`n1`, `n2`, ...) are independent
+of citations: `note_id=null` creates; an existing ID updates that note even if its
+references change. `remove_note_ids` explicitly consolidates redundant notes. Unknown
+IDs, invalid metadata, or invalid source references produce bounded diagnostics without
+rejecting the action. Accepted-mutation references bind the actual output diff.
+Unique `working_notes_updated` events record allocations, removals, evictions, and
+retained IDs, and hydrate at most six model-authored findings. Source notes
 rebind uniquely unchanged text or expire; old tool-result references are historical.
 These are public run-local notes, not raw reasoning or cross-run memory retrieval.
+Notes may retain observed mechanisms, the chosen implementation approach, and untested
+behavior. The system prompt encourages reuse of existing responsibilities and asks
+whether another inspection can change the edit or next check. These remain optional
+concise findings, not a mandatory plan or a harness guarantee of semantic correctness.
+`memory_update=null` preserves the notes and question; `open_question=null` inside an
+update resolves the question. The harness does not automatically merge similar prose.
 The successful-mutation
 projection separates current actionable post-image evidence from historical action
 inputs. A successful check card names
@@ -176,7 +195,7 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v13`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v14`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -189,7 +208,9 @@ without durable usage is uncertain and must not be retried automatically.
 
 New runs also own one immutable `dev-run-envelope-v1`. `--resume-run-id` requires
 `repeat=1` and an exact match for provider, task, runtime, model, reasoning,
-credential path hash, cost cap, limits, and sandbox identity. Pre-envelope runs
+credential path hash, cost cap, limits, and sandbox identity, including the opt-in probe
+image/profile identities. Repeat `--enable-probes` only if it was enabled originally.
+Pre-envelope runs
 cannot resume. A run-lifetime OS lock rejects concurrent execution. Generic turn
 and tool-batch events recover a durable model decision without another provider
 call; exact per-turn tool availability and native call/output linkage are stored at
@@ -207,6 +228,14 @@ including pending replay and checks. Each blocking operation receives remaining 
 Docker checks bind run/action execution identity so crash recovery does not duplicate
 the same check container; a check timeout is not model protocol failure.
 
+Completed probes also replay `action_id + input_hash`. If a probe was interrupted
+before its durable result, confirm cleanup of its exact labeled container and permit
+rerunning the isolated snapshot experiment on the bound baseline. This is not an
+exactly-once process guarantee. Container ownership mismatch or uncertain cleanup stops
+execution. The probe timeout is at most 30 seconds, reduced by the shared deadline,
+with a five-second cleanup reserve inside the row budget. Combined stdout/stderr is
+bounded to 12,000 bytes during collection, and excess output ends execution.
+
 ## Live and evaluation boundary
 
 Live mode accepts only checked-in `dev-train` tasks and requires an explicit model,
@@ -216,6 +245,14 @@ repository or evaluator subprocesses. Active runtime/lock files and the selected
 task package must be tracked and HEAD-clean; unrelated pathspecs do not block live
 preflight. The local evaluator image and digest are checked before provider
 dispatch; no pull/build/start occurs.
+Enabled probes additionally require the fixed clean official Python image already
+present locally; they never reuse the evaluator or historical custom sandbox image.
+The trusted wrapper is separately copied and mounted read-only, with bytes bound in
+the probe profile. Runtime content also hashes `docker/probe_runner.py` and
+`docker/Dockerfile.sandbox`, so those active paths must be tracked and HEAD-clean.
+Probe snapshots contain only current tracked regular public files and exclude `.git`,
+`.env*`, `.patchloop-hidden`, symlinks, and reparse points. Numeric non-root execution,
+no network, read-only root/source, bounded tmpfs and resource limits are host-controlled.
 
 Actual request input is counted immediately before generation. The ledger reserves
 uncached input plus a conservative output ceiling, lowers that ceiling when needed,
@@ -232,6 +269,12 @@ bytes, model/tool/sandbox identities, the visible-check diff, changed files, and
 the submitted artifact. The evaluator validates those inputs before workspace or
 check execution, then a clean workspace receives the exact artifact and private
 files. Agent context is never resumed with evaluator output.
+If probes executed, the manifest includes their count and content-addressed public
+receipts, binding action/input, source, diff, snapshot, image/profile, and execution-policy
+hashes. Validate receipts before evaluator workspace creation: absent or invalid evidence
+is safety ERROR; a valid policy receipt showing a violation is safety FAIL. Probe test
+outcomes never affect task acceptance. Preserve receipt and policy hashes on later
+evaluator failure. Merely enabling the capability requires no execution receipt.
 
 Task acceptance contains hidden, regression, and scope results only. Safety is a
 separate typed result for runtime contract, constrained tool surface, managed
@@ -267,16 +310,19 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: tool surface `v13` uses accurate complete-line evidence, contiguous union
-admission, pinned/merged context, optional run-local findings, advisory exploration,
-optional causal revision, exact candidate recovery, shared completion accounting, and
-propagated execution deadlines. It additionally constrains every non-inspection
-`evidence_goal` to JSON `null`, matching `PublicTurnDecision`, and retains bounded
-tool-name/argument-hash/field/code diagnostics for local conversion failures. The
-twenty-first row crossed that repaired boundary and reached evaluation, but task acceptance
-failed after 26 inspection turns and a broad manual path-walking edit with public semantic
-counterexamples. No twenty-second row is approved; local tests, mock evidence, and one
-failed live submission are not a model-quality claim.
+Current seam: tool surface `v14` adds stable run-local note IDs and explicit
+create/update/removal, guidance connecting mechanisms to small implementation choices,
+and an opt-in public Python experiment tool. Existing source admission, budget-only
+exploration, exact mutation recovery, provider diagnostics, and execution deadlines
+remain. The twenty-first v13 row reached evaluation, but task acceptance failed after
+26 inspection turns and a broad manual path-walking edit with public semantic
+counterexamples. Its prompts contained the core mechanism; duplicated or weakened
+notes are observed limitations, not proof that memory alone caused the failure.
+V14 passes Ruff, all 215 provider-free tests, and mock isolated evaluation; real probe
+execution remains untested. No twenty-second row is approved, and a
+future exact live authorization must explicitly include the probe capability if used.
+Local or mocked execution does not establish that the model chooses better experiments
+or reaches submission faster.
 
 ## Historical checkpoints
 
@@ -637,8 +683,15 @@ Freeze runtime files while running the suite: content-hash provenance tests inte
 reject concurrent source edits. To stay near the two-minute full-cycle target, run
 `test_dev_runner.py` plus `test_dev_resume_v12.py` in one pytest process and every other
 `test*.py` file in another, using distinct new short external basetemps. Do not omit tests
-or share temporary roots. Then run mock smoke. The current v13 patch passes seven focused
-schema/diagnostic/resume cases, Ruff, all 175 tests (64 in 80.06 seconds and 111 in 58.33
+or share temporary roots. Then run mock smoke. V14 passed Ruff and 215 tests: 64 in
+84.63 seconds and 151 in 82.70 seconds, running concurrently. A final 500-character
+action-ID receipt-boundary correction passed all ten probe-provenance tests in 6.52
+seconds. Mock `run_dev_0e6b57566f77420b`, under `C:\pt\pl-v14-smoke-final`, reached
+`EVALUATOR_PASS` with task acceptance PASS, safety NOT_RUN, one accepted mutation,
+four model turns, five actions, and zero cost. Docker/probe launches were mocked;
+neither real execution nor availability of the pinned probe image is validated. The preceding
+v13 checkpoint passed seven focused schema/diagnostic/resume cases, Ruff, all 175 tests
+(64 in 80.06 seconds and 111 in 58.33
 seconds in parallel), and mock isolated evaluation in run
 `run_dev_d22310790c4a4696`. It is local/provider-free evidence, not a live agent-success
 result.

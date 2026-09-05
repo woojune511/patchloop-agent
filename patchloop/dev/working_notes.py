@@ -1,18 +1,10 @@
-"""Small model-authored public observations, separate from reasoning state."""
+"""Small source-backed public working notes, separate from reasoning state."""
 
 from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-
-from patchloop.util import canonical_json, sha256_json
-
-
-def finding_identity(evidence: list[dict[str, Any]]) -> str:
-    """Updated statements replace the same cited evidence, independent of ref order."""
-
-    return sha256_json({"evidence": sorted(evidence, key=canonical_json)})
 
 
 class _NoteModel(BaseModel):
@@ -32,6 +24,9 @@ class ToolNoteEvidence(_NoteModel):
 
 
 class PublicFinding(_NoteModel):
+    # Defaults permit reading earlier synthetic decisions; the provider wire shape
+    # requires explicit create/update intent for every finding.
+    note_id: str | None = Field(default=None, pattern=r"^n[1-9][0-9]*$", max_length=30)
     statement: str = Field(min_length=1, max_length=400)
     evidence: list[
         Annotated[SourceNoteEvidence | ToolNoteEvidence, Field(discriminator="kind")]
@@ -40,6 +35,9 @@ class PublicFinding(_NoteModel):
 
 class WorkingNotesUpdate(_NoteModel):
     findings: list[PublicFinding] = Field(max_length=2)
+    remove_note_ids: list[
+        Annotated[str, Field(pattern=r"^n[1-9][0-9]*$", max_length=30)]
+    ] = Field(default_factory=list, max_length=6)
     open_question: str | None = Field(max_length=500)
 
 
@@ -69,9 +67,12 @@ def memory_update_schema() -> dict[str, Any]:
     return {
         "type": ["object", "null"],
         "description": (
-            "Optional small public source observations learned from preceding results, "
-            "not reasoning or a plan. Only the first non-null update in a batch is used. "
-            "Cite already observed public ranges or prior public tool action IDs."
+            "Optional concise public observations, current implementation approach, and "
+            "unverified behavior, not a reasoning transcript. Cite already observed public "
+            "ranges or prior public tool action IDs. Use note_id=null to create a note or "
+            "an existing note_id to update it, independent of citation ranges. Consolidate "
+            "duplicates by updating one note and removing the others. Only the first "
+            "non-null update in a batch is used; null preserves notes and the question."
         ),
         "properties": {
             "findings": {
@@ -80,18 +81,30 @@ def memory_update_schema() -> dict[str, Any]:
                 "items": {
                     "type": "object",
                     "properties": {
+                        "note_id": {
+                            "type": ["string", "null"], "pattern": r"^n[1-9][0-9]*$",
+                            "maxLength": 30,
+                            "description": "null creates; an existing note ID updates that note.",
+                        },
                         "statement": {"type": "string", "minLength": 1, "maxLength": 400},
                         "evidence": {
                             "type": "array", "minItems": 1, "maxItems": 2,
                             "items": {"anyOf": [source, result]},
                         },
                     },
-                    "required": ["statement", "evidence"],
+                    "required": ["note_id", "statement", "evidence"],
                     "additionalProperties": False,
                 },
             },
+            "remove_note_ids": {
+                "type": "array", "maxItems": 6,
+                "items": {
+                    "type": "string", "pattern": r"^n[1-9][0-9]*$", "maxLength": 30,
+                },
+                "description": "Existing notes to remove; use [] to retain them.",
+            },
             "open_question": {"type": ["string", "null"], "maxLength": 500},
         },
-        "required": ["findings", "open_question"],
+        "required": ["findings", "remove_note_ids", "open_question"],
         "additionalProperties": False,
     }

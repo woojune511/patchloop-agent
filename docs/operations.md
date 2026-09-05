@@ -61,7 +61,8 @@ uv run patchloop dev `
 That exact command is the development approval for its provider, task, model,
 credential file, repeat count, and invocation-wide cap. Live mode accepts only
 checked-in `dev-train` tasks. Every active `patchloop/**/*.py`, `pyproject.toml`,
-`uv.lock`, and selected task-package input must be tracked and match HEAD;
+`uv.lock`, trusted `docker/probe_runner.py`, `docker/Dockerfile.sandbox`, and selected
+task-package input must be tracked and match HEAD;
 unrelated scratch or untracked paths outside those pathspecs are ignored. The
 credential file may contain only one `OPENAI_API_KEY=...` assignment. It may be the
 ignored repository-root `.env` or an exact external path, but it must never be tracked
@@ -84,7 +85,14 @@ before the latest public context. PatchLoop requests
 `reasoning.encrypted_content` while retaining `store=false`. Plaintext reasoning,
 reasoning summaries, and non-tool response content are not retained or replayed.
 The application still enforces its smaller grammar: up to four reads/searches, or
-exactly one mutation, check, finish, or stop.
+exactly one mutation, check, enabled probe, finish, or stop.
+
+`run_probe` is off by default. An exact future live authorization must include
+`--enable-probes` to add this capability; enabling it also requires the separate clean
+Python image in [the probe runtime contract](../docker/README.md) to be present locally.
+Preflight verifies that image and the hash-bound trusted wrapper before provider dispatch.
+It does not pull/build an image, start Docker Desktop, or fall back to the evaluator image.
+No twenty-second live row is authorized by the v14 implementation or local validation.
 
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against
 the official [API pricing](https://developers.openai.com/api/docs/pricing) and
@@ -135,12 +143,19 @@ operational read cache remains keyed only by the executable request and current 
 characters and one or two source-range/prior-tool-result references, plus an open
 question of at most 500 characters or null. Only the first non-null update per batch is
 validated before tool execution; additional non-null updates produce a bounded diagnostic
-and are ignored. Revised statements upsert by canonical evidence identity, not text.
+and are ignored. Findings have stable run-local IDs independent of their source ranges:
+`note_id=null` allocates a new ID such as `n3`; an existing ID updates that note.
+`remove_note_ids` explicitly removes redundant IDs when consolidating notes. At most
+six findings are retained; unknown IDs or invalid citations produce bounded diagnostics.
 Tool-result notes use the result's actual output diff, including the post-mutation diff.
 Invalid notes do not reject that action. Durable
 `working_notes_updated` events restore at most six run-local findings. Source notes
 rebind uniquely unchanged text or expire; old tool-result references are historical.
-This does not enable cross-run memory or store raw reasoning.
+Allocation, update, removal, and eviction are journaled for deterministic resume.
+`memory_update=null` retains the notes and open question; `open_question=null` inside
+an update resolves the question. Notes can retain the mechanism, chosen approach, and
+unverified behavior without a mandatory plan. This does not enable cross-run memory or
+store raw reasoning, and the harness verifies citations rather than interpretation truth.
 
 The public context presents the workflow gate, budget, action horizon, mutation
 readiness, mutation scope budget, evidence ledger, and any active mapped public-check
@@ -205,7 +220,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v13`; prior
+These output and scheduler semantics are bound by tool-surface identity `v14`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually
@@ -255,6 +270,28 @@ blocking operation. Docker checks carry run/action identity so recovery can reco
 their execution without launching duplicate check containers. Process downtime remains
 excluded from active execution and recorded separately as run age.
 
+When enabled, `run_probe(question, python_source)` uses one model turn and one tool
+action only when both budgets retain the protected completion path afterward. Source
+is limited to 8,000 characters and 32,000 UTF-8 bytes; execution is limited to 30 seconds
+and combined stdout/stderr to 12,000 bytes while collecting output. The shared deadline
+can reduce execution time and reserves up to five seconds within the remaining row
+budget for cleanup. The host exports current tracked public files, excluding `.git`,
+`.env*`, and `.patchloop-hidden`, and rejects symlinks or reparse points. Only this
+read-only snapshot and the trusted wrapper are mounted into the clean Python container;
+the agent worktree, Git data, credentials, and private evaluator material are absent.
+The container runs as numeric non-root user with no network, a read-only root, dropped
+capabilities, and bounded CPU, memory, processes, and temporary storage.
+
+A probe cannot change the worktree or the required-check status. Its public receipt binds
+source, current diff, snapshot, image, profile, action/input, and execution-policy hashes.
+Its result can be cited as diagnostic evidence but does not grant source-anchor coverage.
+Failure does not require a mutation or invalidate a previously checked baseline.
+If a probe lacks a durable result after interruption, recovery confirms cleanup of only
+its owned container and may rerun the isolated experiment on the same bound baseline.
+This is safe recovery of an isolated experiment, not an exactly-once process guarantee.
+Cleanup uncertainty stops further execution. Durable completed results use normal
+`action_id + input_hash` replay.
+
 The full submitted patch is stored by content hash. A separate
 manifest is atomically recorded before evaluator execution and binds the exact
 task bytes, full runtime bytes, model/tool/sandbox identities, visible-check diff,
@@ -267,6 +304,14 @@ and submitted artifact against the manifest. Public summaries expose
 `task_acceptance`, `safety_state`, a safe `failure_class`, and
 `claim_eligible=false`. `EVALUATOR_PASS` means task acceptance only; it does not
 mean an official run or safety PASS.
+
+Enabled-probe manifests also bind image/profile identities, execution count, and
+content-addressed public receipts. Before creating a workspace, the evaluator validates
+receipt integrity and policy bindings. Missing or invalid receipts produce safety
+`ERROR`; a valid receipt showing a requested-policy violation produces `FAIL`. Probe
+outcomes never count as required tests. Receipt and execution-policy hashes remain in
+provenance even if subsequent evaluation fails. Enabled but unused probes require no
+execution receipt, and disabled runs retain their existing sandbox identity.
 
 Task acceptance combines hidden checks, public regression, and scope policies.
 Safety is a separate typed axis covering runtime contract, constrained tool
@@ -299,7 +344,9 @@ uv run patchloop dev `
 
 Provider, task, model, reasoning effort, resolved credential-file path, invocation
 cap, limits, runtime content, sandbox identity, and full task-content identity must
-match the stored envelope exactly. A mismatch returns `RESUME_CONTRACT_MISMATCH`
+match the stored envelope exactly. Include `--enable-probes` again only when it was in
+the original invocation; the probe profile and image are part of that exact identity.
+A mismatch returns `RESUME_CONTRACT_MISMATCH`
 before a provider call and leaves the journal unchanged. Pre-envelope runs,
 including `run_dev_e89e940c0715474e`, are immutable evidence and cannot resume.
 

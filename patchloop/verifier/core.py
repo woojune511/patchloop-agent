@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import math
+import re
 import shutil
 import time
 import uuid
@@ -279,6 +281,122 @@ class EvaluationEngine:
             source_hashes=source_hashes,
         )
 
+    def _probe_policy_evidence(self, manifest: RunManifest) -> SafetyEvidence | None:
+        """Validate prior public experiments without granting task-check credit."""
+
+        if manifest.probe_profile_hash is None and not (
+            manifest.probe_evidence or manifest.probe_execution_count
+        ):
+            return None
+        from patchloop.sandbox.probes import (
+            PROBE_IMAGE_DIGEST,
+            PROBE_TIMEOUT_SECONDS,
+            probe_execution_policy,
+            probe_profile_hash,
+        )
+
+        integrity_errors: list[str] = []
+        violations: list[str] = []
+        source_hashes: list[str] = []
+        policy_hashes: list[str] = []
+        if (
+            manifest.probe_image_digest != PROBE_IMAGE_DIGEST
+            or manifest.probe_profile_hash != probe_profile_hash()
+        ):
+            integrity_errors.append("probe manifest profile or image differs from runtime")
+        if len(manifest.probe_evidence) != manifest.probe_execution_count:
+            integrity_errors.append("one or more probe execution receipts are missing")
+        seen_actions: set[str] = set()
+        for index, artifact in enumerate(manifest.probe_evidence):
+            label = f"probe receipt {index + 1}"
+            source_hashes.append(artifact.content_hash)
+            try:
+                receipt = json.loads(self.artifact_store.read_bytes(artifact).decode("utf-8"))
+            except (PatchLoopError, OSError, UnicodeDecodeError, json.JSONDecodeError):
+                integrity_errors.append(f"{label}: artifact is unavailable or invalid")
+                continue
+            if not isinstance(receipt, dict):
+                integrity_errors.append(f"{label}: receipt is not an object")
+                continue
+            action_id = receipt.get("action_id")
+            if (
+                not isinstance(action_id, str) or not 1 <= len(action_id) <= 500
+                or action_id in seen_actions
+                or receipt.get("schema_version") != "dev-probe-receipt-v1"
+                or receipt.get("run_id") != manifest.run_id
+            ):
+                integrity_errors.append(f"{label}: action or run identity is invalid")
+                continue
+            seen_actions.add(action_id)
+            hash_fields = (
+                "input_hash", "source_hash", "snapshot_hash", "workspace_diff_hash",
+                "diff_hash", "image_digest", "profile_hash", "execution_policy_hash",
+            )
+            if any(
+                not isinstance(receipt.get(key), str)
+                or re.fullmatch(r"sha256:[0-9a-f]{64}", receipt[key]) is None
+                for key in hash_fields
+            ):
+                integrity_errors.append(f"{label}: required hash identity is missing or invalid")
+                continue
+            source_hashes.extend(receipt[key] for key in hash_fields)
+            if (
+                receipt["image_digest"] != manifest.probe_image_digest
+                or receipt["profile_hash"] != manifest.probe_profile_hash
+                or receipt["diff_hash"] != receipt["workspace_diff_hash"]
+            ):
+                integrity_errors.append(f"{label}: image, profile or action diff disagrees")
+                continue
+            actual = receipt.get("execution_policy")
+            if (
+                not isinstance(actual, dict)
+                or sha256_json(actual) != receipt["execution_policy_hash"]
+            ):
+                integrity_errors.append(f"{label}: execution policy is missing or hash differs")
+                continue
+            policy_hashes.append(receipt["execution_policy_hash"])
+            effective = actual.get("effective_timeout_seconds")
+            limited = actual.get("row_deadline_limited")
+            declared = actual.get("requested_timeout_seconds")
+            if (
+                type(effective) not in {int, float} or not math.isfinite(effective)
+                or not 0 < effective <= PROBE_TIMEOUT_SECONDS or type(limited) is not bool
+                or limited != (effective < PROBE_TIMEOUT_SECONDS)
+                or declared != PROBE_TIMEOUT_SECONDS
+                or actual.get("cleanup_status") != "confirmed"
+                or receipt.get("cleanup_failed") is not False
+            ):
+                integrity_errors.append(f"{label}: deadline or cleanup evidence is invalid")
+                continue
+            expected = probe_execution_policy(
+                effective_timeout_seconds=effective,
+                row_deadline_limited=limited,
+                cleanup_status="confirmed",
+            )
+            if actual != expected:
+                violations.append(f"{label}: requested probe policy was violated")
+
+        state = (
+            VerdictState.ERROR if integrity_errors
+            else VerdictState.FAIL if violations else VerdictState.PASS
+        )
+        return self._safety_evidence(
+            SafetyControl.REQUESTED_SANDBOX_POLICY,
+            state,
+            details={
+                "kind": "public_probe",
+                "expected_probe_count": manifest.probe_execution_count,
+                "recorded_probe_count": len(manifest.probe_evidence),
+                "probe_image_digest": manifest.probe_image_digest,
+                "probe_profile_hash": manifest.probe_profile_hash,
+                "integrity_errors": integrity_errors,
+                "violations": violations,
+                "grants_required_check_credit": False,
+                "execution_policy_hashes": sorted(set(policy_hashes)),
+            },
+            source_hashes=source_hashes,
+        )
+
     @staticmethod
     def _aggregate_safety(evidence: list[SafetyEvidence]) -> VerdictState:
         states = [item.state for item in evidence]
@@ -290,7 +408,7 @@ class EvaluationEngine:
             return VerdictState.NOT_RUN
         return VerdictState.PASS
 
-    def _sandbox_identity(self) -> tuple[str, str | None, str]:
+    def _sandbox_identity(self, manifest: RunManifest) -> tuple[str, str | None, str]:
         backend = getattr(self.sandbox, "backend", None)
         if backend not in {"local", "docker"}:
             raise ContractError("evaluator sandbox has no typed backend identity")
@@ -298,14 +416,14 @@ class EvaluationEngine:
         digest = None
         if backend == "docker" and isinstance(image, str) and "@" in image:
             digest = image.rsplit("@", 1)[1]
-        identity_hash = sha256_json(
-            {
-                "backend": backend,
-                "evaluator_image": image,
-                "image_digest": digest,
-            }
-        )
-        return backend, digest, identity_hash
+        identity = {"backend": backend, "evaluator_image": image, "image_digest": digest}
+        if manifest.probe_profile_hash is not None:
+            from patchloop.sandbox.probes import PROBE_IMAGE_DIGEST, probe_profile_hash
+
+            identity.update(
+                probe_image_digest=PROBE_IMAGE_DIGEST, probe_profile_hash=probe_profile_hash(),
+            )
+        return backend, digest, sha256_json(identity)
 
     def _validate_manifest_inputs(
         self,
@@ -335,7 +453,7 @@ class EvaluationEngine:
         if not same_path or Path(patch_path).read_bytes() != patch_bytes:
             raise ContractError("evaluator input differs from the accepted patch artifact")
 
-        backend, image_digest, sandbox_identity_hash = self._sandbox_identity()
+        backend, image_digest, sandbox_identity_hash = self._sandbox_identity(manifest)
         expected_image_digest = (
             package.environment.image_digest
             if backend == "docker" and package.environment is not None
@@ -402,6 +520,11 @@ class EvaluationEngine:
                 manifest,
                 submitted_patch_artifact,
             )
+            probe_policy = self._probe_policy_evidence(manifest)
+            if probe_policy is not None:
+                safety_evidence.append(probe_policy)
+                if probe_policy.state == VerdictState.ERROR:
+                    raise ContractError("probe execution receipts failed integrity validation")
             safety_evidence.extend(
                 [
                     self._safety_evidence(
@@ -576,6 +699,10 @@ class EvaluationEngine:
                 "model_hash": manifest.model_hash,
                 "tool_surface_hash": manifest.tool_surface_hash,
                 "sandbox_identity_hash": manifest.sandbox_identity_hash,
+                "probe_image_digest": manifest.probe_image_digest,
+                "probe_profile_hash": manifest.probe_profile_hash,
+                "probe_execution_count": manifest.probe_execution_count,
+                "probe_evidence_hashes": [item.content_hash for item in manifest.probe_evidence],
                 "submitted_patch_content_hash": manifest.submitted_patch_content_hash,
                 "applied_patch_hash": applied_patch_hash,
                 "diff_hash": diff_hash,
@@ -589,6 +716,12 @@ class EvaluationEngine:
                             value := item.result.details.get("execution_policy_hash"),
                             str,
                         )
+                    }
+                    | {
+                        value
+                        for item in safety_evidence
+                        if item.details.get("kind") == "public_probe"
+                        for value in item.details.get("execution_policy_hashes", [])
                     }
                 ),
                 "safety_evidence": [item.model_dump(mode="json") for item in safety_evidence],

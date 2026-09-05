@@ -311,9 +311,10 @@ def note_call(action_id, update):
 
 def source_note(statement="The file begins with first.", start=1, end=1):
     return {
-        "findings": [{"statement": statement, "evidence": [{
+        "findings": [{"note_id": None, "statement": statement, "evidence": [{
             "kind": "source", "path": "src.py", "start_line": start, "end_line": end,
         }]}],
+        "remove_note_ids": [],
         "open_question": "Which observed branch should change?",
     }
 
@@ -366,20 +367,21 @@ def test_source_note_rebinds_unique_unchanged_text_but_expires_ambiguous_text(so
     assert gateway.working_notes()["findings"] == []
 
 
-def test_updated_statement_upserts_same_evidence_independent_of_reference_order(source_gateway):
+def test_explicit_note_update_preserves_identity_independent_of_reference_order(source_gateway):
     gateway, _, tracked = source_gateway
     result = observe(gateway, "src.py", 1, 4)
     first = source_note("Initial observation.")
     first["findings"][0]["evidence"].append({"kind": "tool_result", "action_id": result.action_id})
     gateway.record_working_notes_update([note_call("a", first)], turn_id="first")
-    original_id = gateway.working_notes()["findings"][0]["finding_id"]
+    original_id = gateway.working_notes()["findings"][0]["note_id"]
     revised = copy.deepcopy(first)
     revised["findings"][0]["statement"] = "More precise public observation."
+    revised["findings"][0]["note_id"] = original_id
     revised["findings"][0]["evidence"].reverse()
     gateway.record_working_notes_update([note_call("b", revised)], turn_id="revised")
     notes = gateway.working_notes()
     assert len(notes["findings"]) == 1
-    assert notes["findings"][0]["finding_id"] == original_id
+    assert notes["findings"][0]["note_id"] == original_id
     assert notes["findings"][0]["statement"] == "More precise public observation."
     restored = DevToolGateway(
         workspace=gateway.workspace, public_task=gateway.public_task, sandbox=None,

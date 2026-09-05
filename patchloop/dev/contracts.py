@@ -16,13 +16,15 @@ from patchloop.util import sha256_json
 DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
 DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
-DEV_SINGLE_ACTION_TOOLS = frozenset({"replace_text", "run_check", "finish_task", "stop_task"})
+DEV_SINGLE_ACTION_TOOLS = frozenset({
+    "replace_text", "run_check", "run_probe", "finish_task", "stop_task",
+})
 
 
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v13",
+            "schema_version": "dev-tool-surface-v14",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -49,7 +51,8 @@ def dev_tool_surface_hash() -> str:
             "evidence_plateau_transition": "advisory-only-v2",
             "check_recovery_reserve": "order-independent-distinct-failure-bound-v2",
             "context_projection": "observed-priority-merged-24000-chars-v1",
-            "working_notes": "run-local-source-linked-nonblocking-v1",
+            "working_notes": "stable-note-id-explicit-upsert-remove-v2",
+            "public_probe": "optional-clean-python-diagnostic-protected-budget-v1",
             "mutation_recovery": "atomic-complete-candidate-diff-v2",
             "correction_recovery": "journal-derived-unconsumed-v2",
             "execution_deadline": "shared-active-deadline-owned-cleanup-v1",
@@ -252,6 +255,7 @@ class DevRunRequest(StrictModel):
         pattern=r"^run_dev_[a-zA-Z0-9_-]+$",
     )
     state_root: Path | None = None
+    enable_probes: bool = False
     limits: DevLimits = Field(default_factory=DevLimits)
 
     @model_validator(mode="after")
@@ -291,6 +295,8 @@ class DevRunEnvelope(StrictModel):
     runtime_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
+    probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     model: str
     reasoning_effort: Literal["none", "low", "medium", "high", "xhigh"]
     credential_file_path_hash: str | None = Field(
@@ -309,6 +315,8 @@ class DevRunEnvelope(StrictModel):
 
     @model_validator(mode="after")
     def provider_boundary_is_exact(self) -> DevRunEnvelope:
+        if (self.probe_image_digest is None) != (self.probe_profile_hash is None):
+            raise ValueError("probe image and profile identities must be paired")
         if self.cost_start_nanos > self.max_cost_nanos:
             raise ValueError("run envelope cost start exceeds its invocation cap")
         if self.provider == "openai":

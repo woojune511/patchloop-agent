@@ -27,7 +27,47 @@ Repository policy alone never initiates paid work. The twenty-one live observati
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v13
+## Current implementation: tool surface v14
+
+V14 adds stable run-local note IDs and optional public Python experiments. Findings
+are explicitly created, revised, consolidated, or removed by short `note_id`, rather
+than silently replacing every statement citing the same source. At most six remain;
+source validation, stale-note expiry, nonblocking diagnostics, and durable resume remain.
+The prompt encourages preserving useful mechanism observations, reusing existing
+behavior owners, and testing unverified assumptions without requiring a separate plan.
+
+`--enable-probes` explicitly enables `run_probe(question, python_source)`; it is off by
+default and bound into the run envelope, sandbox identity, and manifest. A probe costs
+one model turn and one tool action and is offered only when the protected completion
+and recovery budget remains afterward. It never grants visible-check credit or forces
+an edit. Only a locally present pinned public Python image is accepted, with an exported
+tracked public source snapshot and separately hash-bound trusted wrapper. No evaluator
+image, Git metadata, credential file, or hidden overlay is mounted. Experiments have
+8,000-character input, 30-second execution, and 12,000-byte combined output limits,
+plus the shared deadline and exact-owned-container cleanup. Missing image fails
+preflight; there is no automatic startup, pull, build, or host execution fallback.
+Receipts bind source/snapshot/diff/image/policy identities into failure and evaluator
+provenance. Completed results replay without execution; interrupted experiments may be
+repeated only after owned cleanup in a fresh snapshot, not claimed as exactly-once code.
+
+The twenty-first-row diagnosis is narrower than "the root mechanism disappeared from
+memory": recorded contexts retained it, while four or five of six findings often
+repeated wrapper details and a later same-source update weakened the mechanism note.
+V14 supplies explicit memory maintenance and optional counterexample experiments;
+it does not establish that either change makes the agent solve the task.
+
+V14 provider-free validation passes Ruff and all 215 tests. The frozen full-suite groups
+passed 64 cases in 84.63 seconds and 151 in 82.70 seconds, running concurrently with
+separate short external temporary roots. Forty new cases cover note maintenance,
+probe isolation and budgets, crash/resume, receipt integrity, and failure provenance.
+A final receipt-validator alignment to the gateway's 500-character action-ID limit
+was rechecked with all ten probe-provenance cases (6.52 seconds). Mock
+`run_dev_0e6b57566f77420b`, under `C:\pt\pl-v14-smoke-final`, reaches isolated
+`EVALUATOR_PASS` through one accepted mutation, four model turns, and five actions.
+Task acceptance is PASS, safety NOT_RUN, `claim_eligible=false`, and cost zero. Probe
+launches and Docker policies were mocked; neither real probe execution nor local
+availability of its pinned image has been validated. No twenty-second live row or
+Docker execution is authorized by this implementation.
 
 The September 5 review found remaining harness defects, not evidence that model
 judgment alone explained unsuccessful runs. V12 corrects truncated/empty read evidence,
@@ -78,7 +118,7 @@ Task acceptance is PASS, safety NOT_RUN, `claim_eligible=false`, and provider co
 Fault regressions include reordered parallel-result hydration, same-action read replay,
 source-linked note upsert, unconsumed correction replay, complete-candidate crash recovery,
 deadline expiry before dispatch/evaluator work, and owned-container cleanup uncertainty.
-Earlier checkpoint counts and policies below describe history, not the current v13
+Earlier checkpoint counts and policies below describe history, not the current v14
 contract. No twenty-second live row is authorized.
 
 The separately authorized twentieth row used the same pyfakefs version-2 task,

@@ -22,6 +22,7 @@ _SECCOMP_RET_ERRNO = 0x00050000
 _SECCOMP_RET_ALLOW = 0x7FFF0000
 _BPF_LD_W_ABS = 0x20
 _BPF_JMP_JEQ_K = 0x15
+_BPF_JMP_JGE_K = 0x35
 _BPF_RET_K = 0x06
 
 
@@ -53,7 +54,10 @@ def _read_source() -> bytes:
     signal.signal(signal.SIGALRM, _input_timeout)
     signal.setitimer(signal.ITIMER_REAL, INPUT_TIMEOUT_SECONDS)
     try:
-        return sys.stdin.buffer.read()
+        source = sys.stdin.buffer.read(32_001)
+        if len(source) > 32_000:
+            raise ValueError("probe source exceeds 32000 bytes")
+        return source
     except _InputTimeout:
         os.write(
             sys.stderr.fileno(),
@@ -104,7 +108,23 @@ def _denied_syscalls() -> tuple[int, ...]:
 
 
 def _install_process_boundary() -> None:
-    instructions = [_SockFilter(_BPF_LD_W_ABS, 0, 0, 0)]
+    machine = platform.machine().lower()
+    if machine in {"x86_64", "amd64"}:
+        audit_arch = 0xC000003E
+    elif machine in {"aarch64", "arm64"}:
+        audit_arch = 0xC00000B7
+    else:
+        raise RuntimeError(f"unsupported probe architecture: {machine}")
+    # seccomp syscall numbers only have meaning within their declared ABI.
+    # Reject alternate audit architectures and the x32 syscall-number bit.
+    instructions = [
+        _SockFilter(_BPF_LD_W_ABS, 0, 0, 4),
+        _SockFilter(_BPF_JMP_JEQ_K, 1, 0, audit_arch),
+        _SockFilter(_BPF_RET_K, 0, 0, _SECCOMP_RET_ERRNO | errno.EPERM),
+        _SockFilter(_BPF_LD_W_ABS, 0, 0, 0),
+        _SockFilter(_BPF_JMP_JGE_K, 0, 1, 0x40000000),
+        _SockFilter(_BPF_RET_K, 0, 0, _SECCOMP_RET_ERRNO | errno.EPERM),
+    ]
     for syscall_number in _denied_syscalls():
         instructions.extend(
             [
@@ -171,6 +191,10 @@ def _execute_child(code: object) -> None:
     try:
         os.setsid()
         _install_process_boundary()
+        # Trusted imports above finish before public source becomes importable.
+        # Work happens in ephemeral /tmp; the public snapshot is read-only.
+        sys.dont_write_bytecode = True
+        sys.path.insert(0, "/workspace")
         namespace = {
             "__name__": "__main__",
             "__file__": "<patchloop-probe>",
@@ -231,7 +255,7 @@ def main() -> int:
         return 2
     try:
         source = _read_source().decode("utf-8")
-    except (_InputTimeout, UnicodeDecodeError):
+    except (_InputTimeout, UnicodeDecodeError, ValueError):
         return TIMEOUT_EXIT_CODE
     try:
         code = compile(source, "<patchloop-probe>", "exec")

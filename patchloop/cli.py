@@ -68,6 +68,9 @@ def dev(
         typer.Option("--max-cost-usd"),
     ] = None,
     repeat: Annotated[int, typer.Option("--repeat", min=1, max=6)] = 1,
+    enable_probes: Annotated[
+        bool, typer.Option("--enable-probes", help="Enable bounded clean-Python diagnostics.")
+    ] = False,
     resume_run_id: Annotated[
         str | None,
         typer.Option("--resume-run-id"),
@@ -88,6 +91,7 @@ def dev(
                 env_file=env_file,
                 max_cost_usd=_parse_cost(max_cost_usd),
                 repeat=repeat,
+                enable_probes=enable_probes,
                 resume_run_id=resume_run_id,
             )
         )
