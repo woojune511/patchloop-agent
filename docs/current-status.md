@@ -11,9 +11,9 @@ claim commands are absent.
 - default one-row live limit: 1,800 seconds
 - 40 model calls, 100 tool actions, and 4 accepted mutations
 - one consecutive protocol/incomplete correction and at most 4 parallel reads
-- completion-slack inspection with one warned final opportunity, independent bounded
-  two-call mutation and minimum three-call failed-check recovery reserves, and a sticky,
-  non-blocking public-coverage commitment signal; legacy 24/3 counters are telemetry only
+- completion-slack inspection plus a coverage-responsive warned final batch, bounded
+  two-call mutation recovery and per-visible-check recovery reserves; legacy 24/3
+  counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
 ## Authority
@@ -473,6 +473,43 @@ five tool actions through one accepted mutation; task acceptance is PASS, safety
 NOT_RUN, `claim_eligible=false`, and provider cost is zero. This validates local action-
 space wiring, not live use of the newly exposed repair.
 
+The separately authorized nineteenth row used the same pyfakefs version-2 task, model,
+reasoning, credential path, repetition, cap, and external state root. Immutable run
+`run_dev_87185b3ce20a4333` ended at `LIMIT_REACHED` after 341.375 active seconds and
+342 seconds of run age, with 39 model/input-count calls, 44 tool actions, two accepted
+mutations, and $0.472921050 of provider cost. It performed 25 reads, 13 searches, three
+replacement attempts (one rejected and two accepted), and three public checks. All 39
+responses carried encrypted reasoning continuation. There was no submission or
+evaluator execution.
+
+The first replacement used stale docstring text in its exact anchor and was rejected.
+After a targeted read, the next mutation implemented recursive parent creation. The
+`parent-traversal-contract` check failed at its public intermediate-directory `0o755`
+assertion. Tool surface v10 correctly exposed both immediate `replace_text` and one
+optional targeted read. The model used that read to find `PERM_DEF`, repaired the parent
+recursion, and the contract passed. The later `upstream-fake-os-regression` check then
+failed two public broken-parent-link cases: expected `ENOENT`, observed `EEXIST`. At that
+point one model call remained against a four-call repair, two-check rerun, and finish
+path, so the pre-dispatch horizon correctly stopped the row.
+
+This row confirms the v10 action-mask repair and isolates two later scheduling defects.
+The sticky commitment was advisory only, so 33 inspection turns could consume nearly
+all completion slack. The single shared failed-check allowance was then consumed by the
+first check and did not protect a repair path for the distinct second check. Tool surface
+`v11` makes the next batch after two consecutive zero-coverage batches a warned final
+parallel inspection. New coverage resets the current plateau and reopens exploration;
+another zero-coverage batch closes broad read/search for the current diff without a new
+terminal or any restriction on targeted recovery reads. It also reserves one recovery
+path per distinct visible-check ID, bounded by remaining accepted mutations and sized to
+rerun earlier declared checks invalidated by a repair. No pyfakefs-specific solution is
+encoded.
+Focused scheduler tests and Ruff pass. All 109 provider-free tests pass in 77.62 seconds
+with external temp root `C:\pt\pl-v11-full-0905-c`. Mock run
+`run_dev_54650ea291e24cd0` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation; task acceptance is PASS, safety is
+NOT_RUN, `claim_eligible=false`, and provider cost is zero. This is local scheduler and
+wiring evidence, not live task-quality evidence.
+
 Read-only hydration of the third live journal recovers its full failed-diff hash,
 hypothesis, `loguru/_handler.py` anchor, and patch line 27. The first live row ran on
 2026-09-02:
@@ -641,8 +678,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth through eighteenth rows were separately authorized and are now
-terminal. No nineteenth row is authorized.
+the later thirteenth through nineteenth rows were separately authorized and are now
+terminal. No twentieth row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -699,8 +736,11 @@ binding on all four mutations, then exposed the public failure-localization and 
 pivot boundary now addressed by tool surface `v9`. The separately authorized eighteenth
 row confirmed that focus and the model's correct repair diagnosis, then exposed the
 mandatory-read action mask. Tool surface `v10` makes that read optional when current
-post-image evidence already supports `replace_text`. No paid retry or nineteenth row is
-authorized.
+post-image evidence already supports `replace_text`. The separately authorized
+nineteenth row confirmed that repair path, then exposed soft-only commitment and the
+single shared failed-check reserve. Tool surface `v11` closes broad inspection only
+after a warned zero-coverage batch and preserves one bounded recovery path per distinct
+visible check. No paid retry or twentieth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

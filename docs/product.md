@@ -94,23 +94,25 @@ remaining visible checks, submission, or an explicit stop retain the required ca
 Each decision uses one fresh public workspace snapshot for both its action policy and
 model context. This keeps the prompt and action mask coherent without caching state
 across mutations, checks, or recovery boundaries.
-The horizon holds two independent bounded allowances: two calls for one rejected-
-mutation recovery and at least three calls for one failed-visible-check recovery. The
-latter conservatively covers the missing-anchor case: one targeted read, replacement,
-recheck, and reruns of checks that passed earlier on the invalidated diff. After a check
-fails, current exact post-image evidence keeps replacement available immediately; a
-restricted read is optional and appears alongside it only when completion slack remains.
-Only missing current anchor evidence makes that targeted read a required step in the
-minimum path. Consuming one allowance does not erase the other. Best-path and protected-
-path feasibility both reflect actual remaining model and tool budgets, not merely the
-presence of another mutation slot.
+The horizon holds two kinds of bounded allowance: two calls for one rejected-mutation
+recovery and one failed-check recovery path for each distinct visible check that can
+still fit within the accepted-mutation cap. A check's allowance conservatively covers a
+missing-anchor read, replacement, recheck, and declared earlier checks invalidated by
+that replacement. Once a check consumes its own allowance, later checks retain theirs.
+After a check fails, current exact post-image evidence keeps replacement available
+immediately; a restricted read is optional and appears alongside it only when completion
+slack remains. Only missing current anchor evidence makes that targeted read a required
+step in the minimum path. Best-path and protected-path feasibility both reflect actual
+remaining model, tool, and mutation budgets.
 After two consecutive successful inspection batches add no non-overlapping coverage in
-any tracked public source while a current mutation anchor exists, the context adds a
-soft `commitment_signal` recommending mutation or explicit stop. A new query, shifted
-span, or contained range can be novel telemetry without being new evidence. Editable
-and supporting coverage remain separate. Once activated, the signal stays active for
-the current diff even when a later inspection adds coverage; mutation or a check/
-completion transition resets it. The signal does not remove read/search.
+any tracked public source while a current mutation anchor exists, the context warns that
+the next parallel batch is the final broad inspection opportunity for that diff. A new
+query, shifted span, or contained range can be novel telemetry without being new
+evidence. If the warned batch adds coverage, exploration reopens while the sticky
+commitment remains advisory. If it adds none, broad read/search closes and the agent must
+mutate or stop; targeted failure-recovery reads remain separate. Editable and supporting
+coverage remain distinct. Successful mutation or a check/completion transition resets
+the signal.
 Every such change is journaled and projected once; corrections name only tools that are
 actually present in that turn's action space.
 

@@ -31,11 +31,13 @@ old_text/new_text replacement. Do not select or serialize evidence span IDs for 
 mutation. The gateway binds the exact anchor to the most recently observed current
 public span that fully covers it and fails closed when no such span exists; it also
 constructs the canonical Git diff. An accepted mutation's bounded post-image becomes
-current evidence for a same-file repair automatically. A commitment_signal is
-soft guidance, not a tool restriction: when active, use current actionable evidence
-to mutate or stop unless one materially different public evidence gap remains. If the
-public context requires a causal alternative, the next mutation must also state which
-prior hypothesis was falsified and a materially different mechanism in
+current evidence for a same-file repair automatically. A commitment_signal starts as
+guidance after two consecutive inspection batches add no new public coverage. That turn
+is the warned final parallel inspection opportunity. New coverage reopens exploration;
+another zero-coverage batch closes broad read/search for the current diff and requires
+replace_text or stop_task. Targeted failure-recovery reads remain governed separately.
+If the public context requires a causal alternative, the next mutation must also state
+which prior hypothesis was falsified and a materially different mechanism in
 causal_revision. When current_public_failure is present, treat its mapped public
 statement as the current counterexample. A same_public_failure_site comparison means
 the prior edit did not move that public failure; a later public source location means

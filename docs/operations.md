@@ -144,11 +144,12 @@ thought.
 
 Tool availability is derived from the workflow gate, current evidence, unexecuted
 visible checks, and remaining model/tool budget. Optional inspection stays open while
-both budgets have calls beyond the minimum mutation, check, and finish path plus two
-independent bounded allowances: two calls for rejected-mutation recovery and at least
-three for failed-check recovery. The latter conservatively covers a missing-anchor read,
-repair, and failed-check rerun, and grows by the number of checks already passed on the
-current diff because a repair invalidates and reruns them. At one remaining optional turn, the context marks
+both budgets have calls beyond the minimum mutation, check, and finish path plus bounded
+recovery allowances: two calls for rejected-mutation recovery and one path per distinct
+visible check, limited by remaining accepted mutations. A check at zero-based declared
+index `i` reserves `3 + i` calls for a missing-anchor read, repair, its rerun, and earlier
+checks invalidated by the repair. A failure consumes only that check ID's allowance. At
+one remaining optional turn, the context marks
 `last_opportunity` and names the inspection tools that will close next; at zero slack
 they are removed. Each allowance is consumed only by its corresponding failure, and
 both states are reconstructed from durable batches on resume. A source read that is strictly required to
@@ -165,10 +166,12 @@ syntactic telemetry, and `first_search_observation` records query novelty only.
 from any tracked public source; editable and supporting lines are reported separately,
 with the old task-relevant count retained as an editable-line alias. A zero-match or
 covered-only result is a negative observation, not progress. When a current mutation
-anchor exists, two consecutive zero-coverage inspection batches activate a soft
-`commitment_signal`. It remains active for that diff even if later inspection adds
-coverage, and clears only after successful mutation or a check/completion transition.
-The signal does not change the allowed-tool set, and `stop_task` is always available.
+anchor exists, two consecutive zero-coverage inspection batches activate a warned final
+parallel inspection opportunity. New coverage resets the consecutive plateau and
+reopens broad exploration while retaining advisory commitment history. Another zero-
+coverage batch closes broad read/search for that diff with `evidence_plateau`; it does
+not create a terminal or block targeted failure-recovery reads. Successful mutation or
+a check/completion transition clears the state, and `stop_task` is always available.
 Every inspection close or reopen is journaled as `tool_policy_transition` and projected
 once in the public context.
 If the best-case minimum path no longer fits the remaining model calls, tool actions,
@@ -177,7 +180,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v10`; prior
+These output and scheduler semantics are bound by tool-surface identity `v11`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually
@@ -204,8 +207,10 @@ scheduler exposes `replace_text` immediately and may expose one restricted `read
 alongside it only while completion slack remains. That read is optional and should serve
 only a concrete unresolved public gap. If no current anchor evidence exists, the same
 restricted read is required before mutation and is counted in the best completion path.
-The conservative failed-check reserve covers that worst case, the repair, and the failed
-check that must be rerun after all current-diff check results are invalidated.
+The per-check reserve covers that worst case, the repair, and every declared check up to
+the failed check after all current-diff results are invalidated. Reserve IDs and their
+total call cost are projected and journaled; old results without a check ID retain the
+single consumed legacy state rather than guessing an identity.
 
 For a failed registered `python -c` check, `run_check` parses only the already-public
 command and bounded public output. A valid `<string>` frame is mapped to its exact

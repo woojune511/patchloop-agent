@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from time import monotonic
 from typing import Any
@@ -70,7 +70,7 @@ from patchloop.task_loader import load_task_package, task_package_content_paths
 from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
 from patchloop.verifier.core import EvaluationEngine
 
-_SOFT_COMMITMENT_NO_GAIN_TURNS = 2
+_EVIDENCE_PLATEAU_WARNING_TURNS = 2
 
 
 @dataclass
@@ -85,6 +85,7 @@ class _RunCounters:
     failed_mutation_recovery_key: str | None = None
     mutation_recovery_used: bool = False
     check_recovery_used: bool = False
+    check_recovery_used_ids: set[str] = field(default_factory=set)
     failed_check_pending: bool = False
     failed_check_repair_read_used: bool = False
     consecutive_no_evidence_gain_turns: int = 0
@@ -110,10 +111,12 @@ class _ToolPolicy:
     completion_budget_calls: int
     mutation_recovery_reserve_calls: int
     check_recovery_reserve_calls: int
+    check_recovery_reserve_ids: tuple[str, ...]
     completion_possible: bool
     protected_completion_possible: bool
     exploration_allowed: bool
     exploration_state: str
+    commitment_action_state: str
     model_turns_available_for_exploration: int
     tool_actions_available_for_exploration: int
     closure_reason: str | None
@@ -434,6 +437,16 @@ def _tool_policy(
         repair_evidence_paths = snapshot.evidence_paths
     workflow_gate = _workflow_gate(summary, ready_to_submit=ready_to_submit)
     current_check_failed = any(row["status"] == "FAIL" for row in visible_status)
+    declared_check_ids = tuple(
+        row["check_id"]
+        for row in visible_status
+        if isinstance(row.get("check_id"), str)
+    )
+    current_failed_check_ids = {
+        row["check_id"]
+        for row in visible_status
+        if row["status"] == "FAIL" and isinstance(row.get("check_id"), str)
+    }
     failed_mutation = gateway.last_failed_mutation is not None
     failure_class_method = getattr(gateway, "last_mutation_failure_class", None)
     failure_class = failure_class_method() if callable(failure_class_method) else None
@@ -492,12 +505,39 @@ def _tool_policy(
         and not counters.mutation_recovery_used
         and gateway.last_failed_mutation is None
     )
-    passed_check_count = sum(row["status"] == "PASS" for row in visible_status)
-    check_recovery_reserve_calls = (3 + passed_check_count) * int(
-        bool(unrun_checks)
+    remaining_mutation_slots = max(
+        0,
+        limits.max_accepted_mutations - gateway.accepted_mutations,
+    )
+    future_check_repair_slots = max(
+        0,
+        remaining_mutation_slots - int(requires_mutation_for_completion),
+    )
+    # Old journals did not identify which check consumed their single allowance.
+    # Preserve that conservative state without guessing an ID. New journals reserve
+    # one bounded repair path for each distinct public check, subject to mutation cap.
+    legacy_unknown_check_recovery = (
+        counters.check_recovery_used and not counters.check_recovery_used_ids
+    )
+    check_recovery_candidates = (
+        tuple(
+            check_id
+            for check_id in declared_check_ids
+            if check_id not in counters.check_recovery_used_ids
+            and check_id not in current_failed_check_ids
+        )
+        if bool(unrun_checks)
         and mutation_capacity
-        and not counters.check_recovery_used
-        and not current_check_failed
+        and not legacy_unknown_check_recovery
+        else ()
+    )
+    check_recovery_reserve_ids = check_recovery_candidates[:future_check_repair_slots]
+    declared_check_indexes = {
+        check_id: index for index, check_id in enumerate(declared_check_ids)
+    }
+    check_recovery_reserve_calls = sum(
+        3 + declared_check_indexes[check_id]
+        for check_id in check_recovery_reserve_ids
     )
     completion_budget_calls = (
         minimum_completion_calls + mutation_recovery_reserve_calls + check_recovery_reserve_calls
@@ -529,12 +569,29 @@ def _tool_policy(
     targeted_mutation_repair_inspection = (
         targeted_mutation_repair_requested and mutation_capacity and completion_possible
     )
+    current_diff_hash = getattr(summary, "patch_hash", None)
+    commitment_for_current_diff = (
+        isinstance(current_diff_hash, str)
+        and counters.commitment_diff_hash == current_diff_hash
+        and has_current_mutation_evidence
+    )
+    plateau_last_opportunity = (
+        commitment_for_current_diff
+        and counters.consecutive_no_evidence_gain_turns
+        == _EVIDENCE_PLATEAU_WARNING_TURNS
+    )
+    plateau_execution_only = (
+        commitment_for_current_diff
+        and counters.consecutive_no_evidence_gain_turns
+        > _EVIDENCE_PLATEAU_WARNING_TURNS
+    )
     exploration_allowed = (
         model_slack > 0
         and tool_slack > 0
         and completion_possible
         and not failed_mutation
         and not counters.failed_check_pending
+        and not plateau_execution_only
     )
     required_inspection_for_completion = (
         targeted_check_repair_required
@@ -560,6 +617,7 @@ def _tool_policy(
     if (
         targeted_check_repair_inspection
         or targeted_mutation_repair_inspection
+        or (exploration_allowed and plateau_last_opportunity)
         or (exploration_allowed and exploration_capacity == 1)
     ):
         exploration_state = "last_opportunity"
@@ -575,6 +633,8 @@ def _tool_policy(
         closure_reason = "workflow_ready_to_submit"
     elif not completion_possible:
         closure_reason = "completion_impossible"
+    elif plateau_execution_only:
+        closure_reason = "evidence_plateau"
     else:
         closure_reason = "completion_horizon"
     tools_closing_after_this_turn = (
@@ -624,6 +684,23 @@ def _tool_policy(
         targeted_read_paths = tuple(sorted({*summary.changed_files, *repair_evidence_paths}))
     else:
         targeted_read_paths = ()
+    if commitment_for_current_diff and exploration_state == "closed":
+        commitment_action_state = "execution_only"
+    elif plateau_last_opportunity:
+        commitment_action_state = "last_opportunity"
+    elif commitment_for_current_diff:
+        commitment_action_state = "advisory"
+    else:
+        commitment_action_state = "inactive"
+    if exploration_state == "closed":
+        model_exploration_capacity = 0
+        tool_exploration_capacity = 0
+    elif exploration_state == "last_opportunity":
+        model_exploration_capacity = 1
+        tool_exploration_capacity = max_parallel_reads
+    else:
+        model_exploration_capacity = max(0, model_slack)
+        tool_exploration_capacity = max(0, tool_slack)
     return _ToolPolicy(
         workflow_gate=workflow_gate,
         allowed_tools=frozenset(allowed),
@@ -634,12 +711,14 @@ def _tool_policy(
         completion_budget_calls=completion_budget_calls,
         mutation_recovery_reserve_calls=mutation_recovery_reserve_calls,
         check_recovery_reserve_calls=check_recovery_reserve_calls,
+        check_recovery_reserve_ids=check_recovery_reserve_ids,
         completion_possible=completion_possible,
         protected_completion_possible=protected_completion_possible,
         exploration_allowed=exploration_allowed,
         exploration_state=exploration_state,
-        model_turns_available_for_exploration=max(0, model_slack),
-        tool_actions_available_for_exploration=max(0, tool_slack),
+        commitment_action_state=commitment_action_state,
+        model_turns_available_for_exploration=model_exploration_capacity,
+        tool_actions_available_for_exploration=tool_exploration_capacity,
         closure_reason=closure_reason,
         tools_closing_after_this_turn=tools_closing_after_this_turn,
         required_inspection_for_completion=required_inspection_for_completion,
@@ -671,19 +750,47 @@ def _commitment_signal(
         or not has_current_mutation_evidence
     ):
         return None
+    if policy.commitment_action_state == "last_opportunity":
+        state = "final_inspection_opportunity"
+        hard_gate = False
+        message = (
+            "Two consecutive inspection batches added no uncovered public source lines. "
+            "This is the final parallel inspection opportunity for the current diff. If it "
+            "adds no coverage, broad read/search closes next turn; use it only for one "
+            "specific unresolved public evidence gap."
+        )
+    elif policy.commitment_action_state == "execution_only":
+        state = "mutation_or_stop_required"
+        hard_gate = True
+        if no_gain_turns > _EVIDENCE_PLATEAU_WARNING_TURNS:
+            message = (
+                "The warned final inspection batch added no uncovered public source lines. "
+                "Broad read/search is closed for the current diff; use current actionable "
+                "evidence for replace_text, or stop_task if it cannot justify a safe mutation."
+            )
+        else:
+            message = (
+                "The current action horizon has closed broad read/search for this diff. Use "
+                "current actionable evidence for replace_text, or stop_task if it cannot "
+                "justify a safe mutation."
+            )
+    else:
+        state = "mutation_or_stop_recommended"
+        hard_gate = False
+        message = (
+            "An earlier same-diff inspection plateau activated this recommendation. Later "
+            "public coverage can reopen exploration, but use current actionable evidence "
+            "for replace_text or stop_task unless one concrete uncovered gap remains."
+        )
     return {
-        "state": "mutation_or_stop_recommended",
+        "state": state,
         "reason": "consecutive_inspection_without_new_public_coverage",
         "consecutive_no_evidence_gain_turns": no_gain_turns,
         "activated_after_consecutive_no_gain_turns": (
             counters.commitment_trigger_no_gain_turns
         ),
-        "hard_gate": False,
-        "message": (
-            "Two consecutive inspections added no uncovered public source lines. This "
-            "recommendation remains active for the current diff: use current actionable "
-            "evidence for replace_text, or stop_task if it cannot justify a safe mutation."
-        ),
+        "hard_gate": hard_gate,
+        "message": message,
     }
 
 
@@ -819,10 +926,18 @@ def _protocol_correction(
                     "required for mutation; these inspection tools close after this turn."
                 )
             elif policy.exploration_state == "last_opportunity":
-                actions.append(
-                    "This is the last inspection opportunity: use read_file or search_files "
-                    "only for the final unresolved public evidence gap."
-                )
+                if policy.commitment_action_state == "last_opportunity":
+                    actions.append(
+                        "Two consecutive inspection batches added no new public coverage. "
+                        "This is the final parallel inspection opportunity for the current "
+                        "diff; use read_file or search_files only for one concrete unresolved "
+                        "public evidence gap."
+                    )
+                else:
+                    actions.append(
+                        "This is the last inspection opportunity: use read_file or "
+                        "search_files only for the final unresolved public evidence gap."
+                    )
             else:
                 actions.append(
                     "Use read_file or search_files only for a concrete unresolved public "
@@ -956,10 +1071,12 @@ def _build_context(
             "feedback_recovery_reserve_calls": (active_policy.feedback_recovery_reserve_calls),
             "mutation_recovery_reserve_calls": (active_policy.mutation_recovery_reserve_calls),
             "check_recovery_reserve_calls": (active_policy.check_recovery_reserve_calls),
+            "check_recovery_reserve_ids": list(active_policy.check_recovery_reserve_ids),
             "completion_possible": active_policy.completion_possible,
             "protected_completion_possible": (active_policy.protected_completion_possible),
             "exploration_allowed": active_policy.exploration_allowed,
             "exploration_state": active_policy.exploration_state,
+            "commitment_action_state": active_policy.commitment_action_state,
             "model_turns_available_for_exploration": (
                 active_policy.model_turns_available_for_exploration
             ),
@@ -1917,7 +2034,7 @@ def _update_inspection_counters(
                     and batch_diff_hash is not None
                     and counters.current_anchor_diff_hash == batch_diff_hash
                     and counters.consecutive_no_evidence_gain_turns
-                    >= _SOFT_COMMITMENT_NO_GAIN_TURNS
+                    >= _EVIDENCE_PLATEAU_WARNING_TURNS
                 ):
                     counters.commitment_diff_hash = batch_diff_hash
                     counters.commitment_trigger_no_gain_turns = (
@@ -1940,6 +2057,9 @@ def _update_inspection_counters(
         counters.commitment_trigger_no_gain_turns = 0
         if result.status != "succeeded" or result.output.get("passed") is not True:
             counters.check_recovery_used = True
+            check_id = result.output.get("check_id")
+            if isinstance(check_id, str) and check_id:
+                counters.check_recovery_used_ids.add(check_id)
             counters.failed_check_pending = True
             counters.failed_check_repair_read_used = False
         return
@@ -2668,9 +2788,11 @@ def _run_one_locked(
                 "feedback_recovery_reserve_calls": (policy.feedback_recovery_reserve_calls),
                 "mutation_recovery_reserve_calls": (policy.mutation_recovery_reserve_calls),
                 "check_recovery_reserve_calls": (policy.check_recovery_reserve_calls),
+                "check_recovery_reserve_ids": list(policy.check_recovery_reserve_ids),
                 "completion_possible": policy.completion_possible,
                 "protected_completion_possible": (policy.protected_completion_possible),
                 "exploration_state": policy.exploration_state,
+                "commitment_action_state": policy.commitment_action_state,
                 "closure_reason": policy.closure_reason,
                 "targeted_check_repair_inspection": (policy.targeted_check_repair_inspection),
                 "targeted_check_repair_required": (policy.targeted_check_repair_required),

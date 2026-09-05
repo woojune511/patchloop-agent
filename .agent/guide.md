@@ -43,10 +43,10 @@ receive one short correction. A second consecutive protocol/incomplete violation
 terminates the row; any valid completed tool batch resets the correction allowance.
 Optional inspection remains available only while both model-call and tool-action
 budgets exceed the minimum path through mutation, all required checks, and finish plus
-two independent bounded allowances: two calls for rejected-mutation recovery and at
-least three calls for failed-visible-check recovery. The latter conservatively covers a
-missing-anchor targeted read, one replacement, the failed check that must be rerun, and
-any current-diff checks already passed before a later check fails. After failure, retain
+bounded allowances: two calls for rejected-mutation recovery and one failed-check path
+per distinct visible-check ID, limited by remaining accepted mutations. Check index `i`
+reserves `3 + i` calls for a missing-anchor targeted read, one replacement, that check,
+and every earlier check invalidated by the repair. After failure, retain
 `replace_text` immediately when current post-image evidence exists; offer the restricted
 read beside it only with optional slack. Require the read only when that current exact
 anchor is absent. Each allowance remains held until its matching failure; consuming one
@@ -64,10 +64,12 @@ from the actual allowed-tool set and must not name a missing tool.
 least one newly covered line from a tracked public source and is split into editable and
 supporting coverage. A zero-match, covered-only, shifted, or contained observation is
 not progress merely because its query or span hash is new. When a current anchor exists,
-two consecutive zero-coverage inspection batches activate a soft mutation-or-stop
-recommendation in context and `turn_started`. Keep it active for the same diff despite
-later coverage; clear it after successful mutation or check/completion transition.
-Never remove tools because of this signal.
+two consecutive zero-coverage inspection batches make the next parallel batch a warned
+final opportunity in context and `turn_started`. If it adds coverage, reset the current
+plateau and reopen exploration while retaining advisory commitment history. If it adds
+none, close broad read/search for that diff with `evidence_plateau`; this is neither a
+terminal nor a block on targeted recovery reads. Clear it after successful mutation or
+check/completion transition.
 
 An unexecuted `run_check` may be available on the first turn while the action horizon
 has slack; on a changed diff it is direct completion work. A check that already failed
@@ -551,6 +553,33 @@ no Docker operation, provider call, or nineteenth live row.
 Ruff and the focused 74-test tool/runner suite pass. All 109 provider-free tests pass in
 71.998 seconds with external temp root `C:\pt\pl-v10-full-a`. Mock run
 `run_dev_b5d5b2473d6a414f` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation, with task acceptance PASS, safety
+NOT_RUN, `claim_eligible=false`, and zero provider cost.
+
+The separately authorized nineteenth row, `run_dev_87185b3ce20a4333`, ended at
+`LIMIT_REACHED` after 39 model/input-count calls, 44 tool actions, two accepted
+mutations, and $0.472921050. All 39 provider turns carried encrypted continuation. The
+first replacement was rejected for a stale exact anchor, and the second implemented the
+recursive behavior. The first public check then failed its intermediate-directory mode
+assertion. Tool surface v10 correctly offered both optional targeted read and immediate
+replacement; the repair switched recursive parents to `PERM_DEF`, and that check passed.
+The later upstream regression check failed two broken-parent-link cases with `EEXIST`
+instead of `ENOENT`. Only one model call remained against a four-call repair/recheck/
+finish path, so the pre-dispatch horizon stopped the row. There was no submission or
+evaluator.
+
+Tool surface `v11` addresses the two remaining scheduler causes without encoding that
+task's semantic repair. Two zero-coverage batches now announce one final parallel
+inspection; new public coverage reopens exploration, while a further zero-coverage
+batch closes broad reads for the current diff and leaves mutation or stop. Separately,
+the horizon reserves one recovery path per distinct visible-check ID, ordered by the
+declared check sequence and bounded by remaining mutation capacity. Consuming the first
+check's reserve no longer erases the second's. Legacy check failures without an ID keep
+their conservative consumed state. This change authorizes no Docker operation, provider
+call, or twentieth live row.
+Focused scheduler tests and Ruff pass. All 109 provider-free tests pass in 77.62 seconds
+with external temp root `C:\pt\pl-v11-full-0905-c`. Mock run
+`run_dev_54650ea291e24cd0` reaches isolated `EVALUATOR_PASS` in four model calls and
 five tool actions through one accepted mutation, with task acceptance PASS, safety
 NOT_RUN, `claim_eligible=false`, and zero provider cost.
 

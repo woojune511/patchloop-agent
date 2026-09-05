@@ -1113,16 +1113,56 @@ five tool actions through one accepted mutation. Task acceptance is PASS, safety
 NOT_RUN, `claim_eligible=false`, and provider cost is zero. This is provider-free harness
 evidence, not proof that a live model will take the repair.
 
+## Nineteenth live observation and remaining scheduler reserves
+
+One separately authorized nineteenth row used the version-2 pyfakefs task,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository-root `.env`, one repetition,
+a $1.20 invocation cap, and external state root `C:\patchloop-state`. Immutable run
+`run_dev_87185b3ce20a4333` ended at `LIMIT_REACHED` after 341.375 active seconds,
+342 seconds of run age, 39 model/input-count calls, 44 tool actions, two accepted
+mutations, and $0.472921050. The action mix was 25 reads, 13 searches, three replacement
+attempts, and three checks. One replacement was rejected; no submission or evaluator
+execution occurred. All 39 provider responses carried encrypted reasoning continuation.
+
+After 31 initial inspection turns, a stale exact docstring anchor rejected the first
+replacement. One targeted read repaired the anchor and the next replacement implemented
+recursive parent creation. The `parent-traversal-contract` check then reached its public
+intermediate-directory permission assertion and observed the leaf mode where `0o755` was
+required. Tool surface v10 exposed `replace_text` immediately together with one optional
+targeted read. The model used that read to find the public `PERM_DEF` constant, repaired
+the recursive parent call, and the contract passed. The later public upstream regression
+failed two broken-parent-link cases with `EEXIST` instead of expected `ENOENT`. With one
+model call left and four required for repair, two check reruns, and finish, the scheduler
+recorded the pre-dispatch horizon terminal.
+
+This evidence separates three axes. Encrypted continuation worked on every turn, and
+v10's failed-check action space worked as designed. Agent-level task completion still
+failed, but two scheduler policies materially constrained its remaining opportunity:
+the same-diff commitment was advisory through 33 inspection turns, and the single shared
+failed-check reserve was consumed by the first check before the distinct regression
+failed. Tool surface `v11` changes those policies without embedding the observed task
+repair. Two consecutive zero-coverage batches announce one final parallel inspection;
+coverage gain reopens exploration, while another zero-gain batch closes broad reads for
+that diff. The horizon now reserves one bounded recovery path per distinct visible-check
+ID, limited by remaining accepted mutations and including earlier declared check reruns.
+Targeted recovery reads remain separately available.
+Focused scheduler tests and Ruff pass. All 109 provider-free tests pass in 77.62 seconds
+with external temp root `C:\pt\pl-v11-full-0905-c`. Mock run
+`run_dev_54650ea291e24cd0` reaches isolated `EVALUATOR_PASS` in four model calls and
+five tool actions through one accepted mutation. Task acceptance is PASS, safety is
+NOT_RUN, `claim_eligible=false`, and provider cost is zero. This validates provider-free
+policy wiring only.
+
 ## Not executed
 
-- no transport retry or follow-up paid run after the eighteenth row
+- no transport retry or follow-up paid run after the nineteenth row
 - no image pull, image build, or automatic Docker Desktop start
 - no contract-valid paid/live task acceptance, claim, qualification, activation,
   adoption, or held-out evaluation; the version-3 PASS is provider-free only
 - no mutation, submission, or evaluator execution in the seventh through tenth
-  pyfakefs version-2 live rows. The eleventh through eighteenth mutated; the eleventh
-  passed both visible checks, while the twelfth through eighteenth each reached a failed
-  visible check. None of those eight live rows submitted or invoked the evaluator
+  pyfakefs version-2 live rows. The eleventh through nineteenth mutated; the eleventh
+  passed both visible checks, while the twelfth through nineteenth each reached a failed
+  visible check. None of those nine live rows submitted or invoked the evaluator
 - no hidden evaluation of the temporary Loguru version-2 public correction
 - no hidden evaluation of the fourteenth-row final patch or its provider-free
   one-identifier repair
