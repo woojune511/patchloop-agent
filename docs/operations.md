@@ -92,9 +92,10 @@ exactly one mutation, check, enabled probe, finish, or stop.
 Python image in [the probe runtime contract](../docker/README.md) to be present locally.
 Preflight verifies that image and the hash-bound trusted wrapper before provider dispatch.
 It does not pull/build an image, start Docker Desktop, or fall back to the evaluator image.
-The separately approved twenty-second and twenty-third rows enabled this opt-in; row 22
-used a probe, while row 23 did not. Their exact results are in `docs/current-status.md`.
-No twenty-fourth live row is authorized by those results, the current implementation,
+The separately approved twenty-second through twenty-fourth rows enabled this opt-in;
+rows 22 and 24 used one baseline probe each, while row 23 did not. These observations
+do not establish candidate validation by probing; exact results are in `docs/current-status.md`.
+No twenty-fifth live row is authorized by those results, the current implementation,
 or local validation.
 
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against

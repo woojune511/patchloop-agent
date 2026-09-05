@@ -421,11 +421,25 @@ not returned to the coding agent. There was no token-ceiling or protocol termina
 
 The subsequent read-only diagnosis found intact source projection, a false-negative
 recursive glob, and a latent probe-to-edit budget disconnect. V16 fixes the latter two
-and clarifies note/anchor guidance. Next seam after local verification is separately
-approved observation of evidence reuse and semantic boundary testing, not another
-speculative action mask or budget increase. The row comparison is descriptive,
+and clarifies note/anchor guidance. The subsequent live observation below tests these
+paths, not another speculative action mask or budget increase. The row comparison is descriptive,
 not proof of memory causality. Do not inject private test cases into future model contexts.
-All existing external evidence remains immutable; no twenty-fourth row is authorized.
+
+The separately approved twenty-fourth row, `run_dev_89757e404d894362`, used v16 commit
+`fcc8e79b11c1f3a478f07dcd894ab995ac3c1988` with the same task/model/medium/.env/repeat-1/
+$1.20/probe conditions: 33 model calls, 38 actions, two accepted mutations, $0.365351250,
+and `EVALUATOR_FAIL` (acceptance FAIL, safety PASS, `claim_eligible=false`). Recursive
+search correctly found direct-child definitions; 26 note receipts with a following turn
+matched their single native delivery. The call-22 probe compared baseline behavior only.
+The first edit at call 27 and permission repair at call 30 were accepted without anchor
+errors, but their 20- and 15-line anchors were still broad. Both public checks passed and
+call 33 submitted; isolated acceptance reported incorrect file-parent error semantics.
+Sixteen of 31 inspections added no coverage, so faster evidence reuse is not established.
+Minimum-path edit admission remained visible with separate protection warnings, but a
+late-probe-to-repair sequence was not exercised. Next seam is read-only public-evidence
+diagnosis of repeated questions and candidate exception handling; do not copy private cases
+into future prompts or infer an action-mask/budget remedy from the final FAIL alone.
+All existing external evidence remains immutable; no twenty-fifth row is authorized.
 See `docs/current-status.md` for exact results and artifact identities.
 
 ## Historical checkpoints

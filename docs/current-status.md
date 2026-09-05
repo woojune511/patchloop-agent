@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The twenty-three live observations below
+Repository policy alone never initiates paid work. The twenty-four live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -63,7 +63,8 @@ after a hypothetical final probe, eight calls remained for a four-call edit/chec
 path, but the old policy required twelve protected calls. No probe was attempted then,
 so that disconnect is not established as the cause of the recorded task failure.
 V16 addresses these defects without changing task bytes, global limits, output ceiling,
-tool names/input field shapes or order, or old envelopes. No twenty-fourth row is authorized.
+tool names/input field shapes or order, or old envelopes. The separately approved
+twenty-fourth row below executes this runtime; no further row is authorized.
 
 Verification passes 75 focused search/guidance/tool/note cases, 16 focused budget cases,
 and Ruff. The frozen complete suite passed 287 provider-free tests: 107 in 90.79 seconds
@@ -77,6 +78,58 @@ eight-call diagnostic-to-edit path, exact minimum/tool/capacity boundaries, comp
 invalidation, warning hydration, root/nested search and cache/restart, and the distinction
 between current citations and unverified interpretation. These are local contract tests,
 not evidence that the live model will explore less or produce a correct patch.
+
+### Twenty-fourth live row: public repair succeeds, task acceptance FAIL
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 run with
+`gpt-5.4-mini-2026-03-17`, medium reasoning, `.env`, repeat 1, a $1.20 invocation cap,
+and `--enable-probes` under `C:\patchloop-state`. Read-only preflight passed the exact
+tracked runtime/task, credential format, running Docker, and both local pinned images.
+V16 commit `fcc8e79b11c1f3a478f07dcd894ab995ac3c1988` produced
+`run_dev_89757e404d894362`: `EVALUATOR_FAIL`, task acceptance FAIL, safety PASS,
+`claim_eligible=false`, and `official=false`. It used 33 model/input-count calls,
+38 actions, two accepted mutations, $0.365351250, and 290.735 active seconds
+(292 seconds of run age). No retry, additional run, image pull/build, or Docker startup ran.
+
+Call 3's recursive `pyfakefs/**/*` search examined 62 eligible files and returned both
+direct-child `makedirs` definitions, exercising the corrected zero-depth glob semantics.
+The first finding was created on call 8, with subsequent updates and the explicit
+`model_authored_unverified` interpretation label. Call 5's extra parallel memory update
+received a nonblocking diagnostic. All 26 receipts with a following model turn appeared
+once in the native output, without duplication in that request's user context; the final
+finish-associated note update had no following turn. There were 27 note-update events.
+
+Call 22 ran one public Python probe against the unchanged baseline, comparing real-OS
+and fake-filesystem parent-traversal side effects. Its 50-byte output showed the baseline
+difference; it completed in 2.844 seconds with cleanup confirmed. This was not a check of
+the later candidate or a broad semantic matrix. The first mutation was accepted on call 27,
+after 25 inspection turns / 29 read-search actions and that probe. Its exact anchor still
+covered 20 lines; the later repair used 15. Neither was rejected, but this does not show
+that the smallest-anchor guidance was fully adopted.
+
+Call 28's public contract check failed on intermediate-directory mode. After two reads
+on call 29, call 30 correctly changed recursive parent creation to `PERM_DEF`, retaining
+the requested leaf mode. Both visible checks passed on calls 31-32; call 33 submitted
+the same 14-line diff (13 added, one deleted) applied by isolated evaluation:
+`sha256:543cd29ddfad4c629ae22fc6d1be6a3b98ef6d14e1222ce1f5560a610d57a8b3`.
+Regression and scope passed. Private acceptance passed 11 of 12 cases, but a file-as-parent
+case returned `ENOENT` instead of `ENOTDIR`. That is an exception-semantics failure,
+not a stale submission or token/protocol terminal; private diagnostics were not reinjected.
+
+Across the run, 16 of 31 inspections added no source coverage, including six cache hits.
+The first edit still arrived late, so efficient evidence reuse is not established.
+V16's minimum-path mutation admission and separate recovery warning were visible on
+turns 28, 32, and 33, but no late-probe-to-repair sequence was exercised. All provider
+responses completed; the largest output was 4,503 tokens, below the unchanged ceiling.
+
+Read-only verification passed the 410-event hash chain, 99 context/input/continuation
+references, six terminal artifacts, three evaluator policy artifacts, all 32 continuation
+edges, 38 unique completed actions, and the exact durable cost sum. No provider or action
+remains pending. Existing run bytes, `.env`, task packages, and user-owned work were
+unchanged. Further diagnosis should use public evidence to examine repeated investigation
+and incomplete exception handling, without copying private cases into agent context.
+This observation is not a controlled comparison or generalization claim. No twenty-fifth
+live row is authorized.
 
 ### V15 implementation and validation checkpoint
 
@@ -105,7 +158,7 @@ after a second, and resurrecting on resume. V15 fixes that storage/replay defect
 not claim that the defect caused row 22's early errors or that better memory guarantees
 faster exploration. Changed or ambiguous cited text still expires, and unobserved sources
 are never accepted. V14 runs/envelopes remain immutable. The separately approved v15 row
-below does not authorize a twenty-fourth row.
+below did not authorize another row; later runs required separate approval.
 
 Validation passes Ruff, 54 focused note/context/input cases in 35.35 seconds, and all
 244 provider-free tests. The frozen full-suite groups ran concurrently: 64 passed in
@@ -169,7 +222,7 @@ Read-only verification passed the 389-event hash chain, all 96 context/input/con
 references, five terminal artifacts, three evaluator execution-policy evidence artifacts,
 34 unique completed actions, and the exact durable cost sum. There is no pending provider
 or action; owned check cleanup was confirmed. The journal and prior external run bytes
-were not changed by analysis. No twenty-fourth live row is authorized.
+were not changed by analysis. The later twenty-fourth row required separate approval.
 
 ### V14 implementation and validation checkpoint
 
@@ -349,8 +402,8 @@ Task acceptance is PASS, safety NOT_RUN, `claim_eligible=false`, and provider co
 Fault regressions include reordered parallel-result hydration, same-action read replay,
 source-linked note upsert, unconsumed correction replay, complete-candidate crash recovery,
 deadline expiry before dispatch/evaluator work, and owned-container cleanup uncertainty.
-Earlier checkpoint counts and policies below describe history, not the current v15
-contract. No twenty-fourth live row is authorized.
+Earlier checkpoint counts and policies below describe history, not the current v16
+contract. No twenty-fifth live row is authorized.
 
 The separately authorized twentieth row used the same pyfakefs version-2 task,
 `gpt-5.4-mini-2026-03-17`, medium reasoning, `.env`, one repetition, a $1.20 cap,
@@ -951,18 +1004,17 @@ compatibility with those runners is intentionally unsupported.
 
 ## Next decision
 
-The twenty-third row confirms early note creation, actionable nonblocking annotation
-feedback, and one mutation's note lifecycle in the live path. It does not show faster
-exploration: 17 of 29 inspections again added no coverage, and the first accepted edit
-came on call 29 after an anchor rejection. Both visible checks passed, but the submitted
-guard missed a trailing-separator case. Further diagnosis should distinguish successful
-information delivery from the model's reuse of it and its testing of semantic boundaries;
-neither a harder read cap nor a larger token budget follows from this observation.
-V16 now fixes the confirmed search semantics and minimum-versus-protected edit admission,
-and clarifies mechanism notes and small exact anchors with provider-free coverage. A future
-separately approved row can observe those changes, but local verification does not authorize
-one. Do not promote private cases into model prompts or infer causality from the row-22/23
-comparison. No twenty-fourth row is authorized.
+The twenty-fourth row exercises the corrected recursive search, explicit note-interpretation
+labels, and minimum-versus-protected mutation admission. It also recovers from a public
+permission failure and submits an identical checked artifact. Those working paths did not
+establish efficient exploration or complete semantics: 16 of 31 inspections added no source
+coverage, the first edit came on call 27, and the submitted code returned the wrong error
+for a file-as-parent case. The only probe examined the baseline, not the edited behavior.
+The next useful step is read-only diagnosis of question reuse, broad anchors, and how the
+model validated the replacement's assumptions and exception behavior against public evidence.
+Do not promote private cases into model prompts, infer causality from uncontrolled row
+comparisons, or default to a harder read cap or larger token budget. No twenty-fifth row
+or further implementation is authorized by this result.
 Earlier decisions below are historical context.
 
 The first live failure exposed a context-projection defect: successful reads were
@@ -1058,8 +1110,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth through twenty-third rows were separately authorized and are now
-terminal. No twenty-fourth row is authorized.
+the later thirteenth through twenty-fourth rows were separately authorized and are now
+terminal. No twenty-fifth row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -1131,8 +1183,9 @@ decision memory and edit-strategy guidance, not grounds for another hard action 
 The twenty-second row then passed with a recursive edit and correct mode repair, while
 still exposing repeated exploration and unsuccessful early note creation. The twenty-third
 row exercised v15 note feedback successfully but retained repeated exploration and failed
-one semantic acceptance case after submission. No paid retry or twenty-fourth row is
-authorized.
+one semantic acceptance case after submission. The twenty-fourth row then exercised the
+v16 search/admission fixes and public permission repair, but still explored late and failed
+exception semantics after submission. No paid retry or twenty-fifth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a
