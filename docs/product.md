@@ -92,8 +92,12 @@ citations. `note_id=null` creates a finding; an existing ID updates it even when
 cited range changes. The model can consolidate duplicates by updating one ID and
 listing the others in `remove_note_ids`. The run retains at most six model-authored
 findings, rebinds unchanged source or expires stale source notes, marks old tool-result
-references historical, and journals IDs and updates for resume. Invalid notes receive
-a diagnostic without rejecting the main action. This run-local working memory has no
+references historical, and journals IDs and updates for resume. A note's observed source
+body is retained independently of temporary source spans; mutation-linked lifecycle
+records make continuation and resume agree on which notes survive. Invalid notes receive
+a separate storage receipt with the affected note and a correction hint, without rejecting
+the main action. Before observing an answer, the agent can keep an open question; afterward
+it can create a note and use the returned ID for revisions. This run-local working memory has no
 retrieval from prior runs and stores no reasoning transcript.
 
 Notes may retain the observed mechanism, the chosen implementation approach, and
@@ -183,8 +187,9 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v14` adds stable note IDs, implementation-oriented note
-guidance, and opt-in public experiments to the existing source projection,
+workflow state. Tool-surface `v15` adds durable note-source lifecycles and distinct
+annotation feedback to stable note IDs, implementation-oriented guidance, opt-in public
+experiments, and the existing source projection,
 advisory exploration, shared deadline/recovery accounting, and exact agreement
 between provider action schemas and internal decision validation. Bounded conversion
 diagnostics retain hashes and field codes, never raw rejected arguments. It excludes cross-run

@@ -24,7 +24,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v14",
+            "schema_version": "dev-tool-surface-v15",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -51,7 +51,9 @@ def dev_tool_surface_hash() -> str:
             "evidence_plateau_transition": "advisory-only-v2",
             "check_recovery_reserve": "order-independent-distinct-failure-bound-v2",
             "context_projection": "observed-priority-merged-24000-chars-v1",
-            "working_notes": "stable-note-id-explicit-upsert-remove-v2",
+            "working_notes": "stable-note-id-independent-body-durable-lifecycle-v3",
+            "working_note_feedback": "action-associated-nonblocking-receipt-v1",
+            "working_note_source_body_chars": 24_000,
             "public_probe": "optional-clean-python-diagnostic-protected-budget-v1",
             "mutation_recovery": "atomic-complete-candidate-diff-v2",
             "correction_recovery": "journal-derived-unconsumed-v2",

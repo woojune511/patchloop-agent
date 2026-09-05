@@ -94,7 +94,7 @@ Preflight verifies that image and the hash-bound trusted wrapper before provider
 It does not pull/build an image, start Docker Desktop, or fall back to the evaluator image.
 The separately approved twenty-second row used this opt-in and completed; its exact
 result is in `docs/current-status.md`. No twenty-third live row is authorized by that
-result, the v14 implementation, or local validation.
+result, the current implementation, or local validation.
 
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against
 the official [API pricing](https://developers.openai.com/api/docs/pricing) and
@@ -150,9 +150,18 @@ and are ignored. Findings have stable run-local IDs independent of their source 
 `remove_note_ids` explicitly removes redundant IDs when consolidating notes. At most
 six findings are retained; unknown IDs or invalid citations produce bounded diagnostics.
 Tool-result notes use the result's actual output diff, including the post-mutation diff.
-Invalid notes do not reject that action. Durable
-`working_notes_updated` events restore at most six run-local findings. Source notes
-rebind uniquely unchanged text or expire; old tool-result references are historical.
+Invalid notes do not reject that action. A separate `memory_update_result` on the owner
+call's native output reports each note's outcome, current IDs, and an actionable error.
+The derived context uses a delivery reference instead of duplicating that receipt.
+Read output does not echo the unvalidated annotation; original function-call arguments
+remain intact for continuation. Before an observation, use an open question or null;
+afterward, cite the already returned source/result on a subsequent useful call.
+Durable `working_notes_updated` events restore at most six run-local findings and retain
+up to 24,000 observed source characters per note outside public projection. Successful
+mutations atomically record rebound/expired note state in `action_finished`, outside
+the public tool result. Resume replays that recorded state. Uniquely unchanged source
+rebinds; changed/ambiguous source expires without resurrection; old tool-result references
+are historical. Public `last_source_lifecycle` identifies the action and affected IDs.
 Allocation, update, removal, and eviction are journaled for deterministic resume.
 `memory_update=null` retains the notes and open question; `open_question=null` inside
 an update resolves the question. Notes can retain the mechanism, chosen approach, and
@@ -222,7 +231,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v14`; prior
+These output and scheduler semantics are bound by tool-surface identity `v15`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually

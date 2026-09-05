@@ -41,6 +41,15 @@ three-part plan is required each turn. These are model-authored notes, not verif
 semantic facts or reasoning transcripts. memory_update=null preserves notes and the
 question; within an update, open_question=null clears the question. Do not repeat an
 update across a parallel batch.
+The update is evaluated before the current batch executes. Before observing an
+answer, use findings=[] with open_question, or leave memory_update=null. Do not
+cite pending or a result from the batch you are requesting. After receiving a
+result, create a source-backed note on a later call with note_id=null; update only
+IDs actually returned in the stored findings or memory_update_result. Read the
+separate memory_update_result: a successful main action does not mean its note
+was stored. Correct a rejected annotation on a useful subsequent call, without
+repeating a source read merely to retry the annotation. Source-change notices
+identify notes that expired; do not treat their former IDs as existing notes.
 
 A mutation requires hypothesis, expected_behavior, and one exact old_text/new_text
 replacement in an allowed existing file. The gateway binds observed current evidence

@@ -27,7 +27,47 @@ Repository policy alone never initiates paid work. The twenty-two live observati
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v14
+## Current implementation: tool surface v15
+
+V15 repairs working-note lifecycle and makes annotation outcomes actionable. Notes retain
+up to 24,000 characters of actually observed source per note, independently of active
+read/mutation spans. Successful mutation `action_finished` events atomically bind the
+rebound/expired note state outside the public tool result. Resume restores that recorded
+decision rather than comparing historical mutations with the final workspace. Public
+context exposes only bounded lifecycle IDs/reasons, not the retained source bodies.
+
+An action-associated `memory_update_result` now separates note creation/update/rejection
+from the main action's status. It identifies the finding, allocated or rejected note ID,
+and a concrete correction without echoing rejected prose or unknown source references.
+It is delivered on the first non-null update's native tool output; the same context uses
+a delivery reference. Read outputs no longer duplicate unvalidated `memory_update`, while
+original function-call arguments and encrypted continuation remain unchanged. Guidance
+explicitly puts unanswered questions before observation and findings after observation;
+new notes use null and later revisions use the ID actually allocated. No extra model
+call, planning tool, hard exploration mask, or mutation/check budget is introduced.
+
+The preceding read-only review distinguished two problems. Row 22's initial rejection
+was legitimate (`pending` was not observed); subsequent updates targeted unallocated `n1`.
+Bare codes reached context but did not give a clear repair receipt. Independently, a real
+Git reproduction showed an unchanged note surviving one unrelated edit, disappearing
+after a second, and resurrecting on resume. V15 fixes that storage/replay defect; it does
+not claim that the defect caused row 22's early errors or that better memory guarantees
+faster exploration. Changed or ambiguous cited text still expires, and unobserved sources
+are never accepted. V14 runs/envelopes remain immutable; no twenty-third row is authorized.
+
+Validation passes Ruff, 54 focused note/context/input cases in 35.35 seconds, and all
+244 provider-free tests. The frozen full-suite groups ran concurrently: 64 passed in
+90.67 seconds and 180 passed in 115.15 seconds; three opt-in real Docker cases were
+skipped. New regressions cover actual sequential Git edits, LF/CRLF, changed/overlapping
+ambiguous source, no resurrection, and crash before/after durable mutation completion.
+Feedback regressions preserve parallel ownership, exact original calls, nonblocking
+rejections, bounded private-free receipts, and normal call counts through mock evaluation.
+Final mock `run_dev_b4a45c26a2e84022`, under `C:\pt\pl-v15-smoke-0d2aaa`, reaches
+isolated `EVALUATOR_PASS` through one mutation, four mock model turns and five actions:
+task acceptance PASS, safety NOT_RUN, cost zero, and `claim_eligible=false`. No Docker
+or paid provider was executed for this change; model behavior with v15 remains untested live.
+
+### V14 implementation and validation checkpoint
 
 V14 adds stable run-local note IDs and optional public Python experiments. Findings
 are explicitly created, revised, consolidated, or removed by short `note_id`, rather
@@ -148,7 +188,7 @@ contexts exposed these diagnostics but retained no findings before the first mut
 A valid note was first allocated at call 30, expired after its cited source changed, and
 was followed by a new current-source note and later successful updates. The trace therefore
 does not support attributing this pass to improved working-memory reuse. Read-only review
-of note creation/feedback and repeated inspection is the next seam, not a new read cap.
+of note creation/feedback motivated the v15 fixes above, not a new read cap.
 
 The journal's 390-event hash chain, all 99 context/input/continuation artifacts, six
 terminal artifacts, 36 unique completed actions, and durable cost sum passed read-only
@@ -205,7 +245,7 @@ Task acceptance is PASS, safety NOT_RUN, `claim_eligible=false`, and provider co
 Fault regressions include reordered parallel-result hydration, same-action read replay,
 source-linked note upsert, unconsumed correction replay, complete-candidate crash recovery,
 deadline expiry before dispatch/evaluator work, and owned-container cleanup uncertainty.
-Earlier checkpoint counts and policies below describe history, not the current v14
+Earlier checkpoint counts and policies below describe history, not the current v15
 contract. No twenty-third live row is authorized.
 
 The separately authorized twentieth row used the same pyfakefs version-2 task,
@@ -810,10 +850,11 @@ compatibility with those runners is intentionally unsupported.
 The twenty-second row passed task acceptance and safety with a small recursive edit,
 correct recovery from the public permission failure, and one successful optional probe.
 Its first edit still came on call 27, and invalid early note references left working
-findings empty throughout initial exploration. Review the memory creation/feedback path
-and repeated source requests before choosing another change or paid run; this single pass
-does not prove memory or probe causality. The detailed record is above. No twenty-third
-row is authorized. Earlier decisions below remain historical context.
+findings empty throughout initial exploration. The subsequent review identified the
+feedback and independent note-lifecycle defects now fixed provider-free in v15. A future
+separately approved live row should distinguish successful note creation/maintenance from
+inspection efficiency and task acceptance; the prior pass does not prove memory or probe
+causality. No twenty-third row is authorized. Earlier decisions below are historical context.
 
 The first live failure exposed a context-projection defect: successful reads were
 selected by lexicographic span hash, so requested source could disappear from the

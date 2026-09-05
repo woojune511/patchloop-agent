@@ -1610,16 +1610,33 @@ def _build_model_input(
             }
             for call in calls
         ]
-    output_items = [
-        {
+    note_update = next(
+        (event["payload"] for event in reversed(events)
+         if event["event_type"] == "working_notes_updated"
+         and event["payload"].get("turn_id") == turn_id),
+        None,
+    )
+    note_receipt = note_update.get("receipt") if note_update is not None else None
+    output_items = []
+    for action_id in action_ids:
+        public_result = results_by_id[action_id].model_dump(mode="json", exclude={"replayed"})
+        if isinstance(note_receipt, dict) and note_receipt.get("action_id") == action_id:
+            # An annotation can fail while the actual action succeeds. Preserve
+            # both outcomes; never rewrite the action status or prior call arguments.
+            public_result["memory_update_result"] = note_receipt
+            notes = current_payload.get("working_notes", {})
+            if isinstance(notes, dict):
+                notes["last_update_result"] = {
+                    "turn_id": turn_id,
+                    "action_id": action_id,
+                    "delivery": "preceding_function_call_output",
+                }
+                notes.pop("last_update_diagnostics", None)
+        output_items.append({
             "type": "function_call_output",
             "call_id": action_id,
-            "output": canonical_json(
-                results_by_id[action_id].model_dump(mode="json", exclude={"replayed"})
-            ),
-        }
-        for action_id in action_ids
-    ]
+            "output": canonical_json(public_result),
+        })
     return [
         system_item,
         *prior_output_items,

@@ -161,7 +161,14 @@ IDs, invalid metadata, or invalid source references produce bounded diagnostics 
 rejecting the action. Accepted-mutation references bind the actual output diff.
 Unique `working_notes_updated` events record allocations, removals, evictions, and
 retained IDs, and hydrate at most six model-authored findings. Source notes
-rebind uniquely unchanged text or expire; old tool-result references are historical.
+retain their actually observed bodies separately from active source spans, with a
+24,000-character total body bound per note. Over-bound citations reject only that note
+with a narrower-citation hint. Successful mutation `action_finished` payloads atomically
+bind `working_notes_state` outside the public result; hydrate replays that snapshot,
+never recomputing historical lifecycle decisions from the final filesystem. Unique
+unchanged text rebinds; changed or ambiguous text expires without later resurrection.
+`last_source_lifecycle` exposes only triggering action, rebound IDs, and expiry reasons.
+Old tool-result references remain historical.
 These are public run-local notes, not raw reasoning or cross-run memory retrieval.
 Notes may retain observed mechanisms, the chosen implementation approach, and untested
 behavior. The system prompt encourages reuse of existing responsibilities and asks
@@ -169,6 +176,14 @@ whether another inspection can change the edit or next check. These remain optio
 concise findings, not a mandatory plan or a harness guarantee of semantic correctness.
 `memory_update=null` preserves the notes and question; `open_question=null` inside an
 update resolves the question. The harness does not automatically merge similar prose.
+Before an observation, use an open question or null update; findings may cite only
+source/results observed before the current batch. The next native output carries the
+owner call's `memory_update_result`, independently of main-action status. Its bounded
+per-finding outcomes identify created/updated/rejected IDs and a recovery hint; separate
+batch/removal diagnostics never repeat the finding's message. Context uses a delivery
+reference for that receipt and otherwise labels the last receipt by turn/action. Do not
+infer note storage from read success. Original function-call arguments remain exact,
+but read results omit the redundant unvalidated annotation from `inspection_intent`.
 The successful-mutation
 projection separates current actionable post-image evidence from historical action
 inputs. A successful check card names
@@ -195,7 +210,7 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v14`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v15`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -310,7 +325,15 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: tool surface `v14` adds stable run-local note IDs and explicit
+Current seam: tool surface `v15` fixes independent source-body retention, atomic note
+lifecycle replay, and action-associated note receipts. Source validation and nonblocking
+annotation failure remain; new planning calls, read caps, or cross-run memory are absent.
+The real two-unrelated-edit reproduction must retain the same note in uninterrupted and
+resumed execution. Genuine expiry must not resurrect when source text later returns.
+Provider-free tests fix these cases, mutation-completion crash boundaries, and the
+initial invalid-reference -> unknown-ID -> null-create feedback path.
+
+The preceding tool surface `v14` added stable run-local note IDs and explicit
 create/update/removal, guidance connecting mechanisms to small implementation choices,
 and an opt-in public Python experiment tool. Existing source admission, budget-only
 exploration, exact mutation recovery, provider diagnostics, and execution deadlines
@@ -338,14 +361,17 @@ was correctly repaired, both visible checks passed, and the submitted diff had 1
 The Linux real-os probe observed string/bytes traversal side effects, not Windows or
 candidate equivalence. Do not turn its successful execution into a broader claim.
 
-Next seam: review early memory admission and repeated inspection using public evidence.
+The read-only review then examined early memory admission and repeated inspection.
 The first edit still arrived at call 27; 17 of 29 inspections added no source coverage.
 The first note cited nonexistent result `pending`; five subsequent updates targeted
 unallocated `n1`. Diagnostics were projected, but no findings survived before mutation.
 Valid note creation began on call 30, with source-change expiry and later updates working.
 These observations do not prove memory caused either the delay or the final success.
-Do not auto-accept unobserved sources or add a hard read cap in response. Record the
-creation/feedback contract and verify a suspected defect before proposing a change.
+It separately reproduced the unchanged-note deletion/resume resurrection now fixed in v15.
+Do not attribute that separate bug to row 22's initial rejection, auto-accept unobserved
+sources, or add a hard read cap. Next seam after provider-free verification: only a future
+exactly approved live invocation can measure whether the model uses the corrected receipts
+and maintained notes, reduces redundant inspection, and still submits an accepted patch.
 The row and all earlier external evidence remain immutable; no twenty-third row is
 authorized. See `docs/current-status.md` for the exact result and artifact identity.
 
@@ -703,6 +729,13 @@ uv run ruff check patchloop tests
 uv run pytest tests --basetemp <short-external-path>
 uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
 ```
+
+V15 passes 54 focused note/context/input cases in 35.35 seconds and Ruff. Full-suite
+groups pass 64 in 90.67 seconds and 180 in 115.15 seconds concurrently: 244 provider-free
+cases, with three real-Docker cases disabled. Final mock `run_dev_b4a45c26a2e84022` under
+`C:\pt\pl-v15-smoke-0d2aaa` reaches isolated `EVALUATOR_PASS`, task acceptance PASS,
+safety NOT_RUN, through one mutation, four mock model turns and five actions, at zero cost.
+This verifies note lifecycle/receipt contracts locally, not better live model decisions.
 
 Freeze runtime files while running the suite: content-hash provenance tests intentionally
 reject concurrent source edits. To stay near the two-minute full-cycle target, run

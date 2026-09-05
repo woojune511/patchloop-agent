@@ -41,6 +41,61 @@ class WorkingNotesUpdate(_NoteModel):
     open_question: str | None = Field(max_length=500)
 
 
+_NOTE_FEEDBACK = {
+    "unknown_note_id": (
+        "This note was not stored: the requested note_id does not exist. Use "
+        "note_id=null to create a note with already observed evidence, or choose an "
+        "ID from available_note_ids to update an existing note."
+    ),
+    "unobserved_tool_result": (
+        "This note was not stored: its tool result has not been observed. Cite an "
+        "already completed public action, not pending or this batch's action. After "
+        "receiving this batch's result, cite it in a later update."
+    ),
+    "unobserved_source_range": (
+        "This note was not stored: its complete source range was not observed before "
+        "this batch. Cite an already returned range; use open_question for what you "
+        "still need to learn, then record the finding after observing the result."
+    ),
+    "note_source_body_unavailable": (
+        "This note was not stored: its observed source body could not be retained. "
+        "Use a narrower already observed citation; source bodies for one note must "
+        "fit within 24000 characters."
+    ),
+    "duplicate_note_update": (
+        "This entry was not stored: the same existing note is updated twice in one "
+        "update. Submit one revision per note ID."
+    ),
+    "invalid_memory_update_shape": (
+        "No note changes were applied: memory_update does not match its schema. "
+        "Use up to two findings, remove_note_ids, and a nullable open_question, or "
+        "memory_update=null to leave notes unchanged. The main action is independent."
+    ),
+    "ignored_additional_memory_updates": (
+        "Only the first non-null memory_update in this batch was processed. Put "
+        "the combined update on one call and use null on the other calls."
+    ),
+    "removals_skipped_after_invalid_finding": (
+        "Requested removals were not applied because a replacement finding was "
+        "rejected. Correct the finding before consolidating the existing notes."
+    ),
+    "unknown_remove_note_id": (
+        "A requested removal was not applied: that ID is not in available_note_ids. "
+        "Remove only existing notes, or use an empty remove_note_ids list."
+    ),
+    "cannot_remove_updated_note": (
+        "A requested removal was not applied: this update also revises that note. "
+        "Keep the revised note and remove only the redundant notes."
+    ),
+}
+
+
+def note_feedback(code: str, **location: int | str) -> dict[str, Any]:
+    """Bounded public feedback, never raw rejected text or unobserved references."""
+
+    return {"code": code, "message": _NOTE_FEEDBACK[code], **location}
+
+
 def memory_update_schema() -> dict[str, Any]:
     """Strict wire shape; semantic validation must never reject the main action."""
 
@@ -72,7 +127,12 @@ def memory_update_schema() -> dict[str, Any]:
             "ranges or prior public tool action IDs. Use note_id=null to create a note or "
             "an existing note_id to update it, independent of citation ranges. Consolidate "
             "duplicates by updating one note and removing the others. Only the first "
-            "non-null update in a batch is used; null preserves notes and the question."
+            "non-null update in a batch is used, before that batch executes. Do not "
+            "cite pending/current-batch results. Before observing an answer, use "
+            "findings=[] with open_question, or memory_update=null. After observing "
+            "it, create a note with note_id=null and use the returned allocated ID "
+            "for later updates. Main action success does not mean a note was stored; "
+            "check memory_update_result. Null preserves notes and the question."
         ),
         "properties": {
             "findings": {

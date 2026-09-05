@@ -40,6 +40,7 @@ from patchloop.dev.working_notes import (
     SourceNoteEvidence,
     WorkingNotesUpdate,
     memory_update_schema,
+    note_feedback,
 )
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
 from patchloop.repository import DiffSummary, WorkspaceManager
@@ -52,6 +53,7 @@ READ_TOOLS = DEV_READ_TOOLS
 SINGLE_ACTION_TOOLS = DEV_SINGLE_ACTION_TOOLS
 ALL_DEV_TOOLS = READ_TOOLS | SINGLE_ACTION_TOOLS
 _MAX_MUTATION_HUNK_CHARS = 24_000
+_MAX_NOTE_SOURCE_BODY_CHARS = 24_000
 _PATCH_ERROR_LINE = re.compile(r"corrupt patch at (?:<stdin>:|line )(\d+)")
 _PATCH_SOURCE_LINE = re.compile(r"patch failed: ([^:\r\n]+):(\d+)")
 _INLINE_PYTHON = re.compile(r"python(?:\d+(?:\.\d+)*)?(?:\.exe)?", re.IGNORECASE)
@@ -431,6 +433,8 @@ class DevToolGateway:
         self.last_successful_mutation: dict[str, Any] | None = None
         self.last_failed_mutation: dict[str, Any] | None = None
         self._working_findings: list[dict[str, Any]] = []
+        self._working_note_source_bodies: dict[str, list[str | None]] = {}
+        self._working_notes_lifecycle: dict[str, Any] | None = None
         self._working_open_question: str | None = None
         self._working_notes_turns: dict[str, dict[str, Any]] = {}
         self._next_working_note_id = 1
@@ -463,7 +467,12 @@ class DevToolGateway:
                             result=result,
                         )
                     continue
-                self._accept_successful_mutation(result.output)
+                notes_state = event["payload"].get("working_notes_state")
+                if isinstance(notes_state, dict):
+                    self._restore_working_notes_state(notes_state)
+                # Historical mutations must never be compared with the final
+                # workspace to recompute historical note lifecycle decisions.
+                self._accept_successful_mutation(result.output, refresh_notes=False)
                 continue
             if result.status != "succeeded":
                 continue
@@ -1077,11 +1086,14 @@ class DevToolGateway:
                 action_id=None,
             )
 
-    def _accept_successful_mutation(self, output: dict[str, Any]) -> None:
+    def _accept_successful_mutation(
+        self, output: dict[str, Any], *, refresh_notes: bool = True,
+    ) -> None:
         self.accepted_mutations += 1
         self.last_successful_mutation = output.get("mutation")
         self.last_failed_mutation = None
-        self._refresh_working_source_notes()
+        if refresh_notes:
+            self._refresh_working_source_notes()
         self._invalidate_spans(output.get("changed_files", []))
         self._restore_mutation_evidence(output)
         if output.get("alternative_requirement_satisfied") is True:
@@ -1141,7 +1153,12 @@ class DevToolGateway:
                 action_id=action_id,
             )
             if turn_decision is not None:
-                decorated["inspection_intent"] = copy.deepcopy(turn_decision)
+                # The original call is retained in native continuation. Do not echo
+                # its unvalidated annotation as part of a successful read result.
+                decorated["inspection_intent"] = {
+                    key: copy.deepcopy(value) for key, value in turn_decision.items()
+                    if key != "memory_update"
+                }
             self._observed_read_actions.add(action_id)
         return decorated
 
@@ -1336,6 +1353,17 @@ class DevToolGateway:
                 if previous.get("note_id") != identity
             ]
             self._working_findings.append(restored)
+            bodies = payload.get("source_bodies_by_note_id", {}).get(identity)
+            if bodies is None:
+                # Read-only legacy hydration may use the observations preceding
+                # this event, never unobserved/final workspace bytes.
+                bodies = self._capture_working_note_source_bodies(
+                    restored.get("evidence", []), list(self.spans.values()),
+                )
+            if bodies is not None:
+                self._working_note_source_bodies[identity] = copy.deepcopy(bodies)
+            else:
+                self._working_note_source_bodies.pop(identity, None)
         evicted = set(payload.get("evicted_note_ids", []))
         self._working_findings = [
             finding for finding in self._working_findings
@@ -1348,6 +1376,43 @@ class DevToolGateway:
             ]
         if payload.get("update_valid") is True:
             self._working_open_question = payload.get("open_question")
+        retained_ids = {finding["note_id"] for finding in self._working_findings}
+        self._working_note_source_bodies = {
+            note_id: bodies for note_id, bodies in self._working_note_source_bodies.items()
+            if note_id in retained_ids
+        }
+
+    @staticmethod
+    def _capture_working_note_source_bodies(
+        evidence: Sequence[dict[str, Any]], spans: Sequence[dict[str, Any]],
+    ) -> list[str | None] | None:
+        """Preserve bounded, actually observed source independently of active spans."""
+
+        bodies: list[str | None] = []
+        total_chars = 0
+        for reference in evidence:
+            if reference.get("kind") != "source":
+                bodies.append(None)
+                continue
+            observed: dict[int, str] = {}
+            for span in spans:
+                if (
+                    span.get("path") != reference["path"]
+                    or span.get("file_hash") != reference["file_hash"]
+                ):
+                    continue
+                lines = span.get("content", "").replace("\r\n", "\n").split("\n")
+                for offset, line in enumerate(lines):
+                    observed[span["start_line"] + offset] = line
+            numbers = range(reference["start_line"], reference["end_line"] + 1)
+            if not all(number in observed for number in numbers):
+                return None
+            content = "\n".join(observed[number] for number in numbers)
+            total_chars += len(content)
+            if not content or total_chars > _MAX_NOTE_SOURCE_BODY_CHARS:
+                return None
+            bodies.append(content)
+        return bodies
 
     def record_working_notes_update(
         self, calls: Sequence[RequestedTool], *, turn_id: str
@@ -1358,32 +1423,59 @@ class DevToolGateway:
         if existing is not None:
             return copy.deepcopy(existing)
         updates = [
-            getattr(call.turn_decision, "memory_update", None)
+            (call.action_id, getattr(call.turn_decision, "memory_update", None))
             for call in calls
             if getattr(call.turn_decision, "memory_update", None) is not None
         ]
         if not updates:
             return {"status": "not_requested"}
         self._refresh_working_source_notes()
-        selected = updates[0]
+        action_id, selected = updates[0]
+        receipt: dict[str, Any] = {
+            "turn_id": turn_id,
+            "action_id": action_id,
+            "status": "rejected",
+            "findings": [],
+            "diagnostics": [],
+            "available_note_ids": [],
+            "removed_note_ids": [],
+            "evicted_note_ids": [],
+            "open_question_applied": False,
+        }
         payload: dict[str, Any] = {
             "turn_id": turn_id,
+            "action_id": action_id,
             "findings": [],
+            "source_bodies_by_note_id": {},
             "allocated_note_ids": [],
             "removed_note_ids": [],
             "evicted_note_ids": [],
             "retained_note_ids": [note["note_id"] for note in self._working_findings],
             "open_question": None,
             "update_valid": False,
-            "diagnostics": ["ignored_additional_memory_updates"] if len(updates) > 1 else [],
+            "diagnostics": [],
+            "receipt": receipt,
         }
+
+        def diagnose(code: str, *, legacy_code: str | None = None, **location: int | str):
+            payload["diagnostics"].append(legacy_code or code)
+            feedback = note_feedback(code, **location)
+            # Per-finding failures already carry their feedback in findings.
+            if "finding_index" not in location:
+                receipt["diagnostics"].append(feedback)
+            return feedback
+
+        if len(updates) > 1:
+            diagnose("ignored_additional_memory_updates")
         try:
             update = WorkingNotesUpdate.model_validate(selected)
         except ValidationError:
-            payload["diagnostics"].append("invalid_memory_update_shape")
+            diagnose("invalid_memory_update_shape")
         else:
             payload["update_valid"] = True
             payload["open_question"] = update.open_question
+            receipt["open_question_applied"] = True
+            question_changed = update.open_question != self._working_open_question
             existing_ids = {finding["note_id"] for finding in self._working_findings}
             updated_ids: set[str] = set()
             next_note_number = self._next_working_note_id
@@ -1394,17 +1486,30 @@ class DevToolGateway:
                 for event in self.journal.events()
                 if event["event_type"] == "action_finished"
             }
-            for finding in update.findings:
+            for index, finding in enumerate(update.findings):
+                entry: dict[str, Any] = {
+                    "finding_index": index,
+                    "note_id": finding.note_id,
+                    "status": "rejected",
+                    "code": None,
+                    "message": "",
+                }
+                receipt["findings"].append(entry)
                 if finding.note_id is not None and finding.note_id not in existing_ids:
-                    payload["diagnostics"].append("unknown_note_id")
+                    entry.update(diagnose(
+                        "unknown_note_id", finding_index=index, note_id=finding.note_id,
+                    ))
                     all_findings_valid = False
                     continue
                 if finding.note_id in updated_ids:
-                    payload["diagnostics"].append("duplicate_note_update")
+                    entry.update(diagnose(
+                        "duplicate_note_update", finding_index=index,
+                        note_id=finding.note_id,
+                    ))
                     all_findings_valid = False
                     continue
                 bound: list[dict[str, Any]] = []
-                for evidence in finding.evidence:
+                for evidence_index, evidence in enumerate(finding.evidence):
                     if isinstance(evidence, SourceNoteEvidence):
                         matches = [span for span in spans if span["path"] == evidence.path]
                         if (
@@ -1413,6 +1518,11 @@ class DevToolGateway:
                                 matches, evidence.start_line, evidence.end_line
                             )
                         ):
+                            entry.update(diagnose(
+                                "unobserved_source_range",
+                                legacy_code="unobserved_public_evidence",
+                                finding_index=index, evidence_index=evidence_index,
+                            ))
                             break
                         bound.append({
                             **evidence.model_dump(), "file_hash": matches[0]["file_hash"],
@@ -1420,6 +1530,11 @@ class DevToolGateway:
                     else:
                         result = prior_results.get(evidence.action_id)
                         if result is None:
+                            entry.update(diagnose(
+                                "unobserved_tool_result",
+                                legacy_code="unobserved_public_evidence",
+                                finding_index=index, evidence_index=evidence_index,
+                            ))
                             break
                         bound.append({
                             **evidence.model_dump(),
@@ -1432,7 +1547,11 @@ class DevToolGateway:
                             ),
                         })
                 if len(bound) != len(finding.evidence):
-                    payload["diagnostics"].append("unobserved_public_evidence")
+                    all_findings_valid = False
+                    continue
+                bodies = self._capture_working_note_source_bodies(bound, spans)
+                if bodies is None:
+                    entry.update(diagnose("note_source_body_unavailable", finding_index=index))
                     all_findings_valid = False
                     continue
                 note_id = finding.note_id
@@ -1448,14 +1567,20 @@ class DevToolGateway:
                     "model_authored": True,
                     **stored,
                 })
+                payload["source_bodies_by_note_id"][note_id] = bodies
+                entry.update({
+                    "note_id": note_id,
+                    "status": "created" if finding.note_id is None else "updated",
+                    "message": "Note stored. Use this allocated note_id for later updates.",
+                })
             if update.remove_note_ids and not all_findings_valid:
-                payload["diagnostics"].append("removals_skipped_after_invalid_finding")
+                diagnose("removals_skipped_after_invalid_finding")
             elif update.remove_note_ids:
                 for note_id in dict.fromkeys(update.remove_note_ids):
                     if note_id not in existing_ids:
-                        payload["diagnostics"].append("unknown_remove_note_id")
+                        diagnose("unknown_remove_note_id", note_id=note_id)
                     elif note_id in updated_ids:
-                        payload["diagnostics"].append("cannot_remove_updated_note")
+                        diagnose("cannot_remove_updated_note", note_id=note_id)
                     else:
                         payload["removed_note_ids"].append(note_id)
             removed = set(payload["removed_note_ids"])
@@ -1465,21 +1590,40 @@ class DevToolGateway:
             ] + [note["note_id"] for note in payload["findings"]]
             payload["evicted_note_ids"] = resulting_ids[:-6]
             payload["retained_note_ids"] = resulting_ids[-6:]
+            applied = bool(payload["findings"] or payload["removed_note_ids"] or question_changed)
+            receipt["status"] = (
+                "applied" if not payload["diagnostics"]
+                else "partially_applied" if applied else "rejected"
+            )
+        receipt["available_note_ids"] = list(payload["retained_note_ids"])
+        receipt["removed_note_ids"] = list(payload["removed_note_ids"])
+        receipt["evicted_note_ids"] = list(payload["evicted_note_ids"])
+        # At most two findings, six removals, and batch/shape diagnostics. Never
+        # include rejected prose or unknown path/result strings in this receipt.
+        receipt["diagnostics"] = receipt["diagnostics"][:10]
         self.journal.append("working_notes_updated", payload)
         self._restore_working_notes(payload)
         return copy.deepcopy(payload)
 
     def _refresh_working_source_notes(self) -> None:
-        """Rebind unchanged uniquely occurring source, otherwise expire that finding."""
+        self._restore_working_notes_state(self._refreshed_working_notes_state())
+
+    def _refreshed_working_notes_state(
+        self, *, action_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Compute lifecycle without applying it until its action is durable."""
 
         current_sources: dict[str, tuple[str, str] | None] = {}
         retained: list[dict[str, Any]] = []
-        with self._lock:
-            observations = [dict(span) for span in self.spans.values()]
+        rebound: list[str] = []
+        expired: list[dict[str, str]] = []
         for original in self._working_findings:
             finding = copy.deepcopy(original)
-            valid = True
-            for evidence in finding["evidence"]:
+            note_id = finding["note_id"]
+            bodies = self._working_note_source_bodies.get(note_id, [])
+            reason: str | None = None
+            source_rebound = False
+            for index, evidence in enumerate(finding["evidence"]):
                 if evidence["kind"] != "source":
                     continue
                 path = evidence["path"]
@@ -1493,37 +1637,66 @@ class DevToolGateway:
                         current_sources[path] = None
                 source = current_sources[path]
                 if source is None:
-                    valid = False
+                    reason = "source_unavailable"
                     break
                 text, file_hash = source
                 if file_hash == evidence["file_hash"]:
                     continue
-                old_lines: dict[int, str] = {}
-                for span in observations:
-                    if span.get("path") == path and span.get("file_hash") == evidence["file_hash"]:
-                        for offset, line in enumerate(span.get("content", "").split("\n")):
-                            old_lines[span["start_line"] + offset] = line
-                numbers = range(evidence["start_line"], evidence["end_line"] + 1)
-                if not all(number in old_lines for number in numbers):
-                    valid = False
+                content = bodies[index] if index < len(bodies) else None
+                if not content:
+                    reason = "observed_body_unavailable"
                     break
-                content = "\n".join(old_lines[number] for number in numbers)
                 positions = [
-                    match.start() for match in re.finditer(re.escape(content), text)
+                    match.start() for match in re.finditer(f"(?={re.escape(content)})", text)
                     if content and (match.start() == 0 or text[match.start() - 1] == "\n")
-                    and (match.end() == len(text) or text[match.end()] == "\n")
+                    and (
+                        match.start() + len(content) == len(text)
+                        or text[match.start() + len(content)] == "\n"
+                    )
                 ]
                 if len(positions) != 1:
-                    valid = False
+                    reason = "source_ambiguous" if positions else "source_changed"
                     break
                 start = text[:positions[0]].count("\n") + 1
                 evidence.update({
                     "file_hash": file_hash, "start_line": start,
                     "end_line": start + content.count("\n"),
                 })
-            if valid:
+                source_rebound = True
+            if reason is None:
                 retained.append(finding)
-        self._working_findings = retained
+                if source_rebound:
+                    rebound.append(note_id)
+            else:
+                expired.append({"note_id": note_id, "reason": reason})
+        lifecycle = copy.deepcopy(self._working_notes_lifecycle)
+        if rebound or expired:
+            lifecycle = {
+                "trigger_action_id": action_id,
+                "rebound_note_ids": rebound,
+                "expired_notes": expired,
+            }
+        return {
+            "findings": retained,
+            "source_bodies_by_note_id": {
+                finding["note_id"]: copy.deepcopy(
+                    self._working_note_source_bodies[finding["note_id"]]
+                )
+                for finding in retained
+                if finding["note_id"] in self._working_note_source_bodies
+            },
+            "lifecycle": lifecycle,
+        }
+
+    def _restore_working_notes_state(self, state: dict[str, Any]) -> None:
+        self._working_findings = copy.deepcopy(state["findings"])
+        self._working_note_source_bodies = copy.deepcopy(state["source_bodies_by_note_id"])
+        self._working_notes_lifecycle = copy.deepcopy(state.get("lifecycle"))
+
+    def working_notes_lifecycle_receipt(self) -> dict[str, Any] | None:
+        """Public lifecycle decisions exclude independently retained source bodies."""
+
+        return copy.deepcopy(self._working_notes_lifecycle)
 
     def working_notes(self, *, diff_hash: str | None = None) -> dict[str, Any]:
         self._refresh_working_source_notes()
@@ -1552,6 +1725,11 @@ class DevToolGateway:
                 list(self._working_notes_turns.values())[-1].get("diagnostics", [])[:3]
                 if self._working_notes_turns else []
             ),
+            "last_update_result": (
+                copy.deepcopy(list(self._working_notes_turns.values())[-1].get("receipt"))
+                if self._working_notes_turns else None
+            ),
+            "last_source_lifecycle": self.working_notes_lifecycle_receipt(),
             "interpretation": (
                 "Model-authored public observations, approach, and unverified behavior; "
                 "sources are validated, interpretations are not. Update an existing note_id "
@@ -2084,17 +2262,23 @@ class DevToolGateway:
                     self.current_diff_hash if call.name == "replace_text" else baseline
                 ),
             )
+        finished_payload: dict[str, Any] = {
+            "action_id": call.action_id,
+            "input_hash": input_hash,
+            "result": result.model_dump(mode="json"),
+        }
+        if result.status == "succeeded" and result.tool == "replace_text":
+            finished_payload["working_notes_state"] = self._refreshed_working_notes_state(
+                action_id=call.action_id,
+            )
         self.journal.append(
             "action_finished",
-            {
-                "action_id": call.action_id,
-                "input_hash": input_hash,
-                "result": result.model_dump(mode="json"),
-            },
+            finished_payload,
         )
         if result.status == "succeeded":
             if result.tool == "replace_text":
-                self._accept_successful_mutation(result.output)
+                self._restore_working_notes_state(finished_payload["working_notes_state"])
+                self._accept_successful_mutation(result.output, refresh_notes=False)
             elif result.tool == "run_check":
                 self._remember_check(result.output)
         elif result.tool == "replace_text":
