@@ -22,7 +22,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({"replace_text", "run_check", "finish_task",
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v11",
+            "schema_version": "dev-tool-surface-v12",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -33,20 +33,26 @@ def dev_tool_surface_hash() -> str:
                 "mode",
                 "basis",
                 "evidence_goal",
+                "memory_update",
             ],
             "parallel_read_decisions": "shared_inspect_mode_with_call_specific_rationale",
             "dynamic_workflow_tools": True,
             "mutation_wire": "gateway-bound-exact-anchor-replacement-v2",
-            "mutation_evidence_binding": "latest-current-public-covering-span-v1",
+            "mutation_evidence_binding": "observed-current-source-union-v2",
             "inspection_gain": "non-overlapping-public-coverage-v2",
             "mutation_failure": "typed-scope-preview-recovery-lineage-v2",
             "completion_horizon": "pre-dispatch-best-path-v2",
-            "public_check_failure_focus": "inline-python-public-source-v1",
+            "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_recurrence": "semantic-site-with-raw-fallback-v1",
-            "causal_revision_guidance": "current-public-failure-grounded-v1",
-            "failed_check_repair_action_space": "optional-read-with-current-evidence-v1",
-            "evidence_plateau_transition": "progress-responsive-final-batch-v1",
-            "check_recovery_reserve": "one-per-distinct-visible-check-v1",
+            "causal_revision_guidance": "advisory-hypothesis-review-v2",
+            "failed_check_repair_action_space": "budget-only-public-inspection-v2",
+            "evidence_plateau_transition": "advisory-only-v2",
+            "check_recovery_reserve": "order-independent-distinct-failure-bound-v2",
+            "context_projection": "observed-priority-merged-24000-chars-v1",
+            "working_notes": "run-local-source-linked-nonblocking-v1",
+            "mutation_recovery": "atomic-complete-candidate-diff-v2",
+            "correction_recovery": "journal-derived-unconsumed-v2",
+            "execution_deadline": "shared-active-deadline-owned-cleanup-v1",
         }
     )
 
@@ -119,6 +125,8 @@ class PublicTurnDecision(StrictModel):
     mode: Literal["inspect", "mutate", "verify", "finish", "stop"]
     basis: str = Field(min_length=1, max_length=800)
     evidence_goal: str | None = Field(default=None, min_length=1, max_length=500)
+    # Notes are parsed independently: an invalid annotation must not reject an action.
+    memory_update: Any = None
 
     @model_validator(mode="after")
     def evidence_goal_matches_mode(self) -> PublicTurnDecision:

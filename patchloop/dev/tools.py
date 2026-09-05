@@ -17,6 +17,15 @@ from typing import Any
 from pydantic import ValidationError
 
 from patchloop.contracts import PublicTask, RegisteredCheck
+from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
+from patchloop.dev.context import (
+    SourceProjection,
+    bounded_lines,
+    project_observed_sources,
+    source_lines,
+    spans_cover_range,
+    valid_observed_span,
+)
 from patchloop.dev.contracts import (
     DEV_READ_TOOLS,
     DEV_SINGLE_ACTION_TOOLS,
@@ -27,6 +36,12 @@ from patchloop.dev.contracts import (
     TextReplacementIntent,
 )
 from patchloop.dev.state import DevJournal
+from patchloop.dev.working_notes import (
+    SourceNoteEvidence,
+    WorkingNotesUpdate,
+    finding_identity,
+    memory_update_schema,
+)
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
 from patchloop.repository import DiffSummary, WorkspaceManager
 from patchloop.sandbox.runner import Sandbox
@@ -58,6 +73,7 @@ class _ValidatedReplacement:
     anchor_end_line: int
     postimage_start_line: int
     anchor_evidence_span_id: str
+    anchor_evidence_span_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -92,8 +108,9 @@ def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
                     "description": "Must be null unless mode is inspect.",
                 }
             ),
+            "memory_update": memory_update_schema(),
         },
-        "required": ["mode", "basis", "evidence_goal"],
+        "required": ["mode", "basis", "evidence_goal", "memory_update"],
         "additionalProperties": False,
     }
 
@@ -166,8 +183,8 @@ def dev_tool_schemas(
                 "gateway validates the current anchor and constructs the canonical Git "
                 "diff; never provide diff syntax or patch wrappers. The minimal plan, "
                 "hypothesis, and exact current source anchor are part of this mutation. "
-                "The gateway selects the most recent current public span that fully covers "
-                "the anchor. An accepted mutation's bounded post-image is current evidence "
+                "The gateway binds the anchor to the contiguous union of current observed "
+                "public source. An accepted mutation's bounded post-image is current evidence "
                 "for a same-file repair; there is no separate planning tool."
             ),
             "strict": True,
@@ -191,8 +208,8 @@ def dev_tool_schemas(
                     "causal_revision": {
                         "type": ["object", "null"],
                         "description": (
-                            "Required only after the same public failure recurs across "
-                            "distinct diffs."
+                            "Optional concise revision of the public hypothesis after "
+                            "observed failure; it is never required for mutation admission."
                         ),
                         "properties": {
                             "falsified_prior_hypothesis": {
@@ -360,12 +377,14 @@ class DevToolGateway:
         sandbox: Sandbox,
         journal: DevJournal,
         limits: DevLimits,
+        deadline: ExecutionDeadline | None = None,
     ) -> None:
         self.workspace = workspace.resolve()
         self.public_task = public_task
         self.sandbox = sandbox
         self.journal = journal
         self.limits = limits
+        self.deadline = deadline
         self._lock = threading.RLock()
         self.spans: dict[str, dict[str, Any]] = {}
         self._observation_seq = 0
@@ -377,6 +396,8 @@ class DevToolGateway:
         self._search_observations_by_diff: dict[str, list[dict[str, Any]]] = {}
         self._search_result_fingerprints_by_diff: dict[str, set[str]] = {}
         self._latest_inspection_by_diff: dict[str, dict[str, Any]] = {}
+        self._recent_inspections_by_diff: dict[str, list[dict[str, Any]]] = {}
+        self._observed_read_actions: set[str] = set()
         self._ledger_seq = 0
         self.checks_by_diff: dict[str, dict[str, dict[str, Any]]] = {}
         self.failure_diffs: dict[str, set[str]] = {}
@@ -386,11 +407,17 @@ class DevToolGateway:
         self.accepted_mutations = 0
         self.last_successful_mutation: dict[str, Any] | None = None
         self.last_failed_mutation: dict[str, Any] | None = None
+        self._working_findings: list[dict[str, Any]] = []
+        self._working_open_question: str | None = None
+        self._working_notes_turns: dict[str, dict[str, Any]] = {}
         self._hydrate()
 
     def _hydrate(self) -> None:
         action_starts: dict[str, dict[str, Any]] = {}
         for event in self.journal.events():
+            if event["event_type"] == "working_notes_updated":
+                self._restore_working_notes(event["payload"])
+                continue
             if event["event_type"] == "action_started":
                 payload = event["payload"]
                 if isinstance(payload.get("action_id"), str):
@@ -501,8 +528,6 @@ class DevToolGateway:
         current_site = current.get("failure_site_fingerprint")
         prior_location = prior_focus.get("public_location")
         current_location = current.get("public_location")
-        prior_boundary = prior_focus.get("execution_boundary")
-        current_boundary = current.get("execution_boundary")
         prior_line = (
             prior_location.get("line") if isinstance(prior_location, dict) else None
         )
@@ -518,20 +543,19 @@ class DevToolGateway:
             and prior_location.get("source_hash") == current_location.get("source_hash")
             and isinstance(prior_line, int)
             and isinstance(current_line, int)
-            and isinstance(prior_boundary, dict)
-            and prior_boundary.get("later_source_lines_observed") is False
-            and isinstance(current_boundary, dict)
-            and current_boundary.get("later_source_lines_observed") is False
         ):
             if current_line > prior_line:
                 relation = "public_failure_location_moved_later"
                 inference = (
-                    "The earlier mapped location no longer stopped this execution before "
-                    "the current public line."
+                    "The observed traceback location has a later source line number; "
+                    "execution of other statements is not established."
                 )
             elif current_line < prior_line:
                 relation = "public_failure_location_moved_earlier"
-                inference = "This execution stopped at an earlier mapped public line."
+                inference = (
+                    "The observed traceback location has an earlier source line number; "
+                    "execution of other statements is not established."
+                )
             else:
                 relation = "different_public_failure_site"
                 inference = (
@@ -591,7 +615,6 @@ class DevToolGateway:
                         "exception_type": exception_type,
                     }
                 )
-                module_boundary = len(frames) == 1 and scope == "<module>"
                 focus.update(
                     {
                         "mapping_status": "mapped_public_inline_python",
@@ -604,15 +627,10 @@ class DevToolGateway:
                             "statement": statement,
                         },
                         "execution_boundary": {
-                            "later_source_lines_observed": False if module_boundary else None,
+                            "later_source_lines_observed": None,
                             "reason": (
-                                "An uncaught exception stopped this single-frame module-level "
-                                "public script at the mapped line."
-                                if module_boundary
-                                else (
-                                    "Nested inline frames do not prove which later source "
-                                    "lines ran."
-                                )
+                                "A traceback identifies the failing frame, not the earlier "
+                                "execution of other lines through loops or branches."
                             ),
                         },
                     }
@@ -681,13 +699,13 @@ class DevToolGateway:
         )
         if failure_class in {"anchor_invalid", "evidence_invalid"}:
             next_action = (
-                "Use the one targeted read_file opportunity for this path, then repair or "
-                "replace the failed mutation."
+                "Inspect the missing current source range if needed and budget permits, "
+                "then repair or replace the failed mutation using exact observed evidence."
             )
         else:
             next_action = (
                 "Repair or explicitly replace this failed mutation using the preserved exact "
-                "replacement, or stop_task."
+                "replacement and typed feedback. Available inspection remains budget-governed."
             )
         return {
             "action_id": action_id,
@@ -733,6 +751,7 @@ class DevToolGateway:
         # Gain and intent belong to the current observation, not the cached request.
         cached.pop("evidence_gain", None)
         cached.pop("inspection_intent", None)
+        cached.pop("read_observation_seq", None)
         return cached
 
     @staticmethod
@@ -780,9 +799,15 @@ class DevToolGateway:
         output: dict[str, Any],
         turn_decision: dict[str, Any] | None,
         action_id: str | None,
+        replay: bool = False,
     ) -> dict[str, Any]:
         spans = [span for span in output.get("spans", []) if isinstance(span, dict)]
         with self._lock:
+            observation_seq = output.get("read_observation_seq")
+            if type(observation_seq) is not int or observation_seq < 1:
+                observation_seq = self._ledger_seq + 1
+                output["read_observation_seq"] = observation_seq
+            self._ledger_seq = max(self._ledger_seq, observation_seq)
             coverage = self._coverage_by_diff.setdefault(workspace_diff_hash, {})
             new_lines = 0
             relevant_new_lines = 0
@@ -815,6 +840,14 @@ class DevToolGateway:
                     if editable:
                         relevant_new_files += 1
 
+            saved_gain = output.get("evidence_gain") if replay else None
+            if isinstance(saved_gain, dict):
+                new_lines = saved_gain.get("new_covered_line_count", new_lines)
+                relevant_new_lines = saved_gain.get(
+                    "new_editable_line_count", relevant_new_lines
+                )
+                new_files = saved_gain.get("new_file_count", new_files)
+                relevant_new_files = saved_gain.get("new_editable_file_count", relevant_new_files)
             supporting_new_lines = new_lines - relevant_new_lines
             supporting_new_files = new_files - relevant_new_files
             first_search_observation = False
@@ -825,6 +858,10 @@ class DevToolGateway:
                     search_key = sha256_json({"query": query, "path_glob": path_glob})
                     searches = self._search_ledger_by_diff.setdefault(workspace_diff_hash, {})
                     first_search_observation = search_key not in searches
+                    if isinstance(saved_gain, dict):
+                        first_search_observation = saved_gain.get(
+                            "first_search_observation", first_search_observation
+                        )
                     truncated = bool(output.get("truncated"))
                     result_fingerprint = self._search_result_fingerprint(
                         spans,
@@ -847,8 +884,7 @@ class DevToolGateway:
                         previous = searches.get(search_key, {})
                         outcome_counts = copy.deepcopy(previous.get("outcome_counts", {}))
                         outcome_counts[outcome] = int(outcome_counts.get(outcome, 0)) + 1
-                        self._ledger_seq += 1
-                        searches[search_key] = {
+                        current_observation = {
                             "query": query,
                             "path_glob": path_glob,
                             "evidence_goal": self._bounded_string(
@@ -871,9 +907,17 @@ class DevToolGateway:
                                 }
                                 for span in spans[:20]
                             ],
-                            "last_observed_seq": self._ledger_seq,
+                            "last_observed_seq": observation_seq,
                         }
-                        observation = copy.deepcopy(searches[search_key])
+                        if int(previous.get("last_observed_seq", 0)) > observation_seq:
+                            searches[search_key] = {
+                                **previous,
+                                "outcome_counts": outcome_counts,
+                                "observation_count": current_observation["observation_count"],
+                            }
+                        else:
+                            searches[search_key] = current_observation
+                        observation = copy.deepcopy(current_observation)
                         observation.pop("outcome_counts", None)
                         observation.pop("observation_count", None)
                         self._search_observations_by_diff.setdefault(
@@ -883,8 +927,7 @@ class DevToolGateway:
                             workspace_diff_hash, set()
                         ).add(result_fingerprint)
             if turn_decision is not None:
-                self._ledger_seq += 1
-                self._latest_inspection_by_diff[workspace_diff_hash] = {
+                latest_intent = {
                     "basis": self._bounded_string(turn_decision.get("basis"), 800),
                     "evidence_goal": self._bounded_string(turn_decision.get("evidence_goal"), 500),
                     "evidence_span_ids": [
@@ -892,14 +935,43 @@ class DevToolGateway:
                         for span in spans[:8]
                         if isinstance(span.get("span_id"), str)
                     ],
-                    "last_observed_seq": self._ledger_seq,
+                    "last_observed_seq": observation_seq,
+                    "marginal_evidence_gain": new_lines > 0,
                 }
+                previous_intent = self._latest_inspection_by_diff.get(workspace_diff_hash, {})
+                if int(previous_intent.get("last_observed_seq", 0)) <= observation_seq:
+                    self._latest_inspection_by_diff[workspace_diff_hash] = latest_intent
+            if tool in READ_TOOLS:
+                recent = self._recent_inspections_by_diff.setdefault(workspace_diff_hash, [])
+                recent.append({
+                    "tool": tool,
+                    "action_id": action_id,
+                    **(
+                        {"query": output.get("query"), "path_glob": output.get("path_glob")}
+                        if tool == "search_files"
+                        else {
+                            "path": spans[0].get("path") if spans else output.get("path"),
+                            "start_line": spans[0].get("start_line") if spans else None,
+                            "end_line": spans[0].get("end_line") if spans else None,
+                        }
+                    ),
+                    "evidence_goal": self._bounded_string(
+                        (turn_decision or {}).get("evidence_goal"), 500
+                    ),
+                    "outcome": (
+                        "zero_match" if not spans
+                        else "covered_only" if not new_lines
+                        else "supporting_coverage" if not relevant_new_lines
+                        else "new_coverage"
+                    ),
+                    "new_covered_line_count": new_lines,
+                    "new_editable_line_count": relevant_new_lines,
+                    "new_supporting_line_count": supporting_new_lines,
+                    "last_observed_seq": observation_seq,
+                })
+                recent.sort(key=lambda item: item["last_observed_seq"], reverse=True)
+                del recent[3:]
         gain_units = new_lines
-        if turn_decision is not None:
-            with self._lock:
-                self._latest_inspection_by_diff[workspace_diff_hash]["marginal_evidence_gain"] = (
-                    gain_units > 0
-                )
         return {
             "new_covered_line_count": new_lines,
             "new_editable_line_count": relevant_new_lines,
@@ -917,17 +989,28 @@ class DevToolGateway:
     def _restore_read_result(self, result: DevToolResult) -> None:
         spans = result.output.get("spans", [])
         with self._lock:
+            if result.action_id in self._observed_read_actions:
+                return
             for span in spans:
                 if not isinstance(span, dict) or not isinstance(span.get("span_id"), str):
                     continue
-                self._observation_seq += 1
                 restored = dict(span)
-                restored["last_observed_seq"] = self._observation_seq
-                self.spans[restored["span_id"]] = restored
+                sequence = restored.get("last_observed_seq")
+                if type(sequence) is not int or sequence < 1:
+                    sequence = self._observation_seq + 1
+                    restored["last_observed_seq"] = sequence
+                self._observation_seq = max(self._observation_seq, sequence)
+                previous = self.spans.get(restored["span_id"], {})
+                if int(previous.get("last_observed_seq", 0)) <= sequence:
+                    self.spans[restored["span_id"]] = restored
             fingerprint = result.output.get("evidence_fingerprint")
             if isinstance(fingerprint, str):
+                repetition = result.output.get("evidence_repetition")
+                previous_repetition = self._evidence_repetitions.get(fingerprint, 0)
                 self._evidence_repetitions[fingerprint] = (
-                    self._evidence_repetitions.get(fingerprint, 0) + 1
+                    max(previous_repetition, repetition)
+                    if type(repetition) is int
+                    else previous_repetition + 1
                 )
             if result.workspace_diff_hash is not None:
                 read_request_hash = result.output.get("read_request_hash", result.input_hash)
@@ -935,15 +1018,16 @@ class DevToolGateway:
                     self._read_cache[
                         self._cache_key(read_request_hash, result.workspace_diff_hash)
                     ] = self._cacheable_read_output(result.output)
-        if result.workspace_diff_hash is not None:
-            intent = result.output.get("inspection_intent")
-            self._record_read_ledger(
-                tool=result.tool,
-                workspace_diff_hash=result.workspace_diff_hash,
-                output=result.output,
-                turn_decision=intent if isinstance(intent, dict) else None,
-                action_id=result.action_id,
-            )
+                intent = result.output.get("inspection_intent")
+                self._record_read_ledger(
+                    tool=result.tool,
+                    workspace_diff_hash=result.workspace_diff_hash,
+                    output=result.output,
+                    turn_decision=intent if isinstance(intent, dict) else None,
+                    action_id=result.action_id,
+                    replay=True,
+                )
+            self._observed_read_actions.add(result.action_id)
 
     def _restore_mutation_evidence(self, output: dict[str, Any]) -> None:
         span = output.get("mutation_evidence")
@@ -972,6 +1056,7 @@ class DevToolGateway:
         self.accepted_mutations += 1
         self.last_successful_mutation = output.get("mutation")
         self.last_failed_mutation = None
+        self._refresh_working_source_notes()
         self._invalidate_spans(output.get("changed_files", []))
         self._restore_mutation_evidence(output)
         if output.get("alternative_requirement_satisfied") is True:
@@ -989,6 +1074,8 @@ class DevToolGateway:
     ) -> dict[str, Any]:
         decorated = copy.deepcopy(output)
         spans = decorated.get("spans", [])
+        # Filesystem scans already finished outside this small metadata section.
+        # Spans, coverage and zero-result observations receive one consistent order.
         with self._lock:
             new_count = 0
             span_ids: list[str] = []
@@ -1012,24 +1099,25 @@ class DevToolGateway:
             )
             repetition = self._evidence_repetitions.get(fingerprint, 0) + 1
             self._evidence_repetitions[fingerprint] = repetition
-        decorated.update(
-            {
-                "new_span_count": new_count,
-                "read_request_hash": input_hash,
-                "evidence_fingerprint": fingerprint,
-                "evidence_repetition": repetition,
-                "stagnation_signal": repetition >= 2 and new_count == 0,
-            }
-        )
-        decorated["evidence_gain"] = self._record_read_ledger(
-            tool=tool,
-            workspace_diff_hash=workspace_diff_hash,
-            output=decorated,
-            turn_decision=turn_decision,
-            action_id=action_id,
-        )
-        if turn_decision is not None:
-            decorated["inspection_intent"] = copy.deepcopy(turn_decision)
+            decorated.update(
+                {
+                    "new_span_count": new_count,
+                    "read_request_hash": input_hash,
+                    "evidence_fingerprint": fingerprint,
+                    "evidence_repetition": repetition,
+                    "stagnation_signal": repetition >= 2 and new_count == 0,
+                }
+            )
+            decorated["evidence_gain"] = self._record_read_ledger(
+                tool=tool,
+                workspace_diff_hash=workspace_diff_hash,
+                output=decorated,
+                turn_decision=turn_decision,
+                action_id=action_id,
+            )
+            if turn_decision is not None:
+                decorated["inspection_intent"] = copy.deepcopy(turn_decision)
+            self._observed_read_actions.add(action_id)
         return decorated
 
     def _invalidate_spans(self, paths: list[str]) -> None:
@@ -1066,11 +1154,15 @@ class DevToolGateway:
             try:
                 normalized, current = self._tracked_path(path)
                 raw = current.read_bytes()
-                text = raw.decode("utf-8")
+                text, _ = self._source_text(raw)
             except (PatchLoopError, OSError, UnicodeDecodeError):
                 continue
             content = str(span["content"])
-            positions = [match.start() for match in re.finditer(re.escape(content), text)]
+            positions = [
+                match.start() for match in re.finditer(re.escape(content), text)
+                if (match.start() == 0 or text[match.start() - 1] == "\n")
+                and (match.end() == len(text) or text[match.end()] == "\n")
+            ]
             if len(positions) != 1:
                 continue
             start_line = text[: positions[0]].count("\n") + 1
@@ -1094,14 +1186,296 @@ class DevToolGateway:
                 break
         return rebound
 
+    def _validated_source_spans(self) -> list[dict[str, Any]]:
+        """Check content as well as hashes before claiming any observed range."""
+
+        with self._lock:
+            candidates = [dict(span) for span in self.spans.values()]
+        sources: dict[str, tuple[list[str], str] | None] = {}
+        valid: list[dict[str, Any]] = []
+        for span in candidates:
+            path = span.get("path")
+            if not isinstance(path, str):
+                continue
+            if path not in sources:
+                try:
+                    _, current = self._tracked_path(path)
+                    raw = current.read_bytes()
+                    sources[path] = (source_lines(raw.decode("utf-8")), sha256_bytes(raw))
+                except (PatchLoopError, OSError, UnicodeDecodeError):
+                    sources[path] = None
+            current_source = sources[path]
+            if current_source is not None and valid_observed_span(span, *current_source):
+                valid.append(span)
+        return valid
+
+    def _source_projection_priorities(self) -> list[tuple[str, int, int, int]]:
+        priorities: list[tuple[str, int, int, int]] = []
+        failed = self.last_failed_mutation or {}
+        replacement = failed.get("replacement")
+        if isinstance(replacement, dict) and isinstance(replacement.get("path"), str):
+            path = replacement["path"]
+            try:
+                _, current = self._tracked_path(path)
+                text, _ = self._source_text(current.read_bytes())
+                old_text = replacement.get("old_text")
+                occurrence = replacement.get("occurrence", 1)
+                positions = (
+                    [match.start() for match in re.finditer(re.escape(old_text), text)]
+                    if isinstance(old_text, str) and old_text else []
+                )
+                if type(occurrence) is int and 1 <= occurrence <= len(positions):
+                    start = text[:positions[occurrence - 1]].count("\n") + 1
+                    priorities.append((path, start, start + old_text.count("\n"), 0))
+            except (PatchLoopError, OSError, UnicodeDecodeError):
+                pass
+            failure = failed.get("mutation_failure")
+            anchor = failure.get("required_anchor") if isinstance(failure, dict) else None
+            if isinstance(anchor, dict) and type(anchor.get("start_line")) is int:
+                priorities.append((
+                    path, anchor["start_line"],
+                    anchor.get("end_line", anchor["start_line"]), 0,
+                ))
+        latest = self.last_successful_mutation or {}
+        postimage_id = latest.get("postimage_evidence_span_id")
+        with self._lock:
+            postimage = self.spans.get(postimage_id)
+        if isinstance(postimage, dict):
+            priorities.append((
+                postimage["path"], postimage["start_line"], postimage["end_line"], 1,
+            ))
+        for finding in self._working_findings:
+            for evidence in finding.get("evidence", []):
+                if evidence.get("kind") == "source":
+                    priorities.append((
+                        evidence["path"], evidence["start_line"], evidence["end_line"], 3,
+                    ))
+        return priorities
+
+    def prepare_context_projection(
+        self, latest_results: Sequence[DevToolResult] = ()
+    ) -> SourceProjection:
+        """Select bounded retained source; native latest results already carry their text."""
+
+        self._refresh_working_source_notes()
+        valid = self._validated_source_spans()
+        valid_by_id = {span["span_id"]: span for span in valid}
+        native: list[dict[str, Any]] = []
+        seen_native: set[str] = set()
+        for result in latest_results:
+            output = result.output
+            candidates = [
+                *output.get("spans", []),
+                output.get("mutation_evidence"),
+                *output.get("revalidated_spans", []),
+            ]
+            for candidate in candidates:
+                if not isinstance(candidate, dict):
+                    continue
+                span_id = candidate.get("span_id")
+                if span_id in valid_by_id and span_id not in seen_native:
+                    native.append(valid_by_id[span_id])
+                    seen_native.add(span_id)
+        return project_observed_sources(
+            valid,
+            native_spans=native,
+            priorities=self._source_projection_priorities(),
+            editable_paths={span["path"] for span in valid if self._path_allowed(span["path"])},
+        )
+
+    def _restore_working_notes(self, payload: dict[str, Any]) -> None:
+        turn_id = payload.get("turn_id")
+        if not isinstance(turn_id, str) or turn_id in self._working_notes_turns:
+            return
+        self._working_notes_turns[turn_id] = copy.deepcopy(payload)
+        for finding in payload.get("findings", []):
+            identity = finding.get("finding_id")
+            self._working_findings = [
+                previous for previous in self._working_findings
+                if previous.get("finding_id") != identity
+            ]
+            self._working_findings.append(copy.deepcopy(finding))
+        self._working_findings = self._working_findings[-6:]
+        if payload.get("update_valid") is True:
+            self._working_open_question = payload.get("open_question")
+
+    def record_working_notes_update(
+        self, calls: Sequence[RequestedTool], *, turn_id: str
+    ) -> dict[str, Any]:
+        """Record the first update once, before this batch; bad notes cannot block it."""
+
+        existing = self._working_notes_turns.get(turn_id)
+        if existing is not None:
+            return copy.deepcopy(existing)
+        updates = [
+            getattr(call.turn_decision, "memory_update", None)
+            for call in calls
+            if getattr(call.turn_decision, "memory_update", None) is not None
+        ]
+        if not updates:
+            return {"status": "not_requested"}
+        selected = updates[0]
+        payload: dict[str, Any] = {
+            "turn_id": turn_id,
+            "findings": [],
+            "open_question": None,
+            "update_valid": False,
+            "diagnostics": ["ignored_additional_memory_updates"] if len(updates) > 1 else [],
+        }
+        try:
+            update = WorkingNotesUpdate.model_validate(selected)
+        except ValidationError:
+            payload["diagnostics"].append("invalid_memory_update_shape")
+        else:
+            payload["update_valid"] = True
+            payload["open_question"] = update.open_question
+            spans = self._validated_source_spans()
+            prior_results = {
+                event["payload"]["result"]["action_id"]: event["payload"]["result"]
+                for event in self.journal.events()
+                if event["event_type"] == "action_finished"
+            }
+            for finding in update.findings:
+                bound: list[dict[str, Any]] = []
+                for evidence in finding.evidence:
+                    if isinstance(evidence, SourceNoteEvidence):
+                        matches = [span for span in spans if span["path"] == evidence.path]
+                        if (
+                            evidence.end_line < evidence.start_line
+                            or not spans_cover_range(
+                                matches, evidence.start_line, evidence.end_line
+                            )
+                        ):
+                            break
+                        bound.append({
+                            **evidence.model_dump(), "file_hash": matches[0]["file_hash"],
+                        })
+                    else:
+                        result = prior_results.get(evidence.action_id)
+                        if result is None:
+                            break
+                        bound.append({
+                            **evidence.model_dump(),
+                            "tool": result["tool"],
+                            "input_hash": result["input_hash"],
+                            "diff_hash": (
+                                result.get("output", {}).get("worktree_diff_hash")
+                                or result.get("output", {}).get("diff_hash")
+                                or result.get("workspace_diff_hash")
+                            ),
+                        })
+                if len(bound) != len(finding.evidence):
+                    payload["diagnostics"].append("unobserved_public_evidence")
+                    continue
+                stored = {"statement": finding.statement, "evidence": bound}
+                payload["findings"].append({
+                    "finding_id": finding_identity(bound),
+                    "author": "model_public_observation",
+                    "model_authored": True,
+                    **stored,
+                })
+        self.journal.append("working_notes_updated", payload)
+        self._restore_working_notes(payload)
+        return copy.deepcopy(payload)
+
+    def _refresh_working_source_notes(self) -> None:
+        """Rebind unchanged uniquely occurring source, otherwise expire that finding."""
+
+        current_sources: dict[str, tuple[str, str] | None] = {}
+        retained: list[dict[str, Any]] = []
+        with self._lock:
+            observations = [dict(span) for span in self.spans.values()]
+        for original in self._working_findings:
+            finding = copy.deepcopy(original)
+            valid = True
+            for evidence in finding["evidence"]:
+                if evidence["kind"] != "source":
+                    continue
+                path = evidence["path"]
+                if path not in current_sources:
+                    try:
+                        _, selected = self._tracked_path(path)
+                        raw = selected.read_bytes()
+                        text, _ = self._source_text(raw)
+                        current_sources[path] = text, sha256_bytes(raw)
+                    except (PatchLoopError, OSError, UnicodeDecodeError):
+                        current_sources[path] = None
+                source = current_sources[path]
+                if source is None:
+                    valid = False
+                    break
+                text, file_hash = source
+                if file_hash == evidence["file_hash"]:
+                    continue
+                old_lines: dict[int, str] = {}
+                for span in observations:
+                    if span.get("path") == path and span.get("file_hash") == evidence["file_hash"]:
+                        for offset, line in enumerate(span.get("content", "").split("\n")):
+                            old_lines[span["start_line"] + offset] = line
+                numbers = range(evidence["start_line"], evidence["end_line"] + 1)
+                if not all(number in old_lines for number in numbers):
+                    valid = False
+                    break
+                content = "\n".join(old_lines[number] for number in numbers)
+                positions = [
+                    match.start() for match in re.finditer(re.escape(content), text)
+                    if content and (match.start() == 0 or text[match.start() - 1] == "\n")
+                    and (match.end() == len(text) or text[match.end()] == "\n")
+                ]
+                if len(positions) != 1:
+                    valid = False
+                    break
+                start = text[:positions[0]].count("\n") + 1
+                evidence.update({
+                    "file_hash": file_hash, "start_line": start,
+                    "end_line": start + content.count("\n"),
+                })
+            if valid:
+                finding["finding_id"] = finding_identity(finding["evidence"])
+                retained.append(finding)
+        self._working_findings = retained
+
+    def working_notes(self, *, diff_hash: str | None = None) -> dict[str, Any]:
+        self._refresh_working_source_notes()
+        current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
+        findings = copy.deepcopy(self._working_findings)
+        source_hashes: dict[str, str | None] = {}
+        for finding in findings:
+            current = True
+            for evidence in finding["evidence"]:
+                if evidence["kind"] == "source":
+                    path = evidence["path"]
+                    if path not in source_hashes:
+                        try:
+                            _, selected = self._tracked_path(path)
+                            source_hashes[path] = sha256_bytes(selected.read_bytes())
+                        except (PatchLoopError, OSError):
+                            source_hashes[path] = None
+                    current &= source_hashes[path] == evidence["file_hash"]
+                else:
+                    current &= evidence.get("diff_hash") in {None, current_hash}
+            finding["status"] = "current" if current else "historical"
+        return {
+            "findings": findings,
+            "open_question": self._working_open_question,
+            "last_update_diagnostics": (
+                list(self._working_notes_turns.values())[-1].get("diagnostics", [])[:3]
+                if self._working_notes_turns else []
+            ),
+            "interpretation": "Model-authored public observations, not verified semantic facts.",
+        }
+
     def context_spans(self, *, exclude: set[str] | None = None) -> list[dict[str, Any]]:
         excluded = exclude or set()
-        with self._lock:
-            candidates = [
-                dict(span) for span_id, span in self.spans.items() if span_id not in excluded
-            ]
-        candidates.sort(key=lambda span: int(span.get("last_observed_seq", 0)), reverse=True)
-        return candidates[:8]
+        candidates = self._validated_source_spans()
+        return list(project_observed_sources(
+            candidates,
+            native_spans=[span for span in candidates if span["span_id"] in excluded],
+            priorities=self._source_projection_priorities(),
+            editable_paths={
+                span["path"] for span in candidates if self._path_allowed(span["path"])
+            },
+        ).source_spans)
 
     def evidence_ledger(self, *, diff_hash: str | None = None) -> dict[str, Any]:
         """Project bounded, public, deterministic facts about observed evidence."""
@@ -1115,6 +1489,9 @@ class DevToolGateway:
                 current_hash, set()
             )
             latest = copy.deepcopy(self._latest_inspection_by_diff.get(current_hash))
+            recent_inspections = copy.deepcopy(
+                self._recent_inspections_by_diff.get(current_hash, [])
+            )
         covered_files = [
             {
                 "path": path,
@@ -1143,12 +1520,15 @@ class DevToolGateway:
             item.pop("last_observed_seq", None)
         if latest is not None:
             latest.pop("last_observed_seq", None)
+        for observation in recent_inspections:
+            observation.pop("last_observed_seq", None)
         return {
             "diff_hash": current_hash,
             "covered_files": covered_files,
             "search_summary": aggregate_counts,
             "canonical_searches": searches[:12],
             "latest_inspection_intent": latest,
+            "recent_inspections": recent_inspections,
         }
 
     def mutation_readiness(
@@ -1163,13 +1543,14 @@ class DevToolGateway:
         )
         return {
             "state": "ready_to_attempt" if paths else "needs_anchor_evidence",
-            "readiness_basis": "current_exact_anchor_only",
+            "readiness_basis": "current_delivered_editable_source_evidence",
             "current_anchor_evidence_paths": paths,
             "visible_check_contract_available": bool(self.public_task.visible_checks),
             "rule": (
-                "ready_to_attempt means only that a current exact mutation anchor exists; it "
-                "does not assert that the semantic solution is sufficient. When the causal "
-                "hypothesis and expected public behavior are also known, prefer replace_text."
+                "ready_to_attempt means this input delivers non-empty current editable source. "
+                "The exact proposed replacement still requires contiguous evidence validation "
+                "at admission; neither anchor coverage for an unspecified edit nor semantic "
+                "sufficiency is established by readiness."
             ),
         }
 
@@ -1231,31 +1612,13 @@ class DevToolGateway:
     def _current_evidence_path_rows(self) -> list[tuple[int, str]]:
         """Validate each observed path once, then rank its current observations."""
 
-        with self._lock:
-            candidates = [dict(span) for span in self.spans.values()]
-        observations_by_path: dict[str, list[tuple[str, int]]] = {}
-        for span in candidates:
-            path = span.get("path")
-            file_hash = span.get("file_hash")
-            if not isinstance(path, str) or not isinstance(file_hash, str):
-                continue
-            observations_by_path.setdefault(path, []).append(
-                (file_hash, int(span.get("last_observed_seq", 0)))
-            )
-
-        current_paths: list[tuple[int, str]] = []
-        for path, observations in observations_by_path.items():
-            try:
-                normalized, current = self._tracked_path(path)
-                current_hash = sha256_bytes(current.read_bytes())
-            except (PatchLoopError, OSError):
-                continue
-            current_sequences = [
-                sequence for file_hash, sequence in observations if file_hash == current_hash
-            ]
-            if current_sequences:
-                current_paths.append((max(current_sequences), normalized))
-
+        observations: dict[str, int] = {}
+        for span in self._validated_source_spans():
+            if span["content"]:
+                observations[span["path"]] = max(
+                    observations.get(span["path"], 0), int(span.get("last_observed_seq", 0))
+                )
+        current_paths = [(sequence, path) for path, sequence in observations.items()]
         current_paths.sort(key=lambda item: (-item[0], item[1]))
         return current_paths
 
@@ -1344,18 +1707,12 @@ class DevToolGateway:
             and comparison.get("relation") == "same_public_failure_site"
         )
         remaining = max(0, self.limits.max_accepted_mutations - self.accepted_mutations)
-        boundary = projected.get("execution_boundary")
-        later_observed = (
-            boundary.get("later_source_lines_observed") if isinstance(boundary, dict) else None
-        )
         projected["mutation_pressure"] = {
             "same_public_failure_site": same_site,
             "accepted_mutations_remaining": remaining,
             "guidance": (
-                "Address the mapped current public statement or stop; later source behavior "
-                "was not observed in this execution."
-                if later_observed is False
-                else "Address the current public failure or stop before unrelated changes."
+                "Use the observed failure to choose a public inspection or repair; "
+                "source-line order does not establish execution history."
             ),
         }
         return projected
@@ -1382,15 +1739,21 @@ class DevToolGateway:
             and self.visible_checks_pass(diff_hash=summary.patch_hash)
         )
 
-    def state_snapshot(self) -> DevGatewayStateSnapshot:
+    def state_snapshot(
+        self, *, projection: SourceProjection | None = None
+    ) -> DevGatewayStateSnapshot:
         """Capture diff, evidence, and check state once for one scheduler decision."""
 
         summary = self.current_diff
-        current_paths = self._current_evidence_path_rows()
-        mutation_paths = tuple(
-            sorted(path for _, path in current_paths if self._path_allowed(path))
+        current_paths = self._current_evidence_path_rows() if projection is None else []
+        mutation_paths = (
+            tuple(sorted(path for _, path in current_paths if self._path_allowed(path)))
+            if projection is None else projection.editable_paths
         )
-        evidence_paths = tuple(sorted(path for _, path in current_paths[:8]))
+        evidence_paths = (
+            tuple(sorted(path for _, path in current_paths[:8]))
+            if projection is None else projection.evidence_paths
+        )
         status = tuple(self.visible_check_status(diff_hash=summary.patch_hash))
         remaining = tuple(row["check_id"] for row in status if row["status"] != "PASS")
         unrun = tuple(row["check_id"] for row in status if row["status"] == "NOT_RUN")
@@ -1433,16 +1796,30 @@ class DevToolGateway:
                 self._restore_read_result(replay)
             return replay
         pending = self.journal.pending_action(call.action_id, input_hash)
+        # Durable results above are safe to replay even after the active deadline.
+        if self.deadline is not None and pending is None:
+            self.deadline.check()
         baseline_summary = self.current_diff
-        baseline = baseline_summary.patch_hash
+        baseline = (
+            str(pending["baseline_diff_hash"])
+            if pending is not None and call.name == "replace_text"
+            else baseline_summary.patch_hash
+        )
         preflight_error: Exception | None = None
         mutation_admitted: bool | None = None
         mutation_anchor_evidence_span_id: str | None = None
+        candidate_summary: DiffSummary | None = None
         if pending is None:
             if call.name == "replace_text":
                 try:
                     validated = self._validate_replacement_intent(call.arguments)
                     mutation_anchor_evidence_span_id = validated.anchor_evidence_span_id
+                    candidate_summary = WorkspaceManager.preview_text_replacement(
+                        self.workspace,
+                        validated.path,
+                        validated.after_bytes,
+                        baseline_diff_hash=baseline,
+                    )
                     mutation_admitted = True
                 except (PatchLoopError, ValidationError, ValueError, OSError) as exc:
                     preflight_error = exc
@@ -1457,8 +1834,34 @@ class DevToolGateway:
                     "turn_decision": turn_decision,
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
+                    "mutation_expected_worktree_diff_hash": (
+                        candidate_summary.patch_hash if candidate_summary is not None else None
+                    ),
+                    "mutation_preimage_file_hash": (
+                        sha256_bytes(validated.before_bytes)
+                        if call.name == "replace_text" and mutation_admitted is True else None
+                    ),
+                    "mutation_preimage_newline": (
+                        self._source_text(validated.before_bytes)[1]
+                        if call.name == "replace_text" and mutation_admitted is True else None
+                    ),
+                    "mutation_anchor_offset": (
+                        list(re.finditer(
+                            re.escape(validated.intent.old_text),
+                            self._source_text(validated.before_bytes)[0],
+                        ))[validated.intent.occurrence - 1].start()
+                        if call.name == "replace_text" and mutation_admitted is True else None
+                    ),
+                    "execution_identity": (
+                        {"run_id": self.journal.run_id, "action_id": call.action_id}
+                        if call.name == "run_check" else None
+                    ),
                     "mutation_admitted": mutation_admitted,
                     "mutation_anchor_evidence_span_id": (mutation_anchor_evidence_span_id),
+                    "mutation_anchor_evidence_span_ids": (
+                        list(validated.anchor_evidence_span_ids)
+                        if call.name == "replace_text" and mutation_admitted is True else []
+                    ),
                     "mutation_anchor_start_line": (
                         validated.anchor_start_line
                         if call.name == "replace_text" and mutation_admitted is True
@@ -1497,7 +1900,23 @@ class DevToolGateway:
             if pending is not None and call.name == "replace_text":
                 output = self._reconcile_or_apply(call.arguments, pending)
                 evidence_cache_hit = False
+            elif call.name == "replace_text":
+                assert candidate_summary is not None
+                output = self._apply_text_replacement(
+                    call.arguments,
+                    expected_candidate_hash=candidate_summary.patch_hash,
+                    baseline_diff_hash=baseline,
+                )
+                evidence_cache_hit = False
+            elif call.name == "run_check":
+                output = self._run_check(
+                    call.arguments["check_id"],
+                    execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
+                )
+                evidence_cache_hit = False
             elif call.name in READ_TOOLS:
+                if self.deadline is not None:
+                    self.deadline.check()
                 cache_key = self._cache_key(read_request_hash, baseline)
                 with self._lock:
                     cached = copy.deepcopy(self._read_cache.get(cache_key))
@@ -1514,6 +1933,8 @@ class DevToolGateway:
                 with self._lock:
                     self._read_cache[cache_key] = self._cacheable_read_output(output)
             else:
+                if self.deadline is not None:
+                    self.deadline.check()
                 output = self._perform(call.name, call.arguments)
                 evidence_cache_hit = False
             result = DevToolResult(
@@ -1525,6 +1946,8 @@ class DevToolGateway:
                 evidence_cache_hit=evidence_cache_hit,
                 workspace_diff_hash=baseline,
             )
+        except ExecutionDeadlineExceeded:
+            raise
         except (PatchLoopError, ValidationError, ValueError, OSError, RuntimeError) as exc:
             code = exc.code if isinstance(exc, PatchLoopError) else "TOOL_CONTRACT_ERROR"
             failure_output = (
@@ -1555,7 +1978,9 @@ class DevToolGateway:
                 output=failure_output,
                 error_code=code,
                 message=str(exc)[:1_000],
-                workspace_diff_hash=baseline,
+                workspace_diff_hash=(
+                    self.current_diff_hash if call.name == "replace_text" else baseline
+                ),
             )
         self.journal.append(
             "action_finished",
@@ -1631,17 +2056,25 @@ class DevToolGateway:
         raw = selected.read_bytes()
         if len(raw) > 2_000_000:
             raise ContractError("read_file refuses files larger than 2 MB")
-        text = raw.decode("utf-8")
-        lines = text.splitlines()
-        actual_end = min(end_line, len(lines))
-        content = "\n".join(lines[start_line - 1 : actual_end])
-        span = self._span(normalized, start_line, actual_end, content[:24_000], sha256_bytes(raw))
+        lines = source_lines(raw.decode("utf-8"))
+        content, actual_end, truncated = bounded_lines(lines, start_line, end_line)
+        spans = (
+            [self._span(normalized, start_line, actual_end, content, sha256_bytes(raw))]
+            if actual_end >= start_line else []
+        )
         return {
             "path": normalized,
             "start_line": start_line,
-            "end_line": actual_end,
-            "spans": [span],
+            "end_line": actual_end if spans else None,
+            "spans": spans,
             "line_count": len(lines),
+            "truncated": truncated,
+            "eof": start_line > len(lines),
+            "next_start_line": actual_end + 1 if truncated else None,
+            "diagnostic": (
+                "requested source line exceeds the 24000-character output limit"
+                if truncated and not spans else None
+            ),
         }
 
     def _search_files(self, query: str, path_glob: str = "**/*") -> dict[str, Any]:
@@ -1649,8 +2082,13 @@ class DevToolGateway:
             raise ContractError("search query must contain 1-500 characters")
         pattern = safe_relative_path(path_glob, field_name="search path_glob")
         spans: list[dict[str, Any]] = []
+        content_chars = 0
+        truncated = False
         for selected in sorted(self.workspace.rglob("*")):
-            if len(spans) >= 20 or not selected.is_file() or selected.is_symlink():
+            if len(spans) >= 20 or content_chars >= 24_000:
+                truncated = True
+                break
+            if not selected.is_file() or selected.is_symlink():
                 continue
             relative = selected.relative_to(self.workspace).as_posix()
             if ".git" in selected.relative_to(self.workspace).parts:
@@ -1672,21 +2110,33 @@ class DevToolGateway:
                 text = raw.decode("utf-8")
             except (OSError, UnicodeDecodeError):
                 continue
-            lines = text.splitlines()
+            lines = source_lines(text)
             for index, line in enumerate(lines, start=1):
                 if query not in line:
                     continue
                 start = max(1, index - 2)
                 end = min(len(lines), index + 2)
-                content = "\n".join(lines[start - 1 : end])
-                spans.append(self._span(relative, start, end, content, sha256_bytes(raw)))
+                content, actual_end, clipped = bounded_lines(
+                    lines, start, end, max_chars=24_000 - content_chars
+                )
+                if actual_end < index:
+                    start = index
+                    content, actual_end, clipped = bounded_lines(
+                        lines, start, index, max_chars=24_000 - content_chars
+                    )
+                truncated |= clipped
+                if actual_end < index:
+                    continue
+                spans.append(self._span(relative, start, actual_end, content, sha256_bytes(raw)))
+                content_chars += len(content)
                 if len(spans) >= 20:
+                    truncated = True
                     break
         return {
             "query": query,
             "path_glob": pattern,
             "spans": spans,
-            "truncated": len(spans) >= 20,
+            "truncated": truncated,
         }
 
     def _path_allowed(self, path: str) -> bool:
@@ -1752,10 +2202,10 @@ class DevToolGateway:
         focus_start_line: int,
         focus_line_count: int,
         diff_hash: str,
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any] | None:
         normalized, current = self._tracked_path(path)
         raw = current.read_bytes()
-        current_lines = raw.decode("utf-8").splitlines()
+        current_lines = source_lines(raw.decode("utf-8"))
         if not current_lines:
             start_index = 0
             end_index = 0
@@ -1766,11 +2216,20 @@ class DevToolGateway:
                 len(current_lines),
                 max(focus_index + max(1, focus_line_count) + 3, start_index + 1),
             )
-        content = "\n".join(current_lines[start_index:end_index])[:24_000]
+        content, actual_end, truncated = bounded_lines(
+            current_lines, start_index + 1, end_index
+        )
+        if current_lines and actual_end < focus_index + 1:
+            start_index = focus_index
+            content, actual_end, truncated = bounded_lines(
+                current_lines, start_index + 1, end_index
+            )
+        if actual_end < start_index + 1:
+            return None
         span = self._span(
             normalized,
             start_index + 1,
-            max(start_index + 1, end_index),
+            actual_end,
             content,
             sha256_bytes(raw),
         )
@@ -1778,6 +2237,7 @@ class DevToolGateway:
             **span,
             "origin": "accepted_mutation",
             "source_diff_hash": diff_hash,
+            "truncated": truncated,
         }
 
     @staticmethod
@@ -1792,11 +2252,6 @@ class DevToolGateway:
 
     def _validate_replacement_intent(self, arguments: dict[str, Any]) -> _ValidatedReplacement:
         intent = TextReplacementIntent.model_validate(arguments)
-        if self.requires_alternative and intent.causal_revision is None:
-            raise ContractError(
-                "repeated public failure across two diffs requires falsified_prior_hypothesis "
-                "and alternative_mechanism in causal_revision on the next mutation"
-            )
         if self.current_diff.untracked_files:
             raise ContractError("replace_text refuses a workspace with untracked files")
         anchor_path, anchor_file = self._tracked_path(intent.path)
@@ -1811,7 +2266,7 @@ class DevToolGateway:
             raise ContractError("exact edit anchor is stale or absent from the current source")
         position = positions[intent.occurrence - 1]
         anchor_start_line = anchor_text[:position].count("\n") + 1
-        anchor_end_line = anchor_start_line + intent.old_text.count("\n")
+        anchor_end_line = anchor_text[:position + len(intent.old_text) - 1].count("\n") + 1
         after_text = (
             anchor_text[:position]
             + intent.new_text
@@ -1820,6 +2275,7 @@ class DevToolGateway:
         after_bytes = after_text.replace("\n", newline).encode("utf-8")
         generated_patch = self._generated_replacement_patch(anchor_path, anchor_text, after_text)
         current_file_hash = sha256_bytes(before_bytes)
+        lines = source_lines(anchor_text)
         with self._lock:
             covering_spans = sorted(
                 (
@@ -1827,10 +2283,9 @@ class DevToolGateway:
                     for span in self.spans.values()
                     if span.get("path") == anchor_path
                     and span.get("file_hash") == current_file_hash
-                    and type(span.get("start_line")) is int
-                    and type(span.get("end_line")) is int
-                    and span["start_line"] <= anchor_start_line
-                    and span["end_line"] >= anchor_end_line
+                    and valid_observed_span(span, lines, current_file_hash)
+                    and span["start_line"] <= anchor_end_line
+                    and span["end_line"] >= anchor_start_line
                     and isinstance(span.get("span_id"), str)
                 ),
                 key=lambda span: (
@@ -1838,9 +2293,9 @@ class DevToolGateway:
                     str(span["span_id"]),
                 ),
             )
-        if not covering_spans:
+        if not spans_cover_range(covering_spans, anchor_start_line, anchor_end_line):
             raise ContractError(
-                "no current observed public evidence span covers the exact replacement anchor",
+                "current evidence spans do not cover the exact replacement anchor contiguously",
                 details={
                     "required_anchor": {
                         "path": anchor_path,
@@ -1859,6 +2314,7 @@ class DevToolGateway:
             anchor_end_line=anchor_end_line,
             postimage_start_line=anchor_start_line,
             anchor_evidence_span_id=str(covering_spans[0]["span_id"]),
+            anchor_evidence_span_ids=tuple(str(span["span_id"]) for span in covering_spans),
         )
 
     def _mutation_result_output(
@@ -1920,7 +2376,13 @@ class DevToolGateway:
             output["recovered_after_crash"] = True
         return output
 
-    def _apply_text_replacement(self, arguments: dict[str, Any]) -> dict[str, Any]:
+    def _apply_text_replacement(
+        self,
+        arguments: dict[str, Any],
+        *,
+        expected_candidate_hash: str | None = None,
+        baseline_diff_hash: str | None = None,
+    ) -> dict[str, Any]:
         if self.accepted_mutations >= self.limits.max_accepted_mutations:
             raise ContractError("accepted mutation limit reached")
         validated = self._validate_replacement_intent(arguments)
@@ -1928,9 +2390,22 @@ class DevToolGateway:
         if target.read_bytes() != validated.before_bytes:
             raise ContractError("exact replacement preimage changed before application")
         baseline_summary = self.current_diff
-        target.write_bytes(validated.after_bytes)
+        if baseline_diff_hash is not None and baseline_summary.patch_hash != baseline_diff_hash:
+            raise RecoveryError("mutation baseline changed after admission")
+        if expected_candidate_hash is None:
+            expected_candidate_hash = WorkspaceManager.preview_text_replacement(
+                self.workspace, validated.path, validated.after_bytes,
+                baseline_diff_hash=baseline_summary.patch_hash,
+            ).patch_hash
+        if self.deadline is not None:
+            self.deadline.check()
+        WorkspaceManager.atomic_replace_source(
+            self.workspace, validated.path, validated.after_bytes,
+        )
         try:
             summary = self.current_diff
+            if summary.patch_hash != expected_candidate_hash:
+                raise RecoveryError("applied worktree differs from admitted complete candidate")
             scope = verify_scope(summary, self.public_task.constraints)
             if not scope.passed:
                 failure = {
@@ -1958,7 +2433,9 @@ class DevToolGateway:
                 summary=summary,
             )
         except Exception as exc:
-            target.write_bytes(validated.before_bytes)
+            WorkspaceManager.atomic_replace_source(
+                self.workspace, validated.path, validated.before_bytes,
+            )
             if isinstance(exc, PatchLoopError):
                 failure = exc.details.get("mutation_failure")
                 if isinstance(failure, dict):
@@ -2021,7 +2498,11 @@ class DevToolGateway:
         baseline = pending.get("baseline_diff_hash")
         current = self.current_diff_hash
         if current == baseline:
-            return self._apply_text_replacement(arguments)
+            return self._apply_text_replacement(
+                arguments,
+                expected_candidate_hash=pending.get("mutation_expected_worktree_diff_hash"),
+                baseline_diff_hash=baseline,
+            )
         if pending.get("mutation_admitted") is not True:
             raise RecoveryError("pending mutation was not admitted before the crash")
         intent = TextReplacementIntent.model_validate(arguments)
@@ -2039,25 +2520,47 @@ class DevToolGateway:
         if not isinstance(generated_patch, str) or not generated_patch:
             raise RecoveryError("pending mutation is missing its generated diff")
         summary = self.current_diff
-        baseline_changed_files = pending.get("baseline_changed_files")
-        expected_changed_files = sorted(
-            {
-                path,
-                *(
-                    baseline_changed_files
-                    if isinstance(baseline_changed_files, list)
-                    and all(isinstance(item, str) for item in baseline_changed_files)
-                    else []
-                ),
-            }
-        )
-        if summary.changed_files != expected_changed_files:
-            raise RecoveryError("pending mutation changed files do not match its admission")
-        if (
-            summary.untracked_files
-            or not verify_scope(summary, self.public_task.constraints).passed
-        ):
-            raise RecoveryError("reconciled mutation violates workspace scope")
+        if summary.patch_hash != pending.get("mutation_expected_worktree_diff_hash"):
+            raise RecoveryError("pending complete candidate diff does not match its admission")
+        if summary.untracked_files:
+            raise RecoveryError("reconciled mutation contains untracked files")
+        scope = verify_scope(summary, self.public_task.constraints)
+        if not scope.passed:
+            # Undo only the exact admitted replacement, never arbitrary workspace drift.
+            text, _ = self._source_text(target.read_bytes())
+            newline = pending.get("mutation_preimage_newline")
+            if newline not in {"\n", "\r\n"}:
+                raise RecoveryError("scope rollback is missing its original newline style")
+            offset = pending.get("mutation_anchor_offset")
+            if (
+                type(offset) is not int
+                or text[offset:offset + len(intent.new_text)] != intent.new_text
+            ):
+                raise RecoveryError("scope rollback is missing its admitted replacement offset")
+            before = (text[:offset] + intent.old_text + text[offset + len(intent.new_text):])
+            before_bytes = before.replace("\n", newline).encode("utf-8")
+            if sha256_bytes(before_bytes) != pending.get("mutation_preimage_file_hash"):
+                raise RecoveryError("scope rollback does not match the admitted preimage")
+            WorkspaceManager.atomic_replace_source(self.workspace, path, before_bytes)
+            restored = self.current_diff
+            if restored.patch_hash != baseline:
+                raise RecoveryError("scope rollback did not restore the complete baseline")
+            raise ContractError(
+                "mutation violates scope: " + "; ".join(scope.violations),
+                details={"mutation_failure": {
+                    "class": "scope_violation",
+                    "baseline": self._bounded_diff_identity(restored),
+                    "candidate": self._bounded_diff_identity(summary),
+                    "delta_from_baseline": {
+                        "diff_lines": summary.diff_lines - restored.diff_lines,
+                        "changed_file_count": (
+                            len(summary.changed_files) - len(restored.changed_files)
+                        ),
+                    },
+                    "violations": copy.deepcopy(scope.details.get("typed_violations", [])),
+                    "rolled_back": True,
+                }},
+            )
         anchor_evidence_span_id = pending.get("mutation_anchor_evidence_span_id")
         if not isinstance(anchor_evidence_span_id, str):
             raise RecoveryError("pending mutation is missing its gateway evidence binding")
@@ -2070,15 +2573,30 @@ class DevToolGateway:
             recovered_after_crash=True,
         )
 
-    def _run_check(self, check_id: str) -> dict[str, Any]:
+    def _run_check(
+        self, check_id: str, *, execution_identity: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         checks = {check.id: check for check in self.public_task.visible_checks}
         try:
             check = checks[check_id]
         except KeyError as exc:
             raise ContractError(f"unknown public check: {check_id}") from exc
         diff_hash = self.current_diff_hash
-        outcome = self.sandbox.run_check(self.workspace, check)
-        passed = not outcome.timed_out and outcome.exit_code in check.expected_exit_codes
+        if self.deadline is not None:
+            self.deadline.check()
+        if getattr(self.sandbox, "supports_execution_deadline", False):
+            outcome = self.sandbox.run_check(
+                self.workspace, check,
+                deadline=self.deadline, execution_identity=execution_identity,
+            )
+        else:
+            outcome = self.sandbox.run_check(self.workspace, check)
+        deadline_exhausted = getattr(outcome, "deadline_exhausted", False)
+        cleanup_failed = getattr(outcome, "cleanup_failed", False)
+        passed = (
+            not outcome.timed_out and not deadline_exhausted and not cleanup_failed
+            and outcome.exit_code in check.expected_exit_codes
+        )
         execution_policy_hash = (
             sha256_json(outcome.execution_policy) if outcome.execution_policy is not None else None
         )
@@ -2099,12 +2617,14 @@ class DevToolGateway:
             "exit_code": outcome.exit_code,
             "timed_out": outcome.timed_out,
             "truncated": outcome.truncated,
+            "deadline_exhausted": deadline_exhausted,
+            "cleanup_failed": cleanup_failed,
             "stdout": outcome.stdout[-12_000:],
             "stderr": outcome.stderr[-12_000:],
             "execution_policy": outcome.execution_policy,
             "execution_policy_hash": execution_policy_hash,
         }
-        if not passed:
+        if not passed and not deadline_exhausted and not cleanup_failed:
             output["public_check_failure"] = self._public_check_failure(
                 check=check,
                 diff_hash=diff_hash,
@@ -2118,6 +2638,8 @@ class DevToolGateway:
         diff_hash = str(output["diff_hash"])
         check_id = str(output["check_id"])
         self.checks_by_diff.setdefault(diff_hash, {})[check_id] = output
+        if output.get("deadline_exhausted") or output.get("cleanup_failed"):
+            return
         if output.get("passed") is True:
             if (
                 self._active_failed_check is not None

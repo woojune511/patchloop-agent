@@ -14,6 +14,11 @@ uv run pytest tests --basetemp $testRoot
 
 This path uses no provider or Docker call.
 
+Keep runtime files unchanged while tests run, because provenance tests bind their actual
+bytes. For a faster complete suite, run the runner/resume tests in one process and all
+remaining test files in another, each with a different new external temporary root.
+The exact split and latest measured result are in [the internal guide](../.agent/guide.md#validation-checklist).
+
 ## Mock end-to-end
 
 ```powershell
@@ -103,38 +108,62 @@ If a valid mutation call fails, its bounded exact replacement, replacement hash,
 error location, and typed recovery lineage remain in `last_failed_mutation` across later reads and
 resume. Scope failure additionally returns the baseline and complete candidate diff
 hashes, line/file counts, their delta, typed actual/limit/overage violations, and
-`rolled_back=true`; the failed result's workspace hash is the restored baseline. A scope
-or other replacement-contract failure exposes only viable `replace_text` and
-`stop_task`. An invalid anchor or evidence exposes exactly one `read_file` restricted
-to the failed path before repair; it never reopens broad search. A successful mutation
-is required to clear that repair target. After success, unchanged uniquely occurring
+`rolled_back=true`; the failed result's workspace hash is the restored baseline.
+A failed proposal is diagnostic state: it does not invalidate that baseline's checks
+or require another accepted mutation when the baseline is already ready to submit.
+Read/search availability after failure follows the remaining completion budget.
+After success, unchanged uniquely occurring
 edited-file spans are rebound to the post-image hash, changed pre-image spans are
 invalidated, and one bounded replacement post-image span is registered in the evidence
-store. `replace_text` has no model-supplied evidence-ID field: the gateway selects the
-most recent current observed span that covers the exact anchor and records that binding
-in `action_started`. Repeating the same failed anchor after its one targeted read does
-not open another read; changing the baseline or exact anchor starts a new recovery
-lineage. Stale file hashes and uncovered anchors still fail closed.
+store. Reads and post-images return complete bounded lines, EOF yields no source span,
+and CRLF is normalized consistently while raw bytes remain hash-bound. `replace_text`
+has no model-supplied evidence-ID field: the gateway verifies a contiguous union of
+actually observed current ranges and journals that binding. Unobserved gaps and stale
+file hashes still fail closed. `causal_revision` is optional, including after repeated
+failure sites. Before writing, admission records the complete expected candidate diff
+hash. A crash after the atomic file replacement must reconcile against that exact hash;
+an over-scope candidate is restored to the admitted baseline with typed failure evidence.
 Tool execution failures are not counted or presented as model protocol violations.
 Every tool call must include one bounded public `turn_decision` containing `mode`,
-`basis`, and an `evidence_goal` only for inspection. Its mode must match the actual
+`basis`, an `evidence_goal` only for inspection, and nullable `memory_update`. Its mode must match the actual
 tool family. Parallel reads all use `inspect` mode, while their `basis` and
 `evidence_goal` may describe different concrete queries or ranges. Each decision
 records its action after the preceding public result; it is not a promise about an
 unseen result or stored raw reasoning. Action identity binds each decision, while the
 operational read cache remains keyed only by the executable request and current diff.
+`memory_update` contains up to two findings, each with a statement of at most 400
+characters and one or two source-range/prior-tool-result references, plus an open
+question of at most 500 characters or null. Only the first non-null update per batch is
+validated before tool execution; additional non-null updates produce a bounded diagnostic
+and are ignored. Revised statements upsert by canonical evidence identity, not text.
+Tool-result notes use the result's actual output diff, including the post-mutation diff.
+Invalid notes do not reject that action. Durable
+`working_notes_updated` events restore at most six run-local findings. Source notes
+rebind uniquely unchanged text or expire; old tool-result references are historical.
+This does not enable cross-run memory or store raw reasoning.
 
 The public context presents the workflow gate, budget, action horizon, mutation
 readiness, mutation scope budget, evidence ledger, and any active mapped public-check
-failure before the larger task payload.
+failure before the larger task payload. Its latest three inspection outcomes include
+both reads and searches, with bounded queries/ranges, public evidence goals and coverage
+results; detailed fingerprints remain journal evidence rather than context repetition.
 Immediately before a new model turn, the scheduler captures one coherent public state
-snapshot containing the complete diff, current evidence paths, and visible-check state.
+snapshot containing the complete diff, actually delivered evidence paths, and visible-check state.
+Source projection is selected first: prioritize the failed/current edit, source-backed
+findings, then recency; merge overlapping or adjacent observed ranges without filling
+gaps. Retained source totals at most 24,000 characters, separately from the exact native
+latest tool batch. Omitted observed source is summarized without body text in at most
+12 path/hash/range entries plus the full omitted-range count. Readiness uses both deliveries.
+Native source ranges, latest mutation
+content, and latest check output are not duplicated in derived context cards.
 Policy derivation and context projection share that snapshot rather than independently
 rerunning Git inspection. Evidence validation groups spans by path and hashes each
 observed file once. The snapshot is not retained across a tool batch, mutation, check,
 or resume reconciliation; the next decision captures fresh workspace state.
-`ready_to_attempt` means that a current exact anchor exists, not that the semantic
-solution is sufficient. Scope headroom describes the current complete diff; it is not
+`ready_to_attempt` has basis `current_delivered_editable_source_evidence`: non-empty current editable
+source is present in this input. Exact replacement coverage is checked at admission;
+readiness neither proves that coverage for an as-yet unspecified edit nor claims that
+the semantic solution is sufficient. Scope headroom describes the current complete diff; it is not
 the replacement line count. The ledger is bounded and deterministic: it merges covered
 line ranges by path, retains the latest 12 search observations, adds an aggregate over
 the complete search history, and is rebuilt from durable tool results on resume. The
@@ -145,18 +174,17 @@ thought.
 Tool availability is derived from the workflow gate, current evidence, unexecuted
 visible checks, and remaining model/tool budget. Optional inspection stays open while
 both budgets have calls beyond the minimum mutation, check, and finish path plus bounded
-recovery allowances: two calls for rejected-mutation recovery and one path per distinct
-visible check, limited by remaining accepted mutations. A check at zero-based declared
-index `i` reserves `3 + i` calls for a missing-anchor read, repair, its rerun, and earlier
-checks invalidated by the repair. A failure consumes only that check ID's allowance. At
+recovery allowances. One transition model accounts for all checks invalidated by a
+repair and for distinct visible-check failures, limited by remaining accepted mutations.
+It handles any permitted check order instead of assuming declared order. At
 one remaining optional turn, the context marks
 `last_opportunity` and names the inspection tools that will close next; at zero slack
 they are removed. Each allowance is consumed only by its corresponding failure, and
 both states are reconstructed from durable batches on resume. A source read that is strictly required to
 establish a mutation anchor is included in the minimum path rather than treated as
-optional exploration. The scheduler recognizes mutation evidence only when a span's
-tracked, allowed file hash is current, matching mutation validation rather than merely
-testing whether any span exists. `completion_possible` requires both remaining budgets
+optional exploration. The scheduler recognizes mutation evidence only when a non-empty
+current observed source range is actually delivered, not merely present in gateway memory.
+`completion_possible` requires both remaining budgets
 to cover the best-case minimum path and required mutation capacity;
 `protected_completion_possible` includes the unused recovery allowances. The legacy
 24-turn and three-repair-read fields remain envelope-compatible telemetry and do not
@@ -165,13 +193,10 @@ syntactic telemetry, and `first_search_observation` records query novelty only.
 `marginal_evidence_gain` is true only when the result adds a previously uncovered line
 from any tracked public source; editable and supporting lines are reported separately,
 with the old task-relevant count retained as an editable-line alias. A zero-match or
-covered-only result is a negative observation, not progress. When a current mutation
-anchor exists, two consecutive zero-coverage inspection batches activate a warned final
-parallel inspection opportunity. New coverage resets the consecutive plateau and
-reopens broad exploration while retaining advisory commitment history. Another zero-
-coverage batch closes broad read/search for that diff with `evidence_plateau`; it does
-not create a terminal or block targeted failure-recovery reads. Successful mutation or
-a check/completion transition clears the state, and `stop_task` is always available.
+covered-only result is a negative observation, not new line coverage. Commitment and
+coverage plateau signals remain advisory and never remove tools. Repeated source or
+zero-match searches can still answer a decision-relevant public question. Successful
+mutation or a check/completion transition clears the signal; `stop_task` is always available.
 Every inspection close or reopen is journaled as `tool_policy_transition` and projected
 once in the public context.
 If the best-case minimum path no longer fits the remaining model calls, tool actions,
@@ -180,7 +205,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v11`; prior
+These output and scheduler semantics are bound by tool-surface identity `v12`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually
@@ -202,27 +227,30 @@ current non-empty diff and no non-ignored untracked file remains. The context li
 every current-diff check as PASS, FAIL, or NOT_RUN and separately names remaining
 IDs; the `run_check` schema exposes only public checks not yet executed on that exact
 diff. A failed check therefore requires a mutation or stop rather than a same-diff
-rerun. If a bounded current mutation post-image still supplies an exact anchor, the
-scheduler exposes `replace_text` immediately and may expose one restricted `read_file`
-alongside it only while completion slack remains. That read is optional and should serve
-only a concrete unresolved public gap. If no current anchor evidence exists, the same
-restricted read is required before mutation and is counted in the best completion path.
-The per-check reserve covers that worst case, the repair, and every declared check up to
-the failed check after all current-diff results are invalidated. Reserve IDs and their
-total call cost are projected and journaled; old results without a check ID retain the
-single consumed legacy state rather than guessing an identity.
+rerun. Current observed evidence allows an immediate exact repair. Source inspection
+remains available while budget permits and is required only if the exact edit evidence
+is missing. Failure locations do not restrict inspection to that path. The completion
+model includes the repair and every visible check invalidated by the new diff; recovery
+IDs and total call cost are projected and journaled. A rejected optional proposal can
+be abandoned and a still-checked baseline submitted directly.
 
 For a failed registered `python -c` check, `run_check` parses only the already-public
 command and bounded public output. A valid `<string>` frame is mapped to its exact
 statement and hashed as a semantic failure site; the original stdout/stderr signature
-remains unchanged for provenance. A single module-level unhandled frame can establish
-that later source lines were not observed. Nested or unmapped traces do not receive a
-directional claim. Across distinct diffs, the context labels the same site, a safely
-ordered later or earlier location, or an incomparable change. The resulting
+remains unchanged for provenance. A module frame does not prove which other lines ran
+through loops or branches, so later-line execution remains unknown. Across distinct
+diffs, the context labels the same site, a later/earlier traceback line number, or an
+incomparable change without claiming semantic progress from source order. The resulting
 `current_public_failure` survives a targeted read and journal hydration, includes the
 remaining accepted-mutation count, and clears when the relevant recheck passes. No
 private task bytes, hidden path, evaluator output, local-variable capture, or inferred
 reasoning enters this card.
+
+One monotonic active-execution deadline covers provider counting/generation and tool
+work, including pending replay and visible checks. Remaining time is passed into each
+blocking operation. Docker checks carry run/action identity so recovery can reconcile
+their execution without launching duplicate check containers. Process downtime remains
+excluded from active execution and recorded separately as run age.
 
 The full submitted patch is stored by content hash. A separate
 manifest is atomically recorded before evaluator execution and binds the exact

@@ -161,21 +161,16 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
             }[schema["name"]]
         )
         assert decision["properties"]["mode"]["enum"] == [expected_mode]
-    assert "gateway binds the exact anchor" in DEV_SYSTEM_PROMPT
-    assert "Do not write a Git diff or patch wrapper" in DEV_SYSTEM_PROMPT
-    assert "When last_failed_mutation is present" in DEV_SYSTEM_PROMPT
-    assert "Every response must request at least one supplied tool" in DEV_SYSTEM_PROMPT
-    assert "Use stop_task when no available public action" in DEV_SYSTEM_PROMPT
-    assert "Every tool call must carry turn_decision" in DEV_SYSTEM_PROMPT
-    assert "Every call in a parallel read batch must use inspect mode" in DEV_SYSTEM_PROMPT
-    assert "may describe that call's distinct public question" in DEV_SYSTEM_PROMPT
-    assert "Do not select or serialize evidence span IDs" in DEV_SYSTEM_PROMPT
-    assert "most recently observed current" in DEV_SYSTEM_PROMPT
-    assert "current_public_failure" in DEV_SYSTEM_PROMPT
-    assert "same_public_failure_site" in DEV_SYSTEM_PROMPT
-    assert "later_source_lines_observed" in DEV_SYSTEM_PROMPT
-    assert "current exact mutation evidence keeps replace_text" in DEV_SYSTEM_PROMPT
-    assert "Do not perform a ceremonial read" in DEV_SYSTEM_PROMPT
+    assert "binds observed current evidence" in DEV_SYSTEM_PROMPT
+    assert "do not supply evidence span IDs or a patch wrapper" in DEV_SYSTEM_PROMPT
+    assert "Every response must request either" in DEV_SYSTEM_PROMPT
+    assert "Every call carries a bounded public turn_decision" in DEV_SYSTEM_PROMPT
+    assert "memory_update" in DEV_SYSTEM_PROMPT
+    assert "Coverage and commitment signals are advisory" in DEV_SYSTEM_PROMPT
+    assert "causal_revision is optional" in DEV_SYSTEM_PROMPT
+    assert (
+        "source read is necessary only to acquire missing exact edit evidence" in DEV_SYSTEM_PROMPT
+    )
     gate_schemas = dev_tool_schemas(
         finish_enabled=False,
         check_ids=(),
@@ -305,7 +300,7 @@ def test_failed_mutation_persists_across_reads_and_restart_then_clears_on_succes
     assert pending["replacement"]["path"] == malformed.arguments["path"]
     assert pending["error_code"] == "CONTRACT_ERROR"
     assert pending["error_location"] == {"path": "mini_data_utils/csvlite.py"}
-    assert "targeted read_file opportunity" in pending["next_action"]
+    assert "budget permits" in pending["next_action"]
     assert pending["mutation_failure"]["class"] == "anchor_invalid"
 
     read_after_failure = gateway.execute(
@@ -471,6 +466,10 @@ def test_scope_failure_reports_complete_49_to_56_candidate_and_survives_restart(
         return baseline if target.read_bytes() == baseline_bytes else candidate
 
     monkeypatch.setattr(WorkspaceManager, "diff_summary", staticmethod(synthetic_summary))
+    monkeypatch.setattr(
+        WorkspaceManager, "preview_text_replacement",
+        staticmethod(lambda *args, **kwargs: candidate),
+    )
 
     assert gateway.mutation_scope_budget() == {
         "current_diff_lines": 49,
@@ -726,8 +725,10 @@ def test_gateway_selects_a_covering_span_without_model_evidence_ids(
         if event["event_type"] == "action_started"
         and event["payload"]["action_id"] == "auto-bound-mutation"
     )
-    assert started["mutation_anchor_evidence_span_id"] == full["span_id"]
-    assert started["mutation_anchor_evidence_span_id"] != short["span_id"]
+    assert started["mutation_anchor_evidence_span_id"] == short["span_id"]
+    assert set(started["mutation_anchor_evidence_span_ids"]) == {
+        full["span_id"], short["span_id"],
+    }
     assert "evidence_span_ids" not in started["arguments"]
 
 
@@ -779,7 +780,7 @@ def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
     rejected = gateway.execute(uncovered)
 
     assert rejected.status == "failed"
-    assert "current observed public evidence span covers" in rejected.message
+    assert "evidence spans do not cover" in rejected.message
     assert rejected.output["mutation_failure"]["required_anchor"] == {
         "path": "mini_data_utils/csvlite.py",
         "start_line": 3,
@@ -1106,7 +1107,9 @@ def test_new_files_and_untracked_submission_fail_closed(gateway_factory) -> None
     assert "untracked files" in finish.message
 
 
-def test_repeated_signature_across_two_diffs_requires_alternative(gateway_factory) -> None:
+def test_repeated_signature_across_two_diffs_keeps_causal_revision_optional(
+    gateway_factory,
+) -> None:
     gateway, _, _ = gateway_factory(sandbox=CountingFailSandbox())
     gateway.execute_batch(read_calls())
     gateway._remember_check(  # noqa: SLF001 - direct reconstruction of durable public history
@@ -1126,12 +1129,7 @@ def test_repeated_signature_across_two_diffs_requires_alternative(gateway_factor
         }
     )
     assert gateway.requires_alternative is True
-    rejected = gateway.execute(mutation_call(gateway, action_id="missing-alternative"))
-    assert rejected.status == "failed"
-    assert "alternative_mechanism" in rejected.message
-    accepted = gateway.execute(
-        mutation_call(gateway, action_id="material-alternative", alternative=True)
-    )
+    accepted = gateway.execute(mutation_call(gateway, action_id="optional-alternative"))
     assert accepted.status == "succeeded"
     assert gateway.requires_alternative is False
 
@@ -1159,7 +1157,7 @@ def test_inline_public_failure_is_mapped_and_survives_read_and_restart(
     assert focus["mapping_status"] == "mapped_public_inline_python"
     assert focus["public_location"]["line"] == 2
     assert focus["public_location"]["statement"] == "assert value == 1"
-    assert focus["execution_boundary"]["later_source_lines_observed"] is False
+    assert focus["execution_boundary"]["later_source_lines_observed"] is None
     assert focus["comparison_with_previous_failure"]["relation"] == "first_observation"
     assert focus["recurrence_across_distinct_diffs"] == 1
 
@@ -1173,8 +1171,8 @@ def test_inline_public_failure_is_mapped_and_survives_read_and_restart(
         "same_public_failure_site": False,
         "accepted_mutations_remaining": 4,
         "guidance": (
-            "Address the mapped current public statement or stop; later source behavior "
-            "was not observed in this execution."
+            "Use the observed failure to choose a public inspection or repair; "
+            "source-line order does not establish execution history."
         ),
     }
 
@@ -1314,11 +1312,11 @@ def test_row_seventeen_public_failure_pattern_localizes_causal_pivot(
         == "same_public_failure_site"
     )
     assert repeated_mode_failure["recurrence_across_distinct_diffs"] == 2
-    assert repeated_mode_failure["execution_boundary"]["later_source_lines_observed"] is False
+    assert repeated_mode_failure["execution_boundary"]["later_source_lines_observed"] is None
     projected = gateway.current_public_failure(diff_hash="sha256:row17-diff-three")
     assert projected is not None
     assert projected["mutation_pressure"]["guidance"].startswith(
-        "Address the mapped current public statement"
+        "Use the observed failure"
     )
 
 
@@ -1350,12 +1348,22 @@ def test_action_replay_and_crash_reconciliation_do_not_duplicate_mutation(
             "arguments": call.arguments,
             "turn_decision": call.turn_decision.model_dump(mode="json"),
             "baseline_diff_hash": gateway.current_diff_hash,
+            "baseline_changed_files": gateway.current_diff.changed_files,
+            "mutation_expected_worktree_diff_hash": WorkspaceManager.preview_text_replacement(
+                workspace, validated.path, validated.after_bytes,
+                baseline_diff_hash=gateway.current_diff_hash,
+            ).patch_hash,
+            "mutation_preimage_file_hash": sha256_bytes(validated.before_bytes),
+            "mutation_anchor_offset": validated.before_bytes.decode("utf-8").replace(
+                "\r\n", "\n"
+            ).index(call.arguments["old_text"]),
             "mutation_admitted": True,
             "mutation_target_path": validated.path,
             "mutation_expected_postimage_file_hash": sha256_bytes(validated.after_bytes),
             "mutation_generated_patch": validated.generated_patch,
             "mutation_postimage_start_line": validated.postimage_start_line,
             "mutation_anchor_evidence_span_id": validated.anchor_evidence_span_id,
+            "mutation_anchor_evidence_span_ids": list(validated.anchor_evidence_span_ids),
             "mutation_anchor_start_line": validated.anchor_start_line,
             "mutation_anchor_end_line": validated.anchor_end_line,
         },

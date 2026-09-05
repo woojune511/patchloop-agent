@@ -36,13 +36,19 @@ public task ──> dev-head ──> constrained model/tool loop
 
 `dev-head` derives its next gate from public execution facts: `needs_mutation`,
 `needs_visible_checks`, or `ready_to_submit`. There is no separate planning phase,
-runtime-version switch, memory retrieval path, or candidate/qualification workflow.
-The exact latest tool batch is guaranteed in the next stateless request; older
-current source spans form a small recency-ordered working set. Before the larger task
+runtime-version switch, cross-run memory retrieval, or candidate/qualification workflow.
+The exact latest tool batch is guaranteed in the next stateless request. Older current
+source uses a deterministic 24,000-character retained working set: pin the current edit
+or failed anchor, retain source-backed notes, then fill with recent observations.
+Overlapping observed ranges are merged; unobserved gaps are never filled. Before the larger task
 text, the prompt presents the current gate, remaining horizon, mutation readiness,
 complete-diff mutation scope budget, and a bounded ledger of covered ranges and recent
-searches. `ready_to_attempt` says only that a current exact anchor exists; it is not a
-semantic-solution judgment. The current diff's
+inspection outcomes, including reads and searches. Omitted observed source has short
+range metadata without body text, bounded to 12 ranges plus its full range count.
+`ready_to_attempt` means non-empty, current editable evidence is delivered
+in this input. It does not establish that a proposed replacement's complete anchor is
+covered or that the semantic solution is sufficient; admission validates the exact
+replacement separately. The current diff's
 complete visible-check status and exact remaining check IDs are projected separately
 from the bounded recent output. `ready_to_submit` additionally requires a non-empty
 diff and no non-ignored untracked files.
@@ -51,18 +57,20 @@ registered inline Python command, the gateway maps an unhandled `<string>` trace
 line back to the exact public command statement without reading another file. It keeps
 the raw-output failure signature for provenance and derives a separate semantic site
 fingerprint for comparisons across diffs. The focus survives intervening inspection
-and restart, distinguishes the same mapped site from a conservatively proven later
-module-level location, reports unobserved later source lines, and remains active through
-the repair until a recheck passes or replaces it. Unmapped or nested traces stay
-explicitly uncertain rather than receiving a guessed execution order.
+and restart, distinguishes the same mapped site from a changed traceback location,
+and remains active through repair until a recheck passes or replaces it. Source-line
+order does not establish execution history through loops or branches; whether later
+lines ran remains unknown. A failure guides investigation without restricting it to
+the reported file or forcing a claim that a prior hypothesis was falsified.
 A successful mutation revalidates unchanged, uniquely occurring pre-image spans in an
 edited file and adds a bounded replacement post-image span, all bound to the current
 file and diff hashes. This preserves nearby imports or symbols without treating changed
 text as current evidence. It lets a failed public check lead directly to an overlapping
 same-file repair, while edits outside current spans still require read/search evidence.
 The model supplies the exact replacement but no evidence IDs. The gateway binds the
-most recent observed span whose current file hash and line range cover that replacement,
-and records the selected ID only as append-only action provenance. The public mutation
+contiguous union of actually observed current source ranges covering that replacement,
+and records their IDs only as append-only action provenance. Complete-line output bounds,
+empty EOF reads, and consistent CRLF normalization keep that coverage accurate. The public mutation
 summary reports whether post-image repair evidence is available; uncovered anchors
 still fail closed.
 
@@ -75,12 +83,15 @@ reasoning summaries, private task material, and evaluator details are never reta
 or projected. Missing or damaged continuation evidence stops the run before another
 provider or tool call.
 
-Every read/search decision carries a bounded public working state: the current causal
-hypothesis, one evidence gap addressed by that operation, and the decision to take
-after its result. The state is returned with the result in the next stateless request
-and retained in its attempt card. This public state remains independently inspectable;
-it does not expose the separately replayed encrypted reasoning or create a planning
-phase or execution gate.
+Each action carries a bounded public decision, with an evidence question for inspection.
+An optional `memory_update` on that same action records at most two concise findings
+citing already observed source ranges or prior public tool results and one open question.
+The first non-null update in a parallel batch is used; additional updates are diagnosed
+and ignored. Revised statements replace the same evidence-keyed finding. The run retains at most six
+model-authored findings, rebinds unchanged source or expires stale source notes, marks
+old tool-result references historical, and journals updates for
+resume. Invalid notes receive a diagnostic without rejecting the main action. This
+run-local working memory has no retrieval from prior runs and stores no reasoning transcript.
 
 Every model response must call at least one constrained tool. Besides inspection,
 mutation, checking, and finish, `stop_task` provides an explicit unsuccessful exit
@@ -91,44 +102,32 @@ Inspection availability is based on completion slack rather than a fixed number 
 earlier reads. When only one optional inspection turn remains, the context warns that
 `read_file` and `search_files` will close next. At zero slack they close so mutation,
 remaining visible checks, submission, or an explicit stop retain the required calls.
-Each decision uses one fresh public workspace snapshot for both its action policy and
-model context. This keeps the prompt and action mask coherent without caching state
-across mutations, checks, or recovery boundaries.
-The horizon holds two kinds of bounded allowance: two calls for one rejected-mutation
-recovery and one failed-check recovery path for each distinct visible check that can
-still fit within the accepted-mutation cap. A check's allowance conservatively covers a
-missing-anchor read, replacement, recheck, and declared earlier checks invalidated by
-that replacement. Once a check consumes its own allowance, later checks retain theirs.
-After a check fails, current exact post-image evidence keeps replacement available
-immediately; a restricted read is optional and appears alongside it only when completion
-slack remains. Only missing current anchor evidence makes that targeted read a required
-step in the minimum path. Best-path and protected-path feasibility both reflect actual
-remaining model, tool, and mutation budgets.
-After two consecutive successful inspection batches add no non-overlapping coverage in
-any tracked public source while a current mutation anchor exists, the context warns that
-the next parallel batch is the final broad inspection opportunity for that diff. A new
-query, shifted span, or contained range can be novel telemetry without being new
-evidence. If the warned batch adds coverage, exploration reopens while the sticky
-commitment remains advisory. If it adds none, broad read/search closes and the agent must
-mutate or stop; targeted failure-recovery reads remain separate. Editable and supporting
-coverage remain distinct. Successful mutation or a check/completion transition resets
-the signal.
+Each decision selects its actually delivered source before computing readiness and the
+tool policy. The latest native tool results and retained source jointly establish the
+available evidence; larger gateway memory is not misrepresented as visible context.
+Native results are not copied again into source, mutation, or recent-check cards.
+One completion model accounts for mutation, all invalidated checks, finish, and bounded
+failure-recovery allowances under the remaining model/tool/mutation budgets. It does not
+assume the model will run checks in their declared order. A rejected optional edit leaves
+its rollback baseline usable, including any checks already passed on that baseline.
+Read/search remain available after mutation or check failure while the completion budget
+allows. Missing exact edit evidence may require a source read, but known evidence never
+requires a ceremonial reread. Coverage and commitment are advisory, including after a
+plateau; already observed source or a negative search can resolve an important question.
+Editable and supporting coverage remain distinct observations, not semantic progress scores.
 Every such change is journaled and projected once; corrections name only tools that are
 actually present in that turn's action space.
 
 Mutation uses one exact `old_text` to `new_text` replacement in an existing tracked,
 allowed file. The gateway validates the current anchor and constructs the Git diff, so
-the model does not spend turns serializing hunk headers or line counts. After a failed
-visible check, one `read_file` turn is restricted to the changed or currently evidenced
-paths before mutation is offered again. The system prompt directs the next hypothesis
-and any required `causal_revision` to the mapped current public statement. A repeated
-site is strong guidance that the preceding edit did not affect that counterexample;
-it does not let the gateway pretend to validate arbitrary program semantics or create
-a new terminal.
+the model does not spend turns serializing hunk headers or line counts. Mutation admission
+binds the complete candidate diff before the source replacement. Recovery checks that
+same identity rather than accepting any changed workspace. `causal_revision` is optional
+explanatory metadata even when a failure site repeats.
 Scope rejection returns the restored baseline and rejected complete candidate arithmetic
-instead of only a generic message. Scope and replacement-contract failures stay in
-mutation-or-stop mode; stale anchor/evidence failures get one targeted reread of their
-path, never broad search. If the minimum remaining mutation/check/finish path becomes
+instead of only a generic message. The agent can revise the proposal, investigate its
+error, or abandon it while continuing from the restored baseline. If the minimum
+remaining mutation/check/finish path becomes
 mathematically impossible, the runtime records `LIMIT_REACHED` before another provider
 dispatch rather than offering actions that cannot reach submission.
 
@@ -164,6 +163,8 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. It excludes memory experiments, held-out tuning, claim runs,
+workflow state. Tool-surface `v12` adds run-local working notes, accurate source projection,
+advisory exploration signals, and shared deadline/recovery accounting. It excludes cross-run
+memory experiments, held-out tuning, claim runs,
 automatic provider retries, Docker startup, image pull/build, and compatibility
 with deleted historical runners or pre-envelope journals.

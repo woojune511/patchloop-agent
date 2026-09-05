@@ -229,6 +229,13 @@ DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1 = {
     "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
 }
 
+DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V2 = {
+    **DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1,
+    "schema_version": "docker-registered-check-request-policy-v2",
+    "owned_container_cleanup": True,
+    "cleanup_reserve_seconds": 5,
+}
+
 
 class ModelConfig(StrictModel):
     provider: Literal["mock", "openai"]

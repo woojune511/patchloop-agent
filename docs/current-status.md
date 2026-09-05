@@ -11,9 +11,9 @@ claim commands are absent.
 - default one-row live limit: 1,800 seconds
 - 40 model calls, 100 tool actions, and 4 accepted mutations
 - one consecutive protocol/incomplete correction and at most 4 parallel reads
-- completion-slack inspection plus a coverage-responsive warned final batch, bounded
-  two-call mutation recovery and per-visible-check recovery reserves; legacy 24/3
-  counters are telemetry only
+- budget-only public inspection with advisory coverage/causal signals, a bounded
+  two-call mutation-rejection allowance and order-independent distinct-check recovery
+  reserves; legacy 24/3 counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
 ## Authority
@@ -23,11 +23,50 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The eighteen live observations below
+Repository policy alone never initiates paid work. The nineteen live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Evidence state
+## Current implementation: tool surface v12
+
+The September 5 review found remaining harness defects, not evidence that model
+judgment alone explained unsuccessful runs. V12 corrects truncated/empty read evidence,
+CRLF revalidation, contiguous multi-span mutation admission, and unsupported traceback
+execution claims. Source projection merges observed ranges, prioritizes editable and
+repair evidence within 24,000 retained characters, and deduplicates the latest native
+results. Bounded run-local `memory_update` notes retain source-linked model observations
+and one open question; they are not verified facts, raw reasoning, or cross-run memory.
+
+Coverage plateau and repeated causal sites are advisory. Remaining completion and
+recovery budgets determine public read/search availability, including after failures.
+One order-independent calculation replaces declaration-index reserves. A rejected
+optional edit does not invalidate an already checked rollback baseline. Correction
+resume is journal-derived. Mutation admission binds the complete candidate diff before
+atomic source replacement; recovery rejects other-file drift. A shared active deadline
+reaches visible checks and isolated evaluation, with label-verified owned Docker cleanup
+and partial provenance retained on timeout. Cleanup uncertainty stops all repetitions.
+
+A provider-free reconstruction of the nineteenth row's 39 public context boundaries
+compared recorded source observations with the new projector. Editable source coverage
+increased in 24 turns and decreased in none. Repeated line entries fell from 1,899 to 2;
+the remaining two are inside preserved parallel native outputs, not duplicated retained
+source. Maximum retained source was 18,272 characters. At turn 12, visible editable
+coverage rose from 74 to 139 lines. This is an observation-selection comparison only:
+no model was asked to act on the reconstructed context and no success is implied.
+
+Final v12 validation passes Ruff and all 175 provider-free tests. Two independent pytest
+groups pass 64 tests in 77.86 seconds and 111 tests in 57.10 seconds; the final Ruff,
+parallel full suite, and mock cycle takes approximately 110 seconds including orchestration.
+Mock `run_dev_935f54a2c3b84b8c`, under `C:\pt\pl-v12-smoke-final-f`, reaches isolated
+`EVALUATOR_PASS` through one accepted mutation, four mock model turns, and five actions.
+Task acceptance is PASS, safety NOT_RUN, `claim_eligible=false`, and provider cost zero.
+Fault regressions include reordered parallel-result hydration, same-action read replay,
+source-linked note upsert, unconsumed correction replay, complete-candidate crash recovery,
+deadline expiry before dispatch/evaluator work, and owned-container cleanup uncertainty.
+Earlier checkpoint counts and policies below describe history, not the current v12
+contract. No Docker execution, paid provider call, or twentieth live row was performed.
+
+## Evidence state (historical checkpoints)
 
 Ruff, the fast suite, and mock smoke pass. The current context-projection checkpoint
 passed 29 tests in 16.45 seconds. The resume checkpoint passes 39 tests in 35.15
@@ -737,10 +776,14 @@ pivot boundary now addressed by tool surface `v9`. The separately authorized eig
 row confirmed that focus and the model's correct repair diagnosis, then exposed the
 mandatory-read action mask. Tool surface `v10` makes that read optional when current
 post-image evidence already supports `replace_text`. The separately authorized
-nineteenth row confirmed that repair path, then exposed soft-only commitment and the
-single shared failed-check reserve. Tool surface `v11` closes broad inspection only
-after a warned zero-coverage batch and preserves one bounded recovery path per distinct
-visible check. No paid retry or twentieth row is authorized.
+nineteenth row confirmed that repair path, then exposed repeated investigation and the
+single shared failed-check reserve. The initial `v11` response closed broad inspection
+after a warned zero-coverage batch and reserved recovery by check declaration order.
+The subsequent review did not establish that stronger action masking was the right
+remedy: it found projection, evidence, reservation, and recovery defects. Current `v12`
+replaces those policies with the working-memory and budget-only contracts above.
+Whether the corrected loop improves agent decisions still needs separate live evidence.
+No paid retry or twentieth row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

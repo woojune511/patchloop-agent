@@ -9,16 +9,23 @@ import shutil
 import subprocess
 import sys
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
-from patchloop.contracts import DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1, RegisteredCheck
-from patchloop.util import ensure_within
+from patchloop.contracts import DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V2, RegisteredCheck
+from patchloop.deadline import ExecutionDeadline
+from patchloop.errors import PatchLoopError
+from patchloop.util import canonical_json, ensure_within, sha256_bytes
 
 _DOCKER_IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}")
 _DOCKER_REPO_DIGEST = re.compile(r"[^\x00-\x20\x7f]+@sha256:[0-9a-f]{64}")
 _IMAGE_INSPECT_FORMAT = '{"Id":{{json .Id}},"RepoDigests":{{json .RepoDigests}}}'
+
+
+class SandboxCleanupError(PatchLoopError):
+    code = "SANDBOX_CLEANUP_FAILED"
 
 
 @dataclass(frozen=True)
@@ -32,17 +39,28 @@ class SandboxResult:
     truncated: bool
     original_output_bytes: int
     execution_policy: dict[str, object] | None = None
+    deadline_exhausted: bool = False
+    cleanup_failed: bool = False
 
     @property
     def passed(self) -> bool:
-        return not self.timed_out and self.exit_code == 0
+        return (
+            not self.timed_out
+            and not self.deadline_exhausted
+            and not self.cleanup_failed
+            and self.exit_code == 0
+        )
 
 
 class Sandbox(Protocol):
     official: bool
     backend: str
 
-    def run_check(self, workspace: Path, check: RegisteredCheck) -> SandboxResult: ...
+    def run_check(
+        self, workspace: Path, check: RegisteredCheck, *,
+        deadline: ExecutionDeadline | None = None,
+        execution_identity: dict[str, str] | None = None,
+    ) -> SandboxResult: ...
 
 
 def _bounded_text(stdout: bytes, stderr: bytes, limit: int) -> tuple[str, str, bool, int]:
@@ -60,7 +78,10 @@ def _bounded_text(stdout: bytes, stderr: bytes, limit: int) -> tuple[str, str, b
 
 
 def registered_check_execution_policy(
-    *, image: str, working_directory: str, timeout_seconds: int, output_limit_bytes: int
+    *, image: str, working_directory: str, timeout_seconds: int, output_limit_bytes: int,
+    effective_timeout_seconds: float | None = None,
+    row_deadline_limited: bool = False,
+    cleanup_status: str = "confirmed",
 ) -> dict[str, object]:
     if not image or image != image.strip() or any(ord(char) < 32 for char in image):
         raise ValueError("registered-check image reference is invalid")
@@ -68,13 +89,23 @@ def registered_check_execution_policy(
         raise ValueError("registered-check working directory is invalid")
     if timeout_seconds < 1 or output_limit_bytes < 1:
         raise ValueError("registered-check limits must be positive")
-    policy = dict(DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1)
+    effective = (
+        float(timeout_seconds) if effective_timeout_seconds is None else effective_timeout_seconds
+    )
+    if not 0 < effective <= timeout_seconds:
+        raise ValueError("effective timeout must be positive and no greater than declared timeout")
+    if cleanup_status not in {"confirmed", "failed"}:
+        raise ValueError("invalid owned-container cleanup status")
+    policy = dict(DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V2)
     policy.update(
         {
             "working_directory": working_directory,
             "image": image,
             "requested_timeout_seconds": timeout_seconds,
-            "launcher_timeout_seconds": timeout_seconds + 5,
+            "launcher_timeout_seconds": effective,
+            "effective_timeout_seconds": effective,
+            "row_deadline_limited": row_deadline_limited,
+            "cleanup_status": cleanup_status,
             "output_limit_bytes": output_limit_bytes,
         }
     )
@@ -86,8 +117,18 @@ class LocalSandbox:
 
     official = False
     backend = "local"
+    supports_execution_deadline = True
 
-    def run_check(self, workspace: Path, check: RegisteredCheck) -> SandboxResult:
+    def run_check(
+        self, workspace: Path, check: RegisteredCheck, *,
+        deadline: ExecutionDeadline | None = None,
+        execution_identity: dict[str, str] | None = None,
+    ) -> SandboxResult:
+        del execution_identity
+        timeout = (
+            deadline.bounded_timeout(check.timeout_seconds)
+            if deadline is not None else check.timeout_seconds
+        )
         workdir = workspace if check.working_directory == "." else ensure_within(
             workspace, check.working_directory
         )
@@ -109,7 +150,7 @@ class LocalSandbox:
                 cwd=workdir,
                 env=environment,
                 capture_output=True,
-                timeout=check.timeout_seconds,
+                timeout=timeout,
                 check=False,
             )
             exit_code = completed.returncode
@@ -131,6 +172,13 @@ class LocalSandbox:
             timed_out=timed_out,
             truncated=truncated,
             original_output_bytes=original,
+            deadline_exhausted=(
+                deadline is not None
+                and (
+                    deadline.remaining_seconds() <= 0
+                    or (timed_out and timeout < check.timeout_seconds)
+                )
+            ),
         )
 
 
@@ -139,6 +187,7 @@ class DockerSandbox:
 
     official = False
     backend = "docker"
+    supports_execution_deadline = True
 
     def __init__(self, image: str) -> None:
         self.image = image
@@ -216,23 +265,84 @@ class DockerSandbox:
             aliases.add(requested.removeprefix("docker.io/"))
         return requested_digest if len(aliases.intersection(repo_digests)) == 1 else None
 
-    def run_check(self, workspace: Path, check: RegisteredCheck) -> SandboxResult:
+    def run_check(
+        self, workspace: Path, check: RegisteredCheck, *,
+        deadline: ExecutionDeadline | None = None,
+        execution_identity: dict[str, str] | None = None,
+    ) -> SandboxResult:
         docker = self.cli_path()
         if docker is None:
             raise RuntimeError("Docker CLI is not available")
         working_directory = "/workspace"
         if check.working_directory != ".":
             working_directory += f"/{check.working_directory}"
-        policy = registered_check_execution_policy(
-            image=self.image,
-            working_directory=working_directory,
-            timeout_seconds=check.timeout_seconds,
-            output_limit_bytes=check.output_limit_bytes,
+        identity = execution_identity or {"execution_id": uuid.uuid4().hex}
+        name = "patchloop-" + sha256_bytes(canonical_json(identity).encode())[7:31]
+        started = time.monotonic()
+
+        def cleanup() -> bool:
+            cleanup_started = time.monotonic()
+
+            def timeout() -> float:
+                remaining = 5.0 - (time.monotonic() - cleanup_started)
+                return min(remaining, deadline.remaining_seconds()) if deadline else remaining
+
+            try:
+                inspect_timeout = timeout()
+                if inspect_timeout <= 0:
+                    return False
+                inspected = subprocess.run(
+                    [docker, "container", "inspect", "--format",
+                     '{{index .Config.Labels "patchloop.execution"}}', name],
+                    capture_output=True, timeout=inspect_timeout, check=False,
+                )
+                if inspected.returncode != 0:
+                    return (
+                        any(message in (inspected.stderr or b"") for message in
+                            (b"No such container", b"No such object"))
+                        and name.encode() in (inspected.stderr or b"")
+                    )
+                if inspected.stdout.strip() != name.encode():
+                    return False
+                remove_timeout = timeout()
+                if remove_timeout <= 0:
+                    return False
+                removed = subprocess.run(
+                    [docker, "rm", "--force", name], capture_output=True,
+                    timeout=remove_timeout, check=False,
+                )
+            except (OSError, subprocess.TimeoutExpired):
+                return False
+            return removed.returncode == 0 or (
+                b"No such container" in (removed.stderr or b"")
+                and name.encode() in (removed.stderr or b"")
+            )
+
+        if deadline is not None:
+            deadline.check(reserve_seconds=5)
+        if execution_identity is not None and not cleanup():
+            return SandboxResult(
+                command=list(check.command), exit_code=None, stdout="", stderr="",
+                duration_ms=int((time.monotonic() - started) * 1000), timed_out=False,
+                truncated=False, original_output_bytes=0, cleanup_failed=True,
+                execution_policy=registered_check_execution_policy(
+                    image=self.image, working_directory=working_directory,
+                    timeout_seconds=check.timeout_seconds,
+                    output_limit_bytes=check.output_limit_bytes, cleanup_status="failed",
+                ),
+            )
+        timeout = (
+            deadline.bounded_timeout(check.timeout_seconds, reserve_seconds=5)
+            if deadline else float(check.timeout_seconds)
         )
         command = [
             docker,
             "run",
             "--rm",
+            "--name",
+            name,
+            "--label",
+            f"patchloop.execution={name}",
             "--pull",
             "never",
             "--network",
@@ -259,12 +369,12 @@ class DockerSandbox:
                 *check.command,
             ]
         )
-        started = time.monotonic()
+        cleanup_ok = False
         try:
             completed = subprocess.run(
                 command,
                 capture_output=True,
-                timeout=check.timeout_seconds + 5,
+                timeout=timeout,
                 check=False,
             )
             exit_code = completed.returncode
@@ -274,6 +384,8 @@ class DockerSandbox:
             exit_code = None
             timed_out = True
             stdout, stderr = exc.stdout or b"", exc.stderr or b""
+        finally:
+            cleanup_ok = cleanup()
         stdout_text, stderr_text, truncated, original = _bounded_text(
             stdout, stderr, check.output_limit_bytes
         )
@@ -286,5 +398,20 @@ class DockerSandbox:
             timed_out=timed_out,
             truncated=truncated,
             original_output_bytes=original,
-            execution_policy=policy,
+            execution_policy=registered_check_execution_policy(
+                image=self.image, working_directory=working_directory,
+                timeout_seconds=check.timeout_seconds,
+                output_limit_bytes=check.output_limit_bytes,
+                effective_timeout_seconds=timeout,
+                row_deadline_limited=timeout < check.timeout_seconds,
+                cleanup_status="confirmed" if cleanup_ok else "failed",
+            ),
+            deadline_exhausted=(
+                deadline is not None
+                and (
+                    deadline.remaining_seconds() <= 0
+                    or (timed_out and timeout < check.timeout_seconds)
+                )
+            ),
+            cleanup_failed=not cleanup_ok,
         )

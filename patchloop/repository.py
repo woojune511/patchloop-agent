@@ -6,10 +6,11 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from patchloop.errors import ContractError
+from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import directory_hash, safe_relative_path, sha256_bytes
 
 ALLOWED_REMOTE_REPOSITORIES = {
@@ -316,6 +317,76 @@ class WorkspaceManager:
                 raise ContractError("submitted patch renames are unsupported")
             paths.append(safe_relative_path(after, field_name="submitted patch path"))
         return sorted(set(paths))
+
+    @staticmethod
+    def preview_text_replacement(
+        workspace: Path,
+        path: str,
+        after_bytes: bytes,
+        *,
+        baseline_diff_hash: str,
+    ) -> DiffSummary:
+        """Hash the complete candidate using a disposable index, without source writes."""
+
+        normalized = safe_relative_path(path)
+        with tempfile.TemporaryDirectory(prefix="mutation-index-", dir=workspace.parent) as root:
+            environment = {**os.environ, "GIT_INDEX_FILE": str(Path(root) / "index")}
+
+            def git(*args: str, content: bytes | None = None) -> str:
+                completed = subprocess.run(
+                    ["git", *args], cwd=workspace, env=environment, input=content,
+                    capture_output=True, check=False,
+                )
+                if completed.returncode:
+                    raise ContractError("candidate Git preview failed")
+                return completed.stdout.decode("utf-8").replace("\r\n", "\n")
+
+            git("read-tree", "HEAD")
+            git("add", "-u", "--", ".")
+            baseline = git("diff", "--cached", "HEAD", "--no-ext-diff", "--binary")
+            if sha256_bytes(baseline.encode("utf-8")) != baseline_diff_hash:
+                raise RecoveryError("workspace changed before candidate admission")
+            entry = git("ls-files", "--stage", "-z", "--", normalized)
+            if not entry or len(entry.rstrip("\0").split("\0")) != 1:
+                raise ContractError("candidate target has no unique tracked entry")
+            mode = entry.split(" ", 1)[0]
+            if mode not in {"100644", "100755"}:
+                raise ContractError("candidate target is not a tracked regular file")
+            blob = git("hash-object", "-w", "--stdin", f"--path={normalized}", content=after_bytes)
+            git("update-index", "--cacheinfo", mode, blob.strip(), normalized)
+            candidate = git("diff", "--cached", "HEAD", "--no-ext-diff", "--binary")
+            numstat = git("diff", "--cached", "HEAD", "--numstat")
+            changed: list[str] = []
+            added = deleted = 0
+            for line in numstat.splitlines():
+                add_text, delete_text, changed_path = line.split("\t", 2)
+                changed.append(changed_path.replace("\\", "/"))
+                added += int(add_text) if add_text.isdigit() else 0
+                deleted += int(delete_text) if delete_text.isdigit() else 0
+            return DiffSummary(
+                changed, added, deleted, candidate, WorkspaceManager.untracked_files(workspace)
+            )
+
+    @staticmethod
+    def atomic_replace_source(workspace: Path, path: str, content: bytes) -> None:
+        """Replace an existing tracked source atomically, staging outside the worktree."""
+
+        normalized = safe_relative_path(path)
+        target = workspace / normalized
+        if target.is_symlink() or not target.is_file():
+            raise ContractError("atomic replacement target is not a regular source file")
+        mode = target.stat().st_mode
+        descriptor, name = tempfile.mkstemp(prefix="mutation-source-", dir=workspace.parent)
+        staged = Path(name)
+        try:
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(content)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.chmod(staged, mode)
+            os.replace(staged, target)
+        finally:
+            staged.unlink(missing_ok=True)
 
     @staticmethod
     def untracked_files(workspace: Path) -> list[str]:

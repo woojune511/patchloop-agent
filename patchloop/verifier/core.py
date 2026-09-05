@@ -23,11 +23,12 @@ from patchloop.contracts import (
     VerdictState,
     VerifierResult,
 )
+from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev.contracts import dev_tool_surface_hash
 from patchloop.errors import ContractError, PatchLoopError
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import runtime_content_hash
-from patchloop.sandbox.runner import Sandbox, registered_check_execution_policy
+from patchloop.sandbox.runner import Sandbox, SandboxCleanupError, registered_check_execution_policy
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 from patchloop.verifier.policy import (
@@ -79,10 +80,21 @@ class EvaluationEngine:
         kind: str,
         results: list[VerifierResult],
         recorded: list[_CheckEvidence],
+        deadline: ExecutionDeadline | None = None,
     ) -> None:
         for check in checks:
+            if deadline is not None:
+                deadline.check()
             started = time.monotonic()
-            outcome = self.sandbox.run_check(workspace, check)
+            if getattr(self.sandbox, "supports_execution_deadline", False):
+                outcome = self.sandbox.run_check(
+                    workspace, check, deadline=deadline,
+                    execution_identity={
+                        "run_id": run_id, "action_id": f"evaluator:{kind}:{check.id}"
+                    },
+                )
+            else:
+                outcome = self.sandbox.run_check(workspace, check)
             execution_policy_hash = (
                 sha256_json(outcome.execution_policy)
                 if outcome.execution_policy is not None
@@ -99,6 +111,8 @@ class EvaluationEngine:
                     "original_output_bytes": outcome.original_output_bytes,
                     "execution_policy": outcome.execution_policy,
                     "execution_policy_hash": execution_policy_hash,
+                    "deadline_exhausted": outcome.deadline_exhausted,
+                    "cleanup_failed": outcome.cleanup_failed,
                 }
             )
             passed = not outcome.timed_out and outcome.exit_code in check.expected_exit_codes
@@ -107,7 +121,10 @@ class EvaluationEngine:
                 run_id=run_id,
                 check_type=kind,
                 check_id=check.id,
-                state=VerdictState.PASS if passed else VerdictState.FAIL,
+                state=(
+                    VerdictState.ERROR if outcome.deadline_exhausted or outcome.cleanup_failed
+                    else VerdictState.PASS if passed else VerdictState.FAIL
+                ),
                 duration_ms=int((time.monotonic() - started) * 1_000),
                 evidence_artifact_ids=[artifact.artifact_id],
                 details={
@@ -116,12 +133,20 @@ class EvaluationEngine:
                     "truncated": outcome.truncated,
                     "execution_policy": outcome.execution_policy,
                     "execution_policy_hash": execution_policy_hash,
+                    "deadline_exhausted": outcome.deadline_exhausted,
+                    "cleanup_failed": outcome.cleanup_failed,
                     "artifact_path": artifact.path,
                     "evidence_artifacts": [artifact.model_dump(mode="json")],
                 },
             )
             results.append(result)
             recorded.append(_CheckEvidence(check, result, artifact))
+            if outcome.cleanup_failed:
+                raise SandboxCleanupError(
+                    "owned evaluator container cleanup could not be confirmed"
+                )
+            if outcome.deadline_exhausted:
+                raise ExecutionDeadlineExceeded("active deadline exhausted during evaluation")
 
     @staticmethod
     def _aggregate(results: list[VerifierResult], check_type: str) -> VerdictState:
@@ -209,12 +234,30 @@ class EvaluationEngine:
             if item.check.working_directory != ".":
                 working_directory += f"/{item.check.working_directory}"
             if isinstance(image, str):
-                expected = registered_check_execution_policy(
-                    image=image,
-                    working_directory=working_directory,
-                    timeout_seconds=item.check.timeout_seconds,
-                    output_limit_bytes=item.check.output_limit_bytes,
-                )
+                try:
+                    effective = actual.get("effective_timeout_seconds")
+                    limited = actual.get("row_deadline_limited")
+                    cleanup_status = actual.get("cleanup_status")
+                    if (
+                        type(effective) not in {int, float}
+                        or type(limited) is not bool
+                        or limited != (effective < item.check.timeout_seconds)
+                        or cleanup_status != "confirmed"
+                    ):
+                        raise ValueError("invalid deadline or cleanup evidence")
+                    expected = registered_check_execution_policy(
+                        image=image,
+                        working_directory=working_directory,
+                        timeout_seconds=item.check.timeout_seconds,
+                        output_limit_bytes=item.check.output_limit_bytes,
+                        effective_timeout_seconds=effective,
+                        row_deadline_limited=limited,
+                    )
+                except (ValueError, TypeError):
+                    integrity_errors.append(
+                        f"{item.result.check_id}: timeout or cleanup evidence is invalid"
+                    )
+                    continue
                 if actual != expected:
                     violations.append(f"{item.result.check_id}: requested policy was violated")
 
@@ -332,6 +375,8 @@ class EvaluationEngine:
         manifest: RunManifest,
         usage: Usage | None = None,
         submitted_patch_artifact: Artifact | None = None,
+        *,
+        deadline: ExecutionDeadline | None = None,
     ) -> RunResult:
         run_dir = Path(self.artifact_store.root) / "runs" / manifest.run_id
         manifest_hash = sha256_bytes(
@@ -349,6 +394,8 @@ class EvaluationEngine:
         sandbox_policy_recorded = False
         started = time.monotonic()
         try:
+            if deadline is not None:
+                deadline.check()
             package, _ = self._validate_manifest_inputs(
                 task_dir,
                 patch_path,
@@ -379,11 +426,15 @@ class EvaluationEngine:
                     ),
                 ]
             )
+            if deadline is not None:
+                deadline.check()
             workspace = self.workspace_manager.create(
                 f"eval_{uuid.uuid4().hex}",
                 package.public.repository.url,
                 package.public.repository.base_commit,
             )
+            if deadline is not None:
+                deadline.check()
             try:
                 workspace = self.workspace_manager.validate_managed_workspace(workspace)
             except PatchLoopError as exc:
@@ -402,6 +453,8 @@ class EvaluationEngine:
                     details={"workspace_separate": True},
                 )
             )
+            if deadline is not None:
+                deadline.check()
             applied_patch_hash = self.workspace_manager.apply_patch(workspace, patch_path)
             summary = self.workspace_manager.diff_summary(workspace)
             diff_hash = summary.patch_hash
@@ -427,6 +480,7 @@ class EvaluationEngine:
                 "regression",
                 results,
                 recorded_checks,
+                deadline,
             )
             self._run_checks(
                 manifest.run_id,
@@ -435,6 +489,7 @@ class EvaluationEngine:
                 "hidden",
                 results,
                 recorded_checks,
+                deadline,
             )
             policies = {
                 "scope": verify_scope(summary, package.public.constraints),
@@ -513,6 +568,8 @@ class EvaluationEngine:
                 "official": False,
                 "evaluation_status": evaluation_status,
                 "failure_class": failure_class,
+                "deadline_exhausted": failure_class == "ExecutionDeadlineExceeded",
+                "completed_check_results": [item.model_dump(mode="json") for item in results],
                 "manifest_content_hash": manifest_hash,
                 "task_content_hash": manifest.task_content_hash,
                 "runtime_content_hash": manifest.runtime_content_hash,
