@@ -318,8 +318,14 @@ remain. The twenty-first v13 row reached evaluation, but task acceptance failed 
 26 inspection turns and a broad manual path-walking edit with public semantic
 counterexamples. Its prompts contained the core mechanism; duplicated or weakened
 notes are observed limitations, not proof that memory alone caused the failure.
-V14 passes Ruff, all 215 provider-free tests, and mock isolated evaluation; real probe
-execution remains untested. No twenty-second row is approved, and a
+The initial v14 implementation passed Ruff, 215 provider-free tests, and mock isolated
+evaluation. Separately approved real Docker probes now verify basic source/process
+isolation, completed replay, bounded output, and deadline cleanup using synthetic data.
+They exposed tag/digest lookup mismatch and unread-pipe cleanup backpressure; canonical
+repository@digest execution and discard-after-cap draining fix those specific defects.
+Keep the output retention limit distinct from total drained-byte telemetry. The failed
+flood receipt remains preserved beside the successful bounded recheck; cleanup uncertainty
+still stops execution. No twenty-second row is approved, and a
 future exact live authorization must explicitly include the probe capability if used.
 Local or mocked execution does not establish that the model chooses better experiments
 or reaches submission faster.
@@ -688,8 +694,17 @@ or share temporary roots. Then run mock smoke. V14 passed Ruff and 215 tests: 64
 action-ID receipt-boundary correction passed all ten probe-provenance tests in 6.52
 seconds. Mock `run_dev_0e6b57566f77420b`, under `C:\pt\pl-v14-smoke-final`, reached
 `EVALUATOR_PASS` with task acceptance PASS, safety NOT_RUN, one accepted mutation,
-four model turns, five actions, and zero cost. Docker/probe launches were mocked;
-neither real execution nor availability of the pinned probe image is validated. The preceding
+four model turns, five actions, and zero cost. Docker/probe launches were mocked at
+that checkpoint. Later approved real-probe evidence is under `C:\pt\pl-probe-real-b`
+(isolation/replay and failed flood) and `C:\pt\pl-probe-real-c` (repaired flood/deadline).
+The opt-in `tests/test_dev_probe_docker.py` requires `PATCHLOOP_TEST_REAL_PROBES=1`
+and an external basetemp; default regression skips all three real-Docker cases. It
+must never pull/build/start automatically, and cleanup uncertainty aborts the session.
+After the real-Docker fixes, Ruff and 224 provider-free tests pass (64 in 89.66 seconds,
+160 in 88.00 seconds, parallel), with three real-Docker cases skipped by default.
+Mock `run_dev_f5951bf0dd474039` in `C:\pt\pl-probe-smoke-final` reaches isolated
+`EVALUATOR_PASS`, acceptance PASS, safety NOT_RUN, and zero cost. See
+`docs/current-status.md` for the separate Docker results and claim boundaries. The preceding
 v13 checkpoint passed seven focused schema/diagnostic/resume cases, Ruff, all 175 tests
 (64 in 80.06 seconds and 111 in 58.33
 seconds in parallel), and mock isolated evaluation in run

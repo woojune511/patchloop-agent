@@ -63,7 +63,8 @@ class RegisteredCheck(StrictModel):
 class RegisteredProbeProfile(StrictModel):
     """Parser compatibility for audited task-public-v2 packages.
 
-    ``dev-head`` does not expose an agent-authored probe tool.
+    Active ``dev-head`` probes use a runtime-owned opt-in profile, not these
+    legacy task-package profile settings.
     """
 
     id: str = Field(pattern=r"^[a-z][a-z0-9_-]+$")

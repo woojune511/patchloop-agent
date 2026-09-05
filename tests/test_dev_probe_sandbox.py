@@ -3,6 +3,8 @@ from __future__ import annotations
 import io
 import runpy
 import subprocess
+import sys
+import threading
 from pathlib import Path
 
 import pytest
@@ -158,8 +160,45 @@ def test_output_flood_is_bounded_and_kills_owned_process(monkeypatch, public_rep
     assert result["status"] == "output_limit"
     assert result["captured_output_bytes"] == 12000
     assert len(result["stdout"].encode()) == 12000
-    assert result["observed_output_bytes"] <= 12000 + 4096
+    assert result["observed_output_bytes"] == 1_000_000
     assert process.killed
+
+
+def test_output_limit_keeps_real_pipes_drained_without_retaining_extra_bytes():
+    collector = probes._OutputCollector()
+    process = subprocess.Popen(
+        [sys.executable, "-I", "-u", "-c",
+         "import sys; "
+         "sys.stdout.buffer.write(b'x' * 524288); sys.stdout.flush(); "
+         "sys.stderr.buffer.write(b'y' * 524288); sys.stderr.flush()"],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0,
+    )
+    assert process.stdout is not None and process.stderr is not None
+    readers = [
+        threading.Thread(target=collector.drain, args=(stream, label), daemon=True)
+        for stream, label in ((process.stdout, "stdout"), (process.stderr, "stderr"))
+    ]
+    for reader in readers:
+        reader.start()
+    try:
+        # Returning from a reader at the cap fills the OS pipe and strands the
+        # writer. Continued discard permits exit while retained memory stays fixed.
+        process.wait(timeout=2)
+        for reader in readers:
+            reader.join(timeout=1)
+        assert process.returncode == 0
+        assert not any(reader.is_alive() for reader in readers)
+        assert collector.limit_hit.is_set()
+        assert collector.observed == 1_048_576
+        assert sum(len(value) for value in collector.streams.values()) == 12000
+    finally:
+        if process.poll() is None:
+            process.kill()
+        process.wait(timeout=1)
+        for reader in readers:
+            reader.join(timeout=1)
+        process.stdout.close()
+        process.stderr.close()
 
 
 def test_invalid_utf8_cannot_expand_public_output_beyond_limit():

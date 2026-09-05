@@ -241,9 +241,15 @@ class DockerSandbox:
         requested_digest = self.image.rsplit("@", 1)[1]
         if _DOCKER_IMAGE_ID.fullmatch(requested_digest) is None:
             return None
+        # Digest references are immutable; their optional tag is not part of
+        # Docker's stored RepoDigest name. Preserve a registry port, if present.
+        repository = self.image.rsplit("@", 1)[0]
+        if ":" in repository.rsplit("/", 1)[-1]:
+            repository = repository.rsplit(":", 1)[0]
+        requested = f"{repository}@{requested_digest}"
         try:
             result = subprocess.run(
-                [docker, "image", "inspect", self.image, "--format", _IMAGE_INSPECT_FORMAT],
+                [docker, "image", "inspect", requested, "--format", _IMAGE_INSPECT_FORMAT],
                 capture_output=True,
                 timeout=10,
                 check=False,
@@ -259,7 +265,6 @@ class DockerSandbox:
             for item in repo_digests
         ):
             return None
-        requested = self.image
         aliases = {requested}
         if requested.startswith("docker.io/"):
             aliases.add(requested.removeprefix("docker.io/"))

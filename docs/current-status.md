@@ -64,10 +64,52 @@ A final receipt-validator alignment to the gateway's 500-character action-ID lim
 was rechecked with all ten probe-provenance cases (6.52 seconds). Mock
 `run_dev_0e6b57566f77420b`, under `C:\pt\pl-v14-smoke-final`, reaches isolated
 `EVALUATOR_PASS` through one accepted mutation, four model turns, and five actions.
-Task acceptance is PASS, safety NOT_RUN, `claim_eligible=false`, and cost zero. Probe
-launches and Docker policies were mocked; neither real probe execution nor local
-availability of its pinned image has been validated. No twenty-second live row or
-Docker execution is authorized by this implementation.
+Task acceptance is PASS, safety NOT_RUN, `claim_eligible=false`, and cost zero. At that
+implementation checkpoint, probe launches and Docker policies were mocked. Implementation
+alone authorized neither Docker execution nor a twenty-second live row.
+
+### Separately approved real Docker probe validation
+
+The user subsequently approved downloading the fixed Python image and bounded synthetic
+Docker verification, without provider calls, evaluator-image changes, or another live row.
+The digest remains `sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de`.
+Actual preflight exposed a naming defect: Docker stores `python@digest`, whereas the
+runtime used `python:3.12-slim@digest`. Matching and lookup now normalize only the optional
+tag, preserving repository, registry port, and digest; probe execution uses the canonical
+reference too. Eight offline identity cases cover accepted aliases and rejected mismatches.
+
+Real isolation and completed-action replay passed in
+`C:\pt\pl-probe-real-b\real-probe-evidence0` (`run_dev_probevalidation_138c96e2b7644a30`).
+The probe imported current modified tracked bytes, excluded synthetic secret/hidden/Git
+and untracked files, enforced non-root/read-only/process restrictions, allowed ephemeral
+scratch writes, and received no mandatory-check credit. Restart replay returned the same
+result without another backend call or journal mutation. The 1.33-second execution left
+no container. Only synthetic fixtures were used; the repository `.env` was not read/copied.
+
+The first output-flood case (`run_dev_probevalidation_fa022e287979467c`) preserved the
+12,000-byte output bound but reported cleanup uncertainty and halted the remaining tests.
+An independent exact-container inspection confirmed absence. A real subprocess-pipe
+regression demonstrated that stopping readers at the retention cap strands a pipe writer.
+Readers now keep draining and discarding excess bytes while the existing main-thread
+cleanup runs; ownership checks, failure handling, and the five-second reserve are unchanged.
+
+The two remaining cases passed in 10.80 seconds under
+`C:\pt\pl-probe-real-c\real-probe-evidence0`. The repaired flood
+(`run_dev_probevalidation_872424ac8fe54e9d`) retained exactly 12,000 bytes, returned
+`output_limit`, and confirmed cleanup in 1.69 seconds. The deadline case
+(`run_dev_probevalidation_48e0ec7ff40b4969`) used a 6.563-second effective timeout within
+a 12-second row budget, returned `timeout`/`deadline_exhausted`, and confirmed cleanup
+in 7.48 seconds. Exact-container absence was independently checked in both cases.
+All four actual container attempts and the completed replay remain diagnostic evidence,
+not an agent-success or full sandbox-security claim. No twenty-second live row is approved.
+
+Final regression passes Ruff and 224 provider-free tests, with three explicit Docker
+tests skipped by default. The two frozen suite groups passed 64 cases in 89.66 seconds
+and 160 cases in 88.00 seconds concurrently. Mock `run_dev_f5951bf0dd474039` under
+`C:\pt\pl-probe-smoke-final` reaches isolated `EVALUATOR_PASS` through one mutation,
+four mock model turns, and five actions; acceptance PASS, safety NOT_RUN, cost zero,
+and `claim_eligible=false`. The separately enabled Docker cases passed as described
+above; these were not invoked by the default suite.
 
 The September 5 review found remaining harness defects, not evidence that model
 judgment alone explained unsuccessful runs. V12 corrects truncated/empty read evidence,

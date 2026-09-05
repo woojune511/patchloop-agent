@@ -4,11 +4,16 @@ Active dev-head probes are enabled explicitly with `patchloop dev --enable-probe
 They use the fixed clean official Python image below, which must already exist locally:
 
 ```text
-python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
+python@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
 ```
 
 `patchloop/sandbox/probes.py` owns this identity as `PROBE_IMAGE`. Preflight verifies
-the exact local image and the trusted wrapper before execution. PatchLoop never pulls
+the exact local image and the trusted wrapper before execution. Docker records
+`name:tag@digest` as `name@digest` in `RepoDigests`; lookup and comparison ignore only
+the optional final-component tag, preserving the repository, registry port, and exact
+digest. The fixed probe image uses this canonical reference for execution too; the
+digest still pins the same reviewed Python 3.12-slim content.
+PatchLoop never pulls
 or builds an image, starts Docker Desktop, or falls back to another image. The
 historical `patchloop-sandbox:py312` image and task evaluator images are not used by
 this capability. `Dockerfile.sandbox` remains a tracked historical image recipe;
@@ -50,9 +55,24 @@ interrupted action without a result can clean up and rerun its isolated experime
 this is not an exactly-once process guarantee. Temporary experiments never become
 part of the submitted patch.
 
+Output retention and pipe draining are separate: after the 12,000-byte cap, readers
+discard further bytes until EOF while the main thread tears down the owned container.
+Leaving attach pipes unread can stall that teardown. `observed_output_bytes` counts
+all drained bytes and may exceed the fixed retained/public-output limit.
+
 Probe results are diagnostic and grant no required-check PASS or submission credit.
 Receipts bind action/input, source, diff, snapshot, image/profile, and execution-policy
 hashes. The evaluator validates their integrity before creating its workspace and
 keeps safety separate from task acceptance. No real Docker probe or new live row is
 authorized by implementation or mocked tests. Future live authorization must explicitly
 include `--enable-probes`, and resume must retain the original capability setting.
+
+## Explicit local verification
+
+After separate permission for real Docker execution and with the fixed image already
+present, `tests/test_dev_probe_docker.py` checks synthetic-source isolation and completed
+replay, output flooding, and shortened-deadline cleanup. Set `PATCHLOOP_TEST_REAL_PROBES=1`
+only for that invocation and use a new external `--basetemp` with `-x`. It records public
+receipts and hash-chained action journals under that temporary root. Default pytest
+skips these three cases; it must not start Docker or acquire images to unskip them.
+This diagnostic matrix is not a paid live row or a comprehensive sandbox-security claim.

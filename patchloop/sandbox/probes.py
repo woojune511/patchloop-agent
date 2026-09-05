@@ -22,7 +22,9 @@ from patchloop.sandbox.runner import DockerSandbox
 from patchloop.util import sha256_bytes, sha256_json
 
 PROBE_IMAGE_DIGEST = "sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de"
-PROBE_IMAGE = "python:3.12-slim@" + PROBE_IMAGE_DIGEST
+# This digest pins the reviewed Python 3.12-slim image. Use Docker's canonical
+# repository@digest name for lookup and execution, not a tag+digest alias.
+PROBE_IMAGE = "python@" + PROBE_IMAGE_DIGEST
 PROBE_TIMEOUT_SECONDS = 30
 PROBE_OUTPUT_LIMIT_BYTES = 12_000
 PROBE_SOURCE_LIMIT_CHARS = 8_000
@@ -172,9 +174,14 @@ class _OutputCollector:
                     retained = sum(len(value) for value in self.streams.values())
                     self.streams[name].extend(block[:max(0, PROBE_OUTPUT_LIMIT_BYTES - retained)])
                     self.observed += len(block)
-                    if self.observed > PROBE_OUTPUT_LIMIT_BYTES:
+                    if (
+                        self.observed > PROBE_OUTPUT_LIMIT_BYTES
+                        and not self.limit_hit.is_set()
+                    ):
                         self.limit_hit.set()
-                        return
+                    # Keep draining and discard after the retention cap. Leaving
+                    # Docker's attach pipe unread can block its own teardown while
+                    # the main thread is removing the exact owned container.
         except (OSError, ValueError):
             return
 
