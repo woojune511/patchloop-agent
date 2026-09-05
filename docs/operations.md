@@ -92,7 +92,9 @@ exactly one mutation, check, enabled probe, finish, or stop.
 Python image in [the probe runtime contract](../docker/README.md) to be present locally.
 Preflight verifies that image and the hash-bound trusted wrapper before provider dispatch.
 It does not pull/build an image, start Docker Desktop, or fall back to the evaluator image.
-No twenty-second live row is authorized by the v14 implementation or local validation.
+The separately approved twenty-second row used this opt-in and completed; its exact
+result is in `docs/current-status.md`. No twenty-third live row is authorized by that
+result, the v14 implementation, or local validation.
 
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against
 the official [API pricing](https://developers.openai.com/api/docs/pricing) and

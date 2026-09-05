@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The twenty-one live observations below
+Repository policy alone never initiates paid work. The twenty-two live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -101,7 +101,7 @@ The two remaining cases passed in 10.80 seconds under
 a 12-second row budget, returned `timeout`/`deadline_exhausted`, and confirmed cleanup
 in 7.48 seconds. Exact-container absence was independently checked in both cases.
 All four actual container attempts and the completed replay remain diagnostic evidence,
-not an agent-success or full sandbox-security claim. No twenty-second live row is approved.
+not an agent-success or full sandbox-security claim. That approval did not authorize a live row.
 
 Final regression passes Ruff and 224 provider-free tests, with three explicit Docker
 tests skipped by default. The two frozen suite groups passed 64 cases in 89.66 seconds
@@ -110,6 +110,51 @@ and 160 cases in 88.00 seconds concurrently. Mock `run_dev_f5951bf0dd474039` und
 four mock model turns, and five actions; acceptance PASS, safety NOT_RUN, cost zero,
 and `claim_eligible=false`. The separately enabled Docker cases passed as described
 above; these were not invoked by the default suite.
+
+### Twenty-second live row: task acceptance PASS
+
+The user separately approved one new run of `pyfakefs-makedirs-parent-traversal` v2,
+`gpt-5.4-mini-2026-03-17`, medium reasoning, `.env`, repeat 1, a $1.20 invocation cap,
+and `--enable-probes` under `C:\patchloop-state`. On committed runtime
+`f7849c664f43cd84d3c5badfb5b9c2b8a3beb012`, run `run_dev_309a71c0c16544ed` completed
+at `EVALUATOR_PASS`: task acceptance PASS, safety PASS, `claim_eligible=false`, and
+`official=false`. It used 33 model/input-count calls, 36 actions, two accepted mutations,
+$0.385299450, and 315.937 seconds of active execution. No provider retry, image operation,
+or additional live invocation ran.
+
+At call 13, one optional probe observed real Linux `os.makedirs` side effects for three
+string paths containing `..`/`.` and one bytes path. It returned 149 output bytes in
+2.937 seconds with confirmed cleanup. Its question mentioned Windows, but its code did
+not exercise Windows or compare the candidate fake implementation. This is a successful
+public experiment, not evidence that the probe exhaustively validated the proposed fix.
+Receipt `sha256:26819db65839c3b7f7d81013ddebe43652140ae7a2bdab97a3d673bfa42bee76`
+is bound into the manifest and evaluator provenance; it grants no visible-check credit.
+
+The first accepted edit arrived at call 27, after 25 inspection turns and the probe
+(27 read/search actions plus one probe). It used recursive parent creation with existing
+`self.path.split`, `exists`, `isdir`, and `self.mkdir` operations instead of manually
+walking normalized components. Call 28's public check correctly localized the parent-mode
+assertion. After a two-action inspection batch, call 30 changed the recursive parent mode
+from the caller's mode to `PERM_DEF`, retaining the caller's mode for the leaf. Both
+visible checks then passed and call 33 submitted a one-file, 14-added/1-deleted-line patch:
+`sha256:6e5ba56bdbfc2022e2aef341a930b8c595b2427365a27657da5eea7d29f02ef9`.
+The visible checks, submission, and isolated evaluation are bound to that same artifact.
+
+Success does not establish efficient exploration or successful early memory maintenance.
+Across the run, 17 of 29 read/search actions added no source coverage, including six cache
+hits. The first note cited nonexistent tool result `pending` and was excluded; the next
+five tried to update unallocated `n1` and were excluded as `unknown_note_id`. Recorded
+contexts exposed these diagnostics but retained no findings before the first mutation.
+A valid note was first allocated at call 30, expired after its cited source changed, and
+was followed by a new current-source note and later successful updates. The trace therefore
+does not support attributing this pass to improved working-memory reuse. Read-only review
+of note creation/feedback and repeated inspection is the next seam, not a new read cap.
+
+The journal's 390-event hash chain, all 99 context/input/continuation artifacts, six
+terminal artifacts, 36 unique completed actions, and durable cost sum passed read-only
+integrity checks. All 33 responses carried continuation references; no provider or action
+remained pending. This is one development success on one task, not a generalization or
+official-quality claim. No twenty-third live row is authorized.
 
 The September 5 review found remaining harness defects, not evidence that model
 judgment alone explained unsuccessful runs. V12 corrects truncated/empty read evidence,
@@ -161,7 +206,7 @@ Fault regressions include reordered parallel-result hydration, same-action read 
 source-linked note upsert, unconsumed correction replay, complete-candidate crash recovery,
 deadline expiry before dispatch/evaluator work, and owned-container cleanup uncertainty.
 Earlier checkpoint counts and policies below describe history, not the current v14
-contract. No twenty-second live row is authorized.
+contract. No twenty-third live row is authorized.
 
 The separately authorized twentieth row used the same pyfakefs version-2 task,
 `gpt-5.4-mini-2026-03-17`, medium reasoning, `.env`, one repetition, a $1.20 cap,
@@ -762,6 +807,14 @@ compatibility with those runners is intentionally unsupported.
 
 ## Next decision
 
+The twenty-second row passed task acceptance and safety with a small recursive edit,
+correct recovery from the public permission failure, and one successful optional probe.
+Its first edit still came on call 27, and invalid early note references left working
+findings empty throughout initial exploration. Review the memory creation/feedback path
+and repeated source requests before choosing another change or paid run; this single pass
+does not prove memory or probe causality. The detailed record is above. No twenty-third
+row is authorized. Earlier decisions below remain historical context.
+
 The first live failure exposed a context-projection defect: successful reads were
 selected by lexicographic span hash, so requested source could disappear from the
 next stateless request and trigger repeated inspection. The second live row provides
@@ -855,8 +908,8 @@ run-lifetime locking, journal-derived counters and cost, durable tool-decision r
 and mutation reconciliation. Pre-envelope runs remain immutable and non-resumable.
 Runtime and task content are byte-bound; the manifest precedes evaluation; task
 acceptance and safety remain separate typed axes. That checkpoint authorized no retry;
-the later thirteenth through twenty-first rows were separately authorized and are now
-terminal. No twenty-second row is authorized.
+the later thirteenth through twenty-second rows were separately authorized and are now
+terminal. No twenty-third row is authorized.
 
 The unrelated local import edge is now fixed. Package initialization no longer
 eagerly imports the development runner or evaluator core, while the existing
@@ -924,8 +977,10 @@ row exercised that context but exposed the provider-schema mismatch now fixed in
 The twenty-first row crossed that repaired boundary, recovered from a public check failure,
 and submitted, but still spent 26 turns inspecting before its first edit and chose a broad
 manual path walker with publicly reproducible semantic gaps. This is evidence for better
-decision memory and edit-strategy guidance, not grounds for another hard action mask. No
-paid retry or twenty-second row is authorized.
+decision memory and edit-strategy guidance, not grounds for another hard action mask.
+The twenty-second row then passed with a recursive edit and correct mode repair, while
+still exposing repeated exploration and unsuccessful early note creation. No paid retry
+or twenty-third row is authorized.
 
 A confirmatory lane is not considered until three distinct tasks submit without a
 harness/contract terminal and at least two privately pass. That threshold opens a

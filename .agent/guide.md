@@ -325,10 +325,29 @@ They exposed tag/digest lookup mismatch and unread-pipe cleanup backpressure; ca
 repository@digest execution and discard-after-cap draining fix those specific defects.
 Keep the output retention limit distinct from total drained-byte telemetry. The failed
 flood receipt remains preserved beside the successful bounded recheck; cleanup uncertainty
-still stops execution. No twenty-second row is approved, and a
-future exact live authorization must explicitly include the probe capability if used.
-Local or mocked execution does not establish that the model chooses better experiments
-or reaches submission faster.
+still stops execution. Future exact live authorization must explicitly include the probe
+capability if used. Local or mocked execution does not establish that the model chooses
+better experiments or reaches submission faster.
+
+The separately approved twenty-second row, `run_dev_309a71c0c16544ed`, ran v14 commit
+`f7849c664f43cd84d3c5badfb5b9c2b8a3beb012` with probes enabled and reached isolated
+`EVALUATOR_PASS`, task acceptance PASS, safety PASS, and `claim_eligible=false`.
+It used 33 model calls, 36 actions, two mutations, one probe, and $0.385299450. The
+recursive edit reused existing path/mkdir operations; the public parent-mode failure
+was correctly repaired, both visible checks passed, and the submitted diff had 15 lines.
+The Linux real-os probe observed string/bytes traversal side effects, not Windows or
+candidate equivalence. Do not turn its successful execution into a broader claim.
+
+Next seam: review early memory admission and repeated inspection using public evidence.
+The first edit still arrived at call 27; 17 of 29 inspections added no source coverage.
+The first note cited nonexistent result `pending`; five subsequent updates targeted
+unallocated `n1`. Diagnostics were projected, but no findings survived before mutation.
+Valid note creation began on call 30, with source-change expiry and later updates working.
+These observations do not prove memory caused either the delay or the final success.
+Do not auto-accept unobserved sources or add a hard read cap in response. Record the
+creation/feedback contract and verify a suspected defect before proposing a change.
+The row and all earlier external evidence remain immutable; no twenty-third row is
+authorized. See `docs/current-status.md` for the exact result and artifact identity.
 
 ## Historical checkpoints
 
