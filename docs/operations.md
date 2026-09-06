@@ -101,8 +101,14 @@ submission or private evaluation. The separately approved twenty-sixth v18 row,
 `run_dev_306785d397d640f3`, reached `EVALUATOR_PASS` (task acceptance and safety PASS)
 in 28 model calls and 32 actions for $0.432518400. It also did not invoke a probe.
 The initial Docker-unavailable read-only preflight made no run/provider call; the user
-started Docker before the one invocation. No twenty-seventh live row is authorized by
-these results, the implementation, or local validation. All results remain unofficial.
+started Docker before the one invocation. The separately approved twenty-seventh v19 row,
+`run_dev_e68682d51d2a4dfa`, used two successful baseline probes but no candidate probe.
+It ended at `LIMIT_REACHED` after four accepted mutations and four failed traversal checks:
+29 model calls, 30 actions, $0.349973100, no submission or private evaluation. Eleven model
+calls remained, but no mutation could repair the current failure. Source/check identity and
+native feedback passed the read-only audit; this is not evidence of task success.
+No retry, resume, or twenty-eighth live row is authorized by these results, the implementation,
+or local validation. All results remain unofficial.
 
 Tool surface v19 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and

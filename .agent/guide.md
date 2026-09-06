@@ -411,9 +411,19 @@ Current seam: tool surface `v19` preserves observed unchanged complete-line frag
 across exact replacements and puts citation identity beside every retained check result.
 Range diagnostics distinguish unobserved from stale-current evidence without weakening
 admission. Keep v18 row26 immutable: its late source-note failures exposed lost current
-bindings, not omitted source from the 24k projection. Verify local mapping, gaps, CRLF,
-drift, crash/restart, annotation/native receipts, and identity before any separately
-approved live invocation. No twenty-seventh live row is authorized.
+bindings, not omitted source from the 24k projection. Local mapping, gaps, CRLF, drift,
+crash/restart, annotation/native receipts, and identity passed provider-free validation.
+Separately approved v19 row27 `run_dev_e68682d51d2a4dfa` used four accepted mutations,
+29 model calls, 30 actions, and $0.349973100 before `LIMIT_REACHED`. It never submitted or
+evaluated privately. Four public checks exposed two wrong helper owners, premature path
+normalization, and finally a newly created leaf being treated as pre-existing. Two passing
+baseline probes did not validate the candidate. Actual pre/post bytes verified all four
+post-images and 11 retained fragments; 20 check-summary rows and 19 native note receipts
+matched durable evidence. No source-range note failed; one nonexistent tool-result citation
+was correctly rejected without blocking execution. Mutation capacity, not token/cost/model
+capacity or forced inspection closure, ended the run. Diagnose evidence-to-code choices
+before selecting another fix; do not infer that rebinding caused the task outcome or that
+larger limits would solve it. No automatic retry, resume, or twenty-eighth row is authorized.
 
 Tool surface `v18` preserved original verification questions separately
 from progress, treats identical updates as no-ops, separates pre-batch note receipts
@@ -425,7 +435,7 @@ validate feedback contracts, not improved choices. Row 25 retained the relevant 
 the identified feedback defects do not establish what caused all repeated exploration.
 Old nonterminal runtime mismatch still rejects resume; no migration is approved. The
 separately approved row 26 below passed task acceptance and safety, but annotation
-limitations remain and no twenty-seventh row is approved. V17 below is historical evidence.
+limitations remained; that result did not authorize row 27. V17 below is historical evidence.
 The preceding tool surface `v16` fixes recursive search-glob semantics and uses the
 minimum successful edit successor for mutation admission, with separate protected-recovery
 warnings. It keeps inspection/probe protection, exact evidence, check invalidation, and
@@ -929,7 +939,8 @@ four model turns/five actions/one mutation, task acceptance PASS, safety NOT_RUN
 cost, `official=false`, `claim_eligible=false`. New tests cover exact-position evidence
 reuse, no inferred gaps, error-range privacy/bounds, same native/restart identity, and
 CRLF/no-final-newline/second-anchor crash recovery. Source-note semantic expiry remains
-independent of retained line evidence. No twenty-seventh live invocation is authorized.
+independent of retained line evidence. This checkpoint did not authorize the separately
+approved row 27 recorded above; no twenty-eighth live invocation is authorized.
 
 V18 passed 414 provider-free tests in three concurrent groups of 75 (90.71 seconds),
 144 (83.92 seconds), and 195 (86.28 seconds), using `C:\pt\pl18-verified-6401-{a,b,c}`;
@@ -943,7 +954,7 @@ from the same saved context; independently rebuilt context is compared by public
 not incidental nested JSON key order. The read-only row-25 index comparison includes
 the actual editable makedirs header at line 915, within 16 entries/3,213 characters.
 That local checkpoint did not authorize the separately approved row 26 recorded above;
-no new model-quality claim or twenty-seventh row follows.
+no new model-quality claim or additional live authorization followed from that checkpoint.
 
 V17 passes 59 focused concern/note/guidance cases, Ruff, and all 336 provider-free tests
 in two concurrent groups of 156 and 180 with separate short external roots. Three real

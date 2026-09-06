@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The twenty-six live observations below
+Repository policy alone never initiates paid work. The twenty-seven live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -56,7 +56,8 @@ error with a harness inconsistency: the correct ID was present in another card, 
 missing from the retained regression summary itself. These deterministic fixes do not
 establish why the model chose its successful solution or guarantee another live result.
 Old run/envelope bytes stay immutable; current-runtime mismatches still reject nonterminal
-resume. No twenty-seventh live row is authorized. All results remain `official=false`.
+resume. This implementation checkpoint did not authorize the separately approved row 27
+below. No twenty-eighth live row is authorized. All results remain `official=false`.
 
 Final provider-free validation passes Ruff and all 447 tests in four concurrent groups
 of 60, 68, 60, and 259 (69.70, 86.16, 64.59, and 67.54 seconds), with three opt-in
@@ -70,8 +71,64 @@ Final mock `run_dev_41da713dc2504dea` under `C:\pt\pl19-smoke-c5` reaches isolat
 `EVALUATOR_PASS`: one mutation, four mock model turns, five tool actions, task acceptance
 PASS, safety NOT_RUN, zero cost, `official=false`, and `claim_eligible=false`.
 The frozen Ruff/full-suite/mock sequence took 93 seconds, excluding earlier focused
-debugging. No provider or Docker execution occurred; `.env`, user-owned `AGENTS.md`,
-task packages, historical directories, and existing external run bytes were untouched.
+debugging. No provider or Docker execution occurred during that checkpoint; `.env`,
+user-owned `AGENTS.md`, task packages, historical directories, and existing external run
+bytes were untouched.
+
+### Twenty-seventh live row: mutation capacity exhausted, no submission
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 run with
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository `.env`, repeat 1, a $1.20 cap,
+and `--enable-probes` under `C:\patchloop-state`. Read-only preflight passed tracked
+HEAD-clean runtime/task inputs, credential format, and both pinned images in the already
+running Docker service. V19 commit `6e4efbb634fc38f6c167758b567e45ba467fea11` produced
+`run_dev_e68682d51d2a4dfa`: `LIMIT_REACHED`, 29 model/input-count calls, 30 actions,
+four accepted mutations, $0.349973100, 195.406 active seconds and 196 seconds run age.
+There was no submission, manifest, or private evaluation. All results remain
+`official=false`; no retry, resume, second invocation, Docker startup, or image pull/build ran.
+
+The first edit came on turn 18 after ten reads, six searches, and two baseline probes
+across 17 model turns. Both probes passed and observed real-OS parent traversal; neither
+executed a candidate patch. The entire run used 12 reads, eight searches, two probes,
+four mutations, and four public `parent-traversal-contract` checks. Five inspections
+added no source coverage. The upstream regression check was never reached.
+
+| Edit / check turns | Observed change and public result |
+| --- | --- |
+| 18 / 19 | A manual component walker called `get_path_separator` on `self.path`; `AttributeError` stopped execution. |
+| 22 / 23 | Moving that call to `self.filesystem` exposed `AssertionError: /visible/build`: whole-path `abspath` had removed the traversal components before walking. |
+| 24 / 25 | Rewriting the walker to preserve the raw path introduced another wrong helper owner, `self.path._alternative_path_separator`; another `AttributeError` stopped execution. |
+| 28 / 29 | Correcting that owner exposed `FileExistsError` for `/visible/release`: the code tested existence after creating the directory and treated the newly created leaf as pre-existing. |
+
+The final candidate changes only `pyfakefs/fake_os.py`, adding 34 lines with no deleted
+lines or untracked files. Its diff hash is
+`sha256:a17c99b7e53425f034a991c65a49b8c7854963c775235fe4f76f5526b81970c9`.
+It failed its public check and was not submitted. The scheduler then recorded
+`completion horizon exhausted before provider dispatch`, with
+`blocking_resources=[accepted_mutations]`: 11 model calls and 70 tool actions remained,
+but zero accepted mutations could repair the failure. The conditional minimum completion
+cost was four calls. There was no turn-30 provider dispatch. Cost and output-token limits
+were not exhausted; all provider responses completed normally, with at most 3,359 output tokens.
+
+Read-only audit verified 345 hash-chained events, 87 context/input/continuation artifacts,
+28 exact encrypted-reasoning replay edges, and all 19 note receipts with a following
+native delivery. All 20 retained check-summary rows matched the durable action/check/diff
+identities. The four mutation post-images and 11 rebound source fragments matched the
+actual admitted pre/post bytes. In particular, turn 24 reused the larger function anchor
+after turn 22's one-line edit without an intervening read. There were no source-range note
+rejections. One finding cited a nonexistent tool result ID and was correctly excluded
+without blocking its probe; it also asserted the pending probe's result prematurely.
+This is a model-authored annotation error, not missing tool-result delivery.
+
+Both probe receipts and all six execution-policy hashes verified, with cleanup confirmed.
+These checks do not establish an evaluator safety result: evaluation did not run.
+Inspection stayed open, so closure-warning behavior was not exercised. No successful
+check/concern resolution exercised the new resolution-label path. Runtime bytes and all
+50 prior journal/envelope files remained unchanged. The new journal hashes to
+`sha256:dab04b152155810eee272dea18159c41e943bdb85a64d15e2cfd09dc4707d071`.
+Evidence continuity worked on the exercised paths, while the generated implementation
+still failed public behavior. This does not prove either v19 quality regression or model
+improvement relative to row 26. No twenty-eighth live row is authorized.
 
 ### V18 implementation and validation checkpoint
 
@@ -170,7 +227,8 @@ artifact hashes, 27 reasoning replay edges, five final artifact hashes, and all 
 public-check policy hashes with cleanup confirmed. Journal bytes hash to
 `sha256:3b9f61aeb31a52cac79b77132ff2f6916f00a87453356a417c4413b94f9369aa`.
 Row-25 bytes remain unchanged. Faster editing and successful repair are observations,
-not causal evidence that one v18 feature improved the model. No twenty-seventh row is authorized.
+not causal evidence that one v18 feature improved the model. This result did not authorize
+the separately approved twenty-seventh row recorded above.
 
 ### V17 implementation and validation checkpoint
 
@@ -1252,13 +1310,17 @@ compatibility with those runners is intentionally unsupported.
 
 ## Next decision
 
-Preserve row 26 as immutable passing v18 evidence. Its read-only audit identified the
-source-rebinding loss and fragmented check citation identity now addressed by v19.
-Provider-free tests must establish those contracts before requesting another exact live
-invocation; they cannot establish model improvement. Probe use and closure-warning
-behavior were not live-exercised. Neither one success on this repeatedly used development
-task nor its difference from row 25 establishes generalization or feature-level causality.
-No automatic retry or twenty-seventh live row is authorized.
+Preserve row 26's passing v18 result and row 27's failing v19 result as immutable evidence.
+Row 27 exercised retained source rebinding, check-summary identity, native feedback, and
+baseline probing; none alone guarantees correct implementation. Its remaining public
+failures concern helper ownership, preserving traversal before normalization, and separating
+newly created from pre-existing directories. Diagnose how observed source and probe results
+informed those choices before selecting another runtime change. Two edits repaired wrong
+helper owners, but this does not by itself prove a context omission or justify a larger
+mutation cap or stronger action mask. Closure warnings and concern-resolution label behavior
+were not exercised. Neither success/failure on this repeatedly used development task nor
+the difference between rows establishes generalization or feature-level causality.
+No automatic retry, resume, or twenty-eighth live row is authorized.
 
 The preceding decision after row 25 was:
 
