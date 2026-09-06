@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from native_history_support import input_context
 
 import patchloop.dev.runner as runner
 from patchloop.dev.contracts import DevRunRequest, DevToolResult
@@ -52,7 +53,7 @@ def test_working_notes_are_nonblocking_in_actual_model_input(
     turns = [event["payload"] for event in events if event["event_type"] == "turn_started"]
     inputs = [json.loads(Path(turn["model_input_artifact"]["path"]).read_text(encoding="utf-8"))
               for turn in turns]
-    contexts = [json.loads(items[1]["content"]) for items in inputs]
+    contexts = [input_context(items) for items in inputs]
     assert all("canonical_searches" not in item["evidence_ledger"] for item in contexts)
     assert all(len(item["evidence_ledger"]["recent_inspection_outcomes"]) <= 3
                for item in contexts)

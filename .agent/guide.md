@@ -7,7 +7,8 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ```text
 patchloop/dev/runner.py   loop composition, gates, context, terminal handling
-patchloop/dev/conversation.py  active native episode and replaceable state framing
+patchloop/dev/conversation.py  append-only episode, exact state deltas and reconstruction
+patchloop/dev/native_sources.py  exact current-source delivery references into native history
 patchloop/dev/tools.py    tool grammar, spans, mutations, checks, finish
 patchloop/dev/state.py    append-only JSONL, action/provider recovery
 patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
@@ -43,6 +44,9 @@ The provider request uses required tool choice, and the application validates th
 smaller batch grammar above. Mixed, empty, duplicate-action, and oversized batches
 receive one short correction. A second consecutive protocol/incomplete violation
 terminates the row; any valid completed tool batch resets the correction allowance.
+`read_file` advertises its existing inclusive range bound explicitly: one to 400 lines,
+with `end_line - start_line + 1 <= 400`. Output may contain fewer complete lines under
+the existing character cap. EOF/truncation and mutation-admission rules are unchanged.
 Search globs are case-sensitive, repository-rooted, and component-aware: `*`, `?`,
 and character classes stay within one component, while a whole `**` includes zero or
 more directories. Default `**/*` includes root files. Queries are literal strings.
@@ -294,21 +298,30 @@ clears it. `mutation_readiness.state=ready_to_attempt` uses basis
 The complete anchor of a proposed edit still requires separate admission validation;
 readiness does not prove that coverage or semantic sufficiency. From turn two onward, the
 actual model input retains the whole native episode, not only the previous batch.
-Its order is system instructions, replaceable developer-role harness-state JSON, one
-stable user task, then all encrypted reasoning/canonical calls/public outputs. The JSON
-and source/tool/model prose are explicitly data, not additional instructions. Keeping
-the replaceable state before the user boundary preserves every native item after that
-boundary untouched. Never append a fresh user context after each action or assume that
-the last ciphertext contains the complete prior conversation. The state prefix is the
-current hash/note/check/correction authority; old native results retain historical identity.
+Its order is fixed system instructions, an immutable initial developer-role state JSON,
+one stable user task, then chronological encrypted reasoning/canonical calls/public outputs
+and appended developer-role state deltas. Every previously sent item remains unchanged.
+Each `harness_state_delta` has `remove` paths and `set` [path, value] pairs. Paths contain
+object keys and zero-based array indices; apply removals in order before assignments.
+An assignment replaces the exact value, including null/empty containers, or appends at
+an array's current length. Missing paths stay unchanged. Choose exact subfield changes
+or a whole-container replacement by serialized size, without semantic summarization.
+Normalize nested JSON keys while preserving top-level control-field priority.
+`reconstruct_state` folds these records and must exactly reproduce the current public
+projection, including correction clearing, note expiry and historical check currency.
+The JSON and source/tool/model prose remain data, not additional instructions. Never
+append a fresh user context or assume the last ciphertext contains the whole episode.
+Only the reconstructed latest state is current hash/note/check/correction authority.
+Old native results and superseded state remain historical, not current PASS or source proof.
 The 24,000-character bound still applies to retained current source, not total history.
 Existing whole-input counting, cap, output bounds and run limits constrain this episode;
 do not silently drop old exchanges, reset reasoning, or introduce paid compaction.
 
-Each new input loads the last decision's hash-verified input artifact, retains its native
-history, and appends only that response/executed or rejected batch. Reasoning-only
+Each new input loads the last decision's hash-verified input artifact, retains every item,
+and appends only that response/executed or rejected batch and its exact state delta. Reasoning-only
 responses also append without losing earlier results; current result duplication is removed
 even on a correction turn. `turn_started.native_history` stores only schema/counts/hash,
+including `state_update_count` and the reconstructed `current_state_hash`,
 never ciphertext or plaintext reasoning. A started-but-undispatched boundary is not a new
 decision or an extra exchange. All durable continuation refs and the saved active input
 must validate before pending tools on resume. Billing uncertainty keeps terminal priority.
@@ -319,7 +332,7 @@ ledger/outcome/attempt decisions as action-bound references, labeled
 `latest_tool_result.inspection_intent` for context-only adapters, or `journal_only` for
 intentions absent from that adapter's input. V22 native history includes older call IDs too;
 the compatibility `preceding_function_call_*` labels identify prior decisions/results,
-not their position relative to the replaceable state prefix. Keep source, query/range, gain, status,
+not their position relative to state messages. Keep source, query/range, gain, status,
 check feedback, explicit notes/questions, and original journal calls/results/cards exact.
 Do not use text matching, invent a finding, reinterpret a decision as an observation, or
 claim that a journal-only reference is an available tool. Original ledger action IDs
@@ -335,7 +348,17 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v22`;
+For native delivery, retained `source_spans` use `content_delivery` references when all
+their exact LF-normalized lines exist in successful native source outputs with the same
+path/raw file hash. References identify action ID, output field and inclusive line range;
+adjacent/overlapping spans may supply the union, with no unobserved gap. Earliest matching
+deliveries keep references stable across rereads. A conflict, old hash, missing line or
+more than 16 references keeps the original inline span. Original native output bytes,
+canonical full context artifacts, the 24k retained selection and gateway admission do not
+change. No filesystem access occurs during reference projection. Do not compare strings
+without their exact source identity or reinterpret historical evidence as current.
+
+Terminal resume returns that same public result. Current semantics are tool-surface `v23`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -454,8 +477,18 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: v22 implements the complete active native episode and replaceable state
-prefix described above. This follows the row-29 diagnosis, not evidence that the live
+Current seam: v23 makes the v22 episode append-only, including initial state and nested
+state deltas, and references already delivered current source bodies. It also advertises
+the existing read range bound. This follows the row-30 input-cost audit: a changing state
+prefix defeated history cache reuse, and retained source repeated native bodies. Keep
+all native history, exact state reconstruction, current evidence identity, correction
+clearing and pending resume behavior covered by provider-free tests. Do not claim cache
+hits or dollar savings from prefix equality or character/byte counts. Dynamic tool schemas
+still limit reuse at action-space changes. Memory simplification is not part of this seam.
+No thirty-first live row is authorized; v22 and earlier run/envelope bytes are immutable.
+
+V22 implemented the complete active native episode and replaceable state prefix.
+This followed the row-29 diagnosis, not evidence that the live
 model will reason efficiently. The former wire put one previous batch before a fresh
 user context; effective reasoning mode was not recorded. Historical ciphertext audits
 prove delivery integrity, not model reuse. Preserve exact provider input/history through
@@ -477,12 +510,14 @@ exactly, including two synthetic rejection results. Mode is reported `current_tu
 throughout, not inferred from ciphertext. Existing 56 journal/envelope files are unchanged.
 
 Inspection zero-coverage is 1/16 with no cache hits, compared with row 29's 15/30;
+that one read requested 500 lines and failed the unadvertised 400-line bound. All 15
+successful inspections added coverage; this was not one repeated successful read.
 this is an uncontrolled observation, not a causal claim. Input grows to 90,851 tokens
 and total cost more than doubles versus row 29 despite fewer calls. Three probes all
 use the baseline, one with a syntax error; source findings stay empty and the initial
 question/two advisory concerns are never updated. Do not claim memory/probe effectiveness
-or general efficiency from acceptance PASS. Next seam is read-only analysis of these
-tradeoffs before choosing another change or requesting a separately approved live row.
+or general efficiency from acceptance PASS. The subsequent read-only audit found the
+input-prefix/source-duplication defects addressed by v23, not a source-note storage failure.
 
 Row 29 `run_dev_7005744ccb5d4cc1` reached `EVALUATOR_FAIL`, task acceptance FAIL and safety
 PASS (`PRIVATE_EVALUATION_FAILED`): 32 model/input-count calls, 35 actions, one accepted
@@ -1057,6 +1092,37 @@ uv run ruff check patchloop tests
 uv run pytest tests -p no:cacheprovider --basetemp <short-external-path>
 uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
 ```
+
+V23 passes Ruff and 518 provider-free tests in four concurrent groups of 60/68/60/330
+(70.68/88.89/66.98/92.84 seconds), three real-Docker tests skipped, under
+`C:\pt\pl23-verified-a{1,2,3,4}`. The partition is unchanged: tools/context/source-rebind;
+runner/resume/state; recovery/notes-v14/note-lifecycle/note-feedback/probes/feedback-v18/
+note-temporal-v18; all remaining test files. Twenty-five new cases include 256 nested
+JSON state pairs, typed null/bool/number identity, array trim/append, exact prefix and
+hydration, correction clearing, source union/gap/hash/conflict/blank-line boundaries,
+bounded inline fallback and read-range description/runtime consistency. Existing four
+crash-boundary, provider uncertainty and pending-replay tests run with v23 framing.
+Focused conversation/contracts: 59 passed in 12.70 seconds. Feedback refinement:
+54 passed in 19.52 seconds. The initial stale test fixture compared an unsent marker
+with a different saved turn; corrected to compare actual sent inputs. Nested key-order
+differences after hydration are normalized instead of weakening exact-replay assertions.
+
+Mock `run_dev_f84797eb6e034ce5` under `C:\pt\pl23-smoke-a` reaches one mutation, visible
+checks, finish and isolated `EVALUATOR_PASS`: four turns, five actions, acceptance PASS,
+safety NOT_RUN, zero cost, `official=false`, `claim_eligible=false`, 4.87-second command.
+Runtime files were frozen throughout full pytest/mock. Focused and full pytest are below
+two minutes; the manual complete sequence including polling/review gaps took 166 seconds,
+so do not describe it as an under-two-minute full cycle.
+
+The row-30 comparison is read-only and in memory, not an old-envelope resume. All 29
+reconstructed inputs preserve original native items and 28 append-only prefix edges.
+Retained-source duplication goes from 542,268 characters to zero, but cumulative canonical
+input bytes rise from 5,960,829 to 7,783,355 because prior state deltas remain in history;
+final input is 608,946 versus 435,299 bytes, excluding tools. Do not turn these bytes into
+billed tokens or assume cache hits. No source finding was submitted in row 30, so unused
+notes are not evidence of storage loss. Future separately approved live evaluation must
+measure actual cache/cost and the model's use of updated state, not only hash integrity.
+No provider call, Docker execution, old-run migration or thirty-first live row ran.
 
 V22 passes Ruff and 493 provider-free tests in four concurrent groups of 60/68/60/305
 (72.78/90.91/68.34/94.61 seconds), with three opt-in Docker tests skipped. Roots are

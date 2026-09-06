@@ -1,9 +1,7 @@
 """Durable provider-input boundaries for synthetic gateway transcripts."""
 
-import json
-
 import patchloop.dev.runner as runner
-from patchloop.dev.conversation import history_metadata
+from patchloop.dev.conversation import history_metadata, reconstruct_state
 
 
 def start_turn(journal, store, turn_id, *, context="{}", results=None, **extra):
@@ -23,5 +21,4 @@ def start_turn(journal, store, turn_id, *, context="{}", results=None, **extra):
 
 
 def input_context(items):
-    assert items[1]["role"] == "developer"
-    return json.loads(items[1]["content"])
+    return reconstruct_state(items)

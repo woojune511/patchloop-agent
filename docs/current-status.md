@@ -27,7 +27,71 @@ Repository policy alone never initiates paid work. The thirty live observations 
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v22
+## Current implementation: tool surface v23
+
+V23 keeps the single user task and every encrypted reasoning/call/result item, but
+replaces v22's mutable front-of-request state with an immutable initial state followed
+by append-only developer-role state deltas. Each delta sets or removes exact nested
+paths; unchanged fields are inherited, null/empty values are explicit, and an exact
+container replacement is used when smaller than individual operations. No model
+summarization, new user boundary, synthetic tool call, or paid compaction is introduced.
+Already sent input items remain a byte-identical prefix of the next input. Equivalent
+hydrated values generate identical delta bytes; the saved input and journal metadata
+bind both the history and reconstructed current-state hash. Pending replay and uncertain
+provider-dispatch handling remain unchanged. Old envelopes are not migrated.
+
+The model-facing current source projection now references complete bodies already in
+native results by action ID, output field, path, raw file hash and exact line range.
+Adjacent/overlapping observations can jointly supply a range; missing lines, stale hashes,
+conflicting text or more than 16 delivery references retain the complete inline fallback.
+No unseen source is read. Canonical context artifacts, original results and mutation
+admission retain their existing full-body and current-hash contracts. The `read_file`
+description now states the existing inclusive 1–400-line rule; inputs and limits are unchanged.
+
+The row-30 read-only audit explains this seam. Input cost rose from $0.317590050 to
+$0.933049350 versus row 29 while output cost fell from $0.165379500 to $0.126819000.
+Cached-input share fell from 26.18% to 8.73%. Every adjacent saved input changed its
+front state before the native history, preventing that history from extending an exact
+cache prefix. Six tool-schema changes remain a separate cache limitation; v23 does not
+change action masks, tool ordering, model, reasoning settings, output ceiling or cap.
+Source body duplication was 542,268 retained characters across 29 inputs, including
+23,993 in the last input. These are character measurements, not billed-token estimates.
+No source finding was submitted by the model; the initial question/concerns persisted,
+so the absence of findings was not a memory-storage failure. Memory simplification is deferred.
+
+The choice follows official [prefix-caching guidance](https://developers.openai.com/api/docs/guides/prompt-caching#preserve-conversation-history)
+while preserving the active reasoning/tool sequence. Read-only, in-memory reconstruction
+of all 29 row-30 saved inputs preserves every original native item and all 28 successive
+input prefixes. Repeated retained-source body characters fall from 542,268 to zero.
+This is not a smaller total wire claim: accumulated exact state deltas increase aggregate
+canonical input bytes from 5,960,829 to 7,783,355, and the final input from 435,299 to
+608,946 bytes. Tool schemas are excluded from these byte counts. A first prototype
+replaced entire changed top-level fields and accumulated still more metadata; exact
+nested changes reduce that overhead. No tokens, cache hit rate or dollar savings are
+inferred from serialized size or ciphertext length. Historical run bytes are unchanged.
+
+Ruff and all 518 provider-free tests pass in four concurrent groups of 60/68/60/330
+(70.68/88.89/66.98/92.84 seconds), with three opt-in Docker cases skipped. New short
+roots are `C:\pt\pl23-verified-a{1,2,3,4}`. The 25 new cases include exact prefix/state
+reconstruction, a 256-pair nested JSON oracle, correction clearing, same-state hydration,
+source identity/union/fallback and the advertised read boundary. Existing parallel,
+mutation, privacy, cost-admission and crash/resume regressions pass under the new framing.
+The focused conversation/contract run passes 59 cases in 12.70 seconds; the earlier
+feedback refinement passes 54 in 19.52 seconds. Runtime files remained frozen during
+the full suite and mock. Mock `run_dev_f84797eb6e034ce5` under `C:\pt\pl23-smoke-a`
+reaches mutation, visible checks, finish and isolated `EVALUATOR_PASS`: four turns,
+five actions, one accepted mutation, acceptance PASS, safety NOT_RUN, zero cost.
+Mock command wall time is 4.87 seconds. Focused tests and the pytest phase stay below
+two minutes; the manually orchestrated Ruff/full-suite/mock sequence took 166 seconds
+including review/polling gaps and is not claimed as an under-two-minute full cycle.
+
+These checks establish neither live cache hits nor improved model behavior/generalization.
+All 58 existing journal/envelope files, `.env`, user-owned `AGENTS.md`, 1,249 tracked
+task/historical files, and pre-existing untracked directory entries are preserved.
+All results remain `official=false`, `claim_eligible=false`. No provider call, Docker
+start/pull/build, resume, retry or thirty-first live row is authorized by this implementation.
+
+### V22 implementation and validation checkpoint
 
 V22 corrects the native conversation boundary, not the task or action policy. A request
 now contains system instructions, one replaceable harness-state JSON prefix, one stable
@@ -102,8 +166,10 @@ $1.059868350, 277.578 active seconds and 279 seconds run age. Results remain
 `official=false`, `claim_eligible=false`. No retry, resume, extra invocation, Docker
 startup, or image pull/build ran.
 
-The first 18 turns made 16 inspections and two baseline probes. Only one inspection
-added no source coverage; none was a cache hit. Turn 19 proposed a 67-line mutation,
+The first 18 turns made 16 inspections and two baseline probes. The one inspection
+without coverage was turn 1's rejected 500-line read against the unadvertised 400-line
+limit, not a repeated successful observation. All 15 successful inspections added new
+coverage; none was a cache hit. Turn 19 proposed a 67-line mutation,
 which scope rejected and rolled back. A third baseline probe at turn 20 failed with a
 Python raw-string `SyntaxError`; this was diagnostic failure, not a sandbox-policy
 violation. Turn 21's 52-line candidate was also rejected, and turn 22 accepted 38 diff
@@ -144,7 +210,7 @@ All 56 prior journal/envelope files, `.env`, user-owned `AGENTS.md`, existing un
 work, task packages and historical directories remain unchanged. No evaluator feedback
 is reinjected into the coding agent.
 
-Post-run changes only record this evidence in current documentation. Three documentation
+The immediate post-run change only recorded this evidence in current documentation. Three documentation
 tests, Ruff and `git diff --check` pass; the full suite and mock are not rerun because
 runtime/task bytes remain identical to the validated v22 checkpoint. No automatic repair,
 retry, resume, or thirty-first live row is authorized.

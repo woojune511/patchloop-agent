@@ -165,7 +165,11 @@ def dev_tool_schemas(
         {
             "type": "function",
             "name": "read_file",
-            "description": "Read one bounded line range from a tracked public source file.",
+            "description": (
+                "Read one inclusive line range from a tracked public source file. "
+                "Request at most 400 lines: end_line - start_line + 1 must be between 1 and 400. "
+                "The existing output bound may return fewer complete lines."
+            ),
             "strict": True,
             "parameters": {
                 "type": "object",

@@ -4,7 +4,7 @@ import copy
 import json
 from types import SimpleNamespace
 
-from native_history_support import start_turn
+from native_history_support import input_context, start_turn
 from test_dev_context_v12 import note_call, source_note
 from test_dev_note_temporal_v18 import _update, _with_update
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
@@ -84,7 +84,7 @@ def test_native_mutation_feedback_separates_update_receipt_from_current_ids(tmp_
         "diff_hash": gateway.current_diff_hash, "available_note_ids": [],
         "expired_notes": [{"note_id": "n1", "reason": "source_changed"}],
     }
-    context = json.loads(items[1]["content"])
+    context = input_context(items)
     assert context["current_diff"]["patch_hash"] != before_hash
     assert context["working_notes"]["available_note_ids"] == []
     assert context["working_notes"]["last_update_result"] == {
@@ -120,7 +120,7 @@ def test_parallel_first_owner_alone_gets_pre_and_post_batch_note_feedback(tmp_pa
     assert "ignored_additional_memory_updates" in {
         diagnostic["code"] for diagnostic in payload["receipt"]["diagnostics"]
     }
-    context = json.loads(items[1]["content"])
+    context = input_context(items)
     assert context["working_notes"]["available_note_ids"] == ["n1"]
     echoed = {
         item["call_id"]: json.loads(item["arguments"])["turn_decision"]
@@ -147,7 +147,7 @@ def test_old_expiry_is_not_reported_as_an_unrelated_batch_lifecycle_event(tmp_pa
     assert output["working_notes_after_batch"]["expired_notes"] == []
     assert output["working_notes_after_batch"]["available_note_ids"] == []
     assert output["working_notes_after_batch"]["turn_id"] == "later"
-    context = json.loads(items[1]["content"])
+    context = input_context(items)
     assert context["working_notes"]["last_source_lifecycle"] == prior_lifecycle
 
     no_update = note_call("later-without-update", None)
@@ -172,8 +172,8 @@ def test_restart_rebuilds_identical_feedback_without_execution_or_new_journal_ev
     restarted = _restart(gateway)
     assert restarted.record_working_notes_update([call], turn_id="turn-expire") == payload
     restored_items = _input(restarted, results, tmp_path)
-    original_context = json.loads(items[1]["content"])
-    restored_context = json.loads(restored_items[1]["content"])
+    original_context = input_context(items)
+    restored_context = input_context(restored_items)
     for key, value in original_context.items():
         assert restored_context[key] == value, key
     assert [restored_items[0], *restored_items[2:]] == [items[0], *items[2:]]

@@ -56,6 +56,7 @@ from patchloop.dev.inspection_projection import (
     project_inspection_result,
 )
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
+from patchloop.dev.native_sources import reference_native_sources
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import (
     DevGatewayStateSnapshot,
@@ -1536,7 +1537,7 @@ def _build_model_input(
         (event for event in reversed(events) if event["event_type"] == "turn_decision_recorded"),
         None,
     )
-    history: list[dict[str, Any]] = []
+    previous_input: list[dict[str, Any]] | None = None
     if decision is not None:
         started = next((event["payload"] for event in reversed(events)
                         if event["event_type"] == "turn_started"
@@ -1544,12 +1545,13 @@ def _build_model_input(
                        None)
         if started is None:
             raise _ProviderContinuationError("recorded decision has no active-episode input")
-        history = _load_active_model_input(started, artifact_store)[3:]
+        previous_input = _load_active_model_input(started, artifact_store)
     exchange = _build_latest_exchange(
         journal=journal, artifact_store=artifact_store, context=context,
         latest_tool_results=latest_tool_results,
     )
-    history.extend(exchange[1:-1])
+    new_history = exchange[1:-1]
+    history = [*(previous_input[3:] if previous_input is not None else []), *new_history]
     # Re-project only derived references. Earlier native results/receipts remain
     # byte-identical, with their original action, file and diff identities.
     state = json.loads(exchange[-1]["content"])
@@ -1564,7 +1566,11 @@ def _build_model_input(
         native_action_ids=[item["call_id"] for item in history
                            if item.get("type") == "function_call"],
     )
-    return assemble_model_input(system_prompt=DEV_SYSTEM_PROMPT, state=state, history=history)
+    state = reference_native_sources(state, history)
+    return assemble_model_input(
+        system_prompt=DEV_SYSTEM_PROMPT, state=state, history=new_history,
+        previous_input=previous_input,
+    )
 
 
 def _build_latest_exchange(

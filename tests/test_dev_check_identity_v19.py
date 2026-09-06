@@ -5,6 +5,7 @@ import json
 from types import SimpleNamespace
 
 import pytest
+from native_history_support import input_context
 from test_dev_context_v12 import note_call
 from test_dev_notes_lifecycle_v15 import _gateway, _read, _restart
 
@@ -109,7 +110,7 @@ def test_native_delivery_preserves_older_check_identity_without_copying_latest_b
     _append(gateway, traversal)
     original = copy.deepcopy(runner._recent_checks(gateway))
     items = _native_input(gateway, traversal, tmp_path)
-    payload = json.loads(items[1]["content"])
+    payload = input_context(items)
     retained, native_reference = payload["recent_checks"]
     assert retained["action_id"] == regression.action_id
     assert retained["check_id"] == "regression"

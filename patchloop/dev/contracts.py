@@ -24,8 +24,12 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v22",
-            "native_conversation": "single-user-active-episode-with-replaceable-state-v1",
+            "schema_version": "dev-tool-surface-v23",
+            "native_conversation": "single-user-append-only-state-deltas-v2",
+            "native_state_delta": "exact-nested-paths-smaller-container-replacement-v1",
+            "native_source_delivery": "exact-path-hash-line-union-references-v1",
+            "native_source_reference_limit": 16,
+            "public_read_range": "inclusive-1-to-400-lines-advertised-v1",
             "reasoning_context_evidence": "provider-reported-mode-or-null-v1",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),

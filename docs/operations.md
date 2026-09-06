@@ -78,23 +78,34 @@ is journaled. The adapter uses zero SDK transport retries and stops all remainin
 repetitions when count, transport, or billing state is uncertain. Generation and input
 counting use the same
 `tool_choice=required` contract, so the provider request and the runner's non-empty
-tool-batch requirement agree. V22 keeps one active native episode: system instructions,
-replaceable harness-state JSON, one stable user task, then all encrypted reasoning,
-canonical calls and matching outputs in chronological order. Updating the prefix never
-adds a user turn or retains another old state snapshot. History is restored from the
-last decision's hash-verified input artifact and extended once, including correction
-responses. Existing current-state/source/check validity remains authoritative; historical
+tool-batch requirement agree. V23 keeps one append-only episode: fixed instructions,
+immutable initial state, one stable user task, then encrypted reasoning, canonical calls,
+matching outputs and exact nested state deltas in chronological order. Updating budgets
+or status never rewrites the prefix or adds a user turn. State deltas explicitly set/remove
+paths rather than accumulating full snapshots. The last decision's hash-verified input
+is extended once, including correction responses; folding its deltas restores current
+state. Retained source already in native results uses exact action/field/path/hash/range
+references, with full inline fallback when complete delivery cannot be proved.
+Existing current-state/source/check validity remains authoritative; historical
 native results do not become current PASS. PatchLoop requests
 `reasoning.encrypted_content` while retaining `store=false`. Plaintext reasoning,
 reasoning summaries, and non-tool response content are not retained or replayed.
-`turn_started.native_history` binds item/call/output/reasoning counts and the history hash.
+`turn_started.native_history` binds item/call/output/reasoning/state-update counts,
+the history hash and reconstructed current-state hash.
 Provider/decision events record `response_reasoning_context` only as `current_turn`,
 `all_turns`, or null; no mode is inferred from a ciphertext. GPT-5.4 mini receives no new
 reasoning-context setting. The existing token count and invocation cap apply to the whole
 input, which can grow despite a bounded retained-source snapshot. No history dropping,
 automatic compaction, extra provider call, or larger cap is introduced.
+Stable input prefixes permit cache reuse but do not guarantee it; tool-schema changes,
+routing and retention still matter. Accumulated state deltas add historical metadata,
+so total serialized size may grow even when duplicated current source is removed.
+Measure actual cached input and billed cost in a separately approved live run. No new
+cache control or model-specific reasoning option is added by this change.
 The application still enforces its smaller grammar: up to four reads/searches, or
 exactly one mutation, check, enabled probe, finish, or stop.
+`read_file` now explicitly advertises one inclusive range of at most 400 lines; the
+limit itself, argument names, complete-line output cap and EOF behavior are unchanged.
 
 `run_probe` is off by default. An exact future live authorization must include
 `--enable-probes` to add this capability; enabling it also requires the separate clean
@@ -149,7 +160,7 @@ reported `current_turn`; that is not proof of effective reasoning reuse. Input g
 does not authorize a retry, resume, thirty-first row, Docker start, or image pull/build.
 See `docs/current-status.md` for the exact trajectory and evidence limits.
 
-Tool surface v22 retains bounded run-local verification concerns inside the existing
+Tool surface v23 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
@@ -161,7 +172,7 @@ existing `vN` upsert stores its incoming statement as the latest `progress_note`
 that original. A distinct question needs a null ID. Exact repetition of the original
 or retained progress yields applied code `unchanged`, preserving state, update time,
 and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
-immutable; v22 does not migrate them and rejects mismatched nonterminal resume under the
+immutable; v23 does not migrate them and rejects mismatched nonterminal resume under the
 existing exact-match contract. No new experiment is automatically executed after a check PASS.
 
 Model-facing inspection feedback uses action-bound decision references instead of repeating
@@ -363,7 +374,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v22`; prior
+These output and scheduler semantics are bound by tool-surface identity `v23`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually

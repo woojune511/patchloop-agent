@@ -6,6 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from native_history_support import input_context
 from test_dev_context_v12 import note_call, source_note
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
 from test_dev_probes import FakeProbe, probe_call
@@ -202,7 +203,7 @@ def test_parallel_owner_receipt_delivery_and_restart_replay_are_exactly_once(tmp
     }
     assert outputs["owner"]["memory_update_result"] == payload["receipt"]
     assert all("memory_update_result" not in outputs[owner] for owner in ["no-update", "ignored"])
-    projected = json.loads(model_input[1]["content"])["working_notes"]
+    projected = input_context(model_input)["working_notes"]
     assert projected["verification"]["unresolved_ids"] == ["v1"]
     assert projected["last_update_result"]["delivery"] == "preceding_function_call_output"
     assert "verification" not in projected["last_update_result"]
@@ -317,7 +318,7 @@ def test_mock_verification_annotations_keep_call_counts_and_native_delivery(tmp_
         receipts = [output["memory_update_result"] for output in outputs
                     if "memory_update_result" in output]
         assert receipts == [prior["receipt"] for prior in updates[:index]]
-        notes = json.loads(items[1]["content"])["working_notes"]
+        notes = input_context(items)["working_notes"]
         assert notes["verification"]["unresolved_ids"] == ["v1"]
         assert notes["last_update_result"]["delivery"] == "preceding_function_call_output"
         assert "verification" not in notes["last_update_result"]

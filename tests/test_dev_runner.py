@@ -9,6 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from native_history_support import input_context
 
 import patchloop.dev.runner as runner
 from patchloop.agent.model import (
@@ -1236,12 +1237,13 @@ def test_protocol_rejection_preserves_reasoning_and_call_linkage(tmp_path) -> No
         latest_tool_results=[],
     )
 
-    assert [item.get("type") for item in model_input[3:]] == [
+    assert [item["type"] for item in model_input[3:] if "type" in item] == [
         "reasoning",
         "function_call",
         "function_call_output",
     ]
-    rejection = json.loads(model_input[-1]["output"])
+    rejection = json.loads(next(item["output"] for item in model_input
+                                if item.get("type") == "function_call_output"))
     assert rejection == {
         "action_id": "rejected-read",
         "available_tool_names": ["replace_text", "stop_task"],
@@ -1872,7 +1874,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
             "output": {key: value for key, value in original["output"].items()
                        if key != "inspection_intent"},
         }
-    current_input_context = json.loads(second_input[1]["content"])
+    current_input_context = input_context(second_input)
     assert current_input_context["latest_tool_results"] == []
     assert current_input_context["latest_tool_results_delivery"] == {
         "format": "preceding_function_call_output_items",

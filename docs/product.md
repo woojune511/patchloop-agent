@@ -89,9 +89,13 @@ count distinguishes an empty eligible file selection from a text search with no 
 
 For OpenAI runs, the complete active native episode follows one stable user task:
 encrypted reasoning, canonical function calls, and matching public results in order.
-A replaceable harness-state JSON prefix sits before that user boundary, so updated
-state does not create a new task or accumulate old snapshots. Saved input artifacts
-preserve the exact history; journal metadata binds its counts/hash. Earlier observations
+A fixed initial harness state precedes that user boundary. Later exact nested state
+changes append after tool results rather than rewriting the prefix. Unchanged fields
+are inherited; explicit null/removal clears old status. Saved input artifacts preserve
+every previous item, and journal metadata binds history and reconstructed current state.
+Current source bodies already in native results are linked by exact path/hash/line and
+action identity, not copied again into state. Missing or ambiguous delivery keeps the
+inline source; mutation admission is unchanged. Earlier observations
 are historical, not current source or check PASS. Effective reasoning mode is recorded
 only when the provider reports it; delivery is not proof of effective model reuse.
 Full history is subject to existing exact cost admission and can cost more; it is not
@@ -249,8 +253,9 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v22` preserves one active native episode with a replaceable
-state prefix. It retains v21's separation of recorded inspection intent from observed
+workflow state. Tool-surface `v23` preserves one append-only native episode with exact
+state deltas and source delivery references. Its read description explicitly states the
+unchanged inclusive 400-line bound. It retains v21's separation of recorded inspection intent from observed
 feedback without changing actions or budgets. It places actual check outcomes beside note citations and
 describes existing candidate-probe capability explicitly. It preserves unchanged observed
 line fragments across edits,

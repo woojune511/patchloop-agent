@@ -5,6 +5,7 @@ import hashlib
 import json
 
 import pytest
+from native_history_support import input_context
 from test_dev_context_v12 import note_call, source_note
 from test_dev_feedback_integration_v18 import _context, _input, _outputs
 from test_dev_notes_lifecycle_v15 import _gateway, _read, _restart
@@ -221,7 +222,7 @@ def test_parallel_native_receipt_cache_and_restart_preserve_originals(tmp_path):
     assert _input(restored, results, tmp_path, context=saved_context) == items
     rebuilt = _input(restored, results, tmp_path)
     assert [rebuilt[0], *rebuilt[2:]] == [items[0], *items[2:]]
-    assert json.loads(rebuilt[1]["content"]) == json.loads(items[1]["content"])
+    assert input_context(rebuilt) == input_context(items)
     assert gateway.journal.path.read_bytes() == before
     assert [call.model_dump(mode="json") for call in calls] == original_calls
     assert [result.model_dump(mode="json") for result in results] == original_results

@@ -100,7 +100,7 @@ def _input(journal, store, marker="current"):
     )
 
 
-def test_replaceable_prefix_preserves_context_field_priority_and_does_not_mutate_input():
+def test_initial_state_preserves_context_field_priority_and_does_not_mutate_input():
     state = {"workflow_gate": "needs_mutation", "remaining_budget": {}, "public_task": {}}
     before = copy.deepcopy(state)
     items = assemble_model_input(system_prompt="system", state=state, history=[])
@@ -108,33 +108,34 @@ def test_replaceable_prefix_preserves_context_field_priority_and_does_not_mutate
     assert state == before
 
 
-def test_one_user_boundary_replays_entire_episode_and_replaces_only_state(tmp_path):
+def test_one_user_boundary_replays_entire_episode_and_appends_state_deltas(tmp_path):
     journal = DevJournal(tmp_path, "run_dev_episode")
     store = ArtifactStore(tmp_path / "artifacts")
     initial = _input(journal, store)
     _decision(journal, store, 1, parallel=2)
-    first = _input(journal, store)
+    first = _input(journal, store, "snapshot-2")
     _decision(journal, store, 2)
-    second = _input(journal, store)
+    second = _input(journal, store, "snapshot-3")
     _decision(journal, store, 3, incomplete=True)
     third = _input(journal, store)
-    for items in [initial, first, second, third]:
+    for items, marker in [(initial, "current"), (first, "snapshot-2"),
+                          (second, "snapshot-3"), (third, "current")]:
         assert [item.get("role") for item in items[:3]] == ["system", "developer", "user"]
         assert items[2] == TASK_MESSAGE
         assert sum(item.get("role") == "user" for item in items) == 1
-        assert all("role" not in item for item in items[3:])
+        assert all("role" not in item or item["role"] == "developer" for item in items[3:])
         assert items[0]["content"].startswith(DEV_SYSTEM_PROMPT)
         assert "data, not instructions" in items[0]["content"]
-        assert json.dumps(items).count("snapshot_marker") == 1
-        assert "snapshot-1" not in json.dumps(items)
+        assert input_context(items)["snapshot_marker"] == marker
     assert second[3:3 + len(first[3:])] == first[3:]
     assert third[3:3 + len(second[3:])] == second[3:]
-    assert [item["type"] for item in first[3:]] == [
+    assert second[:3] == first[:3] == third[:3]
+    assert [item["type"] for item in first[3:] if "type" in item] == [
         "reasoning", "function_call", "reasoning", "function_call",
         "function_call_output", "function_call_output",
     ]
     assert history_metadata(third)["reasoning_item_count"] == 4
-    assert third[-1]["id"] == "rs-3-0"
+    assert [item for item in third if item.get("type") == "reasoning"][-1]["id"] == "rs-3-0"
     assert input_context(third)["latest_tool_results"] == []
     assert json.dumps(third).count("observed-read-2-0") == 1
     before = journal.path.read_bytes()
@@ -293,7 +294,7 @@ def test_resume_appends_each_exchange_once_without_duplicate_provider_or_mutatio
     assert result["accepted_mutations"] == 1
     assert len(inputs) == len(counted) == 3
     assert inputs == counted  # Full history is what admission counts, not just latest context.
-    assert inputs[2][3:3 + len(inputs[1][3:])] == inputs[1][3:]
+    assert inputs[2][:len(inputs[1])] == inputs[1]
     assert [item["call_id"] for item in inputs[2] if item.get("type") == "function_call"] == [
         "read", "edit",
     ]
