@@ -1188,10 +1188,7 @@ def test_inline_public_failure_is_mapped_and_survives_read_and_restart(
     assert projected["mutation_pressure"] == {
         "same_public_failure_site": False,
         "accepted_mutations_remaining": 4,
-        "guidance": (
-            "Use the observed failure to choose a public inspection or repair; "
-            "source-line order does not establish execution history."
-        ),
+        "guidance": "This check failed on the current diff.",
     }
 
     restarted = DevToolGateway(
@@ -1334,7 +1331,7 @@ def test_row_seventeen_public_failure_pattern_localizes_causal_pivot(
     projected = gateway.current_public_failure(diff_hash="sha256:row17-diff-three")
     assert projected is not None
     assert projected["mutation_pressure"]["guidance"].startswith(
-        "Use the observed failure"
+        "This check failed on the current diff."
     )
 
 

@@ -2085,8 +2085,13 @@ class DevToolGateway:
             )
         return status
 
-    def current_public_failure(self, *, diff_hash: str | None = None) -> dict[str, Any] | None:
-        """Return the active public counterexample through inspection and repair turns."""
+    def current_public_failure(
+        self,
+        *,
+        diff_hash: str | None = None,
+        allowed_tools: frozenset[str] | None = None,
+    ) -> dict[str, Any] | None:
+        """Qualify the latest counterexample by diff currency and current action space."""
 
         if self._active_failed_check is None:
             return None
@@ -2100,19 +2105,44 @@ class DevToolGateway:
         projected["phase"] = (
             "repair_current_diff" if failure_hash == current_hash else "awaiting_recheck"
         )
+        currency = (
+            "current" if failure_hash == current_hash
+            else "historical" if failure_hash else "unknown"
+        )
+        projected["evidence_currency"] = currency
         comparison = projected.get("comparison_with_previous_failure")
         same_site = (
             isinstance(comparison, dict)
             and comparison.get("relation") == "same_public_failure_site"
         )
         remaining = max(0, self.limits.max_accepted_mutations - self.accepted_mutations)
+        offered = allowed_tools or frozenset()
+        if currency == "current":
+            guidance = ["This check failed on the current diff."]
+            if "replace_text" in offered:
+                guidance.append("Use replace_text for a repair supported by current evidence.")
+            inspection = " or ".join(sorted(READ_TOOLS & offered))
+            if inspection:
+                guidance.append(
+                    f"Use {inspection} when a public observation could inform the repair."
+                )
+        else:
+            guidance = [
+                "This failure belongs to an earlier diff, not the current candidate."
+                if currency == "historical" else
+                "This failure has no diff binding; it is not a current-candidate verdict."
+            ]
+            if "run_check" in offered:
+                guidance.append("Use run_check to establish the current candidate's outcome.")
+                if remaining == 0:
+                    guidance.append(
+                        "No further edits remain, but available checks and submission after "
+                        "all current-diff checks pass do not require another mutation."
+                    )
         projected["mutation_pressure"] = {
             "same_public_failure_site": same_site,
             "accepted_mutations_remaining": remaining,
-            "guidance": (
-                "Use the observed failure to choose a public inspection or repair; "
-                "source-line order does not establish execution history."
-            ),
+            "guidance": " ".join(guidance),
         }
         return projected
 

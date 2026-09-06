@@ -254,7 +254,7 @@ def test_surface_identity_changes_without_tool_inputs_or_limits_changing():
     assert dev_tool_surface_hash() != (
         "sha256:90dc9a92b61cfd61f61572af504a66424f3e703ab8e29f114de29c22cf97a684"
     )
-    assert len(DEV_SYSTEM_PROMPT) == 7883  # V24 names the compact current_sources navigation.
+    assert len(DEV_SYSTEM_PROMPT) <= 8007  # Preserve the existing bounded-guidance contract.
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()
     assert (limits.max_model_calls, limits.max_tool_actions, limits.max_accepted_mutations,

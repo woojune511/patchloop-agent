@@ -270,8 +270,9 @@ mechanism rather than repeated wrapper locations, and close answered questions. 
 behavior claims against observed post-image evidence after edits even if citations survive.
 Notes retain reusable behavior rules, implementation assumptions, and untested behavior.
 Refine an existing ID for the same fact; use a new ID for a distinct fact. Current error
-status already has `current_public_failure`; do not overwrite reusable knowledge with a
-copy of that status. The system prompt encourages reuse of existing responsibilities and asks
+status already has `current_public_failure`, qualified by diff currency; historical failure
+is not a current-candidate verdict. Do not overwrite reusable knowledge with a copy of
+that status. The system prompt encourages reuse of existing responsibilities and asks
 whether another inspection can change the edit or next check. These remain optional
 concise findings, not a mandatory plan or a harness guarantee of semantic correctness.
 `memory_update=null` preserves the notes and question; `open_question=null` inside an
@@ -378,7 +379,17 @@ Working note content, citation currency, concern status and receipts remain mode
 not harness-validated interpretations. No model summary, mandatory annotation/probe or new
 action restriction is introduced.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v24`;
+Failure feedback receives the actual allowed-tool set at context construction. Preserve
+the original check/diff identity and compatibility phase, adding `evidence_currency` as
+current/historical/unknown. Do not give repair advice for `awaiting_recheck`: name an
+offered `run_check`, and explain that zero mutations prevents further edits, not available
+checks or submission after current-diff PASS. For a current failure, name only offered
+repair/inspection tools. Missing diff binding never becomes a current verdict. Keep
+projection read-only and deterministic after restart, including native latest-state views.
+The prompt distinguishes completion of this candidate from the separate further-edit
+horizon. Do not change tool masks, force a check or reject a voluntary stop on this basis.
+
+Terminal resume returns that same public result. Current semantics are tool-surface `v25`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -497,7 +508,17 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: v24 separates audit accounting from a compact, complete model-facing view
+Current seam: v25 qualifies historical failures and aligns their guidance with offered
+actions. Row 32 rechecked earlier edits with two/one mutations left, then stopped with
+zero despite an unchecked candidate and available checks. This raises a budget/currency
+interpretation hypothesis, not proof of the model's private reasoning. Pure-policy
+checks cover both check orders and the real-failure/no-capacity boundary. Runtime and
+projection tests do not establish changed model selection or final-candidate correctness;
+a paid contrast experiment still requires separate exact approval. Keep schema order,
+native continuation, budgets, task bytes and voluntary stop unchanged. Do not migrate
+old state or execute row 33, resume, retry or Docker work automatically.
+
+V24 separates audit accounting from a compact, complete model-facing view
 and makes out-of-allowance mutation feedback explicit. Row 31's 1,824 assignments and
 24 removals were faithfully delivered but required the model to reconstruct state; rolling
 inspection arrays amplified repeated metadata. Both disallowed edits had the correct
@@ -1152,6 +1173,23 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+V25 passes Ruff and 549 provider-free tests, three opt-in Docker cases skipped, across
+the same four groups: 60/68/85/336 cases in 74.82/92.97/70.50/86.98 seconds under
+`C:\pt\pl25-full-a{1,2,3}` and `C:\pt\pl25-full-b4`. The fourth group was rerun after
+an exact v24 prompt-size assertion was replaced by the existing 8,007-character bound;
+runtime bytes stayed fixed. Focused tests: 89 in 51.33 seconds. Eighteen new cases cover
+current/historical/unknown failure currency, allowed-tool guidance, zero-edit completion
+in either check order, genuine infeasibility, voluntary stop, exact native delivery and
+restart/replay. Prompt size is 7,938 characters; full tool input schemas are unchanged.
+
+Mock `run_dev_4b8f728934de4e53` in `C:\pt\pl25-smoke-a` reaches one mutation, visible
+checks, finish and isolated evaluation: acceptance PASS, safety NOT_RUN, four turns/five
+actions, zero cost, `official=false`, 4.87-second command. Envelope/manifest runtime
+identity matches full-suite bytes. Each final partition/focused phase is under two
+minutes, not the entire validation sequence with reruns. Read-only row-32 reprojection
+changes guidance, not the saved evidence or model output. It is not a counterfactual
+agent success; no paid contrast, Docker execution or thirty-third live row ran.
 
 V24 passes Ruff and 531 provider-free tests, three opt-in Docker tests skipped, in four
 concurrent groups of 60/68/81/322 (106.93/132.22/87.18/155.04 seconds), under

@@ -24,7 +24,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v24",
+            "schema_version": "dev-tool-surface-v25",
             "native_conversation": "single-user-append-only-current-state-v3",
             "native_state_view": "complete-mutable-view-immutable-public-task-v1",
             "model_state_projection": "audit-ledger-separated-native-body-references-v1",
@@ -59,6 +59,8 @@ def dev_tool_surface_hash() -> str:
             "optional_mutation_admission": "minimum-successor-with-protected-warning-v1",
             "mutation_anchor_guidance": "smallest-sufficient-exact-observed-text-v1",
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
+            "public_failure_guidance": "diff-currency-and-actual-action-space-v1",
+            "completion_guidance": "current-candidate-checks-separate-from-further-edits-v1",
             "public_failure_recurrence": "semantic-site-with-raw-fallback-v1",
             "causal_revision_guidance": "advisory-hypothesis-review-v2",
             "failed_check_repair_action_space": "budget-only-public-inspection-v2",

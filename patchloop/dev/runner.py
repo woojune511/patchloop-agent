@@ -1162,7 +1162,8 @@ def _build_context(
             ),
         },
         "current_public_failure": gateway.current_public_failure(
-            diff_hash=summary.patch_hash
+            diff_hash=summary.patch_hash,
+            allowed_tools=active_policy.allowed_tools,
         ),
         "mutation_readiness": gateway.mutation_readiness(
             current_paths=active_snapshot.mutation_evidence_paths

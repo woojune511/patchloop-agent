@@ -27,7 +27,57 @@ Repository policy alone never initiates paid work. The thirty-two live observati
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v24
+## Current implementation: tool surface v25
+
+V25 repairs failure feedback without changing action availability or termination rules.
+`current_public_failure.evidence_currency` explicitly labels current, historical, or
+unbound/unknown evidence; the existing `repair_current_diff` / `awaiting_recheck` phases
+remain. A historical failure is not a verdict on the edited candidate. Its guidance
+names `run_check` only when offered, and at zero remaining mutations explains that
+available checks and submission after current-diff PASS need no further edit. A current
+failure instead names only offered repair/inspection tools. The prompt distinguishes
+the current candidate's completion path from the feasibility of another mutation.
+
+The additional row-32 audit compared post-edit turns 28/30/34: earlier failures were
+retained in each, but the model rechecked with two/one mutations left and stopped with
+zero. The failure kind and code also differed, so this is not a causal experiment.
+The confirmed implementation defect was identical repair-oriented guidance before and
+after an edit. A pure-policy simulation of the last state allows check/check/finish in
+either check order if both pass, while an actual new failure with no mutations left
+still makes completion impossible. It did not execute the final candidate or a model.
+
+Tool names, complete input schemas/descriptions/order, scope, 40/100/4/1,800 limits,
+25,000 output ceiling, native history and voluntary stop remain unchanged. No mandatory
+check, extra planning step, stop rejection, automatic retry or model change is added.
+Only the feedback/runtime identity changes; old envelopes and run bytes are not migrated.
+Separate deterministic evidence/policy validation from model tool-selection evaluation,
+consistent with the official [single-agent evaluation guidance](https://developers.openai.com/api/docs/guides/evaluation-best-practices#example-2).
+No paid contrast experiment, Docker execution/start/pull/build or thirty-third live row
+is authorized or executed by this implementation. All results remain `official=false`.
+
+Validation: Ruff passes; focused feedback/context/contract tests pass 89 cases in
+51.33 seconds. The full provider-free suite passes 549 cases, with three opt-in Docker
+cases skipped, across groups of 60/68/85/336 (74.82/92.97/70.50/86.98 seconds), using
+`C:\pt\pl25-full-a{1,2,3}` and `C:\pt\pl25-full-b4`. The fourth group was rerun after
+replacing an exact v24 prompt-length assertion with the existing 8,007-character bound;
+runtime files stayed frozen. The prompt is 7,938 characters and the full tool input
+schema hash is unchanged. Eighteen added cases cover failure currency, offered-tool
+guidance, conditional check/check/finish with zero edits left, genuine infeasibility,
+voluntary stop, native delivery and mutation replay. Each final partition and focused
+phase is under two minutes; the complete validation sequence, including reruns, is not.
+
+Mock `run_dev_4b8f728934de4e53` under `C:\pt\pl25-smoke-a` reaches mutation, visible
+checks, finish and isolated `EVALUATOR_PASS`: four model turns, five actions, one accepted
+mutation, acceptance PASS, safety NOT_RUN, zero cost, 4.87-second command. Envelope and
+manifest match runtime hash
+`sha256:e1ae0f01fc181572eea43c92e4cd6edda93d280a993bebf35b9a3c3648bff9c5`;
+tool hash is `sha256:2d44849e5e5f5039e8590f08324db75723d8c56eff7f5ecb365758da7071173d`.
+In-memory row-32 reprojection preserves the saved failure evidence while qualifying
+turns 28/30/34 as historical; it neither reruns the candidate nor predicts model choices.
+All 62 existing run journal/envelope files, `.env`, user-owned `AGENTS.md`, 1,249 tracked
+task/historical files and pre-existing untracked entries are unchanged.
+
+### V24 implementation and validation checkpoint
 
 V24 separates the model's current working view from the complete public audit context.
 Each appended `harness_current_state` record contains the complete mutable view; the

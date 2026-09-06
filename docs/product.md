@@ -60,6 +60,11 @@ complete visible-check status and exact remaining check IDs are projected separa
 from the bounded recent output. `ready_to_submit` additionally requires a non-empty
 diff and no non-ignored untracked files.
 A failed public check also creates a bounded `current_public_failure` focus. For a
+changed diff, that failure is explicitly historical, not a verdict on the current
+candidate. Recheck guidance names only an offered check; zero remaining mutations
+prevents more edits, not affordable checks and submission after they pass. Current
+failure feedback instead names offered repair/inspection tools. This is advisory
+presentation, not a new tool restriction or a reason to reject voluntary stop. For a
 registered inline Python command, the gateway maps an unhandled `<string>` traceback
 line back to the exact public command statement without reading another file. It keeps
 the raw-output failure signature for provenance and derives a separate semantic site
@@ -259,7 +264,7 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v24` preserves one append-only native episode with complete
+workflow state. Tool-surface `v25` preserves one append-only native episode with complete
 compact state views and exact source delivery references. Its read description states the
 unchanged inclusive 400-line bound. It retains v21's separation of recorded inspection intent from observed
 feedback without changing actions or budgets. It places actual check outcomes beside note citations and

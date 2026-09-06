@@ -78,7 +78,7 @@ is journaled. The adapter uses zero SDK transport retries and stops all remainin
 repetitions when count, transport, or billing state is uncertain. Generation and input
 counting use the same
 `tool_choice=required` contract, so the provider request and the runner's non-empty
-tool-batch requirement agree. V24 keeps one append-only episode: fixed instructions,
+tool-batch requirement agree. V25 keeps one append-only episode: fixed instructions,
 immutable initial state, one stable user task, then encrypted reasoning, canonical calls,
 matching outputs and compact current-state views in chronological order. Updating budgets
 or status never rewrites the prefix or adds a user turn. Each `harness_current_state.state`
@@ -174,7 +174,7 @@ is an uncontrolled observation, not proof of improved task-solving efficiency. T
 prior journal/envelope files and credential bytes are unchanged. No repair, retry, resume,
 thirty-second row, Docker start or image acquisition is authorized by this result.
 
-Tool surface v24 retains bounded run-local verification concerns inside the existing
+Tool surface v25 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
@@ -186,7 +186,7 @@ existing `vN` upsert stores its incoming statement as the latest `progress_note`
 that original. A distinct question needs a null ID. Exact repetition of the original
 or retained progress yields applied code `unchanged`, preserving state, update time,
 and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
-immutable; v24 does not migrate them and rejects mismatched nonterminal resume under the
+immutable; v25 does not migrate them and rejects mismatched nonterminal resume under the
 existing exact-match contract. No new experiment is automatically executed after a check PASS.
 
 Model-facing inspection feedback uses action-bound decision references instead of repeating
@@ -389,7 +389,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v24`; prior
+These output and scheduler semantics are bound by tool-surface identity `v25`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually
@@ -431,8 +431,15 @@ remains unchanged for provenance. A module frame does not prove which other line
 through loops or branches, so later-line execution remains unknown. Across distinct
 diffs, the context labels the same site, a later/earlier traceback line number, or an
 incomparable change without claiming semantic progress from source order. The resulting
-`current_public_failure` survives a targeted read and journal hydration, includes the
-remaining accepted-mutation count, and clears when the relevant recheck passes. No
+`current_public_failure` survives inspection and journal hydration, includes the
+remaining accepted-mutation count, and clears when the relevant recheck passes.
+Its `evidence_currency` labels the failed diff as current, historical or unknown;
+the compatibility phase remains `repair_current_diff` or `awaiting_recheck`. Historical
+failure does not establish the edited candidate's outcome. Guidance is generated from
+the actual offered tools: repair/inspection for a current failure, an available check
+for a changed diff. Zero mutations alone does not forbid available checks or submission
+after current-diff PASS. The prompt separates that completion path from another edit's
+horizon. This adds no mandatory check or voluntary-stop rejection. No
 private task bytes, hidden path, evaluator output, local-variable capture, or inferred
 reasoning enters this card.
 

@@ -40,8 +40,9 @@ anchor nor a sufficient semantic solution.
 An optional memory_update retains reusable behavior rules, implementation assumptions,
 and unverified behavior. Cite behavior-bearing public source or prior tool-result action
 IDs; preserve why the code causes a behavior, not just a wrapper location.
-current_public_failure already reports the latest error: do not replace a reusable fact
-with a copy of that status. Refine the same fact with its existing note_id, even if
+current_public_failure labels the latest failure's diff currency; a historical failure
+is not a current-candidate verdict. Keep reusable facts separate from that status.
+Refine the same fact with its existing note_id, even if
 citations change; note_id=null creates a distinct fact. Consolidate duplicates with
 remove_note_ids. Close an answered open_question or name the next uncertainty.
 No update or
@@ -88,16 +89,16 @@ The complete current diff is in context. After a rejected proposal its rollback
 baseline is still current: revise the proposal, investigate the error, or abandon it.
 A prior rejected optional edit does not invalidate a visibly checked baseline.
 
-Treat a visible check failure as an observation about the executed behavior. A
-mapped failure location is evidence about that execution, not a prohibition on
-investigating other public dependencies. Repeated failures may justify revising the
-causal hypothesis; causal_revision is optional explanatory metadata, never a forced
-claim that a hypothesis has been falsified. After failure, use current evidence for
-a direct edit when sufficient, or inspect any registered public source while the
-budget allows. A source read is necessary only to acquire missing exact edit evidence.
+A visible failure describes the checked diff, not an untested edit. Its mapped location
+does not restrict public dependency inspection. Repeated failures invite hypothesis
+review; causal_revision is optional, not a forced claim of falsification.
+Repair directly from sufficient current evidence, or inspect registered public source
+while budgets permit. A source read is necessary only to acquire missing exact edit evidence.
 
-All visible checks must pass on the submitted diff. An edit invalidates earlier
-checks; finish_task submits the currently checked baseline. When run_probe is supplied,
+Submit only after all visible_check_status verdicts pass on the current diff. An edit
+invalidates earlier checks. Zero remaining mutations forbids further
+edits, not affordable checks or submission. completion_possible describes completion;
+mutation_completion_horizon describes another edit. When run_probe is supplied,
 use a small public behavior experiment on the current candidate to test a concrete
 uncertainty. Its output is
 diagnostic: probe success does not satisfy a visible check, and failure may be in the
