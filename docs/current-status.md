@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The twenty-eight live observations below
+Repository policy alone never initiates paid work. The twenty-nine live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -64,7 +64,8 @@ values remain exact. Total derived context length falls by 5,745 characters acro
 20 inputs (turn 4: 18,426 to 18,014); this is not a measured token/cost or agent-success
 improvement. Observation IDs missing from the old projection were joined from its durable
 public results solely for this comparison. All 54 existing journal/envelope files remain
-byte-identical. No provider or Docker execution, retry, resume, or row 29 is authorized.
+byte-identical. That implementation checkpoint authorized no provider or Docker execution,
+retry, resume, or row 29; the live observation below required separate exact approval.
 
 Ruff and all 475 provider-free tests pass in four concurrent groups of 60/68/60/287
 (94.86/117.10/87.92/103.01 seconds), with three opt-in Docker cases skipped. External
@@ -79,6 +80,57 @@ The frozen full-suite/mock sequence took 128.0 seconds, slightly over the two-mi
 target; focused validation remained below it. No runtime file changed during that sequence.
 System prompt length remains 7,880 characters. `.env`, user-owned `AGENTS.md`, task
 packages, historical directories, and prior external run bytes were not changed.
+
+### Twenty-ninth live row: public checks PASS, isolated task acceptance FAIL
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 run with
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository `.env`, repeat 1, a $1.20 cap,
+and `--enable-probes` under `C:\patchloop-state`. Read-only preflight confirmed HEAD-clean
+tracked runtime/task inputs, credential format, and both pinned local images in the
+already running Docker service. V21 commit `cb235c25d903e07948bcef31a7885140b4e13aa4`
+produced `run_dev_7005744ccb5d4cc1`: `EVALUATOR_FAIL`, task acceptance FAIL, safety PASS,
+failure class `PRIVATE_EVALUATION_FAILED`, 32 model/input-count calls, 35 actions, one
+accepted mutation, $0.482969550, 290.593 active seconds and 292 seconds run age.
+Results remain `official=false` and `claim_eligible=false`. No retry, resume, additional
+invocation, Docker startup, or image pull/build ran.
+
+The first 26 turns performed 29 reads/searches. Turn 27 attempted a 60-line candidate;
+scope rejected it against the unchanged 50-line limit, returned `over_by=10`, and restored
+the empty baseline. Turn 28 reread an already observed range (cache hit). Turn 29 accepted
+a 48-line candidate: 47 additions and one deletion in `pyfakefs/fake_os.py`, no untracked
+files. Traversal passed at turn 30, upstream regression at turn 31 (517 passed, 570 skipped
+in 3.34 seconds), and finish submitted at turn 32. Isolated task acceptance then failed.
+This is a semantic acceptance failure, not a provider, token-ceiling, cost, or deadline
+terminal. The exact missed behavior has not been diagnosed in this execution checkpoint.
+
+The final visible-check diff, submitted artifact, managed workspace, and isolated
+evaluator's applied diff all match
+`sha256:76b50ccc326b99a286ab1b6540d8ba0b7664922f3498c21b5093c0d8b0b2a7ad`.
+Read-only audit verified the journal chain, 64 context/input artifacts, all 32 encrypted
+continuation artifacts, exact reconstruction of all 32 saved inputs (31 continuation
+edges), 34 next-turn native results, 30 v21 inspection-intent references, two note receipts,
+two public and three evaluator policy hashes with confirmed cleanup, and five terminal
+artifacts. The typed 60/50 failure and restored baseline reached the next input unchanged.
+Provider usage reconciles exactly with the terminal cost; no provider errors occurred.
+All 54 prior journal/envelope files, `.env`, user-owned `AGENTS.md`, existing untracked
+directories, runtime, task packages, and historical directories remain unchanged.
+Journal SHA-256 is `8be79cd609dcc3b276d48a8cd792918c781e48d3668878a1a48af79da856668d`.
+
+V21 removed the redundant intent fields as designed, but did not establish better agent
+efficiency: 15 of 30 inspections added no source coverage, including five cache hits.
+The original delegation body was delivered by turn 2 and remained in every actual input
+from turns 3-29, while the model repeatedly asked to inspect it. Two findings were first
+created at turn 27 and remained after the accepted edit; earlier decisions supplied no
+memory update. Probes were available on 28 turns but never invoked. Retained source peaked
+at 23,997 characters; bounded omission began at turn 25 and reached 151 helper-source
+lines, not loss of the repeatedly requested editable body. The first accepted mutation
+moved from turn 15 in row 28 to turn 29 here. These uncontrolled observations do not prove
+that deduplication worsened behavior, nor support mandatory notes/probes or tighter masks.
+
+Post-run changes only record this evidence in current documentation. All three
+documentation tests, Ruff, and `git diff --check` pass. The full suite and mock were not
+rerun because runtime/task code did not change after the v21 validation checkpoint above.
+No automatic repair, retry, resume, or thirtieth live row is authorized.
 
 ### V20 implementation and validation checkpoint
 
@@ -113,7 +165,7 @@ existed but was not explicit in the stable tool description. These changes test 
 and discoverability, not whether another model trajectory will solve the task.
 All old run/envelope bytes remain immutable. Runtime-mismatched nonterminal resume still
 rejects. This implementation checkpoint did not authorize the separately approved row 28
-below; no migration, retry, or twenty-ninth live invocation is authorized.
+below; it authorized no migration, retry, or subsequent live invocation.
 
 Final provider-free verification passes Ruff and all 462 tests in four concurrent groups
 of 60/68/60/274 (71.99/88.86/66.64/76.73 seconds), with three opt-in Docker tests skipped.
@@ -175,7 +227,7 @@ mutation changed their cited source and expired both; no later context retained 
 The original verification concern survived seven unchanged updates and remained advisory
 and unresolved at finish. Memory-assisted efficiency and candidate probing remain
 unestablished; success on this repeatedly used development task is not generalization.
-No twenty-ninth live row is authorized.
+This result did not authorize the separately approved twenty-ninth row above.
 
 ### V19 implementation and validation checkpoint
 
@@ -1460,17 +1512,16 @@ compatibility with those runners is intentionally unsupported.
 
 ## Next decision
 
-Preserve rows 26-28 as immutable evidence. Row 28 demonstrates a small submitted solution
-and immediate causal repair, not that v20 improved working memory. Read-only analysis
-found intact source delivery and correct note expiry, but repeated projection of an
-incorrect pre-observation premise. V21 removes those redundant copies while preserving
-actual observations, explicit notes, and mutation intent. Local/replayed-input evidence
-establishes projection behavior only, not fewer inspections or better model decisions.
-Evaluate those separately if another exact live invocation is approved. Do not add
-mandatory notes/probes, weaken source validity, or strengthen action masks on this evidence.
-Neither the difference between uncontrolled rows nor passing this reused development
-task establishes generalization or feature-level causality.
-No automatic retry, resume, or twenty-ninth live row is authorized.
+Preserve rows 26-29 as immutable evidence. Row 29 confirms that v21's deduplicated delivery
+and continuation work, but repeated inspection persists despite the editable body being
+present. The accepted mutation was later than row 28's, and public PASS did not imply
+isolated task acceptance. Diagnose the public evidence-to-action trajectory and the final
+artifact's semantic miss separately before selecting another change. Do not treat either
+as proof of missing continuation, old-code execution, or feature-level causality. Keep
+private evaluator feedback out of coding-agent inputs; do not add mandatory notes/probes,
+weaken source validity, tighten action masks, or raise limits merely from this outcome.
+Neither uncontrolled row comparisons nor this reused development task establish
+generalization. No automatic repair, retry, resume, or thirtieth live row is authorized.
 
 The preceding decision after row 25 was:
 

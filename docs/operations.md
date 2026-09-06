@@ -114,8 +114,19 @@ failure was repaired immediately, both visible checks passed, and finish submitt
 same patch later applied by isolated evaluation. Probes were enabled but unused; no
 working note cited a check, so this row did not exercise the v20 check-result label.
 Exact replay, native results, note receipts, execution-policy and patch provenance passed
-read-only audit. No retry, resume, or twenty-ninth live row is authorized by these results,
-the implementation, or local validation. All results remain unofficial.
+read-only audit. That result and local validation did not authorize a later invocation.
+The separately approved twenty-ninth v21 row, `run_dev_7005744ccb5d4cc1`, reached
+`EVALUATOR_FAIL`: public traversal and regression checks passed, isolated task acceptance
+failed, and safety passed (`PRIVATE_EVALUATION_FAILED`). It used 32 model/input-count calls,
+35 actions, one accepted mutation, $0.482969550, and 290.593 active seconds. The first
+candidate at turn 27 exceeded scope (60/50 lines); turn 29 accepted a 48-line replacement,
+and turn 32 submitted it. Checked, submitted, and isolated-applied patch hashes match.
+V21 intent references and exact saved-input/continuation replay passed read-only audit,
+but 15 of 30 inspections added no coverage and no probe ran. This does not establish
+efficiency improvement or a cause for the different outcome. All 54 prior journal/envelope
+files remain unchanged. No automatic repair, retry, resume, or thirtieth live row is
+authorized by this result, the implementation, or local validation. All results remain
+unofficial; no hidden evaluator output is reinjected into the coding agent.
 
 Tool surface v21 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
