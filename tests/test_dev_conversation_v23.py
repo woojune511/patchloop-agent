@@ -56,9 +56,10 @@ def test_state_changes_append_after_native_exchange_and_reconstruct_exactly():
                                       history=exchange, previous_input=initial)
     assert next_input[:len(initial)] == initial == before
     assert next_input[len(initial):-1] == exchange
-    delta = json.loads(next_input[-1]["content"])
-    assert [path[0] for path, _ in delta["set"]] == ["remaining_budget", "protocol_correction"]
-    assert delta["remove"] == [["remove_later"]]
+    view = json.loads(next_input[-1]["content"])
+    assert set(view) == {"kind", "state"}
+    assert view["kind"] == "harness_current_state"
+    assert view["state"] == {k: v for k, v in changed.items() if k != "public_task"}
     assert reconstruct_state(next_input) == changed
     assert canonical_json(next_input).count("STABLE_PUBLIC_TASK") == 1
     assert sum(item.get("role") == "user" for item in next_input) == 1
@@ -96,28 +97,28 @@ def test_reasoning_only_correction_keeps_every_previous_item_and_clears_on_next_
     assert sum(item.get("role") == "user" for item in completed) == 1
 
 
-@pytest.mark.parametrize("damage", ["kind", "shape", "remove", "content", "metadata"])
-def test_invalid_state_delta_or_metadata_fails_closed(damage):
+@pytest.mark.parametrize("damage", ["kind", "shape", "task", "content", "metadata"])
+def test_invalid_current_state_or_metadata_fails_closed(damage):
     items = assemble_model_input(system_prompt="Fixed instructions", state={"value": 2},
                                  history=[], previous_input=_initial({"value": 1}))
     metadata = history_metadata(items)
-    delta = json.loads(items[-1]["content"])
+    view = json.loads(items[-1]["content"])
     if damage == "kind":
-        delta["kind"] = "unrecognized"
+        view["kind"] = "harness_state_delta"
     elif damage == "shape":
-        delta["set"] = {}
-    elif damage == "remove":
-        delta["remove"] = ["unseen"]
+        view["state"] = []
+    elif damage == "task":
+        view["state"]["public_task"] = {}
     elif damage == "content":
-        delta["set"][0][1] = 3
+        view["state"]["value"] = 3
     else:
         metadata["current_state_hash"] = "wrong"
-    items[-1]["content"] = canonical_json(delta)
+    items[-1]["content"] = canonical_json(view)
     with pytest.raises(RecoveryError):
         validate_model_input(items, metadata)
 
 
-def test_nested_state_delta_reconstruction_matches_independent_json_oracle():
+def test_complete_state_reconstruction_matches_independent_json_oracle():
     values = [None, False, True, 0, 1, "", "text", [], [1], [1, 2, 3], {},
               {"value": True}, {"value": 1}, {"value": None, "delete": [1, 2]},
               [{"x": 1}, {"y": [False, "text"]}],
@@ -133,7 +134,7 @@ def test_nested_state_delta_reconstruction_matches_independent_json_oracle():
             assert canonical_json(reconstruct_state(items)) == canonical_json(expected)
 
 
-def test_equivalent_hydrated_nested_objects_emit_identical_deltas():
+def test_equivalent_hydrated_nested_objects_emit_identical_views():
     initial = _initial({"workflow_gate": "needs_mutation", "remaining_budget": {"model": 4},
                         "working_notes": {"findings": []}})
     current = {"workflow_gate": "needs_visible_checks", "remaining_budget": {"model": 3},

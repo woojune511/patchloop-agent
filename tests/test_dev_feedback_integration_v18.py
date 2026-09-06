@@ -17,6 +17,7 @@ def _completed_batch(gateway, calls, turn_id):
     start_turn(
         gateway.journal, ArtifactStore(gateway.workspace.parent / "artifacts"), turn_id,
         context=json.dumps({
+            "public_task": {"task_id": "public-note-feedback"},
             "working_notes": gateway.working_notes(),
             "current_diff": {"patch_hash": gateway.current_diff_hash},
         }),

@@ -24,9 +24,11 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v23",
-            "native_conversation": "single-user-append-only-state-deltas-v2",
-            "native_state_delta": "exact-nested-paths-smaller-container-replacement-v1",
+            "schema_version": "dev-tool-surface-v24",
+            "native_conversation": "single-user-append-only-current-state-v3",
+            "native_state_view": "complete-mutable-view-immutable-public-task-v1",
+            "model_state_projection": "audit-ledger-separated-native-body-references-v1",
+            "current_source_catalog": "file-hash-action-field-range-groups-inline-fallback-v1",
             "native_source_delivery": "exact-path-hash-line-union-references-v1",
             "native_source_reference_limit": 16,
             "public_read_range": "inclusive-1-to-400-lines-advertised-v1",
@@ -52,7 +54,7 @@ def dev_tool_surface_hash() -> str:
             "inspection_intent_projection": "single-native-intent-with-observation-refs-v1",
             "source_search": "rooted-component-glob-double-star-zero-depth-v1",
             "search_feedback": "eligible-decoded-file-count-v1",
-            "mutation_failure": "typed-scope-preview-recovery-lineage-v2",
+            "mutation_failure": "typed-scope-preview-explicit-path-allowance-v3",
             "completion_horizon": "pre-dispatch-best-path-v2",
             "optional_mutation_admission": "minimum-successor-with-protected-warning-v1",
             "mutation_anchor_guidance": "smallest-sufficient-exact-observed-text-v1",

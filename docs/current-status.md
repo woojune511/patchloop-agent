@@ -27,7 +27,74 @@ Repository policy alone never initiates paid work. The thirty-one live observati
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v23
+## Current implementation: tool surface v24
+
+V24 separates the model's current working view from the complete public audit context.
+Each appended `harness_current_state` record contains the complete mutable view; the
+model does not apply nested set/remove operations or shifting array indices. Only the
+unchanged public task is inherited from the initial message. Native encrypted reasoning,
+calls and results remain byte-identical, in order, with no new user boundary or history
+reset. Saved inputs bind the current view; canonical contexts and journal accounting
+remain complete and separate. Old envelopes are not migrated.
+
+The view keeps current tools/budgets, completion feasibility and closure warnings,
+scope headroom, full diff, current failure/check currency, notes and corrections.
+`current_sources` groups exact observed deliveries and lexical headers by path/raw
+file hash; action ID, output field and inclusive line ranges identify native bodies.
+Gaps stay gaps and unverifiable deliveries keep complete inline fallback. No source
+is read by projection. Rolling inspection cards, coverage-detail arrays, span IDs and
+observation counters stay in audit evidence, not repeated model state. Search aggregates
+remain visible. Older mutation/check/probe bodies use native references only when the
+matching result exists; current failure and typed mutation diagnostics remain explicit.
+
+Out-of-allowance `replace_text` reports `path_not_allowed`, `rejected_path`, the actual
+public `allowed_paths`/`forbidden_paths`, and unchanged baseline identity. It explains
+that inspectable helper source is not necessarily editable. The pre-apply rejection,
+replay key, rollback contract, action availability and mutation input schema are unchanged.
+
+The row-31 audit found 1,824 assignments and 24 removals in accumulated state messages.
+State bookkeeping explains 267,071 of the 291,951-byte final-input growth over row 30,
+not lost native results or missing notes. Both rejected helper edits had the actual
+allowance in input; the old generic error omitted those path names. These findings
+justify clearer presentation and feedback, not a claim that they caused every semantic
+error. Optional notes/probes, tool masks, task bytes, limits, model and output cap do not change.
+
+An initial complete-view prototype still repeated file identities and made the final
+input larger. Grouping exact source deliveries/headers removed that duplication.
+Read-only in-memory reprojection of all 31 saved row-31 inputs now measures 651,085
+versus 727,250 final canonical UTF-8 bytes (10.5% less), and 8,853,286 versus 10,011,657
+aggregate bytes (11.6% less), excluding tool schemas. All native items, 30 unchanged-prefix
+edges and source path/hash/action/field/line coverage match. This is not an old-run resume,
+token estimate, cache/cost claim, or proof the model would solve the task. Dynamic tool
+schema changes remain a separate cache limitation.
+
+Ruff and all 531 provider-free tests pass in four concurrent groups of 60/68/81/322
+(106.93/132.22/87.18/155.04 seconds), with three opt-in Docker cases skipped, under
+`C:\pt\pl24-verified-a{1,2,3,4}`. Focused conversation/input coverage passes 78 cases in
+40.49 seconds; final feedback/catalog refinements pass 32 in 30.98 seconds. New cases
+cover 30 rolling states, unchanged audit-only metadata, exact source gaps/hash/fallback,
+direct latest-state reading, stale check identity, immutable task and path-rejection
+admission-crash/replay. An older synthetic fixture omitted the task at turn start but
+introduced it later; it now consistently supplies the same public task. The runtime
+contract was not relaxed. The full pytest phase exceeds the two-minute target; focused
+tests remain under it. No full-cycle under-two-minute claim is made.
+
+Mock `run_dev_8e267bd533ae42dc` under `C:\pt\pl24-smoke-a` reaches one mutation, visible
+checks, finish and isolated `EVALUATOR_PASS`: four model turns, five actions, acceptance
+PASS, safety NOT_RUN, zero cost, 6.69-second command. Runtime hash is
+`sha256:964c628f70842b392f2d404d86eb7cc4f71e489aad3da856a0428174dc8a94e2`;
+tool hash is `sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc`.
+Independent audit also verifies 13,062 projected line occurrences against original
+native bodies and canonical public source. Runtime files stayed fixed through full tests/mock.
+
+No provider/count call, Docker execution/start/pull/build, old-run resume/retry or
+thirty-second live row is authorized by this implementation. `.env`, user-owned
+`AGENTS.md`, task/historical files, old external state and untracked work remain protected.
+Hash checks confirm all 60 existing journal/envelope files, `.env`, user-owned `AGENTS.md`
+and 1,249 tracked task/historical files are unchanged; all old untracked entries remain.
+All results remain `official=false`, `claim_eligible=false`.
+
+### V23 implementation and validation checkpoint
 
 V23 keeps the single user task and every encrypted reasoning/call/result item, but
 replaces v22's mutable front-of-request state with an immutable initial state followed

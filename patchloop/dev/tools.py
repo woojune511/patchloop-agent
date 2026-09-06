@@ -2669,7 +2669,29 @@ class DevToolGateway:
             raise ContractError("replace_text refuses a workspace with untracked files")
         anchor_path, anchor_file = self._tracked_path(intent.path)
         if not self._path_allowed(anchor_path):
-            raise ContractError("replacement changes a path outside the public task allowance")
+            constraints = self.public_task.constraints
+            allowed = list(constraints.allowed_paths)
+            forbidden = list(constraints.forbidden_paths)
+            failure = self._replacement_failure_details(
+                message="path allowance violation", baseline=self.current_diff,
+            )
+            failure.update({
+                "class": "path_not_allowed",
+                "rejected_path": anchor_path,
+                "allowed_paths": allowed,
+                "forbidden_paths": forbidden,
+                "violations": [{"code": "path_not_allowed", "path": anchor_path}],
+                "guidance": (
+                    "Only paths matching allowed_paths and not forbidden_paths are editable. "
+                    "Other registered public source can be inspected but cannot be edited. "
+                    "Choose an allowed target; repeating this rejected target cannot apply."
+                ),
+            })
+            raise ContractError(
+                f"replacement target {anchor_path!r} is outside the public task allowance; "
+                f"allowed_paths={allowed!r}; forbidden_paths={forbidden!r}",
+                details={"mutation_failure": failure},
+            )
         before_bytes = anchor_file.read_bytes()
         anchor_text, newline = self._source_text(before_bytes)
         positions = [

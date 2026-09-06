@@ -56,6 +56,7 @@ from patchloop.dev.inspection_projection import (
     project_inspection_result,
 )
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
+from patchloop.dev.model_state import compact_model_state
 from patchloop.dev.native_sources import reference_native_sources
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import (
@@ -1567,6 +1568,7 @@ def _build_model_input(
                            if item.get("type") == "function_call"],
     )
     state = reference_native_sources(state, history)
+    state = compact_model_state(state, history)
     return assemble_model_input(
         system_prompt=DEV_SYSTEM_PROMPT, state=state, history=new_history,
         previous_input=previous_input,

@@ -108,7 +108,7 @@ def test_initial_state_preserves_context_field_priority_and_does_not_mutate_inpu
     assert state == before
 
 
-def test_one_user_boundary_replays_entire_episode_and_appends_state_deltas(tmp_path):
+def test_one_user_boundary_replays_entire_episode_and_appends_current_state(tmp_path):
     journal = DevJournal(tmp_path, "run_dev_episode")
     store = ArtifactStore(tmp_path / "artifacts")
     initial = _input(journal, store)

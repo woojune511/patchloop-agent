@@ -55,8 +55,7 @@ def test_working_notes_are_nonblocking_in_actual_model_input(
               for turn in turns]
     contexts = [input_context(items) for items in inputs]
     assert all("canonical_searches" not in item["evidence_ledger"] for item in contexts)
-    assert all(len(item["evidence_ledger"]["recent_inspection_outcomes"]) <= 3
-               for item in contexts)
+    assert all(set(item["evidence_ledger"]) == {"search_summary"} for item in contexts)
     assert contexts[2]["last_successful_mutation"]["delivery"] == (
         "preceding_function_call_output"
     )

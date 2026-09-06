@@ -43,13 +43,14 @@ result/ledger/history copies use action-bound references. Source and actual chec
 remain exact; explicit notes and questions are unchanged. Older current
 source uses a deterministic 24,000-character retained working set: pin the current edit
 or failed anchor, retain source-backed notes, then fill with recent observations.
-Overlapping observed ranges are merged; unobserved gaps are never filled. Before the larger task
-text, the prompt presents the current gate, remaining horizon, mutation readiness,
-complete-diff mutation scope budget, and a bounded ledger of covered ranges and recent
-inspection outcomes, including reads and searches. Omitted observed source has short
+Overlapping observed ranges are merged; unobserved gaps are never filled. The current view
+presents the gate, remaining horizon, mutation readiness, complete-diff scope budget and
+search aggregates. Detailed covered ranges and recent inspection accounting stay in the
+canonical audit context and native observations. Omitted observed source has short
 range metadata without body text, bounded to 12 ranges plus its full range count.
-The bounded `observed_source_index` locates lexical function/class headers in already
-delivered current source, with at most 16 entries and 4,000 characters. It helps find
+The audit context's bounded `observed_source_index` locates lexical function/class headers
+in delivered current source, with at most 16 entries and 4,000 characters; the model view
+groups them into `current_sources` without changing selection. It helps find
 observed code again without reading unseen source or claiming complete function extents.
 `ready_to_attempt` means non-empty, current editable evidence is delivered
 in this input. It does not establish that a proposed replacement's complete anchor is
@@ -89,13 +90,18 @@ count distinguishes an empty eligible file selection from a text search with no 
 
 For OpenAI runs, the complete active native episode follows one stable user task:
 encrypted reasoning, canonical function calls, and matching public results in order.
-A fixed initial harness state precedes that user boundary. Later exact nested state
-changes append after tool results rather than rewriting the prefix. Unchanged fields
-are inherited; explicit null/removal clears old status. Saved input artifacts preserve
-every previous item, and journal metadata binds history and reconstructed current state.
+A fixed initial harness state precedes that user boundary. Later complete, compact
+current-state views append after tool results without rewriting the prefix. Read the
+latest view directly; only the public task is inherited from the initial message.
+Older mutable fields are not inherited. The detailed audit context stays separate:
+rolling inspection accounting is not a model-facing edit log. Saved input artifacts
+preserve every previous item, and metadata binds history and current view.
 Current source bodies already in native results are linked by exact path/hash/line and
 action identity, not copied again into state. Missing or ambiguous delivery keeps the
-inline source; mutation admission is unchanged. Earlier observations
+inline source; mutation admission is unchanged. `current_sources` groups path/hash,
+native action/field/ranges and observed headers without filling unseen gaps. Scope
+rejection explicitly names the rejected path and actual public path rules; a helper
+can be inspectable but not editable. Earlier observations
 are historical, not current source or check PASS. Effective reasoning mode is recorded
 only when the provider reports it; delivery is not proof of effective model reuse.
 Full history is subject to existing exact cost admission and can cost more; it is not
@@ -253,8 +259,8 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v23` preserves one append-only native episode with exact
-state deltas and source delivery references. Its read description explicitly states the
+workflow state. Tool-surface `v24` preserves one append-only native episode with complete
+compact state views and exact source delivery references. Its read description states the
 unchanged inclusive 400-line bound. It retains v21's separation of recorded inspection intent from observed
 feedback without changing actions or budgets. It places actual check outcomes beside note citations and
 describes existing candidate-probe capability explicitly. It preserves unchanged observed

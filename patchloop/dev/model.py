@@ -20,7 +20,7 @@ useful negative searches and rereads. Other modes have evidence_goal=null.
 
 Current tool results and public context are evidence; update your hypothesis when a
 check supplies a counterexample. Before inspecting, use the already delivered source
-and notes to identify what remains unanswered. observed_source_index locates headers
+and notes to identify what remains unanswered. current_sources locates observed headers
 in delivered text, not complete parsed functions; use their exact source to interpret behavior.
 Choose another inspection when its answer
 could change the edit or next check; do not reread merely to restate an answered question.

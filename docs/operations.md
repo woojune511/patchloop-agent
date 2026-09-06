@@ -78,13 +78,16 @@ is journaled. The adapter uses zero SDK transport retries and stops all remainin
 repetitions when count, transport, or billing state is uncertain. Generation and input
 counting use the same
 `tool_choice=required` contract, so the provider request and the runner's non-empty
-tool-batch requirement agree. V23 keeps one append-only episode: fixed instructions,
+tool-batch requirement agree. V24 keeps one append-only episode: fixed instructions,
 immutable initial state, one stable user task, then encrypted reasoning, canonical calls,
-matching outputs and exact nested state deltas in chronological order. Updating budgets
-or status never rewrites the prefix or adds a user turn. State deltas explicitly set/remove
-paths rather than accumulating full snapshots. The last decision's hash-verified input
-is extended once, including correction responses; folding its deltas restores current
-state. Retained source already in native results uses exact action/field/path/hash/range
+matching outputs and compact current-state views in chronological order. Updating budgets
+or status never rewrites the prefix or adds a user turn. Each `harness_current_state.state`
+is complete for mutable fields; only `public_task` is inherited from the initial message.
+No nested JSON edit operations are needed. The last decision's hash-verified input is
+extended once, including correction responses. Canonical context artifacts retain the
+full audit state; model views omit rolling inspection/coverage accounting and group source
+navigation under `current_sources`. Retained source already in native results uses exact
+action/field/path/hash/range
 references, with full inline fallback when complete delivery cannot be proved.
 Existing current-state/source/check validity remains authoritative; historical
 native results do not become current PASS. PatchLoop requests
@@ -98,7 +101,7 @@ reasoning-context setting. The existing token count and invocation cap apply to 
 input, which can grow despite a bounded retained-source snapshot. No history dropping,
 automatic compaction, extra provider call, or larger cap is introduced.
 Stable input prefixes permit cache reuse but do not guarantee it; tool-schema changes,
-routing and retention still matter. Accumulated state deltas add historical metadata,
+routing and retention still matter. Accumulated current-state views add historical metadata,
 so total serialized size may grow even when duplicated current source is removed.
 Measure actual cached input and billed cost in a separately approved live run. No new
 cache control or model-specific reasoning option is added by this change.
@@ -171,7 +174,7 @@ is an uncontrolled observation, not proof of improved task-solving efficiency. T
 prior journal/envelope files and credential bytes are unchanged. No repair, retry, resume,
 thirty-second row, Docker start or image acquisition is authorized by this result.
 
-Tool surface v23 retains bounded run-local verification concerns inside the existing
+Tool surface v24 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
@@ -183,7 +186,7 @@ existing `vN` upsert stores its incoming statement as the latest `progress_note`
 that original. A distinct question needs a null ID. Exact repetition of the original
 or retained progress yields applied code `unchanged`, preserving state, update time,
 and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
-immutable; v23 does not migrate them and rejects mismatched nonterminal resume under the
+immutable; v24 does not migrate them and rejects mismatched nonterminal resume under the
 existing exact-match contract. No new experiment is automatically executed after a check PASS.
 
 Model-facing inspection feedback uses action-bound decision references instead of repeating
@@ -319,10 +322,11 @@ latest tool batch. Omitted observed source is summarized without body text in at
 12 path/hash/range entries plus the full omitted-range count. Readiness uses both deliveries.
 Native source ranges, latest mutation
 content, and latest check output are not duplicated in derived context cards.
-The `observed_source_index` adds at most 16 lexical function/class-header locations
+The audit context's `observed_source_index` adds at most 16 lexical function/class-header locations
 within a 4,000-character bound, derived only from delivered observed current code.
 It does not read unseen source, add evidence coverage, or establish a function's extent.
-Use it to locate already delivered code; source bodies remain the evidence authority.
+The model view groups these headers into `current_sources` by file/hash. Use it to locate
+already delivered code; source bodies remain the evidence authority.
 Policy derivation and context projection share that snapshot rather than independently
 rerunning Git inspection. Evidence validation groups spans by path and hashes each
 observed file once. The snapshot is not retained across a tool batch, mutation, check,
@@ -385,7 +389,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v23`; prior
+These output and scheduler semantics are bound by tool-surface identity `v24`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually

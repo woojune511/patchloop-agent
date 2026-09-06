@@ -237,7 +237,7 @@ def test_parallel_native_receipt_cache_and_restart_preserve_originals(tmp_path):
     assert next_items[3:3 + len(items[3:])] == items[3:]
 
 
-def test_surface_identity_changes_without_tool_inputs_prompt_or_limits_changing():
+def test_surface_identity_changes_without_tool_inputs_or_limits_changing():
     schemas = dev_tool_schemas(finish_enabled=True, allowed_tools=ALL_DEV_TOOLS)
 
     def structure(value):
@@ -254,7 +254,7 @@ def test_surface_identity_changes_without_tool_inputs_prompt_or_limits_changing(
     assert dev_tool_surface_hash() != (
         "sha256:90dc9a92b61cfd61f61572af504a66424f3e703ab8e29f114de29c22cf97a684"
     )
-    assert len(DEV_SYSTEM_PROMPT) == 7880
+    assert len(DEV_SYSTEM_PROMPT) == 7883  # V24 names the compact current_sources navigation.
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()
     assert (limits.max_model_calls, limits.max_tool_actions, limits.max_accepted_mutations,

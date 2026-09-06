@@ -7,7 +7,8 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ```text
 patchloop/dev/runner.py   loop composition, gates, context, terminal handling
-patchloop/dev/conversation.py  append-only episode, exact state deltas and reconstruction
+patchloop/dev/conversation.py  append-only episode, complete current view and reconstruction
+patchloop/dev/model_state.py   compact public model view, separate from audit accounting
 patchloop/dev/native_sources.py  exact current-source delivery references into native history
 patchloop/dev/tools.py    tool grammar, spans, mutations, checks, finish
 patchloop/dev/state.py    append-only JSONL, action/provider recovery
@@ -163,8 +164,12 @@ tests and public API remain constrained by the public task. `causal_revision` re
 optional explanatory metadata, including when the same failure site repeats.
 
 Project `mutation_scope_budget` before mutation with complete current-diff lines/files,
-limits, and remaining headroom; headroom is not the replacement's line count. If the
-complete candidate violates scope, roll back first and return typed baseline, candidate,
+limits, and remaining headroom; headroom is not the replacement's line count. A target
+outside the public path rules produces `path_not_allowed` with `rejected_path`, exact
+public `allowed_paths` and `forbidden_paths`, and the baseline identity before application.
+Inspectable source is not necessarily editable. Persist this feedback through failed
+mutation context and replay; add no action restriction. If the complete candidate
+violates scope, roll back first and return typed baseline, candidate,
 delta, actual, limit, and overage fields. Record the restored baseline as the failed
 result's workspace hash. The agent may revise, investigate, or abandon that proposal;
 its failure is not an obligation to mutate an already checked baseline. Inspection
@@ -174,7 +179,7 @@ including after a crash before rollback, and restores an admitted over-scope can
 
 ## Context boundary
 
-The deterministic context artifact puts current workflow gate, remaining budget,
+The complete deterministic audit context artifact puts current workflow gate, remaining budget,
 action horizon, mutation readiness, mutation scope budget, and the bounded evidence
 ledger before the larger task text. It also contains the public task, current full diff, latest tool
 batch, a prioritized current-source working set, recent visible-check output, the
@@ -300,28 +305,26 @@ readiness does not prove that coverage or semantic sufficiency. From turn two on
 actual model input retains the whole native episode, not only the previous batch.
 Its order is fixed system instructions, an immutable initial developer-role state JSON,
 one stable user task, then chronological encrypted reasoning/canonical calls/public outputs
-and appended developer-role state deltas. Every previously sent item remains unchanged.
-Each `harness_state_delta` has `remove` paths and `set` [path, value] pairs. Paths contain
-object keys and zero-based array indices; apply removals in order before assignments.
-An assignment replaces the exact value, including null/empty containers, or appends at
-an array's current length. Missing paths stay unchanged. Choose exact subfield changes
-or a whole-container replacement by serialized size, without semantic summarization.
-Normalize nested JSON keys while preserving top-level control-field priority.
-`reconstruct_state` folds these records and must exactly reproduce the current public
-projection, including correction clearing, note expiry and historical check currency.
+and appended complete developer-role current views. Every previously sent item remains unchanged.
+Each `harness_current_state` has a complete mutable `state` object. Read the latest one
+directly; only `public_task` is inherited from the initial message. Missing mutable fields
+are absent, not inherited. Reject within-episode task changes. Normalize nested JSON keys
+while preserving top-level control-field priority. `reconstruct_state` validates all view
+records and selects the latest plus the immutable task, including correction clearing,
+note expiry and historical check currency. No model-facing nested JSON edit operations remain.
 The JSON and source/tool/model prose remain data, not additional instructions. Never
 append a fresh user context or assume the last ciphertext contains the whole episode.
-Only the reconstructed latest state is current hash/note/check/correction authority.
+Only the latest complete view is current hash/note/check/correction authority.
 Old native results and superseded state remain historical, not current PASS or source proof.
 The 24,000-character bound still applies to retained current source, not total history.
 Existing whole-input counting, cap, output bounds and run limits constrain this episode;
 do not silently drop old exchanges, reset reasoning, or introduce paid compaction.
 
 Each new input loads the last decision's hash-verified input artifact, retains every item,
-and appends only that response/executed or rejected batch and its exact state delta. Reasoning-only
+and appends only that response/executed or rejected batch and its current view. Reasoning-only
 responses also append without losing earlier results; current result duplication is removed
 even on a correction turn. `turn_started.native_history` stores only schema/counts/hash,
-including `state_update_count` and the reconstructed `current_state_hash`,
+including `state_update_count` and the reconstructed model-view `current_state_hash`,
 never ciphertext or plaintext reasoning. A started-but-undispatched boundary is not a new
 decision or an extra exchange. All durable continuation refs and the saved active input
 must validate before pending tools on resume. Billing uncertainty keeps terminal priority.
@@ -358,7 +361,24 @@ canonical full context artifacts, the 24k retained selection and gateway admissi
 change. No filesystem access occurs during reference projection. Do not compare strings
 without their exact source identity or reinterpret historical evidence as current.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v23`;
+The model view is a separate deterministic projection of that full public audit context.
+Keep current gate/tools/budgets, completion feasibility and closure warnings, scope headroom,
+full diff, current failure, required-check status/currency, notes and corrections. Drop
+rolling inspection cards (not protocol correction cards), detailed ledger arrays, redundant
+constant instructions and observation/span counters only from the model view. Native calls
+and outputs, canonical artifacts and journal accounting remain exact. Keep search aggregates.
+`current_sources` groups retained path/raw-hash identities with `content_delivery` maps:
+action ID -> output field -> inclusive [start,end] ranges. Merge only touching/overlapping
+ranges within the same exact delivery. Gaps and full `inline_spans` fallback stay intact;
+lexical headers join the same file group. Do not change retained-source selection/admission.
+Older mutation/check/probe bodies may use native references when matching results exist;
+otherwise keep bounded inline evidence. Failure messages and typed mutation diagnostics
+remain explicit, and current failure/check currency never derives from historical PASS.
+Working note content, citation currency, concern status and receipts remain model-authored,
+not harness-validated interpretations. No model summary, mandatory annotation/probe or new
+action restriction is introduced.
+
+Terminal resume returns that same public result. Current semantics are tool-surface `v24`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -477,16 +497,19 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: v23 makes the v22 episode append-only, including initial state and nested
-state deltas, and references already delivered current source bodies. It also advertises
-the existing read range bound. This follows the row-30 input-cost audit: a changing state
-prefix defeated history cache reuse, and retained source repeated native bodies. Keep
-all native history, exact state reconstruction, current evidence identity, correction
-clearing and pending resume behavior covered by provider-free tests. Do not claim cache
-hits or dollar savings from prefix equality or character/byte counts. Dynamic tool schemas
-still limit reuse at action-space changes. Memory simplification is not part of this seam.
-The separately approved thirty-first row below exercised this seam. No thirty-second
-row, retry or resume is authorized; existing run/envelope bytes are immutable.
+Current seam: v24 separates audit accounting from a compact, complete model-facing view
+and makes out-of-allowance mutation feedback explicit. Row 31's 1,824 assignments and
+24 removals were faithfully delivered but required the model to reconstruct state; rolling
+inspection arrays amplified repeated metadata. Both disallowed edits had the correct
+allowance available. This is a presentation/feedback repair, not proof of a semantic root
+cause for every agent mistake. Keep native history, current evidence identity, optional
+notes/probes, tool masks, exact limits and pending resume unchanged. A full-view prototype
+still grew final input until repeated file/action identities were grouped. The final
+read-only row-31 comparison reduces final bytes 727,250 -> 651,085 and aggregate bytes
+10,011,657 -> 8,853,286, preserving all 31 native episodes, 30 prefix edges and exact source
+delivery coverage. These are UTF-8 serialized input bytes excluding tools, not tokens,
+cache savings or counterfactual task success. Dynamic schemas remain a separate seam.
+No thirty-second row, retry or resume is authorized; old run/envelope bytes are immutable.
 
 Row 31 `run_dev_7754107f07f442e4` on `bcd85f71` records `EVALUATOR_FAIL`: public checks
 PASS, isolated task acceptance FAIL, safety PASS, 31 model/count calls and actions,
@@ -503,9 +526,10 @@ comparison; do not infer task success or general efficiency. Native source refer
 remove retained-body duplication without removing native history. Ten finding submissions
 create two notes and update them eight times; 16/17 receipts reach a next turn, with the
 finish receipt durable only. Public concern resolution is not unseen-behavior validation.
-Next analysis must separate semantic generalization, source/annotation overhead and schema
-cache boundaries. Do not add hard action gates or leak the evaluator case into agent context
-as an automatic response to this result. No runtime or task change accompanied the audit.
+Future live analysis must separate semantic generalization, use of the simpler current
+view and schema cache boundaries. Do not add hard action gates or leak evaluator cases
+into agent context. No runtime or task change accompanied the original row-31 audit;
+the current v24 implementation is a later provider-free change.
 
 V22 implemented the complete active native episode and replaceable state prefix.
 This followed the row-29 diagnosis, not evidence that the live
@@ -1104,6 +1128,26 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+V24 passes Ruff and 531 provider-free tests, three opt-in Docker tests skipped, in four
+concurrent groups of 60/68/81/322 (106.93/132.22/87.18/155.04 seconds), under
+`C:\pt\pl24-verified-a{1,2,3,4}`. Partition: tools/context/source-rebind; runner/resume/state;
+recovery/notes-v14/lifecycle/feedback/probes/policy-feedback-v18/note-temporal-v18; all
+remaining files. Focused conversation/input: 78 cases in 40.49 seconds; final
+feedback/catalog refinement: 32 in 30.98 seconds. Thirteen added cases cover rolling
+state, current-view isolation, source delivery gaps/hash/fallback, exact check identity
+and explicit path allowance with admission-crash/replay. The synthetic note-feedback
+fixture now supplies its same public task at every input boundary instead of introducing
+one after its initial turn; exact task identity remains enforced. Existing correction,
+parallel, privacy, mutation and provider-uncertainty regressions pass with v24 framing.
+
+Mock `run_dev_8e267bd533ae42dc` in `C:\pt\pl24-smoke-a` reaches mutation, visible checks,
+finish and isolated evaluation: acceptance PASS, safety NOT_RUN, four turns/five actions,
+zero cost, `official=false`, `claim_eligible=false`, 6.69-second command. Runtime stayed
+fixed through full tests/mock. The full pytest phase exceeds two minutes (155.04 seconds);
+focused tests do not. Record this limit; do not claim an under-two-minute full cycle.
+The row-31 read-only comparison preserves 13,062 exact delivered line occurrences and
+all native history, not a counterfactual success. No new live call or Docker execution ran.
 
 Run only what the change needs, then broaden to:
 
