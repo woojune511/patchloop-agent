@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirty-two live observations below
+Repository policy alone never initiates paid work. The thirty-three live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -76,6 +76,62 @@ In-memory row-32 reprojection preserves the saved failure evidence while qualify
 turns 28/30/34 as historical; it neither reruns the candidate nor predicts model choices.
 All 62 existing run journal/envelope files, `.env`, user-owned `AGENTS.md`, 1,249 tracked
 task/historical files and pre-existing untracked entries are unchanged.
+
+### Thirty-third live row: public repair and submission completed, private acceptance failed
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 invocation:
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository `.env`, repeat 1, $1.20 total cap,
+and `--enable-probes` under `C:\patchloop-state`. Read-only preflight confirmed clean
+tracked runtime/task inputs, credential format, both pinned local Docker images and
+registered rates matching the official [API pricing table](https://developers.openai.com/api/docs/pricing).
+V25 commit `bac7c70f4063224127c2b32bb429e3712056cfb2` produced
+`run_dev_6159179ed34542f9`: `EVALUATOR_FAIL`, task acceptance FAIL, safety PASS,
+`PRIVATE_EVALUATION_FAILED`, 20 model/input-count calls, 20 actions, two accepted mutations,
+$0.366307650, 196.811 active seconds and 198 seconds run age. All ceilings stayed at
+25,000. No retry, resume, second invocation, Docker startup or image pull/build ran.
+The isolated evaluator recorded hidden-tests FAIL, regression PASS and scope PASS;
+its output was not reinjected into the coding agent. Every result remains `official=false`,
+`claim_eligible=false`.
+
+Fourteen inspections (eight searches, six reads) preceded the first mutation at turn 15.
+The model introduced a raw-component traversal only for parent-directory paths, retaining
+delegation for ordinary paths. The public contract failed at turn 16 on the intermediate
+directory's mode. Turn 17 directly distinguished default parent permissions from requested
+leaf mode. Turn 18 rechecked and passed; turn 19 passed upstream regression (517 passes,
+570 skips); turn 20 submitted 36 additions and one deletion in `pyfakefs/fake_os.py`.
+No mutation was rejected, no protocol correction occurred and no enabled probe was used.
+
+The saved turn-17 input labels the failure current; turn 18 labels it historical and
+explicitly offers `run_check` for the edited candidate. The model's public decision also
+distinguishes the new candidate from the earlier diff. This observes successful delivery,
+repair, recheck and submission, not causation by v25. Two mutation opportunities remained
+at recheck and finish: the zero-mutations boundary responsible for row 32's untested stop
+was not exercised. That targeted live behavior remains unverified. Fewer turns than row 32
+is an uncontrolled trajectory difference, not an efficiency or task-success claim.
+
+Read-only audit verifies all 20 saved inputs and 19 unchanged full-input prefixes,
+matching current failure/check views, encrypted continuation order, count/dispatch hashes
+and exact cost settlement. All responses report `current_turn`, not proof of effective
+reasoning reuse. Input totals 895,551 tokens, including 611,712 cached (68.31%); output
+totals 23,900 tokens, including 18,962 reasoning. Final input is 94,438 tokens and 425,204
+serialized UTF-8 bytes; aggregate input artifacts total 3,789,254 bytes, excluding tools.
+Eighteen journaled note updates contain five findings without note diagnostics.
+
+Checked, submitted, current-worktree and isolated-applied patch identities all match
+`sha256:dd779e12ae729a41e32b1c74bc994ff46b0eb96a1601dee1944e65aad90ad3cc`.
+No untracked candidate files remain. Envelope, manifest and terminal/evaluator provenance
+bind the preflight runtime; all three visible-check policy hashes and confirmed cleanup
+records match. Journal SHA-256 is
+`f7b9a178a92f21bf2ec64aa3ddf03b49c0e98b8fb4f801181c3112afdc805f8d`.
+All 62 prior journal/envelope files, `.env`, user-owned `AGENTS.md`, 1,249 tracked
+task/historical files and old untracked entries are unchanged. This post-run change is
+documentation only. The next diagnosis should examine remaining submitted-code semantics,
+without treating public PASS as complete acceptance or adding a stop/tool gate. No repair,
+paid contrast, retry, resume or thirty-fourth live row is authorized by this result.
+
+Post-run documentation validation passes three tests under `C:\pt\pl33-docs-b`, Ruff
+and `git diff --check`. The full suite/mock are not repeated for this documentation-only
+record; runtime and task bytes remain the preflight-verified v25 inputs.
 
 ### V24 implementation and validation checkpoint
 

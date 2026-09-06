@@ -516,7 +516,25 @@ checks cover both check orders and the real-failure/no-capacity boundary. Runtim
 projection tests do not establish changed model selection or final-candidate correctness;
 a paid contrast experiment still requires separate exact approval. Keep schema order,
 native continuation, budgets, task bytes and voluntary stop unchanged. Do not migrate
-old state or execute row 33, resume, retry or Docker work automatically.
+old state or execute row 34, resume, retry or Docker work automatically.
+
+The subsequent, separately approved row 33 on `bac7c70f` produced
+`run_dev_6159179ed34542f9`: `EVALUATOR_FAIL`, task acceptance FAIL, safety PASS,
+20 model/count calls and actions, two accepted mutations, $0.366307650 and 196.811 active
+seconds. Turn 15 made the first edit after 14 inspections. The public intermediate-mode
+failure at turn 16 prompted a direct repair at turn 17; turns 18/19 passed both checks
+and turn 20 submitted the same 37-line diff later applied by isolated evaluation.
+Hidden tests failed while regression/scope passed; evaluator output stayed outside agent
+context. Probes were enabled but unused, with no mutation rejection or protocol correction.
+
+Turn 18's exact input contains historical-failure/recheck guidance, and the model's public
+decision distinguishes the edited candidate. It still had two mutations left, so this
+does not exercise the zero-mutations boundary or prove v25 caused the behavior. All 20
+input histories, 19 unchanged prefixes, count/dispatch/cost identities and submission
+provenance reconcile. The next diagnostic seam is remaining submitted-code semantics,
+not an inferred need for more tool masks or mandatory checks. Do not repair the saved
+candidate, reinject private evaluator material or execute another paid invocation without
+new authority. Runtime/task/old run bytes remain unchanged; current docs record the result.
 
 V24 separates audit accounting from a compact, complete model-facing view
 and makes out-of-allowance mutation feedback explicit. Row 31's 1,824 assignments and
@@ -531,7 +549,7 @@ read-only row-31 comparison reduces final bytes 727,250 -> 651,085 and aggregate
 delivery coverage. These are UTF-8 serialized input bytes excluding tools, not tokens,
 cache savings or counterfactual task success. Dynamic schemas remain a separate seam.
 The implementation did not authorize a live row. The user subsequently approved the
-single row-32 invocation below; no thirty-third row, retry or resume is authorized.
+single row-32 invocation below; that approval authorized no further row, retry or resume.
 Old run/envelope bytes are immutable.
 
 Row 32 `run_dev_8f19af52fb0948ca` on `c62e5299` records `AGENT_STOPPED`: 34 model/count

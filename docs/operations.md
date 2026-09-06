@@ -174,6 +174,17 @@ is an uncontrolled observation, not proof of improved task-solving efficiency. T
 prior journal/envelope files and credential bytes are unchanged. No repair, retry, resume,
 thirty-second row, Docker start or image acquisition is authorized by this result.
 
+The separately approved thirty-third v25 row, `run_dev_6159179ed34542f9`, reached
+`EVALUATOR_FAIL`: public checks PASS, isolated task acceptance FAIL and safety PASS.
+It used 20 model/count calls and actions, two accepted mutations and $0.366307650 under
+the $1.20 cap. A public parent-mode failure prompted direct repair and recheck before
+submission. The saved input correctly labels the previous diff's failure historical;
+two mutations remained, so the zero-mutation recheck boundary was not exercised.
+Checked/submitted/isolated-applied patch hashes, all 20 input histories and cost records
+match. Probes were enabled but unused. This is not evidence that v25 caused the model's
+choice or solved the task. No repair, retry, resume, thirty-fourth row, Docker startup or
+image acquisition is authorized by this result. See current status for the complete record.
+
 Tool surface v25 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
