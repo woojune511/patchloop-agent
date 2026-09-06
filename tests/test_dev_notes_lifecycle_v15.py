@@ -104,6 +104,12 @@ def test_note_body_survives_two_real_mutations_and_restart(tmp_path, newline):
     _read(gateway)
     _note(gateway)
     assert gateway.execute(_mutation("first")).status == "succeeded"
+    # V19 retains unchanged source fragments. Explicitly evict the note's source
+    # here to keep testing that note bodies survive independently of active spans.
+    assert any(span["start_line"] <= 3 <= span["end_line"] for span in gateway.spans.values())
+    gateway.spans = {
+        key: span for key, span in gateway.spans.items() if span["start_line"] > 3
+    }
     assert all(span["start_line"] > 3 for span in gateway.spans.values())
     first_notes = gateway.working_notes()
     assert first_notes["findings"][0]["evidence"][0]["start_line"] == 3

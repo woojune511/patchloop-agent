@@ -65,9 +65,11 @@ and remains active through repair until a recheck passes or replaces it. Source-
 order does not establish execution history through loops or branches; whether later
 lines ran remains unknown. A failure guides investigation without restricting it to
 the reported file or forcing a claim that a prior hypothesis was falsified.
-A successful mutation revalidates unchanged, uniquely occurring pre-image spans in an
-edited file and adds a bounded replacement post-image span, all bound to the current
-file and diff hashes. This preserves nearby imports or symbols without treating changed
+A successful exact replacement maps already observed unchanged complete lines to their
+new positions using verified pre/post bytes and the exact edit offset. Changing one line
+does not discard the observation's unchanged prefix/suffix. It adds a bounded replacement
+post-image span, all bound to current file and diff hashes. This preserves known source
+without treating changed
 text as current evidence. It lets a failed public check lead directly to an overlapping
 same-file repair, while edits outside current spans still require read/search evidence.
 The model supplies the exact replacement but no evidence IDs. The gateway binds the
@@ -153,6 +155,10 @@ Each decision selects its actually delivered source before computing readiness a
 tool policy. The latest native tool results and retained source jointly establish the
 available evidence; larger gateway memory is not misrepresented as visible context.
 Native results are not copied again into source, mutation, or recent-check cards.
+Every retained check summary keeps its action ID, check name, and diff hash together.
+Concern resolution records the actual cited check, not an automatic interpretation of
+its coverage. Invalid source-note citations distinguish missing observations from missing
+current bindings and report bounded usable/missing ranges without requiring another read.
 One completion model accounts for mutation, all invalidated checks, finish, and bounded
 failure-recovery allowances under the remaining model/tool/mutation budgets. It does not
 assume the model will run checks in their declared order. A rejected optional edit leaves
@@ -227,7 +233,9 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v18` preserves original verification questions, distinguishes
+workflow state. Tool-surface `v19` preserves unchanged observed line fragments across edits,
+separates unobserved/stale range feedback, and retains check citation identity. It preserves
+original verification questions, distinguishes
 update-time and after-batch note state, indexes observed headers, and previews actual
 conditional tool closures without changing action masks or budget rules. It retains
 component-aware search, minimum-path edit admission with separate recovery warnings,

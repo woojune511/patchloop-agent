@@ -24,7 +24,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v18",
+            "schema_version": "dev-tool-surface-v19",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -41,6 +41,7 @@ def dev_tool_surface_hash() -> str:
             "dynamic_workflow_tools": True,
             "mutation_wire": "gateway-bound-exact-anchor-replacement-v2",
             "mutation_evidence_binding": "observed-current-source-union-v2",
+            "mutation_source_rebinding": "exact-position-unchanged-complete-line-fragments-v1",
             "inspection_gain": "non-overlapping-public-coverage-v2",
             "source_search": "rooted-component-glob-double-star-zero-depth-v1",
             "search_feedback": "eligible-decoded-file-count-v1",
@@ -59,8 +60,10 @@ def dev_tool_surface_hash() -> str:
             "tool_closure_warning": "actual-single-inspection-successor-conditional-v1",
             "working_notes": "stable-note-id-independent-body-durable-lifecycle-v3",
             "working_note_feedback": "pre-batch-receipt-with-current-post-batch-ids-v2",
+            "working_note_range_feedback": "bounded-never-observed-versus-stale-current-range-v1",
             "working_note_interpretation": "evidence-currency-not-semantic-validation-v1",
             "verification_concerns": "original-question-progress-note-exact-noop-v2",
+            "check_evidence_identity": "retained-action-check-diff-and-resolution-label-v1",
             "verification_concern_limit": 3,
             "submission_guidance": "required-checks-pass-with-advisory-concern-review-v1",
             "working_note_source_body_chars": 24_000,

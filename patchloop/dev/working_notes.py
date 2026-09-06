@@ -96,10 +96,110 @@ _NOTE_FEEDBACK = {
 }
 
 
+_SOURCE_RANGE_FEEDBACK = {
+    "never_observed": (
+        "This note was not stored: part of its cited range has no prior public "
+        "source observation. Pending reads are not evidence. Use an already "
+        "observed range, or record the finding after a useful read returns."
+    ),
+    "stale_current_range": (
+        "This note was not stored: the missing range was observed previously, "
+        "but is not bound as current source evidence. Historical coordinates "
+        "do not prove current text. Use the reported current ranges or an "
+        "already completed public result; no extra action is required for the note."
+    ),
+}
+_SOURCE_RANGE_DETAIL_LIMIT = 8
+
+
+def source_note_range_details(
+    evidence: SourceNoteEvidence,
+    current_spans: list[dict[str, Any]],
+    historical_spans: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Describe coverage, not source bodies or permission to admit a partial note."""
+
+    def ranges(spans):
+        observed = []
+        for span in spans:
+            start, end = span.get("start_line"), span.get("end_line")
+            content = span.get("content")
+            if (
+                span.get("path") == evidence.path
+                and type(start) is int and type(end) is int and 1 <= start <= end
+                and isinstance(span.get("file_hash"), str) and span["file_hash"]
+                and isinstance(content, str)
+                and len(content.replace("\r\n", "\n").split("\n")) == end - start + 1
+            ):
+                observed.append((start, end))
+        merged = []
+        for start, end in sorted(observed):
+            if merged and start <= merged[-1][1] + 1:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+            else:
+                merged.append((start, end))
+        return merged
+
+    def missing(start, end, covered):
+        gaps = []
+        next_line = start
+        for left, right in covered:
+            if right < next_line:
+                continue
+            if left > end:
+                break
+            if left > next_line:
+                gaps.append((next_line, left - 1))
+            next_line = max(next_line, right + 1)
+        if next_line <= end:
+            gaps.append((next_line, end))
+        return gaps
+
+    current = ranges(current_spans)
+    historical = ranges(historical_spans)
+    requested_valid = evidence.start_line <= evidence.end_line
+    gaps = missing(evidence.start_line, evidence.end_line, current) if requested_valid else []
+    previously_observed = bool(gaps) and all(
+        not missing(start, end, historical) for start, end in gaps
+    )
+    # Useful nearby ranges precede unrelated early-file observations when bounded.
+    current.sort(key=lambda pair: (
+        max(evidence.start_line - pair[1], pair[0] - evidence.end_line, 0), pair,
+    ))
+
+    def bounded(values):
+        return [{"start_line": start, "end_line": end}
+                for start, end in values[:_SOURCE_RANGE_DETAIL_LIMIT]]
+
+    return {
+        "reason": "stale_current_range" if previously_observed else "never_observed",
+        "range_details": {
+            "requested_range": {
+                # Do not echo an unknown/private-looking rejected path.
+                "path": evidence.path if current or historical else None,
+                "start_line": evidence.start_line, "end_line": evidence.end_line,
+            },
+            "requested_range_valid": requested_valid,
+            "current_observed_ranges": bounded(current),
+            "missing_ranges": bounded(gaps),
+            "current_observed_range_count": len(current),
+            "missing_range_count": len(gaps),
+            "range_limit": _SOURCE_RANGE_DETAIL_LIMIT,
+            "ranges_truncated": {
+                "current_observed_ranges": len(current) > _SOURCE_RANGE_DETAIL_LIMIT,
+                "missing_ranges": len(gaps) > _SOURCE_RANGE_DETAIL_LIMIT,
+            },
+        },
+    }
+
+
 def note_feedback(code: str, **location: int | str) -> dict[str, Any]:
     """Bounded public feedback, never raw rejected text or unobserved references."""
 
-    return {"code": code, "message": _NOTE_FEEDBACK[code], **location}
+    message = _NOTE_FEEDBACK[code]
+    if code == "unobserved_source_range":
+        message = _SOURCE_RANGE_FEEDBACK.get(location.get("reason"), message)
+    return {"code": code, "message": message, **location}
 
 
 def memory_update_schema() -> dict[str, Any]:

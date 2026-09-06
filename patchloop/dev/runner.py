@@ -454,6 +454,18 @@ def _cards(
 
 
 def _recent_checks(gateway: DevToolGateway) -> list[dict[str, Any]]:
+    # Keep the result's citation identity with its label even after the native
+    # output ages out. Preserve the existing diff/check selection and order;
+    # repeated actions for one check only update that row's latest identity.
+    action_ids: dict[tuple[str, str], str] = {}
+    for event in gateway.journal.events():
+        if event["event_type"] != "action_finished":
+            continue
+        result = event["payload"]["result"]
+        if result["tool"] != "run_check" or result["status"] != "succeeded":
+            continue
+        value = result["output"]
+        action_ids[(value["diff_hash"], value["check_id"])] = result["action_id"]
     rows: list[dict[str, Any]] = []
     for diff_hash, checks in gateway.checks_by_diff.items():
         for value in checks.values():
@@ -461,6 +473,7 @@ def _recent_checks(gateway: DevToolGateway) -> list[dict[str, Any]]:
             location = failure.get("public_location") if isinstance(failure, dict) else None
             rows.append(
                 {
+                    "action_id": action_ids[(diff_hash, value["check_id"])],
                     "check_id": value["check_id"],
                     "diff_hash": diff_hash,
                     "passed": value["passed"],

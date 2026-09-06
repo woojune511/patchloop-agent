@@ -133,9 +133,17 @@ their IDs and the admitted anchor range. No covering current union is an
 `evidence_invalid` failure with the required path/range; evidence validation remains
 fail-closed.
 
-Before invalidating edited-file
-pre-image spans, a successful mutation revalidates any unchanged, uniquely occurring
-span against the post-image hash. It also registers one bounded replacement post-image
+Before invalidating edited-file pre-image spans, a successful exact replacement maps
+their unchanged complete-line fragments using the admitted character offset and verified
+raw pre/post bytes. Verify original span bodies at their original coordinates, map only
+untouched lines to current coordinates, and verify full current line bodies. Do not use
+fuzzy matching, infer untouched substrings as whole lines, or fill unobserved gaps.
+Merge overlaps before the existing eight-span/per-span output bounds; never enlarge the
+24,000-character retained projection. This preserves known prefix/suffix evidence when
+one interior line changes, including positional shifts and duplicate text. Reconciliation
+reconstructs and hash-verifies the exact pre-image before the identical mapping; persist
+rebound fragments in the normal mutation result for deterministic hydration.
+It also registers one bounded replacement post-image
 span bound to the current file and diff hashes. Those spans can authorize a same-file
 repair only when their contiguous observed union covers the exact current anchor;
 an edit elsewhere still requires current read/search evidence. Read, search and post-image
@@ -192,7 +200,12 @@ extra updates are diagnosed and ignored. Stable IDs (`n1`, `n2`, ...) are indepe
 of citations: `note_id=null` creates; an existing ID updates that note even if its
 references change. `remove_note_ids` explicitly consolidates redundant notes. Unknown
 IDs, invalid metadata, or invalid source references produce bounded diagnostics without
-rejecting the action. Accepted-mutation references bind the actual output diff.
+rejecting the action. Source-range rejection keeps `unobserved_source_range` and adds
+`reason=never_observed|stale_current_range`. Report requested/current/missing ranges
+bounded to eight entries each with counts/truncation; unknown paths are not echoed.
+Historical coordinates describe past observations, not current text proof. Never partly
+admit a finding, auto-read missing ranges, or force another action for an annotation.
+Accepted-mutation references bind the actual output diff.
 Unique `working_notes_updated` events record allocations, removals, evictions, and
 retained IDs, and hydrate at most six model-authored findings. Source notes
 retain their actually observed bodies separately from active source spans, with a
@@ -216,8 +229,12 @@ and check PASS never resolve
 unrelated concerns. Empty/omitted updates preserve them. Independent annotation parsing
 keeps valid findings/focus and the main action usable after a bad concern update.
 Resolution requires a prior completed successful current-diff public check/probe and a
-short reason. The gateway binds action/input/diff identity, not semantic coverage;
-dismissal is only model judgment. Both decisions become historical after a diff change
+short reason. The gateway binds action/input/diff identity, not semantic coverage.
+Retained check summaries always include action/check/diff identity together, and resolved
+check evidence names the actual cited `check_id`. Preserve existing check-summary
+selection/order and native body deduplication. Do not infer semantic relevance from
+free-form resolution prose or add a submission blocker.
+Dismissal is only model judgment. Both decisions become historical after a diff change
 and the retained concern reopens. When full, new concerns may replace currently resolved
 or dismissed entries, never silently evict unresolved ones. Journaled verification_state
 retains items and the ID allocator independently of source lifecycle snapshots. The same
@@ -275,7 +292,7 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v18`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v19`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -390,7 +407,15 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: tool surface `v18` preserves original verification questions separately
+Current seam: tool surface `v19` preserves observed unchanged complete-line fragments
+across exact replacements and puts citation identity beside every retained check result.
+Range diagnostics distinguish unobserved from stale-current evidence without weakening
+admission. Keep v18 row26 immutable: its late source-note failures exposed lost current
+bindings, not omitted source from the 24k projection. Verify local mapping, gaps, CRLF,
+drift, crash/restart, annotation/native receipts, and identity before any separately
+approved live invocation. No twenty-seventh live row is authorized.
+
+Tool surface `v18` preserved original verification questions separately
 from progress, treats identical updates as no-ops, separates pre-batch note receipts
 from current IDs, indexes already delivered header locations, and forecasts affected
 tools using a conditional actual-policy successor. Preserve source-note expiry,
@@ -895,7 +920,18 @@ uv run pytest tests -p no:cacheprovider --basetemp <short-external-path>
 uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
 ```
 
-V18 passes 414 provider-free tests in three concurrent groups of 75 (90.71 seconds),
+V19 passes Ruff and 447 provider-free tests in four concurrent groups of 60/68/60/259
+(69.70/86.16/64.59/67.54 seconds); three real-Docker cases remain opt-in/skipped.
+Roots: `C:\pt\pl19-verified-c{1,2,3,4}`. The frozen Ruff/full-suite/mock sequence took
+93 seconds, excluding earlier focused debugging. Mock `run_dev_41da713dc2504dea` under
+`C:\pt\pl19-smoke-c5` reaches mutation, visible checks, finish, and isolated evaluation:
+four model turns/five actions/one mutation, task acceptance PASS, safety NOT_RUN, zero
+cost, `official=false`, `claim_eligible=false`. New tests cover exact-position evidence
+reuse, no inferred gaps, error-range privacy/bounds, same native/restart identity, and
+CRLF/no-final-newline/second-anchor crash recovery. Source-note semantic expiry remains
+independent of retained line evidence. No twenty-seventh live invocation is authorized.
+
+V18 passed 414 provider-free tests in three concurrent groups of 75 (90.71 seconds),
 144 (83.92 seconds), and 195 (86.28 seconds), using `C:\pt\pl18-verified-6401-{a,b,c}`;
 three opt-in Docker tests remain skipped. Ruff and mock pass. The frozen final
 Ruff/full-suite/mock sequence took 98 seconds, excluding earlier debugging/focused checks.

@@ -1598,27 +1598,30 @@ def test_context_projects_every_current_diff_check_and_names_the_remaining_one(
     )
     gateway.public_task = public
     diff_hash = gateway.current_diff_hash
-    for check_id in check_ids[:3]:
-        gateway._remember_check(  # noqa: SLF001 - reconstruct current public evidence
-            {
+    check_results = []
+    for index, check_id in enumerate(check_ids[:3]):
+        action_id = "third-visible-pass" if index == 2 else f"visible-pass-{index + 1}"
+        check_result = DevToolResult(
+            action_id=action_id,
+            input_hash=sha256_json(action_id),
+            tool="run_check",
+            status="succeeded",
+            output={
                 "check_id": check_id,
                 "diff_hash": diff_hash,
                 "passed": True,
                 "failure_signature": None,
-            }
+            },
+            workspace_diff_hash=diff_hash,
         )
-    last_pass = DevToolResult(
-        action_id="third-visible-pass",
-        input_hash=sha256_json("third-visible-pass"),
-        tool="run_check",
-        status="succeeded",
-        output={
-            "check_id": check_ids[2],
-            "diff_hash": diff_hash,
-            "passed": True,
-            "failure_signature": None,
-        },
-    )
+        journal.append("action_finished", {
+            "action_id": check_result.action_id,
+            "input_hash": check_result.input_hash,
+            "result": check_result.model_dump(mode="json"),
+        })
+        gateway._remember_check(check_result.output)  # noqa: SLF001 - reconstruct public evidence
+        check_results.append(check_result)
+    last_pass = check_results[-1]
 
     context = json.loads(
         runner._build_context(  # noqa: SLF001 - direct context contract test
@@ -1681,8 +1684,12 @@ def test_context_keeps_mapped_public_failure_after_intervening_read(
         stdout="",
         stderr=stderr,
     )
-    gateway._remember_check(  # noqa: SLF001 - reconstruct one public check result
-        {
+    failed_result = DevToolResult(
+        action_id="mapped-public-failure",
+        input_hash=sha256_json("mapped-public-failure"),
+        tool="run_check",
+        status="succeeded",
+        output={
             "check_id": check.id,
             "diff_hash": diff_hash,
             "passed": False,
@@ -1692,8 +1699,15 @@ def test_context_keeps_mapped_public_failure_after_intervening_read(
             "stdout": "",
             "stderr": stderr,
             "public_check_failure": failure,
-        }
+        },
+        workspace_diff_hash=diff_hash,
     )
+    journal.append("action_finished", {
+        "action_id": failed_result.action_id,
+        "input_hash": failed_result.input_hash,
+        "result": failed_result.model_dump(mode="json"),
+    })
+    gateway._remember_check(failed_result.output)  # noqa: SLF001 - reconstruct public evidence
     read = gateway.execute(
         RequestedTool(
             name="read_file",

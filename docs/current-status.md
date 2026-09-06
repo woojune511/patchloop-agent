@@ -27,7 +27,53 @@ Repository policy alone never initiates paid work. The twenty-six live observati
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v18
+## Current implementation: tool surface v19
+
+V19 fixes two evidence-continuity issues found by the read-only row-26 audit, without
+changing action masks, model tool inputs, budgets, task packages, or acceptance gates.
+An admitted exact replacement now maps previously observed complete unchanged lines
+to their post-image positions. A one-line edit no longer discards an entire larger
+observation. Raw pre/post hashes and exact body comparisons bind the mapping; touched
+lines still require the explicit bounded mutation post-image. Unobserved gaps remain
+gaps. Merged fragments retain the existing eight-span/per-span output bounds and the
+24,000-character context projection bound. Durable mutation results restore the same
+evidence after a crash, using the admitted offset and verified original bytes.
+
+Source-note rejection keeps its existing code but distinguishes `never_observed` from
+`stale_current_range`, with bounded requested/current/missing range metadata. Historical
+coordinates are not current text proof. Errors remain nonblocking; no partial finding,
+compulsory reread, new planning action, or automatic semantic validation is introduced.
+Every retained check summary carries `action_id`, `check_id`, and `diff_hash` together;
+concern resolution also records the actual cited check's name. The previous check-row
+selection, native body deduplication, and model-authored interpretation boundary remain.
+
+The row-26 diagnosis is more specific than the initial annotation summary below:
+T2/T14 cited pending read ranges and were correctly rejected. T26/T28 cited unchanged
+lines 943-948 that had been observed before T25's one-line edit and were still visible
+in the current diff, but whole-span invalidation had removed them from admitted current
+source. This was not a 24k projection omission. T28's wrong check citation was a model
+error with a harness inconsistency: the correct ID was present in another card, but
+missing from the retained regression summary itself. These deterministic fixes do not
+establish why the model chose its successful solution or guarantee another live result.
+Old run/envelope bytes stay immutable; current-runtime mismatches still reject nonterminal
+resume. No twenty-seventh live row is authorized. All results remain `official=false`.
+
+Final provider-free validation passes Ruff and all 447 tests in four concurrent groups
+of 60, 68, 60, and 259 (69.70, 86.16, 64.59, and 67.54 seconds), with three opt-in
+Docker tests skipped. External roots are `C:\pt\pl19-verified-c{1,2,3,4}`. The new
+33 cases cover positional source reuse, missing/stale range feedback, and check citation
+identity. Earlier tests that assumed evidence loss now explicitly exercise truly unseen
+source or deliberate span eviction; synthetic check fixtures include durable action IDs.
+Normal/crash execution agrees for insertion/deletion, LF/CRLF, duplicate anchors,
+no-final-newline text, and partial-line boundaries. Drift and unseen gaps still reject.
+Final mock `run_dev_41da713dc2504dea` under `C:\pt\pl19-smoke-c5` reaches isolated
+`EVALUATOR_PASS`: one mutation, four mock model turns, five tool actions, task acceptance
+PASS, safety NOT_RUN, zero cost, `official=false`, and `claim_eligible=false`.
+The frozen Ruff/full-suite/mock sequence took 93 seconds, excluding earlier focused
+debugging. No provider or Docker execution occurred; `.env`, user-owned `AGENTS.md`,
+task packages, historical directories, and existing external run bytes were untouched.
+
+### V18 implementation and validation checkpoint
 
 V18 improves working-memory feedback without tightening the action mask. A concern's
 original `statement` is immutable; an existing-ID upsert stores its latest `progress_note`.
@@ -1206,13 +1252,13 @@ compatibility with those runners is intentionally unsupported.
 
 ## Next decision
 
-Preserve the passing v18 checkpoint. Row 26 reached earlier mutation, repaired two public
-counterexamples, and submitted a task-accepted patch, with intact feedback/provenance.
-Its source-note citation errors and mismatched concern-resolution reference remain worth
-read-only investigation before proposing another change. Probe use and closure-warning
-behavior were not exercised. Neither one success on this repeatedly used development
+Preserve row 26 as immutable passing v18 evidence. Its read-only audit identified the
+source-rebinding loss and fragmented check citation identity now addressed by v19.
+Provider-free tests must establish those contracts before requesting another exact live
+invocation; they cannot establish model improvement. Probe use and closure-warning
+behavior were not live-exercised. Neither one success on this repeatedly used development
 task nor its difference from row 25 establishes generalization or feature-level causality.
-No automatic runtime fix, retry, or twenty-seventh live row is authorized.
+No automatic retry or twenty-seventh live row is authorized.
 
 The preceding decision after row 25 was:
 

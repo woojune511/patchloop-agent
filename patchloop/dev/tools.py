@@ -36,6 +36,7 @@ from patchloop.dev.contracts import (
     TextReplacementIntent,
 )
 from patchloop.dev.source_glob import matches_source_glob
+from patchloop.dev.source_rebinding import SourceReplacement
 from patchloop.dev.state import DevJournal
 from patchloop.dev.verification_concerns import (
     empty_verification_state,
@@ -47,6 +48,7 @@ from patchloop.dev.working_notes import (
     WorkingNotesUpdate,
     memory_update_schema,
     note_feedback,
+    source_note_range_details,
 )
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
 from patchloop.repository import DiffSummary, WorkspaceManager
@@ -77,6 +79,7 @@ class _ValidatedReplacement:
     before_bytes: bytes
     after_bytes: bytes
     generated_patch: str
+    anchor_offset: int
     anchor_start_line: int
     anchor_end_line: int
     postimage_start_line: int
@@ -1190,8 +1193,11 @@ class DevToolGateway:
             self._read_cache.clear()
             self._evidence_repetitions.clear()
 
-    def _revalidated_spans(self, *, paths: Sequence[str], diff_hash: str) -> list[dict[str, Any]]:
-        """Rebind unchanged, uniquely occurring evidence to the post-mutation file hash."""
+    def _revalidated_spans(
+        self, *, paths: Sequence[str], diff_hash: str,
+        replacement: SourceReplacement | None = None,
+    ) -> list[dict[str, Any]]:
+        """Rebind observed untouched lines by exact edit, or unique whole-body fallback."""
 
         changed = {str(path).replace("\\", "/") for path in paths}
         with self._lock:
@@ -1206,6 +1212,24 @@ class DevToolGateway:
                 key=lambda span: int(span.get("last_observed_seq", 0)),
                 reverse=True,
             )
+        if replacement is not None:
+            if len(changed) != 1:
+                raise ContractError("source rebinding requires one exact replacement path")
+            path, = changed
+            normalized, current = self._tracked_path(path)
+            if current.read_bytes() != replacement.after_bytes:
+                raise RecoveryError("source rebinding target differs from the admitted postimage")
+            return [
+                {
+                    **self._span(
+                        normalized, fragment["start_line"], fragment["end_line"],
+                        fragment["content"], sha256_bytes(replacement.after_bytes),
+                    ),
+                    "origin": "revalidated_after_mutation",
+                    "source_diff_hash": diff_hash,
+                }
+                for fragment in replacement.observed_fragments(candidates)
+            ]
         rebound: list[dict[str, Any]] = []
         seen: set[str] = set()
         for span in candidates:
@@ -1433,6 +1457,28 @@ class DevToolGateway:
             bodies.append(content)
         return bodies
 
+    def _source_note_range_diagnostic(
+        self, evidence: SourceNoteEvidence, current_spans: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Use prior completed public observations only for a bounded error detail."""
+
+        historical: list[dict[str, Any]] = []
+        for event in self.journal.events():
+            if event["event_type"] != "action_finished":
+                continue
+            result = event["payload"].get("result", {})
+            if result.get("status") != "succeeded" or result.get("tool") not in {
+                *READ_TOOLS, "replace_text",
+            }:
+                continue
+            output = result.get("output", {})
+            candidates = (
+                output.get("spans", []) if result["tool"] in READ_TOOLS else
+                [output.get("mutation_evidence"), *output.get("revalidated_spans", [])]
+            )
+            historical.extend(span for span in candidates if isinstance(span, dict))
+        return source_note_range_details(evidence, current_spans, historical)
+
     def record_working_notes_update(
         self, calls: Sequence[RequestedTool], *, turn_id: str
     ) -> dict[str, Any]:
@@ -1540,11 +1586,14 @@ class DevToolGateway:
                                 matches, evidence.start_line, evidence.end_line
                             )
                         ):
+                            range_diagnostic = self._source_note_range_diagnostic(evidence, matches)
                             entry.update(diagnose(
                                 "unobserved_source_range",
                                 legacy_code="unobserved_public_evidence",
                                 finding_index=index, evidence_index=evidence_index,
+                                reason=range_diagnostic["reason"],
                             ))
+                            entry["range_details"] = range_diagnostic["range_details"]
                             break
                         bound.append({
                             **evidence.model_dump(), "file_hash": matches[0]["file_hash"],
@@ -2178,10 +2227,7 @@ class DevToolGateway:
                         if call.name == "replace_text" and mutation_admitted is True else None
                     ),
                     "mutation_anchor_offset": (
-                        list(re.finditer(
-                            re.escape(validated.intent.old_text),
-                            self._source_text(validated.before_bytes)[0],
-                        ))[validated.intent.occurrence - 1].start()
+                        validated.anchor_offset
                         if call.name == "replace_text" and mutation_admitted is True else None
                     ),
                     "execution_identity": (
@@ -2659,6 +2705,7 @@ class DevToolGateway:
             before_bytes=before_bytes,
             after_bytes=after_bytes,
             generated_patch=generated_patch,
+            anchor_offset=position,
             anchor_start_line=anchor_start_line,
             anchor_end_line=anchor_end_line,
             postimage_start_line=anchor_start_line,
@@ -2674,6 +2721,7 @@ class DevToolGateway:
         path: str,
         postimage_start_line: int,
         summary: Any,
+        source_replacement: SourceReplacement,
         recovered_after_crash: bool = False,
     ) -> dict[str, Any]:
         postimage_path = ensure_within(self.workspace, path)
@@ -2687,7 +2735,9 @@ class DevToolGateway:
             if postimage_path.is_file() and not postimage_path.is_symlink()
             else None
         )
-        revalidated_spans = self._revalidated_spans(paths=[path], diff_hash=summary.patch_hash)
+        revalidated_spans = self._revalidated_spans(
+            paths=[path], diff_hash=summary.patch_hash, replacement=source_replacement,
+        )
         causal_revision = intent.causal_revision
         mutation = {
             "hypothesis": intent.hypothesis,
@@ -2780,6 +2830,10 @@ class DevToolGateway:
                 path=validated.path,
                 postimage_start_line=validated.postimage_start_line,
                 summary=summary,
+                source_replacement=SourceReplacement(
+                    validated.before_bytes, validated.after_bytes, validated.anchor_offset,
+                    validated.intent.old_text, validated.intent.new_text,
+                ),
             )
         except Exception as exc:
             WorkspaceManager.atomic_replace_source(
@@ -2873,23 +2927,25 @@ class DevToolGateway:
             raise RecoveryError("pending complete candidate diff does not match its admission")
         if summary.untracked_files:
             raise RecoveryError("reconciled mutation contains untracked files")
+        # Recover the exact admitted map for both successful evidence rebinding and rollback.
+        after_bytes = target.read_bytes()
+        text, _ = self._source_text(after_bytes)
+        newline = pending.get("mutation_preimage_newline")
+        if newline not in {"\n", "\r\n"}:
+            raise RecoveryError("mutation recovery is missing its original newline style")
+        offset = pending.get("mutation_anchor_offset")
+        if (
+            type(offset) is not int or not 0 <= offset <= len(text)
+            or text[offset:offset + len(intent.new_text)] != intent.new_text
+        ):
+            raise RecoveryError("mutation recovery is missing its admitted replacement offset")
+        before = (text[:offset] + intent.old_text + text[offset + len(intent.new_text):])
+        before_bytes = before.replace("\n", newline).encode("utf-8")
+        if sha256_bytes(before_bytes) != pending.get("mutation_preimage_file_hash"):
+            raise RecoveryError("mutation recovery does not match the admitted preimage")
         scope = verify_scope(summary, self.public_task.constraints)
         if not scope.passed:
             # Undo only the exact admitted replacement, never arbitrary workspace drift.
-            text, _ = self._source_text(target.read_bytes())
-            newline = pending.get("mutation_preimage_newline")
-            if newline not in {"\n", "\r\n"}:
-                raise RecoveryError("scope rollback is missing its original newline style")
-            offset = pending.get("mutation_anchor_offset")
-            if (
-                type(offset) is not int
-                or text[offset:offset + len(intent.new_text)] != intent.new_text
-            ):
-                raise RecoveryError("scope rollback is missing its admitted replacement offset")
-            before = (text[:offset] + intent.old_text + text[offset + len(intent.new_text):])
-            before_bytes = before.replace("\n", newline).encode("utf-8")
-            if sha256_bytes(before_bytes) != pending.get("mutation_preimage_file_hash"):
-                raise RecoveryError("scope rollback does not match the admitted preimage")
             WorkspaceManager.atomic_replace_source(self.workspace, path, before_bytes)
             restored = self.current_diff
             if restored.patch_hash != baseline:
@@ -2919,6 +2975,9 @@ class DevToolGateway:
             path=path,
             postimage_start_line=int(pending.get("mutation_postimage_start_line", 1)),
             summary=summary,
+            source_replacement=SourceReplacement(
+                before_bytes, after_bytes, offset, intent.old_text, intent.new_text,
+            ),
             recovered_after_crash=True,
         )
 

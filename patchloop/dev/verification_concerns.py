@@ -122,6 +122,9 @@ def _resolution_evidence(
     return {
         "action_id": action_id, "input_hash": result["input_hash"],
         "tool": result["tool"], "diff_hash": diff_hash,
+        **({"check_id": output["check_id"]}
+           if result["tool"] == "run_check" and isinstance(output.get("check_id"), str)
+           else {}),
     }, None
 
 

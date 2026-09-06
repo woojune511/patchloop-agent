@@ -104,7 +104,7 @@ The initial Docker-unavailable read-only preflight made no run/provider call; th
 started Docker before the one invocation. No twenty-seventh live row is authorized by
 these results, the implementation, or local validation. All results remain unofficial.
 
-Tool surface v18 retains bounded run-local verification concerns inside the existing
+Tool surface v19 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
@@ -116,7 +116,7 @@ existing `vN` upsert stores its incoming statement as the latest `progress_note`
 that original. A distinct question needs a null ID. Exact repetition of the original
 or retained progress yields applied code `unchanged`, preserving state, update time,
 and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
-immutable; v18 does not migrate them and rejects mismatched nonterminal resume under the
+immutable; v19 does not migrate them and rejects mismatched nonterminal resume under the
 existing exact-match contract. No new experiment is automatically executed after a check PASS.
 
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against
@@ -181,6 +181,15 @@ and are ignored. Findings have stable run-local IDs independent of their source 
 `note_id=null` allocates a new ID such as `n3`; an existing ID updates that note.
 `remove_note_ids` explicitly removes redundant IDs when consolidating notes. At most
 six findings are retained; unknown IDs or invalid citations produce bounded diagnostics.
+For `unobserved_source_range`, inspect `reason` and `range_details`: `never_observed`
+means some requested coordinates have no prior public source observation;
+`stale_current_range` means prior observations lack a current binding. Historical ranges
+are not current text proof. Requested/current/missing range metadata is bounded; no source
+body or unknown path is echoed, and no partial finding or compulsory reread is introduced.
+Successful exact replacements rebind unchanged complete-line fragments by verified edit
+position, not substring guessing, and journal them for identical recovery. Check summaries
+retain action ID/check ID/diff together, and concern decisions preserve the actual cited
+check ID even though semantic relevance remains model-authored.
 Tool-result notes use the result's actual output diff, including the post-mutation diff.
 Invalid notes do not reject that action. A separate `memory_update_result` on the owner
 call's native output reports each note's outcome and an actionable error. Its
@@ -291,7 +300,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v18`; prior
+These output and scheduler semantics are bound by tool-surface identity `v19`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually

@@ -740,8 +740,21 @@ def test_gateway_selects_a_covering_span_without_model_evidence_ids(
 def test_mutation_postimage_does_not_authorize_an_uncovered_anchor(
     gateway_factory,
 ) -> None:
-    gateway, _, _ = gateway_factory()
-    gateway.execute_batch(read_calls())
+    gateway, _, workspace = gateway_factory()
+    # The import must genuinely be unobserved, not an unchanged part of a broad
+    # earlier read that positional rebinding now correctly preserves.
+    return_line = next(
+        number for number, line in enumerate(
+            (workspace / "mini_data_utils/csvlite.py").read_text().splitlines(), 1,
+        ) if line.strip() == "return rows"
+    )
+    gateway.execute(RequestedTool(
+        name="read_file", action_id="observe-return-only",
+        arguments={
+            "path": "mini_data_utils/csvlite.py",
+            "start_line": return_line, "end_line": return_line,
+        },
+    ))
     narrow_mutation = RequestedTool(
         name="replace_text",
         action_id="narrow-mutation",
@@ -1359,6 +1372,7 @@ def test_action_replay_and_crash_reconciliation_do_not_duplicate_mutation(
                 baseline_diff_hash=gateway.current_diff_hash,
             ).patch_hash,
             "mutation_preimage_file_hash": sha256_bytes(validated.before_bytes),
+            "mutation_preimage_newline": gateway._source_text(validated.before_bytes)[1],
             "mutation_anchor_offset": validated.before_bytes.decode("utf-8").replace(
                 "\r\n", "\n"
             ).index(call.arguments["old_text"]),
