@@ -485,7 +485,27 @@ all native history, exact state reconstruction, current evidence identity, corre
 clearing and pending resume behavior covered by provider-free tests. Do not claim cache
 hits or dollar savings from prefix equality or character/byte counts. Dynamic tool schemas
 still limit reuse at action-space changes. Memory simplification is not part of this seam.
-No thirty-first live row is authorized; v22 and earlier run/envelope bytes are immutable.
+The separately approved thirty-first row below exercised this seam. No thirty-second
+row, retry or resume is authorized; existing run/envelope bytes are immutable.
+
+Row 31 `run_dev_7754107f07f442e4` on `bcd85f71` records `EVALUATOR_FAIL`: public checks
+PASS, isolated task acceptance FAIL, safety PASS, 31 model/count calls and actions,
+three accepted mutations, $0.775517100 and 267.171 active seconds. Out-of-allowance
+helper edits at turns 13/14 were rejected; turn 23 made the first accepted wrapper edit.
+After six regression failures, turns 26/28 repaired public behavior and turn 31 submitted
+seven added lines. The remaining trailing-separator defect recursively creates the leaf
+before the final `exist_ok=False` call and raises `FileExistsError`. No probe ran.
+All 31 inputs reconstruct exactly with 30 unchanged full prefixes; all request, patch,
+execution-policy and cost identities reconcile. Cached input is 1,837,568/2,508,902
+(73.24%) versus row 30's 8.73%, but total input rises 85.82%, final input reaches 178,154
+tokens and six tool-schema transitions remain. Total cost falls 26.83% in this uncontrolled
+comparison; do not infer task success or general efficiency. Native source references
+remove retained-body duplication without removing native history. Ten finding submissions
+create two notes and update them eight times; 16/17 receipts reach a next turn, with the
+finish receipt durable only. Public concern resolution is not unseen-behavior validation.
+Next analysis must separate semantic generalization, source/annotation overhead and schema
+cache boundaries. Do not add hard action gates or leak the evaluator case into agent context
+as an automatic response to this result. No runtime or task change accompanied the audit.
 
 V22 implemented the complete active native episode and replaceable state prefix.
 This followed the row-29 diagnosis, not evidence that the live

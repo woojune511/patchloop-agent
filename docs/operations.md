@@ -160,6 +160,17 @@ reported `current_turn`; that is not proof of effective reasoning reuse. Input g
 does not authorize a retry, resume, thirty-first row, Docker start, or image pull/build.
 See `docs/current-status.md` for the exact trajectory and evidence limits.
 
+The separately approved thirty-first v23 row, `run_dev_7754107f07f442e4`, reached
+`EVALUATOR_FAIL`: both public checks PASS, isolated task acceptance FAIL and safety PASS.
+It used 31 model/count calls and actions, three accepted mutations and $0.775517100.
+The final seven-line patch has a trailing-separator double-creation defect; no probe ran.
+All 31 inputs reconstruct exactly, and 30 successive prefixes are unchanged. Actual
+cached-input share is 73.24%, but total input reaches 2,508,902 tokens and the last input
+178,154 tokens; six tool-schema transitions still limit reuse. Lower cost than row 30
+is an uncontrolled observation, not proof of improved task-solving efficiency. The 58
+prior journal/envelope files and credential bytes are unchanged. No repair, retry, resume,
+thirty-second row, Docker start or image acquisition is authorized by this result.
+
 Tool surface v23 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not

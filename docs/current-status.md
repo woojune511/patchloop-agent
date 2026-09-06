@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirty live observations below
+Repository policy alone never initiates paid work. The thirty-one live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -88,8 +88,80 @@ including review/polling gaps and is not claimed as an under-two-minute full cyc
 These checks establish neither live cache hits nor improved model behavior/generalization.
 All 58 existing journal/envelope files, `.env`, user-owned `AGENTS.md`, 1,249 tracked
 task/historical files, and pre-existing untracked directory entries are preserved.
-All results remain `official=false`, `claim_eligible=false`. No provider call, Docker
-start/pull/build, resume, retry or thirty-first live row is authorized by this implementation.
+All results remain `official=false`, `claim_eligible=false`. This implementation checkpoint
+authorized no provider call, Docker start/pull/build, resume, retry or thirty-first row;
+the live observation below required separate exact approval.
+
+### Thirty-first live row: cache reuse observed, public checks PASS, isolated acceptance FAIL
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 run with
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository `.env`, repeat 1, a $1.20 cap,
+and `--enable-probes` under `C:\patchloop-state`. Read-only preflight confirmed tracked,
+HEAD-clean runtime/task inputs, credential format and both pinned local Docker images.
+The registered standard prices matched the official [API pricing table](https://developers.openai.com/api/docs/pricing).
+V23 commit `bcd85f714b3994eb6aa3ea7b6ecb690b0858a063` produced
+`run_dev_7754107f07f442e4`: `EVALUATOR_FAIL`, task acceptance FAIL, safety PASS,
+`PRIVATE_EVALUATION_FAILED`, 31 model/input-count calls, 31 actions, three accepted
+mutations, $0.775517100, 267.171 active seconds and 268 seconds run age. All 31
+output ceilings were 25,000. No retry, resume, additional invocation, Docker startup
+or image pull/build ran; `official=false` and `claim_eligible=false` remain unchanged.
+
+Turns 13 and 14 attempted to edit `pyfakefs/fake_filesystem.py`, outside the public
+allowance, and were rejected before applying any candidate. The first accepted edit
+at turn 23 instead added recursive parent creation in the allowed `fake_os.py` wrapper.
+Traversal passed at turn 24, but upstream regression failed six file-parent/broken-link
+cases at turn 25. Turn 26 guarded recursion with `lexists`; after one search, turn 28
+replaced that guard with a condition limiting recursion to paths containing `..`.
+Both public checks passed at turns 29/30 (regression: 517 passed, 570 skipped in 3.22
+seconds). Turn 31 submitted seven added lines in one tracked file, with no untracked files.
+There were 21 inspections: 17 added coverage, four did not, and none was a cache hit.
+Probes were enabled but never invoked; there was no protocol correction.
+
+The isolated task check reported one error in 12 cases: a trailing-separator traversal
+path raised `FileExistsError`. In the submitted code, `dirname(name)` for a trailing
+separator denotes the leaf itself without that separator. Recursive `makedirs(...,
+exist_ok=True)` creates that leaf, then the final delegated call tries to create it again
+with the original `exist_ok=False`. This is a semantic patch defect, not an old-workspace,
+submission-hash or cost-limit failure. Public checks did not cover this combination.
+No private evaluator output was reinjected, and no task/harness repair was made after the run.
+
+All 31 canonical contexts and saved inputs reconstruct exactly; all 30 successive full
+input prefixes remain unchanged. Native calls/results, encrypted continuation ordering
+and state hashes reconcile. All provider responses report `current_turn`, which does
+not establish effective reuse of earlier reasoning. Retained current-source bodies total
+501,390 characters across canonical snapshots and zero duplicated inline characters in
+the model-facing retained source projection; 374 span occurrences use native references.
+Aggregate canonical input is 10,011,657 bytes and the final input 727,250 bytes, excluding
+tool schemas. These are serialized-byte measurements, not token or billing estimates.
+
+Provider usage is 2,508,902 input tokens, including 1,837,568 cached (73.24%), and 29,822
+output tokens (21,060 reasoning). Input costs $0.641318100 and output $0.134199000.
+Compared with row 30, cached-input share rises from 8.73% and total cost falls 26.83%,
+but aggregate input grows 85.82% and final input grows from 90,851 to 178,154 tokens.
+Six tool-schema transitions remain; turns 25 and 31 report zero cached tokens despite
+preserved input prefixes. This is observed cache use, not a controlled estimate of the
+change's savings or proof of agent efficiency. Task acceptance regressed in this row.
+
+The model submitted 17 note updates and ten source findings across five updates: two
+notes were created and then updated eight times, with no finding rejected. Sixteen
+receipts appear once in the next native exchange; the finish-turn receipt remains durable
+without another model turn. Two verification-resolution attempts were rejected without
+blocking their checks; the final question is cleared and the advisory concern resolved
+against public evidence. That resolution is not a guarantee of unseen task behavior.
+
+All 31 count/dispatch hashes and cost settlements reconcile. Four public check policies,
+three isolated check evidence records, five safety controls and five terminal artifacts
+pass integrity/cleanup audit. Checked, submitted, managed-workspace and isolated-applied
+patch hash is `sha256:476e1d9665c0212ba417e10f57b738d00165bd1c4cd2370c11a7a0e50fccf388`.
+Journal SHA-256 is `77857a7b967ce95f1107873db795793a0b58963518b70cebe02b784f1c91729a`.
+All 58 prior journal/envelope files, `.env`, user-owned `AGENTS.md`, 1,249 tracked
+task/historical files and existing untracked entries remain unchanged. Only current
+documentation records this result. No automatic repair, retry, resume or thirty-second
+live row is authorized.
+
+Post-run validation passes all three documentation tests, Ruff and `git diff --check`.
+The full suite and mock are not rerun: only current documentation changed, while runtime
+and task bytes remain identical to the provider-free validated v23 checkpoint above.
 
 ### V22 implementation and validation checkpoint
 
