@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The twenty-seven live observations below
+Repository policy alone never initiates paid work. The twenty-eight live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -59,7 +59,8 @@ Both real-OS probes were baseline observations; the candidate-import capability 
 existed but was not explicit in the stable tool description. These changes test delivery
 and discoverability, not whether another model trajectory will solve the task.
 All old run/envelope bytes remain immutable. Runtime-mismatched nonterminal resume still
-rejects; no migration, retry, or twenty-eighth live invocation is authorized.
+rejects. This implementation checkpoint did not authorize the separately approved row 28
+below; no migration, retry, or twenty-ninth live invocation is authorized.
 
 Final provider-free verification passes Ruff and all 462 tests in four concurrent groups
 of 60/68/60/274 (71.99/88.86/66.64/76.73 seconds), with three opt-in Docker tests skipped.
@@ -75,6 +76,53 @@ four model turns, five actions, one mutation, acceptance PASS, safety NOT_RUN, z
 took 103.5 seconds, excluding earlier focused debugging. System prompt length fell from
 8,007 to 7,880 characters. No paid call or Docker execution occurred; `.env`, user-owned
 `AGENTS.md`, task packages, historical directories, and existing run bytes were not changed.
+
+### Twenty-eighth live row: submitted task acceptance and safety PASS
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 run with
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository `.env`, repeat 1, a $1.20 cap,
+and `--enable-probes` under `C:\patchloop-state`. Read-only preflight confirmed tracked
+HEAD-clean runtime/task inputs, credential format, and both pinned images in the already
+running Docker service. V20 commit `5dc3c2a3809bc63f27e655cda03e5b13dd231d66` produced
+`run_dev_a01ff61f95be4a57`: `EVALUATOR_PASS`, task acceptance PASS, safety PASS, 20 model
+and input-count calls, 21 actions, two accepted mutations, $0.193324200, 133.016 active
+seconds and 134 seconds run age. No retry, resume, second invocation, Docker startup,
+or image pull/build ran. Results remain `official=false` and `claim_eligible=false`.
+
+The first edit arrived at turn 15 after eight reads and seven searches across 14 turns.
+It replaced the direct backend call with parent recursion and reused the existing `mkdir`
+wrapper. Turn 16's public traversal check failed its intermediate-directory permission
+assertion: recursive calls incorrectly inherited the leaf's explicit mode. Turn 17
+identified that cause and removed `mode=mode` from the recursive call, without an
+intervening read. Traversal passed at turn 18, upstream regression at turn 19 (517 passed,
+570 skipped), and finish at turn 20. Isolated evaluation then passed. The submitted
+`pyfakefs/fake_os.py` diff adds 13 lines and removes one, with no untracked files.
+
+The final visible-check diff, submitted artifact, and isolated evaluator's applied diff
+all match `sha256:83653e8d441d6b8ad5fb0e917b337e4e6b72a455f6100f66ef4d6f3ad164e432`.
+Read-only audit verified the journal chain, 40 context/input artifacts, all 20 encrypted
+continuation artifacts and 19 exact replay edges, 20 next-turn native results, eight
+note receipts, three public execution-policy hashes with confirmed cleanup, and five
+terminal artifacts. Prior 52 journal/envelope files and the active runtime hash remain
+unchanged. Journal SHA-256 is
+`297d50ef9aa517e4d768675fae81d7edf9450cd3eb8e9caa74a99d86c50dd527`.
+Post-run edits only record this result in current documentation. All three documentation
+tests, Ruff, and `git diff --check` pass; the full suite and mock were not rerun because
+no runtime or task code changed after the v20 checkpoint above.
+
+This is evidence of one successful repair trajectory, not that the v20 changes caused it.
+Inspection remained open and probes were exposed on all 20 turns, but no probe ran and
+no note cited a check, so the new check-result labels and candidate-probe description were
+not behaviorally exercised. Four inspections added no source coverage, including one
+cache hit. No observed lines were omitted; retained source peaked at 9,825 characters.
+Turn 3 repeated a search despite the preceding native read containing the original
+delegation body. Turn 14's finding cited still-pending lines 893-904 and was correctly
+rejected without blocking the read. Turn 15 created two source findings, then the same
+mutation changed their cited source and expired both; no later context retained a finding.
+The original verification concern survived seven unchanged updates and remained advisory
+and unresolved at finish. Memory-assisted efficiency and candidate probing remain
+unestablished; success on this repeatedly used development task is not generalization.
+No twenty-ninth live row is authorized.
 
 ### V19 implementation and validation checkpoint
 
@@ -106,7 +154,7 @@ missing from the retained regression summary itself. These deterministic fixes d
 establish why the model chose its successful solution or guarantee another live result.
 Old run/envelope bytes stay immutable; current-runtime mismatches still reject nonterminal
 resume. This implementation checkpoint did not authorize the separately approved row 27
-below. No twenty-eighth live row is authorized. All results remain `official=false`.
+below, nor the separately approved row 28. All results remain `official=false`.
 
 Final provider-free validation passes Ruff and all 447 tests in four concurrent groups
 of 60, 68, 60, and 259 (69.70, 86.16, 64.59, and 67.54 seconds), with three opt-in
@@ -177,7 +225,7 @@ check/concern resolution exercised the new resolution-label path. Runtime bytes 
 `sha256:dab04b152155810eee272dea18159c41e943bdb85a64d15e2cfd09dc4707d071`.
 Evidence continuity worked on the exercised paths, while the generated implementation
 still failed public behavior. This does not prove either v19 quality regression or model
-improvement relative to row 26. No twenty-eighth live row is authorized.
+improvement relative to row 26. This result did not authorize the separately approved row 28.
 
 ### V18 implementation and validation checkpoint
 
@@ -1359,20 +1407,17 @@ compatibility with those runners is intentionally unsupported.
 
 ## Next decision
 
-Preserve row 26's passing v18 result and row 27's failing v19 result as immutable evidence.
-Row 27 exercised retained source rebinding, check-summary identity, native feedback, and
-baseline probing; none alone guarantees correct implementation. Its remaining public
-failures concern helper ownership, preserving traversal before normalization, and separating
-newly created from pre-existing directories. The read-only analysis found intent/code
-contradictions despite delivered examples, overwriting of reusable notes with current-error
-status, and a cross-diff false summary beside correct original feedback. V20 now labels
-the actual cited check result and exposes existing candidate-probe capability explicitly;
-it does not claim to have corrected the model's interpretation or implementation choices.
-Two edits repaired wrong helper owners, but this does not justify a larger mutation cap
-or stronger action mask. Closure warnings and concern-resolution label behavior
-were not exercised. Neither success/failure on this repeatedly used development task nor
-the difference between rows establishes generalization or feature-level causality.
-No automatic retry, resume, or twenty-eighth live row is authorized.
+Preserve rows 26-28 as immutable evidence. Row 28 demonstrates a small submitted solution
+and a correct immediate causal repair from a public permission failure. It does not
+establish that v20 improved working memory: no check citation or candidate probe ran,
+and both newly created source findings expired before the next model turn. Repeated
+inspection also remained despite intact source delivery. Review when reusable findings
+are written and whether their behavior-bearing evidence can survive the intended edit
+before proposing another memory change; do not make notes or probes compulsory or relax
+source validity merely to retain them. Closure warnings and concern resolution were not
+exercised. Neither the difference between these uncontrolled rows nor passing this reused
+development task establishes generalization or feature-level causality.
+No automatic retry, resume, or twenty-ninth live row is authorized.
 
 The preceding decision after row 25 was:
 

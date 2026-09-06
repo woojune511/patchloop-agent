@@ -107,8 +107,15 @@ It ended at `LIMIT_REACHED` after four accepted mutations and four failed traver
 29 model calls, 30 actions, $0.349973100, no submission or private evaluation. Eleven model
 calls remained, but no mutation could repair the current failure. Source/check identity and
 native feedback passed the read-only audit; this is not evidence of task success.
-No retry, resume, or twenty-eighth live row is authorized by these results, the implementation,
-or local validation. All results remain unofficial.
+The separately approved twenty-eighth v20 row, `run_dev_a01ff61f95be4a57`, reached
+`EVALUATOR_PASS` (task acceptance and safety PASS): 20 model/input-count calls, 21 actions,
+two accepted mutations, $0.193324200, and 133.016 active seconds. A public intermediate-mode
+failure was repaired immediately, both visible checks passed, and finish submitted the
+same patch later applied by isolated evaluation. Probes were enabled but unused; no
+working note cited a check, so this row did not exercise the v20 check-result label.
+Exact replay, native results, note receipts, execution-policy and patch provenance passed
+read-only audit. No retry, resume, or twenty-ninth live row is authorized by these results,
+the implementation, or local validation. All results remain unofficial.
 
 Tool surface v20 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and

@@ -428,8 +428,24 @@ nonblocking, different check/diff identities, unknown failures, source/probe exc
 parallel native delivery, crash/restart, and privacy. The probe schema explicitly describes
 existing current-candidate importability and clean-Python limits. Shorter system guidance
 preserves reusable facts separately from current failure status, without new quotas,
-planning calls, mandatory probes, tighter masks, or higher budgets. Actual behavior change
-is unproven without separately authorized live evidence. No twenty-eighth row is approved.
+planning calls, mandatory probes, tighter masks, or higher budgets. The separately approved
+v20 row 28 below passed, but did not exercise check-citing notes or candidate probes.
+No twenty-ninth row is approved.
+
+Row 28 `run_dev_a01ff61f95be4a57` reached `EVALUATOR_PASS`, task acceptance and safety PASS,
+with 20 model/input-count calls, 21 actions, two mutations, $0.193324200, and 133.016 active
+seconds. Turn 15 reused the existing mkdir wrapper with parent recursion; after turn 16's
+intermediate-mode failure, turn 17 removed the inherited leaf mode. Both visible checks
+then passed and turn 20 submitted a one-file, 14-line diff for isolated evaluation.
+The audit verified 20 continuation artifacts/19 exact replay edges, 20 native results,
+eight note receipts, matching checked/submitted/applied patch identity, and prior run bytes.
+All inspection stayed open; four reads/searches added no coverage, with no omitted source.
+No probe ran. Turn 14's pending-source finding was correctly rejected; turn 15's two notes
+were created and immediately expired by their source-changing edit, leaving no retained
+findings in a later context. No note cited a check, so v20 label behavior was not exercised.
+The original concern remained unresolved without blocking finish. Record the successful
+causal repair separately from unproven memory efficiency or feature-level causality;
+do not tighten masks, mandate probes/notes, or weaken source binding based on this result.
 
 The preceding tool surface `v19` preserves observed unchanged complete-line fragments
 across exact replacements and puts citation identity beside every retained check result.
@@ -447,7 +463,8 @@ matched durable evidence. No source-range note failed; one nonexistent tool-resu
 was correctly rejected without blocking execution. Mutation capacity, not token/cost/model
 capacity or forced inspection closure, ended the run. Diagnose evidence-to-code choices
 before selecting another fix; do not infer that rebinding caused the task outcome or that
-larger limits would solve it. No automatic retry, resume, or twenty-eighth row is authorized.
+larger limits would solve it. This result did not authorize the separately approved row 28.
+No automatic retry, resume, or twenty-ninth row is authorized.
 
 Tool surface `v18` preserved original verification questions separately
 from progress, treats identical updates as no-ops, separates pre-batch note receipts
@@ -976,7 +993,7 @@ cost, `official=false`, `claim_eligible=false`. New tests cover exact-position e
 reuse, no inferred gaps, error-range privacy/bounds, same native/restart identity, and
 CRLF/no-final-newline/second-anchor crash recovery. Source-note semantic expiry remains
 independent of retained line evidence. This checkpoint did not authorize the separately
-approved row 27 recorded above; no twenty-eighth live invocation is authorized.
+approved rows 27 and 28 recorded above; no twenty-ninth live invocation is authorized.
 
 V18 passed 414 provider-free tests in three concurrent groups of 75 (90.71 seconds),
 144 (83.92 seconds), and 195 (86.28 seconds), using `C:\pt\pl18-verified-6401-{a,b,c}`;
