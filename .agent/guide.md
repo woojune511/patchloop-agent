@@ -509,7 +509,31 @@ read-only row-31 comparison reduces final bytes 727,250 -> 651,085 and aggregate
 10,011,657 -> 8,853,286, preserving all 31 native episodes, 30 prefix edges and exact source
 delivery coverage. These are UTF-8 serialized input bytes excluding tools, not tokens,
 cache savings or counterfactual task success. Dynamic schemas remain a separate seam.
-No thirty-second row, retry or resume is authorized; old run/envelope bytes are immutable.
+The implementation did not authorize a live row. The user subsequently approved the
+single row-32 invocation below; no thirty-third row, retry or resume is authorized.
+Old run/envelope bytes are immutable.
+
+Row 32 `run_dev_8f19af52fb0948ca` on `c62e5299` records `AGENT_STOPPED`: 34 model/count
+calls and actions, four accepted mutations, $0.778038600 and 324.014 active seconds.
+One disallowed helper edit received the exact path allowance; turn 25 made the first
+accepted wrapper rewrite. Bytes and intermediate-mode failures prompted direct repairs,
+then traversal passed and upstream regression failed five cases. Turn 33 attempted a
+final compatibility repair, but turn 34 stopped without checking that 50-line diff.
+The exact final request offered `run_check`, marked both current checks `NOT_RUN` and
+the old failure `awaiting_recheck`, and retained seven model calls/67 actions for a
+three-call minimum completion path. Zero mutation budget did not prevent checking.
+Do not present the stop prose's old PASS/FAIL as verdicts on the final candidate.
+
+All 34 saved inputs, 33 unchanged prefixes, 12,168 source-line occurrences and count/
+dispatch/cost identities reconcile. Cached input is 75.93%; eight tool-schema changes
+remain. Twenty-four inspections (ten without new coverage), a later first edit than
+row 31, and an untested final stop do not demonstrate improved agent efficiency.
+Five note updates create/update six findings and all receipts arrive; later source
+changes expire the notes. Final empty notes are not missing-delivery evidence. No probe,
+submission or isolated evaluation ran. Keep the next diagnosis focused on preserving
+existing behavior during repair, note lifecycle/use and interpreting old versus current
+check status, without inferring private reasoning or adding mandatory action gates.
+The post-run change is documentation only; runtime, task and old external bytes stay fixed.
 
 Row 31 `run_dev_7754107f07f442e4` on `bcd85f71` records `EVALUATOR_FAIL`: public checks
 PASS, isolated task acceptance FAIL, safety PASS, 31 model/count calls and actions,

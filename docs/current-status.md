@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirty-one live observations below
+Repository policy alone never initiates paid work. The thirty-two live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -93,6 +93,76 @@ thirty-second live row is authorized by this implementation. `.env`, user-owned
 Hash checks confirm all 60 existing journal/envelope files, `.env`, user-owned `AGENTS.md`
 and 1,249 tracked task/historical files are unchanged; all old untracked entries remain.
 All results remain `official=false`, `claim_eligible=false`.
+
+### Thirty-second live row: stopped after the final repair without rechecking
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 invocation:
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository `.env`, repeat 1, $1.20 total cap,
+and `--enable-probes` under `C:\patchloop-state`. Read-only preflight confirmed tracked,
+HEAD-clean runtime/task inputs, credential format, both pinned local Docker images and
+registered prices matching the official [API pricing table](https://developers.openai.com/api/docs/pricing).
+V24 commit `c62e52999b2b27ed2a015305ba344c9805986a46` produced
+`run_dev_8f19af52fb0948ca`: `AGENT_STOPPED`, 34 model/input-count calls, 34 actions,
+four accepted mutations, $0.778038600, 324.014 active seconds and 325 seconds run age.
+All output ceilings remained 25,000. No retry, resume, second invocation, Docker startup
+or image pull/build ran. There was no submission or isolated evaluation; task acceptance
+and safety were not evaluated. All results remain `official=false`, `claim_eligible=false`.
+
+Turn 13 attempted the uneditable `pyfakefs/fake_filesystem.py`. Pre-apply rejection
+returned `path_not_allowed` with the actual `fake_os.py` allowance; no second disallowed
+edit followed. Turn 25 made the first accepted edit, replacing delegation in the allowed
+wrapper with a low-level path walk. Public traversal failures at turns 26/28 exposed a
+bytes/string mismatch and incorrect intermediate-directory mode. The model repaired
+those causes directly at turns 27/29. Traversal passed at turn 30, but upstream regression
+at turn 31 reported five failures, 512 passes and 570 skips: `exist_ok`, empty-path and
+Windows file-parent compatibility. After one read, turn 33 applied the fourth mutation
+to those behaviors, leaving 49 added lines and one deletion in one tracked file.
+
+Turn 34 selected `stop_task` with `no_safe_scoped_mutation` and cited the previous
+regression failure. This was not a closed-check-tool or completion-horizon terminal:
+the exact request offered `run_check`, both current checks were `NOT_RUN`, and the
+previous failure was marked `awaiting_recheck` with distinct old/current diff hashes.
+Before dispatch, seven model calls and 67 actions remained, versus a conditional
+three-call path for two checks and finish. Accepted mutation budget was zero, so further
+repair was unavailable, but checking the last repair was still possible. Its success
+is unknown. The stop prose's traversal-PASS/regression-FAIL claim belongs to the older
+diff, not this final candidate. Do not classify the final code from those stale verdicts.
+
+There were 24 inspections: 14 added coverage, ten did not, with no cache hits. The first
+accepted mutation was later than row 31 (turn 25 versus 23). Broad exploration and a
+compatibility-sensitive rewrite still followed the explicit path feedback. One rejected
+path attempt rather than two is an observation, not a controlled causal result. No probe
+ran and no protocol correction occurred. Five note updates submitted six findings:
+three created and three updated, all accepted, with all five receipts delivered once
+in the next turn. Source changes expired the retained notes; no new findings followed
+turn 26. Empty final notes are not evidence that note storage or delivery failed.
+
+All 34 saved inputs reconstruct exactly, with 33 unchanged full-input prefixes and
+matching native calls/results, encrypted reasoning and current operational state.
+All responses report `current_turn`; this is delivery metadata, not proof of effective
+reasoning reuse. The source catalog independently preserves 12,168 delivered line
+occurrences. Canonical retained-source snapshots total 486,253 characters, with zero
+duplicated inline retained-source characters in model state. Serialized input totals
+11,359,517 UTF-8 bytes, final input 761,362 bytes, excluding tool schemas. These are not
+token estimates or a controlled comparison with the different row-31 trajectory.
+
+Provider usage totals 2,696,452 input tokens, including 2,047,488 cached (75.93%), and
+30,612 output tokens (23,575 reasoning); final input is 177,062 tokens. Eight tool-schema
+changes remain. All 34 count/dispatch hashes and cost settlements reconcile, and all
+four public-check policy hashes/cleanup records pass audit; no isolated safety verdict
+is inferred. Final untested diff hash is
+`sha256:a6690fcbebaf70fec387f0617d53229309b20ef71ac1019f8afd5f6412843f0b`;
+journal SHA-256 is `b41a434076bc51fa630e6147de81020098b5456c02908e941e3746aa863c50a4`.
+No untracked candidate files remain. All 60 prior journal/envelope files, `.env`,
+user-owned `AGENTS.md`, 1,249 tracked task/historical files and old untracked entries
+are unchanged. Only current documentation records this result. A later diagnosis should
+separate compatibility-preserving repair design, note expiry/use and stale-verdict stop
+selection; the delivered data alone does not establish why the model made that choice.
+No automatic repair, retry, resume or thirty-third live row is authorized.
+
+Post-run validation passes all three documentation tests under `C:\pt\pl32-docs-a`,
+Ruff and `git diff --check`. The full suite and mock are not rerun for this documentation-
+only change; runtime and task bytes remain the preflight-verified v24 inputs.
 
 ### V23 implementation and validation checkpoint
 
