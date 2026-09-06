@@ -137,6 +137,18 @@ files remain unchanged. No automatic repair, retry, resume, or thirtieth live ro
 authorized by this result, the implementation, or local validation. All results remain
 unofficial; no hidden evaluator output is reinjected into the coding agent.
 
+The separately approved thirtieth v22 row, `run_dev_f5f058fc5761480b`, reached
+`EVALUATOR_PASS` (task acceptance and safety PASS): 29 model/input-count calls, 28 actions,
+two accepted mutations and $1.059868350 under the $1.20 cap. Its public regression failure
+was repaired on the next turn, and the final 41-line diff passed both public checks and
+isolated evaluation. Three baseline probes ran; one failed with a Python syntax error.
+The complete active history, count/dispatch identities, correction results, note receipt,
+patch identity and execution-policy provenance passed read-only audit. All responses
+reported `current_turn`; that is not proof of effective reasoning reuse. Input grew to
+90,851 tokens, so fewer zero-coverage inspections did not mean lower cost. This result
+does not authorize a retry, resume, thirty-first row, Docker start, or image pull/build.
+See `docs/current-status.md` for the exact trajectory and evidence limits.
+
 Tool surface v22 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not

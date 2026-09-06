@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The twenty-nine live observations below
+Repository policy alone never initiates paid work. The thirty live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -88,6 +88,66 @@ All 56 pre-existing journal/envelope files, `.env`, user-owned `AGENTS.md`, task
 historical directories and pre-existing untracked work are preserved.
 No paid provider call, Docker start/pull/build, retry, resume, or thirtieth live row is
 authorized by this change. All results remain `official=false`, `claim_eligible=false`.
+
+### Thirtieth live row: full native history, public repair, isolated acceptance PASS
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 run with
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository `.env`, repeat 1, a $1.20 cap,
+and `--enable-probes` under `C:\patchloop-state`. Read-only preflight confirmed tracked,
+HEAD-clean runtime/task inputs, credential format, and both pinned local images in the
+already running Docker service. V22 commit `1caa2859d6a99c8c211c9abf6e45ef4086b140c4`
+produced `run_dev_f5f058fc5761480b`: `EVALUATOR_PASS`, task acceptance PASS, safety PASS,
+no failure class, 29 model/input-count calls, 28 actions, two accepted mutations,
+$1.059868350, 277.578 active seconds and 279 seconds run age. Results remain
+`official=false`, `claim_eligible=false`. No retry, resume, extra invocation, Docker
+startup, or image pull/build ran.
+
+The first 18 turns made 16 inspections and two baseline probes. Only one inspection
+added no source coverage; none was a cache hit. Turn 19 proposed a 67-line mutation,
+which scope rejected and rolled back. A third baseline probe at turn 20 failed with a
+Python raw-string `SyntaxError`; this was diagnostic failure, not a sandbox-policy
+violation. Turn 21's 52-line candidate was also rejected, and turn 22 accepted 38 diff
+lines. Turn 23 requested both checks in one response, triggering the existing
+single-action batch correction without executing either check. Turns 24 and 25 ran
+them separately: traversal passed, upstream regression failed five cases involving
+broken links and Windows file-parent error behavior. Turn 26 immediately added a
+three-line delegation guard for paths without `..`, without another read. Traversal
+and upstream regression then passed at turns 27 and 28 (517 passed, 570 skipped in
+3.51 seconds). Turn 29 submitted the final 41-line diff: 38 additions and three deletions
+in `pyfakefs/fake_os.py`, with no untracked files. Isolated evaluation passed.
+
+All 29 saved inputs reconstruct exactly, including the rejected parallel-check batch.
+The audit verifies 58 context/input artifacts, 29 continuation artifacts, unchanged
+history prefixes, 27 executed native results plus two rejection results, and one note
+receipt. Every request has one stable user boundary. All 29 provider responses report
+`response_reasoning_context=current_turn`; ciphertext integrity and reported mode do
+not prove how effectively the model used earlier reasoning. The only memory annotation,
+at turn 1, creates an open question and two advisory concerns; no source finding is
+written, and both concerns remain unresolved at finish. All three probes use the empty
+baseline, so this row provides no candidate-probe or source-note effectiveness evidence.
+
+This observation has fewer zero-coverage inspections than row 29 (1/16 versus 15/30)
+and an earlier first accepted edit (turn 22 versus 29), but is not a controlled causal
+comparison. Full request input grows from 8,317 to 90,851 tokens; aggregate input is
+1,350,165 tokens, including 117,888 cached, with 28,182 output tokens (22,079 reasoning).
+All admitted output ceilings remain 25,000. Cost rises from row 29's $0.482969550 to
+$1.059868350 despite fewer model calls. Do not equate this single task success with
+proven efficiency, generalization, or provider-side reasoning reuse.
+
+The checked, submitted, managed-workspace and isolated-applied patch identities match
+`sha256:d364976d54ce7f5c936ffc9884b6d215488b02fee152c44248380aa313b58ebe`.
+All 29 count/dispatch request hashes and usage settlements reconcile. Seven public
+check/probe policies, three isolated check evidence records, three probe receipts,
+five safety controls and eight terminal artifacts pass identity/cleanup audit.
+Journal SHA-256 is `414bf776dc136e558e546cb997bb4b32ada3f3d3a760fbb54acf3f5a8e8572a6`.
+All 56 prior journal/envelope files, `.env`, user-owned `AGENTS.md`, existing untracked
+work, task packages and historical directories remain unchanged. No evaluator feedback
+is reinjected into the coding agent.
+
+Post-run changes only record this evidence in current documentation. Three documentation
+tests, Ruff and `git diff --check` pass; the full suite and mock are not rerun because
+runtime/task bytes remain identical to the validated v22 checkpoint. No automatic repair,
+retry, resume, or thirty-first live row is authorized.
 
 ### V21 implementation and validation checkpoint
 
