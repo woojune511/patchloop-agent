@@ -111,6 +111,7 @@ def test_note_body_survives_two_real_mutations_and_restart(tmp_path, newline):
     assert second.status == "succeeded"
     notes = gateway.working_notes()
     assert [note["note_id"] for note in notes["findings"]] == ["n1"]
+    assert notes["available_note_ids"] == ["n1"]
     assert notes["last_source_lifecycle"] == {
         "trigger_action_id": "second", "rebound_note_ids": ["n1"], "expired_notes": [],
     }
@@ -145,6 +146,9 @@ def test_expired_note_cannot_resurrect_when_later_mutation_restores_source(tmp_p
     assert gateway.execute(_mutation("expire", old, new)).status == "succeeded"
     expired = gateway.working_notes()
     assert expired["findings"] == []
+    assert expired["available_note_ids"] == []
+    assert expired["last_update_result"]["note_ids_after_update"] == ["n1"]
+    assert expired["last_update_result"]["scope"] == "before_tool_batch"
     assert expired["last_source_lifecycle"]["expired_notes"] == [
         {"note_id": "n1", "reason": cause},
     ]

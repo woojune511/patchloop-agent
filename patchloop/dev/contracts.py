@@ -24,7 +24,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v17",
+            "schema_version": "dev-tool-surface-v18",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -55,10 +55,12 @@ def dev_tool_surface_hash() -> str:
             "evidence_plateau_transition": "advisory-only-v2",
             "check_recovery_reserve": "order-independent-distinct-failure-bound-v2",
             "context_projection": "observed-priority-merged-24000-chars-v1",
+            "observed_source_index": "delivered-lexical-headers-16-entries-4000-chars-v1",
+            "tool_closure_warning": "actual-single-inspection-successor-conditional-v1",
             "working_notes": "stable-note-id-independent-body-durable-lifecycle-v3",
-            "working_note_feedback": "action-associated-nonblocking-receipt-v1",
+            "working_note_feedback": "pre-batch-receipt-with-current-post-batch-ids-v2",
             "working_note_interpretation": "evidence-currency-not-semantic-validation-v1",
-            "verification_concerns": "bounded-independent-public-concerns-current-diff-v1",
+            "verification_concerns": "original-question-progress-note-exact-noop-v2",
             "verification_concern_limit": 3,
             "submission_guidance": "required-checks-pass-with-advisory-concern-review-v1",
             "working_note_source_body_chars": 24_000,

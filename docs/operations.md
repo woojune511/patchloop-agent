@@ -100,15 +100,20 @@ It terminated at the completion horizon after a public regression failure, witho
 submission or private evaluation. No twenty-sixth live row is authorized by those
 results, the current implementation, or local validation.
 
-Tool surface v17 adds bounded run-local verification concerns inside the existing
+Tool surface v18 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
 and a baseline probe cannot resolve a later candidate's concern. Resolution/dismissal
 decisions are diff-bound model judgments, not added acceptance checks. Concern state and
 ID allocation replay from `working_notes_updated`; malformed annotations do not reject
-the main tool action. Old envelopes remain immutable and the exact runtime-match resume
-contract is unchanged. No new experiment is automatically executed after a check PASS.
+the main tool action. Null concern ID creates an immutable original `statement`; an
+existing `vN` upsert stores its incoming statement as the latest `progress_note` about
+that original. A distinct question needs a null ID. Exact repetition of the original
+or retained progress yields applied code `unchanged`, preserving state, update time,
+and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
+immutable; v18 does not migrate them and rejects mismatched nonterminal resume under the
+existing exact-match contract. No new experiment is automatically executed after a check PASS.
 
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against
 the official [API pricing](https://developers.openai.com/api/docs/pricing) and
@@ -174,7 +179,14 @@ and are ignored. Findings have stable run-local IDs independent of their source 
 six findings are retained; unknown IDs or invalid citations produce bounded diagnostics.
 Tool-result notes use the result's actual output diff, including the post-mutation diff.
 Invalid notes do not reject that action. A separate `memory_update_result` on the owner
-call's native output reports each note's outcome, current IDs, and an actionable error.
+call's native output reports each note's outcome and an actionable error. Its
+`scope=before_tool_batch`, `diff_hash_at_update`, and `note_ids_after_update` identify
+the update-time state, not IDs still usable after a mutation. The native owner output's
+sibling `working_notes_after_batch` reports `scope=after_completed_tool_batch`,
+`diff_hash`, `available_note_ids`, and batch-local `expired_notes`. The current context's
+`working_notes.available_note_ids` is authoritative for the next update. A successful
+annotation can therefore coexist with a subsequent same-batch source-note expiry
+without falsely advertising the expired ID as currently available.
 The derived context uses a delivery reference instead of duplicating that receipt.
 Read output does not echo the unvalidated annotation; original function-call arguments
 remain intact for continuation. Before an observation, use an open question or null;
@@ -209,6 +221,10 @@ latest tool batch. Omitted observed source is summarized without body text in at
 12 path/hash/range entries plus the full omitted-range count. Readiness uses both deliveries.
 Native source ranges, latest mutation
 content, and latest check output are not duplicated in derived context cards.
+The `observed_source_index` adds at most 16 lexical function/class-header locations
+within a 4,000-character bound, derived only from delivered observed current code.
+It does not read unseen source, add evidence coverage, or establish a function's extent.
+Use it to locate already delivered code; source bodies remain the evidence authority.
 Policy derivation and context projection share that snapshot rather than independently
 rerunning Git inspection. Evidence validation groups spans by path and hashes each
 observed file once. The snapshot is not retained across a tool batch, mutation, check,
@@ -231,8 +247,12 @@ recovery allowances. One transition model accounts for all checks invalidated by
 repair and for distinct visible-check failures, limited by remaining accepted mutations.
 It handles any permitted check order instead of assuming declared order. At
 one remaining optional turn, the context marks
-`last_opportunity` and names the inspection tools that will close next; at zero slack
-they are removed. Each allowance is consumed only by its corresponding failure, and
+`last_opportunity`; at zero inspection slack the inspection tools are removed.
+`tools_closing_after_this_turn` previews the actual policy after one read/search with
+unchanged evidence, so affected `run_probe` and `run_check` entries are included as well
+as reads/searches. It is a conditional notice, not a prediction of newly observed evidence
+or a new restriction; action masks and budget rules are unchanged.
+Each allowance is consumed only by its corresponding failure, and
 both states are reconstructed from durable batches on resume. A source read that is strictly required to
 establish a mutation anchor is included in the minimum path rather than treated as
 optional exploration. The scheduler recognizes mutation evidence only when a non-empty
@@ -267,7 +287,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v16`; prior
+These output and scheduler semantics are bound by tool-surface identity `v18`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually

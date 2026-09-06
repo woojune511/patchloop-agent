@@ -22,7 +22,7 @@ _FEEDBACK = {
     "invalid_verification_updates": "Use an array of at most three verification updates.",
     "invalid_verification_update": "This verification update does not match its public schema.",
     "unknown_concern_id": "Use an existing concern ID, or upsert with null to create one.",
-    "statement_required": "Upsert requires a nonempty public verification concern.",
+    "statement_required": "Upsert requires a public concern or a progress note about its original.",
     "reason_required": "Resolve or dismiss requires a nonempty public reason.",
     "concern_capacity": "Three unresolved concerns are already retained; update or address one.",
     "unobserved_verification_result": (
@@ -57,6 +57,7 @@ def project_verification_concerns(
 
     items = copy.deepcopy(state["items"])
     for item in items:
+        item.setdefault("progress_note", None)
         item["status"] = _effective_status(item, diff_hash)
         item["model_authored"] = True
         item["interpretation_status"] = "model_authored_unverified"
@@ -75,7 +76,11 @@ def project_verification_concerns(
         "unresolved_ids": [item["concern_id"] for item in items if item["status"] == "unresolved"],
         "interpretation": (
             "Model-authored public verification concerns survive focus-question changes and "
-            "source-note expiry. Resolution binds a prior successful result to this diff; "
+            "source-note expiry. Statement preserves the original concern; progress_note is "
+            "its latest update, not a replacement question. Create a distinct concern with "
+            "a null ID. Repeating the original statement or retained progress does not "
+            "change the concern or reopen a decision. Resolution binds a prior successful "
+            "result to this diff; "
             "it does not prove that the result addresses the concern. Dismissal records "
             "the model's reason, not verification. Both decisions become historical and "
             "the concern becomes unresolved when the diff changes. These are advisory, "
@@ -183,11 +188,23 @@ def update_verification_concerns(
                     receipt["evicted_concern_ids"].append(evictable["concern_id"])
                 existing = {
                     "concern_id": f"v{updated['next_id']}", "created_turn_id": turn_id,
+                    "statement": update.statement, "progress_note": None,
                 }
                 updated["next_id"] += 1
                 updated["items"].append(existing)
                 entry["concern_id"] = existing["concern_id"]
-            existing.update(statement=update.statement, updated_turn_id=turn_id, decision=None)
+            elif update.statement in (existing["statement"], existing.get("progress_note")):
+                entry.update(
+                    status="applied", code="unchanged",
+                    message=(
+                        "Original concern or retained progress repeated; state and decision "
+                        "are unchanged. Use [] when there is no new progress."
+                    ),
+                )
+                continue
+            else:
+                existing["progress_note"] = update.statement
+            existing.update(updated_turn_id=turn_id, decision=None)
         else:
             if not update.reason or not update.reason.strip():
                 reject("reason_required")
@@ -220,7 +237,10 @@ def verification_updates_schema() -> dict[str, Any]:
         "type": "array", "maxItems": 3,
         "description": (
             "Public uncertainties that must not disappear when focus changes. Upsert with "
-            "null ID creates, an existing ID revises and reopens. Resolve an existing ID "
+            "null ID creates an immutable original concern; an existing ID stores latest "
+            "progress about that original and reopens only for changed progress. Repeating "
+            "the original or retained progress is unchanged. New concerns need null IDs. "
+            "Resolve an existing ID "
             "with a prior successful current-diff check/probe and a reason; dismiss with "
             "a reason when unnecessary. Neither proves semantic coverage. Use [] to retain."
         ),
@@ -233,7 +253,11 @@ def verification_updates_schema() -> dict[str, Any]:
                 },
                 "statement": {
                     "type": ["string", "null"], "maxLength": 400,
-                    "description": "Concise public untested behavior, not a reasoning transcript.",
+                    "description": (
+                        "For upsert: null ID creates the original public untested behavior; "
+                        "existing ID records latest progress about its immutable original. "
+                        "Not a replacement question or reasoning transcript."
+                    ),
                 },
                 "evidence_action_id": {"type": ["string", "null"], "maxLength": 500},
                 "reason": {

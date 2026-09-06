@@ -21,7 +21,7 @@ from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev.context import SourceProjection
+from patchloop.dev.context import SourceProjection, build_observed_source_index
 from patchloop.dev.contracts import (
     DEV_RUNTIME_ID,
     DevModelTurn,
@@ -531,6 +531,7 @@ def _tool_policy(
     limits: Any,
     *,
     snapshot: DevGatewayStateSnapshot | None = None,
+    _preview_inspection: bool = True,
 ) -> _ToolPolicy:
     if snapshot is None and isinstance(gateway, DevToolGateway):
         snapshot = gateway.state_snapshot()
@@ -733,7 +734,7 @@ def _tool_policy(
         and counters.commitment_diff_hash == current_diff_hash
         and has_current_mutation_evidence
     )
-    return _ToolPolicy(
+    policy = _ToolPolicy(
         workflow_gate=workflow_gate,
         allowed_tools=frozenset(allowed),
         check_ids=available_check_ids,
@@ -758,11 +759,7 @@ def _tool_policy(
             else max(0, inspection_tool_slack) if inspection_allowed else 0
         ),
         closure_reason=closure_reason,
-        tools_closing_after_this_turn=(
-            ("read_file", "search_files")
-            if exploration_state == "last_opportunity"
-            else ()
-        ),
+        tools_closing_after_this_turn=(),
         required_inspection_for_completion=required_inspection and inspection_allowed,
         targeted_check_repair_inspection=False,
         targeted_check_repair_required=False,
@@ -776,6 +773,32 @@ def _tool_policy(
         mutation_protected_completion_possible=mutation_protected_completion_possible,
         inspection_uses_repair_credit=inspection_uses_credit and inspection_allowed,
     )
+    if inspection_allowed and _preview_inspection:
+        # Advisory single-inspection forecast, not another admission rule. Reuse
+        # the actual policy so optional probes/checks cannot disappear unannounced.
+        # Evidence/gate stay unchanged; a useful read or a different action may
+        # produce a different successor. Never mutate live counters or read files.
+        after_inspection = _tool_policy(
+            gateway,
+            replace(
+                counters,
+                model_calls=counters.model_calls + 1,
+                tool_actions=counters.tool_actions + 1,
+                failed_check_repair_read_used=(
+                    counters.failed_check_repair_read_used or counters.failed_check_pending
+                ),
+            ),
+            limits,
+            snapshot=snapshot,
+            _preview_inspection=False,
+        )
+        policy = replace(
+            policy,
+            tools_closing_after_this_turn=tuple(
+                sorted(policy.allowed_tools - after_inspection.allowed_tools)
+            ),
+        )
+    return policy
 
 
 def _mutation_completion_horizon(policy: _ToolPolicy) -> dict[str, Any]:
@@ -1090,6 +1113,10 @@ def _build_context(
             ),
             "closure_reason": active_policy.closure_reason,
             "tools_closing_after_this_turn": list(active_policy.tools_closing_after_this_turn),
+            "tool_closure_prediction_basis": (
+                "after_one_read_or_search_with_unchanged_evidence; "
+                "larger_parallel_batches_or_other_actions_may_differ"
+            ),
             "required_inspection_for_completion": (
                 active_policy.required_inspection_for_completion
             ),
@@ -1117,6 +1144,10 @@ def _build_context(
             current_paths=active_snapshot.mutation_evidence_paths
         ),
         "mutation_scope_budget": gateway.mutation_scope_budget(summary=summary),
+        "observed_source_index": build_observed_source_index(
+            projection.delivered_spans,
+            editable_paths=active_snapshot.mutation_evidence_paths,
+        ),
         "evidence_ledger": ledger,
         "working_notes": gateway.working_notes(diff_hash=summary.patch_hash),
         "context_projection": {
@@ -1658,6 +1689,17 @@ def _build_model_input(
             public_result["memory_update_result"] = note_receipt
             notes = current_payload.get("working_notes", {})
             if isinstance(notes, dict):
+                lifecycle = notes.get("last_source_lifecycle") or {}
+                public_result["working_notes_after_batch"] = {
+                    "scope": "after_completed_tool_batch",
+                    "turn_id": turn_id,
+                    "diff_hash": current_payload.get("current_diff", {}).get("patch_hash"),
+                    "available_note_ids": notes.get("available_note_ids", []),
+                    "expired_notes": (
+                        lifecycle.get("expired_notes", [])
+                        if lifecycle.get("trigger_action_id") in action_ids else []
+                    ),
+                }
                 notes["last_update_result"] = {
                     "turn_id": turn_id,
                     "action_id": action_id,

@@ -46,6 +46,11 @@ def test_distinct_notes_share_source_and_explicit_update_can_change_citation(sou
     })
     payload = gateway.record_working_notes_update([note_call("a", update)], turn_id="a")
     assert payload["allocated_note_ids"] == ["n1", "n2"]
+    assert payload["receipt"]["scope"] == "before_tool_batch"
+    assert payload["receipt"]["diff_hash_at_update"] == gateway.current_diff_hash
+    assert payload["receipt"]["note_ids_after_update"] == ["n1", "n2"]
+    assert "available_note_ids" not in payload["receipt"]
+    assert gateway.working_notes()["available_note_ids"] == ["n1", "n2"]
     assert [note["note_id"] for note in gateway.working_notes()["findings"]] == ["n1", "n2"]
     revised = source_note("Preserve entry behavior and change the adjacent branch.", 2, 3)
     revised["findings"][0]["note_id"] = "n1"
@@ -56,6 +61,7 @@ def test_distinct_notes_share_source_and_explicit_update_can_change_citation(sou
     assert merged["removed_note_ids"] == ["n2"]
     assert merged["retained_note_ids"] == ["n1"]
     notes = gateway.working_notes()
+    assert notes["available_note_ids"] == ["n1"]
     assert notes["open_question"] is None
     assert notes["findings"][0]["evidence"][0]["start_line"] == 2
     assert notes["findings"][0]["model_authored"] is True

@@ -1450,13 +1450,16 @@ class DevToolGateway:
             return {"status": "not_requested"}
         self._refresh_working_source_notes()
         action_id, selected = updates[0]
+        diff_hash_at_update = self.current_diff_hash
         receipt: dict[str, Any] = {
+            "scope": "before_tool_batch",
+            "diff_hash_at_update": diff_hash_at_update,
             "turn_id": turn_id,
             "action_id": action_id,
             "status": "rejected",
             "findings": [],
             "diagnostics": [],
-            "available_note_ids": [],
+            "note_ids_after_update": [],
             "removed_note_ids": [],
             "evicted_note_ids": [],
             "open_question_applied": False,
@@ -1590,7 +1593,10 @@ class DevToolGateway:
                 entry.update({
                     "note_id": note_id,
                     "status": "created" if finding.note_id is None else "updated",
-                    "message": "Note stored. Use this allocated note_id for later updates.",
+                    "message": (
+                        "Note update recorded before this tool batch. Consult "
+                        "working_notes.available_note_ids for currently retained IDs."
+                    ),
                 })
             if update.remove_note_ids and not all_findings_valid:
                 diagnose("removals_skipped_after_invalid_finding")
@@ -1624,7 +1630,7 @@ class DevToolGateway:
             }
             state, verification_receipt = update_verification_concerns(
                 self._verification_state, selected["verification_updates"],
-                diff_hash=self.current_diff_hash, prior_results=prior_results,
+                diff_hash=diff_hash_at_update, prior_results=prior_results,
                 turn_id=turn_id,
             )
             payload["verification_state"] = state
@@ -1634,7 +1640,7 @@ class DevToolGateway:
                 payload["diagnostics"].append("verification_update_rejected")
             if verification_status != "not_requested" and verification_status != receipt["status"]:
                 receipt["status"] = "partially_applied"
-        receipt["available_note_ids"] = list(payload["retained_note_ids"])
+        receipt["note_ids_after_update"] = list(payload["retained_note_ids"])
         receipt["removed_note_ids"] = list(payload["removed_note_ids"])
         receipt["evicted_note_ids"] = list(payload["evicted_note_ids"])
         # At most two findings, six removals, and batch/shape diagnostics. Never
@@ -1768,6 +1774,7 @@ class DevToolGateway:
             finding["interpretation_status"] = "model_authored_unverified"
         return {
             "findings": findings,
+            "available_note_ids": [finding["note_id"] for finding in findings],
             "open_question": self._working_open_question,
             "verification": self.verification_concerns(diff_hash=current_hash),
             "last_update_diagnostics": (
@@ -1784,7 +1791,8 @@ class DevToolGateway:
                 "status=current means cited evidence is current, not that the statement "
                 "was revalidated. Sources are validated, interpretations are not. "
                 "Cite behavior-bearing lines for behavior claims and revisit them after edits. "
-                "Update an existing note_id "
+                "available_note_ids is the current retained-ID authority; update receipts "
+                "describe the earlier before-tool-batch state. Update an existing note_id "
                 "to refine it even when citations change; null creates a separate note."
             ),
         }

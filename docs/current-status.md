@@ -27,7 +27,57 @@ Repository policy alone never initiates paid work. The twenty-five live observat
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v17
+## Current implementation: tool surface v18
+
+V18 improves working-memory feedback without tightening the action mask. A concern's
+original `statement` is immutable; an existing-ID upsert stores its latest `progress_note`.
+An exact repeat of the original or current progress returns `unchanged`, preserving the
+decision and update time. A distinct question needs a new concern ID. All concerns remain
+model-authored, bounded to three, advisory, and resolved only with the existing evidence rules.
+
+Source-note receipts explicitly describe `before_tool_batch`, including the update's diff
+and historical `note_ids_after_update`. Current IDs live in `working_notes.available_note_ids`.
+The next native owner output also labels `working_notes_after_batch`, including only that
+batch's source-note expirations. Thus a pre-mutation successful note update no longer claims
+that the expired ID is still available. The durable receipt, first-owner rule, and replay stay exact.
+
+`observed_source_index` adds at most 16 lexical Python header locations within 4,000
+serialized characters, using only already delivered current source. It adds no source read,
+function-extent claim, or semantic proof. A conditional one-read/search policy preview now
+lists all affected tools, including optional probes/checks, instead of warning about reads
+alone. Other actions, new evidence, and larger parallel batches can have different successors.
+No budget, tool admission, task case, mandatory experiment, or extra model turn is added.
+
+The row-25 read-only audit found intact core-source delivery: no omitted observed lines,
+at most 19,799 of 24,000 retained source characters, and the backend special-case source
+already visible. It also found pre-mutation/current-note ID ambiguity, repeated rewriting of
+one concern, and incomplete closure warnings. These are feedback defects, not proof that
+context size or v17 caused the model's late edit or regression. V18 tests these contracts;
+they cannot show that a different prompt would have solved row 25. Existing run/envelope
+bytes are not migrated. No twenty-sixth live row is authorized.
+
+The read-only comparison also caught a navigation implementation defect before release:
+the observed editable fragment started inside a docstring, so assuming an initial code
+state reversed quote boundaries and hid the real `makedirs` header. Ambiguous initial
+bare triple quotes now disable literal masking for that fragment; entries remain explicitly
+lexical candidates, not certified symbols. Known literal openings still suppress examples.
+This uses no unseen source and does not change mutation evidence admission.
+Reapplying the index read-only to row 25's pre-mutation context now retains the
+`pyfakefs/fake_os.py:915` header: 16 entries, five omitted candidates, and 3,213 serialized
+characters. This is a projection comparison, not a replay of the model's decisions.
+
+Final provider-free verification passes Ruff and 414 tests in three concurrent groups
+of 75, 144, and 195 (90.71, 83.92, and 86.28 seconds); three opt-in Docker tests were
+skipped. Separate short external roots are `C:\pt\pl18-verified-6401-{a,b,c}`.
+Mock `run_dev_0fde34f908a74d5e` under `C:\pt\pl18-smoke-6401` reaches isolated
+`EVALUATOR_PASS` in 5.03 seconds through one mutation, four model turns and five actions:
+task acceptance PASS, safety NOT_RUN, cost zero, `official=false`, and `claim_eligible=false`.
+The final frozen Ruff/full-suite/mock sequence took 98 seconds, excluding earlier debugging
+and focused checks. Native feedback is exact across restart; rebuilt context values are
+equivalent even if JSON key order changes, and the same persisted context reproduces the
+exact model input. No provider call, Docker operation, task change, or live row ran.
+
+### V17 implementation and validation checkpoint
 
 V17 separates the currently focused question from up to three run-local public
 verification concerns. Optional `memory_update.verification_updates` creates/revises a

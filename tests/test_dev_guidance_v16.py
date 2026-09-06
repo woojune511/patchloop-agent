@@ -78,6 +78,7 @@ def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
         "smallest sufficient unique exact anchor", "status=current only means",
         "interpretation remains unverified", "post-image", "public input",
         "No update or\nthree-part plan is required each turn",
+        "Use concern_id=null for a distinct concern",
     ):
         assert instruction in DEV_SYSTEM_PROMPT
     assert dev_tool_surface_hash() != (

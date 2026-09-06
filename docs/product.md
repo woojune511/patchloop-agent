@@ -45,6 +45,9 @@ text, the prompt presents the current gate, remaining horizon, mutation readines
 complete-diff mutation scope budget, and a bounded ledger of covered ranges and recent
 inspection outcomes, including reads and searches. Omitted observed source has short
 range metadata without body text, bounded to 12 ranges plus its full range count.
+The bounded `observed_source_index` locates lexical function/class headers in already
+delivered current source, with at most 16 entries and 4,000 characters. It helps find
+observed code again without reading unseen source or claiming complete function extents.
 `ready_to_attempt` means non-empty, current editable evidence is delivered
 in this input. It does not establish that a proposed replacement's complete anchor is
 covered or that the semantic solution is sufficient; admission validates the exact
@@ -101,8 +104,12 @@ references historical, and journals IDs and updates for resume. A note's observe
 body is retained independently of temporary source spans; mutation-linked lifecycle
 records make continuation and resume agree on which notes survive. Invalid notes receive
 a separate storage receipt with the affected note and a correction hint, without rejecting
-the main action. Before observing an answer, the agent can keep an open question; afterward
-it can create a note and use the returned ID for revisions. This run-local working memory has no
+the main action. That receipt describes the update before its tool batch, not which IDs
+survive a following edit. The native owner output separately reports note IDs and expiries
+after the completed batch; `working_notes.available_note_ids` is the current authority.
+Before observing an answer, the agent can keep an open question; afterward
+it can create a note and use its ID for revisions while it remains in the current list.
+This run-local working memory has no
 retrieval from prior runs and stores no reasoning transcript.
 
 Notes may retain the observed mechanism, the chosen implementation approach, and
@@ -115,10 +122,15 @@ their cited evidence is current, not that a behavior claim was checked after an 
 Guidance favors causal mechanisms, closing answered questions, and reconsidering claims
 against changed behavior rather than merely preserving repeated function locations.
 
-A separate working set retains up to three unresolved public verification concerns,
+A separate working set retains up to three public verification concerns,
 independent of the focused question and expiring source observations. The same optional
-memory update can create/revise one, resolve it with a completed successful current-diff
-check or experiment and a brief reason, or explicitly dismiss it. Earlier-diff evidence
+memory update creates an immutable original `statement` with a null concern ID. An
+existing `vN` ID stores the supplied statement as its latest `progress_note`, without
+replacing the original question. Distinct questions need new IDs. Repeating the original
+or currently retained progress is reported as `unchanged`; it does not reopen decisions
+or change state. New progress reopens the concern. The agent can resolve a concern with
+a completed successful current-diff check or experiment and a brief reason, or explicitly
+dismiss it. Earlier-diff evidence
 is historical, and later edits reopen retained resolved/dismissed concerns. These remain
 model judgments: the harness verifies evidence identity, not whether a test establishes
 the claimed behavior. The final visible-check PASS invites reviewing remaining concerns
@@ -131,8 +143,11 @@ when the public evidence cannot support safe progress. It records a bounded publ
 conclusion and does not create a submission or run the evaluator.
 
 Inspection availability is based on completion slack rather than a fixed number of
-earlier reads. When only one optional inspection turn remains, the context warns that
-`read_file` and `search_files` will close next. At zero slack they close so mutation,
+earlier reads. The context previews which tools would close after one more read/search
+with unchanged evidence. `tools_closing_after_this_turn` uses the actual next policy,
+including `run_probe` or `run_check` when affected, not just the inspection tools.
+This conditional notice does not predict new evidence or reserve a different budget.
+At zero inspection slack, reads and searches close so mutation,
 remaining visible checks, submission, or an explicit stop retain the required calls.
 Each decision selects its actually delivered source before computing readiness and the
 tool policy. The latest native tool results and retained source jointly establish the
@@ -212,8 +227,11 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v16` adds component-aware search, minimum-path edit admission
-with separate recovery warnings, and explicit unverified note interpretations to durable
+workflow state. Tool-surface `v18` preserves original verification questions, distinguishes
+update-time and after-batch note state, indexes observed headers, and previews actual
+conditional tool closures without changing action masks or budget rules. It retains
+component-aware search, minimum-path edit admission with separate recovery warnings,
+explicit unverified note interpretations, durable
 note-source lifecycles, distinct annotation feedback, stable note IDs,
 implementation-oriented guidance, opt-in public
 experiments, and the existing source projection,

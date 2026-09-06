@@ -61,6 +61,7 @@ def test_new_concerns_are_unverified_without_source_requirements_and_inputs_are_
     assert projection["items"][0]["status"] == "unresolved"
     assert projection["items"][0]["model_authored"] is True
     assert projection["items"][0]["interpretation_status"] == "model_authored_unverified"
+    assert projection["items"][0]["progress_note"] is None
     assert "does not prove" in projection["interpretation"]
     projection["items"][0]["statement"] = "projection-only mutation"
     assert updated["items"][0]["statement"] == snapshot[0]["statement"]
@@ -164,11 +165,11 @@ def test_decision_reopens_on_new_diff_without_losing_historical_evidence(operati
     assert state == snapshot
 
 
-def test_upsert_existing_reopens_and_json_restart_preserves_stable_id_allocation():
+def test_upsert_progress_reopens_and_json_restart_preserves_stable_id_allocation():
     state, _ = apply(initial(), [concern("dismiss", "v1", reason="Not currently relevant.")])
     state = json.loads(json.dumps(state))
     state, receipt = apply(state, [
-        concern(concern_id="v1", statement="Revised public uncertainty."),
+        concern(concern_id="v1", statement="The public branch still needs a candidate experiment."),
         concern(statement="A different behavior is untested."),
     ], turn="t3")
     assert receipt["available_concern_ids"] == ["v1", "v2"]
@@ -176,6 +177,10 @@ def test_upsert_existing_reopens_and_json_restart_preserves_stable_id_allocation
     assert state["items"][0]["decision"] is None
     assert state["items"][0]["created_turn_id"] == "t1"
     assert state["items"][0]["updated_turn_id"] == "t3"
+    assert state["items"][0]["statement"] == "Public branch behavior is untested."
+    assert state["items"][0]["progress_note"] == (
+        "The public branch still needs a candidate experiment."
+    )
     assert state["next_id"] == 3
 
 

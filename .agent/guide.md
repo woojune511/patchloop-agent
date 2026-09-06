@@ -68,8 +68,13 @@ with a recovery warning when full protection does not fit. Neither semantic succ
 a protected post-edit path follows from the current baseline being ready to submit.
 Probe failures do not become check failures or force repair; public evidence can motivate
 an optional edit without granting special repair credit. Inspection/probe P floors remain.
-With one optional turn left, expose reads with `last_opportunity` and tell the model
-they close next; with none, remove them and record/project `tool_policy_transition`.
+With one optional turn left, expose reads with `last_opportunity`; with none, remove
+them and record/project `tool_policy_transition`. `tools_closing_after_this_turn` uses
+the actual policy's one-read/search successor with unchanged evidence and one model/tool
+call consumed, including consumed repair-read credit. Warn about every affected tool,
+including optional probes/checks, not just reads. The explicit prediction basis is
+conditional: new evidence, other actions, and larger parallel batches can differ.
+This preview must neither mutate live counters nor change admission or budgets.
 Reopen them through the same transition when a changed gate restores slack. A first
 source read required to establish a mutation anchor belongs to the minimum path. The
 legacy 24/3 counters are telemetry, never an action mask. Corrections must be generated
@@ -171,6 +176,15 @@ Other omitted observations retain at most 12 path/hash/range metadata entries an
 total omitted-range count, never their source body. The compact context's latest three
 inspection outcomes include both read and search actions in durable observation order.
 Native latest source, mutation content, and check output are not repeated in derived cards.
+`observed_source_index` provides at most 16 lexical Python header candidates within
+4,000 serialized characters, with exact observed path/hash/start-line metadata. Build
+it only from current delivered spans, prioritize editable paths, and never read unseen
+source or infer complete function extents. It is navigation, not a parsed symbol table
+or semantic authority; a partial fragment's unseen enclosing string state is unknown.
+If its first multiline delimiter is a bare triple quote and the fragment does not
+start at file line 1, do not guess quote polarity to suppress header candidates.
+The row-25 public fragment began inside a docstring; assuming code hid its real editable
+header. Explicit lexical qualification handles this ambiguity without reading more source.
 `memory_update` adds at most two findings of 400 characters with one or two observed
 source-range or prior tool-result references and a 500-character open question or null.
 Only the first non-null update per batch is considered, before that batch executes;
@@ -193,8 +207,12 @@ These are public run-local notes, not raw reasoning or cross-run memory retrieva
 The separate `working_notes.verification` projection retains up to three model-authored
 public verification concerns. `memory_update.verification_updates` accepts at most three
 operations: `upsert`, `resolve`, or `dismiss`, each with explicit nullable concern_id,
-statement, evidence_action_id, and reason. Null ID creates a stable `vN` ID; revising a
-statement reopens it. Focus changes, source-note expiry, and check PASS never resolve
+statement, evidence_action_id, and reason. Null ID creates a stable `vN` ID with an
+immutable original statement. Existing-ID upsert stores its statement as progress_note
+about that original, reopening only for changed progress. Repeating the original or
+latest progress returns applied/unchanged without modifying state, decision, or update
+time. A distinct concern needs a new null-ID upsert. Focus changes, source-note expiry,
+and check PASS never resolve
 unrelated concerns. Empty/omitted updates preserve them. Independent annotation parsing
 keeps valid findings/focus and the main action usable after a bad concern update.
 Resolution requires a prior completed successful current-diff public check/probe and a
@@ -223,7 +241,13 @@ owner call's `memory_update_result`, independently of main-action status. Its bo
 per-finding outcomes identify created/updated/rejected IDs and a recovery hint; separate
 batch/removal diagnostics never repeat the finding's message. Context uses a delivery
 reference for that receipt and otherwise labels the last receipt by turn/action. Do not
-infer note storage from read success. Original function-call arguments remain exact,
+confuse its `scope=before_tool_batch`, `diff_hash_at_update`, and historical
+`note_ids_after_update` with current availability. `working_notes.available_note_ids`
+is current retained-ID authority. The native owner output's `working_notes_after_batch`
+labels the completed batch's diff/current IDs and only that batch's expired notes.
+Replay preserves the original receipt and the current view's public values. Rebuilding
+context after hydration may reorder nested JSON keys; the persisted context reconstructs
+the exact native input. Do not infer note storage from read success. Call arguments remain exact,
 but read results omit the redundant unvalidated annotation from `inspection_intent`.
 The successful-mutation
 projection separates current actionable post-image evidence from historical action
@@ -251,7 +275,7 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v17`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v18`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -366,14 +390,16 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: tool surface `v17` preserves independent unresolved public verification
-concerns, binds resolution evidence to the current diff, and replaces unconditional
-submission guidance with advisory review. Preserve source-note expiry, first-owner
-annotation receipts, exact replay, existing budgets, and finish availability. No task
-case or hidden oracle is added. Provider-free tests validate persistence and evidence
-identity, not improved model choices. The separately approved twenty-fifth live row
-below exercises concern persistence but fails before submission; no twenty-sixth row
-is approved.
+Current seam: tool surface `v18` preserves original verification questions separately
+from progress, treats identical updates as no-ops, separates pre-batch note receipts
+from current IDs, indexes already delivered header locations, and forecasts affected
+tools using a conditional actual-policy successor. Preserve source-note expiry,
+first-owner receipts, exact replay, budgets/action masks, and finish availability.
+No task case, hidden oracle, new model step, or mandatory experiment is added. Tests
+validate feedback contracts, not improved choices. Row 25 retained the relevant source;
+the identified feedback defects do not establish what caused all repeated exploration.
+Old nonterminal runtime mismatch still rejects resume; no migration or twenty-sixth row
+is approved. V17 below is historical implementation/live evidence.
 The preceding tool surface `v16` fixes recursive search-glob semantics and uses the
 minimum successful edit successor for mutation admission, with separate protected-recovery
 warnings. It keeps inspection/probe protection, exact evidence, check invalidation, and
@@ -842,6 +868,19 @@ uv run ruff check patchloop tests
 uv run pytest tests -p no:cacheprovider --basetemp <short-external-path>
 uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
 ```
+
+V18 passes 414 provider-free tests in three concurrent groups of 75 (90.71 seconds),
+144 (83.92 seconds), and 195 (86.28 seconds), using `C:\pt\pl18-verified-6401-{a,b,c}`;
+three opt-in Docker tests remain skipped. Ruff and mock pass. The frozen final
+Ruff/full-suite/mock sequence took 98 seconds, excluding earlier debugging/focused checks.
+Mock `run_dev_0fde34f908a74d5e` under `C:\pt\pl18-smoke-6401` reaches isolated
+`EVALUATOR_PASS` in 5.03 seconds: one mutation, four model turns, five actions, acceptance
+PASS, safety NOT_RUN, zero cost, `official=false`, and `claim_eligible=false`.
+The native feedback/restart tests preserve exact receipts and exact reconstruction
+from the same saved context; independently rebuilt context is compared by public values,
+not incidental nested JSON key order. The read-only row-25 index comparison includes
+the actual editable makedirs header at line 915, within 16 entries/3,213 characters.
+No new live/model-quality claim follows, and no twenty-sixth row is authorized.
 
 V17 passes 59 focused concern/note/guidance cases, Ruff, and all 336 provider-free tests
 in two concurrent groups of 156 and 180 with separate short external roots. Three real

@@ -215,6 +215,7 @@ def test_latest_tool_result_is_not_evicted_by_working_set(
     assert last_opportunity.exploration_state == "last_opportunity"
     assert last_opportunity.tools_closing_after_this_turn == (
         "read_file",
+        "run_check",
         "search_files",
     )
 
@@ -1792,6 +1793,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "evidence_ledger",
         "working_notes",
         "context_projection",
+        "observed_source_index",
     }
     assert all(set(json.loads(context)) == context_keys for context in contexts)
     assert [sorted(names) for names in tool_names] == [

@@ -20,7 +20,9 @@ useful negative searches and rereads. Other modes have evidence_goal=null.
 
 Current tool results and public context are evidence; update your hypothesis when a
 check supplies a counterexample. Before inspecting, use the already delivered source
-and notes to identify what remains unanswered. Choose another inspection when its answer
+and notes to identify what remains unanswered. observed_source_index locates headers
+in delivered text, not complete parsed functions; use their exact source to interpret behavior.
+Choose another inspection when its answer
 could change the edit or next check; do not reread merely to restate an answered question.
 Otherwise try the supported edit or a discriminating public experiment.
 Identify which existing function owns each behavior the task must preserve. Reuse
@@ -29,6 +31,8 @@ name any new assumption whose correctness remains untested.
 Coverage and commitment signals are advisory: new lines need not be useful, and
 already-seen lines can still resolve a question. Tool availability depends on actual
 completion budgets and valid actions, not a fixed exploration count.
+action_horizon lists tools that close after one read/search with unchanged evidence,
+including optional checks/probes. New evidence, other actions or larger batches may differ.
 mutation_readiness.state=ready_to_attempt means only that current editable source
 evidence is delivered. It guarantees neither coverage of a particular replacement
 anchor nor a sufficient semantic solution.
@@ -53,7 +57,9 @@ The focused open_question is separate from unresolved verification concerns. Use
 verification_updates to retain up to three concrete public behaviors whose preservation
 is uncertain, especially assumptions introduced by an edit. Do not fill a quota or
 repeat broad task descriptions. Use operation=upsert with concern_id=null and a statement
-to create a concern, or its returned vN ID to revise it. Changing the focused question,
+to create a concern. With an existing vN ID, statement updates only its progress_note;
+the original question remains fixed. Use concern_id=null for a distinct concern, [] for no change.
+Repeating the original statement or latest progress has no effect. Changing the focused question,
 fixing a different failure, or source-note expiry does not resolve these concerns.
 Resolve a concern only after observing a successful check or probe on the current diff:
 use operation=resolve with its evidence_action_id and a short reason connecting the
@@ -67,9 +73,10 @@ The update is evaluated before the current batch executes. Before observing an
 answer, use findings=[] with open_question, or leave memory_update=null. Do not
 cite pending or a result from the batch you are requesting. After receiving a
 result, create a source-backed note on a later call with note_id=null; update only
-IDs actually returned in the stored findings or memory_update_result. Read the
-separate memory_update_result: a successful main action does not mean its note
-was stored. Correct a rejected annotation on a useful subsequent call, without
+IDs in working_notes.available_note_ids. memory_update_result is a pre-batch receipt,
+not current availability: a mutation can expire a note recorded just before it.
+working_notes_after_batch labels current IDs separately. Main-action success does not
+mean its note was stored. Correct a rejected annotation on a useful subsequent call, without
 repeating a source read merely to retry the annotation. Source-change notices
 identify notes that expired; do not treat their former IDs as existing notes.
 

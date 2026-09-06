@@ -62,7 +62,7 @@ def test_row22_rejected_reference_then_unknown_id_recovers_without_blocking_acti
         assert receipt["findings"][0]["status"] == "rejected"
         assert receipt["findings"][0]["code"]
         assert receipt["findings"][0]["message"]
-        assert receipt["available_note_ids"] == []
+        assert receipt["note_ids_after_update"] == []
     unknown = receipts[1]["findings"][0]
     assert unknown["code"] == "unknown_note_id"
     assert unknown["note_id"] == "n1"
@@ -71,7 +71,7 @@ def test_row22_rejected_reference_then_unknown_id_recovers_without_blocking_acti
     assert receipts[2]["status"] == "applied"
     assert receipts[2]["findings"][0]["status"] == "created"
     assert receipts[2]["findings"][0]["note_id"] == "n1"
-    assert receipts[2]["available_note_ids"] == ["n1"]
+    assert receipts[2]["note_ids_after_update"] == ["n1"]
     assert len(gateway.working_notes()["findings"]) == 1
 
     before = gateway.journal.path.read_bytes()
@@ -97,7 +97,7 @@ def test_first_nonnull_update_owns_parallel_receipt_and_ignored_update_is_report
     payload = gateway.record_working_notes_update(calls, turn_id="parallel")
     receipt = payload["receipt"]
     assert receipt["action_id"] == "owner"
-    assert receipt["available_note_ids"] == ["n1"]
+    assert receipt["note_ids_after_update"] == ["n1"]
     assert len(receipt["findings"]) == 1
     assert "ignored_additional_memory_updates" in {
         diagnostic["code"] for diagnostic in receipt["diagnostics"]
@@ -120,7 +120,7 @@ def test_partial_receipt_identifies_each_finding_without_losing_valid_question(s
     assert [(item["finding_index"], item["status"]) for item in receipt["findings"]] == [
         (0, "created"), (1, "rejected"),
     ]
-    assert receipt["available_note_ids"] == ["n1"]
+    assert receipt["note_ids_after_update"] == ["n1"]
     assert receipt["open_question_applied"] is True
     assert gateway.working_notes()["open_question"] == update["open_question"]
 
@@ -149,7 +149,7 @@ def test_receipt_does_not_echo_rejected_raw_notes_or_private_looking_references(
     assert statement not in serialized
     assert reference not in serialized
     assert "raw_reasoning" not in serialized
-    assert receipt["available_note_ids"] == []
+    assert receipt["note_ids_after_update"] == []
     assert len(receipt["findings"]) <= 2
     assert len(receipt["diagnostics"]) <= 12
     assert all(len(item["message"]) <= 500 for item in receipt["diagnostics"])

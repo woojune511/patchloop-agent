@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+import io
+import json
+import re
+import tokenize
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
@@ -10,6 +15,134 @@ from patchloop.util import sha256_json
 
 SOURCE_OUTPUT_CHARS = 24_000
 RETAINED_SOURCE_CHARS = 24_000
+OBSERVED_SOURCE_INDEX_ENTRIES = 16
+OBSERVED_SOURCE_INDEX_CHARS = 4_000
+_PYTHON_HEADER = re.compile(
+    r"^\s*(?:(async)\s+)?(def|class)\s+([^\W\d]\w*)\s*(?=[:\[(])"
+)
+_TRIPLE_QUOTED_TOKEN = re.compile(r"(?i:[rubf]*)(?:\"{3}|'{3})")
+_BARE_TRIPLE_QUOTE = re.compile(r"(?:\"{3}|'{3})\s*(?:#.*)?")
+
+
+def _visible_string_lines(lines: list[str], *, fragment_start_line: int) -> set[int]:
+    """Suppress known literal bodies without claiming a fragment's enclosing state."""
+
+    excluded: set[int] = set()
+    seen_multiline_delimiter = False
+    # Indentation outside the observed fragment is unknown. Flatten only this
+    # lexical scratch copy; row numbers and the actual source evidence are unchanged.
+    scratch = "\n".join(line.lstrip() for line in lines)
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(scratch).readline):
+            if token.type == tokenize.STRING:
+                if _TRIPLE_QUOTED_TOKEN.match(token.string) and not seen_multiline_delimiter:
+                    # A bare quote can close a string opened before this fragment.
+                    # Choosing the opposite polarity would hide real headers until
+                    # EOF. Keep lexical candidates, not a guessed string mask.
+                    if fragment_start_line > 1 and _BARE_TRIPLE_QUOTE.fullmatch(
+                        lines[token.start[0] - 1].strip()
+                    ):
+                        return set()
+                    seen_multiline_delimiter = True
+                excluded.update(range(token.start[0], token.end[0] + 1))
+    except tokenize.TokenError as error:
+        if error.args[0] == "EOF in multi-line string":
+            if (
+                not seen_multiline_delimiter and fragment_start_line > 1
+                and _BARE_TRIPLE_QUOTE.fullmatch(lines[error.args[1][0] - 1].strip())
+            ):
+                return set()
+            excluded.update(range(error.args[1][0], len(lines) + 1))
+    except (IndentationError, SyntaxError):
+        # A partial source fragment need not be a parseable Python program.
+        pass
+    return excluded
+
+
+def build_observed_source_index(
+    spans: Iterable[dict[str, Any]], *, editable_paths: Iterable[str] = ()
+) -> dict[str, Any]:
+    """Index observed Python header candidates, never unobserved source or extents.
+
+    This is lexical navigation, not a parsed symbol table: a fragment can begin
+    inside an unobserved multiline string. Only visibly opened literals can be
+    excluded. The caller supplies current delivered spans; no source is reread.
+    """
+
+    observed: dict[tuple[str, str], dict[int, str]] = defaultdict(dict)
+    conflicting: set[tuple[str, str, int]] = set()
+    for span in spans:
+        path, file_hash = span.get("path"), span.get("file_hash")
+        start, end, content = span.get("start_line"), span.get("end_line"), span.get("content")
+        if (
+            not isinstance(path, str) or not path.endswith((".py", ".pyi"))
+            or not isinstance(file_hash, str) or not file_hash
+            or type(start) is not int or type(end) is not int or not 1 <= start <= end
+            or not isinstance(content, str)
+        ):
+            continue
+        # A span's final empty element can be an observed blank line, unlike a
+        # whole file's terminal newline. Its explicit range decides the length.
+        lines = content.replace("\r\n", "\n").split("\n")
+        if len(lines) != end - start + 1:
+            continue
+        by_line = observed[(path, file_hash)]
+        for number, line in enumerate(lines, start):
+            if number in by_line and by_line[number] != line:
+                conflicting.add((path, file_hash, number))
+            by_line[number] = line
+
+    candidates: list[dict[str, Any]] = []
+    for (path, file_hash), by_line in sorted(observed.items()):
+        chunks: list[list[int]] = []
+        for number in sorted(by_line):
+            if (path, file_hash, number) in conflicting:
+                continue
+            if chunks and chunks[-1][-1] + 1 == number:
+                chunks[-1].append(number)
+            else:
+                chunks.append([number])
+        for chunk in chunks:
+            lines = [by_line[number] for number in chunk]
+            excluded = _visible_string_lines(lines, fragment_start_line=chunk[0])
+            for offset, line in enumerate(lines):
+                if offset + 1 in excluded:
+                    continue
+                match = _PYTHON_HEADER.match(line)
+                if match is None or (match[1] and match[2] != "def"):
+                    continue
+                candidates.append({
+                    "path": path,
+                    "file_hash": file_hash,
+                    "name": match[3],
+                    "kind": "async_def" if match[1] else match[2],
+                    "start_line": chunk[offset],
+                })
+    editable = set(editable_paths)
+    candidates.sort(key=lambda item: (
+        item["path"] not in editable, item["path"], item["start_line"], item["file_hash"]
+    ))
+    result: dict[str, Any] = {
+        "entries": [],
+        "omitted_count": len(candidates),
+        "interpretation": (
+            "Lexical Python header candidates from current delivered full source lines only. "
+            "Not parsed symbols, complete function ranges, or semantic validation; unseen "
+            "enclosing string state is unknown. Ambiguous bare-quote fragments retain lexical "
+            "candidates. No source was read for this index."
+        ),
+    }
+    for candidate in candidates:
+        if len(result["entries"]) >= OBSERVED_SOURCE_INDEX_ENTRIES:
+            break
+        proposed = {
+            **result,
+            "entries": [*result["entries"], candidate],
+            "omitted_count": result["omitted_count"] - 1,
+        }
+        if len(json.dumps(proposed, sort_keys=True)) <= OBSERVED_SOURCE_INDEX_CHARS:
+            result = proposed
+    return result
 
 
 def source_lines(text: str) -> list[str]:

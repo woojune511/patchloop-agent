@@ -50,7 +50,7 @@ _NOTE_FEEDBACK = {
     "unknown_note_id": (
         "This note was not stored: the requested note_id does not exist. Use "
         "note_id=null to create a note with already observed evidence, or choose an "
-        "ID from available_note_ids to update an existing note."
+        "ID from working_notes.available_note_ids to update a currently retained note."
     ),
     "unobserved_tool_result": (
         "This note was not stored: its tool result has not been observed. Cite an "
@@ -85,8 +85,9 @@ _NOTE_FEEDBACK = {
         "rejected. Correct the finding before consolidating the existing notes."
     ),
     "unknown_remove_note_id": (
-        "A requested removal was not applied: that ID is not in available_note_ids. "
-        "Remove only existing notes, or use an empty remove_note_ids list."
+        "A requested removal was not applied: that ID did not exist before this batch. "
+        "Consult working_notes.available_note_ids for currently retained IDs, or use "
+        "an empty remove_note_ids list."
     ),
     "cannot_remove_updated_note": (
         "A requested removal was not applied: this update also revises that note. "
@@ -135,9 +136,11 @@ def memory_update_schema() -> dict[str, Any]:
             "non-null update in a batch is used, before that batch executes. Do not "
             "cite pending/current-batch results. Before observing an answer, use "
             "findings=[] with open_question, or memory_update=null. After observing "
-            "it, create a note with note_id=null and use the returned allocated ID "
-            "for later updates. Main action success does not mean a note was stored; "
-            "check memory_update_result. Null preserves notes and the question."
+            "it, create a note with note_id=null. memory_update_result records the "
+            "before-tool-batch update; its note_ids_after_update is historical, not "
+            "current availability. Consult working_notes.available_note_ids before "
+            "updating a retained note. Main action success does not mean a note was "
+            "stored. Null preserves notes and the question."
         ),
         "properties": {
             "findings": {
