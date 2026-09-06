@@ -53,6 +53,14 @@ from patchloop.dev.working_notes import (
 )
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
 from patchloop.repository import DiffSummary, WorkspaceManager
+from patchloop.sandbox.execution_feedback import (
+    MAX_FILES,
+    MAX_LINES,
+    changed_lines,
+    make_request,
+    public_feedback,
+    summarize_execution,
+)
 from patchloop.sandbox.probes import DockerProbeSandbox
 from patchloop.sandbox.runner import Sandbox
 from patchloop.util import ensure_within, safe_relative_path, sha256_bytes, sha256_json
@@ -3059,16 +3067,22 @@ class DevToolGateway:
             check = checks[check_id]
         except KeyError as exc:
             raise ContractError(f"unknown public check: {check_id}") from exc
-        diff_hash = self.current_diff_hash
+        summary = self.current_diff
+        diff_hash = summary.patch_hash
+        targets = self._execution_targets(execution_identity, summary=summary)
         if self.deadline is not None:
             self.deadline.check()
         if getattr(self.sandbox, "supports_execution_deadline", False):
             outcome = self.sandbox.run_check(
                 self.workspace, check,
                 deadline=self.deadline, execution_identity=execution_identity,
+                **({"execution_targets": targets}
+                   if getattr(self.sandbox, "supports_public_execution", False) else {}),
             )
         else:
             outcome = self.sandbox.run_check(self.workspace, check)
+        if self.current_diff_hash != diff_hash:
+            raise RecoveryError("managed workspace changed during public check execution")
         deadline_exhausted = getattr(outcome, "deadline_exhausted", False)
         cleanup_failed = getattr(outcome, "cleanup_failed", False)
         passed = (
@@ -3101,6 +3115,10 @@ class DevToolGateway:
             "stderr": outcome.stderr[-12_000:],
             "execution_policy": outcome.execution_policy,
             "execution_policy_hash": execution_policy_hash,
+            "public_execution": (
+                getattr(outcome, "public_execution", None)
+                or public_feedback(targets, reason="backend_or_command_unmeasured")
+            ),
         }
         if not passed and not deadline_exhausted and not cleanup_failed:
             output["public_check_failure"] = self._public_check_failure(
@@ -3121,20 +3139,82 @@ class DevToolGateway:
             raise ContractError("probe question must contain 1-500 characters")
         if not isinstance(python_source, str) or not 1 <= len(python_source) <= 8_000:
             raise ContractError("probe source must contain 1-8000 characters")
-        baseline = self.current_diff_hash
+        summary = self.current_diff
+        baseline = summary.patch_hash
+        targets = self._execution_targets(execution_identity, summary=summary)
         output = self.probe_sandbox.run_probe(
             self.workspace, question, python_source,
             deadline=self.deadline, execution_identity=execution_identity,
+            **({"execution_targets": targets}
+               if getattr(self.probe_sandbox, "supports_public_execution", False) else {}),
         )
         observed_diff_hash = self.current_diff_hash
         receipt = {**output, "question": question, "diff_hash": baseline,
-                   "workspace_diff_hash": baseline}
+                   "workspace_diff_hash": baseline,
+                   "public_execution": output.get("public_execution") or public_feedback(
+                       targets, reason="backend_or_command_unmeasured",
+                   )}
         if observed_diff_hash != baseline:
             raise RecoveryError(
                 "managed workspace changed during probe execution",
                 details={**receipt, "observed_diff_hash": observed_diff_hash},
             )
         return receipt
+
+    def _execution_targets(self, execution_identity=None, *, summary=None) -> dict[str, Any]:
+        summary = self.current_diff if summary is None else summary
+        additions = changed_lines(summary.patch)
+        files = []
+        omitted = 0
+        line_count = 0
+        for relative in summary.changed_files:
+            lines = sorted(additions.get(relative, set()))
+            if (not relative.endswith(".py") or len(relative) > 512
+                    or any(part.lower().startswith(".env")
+                           or part.lower() in {".git", ".patchloop-hidden"}
+                           for part in Path(relative).parts)
+                    or not self._path_allowed(relative) or len(files) >= MAX_FILES
+                    or line_count + len(lines) > MAX_LINES):
+                omitted += 1
+                continue
+            if not lines:
+                continue
+            try:
+                path, selected = self._tracked_path(relative)
+                raw = selected.read_bytes()
+            except (ContractError, OSError):
+                omitted += 1
+                continue
+            files.append({"path": path, "file_hash": sha256_bytes(raw), "changed_lines": lines})
+            line_count += len(lines)
+        return make_request(
+            summary.patch_hash, files, execution_identity=execution_identity,
+            omitted_file_count=omitted, deleted_line_count=summary.deleted_lines,
+        )
+
+    def public_execution_summary(self, *, diff_hash: str) -> dict[str, Any]:
+        records = []
+        hashes = {}
+        for event in self.journal.events():
+            if event["event_type"] != "action_finished":
+                continue
+            result = event["payload"]["result"]
+            if (result["tool"] not in {"run_check", "run_probe"}
+                    or result["status"] != "succeeded"):
+                continue
+            feedback = result["output"].get("public_execution")
+            if not isinstance(feedback, dict) or feedback.get("diff_hash") != diff_hash:
+                continue
+            records.append({"action_id": result["action_id"], "feedback": feedback})
+            for file in feedback.get("files", []):
+                path = file["path"]
+                if path not in hashes:
+                    try:
+                        _, selected = self._tracked_path(path)
+                        hashes[path] = sha256_bytes(selected.read_bytes())
+                    except (ContractError, OSError):
+                        hashes[path] = None
+        return summarize_execution(records, diff_hash, hashes)
 
     def _remember_check(self, output: dict[str, Any]) -> None:
         diff_hash = str(output["diff_hash"])

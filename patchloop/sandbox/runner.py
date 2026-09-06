@@ -17,6 +17,7 @@ from typing import Protocol
 from patchloop.contracts import DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V2, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import PatchLoopError
+from patchloop.sandbox.execution_feedback import public_feedback, split_report, trace_launch
 from patchloop.util import canonical_json, ensure_within, sha256_bytes
 
 _DOCKER_IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}")
@@ -41,6 +42,7 @@ class SandboxResult:
     execution_policy: dict[str, object] | None = None
     deadline_exhausted: bool = False
     cleanup_failed: bool = False
+    public_execution: dict[str, object] | None = None
 
     @property
     def passed(self) -> bool:
@@ -60,6 +62,7 @@ class Sandbox(Protocol):
         self, workspace: Path, check: RegisteredCheck, *,
         deadline: ExecutionDeadline | None = None,
         execution_identity: dict[str, str] | None = None,
+        execution_targets: dict | None = None,
     ) -> SandboxResult: ...
 
 
@@ -118,11 +121,13 @@ class LocalSandbox:
     official = False
     backend = "local"
     supports_execution_deadline = True
+    supports_public_execution = True
 
     def run_check(
         self, workspace: Path, check: RegisteredCheck, *,
         deadline: ExecutionDeadline | None = None,
         execution_identity: dict[str, str] | None = None,
+        execution_targets: dict | None = None,
     ) -> SandboxResult:
         del execution_identity
         timeout = (
@@ -133,9 +138,6 @@ class LocalSandbox:
             workspace, check.working_directory
         )
         declared_command = list(check.command)
-        command = list(declared_command)
-        if command[0] in {"python", "python3"}:
-            command[0] = sys.executable
         environment = {
             "PATH": os.environ.get("PATH", ""),
             "PYTHONPATH": str(workspace),
@@ -144,22 +146,28 @@ class LocalSandbox:
             **check.environment,
         }
         started = time.monotonic()
-        try:
-            completed = subprocess.run(
-                command,
-                cwd=workdir,
-                env=environment,
-                capture_output=True,
-                timeout=timeout,
-                check=False,
-            )
-            exit_code = completed.returncode
-            timed_out = False
-            stdout, stderr = completed.stdout, completed.stderr
-        except subprocess.TimeoutExpired as exc:
-            exit_code = None
-            timed_out = True
-            stdout, stderr = exc.stdout or b"", exc.stderr or b""
+        with trace_launch(declared_command, execution_targets, workspace) as launch:
+            command, _mounts = launch
+            if command[0] in {"python", "python3"}:
+                command[0] = sys.executable
+            if deadline is not None:
+                timeout = deadline.bounded_timeout(check.timeout_seconds)
+            try:
+                completed = subprocess.run(
+                    command, cwd=workdir, env=environment, capture_output=True,
+                    timeout=timeout, check=False,
+                )
+                exit_code = completed.returncode
+                timed_out = False
+                stdout, stderr = completed.stdout, completed.stderr
+            except subprocess.TimeoutExpired as exc:
+                exit_code = None
+                timed_out = True
+                stdout, stderr = exc.stdout or b"", exc.stderr or b""
+        feedback = None
+        if execution_targets is not None:
+            stderr, report = split_report(stderr, execution_targets)
+            feedback = public_feedback(execution_targets, None if timed_out else report)
         stdout_text, stderr_text, truncated, original = _bounded_text(
             stdout, stderr, check.output_limit_bytes
         )
@@ -172,6 +180,7 @@ class LocalSandbox:
             timed_out=timed_out,
             truncated=truncated,
             original_output_bytes=original,
+            public_execution=feedback,
             deadline_exhausted=(
                 deadline is not None
                 and (
@@ -188,6 +197,7 @@ class DockerSandbox:
     official = False
     backend = "docker"
     supports_execution_deadline = True
+    supports_public_execution = True
 
     def __init__(self, image: str) -> None:
         self.image = image
@@ -274,6 +284,7 @@ class DockerSandbox:
         self, workspace: Path, check: RegisteredCheck, *,
         deadline: ExecutionDeadline | None = None,
         execution_identity: dict[str, str] | None = None,
+        execution_targets: dict | None = None,
     ) -> SandboxResult:
         docker = self.cli_path()
         if docker is None:
@@ -370,27 +381,35 @@ class DockerSandbox:
                 f"type=bind,source={workspace.resolve()},target=/workspace,readonly",
                 "--workdir",
                 working_directory,
-                self.image,
-                *check.command,
             ]
         )
         cleanup_ok = False
-        try:
-            completed = subprocess.run(
-                command,
-                capture_output=True,
-                timeout=timeout,
-                check=False,
+        with trace_launch(
+            list(check.command), execution_targets, workspace, docker=True,
+        ) as (entrypoint, mounts):
+            try:
+                if deadline is not None:
+                    timeout = deadline.bounded_timeout(check.timeout_seconds, reserve_seconds=5)
+                completed = subprocess.run(
+                    [*command, *mounts, self.image, *entrypoint],
+                    capture_output=True, timeout=timeout, check=False,
+                )
+                exit_code = completed.returncode
+                timed_out = False
+                stdout, stderr = completed.stdout, completed.stderr
+            except subprocess.TimeoutExpired as exc:
+                exit_code = None
+                timed_out = True
+                stdout, stderr = exc.stdout or b"", exc.stderr or b""
+            finally:
+                # The mounted collector must outlive exact-container cleanup.
+                cleanup_ok = cleanup()
+        feedback = None
+        if execution_targets is not None:
+            stderr, report = split_report(stderr, execution_targets)
+            feedback = public_feedback(
+                execution_targets, report if not timed_out and cleanup_ok else None,
             )
-            exit_code = completed.returncode
-            timed_out = False
-            stdout, stderr = completed.stdout, completed.stderr
-        except subprocess.TimeoutExpired as exc:
-            exit_code = None
-            timed_out = True
-            stdout, stderr = exc.stdout or b"", exc.stderr or b""
-        finally:
-            cleanup_ok = cleanup()
         stdout_text, stderr_text, truncated, original = _bounded_text(
             stdout, stderr, check.output_limit_bytes
         )
@@ -403,6 +422,7 @@ class DockerSandbox:
             timed_out=timed_out,
             truncated=truncated,
             original_output_bytes=original,
+            public_execution=feedback,
             execution_policy=registered_check_execution_policy(
                 image=self.image, working_directory=working_directory,
                 timeout_seconds=check.timeout_seconds,

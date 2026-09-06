@@ -27,6 +27,19 @@ package are not mounted. Snapshot bytes are bounded to 128 MiB and hashed. The t
 read-only at `/opt/patchloop`; its raw-byte hash is part of the immutable run's probe
 profile. Both this wrapper and the Dockerfile are bound in the runtime content hash.
 
+V26 also copies `patchloop/sandbox/line_trace.py` into that existing trusted mount when
+current changed Python lines are selected. The profile includes `line_trace_hash`, and
+the runtime hashes the Python file. This stdlib-only helper needs no image rebuild.
+It observes line entries in the child launch thread and emits a separately bounded
+report frame; stdout/stderr retention and excess-output termination remain unchanged.
+Only host-selected current public paths, raw file hashes and changed line numbers are
+reported, never values or source bodies. Missing, invalid or interrupted collection is
+unknown. The report is a diagnostic, not tamper-resistant attestation, semantic coverage,
+required-check credit or a mandatory-probe/submission policy. The same helper can instrument
+registered public Python checks in a separate read-only trusted mount; private evaluator
+checks never receive collection targets. Current-diff summaries derive from durable tool
+results, so completed-action replay does not execute the experiment again.
+
 The model supplies a public question and Python source, not Docker arguments. Source
 is limited to 8,000 characters and 32,000 UTF-8 bytes. The host caps combined stdout
 and stderr at 12,000 bytes during collection and terminates excess output. Execution

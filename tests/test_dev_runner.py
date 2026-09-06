@@ -1814,8 +1814,10 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "working_notes",
         "context_projection",
         "observed_source_index",
+        "public_execution_summary",
     }
     assert all(set(json.loads(context)) == context_keys for context in contexts)
+    assert json.loads(contexts[-1])["public_execution_summary"]["observation_count"] == 1
     assert [sorted(names) for names in tool_names] == [
         json.loads(context)["available_tool_names"] for context in contexts
     ]

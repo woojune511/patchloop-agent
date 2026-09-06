@@ -264,7 +264,14 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v25` preserves one append-only native episode with complete
+workflow state. Tool-surface `v26` adds public changed-line execution feedback without new
+tools or submission gates. A check can pass while newly added error-handling lines remain
+unobserved. Results distinguish those lines from positions with no Python line event and
+from unknown collection. This is launch-thread line-entry evidence, not branch coverage,
+assertion coverage or correctness. It is separate from read/search coverage, and current
+summaries never inherit old-diff execution evidence. Existing optional notes/probes can
+use this information; private evaluation remains outside the model loop.
+It preserves one append-only native episode with complete
 compact state views and exact source delivery references. Its read description states the
 unchanged inclusive 400-line bound. It retains v21's separation of recorded inspection intent from observed
 feedback without changing actions or budgets. It places actual check outcomes beside note citations and

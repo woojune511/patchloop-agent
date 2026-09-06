@@ -185,7 +185,19 @@ match. Probes were enabled but unused. This is not evidence that v25 caused the 
 choice or solved the task. No repair, retry, resume, thirty-fourth row, Docker startup or
 image acquisition is authorized by this result. See current status for the complete record.
 
-Tool surface v25 retains bounded run-local verification concerns inside the existing
+Tool surface v26 adds `public_execution` to public check/probe results and a bounded
+current-diff `public_execution_summary` to context. Inspect `executed_changed_ranges`,
+`not_observed_changed_ranges`, `no_line_event_ranges` and per-file `status` separately
+from the check's PASS/FAIL. `unknown` is not a negative observation. Only launch-thread
+Python additions/replacements are measured, with eight-file/256-line selection and a
+12,000-byte feedback bound; omission/deletion counts identify limits. The collector is
+copied read-only outside the workspace and needs no new image or dependency. Existing
+deadlines, owned-container cleanup, output caps and private evaluation are unchanged.
+It is advisory in-process instrumentation, not a safety proof or new acceptance check.
+Reuse stored completed results on resume; never rerun a check to rebuild this summary.
+Old envelopes are not migrated and mismatched nonterminal resumes still fail closed.
+
+Tool surface v26 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
@@ -197,7 +209,7 @@ existing `vN` upsert stores its incoming statement as the latest `progress_note`
 that original. A distinct question needs a null ID. Exact repetition of the original
 or retained progress yields applied code `unchanged`, preserving state, update time,
 and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
-immutable; v25 does not migrate them and rejects mismatched nonterminal resume under the
+immutable; v26 does not migrate them and rejects mismatched nonterminal resume under the
 existing exact-match contract. No new experiment is automatically executed after a check PASS.
 
 Model-facing inspection feedback uses action-bound decision references instead of repeating
@@ -400,7 +412,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v25`; prior
+These output and scheduler semantics are bound by tool-surface identity `v26`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually

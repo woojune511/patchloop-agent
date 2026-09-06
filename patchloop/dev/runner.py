@@ -1203,6 +1203,7 @@ def _build_context(
         "visible_check_status": list(active_snapshot.visible_check_status),
         "remaining_visible_check_ids": list(active_snapshot.remaining_visible_check_ids),
         "recent_checks": _recent_checks(gateway),
+        "public_execution_summary": gateway.public_execution_summary(diff_hash=summary.patch_hash),
         "latest_tool_results": [
             result.model_dump(mode="json", exclude={"replayed"}) for result in latest_tool_results
         ],

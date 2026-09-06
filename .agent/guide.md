@@ -16,6 +16,8 @@ patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
 patchloop/agent/model.py  journal-managed Responses adapter, zero retries
 patchloop/repository.py   audited checkout, workspace, full diff
 patchloop/sandbox/        registered checks and optional isolated public probes
+patchloop/sandbox/execution_feedback.py  bounded current-diff execution observations
+patchloop/sandbox/line_trace.py  standalone stdlib launch-thread line collector
 patchloop/verifier/       separate private evaluation and static policy
 patchloop/contracts.py    task, manifest, result, and evaluator models
 tasks/                    public/private packages and declared checks
@@ -115,6 +117,30 @@ not a new mount or required experiment. A probe result is diagnostic:
 it never grants source-span coverage, visible-check PASS, or finish credit, and failure
 does not force mutation or consume a check-repair allowance. See
 [the probe runtime contract](../docker/README.md) for image and isolation details.
+
+Public checks and enabled probes return `public_execution`: advisory Python line-entry
+feedback for current tracked editable additions/replacements only. The host binds diff,
+raw file and run/action request hashes; no model-selected paths or new tool inputs are
+introduced. Bound requests to eight files, 256 changed lines, and 12,000 serialized
+feedback bytes. Whole over-bound/unsupported files are omitted with a count; deleted
+lines have no post-image coordinate. Compile current public bytes without execution to
+identify changed positions present in Python's line table; distinguish `no_line_event_ranges`
+from `not_observed_changed_ranges`. Collect only the launch thread, not other threads,
+subprocesses, branches, values, variable locals, source bodies or assertions. A line event
+means entry, not successful completion or semantic correctness.
+
+The same stdlib collector is copied outside the workspace, read-only: a separate mount
+for registered checks, the existing trusted mount for probes. Preserve the declared check
+command in results. Instrument Python `-c`, `-m`, and script launches; preserve unsupported
+commands and mark their feedback unknown. A bounded separate report frame does not spend
+the stdout/stderr cap. Reject duplicate, malformed, oversized or mismatched reports; missing
+or interrupted collection, trace loss, timeout and file drift yield unknown rather than
+negative line evidence. This in-process report can be interfered with by tested code and
+is not a security attestation. Keep deadline/cleanup authority unchanged and remove mounted
+temporary files only after exact-container cleanup. Probe profile and runtime hashes bind
+the collector. Isolated private evaluation receives no collection targets and remains
+outside the model loop. Follow the documented thread limits of
+[Python tracing](https://docs.python.org/3.12/library/sys.html#sys.settrace).
 
 ## Mutation and causal pivot
 
@@ -379,6 +405,16 @@ Working note content, citation currency, concern status and receipts remain mode
 not harness-validated interpretations. No model summary, mandatory annotation/probe or new
 action restriction is introduced.
 
+`public_execution_summary` unions line observations from completed current-diff public
+check/probe results with matching current raw file hashes. It contains bounded ranges and
+recent action references, not another copy of the report body or an inferred semantic
+summary. Mutation invalidates old-diff observations; hydration derives the identical view
+from durable action results without rerunning checks. Keep per-action feedback in the
+native result, following the existing [tool-output linkage](https://developers.openai.com/api/docs/guides/function-calling).
+Unknown/unobserved positions can inform existing optional model-authored questions/concerns;
+never auto-create a semantic finding, grant source-read coverage or mutation evidence,
+resolve a concern, withhold finish, or require a probe on that basis.
+
 Failure feedback receives the actual allowed-tool set at context construction. Preserve
 the original check/diff identity and compatibility phase, adding `evidence_currency` as
 current/historical/unknown. Do not give repair advice for `awaiting_recheck`: name an
@@ -389,7 +425,7 @@ projection read-only and deterministic after restart, including native latest-st
 The prompt distinguishes completion of this candidate from the separate further-edit
 horizon. Do not change tool masks, force a check or reject a voluntary stop on this basis.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v25`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v26`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -508,7 +544,20 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: v25 qualifies historical failures and aligns their guidance with offered
+Current seam: v26 exposes current changed-line execution evidence from public checks/probes,
+without changing action availability, prompt, tool inputs or submission conditions. Row 33
+demonstrates that correct source delivery and public PASS did not establish correct use of
+the error-handling owner or execution of new error paths. The saved public inline check's
+three new error-raising lines were not entered in the post-terminal local trace. This is
+not a measured full-regression coverage result or proof of a counterfactual model success.
+Keep observations separate from note interpretation; prefer evidence to another warning
+or forced experiment. Validate collector bounds, unknown states, current-diff union, native
+delivery, replay and sandbox cleanup without provider or Docker execution. The next live
+seam, only after separate exact approval, is whether the model uses a relevant unobserved
+range to test/revise a public assumption. Row 34 remains unapproved. Do not repair historical
+candidates, alter task packages or project private evaluation material.
+
+V25 qualifies historical failures and aligns their guidance with offered
 actions. Row 32 rechecked earlier edits with two/one mutations left, then stopped with
 zero despite an unchecked candidate and available checks. This raises a budget/currency
 interpretation hypothesis, not proof of the model's private reasoning. Pure-policy

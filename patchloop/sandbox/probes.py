@@ -18,6 +18,12 @@ from typing import BinaryIO
 
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
+from patchloop.sandbox.execution_feedback import (
+    TRACE_WRAPPER,
+    ReportChannel,
+    prepare_trace,
+    public_feedback,
+)
 from patchloop.sandbox.runner import DockerSandbox
 from patchloop.util import sha256_bytes, sha256_json
 
@@ -40,6 +46,7 @@ def probe_profile() -> dict[str, object]:
         "image": PROBE_IMAGE,
         "image_digest": PROBE_IMAGE_DIGEST,
         "wrapper_hash": sha256_bytes(_WRAPPER.read_bytes()),
+        "line_trace_hash": sha256_bytes(TRACE_WRAPPER.read_bytes()),
         "network": "none",
         "read_only": True,
         "user": "10001:10001",
@@ -161,29 +168,40 @@ def _snapshot(workspace: Path, target: Path, deadline: ExecutionDeadline | None)
 class _OutputCollector:
     """Bound retained memory while two pipe readers drain concurrently."""
 
-    def __init__(self) -> None:
+    def __init__(self, execution_targets: dict | None = None) -> None:
         self.streams = {"stdout": bytearray(), "stderr": bytearray()}
         self.observed = 0
         self.limit_hit = threading.Event()
         self.lock = threading.Lock()
+        self.report = None
+        self.channel = (
+            ReportChannel(execution_targets, lambda block: self._retain(block, "stderr"))
+            if execution_targets is not None else None
+        )
+
+    def _retain(self, block: bytes, name: str) -> None:
+        with self.lock:
+            retained = sum(len(value) for value in self.streams.values())
+            self.streams[name].extend(block[:max(0, PROBE_OUTPUT_LIMIT_BYTES - retained)])
+            self.observed += len(block)
+            if self.observed > PROBE_OUTPUT_LIMIT_BYTES:
+                self.limit_hit.set()
 
     def drain(self, stream: BinaryIO, name: str) -> None:
         try:
             while block := stream.read(4096):
-                with self.lock:
-                    retained = sum(len(value) for value in self.streams.values())
-                    self.streams[name].extend(block[:max(0, PROBE_OUTPUT_LIMIT_BYTES - retained)])
-                    self.observed += len(block)
-                    if (
-                        self.observed > PROBE_OUTPUT_LIMIT_BYTES
-                        and not self.limit_hit.is_set()
-                    ):
+                if name == "stderr" and self.channel is not None:
+                    self.channel.feed(block)
+                    if self.channel.invalid:
                         self.limit_hit.set()
-                    # Keep draining and discard after the retention cap. Leaving
-                    # Docker's attach pipe unread can block its own teardown while
-                    # the main thread is removing the exact owned container.
+                else:
+                    self._retain(block, name)
+                # Drain even after the public cap so Docker teardown cannot stall.
         except (OSError, ValueError):
             return
+        finally:
+            if name == "stderr" and self.channel is not None:
+                self.report = self.channel.finish()
 
     def public_text(self) -> tuple[str, str]:
         # Replacement characters can expand invalid UTF-8; also bound the
@@ -200,6 +218,8 @@ class _OutputCollector:
 
 class DockerProbeSandbox:
     """No local fallback, image acquisition, evaluator mounts, or caller commands."""
+
+    supports_public_execution = True
 
     def __init__(self, image: str = PROBE_IMAGE) -> None:
         if image != PROBE_IMAGE:
@@ -266,6 +286,7 @@ class DockerProbeSandbox:
         self, workspace: Path, question: str, python_source: str, *,
         deadline: ExecutionDeadline | None,
         execution_identity: dict[str, str],
+        execution_targets: dict | None = None,
     ) -> dict[str, object]:
         source = python_source.encode("utf-8")
         if not question or len(question) > 500:
@@ -287,7 +308,7 @@ class DockerProbeSandbox:
             deadline.bounded_timeout(PROBE_TIMEOUT_SECONDS, reserve_seconds=_CLEANUP_SECONDS)
             if deadline else float(PROBE_TIMEOUT_SECONDS)
         )
-        collector = _OutputCollector()
+        collector = _OutputCollector(execution_targets)
         timed_out = False
         exit_code = None
         snapshot_hash = None
@@ -306,6 +327,14 @@ class DockerProbeSandbox:
                 (trusted / "probe_runner.py").write_bytes(wrapper)
                 if sha256_bytes(wrapper) != self._profile["wrapper_hash"]:
                     raise ContractError("probe trusted wrapper changed before execution")
+                trace_arguments = []
+                if execution_targets is not None and execution_targets["files"]:
+                    prepare_trace(trusted, execution_targets)
+                    if sha256_bytes((trusted / "line_trace.py").read_bytes()) != (
+                        self._profile["line_trace_hash"]
+                    ):
+                        raise ContractError("probe line collector changed before execution")
+                    trace_arguments = ["/opt/patchloop/line_request.json"]
                 timeout = (
                     deadline.bounded_timeout(
                         PROBE_TIMEOUT_SECONDS, reserve_seconds=_CLEANUP_SECONDS
@@ -325,6 +354,7 @@ class DockerProbeSandbox:
                     "--mount", f"type=bind,source={trusted},target=/opt/patchloop,readonly",
                     "--workdir", "/tmp", "--entrypoint", "/usr/local/bin/python",
                     self.image, "-I", "-u", "/opt/patchloop/probe_runner.py", "30",
+                    *trace_arguments,
                 ]
                 process = None
                 readers: list[threading.Thread] = []
@@ -413,6 +443,9 @@ class DockerProbeSandbox:
         )
         stdout_text, stderr_text = collector.public_text()
         return {
+            **({"public_execution": public_feedback(
+                execution_targets, collector.report if status in {"passed", "failed"} else None,
+            )} if execution_targets is not None else {}),
             "status": status, "source_hash": sha256_bytes(source),
             "snapshot_hash": snapshot_hash, **self.identity,
             "exit_code": exit_code, "timed_out": timed_out,

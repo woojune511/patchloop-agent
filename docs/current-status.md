@@ -27,7 +27,68 @@ Repository policy alone never initiates paid work. The thirty-three live observa
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v25
+## Current implementation: tool surface v26
+
+V26 adds advisory **changed-code execution feedback** to existing public checks and
+enabled probes. Reading source, entering a Python line, checking an assertion, and
+establishing semantic correctness are distinct. A PASS can now coexist with explicit
+`not_observed_changed_ranges`, rather than implying that every added error path ran.
+No additional model call, tool, forced experiment, action mask, acceptance condition,
+or finish blocker is added; the prompt and complete tool input schemas stay unchanged.
+
+The host selects only current tracked editable public Python additions/replacements,
+bounded to eight files and 256 changed lines. A separately copied read-only stdlib
+collector reports line entries in the launched Python thread; other threads,
+subprocesses, branch/assertion coverage and deleted lines are not measured. File/raw-byte,
+diff and run/action request identities bind results. Missing/invalid reports, source drift,
+trace loss and timeout are unknown, never falsely unexecuted. Non-line-table positions
+are distinguished from unobserved executable positions. The bounded report travels
+separately from stdout/stderr's existing cap and carries no values or source bodies.
+
+`public_execution_summary` unions only current-diff/current-file observations from durable
+public action results. It preserves replay and native delivery, does not populate source
+spans or validate a note's meaning, and suggests using relevant unknowns with existing
+optional notes/probes. The collector is an in-process diagnostic, not tamper-resistant
+attestation or safety evidence. Private evaluation is not instrumented or projected back.
+Supported check launch shapes are Python `-c`, `-m`, and script; other commands retain
+their original launch and report unknown. No image rebuild or dependency is required.
+
+The row-33 diagnosis found wrong object ownership for the newly introduced error-raising
+calls despite an earlier public read containing the correct owner. An in-memory trace of
+the saved public inline contract did not enter the three new error-raising lines. Further
+public-derived synthetic checks exposed additional candidate boundary defects after a
+temporary receiver alias. These are post-terminal diagnostics, not hidden inputs for the
+agent, a repaired historical submission, measured full-suite branch coverage, or proof
+that new feedback would have made the agent succeed. Avoid further tool restrictions or
+another prose warning when concrete execution evidence is missing.
+
+Validation: Ruff and `git diff --check` pass. Focused collector/contract/provenance/feedback
+tests pass 94 cases in 16.30 seconds, including 37 new cases. The full provider-free suite
+passes 586 cases with three opt-in real-Docker tests skipped, across groups of
+60/68/85/373 (65.63/74.79/62.39/99.67 seconds) under `C:\pt\pl26-full-a{1,3,4}` and
+`C:\pt\pl26-full-b2`. Group 2 was rerun after its exact context-key test was updated for
+the new summary field; runtime bytes stayed frozen. Each final group and focused phase
+is under two minutes, not the complete sequence including that rerun. Tests cover actual
+local Python inline/module/script launches, LF/CRLF, unobserved error lines despite PASS,
+invalid/missing reports, source drift, trace loss, unmeasured threads, output bounds,
+native delivery, current-diff union, replay and mocked Docker deadline/cleanup ordering.
+Probe child exception/exit paths run with isolation mocked; no real Docker execution is
+claimed. All 64 existing run journal/envelope files, `.env`, user-owned `AGENTS.md`,
+1,249 tracked task/historical files and pre-existing scratch entries are unchanged.
+
+Mock `run_dev_2380963705404c4b` under `C:\pt\pl26-smoke-a` reaches mutation, visible
+checks, finish and isolated `EVALUATOR_PASS`: four mock turns, five tools, one accepted
+mutation, acceptance PASS, safety NOT_RUN, zero cost, 4.74-second command. The public
+check records the two changed lines as entered and binds the same checked/submitted diff.
+Envelope/manifest runtime hash is
+`sha256:00f2b56f79fee68cecab65564b49cf6f34530b25e9f938c38ae6b41133dbfbf0`;
+tool hash is `sha256:dadc872b862bf72175f889f4220ff197bdc82e90528526d08ca08faa1f0fd4a3`.
+The prompt remains 7,938 characters, and the full ordered tool-input schema hash stays
+`sha256:90db9c2f4c787e23dd598adc3d782d51f838572d71889c06266810588011ca9e`.
+No provider/count call, Docker execution/start/pull/build, resume/retry or thirty-fourth
+live row is authorized or executed by this change. All results remain `official=false`.
+
+### V25 implementation and validation checkpoint
 
 V25 repairs failure feedback without changing action availability or termination rules.
 `current_public_failure.evidence_currency` explicitly labels current, historical, or

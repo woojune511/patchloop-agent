@@ -6,6 +6,7 @@ import ctypes
 import errno
 import os
 import platform
+import runpy
 import signal
 import sys
 import time
@@ -185,7 +186,7 @@ def _flush_child_output(
                 flush()
 
 
-def _execute_child(code: object) -> None:
+def _execute_child(code: object, collector=None) -> None:
     stdout = sys.stdout
     stderr = sys.stderr
     try:
@@ -199,7 +200,13 @@ def _execute_child(code: object) -> None:
             "__name__": "__main__",
             "__file__": "<patchloop-probe>",
         }
-        exec(code, namespace, namespace)
+        if collector is not None:
+            collector.start()
+        try:
+            exec(code, namespace, namespace)
+        finally:
+            if collector is not None:
+                collector.finish()
     except SystemExit as exc:
         exit_code = _child_exit_code(exc.code)
         _flush_child_output(stdout, stderr)
@@ -245,7 +252,7 @@ def _wait_for_child(child_pid: int, timeout_seconds: int) -> int:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in {2, 3}:
         return 2
     try:
         timeout_seconds = int(sys.argv[1])
@@ -263,13 +270,22 @@ def main() -> int:
         traceback.print_exc()
         return 1
 
+    collector = None
+    if len(sys.argv) == 3:
+        # Load only the host-copied stdlib collector before exposing project imports.
+        import json
+        from pathlib import Path
+
+        module = runpy.run_path(str(Path(__file__).with_name("line_trace.py")))
+        collector = module["LineTrace"](json.loads(Path(sys.argv[2]).read_bytes()), "/workspace")
+
     try:
         child_pid = os.fork()
     except OSError:
         traceback.print_exc()
         return CHILD_RESERVED_EXIT_CODE
     if child_pid == 0:
-        _execute_child(code)
+        _execute_child(code, collector)
     return _wait_for_child(child_pid, timeout_seconds)
 
 
