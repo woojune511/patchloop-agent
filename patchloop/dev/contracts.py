@@ -24,7 +24,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v20",
+            "schema_version": "dev-tool-surface-v21",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -43,6 +43,7 @@ def dev_tool_surface_hash() -> str:
             "mutation_evidence_binding": "observed-current-source-union-v2",
             "mutation_source_rebinding": "exact-position-unchanged-complete-line-fragments-v1",
             "inspection_gain": "non-overlapping-public-coverage-v2",
+            "inspection_intent_projection": "single-native-intent-with-observation-refs-v1",
             "source_search": "rooted-component-glob-double-star-zero-depth-v1",
             "search_feedback": "eligible-decoded-file-count-v1",
             "mutation_failure": "typed-scope-preview-recovery-lineage-v2",

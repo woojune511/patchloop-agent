@@ -869,7 +869,13 @@ def test_turn_decision_is_bound_to_cache_action_and_projected_once_per_batch(
     assert "turn_decision" not in context["latest_tool_results"][0]["output"]
     card = context["recent_attempt_result_next_question"][-1]
     assert "turn_decision" not in card
-    assert card["result"]["actions"][0]["turn_decision"] == expected
+    assert "turn_decision" not in card["result"]["actions"][0]
+    assert card["result"]["actions"][0]["turn_decision_ref"] == {
+        "action_id": revised.action_id,
+        "delivery": "latest_tool_result.inspection_intent",
+        "kind": "model_authored_pre_observation_intent",
+    }
+    assert context["latest_tool_results"][0]["output"]["inspection_intent"] == expected
     parallel_card = runner._batch_attempt_card(  # noqa: SLF001 - context contract test
         turn_id="call-specific-parallel-turn",
         calls=[first_call, revised_call],
@@ -1856,7 +1862,18 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "transcript_action_ids"
     ]
     prior_results = json.loads(contexts[1])["latest_tool_results"]
-    assert [json.loads(item["output"]) for item in function_outputs] == prior_results
+    for item, original in zip(function_outputs, prior_results, strict=True):
+        delivered = json.loads(item["output"])
+        assert delivered["output"].pop("inspection_intent_ref") == {
+            "action_id": original["action_id"],
+            "delivery": "preceding_function_call_arguments",
+            "kind": "model_authored_pre_observation_intent",
+        }
+        assert delivered == {
+            **original,
+            "output": {key: value for key, value in original["output"].items()
+                       if key != "inspection_intent"},
+        }
     current_input_context = json.loads(second_input[-1]["content"])
     assert current_input_context["latest_tool_results"] == []
     assert current_input_context["latest_tool_results_delivery"] == {

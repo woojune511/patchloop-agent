@@ -117,7 +117,7 @@ Exact replay, native results, note receipts, execution-policy and patch provenan
 read-only audit. No retry, resume, or twenty-ninth live row is authorized by these results,
 the implementation, or local validation. All results remain unofficial.
 
-Tool surface v20 retains bounded run-local verification concerns inside the existing
+Tool surface v21 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
@@ -129,8 +129,19 @@ existing `vN` upsert stores its incoming statement as the latest `progress_note`
 that original. A distinct question needs a null ID. Exact repetition of the original
 or retained progress yields applied code `unchanged`, preserving state, update time,
 and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
-immutable; v20 does not migrate them and rejects mismatched nonterminal resume under the
+immutable; v21 does not migrate them and rejects mismatched nonterminal resume under the
 existing exact-match contract. No new experiment is automatically executed after a check PASS.
+
+Model-facing inspection feedback uses action-bound decision references instead of repeating
+the original basis/goal across tool results, evidence ledger, and recent attempt cards.
+The native call arguments retain the exact decision. `delivery` distinguishes
+`preceding_function_call_arguments`, `latest_tool_result.inspection_intent` for context-only
+delivery, and `journal_only` when an older intention is no longer projected. These are
+model-authored pre-observation intentions, not observations or accessible extra tools.
+Raw results and original cards remain in the immutable journal; stored context/model-input
+artifacts bind the projected delivery. Rebuilding/replaying a current run uses the same
+action identities. Source, visible-check output, note receipts, and encrypted continuation
+are unchanged. There is no historical run migration or automatic re-execution.
 
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against
 the official [API pricing](https://developers.openai.com/api/docs/pricing) and
@@ -320,7 +331,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v20`; prior
+These output and scheduler semantics are bound by tool-surface identity `v21`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually

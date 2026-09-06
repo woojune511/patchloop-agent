@@ -986,6 +986,7 @@ class DevToolGateway:
                         ).add(result_fingerprint)
             if turn_decision is not None:
                 latest_intent = {
+                    "action_id": action_id,
                     "basis": self._bounded_string(turn_decision.get("basis"), 800),
                     "evidence_goal": self._bounded_string(turn_decision.get("evidence_goal"), 500),
                     "evidence_span_ids": [

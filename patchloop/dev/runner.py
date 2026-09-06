@@ -46,6 +46,10 @@ from patchloop.dev.cost import (
     ModelPricing,
     pricing_for_model,
 )
+from patchloop.dev.inspection_projection import (
+    project_inspection_context,
+    project_inspection_result,
+)
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import (
@@ -1078,7 +1082,7 @@ def _build_context(
     recent_inspections = ledger.pop("recent_inspections", [])[:3]
     ledger["recent_inspection_outcomes"] = [
         {key: row[key] for key in (
-            "tool", "path", "start_line", "end_line", "query", "path_glob", "outcome",
+            "tool", "action_id", "path", "start_line", "end_line", "query", "path_glob", "outcome",
             "evidence_goal", "coverage_breakdown", "returned_span_count",
             "new_covered_line_count", "new_editable_line_count", "new_supporting_line_count",
         ) if key in row}
@@ -1224,7 +1228,9 @@ def _build_context(
         ]
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
-    return json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(
+        project_inspection_context(payload), separators=(",", ":"), ensure_ascii=False,
+    )
 
 
 def _requested_tool_from_openai(call: Any) -> RequestedTool:
@@ -1695,7 +1701,10 @@ def _build_model_input(
     note_receipt = note_update.get("receipt") if note_update is not None else None
     output_items = []
     for action_id in action_ids:
-        public_result = results_by_id[action_id].model_dump(mode="json", exclude={"replayed"})
+        public_result = project_inspection_result(
+            results_by_id[action_id].model_dump(mode="json", exclude={"replayed"}),
+            native_action_ids=action_ids,
+        )
         if isinstance(note_receipt, dict) and note_receipt.get("action_id") == action_id:
             # An annotation can fail while the actual action succeeds. Preserve
             # both outcomes; never rewrite the action status or prior call arguments.
@@ -1730,7 +1739,10 @@ def _build_model_input(
         *output_items,
         {
             "role": "user",
-            "content": json.dumps(current_payload, separators=(",", ":"), ensure_ascii=False),
+            "content": json.dumps(
+                project_inspection_context(current_payload, native_action_ids=action_ids),
+                separators=(",", ":"), ensure_ascii=False,
+            ),
         },
     ]
 

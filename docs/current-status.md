@@ -27,7 +27,60 @@ Repository policy alone never initiates paid work. The twenty-eight live observa
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v20
+## Current implementation: tool surface v21
+
+V21 removes repeated pre-observation inspection prose from the model-facing projection.
+The original `turn_decision`, raw tool results, attempt cards, and encrypted continuation
+remain durable and unchanged. Native input keeps the exact original call arguments;
+the read/search result replaces only its echoed `inspection_intent` with an action-bound
+reference. Derived ledger/outcome/attempt cards also refer to the decision instead of
+copying its basis, goal, or memory annotation. Source text, actual outcomes, check errors,
+coverage, cache flags, explicit notes/questions, current diff, and budgets are not redacted.
+This is structural projection, not string matching or semantic judgment of the model.
+
+References distinguish `preceding_function_call_arguments`, context-only
+`latest_tool_result.inspection_intent`, and `journal_only` for historical intentions that
+are not delivered now. They are marked `model_authored_pre_observation_intent`, not tool
+findings. Context-only/mock delivery retains the original latest result intent once where
+present. Ledger observations carry their actual action IDs, including after hydration;
+identical cached reads or parallel calls never borrow another action's decision.
+No tool input, system prompt, note lifecycle, policy, limit, or run schema changed.
+Tool-surface identity changes to v21; old envelopes and run artifacts are not migrated.
+
+The read-only row-28 analysis ruled out missing source as the initial repeated-read cause:
+the three-line delegation body was already delivered before the model said it had not
+seen the body. That pre-observation statement appeared four times in the next input.
+The first source finding was only attempted at turn 14; its useful executable lines were
+already observed, but its overly broad citation also included unobserved lines 893-904.
+Both turn-15 findings cited the source then replaced by the same mutation and correctly
+expired. The mutation hypothesis and expected behavior still reached subsequent turns;
+expiry did not erase the plan. Seven existing lifecycle/feedback tests passed in 15.82
+seconds during diagnosis. These observations do not establish why the model chose its
+trajectory or justify mandatory notes, weaker source binding, or tighter inspection masks.
+
+In-memory comparison of all 20 saved row-28 inputs reduces the turn-4 statement from four
+copies to one. Original calls/encrypted items and all source/check/note/policy/budget
+values remain exact. Total derived context length falls by 5,745 characters across those
+20 inputs (turn 4: 18,426 to 18,014); this is not a measured token/cost or agent-success
+improvement. Observation IDs missing from the old projection were joined from its durable
+public results solely for this comparison. All 54 existing journal/envelope files remain
+byte-identical. No provider or Docker execution, retry, resume, or row 29 is authorized.
+
+Ruff and all 475 provider-free tests pass in four concurrent groups of 60/68/60/287
+(94.86/117.10/87.92/103.01 seconds), with three opt-in Docker cases skipped. External
+roots are `C:\pt\pl21-verified-b{1,2,3,4}`. The 13 new projection cases pass in 2.60 seconds;
+related context tests pass after updating two old expectations that required duplicate
+decision prose. New tests preserve same-text source/notes, parallel ownership, cache
+identity, current-envelope replay, encrypted item order, and unchanged ordered tool inputs.
+Mock `run_dev_9ec8c92cf7e34e9a` under `C:\pt\pl21-smoke-b` reaches mutation, visible checks,
+finish, and isolated `EVALUATOR_PASS`: four model turns, five actions, one mutation,
+acceptance PASS, safety NOT_RUN, zero cost, `official=false`, and `claim_eligible=false`.
+The frozen full-suite/mock sequence took 128.0 seconds, slightly over the two-minute
+target; focused validation remained below it. No runtime file changed during that sequence.
+System prompt length remains 7,880 characters. `.env`, user-owned `AGENTS.md`, task
+packages, historical directories, and prior external run bytes were not changed.
+
+### V20 implementation and validation checkpoint
 
 V20 addresses two feedback affordances identified by the public row-27 audit. A working
 note citing an executed public check now retains `check_result` beside its existing
@@ -1408,15 +1461,15 @@ compatibility with those runners is intentionally unsupported.
 ## Next decision
 
 Preserve rows 26-28 as immutable evidence. Row 28 demonstrates a small submitted solution
-and a correct immediate causal repair from a public permission failure. It does not
-establish that v20 improved working memory: no check citation or candidate probe ran,
-and both newly created source findings expired before the next model turn. Repeated
-inspection also remained despite intact source delivery. Review when reusable findings
-are written and whether their behavior-bearing evidence can survive the intended edit
-before proposing another memory change; do not make notes or probes compulsory or relax
-source validity merely to retain them. Closure warnings and concern resolution were not
-exercised. Neither the difference between these uncontrolled rows nor passing this reused
-development task establishes generalization or feature-level causality.
+and immediate causal repair, not that v20 improved working memory. Read-only analysis
+found intact source delivery and correct note expiry, but repeated projection of an
+incorrect pre-observation premise. V21 removes those redundant copies while preserving
+actual observations, explicit notes, and mutation intent. Local/replayed-input evidence
+establishes projection behavior only, not fewer inspections or better model decisions.
+Evaluate those separately if another exact live invocation is approved. Do not add
+mandatory notes/probes, weaken source validity, or strengthen action masks on this evidence.
+Neither the difference between uncontrolled rows nor passing this reused development
+task establishes generalization or feature-level causality.
 No automatic retry, resume, or twenty-ninth live row is authorized.
 
 The preceding decision after row 25 was:

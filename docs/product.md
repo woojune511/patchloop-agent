@@ -37,7 +37,10 @@ public task ──> dev-head ──> constrained model/tool loop
 `dev-head` derives its next gate from public execution facts: `needs_mutation`,
 `needs_visible_checks`, or `ready_to_submit`. There is no separate planning phase,
 runtime-version switch, cross-run memory retrieval, or candidate/qualification workflow.
-The exact latest tool batch is guaranteed in the next stateless request. Older current
+The latest tool batch's observations are guaranteed in the next stateless request. Prior
+inspection intent stays in the exact native call arguments, not repeated as a tool finding:
+result/ledger/history copies use action-bound references. Source and actual check results
+remain exact; explicit notes and questions are unchanged. Older current
 source uses a deterministic 24,000-character retained working set: pin the current edit
 or failed anchor, retain source-backed notes, then fill with recent observations.
 Overlapping observed ranges are merged; unobserved gaps are never filled. Before the larger task
@@ -242,7 +245,8 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v20` places actual check outcomes beside note citations and
+workflow state. Tool-surface `v21` separates recorded inspection intent from observed
+feedback without changing actions or budgets. It places actual check outcomes beside note citations and
 describes existing candidate-probe capability explicitly. It preserves unchanged observed
 line fragments across edits,
 separates unobserved/stale range feedback, and retains check citation identity. It preserves

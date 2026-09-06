@@ -171,14 +171,14 @@ including after a crash before rollback, and restores an admitted over-scope can
 
 The deterministic context artifact puts current workflow gate, remaining budget,
 action horizon, mutation readiness, mutation scope budget, and the bounded evidence
-ledger before the larger task text. It also contains the public task, current full diff, the exact latest tool
+ledger before the larger task text. It also contains the public task, current full diff, latest tool
 batch, a prioritized current-source working set, recent visible-check output, the
 complete current-diff check status, exact remaining check IDs, bounded
 `last_successful_mutation`, bounded `last_failed_mutation`, and the latest three
 batch-level attempt-result-next-question cards. The ledger merges covered line ranges
 per path and records canonical search observations and the latest public inspection
-intent; it stores neither raw reasoning nor semantic claims inferred by the harness.
-Source projection precedes policy/readiness: exact native results plus the retained
+intent references; it stores neither raw reasoning nor semantic claims inferred by the harness.
+Source projection precedes policy/readiness: exact native observations plus the retained
 working set define delivered evidence. Retained source is bounded to 24,000 characters.
 Failed/current edit anchors are atomic pins, then editable source, source-backed helper
 notes, and other recent observations fill the budget. Adjacent and overlapping observed
@@ -279,7 +279,8 @@ labels the completed batch's diff/current IDs and only that batch's expired note
 Replay preserves the original receipt and the current view's public values. Rebuilding
 context after hydration may reorder nested JSON keys; the persisted context reconstructs
 the exact native input. Do not infer note storage from read success. Call arguments remain exact,
-but read results omit the redundant unvalidated annotation from `inspection_intent`.
+but native read/search results replace the redundant `inspection_intent` with a reference
+to the exact call arguments. The canonical/context-only result retains that intent once.
 The successful-mutation
 projection separates current actionable post-image evidence from historical action
 inputs. A successful check card names
@@ -291,11 +292,19 @@ clears it. `mutation_readiness.state=ready_to_attempt` uses basis
 `current_delivered_editable_source_evidence`: this input contains non-empty current editable source.
 The complete anchor of a proposed edit still requires separate admission validation;
 readiness does not prove that coverage or semantic sufficiency. From turn two onward, the
-actual model input carries the immediately preceding calls and exact public results as
+actual model input carries the immediately preceding calls and public observations as
 native `function_call` / `function_call_output` items, followed by current derived
 state without duplicating those results. One content-addressed model-input artifact
-binds that sequence. Each read action in the batch card carries its corresponding
-decision once. Identical evidence is counted per fingerprint at the unchanged diff.
+binds that sequence. V21 projects the inspection result's echoed intent and derived
+ledger/outcome/attempt decisions as action-bound references, labeled
+`model_authored_pre_observation_intent`. Delivery is `preceding_function_call_arguments`,
+`latest_tool_result.inspection_intent` for context-only adapters, or `journal_only` for
+historical intentions no longer delivered. Keep observed source, query/range, gain, status,
+check feedback, explicit notes/questions, and original journal calls/results/cards exact.
+Do not use text matching, invent a finding, reinterpret a decision as an observation, or
+claim that a journal-only reference is an available tool. Original ledger action IDs
+hydrate deterministically; cache and parallel action identities remain distinct.
+Identical evidence is counted per fingerprint at the unchanged diff.
 A cache hit still costs one tool action, but its observation-level gain is recalculated
 against the current coverage ledger. It may be signaled but is not hard-blocked. Never
 add raw reasoning, private task material, hidden tests, reference
@@ -306,7 +315,7 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v20`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v21`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -421,7 +430,17 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: tool surface `v20` puts the actual public check verdict/exception beside a
+Current seam: tool surface `v21` removes duplicate pre-observation inspection prose only
+from model-facing projection. Native original calls, encrypted continuation, actual tool
+observations, notes/lifecycle, policy, and journal recovery stay unchanged. Context-only
+delivery retains latest intent once; native delivery refers to the exact original call.
+Historical intention references are journal-only, not newly available actions. Verify
+parallel/cache identity, source/check/explicit-note preservation, native receipts, exact
+replay, and untouched historical bytes. The row-28 in-memory comparison reduced one false
+premise from four copies to one, but does not establish changed model behavior or causality.
+Keep note-source validity and all limits unchanged; no row 29 is approved.
+
+The preceding tool surface `v20` puts the actual public check verdict/exception beside a
 note's citation and dynamically marks its diff currency. Store facts at the note-update
 boundary; derive currency without mutating the durable label. Test false prose remaining
 nonblocking, different check/diff identities, unknown failures, source/probe exclusions,
@@ -971,7 +990,19 @@ uv run pytest tests -p no:cacheprovider --basetemp <short-external-path>
 uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
 ```
 
-V20 passes Ruff and 462 provider-free tests in four concurrent groups of 60/68/60/274
+V21 passes Ruff and 475 provider-free tests in four concurrent groups of 60/68/60/287
+(94.86/117.10/87.92/103.01 seconds), with three opt-in Docker cases skipped. Short roots
+are `C:\pt\pl21-verified-b{1,2,3,4}`: tools/context/source-rebind; runner/resume/state;
+recovery/notes-v14/note-lifecycle/note-feedback/probes/feedback-v18/note-temporal-v18;
+and every remaining test file, respectively. Thirteen new cases take 2.60 seconds.
+Mock `run_dev_9ec8c92cf7e34e9a` under `C:\pt\pl21-smoke-b` reaches isolated `EVALUATOR_PASS`
+through one mutation, four model turns, and five actions: acceptance PASS, safety NOT_RUN,
+zero cost, `official=false`, and `claim_eligible=false`. Frozen full-suite/mock wall time
+was 128.0 seconds, slightly over the two-minute target; focused tests remained below it.
+Runtime files were unchanged during validation. The actual prompt and ordered tool input
+schemas are unchanged. Keep historical run bytes immutable; no live row is authorized.
+
+V20 passed Ruff and 462 provider-free tests in four concurrent groups of 60/68/60/274
 (71.99/88.86/66.64/76.73 seconds), with three opt-in Docker cases skipped. Short external
 roots are `C:\pt\pl20-verified-a{1,2,3,4}`. The 15 new cases cover recorded verdict/exception
 labels, false interpretations, historical/unknown currency, note crash/replay, parallel
