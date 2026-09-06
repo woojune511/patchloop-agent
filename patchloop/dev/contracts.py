@@ -24,7 +24,9 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v21",
+            "schema_version": "dev-tool-surface-v22",
+            "native_conversation": "single-user-active-episode-with-replaceable-state-v1",
+            "reasoning_context_evidence": "provider-reported-mode-or-null-v1",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -230,6 +232,7 @@ class DevModelTurn(StrictModel):
     response_id: str | None = None
     response_model: str | None = None
     response_status: str | None = None
+    response_reasoning_context: Literal["current_turn", "all_turns"] | None = None
     incomplete_reason: str | None = None
     error_code: str | None = None
     output_item_count: int = Field(default=0, ge=0)

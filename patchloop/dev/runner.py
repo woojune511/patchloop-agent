@@ -38,6 +38,11 @@ from patchloop.dev.contracts import (
     RequestedTool,
     dev_tool_surface_hash,
 )
+from patchloop.dev.conversation import (
+    assemble_model_input,
+    history_metadata,
+    validate_model_input,
+)
 from patchloop.dev.cost import (
     DEFAULT_OUTPUT_CEILING,
     PRICING_SOURCE,
@@ -1337,6 +1342,7 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
         response_id=turn.response_id,
         response_model=turn.response_model,
         response_status=turn.response_status,
+        response_reasoning_context=turn.response_reasoning_context,
         incomplete_reason=turn.response_incomplete_reason,
         error_code=turn.error.code if turn.error else conversion_error,
         output_item_count=turn.output_item_count,
@@ -1484,14 +1490,91 @@ def _provider_rejected_call_arguments(call: RequestedTool) -> dict[str, Any]:
     return arguments
 
 
+def _load_active_model_input(
+    payload: dict[str, Any], artifact_store: ArtifactStore,
+) -> list[dict[str, Any]]:
+    try:
+        artifact = Artifact.model_validate(payload.get("model_input_artifact"))
+        if payload.get("model_input_hash") != artifact.content_hash:
+            raise RecoveryError("model input reference does not match its turn boundary")
+        return validate_model_input(
+            json.loads(artifact_store.read_bytes(artifact)), payload.get("native_history"),
+        )
+    except (OSError, ValueError, RecoveryError) as exc:
+        raise _ProviderContinuationError(
+            "saved active-episode input is unavailable or invalid"
+        ) from exc
+
+
+def _validate_recorded_continuations(
+    events: list[dict[str, Any]], artifact_store: ArtifactStore,
+) -> None:
+    # All decisions in this run belong to the same active episode, including
+    # reasoning-only corrections. Never silently reset after losing an older item.
+    for event in events:
+        if event["event_type"] != "turn_decision_recorded":
+            continue
+        payload = event["payload"]
+        reference = _continuation_ref_from_payload(payload)
+        if reference is None:
+            if "reasoning" in payload.get("output_item_types", []):
+                raise _ProviderContinuationError("reasoning output has no durable continuation")
+            continue
+        continuation = _load_provider_continuation(artifact_store, reference)
+        calls = [RequestedTool.model_validate(value) for value in payload.get("tool_calls", [])]
+        _validate_continuation_action_order(continuation, calls)
+
+
 def _build_model_input(
+    *, journal: DevJournal, artifact_store: ArtifactStore, context: str,
+    latest_tool_results: list[DevToolResult],
+) -> list[dict[str, Any]]:
+    """Append the latest exchange to the exact saved active-episode history."""
+    events = journal.events()
+    _validate_recorded_continuations(events, artifact_store)
+    decision = next(
+        (event for event in reversed(events) if event["event_type"] == "turn_decision_recorded"),
+        None,
+    )
+    history: list[dict[str, Any]] = []
+    if decision is not None:
+        started = next((event["payload"] for event in reversed(events)
+                        if event["event_type"] == "turn_started"
+                        and event["payload"].get("turn_id") == decision["payload"].get("turn_id")),
+                       None)
+        if started is None:
+            raise _ProviderContinuationError("recorded decision has no active-episode input")
+        history = _load_active_model_input(started, artifact_store)[3:]
+    exchange = _build_latest_exchange(
+        journal=journal, artifact_store=artifact_store, context=context,
+        latest_tool_results=latest_tool_results,
+    )
+    history.extend(exchange[1:-1])
+    # Re-project only derived references. Earlier native results/receipts remain
+    # byte-identical, with their original action, file and diff identities.
+    state = json.loads(exchange[-1]["content"])
+    output_ids = {item["call_id"] for item in history
+                  if item.get("type") == "function_call_output"}
+    if latest_tool_results and all(
+        result.action_id in output_ids for result in latest_tool_results
+    ):
+        _deduplicate_native_state(state, latest_tool_results)
+    state = project_inspection_context(
+        state,
+        native_action_ids=[item["call_id"] for item in history
+                           if item.get("type") == "function_call"],
+    )
+    return assemble_model_input(system_prompt=DEV_SYSTEM_PROMPT, state=state, history=history)
+
+
+def _build_latest_exchange(
     *,
     journal: DevJournal,
     artifact_store: ArtifactStore,
     context: str,
     latest_tool_results: list[DevToolResult],
 ) -> list[dict[str, Any]]:
-    """Build one bounded provider continuation from durable public records."""
+    """Project the latest exchange and state once, before appending to native history."""
 
     system_item = {"role": "system", "content": DEV_SYSTEM_PROMPT}
     events = journal.events()
@@ -1623,40 +1706,7 @@ def _build_model_input(
         raise RecoveryError("latest public tool results do not match the completed batch")
 
     current_payload = json.loads(context)
-    current_payload["latest_tool_results"] = []
-    current_payload["latest_tool_results_delivery"] = {
-        "format": "preceding_function_call_output_items",
-        "action_ids": action_ids,
-    }
-    for result in latest_tool_results:
-        reference = {
-            "action_id": result.action_id,
-            "delivery": "preceding_function_call_output",
-        }
-        if result.tool == "replace_text" and result.status == "succeeded":
-            current_payload["last_successful_mutation"] = reference
-        elif result.tool == "replace_text" and result.status == "failed":
-            failed = current_payload.get("last_failed_mutation")
-            if isinstance(failed, dict) and failed.get("action_id") == result.action_id:
-                current_payload["last_failed_mutation"] = {
-                    **{key: value for key, value in failed.items() if key not in {
-                        "replacement", "hypothesis", "expected_behavior", "causal_revision",
-                        "mutation_failure", "error_message",
-                    }},
-                    **reference,
-                    "replacement_delivery": "preceding_function_call_arguments",
-                }
-        if result.tool == "run_check":
-            for check in current_payload.get("recent_checks", []):
-                if (check.get("check_id") == result.output.get("check_id")
-                        and check.get("diff_hash") == result.output.get("diff_hash")):
-                    for key in ("stdout", "stderr", "public_check_failure", "execution_policy"):
-                        check.pop(key, None)
-                    check.update(reference)
-        if result.tool == "run_probe":
-            for probe in current_payload.get("recent_probes", []):
-                if probe.get("action_id") == result.action_id:
-                    probe.update(reference)
+    _deduplicate_native_state(current_payload, latest_tool_results)
     calls_by_id = {call.action_id: call for call in calls}
     if continuation is not None:
         _validate_continuation_action_order(continuation, calls)
@@ -1745,6 +1795,46 @@ def _build_model_input(
             ),
         },
     ]
+
+
+def _deduplicate_native_state(
+    payload: dict[str, Any], latest_results: list[DevToolResult],
+) -> None:
+    """Reference the last executed batch even after a reasoning-only correction."""
+    payload["latest_tool_results"] = []
+    payload["latest_tool_results_delivery"] = {
+        "format": "preceding_function_call_output_items",
+        "action_ids": [result.action_id for result in latest_results],
+    }
+    for result in latest_results:
+        reference = {
+            "action_id": result.action_id,
+            "delivery": "preceding_function_call_output",
+        }
+        if result.tool == "replace_text" and result.status == "succeeded":
+            payload["last_successful_mutation"] = reference
+        elif result.tool == "replace_text" and result.status == "failed":
+            failed = payload.get("last_failed_mutation")
+            if isinstance(failed, dict) and failed.get("action_id") == result.action_id:
+                payload["last_failed_mutation"] = {
+                    **{key: value for key, value in failed.items() if key not in {
+                        "replacement", "hypothesis", "expected_behavior", "causal_revision",
+                        "mutation_failure", "error_message",
+                    }},
+                    **reference,
+                    "replacement_delivery": "preceding_function_call_arguments",
+                }
+        if result.tool == "run_check":
+            for check in payload.get("recent_checks", []):
+                if (check.get("check_id") == result.output.get("check_id")
+                        and check.get("diff_hash") == result.output.get("diff_hash")):
+                    for key in ("stdout", "stderr", "public_check_failure", "execution_policy"):
+                        check.pop(key, None)
+                    check.update(reference)
+        if result.tool == "run_probe":
+            for probe in payload.get("recent_probes", []):
+                if probe.get("action_id") == result.action_id:
+                    probe.update(reference)
 
 
 def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, Any]:
@@ -2428,6 +2518,7 @@ def _recover_unrecorded_decision(journal: DevJournal) -> None:
                 "tool_calls": tool_calls,
                 "error_code": payload.get("error_code"),
                 "incomplete_reason": payload.get("incomplete_reason"),
+                "response_reasoning_context": payload.get("response_reasoning_context"),
                 "tool_contract_failure": payload.get("tool_contract_failure"),
                 "output_item_count": payload.get("output_item_count", 0),
                 "non_tool_output_item_count": payload.get("non_tool_output_item_count", 0),
@@ -2890,7 +2981,19 @@ def _run_one_locked(
                 pending_output_item_types,
             ) = pending_decision
             try:
-                if request.provider == "openai" and "reasoning" in pending_output_item_types:
+                # Billing uncertainty takes precedence over missing continuation;
+                # neither a replayed tool nor another provider call is safe then.
+                if pending_error != "input_token_count_mismatch":
+                    _validate_recorded_continuations(journal.events(), artifact_store)
+                    pending_started = next(
+                        event["payload"] for event in reversed(journal.events())
+                        if event["event_type"] == "turn_started"
+                        and event["payload"].get("turn_id") == pending_turn_id
+                    )
+                    _load_active_model_input(pending_started, artifact_store)
+                if (pending_error != "input_token_count_mismatch"
+                        and request.provider == "openai"
+                        and "reasoning" in pending_output_item_types):
                     if pending_continuation_ref is None:
                         raise _ProviderContinuationError(
                             "reasoning output has no durable provider continuation"
@@ -3116,6 +3219,7 @@ def _run_one_locked(
                 "source_projection_hash": sha256_json(projection.delivered_spans),
                 "model_input_artifact": model_input_artifact.model_dump(mode="json"),
                 "model_input_hash": model_input_artifact.content_hash,
+                "native_history": history_metadata(model_input),
                 "transcript_action_ids": [
                     item["call_id"]
                     for item in model_input
@@ -3323,6 +3427,7 @@ def _run_one_locked(
                     "response_id": turn.response_id,
                     "response_model": turn.response_model,
                     "response_status": turn.response_status,
+                    "response_reasoning_context": turn.response_reasoning_context,
                     "input_tokens": turn.input_tokens,
                     "cached_input_tokens": turn.cached_input_tokens,
                     "output_tokens": turn.output_tokens,
@@ -3355,6 +3460,7 @@ def _run_one_locked(
                 "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
                 "error_code": turn.error_code,
                 "incomplete_reason": turn.incomplete_reason,
+                "response_reasoning_context": turn.response_reasoning_context,
                 "tool_contract_failure": (
                     turn.tool_contract_failure.model_dump(mode="json")
                     if turn.tool_contract_failure is not None

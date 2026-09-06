@@ -7,6 +7,7 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ```text
 patchloop/dev/runner.py   loop composition, gates, context, terminal handling
+patchloop/dev/conversation.py  active native episode and replaceable state framing
 patchloop/dev/tools.py    tool grammar, spans, mutations, checks, finish
 patchloop/dev/state.py    append-only JSONL, action/provider recovery
 patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
@@ -292,14 +293,33 @@ clears it. `mutation_readiness.state=ready_to_attempt` uses basis
 `current_delivered_editable_source_evidence`: this input contains non-empty current editable source.
 The complete anchor of a proposed edit still requires separate admission validation;
 readiness does not prove that coverage or semantic sufficiency. From turn two onward, the
-actual model input carries the immediately preceding calls and public observations as
-native `function_call` / `function_call_output` items, followed by current derived
-state without duplicating those results. One content-addressed model-input artifact
-binds that sequence. V21 projects the inspection result's echoed intent and derived
+actual model input retains the whole native episode, not only the previous batch.
+Its order is system instructions, replaceable developer-role harness-state JSON, one
+stable user task, then all encrypted reasoning/canonical calls/public outputs. The JSON
+and source/tool/model prose are explicitly data, not additional instructions. Keeping
+the replaceable state before the user boundary preserves every native item after that
+boundary untouched. Never append a fresh user context after each action or assume that
+the last ciphertext contains the complete prior conversation. The state prefix is the
+current hash/note/check/correction authority; old native results retain historical identity.
+The 24,000-character bound still applies to retained current source, not total history.
+Existing whole-input counting, cap, output bounds and run limits constrain this episode;
+do not silently drop old exchanges, reset reasoning, or introduce paid compaction.
+
+Each new input loads the last decision's hash-verified input artifact, retains its native
+history, and appends only that response/executed or rejected batch. Reasoning-only
+responses also append without losing earlier results; current result duplication is removed
+even on a correction turn. `turn_started.native_history` stores only schema/counts/hash,
+never ciphertext or plaintext reasoning. A started-but-undispatched boundary is not a new
+decision or an extra exchange. All durable continuation refs and the saved active input
+must validate before pending tools on resume. Billing uncertainty keeps terminal priority.
+One content-addressed model-input artifact binds each sequence. V21 projects the inspection
+result's echoed intent and derived
 ledger/outcome/attempt decisions as action-bound references, labeled
 `model_authored_pre_observation_intent`. Delivery is `preceding_function_call_arguments`,
 `latest_tool_result.inspection_intent` for context-only adapters, or `journal_only` for
-historical intentions no longer delivered. Keep observed source, query/range, gain, status,
+intentions absent from that adapter's input. V22 native history includes older call IDs too;
+the compatibility `preceding_function_call_*` labels identify prior decisions/results,
+not their position relative to the replaceable state prefix. Keep source, query/range, gain, status,
 check feedback, explicit notes/questions, and original journal calls/results/cards exact.
 Do not use text matching, invent a finding, reinterpret a decision as an observation, or
 claim that a journal-only reference is an available tool. Original ledger action IDs
@@ -315,7 +335,7 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v21`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v22`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -337,7 +357,7 @@ call; exact per-turn tool availability and native call/output linkage are stored
 the turn boundary. OpenAI turns additionally store provider-encrypted reasoning and
 its output ordering in the external content-addressed artifact store; journal rows
 contain only its reference, counts, and order hash. The next stateless request replays
-that reasoning with matching calls and public results. Plaintext reasoning and
+all active-episode reasoning with matching calls and public results. Plaintext reasoning and
 summaries are never retained. Missing, damaged, reordered, or action-mismatched
 continuation evidence ends at `PROVIDER_CONTINUATION_ERROR` before another tool or
 provider call. Counters, legacy inspection telemetry, settled cost, latest batch, and
@@ -382,6 +402,10 @@ repetitions. Provider completion records structural output evidence only: item
 count, non-tool count, item types, a shape hash, and an encrypted-continuation artifact
 reference. Request `reasoning.encrypted_content` with `store=false`; never persist
 response text, plaintext reasoning, or a reasoning summary for protocol diagnosis.
+Persist bounded `response_reasoning_context` on provider/decision events and decision
+recovery: reported `current_turn`/`all_turns`, null when absent/unrecognized. Do not request
+GPT-5.6-only `all_turns` on GPT-5.4 mini. Wire integrity and reported mode establish
+availability only, not effective model use. No output ceiling or model configuration changes.
 
 After finish, the canonical submitted diff is content-addressed and an immutable
 manifest is recorded before evaluator execution. It binds task bytes, full runtime
@@ -430,16 +454,16 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: tool surface `v21` removes duplicate pre-observation inspection prose only
-from model-facing projection. Native original calls, encrypted continuation, actual tool
-observations, notes/lifecycle, policy, and journal recovery stay unchanged. Context-only
-delivery retains latest intent once; native delivery refers to the exact original call.
-Historical intention references are journal-only, not newly available actions. Verify
-parallel/cache identity, source/check/explicit-note preservation, native receipts, exact
-replay, and untouched historical bytes. The row-28 in-memory comparison reduced one false
-premise from four copies to one, but does not establish changed model behavior or causality.
-Keep note-source validity and all limits unchanged. The separately approved v21 row 29
-below verifies delivery, not improved efficiency; no row 30 is approved.
+Current seam: v22 implements the complete active native episode and replaceable state
+prefix described above. This follows the row-29 diagnosis, not evidence that the live
+model will reason efficiently. The former wire put one previous batch before a fresh
+user context; effective reasoning mode was not recorded. Historical ciphertext audits
+prove delivery integrity, not model reuse. Preserve exact provider input/history through
+parallel, correction and crash/resume paths. No new notes, experiment obligation, action
+mask, task-specific repair hint, output ceiling or global limit is introduced. Existing
+notes remain optional and bounded. A later exact-approved row must assess history/mode,
+repeated answered questions, first edit, public repair and submission separately.
+No row 30, retry, resume or Docker operation is approved by implementation.
 
 Row 29 `run_dev_7005744ccb5d4cc1` reached `EVALUATOR_FAIL`, task acceptance FAIL and safety
 PASS (`PRIVATE_EVALUATION_FAILED`): 32 model/input-count calls, 35 actions, one accepted
@@ -457,6 +481,10 @@ body remained delivered through repeated requests to read it. Later 24k retentio
 up to 151 helper-source lines, beginning at turn 25, without dropping that editable body.
 Inspect repeated-question selection and the submitted semantic miss separately; this row
 does not establish why the model chose its trajectory or that deduplication made it worse.
+The subsequent developer-only in-memory diagnosis reproduces a missing existing-target
+directory guard and a trailing-separator split termination bug in both the rejected and
+accepted proposals. The 50-line reduction did not introduce either bug. These are
+candidate-algorithm defects, not grounds to inject private cases into model instructions.
 Do not feed private failures back into the coding agent or add compulsory planning/notes/
 probes, weaker evidence binding, tighter masks, or larger limits based only on this result.
 No automatic repair, retry, resume, or thirtieth live invocation is authorized.
@@ -1011,7 +1039,22 @@ uv run pytest tests -p no:cacheprovider --basetemp <short-external-path>
 uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
 ```
 
-V21 passes Ruff and 475 provider-free tests in four concurrent groups of 60/68/60/287
+V22 passes Ruff and 493 provider-free tests in four concurrent groups of 60/68/60/305
+(72.78/90.91/68.34/94.61 seconds), with three opt-in Docker tests skipped. Roots are
+`C:\pt\pl22-verified-b{1,2,3,4}` using the same file partition as v21 below. Eighteen new
+cases cover the single-user episode, ordered replaceable state, old history integrity,
+reported-mode privacy, parallel/correction carry, four crash boundaries and exact input
+counting; 54 focused refinement cases pass in 46.29 seconds. Mock
+`run_dev_719b638249c246aa` in `C:\pt\pl22-smoke-b` reaches mutation, visible checks, finish
+and isolated `EVALUATOR_PASS`: four model turns, five actions, one mutation, task acceptance
+PASS, safety NOT_RUN, zero cost, `official=false`, `claim_eligible=false`. Frozen
+Ruff/full-suite/mock wall time is 102.488 seconds. Ordered tool schemas, task/limits and
+note policy are unchanged; native framing adds a short instruction outside the unchanged
+base system prompt. The test-local helper-shadowing failure in the first full-suite
+attempt was fixed, and the new state prefix preserves existing context field priority.
+No live provider or Docker execution ran; historical run/envelope bytes are not migrated.
+
+V21 passed Ruff and 475 provider-free tests in four concurrent groups of 60/68/60/287
 (94.86/117.10/87.92/103.01 seconds), with three opt-in Docker cases skipped. Short roots
 are `C:\pt\pl21-verified-b{1,2,3,4}`: tools/context/source-rebind; runner/resume/state;
 recovery/notes-v14/note-lifecycle/note-feedback/probes/feedback-v18/note-temporal-v18;

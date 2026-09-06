@@ -188,7 +188,9 @@ def test_native_parallel_receipt_is_attached_once_without_echoing_annotation(
         note_call("ignored", tool_note("pending")),
     ]
     turn_id = "native-parallel"
-    gateway.journal.append("turn_started", {"turn_id": turn_id})
+    from native_history_support import start_turn
+
+    start_turn(gateway.journal, ArtifactStore(tmp_path / "artifacts"), turn_id)
     gateway.journal.append("turn_decision_recorded", {
         "turn_id": turn_id, "tool_calls": [call.model_dump(mode="json") for call in calls],
     })
@@ -223,7 +225,7 @@ def test_native_parallel_receipt_is_attached_once_without_echoing_annotation(
         assert echoed_arguments[call.action_id]["turn_decision"] == (
             call.turn_decision.model_dump(mode="json")
         )
-    notes = json.loads(model_input[-1]["content"])["working_notes"]
+    notes = json.loads(model_input[1]["content"])["working_notes"]
     assert notes["last_update_result"]["action_id"] == "owner"
     assert notes["last_update_result"]["delivery"] == "preceding_function_call_output"
     assert "findings" not in notes["last_update_result"]
@@ -269,17 +271,17 @@ def test_mock_row_recovers_notes_via_native_receipts_without_extra_model_or_tool
     inputs = [json.loads(Path(turn["model_input_artifact"]["path"]).read_text(encoding="utf-8"))
               for turn in turns]
     assert len(inputs) == 4
-    for items, payload in zip(inputs[1:], payloads, strict=True):
+    for index, (items, _payload) in enumerate(zip(inputs[1:], payloads, strict=True), start=1):
         outputs = [json.loads(item["output"]) for item in items
                    if item.get("type") == "function_call_output"]
         receipts = [output["memory_update_result"] for output in outputs
                     if "memory_update_result" in output]
-        assert receipts == [payload["receipt"]]
+        assert receipts == [prior["receipt"] for prior in payloads[:index]]
         assert all(output["status"] == "succeeded" for output in outputs)
-        notes = json.loads(items[-1]["content"])["working_notes"]
+        notes = json.loads(items[1]["content"])["working_notes"]
         assert notes["last_update_result"]["delivery"] == "preceding_function_call_output"
         assert "last_update_diagnostics" not in notes
-    final_notes = json.loads(inputs[-1][-1]["content"])["working_notes"]["findings"]
+    final_notes = json.loads(inputs[-1][1]["content"])["working_notes"]["findings"]
     assert [note["note_id"] for note in final_notes] == ["n1"]
     assert final_notes[0]["status"] == "current"
 

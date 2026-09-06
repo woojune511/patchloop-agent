@@ -1113,10 +1113,9 @@ def test_encrypted_reasoning_and_parallel_calls_replay_in_provider_order(tmp_pat
         store,
         continuation,
     )
-    journal.append(
-        "turn_started",
-        {"turn_id": turn_id, "context_hash": "sha256:" + "0" * 64},
-    )
+    from native_history_support import start_turn
+
+    start_turn(journal, store, turn_id)
     journal.append(
         "turn_decision_recorded",
         {
@@ -1209,10 +1208,9 @@ def test_protocol_rejection_preserves_reasoning_and_call_linkage(tmp_path) -> No
             ]
         ),
     )
-    journal.append(
-        "turn_started",
-        {"turn_id": turn_id, "context_hash": "sha256:" + "0" * 64},
-    )
+    from native_history_support import start_turn
+
+    start_turn(journal, store, turn_id)
     journal.append(
         "turn_decision_recorded",
         {
@@ -1238,12 +1236,12 @@ def test_protocol_rejection_preserves_reasoning_and_call_linkage(tmp_path) -> No
         latest_tool_results=[],
     )
 
-    assert [item.get("type") for item in model_input[1:-1]] == [
+    assert [item.get("type") for item in model_input[3:]] == [
         "reasoning",
         "function_call",
         "function_call_output",
     ]
-    rejection = json.loads(model_input[-2]["output"])
+    rejection = json.loads(model_input[-1]["output"])
     assert rejection == {
         "action_id": "rejected-read",
         "available_tool_names": ["replace_text", "stop_task"],
@@ -1874,7 +1872,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
             "output": {key: value for key, value in original["output"].items()
                        if key != "inspection_intent"},
         }
-    current_input_context = json.loads(second_input[-1]["content"])
+    current_input_context = json.loads(second_input[1]["content"])
     assert current_input_context["latest_tool_results"] == []
     assert current_input_context["latest_tool_results_delivery"] == {
         "format": "preceding_function_call_output_items",

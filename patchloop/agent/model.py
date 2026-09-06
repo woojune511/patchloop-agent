@@ -57,6 +57,7 @@ class ModelTurn:
     response_id: str | None = None
     response_model: str | None = None
     response_status: str | None = None
+    response_reasoning_context: Literal["current_turn", "all_turns"] | None = None
     response_incomplete_reason: str | None = None
     error: ModelTurnError | None = None
     output_item_count: int = 0
@@ -194,6 +195,11 @@ class OpenAIResponsesAdapter:
             (getattr(output_details, "reasoning_tokens", 0) if output_details else 0) or 0
         )
         response_status = getattr(response, "status", None)
+        response_reasoning = getattr(response, "reasoning", None)
+        reasoning_context = (
+            response_reasoning.get("context") if isinstance(response_reasoning, dict)
+            else getattr(response_reasoning, "context", None)
+        )
         incomplete_details = getattr(response, "incomplete_details", None)
         incomplete_reason = (
             incomplete_details.get("reason")
@@ -292,6 +298,10 @@ class OpenAIResponsesAdapter:
             response_id=getattr(response, "id", None),
             response_model=getattr(response, "model", None),
             response_status=response_status,
+            response_reasoning_context=(
+                reasoning_context if isinstance(reasoning_context, str)
+                and reasoning_context in {"current_turn", "all_turns"} else None
+            ),
             response_incomplete_reason=incomplete_reason,
             error=error,
             output_item_count=len(output_items),

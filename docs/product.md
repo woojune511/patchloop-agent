@@ -87,11 +87,15 @@ within one path component and `**` includes zero or more directories. This inclu
 root files in the default `**/*` search. Queries are literal text; a searched-file
 count distinguishes an empty eligible file selection from a text search with no match.
 
-For OpenAI runs, stateless continuity also carries the provider-encrypted reasoning
-items returned by the immediately preceding response. Their ciphertext and output
-order live in the external content-addressed store; the journal carries only the
-artifact hash, item counts, and order hash. The next request replays those items with
-the matching function calls and public results before the new public context. Plaintext reasoning,
+For OpenAI runs, the complete active native episode follows one stable user task:
+encrypted reasoning, canonical function calls, and matching public results in order.
+A replaceable harness-state JSON prefix sits before that user boundary, so updated
+state does not create a new task or accumulate old snapshots. Saved input artifacts
+preserve the exact history; journal metadata binds its counts/hash. Earlier observations
+are historical, not current source or check PASS. Effective reasoning mode is recorded
+only when the provider reports it; delivery is not proof of effective model reuse.
+Full history is subject to existing exact cost admission and can cost more; it is not
+silently truncated or compacted by another model. Plaintext reasoning,
 reasoning summaries, private task material, and evaluator details are never retained
 or projected. Missing or damaged continuation evidence stops the run before another
 provider or tool call.
@@ -245,7 +249,8 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v21` separates recorded inspection intent from observed
+workflow state. Tool-surface `v22` preserves one active native episode with a replaceable
+state prefix. It retains v21's separation of recorded inspection intent from observed
 feedback without changing actions or budgets. It places actual check outcomes beside note citations and
 describes existing candidate-probe capability explicitly. It preserves unchanged observed
 line fragments across edits,

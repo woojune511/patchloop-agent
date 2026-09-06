@@ -39,8 +39,8 @@ def _append(gateway, result):
 def _assert_replayed_input(gateway, results, tmp_path, original):
     restarted = _restart(gateway)
     restored = _input(restarted, results, tmp_path)
-    assert restored[:-1] == original[:-1]
-    assert json.loads(restored[-1]["content"]) == json.loads(original[-1]["content"])
+    assert [restored[0], *restored[2:]] == [original[0], *original[2:]]
+    assert json.loads(restored[1]["content"]) == json.loads(original[1]["content"])
     # Hydration may reorder nested dictionaries; the saved context replays byte-exactly.
     assert _input(restarted, results, tmp_path, context=_context(gateway, results)) == original
 
@@ -81,7 +81,7 @@ def test_row27_cross_diff_false_summary_keeps_each_cited_failure_beside_the_note
     payload, results = _completed_batch(gateway, calls, "parallel-notes")
     assert payload["receipt"]["status"] == "partially_applied"
     items = _input(gateway, results, tmp_path)
-    public = json.loads(items[-1]["content"])
+    public = json.loads(items[1]["content"])
     finding = public["working_notes"]["findings"][0]
     assert finding["statement"] == "The visible failure has moved to an assertion."
     assert [ref["check_result"] for ref in finding["evidence"]] == [
@@ -112,7 +112,7 @@ def test_pass_citation_becomes_historical_after_mutation_without_rewriting_verdi
     stored = copy.deepcopy(payload)
     _, results = _completed_batch(gateway, [_mutation("change")], "change")
     items = _input(gateway, results, tmp_path)
-    evidence = json.loads(items[-1]["content"])["working_notes"]["findings"][0]["evidence"][0]
+    evidence = json.loads(items[1]["content"])["working_notes"]["findings"][0]["evidence"][0]
     assert evidence["check_result"] == {
         "check_id": "regression", "passed": True, "exception_type": None,
         "currency": "historical",

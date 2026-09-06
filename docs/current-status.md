@@ -27,7 +27,69 @@ Repository policy alone never initiates paid work. The twenty-nine live observat
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v21
+## Current implementation: tool surface v22
+
+V22 corrects the native conversation boundary, not the task or action policy. A request
+now contains system instructions, one replaceable harness-state JSON prefix, one stable
+user task, and the complete ordered native tool episode. Every encrypted reasoning item,
+canonical call, and matching public result from that episode is retained exactly once.
+The state prefix stays before the user boundary: updating budgets, current evidence,
+notes or a correction neither invents a new user request nor accumulates old 24k snapshots.
+Historical source/check results keep their original identities and are not current evidence
+merely because they remain in history. Current-source admission stays fail-closed.
+
+The saved input artifact supplies the immutable history prefix. Each `turn_started` records
+content-free history counts and a history hash; resume checks this contract and all durable
+reasoning references before pending tools or a new dispatch. Reasoning-only and rejected
+batches append without losing the earlier episode; pending batch replay still finishes
+first. Billing uncertainty keeps terminal priority. Whole-history input is counted by the
+existing cost admission, with no silent truncation or paid compaction. Tool output/run
+limits remain unchanged; the 24,000-character limit bounds retained current source, not
+the complete native history. Full history can increase input cost and reach the cap sooner.
+
+Provider completion/decision events now retain `response_reasoning_context` as the reported
+`current_turn`/`all_turns`, or null when unreported/unrecognized. The selected GPT-5.4 mini
+request still uses medium effort, `store=false`, encrypted continuation and the existing
+25k desired ceiling; no GPT-5.6-only option is added. This telemetry establishes reported
+availability, not that the model used evidence effectively. All plaintext reasoning,
+summaries, private task material and evaluator feedback remain outside agent inputs.
+
+The row-29 read-only diagnosis found two distinct issues. Every saved input replaced the
+actual tool episode with only its previous batch and a fresh trailing user context.
+[Official reasoning guidance](https://developers.openai.com/api/docs/guides/reasoning#keeping-reasoning-items-in-context)
+recommends preserving the active sequence since the last user message. Earlier integrity
+audits proved ciphertext delivery, not provider-side reasoning reuse; effective mode was
+not recorded. This is a structural risk, not a proven explanation of repeated inspection:
+row 28 succeeded with the same framing. Row 29's executable body was present at turns
+3-29, mutation was available from turn 2, and the first 26 decisions had null memory updates.
+
+Separately, the submitted manual walker skipped the directory-type check at an existing
+file target with `exist_ok=True`, and treated a trailing-separator split's empty tail as
+termination, hiding parent traversal. Both defects existed in the rejected 60-line proposal
+as well as the accepted 48-line edit: reducing to the unchanged 50-line cap did not introduce
+them. Developer-only, provider-free in-memory public-input comparisons reproduced both,
+plus premature ancestor-target rejection. They were not an isolated evaluator rerun and
+were not injected into the coding agent. No task, old submission or historical run was edited.
+
+Ruff and all 493 provider-free tests pass in four concurrent groups of 60/68/60/305
+(72.78/90.91/68.34/94.61 seconds), with three opt-in Docker cases skipped. The 18 new
+cases cover full-episode ordering, state field priority, correction carry, reported-mode
+privacy, old-history damage, four crash boundaries, once-only mutation/provider execution,
+whole-input counting and billing-uncertainty priority. The focused 54-case refinement
+passes in 46.29 seconds. Final roots are `C:\pt\pl22-verified-b{1,2,3,4}`.
+Mock `run_dev_719b638249c246aa` under `C:\pt\pl22-smoke-b` reaches mutation, visible checks,
+finish and isolated `EVALUATOR_PASS`: four model turns, five actions, one mutation,
+acceptance PASS, safety NOT_RUN and zero cost. The frozen Ruff/full-suite/mock sequence
+takes 102.488 seconds, below the two-minute target. No runtime file changed during it.
+An earlier full-suite pass attempt exposed a renamed test-local variable shadowing its
+mock helper; that test was corrected. Review also preserved existing context field order
+instead of alphabetically sorting the new state prefix. Neither change alters task behavior.
+All 56 pre-existing journal/envelope files, `.env`, user-owned `AGENTS.md`, task packages,
+historical directories and pre-existing untracked work are preserved.
+No paid provider call, Docker start/pull/build, retry, resume, or thirtieth live row is
+authorized by this change. All results remain `official=false`, `claim_eligible=false`.
+
+### V21 implementation and validation checkpoint
 
 V21 removes repeated pre-observation inspection prose from the model-facing projection.
 The original `turn_decision`, raw tool results, attempt cards, and encrypted continuation
@@ -101,7 +163,7 @@ a 48-line candidate: 47 additions and one deletion in `pyfakefs/fake_os.py`, no 
 files. Traversal passed at turn 30, upstream regression at turn 31 (517 passed, 570 skipped
 in 3.34 seconds), and finish submitted at turn 32. Isolated task acceptance then failed.
 This is a semantic acceptance failure, not a provider, token-ceiling, cost, or deadline
-terminal. The exact missed behavior has not been diagnosed in this execution checkpoint.
+terminal. The execution checkpoint preceded the separate diagnosis recorded above.
 
 The final visible-check diff, submitted artifact, managed workspace, and isolated
 evaluator's applied diff all match
@@ -1512,14 +1574,14 @@ compatibility with those runners is intentionally unsupported.
 
 ## Next decision
 
-Preserve rows 26-29 as immutable evidence. Row 29 confirms that v21's deduplicated delivery
-and continuation work, but repeated inspection persists despite the editable body being
-present. The accepted mutation was later than row 28's, and public PASS did not imply
-isolated task acceptance. Diagnose the public evidence-to-action trajectory and the final
-artifact's semantic miss separately before selecting another change. Do not treat either
-as proof of missing continuation, old-code execution, or feature-level causality. Keep
-private evaluator feedback out of coding-agent inputs; do not add mandatory notes/probes,
-weaken source validity, tighten action masks, or raise limits merely from this outcome.
+Preserve rows 26-29 as immutable evidence. V22's local tests establish the native episode
+and replay contract, not improved agent efficiency or semantic success. Evaluate a future
+separately approved row along distinct axes: full-history delivery and reported reasoning
+mode; first useful edit and repeated answered questions; optional note/experiment use;
+correct public repair and final acceptance. Do not equate delivered ciphertext with actual
+reasoning reuse, or infer feature causality from uncontrolled row comparisons. Keep private
+feedback out of coding-agent inputs. Do not add mandatory notes/probes, weaken source
+validity, tighten action masks, or raise limits merely from the row-29 outcome.
 Neither uncontrolled row comparisons nor this reused development task establish
 generalization. No automatic repair, retry, resume, or thirtieth live row is authorized.
 

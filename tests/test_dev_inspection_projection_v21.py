@@ -156,6 +156,8 @@ def test_failed_read_without_intent_and_empty_initial_context_remain_exact():
 
 
 def _complete(gateway, calls, turn_id, store):
+    from native_history_support import start_turn
+
     continuation = ProviderContinuationArtifact(output_order=[
         EncryptedReasoningContinuationItem(
             id=f"rs-{turn_id}", encrypted_content="opaque-test-state",
@@ -163,7 +165,8 @@ def _complete(gateway, calls, turn_id, store):
         *(FunctionCallContinuationRef(action_id=call.action_id) for call in calls),
     ])
     ref = runner._store_provider_continuation(store, continuation)
-    gateway.journal.append("turn_started", {"turn_id": turn_id})
+    start_turn(gateway.journal, store, turn_id,
+               context=_context(gateway, gateway.journal.latest_tool_batch_results()))
     gateway.journal.append("turn_decision_recorded", {
         "turn_id": turn_id, "tool_calls": [call.model_dump(mode="json") for call in calls],
         "continuation_ref": ref.model_dump(mode="json"),
@@ -209,16 +212,16 @@ def test_parallel_native_receipt_cache_and_restart_preserve_originals(tmp_path):
         assert outputs[result.action_id]["output"]["evidence_gain"] == (
             result.output["evidence_gain"]
         )
-    assert items[1]["encrypted_content"] == "opaque-test-state"
-    assert items[1]["summary"] == []
+    assert items[3]["encrypted_content"] == "opaque-test-state"
+    assert items[3]["summary"] == []
     assert runner._load_provider_continuation(store, ref).output_order[0].encrypted_content == (
         "opaque-test-state"
     )
     restored = _restart(gateway)
     assert _input(restored, results, tmp_path, context=saved_context) == items
     rebuilt = _input(restored, results, tmp_path)
-    assert rebuilt[:-1] == items[:-1]
-    assert json.loads(rebuilt[-1]["content"]) == json.loads(items[-1]["content"])
+    assert [rebuilt[0], *rebuilt[2:]] == [items[0], *items[2:]]
+    assert json.loads(rebuilt[1]["content"]) == json.loads(items[1]["content"])
     assert gateway.journal.path.read_bytes() == before
     assert [call.model_dump(mode="json") for call in calls] == original_calls
     assert [result.model_dump(mode="json") for result in results] == original_results
@@ -229,7 +232,8 @@ def test_parallel_native_receipt_cache_and_restart_preserve_originals(tmp_path):
     assert cached[0].evidence_cache_hit is True
     next_items = _input(restored, cached, tmp_path)
     assert json.dumps(next_items).count(call.turn_decision.basis) == 1
-    assert BASIS not in json.dumps(next_items)
+    # V22 retains earlier native intent once, but does not recopy it as new evidence.
+    assert next_items[3:3 + len(items[3:])] == items[3:]
 
 
 def test_surface_identity_changes_without_tool_inputs_prompt_or_limits_changing():

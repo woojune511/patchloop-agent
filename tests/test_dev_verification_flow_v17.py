@@ -172,7 +172,9 @@ def test_parallel_owner_receipt_delivery_and_restart_replay_are_exactly_once(tmp
     ]
     before_calls = [call.model_dump(mode="json") for call in calls]
     turn_id = "parallel"
-    gateway.journal.append("turn_started", {"turn_id": turn_id})
+    from native_history_support import start_turn
+
+    start_turn(gateway.journal, ArtifactStore(tmp_path / "artifacts"), turn_id)
     gateway.journal.append("turn_decision_recorded", {
         "turn_id": turn_id, "tool_calls": before_calls,
     })
@@ -200,7 +202,7 @@ def test_parallel_owner_receipt_delivery_and_restart_replay_are_exactly_once(tmp
     }
     assert outputs["owner"]["memory_update_result"] == payload["receipt"]
     assert all("memory_update_result" not in outputs[owner] for owner in ["no-update", "ignored"])
-    projected = json.loads(model_input[-1]["content"])["working_notes"]
+    projected = json.loads(model_input[1]["content"])["working_notes"]
     assert projected["verification"]["unresolved_ids"] == ["v1"]
     assert projected["last_update_result"]["delivery"] == "preceding_function_call_output"
     assert "verification" not in projected["last_update_result"]
@@ -308,14 +310,14 @@ def test_mock_verification_annotations_keep_call_counts_and_native_delivery(tmp_
     assert updates[2]["receipt"]["verification"]["status"] == "rejected"
     assert updates[3]["verification_state"]["items"][0]["decision"]["outcome"] == "resolved"
     turns = [event["payload"] for event in events if event["event_type"] == "turn_started"]
-    for turn, update in zip(turns[1:], updates[:3], strict=True):
+    for index, (turn, _receipt) in enumerate(zip(turns[1:], updates[:3], strict=True), start=1):
         items = json.loads(Path(turn["model_input_artifact"]["path"]).read_text(encoding="utf-8"))
         outputs = [json.loads(item["output"]) for item in items
                    if item.get("type") == "function_call_output"]
         receipts = [output["memory_update_result"] for output in outputs
                     if "memory_update_result" in output]
-        assert receipts == [update["receipt"]]
-        notes = json.loads(items[-1]["content"])["working_notes"]
+        assert receipts == [prior["receipt"] for prior in updates[:index]]
+        notes = json.loads(items[1]["content"])["working_notes"]
         assert notes["verification"]["unresolved_ids"] == ["v1"]
         assert notes["last_update_result"]["delivery"] == "preceding_function_call_output"
         assert "verification" not in notes["last_update_result"]

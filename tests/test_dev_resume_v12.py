@@ -315,7 +315,7 @@ def test_provider_correction_survives_crash_without_repeating_dispatch(
     assert result["terminal"] == "AGENT_STOPPED"
     assert executions == counted == 2
     assert result["accepted_mutations"] == 0
-    context = json.loads(inputs[-1][-1]["content"])
+    context = json.loads(inputs[-1][1]["content"])
     cards = context["recent_attempt_result_next_question"]
     assert any(card["attempt"] == "protocol" for card in cards)
     expected_code = (
