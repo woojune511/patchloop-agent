@@ -27,6 +27,7 @@ def dev_tool_surface_hash() -> str:
             "schema_version": "dev-tool-surface-v26",
             "public_execution_feedback": "current-diff-changed-python-launch-thread-lines-v1",
             "public_execution_feedback_bounds": [8, 256, 12_000],
+            "public_execution_report_limit_bytes": 16_000,
             "native_conversation": "single-user-append-only-current-state-v3",
             "native_state_view": "complete-mutable-view-immutable-public-task-v1",
             "model_state_projection": "audit-ledger-separated-native-body-references-v1",

@@ -341,6 +341,26 @@ def test_mocked_probe_copies_same_collector_in_existing_readonly_mount(monkeypat
     )
 
 
+def test_malformed_report_is_unknown_without_changing_probe_outcome(monkeypatch, public_repo):
+    targets = request(public_repo)
+    sandbox = backend(monkeypatch)
+    mock_launch(monkeypatch, lambda *a, **k: FakeProcess(
+        b"public result", marker(targets) + b"malformed\n",
+    ))
+    result = sandbox.run_probe(
+        public_repo, "question", "print('public result')", deadline=None,
+        execution_identity={"run_id": "r", "action_id": "p"}, execution_targets=targets,
+    )
+    assert result["status"] == "passed" and result["exit_code"] == 0
+    assert not result["truncated"] and result["stdout"] == "public result"
+    assert result["public_execution"]["status"] == "unknown"
+
+    collector = _OutputCollector(targets)
+    collector.drain(io.BytesIO(wire(targets) * 1000), "stderr")
+    assert collector.limit_hit.is_set() and collector.report is None
+    assert sum(len(value) for value in collector.streams.values()) <= 12000
+
+
 @pytest.mark.parametrize("cleanup_ok", [True, False])
 def test_timeout_preserves_deadline_and_cleans_container_before_collector_files(
     tmp_path, monkeypatch, cleanup_ok,

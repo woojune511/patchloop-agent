@@ -19,6 +19,7 @@ from typing import BinaryIO
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
 from patchloop.sandbox.execution_feedback import (
+    MAX_REPORT_BYTES,
     TRACE_WRAPPER,
     ReportChannel,
     prepare_trace,
@@ -192,7 +193,9 @@ class _OutputCollector:
             while block := stream.read(4096):
                 if name == "stderr" and self.channel is not None:
                     self.channel.feed(block)
-                    if self.channel.invalid:
+                    pending = len(self.channel.pending) if self.channel.collecting else 0
+                    if (self.channel.framed_bytes + pending
+                            > MAX_REPORT_BYTES + len(self.channel.prefix) + 1):
                         self.limit_hit.set()
                 else:
                     self._retain(block, name)

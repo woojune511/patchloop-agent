@@ -133,7 +133,9 @@ The same stdlib collector is copied outside the workspace, read-only: a separate
 for registered checks, the existing trusted mount for probes. Preserve the declared check
 command in results. Instrument Python `-c`, `-m`, and script launches; preserve unsupported
 commands and mark their feedback unknown. A bounded separate report frame does not spend
-the stdout/stderr cap. Reject duplicate, malformed, oversized or mismatched reports; missing
+the stdout/stderr cap. Its separate cumulative body allowance is 16,000 bytes; malformed
+metadata alone must not change the probe's exit outcome. Reject duplicate, malformed,
+oversized or mismatched reports; missing
 or interrupted collection, trace loss, timeout and file drift yield unknown rather than
 negative line evidence. This in-process report can be interfered with by tested code and
 is not a security attestation. Keep deadline/cleanup authority unchanged and remove mounted

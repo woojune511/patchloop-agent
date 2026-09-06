@@ -179,6 +179,7 @@ class ReportChannel:
         self.collecting = False
         self.invalid = False
         self.count = 0
+        self.framed_bytes = 0
         self.report = None
 
     def feed(self, block: bytes) -> None:
@@ -189,9 +190,11 @@ class ReportChannel:
                 if end < 0:
                     if len(self.pending) > MAX_REPORT_BYTES:
                         self.invalid = True
+                        self.framed_bytes += len(self.pending)
                         self.pending = b""
                     return
                 body, self.pending = self.pending[:end], self.pending[end + 1:]
+                self.framed_bytes += end + 1
                 self.count += 1
                 if self.count > 1:
                     self.invalid = True
@@ -211,6 +214,7 @@ class ReportChannel:
                     self.pending = self.pending[-keep:] if keep else b""
                     return
                 self.emit(self.pending[:start])
+                self.framed_bytes += len(self.prefix)
                 self.pending = self.pending[start + len(self.prefix):]
                 self.collecting = True
 

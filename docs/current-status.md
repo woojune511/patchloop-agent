@@ -63,12 +63,15 @@ that new feedback would have made the agent succeed. Avoid further tool restrict
 another prose warning when concrete execution evidence is missing.
 
 Validation: Ruff and `git diff --check` pass. Focused collector/contract/provenance/feedback
-tests pass 94 cases in 16.30 seconds, including 37 new cases. The full provider-free suite
-passes 586 cases with three opt-in real-Docker tests skipped, across groups of
-60/68/85/373 (65.63/74.79/62.39/99.67 seconds) under `C:\pt\pl26-full-a{1,3,4}` and
-`C:\pt\pl26-full-b2`. Group 2 was rerun after its exact context-key test was updated for
-the new summary field; runtime bytes stayed frozen. Each final group and focused phase
-is under two minutes, not the complete sequence including that rerun. Tests cover actual
+tests pass 95 cases in 16.65 seconds, including 38 new cases. The final provider-free suite
+passes 587 cases with three opt-in real-Docker tests skipped, across groups of
+60/68/85/374 (68.44/87.36/65.06/104.37 seconds) under `C:\pt\pl26-full-c{1,2,3,4}`.
+Earlier validation updated an exact context-key test for the new summary. Final review
+also separated malformed report metadata (unknown) from actual report-output overflow
+(the existing output-limit outcome); the 16,000-byte report allowance is independently
+bounded. Runtime bytes stayed frozen throughout the final full suite and smoke. Each
+final group and focused phase is under two minutes, not the complete development
+validation sequence including earlier passes/reruns. Tests cover actual
 local Python inline/module/script launches, LF/CRLF, unobserved error lines despite PASS,
 invalid/missing reports, source drift, trace loss, unmeasured threads, output bounds,
 native delivery, current-diff union, replay and mocked Docker deadline/cleanup ordering.
@@ -76,13 +79,13 @@ Probe child exception/exit paths run with isolation mocked; no real Docker execu
 claimed. All 64 existing run journal/envelope files, `.env`, user-owned `AGENTS.md`,
 1,249 tracked task/historical files and pre-existing scratch entries are unchanged.
 
-Mock `run_dev_2380963705404c4b` under `C:\pt\pl26-smoke-a` reaches mutation, visible
+Mock `run_dev_60bf5078e5ba466d` under `C:\pt\pl26-smoke-b` reaches mutation, visible
 checks, finish and isolated `EVALUATOR_PASS`: four mock turns, five tools, one accepted
-mutation, acceptance PASS, safety NOT_RUN, zero cost, 4.74-second command. The public
+mutation, acceptance PASS, safety NOT_RUN, zero cost, 4.72-second command. The public
 check records the two changed lines as entered and binds the same checked/submitted diff.
 Envelope/manifest runtime hash is
-`sha256:00f2b56f79fee68cecab65564b49cf6f34530b25e9f938c38ae6b41133dbfbf0`;
-tool hash is `sha256:dadc872b862bf72175f889f4220ff197bdc82e90528526d08ca08faa1f0fd4a3`.
+`sha256:48d18956cd504573bbf52e50c095df591d52761eff1c0f3ef7364e010d375ab6`;
+tool hash is `sha256:270506e1f41e2d439ac6a87797763f075027d94d584266c9df371173d47aa4fc`.
 The prompt remains 7,938 characters, and the full ordered tool-input schema hash stays
 `sha256:90db9c2f4c787e23dd598adc3d782d51f838572d71889c06266810588011ca9e`.
 No provider/count call, Docker execution/start/pull/build, resume/retry or thirty-fourth

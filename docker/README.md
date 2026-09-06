@@ -71,7 +71,11 @@ part of the submitted patch.
 Output retention and pipe draining are separate: after the 12,000-byte cap, readers
 discard further bytes until EOF while the main thread tears down the owned container.
 Leaving attach pipes unread can stall that teardown. `observed_output_bytes` counts
-all drained bytes and may exceed the fixed retained/public-output limit.
+all drained public stdout/stderr bytes and may exceed the fixed retained/public-output
+limit. The separately framed line report has its own 16,000-byte body allowance and is
+excluded from those public-output counters. A malformed report alone means unknown
+execution feedback, not a failed probe; only excess public/report output triggers the
+existing output-limit outcome. Repeated report frames cannot bypass this byte bound.
 
 Probe results are diagnostic and grant no required-check PASS or submission credit.
 Receipts bind action/input, source, diff, snapshot, image/profile, and execution-policy
