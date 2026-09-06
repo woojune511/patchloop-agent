@@ -27,7 +27,56 @@ Repository policy alone never initiates paid work. The twenty-seven live observa
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: tool surface v19
+## Current implementation: tool surface v20
+
+V20 addresses two feedback affordances identified by the public row-27 audit. A working
+note citing an executed public check now retains `check_result` beside its existing
+action/input/diff identity: the actual `check_id`, boolean `passed`, and bounded
+`exception_type` (null when absent). These facts are copied from the durable public
+result, not the model's statement. Projection adds per-citation `currency` as current,
+historical, or unknown when no diff identity exists. A later mutation changes currency,
+not the earlier verdict. Failed actions and non-check results get no invented check
+verdict. The label includes no traceback, source body, private path, or reasoning text.
+Note application/recovery, nonblocking interpretation errors, and native receipt ownership
+remain unchanged; this is not semantic validation of free-form prose.
+
+The probe description now states its existing capability: current tracked public files,
+including accepted edits, are importable read-only from `/workspace`; `/tmp` is writable
+scratch. Only base Python and public project code are supplied, without network or
+dependency installation. The optional experiment remains diagnostic, never required-check
+credit. No sandbox/profile/image, tool input shape/order, action mask, or limit changes.
+The system prompt replaces overlapping memory guidance with reusable behavior rules and
+explicit assumptions: refine the same fact, retain distinct facts separately, and use
+the existing current-failure card instead of overwriting reusable knowledge with status.
+It is shorter than v19 and adds no model call, planning step, compulsory probe, or gate.
+
+The diagnosis distinguishes observed defects from inferred model behavior. Row 27's actual
+mutation inputs contained both separator helper examples and the existing mkdir wrapper;
+its code still contradicted its stated normalization/delegation intent. One later note
+cited the current AttributeError check but described an earlier diff's assertion failure.
+Correct original feedback was present, and zero observed lines were omitted by projection.
+Both real-OS probes were baseline observations; the candidate-import capability already
+existed but was not explicit in the stable tool description. These changes test delivery
+and discoverability, not whether another model trajectory will solve the task.
+All old run/envelope bytes remain immutable. Runtime-mismatched nonterminal resume still
+rejects; no migration, retry, or twenty-eighth live invocation is authorized.
+
+Final provider-free verification passes Ruff and all 462 tests in four concurrent groups
+of 60/68/60/274 (71.99/88.86/66.64/76.73 seconds), with three opt-in Docker tests skipped.
+The 15 new cases cover actual PASS/FAIL/unknown exception labels, cross-diff false prose,
+historical verdicts after mutation, parallel native receipts, durable-note crash/replay,
+privacy, missing identity, and unchanged ordered tool input structure. Rebuilt contexts
+agree by public values; replay from the same saved context is exact. A synthetic fixture
+was corrected to restore both check history and in-memory state before testing this.
+Roots are `C:\pt\pl20-verified-a{1,2,3,4}`. Mock `run_dev_fe269097df164a83` under
+`C:\pt\pl20-smoke-a` reaches mutation, visible checks, finish, and isolated `EVALUATOR_PASS`:
+four model turns, five actions, one mutation, acceptance PASS, safety NOT_RUN, zero cost,
+`official=false`, and `claim_eligible=false`. The final frozen Ruff/full-suite/mock sequence
+took 103.5 seconds, excluding earlier focused debugging. System prompt length fell from
+8,007 to 7,880 characters. No paid call or Docker execution occurred; `.env`, user-owned
+`AGENTS.md`, task packages, historical directories, and existing run bytes were not changed.
+
+### V19 implementation and validation checkpoint
 
 V19 fixes two evidence-continuity issues found by the read-only row-26 audit, without
 changing action masks, model tool inputs, budgets, task packages, or acceptance gates.
@@ -1314,10 +1363,13 @@ Preserve row 26's passing v18 result and row 27's failing v19 result as immutabl
 Row 27 exercised retained source rebinding, check-summary identity, native feedback, and
 baseline probing; none alone guarantees correct implementation. Its remaining public
 failures concern helper ownership, preserving traversal before normalization, and separating
-newly created from pre-existing directories. Diagnose how observed source and probe results
-informed those choices before selecting another runtime change. Two edits repaired wrong
-helper owners, but this does not by itself prove a context omission or justify a larger
-mutation cap or stronger action mask. Closure warnings and concern-resolution label behavior
+newly created from pre-existing directories. The read-only analysis found intent/code
+contradictions despite delivered examples, overwriting of reusable notes with current-error
+status, and a cross-diff false summary beside correct original feedback. V20 now labels
+the actual cited check result and exposes existing candidate-probe capability explicitly;
+it does not claim to have corrected the model's interpretation or implementation choices.
+Two edits repaired wrong helper owners, but this does not justify a larger mutation cap
+or stronger action mask. Closure warnings and concern-resolution label behavior
 were not exercised. Neither success/failure on this repeatedly used development task nor
 the difference between rows establishes generalization or feature-level causality.
 No automatic retry, resume, or twenty-eighth live row is authorized.

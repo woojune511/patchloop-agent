@@ -118,7 +118,13 @@ Notes may retain the observed mechanism, the chosen implementation approach, and
 behavior still unverified. The prompt encourages reuse of existing functions' behavior
 and asks whether another inspection could change the edit or next check. These are
 short public observations and decisions; no extra model call, planning tool, or
-mandatory three-part plan is added. Citation validation does not prove an interpretation.
+mandatory three-part plan is added. Reusable facts remain distinct from current error
+status, which the automatic failure card already provides. Updating an existing note
+refines the same fact; a distinct fact needs a new ID. Citation validation does not prove an interpretation.
+An executed check citation carries its actual check name, PASS/FAIL boolean, and bounded
+exception type beside the model's prose. Its current/historical diff label is recomputed
+after edits without changing that verdict; absent diff identity is unknown. This can
+expose an interpretation contradicting its own cited result without judging or blocking it.
 Projected notes explicitly remain `model_authored_unverified`; `status=current` means
 their cited evidence is current, not that a behavior claim was checked after an edit.
 Guidance favors causal mechanisms, closing answered questions, and reconsidering claims
@@ -200,7 +206,10 @@ package and create a new task version/content identity.
 
 An explicitly enabled `run_probe` lets the model test a concrete public uncertainty
 with a small Python program. It runs against a separate read-only export of current
-tracked public source in a pinned clean Python image. The host selects the image,
+tracked public source in a pinned clean Python image. The tool description makes explicit
+that accepted edits are importable from read-only `/workspace`, with writable `/tmp`
+scratch. Only base Python and public project code are supplied; dependencies cannot be
+installed and network access is absent. The host selects the image,
 mounts, command, execution limits, and trusted wrapper. The program and its output
 are diagnostic evidence: a successful probe grants no visible-check or submission
 credit, and a failure may be a defect in the experiment itself. Experiments are not
@@ -233,7 +242,9 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v19` preserves unchanged observed line fragments across edits,
+workflow state. Tool-surface `v20` places actual check outcomes beside note citations and
+describes existing candidate-probe capability explicitly. It preserves unchanged observed
+line fragments across edits,
 separates unobserved/stale range feedback, and retains check citation identity. It preserves
 original verification questions, distinguishes
 update-time and after-batch note state, indexes observed headers, and previews actual

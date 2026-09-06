@@ -37,19 +37,18 @@ mutation_readiness.state=ready_to_attempt means only that current editable sourc
 evidence is delivered. It guarantees neither coverage of a particular replacement
 anchor nor a sufficient semantic solution.
 
-An optional memory_update in turn_decision can retain concise source-backed public
-observations, the current implementation approach, and unverified behavior. Preserve why
-the observed code causes a behavior, not just which wrapper delegates to which function.
-Distinguish observations from proposed mechanisms and untested assumptions; close an
-answered open_question or replace it with the next uncertainty. Cite behavior-bearing
-public source ranges or prior tool-result
-action IDs. Update an existing note_id when refining a note even if its citations change;
-note_id=null creates a separate note. To consolidate duplicates, update one note and use
-remove_note_ids for the redundant IDs. Distinct facts may share a source. No update or
-three-part plan is required each turn. These are model-authored notes, not verified
-semantic facts or reasoning transcripts. A note's status=current only means its cited
-evidence is current; its interpretation remains unverified. After an edit, reconsider
-behavior claims against the post-image even if unchanged citations let the note survive.
+An optional memory_update retains reusable behavior rules, implementation assumptions,
+and unverified behavior. Cite behavior-bearing public source or prior tool-result action
+IDs; preserve why the code causes a behavior, not just a wrapper location.
+current_public_failure already reports the latest error: do not replace a reusable fact
+with a copy of that status. Refine the same fact with its existing note_id, even if
+citations change; note_id=null creates a distinct fact. Consolidate duplicates with
+remove_note_ids. Close an answered open_question or name the next uncertainty.
+No update or
+three-part plan is required each turn. A note's status=current only means its cited
+evidence is current; its interpretation remains unverified. The citation's check_result
+is the recorded verdict, not confirmation of the note's prose. Reconsider behavior claims
+against the post-image after edits. Do not store reasoning transcripts.
 memory_update=null preserves notes and the
 question; within an update, open_question=null clears the question. Do not repeat an
 update across a parallel batch.
@@ -99,7 +98,8 @@ budget allows. A source read is necessary only to acquire missing exact edit evi
 
 All visible checks must pass on the submitted diff. An edit invalidates earlier
 checks; finish_task submits the currently checked baseline. When run_probe is supplied,
-use a small public behavior experiment to test a concrete uncertainty. Its output is
+use a small public behavior experiment on the current candidate to test a concrete
+uncertainty. Its output is
 diagnostic: probe success does not satisfy a visible check, and failure may be in the
 experiment itself. Test assumptions introduced by new branches using public input
 variations, not just the examples already covered by registered checks.

@@ -202,6 +202,25 @@ def note_feedback(code: str, **location: int | str) -> dict[str, Any]:
     return {"code": code, "message": message, **location}
 
 
+def check_note_result(result: dict[str, Any]) -> dict[str, Any] | None:
+    """Label a completed public check, not the model's interpretation of it."""
+
+    if result.get("tool") != "run_check" or result.get("status") != "succeeded":
+        return None
+    output = result.get("output", {})
+    check_id, passed = output.get("check_id"), output.get("passed")
+    if not isinstance(check_id, str) or type(passed) is not bool:
+        return None
+    focus = output.get("public_check_failure")
+    exception = focus.get("exception_type") if isinstance(focus, dict) else None
+    return {
+        "check_id": check_id,
+        "passed": passed,
+        # Reuse the bounded public failure field; never copy traceback/message text.
+        "exception_type": exception[:200] if not passed and isinstance(exception, str) else None,
+    }
+
+
 def memory_update_schema() -> dict[str, Any]:
     """Strict wire shape; semantic validation must never reject the main action."""
 
@@ -228,10 +247,12 @@ def memory_update_schema() -> dict[str, Any]:
     return {
         "type": ["object", "null"],
         "description": (
-            "Optional concise public observations, current implementation approach, and "
-            "unverified behavior, not a reasoning transcript. Cite already observed public "
+            "Optional reusable behavior rules, implementation assumptions, and unverified "
+            "behavior, not a reasoning transcript or a copy of current_public_failure. "
+            "Cite already observed public "
             "ranges or prior public tool action IDs. Use note_id=null to create a note or "
-            "an existing note_id to update it, independent of citation ranges. Consolidate "
+            "an existing note_id to refine the same fact, independent of citation ranges. "
+            "Keep distinct facts in separate notes. Consolidate "
             "duplicates by updating one note and removing the others. Only the first "
             "non-null update in a batch is used, before that batch executes. Do not "
             "cite pending/current-batch results. Before observing an answer, use "

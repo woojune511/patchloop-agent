@@ -110,7 +110,7 @@ native feedback passed the read-only audit; this is not evidence of task success
 No retry, resume, or twenty-eighth live row is authorized by these results, the implementation,
 or local validation. All results remain unofficial.
 
-Tool surface v19 retains bounded run-local verification concerns inside the existing
+Tool surface v20 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
@@ -122,7 +122,7 @@ existing `vN` upsert stores its incoming statement as the latest `progress_note`
 that original. A distinct question needs a null ID. Exact repetition of the original
 or retained progress yields applied code `unchanged`, preserving state, update time,
 and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
-immutable; v19 does not migrate them and rejects mismatched nonterminal resume under the
+immutable; v20 does not migrate them and rejects mismatched nonterminal resume under the
 existing exact-match contract. No new experiment is automatically executed after a check PASS.
 
 Current GPT-5.4 mini pricing and supported reasoning effort are reviewed against
@@ -197,6 +197,13 @@ position, not substring guessing, and journal them for identical recovery. Check
 retain action ID/check ID/diff together, and concern decisions preserve the actual cited
 check ID even though semantic relevance remains model-authored.
 Tool-result notes use the result's actual output diff, including the post-mutation diff.
+For an executed public check, `evidence[].check_result` stores `check_id`, `passed`, and
+bounded `exception_type` from the recorded result. Projection adds `currency` relative
+to the current diff (current/historical; unknown if the cited diff is missing). A stored
+PASS on an earlier diff never becomes a current PASS. Failed actions/non-checks get no
+invented check verdict. Prose is still unverified and may contradict that label; no semantic
+rejection or new gate is added. Keep reusable behavior facts separate from status already
+shown in `current_public_failure`; refining an ID should refine the same fact.
 Invalid notes do not reject that action. A separate `memory_update_result` on the owner
 call's native output reports each note's outcome and an actionable error. Its
 `scope=before_tool_batch`, `diff_hash_at_update`, and `note_ids_after_update` identify
@@ -306,7 +313,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v19`; prior
+These output and scheduler semantics are bound by tool-surface identity `v20`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually
@@ -365,6 +372,11 @@ budget for cleanup. The host exports current tracked public files, excluding `.g
 `.env*`, and `.patchloop-hidden`, and rejects symlinks or reparse points. Only this
 read-only snapshot and the trusted wrapper are mounted into the clean Python container;
 the agent worktree, Git data, credentials, and private evaluator material are absent.
+The stable tool description explicitly names `/workspace` as the importable current
+public snapshot, including accepted edits, and `/tmp` as writable scratch. It supplies
+only base Python and public project code, with no network or dependency installation.
+An agent can therefore test a candidate's concrete uncertainty, not just baseline OS
+behavior; this remains optional and does not replace registered checks.
 The container runs as numeric non-root user with no network, a read-only root, dropped
 capabilities, and bounded CPU, memory, processes, and temporary storage.
 

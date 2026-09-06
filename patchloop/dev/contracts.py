@@ -24,7 +24,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v19",
+            "schema_version": "dev-tool-surface-v20",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
@@ -62,12 +62,15 @@ def dev_tool_surface_hash() -> str:
             "working_note_feedback": "pre-batch-receipt-with-current-post-batch-ids-v2",
             "working_note_range_feedback": "bounded-never-observed-versus-stale-current-range-v1",
             "working_note_interpretation": "evidence-currency-not-semantic-validation-v1",
+            "working_note_check_result": "durable-verdict-exception-with-projected-currency-v1",
+            "working_note_guidance": "reusable-facts-separate-from-current-failure-v1",
             "verification_concerns": "original-question-progress-note-exact-noop-v2",
             "check_evidence_identity": "retained-action-check-diff-and-resolution-label-v1",
             "verification_concern_limit": 3,
             "submission_guidance": "required-checks-pass-with-advisory-concern-review-v1",
             "working_note_source_body_chars": 24_000,
             "public_probe": "optional-clean-python-diagnostic-protected-budget-v1",
+            "public_probe_discovery": "current-public-snapshot-import-and-environment-limits-v1",
             "mutation_recovery": "atomic-complete-candidate-diff-v2",
             "correction_recovery": "journal-derived-unconsumed-v2",
             "execution_deadline": "shared-active-deadline-owned-cleanup-v1",

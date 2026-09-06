@@ -46,6 +46,7 @@ from patchloop.dev.verification_concerns import (
 from patchloop.dev.working_notes import (
     SourceNoteEvidence,
     WorkingNotesUpdate,
+    check_note_result,
     memory_update_schema,
     note_feedback,
     source_note_range_details,
@@ -318,6 +319,9 @@ def dev_tool_schemas(
             "name": "run_probe",
             "description": (
                 "Run a small public Python experiment in clean isolated scratch space. "
+                "Current tracked public project files, including accepted edits, are importable "
+                "read-only from /workspace; writable scratch is /tmp. Only base Python and "
+                "public project code are supplied, with no network or dependency installation. "
                 "Results are model-authored diagnostics, not required visible-check verdicts."
             ),
             "strict": True,
@@ -1617,6 +1621,9 @@ class DevToolGateway:
                                 or result.get("workspace_diff_hash")
                             ),
                         })
+                        check_result = check_note_result(result)
+                        if check_result is not None:
+                            bound[-1]["check_result"] = check_result
                 if len(bound) != len(finding.evidence):
                     all_findings_valid = False
                     continue
@@ -1819,6 +1826,12 @@ class DevToolGateway:
                     current &= source_hashes[path] == evidence["file_hash"]
                 else:
                     current &= evidence.get("diff_hash") in {None, current_hash}
+                    if "check_result" in evidence:
+                        observed_hash = evidence.get("diff_hash")
+                        evidence["check_result"]["currency"] = (
+                            "unknown" if observed_hash is None else
+                            "current" if observed_hash == current_hash else "historical"
+                        )
             finding["status"] = "current" if current else "historical"
             finding["interpretation_status"] = "model_authored_unverified"
         return {

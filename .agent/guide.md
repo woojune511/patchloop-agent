@@ -101,7 +101,11 @@ or evaluates.
 least one model call and tool action beyond the protected completion budget. It uses
 `verify` decision mode with `evidence_goal=null`. It accepts one public question (500
 characters) and Python source (8,000 characters / 32,000 UTF-8 bytes), not a command,
-image, mount, or environment supplied by the model. A probe result is diagnostic:
+image, mount, or environment supplied by the model. Its description must state that
+current tracked public files, including accepted edits, are importable read-only from
+`/workspace`, with writable `/tmp` scratch and only base Python/public project code:
+no network or dependency installation. This describes the existing snapshot capability,
+not a new mount or required experiment. A probe result is diagnostic:
 it never grants source-span coverage, visible-check PASS, or finish credit, and failure
 does not force mutation or consume a check-repair allowance. See
 [the probe runtime contract](../docker/README.md) for image and isolation details.
@@ -215,7 +219,15 @@ bind `working_notes_state` outside the public result; hydrate replays that snaps
 never recomputing historical lifecycle decisions from the final filesystem. Unique
 unchanged text rebinds; changed or ambiguous text expires without later resurrection.
 `last_source_lifecycle` exposes only triggering action, rebound IDs, and expiry reasons.
-Old tool-result references remain historical.
+Old tool-result references remain historical. For an executed `run_check`, persist a
+compact `check_result` beside the citation: actual `check_id`, `passed`, and the existing
+bounded public `exception_type`, null when absent or passed. Do not infer a verdict for
+an unexecuted/failed action or attach check labels to a probe. Projection adds per-reference
+`currency=current|historical|unknown` from the cited/current diff hashes without rewriting
+the durable result. Missing diff identity means unknown, not current-check proof. Preserve
+this label through note/mutation snapshots and restart; copy no traceback, error message,
+private content, or reasoning. Even contradictory note prose remains model-authored and
+nonblocking. The recorded verdict is not a semantic endorsement of that prose.
 These are public run-local notes, not raw reasoning or cross-run memory retrieval.
 The separate `working_notes.verification` projection retains up to three model-authored
 public verification concerns. `memory_update.verification_updates` accepts at most three
@@ -246,8 +258,10 @@ Legacy `status=current` means only that its cited evidence is current; the harne
 not revalidate the statement's meaning. Cite behavior-bearing source, retain the causal
 mechanism rather than repeated wrapper locations, and close answered questions. Revisit
 behavior claims against observed post-image evidence after edits even if citations survive.
-Notes may retain observed mechanisms, the chosen implementation approach, and untested
-behavior. The system prompt encourages reuse of existing responsibilities and asks
+Notes retain reusable behavior rules, implementation assumptions, and untested behavior.
+Refine an existing ID for the same fact; use a new ID for a distinct fact. Current error
+status already has `current_public_failure`; do not overwrite reusable knowledge with a
+copy of that status. The system prompt encourages reuse of existing responsibilities and asks
 whether another inspection can change the edit or next check. These remain optional
 concise findings, not a mandatory plan or a harness guarantee of semantic correctness.
 `memory_update=null` preserves the notes and question; `open_question=null` inside an
@@ -292,7 +306,7 @@ any pending durable batch. If mutation, all required checks, and finish cannot f
 remaining model/tool/mutation resources, expose only `stop_task` for introspection but
 do not dispatch it to the model. Record existing `LIMIT_REACHED` with
 `completion horizon exhausted before provider dispatch` and bounded horizon arithmetic.
-Terminal resume returns that same public result. Current semantics are tool-surface `v19`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v20`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -407,7 +421,17 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: tool surface `v19` preserves observed unchanged complete-line fragments
+Current seam: tool surface `v20` puts the actual public check verdict/exception beside a
+note's citation and dynamically marks its diff currency. Store facts at the note-update
+boundary; derive currency without mutating the durable label. Test false prose remaining
+nonblocking, different check/diff identities, unknown failures, source/probe exclusions,
+parallel native delivery, crash/restart, and privacy. The probe schema explicitly describes
+existing current-candidate importability and clean-Python limits. Shorter system guidance
+preserves reusable facts separately from current failure status, without new quotas,
+planning calls, mandatory probes, tighter masks, or higher budgets. Actual behavior change
+is unproven without separately authorized live evidence. No twenty-eighth row is approved.
+
+The preceding tool surface `v19` preserves observed unchanged complete-line fragments
 across exact replacements and puts citation identity beside every retained check result.
 Range diagnostics distinguish unobserved from stale-current evidence without weakening
 admission. Keep v18 row26 immutable: its late source-note failures exposed lost current
@@ -930,7 +954,19 @@ uv run pytest tests -p no:cacheprovider --basetemp <short-external-path>
 uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
 ```
 
-V19 passes Ruff and 447 provider-free tests in four concurrent groups of 60/68/60/259
+V20 passes Ruff and 462 provider-free tests in four concurrent groups of 60/68/60/274
+(71.99/88.86/66.64/76.73 seconds), with three opt-in Docker cases skipped. Short external
+roots are `C:\pt\pl20-verified-a{1,2,3,4}`. The 15 new cases cover recorded verdict/exception
+labels, false interpretations, historical/unknown currency, note crash/replay, parallel
+delivery, privacy, and unchanged ordered model input schema. System prompt length is
+7,880 characters, down from 8,007. Mock `run_dev_fe269097df164a83` under
+`C:\pt\pl20-smoke-a` reaches isolated `EVALUATOR_PASS` via four model turns, five actions,
+and one mutation: acceptance PASS, safety NOT_RUN, cost zero, `official=false`, and
+`claim_eligible=false`. The final frozen Ruff/full-suite/mock sequence took 103.5 seconds,
+excluding earlier debugging. No paid provider or Docker execution occurred; no additional
+live authorization follows from these local tests.
+
+V19 passed Ruff and 447 provider-free tests in four concurrent groups of 60/68/60/259
 (69.70/86.16/64.59/67.54 seconds); three real-Docker cases remain opt-in/skipped.
 Roots: `C:\pt\pl19-verified-c{1,2,3,4}`. The frozen Ruff/full-suite/mock sequence took
 93 seconds, excluding earlier focused debugging. Mock `run_dev_41da713dc2504dea` under
