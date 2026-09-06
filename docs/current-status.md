@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The twenty-five live observations below
+Repository policy alone never initiates paid work. The twenty-six live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -54,7 +54,7 @@ already visible. It also found pre-mutation/current-note ID ambiguity, repeated 
 one concern, and incomplete closure warnings. These are feedback defects, not proof that
 context size or v17 caused the model's late edit or regression. V18 tests these contracts;
 they cannot show that a different prompt would have solved row 25. Existing run/envelope
-bytes are not migrated. No twenty-sixth live row is authorized.
+bytes are not migrated. That checkpoint did not authorize the separately approved row below.
 
 The read-only comparison also caught a navigation implementation defect before release:
 the observed editable fragment started inside a docstring, so assuming an initial code
@@ -76,6 +76,55 @@ The final frozen Ruff/full-suite/mock sequence took 98 seconds, excluding earlie
 and focused checks. Native feedback is exact across restart; rebuilt context values are
 equivalent even if JSON key order changes, and the same persisted context reproduces the
 exact model input. No provider call, Docker operation, task change, or live row ran.
+
+### Twenty-sixth live row: submitted task acceptance and safety PASS
+
+The user separately approved one new `pyfakefs-makedirs-parent-traversal` v2 run with
+`gpt-5.4-mini-2026-03-17`, medium reasoning, repository `.env`, repeat 1, a $1.20 cap,
+and `--enable-probes` under `C:\patchloop-state`. Initial read-only preflight found Docker
+unavailable and made no run/provider call. After the user started Docker, preflight passed
+tracked HEAD-clean runtime/task inputs, credential format, and both pinned local images.
+V18 commit `1d361e06ceeb2d4d85a68840ebe354eda7fc52f5` produced
+`run_dev_306785d397d640f3`: `EVALUATOR_PASS`, task acceptance PASS, safety PASS,
+28 model/input-count calls, 32 actions, three accepted mutations, $0.432518400,
+243.125 active seconds and 244 seconds run age. No second invocation, resume, automatic
+retry, Docker startup by PatchLoop, or image pull/build ran. `official=false` and
+`claim_eligible=false` remain explicit; this is development evidence, not a quality claim.
+
+The first edit came on call 16, compared with call 31 in row 25. It replaced whole-path
+delegation with recursive traversal using the existing path/mkdir helpers. Call 17 exposed
+intermediate-mode handling; call 20 changed the recursive parent call to `PERM_DEF`, and
+the public traversal contract passed at call 21. Call 22's upstream regression exposed
+incorrect broken-link-parent errno (17 instead of 2). Call 25 changed parent existence
+testing to `lexists`, allowing the existing leaf mkdir path to produce the proper error.
+The regression passed at call 26 (517 passed, 570 skipped), traversal passed again at
+call 27 on that same final diff, and call 28 submitted. The final patch changes only
+`pyfakefs/fake_os.py`: 18 added/one deleted line, below the unchanged 50-line bound.
+Submission and both final current-diff checks bind to
+`sha256:49f389e710954eeda0572a20547f3b3bef74603614f4bb616f8c6a6ff9e1b69a`.
+Isolated evaluation accepted that artifact; its summary was not reinjected into the agent.
+
+The run used 23 inspections (13 reads, 10 searches), five with no new coverage and no
+cache hits. The editable `makedirs` header appeared in every source index from call 2
+through 28. Retained source reached 23,979 characters and at most 38 observed lines were
+omitted; the working-set bound was not increased. Two concern originals remained stable,
+with separate progress and eight exact-repeat no-ops. All 22 annotation receipts with a
+following turn arrived exactly once with matching post-batch IDs/diff. Four source-note
+range citations and one unknown concern ID were rejected without blocking actions.
+Both concerns were marked resolved on the existing finish turn. One resolution reason
+claimed regression-suite evidence while its action ID actually named the traversal check:
+the gateway verifies current successful evidence identity, not semantic relevance. The
+regression did independently pass, but this mismatch remains a model annotation limitation.
+
+Probes were offered on all 28 turns but never used. No inspection-closure warning was
+needed, so probe use and the new closure-warning boundary were not live-exercised.
+No provider/protocol error or output-ceiling exhaustion occurred (maximum 7,471 output
+tokens). Read-only audit verified all 348 journal events, 84 context/input/continuation
+artifact hashes, 27 reasoning replay edges, five final artifact hashes, and all five
+public-check policy hashes with cleanup confirmed. Journal bytes hash to
+`sha256:3b9f61aeb31a52cac79b77132ff2f6916f00a87453356a417c4413b94f9369aa`.
+Row-25 bytes remain unchanged. Faster editing and successful repair are observations,
+not causal evidence that one v18 feature improved the model. No twenty-seventh row is authorized.
 
 ### V17 implementation and validation checkpoint
 
@@ -1156,6 +1205,16 @@ historical artifacts and `docs/archive/` remain preserved. Current checkout
 compatibility with those runners is intentionally unsupported.
 
 ## Next decision
+
+Preserve the passing v18 checkpoint. Row 26 reached earlier mutation, repaired two public
+counterexamples, and submitted a task-accepted patch, with intact feedback/provenance.
+Its source-note citation errors and mismatched concern-resolution reference remain worth
+read-only investigation before proposing another change. Probe use and closure-warning
+behavior were not exercised. Neither one success on this repeatedly used development
+task nor its difference from row 25 establishes generalization or feature-level causality.
+No automatic runtime fix, retry, or twenty-seventh live row is authorized.
+
+The preceding decision after row 25 was:
 
 The twenty-fifth row confirms bounded concern persistence and nonblocking annotation
 feedback, but not effective use of those concerns: the single item was repeatedly

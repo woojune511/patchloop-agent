@@ -97,8 +97,12 @@ rows 22 and 24 used one baseline probe each, while row 23 did not. These observa
 do not establish candidate validation by probing; exact results are in `docs/current-status.md`.
 The separately approved twenty-fifth row also enabled probes but did not invoke one.
 It terminated at the completion horizon after a public regression failure, without
-submission or private evaluation. No twenty-sixth live row is authorized by those
-results, the current implementation, or local validation.
+submission or private evaluation. The separately approved twenty-sixth v18 row,
+`run_dev_306785d397d640f3`, reached `EVALUATOR_PASS` (task acceptance and safety PASS)
+in 28 model calls and 32 actions for $0.432518400. It also did not invoke a probe.
+The initial Docker-unavailable read-only preflight made no run/provider call; the user
+started Docker before the one invocation. No twenty-seventh live row is authorized by
+these results, the implementation, or local validation. All results remain unofficial.
 
 Tool surface v18 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
