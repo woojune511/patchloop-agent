@@ -10,6 +10,8 @@ import copy
 import json
 from typing import Any
 
+from patchloop.dev.path_policy import mutation_path_allowed
+
 
 def _select(value: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:
     return {key: value[key] for key in keys if key in value}
@@ -20,6 +22,7 @@ def _source_catalog(view: dict[str, Any]) -> None:
     if "source_spans" not in view and "observed_source_index" not in view:
         return
     files: dict[tuple[str, str], dict[str, Any]] = {}
+    constraints = view.get("public_task", {}).get("constraints")
 
     def group_for(row: dict[str, Any]) -> dict[str, Any]:
         identity = row["path"], row["file_hash"]
@@ -41,6 +44,11 @@ def _source_catalog(view: dict[str, Any]) -> None:
     for header in index.get("entries", []):
         group_for(header)["headers"].append(_select(header, ("kind", "name", "start_line")))
     for group in files.values():
+        if isinstance(constraints, dict):
+            group["edit_permission"] = "allowed" if mutation_path_allowed(
+                group["path"], allowed_paths=constraints.get("allowed_paths", []),
+                forbidden_paths=constraints.get("forbidden_paths", []),
+            ) else "read_only"
         for fields in group["content_delivery"].values():
             for field, ranges in fields.items():
                 merged: list[list[int]] = []
@@ -105,6 +113,19 @@ def compact_model_state(
         if (isinstance(result, dict) and result.get("action_id") == item.get("call_id")
                 and isinstance(result.get("output"), dict)):
             results[item["call_id"]] = result
+
+    if isinstance(notes, dict):
+        receipt = notes.get("last_update_result")
+        if isinstance(receipt, dict) and isinstance(receipt.get("turn_id"), str):
+            delivered = results.get(receipt.get("action_id"), {}).get("memory_update_result")
+            if delivered == receipt:
+                # Match the full durable receipt, not just its formerly allocated IDs.
+                # It may belong to any earlier exchange, including before a mutation.
+                notes["last_update_result"] = {
+                    **_select(receipt, ("turn_id", "action_id")),
+                    "delivery": "preceding_function_call_output",
+                }
+                notes.pop("last_update_diagnostics", None)
 
     for key, tool in (("recent_checks", "run_check"), ("recent_probes", "run_probe")):
         for record in view.get(key, []):

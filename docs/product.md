@@ -116,7 +116,9 @@ re-read source or rewrite old messages. The obsolete alternative-requirement fla
 out of the model view. Stopping uses a reason and summary, not model-supplied source IDs;
 this simplifies the interface without preventing voluntary abandonment.
 `current_sources` groups path/hash,
-native action/field/ranges and observed headers without filling unseen gaps. Scope
+native action/field/ranges and observed headers without filling unseen gaps. Each file's
+`edit_permission=allowed|read_only` uses the existing mutation path rules, including
+forbidden-path precedence. It does not grant anchor evidence or change offered tools. Scope
 rejection explicitly names the rejected path and actual public path rules; a helper
 can be inspectable but not editable. Earlier observations
 are historical, not current source or check PASS. Effective reasoning mode is recorded
@@ -142,7 +144,11 @@ records make continuation and resume agree on which notes survive. Invalid notes
 a separate storage receipt with the affected note and a correction hint, without rejecting
 the main action. That receipt describes the update before its tool batch, not which IDs
 survive a following edit. The native owner output separately reports note IDs and expiries
-after the completed batch; `working_notes.available_note_ids` is the current authority.
+after the completed batch. A mutation that expires notes reports that lifecycle even when
+it requests no note update; unrelated later actions do not repeat the expiry.
+`working_notes.available_note_ids` is the current authority. Once the exact storage receipt
+is delivered, later current views reference it rather than repeating its historical success
+or rejection body. Missing or mismatched delivery keeps the bounded inline receipt.
 Before observing an answer, the agent can keep an open question; afterward
 it can create a note and use its ID for revisions while it remains in the current list.
 This run-local working memory has no

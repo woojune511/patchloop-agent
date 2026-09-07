@@ -360,12 +360,19 @@ Before an observation, use an open question or null update; findings may cite on
 source/results observed before the current batch. The next native output carries the
 owner call's `memory_update_result`, independently of main-action status. Its bounded
 per-finding outcomes identify created/updated/rejected IDs and a recovery hint; separate
-batch/removal diagnostics never repeat the finding's message. Context uses a delivery
-reference for that receipt and otherwise labels the last receipt by turn/action. Do not
+batch/removal diagnostics never repeat the finding's message. The model view references
+the full exact receipt already delivered by its action/turn in any earlier native output,
+not only the latest batch. Never substitute a different receipt or drop an undelivered one;
+missing/mismatched delivery keeps bounded inline feedback. The canonical audit and native
+receipt remain exact. Do not
 confuse its `scope=before_tool_batch`, `diff_hash_at_update`, and historical
 `note_ids_after_update` with current availability. `working_notes.available_note_ids`
 is current retained-ID authority. The native owner output's `working_notes_after_batch`
-labels the completed batch's diff/current IDs and only that batch's expired notes.
+labels the completed batch's diff/current IDs and only that action's expired notes.
+A successful mutation that expires notes also carries this post-batch notice when
+`memory_update=null`; it does not fabricate an update receipt. Match the durable lifecycle's
+trigger action, never attach an older expiry to an unrelated read/check, and never alter
+expiry/rebinding, ID allocation, annotation rejection or main-action admission.
 Replay preserves the original receipt and the current view's public values. Rebuilding
 context after hydration may reorder nested JSON keys; the persisted context reconstructs
 the exact native input. Do not infer note storage from read success. Call arguments remain exact,
@@ -451,6 +458,12 @@ and outputs, canonical artifacts and journal accounting remain exact. Keep searc
 action ID -> output field -> inclusive [start,end] ranges. Merge only touching/overlapping
 ranges within the same exact delivery. Gaps and full `inline_spans` fallback stay intact;
 lexical headers join the same file group. Do not change retained-source selection/admission.
+Each group has `edit_permission=allowed|read_only`, derived from the immutable public
+constraints using the same case-sensitive matcher as gateway mutation admission, with
+forbidden paths taking precedence. This labels path permission only, not complete anchor
+coverage, semantic readiness, remaining edit budget or actual tool availability. Preserve
+the existing glob semantics; search's separate rooted-component matcher is not this policy.
+Context-only fixtures lacking public constraints omit the label rather than infer permission.
 Older mutation/check/probe bodies may use native references when matching results exist;
 otherwise keep bounded inline evidence. Failure messages and typed mutation diagnostics
 remain explicit, and current failure/check currency never derives from historical PASS.
@@ -478,7 +491,7 @@ projection read-only and deterministic after restart, including native latest-st
 The prompt distinguishes completion of this candidate from the separate further-edit
 horizon. Do not change tool masks, force a check or reject a voluntary stop on this basis.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v29`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v30`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -597,20 +610,20 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: v29 references position-proven unchanged mutation source already delivered
-in native history, removes the obsolete alternative-requirement projection and drops
-stop's model-supplied source IDs. This changes presentation and one stop input field,
-not admission, policy, limits, notes or voluntary abandonment. Preserve immutable raw
-receipts, prior native prefixes, post-images, failures and exact restart. Missing proof
-keeps inline source. Do not weaken evidence or add a semantic stop gate to improve a metric.
-Row 36's read-only four-result reprojection is 135,440 -> 28,572 UTF-8 bytes; 4,206
-observed path/hash/line entries are identical. This does not measure tokens, causal model
-benefit or candidate success. The separately approved row 37 below now exercises native
-rebinding, failure-directed repair and current-diff rechecking/submission. Assess these
-separately, not as causal proof that a smaller prompt improved the model. The next useful
-seam is read-only analysis of the 18 inspection turns, three rejected mutation attempts
-and two partially applied annotations. No new row, candidate execution/repair or historical
-migration follows automatically; row 38 requires separate exact approval.
+Current seam: v30 makes current path permission and source-note expiry explicit at the
+existing evidence/action boundary. Reuse the gateway's permission matcher in the source
+catalog; attach expiry to its mutation even without a memory update; reference an already
+delivered exact receipt instead of re-emitting historical success in the current view.
+No tool schema/order, action mask, source admission, note lifecycle, limit or task changes.
+Row 37's read-only analysis found 13 inspections with new coverage, three zero-match
+searches and two covered-only inspections, not 18 proven wasted actions. Notes were first
+requested at turn 23, so their later rejection cannot explain earlier exploration. Turns
+26/27 update IDs expired by turn 25; all four findings reject as unknown IDs while other
+annotation fields apply. Current IDs and rejection guidance were delivered. Re-emitted
+historical receipts and conditional native expiry feedback are concrete presentation
+costs, not proof of why the model repeated those IDs. Do not mandate notes or tighten
+inspection limits on this evidence. Preserve prior native prefixes and all historical
+run bytes. Row 38 requires separate exact approval; no new live execution follows here.
 
 Row 37 `run_dev_36024bd4361343dd` on `2a4cb654` ends at `EVALUATOR_PASS`, task acceptance
 PASS/safety PASS, still `official=false` and `claim_eligible=false`: 28 model/count calls
@@ -1439,6 +1452,33 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+V30 passes Ruff and 55 focused source/receipt/lifecycle cases in 36.26 seconds. All 46
+test files run exactly once across six parallel fresh roots `C:\pt\pl30-full-a{1,2,3,4,5,6}`:
+709 passed and four real-Docker opt-ins skipped. Groups pass 71/77/48/129/179/205 cases
+in 90.29/75.99/70.22/76.79/84.64/102.93 seconds. The groups are:
+
+- 1: tools, context-v12, recovery-v12, source-rebind-v19.
+- 2: runner, state, search-v16.
+- 3: resume-v12, input-v12, budget-v16, workflow-v12, parallel-v12.
+- 4: verification concerns/flow/identity, check identity, policy feedback, notes feedback,
+  note temporal and completion-v27.
+- 5: execution feedback, current-feedback-v30, mutation-projection-v29, note lifecycle,
+  note ranges and source navigation.
+- 6: every remaining test file, including explicitly disabled real-Docker opt-ins.
+
+Runtime bytes stay fixed across all groups. The 28 new cases cover permission equality
+with admission, forbidden precedence/case/globs, native/inline/header-only catalog labels,
+full exact receipt identity with inline fallback, unannotated mutation expiry, unchanged
+and rolled-back sources, LF/CRLF, immutable prefix, later-action non-repetition and
+completed-action-before-batch crash/restart without duplicate mutation/provider work.
+Mock `run_dev_1277b7cb3db8495f` under `C:\pt\pl30-smoke-a` reaches mutation/check/finish/
+isolated acceptance PASS, safety NOT_RUN, in 5.11 command seconds, zero cost and zero
+provider/count calls. Each test group and focused validation meet two minutes; the full
+staged sequence including smoke is not measured as a sub-two-minute workflow.
+Read-only row-37 projection labels wrapper/helper permissions, links both source expiries
+to the actual unannotated mutation and references its older 1,018-byte receipt in 139 bytes.
+Original source/receipt/journal bytes stay unchanged; this does not establish model benefit.
 
 V29 passes Ruff and 93 focused mutation-projection/completion/recheck/conversation/stop
 cases in 25.22 seconds. All 45 test files ran once across `C:\pt\pl29-full-a{1,2,3,4}`:

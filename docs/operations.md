@@ -242,7 +242,17 @@ evidence for improved general agent efficiency. No probe or stop ran. See
 [the row-37 record](current-status.md#latest-live-observation-row-37-submitted-and-passed-isolated-evaluation).
 Its terminal is immutable; no retry, candidate repair/recheck or row 38 follows automatically.
 
-Tool surface v29 adds position-bound references for repeated mutation source in new native
+Tool surface v30 labels each `current_sources` file with `edit_permission=allowed|read_only`
+from the existing public mutation path policy. This is not a new action mask or evidence
+grant. `working_notes_after_batch` now also appears on a mutation that expires notes without
+a new annotation; its action/diff identity identifies the actual lifecycle event. Old
+expiries are not attached to later unrelated results. `last_update_result` references an
+exact receipt already delivered in native history, including receipts from older turns;
+the original receipt and canonical audit remain intact. Current IDs remain separate from
+the historical `note_ids_after_update`. Note expiry, unknown-ID rejection and main-action
+independence are unchanged. No new live row follows from this provider-free change.
+
+V30 retains v29's position-bound references for repeated mutation source in new native
 outputs. Inspect `revalidated_spans.content_delivery` for prior action/field/file hash,
 source range and current `target_start_line`; `content_hash` binds the normalized body.
 Missing proof or a non-smaller reference falls back to the original inline body. Saved
@@ -270,7 +280,7 @@ existing `vN` upsert stores its incoming statement as the latest `progress_note`
 that original. A distinct question needs a null ID. Exact repetition of the original
 or retained progress yields applied code `unchanged`, preserving state, update time,
 and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
-immutable; v29 does not migrate them and rejects mismatched nonterminal resume under the
+immutable; v30 does not migrate them and rejects mismatched nonterminal resume under the
 existing exact-match contract. No new experiment is automatically executed after a check PASS.
 
 Model-facing inspection feedback uses action-bound decision references instead of repeating

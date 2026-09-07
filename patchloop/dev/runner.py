@@ -1840,6 +1840,8 @@ def _build_latest_exchange(
         None,
     )
     note_receipt = note_update.get("receipt") if note_update is not None else None
+    notes = current_payload.get("working_notes", {})
+    lifecycle = (notes.get("last_source_lifecycle") or {}) if isinstance(notes, dict) else {}
     output_items = []
     for action_id in action_ids:
         public_result = project_inspection_result(
@@ -1847,29 +1849,37 @@ def _build_latest_exchange(
             native_action_ids=action_ids,
         )
         public_result = project_probe_result(public_result)
-        if isinstance(note_receipt, dict) and note_receipt.get("action_id") == action_id:
+        note_owner = isinstance(note_receipt, dict) and note_receipt.get("action_id") == action_id
+        expiry_owner = (
+            public_result.get("tool") == "replace_text"
+            and public_result.get("status") == "succeeded"
+            and lifecycle.get("trigger_action_id") == action_id
+            and bool(lifecycle.get("expired_notes"))
+        )
+        if note_owner:
             # An annotation can fail while the actual action succeeds. Preserve
             # both outcomes; never rewrite the action status or prior call arguments.
             public_result["memory_update_result"] = note_receipt
-            notes = current_payload.get("working_notes", {})
             if isinstance(notes, dict):
-                lifecycle = notes.get("last_source_lifecycle") or {}
-                public_result["working_notes_after_batch"] = {
-                    "scope": "after_completed_tool_batch",
-                    "turn_id": turn_id,
-                    "diff_hash": current_payload.get("current_diff", {}).get("patch_hash"),
-                    "available_note_ids": notes.get("available_note_ids", []),
-                    "expired_notes": (
-                        lifecycle.get("expired_notes", [])
-                        if lifecycle.get("trigger_action_id") in action_ids else []
-                    ),
-                }
                 notes["last_update_result"] = {
                     "turn_id": turn_id,
                     "action_id": action_id,
                     "delivery": "preceding_function_call_output",
                 }
                 notes.pop("last_update_diagnostics", None)
+        if isinstance(notes, dict) and (note_owner or expiry_owner):
+            # Source expiry belongs to the mutation even without a new annotation.
+            # Never attach a historical expiry to an unrelated later read/check.
+            public_result["working_notes_after_batch"] = {
+                "scope": "after_completed_tool_batch",
+                "turn_id": turn_id,
+                "diff_hash": current_payload.get("current_diff", {}).get("patch_hash"),
+                "available_note_ids": notes.get("available_note_ids", []),
+                "expired_notes": (
+                    lifecycle.get("expired_notes", [])
+                    if lifecycle.get("trigger_action_id") == action_id else []
+                ),
+            }
         output_items.append({
             "type": "function_call_output",
             "call_id": action_id,

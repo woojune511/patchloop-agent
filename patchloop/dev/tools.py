@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import copy
 import difflib
-import fnmatch
 import re
 import subprocess
 import threading
@@ -35,6 +34,7 @@ from patchloop.dev.contracts import (
     StopIntent,
     TextReplacementIntent,
 )
+from patchloop.dev.path_policy import mutation_path_allowed
 from patchloop.dev.source_glob import matches_source_glob
 from patchloop.dev.source_rebinding import SourceReplacement
 from patchloop.dev.state import DevJournal
@@ -2595,9 +2595,10 @@ class DevToolGateway:
 
     def _path_allowed(self, path: str) -> bool:
         constraints = self.public_task.constraints
-        return any(
-            fnmatch.fnmatchcase(path, item) for item in constraints.allowed_paths
-        ) and not any(fnmatch.fnmatchcase(path, item) for item in constraints.forbidden_paths)
+        return mutation_path_allowed(
+            path, allowed_paths=constraints.allowed_paths,
+            forbidden_paths=constraints.forbidden_paths,
+        )
 
     @staticmethod
     def _generated_replacement_patch(path: str, before: str, after: str) -> str:

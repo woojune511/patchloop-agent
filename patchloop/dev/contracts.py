@@ -24,7 +24,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v29",
+            "schema_version": "dev-tool-surface-v30",
             "native_mutation_output": "admitted-position-prior-body-references-v1",
             "mutation_rebind_reference_limit": 16,
             "mutation_projection": "no-obsolete-alternative-requirement-v1",
@@ -35,7 +35,7 @@ def dev_tool_surface_hash() -> str:
             "native_conversation": "single-user-append-only-current-state-v3",
             "native_state_view": "complete-mutable-view-immutable-public-task-v1",
             "model_state_projection": "current-completion-first-native-body-references-v2",
-            "current_source_catalog": "file-hash-action-field-range-groups-inline-fallback-v1",
+            "current_source_catalog": "file-hash-delivery-groups-with-mutation-path-permission-v2",
             "native_source_delivery": "exact-path-hash-line-union-references-v1",
             "native_source_reference_limit": 16,
             "public_read_range": "inclusive-1-to-400-lines-advertised-v1",
@@ -77,7 +77,8 @@ def dev_tool_surface_hash() -> str:
             "observed_source_index": "delivered-lexical-headers-16-entries-4000-chars-v1",
             "tool_closure_warning": "actual-single-inspection-successor-conditional-v1",
             "working_notes": "stable-note-id-independent-body-durable-lifecycle-v3",
-            "working_note_feedback": "pre-batch-receipt-with-current-post-batch-ids-v2",
+            "working_note_feedback": "action-bound-expiry-independent-of-annotation-v3",
+            "working_note_receipt_projection": "exact-prior-native-receipt-reference-v1",
             "working_note_range_feedback": "bounded-never-observed-versus-stale-current-range-v1",
             "working_note_interpretation": "evidence-currency-not-semantic-validation-v1",
             "working_note_check_result": "durable-verdict-exception-with-projected-currency-v1",

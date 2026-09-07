@@ -27,7 +27,68 @@ Repository policy alone never initiates paid work. The thirty-seven live observa
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: position-bound mutation feedback references (v29)
+## Current implementation: current permissions and action-bound note feedback (v30)
+
+The provider-free follow-up labels each observed source group with
+`edit_permission=allowed|read_only`, using the same public path matcher as mutation
+admission. Forbidden paths still take precedence. The label does not grant anchor
+evidence, imply semantic readiness or change offered tools. No source is read to create it.
+
+A successful mutation that expires source notes now carries `working_notes_after_batch`
+even with no memory update. The notice belongs to that exact action and current diff;
+later unrelated reads/checks do not repeat it. A later current view references the full
+exact memory receipt already delivered in native history rather than re-emitting its
+historical success/rejection body. Missing or mismatched delivery keeps inline feedback.
+Canonical audit context, original receipts, prior native prefixes and durable lifecycle
+remain intact. Note expiry, unknown-ID rejection and main-action independence do not change.
+Tool-surface identity is v30; input shapes/order, global limits, model settings, task bytes
+and action masks are unchanged. Existing envelopes are not migrated.
+
+Row 37's read-only analysis distinguished 13 inspections that added coverage, three
+zero-match searches and two covered-only inspections. One covered-only search was a cache
+hit; both reread ranges were still present in the actual input. Path rejection and the
+65/54-line scope failures were correct and reached the next decisions. Source groups
+previously lacked adjacent permission labels, but the public constraints were delivered.
+Notes first appeared at turn 23. Turn 25 changed their broadly cited source and expired
+both IDs; turns 26/27 repeated those IDs despite current-state/unknown-ID guidance.
+Both findings failed in each partially applied update; only other annotation fields
+applied. The unannotated mutation lacked native expiry feedback, and turn 26 re-emitted
+a 1,018-byte old success receipt beside the correct empty current ID list. These are
+observed presentation weaknesses, not proof that they caused the model's repeated IDs
+or earlier exploration. The row remains immutable task acceptance PASS/safety PASS,
+`official=false`, with no broader effectiveness claim.
+
+Ruff and 55 focused cases pass in 36.26 seconds. The complete 46-file provider-free suite
+passes 709 cases, with four real-Docker opt-in cases skipped. Six parallel processes use
+fresh roots `C:\pt\pl30-full-a{1,2,3,4,5,6}`, each file exactly once: 71/77/48/129/179/205
+passed in 90.29/75.99/70.22/76.79/84.64/102.93 seconds. Runtime bytes stayed fixed throughout.
+The 28 new cases cover existing exact/glob/case/forbidden permissions, inline/native/header
+presentation, exact receipt matching and fallback, unannotated expiry, rollback/nonexpiry,
+LF/CRLF, later-action non-repetition and completed-mutation-before-batch crash/restart.
+Focused validation and each full-suite process meet two minutes; this is not a claim that
+the entire staged validation sequence, including smoke, took less than two minutes.
+
+Mock `run_dev_1277b7cb3db8495f` under `C:\pt\pl30-smoke-a` reaches mutation, visible
+check, finish and isolated task acceptance PASS/safety NOT_RUN in 5.11 command seconds:
+four mock turns, five tools, one accepted mutation, zero provider/count calls and zero cost.
+Tested runtime hash is
+`sha256:3ff59ea10d353900bbae0da311011ac06c4a033b8e6693026a0ec074ddd38882`;
+tool-surface hash is
+`sha256:0617d3a20f4e5921b9fddb00cf1e638d0f26adda1982cfe877e8587c9f1116d8`.
+The base system prompt remains 7,973 characters; native framing adds only the label's meaning.
+
+Read-only reprojection of row 37 labels the wrapper allowed and helper read-only, attaches
+the two expiries to turn 25's mutation output, and reduces turn 26's repeated receipt from
+1,018 to a 139-byte reference. Current IDs stay empty; the historical receipt stays exact.
+The journal hash remains
+`sha256:3f935d7aa2749a3cb3936ecaa6b0fdee35f428ad88ab31e8ab8c96c3b5697988`.
+This is a representation check, not a candidate execution or measured model benefit.
+Final preservation hashes match for `.env`, user-owned `AGENTS.md`, 1,249 tracked task/
+historical files and 144 existing run files; all 175 preexisting untracked entries remain.
+This implementation authorizes no Docker/provider work, historical candidate execution,
+retry/resume or row 38; any new live invocation still requires separate exact approval.
+
+## Previous implementation: position-bound mutation feedback references (v29)
 
 New model-facing successful mutation results reference unchanged source already delivered
 in native tool history. The admitted replacement position, pre/post raw-file hashes,
