@@ -276,6 +276,17 @@ the model's named `create_dir` inspection actually covered a different `makedir`
 No runtime change follows from these findings. The reproducible scripts and bounded result
 are under `C:\pt\pl39-analysis-a`; no historical task execution or new live authority follows.
 
+The later design-only next-action packet under `C:\pt\pl39-decision-design-a` proposes
+six single-response samples: three frozen checkpoints, medium/high on the same model.
+It is PREPARED_NOT_EXECUTABLE with dispatch disabled; current CLI/resume cannot run it.
+An external, separately hash-bound sampler still needs implementation and provider-free
+validation, then exact approval naming the packet, both efforts, six cells, `.env`, new
+external result root and a shared cap. The proposed $1.20 is not authorization; its
+$1.066516500 planning reservation uses historical counts/rates, not a live quote.
+Do not execute returned tools, append future outcomes/rubrics to model input, lower one
+arm's 25k ceiling under budget pressure or equate static grading with task acceptance.
+This pilot and any ordinary row 40 are separate requests, never automatic retries.
+
 Tool surface v31 makes successful mutation identity consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete
 post-edit candidate. `result.output.baseline_diff_hash` names the complete pre-edit

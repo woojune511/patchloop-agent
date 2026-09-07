@@ -27,6 +27,9 @@ Repository policy alone never initiates paid work. The thirty-nine live observat
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
+Next work is a prepared, unexecuted next-action comparison on three frozen row-39
+inputs, not another live row. See [the design boundary](#prepared-next-action-comparison-not-executed).
+
 ## Current implementation: explicit mutation pre-state and completed identity (v31)
 
 A successful `replace_text` now records its completed candidate in the result's
@@ -385,6 +388,64 @@ or executes task code. Seven scope/AST comparisons and source-delivery assertion
 The 370-event journal retains its hash above, and the final workspace hash remains fixed.
 All 152 current run files, `.env`, user-owned `AGENTS.md`, 1,249 tracked task/historical
 files and 175 preexisting untracked entries are preserved. This remains `official=false`.
+
+### Prepared next-action comparison (not executed)
+
+The approved design/preparation fixes the v31 harness and compares the same
+`gpt-5.4-mini-2026-03-17` at medium versus high effort for one next response. No prompt,
+tool mask/order, task, memory rule, output ceiling or historical input is changed.
+The [official model page](https://developers.openai.com/api/docs/models/gpt-5.4-mini)
+lists both efforts; this is not evidence that high will improve these decisions.
+
+| Checkpoint | Decision being inspected | Historical input tokens |
+| --- | --- | ---: |
+| Before turn 6 | Locate the implementation named by the inspection goal | 21,225 |
+| Before turn 21 | Preserve public behavior in the first proposed edit | 86,322 |
+| Before turn 32 | Repair within scope without changing unintended control flow | 153,464 |
+
+One fresh response per checkpoint/arm gives six proposed generations. Row 39's
+historical responses are calibration evidence, not the newly sampled medium control.
+Both arms retain the exact medium-generated history and encrypted continuation: the
+intervention concerns only the next decision, not an entire high-effort trajectory.
+Original medium request hashes reproduce exactly at all three cutoffs; high differs
+only at `reasoning.effort`. No future action/result, repair example or audit rubric is
+added to the model input. This follows the existing native-continuation contract and
+[official context guidance](https://developers.openai.com/api/docs/guides/reasoning#keeping-reasoning-items-in-context).
+
+The external packet, protocol, reviewer-only rubric and read-only validator are under
+`C:\pt\pl39-decision-design-a`. Packet hash:
+`sha256:200e80988694023f381ac77f77ff5a62348f34f7f8200e4c6548e7a54caa8347`.
+Status is `PREPARED_NOT_EXECUTABLE`, `dispatch_enabled=false`. The validator confirms
+all three request identities, cutoff/call-result/continuation linkage and identical
+tool schemas/order. Eight tamper cases reject changed output caps, tools, input hash,
+runtime, cutoff, effort, dispatch flag and a future input. No key loading, provider
+counting/generation, tool execution, candidate execution or Docker operation occurred.
+
+The proposed six-response cap is $1.20, total active time 1,800 seconds, fixed 25,000
+output tokens per response, zero SDK retries/corrections and zero tool executions.
+Historical counts and registered row-39 rates give an all-uncached/full-output planning
+reservation of $1.066516500, not a fresh price/count quote or guaranteed affordability.
+Any future driver must recheck prices/counts and preserve the fixed ceiling for all
+remaining cells; uncertainty stops the whole experiment, and budget pressure must not
+silently reduce one arm's output capacity or history.
+
+Review public action/code against prespecified contract, source-grounding, public
+behavior and static-scope/control-flow criteria, initially blind to effort/cost/latency.
+Valid inspection instead of mutation is not automatically failure; unexecuted behavior
+is NOT_ASSESSABLE, never task acceptance PASS. Record casewise preference/tie/not-comparable,
+not a general success rate. The [evaluation guidance](https://developers.openai.com/api/docs/guides/evaluation-best-practices)
+motivates explicit criteria and accounting for variability. These three failure-selected,
+correlated states and one sample per arm cannot establish repeatability or generalization.
+
+The CLI has no decision-only sampling entry point. Its normal `dev` and exact-envelope
+resume paths cannot execute this design. A small external driver, separately bound by
+its own source hash while leaving runtime bytes fixed, still needs implementation and
+provider-free validation. Paid execution then requires exact approval of the packet,
+task/model, both efforts, `.env`, six cells, new external result root and shared cap.
+Neither a single-row approval nor this preparation authorizes that execution, row 40,
+retry/resume or historical candidate repair. `official=false`, `claim_eligible=false`;
+task acceptance and safety evaluation remain NOT_RUN. Runtime and protected prior bytes
+are unchanged. Only design artifacts and current documentation were added.
 
 ## Row 38: stopped after an unverified final repair
 

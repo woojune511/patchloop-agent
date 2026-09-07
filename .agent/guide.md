@@ -646,6 +646,18 @@ projection and observed requirements from preserved behavior. Keep the harness f
 do not infer that forced notes, generic extra prompt text or a semicolon ban solves this.
 Any model/prompt comparison or row 40 still needs its own exact scope and approval.
 
+Next seam is the prepared, unexecuted row-39 next-action pilot in
+`C:\pt\pl39-decision-design-a`: before turns 6/21/32, same model, medium versus high,
+one fresh response per cell (six total), unchanged native histories/tools/output cap.
+Only next-response effort differs; earlier reasoning remains medium in both arms.
+The packet is PREPARED_NOT_EXECUTABLE: no sampler, paid call or tool execution is
+authorized by preparation. Implement any sampler outside the pinned runtime, reuse
+cost/continuation/uncertainty contracts, bind its own source hash and validate it
+provider-free before seeking exact execution approval. Never use terminal resume or
+normal repeat=1 as a six-branch shortcut. Reviewer rubrics and future outcomes stay
+out of model input. Grade deferred actions as unassessed where appropriate, not FAIL,
+and do not call three correlated single-sample comparisons an agent success rate.
+
 V30 makes current path permission and source-note expiry explicit at the
 existing evidence/action boundary. Reuse the gateway's permission matcher in the source
 catalog; attach expiry to its mutation even without a memory update; reference an already
