@@ -2382,6 +2382,10 @@ class DevToolGateway:
                     self.deadline.check()
                 output = self._perform(call.name, call.arguments)
                 evidence_cache_hit = False
+            if call.name == "replace_text":
+                # Reconciliation uses the original admitted baseline, even if the
+                # candidate was already on disk when this process resumed.
+                output["baseline_diff_hash"] = baseline
             result = DevToolResult(
                 action_id=call.action_id,
                 input_hash=input_hash,
@@ -2389,7 +2393,9 @@ class DevToolGateway:
                 status="succeeded",
                 output=output,
                 evidence_cache_hit=evidence_cache_hit,
-                workspace_diff_hash=baseline,
+                workspace_diff_hash=(
+                    output["worktree_diff_hash"] if call.name == "replace_text" else baseline
+                ),
             )
         except ExecutionDeadlineExceeded:
             raise

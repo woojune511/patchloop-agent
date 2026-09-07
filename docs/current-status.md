@@ -27,7 +27,58 @@ Repository policy alone never initiates paid work. The thirty-eight live observa
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: current permissions and action-bound note feedback (v30)
+## Current implementation: explicit mutation pre-state and completed identity (v31)
+
+A successful `replace_text` now records its completed candidate in the result's
+`workspace_diff_hash`, equal to `output.worktree_diff_hash` and the mutation/post-image
+diff identity. `output.baseline_diff_hash` explicitly preserves the full pre-edit diff.
+The baseline comes from the original admission even when a resumed process finds the
+candidate already applied. The incremental replacement's `output.patch_hash` remains
+separate from both full-diff hashes. These are action-time snapshots, not a claim that
+a historical result describes the workspace at later replay.
+
+The read-only row-38 audit found the prior ambiguity in all four successful edits:
+the outer workspace hash named the pre-edit diff while the inner worktree hash named
+the post-edit diff. The source was actually changed and the final current-state view
+was correct. This is a feedback identity inconsistency, not evidence of an unapplied
+repair, and not proof of why the model ignored recheck guidance. The final candidate
+remains untested. No additional stop validation, forced check, action mask, prompt,
+model setting, scope or resource-limit change is introduced.
+
+Reads, searches, probes and checks retain their existing snapshot identity. Failed
+mutations retain the rolled-back workspace identity and existing typed baseline/
+candidate diagnostics. Durable action IDs/inputs, source references, note lifecycle,
+check invalidation and finish identity remain unchanged. Tool-surface v31 binds the
+new output semantics; `dev-run-v1` and tool input shapes/order are unchanged. Older
+run/envelope bytes are not migrated and saved native prefixes are never rewritten.
+Implementation authorizes no Docker/provider execution, historical candidate repair/
+recheck, retry/resume or row 39.
+
+The new regression first reproduces the old pre-state-as-result mismatch, then Ruff
+and all 118 focused identity/recovery/projection/completion/contract cases pass in
+95.54 seconds. All 47 test files run exactly once across six fresh parallel external
+roots `C:\pt\pl31-full-a{1,2,3,4,5,6}`: 717 passed, four real-Docker opt-ins skipped.
+Groups pass 71/77/48/129/187/205 cases in 85.85/71.97/66.44/72.47/107.86/99.19 seconds.
+The eight new cases cover LF/CRLF, sequential non-empty baselines, incremental versus
+complete diff identity, admission/replacement/result crash boundaries, exact completed
+replay, scope rollback/cache preservation, actual native/context delivery and unchanged
+check/finish eligibility at zero edits. Runtime bytes stayed fixed across validation.
+Focused validation and each full-suite group meet two minutes; the staged sequence
+including smoke and audit is not claimed as a sub-two-minute workflow.
+
+Mock `run_dev_52c7646bb0b54864` under `C:\pt\pl31-smoke-a` reaches mutation, visible
+check, finish and isolated task acceptance PASS/safety NOT_RUN: four mock turns, five
+tools, one accepted mutation, zero provider/count calls and zero cost. Its pre/post,
+checked and submitted identities verify. Tested runtime hash is
+`sha256:94cdd9067d777ba2bd2246dd8ea8fa9dbefcbba758ac886e037f1a9702950853`;
+tool-surface hash is
+`sha256:43e2a53673700c48b46247df8b1d91e7ce2af52b88d042f00d843128e9e5f6de`.
+No model prompt or tool input changes. Row 38's journal remains hash-identical; this
+local consistency correction establishes neither live rechecking nor task correctness.
+Final preservation hashes match for `.env`, user-owned `AGENTS.md`, all 1,249 tracked
+task/historical files and 148 prior run files; all 175 preexisting untracked entries remain.
+
+## Previous implementation: current permissions and action-bound note feedback (v30)
 
 The provider-free follow-up labels each observed source group with
 `edit_permission=allowed|read_only`, using the same public path matcher as mutation

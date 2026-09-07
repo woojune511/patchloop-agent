@@ -255,6 +255,18 @@ continuations, source references and the immutable journal verify. See
 [the row-38 record](current-status.md#latest-live-observation-row-38-stopped-after-an-unverified-final-repair).
 No retry/resume, candidate repair/recheck or row 39 follows from this terminal.
 
+Tool surface v31 makes successful mutation identity consistent at action completion:
+`result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete
+post-edit candidate. `result.output.baseline_diff_hash` names the complete pre-edit
+diff from `action_started`, including after pending-action reconciliation. Do not use
+the incremental replacement's `output.patch_hash` as a candidate identity. Old v30
+and earlier receipts can instead carry the pre-edit value in the outer workspace field;
+inspect their recorded semantics, never rewrite or migrate them. Replaying a completed
+result preserves its original pre/post snapshots, even after a later mutation.
+Failed proposals retain their typed baseline/candidate/rollback feedback. Read/search
+cache keys, check/probe identity, budgets, offered tools and voluntary stop are unchanged.
+This correction is not evidence that row 38 would have rechecked or passed.
+
 Tool surface v30 labels each `current_sources` file with `edit_permission=allowed|read_only`
 from the existing public mutation path policy. This is not a new action mask or evidence
 grant. `working_notes_after_batch` now also appears on a mutation that expires notes without

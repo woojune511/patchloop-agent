@@ -24,7 +24,8 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v30",
+            "schema_version": "dev-tool-surface-v31",
+            "mutation_result_identity": "completed-worktree-and-explicit-baseline-v1",
             "native_mutation_output": "admitted-position-prior-body-references-v1",
             "mutation_rebind_reference_limit": 16,
             "mutation_projection": "no-obsolete-alternative-requirement-v1",
@@ -279,6 +280,8 @@ class DevToolResult(StrictModel):
     message: str | None = None
     replayed: bool = False
     evidence_cache_hit: bool = False
+    # Snapshot at action completion, not the current workspace at later replay.
+    # Successful mutation output.baseline_diff_hash separately names its pre-state.
     workspace_diff_hash: str | None = None
 
 

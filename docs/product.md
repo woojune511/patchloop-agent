@@ -88,6 +88,14 @@ empty EOF reads, and consistent CRLF normalization keep that coverage accurate. 
 summary reports whether post-image repair evidence is available; uncovered anchors
 still fail closed.
 
+Successful mutation feedback separates the complete pre-edit diff
+(`output.baseline_diff_hash`) from the completed candidate (`workspace_diff_hash`,
+also `output.worktree_diff_hash`). The incremental replacement's `output.patch_hash`
+is not the complete candidate hash. A replay returns those original action-time
+identities, not the later workspace. A rolled-back proposal retains the restored
+baseline identity. None of these hashes establishes a check verdict: an edited
+candidate still needs its own checks.
+
 Public searches use repository-rooted, case-sensitive globs: ordinary wildcards stay
 within one path component and `**` includes zero or more directories. This includes
 root files in the default `**/*` search. Queries are literal text; a searched-file

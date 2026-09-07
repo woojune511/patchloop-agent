@@ -243,6 +243,18 @@ availability follows the completion budget. Admission records the complete expec
 candidate diff before atomic replacement. Reconciliation must match that identity,
 including after a crash before rollback, and restores an admitted over-scope candidate.
 
+For a successful mutation, `DevToolResult.workspace_diff_hash` names the completed
+full candidate, equal to `output.worktree_diff_hash`, `output.mutation.diff_hash` and
+post-image source diff identity. `output.baseline_diff_hash` names the full pre-state
+from admission, not the candidate found on disk during reconciliation. The incremental
+replacement's `output.patch_hash` remains distinct. Results are action-time snapshots;
+replaying an earlier action must not replace its hashes with the latest workspace.
+Failed mutation workspace identity remains the post-rollback baseline, with the existing
+typed failure diagnostics. Reads/searches/checks/probes keep their existing identities.
+Do not migrate old results or rewrite previously sent native history. Admission and
+reconciliation continue to use `action_started.baseline_diff_hash` and the admitted
+complete candidate; no extra filesystem read or semantic check is added for these labels.
+
 ## Context boundary
 
 The complete deterministic audit context artifact puts current workflow gate, remaining budget,
@@ -491,7 +503,7 @@ projection read-only and deterministic after restart, including native latest-st
 The prompt distinguishes completion of this candidate from the separate further-edit
 horizon. Do not change tool masks, force a check or reject a voluntary stop on this basis.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v30`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v31`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -610,7 +622,16 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: v30 makes current path permission and source-note expiry explicit at the
+Current seam: v31 resolves successful mutation feedback's pre/post identity ambiguity.
+Use the completed candidate in the result workspace hash and name the original baseline
+explicitly. Preserve pending/completed replay, typed rollback, source/check/note identities,
+input shapes, action masks, voluntary stop and all historical bytes. Row 38 shows the
+ambiguity in all four mutation outputs, but does not establish it caused the unchecked
+final stop. Current-diff NOT_RUN and run_check guidance were already correctly delivered.
+Local validation establishes identity consistency, not improved model decisions. Row 39
+still requires separate exact approval; no historical candidate execution is authorized.
+
+V30 makes current path permission and source-note expiry explicit at the
 existing evidence/action boundary. Reuse the gateway's permission matcher in the source
 catalog; attach expiry to its mutation even without a memory update; reference an already
 delivered exact receipt instead of re-emitting historical success in the current view.
@@ -624,9 +645,8 @@ historical receipts and conditional native expiry feedback are concrete presenta
 costs, not proof of why the model repeated those IDs. Do not mandate notes or tighten
 inspection limits on this evidence. Preserve prior native prefixes and all historical
 run bytes. Separately approved row 38 is recorded below; row 39 requires fresh exact
-approval. The next read-only seam is the model's current-failure assertion after an
-unchecked repair, despite explicit historical-failure and recheck guidance. Compare
-turns 16/17 and 19/20 using actual inputs before proposing another mask or obligation.
+approval. Compare the model's current-failure assertion after an unchecked repair with
+the actual historical-failure and recheck guidance before proposing another mask or obligation.
 
 Row 38 `run_dev_91f8c05b570c439b` on `2c303bfc` ends at `AGENT_STOPPED`: 20 model/count
 calls, 22 tools, four accepted mutations, $0.380645550, 198.859 active seconds. Turn 11
@@ -1476,6 +1496,22 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+V31 passes Ruff and 118 focused identity/resume/projection/current-feedback/completion/
+contract cases in 95.54 seconds. The first new regression fails on the old workspace
+hash before the fix. All 47 files run exactly once across six parallel fresh roots
+`C:\pt\pl31-full-a{1,2,3,4,5,6}`: 717 passed, four real-Docker opt-ins skipped. Use the
+v30 groups below with `test_dev_mutation_identity_v31.py` added to group 5. The groups
+pass 71/77/48/129/187/205 in 85.85/71.97/66.44/72.47/107.86/99.19 seconds. Runtime
+bytes stay fixed. The eight new cases cover exact LF/CRLF pre/post identity across
+multiple edits, incremental/full diff distinction, crash after admission/replacement/
+durable result, replay without duplicate writes, rollback/read-cache preservation and
+native/context/restart identity through current-diff rechecking and finish at zero edits.
+Mock `run_dev_52c7646bb0b54864` under `C:\pt\pl31-smoke-a` reaches isolated acceptance
+PASS/safety NOT_RUN with verified mutation/check/finish identity, four mock turns/five
+tools, no provider/count calls and zero cost. Each group and focused validation meet
+two minutes; the staged verification/audit sequence is not a sub-two-minute claim.
+No old run is rewritten or executed; consistency is not measured model effectiveness.
 
 V30 passes Ruff and 55 focused source/receipt/lifecycle cases in 36.26 seconds. All 46
 test files run exactly once across six parallel fresh roots `C:\pt\pl30-full-a{1,2,3,4,5,6}`:
