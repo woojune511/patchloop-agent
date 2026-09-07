@@ -568,8 +568,12 @@ interpreter path. The subsequent row-34 approval was paused before run creation/
 dispatch: both v2 public checks were excluded from collection by literal argv[0] matching.
 The path correction keeps the declared interpreter/argv, adds actual public-declaration
 launch tests with Docker mocked, and exercises the absolute local interpreter. The opt-in
-pair now uses `/usr/local/bin/python` but has not been rerun. Runtime hash changes; tool
-surface v26, prompt, inputs and probe profile do not. The next live seam, after reconfirmed
+pair now uses `/usr/local/bin/python`; a separately approved run under
+`C:\pt\pl26-abs-docker-a` passes in 7.96 seconds with one check and one probe. Both collect
+the expected changed lines, clean their owned containers and replay without execution.
+This is a synthetic public fixture, not task-evaluator or model-success evidence.
+Runtime hash changes for the path correction; tool surface v26, prompt, inputs and probe
+profile do not. The next live seam, after reconfirmed
 exact approval, is whether the model uses a relevant unobserved range to test/revise a
 public assumption. Row 34 remains unexecuted. Do not repair historical candidates, alter
 task packages or project private evaluation material.
@@ -1266,8 +1270,10 @@ do not describe the complete validation as under that target. Full-suite/mock wa
 including polling/review gaps is 163.25 seconds. The mock on those same runtime bytes,
 `run_dev_4b69a2a4630041ad` under `C:\pt\pl26-abs-smoke-a` reaches mutation, checks, finish
 and isolated acceptance PASS, safety NOT_RUN: four mock turns, five tools, zero cost and
-`official=false`. The opt-in Docker test now uses the task's absolute interpreter spelling
-but was skipped. No provider/Docker execution or row 34 follows from these tests.
+`official=false`. The opt-in Docker test was skipped in that suite. A subsequent explicit
+approval ran its absolute-path check/probe pair once in 7.96 seconds under
+`C:\pt\pl26-abs-docker-a`, journal `run_dev_linevalidation_3c3ba21546c54e80`.
+No provider call, task-private evaluation or row 34 follows from this Docker diagnostic.
 
 V25 passes Ruff and 549 provider-free tests, three opt-in Docker cases skipped, across
 the same four groups: 60/68/85/336 cases in 74.82/92.97/70.50/86.98 seconds under

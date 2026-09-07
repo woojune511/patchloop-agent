@@ -108,7 +108,8 @@ command. Regression tests load both real public check declarations (`-c` and `-m
 verify their collector mount and unchanged argv through a mocked Docker launch. Both
 failed before the fix. Local tests execute inline/module/script shapes using the actual
 absolute host interpreter; private/no-target and unsupported launches stay uninstrumented.
-The opt-in real-Docker pair now uses `/usr/local/bin/python` too, but has not been rerun.
+The opt-in real-Docker pair now uses `/usr/local/bin/python` too; its separately approved
+execution is recorded below.
 
 Focused validation: 84 passed in 10.85 seconds, one real-Docker case skipped; Ruff passes.
 Full provider-free validation passes 614 tests, with four real-Docker cases skipped, in
@@ -128,8 +129,25 @@ provider, old-run resume or paid row was executed for this correction.
 Tool surface remains v26 with unchanged tool inputs, prompt, budgets, task package and
 probe profile. Runtime hash changes to
 `sha256:a4fe50d03e93c4c15b78d66329bf070bf1f48511d32301a455f72df7e5d2129c`.
-Prior envelopes are not migrated. This correction permits provider-free validation only;
-row 34 remains unexecuted and live approval must be reconfirmed for the corrected runtime.
+Prior envelopes are not migrated. Implementation itself did not authorize Docker or paid
+execution; row 34 remains unexecuted and live approval must be reconfirmed for this runtime.
+
+### Corrected-path real Docker checkpoint
+
+The separately approved absolute-path check/probe pair passes in 7.96 seconds on the
+corrected runtime above, commit `0e81fffe`, under
+`C:\pt\pl26-abs-docker-a\test_real_check_probe_line_fee0`.
+The hash-chained journal is `run_dev_linevalidation_3c3ba21546c54e80`. Exactly one registered
+check and one probe executed, using the already-local pinned clean Python image; no image
+acquisition or Docker startup occurred. The check enters lines 1-3 and leaves error line 4
+unobserved. The probe deliberately raises `ValueError` at line 4 and records lines 1-2/4;
+comment line 5 has no line event. Both reports are collected, with current-diff union 1-4.
+Completed replay preserves journal/results without relaunch, both exact containers are
+absent, and public source/diff bytes are unchanged. Provider/count calls and cost are zero.
+This validates absolute-path Docker collection on a synthetic public fixture, not the
+private evaluator workload or model behavior. Runtime/test bytes are unchanged by this
+checkpoint; only current docs record the result. Row 34 still needs separate exact approval.
+All results remain `official=false`, `claim_eligible=false`.
 
 ### Separately approved v26 Docker collector verification
 

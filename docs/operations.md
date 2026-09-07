@@ -204,7 +204,10 @@ The subsequent row-34 approval paused before provider dispatch: actual v2 checks
 an absolute interpreter path excluded by the collector's old literal-name test. The
 path correction preserves declared executable/argv and is covered by actual public
 declarations with Docker mocked. The earlier real-Docker pair used bare `python` and
-is not evidence for this correction; see current status before reconfirming live approval.
+is not evidence for this correction. The subsequent separately approved absolute-path
+pair passes with collected feedback, confirmed cleanup and no replay execution; see the
+[corrected-path Docker checkpoint](current-status.md#corrected-path-real-docker-checkpoint)
+before reconfirming live approval. This does not authorize row 34 or another Docker run.
 
 Tool surface v26 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and

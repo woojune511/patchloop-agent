@@ -107,7 +107,8 @@ exact-container cleanup and completed replay without another launch. Missing pre
 or the first unexpected result stops execution without retry or image acquisition.
 The initial approved v26 pair passed under `C:\pt\pl26-docker-real-a` with bare `python`.
 The current test uses `/usr/local/bin/python` to match the task's real interpreter spelling;
-that corrected pair has not yet run in Docker. Provider-free tests read the actual task's
-`-c`/`-m` declarations and verify launch wiring with Docker mocked. Neither the initial
-pair nor these tests establish improved live model decisions, exact task-evaluator workload
-coverage, or new authority.
+its separately approved pair passed in 7.96 seconds under `C:\pt\pl26-abs-docker-a`, with
+exactly one check and one probe, confirmed cleanup and replay without another launch.
+Provider-free tests also read the actual task's `-c`/`-m` declarations and verify launch
+wiring with Docker mocked. These tests do not establish improved live model decisions,
+exact task-evaluator workload coverage, or new execution authority.
