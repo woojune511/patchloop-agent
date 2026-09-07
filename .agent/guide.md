@@ -736,6 +736,37 @@ or prove improved agent behavior. No output ceiling exhaustion occurred. Full to
 admission, task acceptance and safety stay unassessed/NOT_RUN. No default/context
 change, further sampling, candidate execution, retry/resume or row 40 is authorized.
 The packet remains PREPARED_NOT_EXECUTABLE; preparation does not grant paid authority.
+The latest follow-up request targets all four stored C3 responses through their public
+tool-feedback loop, not another next-action draw. `diagnostics/fresh_state_rollout.py`
+is a separate, non-resumable diagnostic driver. Preserve the exact frozen seed inputs,
+continuation/action identity, and checkpoint bytes in four independent external Git
+clones. Label imported journal events as inherited; their provider usage is not new
+billing. Restore 31 prior calls / 32 actions / 3 accepted mutations; each reused seed
+consumes the next model step, then permits at most eight new responses. Keep v31 policy,
+gateway, source projection, checks/probes and full 25k ceiling unchanged. Both arms
+receive the same short current-state-format notice; all new native reasoning and
+call/result items continue normally. B's old public archive remains quoted historical
+data; do not regenerate it from future outcomes or reset reasoning every turn.
+Round-robin A1/B1/B2/A2 shares one proposed $1.20 cap with JIT full-ceiling admission.
+This does not reserve a complete successful trajectory; record cap-truncated outcomes
+as censored. Stop all on count/provider/billing/continuation or cleanup uncertainty.
+Branch clocks exclude waiting on other branches, with an additional 1,800-second
+experiment deadline. Stop at public finish or normal policy terminal; no hidden
+evaluation, new row 40, restart, seed regeneration or automatic retry. The user asked
+to finish the experiment; exact confirmation of the new shared paid cap is still
+pending, not inherited from the closed four-response zero-tool approval.
+Wiring audit `C:\pt\pl39-rollout-wiring-a` verifies seed prefix/raw-byte/diff identity,
+actual admission of A1/A2 edits and B1's 56-line helper evidence gain, with no task-code,
+Docker or provider execution. 24 synthetic tests pass in 49.80s at
+`C:\pt\pl39-rollout-focus-c`; mock lifecycle results are not semantic arm outcomes.
+Final staged coverage is 841 passes / four real-Docker opt-in skips across 51 files:
+24 new cases, 103 existing sampler/design/docs cases, and 714 runtime cases. Longest
+runtime group is 108.41s; the staged total exceeds two minutes. Ruff passes. Separate
+mock `run_dev_9f4f4d7ca0da4dd4` at `C:\pt\pl39-rollout-dev-smoke-a` reaches isolated
+acceptance PASS / safety NOT_RUN, four turns/five tools/one mutation, zero cost. Preserve
+the distinction from the still-unexecuted paid follow-up; explicit new cap confirmation
+remains pending. Owned files, frozen task/history, 152 run files and 175 preexisting
+untracked entries retain their before-validation identities.
 The earlier six-cell implementation is `diagnostics/decision_sampler.py`, outside
 the unchanged v31 runtime content set. Run it as a module from the checkout. `validate`
 reconstructs hash-bound requests without a key/client; `collect` requires explicit

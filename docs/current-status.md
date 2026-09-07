@@ -36,6 +36,12 @@ The user's subsequent exact approval by reference authorized the now
 [collected four-response comparison](#fresh-state-comparison-four-responses-collected).
 No further paid samples, task execution or new live row are authorized.
 
+The subsequent request asks to complete a short tool-feedback follow-up of all four
+existing responses. `diagnostics/fresh_state_rollout.py` now prepares independent
+checkpoint branches; the new invocation-wide $1.20 cap has been asked explicitly and
+has not yet been reconfirmed. No additional provider call or pyfakefs task-code execution has
+run. See [the bounded follow-up contract](#four-seed-short-rollout-preparation).
+
 ## Current implementation: explicit mutation pre-state and completed identity (v31)
 
 A successful `replace_text` now records its completed candidate in the result's
@@ -716,6 +722,65 @@ Preservation checks retain `.env`, user `AGENTS.md`, 1,249 task/historical files
 prior external run files, 49 prior design/pilot/review files and all 175 preexisting
 untracked entries. Runtime and collector content hashes remain unchanged. No further
 sampling, tool/candidate execution, retry/resume or live row 40 is authorized.
+
+### Four-seed short-rollout preparation
+
+The follow-up is not a new normal row or terminal resume. It reuses every collected
+A1/B1/B2/A2 response once, without selecting a preferred candidate or generating a new
+seed. Four separate Git clones reconstruct the same pre-turn-32 diff and raw source
+identities. New hash-chained journals explicitly label cutoff events as inherited,
+not newly executed usage; source journals, designs, collections and reviews stay
+immutable. The original checkpoint has 9 model / 68 tool / 1 accepted mutation and
+1,477 active seconds remaining. The seed consumes the next model step, leaving at
+most eight new responses per branch (32 total), not another 40-call episode.
+
+The proposed one-invocation cap remains $1.20 for new calls only. Scheduling is
+round-robin A1/B1/B2/A2, skipping terminal branches. Each request is counted immediately
+before dispatch and must fit its full 25k output ceiling; capacity is never reduced
+to fit. This cap does not guarantee all branches finish. Cap/transport/billing or
+continuation uncertainty stops the experiment; unfinished branches are censored, not
+scored as semantic failures. Each branch retains its active-time budget, excluding
+other branches' waiting, under an additional 1,800-second whole-experiment deadline.
+There is no restart, seed regeneration, automatic paid retry, image pull/build or
+Docker startup. Registered public checks/probes and public finish are in scope; no
+private evaluator or general task acceptance claim is part of this comparison.
+
+Both arms use unchanged v31 gateway, source admission, projection, notes, correction
+and completion policy. Their exact seed input prefix stays unchanged. All newly
+returned encrypted reasoning, function calls and matching results are retained.
+An identical short `followup_state_contract` field explains subsequent current-state
+developer records in both arms; B's quoted archive remains historical data in its
+initial developer record. This tests a one-time bundled reset/repackaging followed
+by native continuation, not repeated compaction or encrypted-state reset alone.
+
+Provider-free wiring under `C:\pt\pl39-rollout-wiring-a` applies only the two stored
+exact replacements and executes the three stored reads in fresh copies. No task code,
+Docker or provider runs. Both edits pass actual gateway admission: A1 is 49 diff lines,
+A2 is 48. B1 gains 56 previously unobserved helper lines; its wrapper read and B2's
+wrapper read gain zero. Prefix equality, current diff identities and eight remaining
+model calls verify for every branch. These observations are not public check results
+or evidence that B subsequently repairs the task.
+
+The 24 focused synthetic tests pass in 49.80 seconds under
+`C:\pt\pl39-rollout-focus-c`. They cover native continuation, parallel IDs, exact
+mutation/check/finish flow, full-ceiling admission, horizon, typed failure feedback,
+isolated artifact rebinding, fake-clock deadlines and whole-experiment uncertainty
+stops. Crash boundaries preserve usage and action evidence without rerunning a provider
+or mutation. Docker image identities were inspected read-only and match the pinned
+check and probe images. Production runtime, task bytes and existing evidence remain
+unchanged. Live outcome is still unmeasured; mock PASS is not comparison-arm PASS.
+
+Final staged validation covers all 51 test files: **841 passed, four actual-Docker
+opt-ins skipped**. The six runtime groups in `C:\pt\pl39-rollout-full-a{1..6}` have
+714 passes / four skips (longest 108.41s); frozen sampler/design/docs compatibility
+adds 103 passes in 68.56s, and the new focused group adds 24. Ruff and diff whitespace
+checks pass. The staged whole sequence exceeds two minutes; no faster total is claimed.
+Independent mock `run_dev_9f4f4d7ca0da4dd4`, in `C:\pt\pl39-rollout-dev-smoke-a`, reaches
+isolated EVALUATOR_PASS / task acceptance PASS / safety NOT_RUN with four mock turns,
+five tools, one accepted mutation and zero cost, in 7.96s. Preservation hashes match
+for `.env`/user AGENTS.md, 1,249 task/historical files and 152 existing run files; all
+175 preexisting untracked entries remain. Only new diagnostic state lives outside
+the repository. The new paid cap confirmation is still the execution boundary.
 
 ## Row 38: stopped after an unverified final repair
 
