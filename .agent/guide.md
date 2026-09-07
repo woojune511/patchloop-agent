@@ -573,10 +573,28 @@ pair now uses `/usr/local/bin/python`; a separately approved run under
 the expected changed lines, clean their owned containers and replay without execution.
 This is a synthetic public fixture, not task-evaluator or model-success evidence.
 Runtime hash changes for the path correction; tool surface v26, prompt, inputs and probe
-profile do not. The next live seam, after reconfirmed
-exact approval, is whether the model uses a relevant unobserved range to test/revise a
-public assumption. Row 34 remains unexecuted. Do not repair historical candidates, alter
-task packages or project private evaluation material.
+profile do not. Reconfirmed exact approval subsequently executed row 34 below. Its
+collection/delivery succeeded, but this does not establish effective model use of an
+unobserved range. Do not repair historical candidates, alter task packages or project
+private evaluation material.
+
+Row 34 on `ae34d076`, `run_dev_e9f798d9b3bb451c`, ended at `AGENT_STOPPED` after 24 model/
+count calls and tools, three accepted mutations, $0.456825750 and 235.781 active seconds.
+The model repaired a parent-mode failure and six upstream regressions; the final eight-line
+candidate passed regression (517 passed, 570 skipped), but the earlier contract PASS was
+on the previous diff. Both final native inputs explicitly list that contract as NOT_RUN,
+with `needs_visible_checks` and `run_check` available. Before the last decision, 17 model
+calls/77 tools/one mutation remained and check + finish needed two calls. The model instead
+claimed completion via `stop_task` twice; stale/mixed evidence rejected the first request,
+valid source evidence admitted the second. No finish, probe or isolated evaluator ran.
+All four actual public checks collected changed-line feedback, delivered through native
+outputs and current-diff summary. The final regression entered all selected executable
+changed lines; line entry is not branch/assertion coverage or task acceptance. Journal,
+envelope, 72 context/input/continuation artifacts and owned-container cleanup verify.
+Next diagnostic seam: distinguish historical PASS from current completion and understand
+completion-versus-stop selection without inferring private reasoning or adding a stop ban.
+This observation alone does not isolate prompt/history causality. Do not resume, repair,
+run a post-terminal check or execute row 35 without new exact authority.
 
 V25 qualifies historical failures and aligns their guidance with offered
 actions. Row 32 rechecked earlier edits with two/one mutations left, then stopped with

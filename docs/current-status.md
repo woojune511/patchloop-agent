@@ -23,9 +23,57 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirty-three live observations below
+Repository policy alone never initiates paid work. The thirty-four live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
+
+## Latest live observation: row 34 stopped before submission
+
+The separately reconfirmed invocation on `ae34d076` created
+`run_dev_e9f798d9b3bb451c` under `C:\patchloop-state`: v2
+`pyfakefs-makedirs-parent-traversal`, `gpt-5.4-mini-2026-03-17`, medium reasoning,
+root `.env`, repeat one, $1.20 total cap and enabled probes. It ended at `AGENT_STOPPED`
+after 24 model/count calls, 24 tool actions, three accepted mutations and 235.781 active
+seconds, costing $0.456825750. There was no submission or isolated evaluation; task
+acceptance and safety were not evaluated. The model's completion claim is not a PASS.
+
+- Turns 1-12 inspected public source; turn 13 added raw-parent recursion. The turn-14
+  public contract failed its parent-mode assertion; turn 15 removed the leaf mode from
+  recursive parent creation, and turn 16 passed that contract.
+- Turn 17's upstream regression reported six failures, including parent-file and
+  broken-link behavior. Three public inspections preceded turn 21's repair: recurse
+  only when the parent does not exist, using `check_link=True`. Turn 22's regression
+  passed, with 517 passed and 570 skipped.
+- The last edit invalidated the earlier contract PASS. Turns 23/24 both selected
+  `stop_task`, claiming all current checks passed. The first stop mixed stale source
+  and action IDs and was rejected; the second supplied a valid source span and stopped
+  with `no_safe_scoped_mutation`. No `finish_task` or probe was requested.
+
+The final context and actual native input explicitly contain `needs_visible_checks`,
+`parent-traversal-contract: NOT_RUN`, regression PASS and the remaining contract ID.
+`run_check` remained available; 17 model calls, 77 tools and one mutation remained before
+the last decision, while minimum completion needed only check + finish (two calls).
+Finish was correctly unavailable until recheck. This is not ceiling exhaustion or a
+completion-horizon/tool-removal stop. The public decision shows stale-PASS/completion
+confusion; whether history presentation or model interpretation caused it is not isolated
+by this single observation. Do not infer private reasoning or candidate correctness.
+
+All four actual public checks returned `public_execution=collected`, preserved in their
+native outputs and current-diff summary. The final regression entered changed executable
+lines 934-936 and 938-940; blank lines 937/941 have no line event. No executable changed
+line remained unobserved in that report. This validates the absolute-path collection and
+delivery seam, not branch/assertion coverage or effective model use. Probes were unused.
+All four owned containers are confirmed absent. The journal's 281-event hash chain,
+envelope runtime and 72 context/input/continuation artifact hashes and sizes verify;
+all 24 provider responses completed and reported `current_turn` reasoning context.
+
+The final unsubmitted candidate adds eight lines in `pyfakefs/fake_os.py`, with diff hash
+`sha256:71f25e6d936db80da405611ceaaa59c82950518d22798a97aad7909951276c69`.
+Envelope, journal and candidate remain external; no submitted manifest exists. Runtime,
+task, `.env`, user-owned `AGENTS.md`, 64 prior journal/envelope files, 1,249 tracked task/
+historical files and pre-existing scratch entries are unchanged. No resume, retry,
+post-terminal check or repair ran. Row 35 requires separate exact approval; all results
+remain `official=false`, with no claim eligibility.
 
 ## Current implementation: tool surface v26
 
@@ -130,7 +178,7 @@ Tool surface remains v26 with unchanged tool inputs, prompt, budgets, task packa
 probe profile. Runtime hash changes to
 `sha256:a4fe50d03e93c4c15b78d66329bf070bf1f48511d32301a455f72df7e5d2129c`.
 Prior envelopes are not migrated. Implementation itself did not authorize Docker or paid
-execution; row 34 remains unexecuted and live approval must be reconfirmed for this runtime.
+execution; row 34 was unexecuted at this checkpoint and required reconfirmed live approval.
 
 ### Corrected-path real Docker checkpoint
 
@@ -146,7 +194,8 @@ Completed replay preserves journal/results without relaunch, both exact containe
 absent, and public source/diff bytes are unchanged. Provider/count calls and cost are zero.
 This validates absolute-path Docker collection on a synthetic public fixture, not the
 private evaluator workload or model behavior. Runtime/test bytes are unchanged by this
-checkpoint; only current docs record the result. Row 34 still needs separate exact approval.
+checkpoint; only current docs record the result. Row 34 required separate exact approval,
+subsequently given for the latest live observation above.
 All results remain `official=false`, `claim_eligible=false`.
 
 ### Separately approved v26 Docker collector verification
@@ -170,8 +219,8 @@ the real case skipped), plus 19 documentation/contract cases in 0.40 seconds.
 Only tests/docs changed; the previously recorded full suite and
 mock remain the unchanged runtime's validation, not new executions. No start/pull/build,
 private evaluation or paid row ran. This verifies container collection on a synthetic
-public fixture, not improved model behavior or task success. Row 34 still requires
-separate exact approval; all results remain `official=false`, `claim_eligible=false`.
+public fixture, not improved model behavior or task success. It did not authorize row 34;
+all results remain `official=false`, `claim_eligible=false`.
 
 ### V25 implementation and validation checkpoint
 

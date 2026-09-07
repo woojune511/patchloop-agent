@@ -209,6 +209,17 @@ pair passes with collected feedback, confirmed cleanup and no replay execution; 
 [corrected-path Docker checkpoint](current-status.md#corrected-path-real-docker-checkpoint)
 before reconfirming live approval. This does not authorize row 34 or another Docker run.
 
+Fresh exact approval then executed row 34 once on `ae34d076`:
+`run_dev_e9f798d9b3bb451c`, `AGENT_STOPPED`, 24 model/count calls and tools, three accepted
+mutations, $0.456825750. All four actual public checks collected changed-line feedback;
+native delivery and owned-container cleanup verify. The final regression passed, but the
+contract PASS belonged to the prior diff. The final native input correctly offered
+`run_check` and listed the contract as NOT_RUN; the model claimed completion through
+`stop_task` instead of rechecking and submitting. No probe, finish, isolated acceptance or
+safety evaluation ran. This is neither task PASS nor a budget/tool-closure failure.
+See [the latest live record](current-status.md#latest-live-observation-row-34-stopped-before-submission).
+Do not resume the terminal, repair/recheck its candidate or initiate row 35 automatically.
+
 Tool surface v26 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
