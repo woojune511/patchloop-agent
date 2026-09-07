@@ -38,6 +38,7 @@ def prepared(tmp_path, monkeypatch):
     write_json(journal.envelope_path, task)
     state = {
         "public_task": task,
+        "current_diff": {"patch_hash": "synthetic-current-diff", "patch": "public patch"},
         "mutation_scope_budget": {"max_diff_lines": 50},
         "visible_check_status": [{"check_id": "visible", "status": "NOT_RUN"}],
     }
@@ -127,7 +128,9 @@ def prepared(tmp_path, monkeypatch):
                 {
                     "type": "function_call_output",
                     "call_id": action_id,
-                    "output": "public observation",
+                    "output": canonical_json(
+                        {"action_id": action_id, "tool": "read_file", "output": {"spans": []}}
+                    ),
                 },
             ]
         )

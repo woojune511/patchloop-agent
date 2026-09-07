@@ -31,8 +31,9 @@ The six-response medium/high comparison on three frozen row-39 inputs is now col
 It executed no selected tools and is not row 40. See [the pilot findings](#frozen-next-action-comparison-six-responses-collected).
 No default-effort change, further paid sampling or new live row is authorized.
 The subsequently approved provider-free [fresh-state comparison preparation](#prepared-fresh-state-comparison-not-executed)
-is complete. Its two input formats are validated; collecting responses is not implemented
-or authorized for this new design.
+is complete. A separately approved provider-free follow-up now adds the
+[four-response collector](#fresh-state-collector-implemented-no-paid-execution).
+No paid collection is authorized for this new design.
 
 ## Current implementation: explicit mutation pre-state and completed identity (v31)
 
@@ -587,9 +588,9 @@ does not establish fewer billed tokens, a working repair or improved agent perfo
 The proposed later schedule is A1/B1/B2/A2: two fresh responses per arm, four total,
 medium throughout, zero returned-tool executions, no corrections/retries/chaining,
 1,800 shared active seconds and a proposed $1.20 total cap. No paid approval is granted.
-The existing six-cell medium/high collector cannot execute this different design;
-collector support and provider-free validation must be separately scoped before an
-exact execution approval. Fresh counts and current pricing remain admission work,
+At preparation, the six-cell medium/high collector could not execute this different design.
+The subsequent provider-free implementation is recorded below; it grants no execution
+approval. Fresh counts and current pricing remain admission work,
 never infer B's count from its byte length. No default or production-loop change follows.
 
 Packet hash: `sha256:1839a26def6adea31a288ccf2c084d8a77b80b166039e3491dffd141cbb1d8d7`.
@@ -606,6 +607,66 @@ execution or acceptance of either proposed comparison arm. The complete runtime 
 was not rerun for this preparation-only change; its preceding 756/4 record is above.
 No task, historical run/report, user-owned `.env`/`AGENTS.md` or v31 runtime bytes change.
 The preparation remains `official=false`, `claim_eligible=false`, acceptance/safety NOT_RUN.
+
+### Fresh-state collector implemented (no paid execution)
+
+The subsequent go-ahead authorizes collector implementation and provider-free tests,
+not sample generation. `diagnostics/fresh_state_sampler.py` validates the frozen
+fresh-state packet and its original source design, then uses the shared diagnostic
+collection engine. The six-cell medium/high command retains its distinct packet and
+approval contract. The new command requires `--approve-four-responses-zero-tools`
+and binds all three diagnostic implementation files, not just the new entry point.
+Preparation/source request bytes and the v31 production runtime remain unchanged.
+
+The exact schedule is A1/B1/B2/A2, both medium, four independent responses at the same
+pre-turn-32 checkpoint. Every request preserves the frozen ordered bytes. Responses
+are never chained, corrected, applied or evaluated. The public review omits arm,
+replicate number, cost and latency; the journal retains the anonymous-ID unblinding
+map. Returned reasoning is retained only as encrypted artifacts, never plaintext.
+Read-only `inspect` supports both diagnostic kinds and never resumes either one.
+
+Each request is counted immediately before generation. B has no historical token
+count: byte length and A's old count are not substitutes. The collector enforces the
+snapshot's [272,000-token maximum input](https://developers.openai.com/api/docs/models/gpt-5.4-mini)
+as a per-response admission ceiling and reserves that input plus the full 25k output
+for every future response. Counts above the ceiling stop with INPUT_LIMIT_EXCEEDED;
+insufficient shared cap stops with COST_CAP_REACHED before generation, never lowering
+the ceiling or changing either input. At registered rates each future reserve is
+$0.316500000; this is a maximum reservation, not measured cost or a fresh price quote.
+The $1.20 cap, 1,800 active seconds, zero retries and uncertainty-wide stop remain.
+
+Thirty-three new collector cases plus the old sampler/preparer, documentation and
+isolated mock E2E pass 104 focused tests in 61.24s under
+`C:\pt\pl39-fresh-collector-focus-b`. The other 46 files pass 714 cases with four
+real-Docker opt-ins skipped, across six fresh `C:\pt\pl39-fresh-collector-full-a{1,2,3,4,5,6}`
+roots. Group times are 66.80/105.42/107.53/105.65/83.80/29.37s. Together they cover all
+50 files: 817 unique passed, four skipped; the isolated mock case runs in both stages.
+Ruff and diff checks pass. Focused validation and each full-suite group meet two
+minutes; the entire staged sequence including smoke is not a sub-two-minute claim.
+
+The four actual frozen requests pass fake-client collection under
+`C:\pt\pl39-fresh-collector-smoke-a`, with all ordered identities intact. Its counts,
+responses and nested cost are simulated, not actual API usage. A reporting-script
+argument error occurred after collection completed; read-only inspection produced
+the final receipt without recollecting. Production mock `run_dev_750f8dad0a3a44b8` under
+`C:\pt\pl39-fresh-collector-dev-smoke-a` reaches mutation, visible check, finish and
+isolated task acceptance PASS / safety NOT_RUN: four mock turns, five tools, one
+accepted mutation, zero provider/count calls and zero cost (6.69s command wall time).
+Neither mock result is evidence of a fresh-state arm's semantic correctness.
+
+Collector content hash is
+`sha256:6e373bf4028426e39c2f4a6b27f0803e6311991c4d4029cd5252355ab2c58d0a`;
+the shared six-cell module's new hash is
+`sha256:c46a1731601d8df363f56823ee1ec57efe595370721ab1e670fafe029baa5faa`.
+Both original prepared packets validate and the old six-response receipt remains
+readable. Hashes preserve `.env`/user `AGENTS.md`, 1,249 task/historical files, 152
+existing external run files and all 49 files across the two designs, collected pilot
+and review. The 175 preexisting untracked entries and pinned v31 runtime remain intact.
+
+This implementation does not establish which representation yields better decisions.
+The frozen preparation stays PREPARED_NOT_EXECUTABLE; a new exact paid approval and
+same-UTC-day official price review are still required. Neither this diagnostic nor
+the earlier six-response pilot is live row 40. No task/candidate execution is authorized.
 
 ## Row 38: stopped after an unverified final repair
 

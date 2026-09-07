@@ -107,10 +107,24 @@ class Cell:
     arm: str
     request_json: str = field(repr=False)
     request_hash: str
-    historical_count: int
+    historical_count: int | None
     source_turn_id: str
     max_parallel_reads: int
     read_paths: tuple[str, ...]
+    sample_number: int | None = None
+
+
+@dataclass(frozen=True)
+class CollectionProtocol:
+    """Validated diagnostic schedule; never an agent workflow or model input."""
+
+    kind: str
+    efforts: dict[str, str]
+    sampling_order: tuple[tuple[str, str | int], ...]
+    input_token_limit: int | None = None
+
+
+SIX_CELL_PROTOCOL = CollectionProtocol("decision-sampler-v1", EFFORTS, ORDER)
 
 
 @dataclass(frozen=True)
@@ -309,8 +323,18 @@ class Approval:
 
 
 def validate_approval(plan: FrozenPlan, approval: Approval) -> None:
+    _validate_collection_approval(plan, approval, sampler_hash())
+
+
+def _validate_collection_approval(
+    plan: FrozenPlan,
+    approval: Approval,
+    expected_sampler_hash: str,
+    *,
+    protected_roots: tuple[Path, ...] = (),
+) -> None:
     require(approval.packet_hash == plan.packet_hash, "approval packet mismatch")
-    require(approval.sampler_hash == sampler_hash(), "approval sampler mismatch")
+    require(approval.sampler_hash == expected_sampler_hash, "approval sampler mismatch")
     require(
         approval.max_cost_usd == Decimal(plan.packet["proposed_total_cap_usd"]),
         "approval cap mismatch",
@@ -331,6 +355,7 @@ def validate_approval(plan: FrozenPlan, approval: Approval) -> None:
                 repository_root().resolve(),
                 plan.source_root,
                 plan.packet_path.parent,
+                *protected_roots,
             )
         ),
         "result root must be outside repository, source state and prepared design",
@@ -351,7 +376,8 @@ def inspect_result(root: Path) -> dict:
     """Read-only receipt, including a conservative outcome after a killed process."""
     raw = json.loads((root / "envelope.json").read_bytes())
     require(
-        raw["kind"] == "decision-sampler-v1" and (root / "runs").is_dir(),
+        raw["kind"] in {"decision-sampler-v1", "fresh-state-sampler-v1"}
+        and (root / "runs").is_dir(),
         "not a diagnostic result root",
     )
     journal = DevJournal(root, raw["run_id"])
@@ -413,7 +439,26 @@ def collect(
     # Revalidate all disk-backed inputs before claiming a new output root or loading a key.
     refreshed = load_plan(plan.packet_path, plan.source_root, approval.packet_hash)
     require(refreshed.design_hashes == plan.design_hashes, "review design changed after validation")
-    plan = refreshed
+    return _collect_validated(
+        refreshed,
+        approval,
+        protocol=SIX_CELL_PROTOCOL,
+        adapter_factory=adapter_factory,
+        clock=clock,
+        checkpoint=checkpoint,
+    )
+
+
+def _collect_validated(
+    plan: FrozenPlan,
+    approval: Approval,
+    *,
+    protocol: CollectionProtocol,
+    adapter_factory: Callable[[ModelConfig], OpenAIResponsesAdapter] | None,
+    clock: Callable[[], float],
+    checkpoint: Callable[[str], None],
+) -> dict:
+    """Shared one-response engine. Callers must validate disk inputs and exact approval."""
     root = approval.result_root.resolve()
     root.mkdir(parents=True, exist_ok=False)  # Atomic exclusive claim, including concurrent starts.
     store = ArtifactStore(root)
@@ -423,7 +468,7 @@ def collect(
     ledger = DevCostLedger(approval.max_cost_usd, pricing_for_model(MODEL))
     envelope = {
         **BOUNDARIES,
-        "kind": "decision-sampler-v1",
+        "kind": protocol.kind,
         "run_id": journal.run_id,
         "packet_hash": plan.packet_hash,
         "sampler_hash": approval.sampler_hash,
@@ -440,19 +485,25 @@ def collect(
         "pricing": price_identity(),
         "pricing_hash": approval.pricing_hash,
         "pricing_verified_on": approval.pricing_verified_on,
-        "models": [model_config(effort).model_dump(mode="json") for effort in EFFORTS.values()],
-        "sampling_order": ORDER,
+        "models": [
+            model_config(effort).model_dump(mode="json") for effort in protocol.efforts.values()
+        ],
+        "sampling_order": protocol.sampling_order,
+        "collection_policy": asdict(protocol),
         "request_hashes": [c.request_hash for c in plan.cells],
         "ordered_request_hashes": [sha256_text(c.request_json) for c in plan.cells],
         "fixed_output_ceiling": OUTPUT_CEILING,
         "active_seconds": ACTIVE_SECONDS,
-        "maximum_generation_calls": 6,
-        "maximum_input_count_calls": 6,
+        "maximum_generation_calls": len(plan.cells),
+        "maximum_input_count_calls": len(plan.cells),
         "correction_calls": 0,
         "sdk_retries": 0,
         "resume_allowed": False,
         "provider_free": adapter_factory is not None,
     }
+    for key in ("source_packet_hash", "preparer_hash", "schema_version"):
+        if key in plan.packet:
+            envelope[key] = plan.packet[key]
     envelope_ref = store.put_json(envelope)
     store.write_text_immutable(root / "envelope.json", canonical_json(envelope))
     real_client = None
@@ -496,24 +547,33 @@ def collect(
         try:
             for index, cell in enumerate(plan.cells):
                 deadline.check()
-                future = sum(full_reservation(c.historical_count) for c in plan.cells[index + 1 :])
-                if full_reservation(cell.historical_count) + future > ledger.remaining_nanos:
+                if protocol.input_token_limit is None:
+                    future = sum(
+                        full_reservation(c.historical_count) for c in plan.cells[index + 1 :]
+                    )
+                    basis = "historical counts; recount before each dispatch"
+                else:
+                    # No guessed token counts for repackaged input. Each future response
+                    # must satisfy this admission limit, or stop before its generation.
+                    future = (len(plan.cells) - index - 1) * full_reservation(
+                        protocol.input_token_limit
+                    )
+                    basis = "per-response input admission limit; not an estimated token count"
+                if (
+                    protocol.input_token_limit is None
+                    and full_reservation(cell.historical_count) + future > ledger.remaining_nanos
+                ):
                     return finish("COST_CAP_REACHED")
+                config = model_config(protocol.efforts[cell.arm])
                 if adapter_factory is None:
                     if real_client is None:
                         key = load_exact_openai_api_key(approval.credential_file)
-                        real_client = create_openai_client(
-                            model_config(EFFORTS[cell.arm]), api_key=key
-                        )
+                        real_client = create_openai_client(config, api_key=key)
                         del key
-                    adapter = OpenAIResponsesAdapter(
-                        model_config(EFFORTS[cell.arm]), api_key="", client=real_client
-                    )
+                    adapter = OpenAIResponsesAdapter(config, api_key="", client=real_client)
                 else:
-                    adapter = adapter_factory(model_config(EFFORTS[cell.arm]))
-                require(
-                    adapter.config == model_config(EFFORTS[cell.arm]), "adapter config mismatch"
-                )
+                    adapter = adapter_factory(config)
+                require(adapter.config == config, "adapter config mismatch")
                 require(adapter.client.max_retries == 0, "adapter retries must be zero")
                 request = json.loads(cell.request_json)
                 require(sha256_json(request) == cell.request_hash, "request identity mismatch")
@@ -528,6 +588,8 @@ def collect(
                     "ordered_request_hash": sha256_text(cell.request_json),
                     "source_turn_id": cell.source_turn_id,
                 }
+                if cell.sample_number is not None:
+                    common["sample_number"] = cell.sample_number
                 count_timeout = deadline.check()
                 journal.append(
                     "input_count_started",
@@ -548,6 +610,8 @@ def collect(
                     "input_count_finished",
                     {"count_id": count_id, "input_tokens": count, "active_elapsed_ms": elapsed()},
                 )
+                if protocol.input_token_limit is not None and count > protocol.input_token_limit:
+                    return finish("INPUT_LIMIT_EXCEEDED")
                 admission = ledger.admit(
                     count,
                     desired_output_ceiling=OUTPUT_CEILING,
@@ -560,6 +624,11 @@ def collect(
                     return finish("COST_CAP_REACHED")
                 timeout = deadline.check()
                 require(sha256_json(request) == cell.request_hash, "count altered request")
+                require(
+                    json.dumps(request, ensure_ascii=False, separators=(",", ":"))
+                    == cell.request_json,
+                    "count altered request order",
+                )
                 journal.append(
                     "provider_call_started",
                     {
@@ -569,7 +638,7 @@ def collect(
                         "output_ceiling": OUTPUT_CEILING,
                         "reserved_cost_nanos": admission.reserved_cost_nanos,
                         "remaining_cell_reserve_nanos": future,
-                        "remaining_input_basis": "historical counts; recount before each dispatch",
+                        "remaining_input_basis": basis,
                         "active_elapsed_ms": elapsed(),
                     },
                 )

@@ -331,7 +331,7 @@ against a new request containing the complete current public state, all 32 publi
 call/result pairs as quoted data and 665 resolved current source lines. B has no native
 reasoning/call/output history but retains the public archive; this is a bundled context
 representation/fresh-reasoning comparison, not deletion inside a live episode.
-Only the new offline preparer/validator understands this packet:
+The offline preparer/validator rechecks this packet without changing it:
 
 ```powershell
 uv run python -m diagnostics.fresh_state_design validate --source-packet C:/pt/pl39-decision-design-a/packet.json --source-state-root C:/patchloop-state --output-root C:/pt/pl39-fresh-state-design-a
@@ -342,9 +342,40 @@ current source ranges and ordered tool schemas without filesystem source reads o
 provider access. Request sizes (684,213/265,083 UTF-8 bytes) are not fresh token counts.
 The packet stays PREPARED_NOT_EXECUTABLE, dispatch=false. A1/B1/B2/A2, medium in both
 arms, four responses, zero tools, 25k output per response, 1,800s and $1.20 are a proposed
-future execution scope, not authority. The six-cell collector rejects this packet;
-implement and provider-free test separately scoped support before seeking exact paid
-approval. Do not pass it to normal dev/resume or rewrite either historical design.
+future execution scope, not authority. The six-cell collector rejects this packet.
+Do not pass it to normal dev/resume or rewrite either historical design.
+
+The separately implemented four-response collector now has its own read-only validation:
+
+```powershell
+uv run python -m diagnostics.fresh_state_sampler validate --packet C:/pt/pl39-fresh-state-design-a/packet.json --packet-hash sha256:1839a26def6adea31a288ccf2c084d8a77b80b166039e3491dffd141cbb1d8d7 --source-packet C:/pt/pl39-decision-design-a/packet.json --source-state-root C:/patchloop-state
+```
+
+Validation loads no credentials/client and makes no input-count call. It prints the
+new collector identity (hashes of the shared sampler, frozen preparer and new entry
+point), fixed ordered request identities and registered-rate reservations. The shared
+engine's source hash changes with this refactor; historical receipts keep their old
+hashes and are not migrated. A later paid approval must use the newly printed identity.
+
+`collect` additionally requires `--approve-four-responses-zero-tools`, `--sampler-hash`,
+an exact absolute `--credential-file`, new external `--result-root`, `--max-cost-usd 1.20`,
+`--pricing-hash` and an actually reviewed same-UTC-day `--pricing-verified-on`.
+Approval must cover the frozen task v2/checkpoint, exact model, medium in both arms,
+A1/B1/B2/A2, four independent responses, zero tools and no corrections/retries/chaining.
+No paid approval has been granted for that scope. Retain 25k output per response and
+1,800 shared active seconds; do not reuse the old pilot's responses as fresh controls.
+
+The four-response policy counts each request just before create and protects future
+full-output capacity using an enforced 272,000-input-token ceiling, not A's historical
+count as an estimate for B. Above-ceiling counts stop with INPUT_LIMIT_EXCEEDED; a fresh
+count that no longer fits the invocation cap stops with COST_CAP_REACHED. Neither
+condition changes the inputs or reduces output capacity. Fresh counts are still unknown
+until separately approved execution. Input/transport/billing uncertainty stops all
+remaining cells; known incomplete responses are recorded without correction. Usage
+precedes continuation processing; selected actions never execute. The shared blinding,
+hash-chained journal, exclusive new root and no-resume behavior are unchanged.
+Use `uv run python -m diagnostics.fresh_state_sampler inspect --result-root <absolute-root>`
+for read-only terminal/interrupted receipts. This is not a normal live row or task PASS.
 
 Tool surface v31 makes successful mutation identity consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete

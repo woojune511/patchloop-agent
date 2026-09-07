@@ -684,11 +684,40 @@ preparer hash is `sha256:3632c6fc93743b8865025cd89f0c785bd1149bb9b03badb76454c08
 Serialized request sizes are 684,213/265,083 bytes, not newly counted tokens. Preparation
 uses zero key/provider/count/tool calls. 28 new regressions plus sampler/docs/mock E2E
 pass 71 cases in 37.68s; Ruff passes. Mock acceptance is not comparison-arm acceptance.
-The proposed A1/B1/B2/A2 four-response pilot still needs separately scoped collector
-support, provider-free validation and fresh exact paid approval. Existing six-cell
-collection and dev/resume paths do not accept it. No runtime or live row 40 is authorized.
+The subsequent implementation go-ahead adds `diagnostics/fresh_state_sampler.py` and
+provider-free tests, not paid execution. It uses the shared one-response engine with
+the separate A1/B1/B2/A2 protocol (both medium); six-cell and dev/resume entry points
+still reject the new packet. No runtime change or live row 40 is authorized.
+The new exact approval binds the prepared packet, source design and collector content
+hash over all three diagnostic modules. Keep the preparer and both frozen request
+artifacts byte-identical; reconstruct/validate before claiming a fresh external result
+root or loading credentials. Existing receipts retain their old sampler hashes.
+Require `--approve-four-responses-zero-tools` rather than interpreting the old six-cell
+flag. No paid collection is approved yet. Validate is credential/provider/count-free.
+Fresh B has no historical count. For this protocol only, reserve each future response
+at the enforced 272,000-input-token admission limit plus the full 25k output ceiling.
+Count the current request immediately before create; reject above-limit input or
+insufficient $1.20 cap before generation, without truncation or capacity reduction.
+The bound is not a token estimate or a measured price; review official rates on the
+execution UTC date. All four requests retain their exact frozen object/property order.
+Persist replicate numbers with arm/anonymous ID only in the journal; public review
+omits those labels. Never chain samples, execute tools, correct, judge, retry or resume.
+Reuse durable usage-before-continuation and whole-pilot uncertainty/deadline stops.
+`inspect` reads either diagnostic kind without changing bytes or invoking a provider.
+The collector content hash is
+`sha256:6e373bf4028426e39c2f4a6b27f0803e6311991c4d4029cd5252355ab2c58d0a`.
+33 new tests plus the old sampler/preparer, docs and mock E2E pass 104 focused cases
+in 61.24s. The remaining 46 files pass 714 cases / four real-Docker opt-in skips in
+six fresh `C:\pt\pl39-fresh-collector-full-a{1,2,3,4,5,6}` roots, longest 107.53s.
+Combined coverage is all 50 files: 817 unique passed, four skipped; one mock test is
+repeated across stages. Ruff passes. The staged sequence is longer than two minutes.
+Actual frozen-request fake collection at `C:\pt\pl39-fresh-collector-smoke-a` preserves
+ordered bytes; the nested counts/cost are synthetic. A report-writer error was fixed
+through read-only inspection, not recollection. Separate dev mock smoke at
+`C:\pt\pl39-fresh-collector-dev-smoke-a` reaches isolated task acceptance PASS / safety
+NOT_RUN, four mock turns/five tools and no provider calls. No live/arm success follows.
 The packet remains PREPARED_NOT_EXECUTABLE; preparation does not grant paid authority.
-The separately approved implementation is `diagnostics/decision_sampler.py`, outside
+The earlier six-cell implementation is `diagnostics/decision_sampler.py`, outside
 the unchanged v31 runtime content set. Run it as a module from the checkout. `validate`
 reconstructs hash-bound requests without a key/client; `collect` requires explicit
 six-cell/zero-tool authority plus packet/sampler/price hashes, exact credential path,
