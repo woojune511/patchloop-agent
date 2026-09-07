@@ -91,6 +91,30 @@ The prompt remains 7,938 characters, and the full ordered tool-input schema hash
 No provider/count call, Docker execution/start/pull/build, resume/retry or thirty-fourth
 live row is authorized or executed by this change. All results remain `official=false`.
 
+### Separately approved v26 Docker collector verification
+
+On the unchanged runtime above, one synthetic registered check and one public probe
+passed the opt-in integration test in 8.89 seconds. Evidence is under
+`C:\pt\pl26-docker-real-a\test_real_check_probe_line_fee0`, with hash-chained journal
+`run_dev_linevalidation_14158214d0ee43b2`. The check passed after entering lines 1-3;
+changed raising line 4 remained unobserved. The probe deliberately raised the public
+`ValueError`, recording lines 1-2 and 4 despite its diagnostic failure. Comment line 5
+was correctly classified as having no line event. The current-diff union covers lines
+1-4; completed replay preserves results and journal bytes without another execution.
+Both exact containers are confirmed absent, source/diff bytes are unchanged, and report
+frames do not leak into public stdout/stderr. The failed probe does not invalidate the
+required check's PASS or grant source evidence. Provider/count calls and cost are zero.
+
+`tests/test_dev_execution_docker.py` is default-skipped and requires separate explicit
+Docker approval; its one case executes exactly this check/probe pair, not the three-case
+isolation matrix. Ruff and 38 provider-free collector cases also pass (10.11 seconds,
+the real case skipped), plus 19 documentation/contract cases in 0.40 seconds.
+Only tests/docs changed; the previously recorded full suite and
+mock remain the unchanged runtime's validation, not new executions. No start/pull/build,
+private evaluation or paid row ran. This verifies container collection on a synthetic
+public fixture, not improved model behavior or task success. Row 34 still requires
+separate exact approval; all results remain `official=false`, `claim_eligible=false`.
+
 ### V25 implementation and validation checkpoint
 
 V25 repairs failure feedback without changing action availability or termination rules.

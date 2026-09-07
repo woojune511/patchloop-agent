@@ -93,3 +93,15 @@ only for that invocation and use a new external `--basetemp` with `-x`. It recor
 receipts and hash-chained action journals under that temporary root. Default pytest
 skips these three cases; it must not start Docker or acquire images to unskip them.
 This diagnostic matrix is not a paid live row or a comprehensive sandbox-security claim.
+
+For v26 line collection alone, `tests/test_dev_execution_docker.py` is a separate,
+default-skipped case enabled only with `PATCHLOOP_TEST_REAL_EXECUTION=1`. With explicit
+permission, run that exact file with `-x` and a new external `--basetemp`. It uses the
+already-local fixed Python image for one synthetic registered check and one probe;
+it does not run the three-probe matrix above. The probe deliberately raises an error
+to verify that failed execution still records entered lines. Public receipts verify
+current diff/file binding, unobserved versus non-line positions, combined observations,
+exact-container cleanup and completed replay without another launch. Missing preflight
+or the first unexpected result stops execution without retry or image acquisition.
+The approved v26 pair passed under `C:\pt\pl26-docker-real-a`; this is not evidence of
+improved live model decisions, exact task-evaluator workload coverage, or new authority.

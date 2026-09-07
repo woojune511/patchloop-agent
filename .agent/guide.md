@@ -553,11 +553,17 @@ the error-handling owner or execution of new error paths. The saved public inlin
 three new error-raising lines were not entered in the post-terminal local trace. This is
 not a measured full-regression coverage result or proof of a counterfactual model success.
 Keep observations separate from note interpretation; prefer evidence to another warning
-or forced experiment. Validate collector bounds, unknown states, current-diff union, native
-delivery, replay and sandbox cleanup without provider or Docker execution. The next live
-seam, only after separate exact approval, is whether the model uses a relevant unobserved
-range to test/revise a public assumption. Row 34 remains unapproved. Do not repair historical
-candidates, alter task packages or project private evaluation material.
+or forced experiment. Provider-free tests cover collector bounds, unknown states,
+current-diff union, native delivery, replay and mocked sandbox cleanup. A separately
+approved real-Docker check/probe pair now passes under `C:\pt\pl26-docker-real-a`: the
+check leaves one changed error line unobserved and the deliberately failing probe enters
+it. Both owned containers are absent; completed replay launches neither again. The opt-in
+`tests/test_dev_execution_docker.py` requires `PATCHLOOP_TEST_REAL_EXECUTION=1`, separate
+approval and a new external basetemp; do not automatically repeat it or the older
+three-probe matrix. Runtime bytes are unchanged. The next live seam, only after separate
+exact approval, is whether the model uses a relevant unobserved range to test/revise a
+public assumption. Row 34 remains unapproved. Do not repair historical candidates, alter
+task packages or project private evaluation material.
 
 V25 qualifies historical failures and aligns their guidance with offered
 actions. Row 32 rechecked earlier edits with two/one mutations left, then stopped with

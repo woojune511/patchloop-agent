@@ -196,6 +196,10 @@ deadlines, owned-container cleanup, output caps and private evaluation are uncha
 It is advisory in-process instrumentation, not a safety proof or new acceptance check.
 Reuse stored completed results on resume; never rerun a check to rebuild this summary.
 Old envelopes are not migrated and mismatched nonterminal resumes still fail closed.
+The separately approved synthetic Docker collector check/probe pair passed; see
+[current status](current-status.md#separately-approved-v26-docker-collector-verification)
+and [opt-in diagnostic instructions](../docker/README.md#explicit-local-verification).
+That evidence does not authorize repeating Docker work or executing live row 34.
 
 Tool surface v26 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
