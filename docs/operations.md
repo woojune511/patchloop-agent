@@ -362,20 +362,33 @@ an exact absolute `--credential-file`, new external `--result-root`, `--max-cost
 `--pricing-hash` and an actually reviewed same-UTC-day `--pricing-verified-on`.
 Approval must cover the frozen task v2/checkpoint, exact model, medium in both arms,
 A1/B1/B2/A2, four independent responses, zero tools and no corrections/retries/chaining.
-No paid approval has been granted for that scope. Retain 25k output per response and
-1,800 shared active seconds; do not reuse the old pilot's responses as fresh controls.
+That exact scope was subsequently approved once and is now completed as described
+below. Retain 25k output per response and 1,800 shared active seconds; do not reuse the
+old pilot's responses as fresh controls or interpret this completion as new authority.
 
 The four-response policy counts each request just before create and protects future
 full-output capacity using an enforced 272,000-input-token ceiling, not A's historical
 count as an estimate for B. Above-ceiling counts stop with INPUT_LIMIT_EXCEEDED; a fresh
 count that no longer fits the invocation cap stops with COST_CAP_REACHED. Neither
 condition changes the inputs or reduces output capacity. Fresh counts are still unknown
-until separately approved execution. Input/transport/billing uncertainty stops all
+until separately approved execution (now measured for this completed invocation).
+Input/transport/billing uncertainty stops all
 remaining cells; known incomplete responses are recorded without correction. Usage
 precedes continuation processing; selected actions never execute. The shared blinding,
 hash-chained journal, exclusive new root and no-resume behavior are unchanged.
 Use `uv run python -m diagnostics.fresh_state_sampler inspect --result-root <absolute-root>`
 for read-only terminal/interrupted receipts. This is not a normal live row or task PASS.
+
+The approved four-response invocation is `run_dev_sample_1272d5c8122c47cf` under
+`C:\pt\pl39-fresh-state-live-a`: SAMPLES_COLLECTED, four counts/responses, zero tools,
+36.344 active seconds and known $0.195174300 cost. A counts 153,464 input tokens;
+B counts 66,054. Official Standard prices were reviewed on 2026-09-07 UTC before
+dispatch. Read-only integrity, anonymous static observations and later unblinding are
+in `C:\pt\pl39-fresh-state-review-a`. Original input yielded two mutation proposals;
+fresh input yielded two inspection responses. Static candidate defects and repeated
+reads do not establish an end-to-end success rate. No candidate/test was executed,
+all acceptance/safety states remain NOT_RUN and this is not row 40. Do not retry,
+resume or collect additional samples without a new exact approval.
 
 Tool surface v31 makes successful mutation identity consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete

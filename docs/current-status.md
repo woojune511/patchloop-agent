@@ -30,10 +30,11 @@ Docker startup, transport retry, or additional row.
 The six-response medium/high comparison on three frozen row-39 inputs is now collected.
 It executed no selected tools and is not row 40. See [the pilot findings](#frozen-next-action-comparison-six-responses-collected).
 No default-effort change, further paid sampling or new live row is authorized.
-The subsequently approved provider-free [fresh-state comparison preparation](#prepared-fresh-state-comparison-not-executed)
-is complete. A separately approved provider-free follow-up now adds the
-[four-response collector](#fresh-state-collector-implemented-no-paid-execution).
-No paid collection is authorized for this new design.
+The [fresh-state comparison preparation](#prepared-fresh-state-comparison-not-executed)
+and [four-response collector](#fresh-state-collector-implemented-no-paid-execution) are complete.
+The user's subsequent exact approval by reference authorized the now
+[collected four-response comparison](#fresh-state-comparison-four-responses-collected).
+No further paid samples, task execution or new live row are authorized.
 
 ## Current implementation: explicit mutation pre-state and completed identity (v31)
 
@@ -587,7 +588,7 @@ does not establish fewer billed tokens, a working repair or improved agent perfo
 
 The proposed later schedule is A1/B1/B2/A2: two fresh responses per arm, four total,
 medium throughout, zero returned-tool executions, no corrections/retries/chaining,
-1,800 shared active seconds and a proposed $1.20 total cap. No paid approval is granted.
+1,800 shared active seconds and a proposed $1.20 total cap. Preparation granted no paid approval.
 At preparation, the six-cell medium/high collector could not execute this different design.
 The subsequent provider-free implementation is recorded below; it grants no execution
 approval. Fresh counts and current pricing remain admission work,
@@ -664,9 +665,57 @@ existing external run files and all 49 files across the two designs, collected p
 and review. The 175 preexisting untracked entries and pinned v31 runtime remain intact.
 
 This implementation does not establish which representation yields better decisions.
-The frozen preparation stays PREPARED_NOT_EXECUTABLE; a new exact paid approval and
-same-UTC-day official price review are still required. Neither this diagnostic nor
-the earlier six-response pilot is live row 40. No task/candidate execution is authorized.
+The frozen preparation stays PREPARED_NOT_EXECUTABLE. The subsequent paid approval
+and same-UTC-day price review are recorded below; implementation alone did not grant
+them. Neither diagnostic is live row 40. No task/candidate execution is authorized.
+
+### Fresh-state comparison: four responses collected
+
+The user's approval by reference authorized exactly A1/B1/B2/A2 at row 39's frozen
+pre-turn-32 checkpoint: pyfakefs task v2, `gpt-5.4-mini-2026-03-17`, medium in both
+arms, root `.env`, full 25k output ceilings, zero selected tools and $1.20 shared cap.
+Invocation on `35f940d5` created `run_dev_sample_1272d5c8122c47cf` in
+`C:\pt\pl39-fresh-state-live-a`. It finished SAMPLES_COLLECTED: four input counts,
+four completed responses, known **$0.195174300** cost and **36.344s** active time.
+The assistant checked official Standard prices on 2026-09-07 UTC before dispatch.
+No corrections, retries, response chaining, Docker, candidate or evaluator execution.
+Task acceptance/safety remain NOT_RUN, `official=false` and `claim_eligible=false`.
+
+Anonymous public observations were frozen before inspecting arm/usage labels under
+`C:\pt\pl39-fresh-state-review-a`. All 22 journal events, 12 CAS objects, exact ordered
+requests and four encrypted continuation/action links verify. The read-only static
+review uses only cutoff public state/source/traceback evidence. Scope counts are for
+the complete sole changed hunk at the observed anchor; parsing is not task execution
+or full gateway admission.
+
+| Condition | Next decision | Observed static result |
+| --- | --- | --- |
+| A1, original native history | Exact replacement | 49-line candidate assigns `next_dir` inside the error if; normal paths skip assignment. |
+| A2, same original input | Different replacement | 48-line candidate keeps assignment outside the if, but the parent guard is too late for the recorded broken-link failure. |
+| B1, fresh public-state input | Two reads | Rereads 53 current wrapper lines and requests 56 unobserved helper source lines containing both public traceback sites. |
+| B2, same fresh input | One read | Rereads 55 already supplied current wrapper lines. |
+
+For A2, the existing trace shows EEXIST when create_dir encounters a broken link as
+the next child of a valid parent. The added check of current_dir cannot catch this
+before that child creation fails. Its claimed broken-link repair is therefore not
+supported by the public control flow. A2 avoids A1's normal-path assignment defect,
+but neither proposal establishes a correct repair. B1's new helper request is relevant
+to the observed failures, so do not call both B responses wholly redundant or failed
+repairs. Their later evidence and outcomes were not collected.
+
+Fresh input counts are **153,464 for A** and **66,054 for B** each time: a 56.96%
+reduction, not just smaller JSON. Output/reasoning counts are A1 1124/829, B1 740/516,
+B2 611/516 and A2 1382/1017; no response reaches the output ceiling. Cached inputs
+vary (0/5,504/65,920/152,960 in collection order), so observed costs cannot isolate the
+representation effect. The bundled intervention changed reasoning continuation,
+state repetition, source presentation and message structure together. Two responses
+per arm at one failure-selected checkpoint establish neither causal attribution,
+agent improvement nor a default-setting change. All five proposed calls have null notes.
+
+Preservation checks retain `.env`, user `AGENTS.md`, 1,249 task/historical files, 152
+prior external run files, 49 prior design/pilot/review files and all 175 preexisting
+untracked entries. Runtime and collector content hashes remain unchanged. No further
+sampling, tool/candidate execution, retry/resume or live row 40 is authorized.
 
 ## Row 38: stopped after an unverified final repair
 

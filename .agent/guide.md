@@ -693,7 +693,8 @@ hash over all three diagnostic modules. Keep the preparer and both frozen reques
 artifacts byte-identical; reconstruct/validate before claiming a fresh external result
 root or loading credentials. Existing receipts retain their old sampler hashes.
 Require `--approve-four-responses-zero-tools` rather than interpreting the old six-cell
-flag. No paid collection is approved yet. Validate is credential/provider/count-free.
+flag. The subsequent approval authorized one now-completed collection, recorded below;
+it is not authority for another. Validate is credential/provider/count-free.
 Fresh B has no historical count. For this protocol only, reserve each future response
 at the enforced 272,000-input-token admission limit plus the full 25k output ceiling.
 Count the current request immediately before create; reject above-limit input or
@@ -716,6 +717,24 @@ ordered bytes; the nested counts/cost are synthetic. A report-writer error was f
 through read-only inspection, not recollection. Separate dev mock smoke at
 `C:\pt\pl39-fresh-collector-dev-smoke-a` reaches isolated task acceptance PASS / safety
 NOT_RUN, four mock turns/five tools and no provider calls. No live/arm success follows.
+The later exact approval by reference completed the four-response comparison on
+`35f940d5`: `run_dev_sample_1272d5c8122c47cf` in `C:\pt\pl39-fresh-state-live-a`, four
+counts/completed responses, zero tools, $0.195174300 and 36.344s. Official Standard
+prices were reviewed on 2026-09-07 UTC. The frozen packet and source hashes still match.
+Before unblinding, public static observations were fixed under
+`C:\pt\pl39-fresh-state-review-a`; 22 journal events, 12 CAS objects, four exact ordered
+requests and encrypted continuation/action links verify. A1 proposes a 49-line
+candidate with next_dir assigned inside the error guard; A2's 48-line proposal moves
+assignment outside it but checks the current parent too late to prevent the observed
+broken-link child creation failure. Both observations are static, not test results.
+B1 rereads 53 current wrapper lines and asks for 56 unobserved helper lines covering
+both public traceback sites; B2 rereads 55 current wrapper lines. Do not label a
+deferred read as a failed repair or infer source loss from a request to reread it.
+Actual input counts are A 153,464 and B 66,054 (56.96% lower); cache state also varies.
+The two draws per arm and bundled context intervention do not identify a single cause
+or prove improved agent behavior. No output ceiling exhaustion occurred. Full tool
+admission, task acceptance and safety stay unassessed/NOT_RUN. No default/context
+change, further sampling, candidate execution, retry/resume or row 40 is authorized.
 The packet remains PREPARED_NOT_EXECUTABLE; preparation does not grant paid authority.
 The earlier six-cell implementation is `diagnostics/decision_sampler.py`, outside
 the unchanged v31 runtime content set. Run it as a module from the checkout. `validate`
