@@ -15,8 +15,8 @@ uv run pytest tests -p no:cacheprovider --basetemp $testRoot
 This path uses no provider or Docker call.
 
 Keep runtime files unchanged while tests run, because provenance tests bind their actual
-bytes. For a faster complete suite, run the runner/resume tests in one process and all
-remaining test files in another, each with a different new external temporary root.
+bytes. For a faster complete suite, partition files across independent processes,
+each with a different new external temporary root, with every file selected exactly once.
 The exact split and latest measured result are in [the internal guide](../.agent/guide.md#validation-checklist).
 
 ## Mock end-to-end
@@ -220,7 +220,7 @@ safety evaluation ran. This is neither task PASS nor a budget/tool-closure failu
 See [the latest live record](current-status.md#latest-live-observation-row-34-stopped-before-submission).
 Do not resume the terminal, repair/recheck its candidate or initiate row 35 automatically.
 
-Tool surface v26 retains bounded run-local verification concerns inside the existing
+Tool surface v27 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
@@ -232,7 +232,7 @@ existing `vN` upsert stores its incoming statement as the latest `progress_note`
 that original. A distinct question needs a null ID. Exact repetition of the original
 or retained progress yields applied code `unchanged`, preserving state, update time,
 and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
-immutable; v26 does not migrate them and rejects mismatched nonterminal resume under the
+immutable; v27 does not migrate them and rejects mismatched nonterminal resume under the
 existing exact-match contract. No new experiment is automatically executed after a check PASS.
 
 Model-facing inspection feedback uses action-bound decision references instead of repeating
@@ -435,7 +435,7 @@ create another model turn. It records existing `LIMIT_REACHED` with message
 `completion horizon exhausted before provider dispatch` and bounded gate, remaining-
 resource, minimum-call, and blocker fields. Resume first reconciles any already durable
 provider decision or pending batch, then applies this test before a new dispatch.
-These output and scheduler semantics are bound by tool-surface identity `v26`; prior
+These output and scheduler semantics are bound by tool-surface identity `v27`; prior
 envelopes and journals are not migrated.
 One consecutive invalid or incomplete model response receives a correction that
 names the current workflow gate, remaining public checks, and only the tools actually
@@ -457,6 +457,17 @@ The same incomplete reason survives decision recovery and is named in correction
 terminal provenance. If no public read, check, or safe scoped mutation can make
 progress, the agent may call `stop_task` with a bounded reason. This produces
 `AGENT_STOPPED` without submission or evaluation.
+
+For completion diagnosis, inspect the latest actual native `harness_current_state`,
+not only the canonical audit card. V27 places `completion_guidance`, current verdicts
+and remaining check IDs immediately after the gate. Guidance uses the current diff
+and offered actions and survives state compaction. Retained check summaries label
+`evidence_currency` and `counts_toward_completion`: a historical PASS is not current
+credit, while its original native result stays unchanged. A suggested recheck is not
+an automatic execution. `stop_task` remains a voluntary unsuccessful exit; saying that
+no more edit is needed does not submit a candidate. Tool argument shapes/order and
+admission remain unchanged. V27 has no live evidence until a separately approved row;
+row 34 is terminal read-only evidence and row 35 is not authorized by implementation.
 
 `finish_task` becomes available only after every visible check passes on the
 current non-empty diff and no non-ignored untracked file remains. The context lists

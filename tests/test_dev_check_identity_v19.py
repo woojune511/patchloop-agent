@@ -45,6 +45,7 @@ def _append(gateway, result):
 def _summaries_gateway(tmp_path):
     return SimpleNamespace(
         journal=DevJournal(tmp_path, "run_dev_check_identity"), checks_by_diff={},
+        current_diff_hash="current",
     )
 
 
@@ -90,6 +91,8 @@ def test_retained_summaries_keep_identity_and_existing_diff_check_order(tmp_path
         ("fourth", "traversal", "current"),
     ]
     assert rows[0]["stdout"] == "output:repeated-3"
+    assert [row["evidence_currency"] for row in rows] == ["historical", "current", "current"]
+    assert [row["counts_toward_completion"] for row in rows] == [False, True, True]
 
 
 def test_failed_check_keeps_identity_but_failed_action_does_not_replace_it(tmp_path):
@@ -100,6 +103,18 @@ def test_failed_check_keeps_identity_but_failed_action_does_not_replace_it(tmp_p
     assert len(rows) == 1
     assert rows[0]["action_id"] == "check-failed"
     assert rows[0]["passed"] is False
+    assert rows[0]["evidence_currency"] == "current"
+    assert rows[0]["counts_toward_completion"] is False
+
+
+def test_unidentified_check_currency_never_counts_as_current_completion(tmp_path):
+    gateway = _summaries_gateway(tmp_path)
+    gateway.current_diff_hash = ""
+    _append(gateway, _result("unidentified-pass"))
+    row = runner._recent_checks(gateway)[0]
+    assert row["passed"] is True
+    assert row["evidence_currency"] == "unknown"
+    assert row["counts_toward_completion"] is False
 
 
 def test_native_delivery_preserves_older_check_identity_without_copying_latest_body(tmp_path):

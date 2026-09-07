@@ -62,8 +62,8 @@ def compact_model_state(
 ) -> dict[str, Any]:
     """Project an already public, source-validated state without changing authority."""
     view = copy.deepcopy(state)
-    # Rolling inspection cards duplicate native calls/results and produce index churn.
-    # Retain protocol correction cards: they can carry unsatisfied action guidance.
+    # Omit redundant historical cards, not the separately derived current
+    # completion_guidance. Retain protocol cards for unsatisfied corrections.
     if "recent_attempt_result_next_question" in view:
         view["recent_attempt_result_next_question"] = [
             card for card in view["recent_attempt_result_next_question"]

@@ -1804,6 +1804,7 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "recent_attempt_result_next_question",
         "commitment_signal",
         "workflow_gate",
+        "completion_guidance",
         "available_tool_names",
         "action_horizon",
         "current_public_failure",

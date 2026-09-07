@@ -464,10 +464,13 @@ def _cards(
     return [compact(card) for card in cards[-3:]]
 
 
-def _recent_checks(gateway: DevToolGateway) -> list[dict[str, Any]]:
+def _recent_checks(
+    gateway: DevToolGateway, *, diff_hash: str | None = None,
+) -> list[dict[str, Any]]:
     # Keep the result's citation identity with its label even after the native
     # output ages out. Preserve the existing diff/check selection and order;
     # repeated actions for one check only update that row's latest identity.
+    current_hash = diff_hash if diff_hash is not None else gateway.current_diff_hash
     action_ids: dict[tuple[str, str], str] = {}
     for event in gateway.journal.events():
         if event["event_type"] != "action_finished":
@@ -479,6 +482,9 @@ def _recent_checks(gateway: DevToolGateway) -> list[dict[str, Any]]:
         action_ids[(value["diff_hash"], value["check_id"])] = result["action_id"]
     rows: list[dict[str, Any]] = []
     for diff_hash, checks in gateway.checks_by_diff.items():
+        currency = (
+            "current" if diff_hash == current_hash else "historical"
+        ) if diff_hash and current_hash else "unknown"
         for value in checks.values():
             failure = value.get("public_check_failure")
             location = failure.get("public_location") if isinstance(failure, dict) else None
@@ -488,6 +494,8 @@ def _recent_checks(gateway: DevToolGateway) -> list[dict[str, Any]]:
                     "check_id": value["check_id"],
                     "diff_hash": diff_hash,
                     "passed": value["passed"],
+                    "evidence_currency": currency,
+                    "counts_toward_completion": currency == "current" and value["passed"] is True,
                     "failure_signature": value.get("failure_signature"),
                     "exit_code": value.get("exit_code"),
                     "timed_out": value.get("timed_out"),
@@ -512,6 +520,48 @@ def _workflow_gate(summary: Any, *, ready_to_submit: bool) -> str:
     if ready_to_submit:
         return "ready_to_submit"
     return "needs_visible_checks"
+
+
+def _completion_guidance(
+    snapshot: DevGatewayStateSnapshot, policy: _ToolPolicy,
+) -> dict[str, Any]:
+    """Describe an offered next action, without executing it or changing admission."""
+    allowed = policy.allowed_tools
+    next_action: dict[str, str] | None = None
+    message = "No completion action is currently offered; this is not a successful submission."
+    needs_mutation = policy.workflow_gate == "needs_mutation" or any(
+        row["status"] == "FAIL" for row in snapshot.visible_check_status
+    )
+    if snapshot.ready_to_submit and "finish_task" in allowed:
+        next_action = {"tool": "finish_task"}
+        message = "All required visible checks pass on the current diff; use finish_task to submit."
+    elif needs_mutation:
+        if "replace_text" in allowed:
+            next_action = {"tool": "replace_text"}
+            message = (
+                "The current candidate needs a repair. Use replace_text for a supported edit; "
+                "available anchor evidence does not establish a correct solution."
+            )
+        else:
+            inspection = next(
+                (tool for tool in ("read_file", "search_files") if tool in allowed), None,
+            )
+            if inspection:
+                next_action = {"tool": inspection}
+                message = f"Use {inspection} to obtain public evidence for a scoped repair."
+    elif "run_check" in allowed and policy.check_ids:
+        check_id = policy.check_ids[0]
+        next_action = {"tool": "run_check", "check_id": check_id}
+        message = (
+            f"Run one remaining visible check for the current diff: {check_id}. "
+            "Use run_check; PASS on a different diff does not count toward completion."
+        )
+    return {
+        "diff_hash": snapshot.diff.patch_hash,
+        "submission_ready": snapshot.ready_to_submit,
+        "next_action": next_action,
+        "message": message,
+    }
 
 
 def _minimum_completion_calls(
@@ -1034,7 +1084,10 @@ def _protocol_correction(
             "diagnostic only and never replaces required visible checks."
         )
     if "stop_task" in allowed:
-        actions.append("Use stop_task when no available action supports progress.")
+        actions.append(
+            "Use stop_task to abandon without submission or evaluation when no available "
+            "action supports progress; it is not successful completion."
+        )
     return {
         "turn_id": turn_id,
         "code": code,
@@ -1097,6 +1150,9 @@ def _build_context(
     ]
     payload = {
         "workflow_gate": active_policy.workflow_gate,
+        "completion_guidance": _completion_guidance(active_snapshot, active_policy),
+        "visible_check_status": list(active_snapshot.visible_check_status),
+        "remaining_visible_check_ids": list(active_snapshot.remaining_visible_check_ids),
         "remaining_budget": {
             "model_calls": max(0, limits.max_model_calls - counters.model_calls),
             "tool_actions": max(0, limits.max_tool_actions - counters.tool_actions),
@@ -1200,9 +1256,7 @@ def _build_context(
             "untracked_files": summary.untracked_files,
             "truncated": False,
         },
-        "visible_check_status": list(active_snapshot.visible_check_status),
-        "remaining_visible_check_ids": list(active_snapshot.remaining_visible_check_ids),
-        "recent_checks": _recent_checks(gateway),
+        "recent_checks": _recent_checks(gateway, diff_hash=summary.patch_hash),
         "public_execution_summary": gateway.public_execution_summary(diff_hash=summary.patch_hash),
         "latest_tool_results": [
             result.model_dump(mode="json", exclude={"replayed"}) for result in latest_tool_results

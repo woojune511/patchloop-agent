@@ -107,7 +107,67 @@ guidance in actual model input. Future regression must cover that final boundary
 only the audit card. This diagnosis changes documentation only; it neither repairs nor
 executes the saved candidate, calls a provider, starts Docker, nor authorizes row 35.
 
-## Current implementation: tool surface v26
+## Current implementation: tool surface v27
+
+V27 repairs the completion-guidance delivery boundary diagnosed above. The latest
+model-facing state starts with workflow gate, `completion_guidance`, current check
+verdicts and remaining check IDs. The guidance is derived from the same current-diff
+snapshot and offered tool policy as the context; it names one available next action,
+not an automatically executed action or a new requirement. With a repaired candidate
+and a remaining check, it explicitly names that recheck. Once required checks pass,
+it points to `finish_task`.
+
+This compact current guidance survives native-state projection independently of
+historical attempt cards. Retained `recent_checks` keep their original action/check/
+diff identity and verdict, with `evidence_currency` and `counts_toward_completion`
+alongside them. An earlier-diff PASS remains a recorded PASS but cannot count toward
+current completion. Original native results and prior state items are not rewritten.
+
+Tool descriptions, prompt and correction distinguish submission through `finish_task`
+from unsuccessful abandonment through `stop_task`. No further edit being needed is
+not itself completion. Voluntary stop admission, reason codes, input shapes/order,
+tool masks, budgets, output ceiling and exact submission checks are unchanged. No
+prose validator, automatic recheck, extra planning/model call or history reset is added.
+The tool-surface hash advances to v27; previous run/envelope bytes are not migrated.
+
+The new public-only regression follows old PASS, a failure, repair, current regression
+PASS, required recheck and submission through actual native input construction and
+gateway restart. Before implementation it failed on the missing `completion_guidance`.
+This demonstrates the harness delivery contract, not that a live model would choose
+correctly. No historical candidate was executed or repaired, and row 35 still requires
+separate exact approval.
+
+Read-only reprojection of row 34's saved turn-23 native input confirms the intended
+change: `parent-traversal-contract` is the suggested current recheck; its previous
+PASS is historical/non-counting, as is the old regression FAIL. The latest regression
+PASS is current/counting. The latest state message grows from 10,658 to 11,228 UTF-8
+bytes (+570); the original input remains hash-identical. This is a local presentation
+comparison, not resume or evidence of a different model decision.
+
+### V27 local validation
+
+Ruff and `git diff --check` pass. Focused completion/check-identity/state/conversation/
+contract tests pass 140 cases in 43.65 seconds under `C:\pt\pl27-focus-b`. The full
+provider-free suite passes 627 cases with four real-Docker cases skipped, using all
+43 test files exactly once across `C:\pt\pl27-full-a{1,2,3,4}`: 60/68/145/354 passes
+in 45.46/103.77/60.63/150.24 seconds. The longest group exceeds the two-minute target;
+focused validation meets it. Full-suite/mock observed wall time, including local
+read-only review gaps, is 162.18 seconds; do not claim an under-two-minute full cycle.
+
+Mock `run_dev_ab6896e303234425` under `C:\pt\pl27-smoke-a` reaches mutation, visible
+check, finish and isolated `EVALUATOR_PASS`: task acceptance PASS, safety NOT_RUN,
+four mock turns, five tools, one accepted mutation and zero cost. Runtime bytes were
+frozen throughout full pytest/mock. Runtime hash is
+`sha256:5511b176cd864fd0ab843a39546ba84fcb6ea8f0230153d80b039a08f0c922bd`;
+tool-surface hash is
+`sha256:a38c04db17044dd2c3d53036808a3232e4dac67c3439bc890413536683028d4a`.
+The prompt is 7,990 characters; description-free tool shapes and order are unchanged.
+Preservation checks match `.env`, user-owned `AGENTS.md`, all 66 existing external
+journal/envelope files, 1,249 tracked task/historical files and 106 old untracked entries.
+No provider/input-count call, actual Docker execution, retry, resume or row 35 ran.
+All evidence remains `official=false` and `claim_eligible=false`.
+
+### Retained v26 execution-feedback behavior
 
 V26 adds advisory **changed-code execution feedback** to existing public checks and
 enabled probes. Reading source, entering a Python line, checking an assertion, and

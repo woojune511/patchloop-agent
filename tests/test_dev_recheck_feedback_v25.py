@@ -195,7 +195,7 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
 def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:90db9c2f4c787e23dd598adc3d782d51f838572d71889c06266810588011ca9e"
+    )) == "sha256:384a25d020118489ec56cf71077aa305a83baec19b28129b61644321e2feb80a"
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )

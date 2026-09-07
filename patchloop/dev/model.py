@@ -95,8 +95,8 @@ review; causal_revision is optional, not a forced claim of falsification.
 Repair directly from sufficient current evidence, or inspect registered public source
 while budgets permit. A source read is necessary only to acquire missing exact edit evidence.
 
-Submit only after all visible_check_status verdicts pass on the current diff. An edit
-invalidates earlier checks. Zero remaining mutations forbids further
+Use the latest completion_guidance and visible_check_status: only current-diff PASS
+counts. finish_task submits; historical PASS does not. Zero remaining mutations forbids further
 edits, not affordable checks or submission. completion_possible describes completion;
 mutation_completion_horizon describes another edit. When run_probe is supplied,
 use a small public behavior experiment on the current candidate to test a concrete
@@ -106,12 +106,12 @@ experiment itself. Test assumptions introduced by new branches using public inpu
 variations, not just the examples already covered by registered checks.
 Distinguish behavior actually tested from remaining assumptions;
 passing the available tests does not establish correctness for all paths.
-After required checks pass, review the remaining public verification concerns against
-the current candidate. If an available experiment could change the decision, test that
-uncertainty; otherwise submit. Do not treat a check PASS or a focus change as automatically
-resolving unrelated concerns, and do not repeat a baseline-only probe as candidate proof.
-Use stop_task when no
-available action supports progress. Keep decisions and findings concise; never emit
+Review remaining public concerns once required checks pass.
+Test uncertainty if an available experiment could change the decision; otherwise submit.
+A check PASS or focus change does not resolve unrelated concerns; a baseline-only probe
+is not candidate proof. stop_task abandons as AGENT_STOPPED, without submission or
+evaluation; it is not completion. Use it when no available action supports progress,
+not merely when no edit is needed. Keep decisions and findings concise; never emit
 raw chain-of-thought. Private tests, reference patches, and evaluator details are
 unavailable and must not be inferred.
 """

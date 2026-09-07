@@ -280,8 +280,9 @@ def dev_tool_schemas(
             "type": "function",
             "name": "stop_task",
             "description": (
-                "End the run without submission only when no registered read, check, or "
-                "safe scoped mutation can make progress. Give a concise public conclusion, "
+                "Abandon the run as AGENT_STOPPED, without submission or evaluation; this is "
+                "not successful completion. Use when no available action supports progress, "
+                "not merely when no further edit is needed. Give a concise public conclusion, "
                 "not chain-of-thought."
             ),
             "strict": True,
@@ -314,7 +315,9 @@ def dev_tool_schemas(
                 "type": "function",
                 "name": "finish_task",
                 "description": (
-                    "Submit the automatically projected current diff after all checks pass."
+                    "Submit the current diff for evaluation after all required visible checks "
+                    "pass on that same diff. This completes the agent's submission; stopping "
+                    "without submission does not."
                 ),
                 "strict": True,
                 "parameters": {

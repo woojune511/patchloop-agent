@@ -98,6 +98,11 @@ encrypted reasoning, canonical function calls, and matching public results in or
 A fixed initial harness state precedes that user boundary. Later complete, compact
 current-state views append after tool results without rewriting the prefix. Read the
 latest view directly; only the public task is inherited from the initial message.
+It starts with the current workflow gate, a short `completion_guidance`, current check
+verdicts and remaining checks. The harness derives this guidance from actual state and
+available actions; it does not execute the suggested action. Historical PASS is labeled
+as not counting toward current completion. Submission uses `finish_task`; `stop_task`
+is unsuccessful abandonment, even when no further code edit is needed.
 Older mutable fields are not inherited. The detailed audit context stays separate:
 rolling inspection accounting is not a model-facing edit log. Saved input artifacts
 preserve every previous item, and metadata binds history and current view.
@@ -264,7 +269,7 @@ checks, exact-envelope run resume, action recovery, cost enforcement, external r
 state, content-bound manifests, typed safety evidence, and isolated private
 evaluation. Resume derives the current workflow gate
 from the workspace and durable check evidence; it does not restore a decorative
-workflow state. Tool-surface `v26` adds public changed-line execution feedback without new
+workflow state. Tool-surface `v27` retains public changed-line execution feedback without new
 tools or submission gates. A check can pass while newly added error-handling lines remain
 unobserved. Results distinguish those lines from positions with no Python line event and
 from unknown collection. This is launch-thread line-entry evidence, not branch coverage,

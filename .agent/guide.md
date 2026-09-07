@@ -105,6 +105,20 @@ diff with no untracked files after all visible checks pass on that exact diff.
 `stop_task` is always exposed as an explicit unsuccessful terminal; it never submits
 or evaluates.
 
+Derive `completion_guidance` from the already prepared gateway snapshot and actual
+offered policy, without re-executing checks or modifying admission. Project workflow
+gate, this guidance, current check table and remaining IDs first. A current FAIL or
+empty diff points to an offered repair/evidence action; an unchecked candidate names
+an offered remaining check; a ready candidate names `finish_task`. This is advisory,
+not proof that a supported semantic repair exists. Keep guidance in the latest native
+view even when historical attempt cards are omitted. Label retained check summaries
+with `evidence_currency` and `counts_toward_completion`; preserve original verdicts
+and action/check/diff identity. Missing currency is unknown, never current credit.
+Only current-diff PASS counts; do not rewrite historical native results. Clarify
+unsuccessful `stop_task` versus submission, but never reject a stop based on its prose
+or automatically run the suggested action. Test the actual native boundary and restart,
+not only the canonical audit context.
+
 `run_probe` is default-disabled and appears only for `--enable-probes` runs with at
 least one model call and tool action beyond the protected completion budget. It uses
 `verify` decision mode with `evidence_goal=null`. It accepts one public question (500
@@ -430,7 +444,7 @@ projection read-only and deterministic after restart, including native latest-st
 The prompt distinguishes completion of this candidate from the separate further-edit
 horizon. Do not change tool masks, force a check or reject a voluntary stop on this basis.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v26`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v27`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -549,7 +563,14 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: v26 exposes current changed-line execution evidence from public checks/probes,
+Current seam: v27 preserves a snapshot-derived completion view through final native
+projection and labels historical check credit explicitly. Descriptions clarify
+`finish_task` submission versus `stop_task` abandonment; tool shapes/order, voluntary
+stop, masks and budgets stay unchanged. After local validation, effective use of this
+guidance is still untested live. Row 35 requires separate exact task/model/reasoning/
+credential/repeat/cap/probe/state-root approval. Do not resume or recheck row 34.
+
+The earlier v26 seam exposes current changed-line execution evidence from public checks/probes,
 without changing action availability, prompt, tool inputs or submission conditions. Row 33
 demonstrates that correct source delivery and public PASS did not establish correct use of
 the error-handling owner or execution of new error paths. The saved public inline check's
@@ -591,18 +612,19 @@ All four actual public checks collected changed-line feedback, delivered through
 outputs and current-diff summary. The final regression entered all selected executable
 changed lines; line entry is not branch/assertion coverage or task acceptance. Journal,
 envelope, 72 context/input/continuation artifacts and owned-container cleanup verify.
-Next diagnostic seam: distinguish historical PASS from current completion and understand
-completion-versus-stop selection without inferring private reasoning or adding a stop ban.
+The next diagnostic seam was to distinguish historical PASS from current completion and
+understand completion-versus-stop selection without inferring reasoning or adding a stop ban.
 This observation alone does not isolate prompt/history causality. Do not resume, repair,
 run a post-terminal check or execute row 35 without new exact authority.
 The subsequent read-only diagnosis finds that `compact_model_state`'s protocol-only
 rolling-card filter also removes the check card's unique remaining-check instruction:
 present in the turn-23 audit context, absent from all native non-reasoning items.
-Current NOT_RUN/remaining IDs survive. `recent_checks` has diff hashes but no explicit
+Current NOT_RUN/remaining IDs survive. The v26 `recent_checks` has diff hashes but no explicit
 historical PASS label; this is separate from correct diff-bound submission admission.
 Preserve voluntary stop while clarifying that no further edit is not task completion.
 All 65 existing focused tests pass but miss that final guidance-delivery boundary.
-See current status for the diagnosis and its causal limits; no runtime fix was made.
+See current status for the diagnosis and its causal limits. V27 repairs this delivery
+boundary; it does not establish which presentation detail caused the live decision.
 
 V25 qualifies historical failures and aligns their guidance with offered
 actions. Row 32 rechecked earlier edits with two/one mutations left, then stopped with
@@ -1287,6 +1309,23 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+V27 passes 140 focused completion/check-identity/state/conversation/contract tests in
+43.65 seconds and Ruff. All 43 test files run once across four fresh external roots
+`C:\pt\pl27-full-a{1,2,3,4}`: 627 passed, four opt-in real-Docker cases skipped.
+Groups pass 60/68/145/354 in 45.46/103.77/60.63/150.24 seconds. Group 1 contains
+tools/context/recovery; group 2 runner/resume/input; group 3 verification concerns/flow/
+identity, policy feedback, source navigation, note feedback/temporal and completion;
+group 4 contains every remaining test file. Keep runtime bytes frozen across groups.
+The slowest group exceeds two minutes; focused tests meet the target. Observed full
+suite/mock wall time with read-only review gaps is 162.18 seconds. Mock
+`run_dev_ab6896e303234425` under `C:\pt\pl27-smoke-a` reaches mutation/check/finish/
+isolated acceptance PASS, safety NOT_RUN, four model turns/five tools and zero cost.
+The 13 added cases cover actual native guidance, historical/current/unknown check credit,
+restart, unchanged prefix, submission, voluntary stop and stable input shapes/order.
+Read-only row-34 reprojection adds 570 UTF-8 bytes to the latest view, preserves the
+saved input hash and identifies the missing contract recheck. It does not run the
+candidate or prove effective model use. No actual Docker/provider work or row 35 ran.
 
 The v26 interpreter-path correction passes 84 focused cases in 10.85 seconds and Ruff.
 The full provider-free suite passes 614 cases, four real-Docker cases skipped, under
