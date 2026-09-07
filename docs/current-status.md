@@ -27,6 +27,61 @@ Repository policy alone never initiates paid work. The thirty-five live observat
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
+## Current implementation: bounded probe observations and submission eligibility (v28)
+
+The approved provider-free follow-up separates normal experiment execution from semantic
+verification in the model view. `observation.execution_status=completed` replaces the
+ambiguous probe PASS label there; `behavior_verdict=not_assessed` remains explicit for
+every outcome. Up to four public files and three ranges per observation kind are shown
+with omission counts. Unknown collection is not zero coverage. Full outputs/feedback,
+original durable receipts, action/diff identity and execution policies remain unchanged.
+Matching native observations are referenced from the compact state, not repeated.
+
+The existing probe description now asks for a discriminating public input variation and
+expected observation in its existing question/source fields. Completion guidance still
+names `finish_task`, but says eligibility is not proof of untested behavior; it mentions
+an optional probe only when offered. No action mask, limit, tool shape/order, mandatory
+memory/review step, check credit or finish gate changes. Tool-surface identity is v28;
+old envelopes and journals are not migrated.
+Docker/provider execution and row 36 remain separately unauthorized.
+
+Ruff and 68 focused cases pass in 38.68 seconds. All 44 test files were exercised once
+across four new external roots `C:\pt\pl28-full-a{1,2,3,4}`. The groups recorded
+109/84/237/213 passed, one outdated tool-description fingerprint expectation failed,
+and four opt-in real-Docker cases skipped. The expectation is updated for the deliberately
+changed descriptions; ordered input shapes remain pinned separately. The final 50
+recheck/completion/observation/documentation cases pass in 20.07 seconds, including that
+expectation: all 644 unique suite cases pass across these executions, with four skips.
+Group times were
+54.57/109.40/81.35/139.81 seconds: the longest full-suite group exceeds two minutes,
+although focused validation meets the target. Runtime bytes stayed fixed across groups.
+Mock `run_dev_3794b6c0a1414ddf` under `C:\pt\pl28-smoke-a` reaches mutation, visible
+check, finish and isolated acceptance PASS/safety NOT_RUN, four model turns/five tools,
+zero provider/count calls and zero cost. This is not live effectiveness or safety evidence.
+The read-only row-35 probe projection adds 789 UTF-8 bytes and exposes five observed,
+31 not-observed changed executable lines with one range omitted from the excerpt.
+Its journal hash is unchanged; no candidate is re-executed. The system prompt is 7,973
+characters, below the unchanged 8,007-character bound. Runtime hash is
+`sha256:97acb41ef92ced7c8e83835d72067e4eaa10f3da094ca77b2413671d90c8b725`;
+tool-surface hash is `sha256:fd23f26fec2344d2813cf694a377b708ece0dc96afb23f7562a6deb619827237`.
+Final hashes preserve `.env`, user-owned `AGENTS.md`, all 1,249 tracked task/historical
+files and 136 existing files in `C:\patchloop-state\runs`; all 175 preexisting untracked
+entries remain listed and no writes targeted them. New validation state is under
+the explicitly named `C:\pt\pl28-*` roots, not the existing live state.
+
+Read-only row-35 analysis identified two public source defects: comparing relative
+`current_path` with absolute `final_path` loses the requested relative leaf mode; treating
+every existing non-directory as an invalid parent returns ENOTDIR for an existing leaf
+file instead of preserving EEXIST. The public mode check uses an absolute path. These
+are source-derived public defects, not a mapping to the uninspected private assertion.
+The corrected Windows probe used doubled separators and entered only the delegation
+return (changed lines 934-938), not the new traversal body. Nevertheless the next public
+decision attributed POSIX and mode coverage to that probe, which only printed Windows
+existence. That action's line feedback was delivered once in the next native input.
+Every memory update was null; this establishes non-use, not a memory storage failure.
+The v27 prompt already advised reuse and input variation; stronger generic wording alone
+is not established as a solution, and the v28 change is not evidence of improved agent success.
+
 ## Latest live observation: row 35 submitted, private evaluation failed
 
 The separately approved invocation on `d1660947` created
@@ -44,7 +99,7 @@ It used 23 model/count calls, 25 tool actions, three accepted mutations and
 - The public contract failed at turns 15 and 17, with direct repairs at turns 16
   and 18. The model then chose two optional probes on the final candidate. The first
   probe failed to compile because its raw Windows root string ended in a backslash;
-  execution collection correctly remained unknown. The corrected second probe passed
+  execution collection correctly remained unknown. The corrected second probe exited normally
   and collected current-diff line entries. These are diagnostics, not required-check PASS.
 - Turns 21/22 passed the public contract and upstream regression; turn 23 selected
   `finish_task`. The latest native state explicitly suggested that submission, with
@@ -71,13 +126,13 @@ coverage, and these ranges alone do not establish the private failure's cause.
 
 The 264-event journal hash chain, two probe receipts, execution-policy hashes and
 submission provenance verify. All nine owned check/probe/evaluator containers are
-confirmed absent. Runtime remains
+confirmed absent. At this observation the runtime was
 `sha256:5511b176cd864fd0ab843a39546ba84fcb6ea8f0230153d80b039a08f0c922bd`, tool surface
 v27. `.env`, user-owned `AGENTS.md`, 66 prior journal/envelope files, 1,249 tracked
 task/historical files and 106 old untracked entries are preserved. The only new run
-is the one approved above. Next work is read-only analysis of submitted-code semantics
-and public evidence use, not automatic runtime repair, resume or row 36. Any new live
-invocation requires separate exact approval.
+is the one approved above. The subsequent read-only diagnosis and separately approved
+provider-free v28 follow-up are described above. No historical candidate repair, resume
+or row 36 follows from them. Any new live invocation requires separate exact approval.
 
 ## Row 34: stopped before submission
 

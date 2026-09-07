@@ -117,6 +117,14 @@ def compact_model_state(
             for field in ("stdout", "stderr", "execution_policy", "public_check_failure"):
                 record.pop(field, None)
             record["delivery"] = "preceding_function_call_output"
+            if (tool == "run_probe" and isinstance(record.get("observation"), dict)
+                    and result.get("observation") == record["observation"]):
+                # Keep the distinction salient, without repeating range excerpts
+                # already delivered at the front of this native probe result.
+                record["observation"] = {
+                    **_select(record["observation"], ("execution_status", "behavior_verdict")),
+                    "details_delivery": "preceding_function_call_output.observation",
+                }
 
     failed = view.get("last_failed_mutation")
     if isinstance(failed, dict):

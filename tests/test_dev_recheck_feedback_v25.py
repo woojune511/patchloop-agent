@@ -193,9 +193,11 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
 
 
 def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
+    # V28 deliberately clarifies probe/finish descriptions. Ordered input shapes
+    # are independently pinned in test_dev_completion_v27.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:384a25d020118489ec56cf71077aa305a83baec19b28129b61644321e2feb80a"
+    )) == "sha256:fde7155de3dd641149dc44acd141ad966d5ad9794f0b15671aa5e4e95ceb5e7b"
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )

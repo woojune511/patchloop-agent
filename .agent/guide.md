@@ -110,7 +110,11 @@ offered policy, without re-executing checks or modifying admission. Project work
 gate, this guidance, current check table and remaining IDs first. A current FAIL or
 empty diff points to an offered repair/evidence action; an unchecked candidate names
 an offered remaining check; a ready candidate names `finish_task`. This is advisory,
-not proof that a supported semantic repair exists. Keep guidance in the latest native
+not proof that a supported semantic repair exists or that all public behavior was tested.
+At submission eligibility, mention an optional discriminating public experiment only
+when `run_probe` is actually offered; otherwise name finish without inventing an action.
+No review call, annotation, experiment quota or new gate is required. Keep guidance in the
+latest native
 view even when historical attempt cards are omitted. Label retained check summaries
 with `evidence_currency` and `counts_toward_completion`; preserve original verdicts
 and action/check/diff identity. Missing currency is unknown, never current credit.
@@ -131,6 +135,21 @@ not a new mount or required experiment. A probe result is diagnostic:
 it never grants source-span coverage, visible-check PASS, or finish credit, and failure
 does not force mutation or consume a check-repair allowance. See
 [the probe runtime contract](../docker/README.md) for image and isolation details.
+
+V28 projects an `observation` ahead of native probe `output`: `execution_status=completed`
+means the recorded process exited normally, while `behavior_verdict=not_assessed` never
+certifies the question. Preserve nonzero, timeout, output-limit and cleanup outcomes.
+Summarize already public line-entry evidence for at most four files, three observed and
+three not-observed ranges each, with full line counts and explicit omission counts.
+Unknown collection remains null, not zero hits. Do not infer branches, assertions, values
+or untried inputs. The full feedback/stdout/stderr and action/diff/file identities remain
+available. Only the model view drops the ambiguous output `status`; the original sandbox
+receipt, journal, probe provenance and concern-resolution admission are unchanged.
+Context-only and native results share this projection. Retained model-state probe cards
+reference identical native observation details instead of repeating ranges. Hydration is
+deterministic; already sent native history is never rewritten. Tool descriptions recommend
+one discriminating public input variation and an expected observation using the existing
+question/source fields, not a new schema, mandatory note or extra model call.
 
 Public checks and enabled probes return `public_execution`: advisory Python line-entry
 feedback for current tracked editable additions/replacements only. The host binds diff,
@@ -444,7 +463,7 @@ projection read-only and deterministic after restart, including native latest-st
 The prompt distinguishes completion of this candidate from the separate further-edit
 horizon. Do not change tool masks, force a check or reject a voluntary stop on this basis.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v27`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v28`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -563,7 +582,20 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: v27 preserves a snapshot-derived completion view through final native
+Current seam: v28 separates probe execution from unassessed behavior in model-facing
+results and distinguishes submission eligibility from semantic confidence. It adds a
+bounded, source-linked observation excerpt without changing tool shapes/order, masks,
+budgets, note obligations, execution policy or submission admission. No task-specific
+counterexample or hidden information enters prompts. Row 35's read-only analysis found
+relative/absolute leaf-mode comparison and existing-leaf-file error defects in the
+submitted implementation. Its corrected Windows probe doubled separators and exercised
+the delegation return, not the new traversal body, then its decision extrapolated to
+POSIX/modes. The line feedback reached the next native input. All 23 memory updates were
+null: non-use, not lost storage. This identifies public defects and overbroad interpretation,
+not the exact private failing assertion or a proven cause of model behavior. No historical
+candidate rerun/repair or row 36 is authorized; any new live invocation needs exact approval.
+
+V27 preserves a snapshot-derived completion view through final native
 projection and labels historical check credit explicitly. Descriptions clarify
 `finish_task` submission versus `stop_task` abandonment; tool shapes/order, voluntary
 stop, masks and budgets stay unchanged. Separately approved row 35 on `d1660947`,
@@ -573,7 +605,7 @@ FAIL/safety PASS: 23 model/count calls, 25 tools, three accepted mutations, $0.5
 (wrong helper path, then 58/50 lines) and the first accepted edit at turn 14. Public
 contract failures at 15/17 prompt direct repairs at 16/18. Two final-candidate probes
 follow: an invalid raw Windows-root string fails compilation with unknown execution
-feedback; the corrected probe passes with collected feedback. Public checks pass at
+feedback; the corrected probe exits normally with collected feedback. Public checks pass at
 21/22 and finish follows at 23. No stop or extra model call is forced by guidance.
 
 All 23 native completion/currency projections, 69 context/input/continuation artifacts,
@@ -584,8 +616,8 @@ regression/policy and safety pass; do not reinject private evaluator material. F
 public execution feedback leaves nine changed executable lines unobserved, which alone
 does not locate the hidden failure. No prior PASS was invalidated by a later edit in
 this row: it is not a controlled replication of row 34 or proof of the guidance's
-causal effect. Next seam is read-only submitted-code/public-evidence analysis; no
-automatic repair or historical recheck. Row 36 requires separate exact task/model/
+causal effect. Its subsequent read-only analysis motivated the approved v28 follow-up
+above, not an automatic historical repair/recheck. Row 36 requires separate exact task/model/
 reasoning/credential/repeat/cap/probe/state-root approval. Both terminal rows stay immutable.
 
 The earlier v26 seam exposes current changed-line execution evidence from public checks/probes,
@@ -1327,6 +1359,22 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+V28 passes 68 focused probe-observation/completion/probe/state/contract cases in 38.68
+seconds and Ruff. All 44 files were exercised across `C:\pt\pl28-full-a{1,2,3,4}`:
+109/84/237/213 passed, one deliberately changed description hash needed an expectation
+update, and four real-Docker cases skipped. The runtime was frozen across groups;
+the final 50-case recheck/completion/observation/documentation run passes in 20.07 seconds,
+including the updated expectation. All 644 unique cases pass across these executions.
+Group durations were 54.57/109.40/81.35/139.81 seconds, so the longest exceeds the
+two-minute full-suite target. Mock `run_dev_3794b6c0a1414ddf` in `C:\pt\pl28-smoke-a`
+reaches mutation/check/finish/isolated acceptance PASS, safety NOT_RUN, four mock turns,
+five tools and zero cost. The 17 new cases cover exit-zero false/error output, failed/
+unknown/full/zero line observations, bounds/privacy, native delivery, exact replay,
+historical currency, no new admission/annotation requirements and generic input guidance.
+Row 35's read-only single-result projection adds 789 UTF-8 bytes; native details remain
+referenced rather than duplicated in the compact current view. No candidate/Docker/provider
+execution is part of that comparison. Prompt length is 7,973 with the 8,007 bound unchanged.
 
 V27 passes 140 focused completion/check-identity/state/conversation/contract tests in
 43.65 seconds and Ruff. All 43 test files run once across four fresh external roots

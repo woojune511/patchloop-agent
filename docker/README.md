@@ -80,6 +80,11 @@ execution feedback, not a failed probe; only excess public/report output trigger
 existing output-limit outcome. Repeated report frames cannot bypass this byte bound.
 
 Probe results are diagnostic and grant no required-check PASS or submission credit.
+The sandbox's stored `status=passed` still means exit zero only. V28's model projection
+labels this `observation.execution_status=completed`, always with
+`behavior_verdict=not_assessed`, and removes the ambiguous status from the projected body.
+It places bounded public line-entry excerpts before detailed output, without changing
+the collector, process, image/profile, timeout, raw receipt or safety interpretation.
 Receipts bind action/input, source, diff, snapshot, image/profile, and execution-policy
 hashes. The evaluator validates their integrity before creating its workspace and
 keeps safety separate from task acceptance. No real Docker probe or new live row is

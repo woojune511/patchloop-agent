@@ -58,6 +58,7 @@ from patchloop.dev.inspection_projection import (
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.model_state import compact_model_state
 from patchloop.dev.native_sources import reference_native_sources
+from patchloop.dev.probe_observation import probe_observation, project_probe_result
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import (
     DevGatewayStateSnapshot,
@@ -534,7 +535,17 @@ def _completion_guidance(
     )
     if snapshot.ready_to_submit and "finish_task" in allowed:
         next_action = {"tool": "finish_task"}
-        message = "All required visible checks pass on the current diff; use finish_task to submit."
+        message = (
+            "All required visible checks pass on the current diff; submission is eligible, "
+            "not proof of untested behavior. "
+        )
+        if "run_probe" in allowed:
+            message += (
+                "Use run_probe if a concrete remaining public uncertainty could change the edit; "
+                "otherwise use finish_task to submit. No extra experiment is required."
+            )
+        else:
+            message += "Use finish_task to submit; keep any remaining uncertainty explicit."
     elif needs_mutation:
         if "replace_text" in allowed:
             next_action = {"tool": "replace_text"}
@@ -1259,7 +1270,8 @@ def _build_context(
         "recent_checks": _recent_checks(gateway, diff_hash=summary.patch_hash),
         "public_execution_summary": gateway.public_execution_summary(diff_hash=summary.patch_hash),
         "latest_tool_results": [
-            result.model_dump(mode="json", exclude={"replayed"}) for result in latest_tool_results
+            project_probe_result(result.model_dump(mode="json", exclude={"replayed"}))
+            for result in latest_tool_results
         ],
         "source_spans": list(projection.source_spans),
         "recent_attempt_result_next_question": _cards(journal, correction),
@@ -1278,9 +1290,9 @@ def _build_context(
                 "diff_hash": result["workspace_diff_hash"],
                 "historical": result["workspace_diff_hash"] != summary.patch_hash,
                 "diagnostic_only": True,
+                "observation": probe_observation(result),
                 **({"delivery": "latest_tool_result"} if result["action_id"] in latest_ids else {
                     "question": result["output"].get("question"),
-                    "status": result["output"].get("status", result["status"]),
                     "exit_code": result["output"].get("exit_code"),
                     "stdout": result["output"].get("stdout", "")[-2_000:],
                     "stderr": result["output"].get("stderr", "")[-2_000:],
@@ -1819,6 +1831,7 @@ def _build_latest_exchange(
             results_by_id[action_id].model_dump(mode="json", exclude={"replayed"}),
             native_action_ids=action_ids,
         )
+        public_result = project_probe_result(public_result)
         if isinstance(note_receipt, dict) and note_receipt.get("action_id") == action_id:
             # An annotation can fail while the actual action succeeds. Preserve
             # both outcomes; never rewrite the action status or prior call arguments.
@@ -2042,13 +2055,13 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "attempt": "probe",
             "result": {
                 "question": result.output.get("question"),
-                "status": result.output.get("status"),
+                "observation": probe_observation(result.model_dump(mode="json")),
                 "diff_hash": result.workspace_diff_hash,
                 "diagnostic_only": True,
             },
             "next_question": (
-                "Does this experiment change the implementation choice or an unverified "
-                "public behavior? Probe code and its assertions may themselves be wrong."
+                "Did the actual input and observed output test the intended behavior? "
+                "Limit conclusions to that experiment; its code or assertions may be wrong."
             ),
         }
     if result.tool == "stop_task":

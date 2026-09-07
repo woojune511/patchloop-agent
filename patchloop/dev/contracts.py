@@ -24,7 +24,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v27",
+            "schema_version": "dev-tool-surface-v28",
             "public_execution_feedback": "current-diff-changed-python-launch-thread-lines-v1",
             "public_execution_feedback_bounds": [8, 256, 12_000],
             "public_execution_report_limit_bytes": 16_000,
@@ -63,7 +63,7 @@ def dev_tool_surface_hash() -> str:
             "mutation_anchor_guidance": "smallest-sufficient-exact-observed-text-v1",
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_guidance": "diff-currency-and-actual-action-space-v1",
-            "completion_guidance": "snapshot-and-offered-action-derived-native-retained-v2",
+            "completion_guidance": "eligible-submission-with-optional-public-uncertainty-v3",
             "public_failure_recurrence": "semantic-site-with-raw-fallback-v1",
             "causal_revision_guidance": "advisory-hypothesis-review-v2",
             "failed_check_repair_action_space": "budget-only-public-inspection-v2",
@@ -85,6 +85,9 @@ def dev_tool_surface_hash() -> str:
             "working_note_source_body_chars": 24_000,
             "public_probe": "optional-clean-python-diagnostic-protected-budget-v1",
             "public_probe_discovery": "current-public-snapshot-import-and-environment-limits-v1",
+            "public_probe_observation": "execution-not-behavior-model-view-v1",
+            "public_probe_observation_bounds": [4, 3],
+            "public_probe_design_guidance": "public-input-variation-expected-observation-v1",
             "mutation_recovery": "atomic-complete-candidate-diff-v2",
             "correction_recovery": "journal-derived-unconsumed-v2",
             "execution_deadline": "shared-active-deadline-owned-cleanup-v1",

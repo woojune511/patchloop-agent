@@ -244,6 +244,14 @@ included in the submitted patch. Each costs one model turn and one tool action a
 is available only when the remaining protected completion budget still fits afterward.
 The capability is off by default and requires explicit `--enable-probes` configuration.
 
+The model-facing probe observation distinguishes `execution_status=completed` from
+`behavior_verdict=not_assessed`: normal exit is not an answer to the experiment's question.
+Bounded observed/not-observed changed-line excerpts accompany the actual output; unknown
+collection does not imply unexecuted code. The agent is guided to vary a public input
+that could falsify a new assumption and state its expected observation, using the existing
+probe fields. This adds no required experiment or note. Submission eligibility after
+required checks still permits finish, without claiming that untested behavior is correct.
+
 ## Main components
 
 - `patchloop/dev/runner.py` composes the mutable loop.

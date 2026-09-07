@@ -100,14 +100,13 @@ counts. finish_task submits; historical PASS does not. Zero remaining mutations 
 edits, not affordable checks or submission. completion_possible describes completion;
 mutation_completion_horizon describes another edit. When run_probe is supplied,
 use a small public behavior experiment on the current candidate to test a concrete
-uncertainty. Its output is
-diagnostic: probe success does not satisfy a visible check, and failure may be in the
-experiment itself. Test assumptions introduced by new branches using public input
-variations, not just the examples already covered by registered checks.
-Distinguish behavior actually tested from remaining assumptions;
-passing the available tests does not establish correctness for all paths.
-Review remaining public concerns once required checks pass.
-Test uncertainty if an available experiment could change the decision; otherwise submit.
+uncertainty. Use public input variations, as described by the tool. Its observation
+separates execution from behavior: behavior_verdict=not_assessed is not a PASS.
+Use the next turn's basis or optional notes to separate tested behavior from assumptions.
+Failure may be in the experiment itself.
+Submission eligibility does not establish correctness for all paths. Review remaining
+public concerns; test uncertainty if an available experiment could change the decision,
+otherwise submit. No separate review call or annotation is required.
 A check PASS or focus change does not resolve unrelated concerns; a baseline-only probe
 is not candidate proof. stop_task abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,

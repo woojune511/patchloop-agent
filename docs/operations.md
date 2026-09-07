@@ -223,7 +223,7 @@ Do not resume the terminal, repair/recheck its candidate or initiate another row
 Fresh exact approval subsequently executed row 35 once on `d1660947`:
 `run_dev_38e45369894f43b1`, `EVALUATOR_FAIL`, acceptance FAIL/safety PASS, 23 model/count
 calls, 25 tools, three accepted mutations and $0.510596700. Two optional final-candidate
-probes ran (a compile failure, then a corrected passing probe); both required visible
+probes ran (a compile failure, then a corrected normally exiting probe); both required visible
 checks then passed and the model submitted through `finish_task`. All 23 actual input
 views retain current completion guidance and check currency; the checked/submitted/
 isolated-applied patch identities match. Nine owned containers are absent. Unlike row
@@ -231,7 +231,7 @@ isolated-applied patch identities match. Nine owned containers are absent. Unlik
 the changed behavior solely to v27. See [the latest live record](current-status.md#latest-live-observation-row-35-submitted-private-evaluation-failed).
 No retry, resume, candidate repair or row 36 follows automatically.
 
-Tool surface v27 retains bounded run-local verification concerns inside the existing
+Tool surface v28 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
@@ -539,6 +539,16 @@ A probe cannot change the worktree or the required-check status. Its public rece
 source, current diff, snapshot, image, profile, action/input, and execution-policy hashes.
 Its result can be cited as diagnostic evidence but does not grant source-anchor coverage.
 Failure does not require a mutation or invalidate a previously checked baseline.
+V28 leaves durable sandbox status/receipts intact while projecting `observation` ahead of
+the model-facing probe body. Its execution status describes only the process outcome;
+`behavior_verdict=not_assessed` never certifies the question, even after exit zero or all
+changed lines are entered. Public range excerpts are bounded to four files/three ranges
+per kind; counts describe omitted detail, and unknown remains null. The latest state can
+reference identical native details. Replayed results rebuild this same view without any
+new execution, while old native history and earlier envelopes remain immutable. No input
+schema, cleanup policy, concern-resolution rule or submission gate is changed.
+This is an application-owned result format linked to the original call ID, following
+the [OpenAI function-calling contract](https://developers.openai.com/api/docs/guides/function-calling).
 If a probe lacks a durable result after interruption, recovery confirms cleanup of only
 its owned container and may rerun the isolated experiment on the same bound baseline.
 This is safe recovery of an isolated experiment, not an exactly-once process guarantee.

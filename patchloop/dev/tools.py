@@ -317,7 +317,7 @@ def dev_tool_schemas(
                 "description": (
                     "Submit the current diff for evaluation after all required visible checks "
                     "pass on that same diff. This completes the agent's submission; stopping "
-                    "without submission does not."
+                    "without submission does not. Eligibility is not proof of untested behavior."
                 ),
                 "strict": True,
                 "parameters": {
@@ -337,7 +337,12 @@ def dev_tool_schemas(
                 "Current tracked public project files, including accepted edits, are importable "
                 "read-only from /workspace; writable scratch is /tmp. Only base Python and "
                 "public project code are supplied, with no network or dependency installation. "
-                "Results are model-authored diagnostics, not required visible-check verdicts."
+                "Choose a public input variation that could falsify an implementation assumption, "
+                "not just repeat a registered example. State the expected observation in the "
+                "question and print or assert it in the experiment. Execution completed means "
+                "normal exit, not behavior verified. Compare actual input/output and relevant "
+                "line-entry ranges; missing observations are not proof of failure. "
+                "Results are diagnostics, not required visible-check verdicts."
             ),
             "strict": True,
             "parameters": {
