@@ -593,7 +593,33 @@ the delegation return, not the new traversal body, then its decision extrapolate
 POSIX/modes. The line feedback reached the next native input. All 23 memory updates were
 null: non-use, not lost storage. This identifies public defects and overbroad interpretation,
 not the exact private failing assertion or a proven cause of model behavior. No historical
-candidate rerun/repair or row 36 is authorized; any new live invocation needs exact approval.
+candidate rerun/repair is authorized; row 36 received the subsequent exact approval below.
+
+Separately approved row 36 on `9d070a9c`, `run_dev_ef0c30a81dd848eb`, ends at
+`AGENT_STOPPED`: 22 model/count calls and tools, four accepted mutations, $0.533869800,
+210.968 active seconds. The first edit follows 11 inspection turns. Public bytes and
+parent-mode failures prompt repairs; the contract passes at 18, then regression fails
+five cases at 19. Turn 20 applies the final repair, but 21/22 stop without rechecking.
+The first stop incorrectly cites action IDs as source spans; the second uses no spans.
+Both actual native states show two current NOT_RUN checks, historical/awaiting-recheck
+failure and an explicit run_check instruction despite zero edits. Before turn 22,
+19 model calls/79 tools remain and minimum completion needs three calls; run_check is
+available. The stop's current PASS/FAIL claims reuse the previous diff's results.
+Do not report the untested final candidate as still failing, infer private reasoning,
+ban voluntary stops, or attribute this solely to memory/prompt design from one row.
+
+All 22 completion/currency projections, 66 context/input/continuation artifacts,
+21 unchanged prefixes and the 247-event journal chain verify. All responses complete
+with reported current_turn; 22 encrypted continuations are stored and 21 are replayed
+once. The last input is 135,822 tokens; its newest state is 10,867 UTF-8 bytes.
+All four checks collect public execution feedback; policy hashes verify and all four
+owned containers are absent. The final unsubmitted 34-line diff hash is
+`sha256:79074e915e8de9967e2c76fd8ffd6c78ccb7f9d66cc45635b136af7cc936b301`.
+No notes, probe, finish or isolated evaluator run. The new v28 probe observation and
+ready-submission guidance paths are unexercised, not validated as effective. Existing
+protected bytes remain unchanged. The next seam is read-only diagnosis of premature
+stop after a final repair; no candidate recheck/repair, retry/resume or row 37 is
+authorized by this observation. A new live row requires separate exact approval.
 
 V27 preserves a snapshot-derived completion view through final native
 projection and labels historical check credit explicitly. Descriptions clarify
@@ -617,8 +643,9 @@ public execution feedback leaves nine changed executable lines unobserved, which
 does not locate the hidden failure. No prior PASS was invalidated by a later edit in
 this row: it is not a controlled replication of row 34 or proof of the guidance's
 causal effect. Its subsequent read-only analysis motivated the approved v28 follow-up
-above, not an automatic historical repair/recheck. Row 36 requires separate exact task/model/
-reasoning/credential/repeat/cap/probe/state-root approval. Both terminal rows stay immutable.
+above, not an automatic historical repair/recheck. Row 36 required the separate exact
+task/model/reasoning/credential/repeat/cap/probe/state-root approval recorded above.
+All terminal rows stay immutable.
 
 The earlier v26 seam exposes current changed-line execution evidence from public checks/probes,
 without changing action availability, prompt, tool inputs or submission conditions. Row 33

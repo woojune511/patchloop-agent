@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirty-five live observations below
+Repository policy alone never initiates paid work. The thirty-six live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -43,7 +43,8 @@ names `finish_task`, but says eligibility is not proof of untested behavior; it 
 an optional probe only when offered. No action mask, limit, tool shape/order, mandatory
 memory/review step, check credit or finish gate changes. Tool-surface identity is v28;
 old envelopes and journals are not migrated.
-Docker/provider execution and row 36 remain separately unauthorized.
+Implementation alone did not authorize Docker/provider execution. Row 36 received the
+subsequent exact approval recorded below; row 37 remains separately unauthorized.
 
 Ruff and 68 focused cases pass in 38.68 seconds. All 44 test files were exercised once
 across four new external roots `C:\pt\pl28-full-a{1,2,3,4}`. The groups recorded
@@ -82,7 +83,59 @@ Every memory update was null; this establishes non-use, not a memory storage fai
 The v27 prompt already advised reuse and input variation; stronger generic wording alone
 is not established as a solution, and the v28 change is not evidence of improved agent success.
 
-## Latest live observation: row 35 submitted, private evaluation failed
+## Latest live observation: row 36 stopped after an unverified final repair
+
+The separately approved invocation on `9d070a9c` created
+`run_dev_ef0c30a81dd848eb` under `C:\patchloop-state`: v2
+`pyfakefs-makedirs-parent-traversal`, `gpt-5.4-mini-2026-03-17`, medium reasoning,
+root `.env`, repeat one, $1.20 total cap and enabled probes. It ended at
+`AGENT_STOPPED`: 22 model/count calls, 22 tool actions, four accepted mutations,
+210.968 active seconds and $0.533869800. There was no submission or isolated
+evaluation; task acceptance and safety were not evaluated. `official=false` remains.
+
+- Turns 1-11 inspected public source; turn 12 made the first accepted edit. The
+  public contract exposed a bytes/separator type mismatch at 13. After one read,
+  turn 15 repaired it. The next contract failed the intermediate-mode assertion;
+  turn 17 repaired that behavior and turn 18 passed the contract.
+- Turn 19's upstream regression reported five failures, 512 passed and 570 skipped,
+  including broken-link and Windows file-parent cases. Turn 20 changed intermediate
+  creation to the filesystem helper: the fourth and final accepted mutation.
+- Turns 21/22 selected `stop_task` without rechecking that new candidate, claiming
+  the contract still passed and regression still failed. Those were both results
+  of the previous diff. The first stop supplied action IDs where current source
+  spans were expected and was rejected; the second used an empty evidence list
+  and was admitted. A voluntary stop is not proof that completion was impossible.
+
+Both final native states explicitly show both current checks `NOT_RUN`, the earlier
+failure as `historical`/`awaiting_recheck`, and guidance to use `run_check` despite zero
+remaining edits. Before turn 22, 19 model calls/79 tools remained; check + check +
+finish required three calls. `run_check`, both public inspection tools and `run_probe`
+were available. This was not a token-ceiling or completion-horizon terminal, nor a
+missing recheck tool. The public decisions conflict with delivered check currency;
+this single row does not isolate the prompt/history/model cause of that interpretation.
+The final candidate's correctness remains unknown, not a measured regression failure.
+
+All 22 completion-guidance/check-currency projections and 66 context/input/continuation
+artifacts verify, along with 21 unchanged native prefixes. All 22 provider responses
+completed and reported `current_turn`; their encrypted continuations were stored and
+the preceding 21 were replayed exactly once at the next turn. All 21 prior action
+results occur in the final native input. That request used 135,822 input tokens;
+its newest state was 10,867 UTF-8 bytes. The largest output was 13,104 tokens, below
+the unchanged 25,000 ceiling. Every memory update was null, and no probe ran. V28's
+probe observation and ready-to-submit guidance changes therefore have no exercised
+live effectiveness evidence from this row.
+
+The unsubmitted candidate changes only `pyfakefs/fake_os.py`, 33 added/one removed
+line (34 total), hash
+`sha256:79074e915e8de9967e2c76fd8ffd6c78ccb7f9d66cc45635b136af7cc936b301`.
+The 247-event journal chain and four public-check execution-policy hashes verify;
+all four checks collected changed-line feedback and their owned containers are absent.
+Runtime/task/credential inputs match preflight. `.env`, user-owned `AGENTS.md`, 1,249
+tracked task/historical files and 136 prior run files remain unchanged; all 175 old
+untracked entries remain. No retry, resume, post-terminal candidate execution or repair
+ran. Row 37 requires a separate exact approval, not automatic continuation of this row.
+
+## Row 35: submitted, private evaluation failed
 
 The separately approved invocation on `d1660947` created
 `run_dev_38e45369894f43b1` under `C:\patchloop-state`: v2
@@ -131,8 +184,8 @@ confirmed absent. At this observation the runtime was
 v27. `.env`, user-owned `AGENTS.md`, 66 prior journal/envelope files, 1,249 tracked
 task/historical files and 106 old untracked entries are preserved. The only new run
 is the one approved above. The subsequent read-only diagnosis and separately approved
-provider-free v28 follow-up are described above. No historical candidate repair, resume
-or row 36 follows from them. Any new live invocation requires separate exact approval.
+provider-free v28 follow-up are described above. No historical candidate repair or resume
+follows from them; row 36 required the separate exact approval recorded above.
 
 ## Row 34: stopped before submission
 
