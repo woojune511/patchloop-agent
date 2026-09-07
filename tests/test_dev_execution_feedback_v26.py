@@ -20,11 +20,13 @@ from test_dev_probe_sandbox import public_repo as public_repo
 from patchloop.contracts import RegisteredCheck
 from patchloop.deadline import ExecutionDeadline
 from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
+from patchloop.runtime import repository_root
 from patchloop.sandbox import execution_feedback as feedback
 from patchloop.sandbox.line_trace import marker
 from patchloop.sandbox.probes import _WRAPPER as PROBE_WRAPPER
 from patchloop.sandbox.probes import _OutputCollector
 from patchloop.sandbox.runner import DockerSandbox, LocalSandbox
+from patchloop.task_loader import load_public_task
 from patchloop.util import canonical_json, sha256_bytes
 
 SOURCE = (
@@ -61,15 +63,16 @@ def wire(targets, payload=None):
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 @pytest.mark.parametrize("mode", ["inline", "module", "script"])
-def test_public_pass_reports_unobserved_changed_error_line(tmp_path, newline, mode):
+@pytest.mark.parametrize("executable", ["python", sys.executable])
+def test_public_pass_reports_unobserved_changed_error_line(tmp_path, newline, mode, executable):
     targets = request(tmp_path, SOURCE.replace("\n", newline).encode())
     source = "import sample; assert sample.choose(True) == 7; print('PUBLIC_PASS')"
     if mode == "inline":
-        command = ["python", "-c", source]
+        command = [executable, "-c", source]
     else:
         (tmp_path / "public_check.py").write_text(source)
-        command = ["python", "-m", "public_check"] if mode == "module" else [
-            "python", "public_check.py",
+        command = [executable, "-m", "public_check"] if mode == "module" else [
+            executable, "public_check.py",
         ]
     before = (tmp_path / "sample.py").read_bytes()
     check = RegisteredCheck(id="public", command=command)
@@ -151,15 +154,38 @@ def test_source_drift_and_syntax_failure_are_unknown(tmp_path):
     assert result.public_execution["files"][0]["reason"] == "source_unavailable_or_uncompilable"
 
 
-def test_noninstrumented_private_or_unsupported_command_keeps_original_execution(tmp_path):
+@pytest.mark.parametrize("executable", ["python", sys.executable])
+def test_noninstrumented_private_or_unsupported_command_keeps_original_execution(
+    tmp_path, executable,
+):
     targets = request(tmp_path)
-    check = RegisteredCheck(id="private-synthetic", command=["python", "-c", "print('same')"])
+    check = RegisteredCheck(id="private-synthetic", command=[executable, "-c", "print('same')"])
     plain = LocalSandbox().run_check(tmp_path, check)
     assert plain.public_execution is None and plain.stdout.splitlines() == ["same"]
-    flagged = check.model_copy(update={"command": ["python", "-B", "-c", "print('same')"]})
+    flagged = check.model_copy(update={"command": [executable, "-B", "-c", "print('same')"]})
     result = LocalSandbox().run_check(tmp_path, flagged, execution_targets=targets)
     assert result.passed and result.stdout == plain.stdout and result.command == flagged.command
     assert result.public_execution["status"] == "unknown"
+
+
+@pytest.mark.parametrize("executable", [
+    "python", "python3", "/usr/local/bin/python", "/usr/bin/python3",
+    "/venv/bin/python3.12", r"C:\Python312\python.exe", "C:/venv/Scripts/python3.exe",
+    r"C:\Python312\Python.EXE", sys.executable,
+])
+def test_python_executable_names_are_independent_of_host_and_target_path_syntax(executable):
+    assert feedback.python_command_supported([executable, "-c", "assert True"])
+
+
+@pytest.mark.parametrize("command", [
+    [], ["python"], ["/usr/local/bin/python", "-c"], ["/usr/local/bin/python", "-m"],
+    ["/usr/local/bin/notpython", "-c", "assert True"],
+    ["/venv/bin/python3.12-config", "public.py"], ["/bin/sh", "public.py"],
+    ["/usr/bin/env", "python", "-c", "assert True"],
+    ["/usr/local/bin/python", "-B", "-c", "assert True"],
+])
+def test_unrecognized_executable_or_launch_shape_stays_uninstrumented(command):
+    assert not feedback.python_command_supported(command)
 
 
 @pytest.mark.parametrize("alter", [
@@ -313,6 +339,56 @@ def test_mocked_docker_mounts_only_trusted_collector_and_preserves_check_policy(
     assert result.execution_policy["cleanup_status"] == "confirmed"
     assert result.execution_policy["requested_network"] == "none"
     assert len(commands) == 2
+
+
+@pytest.mark.parametrize("check_id,option", [
+    ("parent-traversal-contract", "-c"), ("upstream-fake-os-regression", "-m"),
+])
+def test_actual_task_python_paths_are_instrumented_without_rewriting_command(
+    tmp_path, monkeypatch, check_id, option,
+):
+    # Load public declarations, not private evaluators or copied semantic fixtures.
+    public = load_public_task(
+        repository_root() / "tasks/dev-train/pyfakefs-makedirs-parent-traversal-v2/public.yaml",
+    )
+    check = next(check for check in public.visible_checks if check.id == check_id)
+    declared = list(check.command)
+    assert declared[:2] == ["/usr/local/bin/python", option]
+    targets = request(tmp_path)
+    sandbox = DockerSandbox("public@sha256:" + "a" * 64)
+    monkeypatch.setattr(sandbox, "cli_path", lambda: "docker")
+    launches = []
+
+    def run(command, **kwargs):
+        if command[1] == "container":
+            return subprocess.CompletedProcess(
+                command, 1, b"", b"No such container " + command[-1].encode(),
+            )
+        assert command[1] == "run"
+        launches.append(command)
+        mounts = [arg for arg in command if "target=/opt/patchloop-lines," in arg]
+        assert len(mounts) == 1, "absolute Python command must mount the collector"
+        mount = mounts[0]
+        assert mount.endswith(",readonly")
+        directory = Path(mount.split("source=", 1)[1].split(",target=")[0])
+        assert not directory.is_relative_to(tmp_path)
+        assert json.loads((directory / "line_request.json").read_bytes()) == targets
+        assert (directory / "line_trace.py").read_bytes() == feedback.TRACE_WRAPPER.read_bytes()
+        assert command[command.index(sandbox.image) + 1:] == [
+            declared[0], "/opt/patchloop-lines/line_trace.py",
+            "/opt/patchloop-lines/line_request.json", "/workspace", *declared[1:],
+        ]
+        return subprocess.CompletedProcess(command, 0, b"mock public result\n", wire(targets))
+
+    # No Docker or task check is executed: verify the real declaration's launch wiring.
+    monkeypatch.setattr("patchloop.sandbox.runner.subprocess.run", run)
+    result = sandbox.run_check(tmp_path, check, execution_targets=targets)
+    assert len(launches) == 1
+    assert result.command == check.command == declared
+    assert result.passed and result.stderr == ""
+    assert result.public_execution["status"] == "collected"
+    assert result.public_execution["files"][0]["not_observed_changed_ranges"] == [[4, 4]]
+    assert result.execution_policy["cleanup_status"] == "confirmed"
 
 
 def test_mocked_probe_copies_same_collector_in_existing_readonly_mount(monkeypatch, public_repo):

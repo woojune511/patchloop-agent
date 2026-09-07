@@ -131,10 +131,13 @@ means entry, not successful completion or semantic correctness.
 
 The same stdlib collector is copied outside the workspace, read-only: a separate mount
 for registered checks, the existing trusted mount for probes. Preserve the declared check
-command in results. Instrument Python `-c`, `-m`, and script launches; preserve unsupported
-commands and mark their feedback unknown. A bounded separate report frame does not spend
-the stdout/stderr cap. Its separate cumulative body allowance is 16,000 bytes; malformed
-metadata alone must not change the probe's exit outcome. Reject duplicate, malformed,
+command in results. Instrument Python `-c`, `-m`, and script launches by executable basename:
+`python`, `python3`, versioned Python 3, and optional `.exe`, across POSIX/Windows paths.
+Do not resolve a container path on the host or substitute the declared interpreter/argv.
+Preserve unsupported commands and mark their feedback unknown. A bounded separate report
+frame does not spend the stdout/stderr cap. Its separate cumulative body allowance is
+16,000 bytes; malformed metadata alone must not change the probe's exit outcome.
+Reject duplicate, malformed,
 oversized or mismatched reports; missing
 or interrupted collection, trace loss, timeout and file drift yield unknown rather than
 negative line evidence. This in-process report can be interfered with by tested code and
@@ -560,9 +563,15 @@ check leaves one changed error line unobserved and the deliberately failing prob
 it. Both owned containers are absent; completed replay launches neither again. The opt-in
 `tests/test_dev_execution_docker.py` requires `PATCHLOOP_TEST_REAL_EXECUTION=1`, separate
 approval and a new external basetemp; do not automatically repeat it or the older
-three-probe matrix. Runtime bytes are unchanged. The next live seam, only after separate
+three-probe matrix. That pair used bare `python` and did not validate the task's absolute
+interpreter path. The subsequent row-34 approval was paused before run creation/provider
+dispatch: both v2 public checks were excluded from collection by literal argv[0] matching.
+The path correction keeps the declared interpreter/argv, adds actual public-declaration
+launch tests with Docker mocked, and exercises the absolute local interpreter. The opt-in
+pair now uses `/usr/local/bin/python` but has not been rerun. Runtime hash changes; tool
+surface v26, prompt, inputs and probe profile do not. The next live seam, after reconfirmed
 exact approval, is whether the model uses a relevant unobserved range to test/revise a
-public assumption. Row 34 remains unapproved. Do not repair historical candidates, alter
+public assumption. Row 34 remains unexecuted. Do not repair historical candidates, alter
 task packages or project private evaluation material.
 
 V25 qualifies historical failures and aligns their guidance with offered
@@ -1248,6 +1257,17 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+The v26 interpreter-path correction passes 84 focused cases in 10.85 seconds and Ruff.
+The full provider-free suite passes 614 cases, four real-Docker cases skipped, under
+`C:\pt\pl26-abs-full-a{1,2,3,4}` using the established four-group partition:
+60/68/85/401 in 83.47/106.14/79.23/125.90 seconds. The longest group exceeds two minutes;
+do not describe the complete validation as under that target. Full-suite/mock wall time
+including polling/review gaps is 163.25 seconds. The mock on those same runtime bytes,
+`run_dev_4b69a2a4630041ad` under `C:\pt\pl26-abs-smoke-a` reaches mutation, checks, finish
+and isolated acceptance PASS, safety NOT_RUN: four mock turns, five tools, zero cost and
+`official=false`. The opt-in Docker test now uses the task's absolute interpreter spelling
+but was skipped. No provider/Docker execution or row 34 follows from these tests.
 
 V25 passes Ruff and 549 provider-free tests, three opt-in Docker cases skipped, across
 the same four groups: 60/68/85/336 cases in 74.82/92.97/70.50/86.98 seconds under

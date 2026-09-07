@@ -36,9 +36,11 @@ Only host-selected current public paths, raw file hashes and changed line number
 reported, never values or source bodies. Missing, invalid or interrupted collection is
 unknown. The report is a diagnostic, not tamper-resistant attestation, semantic coverage,
 required-check credit or a mandatory-probe/submission policy. The same helper can instrument
-registered public Python checks in a separate read-only trusted mount; private evaluator
-checks never receive collection targets. Current-diff summaries derive from durable tool
-results, so completed-action replay does not execute the experiment again.
+registered public Python checks in a separate read-only trusted mount. Interpreter
+recognition uses the executable basename, including absolute POSIX/Windows paths,
+versioned Python 3 and `.exe`, without replacing the declared binary or arguments.
+Private evaluator checks never receive collection targets. Current-diff summaries derive
+from durable tool results, so completed-action replay does not execute the experiment again.
 
 The model supplies a public question and Python source, not Docker arguments. Source
 is limited to 8,000 characters and 32,000 UTF-8 bytes. The host caps combined stdout
@@ -103,5 +105,9 @@ to verify that failed execution still records entered lines. Public receipts ver
 current diff/file binding, unobserved versus non-line positions, combined observations,
 exact-container cleanup and completed replay without another launch. Missing preflight
 or the first unexpected result stops execution without retry or image acquisition.
-The approved v26 pair passed under `C:\pt\pl26-docker-real-a`; this is not evidence of
-improved live model decisions, exact task-evaluator workload coverage, or new authority.
+The initial approved v26 pair passed under `C:\pt\pl26-docker-real-a` with bare `python`.
+The current test uses `/usr/local/bin/python` to match the task's real interpreter spelling;
+that corrected pair has not yet run in Docker. Provider-free tests read the actual task's
+`-c`/`-m` declarations and verify launch wiring with Docker mocked. Neither the initial
+pair nor these tests establish improved live model decisions, exact task-evaluator workload
+coverage, or new authority.

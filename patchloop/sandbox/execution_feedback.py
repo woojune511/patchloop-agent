@@ -244,9 +244,16 @@ def prepare_trace(directory: Path, request: dict) -> None:
 
 
 def python_command_supported(command: list[str]) -> bool:
-    return (len(command) >= 2 and command[0] in {"python", "python3"}
-            and (command[1] in {"-c", "-m"} and len(command) >= 3
-                 or not command[1].startswith("-")))
+    if len(command) < 2:
+        return False
+    # Identify the registered executable by name, not by host-side path resolution.
+    # Docker paths can be POSIX paths on a Windows host; keep argv[0] unchanged.
+    executable = re.split(r"[/\\]", command[0])[-1]
+    return (
+        re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", executable, re.IGNORECASE) is not None
+        and (command[1] in {"-c", "-m"} and len(command) >= 3
+             or not command[1].startswith("-"))
+    )
 
 
 @contextmanager

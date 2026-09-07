@@ -200,6 +200,11 @@ The separately approved synthetic Docker collector check/probe pair passed; see
 [current status](current-status.md#separately-approved-v26-docker-collector-verification)
 and [opt-in diagnostic instructions](../docker/README.md#explicit-local-verification).
 That evidence does not authorize repeating Docker work or executing live row 34.
+The subsequent row-34 approval paused before provider dispatch: actual v2 checks used
+an absolute interpreter path excluded by the collector's old literal-name test. The
+path correction preserves declared executable/argv and is covered by actual public
+declarations with Docker mocked. The earlier real-Docker pair used bare `python` and
+is not evidence for this correction; see current status before reconfirming live approval.
 
 Tool surface v26 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and

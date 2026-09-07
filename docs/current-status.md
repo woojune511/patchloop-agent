@@ -50,7 +50,9 @@ public action results. It preserves replay and native delivery, does not populat
 spans or validate a note's meaning, and suggests using relevant unknowns with existing
 optional notes/probes. The collector is an in-process diagnostic, not tamper-resistant
 attestation or safety evidence. Private evaluation is not instrumented or projected back.
-Supported check launch shapes are Python `-c`, `-m`, and script; other commands retain
+Supported check launch shapes are Python `-c`, `-m`, and script, identified by executable
+basename (`python`, `python3`, versioned Python 3, optional `.exe`) across POSIX/Windows
+paths. The declared interpreter path and arguments are preserved. Other commands retain
 their original launch and report unknown. No image rebuild or dependency is required.
 
 The row-33 diagnosis found wrong object ownership for the newly introduced error-raising
@@ -62,7 +64,8 @@ agent, a repaired historical submission, measured full-suite branch coverage, or
 that new feedback would have made the agent succeed. Avoid further tool restrictions or
 another prose warning when concrete execution evidence is missing.
 
-Validation: Ruff and `git diff --check` pass. Focused collector/contract/provenance/feedback
+Initial v26 validation, before the interpreter-path correction below: Ruff and
+`git diff --check` pass. Focused collector/contract/provenance/feedback
 tests pass 95 cases in 16.65 seconds, including 38 new cases. The final provider-free suite
 passes 587 cases with three opt-in real-Docker tests skipped, across groups of
 60/68/85/374 (68.44/87.36/65.06/104.37 seconds) under `C:\pt\pl26-full-c{1,2,3,4}`.
@@ -79,7 +82,7 @@ Probe child exception/exit paths run with isolation mocked; no real Docker execu
 claimed. All 64 existing run journal/envelope files, `.env`, user-owned `AGENTS.md`,
 1,249 tracked task/historical files and pre-existing scratch entries are unchanged.
 
-Mock `run_dev_60bf5078e5ba466d` under `C:\pt\pl26-smoke-b` reaches mutation, visible
+Initial mock `run_dev_60bf5078e5ba466d` under `C:\pt\pl26-smoke-b` reaches mutation, visible
 checks, finish and isolated `EVALUATOR_PASS`: four mock turns, five tools, one accepted
 mutation, acceptance PASS, safety NOT_RUN, zero cost, 4.72-second command. The public
 check records the two changed lines as entered and binds the same checked/submitted diff.
@@ -91,9 +94,46 @@ The prompt remains 7,938 characters, and the full ordered tool-input schema hash
 No provider/count call, Docker execution/start/pull/build, resume/retry or thirty-fourth
 live row is authorized or executed by this change. All results remain `official=false`.
 
+### Absolute interpreter path correction
+
+The approved row 34 was paused at read-only preflight, before creating a run or calling
+the provider: both actual v2 public checks use `/usr/local/bin/python`, but the collector
+recognized only literal `python`/`python3`. Check execution itself was possible; its
+changed-line feedback would have stayed unknown. Earlier synthetic Docker verification
+used the bare executable name and missed this integration gap.
+
+Executable-name recognition now handles declared paths without resolving a container
+path on the host, substituting an interpreter, or changing the check's arguments/result
+command. Regression tests load both real public check declarations (`-c` and `-m`) and
+verify their collector mount and unchanged argv through a mocked Docker launch. Both
+failed before the fix. Local tests execute inline/module/script shapes using the actual
+absolute host interpreter; private/no-target and unsupported launches stay uninstrumented.
+The opt-in real-Docker pair now uses `/usr/local/bin/python` too, but has not been rerun.
+
+Focused validation: 84 passed in 10.85 seconds, one real-Docker case skipped; Ruff passes.
+Full provider-free validation passes 614 tests, with four real-Docker cases skipped, in
+the same four groups: 60/68/85/401 cases in 83.47/106.14/79.23/125.90 seconds under
+`C:\pt\pl26-abs-full-a{1,2,3,4}`. The longest group exceeds the two-minute target; focused
+validation does not. Runtime bytes were frozen throughout the full suite and mock.
+The measured full-suite/smoke wall interval, including polling/review gaps, was 163.25 seconds.
+
+Mock `run_dev_4b69a2a4630041ad`, under `C:\pt\pl26-abs-smoke-a`, reaches one accepted
+mutation, visible checks, finish and isolated `EVALUATOR_PASS` in a 5.54-second command:
+four mock turns, five tools, acceptance PASS, safety NOT_RUN, zero provider/count calls
+and zero cost. The current check records both changed lines and binds the submitted diff.
+All 64 prior journal/envelope files, `.env`, user-owned `AGENTS.md`, 1,249 tracked task/
+historical files and pre-existing untracked entries are unchanged. No actual Docker,
+provider, old-run resume or paid row was executed for this correction.
+
+Tool surface remains v26 with unchanged tool inputs, prompt, budgets, task package and
+probe profile. Runtime hash changes to
+`sha256:a4fe50d03e93c4c15b78d66329bf070bf1f48511d32301a455f72df7e5d2129c`.
+Prior envelopes are not migrated. This correction permits provider-free validation only;
+row 34 remains unexecuted and live approval must be reconfirmed for the corrected runtime.
+
 ### Separately approved v26 Docker collector verification
 
-On the unchanged runtime above, one synthetic registered check and one public probe
+On the initial v26 runtime recorded above, one synthetic registered check and one public probe
 passed the opt-in integration test in 8.89 seconds. Evidence is under
 `C:\pt\pl26-docker-real-a\test_real_check_probe_line_fee0`, with hash-chained journal
 `run_dev_linevalidation_14158214d0ee43b2`. The check passed after entering lines 1-3;

@@ -107,7 +107,7 @@ def test_real_check_probe_line_feedback_and_completed_replay(tmp_path, monkeypat
             allowed_paths=["sample.py"], max_changed_files=1, max_diff_lines=50,
         ),
         visible_checks=[RegisteredCheck(
-            id="public", command=["python", "-c",
+            id="public", command=["/usr/local/bin/python", "-c",
                 "import sample; assert sample.choose(True) == 7; print('PUBLIC_PASS')"],
             timeout_seconds=20,
         )],
