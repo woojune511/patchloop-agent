@@ -30,6 +30,9 @@ Docker startup, transport retry, or additional row.
 The six-response medium/high comparison on three frozen row-39 inputs is now collected.
 It executed no selected tools and is not row 40. See [the pilot findings](#frozen-next-action-comparison-six-responses-collected).
 No default-effort change, further paid sampling or new live row is authorized.
+The subsequently approved provider-free [fresh-state comparison preparation](#prepared-fresh-state-comparison-not-executed)
+is complete. Its two input formats are validated; collecting responses is not implemented
+or authorized for this new design.
 
 ## Current implementation: explicit mutation pre-state and completed identity (v31)
 
@@ -546,6 +549,63 @@ single-row approvals do not authorize another pilot, row 40, retry/resume or his
 All results remain `official=false`, `claim_eligible=false`; task acceptance and safety
 evaluation remain NOT_RUN. `.env`, user-owned `AGENTS.md`, task packages, pre-existing
 untracked directories and all historical run/report bytes are preserved.
+
+### Prepared fresh-state comparison (not executed)
+
+The user approved preparation only for a follow-up at row 39's input before turn 32.
+`diagnostics/fresh_state_design.py` adds standalone `prepare` / read-only `validate`
+commands outside the pinned v31 runtime; it has no provider collection path. The
+packet, protocol, reviewer-only rubric and separate public-equivalence audit are under
+`C:\pt\pl39-fresh-state-design-a`, with status PREPARED_NOT_EXECUTABLE and dispatch disabled.
+No key loading, provider counting/generation or historical candidate execution occurred.
+
+Both arms retain the exact task, `gpt-5.4-mini-2026-03-17`, medium effort, tool/property
+order, 25k output cap, current failure/check status and remaining budgets. A is the
+original native request. B is an independent three-message request with the same core
+coding instructions and task, a context-format-specific instruction suffix and one
+complete current public state. It quotes all 32 prior public calls and their 32 exact
+results as data, including public hypotheses, negative observations and check logs.
+It resolves all 665 observed current source lines across four files and 21 continuous
+ranges into direct bodies, preserving gaps and raw file hashes without reading the
+task workspace. Those bodies also remain in the archive; this deliberate duplication
+tests direct access alongside the other representation changes, not optimal compaction.
+
+| Input | Native message/item count | Final serialized UTF-8 bytes | Fresh input token count |
+| --- | ---: | ---: | --- |
+| A, original native episode | 129 | 684,213 | Not requested; historical count 153,464 |
+| B, fresh state plus quoted public archive | 3 | 265,083 | Not requested |
+
+All current public state fields compare equal, and all public call/output objects,
+argument/output strings and tool schema order are preserved. B omits 31 encrypted
+reasoning items and replaces 32 accumulated developer state records with one current
+record. It still retains prior public model-authored hypotheses; it is not memory-free.
+Fresh reasoning, reduced state repetition, direct source presentation, native-to-data
+conversion and format instructions change together. The result cannot isolate reasoning
+continuation, token load, ordering or any one context mechanism. Smaller serialization
+does not establish fewer billed tokens, a working repair or improved agent performance.
+
+The proposed later schedule is A1/B1/B2/A2: two fresh responses per arm, four total,
+medium throughout, zero returned-tool executions, no corrections/retries/chaining,
+1,800 shared active seconds and a proposed $1.20 total cap. No paid approval is granted.
+The existing six-cell medium/high collector cannot execute this different design;
+collector support and provider-free validation must be separately scoped before an
+exact execution approval. Fresh counts and current pricing remain admission work,
+never infer B's count from its byte length. No default or production-loop change follows.
+
+Packet hash: `sha256:1839a26def6adea31a288ccf2c084d8a77b80b166039e3491dffd141cbb1d8d7`.
+Preparer hash: `sha256:3632c6fc93743b8865025cd89f0c785bd1149bb9b03badb76454c08beba2aaa2`.
+The original medium request reproduces exactly, including its order-sensitive identity.
+Twenty-eight new tests cover state/archive preservation, backward source revalidation,
+gaps/blank lines, conflicts, privacy boundaries, future-input and order tampering,
+fixed settings, read-only deterministic validation and forbidden key/provider access.
+They pass with the 39 sampler tests, three documentation tests and existing isolated
+mock E2E: 71 passed in 37.68s (38.299s shell wall time) under `C:\pt\pl39-fresh-checks-a`.
+Ruff passes for `patchloop`, `tests` and `diagnostics`. The mock still reaches mutation,
+visible check, finish and isolated task acceptance PASS / safety NOT_RUN; this is not
+execution or acceptance of either proposed comparison arm. The complete runtime suite
+was not rerun for this preparation-only change; its preceding 756/4 record is above.
+No task, historical run/report, user-owned `.env`/`AGENTS.md` or v31 runtime bytes change.
+The preparation remains `official=false`, `claim_eligible=false`, acceptance/safety NOT_RUN.
 
 ## Row 38: stopped after an unverified final repair
 

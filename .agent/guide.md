@@ -665,6 +665,28 @@ structure, not task acceptance. Rubric grading stays NOT_ASSESSED; acceptance/sa
 are NOT_RUN. Do not infer an effort win rate, agent improvement or a default change.
 Next work must be separately scoped; no additional paid pilot, tool execution or row 40
 is authorized. Keep this receipt distinct from preparation and provider-free tests.
+The subsequent go-ahead authorized fresh-state input/rubric preparation only, under
+`C:\pt\pl39-fresh-state-design-a`. `diagnostics/fresh_state_design.py` is an offline
+prepare/validate helper, not a collector or production compactor. At pre-turn-32,
+A retains the exact original medium wire request. B preserves every latest public
+state field and all 32 public calls/results as quoted data, materializes 665 current
+observed source lines through existing backward-reference validation, and replaces
+native history with three messages. Keep core coding instructions/task/settings/tool
+order unchanged; only the context-format suffix describes the different data layout.
+Do not read task files, summarize source with a model, use future outcomes or insert
+repair hints. Public hypotheses remain in the archive. Current bodies deliberately
+also remain there; no claim of minimal serialization or memory-free reasoning follows.
+B has no encrypted/native continuation; A remains intact per the normal API contract.
+The intervention bundles reasoning reset, repeated-state removal, source access and
+message representation, so do not attribute a future difference to any single factor.
+Packet hash is `sha256:1839a26def6adea31a288ccf2c084d8a77b80b166039e3491dffd141cbb1d8d7`;
+preparer hash is `sha256:3632c6fc93743b8865025cd89f0c785bd1149bb9b03badb76454c08beba2aaa2`.
+Serialized request sizes are 684,213/265,083 bytes, not newly counted tokens. Preparation
+uses zero key/provider/count/tool calls. 28 new regressions plus sampler/docs/mock E2E
+pass 71 cases in 37.68s; Ruff passes. Mock acceptance is not comparison-arm acceptance.
+The proposed A1/B1/B2/A2 four-response pilot still needs separately scoped collector
+support, provider-free validation and fresh exact paid approval. Existing six-cell
+collection and dev/resume paths do not accept it. No runtime or live row 40 is authorized.
 The packet remains PREPARED_NOT_EXECUTABLE; preparation does not grant paid authority.
 The separately approved implementation is `diagnostics/decision_sampler.py`, outside
 the unchanged v31 runtime content set. Run it as a module from the checkout. `validate`

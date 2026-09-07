@@ -325,6 +325,27 @@ Do not execute returned tools, append future outcomes/rubrics to model input, lo
 arm's 25k ceiling under budget pressure or equate static grading with task acceptance.
 This pilot and any ordinary row 40 are separate requests, never automatic retries.
 
+The later approved preparation-only fresh-state design is in
+`C:\pt\pl39-fresh-state-design-a`. It freezes the original pre-turn-32 medium request
+against a new request containing the complete current public state, all 32 public
+call/result pairs as quoted data and 665 resolved current source lines. B has no native
+reasoning/call/output history but retains the public archive; this is a bundled context
+representation/fresh-reasoning comparison, not deletion inside a live episode.
+Only the new offline preparer/validator understands this packet:
+
+```powershell
+uv run python -m diagnostics.fresh_state_design validate --source-packet C:/pt/pl39-decision-design-a/packet.json --source-state-root C:/patchloop-state --output-root C:/pt/pl39-fresh-state-design-a
+```
+
+It must reconstruct the exact original A request, current state, public archive,
+current source ranges and ordered tool schemas without filesystem source reads or
+provider access. Request sizes (684,213/265,083 UTF-8 bytes) are not fresh token counts.
+The packet stays PREPARED_NOT_EXECUTABLE, dispatch=false. A1/B1/B2/A2, medium in both
+arms, four responses, zero tools, 25k output per response, 1,800s and $1.20 are a proposed
+future execution scope, not authority. The six-cell collector rejects this packet;
+implement and provider-free test separately scoped support before seeking exact paid
+approval. Do not pass it to normal dev/resume or rewrite either historical design.
+
 Tool surface v31 makes successful mutation identity consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete
 post-edit candidate. `result.output.baseline_diff_hash` names the complete pre-edit
