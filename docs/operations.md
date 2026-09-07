@@ -217,8 +217,19 @@ contract PASS belonged to the prior diff. The final native input correctly offer
 `run_check` and listed the contract as NOT_RUN; the model claimed completion through
 `stop_task` instead of rechecking and submitting. No probe, finish, isolated acceptance or
 safety evaluation ran. This is neither task PASS nor a budget/tool-closure failure.
-See [the latest live record](current-status.md#latest-live-observation-row-34-stopped-before-submission).
-Do not resume the terminal, repair/recheck its candidate or initiate row 35 automatically.
+See [the row-34 record](current-status.md#row-34-stopped-before-submission).
+Do not resume the terminal, repair/recheck its candidate or initiate another row automatically.
+
+Fresh exact approval subsequently executed row 35 once on `d1660947`:
+`run_dev_38e45369894f43b1`, `EVALUATOR_FAIL`, acceptance FAIL/safety PASS, 23 model/count
+calls, 25 tools, three accepted mutations and $0.510596700. Two optional final-candidate
+probes ran (a compile failure, then a corrected passing probe); both required visible
+checks then passed and the model submitted through `finish_task`. All 23 actual input
+views retain current completion guidance and check currency; the checked/submitted/
+isolated-applied patch identities match. Nine owned containers are absent. Unlike row
+34, this row does not exercise PASS invalidation by a later edit, so do not attribute
+the changed behavior solely to v27. See [the latest live record](current-status.md#latest-live-observation-row-35-submitted-private-evaluation-failed).
+No retry, resume, candidate repair or row 36 follows automatically.
 
 Tool surface v27 retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
@@ -466,8 +477,9 @@ and offered actions and survives state compaction. Retained check summaries labe
 credit, while its original native result stays unchanged. A suggested recheck is not
 an automatic execution. `stop_task` remains a voluntary unsuccessful exit; saying that
 no more edit is needed does not submit a candidate. Tool argument shapes/order and
-admission remain unchanged. V27 has no live evidence until a separately approved row;
-row 34 is terminal read-only evidence and row 35 is not authorized by implementation.
+admission remain unchanged. Separately approved row 35 now supplies delivery/submission
+evidence, not a private acceptance PASS or causal proof of better decisions. Rows 34/35
+are terminal read-only evidence; implementation and prior approval do not authorize row 36.
 
 `finish_task` becomes available only after every visible check passes on the
 current non-empty diff and no non-ignored untracked file remains. The context lists

@@ -23,11 +23,63 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirty-four live observations below
+Repository policy alone never initiates paid work. The thirty-five live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Latest live observation: row 34 stopped before submission
+## Latest live observation: row 35 submitted, private evaluation failed
+
+The separately approved invocation on `d1660947` created
+`run_dev_38e45369894f43b1` under `C:\patchloop-state`: v2
+`pyfakefs-makedirs-parent-traversal`, `gpt-5.4-mini-2026-03-17`, medium reasoning,
+root `.env`, repeat one, $1.20 total cap and enabled probes. It ended at
+`EVALUATOR_FAIL`: task acceptance FAIL, safety PASS, failure class
+`PRIVATE_EVALUATION_FAILED`, with `official=false` and `claim_eligible=false`.
+It used 23 model/count calls, 25 tool actions, three accepted mutations and
+274.327 active seconds, costing $0.510596700. There was no voluntary stop or retry.
+
+- Turns 1-11 made 13 public inspections. Turn 12 proposed an out-of-allowance helper
+  edit; turn 13's allowed-file candidate exceeded scope at 58/50 diff lines. Both
+  rejections preserved the baseline. Turn 14 made the first accepted mutation.
+- The public contract failed at turns 15 and 17, with direct repairs at turns 16
+  and 18. The model then chose two optional probes on the final candidate. The first
+  probe failed to compile because its raw Windows root string ended in a backslash;
+  execution collection correctly remained unknown. The corrected second probe passed
+  and collected current-diff line entries. These are diagnostics, not required-check PASS.
+- Turns 21/22 passed the public contract and upstream regression; turn 23 selected
+  `finish_task`. The latest native state explicitly suggested that submission, with
+  both current checks PASS. Eighteen model calls, 76 tools and one mutation remained
+  before that decision; this was not budget exhaustion.
+
+All 23 canonical/native completion-guidance and check-currency projections match;
+69 context/input/continuation artifacts and 22 unchanged native-history prefixes
+verify. The 24 prior action results are present in the final native input, and all
+23 responses completed with reported `current_turn` reasoning context. The final
+request used 134,010 input tokens; its newest state message was 12,197 UTF-8 bytes.
+Unlike row 34, no passing visible check was invalidated by a later edit in this row.
+This verifies delivery and check-to-submit behavior, not a controlled stale-PASS
+replication or proof that v27 caused the different decision.
+
+The submitted diff changes only `pyfakefs/fake_os.py`: 40 added and one removed line,
+hash `sha256:e9e47d7288c3305c2017b8508ab1e7c8e742e22becc9d09c5088ce3270011ee4`.
+Visible-check, manifest, submitted-artifact and isolated applied/diff hashes match.
+Evaluator regression and policy checks pass; the hidden check fails. Private evaluator
+contents were not projected back, and no post-terminal candidate test or repair ran.
+All four public checks collected execution feedback; the final summary still lists
+nine changed executable lines as unobserved. Line entry is not branch/assertion
+coverage, and these ranges alone do not establish the private failure's cause.
+
+The 264-event journal hash chain, two probe receipts, execution-policy hashes and
+submission provenance verify. All nine owned check/probe/evaluator containers are
+confirmed absent. Runtime remains
+`sha256:5511b176cd864fd0ab843a39546ba84fcb6ea8f0230153d80b039a08f0c922bd`, tool surface
+v27. `.env`, user-owned `AGENTS.md`, 66 prior journal/envelope files, 1,249 tracked
+task/historical files and 106 old untracked entries are preserved. The only new run
+is the one approved above. Next work is read-only analysis of submitted-code semantics
+and public evidence use, not automatic runtime repair, resume or row 36. Any new live
+invocation requires separate exact approval.
+
+## Row 34: stopped before submission
 
 The separately reconfirmed invocation on `ae34d076` created
 `run_dev_e9f798d9b3bb451c` under `C:\patchloop-state`: v2
@@ -72,7 +124,7 @@ The final unsubmitted candidate adds eight lines in `pyfakefs/fake_os.py`, with 
 Envelope, journal and candidate remain external; no submitted manifest exists. Runtime,
 task, `.env`, user-owned `AGENTS.md`, 64 prior journal/envelope files, 1,249 tracked task/
 historical files and pre-existing scratch entries are unchanged. No resume, retry,
-post-terminal check or repair ran. Row 35 requires separate exact approval; all results
+post-terminal check or repair ran. Row 35 required the later separate approval above; all results
 remain `official=false`, with no claim eligibility.
 
 ### Row-34 read-only completion-path diagnosis
@@ -134,8 +186,8 @@ The new public-only regression follows old PASS, a failure, repair, current regr
 PASS, required recheck and submission through actual native input construction and
 gateway restart. Before implementation it failed on the missing `completion_guidance`.
 This demonstrates the harness delivery contract, not that a live model would choose
-correctly. No historical candidate was executed or repaired, and row 35 still requires
-separate exact approval.
+correctly. No historical candidate was executed or repaired. Implementation alone did
+not authorize row 35; its later separately approved observation is recorded above.
 
 Read-only reprojection of row 34's saved turn-23 native input confirms the intended
 change: `parent-traversal-contract` is the suggested current recheck; its previous
@@ -164,7 +216,8 @@ tool-surface hash is
 The prompt is 7,990 characters; description-free tool shapes and order are unchanged.
 Preservation checks match `.env`, user-owned `AGENTS.md`, all 66 existing external
 journal/envelope files, 1,249 tracked task/historical files and 106 old untracked entries.
-No provider/input-count call, actual Docker execution, retry, resume or row 35 ran.
+No provider/input-count call, actual Docker execution, retry, resume or row 35 ran
+as part of this provider-free validation.
 All evidence remains `official=false` and `claim_eligible=false`.
 
 ### Retained v26 execution-feedback behavior
