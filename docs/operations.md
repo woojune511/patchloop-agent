@@ -252,8 +252,21 @@ No submission or isolated evaluation ran. The permission labels were delivered c
 but one disallowed helper edit was still attempted. All memory updates were null, so v30's
 note-expiry/receipt changes remain unexercised live. Three owned containers are absent;
 continuations, source references and the immutable journal verify. See
-[the row-38 record](current-status.md#latest-live-observation-row-38-stopped-after-an-unverified-final-repair).
+[the row-38 record](current-status.md#row-38-stopped-after-an-unverified-final-repair).
 No retry/resume, candidate repair/recheck or row 39 follows from this terminal.
+
+The separately approved row 39 on `dfb3f8e9`, `run_dev_eaad5c70be16434f`, ends at
+`LIMIT_REACHED`: 33 model/count calls, 34 tools, four accepted edits and $0.712855950.
+The final edit is actually rechecked, but its one-line parent guard makes `next_dir`
+assignment conditional: the regression changes from four failures to 21 UnboundLocalError
+failures. With no accepted edits left, the horizon stops before another provider dispatch;
+seven model/66 tool calls remain. Final regression is FAIL and contract NOT_RUN; the earlier
+contract PASS is historical. No probe, voluntary stop, submission or isolated evaluation ran.
+All four v31 mutation receipts/native deliveries match completed and baseline identities;
+continuations, prefixes, policies and journal verify, and five owned containers are absent.
+This is successful identity delivery and observed rechecking, not causal effectiveness proof.
+See [the row-39 record](current-status.md#latest-live-observation-row-39-rechecked-and-exhausted-accepted-mutations).
+Its terminal is immutable. No candidate repair/recheck, retry/resume or row 40 is authorized.
 
 Tool surface v31 makes successful mutation identity consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete
@@ -542,7 +555,7 @@ no more edit is needed does not submit a candidate. Tool argument shapes/order a
 admission remain unchanged. Separately approved row 35 now supplies delivery/submission
 evidence, not a private acceptance PASS or causal proof of better decisions. Rows 34/35
 are terminal read-only evidence. Later approvals and results are recorded in current status;
-the latest row 38 does not authorize row 39.
+the latest row 39 does not authorize row 40.
 
 `finish_task` becomes available only after every visible check passes on the
 current non-empty diff and no non-ignored untracked file remains. The context lists

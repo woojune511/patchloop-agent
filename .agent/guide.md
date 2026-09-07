@@ -628,8 +628,11 @@ explicitly. Preserve pending/completed replay, typed rollback, source/check/note
 input shapes, action masks, voluntary stop and all historical bytes. Row 38 shows the
 ambiguity in all four mutation outputs, but does not establish it caused the unchecked
 final stop. Current-diff NOT_RUN and run_check guidance were already correctly delivered.
-Local validation establishes identity consistency, not improved model decisions. Row 39
-still requires separate exact approval; no historical candidate execution is authorized.
+Local validation establishes identity consistency, not improved model decisions. The
+separately approved row 39 verifies actual pre/post identity delivery and final rechecking,
+but introduces a new control-flow bug and exhausts accepted edits. Preserve that distinction;
+do not infer a causal improvement from one row. Row 40 requires separate exact approval.
+No historical candidate execution is authorized.
 
 V30 makes current path permission and source-note expiry explicit at the
 existing evidence/action boundary. Reuse the gateway's permission matcher in the source
@@ -644,9 +647,30 @@ annotation fields apply. Current IDs and rejection guidance were delivered. Re-e
 historical receipts and conditional native expiry feedback are concrete presentation
 costs, not proof of why the model repeated those IDs. Do not mandate notes or tighten
 inspection limits on this evidence. Preserve prior native prefixes and all historical
-run bytes. Separately approved row 38 is recorded below; row 39 requires fresh exact
-approval. Compare the model's current-failure assertion after an unchecked repair with
+run bytes. Separately approved rows 38 and 39 are recorded below; later rows require fresh
+exact approval. Compare the model's current-failure assertion after an unchecked repair with
 the actual historical-failure and recheck guidance before proposing another mask or obligation.
+
+Row 39 `run_dev_eaad5c70be16434f` on `dfb3f8e9` ends at `LIMIT_REACHED`: 33 model/count
+calls, 34 tools, four accepted mutations, $0.712855950, 360.375 active seconds. Rejected
+proposals at 16/19/25 are path/anchor/scope failures; scope rollback correctly reports
+47 baseline lines, 51 candidate, 50 limit. Accepted edits occur at 21/23/26/32. The first
+two public failures concern bytes paths and intermediate mode. Turn 27's contract passes;
+turn 28's regression fails four exception cases (513 passed/570 skipped). The final edit
+compresses a parent guard and `next_dir` assignment onto one line. Saved source and AST
+confirm that the assignment is accidentally conditional. Turn 33 rechecks this diff and
+fails 21 cases with UnboundLocalError (496 passed/570 skipped). After that failure, zero
+accepted edits block minimum completion; seven model/66 tool calls remain. No additional
+dispatch occurs. This differs from row 38's unchecked voluntary stop, and does not justify
+a mandatory check, stronger mask or scope increase. The final 49-line diff has regression
+FAIL/contract NOT_RUN and no submission or isolated evaluation. All four v31 mutation
+receipts/native deliveries match baseline and completed identity. All 99 saved artifacts,
+33 completion projections, 32 prefixes, 33 stored/32 replayed continuations, 83 permission
+entries and five execution policies verify; five owned containers are absent. Eighteen
+inspections add coverage, three are covered-only and one is zero-match; all memory updates
+are null and no probe ran. Runtime and protected prior bytes are unchanged. The final hash is
+`sha256:26e28fec2ef8e063037a97f78a3dbd2fb32999a34a94b5016eb88c5b5c6f6341`.
+Keep this run read-only; do not repair/recheck its candidate, retry/resume or start row 40.
 
 Row 38 `run_dev_91f8c05b570c439b` on `2c303bfc` ends at `AGENT_STOPPED`: 20 model/count
 calls, 22 tools, four accepted mutations, $0.380645550, 198.859 active seconds. Turn 11

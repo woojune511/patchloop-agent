@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirty-eight live observations below
+Repository policy alone never initiates paid work. The thirty-nine live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -51,8 +51,9 @@ candidate diagnostics. Durable action IDs/inputs, source references, note lifecy
 check invalidation and finish identity remain unchanged. Tool-surface v31 binds the
 new output semantics; `dev-run-v1` and tool input shapes/order are unchanged. Older
 run/envelope bytes are not migrated and saved native prefixes are never rewritten.
-Implementation authorizes no Docker/provider execution, historical candidate repair/
-recheck, retry/resume or row 39.
+Implementation alone authorized no Docker/provider execution, historical candidate repair/
+recheck or retry/resume. Row 39 received the subsequent exact approval recorded below;
+row 40 requires separate approval.
 
 The new regression first reproduces the old pre-state-as-result mismatch, then Ruff
 and all 118 focused identity/recovery/projection/completion/contract cases pass in
@@ -137,8 +138,8 @@ This is a representation check, not a candidate execution or measured model bene
 Final preservation hashes match for `.env`, user-owned `AGENTS.md`, 1,249 tracked task/
 historical files and 144 existing run files; all 175 preexisting untracked entries remain.
 Implementation alone authorized no Docker/provider work, historical candidate execution
-or retry/resume. Row 38 received the subsequent exact approval recorded below; row 39
-requires separate approval.
+or retry/resume. Rows 38 and 39 received subsequent exact approvals recorded below;
+later rows require their own exact approval.
 
 ## Previous implementation: position-bound mutation feedback references (v29)
 
@@ -255,7 +256,72 @@ Every memory update was null; this establishes non-use, not a memory storage fai
 The v27 prompt already advised reuse and input variation; stronger generic wording alone
 is not established as a solution, and the v28 change is not evidence of improved agent success.
 
-## Latest live observation: row 38 stopped after an unverified final repair
+## Latest live observation: row 39 rechecked and exhausted accepted mutations
+
+The separately approved invocation on `dfb3f8e9` created
+`run_dev_eaad5c70be16434f` under `C:\patchloop-state`: v2
+`pyfakefs-makedirs-parent-traversal`, `gpt-5.4-mini-2026-03-17`, medium reasoning,
+root `.env`, repeat one, $1.20 total cap and enabled probes. It ended at
+`LIMIT_REACHED`: 33 model/count calls, 34 tools, four accepted mutations,
+360.375 active seconds and $0.712855950. No probe, stop, submission or isolated
+evaluation ran. Task acceptance and safety were not evaluated; `official=false`.
+
+- Turn 16 attempted the read-only helper; admission rejected `path_not_allowed`.
+  Turn 19's wrapper proposal failed `anchor_invalid`. After another read, turn 21
+  applied the first mutation, implementing direct component traversal in the wrapper.
+- Turn 22's public contract failed on the bytes-path invocation with TypeError from
+  mixing string and bytes paths. Turn 23 repaired the accumulator type. Turn 24 then
+  failed the public intermediate-mode assertion: `/permissions/transient` needed `0o755`.
+- Turn 25's proposal exceeded scope: baseline 47 lines, candidate 51, limit 50,
+  delta four, over by one. Rollback retained the baseline. Turn 26 applied a smaller
+  permission repair, and the parent-traversal contract passed at turn 27.
+- Turn 28's upstream regression failed four cases (513 passed, 570 skipped): broken
+  symlink parents returned EEXIST instead of ENOENT, and Windows file parents returned
+  ENOTDIR instead of ENOENT, in both normal and case-insensitive variants.
+- After three inspections, turn 32 applied the fourth edit. Its public decision proposed
+  a one-line parent validation to fit the remaining diff-line headroom. Turn 33 actually
+  rechecked that final diff: 21 failed, 496 passed, 570 skipped. All listed failures were
+  `UnboundLocalError` for `next_dir`.
+
+The final edit put `raise_os_error(...); next_dir = ...` on the same physical line as
+the `if` condition. Read-only AST inspection confirms that both statements belong to
+the conditional body: the normal false branch skips the assignment before the next
+line reads `next_dir`. This is a directly observed control-flow defect introduced while
+compressing the edit, not evidence that a valid solution cannot fit the 50-line scope.
+The original four exception-semantic failures are not proven repaired by this candidate.
+
+Unlike row 38, the final candidate was rechecked. After that failure, the harness
+recorded `completion horizon exhausted before provider dispatch`, with seven model
+calls and 66 tool actions remaining, minimum completion four calls, and only
+`accepted_mutations` blocking. No 34th provider dispatch occurred. The terminal was
+not a token/cost/provider failure or a voluntary premature stop. Final current-diff
+status is upstream regression FAIL and parent-traversal contract NOT_RUN; the earlier
+contract PASS belongs to the previous candidate and gives no current completion credit.
+
+The final workspace has only `pyfakefs/fake_os.py`, 48 added/one removed lines, and no
+non-ignored untracked files. Its 49-line diff and final check bind
+`sha256:26e28fec2ef8e063037a97f78a3dbd2fb32999a34a94b5016eb88c5b5c6f6341`.
+There is no submitted artifact, manifest or evaluator result. All four v31 successful
+mutation receipts and actual native deliveries consistently distinguish original
+baseline from completed candidate. This verifies identity delivery and observed
+rechecking, not that v31 caused rechecking or improves general agent effectiveness.
+
+All 99 context/input/continuation artifacts, 33 completion/currency projections and
+32 unchanged input prefixes verify. All responses completed; 33 encrypted continuations
+were stored and 32 replayed exactly once. All native source identities/lines, mutation
+post-images and 83 source permission entries verify. All five check policy hashes verify;
+all five line traces were collected and five owned containers are absent. All memory updates
+were null. Eighteen inspections added coverage, three were covered-only and one search
+was zero-match; there were no cache hits. First accepted mutation was turn 21. Final
+input was 160,590 tokens, newest state 12,699 UTF-8 bytes, largest output 6,051 tokens.
+The 370-event journal hash chain verifies at
+`sha256:cf17509d072b278592c5a0bc9072f63fe384e4ed473cbca60c03c5625ed94b52`.
+Approved runtime/task/model/credential-path/probe identities match preflight. `.env`,
+user-owned `AGENTS.md`, 1,249 tracked task/historical files, 148 prior run files and
+175 preexisting untracked entries remain unchanged. No historical candidate repair/
+recheck, retry/resume or row 40 is authorized; further diagnosis uses saved evidence.
+
+## Row 38: stopped after an unverified final repair
 
 The separately approved invocation on `2c303bfc` created
 `run_dev_91f8c05b570c439b` under `C:\patchloop-state`: v2
