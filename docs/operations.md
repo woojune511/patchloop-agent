@@ -278,11 +278,39 @@ are under `C:\pt\pl39-analysis-a`; no historical task execution or new live auth
 
 The later design-only next-action packet under `C:\pt\pl39-decision-design-a` proposes
 six single-response samples: three frozen checkpoints, medium/high on the same model.
-It is PREPARED_NOT_EXECUTABLE with dispatch disabled; current CLI/resume cannot run it.
-An external, separately hash-bound sampler still needs implementation and provider-free
-validation, then exact approval naming the packet, both efforts, six cells, `.env`, new
-external result root and a shared cap. The proposed $1.20 is not authorization; its
+It stays PREPARED_NOT_EXECUTABLE with dispatch disabled; normal CLI/resume cannot run it.
+The implemented [standalone sampler](../diagnostics/decision_sampler.py) is outside the
+unchanged v31 runtime and has provider-free tests. From the checkout, its read-only
+validation command is:
+
+```powershell
+uv run python -m diagnostics.decision_sampler validate --packet C:/pt/pl39-decision-design-a/packet.json --packet-hash sha256:200e80988694023f381ac77f77ff5a62348f34f7f8200e4c6548e7a54caa8347 --source-state-root C:/patchloop-state
+```
+
+This prints request/sampler/runtime/price identities and historical cost reservations,
+not an authorization or a current price quote. `collect` additionally requires
+`--approve-six-responses-zero-tools`, `--sampler-hash`, `--credential-file` (absolute),
+`--result-root` (new and external), `--max-cost-usd 1.20`, `--pricing-hash` and
+`--pricing-verified-on`. The operator must actually check the official rates for the
+fixed snapshot/default tier on that UTC date before asserting this price review.
+The exact approval must name the packet and sampler hashes, task v2, model, both
+efforts, one response for each of six cells, `.env`, new root and zero tool executions.
+No such paid approval has been granted. The proposed $1.20 is not authorization; its
 $1.066516500 planning reservation uses historical counts/rates, not a live quote.
+Each current request is counted just before generation; future cells retain historical
+input reservations plus their full 25k output allowance. Higher later counts can stop
+the pilot, never silently reduce a ceiling. Input count/create have zero retries;
+uncertainty stops the whole pilot and known incomplete output receives no correction.
+Usage is journaled before response artifact processing. Raw SDK errors and plaintext
+reasoning are not saved. Request artifacts preserve tool/property order and bind an
+order-sensitive hash in addition to the original canonical content hash. A fresh root
+is claimed exclusively before any credential loading. Existing roots cannot be collected
+again, even after a crash; no resume exists.
+Use `uv run python -m diagnostics.decision_sampler inspect --result-root <absolute-root>`
+only to read durable terminal or interrupted/unknown status. It never replays or writes.
+Public review artifacts hide arm/effort/cost/latency; the journal records the unblinding
+map and independently shuffled presentation order. Neither batch grammar nor unexecuted
+source is assigned task acceptance or automatic rubric grades.
 Do not execute returned tools, append future outcomes/rubrics to model input, lower one
 arm's 25k ceiling under budget pressure or equate static grading with task acceptance.
 This pilot and any ordinary row 40 are separate requests, never automatic retries.

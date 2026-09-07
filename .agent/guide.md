@@ -650,13 +650,38 @@ Next seam is the prepared, unexecuted row-39 next-action pilot in
 `C:\pt\pl39-decision-design-a`: before turns 6/21/32, same model, medium versus high,
 one fresh response per cell (six total), unchanged native histories/tools/output cap.
 Only next-response effort differs; earlier reasoning remains medium in both arms.
-The packet is PREPARED_NOT_EXECUTABLE: no sampler, paid call or tool execution is
-authorized by preparation. Implement any sampler outside the pinned runtime, reuse
-cost/continuation/uncertainty contracts, bind its own source hash and validate it
-provider-free before seeking exact execution approval. Never use terminal resume or
-normal repeat=1 as a six-branch shortcut. Reviewer rubrics and future outcomes stay
-out of model input. Grade deferred actions as unassessed where appropriate, not FAIL,
-and do not call three correlated single-sample comparisons an agent success rate.
+The packet remains PREPARED_NOT_EXECUTABLE; preparation does not grant paid authority.
+The separately approved implementation is `diagnostics/decision_sampler.py`, outside
+the unchanged v31 runtime content set. Run it as a module from the checkout. `validate`
+reconstructs hash-bound requests without a key/client; `collect` requires explicit
+six-cell/zero-tool authority plus packet/sampler/price hashes, exact credential path,
+new external result root and the shared cap. Same-UTC-day price review is an operator
+attestation, not a fetched quote. The supplied adapter factory is an offline test seam,
+not a provider CLI mode. Never invoke the real path for provider-free validation.
+Keep full 25k output capacity for every remaining cell: reserve historical inputs,
+recount each current request just before generation and stop if it no longer fits.
+The driver reuses the adapter, ledger, native continuation helpers and DevJournal;
+persist usage before continuation/public artifact processing. Return only selected
+public actions and encrypted reasoning artifacts, never plaintext reasoning/summary
+or a raw SDK exception body. No selected tool, correction, evaluator or judge runs.
+Exclusive root creation forbids same-root concurrency/retry. There is no sampler resume:
+`inspect` only reads terminal or interrupted/unknown receipts and never changes bytes.
+Review artifacts omit arm/effort/cost/latency; journal keeps the unblinding map and
+independent display order. Batch-shape validation is not full gateway/rubric acceptance.
+Keep schema/property order in count/dispatch/capture: canonical content hashing sorts
+object keys and is not evidence of order preservation. The diagnostic request artifact
+and a separate ordered-request hash preserve it without changing the original content hash.
+The new 39 fake-client regressions cover uncertainty, identity, privacy, fixed reservations,
+deadline and crash paths. Do not infer model-quality evidence from fake decisions.
+Final full validation: 756 passed / four actual-Docker opt-ins skipped across 48 files
+in six new `C:\pt\pl39-sampler-final-b{1,2,3,4,5,6}` roots (longest group 116.62s).
+Fake collection of the six actual frozen requests finishes under `C:\pt\pl39-sampler-smoke-b`;
+its counted usage is simulated, not billed. Existing dev-head smoke at
+`C:\pt\pl39-dev-smoke-a` still reaches isolated task acceptance PASS / safety NOT_RUN.
+Never use terminal resume or normal repeat=1 as a six-branch shortcut. Reviewer rubrics
+and future outcomes stay out of model input. Grade deferred actions as unassessed where
+appropriate, not FAIL, and do not call three correlated single-sample comparisons an
+agent success rate.
 
 V30 makes current path permission and source-note expiry explicit at the
 existing evidence/action boundary. Reuse the gateway's permission matcher in the source

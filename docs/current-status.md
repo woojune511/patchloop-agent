@@ -27,8 +27,9 @@ Repository policy alone never initiates paid work. The thirty-nine live observat
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-Next work is a prepared, unexecuted next-action comparison on three frozen row-39
-inputs, not another live row. See [the design boundary](#prepared-next-action-comparison-not-executed).
+Next work is separately approving the unexecuted next-action comparison on three
+frozen row-39 inputs, not another live row. Its standalone sampler is implemented
+and provider-free tested. See [the design boundary](#prepared-next-action-comparison-not-executed).
 
 ## Current implementation: explicit mutation pre-state and completed identity (v31)
 
@@ -437,15 +438,69 @@ not a general success rate. The [evaluation guidance](https://developers.openai.
 motivates explicit criteria and accounting for variability. These three failure-selected,
 correlated states and one sample per arm cannot establish repeatability or generalization.
 
-The CLI has no decision-only sampling entry point. Its normal `dev` and exact-envelope
-resume paths cannot execute this design. A small external driver, separately bound by
-its own source hash while leaving runtime bytes fixed, still needs implementation and
-provider-free validation. Paid execution then requires exact approval of the packet,
-task/model, both efforts, `.env`, six cells, new external result root and shared cap.
-Neither a single-row approval nor this preparation authorizes that execution, row 40,
-retry/resume or historical candidate repair. `official=false`, `claim_eligible=false`;
-task acceptance and safety evaluation remain NOT_RUN. Runtime and protected prior bytes
-are unchanged. Only design artifacts and current documentation were added.
+The normal `dev` and exact-envelope resume paths cannot execute this design.
+[diagnostics/decision_sampler.py](../diagnostics/decision_sampler.py) now provides a
+separately source-hashed `validate` / `collect` / read-only `inspect` entry point outside
+the pinned v31 runtime. It reconstructs the exact original inputs and tools without
+executing selected actions. The original prepared packet remains unchanged with
+dispatch disabled; collection requires separate execution authority, never a flag
+change to historical preparation or a normal repeat=1 invocation.
+
+The sampler reuses the zero-retry adapter, exact input counting, integer cost ledger,
+encrypted-continuation storage/verification and hash-chained `dev-run-v1` journal.
+Each fresh request retains 25,000 output tokens. Admission protects all remaining
+cells using historical input reservations, replacing the current cell's estimate
+with its fresh count immediately before dispatch; later counts can still stop the
+pilot. No arm/history is shortened to fit. Live admission requires explicit same-UTC-day
+human verification of the registered price identity, not an automatic price quote.
+Uncertainty stops every remaining cell; a settled incomplete response is recorded
+without correction. Usage is durable before further response artifact processing.
+An exclusively created fresh external root prevents concurrent collection or retry;
+`inspect` reports killed-process uncertainty without writes or resumed execution.
+Public decision artifacts and independently shuffled review order omit arm/effort,
+usage and latency. The unblinding map and encrypted-artifact hashes remain in the
+diagnostic journal. Batch-shape checking is not full tool admission or rubric grading.
+Canonical content hashes do not detect JSON object-property reordering. Implementation
+review caught the sorted hash serialization being reused for transmission; the sampler
+now preserves the original tool/property order for counting, dispatch and durable
+request capture, with a separate order-sensitive identity. This diagnostic-only fix
+does not rewrite any historical input, runtime schema or frozen request content hash.
+
+The 39 new sampler cases and three documentation cases pass in 31.06 seconds. Tests
+use synthetic public inputs and fake clients; credential loading, real client creation
+and gateway execution are forbidden. They cover six-cell independence, input/approval
+tampering, full-capacity reservation, parallel IDs, incomplete outcomes, opaque errors,
+continuation corruption/action mismatch, deadline reduction, concurrent-root rejection,
+crashes before/after dispatch/usage/sample recording and idempotent terminal projection.
+Tool/property order is checked separately from canonical request-content equality.
+The original three medium request hashes also reproduce through the new validator;
+their high counterparts differ only in effort. This is collection reliability evidence,
+not evidence that high makes better decisions.
+
+Final Ruff passes for `patchloop`, `tests` and `diagnostics`. All 48 test files run
+exactly once in six fresh external roots `C:\pt\pl39-sampler-final-b{1,2,3,4,5,6}`:
+756 passed, four real-Docker opt-ins skipped. Groups pass 60/64/64/141/155/272 cases
+in 96.37/116.62/92.00/102.77/100.79/100.25 seconds. The initial partition's longest
+group took 133.98 seconds; redistributing tests brings every final group below two
+minutes without omitting tests. The complete iterative implementation/validation
+session is not a two-minute measurement.
+
+The real frozen input fake-client smoke under `C:\pt\pl39-sampler-smoke-b`, diagnostic
+`run_dev_sample_24e6f1aca57c43aa`, collects all six cells with original tool/property
+order and no credential loader, real client or tool execution. Its usage numbers are
+simulated, not billed. Existing dev-head mock `run_dev_5e78b26004514415` under
+`C:\pt\pl39-dev-smoke-a` still reaches mutation, visible checks, finish and isolated
+task acceptance PASS / safety NOT_RUN at zero provider cost. Sampler source identity:
+`sha256:d5718e7b1021aae3c9e6cfb34d1b9ebe9aa9f14b2a77d920f198940d8c9ad16d`.
+Runtime remains `sha256:94cdd9067d777ba2bd2246dd8ea8fa9dbefcbba758ac886e037f1a9702950853`.
+
+Paid execution requires exact approval of the packet and sampler hashes, task/model,
+both efforts, `.env`, one response for each of six cells, a new external result root,
+zero tool executions and a shared $1.20 cap. Neither this implementation nor prior
+single-row approvals authorize it, row 40, retry/resume or historical candidate repair.
+All results remain `official=false`, `claim_eligible=false`; task acceptance and safety
+evaluation remain NOT_RUN. `.env`, user-owned `AGENTS.md`, task packages, pre-existing
+untracked directories and all historical run/report bytes are preserved.
 
 ## Row 38: stopped after an unverified final repair
 
