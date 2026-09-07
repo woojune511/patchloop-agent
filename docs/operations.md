@@ -295,8 +295,14 @@ not an authorization or a current price quote. `collect` additionally requires
 fixed snapshot/default tier on that UTC date before asserting this price review.
 The exact approval must name the packet and sampler hashes, task v2, model, both
 efforts, one response for each of six cells, `.env`, new root and zero tool executions.
-No such paid approval has been granted. The proposed $1.20 is not authorization; its
-$1.066516500 planning reservation uses historical counts/rates, not a live quote.
+The user subsequently approved by reference the disclosed six-cell scope. That one
+pilot is complete as `run_dev_sample_789ffee05f9d4473` in `C:\pt\pl39-decision-live-a`:
+six counts/generations, SAMPLES_COLLECTED, known $0.392849400 cost, 51.657s and zero
+tool executions. The assistant rechecked official Standard rates before dispatch;
+the date flag is a review attestation, not an automatic quote or separate human audit.
+This diagnostic is not row 40. No further paid calls, retry/resume or task execution
+are authorized. Its original $1.066516500 planning reservation used historical
+counts/rates, not a live quote; the $1.20 cap did not imply spending all of it.
 Each current request is counted just before generation; future cells retain historical
 input reservations plus their full 25k output allowance. Higher later counts can stop
 the pilot, never silently reduce a ceiling. Input count/create have zero retries;
@@ -310,7 +316,11 @@ Use `uv run python -m diagnostics.decision_sampler inspect --result-root <absolu
 only to read durable terminal or interrupted/unknown status. It never replays or writes.
 Public review artifacts hide arm/effort/cost/latency; the journal records the unblinding
 map and independently shuffled presentation order. Neither batch grammar nor unexecuted
-source is assigned task acceptance or automatic rubric grades.
+source is assigned task acceptance or automatic rubric grades. The completed pilot's
+read-only anonymous static findings and later unblinding audit are under
+`C:\pt\pl39-decision-review-a`; all six exact ordered requests/continuations verify.
+Both efforts propose the same erroneous conditional assignment at the final checkpoint.
+That static finding is not an executed task result or a general comparison of efforts.
 Do not execute returned tools, append future outcomes/rubrics to model input, lower one
 arm's 25k ceiling under budget pressure or equate static grading with task acceptance.
 This pilot and any ordinary row 40 are separate requests, never automatic retries.

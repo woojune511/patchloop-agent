@@ -646,10 +646,25 @@ projection and observed requirements from preserved behavior. Keep the harness f
 do not infer that forced notes, generic extra prompt text or a semicolon ban solves this.
 Any model/prompt comparison or row 40 still needs its own exact scope and approval.
 
-Next seam is the prepared, unexecuted row-39 next-action pilot in
+The row-39 next-action pilot was prepared in
 `C:\pt\pl39-decision-design-a`: before turns 6/21/32, same model, medium versus high,
 one fresh response per cell (six total), unchanged native histories/tools/output cap.
 Only next-response effort differs; earlier reasoning remains medium in both arms.
+The user's subsequent go-ahead by reference authorized exactly that six-cell pilot,
+collected as `run_dev_sample_789ffee05f9d4473` in `C:\pt\pl39-decision-live-a`:
+six counts/responses, $0.392849400, 51.657s, SAMPLES_COLLECTED, zero tool executions.
+All responses completed; 32 journal events, 20 CAS objects, six exact ordered request
+identities and six encrypted continuation/action links verify. Assistant static facts
+were fixed before unblinding under `C:\pt\pl39-decision-review-a`; no judge call ran.
+Both C1 reads target the stated `_path_components` helper. C2 high proposes 44 diff
+lines versus medium's 49, but both use the leaf mode in every component-creation call;
+unobserved helper behavior is uncertainty, not automatic semantic FAIL. Both C3 samples
+produce the identical 49-line candidate with `next_dir` assigned inside the one-line
+error guard, skipping normal paths. Separate Git blobs/AST establish counts and block
+structure, not task acceptance. Rubric grading stays NOT_ASSESSED; acceptance/safety
+are NOT_RUN. Do not infer an effort win rate, agent improvement or a default change.
+Next work must be separately scoped; no additional paid pilot, tool execution or row 40
+is authorized. Keep this receipt distinct from preparation and provider-free tests.
 The packet remains PREPARED_NOT_EXECUTABLE; preparation does not grant paid authority.
 The separately approved implementation is `diagnostics/decision_sampler.py`, outside
 the unchanged v31 runtime content set. Run it as a module from the checkout. `validate`

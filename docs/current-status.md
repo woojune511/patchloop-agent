@@ -27,9 +27,9 @@ Repository policy alone never initiates paid work. The thirty-nine live observat
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-Next work is separately approving the unexecuted next-action comparison on three
-frozen row-39 inputs, not another live row. Its standalone sampler is implemented
-and provider-free tested. See [the design boundary](#prepared-next-action-comparison-not-executed).
+The six-response medium/high comparison on three frozen row-39 inputs is now collected.
+It executed no selected tools and is not row 40. See [the pilot findings](#frozen-next-action-comparison-six-responses-collected).
+No default-effort change, further paid sampling or new live row is authorized.
 
 ## Current implementation: explicit mutation pre-state and completed identity (v31)
 
@@ -390,7 +390,51 @@ The 370-event journal retains its hash above, and the final workspace hash remai
 All 152 current run files, `.env`, user-owned `AGENTS.md`, 1,249 tracked task/historical
 files and 175 preexisting untracked entries are preserved. This remains `official=false`.
 
-### Prepared next-action comparison (not executed)
+### Frozen next-action comparison (six responses collected)
+
+After the user approved by reference the disclosed six-response/zero-tool scope,
+`run_dev_sample_789ffee05f9d4473` under `C:\pt\pl39-decision-live-a` completed at
+`SAMPLES_COLLECTED`: six fresh input counts, six provider responses, $0.392849400
+known recorded cost and 51.657 active seconds. It used the frozen v2 task inputs,
+`gpt-5.4-mini-2026-03-17`, medium/high, root `.env`, one response per cell, the shared
+$1.20 cap and full 25k output ceilings. No returned tool, correction, retry, candidate,
+probe, evaluator or judge API call ran. This is a diagnostic pilot, not live row 40.
+
+Before dispatch, the assistant rechecked the official Standard rates against the
+registered price hash on 2026-09-07 UTC (2026-09-08 KST). This is not a separate human
+price audit. Read-only checks verify all 32 journal events and 20 CAS objects, exact
+frozen request bytes including tool/property order, and all six continuation hashes,
+item orders and action links. Fresh input counts match the three historical counts.
+Every response completed; no output ceiling was reached or dispatch left uncertain.
+
+Anonymous public observations were fixed before opening the effort/usage map:
+
+| Checkpoint | Medium | High | Static finding |
+| --- | --- | --- | --- |
+| C1, before turn 6 | Read helper lines 1258-1315 | Read helper lines 1262-1325 | Both ranges include the delivered `_path_components` headers and match the stated inspection goal. Reads were not executed. |
+| C2, before turn 21 | 49-line proposed diff | 44-line proposed diff | Both loop over components with `create_dir(next_dir, mode)` and no separate intermediate-mode selection. High avoids medium's duplicate `exist_ok` normalization. Neither proposal was executed. |
+| C3, before turn 32 | 49-line proposed diff | Identical replacement and candidate | Both put `next_dir = ...` inside the one-line `if` body after the error call. A normal false-guard path skips the required assignment. |
+
+Full candidate counts use separate Git blobs, not replacement-line estimates. Frozen
+cutoff source hashes are verified with the original CRLF bytes; AST parsing proves C3's
+block structure without executing code. C2's delivered parent/leaf mode distinction
+is not explicitly preserved by either replacement; the unobserved helper behavior is
+an uncertainty, not an automatic semantic FAIL. Exact anchors and valid batch shapes
+are not full gateway admission. Task acceptance and safety remain NOT_RUN.
+
+Reproducible read-only audit scripts, fixed anonymous observations and the later
+unblinding receipt are under `C:\pt\pl39-decision-review-a`. This is assistant static
+inspection, not an independent human rating or separately sampled judge; collection
+artifacts keep `grading=NOT_ASSESSED`. One pair per failure-selected, correlated state
+cannot establish a win rate, repeatability or whole-agent improvement. In particular,
+this pilot does not support treating higher effort alone as a fix for the last repair.
+Observed cost/latency differences are not efficiency estimates; cache hits differ.
+
+The sampler and v31 runtime remain unchanged. Pre/post hashes of `.env` plus user-owned
+`AGENTS.md`, 1,249 tracked task/history files and 152 existing run-directory files match;
+all 175 preexisting untracked entries remain. No further sampling, replay, tool execution
+or row 40 follows from this result. The design and provider-free implementation record
+below predates collection and remains distinct from this live receipt.
 
 The approved design/preparation fixes the v31 harness and compares the same
 `gpt-5.4-mini-2026-03-17` at medium versus high effort for one next response. No prompt,
@@ -404,7 +448,7 @@ lists both efforts; this is not evidence that high will improve these decisions.
 | Before turn 21 | Preserve public behavior in the first proposed edit | 86,322 |
 | Before turn 32 | Repair within scope without changing unintended control flow | 153,464 |
 
-One fresh response per checkpoint/arm gives six proposed generations. Row 39's
+One fresh response per checkpoint/arm prescribes six generations. Row 39's
 historical responses are calibration evidence, not the newly sampled medium control.
 Both arms retain the exact medium-generated history and encrypted continuation: the
 intervention concerns only the next decision, not an entire high-effort trajectory.
@@ -416,17 +460,18 @@ added to the model input. This follows the existing native-continuation contract
 The external packet, protocol, reviewer-only rubric and read-only validator are under
 `C:\pt\pl39-decision-design-a`. Packet hash:
 `sha256:200e80988694023f381ac77f77ff5a62348f34f7f8200e4c6548e7a54caa8347`.
-Status is `PREPARED_NOT_EXECUTABLE`, `dispatch_enabled=false`. The validator confirms
+The preparation receipt stays `PREPARED_NOT_EXECUTABLE`, `dispatch_enabled=false`;
+the separate live receipt above does not rewrite it. The validator confirms
 all three request identities, cutoff/call-result/continuation linkage and identical
 tool schemas/order. Eight tamper cases reject changed output caps, tools, input hash,
-runtime, cutoff, effort, dispatch flag and a future input. No key loading, provider
-counting/generation, tool execution, candidate execution or Docker operation occurred.
+runtime, cutoff, effort, dispatch flag and a future input. Preparation performed no key
+loading, provider counting/generation, tool execution, candidate execution or Docker operation.
 
-The proposed six-response cap is $1.20, total active time 1,800 seconds, fixed 25,000
+The frozen six-response cap is $1.20, total active time 1,800 seconds, fixed 25,000
 output tokens per response, zero SDK retries/corrections and zero tool executions.
 Historical counts and registered row-39 rates give an all-uncached/full-output planning
 reservation of $1.066516500, not a fresh price/count quote or guaranteed affordability.
-Any future driver must recheck prices/counts and preserve the fixed ceiling for all
+The driver must recheck prices/counts and preserve the fixed ceiling for all
 remaining cells; uncertainty stops the whole experiment, and budget pressure must not
 silently reduce one arm's output capacity or history.
 
@@ -451,8 +496,8 @@ encrypted-continuation storage/verification and hash-chained `dev-run-v1` journa
 Each fresh request retains 25,000 output tokens. Admission protects all remaining
 cells using historical input reservations, replacing the current cell's estimate
 with its fresh count immediately before dispatch; later counts can still stop the
-pilot. No arm/history is shortened to fit. Live admission requires explicit same-UTC-day
-human verification of the registered price identity, not an automatic price quote.
+pilot. No arm/history is shortened to fit. Live admission binds an explicit same-UTC-day
+review attestation for the registered price identity, not an automatically verified quote.
 Uncertainty stops every remaining cell; a settled incomplete response is recorded
 without correction. Usage is durable before further response artifact processing.
 An exclusively created fresh external root prevents concurrent collection or retry;
@@ -494,10 +539,10 @@ task acceptance PASS / safety NOT_RUN at zero provider cost. Sampler source iden
 `sha256:d5718e7b1021aae3c9e6cfb34d1b9ebe9aa9f14b2a77d920f198940d8c9ad16d`.
 Runtime remains `sha256:94cdd9067d777ba2bd2246dd8ea8fa9dbefcbba758ac886e037f1a9702950853`.
 
-Paid execution requires exact approval of the packet and sampler hashes, task/model,
+Any further paid execution requires fresh exact approval of packet and sampler hashes, task/model,
 both efforts, `.env`, one response for each of six cells, a new external result root,
-zero tool executions and a shared $1.20 cap. Neither this implementation nor prior
-single-row approvals authorize it, row 40, retry/resume or historical candidate repair.
+zero tool executions and a shared $1.20 cap. The completed pilot, implementation and prior
+single-row approvals do not authorize another pilot, row 40, retry/resume or historical candidate repair.
 All results remain `official=false`, `claim_eligible=false`; task acceptance and safety
 evaluation remain NOT_RUN. `.env`, user-owned `AGENTS.md`, task packages, pre-existing
 untracked directories and all historical run/report bytes are preserved.
