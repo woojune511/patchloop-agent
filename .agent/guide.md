@@ -595,6 +595,14 @@ Next diagnostic seam: distinguish historical PASS from current completion and un
 completion-versus-stop selection without inferring private reasoning or adding a stop ban.
 This observation alone does not isolate prompt/history causality. Do not resume, repair,
 run a post-terminal check or execute row 35 without new exact authority.
+The subsequent read-only diagnosis finds that `compact_model_state`'s protocol-only
+rolling-card filter also removes the check card's unique remaining-check instruction:
+present in the turn-23 audit context, absent from all native non-reasoning items.
+Current NOT_RUN/remaining IDs survive. `recent_checks` has diff hashes but no explicit
+historical PASS label; this is separate from correct diff-bound submission admission.
+Preserve voluntary stop while clarifying that no further edit is not task completion.
+All 65 existing focused tests pass but miss that final guidance-delivery boundary.
+See current status for the diagnosis and its causal limits; no runtime fix was made.
 
 V25 qualifies historical failures and aligns their guidance with offered
 actions. Row 32 rechecked earlier edits with two/one mutations left, then stopped with

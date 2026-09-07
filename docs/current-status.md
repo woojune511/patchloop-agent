@@ -75,6 +75,38 @@ historical files and pre-existing scratch entries are unchanged. No resume, retr
 post-terminal check or repair ran. Row 35 requires separate exact approval; all results
 remain `official=false`, with no claim eligibility.
 
+### Row-34 read-only completion-path diagnosis
+
+Comparison of the saved audit context and actual native input isolates a projection
+defect: the turn-23 audit card says to run the remaining `parent-traversal-contract`,
+but this guidance occurs in none of the native non-reasoning items. In
+`compact_model_state`, an inspection-card deduplication filter keeps only protocol
+cards, also dropping unique check/mutation next-action guidance. The current NOT_RUN
+table and remaining check ID do survive; this is not loss of every completion signal.
+
+`recent_checks` simultaneously retains the previous diff's contract PASS without an
+explicit current/historical label, requiring a hash comparison. Failure and working-note
+projections do have currency labels. This asymmetry is a presentation weakness, not a
+false PASS in the gateway's diff-bound check store. The final provider request reports
+114,765 input tokens; its newest complete state message is 10,658 UTF-8 bytes. Large
+historical context is measurable, but its causal effect on this decision is not proven.
+
+The stop description already says without submission, but its reason
+`no_safe_scoped_mutation` was interpreted in both public decisions as no more edit needed.
+Admission validates the intent shape and source IDs, not the truth of completion prose.
+That preserves voluntary stop; accepting it did not create a successful task result.
+Do not add a prose validator, force a check, rewrite history, or infer that exposing
+finish earlier would have solved the run. Prioritize a compact current completion view
+with surviving next-action guidance, explicit historical PASS/recheck labels, and a
+clear unsuccessful-stop versus successful-submit distinction.
+
+Provider-free characterization reproduces guidance removal and intent-only stop admission
+in memory. The 65 existing model-state/check-identity/recheck/conversation tests pass in
+9.88 seconds under `C:\pt\pl34-analysis-a`, but do not assert delivery of the remaining-check
+guidance in actual model input. Future regression must cover that final boundary, not
+only the audit card. This diagnosis changes documentation only; it neither repairs nor
+executes the saved candidate, calls a provider, starts Docker, nor authorizes row 35.
+
 ## Current implementation: tool surface v26
 
 V26 adds advisory **changed-code execution feedback** to existing public checks and
