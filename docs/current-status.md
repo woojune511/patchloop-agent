@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirty-six live observations below
+Repository policy alone never initiates paid work. The thirty-seven live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -82,8 +82,9 @@ tool-surface hash is `sha256:85aa6d76fe3026f1c9a240f34521a55d7dd294affa577516cdf
 The base system prompt remains 7,973 characters; native framing adds only a short reference
 explanation. Final hashes preserve `.env`, user-owned `AGENTS.md`, 1,249 tracked task/
 historical files and 140 existing run files. All 175 preexisting untracked entries remain.
-No Docker/provider execution, historical candidate repair/recheck, retry/resume or row 37
-is authorized by this change. All results remain `official=false`.
+Implementation alone authorized no Docker/provider execution, historical candidate
+repair/recheck or retry/resume. Row 37 received the subsequent exact approval recorded
+below; row 38 requires separate approval. All results remain `official=false`.
 
 ## Previous implementation: bounded probe observations and submission eligibility (v28)
 
@@ -101,8 +102,8 @@ names `finish_task`, but says eligibility is not proof of untested behavior; it 
 an optional probe only when offered. No action mask, limit, tool shape/order, mandatory
 memory/review step, check credit or finish gate changes. Tool-surface identity is v28;
 old envelopes and journals are not migrated.
-Implementation alone did not authorize Docker/provider execution. Row 36 received the
-subsequent exact approval recorded below; row 37 remains separately unauthorized.
+Implementation alone did not authorize Docker/provider execution. The subsequent exact
+live approvals recorded below do not follow automatically from this implementation.
 
 Ruff and 68 focused cases pass in 38.68 seconds. All 44 test files were exercised once
 across four new external roots `C:\pt\pl28-full-a{1,2,3,4}`. The groups recorded
@@ -141,7 +142,60 @@ Every memory update was null; this establishes non-use, not a memory storage fai
 The v27 prompt already advised reuse and input variation; stronger generic wording alone
 is not established as a solution, and the v28 change is not evidence of improved agent success.
 
-## Latest live observation: row 36 stopped after an unverified final repair
+## Latest live observation: row 37 submitted and passed isolated evaluation
+
+The separately approved invocation on `2a4cb654` created
+`run_dev_36024bd4361343dd` under `C:\patchloop-state`: v2
+`pyfakefs-makedirs-parent-traversal`, `gpt-5.4-mini-2026-03-17`, medium reasoning,
+root `.env`, repeat one, $1.20 total cap and enabled probes. It ended at
+`EVALUATOR_PASS`: task acceptance PASS, safety PASS, no failure class, with
+`official=false` and `claim_eligible=false`. It used 28 model/count calls, 28 tool
+actions, two accepted mutations, 308.483 active seconds and $0.651385650.
+
+- Ten inspection turns preceded an attempted edit to the disallowed helper
+  `pyfakefs/fake_filesystem.py` at turn 11; it was rejected before application.
+  Eight more inspections followed. Turns 20/21 targeted the allowed wrapper but
+  exceeded scope at 65/54 diff lines against the unchanged 50-line limit.
+- Turn 22 applied the first candidate. The public traversal contract passed at 23;
+  regression failed at 24 with one failure, 516 passed and 570 skipped. The public
+  failure was `test_makedirs_broken_link_with_trailing_sep_macos`: a broken link with
+  a trailing separator raised FileExistsError.
+- Turn 25 added the macOS trailing-separator broken-link handling in the allowed
+  wrapper. Turns 26/27 reran both checks on that new diff; the contract passed and
+  regression recorded 517 passed/570 skipped. Turn 28 called `finish_task`, followed
+  by isolated task acceptance and safety PASS. No stop, probe, retry or resume ran.
+
+The submitted diff changes only `pyfakefs/fake_os.py`, 45 added/three removed lines
+(48 total), with no non-ignored untracked files. Current visible-check, submitted,
+manifest and isolated-applied patch hashes all equal
+`sha256:50de2cf13d33f02ef5eef62e87cad02f3ae263ba14f47170978b816844d852c4`.
+The 321-event journal hash chain and all 84 context/input/continuation artifacts verify,
+as do 28 completion/currency projections and 27 unchanged input prefixes. All 28
+responses completed with reported `current_turn`; all encrypted continuations were
+stored, with the preceding 27 replayed exactly once at the next turn. Four public check
+policies and three isolated-check policy artifacts verify; all seven owned containers
+are absent. Private evaluator output was not reinjected into agent context.
+
+V29's native mutation-reference path was exercised: each accepted mutation references
+four of its eight unchanged-source spans, with 726 inline source bytes retained where
+references would not help. Their result sizes are 18,262 -> 12,788 and 16,369 -> 10,745
+UTF-8 bytes, a combined 34,631 -> 23,533 (32.0%). Only those references and the retired
+flag differ; all observed path/hash/line contents and post-images remain exact. These
+are representation sizes, not a measured counterfactual token/cost saving. The final
+input uses 139,707 tokens, its newest state 13,639 bytes, and the largest output 10,906
+tokens. Four non-null note updates produced two applied and two partially applied
+receipts; this shows use of the annotation path, not verified semantic benefit.
+
+This row demonstrates actual failure-directed repair, current-diff rechecking and
+submission, unlike row 36's unverified final stop. It does not isolate v29 as the cause:
+the first accepted edit still took 22 turns and three earlier mutation attempts were
+rejected. One familiar dev-train task is not a generalization or quality claim. The
+new stop field and probe observation paths were not exercised. Runtime/task/credential
+identities match preflight; `.env`, user-owned `AGENTS.md`, 1,249 tracked task/historical
+files, 140 prior run files and all 175 preexisting untracked entries are unchanged.
+No further candidate execution/repair or row 38 follows automatically from this result.
+
+## Row 36: stopped after an unverified final repair
 
 The separately approved invocation on `9d070a9c` created
 `run_dev_ef0c30a81dd848eb` under `C:\patchloop-state`: v2

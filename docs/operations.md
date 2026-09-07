@@ -231,6 +231,17 @@ isolated-applied patch identities match. Nine owned containers are absent. Unlik
 the changed behavior solely to v27. See [the latest live record](current-status.md#latest-live-observation-row-35-submitted-private-evaluation-failed).
 No retry, resume, candidate repair or row 36 follows automatically.
 
+The subsequent separately approved row 37 on `2a4cb654`,
+`run_dev_36024bd4361343dd`, ends at `EVALUATOR_PASS`: task acceptance PASS/safety PASS,
+28 model/count calls and tools, two accepted mutations, $0.651385650. After one public
+regression failure, the model repairs the candidate, rechecks both current-diff obligations
+and submits. Checked/submitted/isolated-applied patch hashes match; all seven owned
+containers are absent. Native mutation references preserve source identity and reduce
+those two result payloads by 32.0%. This is live delivery and one task success, not causal
+evidence for improved general agent efficiency. No probe or stop ran. See
+[the row-37 record](current-status.md#latest-live-observation-row-37-submitted-and-passed-isolated-evaluation).
+Its terminal is immutable; no retry, candidate repair/recheck or row 38 follows automatically.
+
 Tool surface v29 adds position-bound references for repeated mutation source in new native
 outputs. Inspect `revalidated_spans.content_delivery` for prior action/field/file hash,
 source range and current `target_start_line`; `content_hash` binds the normalized body.
@@ -495,7 +506,8 @@ an automatic execution. `stop_task` remains a voluntary unsuccessful exit; sayin
 no more edit is needed does not submit a candidate. Tool argument shapes/order and
 admission remain unchanged. Separately approved row 35 now supplies delivery/submission
 evidence, not a private acceptance PASS or causal proof of better decisions. Rows 34/35
-are terminal read-only evidence; implementation and prior approval do not authorize row 36.
+are terminal read-only evidence. Later approvals and results are recorded in current status;
+the latest row 37 does not authorize row 38.
 
 `finish_task` becomes available only after every visible check passes on the
 current non-empty diff and no non-ignored untracked file remains. The context lists
