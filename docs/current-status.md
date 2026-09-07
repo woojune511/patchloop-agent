@@ -321,6 +321,71 @@ user-owned `AGENTS.md`, 1,249 tracked task/historical files, 148 prior run files
 175 preexisting untracked entries remain unchanged. No historical candidate repair/
 recheck, retry/resume or row 40 is authorized; further diagnosis uses saved evidence.
 
+### Row 39 follow-up: scope feasibility and first-edit evidence
+
+The approved provider-free audit reconstructs all four accepted edits in memory from
+the public base source and durable exact replacements. Each preimage matches its raw
+CRLF hash, and the final bytes match the immutable workspace. A fresh external bare Git
+store computes whole-file `--numstat`; the existing pure `verify_scope` checks the same
+public constraints. AST inspection checks assignment placement, without importing or
+executing any candidate. The actual turn-32 input contains the correct 49/50 budget and
+the existing warning that headroom is not replacement-text length.
+
+| Final guard layout | Full diff lines | Scope | Assignment outside `if` |
+| --- | ---: | --- | --- |
+| Recorded semicolon edit | 49 | PASS | No |
+| Put only the assignment on the next line | 50 | PASS | Yes |
+| Put condition, raise and assignment on separate lines | 51 | FAIL | Yes |
+| Same separate lines, remove the preceding added blank line | 50 | PASS | Yes |
+
+The limit did not require the erroneous compression. These results prove feasible
+line layout and block structure only, not correct exception semantics or passing checks.
+No historical candidate was repaired in a worktree or rechecked.
+
+At the first accepted edit, all 572 previously observed source lines are present in
+the actual native input: 243 wrapper, 270 filesystem helper and 59 path-helper lines.
+Public bytes-path assertions, intermediate `0o755`/leaf `0o700` assertions, read-only
+permission labels and the instruction to identify/reuse existing behavior owners are
+also present. Thus these failures are not explained by source projection loss.
+
+- Turn 6 says it will inspect `create_dir`, but requests filesystem lines 2720-2788.
+  That range starts inside `makedir` (2712-2762), a different function. The actual
+  `create_dir` (2092-2143) has zero observed lines before the first edit. Its implementation
+  was read only by this audit, not retroactively attributed to the model. The wrapper's
+  `mkdir` body (890-912) was also not observed.
+- The complete existing filesystem `makedirs` (2769-2823) was delivered, including
+  the Windows ENOTDIR-to-ENOENT translation at 2821-2822. The first edit bypasses it
+  and calls `create_dir(next_dir, mode)` directly, dropping that exception adaptation.
+- Delivered `_path_components` overloads preserve bytes, and `abspath` distinguishes
+  byte/string working directories. The new accumulator instead starts from string
+  separator/cwd values. The first public check exposes that mismatch.
+- The new loop passes the leaf mode to every `create_dir` call despite the public
+  parent/leaf distinction. The next public failure exposes that separate preservation gap.
+
+Before the first edit, 19 inspections comprise 15 new-coverage actions, three covered-only
+reads and one zero-match search. Turns 9/12 reread parts of the already delivered helper;
+turn 20 rereads the wrapper after a correctly rejected fabricated contiguous anchor.
+The public decisions increasingly seek components for a direct walker; after the rejected
+helper edit, the model ports that strategy into the allowed wrapper. This supports an
+edit-strategy/evidence-use diagnosis, not a conclusion that all exploration was wasted.
+Every memory update was null: non-use, not a demonstrated storage failure or proof that
+mandatory notes would help. Prompt reuse guidance was already supplied.
+
+No new deterministic delivery, scope-arithmetic or admission defect was established,
+so runtime, prompts, masks, limits and task bytes remain unchanged. The next experiment
+should hold the harness fixed and distinguish behavior-owner identification, preservation
+of explicit public requirements and scope interpretation; it requires separate exact
+authority. No stronger generic instruction, forced memory/check step, semicolon ban or
+scope increase is justified by this audit alone.
+
+The scripts and structured result are under `C:\pt\pl39-analysis-a`; scope reconstruction
+was reproduced with fresh Git objects under `C:\pt\pl39-analysis-b`. The scope script
+requires a new `--output-root` directly under `C:\pt`; neither script dispatches a provider
+or executes task code. Seven scope/AST comparisons and source-delivery assertions pass.
+The 370-event journal retains its hash above, and the final workspace hash remains fixed.
+All 152 current run files, `.env`, user-owned `AGENTS.md`, 1,249 tracked task/historical
+files and 175 preexisting untracked entries are preserved. This remains `official=false`.
+
 ## Row 38: stopped after an unverified final repair
 
 The separately approved invocation on `2c303bfc` created

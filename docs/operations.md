@@ -268,6 +268,14 @@ This is successful identity delivery and observed rechecking, not causal effecti
 See [the row-39 record](current-status.md#latest-live-observation-row-39-rechecked-and-exhausted-accepted-mutations).
 Its terminal is immutable. No candidate repair/recheck, retry/resume or row 40 is authorized.
 
+The subsequent read-only audit reconstructs candidate text only in memory and external
+Git blobs: a separated assignment fits 50 lines, while a three-line guard also fits after
+removing one added blank line. Scope PASS and AST placement are not semantic test PASS.
+The first edit input retains all 572 observed source lines and public bytes/mode checks;
+the model's named `create_dir` inspection actually covered a different `makedir` body.
+No runtime change follows from these findings. The reproducible scripts and bounded result
+are under `C:\pt\pl39-analysis-a`; no historical task execution or new live authority follows.
+
 Tool surface v31 makes successful mutation identity consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete
 post-edit candidate. `result.output.baseline_diff_hash` names the complete pre-edit

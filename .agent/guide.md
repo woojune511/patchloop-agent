@@ -634,6 +634,18 @@ but introduces a new control-flow bug and exhausts accepted edits. Preserve that
 do not infer a causal improvement from one row. Row 40 requires separate exact approval.
 No historical candidate execution is authorized.
 
+The row-39 provider-free follow-up finds no new delivery or scope-arithmetic defect.
+External Git/AST comparisons show the assignment can sit outside the guard within 50
+diff lines, including a multiline form after removing one added blank line. This is
+layout/scope evidence, not a passing candidate. All 572 observed lines, bytes/mode checks,
+permissions and reuse guidance reached the first edit. Turn 6's claimed `create_dir`
+inspection actually starts in `makedir`; the called `create_dir` implementation was not
+read. Conversely the full higher-level `makedirs`, including Windows errno translation,
+was delivered but bypassed by the new loop. Distinguish unrequested evidence from lost
+projection and observed requirements from preserved behavior. Keep the harness fixed;
+do not infer that forced notes, generic extra prompt text or a semicolon ban solves this.
+Any model/prompt comparison or row 40 still needs its own exact scope and approval.
+
 V30 makes current path permission and source-note expiry explicit at the
 existing evidence/action boundary. Reuse the gateway's permission matcher in the source
 catalog; attach expiry to its mutation even without a memory update; reference an already
