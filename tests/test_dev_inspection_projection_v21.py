@@ -237,7 +237,7 @@ def test_parallel_native_receipt_cache_and_restart_preserve_originals(tmp_path):
     assert next_items[3:3 + len(items[3:])] == items[3:]
 
 
-def test_surface_identity_changes_without_tool_inputs_or_limits_changing():
+def test_projection_preserves_current_ordered_tool_inputs_and_limits():
     schemas = dev_tool_schemas(finish_enabled=True, allowed_tools=ALL_DEV_TOOLS)
 
     def structure(value):
@@ -249,7 +249,7 @@ def test_surface_identity_changes_without_tool_inputs_or_limits_changing():
 
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "2be7c053908b397aaefac42085a7af992e60dcac39ad45c0bbc3cb88d92278aa"
+        "918f1c2a1aa600f1c2eef71dde64b3542d35ea9a34a08a70c494130776891710"
     )
     assert dev_tool_surface_hash() != (
         "sha256:90dc9a92b61cfd61f61572af504a66424f3e703ab8e29f114de29c22cf97a684"

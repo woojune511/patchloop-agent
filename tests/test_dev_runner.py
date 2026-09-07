@@ -2653,7 +2653,6 @@ def test_protocol_correction_limit_is_consecutive_and_stop_is_structured(
                         arguments={
                             "reason_code": "insufficient_public_evidence",
                             "summary": "No additional public evidence supports a safe edit.",
-                            "evidence_span_ids": [],
                         },
                         turn_decision=PublicTurnDecision(
                             mode="stop",
@@ -2680,7 +2679,6 @@ def test_protocol_correction_limit_is_consecutive_and_stop_is_structured(
     assert run["agent_stop"] == {
         "reason_code": "insufficient_public_evidence",
         "summary": "No additional public evidence supports a safe edit.",
-        "evidence_span_ids": [],
         "diff_hash": sha256_bytes(b""),
     }
     journal = DevJournal(tmp_path, run["run_id"])
@@ -3329,7 +3327,6 @@ def test_provider_response_resume_does_not_repeat_provider_call(tmp_path, monkey
                         arguments={
                             "reason_code": "insufficient_public_evidence",
                             "summary": "Stop at the one-call test horizon.",
-                            "evidence_span_ids": [],
                             "turn_decision": PublicTurnDecision(
                                 mode="stop",
                                 basis="Only an explicit stop fits the current horizon.",
@@ -3435,7 +3432,6 @@ def test_resume_rejects_tampered_reasoning_before_tool_or_provider_call(
                         arguments={
                             "reason_code": "insufficient_public_evidence",
                             "summary": "Stop after the integrity test.",
-                            "evidence_span_ids": [],
                             "turn_decision": PublicTurnDecision(
                                 mode="stop",
                                 basis="The integrity test uses one bounded action.",

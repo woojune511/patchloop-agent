@@ -108,7 +108,14 @@ rolling inspection accounting is not a model-facing edit log. Saved input artifa
 preserve every previous item, and metadata binds history and current view.
 Current source bodies already in native results are linked by exact path/hash/line and
 action identity, not copied again into state. Missing or ambiguous delivery keeps the
-inline source; mutation admission is unchanged. `current_sources` groups path/hash,
+inline source; mutation admission is unchanged. New mutation results also reference
+unchanged source in prior native outputs when the admitted edit position, raw-file hashes
+and exact delivered lines prove the mapping. Backward references retain the new source
+identity and a body hash; changed code and post-images stay explicit. They never silently
+re-read source or rewrite old messages. The obsolete alternative-requirement flag stays
+out of the model view. Stopping uses a reason and summary, not model-supplied source IDs;
+this simplifies the interface without preventing voluntary abandonment.
+`current_sources` groups path/hash,
 native action/field/ranges and observed headers without filling unseen gaps. Scope
 rejection explicitly names the rejected path and actual public path rules; a helper
 can be inspectable but not editable. Earlier observations

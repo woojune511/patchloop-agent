@@ -236,7 +236,6 @@ def test_provider_correction_survives_crash_without_repeating_dispatch(
     counted = 0
     stop_arguments = {
         "reason_code": "insufficient_public_evidence", "summary": "End synthetic run",
-        "evidence_span_ids": [],
         "turn_decision": {"mode": "stop", "basis": "End", "evidence_goal": None},
     }
 

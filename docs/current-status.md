@@ -27,7 +27,65 @@ Repository policy alone never initiates paid work. The thirty-six live observati
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-## Current implementation: bounded probe observations and submission eligibility (v28)
+## Current implementation: position-bound mutation feedback references (v29)
+
+New model-facing successful mutation results reference unchanged source already delivered
+in native tool history. The admitted replacement position, pre/post raw-file hashes,
+complete candidate diff and exact delivered lines prove each reference; this is not a
+similar-text search. Each span keeps its current identity, a normalized body hash and at
+most 16 backward action/field/source-range/target-position references. Missing, conflicting,
+partial or non-smaller delivery stays inline. Changed hunks, post-images and failures stay
+exact. Durable mutation receipts, gateway evidence and previously sent native items are
+not rewritten; restart resolves references deterministically without rereading source.
+
+The obsolete `alternative_requirement_satisfied` flag is omitted from model-facing
+mutation results, not raw receipts or recovery telemetry. `stop_task` no longer asks the
+model to supply `evidence_span_ids`; its existing reason/summary and turn decision remain.
+It still abandons the run without submission. No action mask, stronger stop rule, note
+obligation, automatic recheck, task-specific hint or resource-limit change is introduced.
+Tool-surface v29 changes the output semantics and only that stop input field; older
+nonterminal envelopes remain subject to exact-match rejection, without migration.
+
+A read-only reprojection of row 36's four native mutation outputs reduces their combined
+serialized UTF-8 size from 135,440 to 28,572 bytes (78.9%). The final mutation output goes
+from 33,409 to 5,373 bytes. All 12 unchanged-source spans become proven references; all
+4,206 observed path/hash/line entries, post-images and other result fields remain exact,
+apart from the retired flag. The journal hash remains
+`sha256:197e0bd4a4daf6fc639d00567b3d4705d7f352f7ca1e95f27804c40c624c9d8f`.
+This is an in-memory representation comparison, not a token/cost measurement, replay of
+the historical candidate, or evidence that a new agent would finish successfully.
+
+Read-only source analysis also finds the final candidate still has the Windows file-parent
+ENOTDIR branch where the public upstream test expects ENOENT. The last repair changed a
+different, absent-path branch. This establishes a public code defect, not the outcome of
+an unexecuted final check. Delivered recheck guidance and sufficient budget were already
+present. The source duplication and obsolete citation requirement are concrete interface
+costs, but neither is proven to have caused the model's premature stop. In a separately
+approved future row, assess repair of the public failing branch and current-diff rechecking
+separately from delivery/byte reduction; do not infer either from model-authored prose.
+
+Ruff and 93 focused cases pass in 25.22 seconds. All 45 test files ran once on fixed
+runtime bytes across `C:\pt\pl29-full-a{1,2,3,4}`: 136/72/155/316 passed, two stale
+ordered-schema expectations failed, and four opt-in real-Docker cases skipped. Those
+expectations now reflect removal of stop's citation field; the final 31 affected feedback/
+projection/documentation cases pass in 10.76 seconds. All 681 unique suite cases pass
+across these executions, including 37 new reference/projection/restart cases. Group times
+were 85.48/104.36/62.40/130.94 seconds; the longest exceeds the two-minute full-suite
+target, while focused validation meets it.
+
+Mock `run_dev_3c988fa1ae6d4fdf` under `C:\pt\pl29-smoke-a` reaches mutation, visible
+check, finish and isolated task acceptance PASS/safety NOT_RUN in 5.57 command seconds:
+four mock turns, five tools, one accepted mutation, zero provider/count calls and zero cost.
+The envelope matches the tested runtime hash
+`sha256:83c0f69696db8e5d7700719835f1d62a78a31ffeb646f1084718fb9be5b341a7`;
+tool-surface hash is `sha256:85aa6d76fe3026f1c9a240f34521a55d7dd294affa577516cdf332cfbb66a2b5`.
+The base system prompt remains 7,973 characters; native framing adds only a short reference
+explanation. Final hashes preserve `.env`, user-owned `AGENTS.md`, 1,249 tracked task/
+historical files and 140 existing run files. All 175 preexisting untracked entries remain.
+No Docker/provider execution, historical candidate repair/recheck, retry/resume or row 37
+is authorized by this change. All results remain `official=false`.
+
+## Previous implementation: bounded probe observations and submission eligibility (v28)
 
 The approved provider-free follow-up separates normal experiment execution from semantic
 verification in the model view. `observation.execution_status=completed` replaces the

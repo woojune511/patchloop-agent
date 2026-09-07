@@ -201,10 +201,10 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
             return [structure(item) for item in value]
         return value
 
-    # Captured from v19: preserve property order, required fields, limits, and tool order.
+    # V29 removes stop's source IDs; probe properties/limits and tool order stay unchanged.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "2be7c053908b397aaefac42085a7af992e60dcac39ad45c0bbc3cb88d92278aa"
+        "918f1c2a1aa600f1c2eef71dde64b3542d35ea9a34a08a70c494130776891710"
     )
     assert dev_tool_surface_hash() != (
         "sha256:d69d9d4f71a4ed6517e0ae077d2df1fe934f6498abcacf104eed0b9b0fc717a8"

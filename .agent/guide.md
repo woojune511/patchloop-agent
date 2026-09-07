@@ -103,7 +103,9 @@ The minimum path includes a source read only when current exact evidence must fi
 acquired. `finish_task` is exposed only for a non-empty
 diff with no untracked files after all visible checks pass on that exact diff.
 `stop_task` is always exposed as an explicit unsuccessful terminal; it never submits
-or evaluates.
+or evaluates. Its tool arguments are the existing reason code/summary and turn decision;
+do not ask the model for source-span IDs. The gateway attaches the current diff identity.
+Retired citation fields are strict input errors, not new semantic reasons to reject a stop.
 
 Derive `completion_guidance` from the already prepared gateway snapshot and actual
 offered policy, without re-executing checks or modifying admission. Project workflow
@@ -262,6 +264,19 @@ Other omitted observations retain at most 12 path/hash/range metadata entries an
 total omitted-range count, never their source body. The compact context's latest three
 inspection outcomes include both read and search actions in durable observation order.
 Native latest source, mutation content, and check output are not repeated in derived cards.
+For a newly delivered mutation result, replace an unchanged `revalidated_spans` body with
+backward `content_delivery` only when its admitted action/input/candidate identity and
+pre/post raw hashes match. Map complete lines using the admitted replacement position and
+line delta, never a text search. Each reference names the earlier action/field/file hash,
+inclusive source range and `target_start_line`; keep the new span's current file/diff
+identity and normalized `content_hash`. Use at most 16 references and only when their
+final serialized UTF-8 form is smaller. An unproven, partial, conflicting or touched span
+stays inline. Resolve alias chains chronologically with complete range/body-hash checks;
+self/forward references cannot gain authority. No filesystem read or new evidence admission
+is performed. The gateway and canonical audit retain exact bodies; saved native prefixes
+and original mutation receipts never change. Context/native mutation projections omit
+`alternative_requirement_satisfied`, while raw receipts and internal recovery telemetry
+retain it. Keep current post-image, bounded changed hunk and typed failure feedback exact.
 `observed_source_index` provides at most 16 lexical Python header candidates within
 4,000 serialized characters, with exact observed path/hash/start-line metadata. Build
 it only from current delivered spans, prioritize editable paths, and never read unseen
@@ -463,7 +478,7 @@ projection read-only and deterministic after restart, including native latest-st
 The prompt distinguishes completion of this candidate from the separate further-edit
 horizon. Do not change tool masks, force a check or reject a voluntary stop on this basis.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v28`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v29`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -582,7 +597,19 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: v28 separates probe execution from unassessed behavior in model-facing
+Current seam: v29 references position-proven unchanged mutation source already delivered
+in native history, removes the obsolete alternative-requirement projection and drops
+stop's model-supplied source IDs. This changes presentation and one stop input field,
+not admission, policy, limits, notes or voluntary abandonment. Preserve immutable raw
+receipts, prior native prefixes, post-images, failures and exact restart. Missing proof
+keeps inline source. Do not weaken evidence or add a semantic stop gate to improve a metric.
+Row 36's read-only four-result reprojection is 135,440 -> 28,572 UTF-8 bytes; 4,206
+observed path/hash/line entries are identical. This does not measure tokens, causal model
+benefit or candidate success. The next separately authorized live observation must assess
+public failing-branch repair and actual current-diff rechecks separately from delivery
+correctness. No new row, candidate execution or historical migration follows automatically.
+
+V28 separates probe execution from unassessed behavior in model-facing
 results and distinguishes submission eligibility from semantic confidence. It adds a
 bounded, source-linked observation excerpt without changing tool shapes/order, masks,
 budgets, note obligations, execution policy or submission admission. No task-specific
@@ -617,9 +644,12 @@ owned containers are absent. The final unsubmitted 34-line diff hash is
 `sha256:79074e915e8de9967e2c76fd8ffd6c78ccb7f9d66cc45635b136af7cc936b301`.
 No notes, probe, finish or isolated evaluator run. The new v28 probe observation and
 ready-submission guidance paths are unexercised, not validated as effective. Existing
-protected bytes remain unchanged. The next seam is read-only diagnosis of premature
-stop after a final repair; no candidate recheck/repair, retry/resume or row 37 is
-authorized by this observation. A new live row requires separate exact approval.
+protected bytes remain unchanged. Subsequent read-only diagnosis confirmed repeated
+mutation source and a remaining public Windows file-parent error branch untouched by the
+last repair; it did not re-execute the candidate or establish the model's private cause.
+V29 addresses concrete interface costs, not a proven fix for premature stop. No candidate
+recheck/repair, retry/resume or row 37 is authorized by this observation or local change.
+A new live row requires separate exact approval.
 
 V27 preserves a snapshot-derived completion view through final native
 projection and labels historical check credit explicitly. Descriptions clarify
@@ -1386,6 +1416,28 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+V29 passes Ruff and 93 focused mutation-projection/completion/recheck/conversation/stop
+cases in 25.22 seconds. All 45 test files ran once across `C:\pt\pl29-full-a{1,2,3,4}`:
+136/72/155/316 passed, two stale stop-input schema hashes failed, four real-Docker cases
+skipped. After updating only those expectations, all 31 affected feedback/projection/docs
+cases pass in 10.76 seconds: all 681 unique cases pass across these executions. Runtime
+bytes stayed fixed throughout. Groups take 85.48/104.36/62.40/130.94 seconds; do not claim
+the full sequence meets the two-minute target. Group 1: tools/context/recovery/source-rebind/
+execution-feedback; group 2: runner/resume/input/state; group 3: verification concerns/flow/
+identity, check identity, policy feedback, source navigation, notes feedback, note temporal,
+completion; group 4: every remaining file. Explicitly disable real-Docker opt-ins.
+The 37 new cases cover LF/CRLF, shifted/deleted lines, exact union/gap/conflict/position
+proof, bounded byte-beneficial references, backward hash-verified alias chains, inline
+fallback, non-projection of unused private admission data, unchanged post-image/receipt,
+real multi-edit prefix/restart/idempotency and a completed-action-before-batch crash.
+Existing continuation, provider-uncertainty, mutation/check/deadline tests also pass.
+Mock `run_dev_3c988fa1ae6d4fdf` in `C:\pt\pl29-smoke-a` reaches mutation/check/finish/
+isolated acceptance PASS, safety NOT_RUN, four mock turns/five tools and zero cost in
+5.57 command seconds. It shares the tested runtime hash recorded in current status.
+The read-only row-36 four-result reprojection reduces 135,440 to 28,572 UTF-8 bytes,
+preserving all 4,206 observed path/hash/line entries and the original journal hash.
+This is not billed-token savings, semantic success, or authority for a new live row.
 
 V28 passes 68 focused probe-observation/completion/probe/state/contract cases in 38.68
 seconds and Ruff. All 44 files were exercised across `C:\pt\pl28-full-a{1,2,3,4}`:

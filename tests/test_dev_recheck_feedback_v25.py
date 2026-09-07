@@ -103,8 +103,7 @@ def test_last_mutation_keeps_conditional_check_check_finish_path(order, remainin
     counters = runner._RunCounters(model_calls=40 - remaining_calls, tool_actions=33)
     stop = RequestedTool(
         name="stop_task", action_id="voluntary-stop",
-        arguments={"reason_code": "no_safe_scoped_mutation", "summary": "Model judgment.",
-                   "evidence_span_ids": []},
+        arguments={"reason_code": "no_safe_scoped_mutation", "summary": "Model judgment."},
         turn_decision=PublicTurnDecision(mode="stop", basis="A public judgment."),
     )
     for step in range(3):
@@ -193,11 +192,11 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
 
 
 def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
-    # V28 deliberately clarifies probe/finish descriptions. Ordered input shapes
+    # V29 removes only stop's model-supplied source IDs. Ordered input shapes
     # are independently pinned in test_dev_completion_v27.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:fde7155de3dd641149dc44acd141ad966d5ad9794f0b15671aa5e4e95ceb5e7b"
+    )) == "sha256:40ca146186076af26dc2fb87213a5e50422cac9db0b22f09d48be310f5817be8"
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )

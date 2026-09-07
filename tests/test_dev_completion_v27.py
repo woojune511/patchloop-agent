@@ -184,13 +184,12 @@ def test_success_prose_does_not_create_a_new_stop_rejection_or_a_submission():
     gateway = SimpleNamespace(spans={}, current_diff_hash="current")
     result = DevToolGateway._stop_task(gateway, {
         "reason_code": "no_safe_scoped_mutation", "summary": "Everything is complete.",
-        "evidence_span_ids": [],
     })
     assert result["reason_code"] == "no_safe_scoped_mutation"
     assert "patch" not in result
 
 
-def test_completion_descriptions_change_without_changing_tool_shapes_or_order():
+def test_completion_descriptions_preserve_tool_order_and_current_input_shapes():
     schemas = dev_tool_schemas(
         finish_enabled=True, allowed_tools=DEV_READ_TOOLS | DEV_SINGLE_ACTION_TOOLS,
         check_ids=["first", "second"],
@@ -205,7 +204,7 @@ def test_completion_descriptions_change_without_changing_tool_shapes_or_order():
         return value
 
     assert sha256_json(without_descriptions(schemas)) == (
-        "sha256:0c5760319ac58355a50fa4f6d6d61e039078d302569df9aded07aba8c408bc4a"
+        "sha256:b9a718dbdbcd9aabd230b2ee90b8ae680decdb0d4069986e9209c3e1fd03adbe"
     )
     assert [schema["name"] for schema in schemas] == [
         "search_files", "read_file", "run_check", "replace_text", "stop_task", "finish_task",

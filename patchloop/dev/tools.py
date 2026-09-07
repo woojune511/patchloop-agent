@@ -298,13 +298,8 @@ def dev_tool_schemas(
                         ],
                     },
                     "summary": {"type": "string", "minLength": 1, "maxLength": 1_000},
-                    "evidence_span_ids": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "maxItems": 8,
-                    },
                 },
-                "required": ["reason_code", "summary", "evidence_span_ids"],
+                "required": ["reason_code", "summary"],
                 "additionalProperties": False,
             },
         },
@@ -3271,9 +3266,6 @@ class DevToolGateway:
 
     def _stop_task(self, arguments: dict[str, Any]) -> dict[str, Any]:
         intent = StopIntent.model_validate(arguments)
-        unknown = [span_id for span_id in intent.evidence_span_ids if span_id not in self.spans]
-        if unknown:
-            raise ContractError("stop_task evidence contains an unknown or stale public span")
         return {
             **intent.model_dump(mode="json"),
             "diff_hash": self.current_diff_hash,

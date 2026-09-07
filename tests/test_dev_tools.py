@@ -216,7 +216,7 @@ def test_empty_diff_is_never_ready_even_with_remembered_passing_checks(
     assert all(schema["name"] != "finish_task" for schema in schemas)
 
 
-def test_stop_task_is_structured_and_rejects_unknown_public_evidence(
+def test_stop_task_is_structured_and_rejects_retired_citation_field(
     gateway_factory,
 ) -> None:
     gateway, _, _ = gateway_factory()
@@ -238,13 +238,13 @@ def test_stop_task_is_structured_and_rejects_unknown_public_evidence(
             arguments={
                 "reason_code": "no_safe_scoped_mutation",
                 "summary": "No safe mutation follows from the public evidence.",
-                "evidence_span_ids": [],
             },
         )
     )
 
     assert unknown.status == "failed"
-    assert "unknown or stale public span" in unknown.message
+    assert "evidence_span_ids" in unknown.message
+    assert "Extra inputs are not permitted" in unknown.message
     assert stopped.status == "succeeded"
     assert stopped.output["reason_code"] == "no_safe_scoped_mutation"
     assert stopped.output["diff_hash"] == gateway.current_diff_hash

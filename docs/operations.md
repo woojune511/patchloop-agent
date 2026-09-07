@@ -231,7 +231,23 @@ isolated-applied patch identities match. Nine owned containers are absent. Unlik
 the changed behavior solely to v27. See [the latest live record](current-status.md#latest-live-observation-row-35-submitted-private-evaluation-failed).
 No retry, resume, candidate repair or row 36 follows automatically.
 
-Tool surface v28 retains bounded run-local verification concerns inside the existing
+Tool surface v29 adds position-bound references for repeated mutation source in new native
+outputs. Inspect `revalidated_spans.content_delivery` for prior action/field/file hash,
+source range and current `target_start_line`; `content_hash` binds the normalized body.
+Missing proof or a non-smaller reference falls back to the original inline body. Saved
+inputs and durable raw receipts are not rewritten, and restart needs no extra read or
+provider call. The model view drops `alternative_requirement_satisfied`, not its raw
+telemetry. `stop_task` uses the existing reason/summary and turn decision without
+`evidence_span_ids`; its result remains unsuccessful and diff-bound. Do not change a
+historical terminal result to this new shape. Old nonterminal runtime/input contracts
+still reject mismatched resume before provider work. No automatic migration or live retry.
+
+These byte savings are a delivery check, not model effectiveness. In the next separately
+approved row, record whether a repair changes the public failing behavior and whether
+the new candidate is actually checked; do not count an old PASS or stop summary as either.
+The default row/cap/limits and Docker/provider approval boundary are unchanged.
+
+The current tool surface retains bounded run-local verification concerns inside the existing
 memory annotation. Inspect `working_notes.verification` for current unresolved IDs and
 `memory_update_result.verification` for update outcomes. A source/focus update does not
 clear these items, a successful check does not automatically resolve unrelated items,
@@ -243,7 +259,7 @@ existing `vN` upsert stores its incoming statement as the latest `progress_note`
 that original. A distinct question needs a null ID. Exact repetition of the original
 or retained progress yields applied code `unchanged`, preserving state, update time,
 and any resolution/dismissal. Changed progress reopens the concern. Old envelopes remain
-immutable; v27 does not migrate them and rejects mismatched nonterminal resume under the
+immutable; v29 does not migrate them and rejects mismatched nonterminal resume under the
 existing exact-match contract. No new experiment is automatically executed after a check PASS.
 
 Model-facing inspection feedback uses action-bound decision references instead of repeating

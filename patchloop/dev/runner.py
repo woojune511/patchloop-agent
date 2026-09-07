@@ -57,7 +57,7 @@ from patchloop.dev.inspection_projection import (
 )
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.model_state import compact_model_state
-from patchloop.dev.native_sources import reference_native_sources
+from patchloop.dev.native_sources import project_mutation_result, reference_native_sources
 from patchloop.dev.probe_observation import probe_observation, project_probe_result
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import (
@@ -1270,7 +1270,9 @@ def _build_context(
         "recent_checks": _recent_checks(gateway, diff_hash=summary.patch_hash),
         "public_execution_summary": gateway.public_execution_summary(diff_hash=summary.patch_hash),
         "latest_tool_results": [
-            project_probe_result(result.model_dump(mode="json", exclude={"replayed"}))
+            project_mutation_result(
+                project_probe_result(result.model_dump(mode="json", exclude={"replayed"}))
+            )
             for result in latest_tool_results
         ],
         "source_spans": list(projection.source_spans),
@@ -1620,6 +1622,19 @@ def _build_model_input(
         latest_tool_results=latest_tool_results,
     )
     new_history = exchange[1:-1]
+    prior_history = previous_input[3:] if previous_input is not None else []
+    admissions = {
+        event["payload"]["action_id"]: event["payload"] for event in events
+        if event["event_type"] == "action_started"
+    }
+    for position, item in enumerate(new_history):
+        if item.get("type") == "function_call_output":
+            result = json.loads(item["output"])
+            projected = project_mutation_result(
+                result, history=[*prior_history, *new_history[:position]],
+                admission=admissions.get(item["call_id"]),
+            )
+            new_history[position] = {**item, "output": canonical_json(projected)}
     history = [*(previous_input[3:] if previous_input is not None else []), *new_history]
     # Re-project only derived references. Earlier native results/receipts remain
     # byte-identical, with their original action, file and diff identities.
@@ -2221,7 +2236,6 @@ def _milestones(journal: DevJournal) -> dict[str, Any]:
             agent_stop = {
                 "reason_code": output["reason_code"],
                 "summary": output["summary"],
-                "evidence_span_ids": output["evidence_span_ids"],
                 "diff_hash": output["diff_hash"],
             }
     return {

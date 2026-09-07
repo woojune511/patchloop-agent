@@ -24,7 +24,11 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v28",
+            "schema_version": "dev-tool-surface-v29",
+            "native_mutation_output": "admitted-position-prior-body-references-v1",
+            "mutation_rebind_reference_limit": 16,
+            "mutation_projection": "no-obsolete-alternative-requirement-v1",
+            "stop_wire": "reason-and-summary-no-model-source-ids-v1",
             "public_execution_feedback": "current-diff-changed-python-launch-thread-lines-v1",
             "public_execution_feedback_bounds": [8, 256, 12_000],
             "public_execution_report_limit_bytes": 16_000,
@@ -155,7 +159,6 @@ class StopIntent(StrictModel):
         "public_task_conflict",
     ]
     summary: str = Field(min_length=1, max_length=1_000)
-    evidence_span_ids: list[str] = Field(default_factory=list, max_length=8)
 
 
 class PublicTurnDecision(StrictModel):
