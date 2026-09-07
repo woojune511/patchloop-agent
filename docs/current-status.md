@@ -23,7 +23,7 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirty-seven live observations below
+Repository policy alone never initiates paid work. The thirty-eight live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
@@ -85,8 +85,9 @@ The journal hash remains
 This is a representation check, not a candidate execution or measured model benefit.
 Final preservation hashes match for `.env`, user-owned `AGENTS.md`, 1,249 tracked task/
 historical files and 144 existing run files; all 175 preexisting untracked entries remain.
-This implementation authorizes no Docker/provider work, historical candidate execution,
-retry/resume or row 38; any new live invocation still requires separate exact approval.
+Implementation alone authorized no Docker/provider work, historical candidate execution
+or retry/resume. Row 38 received the subsequent exact approval recorded below; row 39
+requires separate approval.
 
 ## Previous implementation: position-bound mutation feedback references (v29)
 
@@ -145,7 +146,7 @@ explanation. Final hashes preserve `.env`, user-owned `AGENTS.md`, 1,249 tracked
 historical files and 140 existing run files. All 175 preexisting untracked entries remain.
 Implementation alone authorized no Docker/provider execution, historical candidate
 repair/recheck or retry/resume. Row 37 received the subsequent exact approval recorded
-below; row 38 requires separate approval. All results remain `official=false`.
+below; later rows require their own exact approval. All results remain `official=false`.
 
 ## Previous implementation: bounded probe observations and submission eligibility (v28)
 
@@ -203,7 +204,69 @@ Every memory update was null; this establishes non-use, not a memory storage fai
 The v27 prompt already advised reuse and input variation; stronger generic wording alone
 is not established as a solution, and the v28 change is not evidence of improved agent success.
 
-## Latest live observation: row 37 submitted and passed isolated evaluation
+## Latest live observation: row 38 stopped after an unverified final repair
+
+The separately approved invocation on `2c303bfc` created
+`run_dev_91f8c05b570c439b` under `C:\patchloop-state`: v2
+`pyfakefs-makedirs-parent-traversal`, `gpt-5.4-mini-2026-03-17`, medium reasoning,
+root `.env`, repeat one, $1.20 total cap and enabled probes. It ended at
+`AGENT_STOPPED`, with no submission or isolated evaluation: 20 model/count calls,
+22 tool actions, four accepted mutations, 198.859 active seconds and $0.380645550.
+The final candidate's task acceptance and safety were not evaluated; `official=false`.
+
+- Turn 7 ran one normally exiting baseline probe about raw parent traversal. This
+  is an observation, not semantic PASS or evidence about the later candidates.
+- Turn 11 attempted the disallowed helper `pyfakefs/fake_filesystem.py`; admission
+  correctly rejected it. Both the public path constraints and v30's adjacent
+  `edit_permission=read_only` label were in the actual input.
+- Turn 14 applied the first wrapper repair. The contract failed at 15 with
+  FileExistsError at public command line 10, the raw parent-traversal invocation.
+  Turns 16 and 17 applied two more repairs. There was no check between them, so
+  turn 17's assertion that the preceding repair still failed was not established.
+- Turn 18's contract failed at public command line 23: the intermediate directory
+  `/permissions/transient` did not have the required `0o755` mode. Turn 19 applied
+  the fourth repair, changing recursive parent creation to use the default mode.
+- Turn 20 called `stop_task` with `no_safe_scoped_mutation` and claimed the current
+  candidate still failed. Neither visible check had run on turn 19's final diff.
+
+The actual final input marked both required checks `NOT_RUN`, offered `run_check`,
+and explicitly recommended the parent-traversal check. It marked the earlier failure
+`evidence_currency=historical`, `phase=awaiting_recheck`, and explained that exhausted
+edit allowance does not prevent checks or submission after all checks pass. Completion
+was possible with three minimum calls and 21 model/79 tool calls remaining at input
+construction; zero accepted mutations remained. Thus the terminal was not forced by
+completion, token, cost or provider limits, and a missing check tool does not explain it.
+The public decision treated an old failure as current despite the delivered distinction.
+Why the model did so is not established by this trace; final correctness remains unknown.
+
+The final workspace contains only a 39-line diff in `pyfakefs/fake_os.py` (38 added,
+one removed), with no non-ignored untracked files. Its hash is
+`sha256:12c54957d4c994fea756c811dcb18c525415cd17a0d20675ed04478905f5dace`;
+the last actual check bound the earlier
+`sha256:33e8623251ff0fb485a498e48439358e6de41839412000616ad29cb1ddea6af0`.
+No final-candidate probe, recheck, submitted artifact, manifest or evaluator result exists.
+
+All 60 context/input/continuation artifacts, 20 completion/currency projections and
+19 unchanged input prefixes verify. All 20 responses completed with reported
+`current_turn`; 20 encrypted continuations were stored and the preceding 19 replayed
+exactly once. All native observed source identities/lines and mutation post-images
+remain exact. Two check policies and the probe policy/receipt hashes verify; both
+check line traces were collected and all three owned containers are absent. Final
+input: 99,855 tokens; newest state: 11,363 UTF-8 bytes; largest output: 8,439 tokens.
+The 228-event journal hash chain verifies at
+`sha256:c263afaad68bb4d6343515807965ef60d4a8fd0901decc83abef24666dd9289a`.
+
+V30's permission labels match public policy in all 36 actual source-group entries,
+but the disallowed edit was still attempted. Every memory update was null; note expiry
+and receipt-reference changes were not exercised live. Twelve inspections added
+coverage and one was covered-only, with no zero-match or cache hits. First accepted
+mutation at 14 rather than row 37's 22 is an observation, not causal efficiency evidence.
+Runtime/task/credential identities match preflight. `.env`, user-owned `AGENTS.md`,
+1,249 tracked task/historical files, 144 prior run files and 175 preexisting untracked
+entries remain unchanged. This row authorizes no retry/resume, historical candidate
+repair/recheck or row 39; the next investigation can use the saved inputs read-only.
+
+## Row 37: submitted and passed isolated evaluation
 
 The separately approved invocation on `2a4cb654` created
 `run_dev_36024bd4361343dd` under `C:\patchloop-state`: v2
@@ -254,7 +317,8 @@ rejected. One familiar dev-train task is not a generalization or quality claim. 
 new stop field and probe observation paths were not exercised. Runtime/task/credential
 identities match preflight; `.env`, user-owned `AGENTS.md`, 1,249 tracked task/historical
 files, 140 prior run files and all 175 preexisting untracked entries are unchanged.
-No further candidate execution/repair or row 38 follows automatically from this result.
+No further candidate execution/repair follows automatically from this result. Row 38
+received the separate exact approval recorded above.
 
 ## Row 36: stopped after an unverified final repair
 

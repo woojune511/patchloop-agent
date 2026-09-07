@@ -239,8 +239,21 @@ and submits. Checked/submitted/isolated-applied patch hashes match; all seven ow
 containers are absent. Native mutation references preserve source identity and reduce
 those two result payloads by 32.0%. This is live delivery and one task success, not causal
 evidence for improved general agent efficiency. No probe or stop ran. See
-[the row-37 record](current-status.md#latest-live-observation-row-37-submitted-and-passed-isolated-evaluation).
-Its terminal is immutable; no retry, candidate repair/recheck or row 38 follows automatically.
+[the row-37 record](current-status.md#row-37-submitted-and-passed-isolated-evaluation).
+Its terminal is immutable; no retry, candidate repair/recheck or additional row follows automatically.
+
+The subsequent separately approved row 38 on `2c303bfc`,
+`run_dev_91f8c05b570c439b`, ends at `AGENT_STOPPED`: 20 model/count calls, 22 tools,
+four accepted mutations and $0.380645550. After the last mode repair, the model stops
+without rechecking. Both current checks were NOT_RUN, `run_check` and sufficient completion
+budget remained, and the input explicitly marked the old failure historical/awaiting_recheck.
+Do not repeat the stop summary's unverified claim that the final candidate still failed.
+No submission or isolated evaluation ran. The permission labels were delivered correctly,
+but one disallowed helper edit was still attempted. All memory updates were null, so v30's
+note-expiry/receipt changes remain unexercised live. Three owned containers are absent;
+continuations, source references and the immutable journal verify. See
+[the row-38 record](current-status.md#latest-live-observation-row-38-stopped-after-an-unverified-final-repair).
+No retry/resume, candidate repair/recheck or row 39 follows from this terminal.
 
 Tool surface v30 labels each `current_sources` file with `edit_permission=allowed|read_only`
 from the existing public mutation path policy. This is not a new action mask or evidence
@@ -517,7 +530,7 @@ no more edit is needed does not submit a candidate. Tool argument shapes/order a
 admission remain unchanged. Separately approved row 35 now supplies delivery/submission
 evidence, not a private acceptance PASS or causal proof of better decisions. Rows 34/35
 are terminal read-only evidence. Later approvals and results are recorded in current status;
-the latest row 37 does not authorize row 38.
+the latest row 38 does not authorize row 39.
 
 `finish_task` becomes available only after every visible check passes on the
 current non-empty diff and no non-ignored untracked file remains. The context lists
