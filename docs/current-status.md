@@ -50,7 +50,52 @@ four regression failures but introduced two new ones. That approval did not auth
 further paid execution, a default-context change, retry/resume or normal row 40. See also
 [the frozen follow-up contract](#four-seed-short-rollout-preparation).
 
-## Current implementation: complete-line public check feedback (v32)
+## Current implementation: current failure versus pending recheck (v33)
+
+The model-facing current view now separates an observed failure on this diff from
+an edited-but-unchecked candidate. `current_public_failure` keeps current failures
+and their exact public diagnostics unchanged. After repair, `pending_recheck` names
+the current diff, unchecked status and previous failure's native receipt instead
+of repeating old recurrence/repair claims as an active current failure. A receipt
+reference requires matching action/check/diff and the complete failure payload;
+missing delivery retains the bounded original observation as historical/unbound.
+Recheck PASS clears pending; recheck FAIL supplies the new current failure.
+
+Canonical audit context, original native tool results and saved input prefixes
+remain unchanged. The short prompt distinguishes hypothesis from verified defect
+and recommends rechecking a repair before reusing the old failure as evidence;
+independently supported edits remain available. No forced read/check, stop rejection,
+new action mask, model/API setting, tool input/order, scope or limit change is made.
+Tool-surface v33 binds the presentation semantics; `dev-run-v1` stays unchanged and
+old envelopes are not migrated. The prompt is 7,965 characters versus v32's 7,973.
+
+The new regression reproduces the old active-looking historical focus. A read-only
+comparison of all 25 saved row-40 inputs changes only the failure/pending fields at
+turns 20/22/23/24; source evidence, available tools and budgets stay identical.
+Row 40 already delivered historical labels and recheck advice, so this is a clarity
+repair, not proof that the model lacked that information or would now solve the task.
+Neither the earlier candidate nor a new live row has been executed. Row 41 and any
+paid follow-up still require separate exact approval. Evidence is in
+`C:\pt\pl33-feedback-a`; the old `C:\pt\pl40-review-a` remains read-only.
+
+Ruff and the final focused repair/recheck/identity/tool/prompt group pass: 69 cases
+in 103.49s. All 53 test files run exactly once on the frozen final runtime in nine
+fresh external roots `C:\pt\pl33-final-b{1..9}`: **906 passed, four real-Docker
+opt-ins skipped**. The longest group is 117.99s; the entire staged workflow is not
+claimed to take under two minutes. The 19 new cases cover current versus historical
+focus, exact native receipt/fallback, recheck PASS/FAIL, optional edits/inspection,
+rollback, immutable history, restart/replay and privacy.
+
+Mock `run_dev_47b590d48d744c5e` at `C:\pt\pl33-smoke-a` reaches mutation, visible
+check, finish and isolated EVALUATOR_PASS / acceptance PASS / safety NOT_RUN in
+5.70 command seconds: four mock turns, five tools, one accepted mutation, zero
+provider/count calls and zero cost. Runtime content is
+`sha256:0a5a7386b3c2c2251e374815fc62c83663dbbe9650a42722c9ed571fcdd2542d`;
+tool surface is `sha256:4c927d9a5e6ee6b9ea04115129c603160073e49508a78baec80ccd2493bcb16e`.
+Hash checks preserve `.env`, user-owned `AGENTS.md`, tracked task/history bytes and
+all old `C:\patchloop-state` run/artifact bytes. No live effectiveness claim follows.
+
+## Previous implementation: complete-line public check feedback (v32)
 
 Public checks now retain complete LF/CRLF lines at the sandbox byte-prefix limit,
 the gateway's 12,000-character per-stream tail, and the recent-check 4,000-character

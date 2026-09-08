@@ -217,7 +217,11 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
 
 def test_guidance_prioritizes_reusable_facts_without_growing_the_system_prompt():
     assert len(DEV_SYSTEM_PROMPT) <= 8007  # v19 length; replace guidance, do not stack warnings.
-    assert "current_public_failure labels the latest failure's diff currency" in DEV_SYSTEM_PROMPT
+    assert "current_public_failure describes this diff's failure" in DEV_SYSTEM_PROMPT
+    assert "pending_recheck references an" in DEV_SYSTEM_PROMPT
+    assert "Recheck a repair before assuming it persists" in DEV_SYSTEM_PROMPT
+    assert "another edit can use independent current evidence" in DEV_SYSTEM_PROMPT
+    assert "headers do not establish behavior of unread return paths" in DEV_SYSTEM_PROMPT
     assert "note_id=null creates a distinct fact" in DEV_SYSTEM_PROMPT
     assert "experiment on the current candidate" in DEV_SYSTEM_PROMPT
     assert "not confirmation of the note's prose" in DEV_SYSTEM_PROMPT

@@ -362,8 +362,9 @@ mechanism rather than repeated wrapper locations, and close answered questions. 
 behavior claims against observed post-image evidence after edits even if citations survive.
 Notes retain reusable behavior rules, implementation assumptions, and untested behavior.
 Refine an existing ID for the same fact; use a new ID for a distinct fact. Current error
-status already has `current_public_failure`, qualified by diff currency; historical failure
-is not a current-candidate verdict. Do not overwrite reusable knowledge with a copy of
+status already has `current_public_failure` for the current diff or `pending_recheck`
+for an edited-but-unchecked candidate in the model view. Historical failure is not a
+current-candidate verdict. Do not overwrite reusable knowledge with a copy of
 that status. The system prompt encourages reuse of existing responsibilities and asks
 whether another inspection can change the edit or next check. These remain optional
 concise findings, not a mandatory plan or a harness guarantee of semantic correctness.
@@ -501,8 +502,20 @@ offered `run_check`, and explain that zero mutations prevents further edits, not
 checks or submission after current-diff PASS. For a current failure, name only offered
 repair/inspection tools. Missing diff binding never becomes a current verdict. Keep
 projection read-only and deterministic after restart, including native latest-state views.
+The canonical audit preserves that full qualified focus. In the derived model view,
+keep actual current failures unchanged; move historical/unbound focus to `pending_recheck`
+and clear `current_public_failure`. Reference the earlier native result only when its
+action/check/diff and entire failure payload match. Otherwise retain bounded original
+details explicitly as historical/unbound. Do not duplicate the old recurrence/repair
+claims as a current error. Current check status remains authoritative; recheck PASS
+clears pending and recheck FAIL supplies the new current failure. Preserve original
+native outputs, prior input prefixes and all replay identities. Optional inspection
+and independently evidenced edits remain available under the same budgets.
 The prompt distinguishes completion of this candidate from the separate further-edit
 horizon. Do not change tool masks, force a check or reject a voluntary stop on this basis.
+Recheck a repair before assuming the old failure persists. A proposed explanation is
+not a verified defect; a helper header does not establish its unread return behavior.
+These are concise task instructions, not required planning or raw-reasoning output.
 
 Public check bodies retain complete LF/CRLF lines: sandbox byte-prefix allocation,
 12,000-character gateway tails and 4,000-character recent-check tails. Preserve fitting
@@ -520,7 +533,7 @@ action results are restored verbatim, not reclassified by the current parser. Ve
 deadlines, policy hashes, raw-tail failure-signature formula and all workflow gates
 remain unchanged; only captured/retained output and diagnostic semantics change.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v32`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v33`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -656,10 +669,15 @@ no submission/evaluation. V32 early error summaries reach the next decisions; th
 final mixed-error summary preserves all seven rows and accurate truncation, but has
 no later inference. All 75 artifacts, 24 prefixes, four mutation identities and four
 check policy hashes verify; four owned containers are absent. Notes/probes are unused.
-Keep row 40 and preceding experiments read-only. The next seam is validating the
-evidence behind a proposed repair and distinguishing repaired-but-unchecked from
-still-failing, not increasing limits or reapplying a historical task patch. No row 41,
-new paid comparison, retry/resume or candidate execution follows from this approval.
+V33 now separates that historical error into pending recheck in the derived model view;
+the canonical audit and original native results are unchanged. A read-only comparison
+of all 25 saved row-40 views changes only the failure/pending card at turns 20/22/23/24,
+not source evidence, tools or budgets. This resolves current-looking repeated failure
+presentation, not the model's demonstrated misreading or the candidate's semantics.
+Keep row 40 and preceding experiments read-only. The next evidence seam, if separately
+authorized, is whether the model rechecks a repair and uses behavior-bearing source
+before another edit. No row 41, new paid comparison, retry/resume or candidate execution
+follows from this implementation approval.
 Older row-40 prohibitions below describe earlier approval boundaries, not a new run.
 
 V31 resolved successful mutation feedback's pre/post identity ambiguity.
@@ -1746,6 +1764,21 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+V33 passes Ruff and 69 focused repair/recheck/identity/tool/prompt cases in 103.49s.
+All 53 files run once on the final runtime in nine balanced fresh external roots
+`C:\pt\pl33-final-b{1..9}`: 906 passed / four explicitly disabled real-Docker opt-ins.
+Use `C:\pt\pl33-feedback-a\test-groups-final.json`; the longest group is 117.99s.
+Each group meets two minutes, not the entire staged sequence. The 19 new cases
+cover exact current diagnostics, pending historical/unbound focus, complete receipt
+identity and fallback, recheck PASS/FAIL, optional edits/parallel reads, rejection,
+native-prefix preservation, restart/action replay and privacy. Mock
+`run_dev_47b590d48d744c5e` in `C:\pt\pl33-smoke-a` reaches mutation/check/finish/
+isolated acceptance PASS / safety NOT_RUN in 5.70 command seconds, four mock turns,
+five tools, one accepted mutation, zero provider/count/cost. Runtime is
+`sha256:0a5a7386b3c2c2251e374815fc62c83663dbbe9650a42722c9ed571fcdd2542d` and remains
+fixed during final tests and mock. Saved row-40 input comparison verifies only the
+intended field changes, not hypothetical model success; old state is unchanged.
 
 V32 passes Ruff and 46 focused public-check boundary/parser/summary/native/restart
 cases in 4.63s. All 52 files run exactly once on the final runtime across eight fresh

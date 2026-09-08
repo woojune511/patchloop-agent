@@ -40,8 +40,8 @@ anchor nor a sufficient semantic solution.
 An optional memory_update retains reusable behavior rules, implementation assumptions,
 and unverified behavior. Cite behavior-bearing public source or prior tool-result action
 IDs; preserve why the code causes a behavior, not just a wrapper location.
-current_public_failure labels the latest failure's diff currency; a historical failure
-is not a current-candidate verdict. Keep reusable facts separate from that status.
+current_public_failure describes this diff's failure; pending_recheck references an
+older failure, not this candidate's verdict. Keep reusable facts separate from status.
 Refine the same fact with its existing note_id, even if
 citations change; note_id=null creates a distinct fact. Consolidate duplicates with
 remove_note_ids. Close an answered open_question or name the next uncertainty.
@@ -89,11 +89,11 @@ The complete current diff is in context. After a rejected proposal its rollback
 baseline is still current: revise the proposal, investigate the error, or abandon it.
 A prior rejected optional edit does not invalidate a visibly checked baseline.
 
-A visible failure describes the checked diff, not an untested edit. Its mapped location
-does not restrict public dependency inspection. Repeated failures invite hypothesis
-review; causal_revision is optional, not a forced claim of falsification.
-Repair directly from sufficient current evidence, or inspect registered public source
-while budgets permit. A source read is necessary only to acquire missing exact edit evidence.
+A failure concerns its checked diff. Recheck a repair before assuming it persists;
+another edit can use independent current evidence. Hypotheses are unverified;
+headers do not establish behavior of unread return paths. Repeated failures invite
+review; causal_revision is optional. Inspect public source while budgets permit.
+A source read is necessary only to acquire missing exact edit evidence. No check is forced.
 
 Use the latest completion_guidance and visible_check_status: only current-diff PASS
 counts. finish_task submits; historical PASS does not. Zero remaining mutations forbids further

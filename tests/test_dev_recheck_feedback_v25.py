@@ -166,8 +166,10 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
     canonical = json.loads(context)
     items = _input(gateway, results, tmp_path, context=context)
     view = input_context(items)
-    focus = view["current_public_failure"]
-    assert focus == canonical["current_public_failure"]
+    focus = canonical["current_public_failure"]
+    assert view["current_public_failure"] is None
+    assert view["pending_recheck"]["current_check_status"] == "NOT_RUN"
+    assert view["pending_recheck"]["previous_failure"]["diff_hash"] == baseline
     assert focus["evidence_currency"] == "historical" and focus["phase"] == "awaiting_recheck"
     assert "run_check" in focus["mutation_pressure"]["guidance"]
     assert "replace_text" not in focus["mutation_pressure"]["guidance"]
@@ -181,7 +183,9 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
     replay = restored.execute(call)
     assert replay.replayed and restored.accepted_mutations == 1
     assert _input(restored, results, tmp_path, context=context) == items
-    assert input_context(_input(restored, results, tmp_path))["current_public_failure"] == focus
+    restored_view = input_context(_input(restored, results, tmp_path))
+    assert restored_view["current_public_failure"] is None
+    assert restored_view["pending_recheck"] == view["pending_recheck"]
     assert gateway.journal.path.read_bytes() == before
     assert (gateway.workspace / "src.py").read_bytes() == before_source
     # A successful recheck clears the latest failure, not every other unchecked obligation.

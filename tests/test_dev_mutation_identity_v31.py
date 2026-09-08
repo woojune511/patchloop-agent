@@ -175,7 +175,10 @@ def test_final_unchecked_edit_keeps_consistent_identity_and_available_check_or_s
     assert {"run_check", "stop_task"} <= set(state["available_tool_names"])
     assert "replace_text" not in state["available_tool_names"]
     assert [row["status"] for row in state["visible_check_status"]] == ["NOT_RUN", "NOT_RUN"]
-    assert state["current_public_failure"]["evidence_currency"] == "historical"
+    assert state["current_public_failure"] is None
+    assert state["pending_recheck"]["current_check_status"] == "NOT_RUN"
+    assert state["pending_recheck"]["diff_hash"] == gateway.current_diff_hash
+    assert state["pending_recheck"]["previous_failure"]["evidence_currency"] == "historical"
     assert state["completion_guidance"]["next_action"]["tool"] == "run_check"
     for name in ("contract", "regression"):
         checked = _batch(gateway, _check(name, f"new-{name}"), tmp_path)

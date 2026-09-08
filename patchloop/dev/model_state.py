@@ -17,6 +17,52 @@ def _select(value: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:
     return {key: value[key] for key in keys if key in value}
 
 
+def _check_followup(view: dict[str, Any], results: dict[str, dict[str, Any]]) -> None:
+    """Keep unchecked repairs separate from observed current failures.
+
+    The gateway's full, currency-qualified audit remains unchanged. Only its
+    historical focus is replaced in this derived view; prior native receipts are
+    never edited. In particular old recurrence prose is not a new repair signal.
+    """
+    failure = view.get("current_public_failure")
+    if not isinstance(failure, dict) or failure.get("evidence_currency") not in {
+        "historical", "unknown",
+    }:
+        return
+    view["current_public_failure"] = None
+    check_id = failure.get("check_id")
+    current_hash = failure.get("current_diff_hash")
+    status = next((row["status"] for row in view.get("visible_check_status", [])
+                   if row.get("check_id") == check_id
+                   and row.get("diff_hash") == current_hash), "UNKNOWN")
+    if status in {"PASS", "FAIL"}:
+        return  # The current check table already supplies an observed verdict.
+    previous = _select(failure, ("check_id", "diff_hash", "evidence_currency"))
+    observed = {key: value for key, value in failure.items() if key not in {
+        "current_diff_hash", "evidence_currency", "phase", "mutation_pressure",
+    }}
+    delivered = next((result for result in reversed(list(results.values()))
+                      if result.get("tool") == "run_check"
+                      and result.get("status") == "succeeded"
+                      and result["output"].get("passed") is False
+                      and result["output"].get("check_id") == check_id
+                      and result["output"].get("diff_hash") == failure.get("diff_hash")
+                      and result["output"].get("public_check_failure") == observed), None)
+    if delivered is not None:
+        previous.update(action_id=delivered["action_id"],
+                        delivery="preceding_function_call_output",
+                        field="output.public_check_failure")
+    else:
+        # Missing or mismatched delivery must not erase the bounded observation.
+        previous["details"] = observed
+    view["pending_recheck"] = {
+        "check_id": check_id, "diff_hash": current_hash, "current_check_status": status,
+        "previous_failure": previous,
+        # Already qualified against the actual offered tools by the gateway.
+        "guidance": failure.get("mutation_pressure", {}).get("guidance"),
+    }
+
+
 def _source_catalog(view: dict[str, Any]) -> None:
     """Group exact deliveries by file/action, preserving gaps and inline fallbacks."""
     if "source_spans" not in view and "observed_source_index" not in view:
@@ -113,6 +159,8 @@ def compact_model_state(
         if (isinstance(result, dict) and result.get("action_id") == item.get("call_id")
                 and isinstance(result.get("output"), dict)):
             results[item["call_id"]] = result
+
+    _check_followup(view, results)
 
     if isinstance(notes, dict):
         receipt = notes.get("last_update_result")

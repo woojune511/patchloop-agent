@@ -59,9 +59,13 @@ replacement separately. The current diff's
 complete visible-check status and exact remaining check IDs are projected separately
 from the bounded recent output. `ready_to_submit` additionally requires a non-empty
 diff and no non-ignored untracked files.
-A failed public check also creates a bounded `current_public_failure` focus. For a
-changed diff, that failure is explicitly historical, not a verdict on the current
-candidate. Recheck guidance names only an offered check; zero remaining mutations
+A failed public check creates a bounded `current_public_failure` focus for its
+checked diff. After an edit, the model view instead shows `pending_recheck`: the
+current candidate is unchecked, with a reference to the earlier failure's exact
+native result (or bounded historical details if no matching result was delivered).
+The original error and comparison history remain in that result and the audit;
+they are not repeated as an active failure of the edited candidate.
+Recheck guidance names only an offered check; zero remaining mutations
 prevents more edits, not affordable checks and submission after they pass. Current
 failure feedback instead names offered repair/inspection tools. This is advisory
 presentation, not a new tool restriction or a reason to reject voluntary stop. For a
@@ -70,7 +74,10 @@ line back to the exact public command statement without reading another file. It
 the raw-output failure signature for provenance and derives a separate semantic site
 fingerprint for comparisons across diffs. The focus survives intervening inspection
 and restart, distinguishes the same mapped site from a changed traceback location,
-and remains active through repair until a recheck passes or replaces it. Source-line
+and becomes pending through repair until a recheck passes or supplies a new current
+failure. Rechecking a repair is advice, not a gate: an independent source-supported
+edit remains possible. A hypothesis or unread helper's header is not a verified
+defect. Source-line
 order does not establish execution history through loops or branches; whether later
 lines ran remains unknown. A failure guides investigation without restricting it to
 the reported file or forcing a claim that a prior hypothesis was falsified.

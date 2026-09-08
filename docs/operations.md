@@ -390,7 +390,18 @@ reads do not establish an end-to-end success rate. No candidate/test was execute
 all acceptance/safety states remain NOT_RUN and this is not row 40. Do not retry,
 resume or collect additional samples without a new exact approval.
 
-Tool surface v32 binds complete-line public check output and terminal-format diagnostics.
+Tool surface v33 separates current-diff failure from repaired-but-unchecked status
+in the derived model view. `current_public_failure` keeps actual current failures;
+`pending_recheck` names the unchecked candidate, earlier failed diff and exact native
+receipt. Only a matching action/check/diff and full failure payload permits the
+reference; missing delivery retains bounded historical/unbound details. Existing
+canonical audit context and native history are not rewritten. Recheck clears the
+pending card or replaces it with a current failure. Guidance remains advisory, and
+tool inputs/order, action masks, model settings and limits are unchanged. Old envelopes
+are not migrated; nonterminal resume still requires an exact runtime/input match.
+The provider-free implementation authorizes no row 41, paid retry or Docker execution.
+
+The preceding v32 contract binds complete-line public check output and terminal-format diagnostics.
 The sandbox byte cap, per-stream gateway 12k-character cap and recent-check 4k-character
 cap remain unchanged; clipping at any stage is reported. Diagnostics use the captured
 public result before gateway clipping, without further filesystem access. Up to eight
@@ -558,7 +569,8 @@ to the current diff (current/historical; unknown if the cited diff is missing). 
 PASS on an earlier diff never becomes a current PASS. Failed actions/non-checks get no
 invented check verdict. Prose is still unverified and may contradict that label; no semantic
 rejection or new gate is added. Keep reusable behavior facts separate from status already
-shown in `current_public_failure`; refining an ID should refine the same fact.
+shown in `current_public_failure` or `pending_recheck`; refining an ID should refine
+the same fact.
 Invalid notes do not reject that action. A separate `memory_update_result` on the owner
 call's native output reports each note's outcome and an actionable error. Its
 `scope=before_tool_batch`, `diff_hash_at_update`, and `note_ids_after_update` identify
@@ -724,10 +736,13 @@ remains unchanged for provenance. A module frame does not prove which other line
 through loops or branches, so later-line execution remains unknown. Across distinct
 diffs, the context labels the same site, a later/earlier traceback line number, or an
 incomparable change without claiming semantic progress from source order. The resulting
-`current_public_failure` survives inspection and journal hydration, includes the
+canonical audit focus survives inspection and journal hydration, includes the
 remaining accepted-mutation count, and clears when the relevant recheck passes.
 Its `evidence_currency` labels the failed diff as current, historical or unknown;
-the compatibility phase remains `repair_current_diff` or `awaiting_recheck`. Historical
+the compatibility phase remains `repair_current_diff` or `awaiting_recheck`. The
+derived model view leaves only current failures in `current_public_failure` and uses
+`pending_recheck` for an edited-but-unchecked candidate, without repeating historical
+recurrence/repair claims when their exact native result is already present. Historical
 failure does not establish the edited candidate's outcome. Guidance is generated from
 the actual offered tools: repair/inspection for a current failure, an available check
 for a changed diff. Zero mutations alone does not forbid available checks or submission
