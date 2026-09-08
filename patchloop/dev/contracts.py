@@ -24,7 +24,11 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v31",
+            "schema_version": "dev-tool-surface-v32",
+            "public_check_output": "complete-line-prefix-and-tail-accurate-truncation-v1",
+            "public_check_output_character_limits": [12_000, 4_000],
+            "public_check_diagnostics": "captured-public-terminal-format-or-null-v1",
+            "public_check_diagnostic_bounds": [8, 4_000],
             "mutation_result_identity": "completed-worktree-and-explicit-baseline-v1",
             "native_mutation_output": "admitted-position-prior-body-references-v1",
             "mutation_rebind_reference_limit": 16,

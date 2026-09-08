@@ -11,6 +11,7 @@ patchloop/dev/conversation.py  append-only episode, complete current view and re
 patchloop/dev/model_state.py   compact public model view, separate from audit accounting
 patchloop/dev/native_sources.py  exact current-source delivery references into native history
 patchloop/dev/tools.py    tool grammar, spans, mutations, checks, finish
+patchloop/dev/check_feedback.py  complete-line public output and terminal diagnostics
 patchloop/dev/state.py    append-only JSONL, action/provider recovery
 patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
 patchloop/agent/model.py  journal-managed Responses adapter, zero retries
@@ -503,7 +504,23 @@ projection read-only and deterministic after restart, including native latest-st
 The prompt distinguishes completion of this candidate from the separate further-edit
 horizon. Do not change tool masks, force a check or reject a voluntary stop on this basis.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v31`;
+Public check bodies retain complete LF/CRLF lines: sandbox byte-prefix allocation,
+12,000-character gateway tails and 4,000-character recent-check tails. Preserve fitting
+EOF lines without a newline; omit a cut line rather than publishing its fragment.
+Keep existing caps/stdout-first allocation and propagate every clipping stage through
+`truncated`. Parse already captured public output before gateway reduction; never read
+another file or private evaluator input to enrich feedback. Final pytest failure rows
+take precedence over intermediate chained exceptions. Otherwise accept recognizable
+pytest exception lines or a Python terminal frame. Unframed words and mixed/unknown
+terminal types stay null. `failure_summary` is literal observed public diagnostics,
+at most eight complete lines / 4,000 characters, with observed_count and truncation;
+do not label comparison operands as expected/actual or infer a causal explanation.
+Durable focus/native/check evidence and restart preserve that summary. Old completed
+action results are restored verbatim, not reclassified by the current parser. Verdicts,
+deadlines, policy hashes, raw-tail failure-signature formula and all workflow gates
+remain unchanged; only captured/retained output and diagnostic semantics change.
+
+Terminal resume returns that same public result. Current semantics are tool-surface `v32`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -622,7 +639,7 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
-Current seam: v31 resolves successful mutation feedback's pre/post identity ambiguity.
+V31 resolved successful mutation feedback's pre/post identity ambiguity.
 Use the completed candidate in the result workspace hash and name the original baseline
 explicitly. Preserve pending/completed replay, typed rollback, source/check/note identities,
 input shapes, action masks, voluntary stop and all historical bytes. Row 38 shows the
@@ -780,12 +797,12 @@ validated default fresh-state win: two samples/arm, one checkpoint, bundled rese
 and repackaging, and scope feedback before the pivot. B2 needs no new helper source
 to reach B1's patch. Memory updates remain null and final failed checks have no later
 inference. Do not attribute non-repair to ignoring an error the model never received.
-Next bounded implementation seam: public check output truncation/exception parsing.
+The subsequent v32 implementation fixes public check output truncation/exception parsing.
 Captured B stdout starts `turn:` after cutting a `NoReturn:` signature to 12,000 chars;
 the broad exception regex invents `exception_type="turn"` while the gateway reports
 the sandbox's `truncated=false`. Read-only parser reproduction confirms this separate
-metadata defect; it did not cause either B patch. No runtime repair or additional
-paid execution was part of the completed comparison. Keep old evidence immutable,
+metadata defect; it did not cause either B patch. The repair is a separate provider-free
+change, not part of the completed comparison. Keep old evidence immutable,
 preserve caller/leaf semantics in agent-behavior diagnostics, and do not add masks or
 increase limits on the strength of this small comparison.
 The earlier six-cell implementation is `diagnostics/decision_sampler.py`, outside
@@ -1706,6 +1723,18 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+V32 passes Ruff and 46 focused public-check boundary/parser/summary/native/restart
+cases in 4.63s. All 52 files run exactly once on the final runtime across eight fresh
+roots `C:\pt\pl32-full-final-a{1..8}`: 887 passed / four real-Docker opt-ins skipped.
+Use the measured, file-balanced partition `C:\pt\pl32-feedback-a\test-groups-final.json`.
+Group 6 takes 120.53s, just above the target; do not claim all groups or the staged
+workflow finish within two minutes. Runtime bytes remain fixed during final tests and
+mock. Mock `run_dev_54fbfa663cfc46b9` at `C:\pt\pl32-smoke-a` reaches mutation, the
+visible check, finish and isolated acceptance PASS / safety NOT_RUN, four mock turns,
+five tools, one accepted mutation and zero provider/count/cost. Captured B1/B2 output
+reclassification returns AssertionError plus both original public comparison rows;
+old artifacts remain unchanged. This verifies feedback, not agent task success.
 
 V31 passes Ruff and 118 focused identity/resume/projection/current-feedback/completion/
 contract cases in 95.54 seconds. The first new regression fails on the old workspace

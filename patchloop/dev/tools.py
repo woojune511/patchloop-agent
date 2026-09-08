@@ -17,6 +17,7 @@ from pydantic import ValidationError
 
 from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
+from patchloop.dev.check_feedback import check_failure_diagnostics, output_tail
 from patchloop.dev.context import (
     SourceProjection,
     bounded_lines,
@@ -77,7 +78,6 @@ _INLINE_PYTHON = re.compile(r"python(?:\d+(?:\.\d+)*)?(?:\.exe)?", re.IGNORECASE
 _INLINE_PYTHON_FRAME = re.compile(
     r'File "<string>", line (?P<line>\d+)(?:, in (?P<scope>[^\r\n]+))?'
 )
-_TRACEBACK_EXCEPTION = re.compile(r"^(?P<type>[A-Za-z_][A-Za-z0-9_.]*)(?::.*)?$")
 _MUTATION_TOOLS = frozenset({"replace_text", "apply_git_diff"})
 
 
@@ -552,14 +552,7 @@ class DevToolGateway:
 
     @staticmethod
     def _exception_type(stdout: str, stderr: str) -> str | None:
-        for stream in (stderr, stdout):
-            for raw_line in reversed(stream.splitlines()):
-                if raw_line != raw_line.strip():
-                    continue
-                match = _TRACEBACK_EXCEPTION.fullmatch(raw_line)
-                if match is not None:
-                    return match.group("type")[:200]
-        return None
+        return check_failure_diagnostics(stdout, stderr)[0]
 
     def _previous_failed_check(self, check_id: str) -> dict[str, Any] | None:
         for output in reversed(self._failed_check_history):
@@ -654,12 +647,13 @@ class DevToolGateway:
         stdout: str,
         stderr: str,
     ) -> dict[str, Any]:
-        exception_type = self._exception_type(stdout, stderr)
+        exception_type, failure_summary = check_failure_diagnostics(stdout, stderr)
         focus: dict[str, Any] = {
             "check_id": check.id,
             "diff_hash": diff_hash,
             "failure_signature": failure_signature,
             "exception_type": exception_type,
+            "failure_summary": failure_summary,
             "mapping_status": "unmapped",
             "failure_site_fingerprint": None,
             "public_location": None,
@@ -3111,6 +3105,8 @@ class DevToolGateway:
                 "stderr": outcome.stderr[-8_000:],
             }
         )
+        stdout, stdout_clipped = output_tail(outcome.stdout, 12_000)
+        stderr, stderr_clipped = output_tail(outcome.stderr, 12_000)
         output = {
             "check_id": check_id,
             "diff_hash": diff_hash,
@@ -3118,11 +3114,11 @@ class DevToolGateway:
             "failure_signature": None if passed else signature,
             "exit_code": outcome.exit_code,
             "timed_out": outcome.timed_out,
-            "truncated": outcome.truncated,
+            "truncated": outcome.truncated or stdout_clipped or stderr_clipped,
             "deadline_exhausted": deadline_exhausted,
             "cleanup_failed": cleanup_failed,
-            "stdout": outcome.stdout[-12_000:],
-            "stderr": outcome.stderr[-12_000:],
+            "stdout": stdout,
+            "stderr": stderr,
             "execution_policy": outcome.execution_policy,
             "execution_policy_hash": execution_policy_hash,
             "public_execution": (
@@ -3135,8 +3131,10 @@ class DevToolGateway:
                 check=check,
                 diff_hash=diff_hash,
                 failure_signature=signature,
-                stdout=outcome.stdout[-12_000:],
-                stderr=outcome.stderr[-12_000:],
+                # Parse the captured public result before reducing its delivery
+                # body, so clipping cannot remove a frame or invent a new token.
+                stdout=outcome.stdout,
+                stderr=outcome.stderr,
             )
         return output
 

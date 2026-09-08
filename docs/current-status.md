@@ -44,7 +44,50 @@ four regression failures but introduced two new ones. No further paid execution,
 default-context change, retry/resume or normal row 40 is authorized. See also
 [the frozen follow-up contract](#four-seed-short-rollout-preparation).
 
-## Current implementation: explicit mutation pre-state and completed identity (v31)
+## Current implementation: complete-line public check feedback (v32)
+
+Public checks now retain complete LF/CRLF lines at the sandbox byte-prefix limit,
+the gateway's 12,000-character per-stream tail, and the recent-check 4,000-character
+tail. An intact unterminated EOF line is retained if it fits; an overlong or partially
+cut line is omitted. The existing stdout-first sandbox byte allocation and all output
+ceilings are unchanged. `truncated` reports sandbox or subsequent delivery clipping.
+
+Failure diagnostics are extracted from already captured public output before gateway
+clipping. Final pytest summary rows take priority over intermediate chained exceptions;
+otherwise recognized pytest exception lines or Python terminal frames provide the
+exception type. Unframed log words and mixed/unknown terminal types remain null.
+`public_check_failure.failure_summary` preserves literal public failure/comparison
+lines (up to eight lines / 4,000 characters), observed count and omission status.
+It does not infer expected/actual direction, cause, test acceptance or execution order.
+This durable summary reaches current failure focus and native tool output, and is
+restored unchanged on action replay/restart. Earlier journal feedback is not reparsed.
+
+The row-39 B tail's false `exception_type="turn"` and the unreported gateway clipping
+both reproduce on the preceding runtime. This fixes feedback accuracy, not the
+candidate's leaf-link semantics: neither B branch had a model turn after that check.
+No prompt, action mask, model setting, limit, task package or tool input/order change
+is introduced. Output semantics are bound by tool-surface v32; `dev-run-v1` stays the
+same, old envelopes are not migrated and no paid run/resume or Docker execution is
+authorized by this provider-free implementation.
+
+Ruff and 46 new focused cases pass (4.63s), including malformed qualified exception
+names, LF/CRLF/UTF-8 boundaries, mixed exceptions, literal comparison preservation,
+pre-clipping diagnostics, unchanged outcomes and native/restart/action replay. All
+52 test files run once on the final runtime across eight fresh external roots
+`C:\pt\pl32-full-final-a{1..8}`: **887 passed, four real-Docker opt-ins skipped**.
+The longest group is 120.53s, slightly above the two-minute target; the full staged
+workflow is not claimed to fit two minutes. Partition and read-only stored-output
+analysis are in `C:\pt\pl32-feedback-a`.
+
+Mock `run_dev_54fbfa663cfc46b9` under `C:\pt\pl32-smoke-a` reaches mutation, the
+registered visible check, finish and isolated EVALUATOR_PASS / task acceptance PASS / safety
+NOT_RUN in 5.05 command seconds: four mock turns, five tools, one accepted mutation,
+zero provider/count calls and zero cost. It does not measure the coding model's repair
+ability. Runtime content is
+`sha256:78ee51337d43c39de7e035f55ce0fac6a4ad2d782fae83ae4d17295e6329557b`;
+tool surface is `sha256:99c1205b2182ffae25bd2647aca2b83c726df5963094a95c6368d57493ca1c79`.
+
+## Previous implementation: explicit mutation pre-state and completed identity (v31)
 
 A successful `replace_text` now records its completed candidate in the result's
 `workspace_diff_hash`, equal to `output.worktree_diff_hash` and the mutation/post-image
@@ -832,13 +875,13 @@ per arm at one failure-selected checkpoint do not isolate encrypted reset from p
 history repackaging or feedback effects, and no default change is justified. All
 memory updates are null; this does not validate improved note or probe use.
 
-An independent, unmodified runtime defect is now reproduced from captured public
+An independent runtime defect was reproduced from captured public
 output: both B upstream results record `exception_type="turn"`, the suffix of a
 `NoReturn:` source signature cut at the 12,000-character tail boundary. The gateway
 copies only the sandbox's `truncated=false` flag and its broad exception regex accepts
 the severed source token. This did not drive either candidate or a subsequent decision;
-there was no next inference. A bounded provider-free output-boundary/parser repair is
-the clearest next implementation seam, not another action mask or automatic paid run.
+there was no next inference. The subsequent provider-free v32 output-boundary/parser
+repair above leaves these experiment bytes and their causal interpretation unchanged.
 
 Read-only audit verifies four journal chains, 434 per-branch CAS files including
 inherited copies, ordered input/continuation/call-result identities, current workspace

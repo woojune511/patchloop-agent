@@ -68,10 +68,17 @@ class Sandbox(Protocol):
 
 def _bounded_text(stdout: bytes, stderr: bytes, limit: int) -> tuple[str, str, bool, int]:
     original = len(stdout) + len(stderr)
-    remaining = limit
-    stdout_slice = stdout[:remaining]
-    remaining -= len(stdout_slice)
-    stderr_slice = stderr[: max(0, remaining)]
+
+    def complete_prefix(data: bytes, capacity: int) -> bytes:
+        if len(data) <= capacity:
+            return data
+        prefix = data[:capacity]
+        return prefix[:prefix.rfind(b"\n") + 1]
+
+    # Keep the existing stdout-first byte allocation. Do not publish a partial
+    # line (or split UTF-8 character) as the end of either captured stream.
+    stdout_slice = complete_prefix(stdout, limit)
+    stderr_slice = complete_prefix(stderr, max(0, limit - len(stdout)))
     return (
         stdout_slice.decode("utf-8", errors="replace"),
         stderr_slice.decode("utf-8", errors="replace"),

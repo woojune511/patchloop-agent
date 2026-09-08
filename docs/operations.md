@@ -390,7 +390,16 @@ reads do not establish an end-to-end success rate. No candidate/test was execute
 all acceptance/safety states remain NOT_RUN and this is not row 40. Do not retry,
 resume or collect additional samples without a new exact approval.
 
-Tool surface v31 makes successful mutation identity consistent at action completion:
+Tool surface v32 binds complete-line public check output and terminal-format diagnostics.
+The sandbox byte cap, per-stream gateway 12k-character cap and recent-check 4k-character
+cap remain unchanged; clipping at any stage is reported. Diagnostics use the captured
+public result before gateway clipping, without further filesystem access. Up to eight
+literal failure lines / 4,000 characters preserve public failure IDs and comparison
+text, with omission metadata. Unknown/mixed exception types are null. On restart,
+completed results keep their recorded diagnostic bytes; old envelopes/journals are not
+migrated. No paid invocation or historical rerun is authorized by this local repair.
+
+The v31 successful mutation identity contract remains consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete
 post-edit candidate. `result.output.baseline_diff_hash` names the complete pre-edit
 diff from `action_started`, including after pending-action reconciliation. Do not use

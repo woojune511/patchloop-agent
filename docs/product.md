@@ -74,6 +74,11 @@ and remains active through repair until a recheck passes or replaces it. Source-
 order does not establish execution history through loops or branches; whether later
 lines ran remains unknown. A failure guides investigation without restricting it to
 the reported file or forcing a claim that a prior hypothesis was falsified.
+Check output limits preserve complete lines and explicitly report clipping. A small
+literal failure summary preserves public test IDs/comparison text even when a long log
+pushes them out of the delivered tail. Exception labels come from recognized terminal
+formats, not arbitrary log words; ambiguous or unrecognized types remain unknown.
+These are public observations, not a model-authored diagnosis or another submission gate.
 A successful exact replacement maps already observed unchanged complete lines to their
 new positions using verified pre/post bytes and the exact edit offset. Changing one line
 does not discard the observation's unchanged prefix/suffix. It adds a bounded replacement

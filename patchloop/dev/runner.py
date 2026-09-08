@@ -21,6 +21,7 @@ from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
+from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.context import SourceProjection, build_observed_source_index
 from patchloop.dev.contracts import (
     DEV_RUNTIME_ID,
@@ -489,6 +490,8 @@ def _recent_checks(
         for value in checks.values():
             failure = value.get("public_check_failure")
             location = failure.get("public_location") if isinstance(failure, dict) else None
+            stdout, stdout_clipped = output_tail(value.get("stdout", ""), 4_000)
+            stderr, stderr_clipped = output_tail(value.get("stderr", ""), 4_000)
             rows.append(
                 {
                     "action_id": action_ids[(diff_hash, value["check_id"])],
@@ -508,8 +511,9 @@ def _recent_checks(
                     "public_failure_line": (
                         location.get("line") if isinstance(location, dict) else None
                     ),
-                    "stdout": value.get("stdout", "")[-4_000:],
-                    "stderr": value.get("stderr", "")[-4_000:],
+                    "stdout": stdout,
+                    "stderr": stderr,
+                    "truncated": bool(value.get("truncated")) or stdout_clipped or stderr_clipped,
                 }
             )
     return rows[-3:]
