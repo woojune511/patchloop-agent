@@ -747,14 +747,14 @@ gateway, source projection, checks/probes and full 25k ceiling unchanged. Both a
 receive the same short current-state-format notice; all new native reasoning and
 call/result items continue normally. B's old public archive remains quoted historical
 data; do not regenerate it from future outcomes or reset reasoning every turn.
-Round-robin A1/B1/B2/A2 shares one proposed $1.20 cap with JIT full-ceiling admission.
+Round-robin A1/B1/B2/A2 shares one $1.20 cap with JIT full-ceiling admission.
 This does not reserve a complete successful trajectory; record cap-truncated outcomes
 as censored. Stop all on count/provider/billing/continuation or cleanup uncertainty.
 Branch clocks exclude waiting on other branches, with an additional 1,800-second
 experiment deadline. Stop at public finish or normal policy terminal; no hidden
-evaluation, new row 40, restart, seed regeneration or automatic retry. The user asked
-to finish the experiment; exact confirmation of the new shared paid cap is still
-pending, not inherited from the closed four-response zero-tool approval.
+evaluation, new row 40, restart, seed regeneration or automatic retry. The user
+subsequently confirmed this exact new shared paid cap; its authority was separate
+from the closed four-response zero-tool approval and is now consumed.
 Wiring audit `C:\pt\pl39-rollout-wiring-a` verifies seed prefix/raw-byte/diff identity,
 actual admission of A1/A2 edits and B1's 56-line helper evidence gain, with no task-code,
 Docker or provider execution. 24 synthetic tests pass in 49.80s at
@@ -764,9 +764,30 @@ Final staged coverage is 841 passes / four real-Docker opt-in skips across 51 fi
 runtime group is 108.41s; the staged total exceeds two minutes. Ruff passes. Separate
 mock `run_dev_9f4f4d7ca0da4dd4` at `C:\pt\pl39-rollout-dev-smoke-a` reaches isolated
 acceptance PASS / safety NOT_RUN, four turns/five tools/one mutation, zero cost. Preserve
-the distinction from the still-unexecuted paid follow-up; explicit new cap confirmation
-remains pending. Owned files, frozen task/history, 152 run files and 175 preexisting
+the distinction between this mock and the subsequently executed paid follow-up.
+Owned files, frozen task/history, 152 run files and 175 preexisting
 untracked entries retain their before-validation identities.
+The four-branch follow-up is complete at `C:\pt\pl39-rollout-live-a`, reviewed read-only
+at `C:\pt\pl39-rollout-review-a`: ten new counts/responses, fifteen tools, six public
+checks, zero probes/finish/private evaluation, $0.542493150, 177.172s. All branches
+stop at LIMIT_REACHED solely on accepted-mutation exhaustion; do not restart them.
+A1 introduces an uninitialized `next_dir`; A2 retains two original broken-parent
+failures. Both B branches receive 57/50 or 56/50 scope rejection, then converge on
+the same 49-line helper-delegation patch. Original four failures disappear, but the
+unconditional `exist_ok=True` loses leaf-link EEXIST semantics and adds two regressions.
+B's parent check passes; private acceptance/safety remain NOT_RUN. This is not a
+validated default fresh-state win: two samples/arm, one checkpoint, bundled reset
+and repackaging, and scope feedback before the pivot. B2 needs no new helper source
+to reach B1's patch. Memory updates remain null and final failed checks have no later
+inference. Do not attribute non-repair to ignoring an error the model never received.
+Next bounded implementation seam: public check output truncation/exception parsing.
+Captured B stdout starts `turn:` after cutting a `NoReturn:` signature to 12,000 chars;
+the broad exception regex invents `exception_type="turn"` while the gateway reports
+the sandbox's `truncated=false`. Read-only parser reproduction confirms this separate
+metadata defect; it did not cause either B patch. No runtime repair or additional
+paid execution was part of the completed comparison. Keep old evidence immutable,
+preserve caller/leaf semantics in agent-behavior diagnostics, and do not add masks or
+increase limits on the strength of this small comparison.
 The earlier six-cell implementation is `diagnostics/decision_sampler.py`, outside
 the unchanged v31 runtime content set. Run it as a module from the checkout. `validate`
 reconstructs hash-bound requests without a key/client; `collect` requires explicit

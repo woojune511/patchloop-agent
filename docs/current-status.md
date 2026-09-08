@@ -36,11 +36,13 @@ The user's subsequent exact approval by reference authorized the now
 [collected four-response comparison](#fresh-state-comparison-four-responses-collected).
 No further paid samples, task execution or new live row are authorized.
 
-The subsequent request asks to complete a short tool-feedback follow-up of all four
-existing responses. `diagnostics/fresh_state_rollout.py` now prepares independent
-checkpoint branches; the new invocation-wide $1.20 cap has been asked explicitly and
-has not yet been reconfirmed. No additional provider call or pyfakefs task-code execution has
-run. See [the bounded follow-up contract](#four-seed-short-rollout-preparation).
+The user's subsequent exact approval by reference authorized one shared-$1.20
+tool-feedback follow-up of all four existing responses. That experiment is now
+[complete](#four-seed-short-rollout-completed): ten new responses, fifteen tools,
+$0.542493150, and no submitted branch. Both fresh-state branches repaired the original
+four regression failures but introduced two new ones. No further paid execution,
+default-context change, retry/resume or normal row 40 is authorized. See also
+[the frozen follow-up contract](#four-seed-short-rollout-preparation).
 
 ## Current implementation: explicit mutation pre-state and completed identity (v31)
 
@@ -734,7 +736,7 @@ immutable. The original checkpoint has 9 model / 68 tool / 1 accepted mutation a
 1,477 active seconds remaining. The seed consumes the next model step, leaving at
 most eight new responses per branch (32 total), not another 40-call episode.
 
-The proposed one-invocation cap remains $1.20 for new calls only. Scheduling is
+The one-invocation cap is $1.20 for new calls only. Scheduling is
 round-robin A1/B1/B2/A2, skipping terminal branches. Each request is counted immediately
 before dispatch and must fit its full 25k output ceiling; capacity is never reduced
 to fit. This cap does not guarantee all branches finish. Cap/transport/billing or
@@ -768,7 +770,8 @@ isolated artifact rebinding, fake-clock deadlines and whole-experiment uncertain
 stops. Crash boundaries preserve usage and action evidence without rerunning a provider
 or mutation. Docker image identities were inspected read-only and match the pinned
 check and probe images. Production runtime, task bytes and existing evidence remain
-unchanged. Live outcome is still unmeasured; mock PASS is not comparison-arm PASS.
+unchanged. At preparation time live outcome was unmeasured; mock PASS is not
+comparison-arm PASS. The subsequent authorized execution is recorded below.
 
 Final staged validation covers all 51 test files: **841 passed, four actual-Docker
 opt-ins skipped**. The six runtime groups in `C:\pt\pl39-rollout-full-a{1..6}` have
@@ -780,7 +783,70 @@ isolated EVALUATOR_PASS / task acceptance PASS / safety NOT_RUN with four mock t
 five tools, one accepted mutation and zero cost, in 7.96s. Preservation hashes match
 for `.env`/user AGENTS.md, 1,249 task/historical files and 152 existing run files; all
 175 preexisting untracked entries remain. Only new diagnostic state lives outside
-the repository. The new paid cap confirmation is still the execution boundary.
+the repository. This preparation did not itself authorize the paid follow-up.
+
+### Four-seed short-rollout completed
+
+The user subsequently confirmed the exact four-branch / at-most-eight-new-turns-each
+scope and new shared $1.20 cap. One invocation on `3116cd29` completed at
+`C:\pt\pl39-rollout-live-a`: 10 input counts / 10 new Responses, 15 tool actions
+(including five selected by reused seeds), six public Docker checks, zero probes,
+zero finishes and zero private evaluation. Elapsed time was 177.172s and known new
+cost $0.542493150. Existing seed costs were not charged to this invocation. No
+seed regeneration, paid retry, normal row 40, Docker startup or image pull/build ran.
+Full public audit and analysis are in `C:\pt\pl39-rollout-review-a\summary.md`.
+
+| Branch | New calls / tools | Final diff | Current-diff public result | New cost |
+|---|---:|---:|---|---:|
+| A1 original native | 1 / 2 | 49 lines | parent FAIL: UnboundLocalError; upstream NOT_RUN | $0.123215250 |
+| A2 original native | 1 / 2 | 48 lines | upstream 2 FAIL / 515 PASS / 570 SKIP; parent NOT_RUN | $0.018701250 |
+| B1 fresh state | 4 / 6 | 49 lines | parent PASS; upstream 2 FAIL / 515 PASS / 570 SKIP | $0.277969650 |
+| B2 fresh state | 4 / 5 | 49 lines | parent PASS; upstream 2 FAIL / 515 PASS / 570 SKIP | $0.122607000 |
+
+All branch terminals are LIMIT_REACHED with only `accepted_mutations` blocking:
+the checkpoint left one accepted mutation, now consumed. A branches still had seven
+model calls and B branches four; token/cost/time exhaustion did not stop them. All
+responses completed within the unchanged 25k ceiling. No inference followed the last
+failed check, so this is not evidence of ignoring that newly returned failure.
+
+A1's single-line guard puts `next_dir` assignment inside the raising conditional;
+the public check confirms an uninitialized local. A2's `current_dir` guard removes
+the two Windows-file-parent failures but checks broken parents too late: creation of
+the next component raises EEXIST before advancing the current parent. Two original
+broken-parent ENOENT expectations still fail.
+
+B1/B2 first propose over-scope candidates (57/50 and 56/50 lines), receive exact
+typed failure and rollback feedback, then converge on the same full patch:
+`sha256:60e1d12c826a69ce83d6c4dd46ba5eb183f29565942cf595c598fb2b20fba054`.
+They replace direct `create_dir` with `filesystem.makedirs(..., True)`. All four
+original upstream failure IDs disappear, but looping-link and trailing-separator
+broken-link leaf cases now return ELOOP/ENOENT instead of expected EEXIST. Constant
+`exist_ok=True` causes helper resolution where the original False path short-circuits
+and preserves EEXIST. This is caller/leaf semantics lost during otherwise relevant
+helper reuse, not proof that more inspection or a larger token cap was needed.
+
+Fresh-state did lead to mutation and both checks, not endless reading. However the
+helper pivot followed scope rejection; B2 reached the same patch without B1's new
+56-line helper read. The higher-level helper was already cutoff evidence. Two samples
+per arm at one failure-selected checkpoint do not isolate encrypted reset from public
+history repackaging or feedback effects, and no default change is justified. All
+memory updates are null; this does not validate improved note or probe use.
+
+An independent, unmodified runtime defect is now reproduced from captured public
+output: both B upstream results record `exception_type="turn"`, the suffix of a
+`NoReturn:` source signature cut at the 12,000-character tail boundary. The gateway
+copies only the sandbox's `truncated=false` flag and its broad exception regex accepts
+the severed source token. This did not drive either candidate or a subsequent decision;
+there was no next inference. A bounded provider-free output-boundary/parser repair is
+the clearest next implementation seam, not another action mask or automatic paid run.
+
+Read-only audit verifies four journal chains, 434 per-branch CAS files including
+inherited copies, ordered input/continuation/call-result identities, current workspace
+diffs, check policy hashes and the exact billing sum. All six check cleanups are
+confirmed. Owned files, 1,249 tracked task/history files, 152 old run files, 83 prior
+diagnostic files and the 175-entry untracked list retain their inspected identities.
+Production v31 and task bytes are unchanged. Public results remain `official=false`,
+`claim_eligible=false`; task acceptance, safety and private evaluation are NOT_RUN.
 
 ## Row 38: stopped after an unverified final repair
 
