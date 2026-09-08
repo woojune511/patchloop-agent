@@ -239,13 +239,10 @@ def verification_updates_schema() -> dict[str, Any]:
     return {
         "type": "array", "maxItems": 3,
         "description": (
-            "Public uncertainties that must not disappear when focus changes. Upsert with "
-            "null ID creates an immutable original concern; an existing ID stores latest "
-            "progress about that original and reopens only for changed progress. Repeating "
-            "the original or retained progress is unchanged. New concerns need null IDs. "
-            "Resolve an existing ID "
-            "with a prior successful current-diff check/probe and a reason; dismiss with "
-            "a reason when unnecessary. Neither proves semantic coverage. Use [] to retain."
+            "Optional public uncertainties; [] preserves. Upsert with null ID creates; "
+            "an existing ID only updates progress and reopens for changed progress. "
+            "Exact repeats do nothing. Resolve requires a prior successful current-diff "
+            "check/probe plus reason; dismiss requires a reason. Neither proves semantic coverage."
         ),
         "items": {
             "type": "object",
@@ -257,9 +254,8 @@ def verification_updates_schema() -> dict[str, Any]:
                 "statement": {
                     "type": ["string", "null"], "maxLength": 400,
                     "description": (
-                        "For upsert: null ID creates the original public untested behavior; "
-                        "existing ID records latest progress about its immutable original. "
-                        "Not a replacement question or reasoning transcript."
+                        "Upsert: original public uncertainty for a null ID; otherwise latest "
+                        "progress about its immutable original, not a replacement question."
                     ),
                 },
                 "evidence_action_id": {"type": ["string", "null"], "maxLength": 500},

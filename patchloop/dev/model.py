@@ -37,48 +37,38 @@ mutation_readiness.state=ready_to_attempt means only that current editable sourc
 evidence is delivered. It guarantees neither coverage of a particular replacement
 anchor nor a sufficient semantic solution.
 
-An optional memory_update retains reusable behavior rules, implementation assumptions,
-and unverified behavior. Cite behavior-bearing public source or prior tool-result action
-IDs; preserve why the code causes a behavior, not just a wrapper location.
+An optional memory_update retains reusable public behavior rules and explicitly
+untested implementation assumptions, not status copies or reasoning transcripts.
+Cite behavior-bearing source or already observed tool results, not wrapper locations.
 current_public_failure describes this diff's failure; pending_recheck references an
-older failure, not this candidate's verdict. Keep reusable facts separate from status.
-Refine the same fact with its existing note_id, even if
-citations change; note_id=null creates a distinct fact. Consolidate duplicates with
-remove_note_ids. Close an answered open_question or name the next uncertainty.
-No update or
-three-part plan is required each turn. A note's status=current only means its cited
-evidence is current; its interpretation remains unverified. The citation's check_result
-is the recorded verdict, not confirmation of the note's prose. Reconsider behavior claims
-against the post-image after edits. Do not store reasoning transcripts.
-memory_update=null preserves notes and the
-question; within an update, open_question=null clears the question. Do not repeat an
-update across a parallel batch.
-The focused open_question is separate from unresolved verification concerns. Use optional
-verification_updates to retain up to three concrete public behaviors whose preservation
-is uncertain, especially assumptions introduced by an edit. Do not fill a quota or
-repeat broad task descriptions. Use operation=upsert with concern_id=null and a statement
-to create a concern. With an existing vN ID, statement updates only its progress_note;
-the original question remains fixed. Use concern_id=null for a distinct concern, [] for no change.
-Repeating the original statement or latest progress has no effect. Changing the focused question,
-fixing a different failure, or source-note expiry does not resolve these concerns.
-Resolve a concern only after observing a successful check or probe on the current diff:
-use operation=resolve with its evidence_action_id and a short reason connecting the
-result to the concern. A baseline experiment cannot validate an edited candidate.
-Harness validation binds that evidence, not the truth or completeness of your
-interpretation. Operation=dismiss requires a reason why further verification is not
-useful; it is not test evidence. Resolve/dismiss decisions need reconsideration after
-the diff changes. Use [] to preserve concerns; errors here do not reject the main action.
-Unresolved concerns are advisory, never an extra required model step or finish blocker.
-The update is evaluated before the current batch executes. Before observing an
-answer, use findings=[] with open_question, or leave memory_update=null. Do not
-cite pending or a result from the batch you are requesting. After receiving a
-result, create a source-backed note on a later call with note_id=null; update only
-IDs in working_notes.available_note_ids. memory_update_result is a pre-batch receipt,
-not current availability: a mutation can expire a note recorded just before it.
-working_notes_after_batch labels current IDs separately. Main-action success does not
-mean its note was stored. Correct a rejected annotation on a useful subsequent call, without
-repeating a source read merely to retry the annotation. Source-change notices
-identify notes that expired; do not treat their former IDs as existing notes.
+older failure, not this candidate's verdict.
+Refine the same fact with its existing note_id; note_id=null creates a distinct fact.
+Consolidate duplicates with remove_note_ids. Close an answered open_question or name
+the next uncertainty. No update or three-part plan is required each turn.
+status=current only means cited evidence is current; interpretation remains unverified.
+A citation's check_result is its verdict, not confirmation of the note's prose.
+Reconsider claims against the post-image after edits.
+
+Only the first non-null memory_update is applied before the batch executes: cite no
+pending/current-batch results. Before observing an answer, use findings=[] with
+open_question, or memory_update=null. Null preserves notes and the question;
+open_question=null within an update clears only the question.
+Use working_notes.available_note_ids for updates. memory_update_result is a pre-batch
+receipt, not current availability; working_notes_after_batch reports surviving IDs.
+Source changes can expire notes, including ones just recorded. Main-action success
+does not mean a note was stored. Fix annotation errors on a useful later call without
+rereading solely to retry a note.
+
+verification_updates keeps concrete unverified public behaviors separate from focus.
+No quota or broad task recap. Upsert creates an original concern or updates only its
+progress_note. Use concern_id=null for a distinct concern. Exact repeats do nothing.
+Resolve only with an already observed successful current-diff check/probe, its
+evidence_action_id, and a reason connecting it to the concern. Baseline evidence cannot
+validate a candidate. Dismiss needs a reason why further verification is not useful,
+not test evidence. Neither certifies semantic coverage. Reconsider resolved/dismissed
+concerns after diff changes; focus changes, unrelated fixes and source-note expiry
+do not resolve them. Use [] for no concern change. Concerns and annotation errors
+never block the main action or finish, and require no extra call.
 
 A mutation requires hypothesis, expected_behavior, and one exact old_text/new_text
 replacement in an allowed existing file. The gateway binds observed current evidence

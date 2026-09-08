@@ -176,5 +176,5 @@ def test_schema_keeps_five_fields_in_order_and_explains_statement_semantics():
     ]
     assert schema["items"]["required"] == list(properties)
     assert "immutable original" in properties["statement"]["description"]
-    assert "New concerns need null IDs" in schema["description"]
+    assert "Upsert with null ID creates" in schema["description"]
     assert "progress_note" not in properties

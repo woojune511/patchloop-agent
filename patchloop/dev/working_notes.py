@@ -247,21 +247,11 @@ def memory_update_schema() -> dict[str, Any]:
     return {
         "type": ["object", "null"],
         "description": (
-            "Optional reusable behavior rules, implementation assumptions, and unverified "
-            "behavior, not a reasoning transcript or a copy of current_public_failure. "
-            "Cite already observed public "
-            "ranges or prior public tool action IDs. Use note_id=null to create a note or "
-            "an existing note_id to refine the same fact, independent of citation ranges. "
-            "Keep distinct facts in separate notes. Consolidate "
-            "duplicates by updating one note and removing the others. Only the first "
-            "non-null update in a batch is used, before that batch executes. Do not "
-            "cite pending/current-batch results. Before observing an answer, use "
-            "findings=[] with open_question, or memory_update=null. After observing "
-            "it, create a note with note_id=null. memory_update_result records the "
-            "before-tool-batch update; its note_ids_after_update is historical, not "
-            "current availability. Consult working_notes.available_note_ids before "
-            "updating a retained note. Main action success does not mean a note was "
-            "stored. Null preserves notes and the question."
+            "Optional public facts/assumptions; null preserves notes and open_question. "
+            "Only the first non-null update is applied before the batch; cite already "
+            "observed public source/results, never pending/current-batch results. "
+            "memory_update_result is before-tool-batch; note_ids_after_update is historical. "
+            "Use working_notes.available_note_ids; main-action success does not imply note storage."
         ),
         "properties": {
             "findings": {
@@ -273,14 +263,16 @@ def memory_update_schema() -> dict[str, Any]:
                         "note_id": {
                             "type": ["string", "null"], "pattern": r"^n[1-9][0-9]*$",
                             "maxLength": 30,
-                            "description": "null creates; an existing note ID updates that note.",
+                            "description": (
+                                "note_id=null creates a distinct fact; an existing ID refines "
+                                "the same fact even if citations change."
+                            ),
                         },
                         "statement": {
                             "type": "string", "minLength": 1, "maxLength": 400,
                             "description": (
-                                "A useful public mechanism, observation, or explicitly untested "
-                                "assumption; not just a repeated function location. Cite the "
-                                "behavior-bearing source or observed result."
+                                "Reusable public mechanism, observation, or explicitly untested "
+                                "assumption; cite behavior-bearing source/results."
                             ),
                         },
                         "evidence": {
@@ -297,14 +289,13 @@ def memory_update_schema() -> dict[str, Any]:
                 "items": {
                     "type": "string", "pattern": r"^n[1-9][0-9]*$", "maxLength": 30,
                 },
-                "description": "Existing notes to remove; use [] to retain them.",
+                "description": "Remove existing IDs to consolidate duplicates; [] preserves.",
             },
             "open_question": {
                 "type": ["string", "null"], "maxLength": 500,
                 "description": (
-                    "The remaining uncertainty that could change an edit or experiment. "
-                    "Resolve an answered question with null, or replace it with the next one. "
-                    "Changing focus does not address retained verification concerns."
+                    "Resolve an answered question with null; otherwise name the next "
+                    "uncertainty that could change an edit/experiment. Does not resolve concerns."
                 ),
             },
             "verification_updates": verification_updates_schema(),

@@ -390,7 +390,20 @@ reads do not establish an end-to-end success rate. No candidate/test was execute
 all acceptance/safety states remain NOT_RUN and this is not row 40. Do not retry,
 resume or collect additional samples without a new exact approval.
 
-Tool surface v33 separates current-diff failure from repaired-but-unchecked status
+Tool surface v34 compresses only the optional memory block and repeated memory/concern
+schema descriptions. Keep nullable fields, all required properties, constraints and
+tool order unchanged: optional updates are represented with null, not by removing
+required properties from a [strict object](https://developers.openai.com/api/docs/guides/function-calling#strict-mode).
+Storage, evidence validation, receipts, lifecycle, replay, model settings, limits and
+action policy are unchanged. Old nonterminal envelopes fail exact runtime matching;
+do not migrate them. This local-only change authorizes no live row or paid sampling.
+Canonical schema byte reductions do not measure billed tokens or memory effectiveness.
+Future separately approved observations should distinguish useful facts available
+before decisions, later retention/citation support and actual repair/submission,
+not simply count how often the model writes notes. Same-response notes are not
+evidence of prior-memory reuse; null notes do not erase native history or continuation.
+
+The preceding v33 surface separates current-diff failure from repaired-but-unchecked status
 in the derived model view. `current_public_failure` keeps actual current failures;
 `pending_recheck` names the unchecked candidate, earlier failed diff and exact native
 receipt. Only a matching action/check/diff and full failure payload permits the

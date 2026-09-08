@@ -24,7 +24,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v33",
+            "schema_version": "dev-tool-surface-v34",
             "public_check_focus": "current-failure-or-pending-recheck-native-receipt-v1",
             "repair_followup": "recheck-before-reusing-older-failure-advisory-v1",
             "public_check_output": "complete-line-prefix-and-tail-accurate-truncation-v1",
@@ -89,7 +89,7 @@ def dev_tool_surface_hash() -> str:
             "working_note_range_feedback": "bounded-never-observed-versus-stale-current-range-v1",
             "working_note_interpretation": "evidence-currency-not-semantic-validation-v1",
             "working_note_check_result": "durable-verdict-exception-with-projected-currency-v1",
-            "working_note_guidance": "reusable-facts-separate-from-current-failure-v1",
+            "working_note_guidance": "compact-reusable-facts-and-lifecycle-guidance-v2",
             "verification_concerns": "original-question-progress-note-exact-noop-v2",
             "check_evidence_identity": "retained-action-check-diff-explicit-completion-currency-v2",
             "verification_concern_limit": 3,

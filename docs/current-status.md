@@ -33,6 +33,8 @@ once under the unchanged row-41 conditions on v33. It is separate from row 41,
 row 40 and the row-39 diagnostic comparisons below. Earlier
 approval exclusions remain scoped to their historical receipts.
 No row 43, paid retry/resume, historical candidate execution or further sampling is authorized.
+The subsequent local-only approval compresses memory guidance in v34 below; it does
+not authorize another live observation.
 
 The six-response medium/high comparison on three frozen row-39 inputs is now collected.
 It executed no selected tools and is not row 40. See [the pilot findings](#frozen-next-action-comparison-six-responses-collected).
@@ -99,8 +101,9 @@ and evaluator policies record cleanup. The read-only analysis at `C:\pt\pl42-rev
 runs no additional candidate/check/evaluator/provider execution. `.env`, user-owned
 `AGENTS.md`, 175 prior untracked entries, 1,249 task/history files, 160 prior run files,
 3,317 prior artifact files and both prior review directories remain unchanged.
-Runtime v33 stays frozen; only result documentation changes. Row 43 requires a new
-exact approval, and no failure-specific task, prompt, gate or candidate fix is made.
+Runtime v33 stayed frozen at that result-only checkpoint. Row 43 requires a new
+exact approval; the later v34 guidance compression below adds no failure-specific
+task hint, gate or candidate fix.
 The three documentation-layout tests, Ruff and `git diff --check` pass; the runtime
 hash is reverified unchanged. The full implementation suite and mock are not rerun
 for this documentation-only receipt; their frozen-runtime evidence remains below.
@@ -129,20 +132,68 @@ visible-checked, applied evaluator and worktree hashes agree. Sixty-six public i
 context/continuation artifacts and five outcome artifacts verify, as do three visible
 and three evaluator execution-policy hashes. The three visible owned containers are
 confirmed absent; evaluator policies record owned cleanup. Thirteen non-null note
-updates yield 12 applied receipts and one partial receipt: an unobserved verification
-reference is rejected without blocking the check, then resolved from its real result.
+updates yield 12 applied receipts and one partial receipt: resolution cites an observed
+mutation, not a completed check/probe (`unobserved_verification_result`). The valid finding
+and main check continue; resolution is corrected after the actual check result.
 No protocol correction, provider retry, resume or budget increase occurs.
 
 This observes the intended failure -> repair -> recheck -> submit flow, not a causal
 proof that v33 produced success or a generalization result. Early scope/path mistakes,
 first-edit latency and eight unchanged concern updates remain efficiency observations.
-Current runtime stays at commit `96d4a122`; only result documentation changes afterward.
+Runtime stayed at commit `96d4a122` through both live rows; v34 below is not live-tested.
 Read-only evidence: `C:\pt\pl41-review-a`. `.env`, user-owned `AGENTS.md`, all 175
 pre-existing untracked entries, 1,249 task/history files, 156 prior run files and 3,241
 prior artifacts remain unchanged. This approval was consumed by row 41 alone;
 row 42 subsequently received the separate approval recorded above.
 
-## Current implementation: current failure versus pending recheck (v33)
+## Current implementation: compact optional memory guidance (v34)
+
+The system prompt's memory block and the repeated memory/verification schema
+descriptions are shorter. Existing fields, nullable/required structure, constraints,
+tool order, source binding, six-note/three-concern lifecycle, delivery and restart
+remain unchanged. No model/API/continuation setting, action policy, budget, task
+or extra call changes. Notes remain optional, public, run-local and model-authored;
+current evidence does not certify the note's interpretation.
+
+The read-only row-41/42 audit found working storage/projection, not a new transport
+defect. Row 41 refines the same two IDs and repeats concern updates; row 42 supplies
+only null updates. These choices do not isolate a memory effect. V34 consolidates
+existing guidance about reusable facts, citation timing, identity and uncertainty;
+it does not add mandatory notes, semantic judging or private failure-specific hints.
+
+System prompt: **7,965 -> 6,943 characters**. The dedicated block, including its two
+trailing newlines, falls **3,368 -> 2,346**; with unchanged conversation instructions,
+the actual system message is **9,422 -> 8,400** characters. The canonical UTF-8
+memory schema falls **4,047 -> 3,149 bytes**. Five/six-tool schema examples save
+4,490/5,388 bytes, with check-ID enums omitted consistently. These are character/byte
+measurements, not billed-token savings or evidence of better agent decisions.
+
+Tool-surface v34 binds this description change; `dev-run-v1` and input shapes do
+not change. Old envelopes/journals are not migrated; an old nonterminal run cannot
+resume on a mismatched runtime. Local comparison and validation records are in
+`C:\pt\pl34-memory-a`; `C:\pt\pl41-42-memory-a` remains the read-only audit.
+Row 43 and any paid comparison still require separate exact approval.
+
+Ruff, 80 focused memory/feedback cases and nine final compression/wire cases pass.
+All 54 test files pass across the final nine groups: **915 passed, four real-Docker
+opt-ins skipped**. Two stale prose/full-schema-hash expectations from the first
+pass were corrected, and only their two groups reran; runtime bytes stayed fixed.
+The longest group command is 119.83s; the staged workflow including reruns is not
+an under-two-minute cycle. Existing citation, expiry, optional/null update,
+nonblocking rejection, native delivery, restart, privacy and completion tests pass.
+
+Mock `run_dev_f378a3d7f2724dde` at `C:\pt\pl34-smoke-a` reaches mutation, visible
+check, finish and isolated EVALUATOR_PASS / acceptance PASS / safety NOT_RUN:
+four mock turns, five tools, one accepted mutation, zero count/provider calls and
+zero cost, in 5.26 command seconds. Runtime content is
+`sha256:1cd81f909921c3c8ef34c0452b35db32a67421e3b45d42e525dfac057f7c53ea`;
+tool surface is `sha256:00d059e1093394877e4a0a50716f89cf0c8db72576e45a16daf8821c0471d108`.
+This verifies local contracts and smaller descriptions, not improved live memory
+use or task acceptance. No Docker/provider execution or old-run migration occurred.
+Preservation hashes keep `.env`, user-owned `AGENTS.md`, task/history and old
+run/artifact/review files unchanged; all 175 prior untracked entries remain in place.
+
+## Previous implementation: current failure versus pending recheck (v33)
 
 The model-facing current view now separates an observed failure on this diff from
 an edited-but-unchecked candidate. `current_public_failure` keeps current failures

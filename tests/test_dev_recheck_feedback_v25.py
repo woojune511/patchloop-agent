@@ -196,11 +196,11 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
 
 
 def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
-    # V29 removes only stop's model-supplied source IDs. Ordered input shapes
-    # are independently pinned in test_dev_completion_v27.
+    # V34 compresses memory descriptions only; ordered input shapes and non-memory
+    # descriptions are independently pinned in test_dev_memory_guidance_v34.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:40ca146186076af26dc2fb87213a5e50422cac9db0b22f09d48be310f5817be8"
+    )) == "sha256:ec8bf855315bce7c01143b5717d3173dc61b105b4d8e7f59ac656fb38d637f37"
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )

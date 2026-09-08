@@ -225,6 +225,6 @@ def test_guidance_prioritizes_reusable_facts_without_growing_the_system_prompt()
     assert "note_id=null creates a distinct fact" in DEV_SYSTEM_PROMPT
     assert "experiment on the current candidate" in DEV_SYSTEM_PROMPT
     assert "not confirmation of the note's prose" in DEV_SYSTEM_PROMPT
-    description = memory_update_schema()["description"]
-    assert "refine the same fact" in description
-    assert "Keep distinct facts in separate notes" in description
+    note_id = memory_update_schema()["properties"]["findings"]["items"]["properties"]["note_id"]
+    assert "refines the same fact even if citations change" in note_id["description"]
+    assert "note_id=null creates a distinct fact" in note_id["description"]

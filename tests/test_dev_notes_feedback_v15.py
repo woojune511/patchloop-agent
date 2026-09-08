@@ -294,4 +294,7 @@ def test_prompt_and_memory_schema_explain_before_batch_timing_and_initial_questi
         assert "before" in text
         assert "batch" in text
         assert "open_question" in text
-        assert "note_id=null" in text
+    # Identity instructions live beside note_id instead of repeating in the root description.
+    note_id = memory_update_schema()["properties"]["findings"]["items"]["properties"]["note_id"]
+    assert "note_id=null" in note_id["description"]
+    assert "note_id=null" in prompt

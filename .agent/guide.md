@@ -368,6 +368,12 @@ current-candidate verdict. Do not overwrite reusable knowledge with a copy of
 that status. The system prompt encourages reuse of existing responsibilities and asks
 whether another inspection can change the edit or next check. These remain optional
 concise findings, not a mandatory plan or a harness guarantee of semantic correctness.
+V34 compresses the dedicated system memory block and memory/concern schema descriptions
+only. Field-local descriptions carry API construction details; the system block keeps
+purpose, timing and interpretation/lifecycle boundaries. Preserve nullable/required
+shape, property/tool order, bounds, source validation, state/receipt projection and
+replay. No note quota, semantic judge, cross-run retrieval or new call is introduced.
+The shorter guidance does not establish better note use or task performance.
 `memory_update=null` preserves the notes and question; `open_question=null` inside an
 update resolves the question. The harness does not automatically merge similar prose.
 Before an observation, use an open question or null update; findings may cite only
@@ -533,7 +539,7 @@ action results are restored verbatim, not reclassified by the current parser. Ve
 deadlines, policy hashes, raw-tail failure-signature formula and all workflow gates
 remain unchanged; only captured/retained output and diagnostic semantics change.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v33`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v34`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -652,6 +658,20 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
+V34 is the local-only memory-guidance compression seam. The read-only audit at
+`C:\pt\pl41-42-memory-a` found correct storage/projection: row 41 updates the same two
+note IDs, often shifting into current status; row 42 never requests a non-null update.
+The row-41 rejected resolution cites an observed mutation, not an eligible completed
+check/probe; do not describe it as an invented future action. No new memory mechanism
+or task-specific prompt repair follows. The schema's structural values/order and the
+prompt outside its memory block stay exact. Measurements and validation are in
+`C:\pt\pl34-memory-a`; do not rewrite the earlier audit or run bytes.
+Any future comparison needs exact separate approval. Observe reusable facts before
+the first edit, later topic retention, actual citation support and downstream repair/
+submission. Same-response annotations are not prior-memory reuse, and annotation counts
+are not effectiveness. No row 43, provider/count call, Docker execution or paid A/B
+is authorized by this local implementation; do not infer a live benefit from it.
+
 Normal row 42 is complete on the same frozen v33: `run_dev_2dc51a86320d43d1`,
 EVALUATOR_FAIL / acceptance FAIL / safety PASS, 18 model/count calls, 19 tools,
 one accepted edit, no rejection, $0.287173950 and 197.140 active seconds. Fifteen
@@ -671,7 +691,7 @@ the model elects to submit. No public failure means the pending-recheck flow is 
 exercised, rather than observed broken. Keep candidate semantic errors separate from
 transport, source delivery, action-mask or budget defects. The two observations do
 not isolate a memory effect, establish a success rate or justify a stronger gate.
-Runtime stays frozen with no automatic fix. Any row 43 or further diagnostic execution
+Runtime stayed frozen for that result-only receipt. Any row 43 or further paid/task execution
 needs its own exact approval; this approval authorized only row 42. Prior bytes remain
 unchanged, and the operator's saved-result analysis executes no candidate or new check.
 
@@ -1805,6 +1825,24 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+V34 passes Ruff, 80 focused memory/feedback cases in 28.99s, nine final wire/compression
+cases in 0.14s and both corrected legacy expectation cases in 0.74s. Every one of 54
+files is represented once in the final selected nine groups: 915 passed / four real-
+Docker opt-ins explicitly disabled. Use `C:\pt\pl34-memory-a\test-groups.json` (v33
+partition plus the new test in group 7). Final evidence selects `final-1.xml` and
+`final-8.xml` from fresh `C:\pt\pl34-full-b{1,8}`, and `full-{2,3,4,5,6,7,9}.xml`
+from `C:\pt\pl34-full-a{2,3,4,5,6,7,9}`. The initial failures were an old prose string
+and a full-schema hash including descriptions, not changed runtime behavior. Runtime
+stays fixed; only those two expectation assertions change before their groups rerun.
+Longest group command is 119.83s; do not claim the full staged cycle fits two minutes.
+Mock `run_dev_f378a3d7f2724dde` at `C:\pt\pl34-smoke-a` reaches mutation/check/finish/
+isolated acceptance PASS / safety NOT_RUN in 5.26s, four mock turns, five tools,
+one accepted edit, zero count/provider/cost. Runtime is
+`sha256:1cd81f909921c3c8ef34c0452b35db32a67421e3b45d42e525dfac057f7c53ea`.
+The ordered structure, non-memory descriptions and surrounding prompt match v33;
+the memory block is 3,368 -> 2,346 chars and schema 4,047 -> 3,149 canonical bytes.
+Those reductions are not token/cost savings or a live memory-quality result.
 
 V33 passes Ruff and 69 focused repair/recheck/identity/tool/prompt cases in 103.49s.
 All 53 files run once on the final runtime in nine balanced fresh external roots
