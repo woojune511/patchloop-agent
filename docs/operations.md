@@ -399,7 +399,8 @@ canonical audit context and native history are not rewritten. Recheck clears the
 pending card or replaces it with a current failure. Guidance remains advisory, and
 tool inputs/order, action masks, model settings and limits are unchanged. Old envelopes
 are not migrated; nonterminal resume still requires an exact runtime/input match.
-The provider-free implementation authorizes no row 41, paid retry or Docker execution.
+The provider-free implementation authorized no row 41, paid retry or Docker execution;
+the later exact row-41 approval and outcome are recorded below.
 
 The preceding v32 contract binds complete-line public check output and terminal-format diagnostics.
 The sandbox byte cap, per-stream gateway 12k-character cap and recent-check 4k-character
@@ -426,6 +427,19 @@ interpret error availability as correct use, or this run as proof of a new harne
 defect. The read-only report is `C:\pt\pl40-review-a`; prior state and runtime are
 unchanged. No further paid invocation, retry/resume or candidate execution is authorized.
 See [the row-40 record](current-status.md#latest-live-observation-row-40-type-repair-and-mutation-exhaustion).
+
+The separately approved normal row 41 uses v33 unchanged at `96d4a122`:
+`run_dev_872af7b3c9524a04`, EVALUATOR_PASS / task acceptance PASS / safety PASS,
+22 model/count calls, 23 tools, two accepted edits, $0.431456850 and 265.983 active
+seconds. The public permission failure is repaired, rechecked, followed by 517 passing
+upstream cases (570 skipped), and submitted as the same 30-line artifact applied in
+isolated evaluation. Probes are enabled but unused. The native pending-recheck view
+is observed before the model selects recheck; no check was forced. Three earlier
+proposals were rejected for path/scope constraints, and the first accepted edit is
+still turn 17. All prior state/credential/task/history bytes are preserved. Read-only
+integrity, outcome and note receipt review: `C:\pt\pl41-review-a`. This is one
+unofficial success, not proof of a v33 effect or generalization. Do not retry, resume,
+run row 42 or sample again without another exact approval.
 
 The v31 successful mutation identity contract remains consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete

@@ -652,6 +652,23 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
+Normal row 41 is complete on v33: `run_dev_872af7b3c9524a04`, EVALUATOR_PASS with
+task acceptance and safety PASS, 22 model/count calls, 23 tools, two accepted edits,
+$0.431456850 and 265.983 active seconds. First accepted edit remains turn 17 after
+14 inspection actions and three rejected proposals (wrong file, 72/50 and 59/50).
+Turn 18 fails the public intermediate-mode assertion; turn 19 changes the intermediate
+creation mode to PERM_DEF while preserving leaf mode. Turn 20's actual native view
+separates current failure from pending recheck, and the model immediately runs that
+check successfully. Turn 21 passes all 517 upstream cases (570 skipped), then turn 22
+submits the same 30-line candidate; isolated evaluation passes. Probes are unused.
+Notes are used: 13 updates, 12 applied and one partial due to an unobserved verification
+reference, corrected after the real check. Eight repeated concern updates are unchanged.
+The repair/recheck path is now live-observed; attribution to v33 or broad quality is
+not established by one run. Preserve early scope mistakes as efficiency evidence,
+not a new reason to tighten action masks. Exact patch/manifest/policy/native-prefix
+identity checks and prior-byte preservation pass in `C:\pt\pl41-review-a`.
+No row 42, retry/resume, earlier candidate execution or paid comparison is authorized.
+
 Normal row 40 is now complete on v32: `run_dev_766c5a6ab2f04d82`, 25 model/count/tool
 calls, four accepted edits, $0.461354550, 197.000 active seconds, LIMIT_REACHED solely
 on accepted-mutation exhaustion. First edit is turn 17 after 16 inspections; turns
@@ -674,10 +691,10 @@ the canonical audit and original native results are unchanged. A read-only compa
 of all 25 saved row-40 views changes only the failure/pending card at turns 20/22/23/24,
 not source evidence, tools or budgets. This resolves current-looking repeated failure
 presentation, not the model's demonstrated misreading or the candidate's semantics.
-Keep row 40 and preceding experiments read-only. The next evidence seam, if separately
-authorized, is whether the model rechecks a repair and uses behavior-bearing source
-before another edit. No row 41, new paid comparison, retry/resume or candidate execution
-follows from this implementation approval.
+Keep rows 40/41 and preceding experiments read-only. Row 41 observes rechecking and
+an evidence-supported repair, but does not isolate why this behavior changed. Any
+next experiment needs a separate defined question and exact approval; no row 42,
+new paid comparison, retry/resume or candidate execution follows automatically.
 Older row-40 prohibitions below describe earlier approval boundaries, not a new run.
 
 V31 resolved successful mutation feedback's pre/post identity ambiguity.
