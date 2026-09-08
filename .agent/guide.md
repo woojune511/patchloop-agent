@@ -652,6 +652,29 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
+Normal row 42 is complete on the same frozen v33: `run_dev_2dc51a86320d43d1`,
+EVALUATOR_FAIL / acceptance FAIL / safety PASS, 18 model/count calls, 19 tools,
+one accepted edit, no rejection, $0.287173950 and 197.140 active seconds. Fifteen
+inspections precede turn 15's first edit; both visible checks pass (517 upstream
+cases, 570 skips) and turn 18 submits the same 45-line candidate. Isolated acceptance
+fails. The submitted public code duplicates the final creation for a trailing empty
+component and rethrows EEXIST for a file parent. Relevant helper bodies are exact
+native receipts before mutation, not missing evidence. Do not export private cases
+or feedback to future agent inputs or use them to tune the frozen task.
+
+All 54 public artifacts, eight outcome artifacts, 18 continuations, 17 input prefixes,
+patch identities and execution policy hashes verify in `C:\pt\pl42-review-a`.
+The row-41/42 first model inputs are byte-identical; runtime/task/model/cap/limits/
+sandbox and credential-path identities match. This time notes and probes are unused.
+At finish, optional source/probe/edit actions and ample budget remain available;
+the model elects to submit. No public failure means the pending-recheck flow is not
+exercised, rather than observed broken. Keep candidate semantic errors separate from
+transport, source delivery, action-mask or budget defects. The two observations do
+not isolate a memory effect, establish a success rate or justify a stronger gate.
+Runtime stays frozen with no automatic fix. Any row 43 or further diagnostic execution
+needs its own exact approval; this approval authorized only row 42. Prior bytes remain
+unchanged, and the operator's saved-result analysis executes no candidate or new check.
+
 Normal row 41 is complete on v33: `run_dev_872af7b3c9524a04`, EVALUATOR_PASS with
 task acceptance and safety PASS, 22 model/count calls, 23 tools, two accepted edits,
 $0.431456850 and 265.983 active seconds. First accepted edit remains turn 17 after
@@ -667,7 +690,8 @@ The repair/recheck path is now live-observed; attribution to v33 or broad qualit
 not established by one run. Preserve early scope mistakes as efficiency evidence,
 not a new reason to tighten action masks. Exact patch/manifest/policy/native-prefix
 identity checks and prior-byte preservation pass in `C:\pt\pl41-review-a`.
-No row 42, retry/resume, earlier candidate execution or paid comparison is authorized.
+That receipt did not authorize row 42; the separate approval above is now consumed.
+No row 43, retry/resume, earlier candidate execution or paid comparison is authorized.
 
 Normal row 40 is now complete on v32: `run_dev_766c5a6ab2f04d82`, 25 model/count/tool
 calls, four accepted edits, $0.461354550, 197.000 active seconds, LIMIT_REACHED solely
@@ -693,7 +717,7 @@ not source evidence, tools or budgets. This resolves current-looking repeated fa
 presentation, not the model's demonstrated misreading or the candidate's semantics.
 Keep rows 40/41 and preceding experiments read-only. Row 41 observes rechecking and
 an evidence-supported repair, but does not isolate why this behavior changed. Any
-next experiment needs a separate defined question and exact approval; no row 42,
+next experiment needs a separate defined question and exact approval; no row 43,
 new paid comparison, retry/resume or candidate execution follows automatically.
 Older row-40 prohibitions below describe earlier approval boundaries, not a new run.
 

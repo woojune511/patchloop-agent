@@ -438,8 +438,24 @@ is observed before the model selects recheck; no check was forced. Three earlier
 proposals were rejected for path/scope constraints, and the first accepted edit is
 still turn 17. All prior state/credential/task/history bytes are preserved. Read-only
 integrity, outcome and note receipt review: `C:\pt\pl41-review-a`. This is one
-unofficial success, not proof of a v33 effect or generalization. Do not retry, resume,
-run row 42 or sample again without another exact approval.
+unofficial success, not proof of a v33 effect or generalization. That receipt alone
+did not authorize row 42 or another paid invocation.
+
+The subsequent approval by reference authorizes only normal row 42 once under the
+same task/model/medium/.env/repeat-one/$1.20/probes/state-root conditions. Completed
+run `run_dev_2dc51a86320d43d1` is EVALUATOR_FAIL / acceptance FAIL / safety PASS:
+18 model/count calls, 19 tools, one accepted edit, $0.287173950, 197.140 active seconds.
+Both visible checks pass and the same 45-line artifact is submitted and evaluated.
+Private acceptance fails; this is not a transport, provenance or deadline error.
+No retry/resume is called for, and private feedback is never returned to the agent.
+The first actual model input is identical to row 41; runtime, task, model, cap, limits
+and sandbox/probe identities also match. No probe or working-note update is invoked.
+Optional inspection, edits and probes remain available before finish; no budget
+exhaustion forces submission. Read-only review: `C:\pt\pl42-review-a` and
+[the row-42 record](current-status.md#latest-live-observation-row-42-fixed-runtime-submission-with-acceptance-failure).
+Preserve runtime and historical bytes; do not infer a causal success/failure rate
+from the pair or inject evaluation-derived hints. No row 43, new paid sample,
+historical candidate execution or additional check follows from this consumed approval.
 
 The v31 successful mutation identity contract remains consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete

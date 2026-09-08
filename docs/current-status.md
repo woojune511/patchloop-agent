@@ -23,15 +23,16 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The forty-one live observations below
+Repository policy alone never initiates paid work. The forty-two live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-The user's latest exact approval authorized the now completed normal
-[row 41](#latest-live-observation-row-41-repair-recheck-and-submission) on v33.
-It is separate from row 40 and the row-39 diagnostic comparisons below. Earlier
+The user's latest approval by reference authorized the now completed normal
+[row 42](#latest-live-observation-row-42-fixed-runtime-submission-with-acceptance-failure)
+once under the unchanged row-41 conditions on v33. It is separate from row 41,
+row 40 and the row-39 diagnostic comparisons below. Earlier
 approval exclusions remain scoped to their historical receipts.
-No row 42, paid retry/resume, historical candidate execution or further sampling is authorized.
+No row 43, paid retry/resume, historical candidate execution or further sampling is authorized.
 
 The six-response medium/high comparison on three frozen row-39 inputs is now collected.
 It executed no selected tools and is not row 40. See [the pilot findings](#frozen-next-action-comparison-six-responses-collected).
@@ -49,6 +50,60 @@ $0.542493150, and no submitted branch. Both fresh-state branches repaired the or
 four regression failures but introduced two new ones. That approval did not authorize
 further paid execution, a default-context change, retry/resume or normal row 40. See also
 [the frozen follow-up contract](#four-seed-short-rollout-preparation).
+
+## Latest live observation: row 42 fixed-runtime submission with acceptance failure
+
+The separately authorized run `run_dev_2dc51a86320d43d1` completes with
+**EVALUATOR_FAIL / task acceptance FAIL / safety PASS**,
+`failure_class=PRIVATE_EVALUATION_FAILED`, `official=false`, `claim_eligible=false`.
+It uses 18 model/count calls, 19 tools, one accepted edit, 197.140 active seconds
+and **$0.287173950**. There are no rejected mutations, protocol corrections, retries
+or probes. Fifteen inspections precede the first edit at turn 15. Turns 16/17 pass
+the public contract and all 517 upstream cases (570 skipped); turn 18 submits the
+same 45-line diff (44 additions / one deletion). Isolated acceptance then fails.
+
+Saved evaluator evidence records 10 passing cases, one failure and one error.
+Static inspection of the submitted public code explains both observed defects:
+the raw component split retains a trailing empty component, causing duplicate
+creation of the final directory; treating each visited prefix as a creation target
+also propagates EEXIST for an existing file parent instead of ENOTDIR. The relevant
+`makedirs`, `create_dir` and `_path_components` bodies were delivered at turns 4/6/8
+and remain exact native receipts in turn 15's actual input. This is not evidence
+of missing source projection or an old candidate being evaluated. No private case
+body or evaluator feedback is reinjected into the coding agent.
+
+| Observation | Row 41 | Row 42 |
+| --- | --- | --- |
+| Task acceptance / safety | PASS / PASS | FAIL / PASS |
+| Model calls / tools | 22 / 23 | 18 / 19 |
+| First accepted edit | Turn 17 | Turn 15 |
+| Accepted / rejected edits | 2 / 3 | 1 / 0 |
+| Cost | $0.431456850 | $0.287173950 |
+
+Twenty-five meaningful envelope fields agree, including runtime/model/task identity,
+limits, cap, credential-path hash and sandbox/probe identity. The first actual model
+input is byte-identical: `sha256:ed2d0f5371823334d55881f5d7d9a83c8210f23c5848cdeae265e11d5a4d07db`.
+Row 42 uses no working-note updates versus row 41's 13, but these are observed choices,
+not a controlled memory intervention. At submission, inspection, mutation and probe
+remain available with 23 model calls and three accepted edits remaining before the
+finish decision. The model judges no further public uncertainty worth probing;
+neither exhaustion nor a forced stop caused this failure. No public check fails,
+so v33's repair/pending-recheck path is not exercised in this row. One success and
+one failure establish neither a success rate nor a causal v33 effect.
+
+All 54 public input/context/continuation artifacts, 18 encrypted continuations,
+17 immutable prefixes and eight outcome artifacts verify. Visible-checked,
+submitted, worktree and evaluator-applied patch hashes match. Two visible and three
+evaluator policy hashes verify; the two visible owned containers are confirmed absent,
+and evaluator policies record cleanup. The read-only analysis at `C:\pt\pl42-review-a`
+runs no additional candidate/check/evaluator/provider execution. `.env`, user-owned
+`AGENTS.md`, 175 prior untracked entries, 1,249 task/history files, 160 prior run files,
+3,317 prior artifact files and both prior review directories remain unchanged.
+Runtime v33 stays frozen; only result documentation changes. Row 43 requires a new
+exact approval, and no failure-specific task, prompt, gate or candidate fix is made.
+The three documentation-layout tests, Ruff and `git diff --check` pass; the runtime
+hash is reverified unchanged. The full implementation suite and mock are not rerun
+for this documentation-only receipt; their frozen-runtime evidence remains below.
 
 ## Latest live observation: row 41 repair, recheck and submission
 
@@ -84,7 +139,8 @@ first-edit latency and eight unchanged concern updates remain efficiency observa
 Current runtime stays at commit `96d4a122`; only result documentation changes afterward.
 Read-only evidence: `C:\pt\pl41-review-a`. `.env`, user-owned `AGENTS.md`, all 175
 pre-existing untracked entries, 1,249 task/history files, 156 prior run files and 3,241
-prior artifacts remain unchanged. This approval is consumed; no row 42 is authorized.
+prior artifacts remain unchanged. This approval was consumed by row 41 alone;
+row 42 subsequently received the separate approval recorded above.
 
 ## Current implementation: current failure versus pending recheck (v33)
 
@@ -111,8 +167,8 @@ turns 20/22/23/24; source evidence, available tools and budgets stay identical.
 Row 40 already delivered historical labels and recheck advice, so this is a clarity
 repair, not proof that the model lacked that information or would now solve the task.
 The implementation validation executed neither an earlier candidate nor a new live
-row. Row 41 subsequently received the separate exact approval recorded above; no
-row 42 or paid follow-up is authorized. Provider-free implementation evidence is in
+row. Rows 41/42 subsequently received the separate approvals recorded above; no
+row 43 or paid follow-up is authorized. Provider-free implementation evidence is in
 `C:\pt\pl33-feedback-a`; the old `C:\pt\pl40-review-a` remains read-only.
 
 Ruff and the final focused repair/recheck/identity/tool/prompt group pass: 69 cases
