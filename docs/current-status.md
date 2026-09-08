@@ -23,18 +23,17 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The forty-two live observations below
+Repository policy alone never initiates paid work. The forty-three live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-The user's latest approval by reference authorized the now completed normal
-[row 42](#latest-live-observation-row-42-fixed-runtime-submission-with-acceptance-failure)
-once under the unchanged row-41 conditions on v33. It is separate from row 41,
-row 40 and the row-39 diagnostic comparisons below. Earlier
-approval exclusions remain scoped to their historical receipts.
-No row 43, paid retry/resume, historical candidate execution or further sampling is authorized.
-The subsequent local-only approval compresses memory guidance in v34 below; it does
-not authorize another live observation.
+The user's latest exact approval authorized the now completed normal
+[row 43](#latest-live-observation-row-43-partial-repair-and-voluntary-stop)
+once on v34: v2 task, gpt-5.4-mini-2026-03-17, medium, root .env, repeat 1,
+$1.20 total cap, probes enabled, new run in `C:\patchloop-state`.
+Earlier exclusions remain scoped to their historical receipts. The v34 local-only
+implementation did not authorize this row; the separate live approval is consumed.
+No row 44, paid retry/resume, historical candidate execution or further sampling is authorized.
 
 The six-response medium/high comparison on three frozen row-39 inputs is now collected.
 It executed no selected tools and is not row 40. See [the pilot findings](#frozen-next-action-comparison-six-responses-collected).
@@ -52,6 +51,53 @@ $0.542493150, and no submitted branch. Both fresh-state branches repaired the or
 four regression failures but introduced two new ones. That approval did not authorize
 further paid execution, a default-context change, retry/resume or normal row 40. See also
 [the frozen follow-up contract](#four-seed-short-rollout-preparation).
+
+## Latest live observation: row 43 partial repair and voluntary stop
+
+The separately approved v34 run `run_dev_9b91e06c13ff4bd3` ends **AGENT_STOPPED**:
+22 model/count calls, 22 tools, four accepted edits, no rejected edits, **$0.464054850**
+and 224.094 active seconds. No submission or isolated evaluation occurs
+(`evaluator=null`); this is not EVALUATOR_FAIL or an aggregate safety verdict.
+The final candidate is 46 diff lines (45 additions / one deletion), unverified.
+
+Thirteen inspections precede turn 14's first edit. Turn 15 reports false EEXIST;
+turn 16 repairs it, and turn 17 reports wrong intermediate-directory permissions.
+Turn 18 repairs mode handling and turn 19 passes the public contract. Turn 20's
+upstream regression has three failures / 514 passes / 570 skips: one macOS broken-
+link case and two Windows errno cases. Turn 21 uses the last edit on the macOS
+branch only, then turn 22 stops without rechecking. Old helper bodies, including
+macOS handling and Windows ENOTDIR-to-ENOENT translation, were delivered at turns
+4/6 and remain exact native receipts before the initial rewrite. All three public
+failure rows reach the final repair decision untruncated. The Windows translation
+is not restored by that edit; this static observation is not a new check verdict.
+
+At the stop decision, 19 model calls, 79 tools and 1,582 active seconds remain, with
+zero mutations. `run_check` and `run_probe` remain available. Both final-diff checks
+are NOT_RUN, old failure is explicitly historical in `pending_recheck`, and current
+completion guidance recommends a check. The stop summary reuses the prior candidate's
+PASS/FAIL; the final candidate has no measured outcome. No missing tool, forced read,
+token saturation or pre-dispatch horizon terminal explains this stop. However, merely
+forcing a recheck would not repair the two unaddressed Windows cases. The earlier
+failure to plan the last mutation across both reported failure classes is the more
+actionable bottleneck; no new gate, cap increase or runtime fix follows automatically.
+
+All 22 decisions use `memory_update=null`; no finding, question or concern is stored
+or rejected. The compact prompt/schema is present and note projection is exact.
+This row observes no improvement in explicit note use, not a storage failure or a
+causal proof that memory non-use caused the outcome. Native history and encrypted
+continuation remain intact. All responses complete, largest output 3,931 tokens;
+no protocol correction, paid retry, resume or probe occurs.
+
+Read-only audit at `C:\pt\pl43-review-a` verifies 66 public artifacts, 22 continuations,
+21 immutable prefixes, four mutation identities, four public policy hashes and four
+owned-container absences. Runtime stays at `bf74bf93`; only result documentation
+changes. No earlier candidate, new check or evaluator is executed for analysis, and
+no private feedback is reinjected. Hash checks preserve `.env`, user-owned `AGENTS.md`,
+1,249 task/history files, 46 runtime files, all 164 prior run files / 3,381 artifacts,
+earlier review/audit files and all 175 prior untracked entries. Documentation-layout
+tests (three cases), Ruff and whitespace checks pass; runtime hash stays unchanged.
+The implementation suite/mock is not rerun for this documentation-only receipt.
+Row 44 requires new exact approval.
 
 ## Latest live observation: row 42 fixed-runtime submission with acceptance failure
 
@@ -101,8 +147,8 @@ and evaluator policies record cleanup. The read-only analysis at `C:\pt\pl42-rev
 runs no additional candidate/check/evaluator/provider execution. `.env`, user-owned
 `AGENTS.md`, 175 prior untracked entries, 1,249 task/history files, 160 prior run files,
 3,317 prior artifact files and both prior review directories remain unchanged.
-Runtime v33 stayed frozen at that result-only checkpoint. Row 43 requires a new
-exact approval; the later v34 guidance compression below adds no failure-specific
+Runtime v33 stayed frozen at that result-only checkpoint. Row 43 later received the
+separate approval above; v34 guidance compression adds no failure-specific
 task hint, gate or candidate fix.
 The three documentation-layout tests, Ruff and `git diff --check` pass; the runtime
 hash is reverified unchanged. The full implementation suite and mock are not rerun
@@ -172,7 +218,8 @@ Tool-surface v34 binds this description change; `dev-run-v1` and input shapes do
 not change. Old envelopes/journals are not migrated; an old nonterminal run cannot
 resume on a mismatched runtime. Local comparison and validation records are in
 `C:\pt\pl34-memory-a`; `C:\pt\pl41-42-memory-a` remains the read-only audit.
-Row 43 and any paid comparison still require separate exact approval.
+That implementation authorized no live row. Row 43 later received separate approval
+above; row 44 and any paid comparison require another exact approval.
 
 Ruff, 80 focused memory/feedback cases and nine final compression/wire cases pass.
 All 54 test files pass across the final nine groups: **915 passed, four real-Docker
@@ -218,8 +265,8 @@ turns 20/22/23/24; source evidence, available tools and budgets stay identical.
 Row 40 already delivered historical labels and recheck advice, so this is a clarity
 repair, not proof that the model lacked that information or would now solve the task.
 The implementation validation executed neither an earlier candidate nor a new live
-row. Rows 41/42 subsequently received the separate approvals recorded above; no
-row 43 or paid follow-up is authorized. Provider-free implementation evidence is in
+row. Rows 41/42, and then row 43 on v34, received the separate approvals above; no
+row 44 or paid follow-up is authorized. Provider-free implementation evidence is in
 `C:\pt\pl33-feedback-a`; the old `C:\pt\pl40-review-a` remains read-only.
 
 Ruff and the final focused repair/recheck/identity/tool/prompt group pass: 69 cases

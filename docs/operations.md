@@ -403,6 +403,17 @@ before decisions, later retention/citation support and actual repair/submission,
 not simply count how often the model writes notes. Same-response notes are not
 evidence of prior-memory reuse; null notes do not erase native history or continuation.
 
+The later exact row-43 approval is consumed: v34 `run_dev_9b91e06c13ff4bd3` stops
+voluntarily after four edits, 22 model/count/tool calls and $0.464054850, without
+submission/evaluation. The public contract passes on the third candidate; the final
+macOS-only repair is unchecked and does not restore the reported Windows error
+translation. At stop, checks remain available and both final-diff statuses are NOT_RUN.
+No tool reopening, cap increase or mandatory-check patch is justified merely by that
+stop. All memory updates are null, with prompt/schema and projection verified. Preserve
+the distinction between delivered information and correct use of it. Read-only evidence
+is `C:\pt\pl43-review-a`; no additional check/candidate execution, paid retry/resume,
+comparison or row 44 is authorized by this completed invocation.
+
 The preceding v33 surface separates current-diff failure from repaired-but-unchecked status
 in the derived model view. `current_public_failure` keeps actual current failures;
 `pending_recheck` names the unchecked candidate, earlier failed diff and exact native
@@ -467,8 +478,9 @@ Optional inspection, edits and probes remain available before finish; no budget
 exhaustion forces submission. Read-only review: `C:\pt\pl42-review-a` and
 [the row-42 record](current-status.md#latest-live-observation-row-42-fixed-runtime-submission-with-acceptance-failure).
 Preserve runtime and historical bytes; do not infer a causal success/failure rate
-from the pair or inject evaluation-derived hints. No row 43, new paid sample,
-historical candidate execution or additional check follows from this consumed approval.
+from the pair or inject evaluation-derived hints. Row 43 used a later separate approval;
+no new paid sample, historical candidate execution or additional check follows from
+this older consumed approval.
 
 The v31 successful mutation identity contract remains consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete

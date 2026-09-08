@@ -658,6 +658,25 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
+Normal row 43 is complete on v34: `run_dev_9b91e06c13ff4bd3`, AGENT_STOPPED,
+22 model/count/tool calls, four edits, $0.464054850, 224.094 active seconds. First
+edit is turn 14. False EEXIST and intermediate-mode failures are repaired at turns
+16/18, followed by public PASS at 19. Turn 20 reports one macOS and two Windows
+regression failures; all three rows reach the next input. Last edit at 21 restores
+only the macOS branch; 22 stops without rechecking. Final diff is 46 lines and both
+checks are NOT_RUN. Pending historical failure and explicit run_check advice are
+present; 19 calls/79 tools remain before stop, but zero mutations. Do not call this
+a removed check tool, horizon terminal or verified final-candidate failure. A forced
+recheck alone does not supply the missing Windows repair. Investigate multi-failure
+repair selection and preservation of already observed helper responsibilities.
+All 22 memory updates are null; no annotation rejection or projection loss occurs.
+This is not proof that note non-use caused the failure or that shorter guidance cannot
+help generally. Source/failure delivery, 66 artifacts, 22 continuations/21 prefixes,
+four mutation identities/policies and exact container cleanup verify at
+`C:\pt\pl43-review-a`. No probe, submission or private evaluator runs. Runtime remains
+frozen; no auto-fix, historical candidate execution, retry/resume, paid comparison
+or row 44 is authorized. The exact row-43 approval is consumed.
+
 V34 is the local-only memory-guidance compression seam. The read-only audit at
 `C:\pt\pl41-42-memory-a` found correct storage/projection: row 41 updates the same two
 note IDs, often shifting into current status; row 42 never requests a non-null update.
@@ -669,8 +688,8 @@ prompt outside its memory block stay exact. Measurements and validation are in
 Any future comparison needs exact separate approval. Observe reusable facts before
 the first edit, later topic retention, actual citation support and downstream repair/
 submission. Same-response annotations are not prior-memory reuse, and annotation counts
-are not effectiveness. No row 43, provider/count call, Docker execution or paid A/B
-is authorized by this local implementation; do not infer a live benefit from it.
+are not effectiveness. That implementation authorized no provider/Docker execution;
+row 43's later separate approval above is consumed. No row 44 or paid A/B is authorized.
 
 Normal row 42 is complete on the same frozen v33: `run_dev_2dc51a86320d43d1`,
 EVALUATOR_FAIL / acceptance FAIL / safety PASS, 18 model/count calls, 19 tools,
@@ -691,8 +710,8 @@ the model elects to submit. No public failure means the pending-recheck flow is 
 exercised, rather than observed broken. Keep candidate semantic errors separate from
 transport, source delivery, action-mask or budget defects. The two observations do
 not isolate a memory effect, establish a success rate or justify a stronger gate.
-Runtime stayed frozen for that result-only receipt. Any row 43 or further paid/task execution
-needs its own exact approval; this approval authorized only row 42. Prior bytes remain
+Runtime stayed frozen for that result-only receipt. Row 43 later received its own
+exact approval above; this older approval authorized only row 42. Prior bytes remain
 unchanged, and the operator's saved-result analysis executes no candidate or new check.
 
 Normal row 41 is complete on v33: `run_dev_872af7b3c9524a04`, EVALUATOR_PASS with
@@ -711,7 +730,8 @@ not established by one run. Preserve early scope mistakes as efficiency evidence
 not a new reason to tighten action masks. Exact patch/manifest/policy/native-prefix
 identity checks and prior-byte preservation pass in `C:\pt\pl41-review-a`.
 That receipt did not authorize row 42; the separate approval above is now consumed.
-No row 43, retry/resume, earlier candidate execution or paid comparison is authorized.
+Row 43's later separate approval is also consumed; no row 44, retry/resume,
+earlier candidate execution or paid comparison is authorized.
 
 Normal row 40 is now complete on v32: `run_dev_766c5a6ab2f04d82`, 25 model/count/tool
 calls, four accepted edits, $0.461354550, 197.000 active seconds, LIMIT_REACHED solely
@@ -737,7 +757,7 @@ not source evidence, tools or budgets. This resolves current-looking repeated fa
 presentation, not the model's demonstrated misreading or the candidate's semantics.
 Keep rows 40/41 and preceding experiments read-only. Row 41 observes rechecking and
 an evidence-supported repair, but does not isolate why this behavior changed. Any
-next experiment needs a separate defined question and exact approval; no row 43,
+next experiment needs a separate defined question and exact approval; no row 44,
 new paid comparison, retry/resume or candidate execution follows automatically.
 Older row-40 prohibitions below describe earlier approval boundaries, not a new run.
 
