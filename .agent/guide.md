@@ -639,6 +639,29 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
+Normal row 40 is now complete on v32: `run_dev_766c5a6ab2f04d82`, 25 model/count/tool
+calls, four accepted edits, $0.461354550, 197.000 active seconds, LIMIT_REACHED solely
+on accepted-mutation exhaustion. First edit is turn 17 after 16 inspections; turns
+19/21 repair bytes separators/root prefix. Turn 23 consumes the final edit with a
+false premise that `splitdrive` loses bytes type: its returns slice the input and the
+added drive coercion is a str/bytes no-op. The turn-22 read stops before the return
+paths. Actual turns 22/23 label the prior error historical/awaiting_recheck and guide
+run_check, but the model edits again without rechecking. Preserve this difference
+between delivered state and effective use; do not claim a model-only cause or turn
+the trace into a mandatory check/mask without a separate scoped change.
+Turn 24's public contract passes; turn 25's regression has seven failures from the
+direct walk's EEXIST behavior and lost macOS handling. Both original helper bodies
+were already observed. Final diff is 50 lines, current contract PASS/regression FAIL,
+no submission/evaluation. V32 early error summaries reach the next decisions; the
+final mixed-error summary preserves all seven rows and accurate truncation, but has
+no later inference. All 75 artifacts, 24 prefixes, four mutation identities and four
+check policy hashes verify; four owned containers are absent. Notes/probes are unused.
+Keep row 40 and preceding experiments read-only. The next seam is validating the
+evidence behind a proposed repair and distinguishing repaired-but-unchecked from
+still-failing, not increasing limits or reapplying a historical task patch. No row 41,
+new paid comparison, retry/resume or candidate execution follows from this approval.
+Older row-40 prohibitions below describe earlier approval boundaries, not a new run.
+
 V31 resolved successful mutation feedback's pre/post identity ambiguity.
 Use the completed candidate in the result workspace hash and name the original baseline
 explicitly. Preserve pending/completed replay, typed rollback, source/check/note identities,
@@ -648,7 +671,7 @@ final stop. Current-diff NOT_RUN and run_check guidance were already correctly d
 Local validation establishes identity consistency, not improved model decisions. The
 separately approved row 39 verifies actual pre/post identity delivery and final rechecking,
 but introduces a new control-flow bug and exhausts accepted edits. Preserve that distinction;
-do not infer a causal improvement from one row. Row 40 requires separate exact approval.
+do not infer a causal improvement from one row. Row 40 later received its own exact approval.
 No historical candidate execution is authorized.
 
 The row-39 provider-free follow-up finds no new delivery or scope-arithmetic defect.

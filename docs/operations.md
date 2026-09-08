@@ -399,6 +399,23 @@ text, with omission metadata. Unknown/mixed exception types are null. On restart
 completed results keep their recorded diagnostic bytes; old envelopes/journals are not
 migrated. No paid invocation or historical rerun is authorized by this local repair.
 
+The later separately approved normal row 40 runs v32 unchanged:
+`run_dev_766c5a6ab2f04d82`, 25 model/count/tool calls, four accepted edits, $0.461354550,
+197.000 active seconds. It ends at LIMIT_REACHED with 15 model calls/75 tools left
+but no accepted mutation remaining. The final 50-line diff passes the public traversal
+contract and fails seven upstream cases (510 passed/570 skipped); no probe, submission
+or isolated evaluation occurs. Both earlier TypeError summaries reach the next turn.
+The final seven-line mixed-error summary is complete, exception type is null, and
+gateway clipping is reported; there is no model turn after that final failure.
+All 75 saved artifacts, 24 input prefixes, four mutation identities and four execution
+policy hashes verify; four exact owned containers are absent. Actual turns 22/23
+mark the previous error historical and recommend rechecking, yet the fourth edit
+adds a type coercion contradicted by `splitdrive`'s slice-preserving returns. Do not
+interpret error availability as correct use, or this run as proof of a new harness
+defect. The read-only report is `C:\pt\pl40-review-a`; prior state and runtime are
+unchanged. No further paid invocation, retry/resume or candidate execution is authorized.
+See [the row-40 record](current-status.md#latest-live-observation-row-40-type-repair-and-mutation-exhaustion).
+
 The v31 successful mutation identity contract remains consistent at action completion:
 `result.workspace_diff_hash == result.output.worktree_diff_hash` names the complete
 post-edit candidate. `result.output.baseline_diff_hash` names the complete pre-edit
@@ -686,7 +703,7 @@ no more edit is needed does not submit a candidate. Tool argument shapes/order a
 admission remain unchanged. Separately approved row 35 now supplies delivery/submission
 evidence, not a private acceptance PASS or causal proof of better decisions. Rows 34/35
 are terminal read-only evidence. Later approvals and results are recorded in current status;
-the latest row 39 does not authorize row 40.
+neither row 39 nor the separately completed row 40 authorizes another live row.
 
 `finish_task` becomes available only after every visible check passes on the
 current non-empty diff and no non-ignored untracked file remains. The context lists

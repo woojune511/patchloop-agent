@@ -23,9 +23,15 @@ invocation authorizes only its declared `dev-train` task, model, credential file
 repeat count, and positive total cap. It never authorizes an image pull/build,
 another task, an automatic retry after uncertainty, or a confirmatory claim run.
 
-Repository policy alone never initiates paid work. The thirty-nine live observations below
+Repository policy alone never initiates paid work. The forty live observations below
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
+
+The user's latest exact approval authorized the now completed normal
+[row 40](#latest-live-observation-row-40-type-repair-and-mutation-exhaustion) on v32.
+It is separate from the row-39 diagnostic comparisons below. Earlier statements that
+those approvals did not authorize row 40 remain scoped to those historical receipts.
+No row 41, paid retry/resume, historical candidate execution or further sampling is authorized.
 
 The six-response medium/high comparison on three frozen row-39 inputs is now collected.
 It executed no selected tools and is not row 40. See [the pilot findings](#frozen-next-action-comparison-six-responses-collected).
@@ -40,8 +46,8 @@ The user's subsequent exact approval by reference authorized one shared-$1.20
 tool-feedback follow-up of all four existing responses. That experiment is now
 [complete](#four-seed-short-rollout-completed): ten new responses, fifteen tools,
 $0.542493150, and no submitted branch. Both fresh-state branches repaired the original
-four regression failures but introduced two new ones. No further paid execution,
-default-context change, retry/resume or normal row 40 is authorized. See also
+four regression failures but introduced two new ones. That approval did not authorize
+further paid execution, a default-context change, retry/resume or normal row 40. See also
 [the frozen follow-up contract](#four-seed-short-rollout-preparation).
 
 ## Current implementation: complete-line public check feedback (v32)
@@ -315,6 +321,76 @@ existence. That action's line feedback was delivered once in the next native inp
 Every memory update was null; this establishes non-use, not a memory storage failure.
 The v27 prompt already advised reuse and input variation; stronger generic wording alone
 is not established as a solution, and the v28 change is not evidence of improved agent success.
+
+## Latest live observation: row 40 type repair and mutation exhaustion
+
+The separately approved normal invocation on `9c6cafa7` created
+`run_dev_766c5a6ab2f04d82` under `C:\patchloop-state`: v2
+`pyfakefs-makedirs-parent-traversal`, `gpt-5.4-mini-2026-03-17`, medium reasoning,
+root `.env`, repeat one, $1.20 total cap and enabled probes. It ended at
+`LIMIT_REACHED`: 25 model/count calls, 25 tools, four accepted mutations,
+197.000 active seconds and **$0.461354550**. No probe, stop, submission or isolated
+evaluation ran. Task acceptance and safety were not evaluated; `official=false`.
+
+- Turns 1-16 inspect the wrapper and helpers. The full higher-level `makedirs`
+  (2760-2845) and `create_dir` (2090-2175) bodies were delivered at turns 6/8,
+  including Windows errno translation and macOS trailing-separator handling.
+- Turn 17 replaces the wrapper delegation with a direct component walk. Turn 18
+  fails the bytes-path check with `TypeError: startswith first arg must be bytes or
+  a tuple of bytes, not str`. Turn 19 makes the split/normalization separators typed.
+- Turn 20 fails `TypeError: can't concat str to bytes`. Turn 21 changes the absolute
+  prefix from `drive + self.path.sep` to `drive + path_sep`.
+- Instead of rechecking that third candidate, turn 22 reads only 1090-1125 of
+  `splitdrive`; its return paths extend through 1136. Turn 23 spends the final
+  accepted mutation coercing `drive` to bytes, asserting that `splitdrive` returns
+  text for bytes input. Static source inspection contradicts that premise:
+  `make_string_path` uses `os.fspath`, and every drive return slices `path_str`.
+  The added guard is a no-op for the supported str/bytes paths. The third candidate
+  was not executed separately, so this is source-level evidence, not a recheck claim.
+- Turn 24's public parent-traversal contract passes. Turn 25's regression returns
+  **7 failed, 510 passed, 570 skipped**: broken-link parents expect ENOENT (2),
+  POSIX file parents ENOTDIR (20), Windows file parents ENOENT (2), but receive
+  EEXIST (17), each in normal/case-insensitive variants; the macOS trailing-separator
+  broken-link case unexpectedly raises EEXIST instead of completing.
+
+The direct walk substitutes blanket EEXIST and low-level `create_dir` for the existing
+caller/helper behavior. This is a concrete semantic regression, not evidence that the
+50-line scope is unsatisfiable. The repair process also spends its last edit on an
+unverified, incorrect type premise. Actual model inputs at turns 22/23 already say
+`historical`, `awaiting_recheck`, current checks NOT_RUN, and recommend `run_check`.
+Thus this is not a missing-error or missing-currency-label observation. Whether the
+retained historical failure wording contributes to the decision remains unisolated;
+neither model internals nor a single run establish a purely model-only cause.
+
+V32's two early TypeError summaries and exact streams reach turns 19/21 unchanged.
+The final regression preserves all seven literal summary rows, reports gateway
+clipping (`stdout` 11,987 characters, `truncated=true`), and correctly leaves the
+mixed FileExistsError/AssertionError type null. That final result has no subsequent
+model turn: minimum completion is blocked solely by accepted mutations (15 model
+calls/75 tools remain). It is not token/cost/continuation failure or voluntary stop,
+and non-repair cannot be described as ignoring that last error after receiving it.
+
+The final 50-line diff (49 added/one removed), both final checks and workspace bind
+`sha256:d3f40afb9044151d28eebe5b34667329c95b405e82b32ba079b63d82429f21f1`.
+Current status is contract PASS / regression FAIL, with no untracked file, submitted
+artifact or manifest. All four completed/baseline mutation identities and their native
+deliveries verify. All 75 context/input/continuation artifacts, 25 current-state budget
+projections and 24 append-only prefixes verify; 25 encrypted continuations are stored,
+24 replayed exactly once. Every response completes and reports `current_turn` (a
+provider-reported mode, not evidence of effective reasoning use). Largest output is
+6,404 tokens; final input 110,692 tokens and newest state 11,710 UTF-8 bytes.
+There are 17 inspections: 14 add coverage, two are covered-only and one is zero-match;
+no cache hit, non-null memory update or probe occurs. Four policy hashes verify and
+four exact owned containers are absent. The 279-event chain ends at
+`sha256:3889f312f475527d504fe9bedf2af50a6d5adf5561e3d1eb713734e05f1254bc`.
+
+Read-only audit and candidate copy: `C:\pt\pl40-review-a`. `.env`, user-owned
+`AGENTS.md`, 1,249 tracked task/historical files, 152 prior run files, 3,168 prior
+content-addressed objects and 175 existing untracked entries remain unchanged.
+Runtime stayed at the previously provider-free-tested v32 hash throughout. No code,
+prompt, context reset, tool mask or limit was changed for this row. The next diagnostic
+target is evidence-to-edit validity and repair-then-recheck behavior, not an automatic
+cap increase or stronger tool gate. No row 41 or historical candidate rerun is authorized.
 
 ## Latest live observation: row 39 rechecked and exhausted accepted mutations
 
