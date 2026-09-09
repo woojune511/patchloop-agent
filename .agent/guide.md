@@ -539,7 +539,7 @@ action results are restored verbatim, not reclassified by the current parser. Ve
 deadlines, policy hashes, raw-tail failure-signature formula and all workflow gates
 remain unchanged; only captured/retained output and diagnostic semantics change.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v34`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v35`;
 do not migrate old envelopes or journal bytes.
 
 ## State and recovery
@@ -571,6 +571,11 @@ One active monotonic deadline reaches provider counting/generation and tool exec
 including pending replay and checks. Each blocking operation receives remaining time.
 Docker checks bind run/action execution identity so crash recovery does not duplicate
 the same check container; a check timeout is not model protocol failure.
+If launcher execution raises, preserve the original exception only after confirmed
+owned-container cleanup. Otherwise raise typed `SANDBOX_CLEANUP_FAILED` with the
+failed execution-policy hash and `cleanup_failed=true`, including on interruption.
+The gateway journals that result and stops further tools/repetitions; it must not
+flatten uncertain cleanup into a retryable generic tool error or semantic check failure.
 
 Completed probes also replay `action_id + input_hash`. If a probe was interrupted
 before its durable result, confirm cleanup of its exact labeled container and permit

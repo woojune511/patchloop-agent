@@ -24,7 +24,8 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v34",
+            "schema_version": "dev-tool-surface-v35",
+            "sandbox_exception_cleanup": "typed-uncertainty-preserved-through-gateway-v1",
             "public_check_focus": "current-failure-or-pending-recheck-native-receipt-v1",
             "repair_followup": "recheck-before-reusing-older-failure-advisory-v1",
             "public_check_output": "complete-line-prefix-and-tail-accurate-truncation-v1",

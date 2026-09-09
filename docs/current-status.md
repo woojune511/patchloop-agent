@@ -16,6 +16,20 @@ claim commands are absent.
   reserves; legacy 24/3 counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
+## Sequential reliability review fixes (provider-free)
+
+The 2026-09-09 review is recorded externally at `C:\pt\pl-system-review-a\review.md`.
+The subsequent implementation request authorizes local fixes and provider-free
+validation, not another paid row or Docker execution. These edge-case defects are
+not established causes of row 43's problem-solving failure.
+
+First fix: v35 preserves owned-container cleanup uncertainty even when the launcher
+raises. Confirmed cleanup preserves the original exception; unconfirmed cleanup
+becomes typed `SANDBOX_CLEANUP_FAILED`, retains policy/hash evidence through the
+gateway, and stops further execution. Mocked launch/cleanup/interruption and durable
+replay tests pass with existing cleanup/deadline cases: 14 passed in 4.05s at
+`C:\pt\pl-fix-cleanup-green-b`; focused Ruff passes. No real Docker/provider call.
+
 ## Authority
 
 Mock execution carries no provider authority. One exact live `patchloop dev`

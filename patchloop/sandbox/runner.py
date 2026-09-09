@@ -395,22 +395,46 @@ class DockerSandbox:
             list(check.command), execution_targets, workspace, docker=True,
         ) as (entrypoint, mounts):
             try:
-                if deadline is not None:
-                    timeout = deadline.bounded_timeout(check.timeout_seconds, reserve_seconds=5)
-                completed = subprocess.run(
-                    [*command, *mounts, self.image, *entrypoint],
-                    capture_output=True, timeout=timeout, check=False,
+                try:
+                    if deadline is not None:
+                        timeout = deadline.bounded_timeout(check.timeout_seconds, reserve_seconds=5)
+                    completed = subprocess.run(
+                        [*command, *mounts, self.image, *entrypoint],
+                        capture_output=True, timeout=timeout, check=False,
+                    )
+                    exit_code = completed.returncode
+                    timed_out = False
+                    stdout, stderr = completed.stdout, completed.stderr
+                except subprocess.TimeoutExpired as exc:
+                    exit_code = None
+                    timed_out = True
+                    stdout, stderr = exc.stdout or b"", exc.stderr or b""
+                finally:
+                    # The mounted collector must outlive exact-container cleanup.
+                    cleanup_ok = cleanup()
+            except BaseException as exc:
+                if cleanup_ok:
+                    raise
+                # An interrupted launcher must not erase the stronger fact that
+                # ownership/cleanup is uncertain. The gateway preserves these
+                # typed details and stops the run before any further execution.
+                policy = registered_check_execution_policy(
+                    image=self.image, working_directory=working_directory,
+                    timeout_seconds=check.timeout_seconds,
+                    output_limit_bytes=check.output_limit_bytes,
+                    effective_timeout_seconds=timeout,
+                    row_deadline_limited=timeout < check.timeout_seconds,
+                    cleanup_status="failed",
                 )
-                exit_code = completed.returncode
-                timed_out = False
-                stdout, stderr = completed.stdout, completed.stderr
-            except subprocess.TimeoutExpired as exc:
-                exit_code = None
-                timed_out = True
-                stdout, stderr = exc.stdout or b"", exc.stderr or b""
-            finally:
-                # The mounted collector must outlive exact-container cleanup.
-                cleanup_ok = cleanup()
+                raise SandboxCleanupError(
+                    "owned sandbox cleanup could not be confirmed after execution error",
+                    details={
+                        "cleanup_failed": True,
+                        "execution_error_type": type(exc).__name__,
+                        "execution_policy": policy,
+                        "execution_policy_hash": sha256_bytes(canonical_json(policy).encode()),
+                    },
+                ) from exc
         feedback = None
         if execution_targets is not None:
             stderr, report = split_report(stderr, execution_targets)
