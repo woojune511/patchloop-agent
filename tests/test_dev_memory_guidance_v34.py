@@ -118,8 +118,10 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
 
 
 def test_guidance_identity_changes_without_changing_run_schema_or_limits():
+    # v35 adds execution/recovery semantics; the v33/v34 argument and description
+    # identities above remain independently pinned and unchanged.
     assert dev_tool_surface_hash() == (
-        "sha256:00d059e1093394877e4a0a50716f89cf0c8db72576e45a16daf8821c0471d108"
+        "sha256:7873a505e3ef4ecb1c32e268209b46e5e3dc3cf9538c9ce58342d8fbabbc84cd"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

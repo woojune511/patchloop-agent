@@ -14,7 +14,7 @@ from patchloop.dev.runner import _build_context, _RunCounters
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
 from patchloop.errors import ContractError
-from patchloop.repository import DiffSummary
+from patchloop.repository import DiffSummary, WorkspaceManager
 from patchloop.util import sha256_bytes, sha256_json
 
 
@@ -34,12 +34,20 @@ def source_gateway(tmp_path, monkeypatch):
         sandbox=None, journal=journal, limits=DevLimits(),
     )
 
-    def tracked(path):
+    def tracked(path, *, deadline=None):
+        if deadline is not None:
+            deadline.check()
         if path not in raw_sources:
             raise ContractError("not a tracked public path")
         return path, SimpleNamespace(read_bytes=lambda: raw_sources[path])
 
     monkeypatch.setattr(gateway, "_tracked_path", tracked)
+    # The synthetic workspace has no Git repository. Cover explicit bounded
+    # metadata reads as well as the current_diff property used by projection.
+    monkeypatch.setattr(
+        WorkspaceManager, "diff_summary",
+        staticmethod(lambda workspace, *, deadline=None: DiffSummary([], 0, 0, "", [])),
+    )
     monkeypatch.setattr(
         DevToolGateway, "current_diff",
         PropertyMock(return_value=DiffSummary([], 0, 0, "", [])),
@@ -169,7 +177,7 @@ def test_search_bounds_total_complete_source_and_keeps_matches_visible(
     source = gateway.workspace / "src.py"
     source.write_text("\n".join(f"MATCH {number} " + "x" * 2_000 for number in range(40)))
     monkeypatch.setattr(
-        "patchloop.dev.tools.subprocess.run", lambda *args, **kwargs: SimpleNamespace(returncode=0)
+        "patchloop.dev.tools.run_git", lambda *args, **kwargs: SimpleNamespace(returncode=0)
     )
     result = gateway._search_files("MATCH", "*.py")
     assert result["truncated"] is True

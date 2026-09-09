@@ -466,8 +466,10 @@ def test_scope_failure_reports_complete_49_to_56_candidate_and_survives_restart(
         untracked_files=[],
     )
 
-    def synthetic_summary(selected_workspace):
+    def synthetic_summary(selected_workspace, *, deadline=None):
         del selected_workspace
+        if deadline is not None:
+            deadline.check()
         return baseline if target.read_bytes() == baseline_bytes else candidate
 
     monkeypatch.setattr(WorkspaceManager, "diff_summary", staticmethod(synthetic_summary))

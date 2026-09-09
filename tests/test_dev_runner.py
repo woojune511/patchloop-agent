@@ -82,13 +82,13 @@ def test_latest_tool_result_is_not_evicted_by_working_set(
     original_diff_summary = RealWorkspaceManager.diff_summary
     original_tracked_path = gateway._tracked_path  # noqa: SLF001
 
-    def counted_diff_summary(workspace):
+    def counted_diff_summary(workspace, **kwargs):
         observations["diff"] += 1
-        return original_diff_summary(workspace)
+        return original_diff_summary(workspace, **kwargs)
 
-    def counted_tracked_path(path):
+    def counted_tracked_path(path, **kwargs):
         observations["tracked_path"] += 1
-        return original_tracked_path(path)
+        return original_tracked_path(path, **kwargs)
 
     monkeypatch.setattr(
         RealWorkspaceManager,
@@ -2888,8 +2888,8 @@ def test_live_source_preflight_scopes_cleanliness_to_relevant_tracked_paths(tmp_
 def test_live_missing_local_image_stops_before_provider(tmp_path, monkeypatch) -> None:
     env_file = tmp_path / "credential.env"
     env_file.write_text("OPENAI_API_KEY=test-only-sentinel\n", encoding="utf-8")
-    monkeypatch.setattr(runner.DockerSandbox, "available", staticmethod(lambda: True))
-    monkeypatch.setattr(runner.DockerSandbox, "image_identity", lambda self: None)
+    monkeypatch.setattr(runner.DockerSandbox, "available", staticmethod(lambda **kwargs: True))
+    monkeypatch.setattr(runner.DockerSandbox, "image_identity", lambda self, **kwargs: None)
     monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package, **kwargs: None)
     request = DevRunRequest(
         provider="openai",
