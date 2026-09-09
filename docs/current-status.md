@@ -50,6 +50,18 @@ mutation newline policy remain unchanged. New tests first reproduce five mixed-E
 failures; the fix plus source/note lifecycle regressions pass 48 cases in 14.27s
 (`C:\pt\pl-fix-notes-green-a.xml`). This fixes storage/lifecycle, not optional note non-use.
 
+Design follow-up is kept separate from those confirmed defects. The offline
+`diagnostics.current_source_view` prototype preserves the full native prefix and
+selected current sources, but makes their bodies inline in only the latest view.
+Its 26 cases pass in 0.85s. Frozen row-43 A retains all 385 selected lines, 82 prior
+items and 20 encrypted reasoning items; request size grows 424,331 -> 440,593 UTF-8
+bytes (`C:\pt\pl-fix-source-view-a`). No model-effect/token-saving claim or default
+context change follows. An external synthetic edit-unit comparison confirms the
+separate-edit versus wide-anchor tradeoff, not a cause of row 43's failure. Existing
+mutation schema/counting and optional notes remain unchanged; neither diagnostic
+authorizes or implements paid collection. The original fresh-state/order pilots
+remain immutable evidence, not runtime defaults.
+
 ## Authority
 
 Mock execution carries no provider authority. One exact live `patchloop dev`

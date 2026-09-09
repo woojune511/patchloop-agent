@@ -674,6 +674,34 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
+The sequential review fixes first address deterministic execution, recovery, budget
+and note defects; do not attribute those synthetic edge cases to row 43 without a
+matching trace. State ownership is consolidated at the existing B/P function,
+shared observational normalization and durable evaluation-completion receipt, not
+a new planning layer or broad framework rewrite.
+
+`diagnostics.current_source_view` is a prepare/validate-only presentation prototype.
+It changes only the latest complete view's selected current-source references into
+their exact inline bodies. Earlier native items/ciphertext, task, schema order, all
+other state and selected path/hash/ranges remain unchanged. Never expand selection
+to all previously observed lines of that file. On frozen row-43 pre-turn-21 control A,
+385 selected lines and 82 prior items/20 reasoning items are preserved; 15 current
+reference ranges become inline. Full UTF-8 request bytes grow 424,331 -> 440,593.
+Evidence at `C:\pt\pl-fix-source-view-a` establishes delivery equivalence and cost in
+bytes only, not token counts, note use or better model decisions. This is not wired
+into normal runtime and has no count/provider/tool execution path. Keep the official
+[reasoning continuation contract](https://developers.openai.com/api/docs/guides/reasoning#keeping-reasoning-items-in-context).
+
+The current single-occurrence edit unit remains explicit. A synthetic text-only
+comparison at `C:\pt\pl-fix-edit-unit-a` confirms two distant one-line replacements
+cost two accepted mutations, while a combined exact anchor must include the gap.
+With 20 unchanged lines, argument-only bytes are 167 separate vs 825 combined and
+observed anchor coverage is 2 vs 22 lines. A 1,500-line gap exceeds the current 20k
+old/new text bound. These are expression constraints, not model failure causation.
+An atomic multi-replacement candidate would change wire and mutation-count semantics;
+it is not silently enabled by the reliability fixes. No note quota, automatic semantic
+memory, context reset, cap increase or new hard action gate is justified by these probes.
+
 - Edit `dev-head` directly in small commits; do not version ordinary fixes.
 - Keep cross-run memory disabled; bounded public run-local working notes are enabled.
 - Keep mutation intent embedded in the mutation turn.
