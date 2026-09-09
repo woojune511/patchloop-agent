@@ -30,6 +30,14 @@ gateway, and stops further execution. Mocked launch/cleanup/interruption and dur
 replay tests pass with existing cleanup/deadline cases: 14 passed in 4.05s at
 `C:\pt\pl-fix-cleanup-green-b`; focused Ruff passes. No real Docker/provider call.
 
+Second fix: completed evaluation now has one durable receipt, validated and finalized
+without entering workspace/provider/sandbox execution on resume. PASS, FAIL, evaluator
+error, cleanup uncertainty and deadline outcomes preserve their original artifacts,
+message, active time and repetition-stop decision. Two crash boundaries, changed second
+verdict prevention, artifact tamper and uncertainty precedence pass 22 cases in 61.93s
+(`C:\pt\pl-fix-eval-green-b.xml`). This closes the after-`evaluator_finished` crash gap,
+not the earlier uncommitted-evaluation window. Existing run bytes are not migrated.
+
 ## Authority
 
 Mock execution carries no provider authority. One exact live `patchloop dev`

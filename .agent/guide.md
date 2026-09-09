@@ -13,6 +13,7 @@ patchloop/dev/native_sources.py  exact current-source delivery references into n
 patchloop/dev/tools.py    tool grammar, spans, mutations, checks, finish
 patchloop/dev/check_feedback.py  complete-line public output and terminal diagnostics
 patchloop/dev/state.py    append-only JSONL, action/provider recovery
+patchloop/dev/evaluation_completion.py  durable evaluator receipt and read-only recovery validation
 patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
 patchloop/agent/model.py  journal-managed Responses adapter, zero retries
 patchloop/repository.py   audited checkout, workspace, full diff
@@ -622,6 +623,15 @@ bytes, model/tool/sandbox identities, the visible-check diff, changed files, and
 the submitted artifact. The evaluator validates those inputs before workspace or
 check execution, then a clean workspace receives the exact artifact and private
 files. Agent context is never resumed with evaluator output.
+Before `evaluator_finished`, store the evaluation summary and terminal provenance
+in CAS. That single completion event binds the original artifacts, terminal/message,
+active elapsed time and repetition-stop flag. Both normal completion and resume use
+the same metadata-only finalizer. After exact envelope and provider-uncertainty guards,
+a completed evaluation resumes without workspace, credential, sandbox or evaluator
+execution; validate the stored submission/manifest/provenance before writing a terminal.
+Preserve result/provenance bytes and partial-error evidence. A crash before durable
+`evaluator_finished` does not prove completion; this is not an exactly-once evaluator
+process guarantee. Old envelopes/events are not migrated.
 If probes executed, the manifest includes their count and content-addressed public
 receipts, binding action/input, source, diff, snapshot, image/profile, and execution-policy
 hashes. Validate receipts before evaluator workspace creation: absent or invalid evidence

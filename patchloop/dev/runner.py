@@ -52,6 +52,11 @@ from patchloop.dev.cost import (
     ModelPricing,
     pricing_for_model,
 )
+from patchloop.dev.evaluation_completion import (
+    EvaluationCompletion,
+    load_evaluation_completion,
+    prepare_evaluation_completion,
+)
 from patchloop.dev.inspection_projection import (
     project_inspection_context,
     project_inspection_result,
@@ -2785,6 +2790,27 @@ def _record_tool_batch(
     return completion_result, None
 
 
+def _finish_evaluation_metadata(
+    *, journal: DevJournal, store: ArtifactStore, completion: EvaluationCompletion,
+    counters: _RunCounters, cost_ledger: DevCostLedger | None, cost_start_nanos: int,
+    hashes: dict[str, str],
+) -> _OneRunResult:
+    """The same metadata-only tail serves normal completion and crash recovery."""
+
+    provenance = completion.artifacts["terminal_provenance"]
+    store.write_text_immutable(
+        store.root / "runs" / journal.run_id / "terminal-provenance.json",
+        store.read_bytes(provenance).decode("utf-8"),
+    )
+    terminal = _terminal(
+        journal=journal, terminal=DevTerminal(completion.terminal), counters=counters,
+        cost_ledger=cost_ledger, cost_start_nanos=cost_start_nanos, hashes=hashes,
+        evaluator=completion.summary.model_dump(), artifacts=completion.artifact_hashes,
+        message=completion.message, active_elapsed_ms=completion.active_elapsed_ms,
+    )
+    return _OneRunResult(_public_result(journal.run_id, terminal), completion.stop_remaining)
+
+
 def _run_one(
     *,
     request: DevRunRequest,
@@ -2880,6 +2906,16 @@ def _run_one(
                 message="durable provider usage exceeded the invocation cap",
             )
             return _OneRunResult(_public_result(run_id, terminal), True)
+
+        if resuming:
+            store = ArtifactStore(state_root / "artifacts")
+            completion = load_evaluation_completion(journal, store, envelope)
+            if completion is not None:
+                return _finish_evaluation_metadata(
+                    journal=journal, store=store, completion=completion, counters=counters,
+                    cost_ledger=cost_ledger, cost_start_nanos=envelope.cost_start_nanos,
+                    hashes=hashes,
+                )
 
         return _run_one_locked(
             request=request,
@@ -3814,66 +3850,30 @@ def _run_one_locked(
             stop_remaining = True
         terminal_code = DevTerminal.EVALUATOR_ERROR
         terminal_message = f"isolated evaluator failed: {type(exc).__name__}"
-    evaluator_hash = sha256_json(evaluator_summary)
-    evaluator_summary_artifact = artifact_store.put_json(evaluator_summary)
     evaluator_provenance_path = run_artifact_dir / "provenance.json"
-    evaluator_provenance_hash = None
+    completion_artifacts = {
+        "submitted_patch": submitted,
+        "manifest": manifest_artifact,
+        **{f"probe_receipt_{index + 1}": artifact for index, artifact in enumerate(probe_evidence)},
+    }
     if evaluator_provenance_path.is_file() and not evaluator_provenance_path.is_symlink():
-        evaluator_provenance = artifact_store.put_bytes(
+        completion_artifacts["evaluator_provenance"] = artifact_store.put_bytes(
             evaluator_provenance_path.read_bytes(),
             "application/json",
         )
-        evaluator_provenance_hash = evaluator_provenance.content_hash
+    completion = prepare_evaluation_completion(
+        store=artifact_store, run_id=run_id, terminal=terminal_code, summary=evaluator_summary,
+        message=terminal_message, stop_remaining=stop_remaining,
+        active_elapsed_ms=active_elapsed_ms(), artifacts=completion_artifacts, hashes=hashes,
+    )
     journal.append(
         "evaluator_finished",
-        {
-            "summary": evaluator_summary,
-            "summary_hash": evaluator_hash,
-            "agent_context_reinjected": False,
-        },
+        completion.model_dump(mode="json"),
     )
-    terminal_provenance = artifact_store.put_json(
-        {
-            "schema_version": "dev-terminal-provenance-v1",
-            "official": False,
-            "terminal": terminal_code.value,
-            "manifest_content_hash": manifest_artifact.content_hash,
-            "submitted_patch_content_hash": submitted.content_hash,
-            "evaluator_summary_hash": evaluator_hash,
-            "evaluator_provenance_content_hash": evaluator_provenance_hash,
-            "runtime_content_hash": runtime_hash,
-            "task_content_hash": package.task_content_hash,
-            "model_hash": model_hash,
-        }
+    return _finish_evaluation_metadata(
+        journal=journal, store=artifact_store, completion=completion, counters=counters,
+        cost_ledger=cost_ledger, cost_start_nanos=cost_start_nanos, hashes=hashes,
     )
-    artifact_store.write_bytes_atomic(
-        run_artifact_dir / "terminal-provenance.json",
-        artifact_store.read_bytes(terminal_provenance),
-    )
-    terminal = _terminal(
-        journal=journal,
-        terminal=terminal_code,
-        counters=counters,
-        cost_ledger=cost_ledger,
-        cost_start_nanos=cost_start_nanos,
-        hashes=hashes,
-        evaluator=evaluator_summary,
-        artifacts={
-            **probe_artifact_hashes,
-            "submitted_patch": submitted.content_hash,
-            "manifest": manifest_artifact.content_hash,
-            "evaluator_summary": evaluator_summary_artifact.content_hash,
-            "terminal_provenance": terminal_provenance.content_hash,
-            **(
-                {"evaluator_provenance": evaluator_provenance_hash}
-                if evaluator_provenance_hash is not None
-                else {}
-            ),
-        },
-        message=terminal_message,
-        active_elapsed_ms=active_elapsed_ms(),
-    )
-    return _OneRunResult(_public_result(run_id, terminal), stop_remaining)
 
 
 def run_dev(request: DevRunRequest) -> dict[str, Any]:

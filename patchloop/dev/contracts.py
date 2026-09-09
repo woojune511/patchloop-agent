@@ -26,6 +26,7 @@ def dev_tool_surface_hash() -> str:
         {
             "schema_version": "dev-tool-surface-v35",
             "sandbox_exception_cleanup": "typed-uncertainty-preserved-through-gateway-v1",
+            "evaluation_completion": "durable-receipt-metadata-only-resume-v1",
             "public_check_focus": "current-failure-or-pending-recheck-native-receipt-v1",
             "repair_followup": "recheck-before-reusing-older-failure-advisory-v1",
             "public_check_output": "complete-line-prefix-and-tail-accurate-truncation-v1",
