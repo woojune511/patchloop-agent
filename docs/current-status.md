@@ -35,6 +35,10 @@ Earlier exclusions remain scoped to their historical receipts. The v34 local-onl
 implementation did not authorize this row; the separate live approval is consumed.
 No row 44, paid retry/resume, historical candidate execution or further sampling is authorized.
 
+The subsequent go-ahead covers only the [failure-order collector implementation](#failure-order-collector-implemented-no-paid-execution)
+and provider-free verification. The frozen A/B requests are ready, but no comparison
+response has been collected from OpenAI. This is not a new agent runtime or live row.
+
 The six-response medium/high comparison on three frozen row-39 inputs is now collected.
 It executed no selected tools and is not row 40. See [the pilot findings](#frozen-next-action-comparison-six-responses-collected).
 No default-effort change, further paid sampling or new live row is authorized.
@@ -51,6 +55,41 @@ $0.542493150, and no submitted branch. Both fresh-state branches repaired the or
 four regression failures but introduced two new ones. That approval did not authorize
 further paid execution, a default-context change, retry/resume or normal row 40. See also
 [the frozen follow-up contract](#four-seed-short-rollout-preparation).
+
+## Failure-order collector implemented: no paid execution
+
+The read-only follow-up at `C:\pt\pl43-decision-a` freezes row 43 immediately before
+turn 21. It confirms delivery of all three failure rows and the relevant helper
+source; it does not establish why the model chose a partial repair. The new
+`diagnostics/failure_order_sampler.py` connects that pinned audit to the existing
+one-response collector, outside the normal agent loop.
+
+The prepared design at `C:\pt\pl43-order-design-a` has two arms: original input (A)
+and only the latest state's failure-summary rows permuted `[1,2,0]` (B). Both retain
+the same 83 input items, 20 encrypted reasoning items, native tool receipts, older
+state views, source, budgets, tool-schema order, medium reasoning and 25k output
+ceiling. Each full request is 424,331 UTF-8 bytes; these are not token counts.
+The proposed schedule is A1/B1/B2/A2, four independent next responses and zero
+selected-tool executions. Reviewer labels and later decisions never enter requests.
+This small, failure-selected pilot tests sensitivity to this presentation change;
+it cannot establish whole-run quality or justify a permanent sorting rule.
+
+Local verification passes 161 relevant regressions, including 33 new cases, in
+71.99s and 37.58s groups; Ruff and documentation checks pass. The actual frozen
+requests also pass fake collection at `C:\pt\pl43-order-smoke-a`. Its four adapter
+responses/counts and recorded cost are simulated, not paid evidence. Separate mock
+`run_dev_ccc20ba4bacc4efa` reaches mutation, check, finish and isolated EVALUATOR_PASS
+at `C:\pt\pl43-order-dev-smoke-a`, acceptance PASS / safety NOT_RUN, with zero cost.
+The unchanged normal runtime's full suite is not rerun for this diagnostic-only
+change. Detailed receipts and preservation checks are at `C:\pt\pl43-order-wire-a`.
+
+Normal runtime v34, task packages, `.env`, user-owned `AGENTS.md`, historical files
+and prior external state remain unchanged. Prepare/validate load no credential and
+make no count/provider/tool call. Collection requires new exact four-response/zero-tool
+approval, packet/collector identities, credential path, $1.20 total cap, fresh pricing
+review and a new result root; see [operations](operations.md#failure-order-pilot-row-43).
+The 272,000-token per-request limit is an enforced admission ceiling, not a guessed
+count. No paid collection, Docker execution, retry/resume or row 44 is authorized.
 
 ## Latest live observation: row 43 partial repair and voluntary stop
 

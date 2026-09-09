@@ -658,6 +658,45 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
+Latest implementation seam: `diagnostics/failure_order_sampler.py` connects the
+immutable row-43 pre-turn-21 audit (`C:\pt\pl43-decision-a`) to the shared standalone
+collector. This is not a runtime/prompt/memory-policy fix. A keeps the exact original
+request; B permutes only `state.current_public_failure.failure_summary.lines` in
+the latest developer view by `[1,2,0]`. Historical views, encrypted reasoning/native
+calls and outputs, tool-schema order, source, budgets and medium/25k settings remain
+unchanged. Reconstruction must match the original request hash and prospective B
+input hash. Never add reviewer labels, later decisions or private feedback to inputs.
+
+New prepare/validate commands are provider-free. The prepared external packet is
+`C:\pt\pl43-order-design-a\packet.json`, hash
+`sha256:95ac3ffe75d4cd4587dd1a5db0ec35e9b6a3a28aa6698c3a13c6f58f300e2664`;
+collector hash is `sha256:8d7cc26d63c85a25306f64ac335eaedf0738a12d231036c7ab1b307627279bbc`.
+Revalidate before any future separately approved A1/B1/B2/A2 collection. The identity
+binds this module and the shared engine; normal runtime/task identity remains separately
+bound. Earlier packets, collectors' receipts and audit bytes are not migrated.
+The shared change is read-only inspect recognition of `failure-order-sampler-v1`.
+
+Collection requires its own `--approve-four-order-responses-zero-tools` authority,
+exact packet/sampler/credential/cap/price inputs and a fresh external root. It uses
+the shared immediate-count, zero-retry, fixed-output, durable-usage and uncertainty
+stop path, with the enforced 272,000 input-token limit reserving each future sample's
+worst permitted cost. No guessed alternate count, chaining, correction, sampled-tool
+execution, judge call or resume. Inspect interrupted results read-only. Only anonymous
+public decisions enter review; plaintext reasoning is discarded and encrypted items
+stay in hash-bound CAS. Keep static review separate from gateway admission/correctness.
+
+Validation: 33 new cases plus collector/design/rollout/docs/mock regressions pass
+161 tests in 71.99s and 37.58s; Ruff passes. Frozen-request fake collection in
+`C:\pt\pl43-order-smoke-a` preserves all 83 input items and both arms' exact native
+prefixes; all counts/responses/cost there are simulated. Production mock
+`run_dev_ccc20ba4bacc4efa` reaches isolated EVALUATOR_PASS in
+`C:\pt\pl43-order-dev-smoke-a` (task acceptance PASS, safety NOT_RUN, zero cost).
+Receipts are in `C:\pt\pl43-order-wire-a`; unchanged runtime tests are not all rerun.
+Next seam is a separately approved four-response pilot and blinded public-action
+review, not a normal live row. No paid call, Docker operation, row 44 or automatic
+fix is authorized. Two draws per arm on one failure-selected checkpoint do not prove
+a general ordering effect, memory effectiveness or whole-run success.
+
 Normal row 43 is complete on v34: `run_dev_9b91e06c13ff4bd3`, AGENT_STOPPED,
 22 model/count/tool calls, four edits, $0.464054850, 224.094 active seconds. First
 edit is turn 14. False EEXIST and intermediate-mode failures are repaired at turns

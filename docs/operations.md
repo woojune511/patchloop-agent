@@ -414,6 +414,49 @@ the distinction between delivered information and correct use of it. Read-only e
 is `C:\pt\pl43-review-a`; no additional check/candidate execution, paid retry/resume,
 comparison or row 44 is authorized by this completed invocation.
 
+### Failure-order pilot: row 43
+
+The later implementation-only go-ahead wires the pinned pre-turn-21 audit at
+`C:\pt\pl43-decision-a` through `diagnostics.failure_order_sampler`. It authorizes
+no paid collection. The prepared packet at `C:\pt\pl43-order-design-a` must stay
+immutable; validate it without loading `.env` or contacting OpenAI:
+
+```powershell
+uv run python -m diagnostics.failure_order_sampler validate `
+  --audit-root C:/pt/pl43-decision-a `
+  --source-state-root C:/patchloop-state `
+  --packet C:/pt/pl43-order-design-a/packet.json `
+  --packet-hash sha256:95ac3ffe75d4cd4587dd1a5db0ec35e9b6a3a28aa6698c3a13c6f58f300e2664
+```
+
+Both A and B preserve native calls/results, encrypted reasoning and older state
+views; only B's latest failure-summary rows change order. Preserving reasoning and
+matching native tool items follows the [Responses continuation guidance](https://developers.openai.com/api/docs/guides/reasoning#keeping-reasoning-items-in-context).
+No summary text or plaintext reasoning is retained. Model, medium reasoning, 25k
+output ceiling, tool schemas/order, source and budgets remain fixed. Full requests
+are 424,331 bytes each; only A has a historical count (91,222), not a fresh API count.
+
+Future `collect` requires the separate flag
+`--approve-four-order-responses-zero-tools`, the same packet/audit/state arguments,
+`--sampler-hash`, absolute `--credential-file`, new external `--result-root`,
+`--max-cost-usd 1.20`, `--pricing-hash` and `--pricing-verified-on` (execution UTC date).
+The prepared collector hash is
+`sha256:8d7cc26d63c85a25306f64ac335eaedf0738a12d231036c7ab1b307627279bbc`.
+Exact approval must name this packet/collector, v2 task, model, medium, four
+independent A1/B1/B2/A2 responses, zero tools, credential path, cap and result root.
+Earlier row, six-response or fresh-state approvals do not cover this comparison.
+
+The shared collector counts immediately before each possible dispatch and reserves
+future samples at the enforced 272,000-input-token ceiling. Registered prices must
+be freshly reviewed before live use. Count/cap failure never shrinks the 25k output
+ceiling. Any transport, billing or continuation uncertainty stops all later samples;
+there is no paid retry, response chaining, correction, judge or tool execution.
+`inspect --result-root <absolute-root>` is read-only, not resume. Review anonymized
+public actions before unblinding; proposed edits are unexecuted, task acceptance and
+safety stay NOT_RUN. One checkpoint with two samples per arm is not a quality estimate.
+Provider-free tests/fake collection are complete, normal v34 is unchanged, and neither
+this pilot's paid responses nor normal row 44 has been authorized.
+
 The preceding v33 surface separates current-diff failure from repaired-but-unchecked status
 in the derived model view. `current_public_failure` keeps actual current failures;
 `pending_recheck` names the unchecked candidate, earlier failed diff and exact native
