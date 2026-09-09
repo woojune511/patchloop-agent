@@ -136,6 +136,39 @@ Audit verifies native prefixes/continuations, 292 branch CAS objects, billing,
 seven owned-container cleanups and unchanged historical/task/run/credential bytes.
 Acceptance/safety remain NOT_RUN, `official=false`, `claim_eligible=false`.
 
+### Completion-signal follow-up: prepared, not executed
+
+Inspection of the actual final inputs finds more than correct status fields:
+`completion_guidance` already leads with `run_check`, and `pending_recheck.guidance`
+explicitly says the failure is historical and zero edits does not prevent checks or
+submission. This is not a missing-instruction bug. Do not add equivalent prose or
+claim another prompt sentence would have prevented the stops.
+
+`diagnostics.completion_signal_view` prepares/validates a narrower one-field ablation.
+For a nonempty candidate with zero remaining mutations, current nonfailed checks and
+an available completion path, control A preserves the exact original request. B only
+omits the latest `action_horizon.mutation_completion_horizon`. The explicit zero-edit
+counter, completion/check guidance, pending historical failure, sources, notes, tool
+schemas/order/settings and full native prefix remain exact. Earlier copies of the
+forecast remain historical; this does not reset reasoning or remove all old warnings.
+Eligibility is a diagnostic-input filter, never a runtime tool gate.
+
+Four paired inputs from the preceding A1/B1/B2/A2 checkpoints are frozen at
+`C:\pt\pl43-completion-view-a`. Each B is exactly 158 UTF-8 bytes smaller, with
+unchanged prefix lengths 94/86/90/90 and reasoning-item counts 23/21/22/22. This is
+not a counted-token saving or a model-effect result. All four still recommend the
+same public check. The read-only preparation verifies 5,254 protected files unchanged.
+Focused projection/completion/documentation tests pass 72 cases in 8.95s, plus Ruff.
+Existing source/native rollout regressions pass 47 more in 68.32s; result-doc tests
+pass again. Mock `run_dev_06e51698c0d640a6` at `C:\pt\pl43-completion-smoke-a` reaches
+mutation/check/finish/isolated evaluation: four mock turns, five actions, task
+acceptance PASS, safety NOT_RUN and zero cost. That is not a model treatment result.
+The unchanged normal-runtime full suite is not rerun for this diagnostic-only change.
+Normal runtime/tool surface stays v35; no default policy, schema, model, memory,
+collector execution or paid authority changes. This module exposes only prepare and
+validate, with zero provider/count/tool calls. `PREPARED_NOT_EXECUTABLE` is not a
+completed behavioral comparison; outcome claims require a separately bounded collector.
+
 ## Authority
 
 The current-source presentation A/B approval has been consumed by the completed

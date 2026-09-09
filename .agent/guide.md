@@ -747,12 +747,36 @@ Analysis `C:\pt\pl43-source-review-a\result.md` and final `audit-v2.json` verify
 owned cleanup and historical preservation. The initial audit's empty CAS glob was
 corrected in a separate v2 receipt without changing live bytes. Runtime stays v35.
 
-The next candidate is a single-factor post-mutation state-communication test:
-current checks are unknown, earlier failures are historical, and no further mutation
-does not make checks/finish impossible. Competition between nested mutation-horizon
-and overall completion signals is a hypothesis, not proven model reasoning. Do not
-add a hard stop prohibition, force memory, adopt inlining or silently extend paid
-collection. Acceptance/safety remain NOT_RUN and this approval is consumed.
+The next candidate is now a prepare-only one-field ablation in
+`diagnostics.completion_signal_view`. Read-only inspection of the actual stop inputs
+confirms `completion_guidance` already recommends `run_check` at the front, while
+`pending_recheck.guidance` explicitly separates historical failure and zero edits from
+still-available checks/submission. No missing-instruction defect is established.
+Do not duplicate these instructions or claim new wording fixes the observed behavior.
+
+The prototype selects only nonempty candidates with zero remaining accepted mutations,
+current nonfailed check status, no current failure, matching declared/wire tools and
+a feasible offered check/submission path. It deletes only the latest state's
+`action_horizon.mutation_completion_horizon`; original zero-edit counters, completion
+guidance/forecasts, historical focus, sources/notes and every earlier native item stay
+exact. There is no new message, source read, reasoning reset, schema/order change,
+tool execution or runtime action gate. Reject malformed/ineligible diagnostic inputs
+before creating a packet. Normal state projection remains unchanged on v35.
+
+Prepare uses an exact source hash and a fresh external root; A.json is byte-identical
+control, B.json the one-field omission. Validation recomputes both plus manifest and
+implementation hash without credentials/count/provider/task execution. Four pairs
+in `C:\pt\pl43-completion-view-a` remove exactly 158 UTF-8 bytes each; 72 focused tests
+pass in 8.95s and 5,254 protected files are unchanged. This is not token or behavior
+evidence. A further 47 existing collector/native-rollout tests pass in 68.32s; mock
+`run_dev_06e51698c0d640a6` reaches isolated EVALUATOR_PASS in 4.16 command seconds,
+four mock turns/five actions, zero cost and safety NOT_RUN. The unchanged runtime's
+full suite is not rerun. Earlier warnings and original system prompt remain, so the proposed contrast
+isolates latest-field presence only, not all mutation-pressure information.
+Competition between nested mutation-horizon and overall completion signals remains a
+hypothesis. Do not add a hard stop prohibition, force memory, adopt inlining, execute
+these historical branches or silently extend paid collection. Next work would need a
+bounded matched-input collector; this prepare/validate module cannot perform it.
 
 The current single-occurrence edit unit remains explicit. A synthetic text-only
 comparison at `C:\pt\pl-fix-edit-unit-a` confirms two distant one-line replacements
