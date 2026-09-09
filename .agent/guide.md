@@ -708,6 +708,15 @@ bytes only, not token counts, note use or better model decisions. This is not wi
 into normal runtime and has no count/provider/tool execution path. Keep the official
 [reasoning continuation contract](https://developers.openai.com/api/docs/guides/reasoning#keeping-reasoning-items-in-context).
 
+The subsequent user request authorizes proceeding with this A/B follow-up without
+routine reapproval under the referenced task/model and shared $1.20 cap, not row 44.
+`C:\pt\pl43-source-preflight-a\result.md` records an engine-unavailable stop before
+any paid/count/container call (62 focused cases and Ruff pass). Do not start Docker
+Desktop. Once it is available, complete and test the bounded native-history rollout
+collector and exact-image check/probe smoke before collection; the inline prototype
+alone is not an executable experiment. Source and executing runtime identities differ
+and must be bound separately, without weakening normal resume matching.
+
 The current single-occurrence edit unit remains explicit. A synthetic text-only
 comparison at `C:\pt\pl-fix-edit-unit-a` confirms two distant one-line replacements
 cost two accepted mutations, while a combined exact anchor must include the gap.

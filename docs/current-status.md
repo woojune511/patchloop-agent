@@ -101,6 +101,17 @@ remain immutable evidence, not runtime defaults.
 
 ## Authority
 
+The latest request to proceed without another approval question concerns the
+current-source presentation A/B follow-up, not normal row 44. Its 2026-09-10
+preflight stops before paid dispatch: neither local Docker engine pipe exists and
+Docker Desktop is not running. Source delivery equivalence revalidates; 62 focused
+tests and Ruff pass. Provider/count calls, container launches and cost are zero.
+Evidence: `C:\pt\pl43-source-preflight-a\result.md`. Docker must be made available
+externally; never start it or pull/build automatically. The tested bounded rollout
+collector and real check/probe smoke still precede collection; the existing inline
+prototype alone is not a live collector. Keep the referenced task/model settings
+and one shared $1.20 cap, with no routine reapproval or uncertainty retry.
+
 Mock execution carries no provider authority. One exact live `patchloop dev`
 invocation authorizes only its declared `dev-train` task, model, credential file,
 repeat count, and positive total cap. It never authorizes an image pull/build,
