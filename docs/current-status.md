@@ -99,10 +99,48 @@ mutation schema/counting and optional notes remain unchanged; neither diagnostic
 authorizes or implements paid collection. The original fresh-state/order pilots
 remain immutable evidence, not runtime defaults.
 
+## Current-source presentation comparison completed
+
+The separately authorized A/B follow-up is complete on collector `29eb5fb`, with
+unchanged v35 runtime: four fresh short branches, 12 counts/completed responses,
+12 tool actions, **$0.387835350**, 204.030s, zero submissions/private evaluations.
+Evidence: `C:\pt\pl43-source-live-a\result.json`; analysis and independent audit:
+`C:\pt\pl43-source-review-a\result.md` and `audit-v2.json`. This is not normal row 44.
+No branch hits the shared $1.20 cap or eight-response bound; maximum output is
+5,503 tokens. First A/B inputs count 91,222/94,639 tokens (424,331/440,593 bytes).
+
+A1 searches twice, gains 79 new helper lines, mutates, then stops. A2 and B2 each
+recover one scope rejection, mutate, then stop. Their current checks are NOT_RUN,
+current failure is null, `run_check` is available, and the three-call minimum
+completion path still fits. The agent nevertheless treats the previous failure as
+current. A2 explicitly repeats a Windows failure its new patch actually repairs.
+B1 mutates then runs regression: 21 failures include calling a filesystem helper
+on the wrong object (`self.ends_with_path_separator`). After this observed failure,
+zero remaining accepted mutations correctly causes pre-dispatch `LIMIT_REACHED`.
+Distinguish that terminal from the other three voluntary untested stops.
+
+Separate post-hoc operator checks in `C:\pt\pl43-source-operator-a` run no provider
+calls and never modify the live branches. A1/A2/B2 all pass the public traversal
+contract; upstream respectively has 3/1/1 failures. A2/B2 repair the two Windows
+cases but retain the macOS case. These six checks are not agent verification or
+submission credit. All 12 new memory updates are null. Source-body inlining alone
+has no demonstrated completion benefit; two samples per arm cannot establish a
+general effect. Do not describe A1's novel supporting coverage as duplicate search.
+
+Next candidate: a single-factor test of clearer post-mutation state communication,
+separating historical failures and unavailable further mutation from the still-open
+check/finish path. The nested mutation-horizon warning may compete with the overall
+completion signal, but this cause is unproven. No default inlining, memory mandate,
+new hard gate, runtime change or further paid draw is implied by this result.
+Audit verifies native prefixes/continuations, 292 branch CAS objects, billing,
+seven owned-container cleanups and unchanged historical/task/run/credential bytes.
+Acceptance/safety remain NOT_RUN, `official=false`, `claim_eligible=false`.
+
 ## Authority
 
-The latest request authorizes the current-source presentation A/B follow-up without
-routine reapproval, not normal row 44. The initial Docker-unavailable preflight is
+The current-source presentation A/B approval has been consumed by the completed
+comparison above; it is not normal row 44 or authority for another paid draw.
+The initial Docker-unavailable preflight is
 preserved at `C:\pt\pl43-source-preflight-a\result.md`. The user's subsequent explicit
 startup request resolved that blocker (`C:\pt\pl-docker-start-20260910-a.md`); no image
 pull/build or data reset occurred. One real registered-check/probe smoke passes in

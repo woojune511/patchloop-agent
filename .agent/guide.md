@@ -708,7 +708,7 @@ bytes only, not token counts, note use or better model decisions. This is not wi
 into normal runtime and has no count/provider/tool execution path. Keep the official
 [reasoning continuation contract](https://developers.openai.com/api/docs/guides/reasoning#keeping-reasoning-items-in-context).
 
-The subsequent user request authorizes proceeding with this A/B follow-up without
+The subsequent user request authorized this now completed A/B follow-up without
 routine reapproval under the referenced task/model and shared $1.20 cap, not row 44.
 `C:\pt\pl43-source-preflight-a\result.md` records the initial engine-unavailable stop.
 The user later explicitly requested startup; the bounded recovery succeeds without
@@ -725,6 +725,34 @@ resume is unchanged. Stop all branches on cost, billing, continuation or cleanup
 uncertainty; no retry/resume or private evaluation. Treat cap/response-bound branches
 as censored, not evidence that the model could not solve the task. The inline
 prototype itself remains provider-free and immutable.
+
+Collector `29eb5fb` completed all four branches at `C:\pt\pl43-source-live-a`:
+12 counts/completed responses/selected tool actions, $0.387835350 and 204.030s.
+No submission, private evaluation, retry, cap/response censoring or 25k saturation
+occurs. A1 gains 79 new helper lines in two searches, mutates and stops; A2/B2
+recover a scope rejection, mutate and stop. Their final actual inputs expose
+`run_check`, two current NOT_RUN checks, null current failure and a viable three-call
+completion path. Old failure claims in their stop decisions are not current-check
+evidence. B1 uses the wrong helper receiver, runs regression (21 failures), then
+correctly reaches LIMIT_REACHED because no accepted mutation remains for repair.
+All 12 memory updates are null; neither note effectiveness nor source-inlining
+benefit is established. Keep the voluntary untested stops separate from B1's gate.
+
+Six provider-free post-hoc operator checks at `C:\pt\pl43-source-operator-a` find
+A1/A2/B2 traversal PASS and upstream 3/1/1 failures. A2/B2 repair Windows but not
+macOS; A2's explicit stale Windows claim is false, while B2 only asserts overall
+current regression failure. Never back-credit these operator checks to the agent.
+Analysis `C:\pt\pl43-source-review-a\result.md` and final `audit-v2.json` verify
+292 branch CAS objects, exact native prefixes/encrypted continuation, billing,
+owned cleanup and historical preservation. The initial audit's empty CAS glob was
+corrected in a separate v2 receipt without changing live bytes. Runtime stays v35.
+
+The next candidate is a single-factor post-mutation state-communication test:
+current checks are unknown, earlier failures are historical, and no further mutation
+does not make checks/finish impossible. Competition between nested mutation-horizon
+and overall completion signals is a hypothesis, not proven model reasoning. Do not
+add a hard stop prohibition, force memory, adopt inlining or silently extend paid
+collection. Acceptance/safety remain NOT_RUN and this approval is consumed.
 
 The current single-occurrence edit unit remains explicit. A synthetic text-only
 comparison at `C:\pt\pl-fix-edit-unit-a` confirms two distant one-line replacements
