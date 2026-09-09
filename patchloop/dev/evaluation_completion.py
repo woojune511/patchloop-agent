@@ -8,7 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import Artifact, RunManifest
+from patchloop.contracts import Artifact, RunManifest, VerifierResult
 from patchloop.dev.contracts import DevRunEnvelope, DevTerminal
 from patchloop.dev.state import DevJournal
 from patchloop.errors import RecoveryError
@@ -117,7 +117,25 @@ def load_evaluation_completion(
         manifest = RunManifest.model_validate_json(raw["manifest"])
         summary = json.loads(raw["evaluator_summary"])
         terminal_provenance = json.loads(raw["terminal_provenance"])
-    except (ValidationError, ValueError, UnicodeError) as exc:
+        if "evaluator_provenance" in raw:
+            provenance = json.loads(raw["evaluator_provenance"])
+            # Follow only the current evaluator's explicit completed-check refs,
+            # not arbitrary JSON paths or task inputs. A durable summary does not
+            # establish that its leaf evidence survived a crash or later damage.
+            checks = provenance["completed_check_results"]
+            if not isinstance(checks, list):
+                raise ValueError("completed evaluator checks must be a list")
+            for check in checks:
+                result = VerifierResult.model_validate(check)
+                refs = result.details.get("evidence_artifacts", [])
+                if not isinstance(refs, list):
+                    raise ValueError("completed check evidence must be a list")
+                artifacts = [Artifact.model_validate(reference) for reference in refs]
+                if [artifact.artifact_id for artifact in artifacts] != result.evidence_artifact_ids:
+                    raise ValueError("completed check evidence references are incomplete")
+                for artifact in artifacts:
+                    store.read_bytes(artifact)
+    except (ValidationError, ValueError, UnicodeError, KeyError, TypeError) as exc:
         raise RecoveryError("durable evaluator completion is invalid") from exc
 
     expected_manifest = {

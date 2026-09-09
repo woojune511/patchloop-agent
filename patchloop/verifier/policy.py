@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import ast
 import fnmatch
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
 from patchloop.contracts import TaskConstraints
+from patchloop.deadline import ExecutionDeadline
+from patchloop.git_execution import run_git
 from patchloop.repository import DiffSummary
 
 DEPENDENCY_FILES = {
@@ -145,7 +146,8 @@ def _signature_map(source: str) -> dict[str, str]:
 
 
 def verify_public_api(
-    summary: DiffSummary, constraints: TaskConstraints, workspace: Path
+    summary: DiffSummary, constraints: TaskConstraints, workspace: Path,
+    *, deadline: ExecutionDeadline | None = None,
 ) -> PolicyOutcome:
     if constraints.public_api_changes_allowed:
         return PolicyOutcome(True, [], {"changes_allowed": True, "changed_symbols": []})
@@ -154,14 +156,7 @@ def verify_public_api(
     for path in summary.changed_files:
         if not path.endswith(".py") or path.startswith("tests/"):
             continue
-        base = subprocess.run(
-            ["git", "show", f"HEAD:{path}"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            check=False,
-        )
+        base = run_git(workspace, "show", f"HEAD:{path}", check=False, deadline=deadline)
         target = workspace / path
         if base.returncode != 0 or not target.exists():
             violations.append(f"public Python module added or removed: {path}")

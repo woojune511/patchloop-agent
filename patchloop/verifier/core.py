@@ -502,6 +502,7 @@ class EvaluationEngine:
         )
         evaluation_status = "error"
         failure_class: str | None = None
+        deadline_exhausted = False
         applied_patch_hash: str | None = None
         diff_hash: str | None = None
         changed_files: list[str] = []
@@ -555,6 +556,7 @@ class EvaluationEngine:
                 f"eval_{uuid.uuid4().hex}",
                 package.public.repository.url,
                 package.public.repository.base_commit,
+                deadline=deadline,
             )
             if deadline is not None:
                 deadline.check()
@@ -578,8 +580,10 @@ class EvaluationEngine:
             )
             if deadline is not None:
                 deadline.check()
-            applied_patch_hash = self.workspace_manager.apply_patch(workspace, patch_path)
-            summary = self.workspace_manager.diff_summary(workspace)
+            applied_patch_hash = self.workspace_manager.apply_patch(
+                workspace, patch_path, deadline=deadline,
+            )
+            summary = self.workspace_manager.diff_summary(workspace, deadline=deadline)
             diff_hash = summary.patch_hash
             changed_files = summary.changed_files
             if (
@@ -622,6 +626,7 @@ class EvaluationEngine:
                     summary,
                     package.public.constraints,
                     workspace,
+                    deadline=deadline,
                 ),
             }
             results.extend(
@@ -675,6 +680,9 @@ class EvaluationEngine:
             return result
         except BaseException as exc:
             failure_class = type(exc).__name__
+            deadline_exhausted = isinstance(exc, ExecutionDeadlineExceeded) or bool(
+                getattr(exc, "details", {}).get("deadline_exhausted", False)
+            )
             raise
         finally:
             if not sandbox_policy_recorded:
@@ -691,7 +699,7 @@ class EvaluationEngine:
                 "official": False,
                 "evaluation_status": evaluation_status,
                 "failure_class": failure_class,
-                "deadline_exhausted": failure_class == "ExecutionDeadlineExceeded",
+                "deadline_exhausted": deadline_exhausted,
                 "completed_check_results": [item.model_dump(mode="json") for item in results],
                 "manifest_content_hash": manifest_hash,
                 "task_content_hash": manifest.task_content_hash,

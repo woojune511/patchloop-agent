@@ -17,7 +17,9 @@ patchloop/dev/evaluation_completion.py  durable evaluator receipt and read-only 
 patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
 patchloop/agent/model.py  journal-managed Responses adapter, zero retries
 patchloop/repository.py   audited checkout, workspace, full diff
+patchloop/git_execution.py  exact Git output, deadline and uncertain-execution boundary
 patchloop/sandbox/        registered checks and optional isolated public probes
+patchloop/sandbox/capture.py  bounded check-output drain and process/pipe teardown
 patchloop/sandbox/execution_feedback.py  bounded current-diff execution observations
 patchloop/sandbox/line_trace.py  standalone stdlib launch-thread line collector
 patchloop/verifier/       separate private evaluation and static policy
@@ -577,8 +579,14 @@ continuation evidence ends at `PROVIDER_CONTINUATION_ERROR` before another tool 
 provider call. Counters, legacy inspection telemetry, settled cost, latest batch, and
 active execution time are rebuilt from unique journal events. Process downtime
 contributes only to run age.
-One active monotonic deadline reaches provider counting/generation and tool execution,
-including pending replay and checks. Each blocking operation receives remaining time.
+One active monotonic deadline starts before workspace creation and live preflight,
+then reaches provider counting/generation, Git, tool execution and isolated evaluation.
+Git waits use a shared wrapper with exact file-backed byte capture, remaining-time
+timeouts and a finite standalone default. An interrupted Git process has unknown
+descendant cleanup even if the direct process is reaped: stop the row/repetitions,
+never retry or claim process-tree termination. Allow only bounded read-only metadata
+and exact mutation reconciliation after expiry; no new task execution. Record the
+harness Git identity at row admission and reuse it for post-deadline provenance.
 Docker checks bind run/action execution identity so crash recovery does not duplicate
 the same check container; a check timeout is not model protocol failure.
 If launcher execution raises, preserve the original exception only after confirmed
@@ -586,6 +594,13 @@ owned-container cleanup. Otherwise raise typed `SANDBOX_CLEANUP_FAILED` with the
 failed execution-policy hash and `cleanup_failed=true`, including on interruption.
 The gateway journals that result and stops further tools/repetitions; it must not
 flatten uncertain cleanup into a retryable generic tool error or semantic check failure.
+Registered checks drain both output pipes concurrently while retaining only bounded
+prefixes; exceeding their public output cap does not stop a check or change its exit
+verdict. Allocate stdout-first using total observed bytes, align clipped output to
+complete lines, and keep the separately bounded trace-report channel. Pipe/read/close
+or join uncertainty is an execution error, not a semantic failure. Docker cleanup and
+reader teardown share the remaining cleanup budget. Probes retain their separate
+stop-on-output-limit contract below.
 
 Completed probes also replay `action_id + input_hash`. If a probe was interrupted
 before its durable result, confirm cleanup of its exact labeled container and permit
@@ -637,7 +652,8 @@ in CAS. That single completion event binds the original artifacts, terminal/mess
 active elapsed time and repetition-stop flag. Both normal completion and resume use
 the same metadata-only finalizer. After exact envelope and provider-uncertainty guards,
 a completed evaluation resumes without workspace, credential, sandbox or evaluator
-execution; validate the stored submission/manifest/provenance before writing a terminal.
+execution; validate the stored submission/manifest/provenance before writing a terminal,
+including the explicit typed completed-check artifact references and their CAS bytes.
 Preserve result/provenance bytes and partial-error evidence. A crash before durable
 `evaluator_finished` does not prove completion; this is not an exactly-once evaluator
 process guarantee. Old envelopes/events are not migrated.

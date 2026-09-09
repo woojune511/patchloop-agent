@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import uuid
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -79,6 +78,7 @@ from patchloop.errors import (
     RecoveryError,
     ResumeContractMismatch,
 )
+from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import (
     git_commit,
@@ -309,28 +309,19 @@ def _live_task_is_admitted(task_dir: Path, package: Any) -> None:
         raise ContractError("live dev-head task is missing environment.yaml")
 
 
-def _require_tracked_clean_paths(root: Path, relative_paths: list[str]) -> None:
+def _require_tracked_clean_paths(
+    root: Path, relative_paths: list[str], *, deadline: ExecutionDeadline | None = None,
+) -> None:
     expected = sorted(set(relative_paths))
-    tracked = subprocess.run(
-        ["git", "ls-files", "-z", "--", *expected],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=False,
-    )
+    tracked = run_git(root, "ls-files", "-z", "--", *expected, check=False, deadline=deadline)
     if tracked.returncode != 0:
         raise ContractError("cannot inspect live source tracking state")
     actual = sorted(path for path in tracked.stdout.split("\0") if path)
     if actual != expected:
         raise ContractError("live runtime and task inputs must all be tracked")
-    status = subprocess.run(
-        ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all", "--", *expected],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=False,
+    status = run_git(
+        root, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--", *expected,
+        check=False, deadline=deadline,
     )
     if status.returncode != 0:
         raise ContractError("cannot inspect live source modification state")
@@ -338,23 +329,29 @@ def _require_tracked_clean_paths(root: Path, relative_paths: list[str]) -> None:
         raise ContractError("live runtime and task inputs must match HEAD exactly")
 
 
-def _live_source_preflight(task_dir: Path, package: Any) -> None:
+def _live_source_preflight(
+    task_dir: Path, package: Any, *, deadline: ExecutionDeadline | None = None,
+) -> None:
     root = repository_root().resolve()
     task_paths = [
         (task_dir / relative).resolve().relative_to(root).as_posix()
         for relative in task_package_content_paths(package)
     ]
-    _require_tracked_clean_paths(root, [*runtime_content_paths(root), *task_paths])
+    _require_tracked_clean_paths(
+        root, [*runtime_content_paths(root), *task_paths], deadline=deadline,
+    )
 
 
-def _live_sandbox_preflight(package: Any) -> DockerSandbox:
+def _live_sandbox_preflight(
+    package: Any, *, deadline: ExecutionDeadline | None = None,
+) -> DockerSandbox:
     environment = package.environment
     if environment is None:
         raise ContractError("live evaluator environment is missing")
     sandbox = DockerSandbox(environment.evaluator_image)
-    if not DockerSandbox.available():
+    if not DockerSandbox.available(deadline=deadline):
         raise ContractError("Docker is unavailable; dev-head never starts or installs it")
-    identity = sandbox.image_identity()
+    identity = sandbox.image_identity(deadline=deadline)
     if identity is None:
         raise ContractError(
             "required evaluator image is not local; dev-head never pulls or builds it"
@@ -376,6 +373,7 @@ def _manifest(
     submitted_patch_hash: str,
     submitted_changed_files: list[str],
     created_at: Any,
+    harness_git_commit: str,
     probe_evidence: list[Artifact] | None = None,
 ) -> RunManifest:
     return RunManifest(
@@ -397,7 +395,7 @@ def _manifest(
         submitted_patch_content_hash=submitted_patch_hash,
         visible_check_diff_hash=submitted_patch_hash,
         submitted_changed_files=sorted(submitted_changed_files),
-        harness_git_commit=git_commit(),
+        harness_git_commit=harness_git_commit,
         model=ModelConfig(
             provider=request.provider,
             model_id=request.model,
@@ -2568,8 +2566,10 @@ def _update_inspection_counters(
         counters.mutation_recovery_used = True
 
 
-def _validate_resumed_workspace(workspace: Path, journal: DevJournal) -> None:
-    summary = WorkspaceManager.diff_summary(workspace)
+def _validate_resumed_workspace(
+    workspace: Path, journal: DevJournal, *, deadline: ExecutionDeadline | None = None,
+) -> None:
+    summary = WorkspaceManager.diff_summary(workspace, deadline=deadline)
     if summary.untracked_files:
         raise ResumeContractMismatch("workspace contains non-ignored untracked files")
     expected_diff_hash = sha256_bytes(b"")
@@ -2950,6 +2950,58 @@ def _run_one_locked(
     envelope: DevRunEnvelope,
     resuming: bool,
 ) -> _OneRunResult:
+    # Terminal and completed-evaluation recovery already returned before this
+    # boundary. Workspace/Git/preflight now spend the row's active execution time.
+    active_base_ms = journal.latest_active_elapsed_ms() if resuming else 0
+    started = monotonic()
+    deadline = ExecutionDeadline(
+        started + max(0.0, request.limits.wall_time_seconds - active_base_ms / 1_000),
+        clock=monotonic,
+    )
+    try:
+        identity = next((
+            event["payload"] for event in journal.events()
+            if event["event_type"] == "runtime_git_identity"
+        ), None)
+        if identity is None:
+            identity = {"harness_git_commit": git_commit(deadline=deadline)}
+            journal.append("runtime_git_identity", {
+                **identity,
+                "active_elapsed_ms": active_base_ms + int((monotonic() - started) * 1_000),
+            })
+        return _run_one_active(
+            request=request, task_dir=task_dir, package=package, state_root=state_root,
+            pricing=pricing, cost_ledger=cost_ledger, runtime_hash=runtime_hash,
+            model_hash=model_hash, run_id=run_id, journal=journal, envelope=envelope,
+            resuming=resuming, deadline=deadline, active_base_ms=active_base_ms,
+            started=started, harness_git_commit=identity["harness_git_commit"],
+        )
+    except (ExecutionDeadlineExceeded, GitExecutionUncertain) as exc:
+        exhausted = isinstance(exc, ExecutionDeadlineExceeded) or exc.details.get(
+            "deadline_exhausted", False,
+        )
+        terminal = _terminal(
+            journal=journal,
+            terminal=DevTerminal.LIMIT_REACHED if exhausted else DevTerminal.TASK_FAILED,
+            counters=_restore_counters(journal), cost_ledger=cost_ledger,
+            cost_start_nanos=envelope.cost_start_nanos,
+            hashes={"runtime_hash": runtime_hash, "task_hash": package.task_content_hash,
+                    "model_hash": model_hash},
+            message=str(exc),
+            active_elapsed_ms=active_base_ms + int((monotonic() - started) * 1_000),
+        )
+        return _OneRunResult(
+            _public_result(run_id, terminal), isinstance(exc, GitExecutionUncertain),
+        )
+
+
+def _run_one_active(
+    *, request: DevRunRequest, task_dir: Path, package: Any, state_root: Path,
+    pricing: ModelPricing | None, cost_ledger: DevCostLedger | None,
+    runtime_hash: str, model_hash: str, run_id: str, journal: DevJournal,
+    envelope: DevRunEnvelope, resuming: bool, deadline: ExecutionDeadline,
+    active_base_ms: int, started: float, harness_git_commit: str,
+) -> _OneRunResult:
     artifact_store = ArtifactStore(state_root / "artifacts")
     counters = _restore_counters(journal) if resuming else _RunCounters()
     cost_start_nanos = envelope.cost_start_nanos
@@ -2958,12 +3010,21 @@ def _run_one_locked(
         "task_hash": package.task_content_hash,
         "model_hash": model_hash,
     }
+
+    def active_elapsed_ms() -> int:
+        return active_base_ms + int((monotonic() - started) * 1_000)
+
+    def remaining_active_seconds() -> float:
+        return deadline.remaining_seconds()
+
     workspace_manager = WorkspaceManager(
         repository_root() / "fixtures" / "repositories",
         state_root / "workspaces",
     )
     workspace_path = state_root / "workspaces" / run_id / "repo"
     try:
+        if request.provider == "openai" and remaining_active_seconds() > 0:
+            _live_source_preflight(task_dir, package, deadline=deadline)
         if resuming and not workspace_path.exists():
             raise RecoveryError("resumable development workspace is missing")
         workspace = (
@@ -2973,8 +3034,11 @@ def _run_one_locked(
                 run_id,
                 package.public.repository.url,
                 package.public.repository.base_commit,
+                deadline=deadline,
             )
         )
+    except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+        raise
     except PatchLoopError as exc:
         if resuming:
             raise
@@ -2986,15 +3050,18 @@ def _run_one_locked(
             cost_start_nanos=cost_start_nanos,
             hashes=hashes,
             message=str(exc)[:1_000],
+            active_elapsed_ms=active_elapsed_ms(),
         )
         return _OneRunResult(_public_result(run_id, terminal), False)
 
     if resuming:
-        _validate_resumed_workspace(workspace, journal)
+        _validate_resumed_workspace(
+            workspace, journal, deadline=DevToolGateway._recovery_read_deadline(),
+        )
         journal.append(
             "run_resumed",
             {
-                "active_elapsed_ms": journal.latest_active_elapsed_ms(),
+                "active_elapsed_ms": active_elapsed_ms(),
                 "run_age_seconds": max(
                     0,
                     int((utc_now() - envelope.created_at).total_seconds()),
@@ -3007,18 +3074,26 @@ def _run_one_locked(
     try:
         if request.provider == "openai":
             assert request.env_file is not None
-            api_key = load_exact_openai_api_key(request.env_file)
-            sandbox = _live_sandbox_preflight(package)
+            if remaining_active_seconds() > 0:
+                api_key = load_exact_openai_api_key(request.env_file)
+                sandbox = _live_sandbox_preflight(package, deadline=deadline)
+            else:
+                sandbox = DockerSandbox(package.environment.evaluator_image)
         else:
             sandbox = LocalSandbox()
         if request.enable_probes:
             probe_sandbox = DockerProbeSandbox()
-            identity = probe_sandbox.preflight()
-            if identity != {
-                "image_digest": envelope.probe_image_digest,
-                "profile_hash": envelope.probe_profile_hash,
-            }:
-                raise ContractError("probe preflight identity differs from the admitted envelope")
+            if remaining_active_seconds() > 0:
+                identity = probe_sandbox.preflight(deadline=deadline)
+                if identity != {
+                    "image_digest": envelope.probe_image_digest,
+                    "profile_hash": envelope.probe_profile_hash,
+                }:
+                    raise ContractError(
+                        "probe preflight identity differs from the admitted envelope"
+                    )
+    except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+        raise
     except PatchLoopError as exc:
         terminal = _terminal(
             journal=journal,
@@ -3028,15 +3103,11 @@ def _run_one_locked(
             cost_start_nanos=cost_start_nanos,
             hashes=hashes,
             message=str(exc)[:1_000],
+            active_elapsed_ms=active_elapsed_ms(),
         )
         return _OneRunResult(_public_result(run_id, terminal), False)
 
-    active_base_ms = journal.latest_active_elapsed_ms() if resuming else 0
-    started = monotonic()
-    deadline = ExecutionDeadline(
-        started + max(0.0, request.limits.wall_time_seconds - active_base_ms / 1_000),
-        clock=monotonic,
-    )
+    journal.append("execution_prepared", {"active_elapsed_ms": active_elapsed_ms()})
     gateway = DevToolGateway(
         workspace=workspace,
         public_task=package.public,
@@ -3049,15 +3120,9 @@ def _run_one_locked(
     correction: dict[str, Any] | None = _pending_protocol_correction(journal)
     latest_tool_results = journal.latest_tool_batch_results() if resuming else []
 
-    def active_elapsed_ms() -> int:
-        return active_base_ms + int((monotonic() - started) * 1_000)
-
-    def remaining_active_seconds() -> float:
-        return deadline.remaining_seconds()
-
     mock_adapter = MockDevAdapter(package.public.task_id) if request.provider == "mock" else None
     openai_adapter: OpenAIResponsesAdapter | None = None
-    if request.provider == "openai":
+    if request.provider == "openai" and remaining_active_seconds() > 0:
         assert pricing is not None
         config = ModelConfig(
             provider="openai",
@@ -3241,6 +3306,8 @@ def _run_one_locked(
                         except ExecutionDeadlineExceeded:
                             terminal_code = DevTerminal.LIMIT_REACHED
                             terminal_message = "active deadline exhausted before recovered action"
+                        except GitExecutionUncertain:
+                            raise
                         except Exception as exc:
                             terminal_code = DevTerminal.TASK_FAILED
                             terminal_message = (
@@ -3343,6 +3410,8 @@ def _run_one_locked(
             terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
             terminal_message = str(exc)
             break
+        except GitExecutionUncertain:
+            raise
         except RecoveryError as exc:
             terminal_code = DevTerminal.TASK_FAILED
             terminal_message = str(exc)
@@ -3707,6 +3776,8 @@ def _run_one_locked(
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "active deadline exhausted before tool execution"
             break
+        except GitExecutionUncertain:
+            raise
         except Exception as exc:
             terminal_code = DevTerminal.TASK_FAILED
             terminal_message = f"tool gateway failed: {type(exc).__name__}"
@@ -3801,6 +3872,7 @@ def _run_one_locked(
         submitted_patch_hash=submitted.content_hash,
         submitted_changed_files=finish_result.output["changed_files"],
         created_at=envelope.created_at,
+        harness_git_commit=harness_git_commit,
         probe_evidence=probe_evidence,
     )
     manifest_text = canonical_json(manifest.model_dump(mode="json")) + "\n"
@@ -3838,6 +3910,21 @@ def _run_one_locked(
         }
         terminal_code = DevTerminal.LIMIT_REACHED
         terminal_message = "active deadline exhausted during isolated evaluation"
+    except GitExecutionUncertain as exc:
+        evaluator_summary = {
+            "task_acceptance": "ERROR", "safety_state": "ERROR",
+            "failure_class": (
+                "ACTIVE_DEADLINE_EXHAUSTED" if exc.details.get("deadline_exhausted")
+                else "EVALUATOR_INFRA_FAILURE"
+            ),
+            "claim_eligible": False,
+        }
+        terminal_code = (
+            DevTerminal.LIMIT_REACHED if exc.details.get("deadline_exhausted")
+            else DevTerminal.EVALUATOR_ERROR
+        )
+        terminal_message = str(exc)
+        stop_remaining = True
     except Exception as exc:
         evaluator_summary = {
             "task_acceptance": "ERROR",
@@ -3897,7 +3984,6 @@ def run_dev(request: DevRunRequest) -> dict[str, Any]:
     cost_ledger: DevCostLedger | None = None
     if request.provider == "openai":
         _live_task_is_admitted(task_dir, package)
-        _live_source_preflight(task_dir, package)
         assert request.max_cost_usd is not None
         pricing = pricing_for_model(request.model)
         cost_ledger = DevCostLedger(request.max_cost_usd, pricing)

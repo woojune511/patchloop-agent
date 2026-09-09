@@ -50,6 +50,29 @@ mutation newline policy remain unchanged. New tests first reproduce five mixed-E
 failures; the fix plus source/note lifecycle regressions pass 48 cases in 14.27s
 (`C:\pt\pl-fix-notes-green-a.xml`). This fixes storage/lifecycle, not optional note non-use.
 
+Fifth fix: registered-check output now uses bounded streaming retention, preserving
+the existing stdout-first byte/complete-line format, separate trace-report channel and
+exit verdict while discarding excess output. Process/pipe/container uncertainty still
+stops execution and carries typed policy evidence. Capture and surrounding regressions:
+171 passed in 12.50s (`C:\pt\pl-fix-capture-green-d.xml`), including harmless local
+flood/timeout and mocked Docker cases. Independent legacy-format comparison matched
+2,500 inputs; no new concrete defect was found in that cross-review.
+
+Sixth fix: main repository/Git operations receive finite timeouts and remaining active
+time, with file-backed exact output to avoid the Windows post-timeout pipe-drain path.
+The row clock now starts before workspace/preflight; already finished mutation/check
+metadata has a bounded recovery tail, and submission reuses the admission Git identity.
+Uncertain Git interruption stops all repetitions; it does not claim descendant-tree
+cleanup. New deadline/receipt/reconciliation cases: 23 passed in 10.98s, plus 27 existing
+resume/evaluator/mock cases in 31.80s. Whole filesystem operations remain cooperative,
+and invocation task/envelope hashing remains outside the row clock. The tool surface
+stays v35 with these semantics hash-bound; arguments/order, limits and task bytes stay fixed.
+
+Completed-evaluation recovery also verifies explicit typed completed-check leaf CAS
+references, not only their parent provenance. The two new missing/tampered cases were
+first reproduced and then passed; final frozen full-suite verification covers this
+refinement together with all six fixes.
+
 Design follow-up is kept separate from those confirmed defects. The offline
 `diagnostics.current_source_view` prototype preserves the full native prefix and
 selected current sources, but makes their bodies inline in only the latest view.

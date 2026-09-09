@@ -235,10 +235,10 @@ class DockerProbeSandbox:
     def identity(self) -> dict[str, str]:
         return {"image_digest": PROBE_IMAGE_DIGEST, "profile_hash": sha256_json(self._profile)}
 
-    def preflight(self) -> dict[str, str]:
+    def preflight(self, *, deadline: ExecutionDeadline | None = None) -> dict[str, str]:
         if probe_profile() != self._profile:
             raise ContractError("probe trusted profile changed before preflight")
-        if DockerSandbox(self.image).image_identity() != PROBE_IMAGE_DIGEST:
+        if DockerSandbox(self.image).image_identity(deadline=deadline) != PROBE_IMAGE_DIGEST:
             raise ContractError("probe public Python image is not available at its pinned digest")
         self._verified = True
         return self.identity

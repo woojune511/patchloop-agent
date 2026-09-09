@@ -16,6 +16,7 @@ from test_dev_feedback_integration_v18 import _completed_batch, _context, _input
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
 from test_dev_probe_sandbox import FakeProcess, backend, mock_launch
 from test_dev_probe_sandbox import public_repo as public_repo
+from test_sandbox_capture import fake_capture
 
 from patchloop.contracts import RegisteredCheck
 from patchloop.deadline import ExecutionDeadline
@@ -330,6 +331,7 @@ def test_mocked_docker_mounts_only_trusted_collector_and_preserves_check_policy(
         return subprocess.CompletedProcess(command, 0, b"ok\n", wire(targets))
 
     monkeypatch.setattr("patchloop.sandbox.runner.subprocess.run", run)
+    monkeypatch.setattr("patchloop.sandbox.runner.capture_process", fake_capture(run))
     result = sandbox.run_check(
         tmp_path, RegisteredCheck(id="public", command=["python", "-c", "assert True"]),
         execution_targets=targets,
@@ -382,6 +384,7 @@ def test_actual_task_python_paths_are_instrumented_without_rewriting_command(
 
     # No Docker or task check is executed: verify the real declaration's launch wiring.
     monkeypatch.setattr("patchloop.sandbox.runner.subprocess.run", run)
+    monkeypatch.setattr("patchloop.sandbox.runner.capture_process", fake_capture(run))
     result = sandbox.run_check(tmp_path, check, execution_targets=targets)
     assert len(launches) == 1
     assert result.command == check.command == declared
@@ -463,6 +466,7 @@ def test_timeout_preserves_deadline_and_cleans_container_before_collector_files(
         return subprocess.CompletedProcess(command, 0 if cleanup_ok else 1, b"", b"")
 
     monkeypatch.setattr("patchloop.sandbox.runner.subprocess.run", run)
+    monkeypatch.setattr("patchloop.sandbox.runner.capture_process", fake_capture(run))
     result = sandbox.run_check(
         tmp_path, RegisteredCheck(id="public", command=["python", "-c", "assert True"]),
         deadline=deadline, execution_targets=targets,

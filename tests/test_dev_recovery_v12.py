@@ -6,6 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from test_sandbox_capture import fake_capture
 
 import patchloop.repository as repository
 import patchloop.sandbox.runner as sandbox_module
@@ -73,11 +74,11 @@ def test_local_check_clips_timeout_to_active_deadline(tmp_path, monkeypatch) -> 
     deadline = ExecutionDeadline.from_remaining(0.1, clock=lambda: clock[0])
 
     def timed_out(command, **kwargs):
-        assert kwargs["timeout"] == pytest.approx(0.1)
-        clock[0] = 0.1
+        assert kwargs["timeout"] == pytest.approx(0.05)
+        clock[0] = 0.05
         raise subprocess.TimeoutExpired(command, kwargs["timeout"], output=b"partial")
 
-    monkeypatch.setattr(sandbox_module.subprocess, "run", timed_out)
+    monkeypatch.setattr(sandbox_module, "capture_process", fake_capture(timed_out))
     result = LocalSandbox().run_check(
         tmp_path, RegisteredCheck(id="public-check", command=["python", "-V"], timeout_seconds=30),
         deadline=deadline,
@@ -116,6 +117,7 @@ def test_docker_deadline_cleans_only_owned_container(tmp_path, monkeypatch, clea
 
     monkeypatch.setattr(DockerSandbox, "cli_path", staticmethod(lambda: "fake-docker"))
     monkeypatch.setattr(sandbox_module.subprocess, "run", execute)
+    monkeypatch.setattr(sandbox_module, "capture_process", fake_capture(execute))
     result = DockerSandbox("test@sha256:" + "a" * 64).run_check(
         tmp_path, RegisteredCheck(id="public-check", command=["python", "-V"], timeout_seconds=30),
         deadline=deadline, execution_identity={"run_id": "run_dev_test", "action_id": "check1"},
@@ -211,10 +213,10 @@ def test_evaluator_deadline_keeps_failure_provenance(tmp_path, monkeypatch) -> N
         private=SimpleNamespace(hidden_checks=[]),
     )
     manager = SimpleNamespace(
-        create=lambda *args: tmp_path,
-        validate_managed_workspace=lambda workspace: workspace,
-        apply_patch=lambda *args: digest,
-        diff_summary=lambda workspace: DiffSummary(["a.py"], 1, 1, patch_text, []),
+        create=lambda *args, **kwargs: tmp_path,
+        validate_managed_workspace=lambda workspace, **kwargs: workspace,
+        apply_patch=lambda *args, **kwargs: digest,
+        diff_summary=lambda workspace, **kwargs: DiffSummary(["a.py"], 1, 1, patch_text, []),
     )
 
     class ExpiringSandbox:
@@ -265,16 +267,16 @@ def test_evaluator_starts_no_workspace_or_patch_after_deadline(
             clock[0] = 1
         return package, b"audit"
 
-    def create(*args):
+    def create(*args, **kwargs):
         assert clock[0] < 1
         created.append(True)
         return tmp_path
 
-    def validate_workspace(workspace):
+    def validate_workspace(workspace, **kwargs):
         clock[0] = 1
         return workspace
 
-    def forbidden_patch(*args):
+    def forbidden_patch(*args, **kwargs):
         raise AssertionError("evaluator applied a patch after the active deadline")
 
     manager = SimpleNamespace(

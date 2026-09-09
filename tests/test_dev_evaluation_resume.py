@@ -178,6 +178,31 @@ def test_corrupt_completion_artifact_stops_before_execution_or_journal_change(
     assert journal.terminal() is None
 
 
+@pytest.mark.parametrize("damage", ["missing", "tampered"])
+def test_completed_check_leaf_evidence_must_survive_metadata_resume(
+    tmp_path, monkeypatch, damage,
+):
+    request, journal, payload = _completed_run(tmp_path, monkeypatch)
+    provenance = json.loads(Path(payload["artifacts"]["evaluator_provenance"]["path"]).read_bytes())
+    leaf = next(
+        artifact for result in provenance["completed_check_results"]
+        for artifact in result.get("details", {}).get("evidence_artifacts", [])
+    )
+    leaf_path = Path(leaf["path"]).resolve()
+    assert leaf_path.is_relative_to(tmp_path.resolve())
+    if damage == "missing":
+        leaf_path.unlink()
+    else:
+        leaf_path.write_bytes(b"synthetic corrupted check evidence")
+    before = journal.path.read_bytes()
+    monkeypatch.setattr(runner, "_run_one_locked", _forbid_execution)
+    monkeypatch.setattr(runner.EvaluationEngine, "evaluate", _forbid_execution)
+    with pytest.raises(RecoveryError):
+        runner.run_dev(request)
+    assert journal.path.read_bytes() == before
+    assert journal.terminal() is None
+
+
 @pytest.mark.parametrize("field", ["summary", "message", "active_elapsed_ms", "stop_remaining"])
 def test_invalid_completion_receipt_cannot_enter_execution(tmp_path, monkeypatch, field):
     request, journal, _ = _completed_run(tmp_path, monkeypatch)

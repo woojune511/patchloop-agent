@@ -2890,7 +2890,7 @@ def test_live_missing_local_image_stops_before_provider(tmp_path, monkeypatch) -
     env_file.write_text("OPENAI_API_KEY=test-only-sentinel\n", encoding="utf-8")
     monkeypatch.setattr(runner.DockerSandbox, "available", staticmethod(lambda: True))
     monkeypatch.setattr(runner.DockerSandbox, "image_identity", lambda self: None)
-    monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package: None)
+    monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package, **kwargs: None)
     request = DevRunRequest(
         provider="openai",
         task=(
@@ -2917,12 +2917,13 @@ class _SnapshotWorkspaceManager:
     def __init__(self, fixture_root, workspace_root) -> None:
         self.delegate = RealWorkspaceManager(fixture_root, workspace_root)
 
-    def create(self, run_id, repository_url, expected_revision=None):
+    def create(self, run_id, repository_url, expected_revision=None, **kwargs):
         del repository_url, expected_revision
         return self.delegate.create(
             run_id,
             self.smoke.public.repository.url,
             self.smoke.public.repository.base_commit,
+            **kwargs,
         )
 
     def validate_managed_workspace(self, workspace):
@@ -2951,8 +2952,8 @@ def _live_request(tmp_path: Path, *, repeat: int = 3, cap: str = "0.01") -> DevR
 
 
 def _patch_live_boundaries(monkeypatch) -> None:
-    monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package: None)
-    monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda package: LocalSandbox())
+    monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package, **kwargs: None)
+    monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda package, **kwargs: LocalSandbox())
     monkeypatch.setattr(runner, "WorkspaceManager", _SnapshotWorkspaceManager)
 
 
@@ -3541,12 +3542,12 @@ def test_unfinished_provider_dispatch_with_orphan_continuation_is_unknown(
                 ),
             )
 
-    def preflight(package):
+    def preflight(package, **kwargs):
         del package
         calls["preflight"] += 1
         return LocalSandbox()
 
-    monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package: None)
+    monkeypatch.setattr(runner, "_live_source_preflight", lambda task_dir, package, **kwargs: None)
     monkeypatch.setattr(runner, "_live_sandbox_preflight", preflight)
     monkeypatch.setattr(runner, "WorkspaceManager", _SnapshotWorkspaceManager)
     monkeypatch.setattr(runner, "OpenAIResponsesAdapter", ReasoningAdapter)

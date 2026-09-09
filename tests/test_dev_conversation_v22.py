@@ -217,7 +217,7 @@ def _provider_smoke(monkeypatch, tmp_path):
     })
     _patch_live_boundaries(monkeypatch)
     monkeypatch.setattr(runner, "_live_task_is_admitted", lambda *args: None)
-    monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda *args: LocalSandbox())
+    monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda *args, **kwargs: LocalSandbox())
     # Use real managed smoke checkout; no API or Docker authority is exercised.
     from patchloop.repository import WorkspaceManager
 

@@ -279,8 +279,8 @@ def test_provider_correction_survives_crash_without_repeating_dispatch(
 
     monkeypatch.setattr(runner, "OpenAIResponsesAdapter", FakeProvider)
     monkeypatch.setattr(runner, "_live_task_is_admitted", lambda *args: None)
-    monkeypatch.setattr(runner, "_live_source_preflight", lambda *args: None)
-    monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda *args: LocalSandbox())
+    monkeypatch.setattr(runner, "_live_source_preflight", lambda *args, **kwargs: None)
+    monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda *args, **kwargs: LocalSandbox())
     monkeypatch.setattr(runner, "load_exact_openai_api_key", lambda path: "unused")
     task_dir, package = runner._resolve_task_file(_request(tmp_path).task)
     package = package.model_copy(update={"environment": TaskEnvironment(
@@ -496,8 +496,8 @@ def test_expired_provider_admission_does_not_record_undispatched_calls(
     monkeypatch.setattr(runner, "monotonic", lambda: clock[0])
     monkeypatch.setattr(runner, "OpenAIResponsesAdapter", FakeProvider)
     monkeypatch.setattr(runner, "_live_task_is_admitted", lambda *args: None)
-    monkeypatch.setattr(runner, "_live_source_preflight", lambda *args: None)
-    monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda *args: LocalSandbox())
+    monkeypatch.setattr(runner, "_live_source_preflight", lambda *args, **kwargs: None)
+    monkeypatch.setattr(runner, "_live_sandbox_preflight", lambda *args, **kwargs: LocalSandbox())
     monkeypatch.setattr(runner, "load_exact_openai_api_key", lambda path: "unused")
     monkeypatch.setattr(runner, "_resolve_task_file", lambda task: (task_dir, package))
     request = _request(tmp_path).model_copy(update={

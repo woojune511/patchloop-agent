@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import subprocess
 import uuid
 from pathlib import Path
 
+from patchloop.deadline import ExecutionDeadline
+from patchloop.git_execution import run_git
 from patchloop.util import raw_file_set_hash
 
 
@@ -31,15 +32,8 @@ def runtime_content_hash(root: Path | None = None) -> str:
     return raw_file_set_hash(selected_root, runtime_content_paths(selected_root))
 
 
-def git_commit() -> str:
-    result = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=repository_root(),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=False,
-    )
+def git_commit(*, deadline: ExecutionDeadline | None = None) -> str:
+    result = run_git(repository_root(), "rev-parse", "HEAD", check=False, deadline=deadline)
     return result.stdout.strip() if result.returncode == 0 else "uncommitted"
 
 

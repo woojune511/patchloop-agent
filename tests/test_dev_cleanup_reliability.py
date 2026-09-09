@@ -3,6 +3,7 @@ from __future__ import annotations
 import subprocess
 
 import pytest
+from test_sandbox_capture import fake_capture
 
 from patchloop.contracts import RegisteredCheck
 from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
@@ -33,6 +34,7 @@ def _failing_docker(monkeypatch, error, *, cleanup_confirmed):
 
     monkeypatch.setattr(DockerSandbox, "cli_path", staticmethod(lambda: "fake-docker"))
     monkeypatch.setattr(subprocess, "run", run)
+    monkeypatch.setattr("patchloop.sandbox.runner.capture_process", fake_capture(run))
     return commands
 
 

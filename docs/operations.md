@@ -864,11 +864,20 @@ horizon. This adds no mandatory check or voluntary-stop rejection. No
 private task bytes, hidden path, evaluator output, local-variable capture, or inferred
 reasoning enters this card.
 
-One monotonic active-execution deadline covers provider counting/generation and tool
-work, including pending replay and visible checks. Remaining time is passed into each
-blocking operation. Docker checks carry run/action identity so recovery can reconcile
+One monotonic active-execution deadline starts before workspace creation and live
+preflight and covers provider work, Git waits, tools and isolated evaluation. Git uses
+exact file-backed output and bounded waits rather than an unbounded pipe-drain path.
+After interruption, direct Git-process termination does not establish descendant
+cleanup: stop further execution/repetitions and do not automatically retry. Only bounded
+metadata recovery and exact pending-mutation reconciliation may finish after expiry.
+Docker checks carry run/action identity so recovery can reconcile
 their execution without launching duplicate check containers. Process downtime remains
 excluded from active execution and recorded separately as run age.
+Registered-check output is now bounded during collection, not after complete capture.
+Excess output is drained and discarded without changing the check's exit verdict;
+stdout retains its existing priority and clipped output contains complete lines.
+Output-reader or owned-container cleanup uncertainty stops execution and preserves
+typed policy evidence. The separate probe output-limit behavior below is unchanged.
 
 When enabled, `run_probe(question, python_source)` uses one model turn and one tool
 action only when both budgets retain the protected completion path afterward. Source
@@ -977,3 +986,12 @@ read-only,
 idempotent return of its existing public result. The restored protocol counter is
 the consecutive corrections since the latest completed valid tool batch, not a
 lifetime total.
+
+When `evaluator_finished` is already durable but the terminal is missing, resume
+validates its completion receipt, submitted patch, manifest, provenance and explicit
+completed-check CAS references, then finishes metadata only. It does not recreate a
+workspace, load credentials, preflight Docker or rerun evaluation. The original verdict,
+partial error evidence, active time and repetition-stop flag are preserved. Provider
+uncertainty and exact-envelope checks still take precedence. This closes the crash gap
+after the completion event, not the earlier uncommitted-evaluation window. Old run bytes
+are not migrated.

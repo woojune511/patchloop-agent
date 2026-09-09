@@ -5,7 +5,6 @@ from __future__ import annotations
 import copy
 import difflib
 import re
-import subprocess
 import threading
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -54,6 +53,7 @@ from patchloop.dev.working_notes import (
     source_note_range_details,
 )
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
+from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.repository import DiffSummary, WorkspaceManager
 from patchloop.sandbox.execution_feedback import (
     MAX_FILES,
@@ -1211,6 +1211,7 @@ class DevToolGateway:
     def _revalidated_spans(
         self, *, paths: Sequence[str], diff_hash: str,
         replacement: SourceReplacement | None = None,
+        deadline: ExecutionDeadline | None = None,
     ) -> list[dict[str, Any]]:
         """Rebind observed untouched lines by exact edit, or unique whole-body fallback."""
 
@@ -1231,7 +1232,7 @@ class DevToolGateway:
             if len(changed) != 1:
                 raise ContractError("source rebinding requires one exact replacement path")
             path, = changed
-            normalized, current = self._tracked_path(path)
+            normalized, current = self._tracked_path(path, deadline=deadline)
             if current.read_bytes() != replacement.after_bytes:
                 raise RecoveryError("source rebinding target differs from the admitted postimage")
             return [
@@ -1250,9 +1251,11 @@ class DevToolGateway:
         for span in candidates:
             path = str(span["path"])
             try:
-                normalized, current = self._tracked_path(path)
+                normalized, current = self._tracked_path(path, deadline=deadline)
                 raw = current.read_bytes()
                 text, _ = self._source_text(raw)
+            except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+                raise
             except (PatchLoopError, OSError, UnicodeDecodeError):
                 continue
             content = str(span["content"])
@@ -1300,6 +1303,8 @@ class DevToolGateway:
                     _, current = self._tracked_path(path)
                     raw = current.read_bytes()
                     sources[path] = (source_lines(raw.decode("utf-8")), sha256_bytes(raw))
+                except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+                    raise
                 except (PatchLoopError, OSError, UnicodeDecodeError):
                     sources[path] = None
             current_source = sources[path]
@@ -1325,6 +1330,8 @@ class DevToolGateway:
                 if type(occurrence) is int and 1 <= occurrence <= len(positions):
                     start = text[:positions[occurrence - 1]].count("\n") + 1
                     priorities.append((path, start, start + old_text.count("\n"), 0))
+            except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+                raise
             except (PatchLoopError, OSError, UnicodeDecodeError):
                 pass
             failure = failed.get("mutation_failure")
@@ -1721,7 +1728,7 @@ class DevToolGateway:
         self._restore_working_notes_state(self._refreshed_working_notes_state())
 
     def _refreshed_working_notes_state(
-        self, *, action_id: str | None = None,
+        self, *, action_id: str | None = None, deadline: ExecutionDeadline | None = None,
     ) -> dict[str, Any]:
         """Compute lifecycle without applying it until its action is durable."""
 
@@ -1741,10 +1748,12 @@ class DevToolGateway:
                 path = evidence["path"]
                 if path not in current_sources:
                     try:
-                        _, selected = self._tracked_path(path)
+                        _, selected = self._tracked_path(path, deadline=deadline)
                         raw = selected.read_bytes()
                         text = normalize_source_text(raw.decode("utf-8"))
                         current_sources[path] = text, sha256_bytes(raw)
+                    except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+                        raise
                     except (PatchLoopError, OSError, UnicodeDecodeError):
                         current_sources[path] = None
                 source = current_sources[path]
@@ -1832,6 +1841,8 @@ class DevToolGateway:
                         try:
                             _, selected = self._tracked_path(path)
                             source_hashes[path] = sha256_bytes(selected.read_bytes())
+                        except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+                            raise
                         except (PatchLoopError, OSError):
                             source_hashes[path] = None
                     current &= source_hashes[path] == evidence["file_hash"]
@@ -1999,6 +2010,8 @@ class DevToolGateway:
             return None
         try:
             normalized, _ = self._tracked_path(path)
+        except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+            raise
         except (PatchLoopError, OSError):
             return None
         return normalized
@@ -2051,7 +2064,12 @@ class DevToolGateway:
 
     @property
     def current_diff(self):
-        return WorkspaceManager.diff_summary(self.workspace)
+        return WorkspaceManager.diff_summary(self.workspace, deadline=self.deadline)
+
+    @staticmethod
+    def _recovery_read_deadline() -> ExecutionDeadline:
+        """A bounded metadata/reconciliation tail, never authority for a new action."""
+        return ExecutionDeadline.from_remaining(5)
 
     @property
     def current_diff_hash(self) -> str:
@@ -2234,7 +2252,13 @@ class DevToolGateway:
         # Durable results above are safe to replay even after the active deadline.
         if self.deadline is not None and pending is None:
             self.deadline.check()
-        baseline_summary = self.current_diff
+        action_read_deadline = (
+            self._recovery_read_deadline()
+            if pending is not None and call.name == "replace_text" else self.deadline
+        )
+        baseline_summary = WorkspaceManager.diff_summary(
+            self.workspace, deadline=action_read_deadline,
+        )
         baseline = (
             str(pending["baseline_diff_hash"])
             if pending is not None and call.name == "replace_text"
@@ -2254,6 +2278,7 @@ class DevToolGateway:
                         validated.path,
                         validated.after_bytes,
                         baseline_diff_hash=baseline,
+                        deadline=self.deadline,
                     )
                     mutation_admitted = True
                 except (PatchLoopError, ValidationError, ValueError, OSError) as exc:
@@ -2330,7 +2355,9 @@ class DevToolGateway:
             if preflight_error is not None:
                 raise preflight_error
             if pending is not None and call.name == "replace_text":
-                output = self._reconcile_or_apply(call.arguments, pending)
+                output = self._reconcile_or_apply(
+                    call.arguments, pending, deadline=action_read_deadline,
+                )
                 evidence_cache_hit = False
             elif call.name == "replace_text":
                 assert candidate_summary is not None
@@ -2392,7 +2419,7 @@ class DevToolGateway:
                     output["worktree_diff_hash"] if call.name == "replace_text" else baseline
                 ),
             )
-        except ExecutionDeadlineExceeded:
+        except (ExecutionDeadlineExceeded, GitExecutionUncertain):
             raise
         except (PatchLoopError, ValidationError, ValueError, OSError, RuntimeError) as exc:
             code = exc.code if isinstance(exc, PatchLoopError) else "TOOL_CONTRACT_ERROR"
@@ -2425,7 +2452,9 @@ class DevToolGateway:
                 error_code=code,
                 message=str(exc)[:1_000],
                 workspace_diff_hash=(
-                    self.current_diff_hash if call.name == "replace_text" else baseline
+                    WorkspaceManager.diff_summary(
+                        self.workspace, deadline=action_read_deadline,
+                    ).patch_hash if call.name == "replace_text" else baseline
                 ),
             )
         finished_payload: dict[str, Any] = {
@@ -2436,6 +2465,7 @@ class DevToolGateway:
         if result.status == "succeeded" and result.tool == "replace_text":
             finished_payload["working_notes_state"] = self._refreshed_working_notes_state(
                 action_id=call.action_id,
+                deadline=self._recovery_read_deadline(),
             )
         self.journal.append(
             "action_finished",
@@ -2472,17 +2502,16 @@ class DevToolGateway:
             return self._stop_task(arguments)
         raise ContractError(f"unknown dev-head tool: {name}")
 
-    def _tracked_path(self, relative: str) -> tuple[str, Path]:
+    def _tracked_path(
+        self, relative: str, *, deadline: ExecutionDeadline | None = None,
+    ) -> tuple[str, Path]:
         normalized = safe_relative_path(relative)
         if normalized.startswith(".patchloop-hidden/"):
             raise ContractError("private evaluator paths are never agent-readable")
         path = ensure_within(self.workspace, normalized)
-        tracked = subprocess.run(
-            ["git", "ls-files", "--error-unmatch", "--", normalized],
-            cwd=self.workspace,
-            capture_output=True,
-            text=True,
-            check=False,
+        tracked = run_git(
+            self.workspace, "ls-files", "--error-unmatch", "--", normalized,
+            check=False, deadline=deadline if deadline is not None else self.deadline,
         )
         if tracked.returncode != 0 or not path.is_file() or path.is_symlink():
             raise ContractError(f"path is not a tracked public file: {normalized}")
@@ -2538,6 +2567,8 @@ class DevToolGateway:
         searched_file_count = 0
         truncated = False
         for selected in sorted(self.workspace.rglob("*")):
+            if self.deadline is not None:
+                self.deadline.check()
             if len(spans) >= 20 or content_chars >= 24_000:
                 truncated = True
                 break
@@ -2550,11 +2581,9 @@ class DevToolGateway:
                 relative, pattern
             ):
                 continue
-            tracked = subprocess.run(
-                ["git", "ls-files", "--error-unmatch", "--", relative],
-                cwd=self.workspace,
-                capture_output=True,
-                check=False,
+            tracked = run_git(
+                self.workspace, "ls-files", "--error-unmatch", "--", relative,
+                check=False, text=False, deadline=self.deadline,
             )
             if tracked.returncode != 0 or selected.stat().st_size > 1_000_000:
                 continue
@@ -2647,6 +2676,8 @@ class DevToolGateway:
             _, current = self._tracked_path(str(span["path"]))
             if sha256_bytes(current.read_bytes()) == span["file_hash"]:
                 return span
+        except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+            raise
         except (PatchLoopError, OSError):
             pass
         return None
@@ -2658,8 +2689,9 @@ class DevToolGateway:
         focus_start_line: int,
         focus_line_count: int,
         diff_hash: str,
+        deadline: ExecutionDeadline | None = None,
     ) -> dict[str, Any] | None:
-        normalized, current = self._tracked_path(path)
+        normalized, current = self._tracked_path(path, deadline=deadline)
         raw = current.read_bytes()
         current_lines = source_lines(raw.decode("utf-8"))
         if not current_lines:
@@ -2806,6 +2838,7 @@ class DevToolGateway:
         summary: Any,
         source_replacement: SourceReplacement,
         recovered_after_crash: bool = False,
+        deadline: ExecutionDeadline | None = None,
     ) -> dict[str, Any]:
         postimage_path = ensure_within(self.workspace, path)
         mutation_evidence = (
@@ -2814,12 +2847,14 @@ class DevToolGateway:
                 focus_start_line=postimage_start_line,
                 focus_line_count=max(1, intent.new_text.count("\n") + 1),
                 diff_hash=summary.patch_hash,
+                deadline=deadline,
             )
             if postimage_path.is_file() and not postimage_path.is_symlink()
             else None
         )
         revalidated_spans = self._revalidated_spans(
             paths=[path], diff_hash=summary.patch_hash, replacement=source_replacement,
+            deadline=deadline,
         )
         causal_revision = intent.causal_revision
         mutation = {
@@ -2878,6 +2913,7 @@ class DevToolGateway:
             expected_candidate_hash = WorkspaceManager.preview_text_replacement(
                 self.workspace, validated.path, validated.after_bytes,
                 baseline_diff_hash=baseline_summary.patch_hash,
+                deadline=self.deadline,
             ).patch_hash
         if self.deadline is not None:
             self.deadline.check()
@@ -2979,10 +3015,12 @@ class DevToolGateway:
         )
 
     def _reconcile_or_apply(
-        self, arguments: dict[str, Any], pending: dict[str, Any]
+        self, arguments: dict[str, Any], pending: dict[str, Any],
+        *, deadline: ExecutionDeadline | None = None,
     ) -> dict[str, Any]:
         baseline = pending.get("baseline_diff_hash")
-        current = self.current_diff_hash
+        summary = WorkspaceManager.diff_summary(self.workspace, deadline=deadline)
+        current = summary.patch_hash
         if current == baseline:
             return self._apply_text_replacement(
                 arguments,
@@ -2995,7 +3033,7 @@ class DevToolGateway:
         path = safe_relative_path(intent.path)
         if pending.get("mutation_target_path") != path:
             raise RecoveryError("pending mutation target does not match its admission")
-        _, target = self._tracked_path(path)
+        _, target = self._tracked_path(path, deadline=deadline)
         expected_postimage_hash = pending.get("mutation_expected_postimage_file_hash")
         if (
             not isinstance(expected_postimage_hash, str)
@@ -3005,7 +3043,6 @@ class DevToolGateway:
         generated_patch = pending.get("mutation_generated_patch")
         if not isinstance(generated_patch, str) or not generated_patch:
             raise RecoveryError("pending mutation is missing its generated diff")
-        summary = self.current_diff
         if summary.patch_hash != pending.get("mutation_expected_worktree_diff_hash"):
             raise RecoveryError("pending complete candidate diff does not match its admission")
         if summary.untracked_files:
@@ -3030,7 +3067,7 @@ class DevToolGateway:
         if not scope.passed:
             # Undo only the exact admitted replacement, never arbitrary workspace drift.
             WorkspaceManager.atomic_replace_source(self.workspace, path, before_bytes)
-            restored = self.current_diff
+            restored = WorkspaceManager.diff_summary(self.workspace, deadline=deadline)
             if restored.patch_hash != baseline:
                 raise RecoveryError("scope rollback did not restore the complete baseline")
             raise ContractError(
@@ -3062,6 +3099,7 @@ class DevToolGateway:
                 before_bytes, after_bytes, offset, intent.old_text, intent.new_text,
             ),
             recovered_after_crash=True,
+            deadline=deadline,
         )
 
     def _run_check(
@@ -3086,7 +3124,9 @@ class DevToolGateway:
             )
         else:
             outcome = self.sandbox.run_check(self.workspace, check)
-        if self.current_diff_hash != diff_hash:
+        if WorkspaceManager.diff_summary(
+            self.workspace, deadline=self._recovery_read_deadline(),
+        ).patch_hash != diff_hash:
             raise RecoveryError("managed workspace changed during public check execution")
         deadline_exhausted = getattr(outcome, "deadline_exhausted", False)
         cleanup_failed = getattr(outcome, "cleanup_failed", False)
@@ -3157,7 +3197,9 @@ class DevToolGateway:
             **({"execution_targets": targets}
                if getattr(self.probe_sandbox, "supports_public_execution", False) else {}),
         )
-        observed_diff_hash = self.current_diff_hash
+        observed_diff_hash = WorkspaceManager.diff_summary(
+            self.workspace, deadline=self._recovery_read_deadline(),
+        ).patch_hash
         receipt = {**output, "question": question, "diff_hash": baseline,
                    "workspace_diff_hash": baseline,
                    "public_execution": output.get("public_execution") or public_feedback(

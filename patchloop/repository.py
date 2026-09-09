@@ -10,7 +10,9 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError, RecoveryError
+from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.util import directory_hash, safe_relative_path, sha256_bytes
 
 ALLOWED_REMOTE_REPOSITORIES = {
@@ -65,20 +67,11 @@ class DiffSummary:
         return sha256_bytes(self.patch.encode("utf-8"))
 
 
-def _git(workspace: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(
-        ["git", *args],
-        cwd=workspace,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=False,
-    )
-    if check and result.returncode != 0:
-        raise ContractError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
-    if result.stdout is None or result.stderr is None:
-        raise ContractError(f"git {' '.join(args)} did not produce decodable UTF-8 output")
-    return result
+def _git(
+    workspace: Path, *args: str, check: bool = True,
+    deadline: ExecutionDeadline | None = None,
+) -> subprocess.CompletedProcess[str]:
+    return run_git(workspace, *args, check=check, deadline=deadline)
 
 
 class WorkspaceManager:
@@ -100,8 +93,11 @@ class WorkspaceManager:
         return source
 
     def create(
-        self, run_id: str, repository_url: str, expected_revision: str | None = None
+        self, run_id: str, repository_url: str, expected_revision: str | None = None,
+        *, deadline: ExecutionDeadline | None = None,
     ) -> Path:
+        if deadline is not None:
+            deadline.check()
         run_root = (self.workspace_root / run_id).resolve()
         if run_root.parent != self.workspace_root:
             raise ContractError(f"invalid workspace run ID: {run_id!r}")
@@ -123,19 +119,17 @@ class WorkspaceManager:
                     raise ContractError(
                         "remote repository revision must be a full 40-character commit"
                     )
-                initialize = subprocess.run(
-                    ["git", "init", "--quiet", str(staging)],
-                    capture_output=True,
-                    text=True,
-                    check=False,
+                initialize = _git(
+                    run_root, "init", "--quiet", str(staging),
+                    check=False, deadline=deadline,
                 )
                 if initialize.returncode != 0:
                     raise ContractError(
                         "audited remote checkout initialization failed: "
                         f"{initialize.stderr.strip()}"
                     )
-                _git(staging, "config", "core.longpaths", "true")
-                _git(staging, "remote", "add", "origin", repository_url)
+                _git(staging, "config", "core.longpaths", "true", deadline=deadline)
+                _git(staging, "remote", "add", "origin", repository_url, deadline=deadline)
                 fetch = _git(
                     staging,
                     "fetch",
@@ -146,17 +140,19 @@ class WorkspaceManager:
                     "origin",
                     expected_revision,
                     check=False,
+                    deadline=deadline,
                 )
                 if fetch.returncode != 0:
                     raise ContractError(
                         "audited remote revision is unavailable: "
                         f"exact-SHA fetch failed with {fetch.stderr.strip()!r}"
                     )
-                _git(staging, "checkout", "--quiet", "--detach", "FETCH_HEAD")
+                _git(staging, "checkout", "--quiet", "--detach", "FETCH_HEAD", deadline=deadline)
                 actual_revision = _git(
                     staging,
                     "rev-parse",
                     "HEAD",
+                    deadline=deadline,
                 ).stdout.strip()
                 if actual_revision != expected_revision:
                     raise ContractError(
@@ -174,12 +170,15 @@ class WorkspaceManager:
                         "repository.base_commit: "
                         f"expected {expected_revision}, got {actual_revision}"
                     )
+                if deadline is not None:
+                    deadline.check()
                 shutil.copytree(source, staging)
-                _git(staging, "init", "-q")
+                _git(staging, "init", "-q", deadline=deadline)
                 _git(
                     staging,
                     "add",
                     ".",
+                    deadline=deadline,
                 )
                 _git(
                     staging,
@@ -190,10 +189,16 @@ class WorkspaceManager:
                     "commit",
                     "-qm",
                     "audited base snapshot",
+                    deadline=deadline,
                 )
+            if deadline is not None:
+                deadline.check()
             os.replace(staging, target)
-        except BaseException:
-            if staging.exists() and not staging.is_symlink():
+        except BaseException as exc:
+            if (
+                not isinstance(exc, GitExecutionUncertain)
+                and staging.exists() and not staging.is_symlink()
+            ):
                 shutil.rmtree(staging)
             raise
         return target
@@ -203,6 +208,7 @@ class WorkspaceManager:
         workspace: str | Path,
         repository_url: str,
         expected_revision: str,
+        *, deadline: ExecutionDeadline | None = None,
     ) -> None:
         """Prove an eventless/pre-checkpoint workspace is the manifest base."""
 
@@ -212,6 +218,7 @@ class WorkspaceManager:
             "status",
             "--porcelain=v1",
             "--untracked-files=all",
+            deadline=deadline,
         ).stdout
         if status:
             raise ContractError("pre-checkpoint workspace is not a clean base checkout")
@@ -222,6 +229,7 @@ class WorkspaceManager:
                 resolved,
                 "rev-parse",
                 "HEAD",
+                deadline=deadline,
             ).stdout.strip()
         else:
             raise ContractError(f"repository URL is not allowlisted: {repository_url}")
@@ -264,6 +272,7 @@ class WorkspaceManager:
         self,
         workspace: str | Path,
         relative_path: str,
+        *, deadline: ExecutionDeadline | None = None,
     ) -> bytes:
         """Read one exact file from Git HEAD, never from the mutable worktree."""
 
@@ -272,11 +281,9 @@ class WorkspaceManager:
             relative_path,
             field_name="base revision file path",
         )
-        result = subprocess.run(
-            ["git", "show", f"HEAD:{normalized}"],
-            cwd=resolved,
-            capture_output=True,
-            check=False,
+        result = run_git(
+            resolved, "show", f"HEAD:{normalized}", text=False,
+            check=False, deadline=deadline,
         )
         if result.returncode != 0:
             detail = result.stderr.decode("utf-8", errors="replace").strip()
@@ -286,17 +293,18 @@ class WorkspaceManager:
         return result.stdout
 
     @staticmethod
-    def apply_patch(workspace: Path, patch_path: str | Path) -> str:
+    def apply_patch(
+        workspace: Path, patch_path: str | Path, *, deadline: ExecutionDeadline | None = None,
+    ) -> str:
+        if deadline is not None:
+            deadline.check()
         content = Path(patch_path).read_bytes()
         digest = sha256_bytes(content)
         if not content.strip():
             return digest
-        result = subprocess.run(
-            ["git", "apply", "--whitespace=nowarn", str(Path(patch_path).resolve())],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            check=False,
+        result = run_git(
+            workspace, "apply", "--whitespace=nowarn", str(Path(patch_path).resolve()),
+            check=False, deadline=deadline,
         )
         if result.returncode != 0:
             raise ContractError(f"patch application failed: {result.stderr.strip()}")
@@ -325,17 +333,20 @@ class WorkspaceManager:
         after_bytes: bytes,
         *,
         baseline_diff_hash: str,
+        deadline: ExecutionDeadline | None = None,
     ) -> DiffSummary:
         """Hash the complete candidate using a disposable index, without source writes."""
 
         normalized = safe_relative_path(path)
-        with tempfile.TemporaryDirectory(prefix="mutation-index-", dir=workspace.parent) as root:
+        with tempfile.TemporaryDirectory(
+            prefix="mutation-index-", dir=workspace.parent, ignore_cleanup_errors=True,
+        ) as root:
             environment = {**os.environ, "GIT_INDEX_FILE": str(Path(root) / "index")}
 
             def git(*args: str, content: bytes | None = None) -> str:
-                completed = subprocess.run(
-                    ["git", *args], cwd=workspace, env=environment, input=content,
-                    capture_output=True, check=False,
+                completed = run_git(
+                    workspace, *args, env=environment, input=content, text=False,
+                    check=False, deadline=deadline,
                 )
                 if completed.returncode:
                     raise ContractError("candidate Git preview failed")
@@ -364,7 +375,8 @@ class WorkspaceManager:
                 added += int(add_text) if add_text.isdigit() else 0
                 deleted += int(delete_text) if delete_text.isdigit() else 0
             return DiffSummary(
-                changed, added, deleted, candidate, WorkspaceManager.untracked_files(workspace)
+                changed, added, deleted, candidate,
+                WorkspaceManager.untracked_files(workspace, deadline=deadline),
             )
 
     @staticmethod
@@ -389,26 +401,32 @@ class WorkspaceManager:
             staged.unlink(missing_ok=True)
 
     @staticmethod
-    def untracked_files(workspace: Path) -> list[str]:
+    def untracked_files(
+        workspace: Path, *, deadline: ExecutionDeadline | None = None,
+    ) -> list[str]:
         output = _git(
             workspace,
             "ls-files",
             "--others",
             "--exclude-standard",
             "-z",
+            deadline=deadline,
         ).stdout
         return sorted(path.replace("\\", "/") for path in output.split("\0") if path)
 
     @staticmethod
-    def diff_summary(workspace: Path) -> DiffSummary:
+    def diff_summary(
+        workspace: Path, *, deadline: ExecutionDeadline | None = None,
+    ) -> DiffSummary:
         patch = _git(
             workspace,
             "diff",
             "HEAD",
             "--no-ext-diff",
             "--binary",
+            deadline=deadline,
         ).stdout
-        numstat = _git(workspace, "diff", "HEAD", "--numstat").stdout
+        numstat = _git(workspace, "diff", "HEAD", "--numstat", deadline=deadline).stdout
         changed_files: list[str] = []
         added = deleted = 0
         for line in numstat.splitlines():
@@ -423,5 +441,5 @@ class WorkspaceManager:
             added,
             deleted,
             patch,
-            WorkspaceManager.untracked_files(workspace),
+            WorkspaceManager.untracked_files(workspace, deadline=deadline),
         )

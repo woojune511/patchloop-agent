@@ -53,7 +53,7 @@ class FakeProcess:
 def backend(monkeypatch):
     sandbox = probes.DockerProbeSandbox()
     monkeypatch.setattr(
-        probes.DockerSandbox, "image_identity", lambda self: probes.PROBE_IMAGE_DIGEST
+        probes.DockerSandbox, "image_identity", lambda self, **kwargs: probes.PROBE_IMAGE_DIGEST
     )
     monkeypatch.setattr(probes.DockerSandbox, "cli_path", lambda: "docker")
     sandbox.preflight()
@@ -73,7 +73,7 @@ def mock_launch(monkeypatch, launch):
 def test_probe_preflight_requires_exact_reviewed_image(monkeypatch):
     with pytest.raises(ContractError, match="reviewed"):
         probes.DockerProbeSandbox("private-evaluator@sha256:" + "f" * 64)
-    monkeypatch.setattr(probes.DockerSandbox, "image_identity", lambda self: None)
+    monkeypatch.setattr(probes.DockerSandbox, "image_identity", lambda self, **kwargs: None)
     with pytest.raises(ContractError, match="not available"):
         probes.DockerProbeSandbox().preflight()
 

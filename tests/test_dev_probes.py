@@ -32,7 +32,7 @@ class FakeProbe:
         self.status = status
         self.effect = effect
 
-    def preflight(self):
+    def preflight(self, **kwargs):
         return {"image_digest": PROBE_IMAGE_DIGEST, "profile_hash": probe_profile_hash()}
 
     def run_probe(self, workspace, question, python_source, *, deadline, execution_identity):
@@ -221,7 +221,7 @@ def test_probe_resume_and_manifest_keep_diagnostic_execution_once(
 @pytest.mark.parametrize("fault", ["missing_image", "identity_drift"])
 def test_probe_preflight_fails_before_model_turn(tmp_path, monkeypatch, fault):
     class MissingImage(FakeProbe):
-        def preflight(self):
+        def preflight(self, **kwargs):
             if fault == "identity_drift":
                 return {"image_digest": PROBE_IMAGE_DIGEST, "profile_hash": sha256_json("changed")}
             raise ContractError("pinned probe image is not local")
