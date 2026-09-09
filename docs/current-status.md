@@ -101,16 +101,37 @@ remain immutable evidence, not runtime defaults.
 
 ## Authority
 
-The latest request to proceed without another approval question concerns the
-current-source presentation A/B follow-up, not normal row 44. Its 2026-09-10
-preflight stops before paid dispatch: neither local Docker engine pipe exists and
-Docker Desktop is not running. Source delivery equivalence revalidates; 62 focused
-tests and Ruff pass. Provider/count calls, container launches and cost are zero.
-Evidence: `C:\pt\pl43-source-preflight-a\result.md`. Docker must be made available
-externally; never start it or pull/build automatically. The tested bounded rollout
-collector and real check/probe smoke still precede collection; the existing inline
-prototype alone is not a live collector. Keep the referenced task/model settings
-and one shared $1.20 cap, with no routine reapproval or uncertainty retry.
+The latest request authorizes the current-source presentation A/B follow-up without
+routine reapproval, not normal row 44. The initial Docker-unavailable preflight is
+preserved at `C:\pt\pl43-source-preflight-a\result.md`. The user's subsequent explicit
+startup request resolved that blocker (`C:\pt\pl-docker-start-20260910-a.md`); no image
+pull/build or data reset occurred. One real registered-check/probe smoke passes in
+3.75s (`C:\pt\pl43-source-docker-a.xml`) with confirmed cleanup, no provider calls.
+
+`diagnostics.current_source_rollout` connects the frozen row-43 pre-turn-21 request
+to four fresh short rollouts, A1/B1/B2/A2. A uses normal source references; B inlines
+only selected source bodies in each new current-state view. Earlier native items,
+ciphertext, schema order and settings stay intact. Source v34 and executing v35 are
+bound separately; this is not old-run resume or migration. Each branch inherits
+20 remaining model calls, 80 tool actions, one accepted mutation and 1,601 active
+seconds; the diagnostic additionally caps new responses at eight per branch.
+All branches share one $1.20 ledger, a 1,800-second experiment deadline and zero
+SDK retries. Full-25k-ceiling JIT admission can censor the comparison; no complete
+trajectory reserve is claimed. Private evaluation is not run. Compare new inspections,
+accepted mutations, complete public check results, submission, calls and cost; small
+failure-selected samples do not establish general agent quality. The normal runtime
+is unchanged. Collection status and measured outcomes must come from a fresh result,
+not preparation or mock artifacts.
+
+Collector validation: 76 current-source/native-rollout/documentation cases pass in
+67.64s at `C:\pt\pl43-source-tests-final-a.xml`; Ruff and whitespace pass. These
+include real frozen-checkpoint hydration without dispatch, exact first A/B inputs,
+native wire-prefix/ciphertext preservation, mock mutation/check/finish, six crash
+boundaries, four-branch uncertainty stops and full-ceiling cap admission. Earlier
+test-only failures were a tiny-fixture reference assumption and an invalid synthetic
+stop code. No runtime fix or policy change was needed. The v35 runtime hash remains
+the fully validated one; the full runtime suite is not rerun for this diagnostic-only
+change. Historical source/run/CAS/task/owned-file hash checks remain clean.
 
 Mock execution carries no provider authority. One exact live `patchloop dev`
 invocation authorizes only its declared `dev-train` task, model, credential file,

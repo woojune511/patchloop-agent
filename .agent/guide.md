@@ -710,12 +710,21 @@ into normal runtime and has no count/provider/tool execution path. Keep the offi
 
 The subsequent user request authorizes proceeding with this A/B follow-up without
 routine reapproval under the referenced task/model and shared $1.20 cap, not row 44.
-`C:\pt\pl43-source-preflight-a\result.md` records an engine-unavailable stop before
-any paid/count/container call (62 focused cases and Ruff pass). Do not start Docker
-Desktop. Once it is available, complete and test the bounded native-history rollout
-collector and exact-image check/probe smoke before collection; the inline prototype
-alone is not an executable experiment. Source and executing runtime identities differ
-and must be bound separately, without weakening normal resume matching.
+`C:\pt\pl43-source-preflight-a\result.md` records the initial engine-unavailable stop.
+The user later explicitly requested startup; the bounded recovery succeeds without
+data reset (`C:\pt\pl-docker-start-20260910-a.md`). Do not infer future startup or
+image acquisition permission. A real check/probe smoke now passes with cleanup.
+`diagnostics.current_source_rollout` supplies the separate tested collector: exact
+row-43 pre-turn-21 native prefix, four fresh branches in A1/B1/B2/A2 round-robin order,
+eight new responses each, one shared $1.20 cap, 25k desired/admitted ceiling, 1,800
+experiment seconds and inherited 20-model/80-tool/one-mutation/1,601-active-second
+budgets. Only each new B view's selected current source bodies become inline. Keep
+full native history/ciphertext, public/private separation and registered gateways.
+Source v34 and current executing v35 are separately hash-bound; normal exact-match
+resume is unchanged. Stop all branches on cost, billing, continuation or cleanup
+uncertainty; no retry/resume or private evaluation. Treat cap/response-bound branches
+as censored, not evidence that the model could not solve the task. The inline
+prototype itself remains provider-free and immutable.
 
 The current single-occurrence edit unit remains explicit. A synthetic text-only
 comparison at `C:\pt\pl-fix-edit-unit-a` confirms two distant one-line replacements
