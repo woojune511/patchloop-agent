@@ -21,6 +21,7 @@ from patchloop.dev.check_feedback import check_failure_diagnostics, output_tail
 from patchloop.dev.context import (
     SourceProjection,
     bounded_lines,
+    normalize_source_text,
     project_observed_sources,
     source_lines,
     spans_cover_range,
@@ -1742,7 +1743,7 @@ class DevToolGateway:
                     try:
                         _, selected = self._tracked_path(path)
                         raw = selected.read_bytes()
-                        text, _ = self._source_text(raw)
+                        text = normalize_source_text(raw.decode("utf-8"))
                         current_sources[path] = text, sha256_bytes(raw)
                     except (PatchLoopError, OSError, UnicodeDecodeError):
                         current_sources[path] = None
@@ -2703,7 +2704,7 @@ class DevToolGateway:
         if "\r" in decoded.replace("\r\n", ""):
             raise ContractError("replace_text refuses legacy carriage-return newlines")
         newline = "\r\n" if "\r\n" in decoded else "\n"
-        return decoded.replace("\r\n", "\n"), newline
+        return normalize_source_text(decoded), newline
 
     def _validate_replacement_intent(self, arguments: dict[str, Any]) -> _ValidatedReplacement:
         intent = TextReplacementIntent.model_validate(arguments)

@@ -44,6 +44,12 @@ oracle found 434 prior two-call omissions; corrected forecasts match all states 
 minimum admission remains unchanged. New and existing workflow/budget/feedback cases:
 93 passed in 10.81s (`C:\pt\pl-fix-budget-green-a.xml`). No new action gate or cap increase.
 
+Fourth fix: readable mixed LF/CRLF notes now use the same observational normalization
+as source reads. Raw hashes, exact rebinding, stale/ambiguous expiry and the stricter
+mutation newline policy remain unchanged. New tests first reproduce five mixed-EOL
+failures; the fix plus source/note lifecycle regressions pass 48 cases in 14.27s
+(`C:\pt\pl-fix-notes-green-a.xml`). This fixes storage/lifecycle, not optional note non-use.
+
 ## Authority
 
 Mock execution carries no provider authority. One exact live `patchloop dev`

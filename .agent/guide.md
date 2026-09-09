@@ -326,6 +326,10 @@ with a narrower-citation hint. Successful mutation `action_finished` payloads at
 bind `working_notes_state` outside the public result; hydrate replays that snapshot,
 never recomputing historical lifecycle decisions from the final filesystem. Unique
 unchanged text rebinds; changed or ambiguous text expires without later resurrection.
+Observation and note retention share CRLF-to-LF normalization. Mixed LF/CRLF is
+readable and can back notes, including read-only helpers; raw-byte hashes still
+identify files. Mutation-only mixed/legacy-newline refusal must not expire an
+unchanged readable note. Exact replacement retains that separate format restriction.
 `last_source_lifecycle` exposes only triggering action, rebound IDs, and expiry reasons.
 Old tool-result references remain historical. For an executed `run_check`, persist a
 compact `check_result` beside the citation: actual `check_id`, `passed`, and the existing

@@ -86,6 +86,7 @@ def dev_tool_surface_hash() -> str:
             "observed_source_index": "delivered-lexical-headers-16-entries-4000-chars-v1",
             "tool_closure_warning": "actual-single-inspection-successor-conditional-v1",
             "working_notes": "stable-note-id-independent-body-durable-lifecycle-v3",
+            "source_note_normalization": "shared-observation-lf-not-mutation-format-v1",
             "working_note_feedback": "action-bound-expiry-independent-of-annotation-v3",
             "working_note_receipt_projection": "exact-prior-native-receipt-reference-v1",
             "working_note_range_feedback": "bounded-never-observed-versus-stale-current-range-v1",

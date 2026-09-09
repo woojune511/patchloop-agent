@@ -145,10 +145,15 @@ def build_observed_source_index(
     return result
 
 
+def normalize_source_text(text: str) -> str:
+    """Normalize observed CRLF without imposing mutation-format restrictions."""
+    return text.replace("\r\n", "\n")
+
+
 def source_lines(text: str) -> list[str]:
     """Use one newline representation without inventing an extra EOF line."""
 
-    lines = text.replace("\r\n", "\n").split("\n")
+    lines = normalize_source_text(text).split("\n")
     if lines and not lines[-1]:
         lines.pop()
     return lines
