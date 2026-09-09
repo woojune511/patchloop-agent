@@ -136,7 +136,38 @@ Audit verifies native prefixes/continuations, 292 branch CAS objects, billing,
 seven owned-container cleanups and unchanged historical/task/run/credential bytes.
 Acceptance/safety remain NOT_RUN, `official=false`, `claim_eligible=false`.
 
-### Completion-signal follow-up: prepared, not executed
+### Completion-signal follow-up: completed, no observed action difference
+
+The bounded comparison is complete on collector `5df509a`:
+`run_dev_sample_a746407355254569`, eight counts/eight completed responses,
+**$0.203554800**, 47.671 active seconds, zero tool executions. Result and audit:
+`C:\pt\pl43-completion-live-a\result.json` and
+`C:\pt\pl43-completion-review-a\result.md` / `audit.json`.
+Each arm selects three stops and one upstream check; all four matched checkpoints
+choose the same tool in A and B. The sole check-selecting checkpoint is C4 (source
+A2). C2 (source B1) originally checked but both fresh responses stop; C4 originally
+stopped but both fresh responses check. Identical original inputs can yield different
+selections, so these single samples cannot establish a general treatment effect.
+
+All six stop responses describe upstream failure as current despite NOT_RUN/null
+current-failure state and available checks. This is an unsupported current-check
+verdict, not evidence of token exhaustion, a missing check tool or an exhausted
+minimum completion path. Outputs use 296-613 tokens; each treatment removes 158 bytes
+and 31 counted input tokens. All eight memory updates are null, with native/encrypted
+history retained. The latest-field-only explanation is not supported; do not adopt
+the omission, force notes, prohibit stops or add another equivalent instruction.
+How historical verdicts are weighted against the current candidate remains unisolated.
+An unchecked stop alone is not proof of a memory or action-policy bug: the model may
+predict failure from source and rationally stop when no repair remains. Distinguish
+such predictions from observed check results; the public wording does not resolve
+the internal cause.
+The four related checkpoints and one sample per condition do not prove no effect.
+
+Anonymous review precedes unblinding. Separate audit verifies exact paired requests,
+native prefixes/continuations, billing, 34 CAS objects and 5,268 protected files.
+Task acceptance/safety remain NOT_RUN; this is not row 44, submitted code, executed
+verification or a runtime improvement. The following preparation/validation details
+remain the experiment's input contract, not another unconsumed collection authority.
 
 Inspection of the actual final inputs finds more than correct status fields:
 `completion_guidance` already leads with `run_check`, and `pending_recheck.guidance`
@@ -180,7 +211,7 @@ The shared $1.20 cap is admitted just in time: fresh count plus full 25k output 
 each dispatch. No future trajectory is guaranteed; an uncollected cell is censored,
 not an agent failure. Other samplers retain their original future-reservation policy.
 New packet/sampler hashes bind this policy; previous diagnostic bytes are not migrated.
-Normal runtime and task bytes are unchanged; collection results are pending.
+Normal runtime and task bytes are unchanged; collection is now complete as above.
 Provider-free validation passes 29 new cases in 12.07s and 139 projection/collector/
 documentation regressions in 62.88s, plus Ruff. Mock `run_dev_ca8ad90fdf494637`
 at `C:\pt\pl43-completion-dev-smoke-b` reaches isolated EVALUATOR_PASS in 3.97 command
@@ -189,9 +220,9 @@ and zero cost. The unchanged normal-runtime full suite is not rerun.
 
 ## Authority
 
-The latest proceed request covers only the eight-response/zero-tool completion-signal
-comparison above under one $1.20 cap. It does not authorize row 44, a second collection,
-Docker startup/image operations, sampled tools or changes to the normal runtime.
+The latest proceed request's eight-response/zero-tool completion-signal comparison
+is complete under its shared $1.20 cap. Do not repeat it or infer row 44, a second
+collection, Docker startup/image operations, sampled tools or normal-runtime changes.
 
 The current-source presentation A/B approval has been consumed by the completed
 comparison above; it is not normal row 44 or authority for another paid draw.

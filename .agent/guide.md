@@ -747,7 +747,7 @@ Analysis `C:\pt\pl43-source-review-a\result.md` and final `audit-v2.json` verify
 owned cleanup and historical preservation. The initial audit's empty CAS glob was
 corrected in a separate v2 receipt without changing live bytes. Runtime stays v35.
 
-The next candidate is now a prepare-only one-field ablation in
+The next candidate was prepared as a one-field ablation in
 `diagnostics.completion_signal_view`. Read-only inspection of the actual stop inputs
 confirms `completion_guidance` already recommends `run_check` at the front, while
 `pending_recheck.guidance` explicitly separates historical failure and zero edits from
@@ -796,12 +796,38 @@ interrupted results read-only, never resume/recollect. Source receipt, sampler a
 runtime hashes must match before claiming the result root or loading credentials.
 This changes only diagnostics: no task/worktree access by selected tools, Docker,
 normal row 44, private evaluation, prompt default, memory mandate or runtime policy.
-Old envelopes/results are not migrated; completion-signal results are pending.
+Old envelopes/results are not migrated; completion-signal collection is now complete.
 Validation: 29 new cases pass in 12.07s, 139 existing collector/projection/docs cases
 in 62.88s, Ruff PASS; production mock `run_dev_ca8ad90fdf494637` reaches isolated
 EVALUATOR_PASS in 3.97 command seconds at `C:\pt\pl43-completion-dev-smoke-b`.
 All mock cost is zero and safety is NOT_RUN; the unchanged full runtime suite is not
 rerun for this diagnostic-only addition.
+
+Completed collector `5df509a`, run `run_dev_sample_a746407355254569`, at
+`C:\pt\pl43-completion-live-a`: eight counts/completed responses, $0.203554800,
+47.671 active seconds, zero tools. Both A and B select stop/stop/stop/run_check on
+C1-C4. All six stops present a current upstream failure unsupported by current-diff
+checks; zero accepted edits does not remove the offered three-call completion path.
+The two C4 responses select upstream verification without executing it; one correctly
+distinguishes historical failures, the other incorrectly describes upstream as the
+remaining gate even though both current checks are NOT_RUN. All eight note updates
+are null; native/encrypted continuation is intact. Outputs are only 296-613 tokens.
+The single-field omission removes 158 bytes/31 input tokens but demonstrates no
+next-action difference in these four matched pairs. Do not promote it to a default.
+
+Read-only historical comparison finds the identical C2 original previously selected
+a check but now stops, while C4 previously stopped but now checks. This variability
+and one draw per condition prevent a general no-effect or root-cause conclusion.
+Earlier forecasts/system prompt remain; this does not test all mutation pressure.
+Current-versus-historical verdict use remains the behavioral problem, not a proven
+implementation cause. An unchecked stop can be rational if the model predicts an
+unrepairable failure; the public explanation does not distinguish that from stale
+verdict reuse. Do not infer a memory defect from stopping alone. Keep the next
+information-layout hypothesis separate from any
+runtime adoption, stronger gate, forced note or reasoning reset. No further collection
+or normal row is part of this completed experiment. Report and anonymous review:
+`C:\pt\pl43-completion-review-a\result.md`; audit verifies 34 CAS objects, exact inputs,
+continuation/billing and 5,268 unchanged protected files. Acceptance/safety NOT_RUN.
 
 The current single-occurrence edit unit remains explicit. A synthetic text-only
 comparison at `C:\pt\pl-fix-edit-unit-a` confirms two distant one-line replacements
