@@ -690,6 +690,45 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
+The current next seam is a prepared, not executable probe-first repair comparison.
+`diagnostics.probe_first_view` freezes exact A/B inputs from the original row-43
+pre-turn-21 public failure. A remains ordinary; B changes only `tool_choice` to
+`{"type":"function","name":"run_probe"}` using the official Responses contract.
+Keep the full tool list/order, native input and ciphertext, sources, optional notes,
+model/medium/25k and inherited budgets identical. Do not insert the operator's
+successful patch, probe, expected observation or diagnosis as model guidance.
+The public counterfactual at `C:\pt\pl43-repair-check-review-a\result.md` proves a
+50-line repair passes the two public checks, not that a model-authored probe helps.
+
+Packet `C:\pt\pl43-probe-first-design-a` preserves 83 items/20 reasoning items;
+only request bytes grow 424,331 -> 424,359. The preparation audit at
+`C:\pt\pl43-probe-first-prep-a\audit.json` verifies 5,955 protected files unchanged.
+Keep source request, preparer, runtime and protocol hashes exact. The prepare/validate
+CLI has no credential, provider/count, sandbox or collector path. Do not mistake
+`PREPARED_NOT_EXECUTABLE` for a completed agent comparison or silently use an older
+collector: existing source-rollout B inlines source and would confound this contrast.
+
+The future collector contract has four A1/B1/B2/A2 branches, eight new responses each
+and one shared $1.20 cap. Every probe/correction consumes the inherited budgets.
+Force B's probe phase only until its first attempt's native feedback is delivered;
+release on execution failure too, with no forced probe retry. Bounded protocol
+correction retains the phase; subsequent requests use the ordinary loop and policy.
+Reconcile pending batches before dispatch, preserve encrypted continuation and action
+idempotency, and stop all branches on count/provider/billing/continuation/cleanup
+uncertainty. Count just in time against the exact request and full output ceiling;
+cap/response limits censor the branch. No paid retry/resume, private evaluation,
+Docker startup/pull/build, normal row or runtime policy adoption is included here.
+Review public question usefulness, observation interpretation, code correctness and
+actual recheck/submission separately; no reasoning plaintext, model judge or semantic
+success inferred from merely choosing the forced probe. One checkpoint/two samples
+per arm cannot establish general effectiveness. Runtime/tool surface remains v35.
+
+Provider-free validation passes 145 preparation/native-rollout/docs cases in 70.15s
+and Ruff. Normal-runtime mock `run_dev_14c2017d8d4943c9` reaches isolated evaluation
+in 4.14 command seconds, with four turns/five actions, zero cost and safety NOT_RUN.
+These tests do not execute a new probe-first collector or establish model benefit;
+the unchanged normal-runtime full suite is not rerun.
+
 The sequential review fixes first address deterministic execution, recovery, budget
 and note defects; do not attribute those synthetic edge cases to row 43 without a
 matching trace. State ownership is consolidated at the existing B/P function,
