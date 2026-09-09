@@ -73,6 +73,20 @@ references, not only their parent provenance. The two new missing/tampered cases
 first reproduced and then passed; final frozen full-suite verification covers this
 refinement together with all six fixes.
 
+Final frozen validation on `b0da0e7`: Ruff PASS; all 63 test files pass with
+**1,108 passed / 4 opt-in Docker tests skipped** at `C:\pt\pl-fixes-final-b`.
+The nine groups take at most 115.51s each; the full three-worker test/preservation
+phase takes 225.594s, not under two minutes. The first full attempt exposed old
+synthetic mock signatures and a stale identity expectation; test-only corrections
+pass 91 focused cases before this complete rerun. Runtime and protected state stay fixed.
+Mock `run_dev_5efcad90f9ca4cdc` at `C:\pt\pl-fixes-smoke-a` reaches mutation, visible
+check, finish and isolated evaluation in 4.02 command seconds: four mock turns/five
+actions, one accepted mutation, task acceptance PASS, safety NOT_RUN, zero cost.
+Checked/submitted/isolated-applied diff identity matches. Existing 1,249 task/history
+files, 168 run/lock files, 3,446 CAS artifacts, prior diagnostic roots, `.env`, user
+`AGENTS.md` and all prior untracked entries remain unchanged. Full implementation
+notes: `C:\pt\pl-fixes-review-a\implementation.md`. No paid/Docker/live row was run.
+
 Design follow-up is kept separate from those confirmed defects. The offline
 `diagnostics.current_source_view` prototype preserves the full native prefix and
 selected current sources, but makes their bodies inline in only the latest view.

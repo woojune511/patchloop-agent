@@ -1980,6 +1980,22 @@ or generalization benefit.
 
 ## Validation checklist
 
+Latest v35 reliability receipt: `C:\pt\pl-fixes-final-b` on code/test commit
+`b0da0e7`, all 63 test files, 1,108 passed and four opt-in real-Docker skips; Ruff
+passes. Three-worker full pytest plus preservation is 225.594s; each focused group
+is at most 115.51s. Do not call the whole cycle under two minutes. Initial test-double
+deadline/signature/identity mismatches are fixed in tests, not runtime fallbacks.
+The final runtime hash is
+`sha256:a3d7f3c00ffc7d534b434eb197366da241228d4906d997084b9d8094c39526f1`;
+tool surface v35 is
+`sha256:7873a505e3ef4ecb1c32e268209b46e5e3dc3cf9538c9ce58342d8fbabbc84cd`.
+Mock `run_dev_5efcad90f9ca4cdc` at `C:\pt\pl-fixes-smoke-a` reaches isolated
+acceptance PASS/safety NOT_RUN with four mock turns, five tools, one accepted edit,
+zero cost and matching checked/submitted/applied patch hash. No provider/real Docker
+execution or agent-quality claim follows. Historical state and user-owned files are
+unchanged. Detailed red/green and design-boundary notes are external at
+`C:\pt\pl-fixes-review-a\implementation.md`.
+
 V34 passes Ruff, 80 focused memory/feedback cases in 28.99s, nine final wire/compression
 cases in 0.14s and both corrected legacy expectation cases in 0.74s. Every one of 54
 files is represented once in the final selected nine groups: 915 passed / four real-
