@@ -38,6 +38,12 @@ verdict prevention, artifact tamper and uncertainty precedence pass 22 cases in 
 (`C:\pt\pl-fix-eval-green-b.xml`). This closes the after-`evaluator_finished` crash gap,
 not the earlier uncommitted-evaluation window. Existing run bytes are not migrated.
 
+Third fix: mutation-specific recovery forecasting uses the shared B/P calculation
+on the immediate attempt, including its initial rejection. The independent 2,728-state
+oracle found 434 prior two-call omissions; corrected forecasts match all states while
+minimum admission remains unchanged. New and existing workflow/budget/feedback cases:
+93 passed in 10.81s (`C:\pt\pl-fix-budget-green-a.xml`). No new action gate or cap increase.
+
 ## Authority
 
 Mock execution carries no provider authority. One exact live `patchloop dev`

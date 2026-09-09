@@ -228,6 +228,17 @@ def _completion_budget(state: _CompletionState) -> _CompletionBudget:
     )
 
 
+def _mutation_attempt_budget(state: _CompletionState) -> _CompletionBudget:
+    """Protect the offered attempt, including its first rejection, not just success.
+
+    Evidence admission remains separate. Selecting the immediate edit for this
+    forecast excludes an optional read before it, but retains the retry allowance.
+    """
+    return _completion_budget(replace(
+        state, requires_mutation=True, anchor_available=True, repair_read_credit=False,
+    ))
+
+
 class _ProviderContinuationError(RecoveryError):
     pass
 
@@ -734,18 +745,9 @@ def _tool_policy(
     # minimum successor must fit; a recovery guarantee is reported separately,
     # not required to make a viable edit executable. Optional inspection/probes
     # still preserve the complete protected baseline path above/below.
-    postmutation_state = replace(
-        completion_state,
-        remaining_check_count=completion_state.check_count,
-        unrun_recoverable_check=bool(unused_check_ids),
-        requires_mutation=False,
-        anchor_available=True,
-        remaining_mutations=max(0, remaining_mutations - 1),
-        repair_read_credit=False,
-    )
-    postmutation_budget = _completion_budget(postmutation_state)
-    optional_mutation_completion_calls = 1 + postmutation_budget.minimum
-    optional_mutation_protected_calls = 1 + postmutation_budget.protected
+    mutation_budget = _mutation_attempt_budget(completion_state)
+    optional_mutation_completion_calls = mutation_budget.minimum
+    optional_mutation_protected_calls = mutation_budget.protected
     mutation_allowed = (
         completion_possible
         and mutation_capacity

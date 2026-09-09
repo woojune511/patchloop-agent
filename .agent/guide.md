@@ -76,6 +76,11 @@ one edit, every invalidated visible check, and finish must fit both resource bud
 minimum/protected calls and feasibility separately. An affordable edit remains exposed
 with a recovery warning when full protection does not fit. Neither semantic success nor
 a protected post-edit path follows from the current baseline being ready to submit.
+Compute that forecast with the same B/P function as an immediate mutation attempt,
+not the already-successful successor. Include the first rejected attempt's unused
+two-call reserve even on the last mutation or when no check recovery allowance remains.
+Do not double reserve that allowance or include an optional read before the selected edit.
+The minimum path and actual offered tools remain unchanged by this forecast correction.
 Probe failures do not become check failures or force repair; public evidence can motivate
 an optional edit without granting special repair credit. Inspection/probe P floors remain.
 With one optional turn left, expose reads with `last_opportunity`; with none, remove

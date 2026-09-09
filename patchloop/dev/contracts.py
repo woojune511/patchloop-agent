@@ -72,7 +72,7 @@ def dev_tool_surface_hash() -> str:
             "search_feedback": "eligible-decoded-file-count-v1",
             "mutation_failure": "typed-scope-preview-explicit-path-allowance-v3",
             "completion_horizon": "pre-dispatch-best-path-v2",
-            "optional_mutation_admission": "minimum-successor-with-protected-warning-v1",
+            "optional_mutation_admission": "minimum-attempt-initial-rejection-protection-v2",
             "mutation_anchor_guidance": "smallest-sufficient-exact-observed-text-v1",
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_guidance": "diff-currency-and-actual-action-space-v1",
