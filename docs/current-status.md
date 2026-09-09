@@ -27,7 +27,7 @@ Repository policy alone never initiates paid work. The forty-three live observat
 were separately authorized. None authorized an image pull/build, automatic
 Docker startup, transport retry, or additional row.
 
-The user's latest exact approval authorized the now completed normal
+The user's latest exact normal-row approval authorized the now completed
 [row 43](#latest-live-observation-row-43-partial-repair-and-voluntary-stop)
 once on v34: v2 task, gpt-5.4-mini-2026-03-17, medium, root .env, repeat 1,
 $1.20 total cap, probes enabled, new run in `C:\patchloop-state`.
@@ -35,9 +35,11 @@ Earlier exclusions remain scoped to their historical receipts. The v34 local-onl
 implementation did not authorize this row; the separate live approval is consumed.
 No row 44, paid retry/resume, historical candidate execution or further sampling is authorized.
 
-The subsequent go-ahead covers only the [failure-order collector implementation](#failure-order-collector-implemented-no-paid-execution)
-and provider-free verification. The frozen A/B requests are ready, but no comparison
-response has been collected from OpenAI. This is not a new agent runtime or live row.
+The subsequent implementation-only go-ahead completed the [failure-order collector](#failure-order-collector-implemented-no-paid-execution).
+The user then explicitly instructed execution without another approval request,
+authorizing that prepared four-response/$1.20/zero-tool pilot by reference. It is now
+[collected](#failure-order-comparison-four-responses-collected), not a new normal row.
+No further samples, tool-feedback rollout, retry/resume or runtime change is implied.
 
 The six-response medium/high comparison on three frozen row-39 inputs is now collected.
 It executed no selected tools and is not row 40. See [the pilot findings](#frozen-next-action-comparison-six-responses-collected).
@@ -55,6 +57,50 @@ $0.542493150, and no submitted branch. Both fresh-state branches repaired the or
 four regression failures but introduced two new ones. That approval did not authorize
 further paid execution, a default-context change, retry/resume or normal row 40. See also
 [the frozen follow-up contract](#four-seed-short-rollout-preparation).
+
+## Failure-order comparison: four responses collected
+
+Commit `08ec618f` collects `run_dev_sample_36bef4eebfaa4954` at
+`C:\pt\pl43-order-live-a`: SAMPLES_COLLECTED, four immediate input counts and four
+completed responses, **$0.119271000** known cost under the shared $1.20 cap,
+**37.890s** active time, zero tools/retries/corrections. Task acceptance and safety
+remain NOT_RUN; `official=false`, `claim_eligible=false`. This is not row 44.
+Official OpenAI Docs pricing for the pinned snapshot was reviewed on execution UTC
+date, and the registered rate hash matched. Both arms count 91,222 input tokens.
+
+The frozen pre-turn-21 input differs only in the latest failure-summary order.
+Anonymous review was recorded before unblinding:
+
+| Arm | First independent response | Second independent response |
+| --- | --- | --- |
+| A: original order | Combined macOS/Windows repair proposal; static complete diff 54/50 lines | Search the named macOS test, with intent covering both failure classes |
+| B: reordered summary | The same named-test search, with intent covering both failure classes | Search wrapper helper usage, focusing on macOS |
+
+A1's old text matches delivered current source. Its proposed code addresses both
+reported mechanisms, but text-only reconstruction from the canonical public diff
+gives 53 additions plus one deletion, four lines over scope. This is not an observed
+gateway rejection or executed semantic result. The three searches remain unexecuted;
+do not call them task failures or a repeated search loop across independent samples.
+All four note updates are null, without a memory treatment or storage failure.
+
+No clear ordering benefit is observed. The unchanged original input can already
+yield a combined repair; information loss or compulsory first-item selection is not
+established. The actionable observed weakness is integrating all failure classes
+with the complete patch constraint, not a reason to add another gate or sort policy.
+Two draws per arm do not estimate a causal ordering effect or whole-run success.
+Earlier native summaries/stdout still retain their original order, so this tests only
+the latest card. All outputs complete below 3,970 tokens; no saturation is observed.
+Different cache hits make per-arm cost unsuitable as an efficiency comparison.
+
+Read-only review at `C:\pt\pl43-order-review-a` verifies 22 journal events, 12 CAS
+objects, four exact ordered requests and encrypted continuations, independent cost
+arithmetic, and unchanged collected bytes. `.env`, user-owned `AGENTS.md`, 1,249
+task/history files, 51 runtime/diagnostic files, 168 prior run files, 3,446 prior
+artifacts, earlier reviews/designs and 175 untracked entries remain unchanged.
+Only current result documentation changes; no candidate, task, check, Docker or
+evaluator execution occurred. Documentation tests and Ruff pass; the frozen runtime
+suite/mock is not repeated for this result-only receipt. No default ordering/memory
+change, further paid work, tool rollout or normal row 44 follows from this pilot.
 
 ## Failure-order collector implemented: no paid execution
 
@@ -89,7 +135,8 @@ make no count/provider/tool call. Collection requires new exact four-response/ze
 approval, packet/collector identities, credential path, $1.20 total cap, fresh pricing
 review and a new result root; see [operations](operations.md#failure-order-pilot-row-43).
 The 272,000-token per-request limit is an enforced admission ceiling, not a guessed
-count. No paid collection, Docker execution, retry/resume or row 44 is authorized.
+count. At that implementation checkpoint no paid collection, Docker execution,
+retry/resume or row 44 was authorized. The later separately instructed pilot is above.
 
 ## Latest live observation: row 43 partial repair and voluntary stop
 

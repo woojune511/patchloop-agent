@@ -658,6 +658,33 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
   their active import graph.
 - Keep confirmatory work in a future, separately frozen lane.
 
+The prepared failure-order pilot is now collected after the user's explicit instruction
+to execute it without another approval request. `08ec618f` produces
+`run_dev_sample_36bef4eebfaa4954` in `C:\pt\pl43-order-live-a`: four counts/completed
+responses, $0.119271000, 37.890s, zero tools/retries/corrections, acceptance/safety
+NOT_RUN. Do not count this as normal row 44. Execution-day OpenAI Docs pricing agrees
+with the pinned registry; all inputs count 91,222 tokens. Anonymous review precedes
+unblinding in `C:\pt\pl43-order-review-a`.
+
+A1 proposes both macOS and Windows repairs; its old text matches current delivered
+source, but the complete text diff is 53 additions + one deletion = 54/50 lines.
+This is a static scope finding, not an executed rejection or check. A2 and B1 search
+the same macOS test name while their public goals mention both failure classes. B2
+searches wrapper helper usage for macOS only. Searches are not executed or chained:
+do not grade their unobserved follow-ups as failures or call independent draws a loop.
+All four notes are null. Both arms retain native history and encrypted reasoning;
+no note-use or history treatment occurred. No clear benefit from latest-summary order
+is observed, but two samples per arm cannot identify a general causal effect. Two
+earlier copies of the failure list were deliberately not reordered.
+
+The finding narrows the observed issue to consistent integration of multiple failures
+and complete patch-size constraints; it does not justify a sorting policy, forced
+memory, larger cap or new gate. Existing typed scope recovery is unexercised here.
+No tool-feedback continuation, further paid draw, runtime change or row 44 is implied.
+Review verifies 22 events/12 CAS objects, all four requests/continuations, cost arithmetic
+and immutable source/run/credential/history bytes. Result docs, three doc tests, Ruff
+and whitespace are updated; unchanged runtime suite/mock is not rerun.
+
 Latest implementation seam: `diagnostics/failure_order_sampler.py` connects the
 immutable row-43 pre-turn-21 audit (`C:\pt\pl43-decision-a`) to the shared standalone
 collector. This is not a runtime/prompt/memory-policy fix. A keeps the exact original
@@ -692,9 +719,9 @@ prefixes; all counts/responses/cost there are simulated. Production mock
 `run_dev_ccc20ba4bacc4efa` reaches isolated EVALUATOR_PASS in
 `C:\pt\pl43-order-dev-smoke-a` (task acceptance PASS, safety NOT_RUN, zero cost).
 Receipts are in `C:\pt\pl43-order-wire-a`; unchanged runtime tests are not all rerun.
-Next seam is a separately approved four-response pilot and blinded public-action
-review, not a normal live row. No paid call, Docker operation, row 44 or automatic
-fix is authorized. Two draws per arm on one failure-selected checkpoint do not prove
+That implementation's next seam was the separately approved pilot now recorded above,
+not a normal live row. It did not authorize a paid call, Docker operation, row 44 or
+automatic fix. Two draws per arm on one failure-selected checkpoint do not prove
 a general ordering effect, memory effectiveness or whole-run success.
 
 Normal row 43 is complete on v34: `run_dev_9b91e06c13ff4bd3`, AGENT_STOPPED,

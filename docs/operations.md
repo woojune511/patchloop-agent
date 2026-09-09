@@ -454,8 +454,23 @@ there is no paid retry, response chaining, correction, judge or tool execution.
 `inspect --result-root <absolute-root>` is read-only, not resume. Review anonymized
 public actions before unblinding; proposed edits are unexecuted, task acceptance and
 safety stay NOT_RUN. One checkpoint with two samples per arm is not a quality estimate.
-Provider-free tests/fake collection are complete, normal v34 is unchanged, and neither
-this pilot's paid responses nor normal row 44 has been authorized.
+Provider-free tests/fake collection were completed without live authority. The user's
+later explicit instruction to execute this experiment without another approval request
+authorized the prepared four-response pilot by reference. It is now complete on
+`08ec618f` as `run_dev_sample_36bef4eebfaa4954` at `C:\pt\pl43-order-live-a`:
+four counts/completed responses, zero tools/retries, $0.119271000 under the shared
+$1.20 cap and 37.890s. Both arms count 91,222 tokens; all continuations and exact
+ordered requests verify. Acceptance and safety are NOT_RUN; it is not normal row 44.
+
+Anonymous-then-unblinded review is at `C:\pt\pl43-order-review-a`. Original-order A1
+proposes both macOS and Windows repairs, but its complete text diff is 54/50 lines;
+the other three responses request inspection. No proposal is applied and no gateway
+or check verdict is inferred from these samples. Latest-summary reordering shows no
+clear benefit in this small pilot. Original input already permits combined repair;
+joint repair selection and patch scope remain the observed integration problem.
+All four note updates are null; that is not a memory intervention. Cache differences
+prevent using per-arm cost as an efficiency result. No default policy change, further
+paid sampling, tool-feedback rollout or row 44 is authorized by the consumed pilot.
 
 The preceding v33 surface separates current-diff failure from repaired-but-unchecked status
 in the derived model view. `current_public_failure` keeps actual current failures;
