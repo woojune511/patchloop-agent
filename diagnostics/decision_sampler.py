@@ -122,6 +122,7 @@ class CollectionProtocol:
     efforts: dict[str, str]
     sampling_order: tuple[tuple[str, str | int], ...]
     input_token_limit: int | None = None
+    reserve_future_calls: bool = True
 
 
 SIX_CELL_PROTOCOL = CollectionProtocol("decision-sampler-v1", EFFORTS, ORDER)
@@ -376,7 +377,8 @@ def inspect_result(root: Path) -> dict:
     """Read-only receipt, including a conservative outcome after a killed process."""
     raw = json.loads((root / "envelope.json").read_bytes())
     require(
-        raw["kind"] in {"decision-sampler-v1", "fresh-state-sampler-v1", "failure-order-sampler-v1"}
+        raw["kind"] in {"decision-sampler-v1", "fresh-state-sampler-v1", "failure-order-sampler-v1",
+                        "completion-signal-sampler-v1"}
         and (root / "runs").is_dir(),
         "not a diagnostic result root",
     )
@@ -501,7 +503,7 @@ def _collect_validated(
         "resume_allowed": False,
         "provider_free": adapter_factory is not None,
     }
-    for key in ("source_packet_hash", "preparer_hash", "schema_version"):
+    for key in ("source_packet_hash", "preparer_hash", "schema_version", "source_checkpoints"):
         if key in plan.packet:
             envelope[key] = plan.packet[key]
     envelope_ref = store.put_json(envelope)
@@ -547,7 +549,10 @@ def _collect_validated(
         try:
             for index, cell in enumerate(plan.cells):
                 deadline.check()
-                if protocol.input_token_limit is None:
+                if not protocol.reserve_future_calls:
+                    future = 0
+                    basis = "current counted input plus full output; no future trajectory reserve"
+                elif protocol.input_token_limit is None:
                     future = sum(
                         full_reservation(c.historical_count) for c in plan.cells[index + 1 :]
                     )
@@ -560,7 +565,7 @@ def _collect_validated(
                     )
                     basis = "per-response input admission limit; not an estimated token count"
                 if (
-                    protocol.input_token_limit is None
+                    protocol.reserve_future_calls and protocol.input_token_limit is None
                     and full_reservation(cell.historical_count) + future > ledger.remaining_nanos
                 ):
                     return finish("COST_CAP_REACHED")

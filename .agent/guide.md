@@ -778,6 +778,31 @@ hypothesis. Do not add a hard stop prohibition, force memory, adopt inlining, ex
 these historical branches or silently extend paid collection. Next work would need a
 bounded matched-input collector; this prepare/validate module cannot perform it.
 
+That collector is now `diagnostics.completion_signal_sampler`, under the subsequent
+proceed request for exactly four pairs/eight responses and zero selected tools. It
+reconstructs the pinned public requests from each branch's native/count event and CAS,
+validates the prepare-only transformation, then freezes all eight request bodies and
+source identities in a separate packet. C1-C4 map to A1/B1/B2/A2 checkpoints; sample
+C1 A/B, C2 B/A, C3 A/B, C4 B/A once, without chaining sampled output or corrections.
+Review anonymous public decisions before unblinding. Preserve full native prefixes,
+encrypted reasoning, tools/order, snapshot model/medium/25k and root `.env` identity.
+
+Use one fresh external result root and shared $1.20 invocation cap. Count immediately
+before each dispatch and reserve that input plus the full 25k maximum output, with
+zero retries. This protocol does not reserve hypothetical later samples; cap-excluded
+cells remain censored. Other samplers keep future reservation enabled by default.
+Keep durable usage and encrypted CAS; stop all remaining cells on uncertainty. Inspect
+interrupted results read-only, never resume/recollect. Source receipt, sampler and
+runtime hashes must match before claiming the result root or loading credentials.
+This changes only diagnostics: no task/worktree access by selected tools, Docker,
+normal row 44, private evaluation, prompt default, memory mandate or runtime policy.
+Old envelopes/results are not migrated; completion-signal results are pending.
+Validation: 29 new cases pass in 12.07s, 139 existing collector/projection/docs cases
+in 62.88s, Ruff PASS; production mock `run_dev_ca8ad90fdf494637` reaches isolated
+EVALUATOR_PASS in 3.97 command seconds at `C:\pt\pl43-completion-dev-smoke-b`.
+All mock cost is zero and safety is NOT_RUN; the unchanged full runtime suite is not
+rerun for this diagnostic-only addition.
+
 The current single-occurrence edit unit remains explicit. A synthetic text-only
 comparison at `C:\pt\pl-fix-edit-unit-a` confirms two distant one-line replacements
 cost two accepted mutations, while a combined exact anchor must include the gap.

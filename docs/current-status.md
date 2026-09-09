@@ -169,7 +169,29 @@ collector execution or paid authority changes. This module exposes only prepare 
 validate, with zero provider/count/tool calls. `PREPARED_NOT_EXECUTABLE` is not a
 completed behavioral comparison; outcome claims require a separately bounded collector.
 
+The subsequent proceed request authorizes one bounded next-response comparison, not
+another normal row. `diagnostics.completion_signal_sampler` revalidates these four
+frozen pairs against their native-input/count journal events before loading credentials.
+Schedule: C1 A/B, C2 B/A, C3 A/B, C4 B/A, with C1-C4 mapped to source A1/B1/B2/A2.
+Maximum eight responses, one per checkpoint/arm; no sampled tool execution, chaining,
+correction, judge call, retry/resume or private evaluation. The original model snapshot,
+medium reasoning, encrypted history, 25k output and exact `.env` path remain fixed.
+The shared $1.20 cap is admitted just in time: fresh count plus full 25k output before
+each dispatch. No future trajectory is guaranteed; an uncollected cell is censored,
+not an agent failure. Other samplers retain their original future-reservation policy.
+New packet/sampler hashes bind this policy; previous diagnostic bytes are not migrated.
+Normal runtime and task bytes are unchanged; collection results are pending.
+Provider-free validation passes 29 new cases in 12.07s and 139 projection/collector/
+documentation regressions in 62.88s, plus Ruff. Mock `run_dev_ca8ad90fdf494637`
+at `C:\pt\pl43-completion-dev-smoke-b` reaches isolated EVALUATOR_PASS in 3.97 command
+seconds, with four mock turns/five actions, task acceptance PASS, safety NOT_RUN
+and zero cost. The unchanged normal-runtime full suite is not rerun.
+
 ## Authority
+
+The latest proceed request covers only the eight-response/zero-tool completion-signal
+comparison above under one $1.20 cap. It does not authorize row 44, a second collection,
+Docker startup/image operations, sampled tools or changes to the normal runtime.
 
 The current-source presentation A/B approval has been consumed by the completed
 comparison above; it is not normal row 44 or authority for another paid draw.
