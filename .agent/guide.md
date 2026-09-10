@@ -690,7 +690,30 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is a collected probe-first repair comparison, with no default policy
+The current seam is the post-hoc A1 stop-validity check, not another model comparison.
+`C:\pt\pl43-stop-validity-a` restores the exact stopped 48-line candidate once in a
+new external workspace. Traversal PASS; upstream has one macOS trailing-link failure,
+516 passed/570 skipped. Review/audit: `C:\pt\pl43-stop-validity-review-a`.
+The candidate really failed with no edits left, so an unchecked stop alone does not
+prove budget confusion, stale memory or irrational action selection. The earlier
+interpretation was too strong. `completion_possible` is a conditional budget bound,
+not a prediction that the code will pass. Predicted failure and an executed current-diff
+verdict must remain separate. The model's internal basis is unknown; do not back-credit
+operator checks or count every untested stop as a harness defect.
+One unchanged operator restoration/two registered checks take 19.899s, $0, zero
+provider/count/probe calls. No paid A/B, resume, new repair, Docker startup/pull/build,
+private evaluation or normal runtime modification. All result axes remain NOT_RUN
+except the separately recorded public check verdicts; `official=false`.
+Audit verifies 62 CAS objects, exact candidate/check/task/image bindings and cleanup
+of two owned containers; 7,033 prior files and 199 execution files are unchanged.
+40 existing recheck/projection/docs tests pass in 43.403s, plus Ruff. Do not repeat
+the already completed one-field horizon omission comparison or add mandatory checks,
+stop prohibitions or forced notes on this evidence. Separate observed, predicted and
+unknown candidate outcomes in analysis before considering further action-selection
+comparisons. The remaining observed task defect is regression preservation in the
+last repair, not established inability to understand zero-edit budgets.
+
+The preceding seam is a collected probe-first repair comparison, with no default policy
 adoption. Results: `C:\pt\pl43-probe-live-a`; review/audit:
 `C:\pt\pl43-probe-review-a`. A1/B1/B2/A2 complete 4/6/5/2 new responses and actions,
 17 total, $0.584686950 and 233.059s. A submits 0/2 and B 1/2 at one frozen checkpoint;
@@ -701,7 +724,8 @@ after upstream (517 passed/570 skipped) and traversal PASS. Checked/workspace/su
 hashes match. Private evaluation, task acceptance and aggregate safety remain NOT_RUN.
 B1 probes Windows and restores platform-specific handling but leaves the macOS raw
 trailing-separator operand defect; B1/A2 each record one macOS failure, then correctly
-reach LIMIT_REACHED with no accepted mutation left. A1's 48-line candidate is untested:
+reach LIMIT_REACHED with no accepted mutation left. A1's 48-line candidate was untested
+within its model trajectory:
 its actual last input offers run_check, two NOT_RUN checks, null current failure,
 recheck guidance and a viable three-call completion path, yet it claims current
 failure and stops. Do not merge that voluntary stop with the valid horizon stops.

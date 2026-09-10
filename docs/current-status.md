@@ -16,7 +16,35 @@ claim commands are absent.
   reserves; legacy 24/3 counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
-## Current seam: probe-first comparison collected; no default policy adoption
+## Current seam: post-hoc A1 checks limit the stop diagnosis
+
+`C:\pt\pl43-stop-validity-a` checks the exact previously untested probe-pilot A1
+candidate in a fresh external workspace; review/audit are at
+`C:\pt\pl43-stop-validity-review-a`. The 48-line diff is unchanged:
+`sha256:7a4f5b54b0240f00006d8a975b02a3431cac6af016be0e11fd1686fb3ba5c0c6`.
+Traversal passes; upstream reports one macOS broken-link trailing-separator failure,
+516 passed and 570 skipped. This is operator evidence, never back-credited to A1.
+
+The prior suggestion that A1 necessarily confused zero edits with zero useful actions
+was too strong. `completion_possible=true` is conditional on successful checks, not
+a correctness prediction. With an actually failing candidate and no mutation left,
+stopping can be rational. The code's remaining failure is now observed; whether the
+model predicted it or reused a historical verdict remains unknown. Its stop wording
+was not an executed current-diff check, and the new failure list contains only macOS,
+not both platform failures asserted in the stop. Do not score every unchecked stop
+as a memory/policy defect or adopt an obligatory check/stop prohibition from this case.
+
+One exact operator candidate restoration and two registered checks complete in
+19.899s, with zero provider/count/probe calls and $0. The original task, limits and
+image remain fixed; Docker was already running, with no startup/pull/build. No paid
+resume/retry, new A/B or normal row is performed. Private evaluation/task acceptance/
+aggregate safety/submission remain NOT_RUN and `official=false`.
+Audit verifies the journal, 62 CAS objects, candidate/check identities, two owned
+containers cleaned up and absent, 7,033 preserved prior files and 199 unchanged new
+execution files. Existing recheck/projection/docs tests pass 40 cases in 43.403s;
+Ruff passes. Runtime is unchanged, so no new full-suite/mock claim is made.
+
+## Probe-first comparison collected; no default policy adoption
 
 The bounded comparison completed at `C:\pt\pl43-probe-live-a`; analysis and read-only
 audit are at `C:\pt\pl43-probe-review-a\result.md` and `audit.json`. Ordinary A submits
@@ -47,7 +75,8 @@ macOS failure (516 passed/570 skipped); accepted mutation exhaustion then legiti
 blocks further repair. A1 instead voluntarily stops on an untested candidate while
 `run_check`, two NOT_RUN checks, null current failure, explicit recheck guidance and a
 viable three-call completion path remain in its actual input. Its current failure
-claim is unsupported by a new check; no operator check was added to back-credit it.
+claim had no new check in the agent trajectory. The later operator check above
+confirms a remaining failure without showing how the model reached that judgment.
 All 17 memory updates are null. Native input/continuation delivery passes audit, but
 note use or the model's internal attention is not established. Review useful probe
 questions, small behavior-preserving repairs and current-diff rechecks separately;
