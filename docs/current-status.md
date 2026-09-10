@@ -38,7 +38,45 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: frozen operator repair passes isolated task acceptance
+## Current seam: first-mutation public trace audit
+
+The 2026-09-11 read-only audit at `C:\pt\analyses\pl43-first-mutation` traces B2's
+inherited implementation back to row43's first mutation, turn 14 / decision seq151.
+All 22 saved inputs, contexts and encrypted continuations verify; all 21 request
+extensions preserve previous items and native call/result order. The source and B2
+journal chains verify, their first 20 decisions/diff bindings match, and 70 read
+source files remain unchanged. The historical runtime differs from current v35;
+the audit uses stored inputs, not an assumed historical request reconstruction.
+
+After 13 inspections, the first mutation had the public mode assertions and 350
+observed source lines, including helper normalization, permission and platform
+behavior. Read/search/probe remained available, with 27 model / 87 tool actions and
+four mutations left. Output completed at 1,860 of 25,000 tokens. All 22 decisions
+used memory_update=null: source history was retained, but no working note or
+verification concern was authored. No new delivery, continuation or memory-storage
+defect is demonstrated, so runtime, prompt, tools and task bytes are not changed.
+
+The first edit replaced delegation with a broad traversal algorithm. It discarded
+compatibility behavior and introduced false EEXIST and uniform-mode errors. The
+agent correctly repaired those two direct public failures; the weaker behavior was
+generalizing the rule to untested path combinations, not total inability to read
+feedback. B2 later restored no-parent delegation without revisiting traversal's
+remaining assumptions. This is public behavioral evidence, not internal-reasoning
+access or attribution of a private evaluator failure.
+
+The first-mutation input contains 226,142 serialized bytes / 49,648 recorded input
+tokens. Accumulated state and optional-note usability remain hypotheses, not proven
+causes; byte shares do not measure attention or token shares. The system prompt was
+already identical to current guidance about behavior ownership and unverified
+assumptions. Next compare one small evidence-to-decision change from the same
+pre-mutation public checkpoint; do not inject the operator solution, add mandatory
+tools, or claim that more prompt text alone fixes this. No such comparison was run.
+The audit executes no provider/count, Docker, task, probe, check or evaluator.
+Only analysis/docs are added; official=false/claim_eligible=false remains unchanged.
+Three documentation tests and Ruff pass. No full runtime suite or mock smoke is
+rerun for this documentation-only change; pytest did not create its unused basetemp.
+
+## Prior seam: frozen operator repair passes isolated task acceptance
 
 The separately approved 2026-09-11 evaluation at
 `C:\pt\evaluations\pl43-b2-repaired` accepts the exact 49-line operator patch

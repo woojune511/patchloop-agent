@@ -711,7 +711,39 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the completed isolated evaluation of the frozen operator repair
+The current seam is the public-only first-mutation trace audit at
+`C:\pt\analyses\pl43-first-mutation`. Original row43
+run_dev_9b91e06c13ff4bd3 introduces the traversal rewrite at turn 14 / decision seq151;
+B2 inherits the first 20 decisions and diff bindings. Source/B2 chains, all 22
+input/context/continuation artifacts, 21 append-only request extensions and native
+call/output ordering verify. Seventy read source files are unchanged. Use stored
+historical input: source runtime 1cd81f90 differs from current a3d7f3c0/v35, even
+though the system prompt itself is identical.
+
+The first edit had the public mode assertions and 350 exact source lines, including
+helper behavior, with 27 model/87 tool actions/four mutations remaining and read,
+search and probe available. Its response completed at 1,860/25,000 output tokens.
+All 22 memory_update values are null; no note was authored or lost. Broad replacement
+of delegation discarded existing behavior. EEXIST and intermediate-mode feedback
+were then interpreted and repaired correctly; do not generalize this into inability
+to interpret every failure. Untested combinations of traversal, target validation,
+mode and platform behavior remained the public verification gap.
+
+No new reproducible harness defect is established, so do not make a speculative
+runtime/prompt/tool change or force notes/probes based on this trace. The 226,142-byte,
+49,648-input-token request motivates an input-usability hypothesis, not proof of
+attention failure. Presence of encrypted history proves retention, not semantic use.
+Next isolate an evidence-to-decision change at the same pre-first-mutation public
+checkpoint, with no operator solution/private hints, and measure first-edit public
+violations, mutation consumption, counterexample repair and submission separately.
+No new comparison or candidate execution is part of this audit. Provider/count,
+Docker, task/check/probe/evaluator executions and private evaluator reads are zero.
+Analysis CAS and a hash-chained dev-run-v1 completion event are under the new root;
+official=false/claim_eligible=false. Runtime/task/history/user-owned files are unchanged.
+Three documentation tests and Ruff pass. No full runtime-suite/mock-smoke claim;
+the documentation tests did not create their reserved disposable basetemp.
+
+The preceding seam is the completed isolated evaluation of the frozen operator repair
 at `C:\pt\evaluations\pl43-b2-repaired`. Exact 49-line patch
 `sha256:c69bf63cc3a7fc7c91054888501b538c9d7a4314849baabb2c2525c80e120610`
 passes task acceptance, public regression, scope and typed evaluation safety;
