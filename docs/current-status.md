@@ -38,7 +38,49 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: separate B2 operator repair passes public validation
+## Current seam: frozen operator repair passes isolated task acceptance
+
+The separately approved 2026-09-11 evaluation at
+`C:\pt\evaluations\pl43-b2-repaired` accepts the exact 49-line operator patch
+`sha256:c69bf63cc3a7fc7c91054888501b538c9d7a4314849baabb2c2525c80e120610`.
+Task acceptance, public regression, scope and typed evaluation safety are PASS;
+failure_class is null. One standard evaluator invocation in one fresh no-hardlink
+workspace takes 7.559s. Runtime v35, task v2 and its 50-line limit are unchanged.
+No provider/count/probe call, model cost, repair, retry or new live row occurs.
+
+Manifest/task/runtime/image and submitted/applied/checked patch bindings verify;
+2,025 protected files, including the original B2 and operator repair, are unchanged.
+CAS/journal and execution-policy evidence verify, and owned containers are absent.
+The new evaluation ID is `run_dev_operator_b2_repair_eval_20260911`. Historical
+operator probes are referenced as source evidence, not relabeled as executions in
+this evaluation. The schema-required model field is explicitly a no-model metadata
+placeholder; the evaluator and Docker checks are real, not mock task acceptance.
+Only aggregate private results are read back; no hidden case or failure detail is
+used as an agent hint. Detailed aggregate report and audit are under the new root.
+
+This establishes an accepted implementation within the current task scope, not an
+improvement in the original agent. A read-only comparison of B2's last five public
+actions shows probe -> mutation -> two checks -> finish. The probe concerns two
+no-parent regressions; the mutation restores the old implementation for no-parent
+paths, leaving the custom `..` traversal semantics unchanged. Public checks genuinely
+pass, so finish was consistent with its gate. All five responses complete, and their
+optional memory_update values are null. These observations do not establish context
+loss, a disabled tool or output-token saturation as the cause of B2's remaining bugs.
+
+The evidence points to incomplete behavioral verification, especially interactions
+between the changed traversal and preserved destination/mode/platform semantics.
+It does not reveal the model's internal reasoning. B2 inherited only one remaining
+accepted mutation; the operator used three candidates and additional public cases.
+Do not treat this as a controlled agent comparison or evidence that all resource
+limits are sufficient. Further loop work should test public behavioral questions and
+evidence-to-repair decisions, without copying this solution into memory or adding
+mandatory tools on this single result. All evidence remains official=false/claim_eligible=false.
+Twelve existing evaluator/documentation tests and Ruff pass. Their new owned pytest
+scratch is recycled with verified content and an exact restoration mapping; durable
+evaluation workspaces and prior roots remain in place. No new full runtime-suite or
+mock-smoke execution is claimed. See result.md and original-public-comparison.json.
+
+## Prior seam: separate B2 operator repair passes public validation
 
 The 2026-09-11 repair at `C:\pt\repairs\pl43-b2` preserves the original B2 run,
 submission, task v2 and runtime. Three operator-authored candidates use an independent

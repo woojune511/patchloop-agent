@@ -711,7 +711,39 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the completed separate B2 operator repair at
+The current seam is the completed isolated evaluation of the frozen operator repair
+at `C:\pt\evaluations\pl43-b2-repaired`. Exact 49-line patch
+`sha256:c69bf63cc3a7fc7c91054888501b538c9d7a4314849baabb2c2525c80e120610`
+passes task acceptance, public regression, scope and typed evaluation safety;
+failure_class=null. One unchanged evaluator invocation/fresh no-hardlink workspace
+takes 7.559s. Manifest/task/runtime/image, submitted/applied/checked hash and policy
+receipts verify; 2,025 protected files are unchanged and owned containers are absent.
+No provider/count/new-probe call, repair, retry, model cost or live row occurs.
+Only aggregate private results return to the operator conversation. No private case,
+failure detail or reference solution is used for diagnosis or agent context.
+
+Evaluation ID is run_dev_operator_b2_repair_eval_20260911, separate from original B2
+and the operator repair. Prior probes are source history, not inherited native calls.
+Manifest model is an explicitly unused schema placeholder; task execution is real
+Docker, not a mock acceptance result. All results remain official=false/claim_eligible=false.
+Runtime/tool surface stays v35 and task v2/50-line scope are unchanged.
+
+Read-only review of B2's last five public actions confirms probe -> non-parent
+delegation repair -> two passing checks -> finish, with completed responses and
+memory_update=null. The probe and repair address no-parent regressions; changed
+parent-traversal combinations are not independently exercised in that tail.
+This is a behavioral-verification gap, not evidence that finish used stale checks.
+It does not establish missing context, tool removal or token saturation. One last
+accepted mutation remained in B2; the operator used three candidates and extra public
+observations. Do not claim an equal-budget comparison or global budget sufficiency.
+The next loop question is how an agent selects public checks for changed behavior
+and remaining assumptions, not whether to inject this patch or force more tools.
+Twelve existing evaluator/documentation tests and Ruff pass. The new owned pytest
+scratch is recycled with content verification and a recorded restoration mapping;
+durable evaluator workspace and all prior roots are preserved. No new full-suite or
+mock-smoke claim. Result and public-only trace comparison remain in the evaluation root.
+
+The preceding seam is the completed separate B2 operator repair at
 `C:\pt\repairs\pl43-b2`. Original run/task/runtime bytes are not modified, and no
 private evaluator input, hidden failure detail or reference patch is loaded or used.
 The independent no-hardlink workspace contains a 49-line, one-file final patch
