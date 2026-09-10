@@ -711,7 +711,31 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the completed requirements-proximity pilot on `d5a411a`:
+The current seam is the provider-free proposal-review/repair-boundary audit at
+`C:\pt\analyses\pl43-proposal-review-boundary`. Mutation admission checks source,
+scope and identity, not the truth of hypothesis/expected_behavior. B1's public prose
+mentions preserving mode while its code violates that condition. Optional notes and
+concerns are retention/attention aids, not a separate semantic reviewer.
+`tests/test_dev_proposal_review_boundary.py` uses real local CSV checks, no model:
+one read, wrong edit, first failure, journal reconstruction, partial repair, second
+failure, final repair/check/finish. Three accepted mutations expose the cost of
+sequential discovery; ample-budget inspection and direct repair remain available.
+Same-hypothesis repairs and empty optional notes are valid. Existing native-note,
+concern and mapped-feedback regressions complement this scripted gateway test.
+
+Do not infer internal reasoning failure, new context loss or a required review gate.
+Next isolate draft review versus a neutral extra inference on the same frozen public
+input/draft; score actual replacements, not mentions of requirements. Preparing the
+comparison is not paid execution authority. No runtime/task/prompt change, proposal
+execution, full-suite result or new live quality claim follows from this audit.
+An independent known limitation remains: `_inline_python_source` does not recognize
+intervening interpreter flags such as `python -B -c`; raw failure feedback survives.
+The row43 task uses the mapped plain form, so this is not its causal explanation.
+All 56 focused workflow/concern/feedback/docs tests pass in 32.20s and Ruff passes;
+the existing verification-flow mock reaches isolated CSV evaluation. No full-suite
+rerun or separate mock CLI invocation is claimed for this test/documentation change.
+
+The preceding seam is the completed requirements-proximity pilot on `d5a411a`:
 `run_dev_sample_e54f9963571a4f1d`, `C:\pt\analyses\pl43-requirements-focus-live`.
 Explicit payload/destination approval followed a host rejection that had started
 no process or count. The one actual invocation completed four responses/counts,

@@ -38,7 +38,39 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: requirements proximity pilot shows no proposal improvement
+## Current seam: proposal review and public repair boundary characterized
+
+The provider-free audit at `C:\pt\analyses\pl43-proposal-review-boundary` separates
+mutation admission from semantic review. Exact source, scope and diff identity are
+validated; hypothesis/expected_behavior are model claims, not checked invariants.
+The sampled B1 even promises to preserve mode while its code violates the public
+mode condition. Optional notes/verification concerns retain authored observations;
+they do not independently review a draft, and none was authored in this pilot.
+
+A new scripted CSV regression uses real local gateway/check execution: one read,
+three admitted edits, three checks and finish. An earlier assertion first masks a
+second declared behavior; each failure is mapped to the public statement, repairs
+use post-image evidence without rereading, and journal reconstruction preserves the
+first failure. Final submission binds the passing diff. This is a fixture workflow
+result, not an LLM self-repair result or execution of any sampled pyfakefs proposal.
+
+No new delivery/action-mask defect explains the sampled proposals. The observed
+weakness is constructing and reviewing a candidate before spending mutation slots;
+its internal cognitive cause remains unproven. Keep the runtime, task and prompt
+unchanged. Next test whether a bounded draft-review instruction improves actual
+replacement code beyond a neutral second attempt, without supplying the known
+defects/repair. No reviewer call, paid collection or live row is run or authorized.
+
+A separate diagnostic limitation was reproduced: `python -B -c` executes and
+returns its traceback, but the inline-source mapper expects the executable directly
+before `-c` and leaves the public location unmapped. The task's plain `python -c`
+form is unaffected. This limitation is recorded, not fixed or blamed for row43.
+All results remain `official=false`; no task acceptance or safety claim is added.
+The 56 focused workflow/concern/feedback/documentation tests pass in 32.20s, including
+the existing annotation-aware mock through isolated CSV evaluation; Ruff passes.
+No full runtime suite or separate mock CLI invocation is newly claimed.
+
+## Prior seam: requirements proximity pilot shows no proposal improvement
 
 The explicitly approved four-response pilot is complete on `d5a411a` as
 `run_dev_sample_e54f9963571a4f1d` at
