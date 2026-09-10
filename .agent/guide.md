@@ -711,7 +711,35 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the public-only first-mutation trace audit at
+The current seam is the provider-free requirements-proximity packet at
+`C:\pt\analyses\pl43-requirements-focus`, implemented outside the runtime in
+`diagnostics/requirements_focus_sampler.py`. A pins row43 turn 14's historical
+canonical request hash 511b1fc7; B adds only public_requirements_at_decision to the
+latest state, copying the original issue and every public check ID/command verbatim.
+Do not add an operator solution, new examples, selected helper details, mandatory
+notes/probes, action masks or a continuation reset. Earlier 54 items/13 encrypted
+reasoning items and tools/order/settings are unchanged. Full requests are
+253,546/256,004 bytes, not fresh token counts. Runtime remains a3d7f3c0/v35.
+
+Prepare/validate neither load credentials nor dispatch/count or execute task code.
+The proposed collect scope is four independent A1/B1/B2/A2 next responses, mini
+medium, fixed 25k, a shared $1.20 cap and zero tools. It reuses the bounded collector:
+JIT count, full output/future-sample reserve, zero SDK retries, global uncertainty
+stop, sanitized public output and encrypted-only artifacts. A frozen exact packet,
+sampler and source/runtime identity are revalidated before credentials or output
+root claim. No retry/resume/chaining/judge/evaluator is authorized. Static anonymous
+action review precedes unblinding; non-mutation is not a correct-edit score. This
+small proximity-plus-repetition pilot cannot establish attention use or task success.
+Collection is not executed or authorized by preparing the packet; use the exact
+operations approval contract. First accepted edit, repair and submission require
+a separately scoped feedback rollout, not claims from these single responses.
+All 95 focused sampler/shared-collector/docs cases pass in 45.108s and Ruff passes;
+four-response fake collection never executes tools. Two real-source provider-free
+validations agree exactly. No full runtime-suite/mock-smoke rerun is claimed for
+this diagnostics-only change. Owned pytest scratch is recycled and hash-verified;
+the mapping and validation receipt stay with the packet.
+
+The previous seam is the public-only first-mutation trace audit at
 `C:\pt\analyses\pl43-first-mutation`. Original row43
 run_dev_9b91e06c13ff4bd3 introduces the traversal rewrite at turn 14 / decision seq151;
 B2 inherits the first 20 decisions and diff bindings. Source/B2 chains, all 22

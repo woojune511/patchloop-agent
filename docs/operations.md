@@ -432,6 +432,49 @@ the distinction between delivered information and correct use of it. Read-only e
 is `C:\pt\pl43-review-a`; no additional check/candidate execution, paid retry/resume,
 comparison or row 44 is authorized by this completed invocation.
 
+### Requirements proximity pilot: row 43
+
+`diagnostics.requirements_focus_sampler` freezes the same pre-first-mutation turn 14
+at `C:\pt\analyses\pl43-requirements-focus`. A matches the historical canonical
+request hash; B only repeats the verbatim public issue and every visible check
+ID/command in the latest state. Prior native history, opaque reasoning, tools/order,
+notes and settings are identical. No private input, new behavior example or proposed
+solution is added. This is proximity plus repetition/extra bytes, not a pure position
+or memory intervention. Full request sizes are 253,546/256,004 bytes; A's 49,648 count
+is historical and B is uncounted.
+
+The fixed objective, reviewer criteria and one-variable comparison follow the
+[evaluation design guidance](https://developers.openai.com/api/docs/guides/evaluation-best-practices#design-your-eval-process).
+This is a small diagnostic, not a model-quality or complete-agent benchmark.
+Provider-free validation does not load `.env`, count input, or contact OpenAI:
+
+```powershell
+uv run python -m diagnostics.requirements_focus_sampler validate `
+  --source-state-root C:/patchloop-state `
+  --packet C:/pt/analyses/pl43-requirements-focus/packet.json `
+  --packet-hash sha256:7bd2b499101625f38ec4fbc8bc5d612e82da39f6dacd6ab6d657fea48bfb3870
+```
+
+Collector hash is
+`sha256:b9007be87e169976263176dc9c001c46992b2730e4a1c819e228df45a6862f58`.
+Future exact approval must identify this packet/collector, task
+`pyfakefs-makedirs-parent-traversal` v2, `gpt-5.4-mini-2026-03-17`, medium, `.env`,
+four independent responses A1/B1/B2/A2 (two per arm), zero tools, shared $1.20 cap,
+and a fresh result root such as `C:\pt\analyses\pl43-requirements-focus-live`.
+This is not `patchloop dev --repeat 1`, a normal live row, or approval inherited
+from a completed comparison.
+
+`collect` takes the same source/packet arguments plus
+`--approve-four-focus-responses-zero-tools`, `--sampler-hash`, absolute
+`--credential-file`, `--result-root`, `--max-cost-usd 1.20`, `--pricing-hash` and
+`--pricing-verified-on` (execution UTC date). Review registered rates freshly first.
+The shared collector reserves all 25k output tokens and future samples, enforces
+272,000 input tokens, stops on any count/transport/billing/continuation uncertainty,
+and never retries or lowers the output ceiling. No sampled tool execution, response
+chaining, correction, judge, task workspace or evaluator runs. `inspect` is read-only,
+not resume. Static anonymous action review precedes unblinding; accepted edits,
+checks, repair and submission are NOT_RUN, not inferred from proposed code.
+
 ### Failure-order pilot: row 43
 
 The later implementation-only go-ahead wires the pinned pre-turn-21 audit at

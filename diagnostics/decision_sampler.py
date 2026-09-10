@@ -378,7 +378,7 @@ def inspect_result(root: Path) -> dict:
     raw = json.loads((root / "envelope.json").read_bytes())
     require(
         raw["kind"] in {"decision-sampler-v1", "fresh-state-sampler-v1", "failure-order-sampler-v1",
-                        "completion-signal-sampler-v1"}
+                        "completion-signal-sampler-v1", "requirements-focus-sampler-v1"}
         and (root / "runs").is_dir(),
         "not a diagnostic result root",
     )

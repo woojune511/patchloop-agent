@@ -38,7 +38,35 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: first-mutation public trace audit
+## Current seam: first-decision requirements proximity pilot prepared
+
+The provider-free packet at `C:\pt\analyses\pl43-requirements-focus` fixes row43's
+pre-first-mutation turn 14. Control A reconstructs the historical canonical request
+hash exactly (`511b1fc7`), despite the different historical runtime. B changes only
+the latest state's `public_requirements_at_decision`: verbatim public issue and all
+visible check declarations already present in the input. The other 54 input items,
+13 encrypted reasoning items, source history, optional notes, tools/order, model,
+medium reasoning and 25k ceiling are unchanged. Full requests are 253,546/256,004
+bytes; no fresh token count is claimed.
+
+The standalone collector proposes four independent next responses A1/B1/B2/A2,
+zero sampled tool executions and one shared $1.20 cap. No response is chained,
+corrected, retried or evaluated privately. Anonymous static action review is fixed
+before sampling; first accepted mutation, repair and submission remain unobserved.
+This tests proximity plus repetition/extra bytes, not pure memory use or attention.
+Two samples per arm at one failure-selected checkpoint cannot establish agent quality.
+No default runtime, task, prompt or policy is changed. Collection has not run;
+exact packet/collector/task/model/credential/sample-count/cap/output-root approval
+is still required. See the [operations contract](operations.md#requirements-proximity-pilot-row-43).
+
+All 95 focused sampler/shared-collector/documentation cases pass in 45.108s, including
+four-response fake collection with zero tool executions; Ruff passes. Two read-only
+validations produce identical output. Runtime bytes remain unchanged, so no full
+runtime suite or runtime mock smoke is newly claimed. The completed owned pytest
+root is recycled with content verification and a restoration mapping; reports remain
+under `C:\pt\validation`. Provider/count/Docker calls are zero.
+
+## Prior seam: first-mutation public trace audit
 
 The 2026-09-11 read-only audit at `C:\pt\analyses\pl43-first-mutation` traces B2's
 inherited implementation back to row43's first mutation, turn 14 / decision seq151.
