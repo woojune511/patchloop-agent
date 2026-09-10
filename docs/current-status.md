@@ -38,7 +38,43 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: B2 submits publicly but fails isolated task acceptance
+## Current seam: independent public diagnosis reproduces B2 semantic gaps
+
+The 2026-09-11 operator diagnostic at `C:\pt\analyses\pl43-b2-public` uses only the
+public v2 requirement, B2's unchanged source and an independently authored case matrix.
+No private evaluator files, failure details or reference patch are read or used.
+One fixed-image public probe compares 30 cases with real POSIX `os.makedirs` on
+Python 3.12.13: 18 match and 12 differ. This selected edge-case matrix is not an
+agent success rate or a general input-distribution estimate.
+
+The differences cover accepting an existing file with `exist_ok=True`, skipping
+the final existing-target error when the path ends in `..`, wrong leaf mode/error
+with trailing separators, and wrong destination after repeated separators or a
+symlink followed by `..`. Basic traversal/bytes/mode controls, the four tested invalid
+parent cases and two terminal-dot cases agree; not every suspicion is a defect.
+The direct code problem is incomplete filesystem semantics in the hand-written
+parent-traversal branch: raw token position, existence and lexical dirname are not
+equivalent to the actual leaf, directory type and resolved parent. Many upstream
+cases continue through the unchanged no-parent branch, leaving these combinations
+untested. Memory/prompt causation and any exact hidden-failure mapping remain unknown.
+
+The probe completes in 6.328s with no truncation; its zero exit means the comparison
+ran, not that B2 passed all cases. Source/diff, journal/CAS and policy receipts verify;
+219 prior files and runtime bytes are unchanged and the owned container is absent.
+There are zero provider/count/private-evaluator calls and $0 model cost. No patch,
+runtime/task change, private reevaluation, Docker startup/pull/build or paid row occurs.
+Windows/macOS native behavior is not newly verified. See `result.md` and `audit.json`.
+
+Next implementation should separate traversal side effects from final-target checks
+and verify existing directory/path primitives before reusing them; do not assume a
+recursive wrapper alone fixes lower-level path normalization. Freeze public behavioral
+cases before repair, preserve task v2, and use a separately approved versioned successor
+if registered checks change. No tool mask, mandatory probe/memory or budget expansion
+is justified by this diagnostic. All results remain `official=false`, `claim_eligible=false`.
+Three documentation tests pass in 0.058s and Ruff passes. No new full runtime suite
+or mock smoke is claimed; the requested pytest basetemp was not needed or created.
+
+## Prior seam: B2 submits publicly but fails isolated task acceptance
 
 The separately approved 2026-09-11 operator evaluation is complete at
 `C:\pt\evaluations\pl43-b2`; `result.md` and `audit.json` contain the aggregate report

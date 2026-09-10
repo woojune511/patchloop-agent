@@ -711,7 +711,31 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the completed post-hoc B2 submission evaluation at
+The current seam is the completed independent public B2 diagnostic at
+`C:\pt\analyses\pl43-b2-public`. No private evaluator file/detail/reference patch is
+read; cases derive from public requirements and B2 source. One fixed public probe
+on Python 3.12.13/POSIX compares 30 cases: 18 match and 12 differ, not a sampled
+failure-rate estimate. Existing-file acceptance, terminal-parent validation,
+trailing-separator mode/error and repeated-separator/symlink parent resolution
+expose incomplete semantics in the hand-written traversal branch. Four tested invalid
+parent cases and two terminal-dot cases agree; preserve these negative findings.
+The comparison takes 6.328s; exit zero means execution completed, not behavioral PASS.
+Journal/CAS, source/diff and policy receipts verify; 219 protected files and runtime
+bytes are unchanged, the owned container is absent, and provider/private-evaluator
+calls and model cost are zero. Windows/macOS native cases remain unverified.
+
+Do not equate these public defects with a specific hidden failure or infer a memory,
+prompt or action-mask cause. No patch/task/runtime change or policy adoption occurs.
+Next work should preserve intermediate side effects and final-target/type/mode
+checks together, validate existing primitives before reuse, and keep the frozen
+public cases as independent operator evidence. Task v2 is immutable; registered
+check changes require a separately decided versioned successor. Do not inject
+operator hints into the old comparison or add compulsory probes/notes on this result.
+Details and limits are in result.md; all results remain official=false/claim_eligible=false.
+Three documentation tests pass in 0.058s, plus Ruff. Runtime is unchanged and no new
+full-suite/mock execution or disposable pytest directory is claimed.
+
+The preceding seam is the completed post-hoc B2 submission evaluation at
 `C:\pt\evaluations\pl43-b2` (aggregate report `result.md`, integrity `audit.json`).
 Its unchanged 39-line public submission passes public regression and scope, but
 fails private task acceptance with `PRIVATE_EVALUATION_FAILED`; typed safety PASS.
