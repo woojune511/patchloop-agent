@@ -38,7 +38,34 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: proposal review and public repair boundary characterized
+## Current seam: draft review versus neutral second opportunity prepared
+
+`C:\pt\analyses\pl43-draft-review` freezes row43 turn 14 and the first collected
+requirements-focus proposal (A1) as explicitly unexecuted data. Both arms retain
+the same 54 preceding items, 13 encrypted reasoning items, source/tool history,
+optional notes, unchanged worktree/check state and model settings. Only the latest
+`draft_reconsideration.harness_instruction` differs: A chooses the next action;
+B first compares the draft's executable behavior with the existing public requirements.
+Neither names the known defects or supplies an operator repair or new example.
+
+Full requests are 258,422 / 258,605 bytes (+183), not token counts. This is review
+framing/wording, not a length-matched attention experiment. The draft sample's own
+new reasoning is not loaded or replayed, and no fake native call/output is added;
+this is content-only reconsideration, not continuation of that sampled response.
+The original unreviewed draft is not a randomized no-extra-inference control.
+
+The proposed collection is four independent A1/B1/B2/A2 responses, mini/medium/25k,
+shared $1.20 and zero tools. Preparation does not authorize or execute collection.
+Runtime/task/prompt/tool-surface v35 are unchanged. The standalone collector adds
+only the new diagnostic kind to its read-only inspector; prior packet identities
+remain immutable and require their recorded implementation for exact revalidation.
+
+All 82 focused draft/source/shared-collector/documentation tests pass in 37.59s,
+including four-response fake collection and no new draft-reasoning reads; Ruff passes.
+No provider/count/Docker/task/evaluator execution or model-quality result is added.
+See the [operations contract](operations.md#draft-review-pilot-row-43).
+
+## Prior seam: proposal review and public repair boundary characterized
 
 The provider-free audit at `C:\pt\analyses\pl43-proposal-review-boundary` separates
 mutation admission from semantic review. Exact source, scope and diff identity are

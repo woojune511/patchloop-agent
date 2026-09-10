@@ -711,7 +711,31 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the provider-free proposal-review/repair-boundary audit at
+The current seam is the provider-free draft-review packet at
+`C:\pt\analyses\pl43-draft-review`, implemented in `diagnostics/draft_review_sampler.py`.
+It reuses historical checkpoint reconstruction and the existing independent-response
+collector. The first collected requirements-focus A1 draft is pinned by source
+journal/envelope/public artifact and original request identity; never rank/select a
+different proposal based on later quality analysis. Both arms receive identical
+unexecuted proposal data. Only `draft_reconsideration.harness_instruction` changes.
+Original native history, 54 earlier items/13 opaque reasoning items, public task,
+tools/order, notes, budget and model/medium/25k stay fixed. The draft-generating
+response's own reasoning is not read; no native call or fake completion is inserted.
+Request sizes 258,422/258,605 are bytes, with no fresh input counts claimed.
+
+This tests review framing beyond a neutral extra opportunity, not extra inference
+versus none, native draft continuation, or general agent quality. Four independent
+A1/B1/B2/A2 responses and a shared $1.20 cap are proposed, not executed/authorized.
+Keep actual replacement behavior separate from requirement mentions and static
+contradictions separate from gateway/check acceptance. Freeze anonymous action reviews
+before mapping; no judge, sampled tool, retry, correction or feedback chain is included.
+The collector hash binds all three diagnostic source files. Its read-only inspector
+recognizes one additional kind; old exact packet validation must use the recorded
+implementation, not rewrite old packet hashes. Runtime/task/tool surface are unchanged.
+All 82 focused draft/source/collector/docs tests pass in 37.59s and Ruff passes.
+No full runtime suite or runtime mock smoke is newly claimed for this diagnostic-only change.
+
+The preceding seam is the provider-free proposal-review/repair-boundary audit at
 `C:\pt\analyses\pl43-proposal-review-boundary`. Mutation admission checks source,
 scope and identity, not the truth of hypothesis/expected_behavior. B1's public prose
 mentions preserving mode while its code violates that condition. Optional notes and

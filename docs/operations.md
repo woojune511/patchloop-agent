@@ -432,6 +432,45 @@ the distinction between delivered information and correct use of it. Read-only e
 is `C:\pt\pl43-review-a`; no additional check/candidate execution, paid retry/resume,
 comparison or row 44 is authorized by this completed invocation.
 
+### Draft review pilot: row 43
+
+`diagnostics.draft_review_sampler` compares a neutral second opportunity with an
+explicit draft/public-requirement review instruction. Both receive the first
+requirements-focus A1 proposal as unexecuted data on the original turn-14 context.
+The draft's new reasoning is not imported; old native history/13 reasoning items,
+tools, settings and state remain unchanged. No known defect hint or repair is supplied.
+This is one fixed draft, two responses per arm, not a whole-agent quality benchmark.
+
+The prepared packet is `C:\pt\analyses\pl43-draft-review\packet.json`, hash
+`sha256:3b08b83f24914ff9b05d18288926007fc8ec2314653e44154f26288ed83c029e`.
+Collector hash:
+`sha256:1706cf856e9b61bcdd33d7a6bcd878f1109adb615ebdc174d2f4a12fa999bed9`.
+
+```powershell
+uv run python -m diagnostics.draft_review_sampler validate `
+  --source-state-root C:/patchloop-state `
+  --draft-state-root C:/pt/analyses/pl43-requirements-focus-live `
+  --packet C:/pt/analyses/pl43-draft-review/packet.json `
+  --packet-hash sha256:3b08b83f24914ff9b05d18288926007fc8ec2314653e44154f26288ed83c029e
+```
+
+Preparation/validation use no credential loading, token count, provider or task execution.
+Future approval must identify this packet/collector, task
+`pyfakefs-makedirs-parent-traversal` v2, `gpt-5.4-mini-2026-03-17`, medium, root `.env`,
+four independent A1/B1/B2/A2 responses, zero tools, shared $1.20 and a fresh root such
+as `C:\pt\analyses\pl43-draft-review-live`. Transmission includes the historical
+public task/source/tool context, encrypted reasoning and unexecuted public draft
+to `https://api.openai.com/v1`; the key is only for SDK authentication. Private
+evaluators/reference repairs/plaintext reasoning are not supplied. Old grants are consumed.
+
+`collect` takes the validation arguments plus `--approve-four-draft-responses-zero-tools`,
+`--sampler-hash`, absolute `--credential-file`, `--result-root`, `--max-cost-usd 1.20`,
+`--pricing-hash`, and `--pricing-verified-on` after fresh execution-date pricing review.
+It keeps the existing JIT count, full 25k/future-response reservation, 272k input limit,
+zero retries and global uncertainty stop. No draft/tool execution, correction,
+chaining or evaluator is included; `inspect` is read-only. Static anonymous code
+review precedes unblinding. Any apparent improvement requires separate execution evidence.
+
 ### Requirements proximity pilot: row 43
 
 `diagnostics.requirements_focus_sampler` freezes the same pre-first-mutation turn 14
@@ -446,7 +485,9 @@ is historical and B is uncounted.
 The fixed objective, reviewer criteria and one-variable comparison follow the
 [evaluation design guidance](https://developers.openai.com/api/docs/guides/evaluation-best-practices#design-your-eval-process).
 This is a small diagnostic, not a model-quality or complete-agent benchmark.
-Provider-free validation does not load `.env`, count input, or contact OpenAI:
+The following original provider-free validation uses the packet's recorded `d5a411a`
+implementation; later diagnostic inspector changes alter its exact sampler identity.
+Do not rewrite the old packet. Validation does not load `.env`, count input, or contact OpenAI:
 
 ```powershell
 uv run python -m diagnostics.requirements_focus_sampler validate `
