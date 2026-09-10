@@ -713,6 +713,12 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 The current seam is the provider-free draft-review packet at
 `C:\pt\analyses\pl43-draft-review`, implemented in `diagnostics/draft_review_sampler.py`.
+Its first collection attempt was blocked by host security review before process
+creation; generic proceed was insufficient for explicit transmission approval.
+`C:\pt\analyses\pl43-draft-review-audit` records zero calls/cost and 1,069 preserved
+files. The live root is absent. Require explicit approval of the historical public
+source/tool history, opaque reasoning and unexecuted draft transmission to the
+official API for four responses/$1.20 before another attempt; never bypass the denial.
 It reuses historical checkpoint reconstruction and the existing independent-response
 collector. The first collected requirements-focus A1 draft is pinned by source
 journal/envelope/public artifact and original request identity; never rank/select a

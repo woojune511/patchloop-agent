@@ -40,6 +40,14 @@ runtime suite, mock smoke, Docker operation or provider invocation was required.
 
 ## Current seam: draft review versus neutral second opportunity prepared
 
+The subsequent collection attempt was rejected by host security review before
+process creation: generic proceed did not establish explicit payload/destination
+approval. No count/provider/tool call or cost occurred, and the proposed live root
+does not exist. `C:\pt\analyses\pl43-draft-review-audit` records the preflight and
+denial; 1,069 protected files remain unchanged. Do not retry until the user explicitly
+approves sending the frozen public source/tool history, opaque reasoning and draft
+to `https://api.openai.com/v1` for these four responses under the shared $1.20 cap.
+
 `C:\pt\analyses\pl43-draft-review` freezes row43 turn 14 and the first collected
 requirements-focus proposal (A1) as explicitly unexecuted data. Both arms retain
 the same 54 preceding items, 13 encrypted reasoning items, source/tool history,
