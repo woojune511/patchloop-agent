@@ -38,7 +38,37 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: post-hoc A1 checks limit the stop diagnosis
+## Current seam: B2 submits publicly but fails isolated task acceptance
+
+The separately approved 2026-09-11 operator evaluation is complete at
+`C:\pt\evaluations\pl43-b2`; `result.md` and `audit.json` contain the aggregate report
+and integrity checks. The exact B2 submission remains the same 39-line patch:
+`sha256:0ed4a24551e7a171969b032fd61ccb6bb4c91aba71c522e01b0f17fa0a1e1708`.
+Public regression and scope PASS; private evaluation and task acceptance FAIL;
+typed safety PASS. The canonical failure class is `PRIVATE_EVALUATION_FAILED`, not
+an evaluator exception. The isolated evaluation completed in 7.206s.
+
+One new workspace used a no-hardlink local clone at the original audited base,
+then the standard evaluator applied the exact submitted artifact. Manifest/task/
+runtime/image, visible/submitted/applied diff and execution-policy bindings verify.
+The prior public probe receipt was derived exactly from its durable action event;
+no probe was rerun. All 1,835 protected files remain byte-identical and the owned
+containers are absent. There were zero provider/count/new-probe calls and $0 model
+cost, with no Docker startup/pull/build, repair, retry or normal live row.
+
+This evidence belongs to a separate operator evaluation, not a resumed B2 run.
+The original comparison still records `PUBLIC_CHECKS_SUBMITTED` and NOT_RUN private
+evaluation; its immutable bytes and scores are not rewritten. B2's public submission
+is not task completion. This result neither identifies the semantic cause nor proves
+a private-oracle error, harness defect or general probe benefit. Private failures
+are not supplied to the coding agent or converted into public repair hints. Further
+diagnosis must begin with public requirements and independent public cases; no
+mandatory-probe policy or additional model experiment follows from this check.
+All results remain `official=false`, `claim_eligible=false`.
+Twelve existing evaluator/documentation tests pass in 6.577s; Ruff passes. Runtime
+and task bytes are unchanged, so no new full-suite or mock-smoke claim is made.
+
+## Prior seam: post-hoc A1 checks limit the stop diagnosis
 
 `C:\pt\pl43-stop-validity-a` checks the exact previously untested probe-pilot A1
 candidate in a fresh external workspace; review/audit are at

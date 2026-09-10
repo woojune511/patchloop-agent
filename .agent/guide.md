@@ -711,7 +711,30 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the post-hoc A1 stop-validity check, not another model comparison.
+The current seam is the completed post-hoc B2 submission evaluation at
+`C:\pt\evaluations\pl43-b2` (aggregate report `result.md`, integrity `audit.json`).
+Its unchanged 39-line public submission passes public regression and scope, but
+fails private task acceptance with `PRIVATE_EVALUATION_FAILED`; typed safety PASS.
+No evaluator exception occurred. One isolated workspace and the standard evaluator
+complete in 7.206s with zero provider/count/new-probe calls and $0 model cost.
+Base acquisition alone uses a local no-hardlink clone at the exact audited commit.
+Manifest, task/runtime/image, submitted/applied/checked diff, public probe receipt
+derivation and policy evidence verify; 1,835 protected files are unchanged and owned
+containers are absent. Runtime/tool surface remains v35.
+Twelve existing evaluator/documentation tests pass in 6.577s, plus Ruff; no new full
+runtime-suite or mock-smoke execution is claimed for this operator/docs-only change.
+
+The new operator evaluation ID and external state root distinguish this evidence
+from the original B2 subject ID, which is retained for receipt identity. The original
+run's PUBLIC_CHECKS_SUBMITTED / private NOT_RUN bytes are not migrated or back-credited.
+This candidate is not task-complete. Do not feed private evaluator contents/failures
+back into agent context or derive public repair hints from them. The aggregate failure
+does not establish its semantic cause, an incorrect private oracle, a harness defect
+or general probe benefit. Any further diagnosis starts from public requirements and
+independent public examples. No repair, paid comparison, resume, mandatory-probe
+adoption or normal live row is included. Results remain official=false/claim_eligible=false.
+
+The preceding seam is the post-hoc A1 stop-validity check, not another model comparison.
 `C:\pt\pl43-stop-validity-a` restores the exact stopped 48-line candidate once in a
 new external workspace. Traversal PASS; upstream has one macOS trailing-link failure,
 516 passed/570 skipped. Review/audit: `C:\pt\pl43-stop-validity-review-a`.
