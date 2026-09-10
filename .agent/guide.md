@@ -711,7 +711,36 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the completed independent public B2 diagnostic at
+The current seam is the completed separate B2 operator repair at
+`C:\pt\repairs\pl43-b2`. Original run/task/runtime bytes are not modified, and no
+private evaluator input, hidden failure detail or reference patch is loaded or used.
+The independent no-hardlink workspace contains a 49-line, one-file final patch
+`sha256:c69bf63cc3a7fc7c91054888501b538c9d7a4314849baabb2c2525c80e120610`.
+The original 50-line scope and both public registered checks remain unchanged.
+
+The frozen 30-case POSIX differential matrix matches 30/30, versus original B2's
+18/30. Resolved intermediate traversal and final-target validation must be separate.
+Windows has different parent-existence/normalization semantics; three operator
+candidates match a separate unchanged native Windows matrix in 6/24, 23/24 and
+24/24 cases. Preserve drive-relative behavior as well as absolute/relative paths.
+Both original checks pass on the final hash, with upstream 517 passed / 570 skipped.
+Final sandbox execution time totals 11.267s. Across development there are five public
+probes, four public checks and one stdlib-only native Windows batch, all provider-free.
+
+Native Windows Python is 3.14.5 and container Python is 3.12.13: this selected matrix
+is not cross-version equivalence or generalization evidence. macOS native, Windows
+ACL/mode and symlink/junction/network-share behavior are not verified. Private task
+acceptance is NOT_RUN. Do not equate operator patch success with agent improvement,
+resume/back-credit original B2, supply operator solutions as agent memory, or add
+tool-policy restrictions on this evidence. Any private acceptance evaluation is
+separate work. Final patch, public comparison and provenance live beside result.md;
+official=false/claim_eligible=false throughout. Runtime/tool surface remains v35.
+Audit verifies 234 protected files, runtime, candidate/receipt bindings, CAS/journal
+and owned-container cleanup. The new native Windows scratch is recycled with an
+exact verified restoration mapping; the docs-only pytest basetemp is not created.
+Three documentation tests and Ruff pass; no new full runtime-suite/mock claim.
+
+The preceding seam is the completed independent public B2 diagnostic at
 `C:\pt\analyses\pl43-b2-public`. No private evaluator file/detail/reference patch is
 read; cases derive from public requirements and B2 source. One fixed public probe
 on Python 3.12.13/POSIX compares 30 cases: 18 match and 12 differ, not a sampled

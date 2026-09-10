@@ -38,7 +38,52 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: independent public diagnosis reproduces B2 semantic gaps
+## Current seam: separate B2 operator repair passes public validation
+
+The 2026-09-11 repair at `C:\pt\repairs\pl43-b2` preserves the original B2 run,
+submission, task v2 and runtime. Three operator-authored candidates use an independent
+no-hardlink clone at the audited base. The final `final.patch` changes only
+`pyfakefs/fake_os.py`: 48 added + 1 deleted = 49 lines, within the unchanged 50-line
+scope. Its hash is
+`sha256:c69bf63cc3a7fc7c91054888501b538c9d7a4314849baabb2c2525c80e120610`.
+
+The unchanged, previously frozen POSIX matrix now matches real `os.makedirs` in
+30/30 cases (original B2: 18/30). POSIX traversal follows resolved directories,
+then validates the final target separately; default parent mode, requested leaf
+mode, existing-file rejection and trailing separators remain distinct concerns.
+No-parent paths retain the existing implementation.
+
+A separate 24-case public Windows comparison exposed a platform distinction:
+Windows may normalize `..` before directory creation, depending on which parents
+already exist. Unconditionally applying POSIX traversal side effects is incorrect.
+The repair uses Windows parent-existence/recursive creation behavior and preserves
+drive-relative paths. Candidate agreement increases from 6/24 to 23/24 to 24/24;
+neither the cases nor the task's registered checks are changed to obtain this result.
+Native Windows uses Python 3.14.5; fake Windows and the POSIX oracle use 3.12.13.
+This is a bounded behavioral comparison, not a cross-version equivalence claim.
+
+Both original public checks pass on the final patch hash; upstream reports
+517 passed / 570 skipped. The final four sandbox executions take 11.267s combined.
+There are five public probes, four public registered-check executions and one
+stdlib-only native Windows case batch across all three candidates. Provider/count
+calls and model cost are zero. Private evaluation is NOT_RUN; no private evaluator
+input, hidden failure detail or reference patch is loaded or used.
+
+This repairs an operator candidate, not the agent loop: it does not demonstrate
+better agent reasoning, memory, tool selection or generalization. Do not back-credit
+the original B2 result, inject this patch into agent context, or change the tool mask.
+Native macOS, Windows ACL/mode and symlink/junction/network-share behavior remain
+unverified. Any private acceptance evaluation is separate work. Detailed public
+receipts, candidate history and the downloadable patch are retained with `result.md`;
+all results remain `official=false`, `claim_eligible=false`.
+
+Audit verifies all 234 protected original/diagnostic files and runtime bytes,
+candidate/check identity, CAS/journal integrity and absence of owned containers.
+The new Windows scratch is recycled with a verified restoration mapping; no existing
+scratch is touched. Three documentation tests and Ruff pass. Runtime is unchanged,
+so no new full runtime suite or mock smoke is claimed.
+
+## Prior seam: independent public diagnosis reproduces B2 semantic gaps
 
 The 2026-09-11 operator diagnostic at `C:\pt\analyses\pl43-b2-public` uses only the
 public v2 requirement, B2's unchanged source and an independently authored case matrix.
