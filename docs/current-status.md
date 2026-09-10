@@ -38,15 +38,36 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: draft review versus neutral second opportunity prepared
+## Current seam: explicit draft review does not change proposed behavior
 
-The subsequent collection attempt was rejected by host security review before
-process creation: generic proceed did not establish explicit payload/destination
-approval. No count/provider/tool call or cost occurred, and the proposed live root
-does not exist. `C:\pt\analyses\pl43-draft-review-audit` records the preflight and
-denial; 1,069 protected files remain unchanged. Do not retry until the user explicitly
-approves sending the frozen public source/tool history, opaque reasoning and draft
-to `https://api.openai.com/v1` for these four responses under the shared $1.20 cap.
+The approved pilot completed as `run_dev_sample_28ab0479aac64fe9` at
+`C:\pt\analyses\pl43-draft-review-live`: four independent responses/counts,
+$0.0700872 / $1.20, 38.615s, and zero sampled tools, corrections, retries, Docker
+or evaluator executions. The earlier host rejection started no process. Explicit
+payload/destination approval then preceded the first actual invocation; this grant
+is consumed. No further sampling or live row is authorized.
+
+Anonymous static review at `C:\pt\analyses\pl43-draft-review-audit` was frozen
+before unblinding. A1/A2/B1 reproduce the draft code exactly; B2 only changes line
+wrapping. All four have the same AST as the draft, preserving its false EEXIST and
+intermediate-directory mode contradictions. All observed old_text anchors match;
+all new memory updates are null. These are static facts, not gateway/check results.
+
+Actual inputs are 50,675 tokens for A and 50,702 for B. Reasoning tokens are
+A1=34, A2=93, B1=215, B2=316; completed outputs are 1,003-1,252 of 25,000 tokens.
+All four ordered requests and continuation artifacts validate; each request retains
+13 original reasoning items and 13 native call/result pairs. Protected files (1,069)
+and the new live files (17) remain unchanged during review.
+
+This intervention shows no executable improvement over a neutral second opportunity.
+It does not establish internal reasoning, memory failure or that every reviewer is
+ineffective. Keep the default runtime/task/prompt unchanged; do not adopt this extra
+review call or automatically repeat it. This is a four-proposal pilot at one reused
+failure-selected checkpoint, not a general quality or task-acceptance result.
+Documentation tests (3, 0.10s) and Ruff pass. No full runtime suite or runtime mock
+smoke is newly claimed; the documentation validation created no disposable test root.
+
+## Prior seam: draft review versus neutral second opportunity prepared
 
 `C:\pt\analyses\pl43-draft-review` freezes row43 turn 14 and the first collected
 requirements-focus proposal (A1) as explicitly unexecuted data. Both arms retain
@@ -62,15 +83,15 @@ new reasoning is not loaded or replayed, and no fake native call/output is added
 this is content-only reconsideration, not continuation of that sampled response.
 The original unreviewed draft is not a randomized no-extra-inference control.
 
-The proposed collection is four independent A1/B1/B2/A2 responses, mini/medium/25k,
-shared $1.20 and zero tools. Preparation does not authorize or execute collection.
+The preparation proposed four independent A1/B1/B2/A2 responses, mini/medium/25k,
+shared $1.20 and zero tools; preparation itself did not authorize or execute collection.
 Runtime/task/prompt/tool-surface v35 are unchanged. The standalone collector adds
 only the new diagnostic kind to its read-only inspector; prior packet identities
 remain immutable and require their recorded implementation for exact revalidation.
 
 All 82 focused draft/source/shared-collector/documentation tests pass in 37.59s,
 including four-response fake collection and no new draft-reasoning reads; Ruff passes.
-No provider/count/Docker/task/evaluator execution or model-quality result is added.
+That preparation added no provider/count/Docker/task/evaluator or model-quality result.
 See the [operations contract](operations.md#draft-review-pilot-row-43).
 
 ## Prior seam: proposal review and public repair boundary characterized

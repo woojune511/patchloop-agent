@@ -441,6 +441,15 @@ The draft's new reasoning is not imported; old native history/13 reasoning items
 tools, settings and state remain unchanged. No known defect hint or repair is supplied.
 This is one fixed draft, two responses per arm, not a whole-agent quality benchmark.
 
+The first actual approved collection is complete at
+`C:\pt\analyses\pl43-draft-review-live`, run `run_dev_sample_28ab0479aac64fe9`,
+with four responses/counts, $0.0700872 / $1.20 and 38.615s. A prior host rejection
+started no process; explicit payload/destination approval followed it. The grant
+is now consumed. Audit at `C:\pt\analyses\pl43-draft-review-audit` preserves the
+anonymous-before-mapping review: all four proposal ASTs equal the fixed draft,
+with no executable-code improvement or proposal execution. The frozen packet and
+live root are immutable; another collect is not a resume or an authorized retry.
+
 The prepared packet is `C:\pt\analyses\pl43-draft-review\packet.json`, hash
 `sha256:3b08b83f24914ff9b05d18288926007fc8ec2314653e44154f26288ed83c029e`.
 Collector hash:
@@ -457,8 +466,8 @@ uv run python -m diagnostics.draft_review_sampler validate `
 Preparation/validation use no credential loading, token count, provider or task execution.
 Future approval must identify this packet/collector, task
 `pyfakefs-makedirs-parent-traversal` v2, `gpt-5.4-mini-2026-03-17`, medium, root `.env`,
-four independent A1/B1/B2/A2 responses, zero tools, shared $1.20 and a fresh root such
-as `C:\pt\analyses\pl43-draft-review-live`. Transmission includes the historical
+four independent A1/B1/B2/A2 responses, zero tools, shared $1.20 and a newly approved
+external directory; the recorded live root is already consumed. Transmission includes the historical
 public task/source/tool context, encrypted reasoning and unexecuted public draft
 to `https://api.openai.com/v1`; the key is only for SDK authentication. Private
 evaluators/reference repairs/plaintext reasoning are not supplied. Old grants are consumed.

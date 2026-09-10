@@ -711,14 +711,28 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the provider-free draft-review packet at
+The current seam is the completed draft-review pilot at
+`C:\pt\analyses\pl43-draft-review-live`, run `run_dev_sample_28ab0479aac64fe9`.
+The original pre-process denial remains recorded. Subsequent explicit transmission
+approval preceded the first actual invocation: four independent responses/counts,
+$0.0700872 / $1.20, 38.615s, zero sampled tools, retries, corrections or evaluation.
+This grant is consumed; no automatic repeat, feedback rollout or new live row follows.
+
+The anonymous review at `C:\pt\analyses\pl43-draft-review-audit` was frozen before
+mapping. All four ASTs equal the draft; A1/A2/B1 code bytes match, B2 only wraps a
+line. Both public contradictions remain; all source anchors match and all new
+memory updates are null. Actual A/B inputs are 50,675/50,702 tokens. Reasoning tokens
+34/93 (A) versus 215/316 (B) do not establish what was internally reviewed; no output
+is near 25k. Four ordered requests and continuations validate, with 13 original
+reasoning items/native pairs per request. All 1,069 protected files and 17 live files
+are unchanged during review. Keep runtime/task/prompt v35 unchanged and do not adopt
+this extra review call: it shows no code improvement at this checkpoint, not that all
+review or memory interventions fail. Static code evidence is not executed acceptance.
+Documentation validation passes (3 tests, 0.10s) with Ruff; no full runtime suite,
+runtime mock smoke or new scratch directory is claimed for this result-only update.
+
+The preceding seam is the provider-free draft-review packet at
 `C:\pt\analyses\pl43-draft-review`, implemented in `diagnostics/draft_review_sampler.py`.
-Its first collection attempt was blocked by host security review before process
-creation; generic proceed was insufficient for explicit transmission approval.
-`C:\pt\analyses\pl43-draft-review-audit` records zero calls/cost and 1,069 preserved
-files. The live root is absent. Require explicit approval of the historical public
-source/tool history, opaque reasoning and unexecuted draft transmission to the
-official API for four responses/$1.20 before another attempt; never bypass the denial.
 It reuses historical checkpoint reconstruction and the existing independent-response
 collector. The first collected requirements-focus A1 draft is pinned by source
 journal/envelope/public artifact and original request identity; never rank/select a
@@ -727,11 +741,11 @@ unexecuted proposal data. Only `draft_reconsideration.harness_instruction` chang
 Original native history, 54 earlier items/13 opaque reasoning items, public task,
 tools/order, notes, budget and model/medium/25k stay fixed. The draft-generating
 response's own reasoning is not read; no native call or fake completion is inserted.
-Request sizes 258,422/258,605 are bytes, with no fresh input counts claimed.
+At preparation, request sizes 258,422/258,605 were bytes, with no fresh input counts.
 
 This tests review framing beyond a neutral extra opportunity, not extra inference
 versus none, native draft continuation, or general agent quality. Four independent
-A1/B1/B2/A2 responses and a shared $1.20 cap are proposed, not executed/authorized.
+A1/B1/B2/A2 responses and a shared $1.20 cap were proposed, not run by preparation.
 Keep actual replacement behavior separate from requirement mentions and static
 contradictions separate from gateway/check acceptance. Freeze anonymous action reviews
 before mapping; no judge, sampled tool, retry, correction or feedback chain is included.
