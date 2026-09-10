@@ -690,7 +690,27 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is an implemented, not yet collected probe-first repair comparison.
+The current seam is a collected probe-first repair comparison, with no default policy
+adoption. Results: `C:\pt\pl43-probe-live-a`; review/audit:
+`C:\pt\pl43-probe-review-a`. A1/B1/B2/A2 complete 4/6/5/2 new responses and actions,
+17 total, $0.584686950 and 233.059s. A submits 0/2 and B 1/2 at one frozen checkpoint;
+do not generalize this small observation into a mandatory-probe policy.
+B2 probes both platform errors, restricts the new traversal logic to paths containing
+`..`, delegates the rest to the original implementation, and submits a 39-line diff
+after upstream (517 passed/570 skipped) and traversal PASS. Checked/workspace/submitted
+hashes match. Private evaluation, task acceptance and aggregate safety remain NOT_RUN.
+B1 probes Windows and restores platform-specific handling but leaves the macOS raw
+trailing-separator operand defect; B1/A2 each record one macOS failure, then correctly
+reach LIMIT_REACHED with no accepted mutation left. A1's 48-line candidate is untested:
+its actual last input offers run_check, two NOT_RUN checks, null current failure,
+recheck guidance and a viable three-call completion path, yet it claims current
+failure and stops. Do not merge that voluntary stop with the valid horizon stops.
+All 17 memory updates are null; exact native/continuation delivery is verified, not
+working-note benefit or internal attention. Next evidence should distinguish useful
+execution questions, behavior-preserving repair scope and actual recheck/submission,
+preferably on independent public checkpoints. No extra paid run or runtime change
+is part of this completed comparison.
+
 `diagnostics.probe_first_view` freezes exact A/B inputs from the original row-43
 pre-turn-21 public failure. A remains ordinary; B changes only `tool_choice` to
 `{"type":"function","name":"run_probe"}` using the official Responses contract.
@@ -736,11 +756,20 @@ Exact admitted mutation candidates reconcile once; unrelated drift fails before
 execution. Unknown provider completion stops; known usage with no recoverable
 decision stops continuation rather than retrying. Terminal reconciliation performs
 no provider/tool work or journal writes. No paid restart/resume CLI is provided.
-This implementation request is not itself a collected four-branch comparison.
+The implementation-only request was followed by a separate proceed request consuming
+the four-branch comparison once; preserve both stages' distinct evidence.
 Executable plan: `C:\pt\pl43-probe-collector-plan-a`; handoff/audit:
 `C:\pt\pl43-probe-collector-review-a`. Its initial A/B hashes still match the frozen
-design, and 6,065 protected files are unchanged. Check live backend/image readiness
-and execution-day pricing before collection; neither was exercised by these mocks.
+design, and 6,065 protected files were unchanged at handoff. The later execution-day
+preflight is `C:\pt\pl43-probe-preflight-a`: running backend, existing pinned images,
+clean tracked inputs and official pricing pass. Final review verifies four journals,
+313 CAS objects, native prefixes/ciphertext, tool-choice phase release and exact
+usage/shared-cap admission. Six owned containers are cleaned up and absent; 6,174
+prior protected files and 849 live files are unchanged. No cap/response censoring,
+25k saturation, incomplete correction, paid retry/resume, Docker startup/pull/build
+or private evaluation occurred. Runtime/tool surface remains v35.
+The results-only documentation update passes three layout/link tests, Ruff on
+`patchloop tests` and `git diff --check`; no new full-suite/mock claim is made.
 
 Provider-free validation passes 178 cases in overlapping groups (74 in 55.73s,
 104 in 69.90s) and Ruff. They cover the new collector's synthetic probe/repair/

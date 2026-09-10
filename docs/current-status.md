@@ -16,7 +16,42 @@ claim commands are absent.
   reserves; legacy 24/3 counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
-## Current seam: probe-first repair comparison (collector implemented, not collected)
+## Current seam: probe-first comparison collected; no default policy adoption
+
+The bounded comparison completed at `C:\pt\pl43-probe-live-a`; analysis and read-only
+audit are at `C:\pt\pl43-probe-review-a\result.md` and `audit.json`. Ordinary A submits
+0/2; probe-first B submits 1/2 after both public checks pass. This is one checkpoint
+with two samples per arm, not demonstrated general probe benefit or task acceptance.
+No new runtime prompt/mask, mandatory probe policy or normal live row follows.
+
+| Branch | New responses/actions | Final diff | Observed outcome |
+|---|---:|---:|---|
+| A1 ordinary | 4/4 | 48 lines | AGENT_STOPPED without current-diff checks |
+| B1 probe-first | 6/6 | 43 lines | Upstream macOS failure, then LIMIT_REACHED |
+| B2 probe-first | 5/5 | 39 lines | Both public checks PASS; PUBLIC_CHECKS_SUBMITTED |
+| A2 ordinary | 2/2 | 50 lines | Upstream macOS failure, then LIMIT_REACHED |
+
+There are 17 counts/completed responses/actions, $0.584686950 recorded cost and
+233.059 collector seconds. Full 25k admission is preserved; output tokens range
+176–3,748. No cap/response/deadline censoring, incomplete response or paid retry occurs.
+Both B branches author and execute one probe, then return to the ordinary loop.
+B2 reproduces both platform errors and delegates paths without `..` to the original
+implementation, limiting the new traversal logic's scope. Its 39-line checked and
+submitted diff is `sha256:0ed4a24551e7a171969b032fd61ccb6bb4c91aba71c522e01b0f17fa0a1e1708`.
+Upstream reports 517 passed/570 skipped; traversal also passes. Private evaluation,
+task acceptance and aggregate safety remain NOT_RUN, with `official=false`.
+
+B1 probes only Windows, then restores platform-specific handling but still uses an
+unprocessed trailing-separator operand for macOS link checks. B1/A2 each report one
+macOS failure (516 passed/570 skipped); accepted mutation exhaustion then legitimately
+blocks further repair. A1 instead voluntarily stops on an untested candidate while
+`run_check`, two NOT_RUN checks, null current failure, explicit recheck guidance and a
+viable three-call completion path remain in its actual input. Its current failure
+claim is unsupported by a new check; no operator check was added to back-credit it.
+All 17 memory updates are null. Native input/continuation delivery passes audit, but
+note use or the model's internal attention is not established. Review useful probe
+questions, small behavior-preserving repairs and current-diff rechecks separately;
+do not infer that more tool restrictions or duplicated guidance would solve this.
 
 The public operator counterfactual is complete at
 `C:\pt\pl43-repair-check-review-a\result.md`. Removing trailing separators from link
@@ -65,16 +100,23 @@ dispatch completion or known usage without a recoverable decision stops without
 another provider call. Terminal reconciliation is read-only; the CLI has no paid
 resume and refuses an existing result root. This is not normal `dev --resume-run-id`.
 
-The collector has not been used for a paid comparison. Preparation/tests make no
-provider/count/Docker calls; mock adapters/backends are separate synthetic evidence.
-Task acceptance/safety remain NOT_RUN for the diagnostic and `official=false`.
-Implementation is not a completed behavior experiment or a new normal live row.
+The latest proceed request consumed this separate four-branch comparison once.
+The earlier preparation/tests remain provider-free synthetic evidence, distinct
+from the now collected model trajectories. This is not a new normal live row.
 
 The executable plan is frozen at `C:\pt\pl43-probe-collector-plan-a`; audit and
 handoff are at `C:\pt\pl43-probe-collector-review-a`. Both initial request hashes
 match the original A/B design exactly, repeated plan validation is byte-identical,
-and 6,065 existing evidence files remain unchanged. Live Docker/image readiness
-and current provider pricing have not been checked during this implementation turn.
+and 6,065 existing evidence files were unchanged at implementation handoff. The later
+`C:\pt\pl43-probe-preflight-a` verifies tracked-clean implementation/task inputs,
+already-running Docker, pinned local images and execution-day official pricing.
+The live review verifies 313 CAS objects, four journal chains, native prefixes,
+continuations, exact initial A/B requests, phase release, usage and shared-cap
+admission. All six owned probe/check containers have confirmed cleanup and are absent.
+6,174 prior protected files and 849 live files remain unchanged. No Docker startup,
+pull/build, private evaluation or normal runtime change was performed.
+The documentation update passes all three layout/link tests, Ruff on `patchloop tests`
+and `git diff --check`; the unchanged runtime's full suite/mock smoke is not rerun.
 
 Collector validation: 178 cases pass in two overlapping groups (74 in 55.73s and
 104 in 69.90s), plus Ruff. The new cases exercise first-probe release, ordinary-loop
