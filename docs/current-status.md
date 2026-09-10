@@ -16,7 +16,7 @@ claim commands are absent.
   reserves; legacy 24/3 counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
-## Current seam: probe-first repair comparison (preparation only)
+## Current seam: probe-first repair comparison (collector implemented, not collected)
 
 The public operator counterfactual is complete at
 `C:\pt\pl43-repair-check-review-a\result.md`. Removing trailing separators from link
@@ -26,7 +26,7 @@ checks (517 passed / 570 skipped) within the unchanged 50-line scope. This estab
 a feasible public repair, not agent success, private task acceptance or probe benefit.
 The operator's patches, probes and diagnosis are not supplied to the next model inputs.
 
-The latest proceed request prepares a comparison with `diagnostics.probe_first_view`.
+The preceding preparation uses `diagnostics.probe_first_view`.
 Both arms start from row 43's frozen pre-turn-21 current public failure. A keeps the
 ordinary loop; B changes only the first probe phase's `tool_choice` to the official
 Responses forced-function form for `run_probe`. The model must author its own probe.
@@ -40,7 +40,7 @@ B is 424,359 bytes. Both retain 83 input items, including 20 encrypted reasoning
 items. Read-only validation succeeds twice with 5,955 protected files unchanged.
 These are serialized-byte and preservation measurements, not counted-token savings.
 
-The separate, not-yet-implemented collector contract specifies A1/B1/B2/A2, at most
+The separate collector contract specifies A1/B1/B2/A2, at most
 eight new responses per branch and one shared $1.20 cap. Probe/correction work consumes
 the same inherited budgets. B returns to the ordinary loop after native feedback
 from its first probe attempt, including a failed probe; protocol corrections remain
@@ -48,18 +48,45 @@ bounded. Review question usefulness, interpretation, repair and recheck/submissi
 separately. Preserve normal admission, replay and uncertainty stops; cap/response
 censoring is not an uncensored task failure. This is not a default mandatory-probe policy.
 
-The module exposes only prepare/validate: `PREPARED_NOT_EXECUTABLE`,
-`collector_implemented=false`. No provider, input-count, Docker or task tool execution
-occurs during preparation; task acceptance/safety are NOT_RUN and `official=false`.
-Actual behavior comparison requires the separate collector; preparation is not a
-completed experiment or a new normal live row.
+The original preparer and frozen design remain `PREPARED_NOT_EXECUTABLE` with
+`collector_implemented=false`; their bytes are not migrated. The subsequent proceed
+request implements the separate `diagnostics.probe_first_rollout` collector. Its new
+plan binds the frozen design, all diagnostic dependencies and runtime hashes. It
+reuses the existing ordinary request builder and shared JIT cost driver, but not the
+old B source-inlining intervention. Only the probe phase changes tool choice; its
+actual mask also governs bounded protocol correction. No operator hints are added.
 
-Validation: 145 preparation/native-rollout/documentation tests pass in 70.15s, plus
-Ruff. Normal-runtime mock `run_dev_14c2017d8d4943c9` at
-`C:\pt\pl43-probe-first-smoke-a` reaches mutation/check/finish/isolated EVALUATOR_PASS
-in 4.14 command seconds: four mock turns/five actions, one mutation, zero cost and
-safety NOT_RUN. This does not exercise the future probe-first collector. The unchanged
-normal-runtime full suite is not rerun for this diagnostic-only change.
+Recorded decisions/batches are reconciled before a new dispatch or horizon stop.
+Probe execution failure releases the phase; cleanup uncertainty stops all branches.
+A completed probe/check result is replayed, but an execution without its durable
+result stops as `TOOL_EXECUTION_UNKNOWN` rather than running again. Mutation recovery
+uses the exact admitted candidate; other-file drift is rejected. Missing provider
+dispatch completion or known usage without a recoverable decision stops without
+another provider call. Terminal reconciliation is read-only; the CLI has no paid
+resume and refuses an existing result root. This is not normal `dev --resume-run-id`.
+
+The collector has not been used for a paid comparison. Preparation/tests make no
+provider/count/Docker calls; mock adapters/backends are separate synthetic evidence.
+Task acceptance/safety remain NOT_RUN for the diagnostic and `official=false`.
+Implementation is not a completed behavior experiment or a new normal live row.
+
+The executable plan is frozen at `C:\pt\pl43-probe-collector-plan-a`; audit and
+handoff are at `C:\pt\pl43-probe-collector-review-a`. Both initial request hashes
+match the original A/B design exactly, repeated plan validation is byte-identical,
+and 6,065 existing evidence files remain unchanged. Live Docker/image readiness
+and current provider pricing have not been checked during this implementation turn.
+
+Collector validation: 178 cases pass in two overlapping groups (74 in 55.73s and
+104 in 69.90s), plus Ruff. The new cases exercise first-probe release, ordinary-loop
+repair/check/finish, shared-cap uncertainty, incomplete correction, candidate replay,
+native artifact tamper and missing execution receipts. No new model samples are used.
+Normal-runtime mock `run_dev_e2ee0c2be6ec45ea` at `C:\pt\pl43-probe-collector-smoke-a`
+reaches mutation/check/finish/isolated EVALUATOR_PASS in 4.54 command seconds: four
+mock turns/five actions, one mutation, zero cost and safety NOT_RUN. Keep this smoke
+separate from diagnostic task acceptance, which is NOT_RUN. Runtime code is unchanged;
+the full normal-runtime suite is not rerun. `uv` rebuilt the local `.venv` for Python
+3.14.5 during validation; the declared `dev` extra restored pytest/Ruff. No `.env`,
+lockfile, task or historical run changes were made.
 
 ## Sequential reliability review fixes (provider-free)
 

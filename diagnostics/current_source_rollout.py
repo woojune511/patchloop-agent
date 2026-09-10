@@ -176,6 +176,16 @@ class Branch(common.Branch):
     initial_request: dict | None = field(default=None, repr=False)
     initial_context: str = field(default="", repr=False)
 
+    def transform_request(self, request: dict, policy: Any) -> tuple[dict, str, dict]:
+        """Presentation intervention; subclasses must preserve the ordinary builder."""
+        shared.require(request.get("tool_choice") == "required", "tool choice drift")
+        alternate, metrics = view.inline_current_sources(request)
+        return (alternate if self.label.startswith("B") else request,
+                "source_presentation_recorded", {
+                    "arm": self.label[0], "treatment_applied": self.label[0] == "B",
+                    "context_is_pre_treatment": True, **metrics,
+                })
+
     def prepare_request(self, package: Any, adapter: Any):
         self.gateway.deadline.check()
         if self.new_provider_calls >= 8:
@@ -215,11 +225,10 @@ class Branch(common.Branch):
             request["parallel_tool_calls"], request["tool_choice"] = True, "required"
         # The first request is frozen A for both arms; subsequent A follows normal
         # projection. B changes only this new state's selected source presentation.
-        alternate, metrics = view.inline_current_sources(request)
-        if self.label.startswith("B"):
-            request = alternate
+        request, intervention_event, intervention = self.transform_request(request, policy)
         for key, value in shared.SETTINGS.items():
-            shared.require(request.get(key) == value, "dispatch settings drift")
+            if key != "tool_choice":  # Each intervention binds its exact choice below.
+                shared.require(request.get(key) == value, "dispatch settings drift")
         shared.require(request.get("reasoning") == {"effort": "medium"}, "effort drift")
         turn_id = "turn_" + uuid.uuid4().hex
         input_ref = self.store.put_text(view.wire(request["input"]).decode(), "application/json")
@@ -235,9 +244,8 @@ class Branch(common.Branch):
             "targeted_read_paths": list(policy.targeted_read_paths),
             "active_elapsed_ms": self.elapsed_ms(),
         })
-        self.journal.append("source_presentation_recorded", {
-            "turn_id": turn_id, "arm": self.label[0], "treatment_applied": self.label[0] == "B",
-            "input_hash": input_ref.content_hash, "context_is_pre_treatment": True, **metrics,
+        self.journal.append(intervention_event, {
+            "turn_id": turn_id, "input_hash": input_ref.content_hash, **intervention,
         })
         if transition:
             self.journal.append("tool_policy_transition", {"turn_id": turn_id, **transition})
@@ -246,12 +254,12 @@ class Branch(common.Branch):
 
 
 def initialize_branch(plan: Plan, label: str, root: Path, sandbox: Any, probe: Any,
-                      deadline: ExecutionDeadline) -> Branch:
+                      deadline: ExecutionDeadline, *, branch_type=Branch, kind=SCHEMA) -> Branch:
     branch_root = root / label
     store = ArtifactStore(branch_root / "artifacts")
     journal = DevJournal(branch_root, "run_dev_source_" + uuid.uuid4().hex[:16])
     journal.append("diagnostic_branch_started", {
-        **BOUNDARIES, "kind": SCHEMA, "label": label,
+        **BOUNDARIES, "kind": kind, "label": label,
         "source_run_id": plan.manifest["run_id"],
         "source_prefix_last_event_hash": plan.prefix[-1]["event_hash"],
         "source_runtime_hash": plan.envelope["runtime_hash"],
@@ -280,9 +288,9 @@ def initialize_branch(plan: Plan, label: str, root: Path, sandbox: Any, probe: A
                    and gateway.accepted_mutations == 3, "checkpoint counters differ")
     loop._validate_resumed_workspace(workspace, journal, deadline=deadline)
     loop._validate_recorded_continuations(journal.events(), store)
-    return Branch(label, journal, store, gateway, counters, active, 1800 - remaining,
-                  latest=journal.latest_tool_batch_results(),
-                  initial_request=plan.requests["A"], initial_context=plan.context)
+    return branch_type(label, journal, store, gateway, counters, active, 1800 - remaining,
+                       latest=journal.latest_tool_batch_results(),
+                       initial_request=plan.requests["A"], initial_context=plan.context)
 
 
 def envelope_for(plan: Plan) -> dict:
@@ -328,9 +336,10 @@ def prepare(root: Path) -> dict:
 
 def run(plan_root: Path, root: Path, *, credential_file: Path, cap: Decimal,
         pricing_verified_on: str, adapter_factory=None, sandbox=None, probe=None,
-        checkpoint=lambda _: None, progress=lambda _: None) -> dict:
-    plan = load_plan()
-    expected = envelope_for(plan)
+        checkpoint=lambda _: None, progress=lambda _: None,
+        plan_loader=None, envelope_builder=None, branch_initializer=None) -> dict:
+    plan = (plan_loader or load_plan)()
+    expected = (envelope_builder or envelope_for)(plan)
     shared.require(json.loads((plan_root / "plan.json").read_bytes()) == expected,
                    "prepared experiment changed")
     for arm, request in plan.requests.items():
@@ -369,7 +378,8 @@ def run(plan_root: Path, root: Path, *, credential_file: Path, cap: Decimal,
     started = monotonic()
     try:
         for label in ORDER:
-            branches.append(initialize_branch(plan, label, root, sandbox, probe, deadline))
+            branches.append((branch_initializer or initialize_branch)(
+                plan, label, root, sandbox, probe, deadline))
         config = shared.model_config("medium")
         while any(b.terminal is None for b in branches):
             for branch in branches:

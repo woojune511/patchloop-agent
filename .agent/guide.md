@@ -690,7 +690,7 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current next seam is a prepared, not executable probe-first repair comparison.
+The current seam is an implemented, not yet collected probe-first repair comparison.
 `diagnostics.probe_first_view` freezes exact A/B inputs from the original row-43
 pre-turn-21 public failure. A remains ordinary; B changes only `tool_choice` to
 `{"type":"function","name":"run_probe"}` using the official Responses contract.
@@ -708,7 +708,7 @@ CLI has no credential, provider/count, sandbox or collector path. Do not mistake
 `PREPARED_NOT_EXECUTABLE` for a completed agent comparison or silently use an older
 collector: existing source-rollout B inlines source and would confound this contrast.
 
-The future collector contract has four A1/B1/B2/A2 branches, eight new responses each
+The collector contract has four A1/B1/B2/A2 branches, eight new responses each
 and one shared $1.20 cap. Every probe/correction consumes the inherited budgets.
 Force B's probe phase only until its first attempt's native feedback is delivered;
 release on execution failure too, with no forced probe retry. Bounded protocol
@@ -723,11 +723,31 @@ actual recheck/submission separately; no reasoning plaintext, model judge or sem
 success inferred from merely choosing the forced probe. One checkpoint/two samples
 per arm cannot establish general effectiveness. Runtime/tool surface remains v35.
 
-Provider-free validation passes 145 preparation/native-rollout/docs cases in 70.15s
-and Ruff. Normal-runtime mock `run_dev_14c2017d8d4943c9` reaches isolated evaluation
-in 4.14 command seconds, with four turns/five actions, zero cost and safety NOT_RUN.
-These tests do not execute a new probe-first collector or establish model benefit;
-the unchanged normal-runtime full suite is not rerun.
+`diagnostics.probe_first_rollout` now implements this separate collector. Its plan
+binds the unchanged original design and all diagnostic dependencies; never migrate
+the preparer's `collector_implemented=false` record. Reuse the ordinary request
+builder and shared JIT driver through explicit hooks, not the old B inlining hook.
+Journal the exact forced choice separately from the unchanged full tool list, and
+validate corrections/actions against that choice. Restore unconsumed corrections
+and reconcile recorded decisions/batches before new dispatch or horizon admission.
+Validate native input/ciphertext before replay. Completed probe/check results are
+replayed; an execution lacking its durable result stops `TOOL_EXECUTION_UNKNOWN`.
+Exact admitted mutation candidates reconcile once; unrelated drift fails before
+execution. Unknown provider completion stops; known usage with no recoverable
+decision stops continuation rather than retrying. Terminal reconciliation performs
+no provider/tool work or journal writes. No paid restart/resume CLI is provided.
+This implementation request is not itself a collected four-branch comparison.
+Executable plan: `C:\pt\pl43-probe-collector-plan-a`; handoff/audit:
+`C:\pt\pl43-probe-collector-review-a`. Its initial A/B hashes still match the frozen
+design, and 6,065 protected files are unchanged. Check live backend/image readiness
+and execution-day pricing before collection; neither was exercised by these mocks.
+
+Provider-free validation passes 178 cases in overlapping groups (74 in 55.73s,
+104 in 69.90s) and Ruff. They cover the new collector's synthetic probe/repair/
+check/finish and uncertainty/replay paths, not model benefit. Normal-runtime mock
+`run_dev_e2ee0c2be6ec45ea` reaches isolated evaluation in 4.54 command seconds, with
+four turns/five actions, zero cost and safety NOT_RUN. Keep it separate from the
+diagnostic's NOT_RUN task acceptance. The unchanged full runtime suite is not rerun.
 
 The sequential review fixes first address deterministic execution, recovery, budget
 and note defects; do not attribute those synthetic edge cases to row 43 without a
