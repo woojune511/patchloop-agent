@@ -554,6 +554,27 @@ remain unchanged; only captured/retained output and diagnostic semantics change.
 Terminal resume returns that same public result. Current semantics are tool-surface `v35`;
 do not migrate old envelopes or journal bytes.
 
+## Local storage hygiene
+
+New disposable pytest basetemps belong only under `C:\pt\tmp\<unique-name>`, not
+directly under `C:\`, beside durable experiment records, or inside the repository.
+Each parallel test process owns its own exact child directory. Keep JUnit reports
+under `C:\pt\validation`, or in the current durable diagnostic record, before cleanup.
+After the process and its children have exited, recycle the owned temporary root;
+retain a failed-test workspace only while it is needed for diagnosis. Never sweep
+the parent, empty the Recycle Bin automatically, or infer disposability from a name.
+
+Durable runs, CAS objects, experiment packets, analysis, submitted patches and their
+workspaces are not pytest scratch. Preserve existing paths and bytes; state roots and
+recorded absolute paths must not be relocated as a side effect of housekeeping.
+Credentials, user-owned `AGENTS.md`, task packages, historical reports and existing
+repository-local scratch remain outside this cleanup scope. For an approved legacy
+cleanup, freeze exact targets, exclude active processes/locks and reparse points,
+confirm actual Recycle Bin delivery and retain a restoration list separately.
+The approved 2026-09-10 legacy cleanup recycled 598 pytest roots; its exact mappings
+and hash checks are at `C:\pt\maintenance\cleanup-20260910`. Old pytest basetemp
+references may therefore point to recycled scratch, not missing durable run evidence.
+
 ## State and recovery
 
 Each run owns an external `dev-run-v1` JSONL stream with sequence, prior hash, and

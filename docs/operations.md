@@ -1,15 +1,33 @@
 # Run and validate
 
-All generated state must live outside the repository. The examples use short
-Windows paths to avoid temporary-directory permission and path-length failures.
+All generated state must live outside the repository. Use short Windows paths to
+avoid temporary-directory permission and path-length failures, but keep disposable
+test workspaces separate from durable evidence.
+
+- `C:\pt\tmp\<unique-name>`: disposable test workspaces; do not create new test
+  directories directly under `C:\` or scatter them beside experiment records.
+- `C:\pt\validation\<unique-name>.xml`: retained test reports, outside the temporary
+  workspace so cleanup does not erase the validation result.
+- `C:\patchloop-state`: durable runs, artifacts and managed workspaces. Existing
+  experiment/analysis directories retain their original paths and bytes.
+
+After the test process and its children exit, retain the report and recycle only
+that invocation's exact temporary directory. Failed-test workspaces may remain while
+diagnosis needs them; recycle them when that investigation finishes. Do not empty
+the Recycle Bin automatically, sweep a parent directory, or classify run/analysis
+evidence as disposable merely because its path contains `test`, `tmp` or `pt`.
 
 ## Fast local verification
 
 ```powershell
-$testRoot = 'C:\patchloop-test-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
+$testId = 'pytest-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
+$testRoot = Join-Path 'C:\pt\tmp' $testId
+$testReport = Join-Path 'C:\pt\validation' ($testId + '.xml')
+New-Item -ItemType Directory -Force -Path 'C:\pt\tmp', 'C:\pt\validation' | Out-Null
 uv sync --extra dev --locked
 uv run ruff check patchloop tests
-uv run pytest tests -p no:cacheprovider --basetemp $testRoot
+uv run pytest tests -p no:cacheprovider --basetemp $testRoot --junitxml $testReport
+# Once pytest and its children have exited, recycle only $testRoot as described above.
 ```
 
 This path uses no provider or Docker call.

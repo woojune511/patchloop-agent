@@ -16,6 +16,28 @@ claim commands are absent.
   reserves; legacy 24/3 counters are telemetry only
 - `repeat=1` by default, 6 maximum, under one invocation-wide cost cap
 
+## Local storage housekeeping
+
+The user-approved 2026-09-10 cleanup recycled 598 completed standalone pytest
+temporary roots: 115 directly under `C:\` and 483 inside the existing scratch
+containers. These held 748,262 files / 1,894,300,495 logical bytes. The number of
+top-level `C:\` directories fell from 167 to 52. The Recycle Bin was not emptied;
+this is recoverable housekeeping, not a claim that disk space was freed.
+
+Exact source/Recycle Bin mappings and preservation checks are retained under
+`C:\pt\maintenance\cleanup-20260910`. All 42 primary run journals, actual run and
+analysis records, credentials, user-owned `AGENTS.md`, and historical report/archive
+bytes remain unchanged. Recycled test trees match their pre-move file metadata;
+retained evidence and protected files pass content-hash checks. Historical test
+basetemp references may now point to recycled scratch; do not rewrite those receipts
+or confuse that disposal with missing live-run evidence.
+
+New disposable test roots belong under `C:\pt\tmp`, with validation reports stored
+separately and the owned scratch recycled after process completion/diagnosis. The
+human operations guide and agent guide now document that lifecycle. Three focused
+documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
+runtime suite, mock smoke, Docker operation or provider invocation was required.
+
 ## Current seam: post-hoc A1 checks limit the stop diagnosis
 
 `C:\pt\pl43-stop-validity-a` checks the exact previously untested probe-pilot A1
