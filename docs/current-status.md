@@ -38,7 +38,43 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: first-decision requirements proximity pilot prepared
+## Current seam: requirements proximity pilot shows no proposal improvement
+
+The explicitly approved four-response pilot is complete on `d5a411a` as
+`run_dev_sample_e54f9963571a4f1d` at
+`C:\pt\analyses\pl43-requirements-focus-live`. Four counts and four completed
+mini/medium responses cost $0.081974700 under the shared $1.20 cap in 48.434s.
+Zero sampled tools, corrections, retries, Docker or evaluator executions occur.
+The initial host-review rejection never started a process; explicit approval to
+transmit the historical public context and opaque reasoning to the official API
+preceded the first actual invocation. Both the invocation and transmission grants
+are consumed; no additional sampling, feedback rollout or live row is authorized.
+
+Anonymous static review was frozen before unblinding at
+`C:\pt\analyses\pl43-requirements-focus-review`. Both A samples and both B samples
+propose the same two public contradictions: they create a missing final directory
+then raise EEXIST because it now exists, and use leaf mode for intermediate dirs.
+A2 additionally omits the real docstring from its exact old_text anchor. All four
+memory_update values are null. None of these proposals is applied: gateway/check
+and task-acceptance outcomes are NOT_RUN, not four executed test failures.
+
+A counts 49,648 tokens and B 50,210 (+562). Outputs complete at 838–2,489 of 25,000
+tokens; every ordered request and continuation verifies, with all 13 historical
+reasoning items preserved in each request. The 991 protected files and all 17 live
+result files remain unchanged during review. Cache warmth differs, so per-arm cost
+is not an efficiency result. Task acceptance/safety are NOT_RUN, official=false.
+
+Repeating public requirements nearer the decision does not improve these four
+proposals. The observed gap is translating requirements into implementation rules
+and checking the proposed code, not a demonstrated new delivery/memory-storage
+defect. Old source docstrings also describe applying mode to parents, while the
+public check distinguishes parent and leaf modes; this is a potential conflicting
+cue, not proof of the model's reasoning. No inference about encrypted-state anchoring
+or general model ability follows from this single checkpoint. Do not adopt the
+repetition field by default; next investigate public-requirement/proposal validation,
+without injecting a repair or treating more prompt text as a demonstrated fix.
+
+## Prior seam: first-decision requirements proximity pilot prepared
 
 The provider-free packet at `C:\pt\analyses\pl43-requirements-focus` fixes row43's
 pre-first-mutation turn 14. Control A reconstructs the historical canonical request

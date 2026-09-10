@@ -475,6 +475,25 @@ chaining, correction, judge, task workspace or evaluator runs. `inspect` is read
 not resume. Static anonymous action review precedes unblinding; accepted edits,
 checks, repair and submission are NOT_RUN, not inferred from proposed code.
 
+This pilot is now complete after the user explicitly approved transmission of the
+historical public task/source/tool context and encrypted reasoning to
+`https://api.openai.com/v1`; `.env` was used only for SDK authentication. The earlier
+host rejection started no process/count. The actual invocation on `d5a411a` is
+`run_dev_sample_e54f9963571a4f1d` in `C:\pt\analyses\pl43-requirements-focus-live`:
+four counts/completed responses, $0.081974700, 48.434s, zero tools/retries/evaluation.
+Input counts are A 49,648 / B 50,210; all ordered requests and continuations verify.
+The approval is consumed; `inspect` remains read-only, and no new collection,
+correction, feedback rollout or live row is included.
+
+Anonymous-first review is at `C:\pt\analyses\pl43-requirements-focus-review`.
+All four proposals falsely treat their newly created leaf as preexisting and apply
+leaf mode to intermediate directories. A2 also mismatches the observed old_text.
+These are static proposal contradictions, not executed test results. No default
+prompt change follows; the small single-checkpoint comparison shows no benefit from
+this proximity-plus-repetition treatment. Different cache warmth invalidates using
+per-arm cost as an efficiency result. All memory updates are null; encrypted history
+was retained, but its internal semantic use is not observable.
+
 ### Failure-order pilot: row 43
 
 The later implementation-only go-ahead wires the pinned pre-turn-21 audit at

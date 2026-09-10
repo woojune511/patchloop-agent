@@ -711,7 +711,33 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the provider-free requirements-proximity packet at
+The current seam is the completed requirements-proximity pilot on `d5a411a`:
+`run_dev_sample_e54f9963571a4f1d`, `C:\pt\analyses\pl43-requirements-focus-live`.
+Explicit payload/destination approval followed a host rejection that had started
+no process or count. The one actual invocation completed four responses/counts,
+$0.081974700 / $1.20 and 48.434s, zero sampled tools/retries/corrections/evaluation.
+No additional collection or feedback rollout is authorized by this consumed grant.
+
+Review at `C:\pt\analyses\pl43-requirements-focus-review` freezes anonymous static
+findings before mapping: A1/A2/B1/B2 all create a missing leaf then falsely raise
+EEXIST, and all pass leaf mode into intermediate create_dir calls. A2 additionally
+has an old_text anchor omitting the actual docstring. Four null memory updates are
+model choices, not lost gateway notes. No proposal is applied and no gateway/check
+verdict is claimed. All four exact ordered requests and opaque continuations verify;
+each request retains 13 reasoning items. A/B input counts are 49,648/50,210 and
+all responses finish at 838–2,489 output tokens, below 25k. Protected 991 files and
+17 live-result files remain unchanged during review; cache warmth confounds costs.
+
+Do not promote this repetition field into the default runtime: this small pilot
+shows no proposal improvement. The behavioral gap is public-constraint integration
+and proposal validation; it does not establish internal reasoning, memory attention
+or general ability. Source docstrings apply mode to parents while public checks
+require a leaf/intermediate distinction, a possible conflicting cue, not causal proof.
+The next investigation should target requirement/proposal checking rather than more
+source repetition, mandatory notes or action restrictions. Runtime/task/tool hashes
+are unchanged; official=false and acceptance/safety remain NOT_RUN.
+
+The preceding provider-free requirements-proximity packet is at
 `C:\pt\analyses\pl43-requirements-focus`, implemented outside the runtime in
 `diagnostics/requirements_focus_sampler.py`. A pins row43 turn 14's historical
 canonical request hash 511b1fc7; B adds only public_requirements_at_decision to the
