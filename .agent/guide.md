@@ -711,8 +711,54 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is provider-free inspection audit and short-episode preparation
-in `diagnostics/model_state_inspection_audit.py` and `diagnostics/model_state_episode.py`.
+The current seam is the exact-grant short-episode collector in
+`diagnostics/model_state_episode_collector.py`. Only `collect` may access credentials
+or preflight already-running Docker/images; `prepare`, `validate` and `inspect` are
+strictly provider-free. Default runtime/tool surface v35 and task packages stay frozen.
+The proposed packet is `C:\pt\analyses\pl43-short-episode-execution-v2\packet.json`,
+`sha256:422ea586587c7a059fd48c65f6fcc9530c41874eb776f4594c5c944cce2a6776`, binding
+implementation-set `sha256:df64112be339bb3c00c699446c1a4cb6c0c8e4b8e86899986168bb809fbe9939`.
+It proposes one $5 invocation at `C:\pt\analyses\pl43-short-episode-live-v1` using root
+`.env`, not a reusable grant. The previous paid grant is consumed. Fresh explicit
+approval must match packet, implementation, prices, cap, credential and output path.
+Recheck official prices on the execution UTC date. No automatic retry/resume,
+replacement root/model, Docker start/pull/build, hidden evaluator or paid judge.
+
+Before any credential access, revalidate packet/source/task/runtime/code hashes and
+atomically claim the fresh result root. Record the envelope, then hold invocation
+and branch locks throughout execution. Register each branch before cloning so even
+partial initialization remains inspectable. One shared 1,800-second deadline also
+bounds cloning; each branch retains its inherited active budget. Reserve every
+active arm at each depth with 272k input/full 25k output, then count each exact
+request immediately before dispatch. The four-arm reservation is $2.743; $5 cannot
+guarantee all 16 windows or 128 maximum responses. Do not lower outputs, skip to
+cheaper groups, retry uncertainty or interpret censoring as agent failure.
+
+Collect exact native public action/result and candidate receipts before blind review;
+condition mapping remains separately journaled. Read-only inspection derives counts
+and known usage from non-inherited events, with provider/count uncertainty taking
+precedence over interruption/deadline. Finalization permits only ten seconds of
+read-only Git metadata after execution stops, without resetting the gateway deadline.
+Missing/drifted candidates mark partial review evidence, never an invented PASS binding.
+Checks/probes/finish are model-requested; no automatic evaluation is added. Test errors
+are not serialized verbatim. Preparation/validation must not read credential values.
+
+Twenty-two new collector tests pass in 110.02s, including public local mock
+mutation/check/finish, uncertainty, concurrent entry, deadline and crash inspection.
+Both real source checkpoints and all 16 first requests validate without network,
+tools, credentials or Docker. New receipts are at
+`C:\pt\validation\pl43-episode-collector`. Related totals are 166 passing cases:
+22 collector, 45 episode/factorial/review (126.96s), 96 reused engine/sampler
+(116.24s), three docs (0.05s), plus Ruff. The 45-case group exceeded two minutes;
+do not claim a full runtime suite or a two-minute whole cycle. Anonymous receipts
+pair exact public decision arguments and action results. The earlier unapproved
+execution-v1 packet is preserved, superseded and incompatible with the final code.
+Eight owned scratch roots were recycled with full content identity and restoration
+records. All 1,298 protected files and source/user file hashes are unchanged.
+This is not a paid run or quality claim.
+
+The preceding provider-free audit/preparation remains in
+`diagnostics/model_state_inspection_audit.py` and `diagnostics/model_state_episode.py`.
 The audit at `C:\pt\analyses\pl43-inspection-audit-v1` binds saved inspection results to
 the exact frozen requests by path/raw hash/range/body. It finds 16 new-coverage,
 six covered-only and three zero-match actions in the 14 response batches. Five
@@ -733,10 +779,10 @@ no hidden evaluator, automatic checker or new planning action is added.
 
 The injected scheduler reserves a complete active four-arm depth at the 272k input
 bound/full 25k output with per-model prices and a shared cap. It stops every arm on
-count/transport/billing/continuation uncertainty, never retries or resumes. Its only
-CLI is preparation. Before supplying any live adapter, bind a new exact packet/grant,
-reviewed prices, shared active deadline, execution lock, durable final receipt and
-fail-stop collector. The existing $5 grant is consumed; no cap/approval transfers.
+count/transport/billing/continuation uncertainty, never retries or resumes. The episode
+module's CLI remains preparation-only; use the separate exact-grant collector above
+for any later authorized invocation. The existing $5 grant is consumed; no cap/approval
+transfers.
 No-call checkpoint rehearsal forbids network, checks and probes while restoring both
 actual source cutoffs into owned external disposable copies. Keep new validation
 receipts at `C:\pt\validation\pl43-episodes`, separate from disposable scratch.

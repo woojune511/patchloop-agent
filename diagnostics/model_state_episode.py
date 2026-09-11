@@ -98,7 +98,7 @@ class Episode(engine.Branch):
 
 
 def initialize(plan, cell, root, workspace, package, sandbox, *, probe_sandbox=None,
-               clock=monotonic):
+               clock=monotonic, execution_deadline=None):
     """Fresh disposable gateway; inherit observations/counters, never old provider state."""
     shared.require(cell in plan.cells, "cell is not in the frozen design")
     root = design.fresh_root(root, plan.source_root, plan.packet_path.parent)
@@ -119,6 +119,8 @@ def initialize(plan, cell, root, workspace, package, sandbox, *, probe_sandbox=N
                    "restored counter mismatch")
     active = engine.ActiveClock(clock)
     deadline = ExecutionDeadline.from_remaining(remaining["active_wall_time_seconds"], clock=active)
+    if execution_deadline is not None:
+        deadline = engine.SharedDeadline(deadline, execution_deadline)
     with active.active():
         gateway = review.gateway_at(plan, cell.case_id, payload, prefix, root, workspace,
                                     package.public, sandbox, deadline)

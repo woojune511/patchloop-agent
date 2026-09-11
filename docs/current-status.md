@@ -38,7 +38,57 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: inspection audit and short-episode preparation
+## Current seam: short-episode collector ready for exact approval
+
+`diagnostics/model_state_episode_collector.py` now binds the prepared experiment
+to one exact invocation: immutable packet/implementation/runtime/task identities,
+fixed model prices, a proposed **$5 shared cap**, an exclusive result root and
+run-lifetime locks. Preparing, validating and inspecting never load a credential,
+call a provider or use Docker. The old paid grant is consumed; this is not a new
+execution approval.
+
+The new packet is `C:\pt\analyses\pl43-short-episode-execution-v2\packet.json`,
+`sha256:422ea586587c7a059fd48c65f6fcc9530c41874eb776f4594c5c944cce2a6776`.
+It fixes mini/GPT-5.4 medium/25k, the two row43 checkpoints and two repetitions of
+four conditions, at most eight responses per independent window. Every next depth
+reserves all active arms at the 272k-input/full-output bound before dispatch; a
+four-arm depth reserves $2.743. Actual inputs are counted just before dispatch.
+**$5 does not guarantee all 16 windows or 128 possible responses.** Unobserved
+windows and cost/step/deadline censoring are separate from agent failure.
+
+The 1,800-second shared deadline reaches checkpoint cloning and public actions.
+No retry/resume occurs after cost, count, transport or continuation uncertainty.
+Durable usage determines billing; read-only `inspect` never resumes pending work.
+A discovered deadline-finalization defect is fixed in the collector: after task
+execution stops, an independent ten-second read-only Git metadata tail can preserve
+final candidates. If a snapshot is missing or drifts, retain partial evidence with
+no invented candidate binding. Never relax the gateway execution deadline.
+
+Twenty-two collector tests pass in 110.02s, including actual local mock
+read -> mutation -> both visible checks -> finish, deadline/transport faults,
+concurrent-entry rejection and immutable crash inspection. Both real checkpoints
+also restore exact requests, tools and counters with the shared deadline; the
+packet validates twice without calls. Receipts are under
+`C:\pt\validation\pl43-episode-collector`. This is provider-free implementation
+evidence, not improved agent performance or hidden acceptance.
+
+Related validation totals 166 passing cases: 22 collector, 45 episode/factorial/
+review (126.96s), 96 reused engine/sampler (116.24s), and three documentation
+(0.05s), plus Ruff. The 45-case group exceeds the two-minute target; these are
+related tests, not a full-runtime rerun or a single two-minute workflow. Exact
+public decision arguments and results are paired in anonymous receipts. The earlier
+unapproved execution-v1 draft is preserved but superseded, not overwritten.
+All 1,298 protected files, source journal/envelope, `.env` and user `AGENTS.md`
+retain their hashes. Eight owned temporary roots were recycled with identical
+contents and restoration mappings; durable packets/validation remain in place.
+
+Next is a **fresh exact approval** for that packet, $5 total, root `.env` and one
+new `C:\pt\analyses\pl43-short-episode-live-v1` invocation. Prices must be reviewed
+on its execution UTC date. Docker and pinned images must already be available;
+no automatic start/pull/build, hidden evaluator or paid judge. Default agent/runtime,
+task packages and existing evidence remain unchanged; all results `official=false`.
+
+## Prior inspection audit and short-episode preparation
 
 The read-only follow-up at `C:\pt\analyses\pl43-inspection-audit-v1` compares all
 25 saved inspections with the exact source bodies in their original requests:
@@ -58,11 +108,10 @@ The history factor is inherited pre-checkpoint state; new native state views,
 encrypted reasoning and calls/results accumulate in every arm. This is not ongoing
 current-only compaction. Production runtime/tool surface v35 is unchanged.
 
-Preparation has no credential/client construction or live CLI. Shared per-model
-round reservation is mock-testable, but a fresh exact grant, pricing review,
-invocation lock/deadline and fail-stop collector binding are still required before
-paid execution. No cap or paid authority is inherited from the completed experiment.
-No provider, Docker or hidden evaluator execution accompanies this implementation.
+That preparation module has no credential/client construction or live CLI. The
+separate collector above supplies exact-grant, lock/deadline and fail-stop binding;
+it does not inherit paid authority from the completed experiment. No provider,
+Docker or hidden evaluator execution accompanies this implementation.
 
 The new preparation is `C:\pt\analyses\pl43-short-episode-design-v1\packet.json`,
 `sha256:dc8f431ea408ce311270f2e42cd2ccbfc16d3ed6f7b8efa888c87e3ba1b5ac02`.
