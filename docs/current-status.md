@@ -38,7 +38,44 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: frozen mini submissions independently evaluated
+## Current seam: fresh-start mini run completed; grant consumed
+
+The separately approved default-mini reproduction completed one new native run,
+`run_dev_91384f8a97354835`, at `C:\patchloop-state`. Read-only approval/analysis is
+at `C:\pt\analyses\mini-fresh-start-20260912` (`result.md`). It starts with an empty
+diff, no notes/source/old continuation, and full 40/100/4 budgets; no checkpoint,
+answer patch or private feedback was seeded. Runtime a3d7f3c0/tool surface v35,
+task v2, mini snapshot/medium/25k, root `.env`, probes enabled and $1.20 cap were unchanged.
+
+Result: `LIMIT_REACHED`, 27 responses/counts/tools, four accepted edits, three failed
+public contract checks, $0.441195300 and 220.438 active seconds. The final 32-line
+diff is within scope, but its intermediate directories still receive the leaf mode;
+the last check fails the public `0o755` permission assertion. Regression, submission
+and isolated evaluation did not run. The sole horizon blocker is accepted mutations,
+with 13 model/73 tool calls left. No token ceiling, transport or protocol error occurred.
+
+After the third edit, the model uses an old bytes error to justify its fourth edit
+without rechecking. Exact inputs already include the post-image, NOT_RUN current
+checks, historical failures and pending-recheck guidance; check/probe/read/search
+remain available. This repeats a stale-verdict-use pattern, not demonstrated feedback
+loss. The third candidate is untested; do not claim it passed or that the fourth edit
+was unnecessary without a separate public-only check. Four optional note updates
+yield one retained note; receipts and source rebinding verify, but repair outcomes
+are not incorporated. Absent internal planning or a need for mandatory notes is unproven.
+
+All 27 request hashes and encrypted continuations, 26 continuation follow-ups,
+81 referenced artifacts, check policy/diff identities and 3,231 protected files verify.
+Owned check containers are absent. No retry/resume, extra task check, private diagnosis,
+Docker start/pull/build or default-loop change occurred. Next is a separate decision
+on checking the frozen third candidate, then one evidence-backed repair/recheck-loop
+experiment, not another automatic paid row or budget increase. Task acceptance and
+safety NOT_RUN; official=false/claim_eligible=false. This one run is not a success rate.
+
+Result documentation passes three focused tests (0.050s), Ruff and diff checks.
+Runtime/task bytes are unchanged; no full runtime suite or mock smoke rerun. No
+pytest scratch tree was created by these documentation-only tests.
+
+## Prior result: frozen mini submissions independently evaluated
 
 The separately approved operator evaluation of both publicly submitted mini patches
 is complete at `C:\pt\evaluations\pl43-mini-recovery-v1`; read `result.md` there.
@@ -64,9 +101,9 @@ Evaluation safety applies to these operator executions, not the whole source age
 
 Mini produced one independently accepted patch from this checkpoint. This is not
 a fresh-start full-run result, a 50% overall success rate or cross-task evidence.
-Next is a separately scoped fresh-start reproduction with the existing default mini
-loop, without seeding either patch or private feedback. No context reduction, forced
-notes, default-loop change or further paid execution is authorized by this result.
+The subsequently approved fresh-start reproduction is recorded above, without seeding
+either patch or private feedback. No context reduction, forced notes, default-loop
+change or further paid execution is authorized by these results.
 All evidence remains official=false and claim_eligible=false.
 
 Evaluator/documentation focused tests pass (12 cases/7.78s), followed by three final

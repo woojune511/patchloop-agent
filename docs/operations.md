@@ -434,6 +434,22 @@ comparison or row 44 is authorized by this completed invocation.
 
 ### Model x state-history diagnostic: row 43
 
+The subsequent exact fresh-start default-mini invocation is complete:
+`run_dev_91384f8a97354835` at `C:\patchloop-state`, analysis/approval at
+`C:\pt\analyses\mini-fresh-start-20260912`. New task/base with no checkpoint, notes,
+source observations or answer patch; full native limits, v2, mini snapshot/medium/25k,
+root `.env`, repeat1, probes enabled and $1.20 cap. LIMIT_REACHED after 27 responses/
+counts/tools, four edits and three failed public checks, $0.441195300/220.438s.
+Only accepted mutations are exhausted. Final 32-line diff fails the intermediate
+mode assertion; no regression, submission or isolated evaluation ran.
+The unchecked third repair was treated as still failing despite delivered historical
+labels, NOT_RUN and pending-recheck guidance. Its actual outcome remains unmeasured;
+do not repair or check it under this consumed native-run grant. Read `result.md`
+before deciding a separate public-only counterfactual check or loop experiment.
+All request/continuation and check-policy evidence verify, with 3,231 protected files
+unchanged. No default-loop change, retry/resume, further provider call or Docker
+start/pull/build is implied. Task acceptance/safety NOT_RUN, official=false.
+
 The subsequent, separately approved evaluation of the two frozen public submissions
 is complete at `C:\pt\evaluations\pl43-mini-recovery-v1` (`result.md`). Exact C1/A/1
 49-line patch: task acceptance PASS. Exact C1/A/2 28-line patch: task acceptance FAIL,
@@ -443,8 +459,8 @@ PASS. Two unchanged evaluator invocations, two fresh no-hardlink workspaces,
 details were not returned to the agent or used for diagnosis. Do not repair or rerun
 these frozen candidates under this consumed grant. Their original diagnostic records
 remain NOT_RUN; separate operator results do not retroactively rewrite source runs.
-The next fresh-start mini reproduction requires its own exact execution scope; these
-checkpoint results are not an overall success rate. No default-loop change is implied.
+The separately approved fresh-start reproduction is recorded above; these checkpoint
+results are not an overall success rate. No default-loop change is implied.
 
 Completed follow-up: `mini-recovery-budget-v1` used mini-only A/B at both
 checkpoints with two fresh repetitions (eight episodes), no independent eight-response

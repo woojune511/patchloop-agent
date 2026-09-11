@@ -711,7 +711,34 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the separately approved independent evaluation of the two frozen mini
+Current seam: the exact fresh-start native mini grant is consumed by
+`run_dev_91384f8a97354835` at `C:\patchloop-state`; approval and public analysis are
+at `C:\pt\analyses\mini-fresh-start-20260912` (`result.md`, `analysis.json`). No
+checkpoint, answer patch or private feedback was seeded. Runtime a3d7f3c0/v35,
+v2 task, mini snapshot/medium/25k, .env, repeat1, probes, $1.20 and 40/100/4/1,800
+remain unchanged. 27 responses/counts/tools, four accepted edits, three failed public
+checks, $0.441195300/220.438s end in LIMIT_REACHED: accepted_mutations is the only
+blocker, despite 13 model/73 tool calls left. Final diff +31/-1 fits scope; public
+mode assertion fails because prefix creation still uses the leaf mode. No submission,
+regression/hidden evaluation, probe, retry/resume or Docker start/pull/build occurred.
+
+Third edit's new post-image, historical TypeError, current NOT_RUN and explicit
+pending-recheck guidance reach turns23-26. The model nonetheless claims the bytes
+repair was insufficient and spends its final edit before any check/probe. Do not
+call this lost feedback or claim the third candidate passed. Check/probe/read/search
+remain available all 27 turns. Four proposed note updates produce one retained note
+(first invalid tool-result citation rejected without blocking); delivery/rebinding
+verify, but notes are not updated after failures. No forced-note/plan conclusion.
+
+27 canonical request hashes/continuations, 26 replay deliveries, 81 artifacts and
+3,231 protected files verify; exact check containers are absent. Peak input/output
+122,330/6,939 are below limits. No incomplete/protocol/transport uncertainty. Next
+requires a separate decision: public-only evaluation of the frozen third candidate
+to test the fourth edit's necessity, then one repair/recheck-loop intervention if
+warranted. Do not repair/rerun frozen patches or launch another paid row automatically.
+No runtime/task changes; task acceptance/safety NOT_RUN, official=false, no claim.
+
+Prior result: the separately approved independent evaluation of the two frozen mini
 submissions is complete at `C:\pt\evaluations\pl43-mini-recovery-v1` (`result.md`).
 C1/A/1's unchanged 49-line patch passes task acceptance; C1/A/2's unchanged 28-line
 patch fails it. Both public regression, scope and typed evaluation safety PASS.
@@ -724,9 +751,9 @@ Only aggregate private verdicts are returned to the operator. Do not inspect pri
 failure details or claim the earlier public receiver-risk finding caused this failure.
 The schema-required model field is unused operator metadata, not a mock task result;
 real Docker evaluation ran. Safety covers these evaluations, not the full source loop.
-One checkpoint-produced mini patch is independently accepted. Fresh-start reliability,
-model success rates and generalization remain unmeasured. Next is a separate decision
-on fresh-start default-mini reproduction, without answer-patch/private-feedback seeds.
+One checkpoint-produced mini patch is independently accepted. The separately approved
+fresh-start reproduction is recorded above; reliability, model success rates and
+generalization remain unestablished. No answer-patch/private-feedback seeds were used.
 No new paid work or loop change is authorized; official=false/claim_eligible=false.
 
 Prior diagnostic: the exact `mini-recovery-budget-v1` grant is consumed. Collection
