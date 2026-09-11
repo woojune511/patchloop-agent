@@ -82,6 +82,16 @@ model-selected. No provider retry/resume, extra operator check or Docker start/p
 build ran. Original evidence is immutable and the grant is consumed. Do not infer
 automatic default adoption or feature causality from this single successful trajectory.
 
+The next comparison is prepared, **not approved**, at
+`C:\pt\analyses\repair-recheck-comparison-20260912` (canonical packet `af29b90f...`).
+It proposes four independent native repeat1 invocations in OFF/ON/ON/OFF order under
+identical v2/mini snapshot/medium/.env/probes/runtime settings. Each row has its own
+$1.20 cap; the total maximum is $4.80 without borrowing unused allowance. Do not run
+`--repeat 4` for one setting, reuse prior grants, alter runtime between cells or restart
+failed cells. Bind cell admission and native run ID once in an external observer;
+stop the entire comparison on uncertain cost/execution, integrity or safety failure.
+The option's context notice is part of the treatment, not a timing-only contrast.
+
 ## Explicitly approved live development
 
 First inspect local prerequisites and the task package:

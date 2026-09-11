@@ -38,7 +38,31 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current result: fresh mini plus repair-recheck reaches task acceptance PASS
+## Current seam: four-run repair-recheck comparison prepared; live unapproved
+
+The next proposal is frozen at `C:\pt\analyses\repair-recheck-comparison-20260912`
+(`README.md`, `packet.json`), canonical packet hash `af29b90f...`. Same v36/runtime
+`28f08d7c...`, v2 task, mini snapshot/medium/.env/probes and native limits. Four new,
+independent repeat1 invocations run OFF/ON/ON/OFF, each capped at $1.20, combined
+maximum $4.80 with no transfer of unused row allowance. Prior successful/failed rows
+are reference observations, not control samples. No provider/count/task call ran.
+
+This compares the native option including its first-context policy notice, not
+check timing alone. An initial-context test confirms that notice is the only
+synthetic pre-action context difference. All attempted rows remain in the comparison;
+no-child rows are NOT_EXERCISED for that path, not discarded. Submission/task acceptance,
+repair/check chronology, resource use and typed safety are separate outcomes.
+Only aggregate private evaluation after normal finish is permitted. No hidden-detail
+inspection, cross-run hints, retry/resume, extra sample or default adoption follows.
+
+Eighteen repair-recheck and three documentation tests pass in 68.174s; two packet/
+context tests pass in 1.06s. Native runtime/task are unchanged. The preparer has no
+paid execution entry point. Price and read-only Docker/image preflight agree with
+the proposed inputs. Fresh exact approval of the packet and four-run $4.80 scope is
+still required; uncertainty stops the whole comparison with remaining rows NOT_RUN.
+This is a small within-task reproducibility diagnostic, not a generalization claim.
+
+## Latest live result: fresh mini plus repair-recheck reaches task acceptance PASS
 
 The exact separately approved invocation completed as `run_dev_d484ea8a2a8e4ba4`
 at `C:\patchloop-state`; approval, public trajectory and integrity receipts are at

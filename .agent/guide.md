@@ -753,6 +753,24 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
+Current seam: prepare-only four-run native comparison at
+`C:\pt\analyses\repair-recheck-comparison-20260912`; packet hash `af29b90f...`.
+No execution authority yet. OFF/ON/ON/OFF, two fresh runs each, same runtime v36/
+`28f08d7c...`, task v2, mini snapshot/medium/.env/probes, each repeat1/$1.20, total
+$4.80 with no budget transfer. Keep 40/100/4/1,800 and native output admission.
+Previous rows are context only, never substitute controls or answer seeds. The option
+also adds its initial context notice, so this is not a timing-only intervention.
+Initial-context equality excluding that notice and packet/model/cap binding pass;
+21 existing focused/docs tests plus two design cases complete in about 70s.
+
+Use the unchanged native run entry per cell only after exact packet approval; bind
+each admission once in a separate observer. Verify terminal/cost/cleanup before the
+next row. Infrastructure/transport/billing/continuation or safety uncertainty ends
+the comparison; preserve partial results, no resume/retry/replacement. Native private
+evaluation follows ordinary finish; read aggregate verdicts only. Include no-child
+and non-submission rows with NOT_EXERCISED/NOT_RUN labels, not selected-success bias.
+No implementation/default adoption or generalization claim follows from this design.
+
 Current result: separately approved fresh mini `run_dev_d484ea8a2a8e4ba4` completes
 with EVALUATOR_PASS, task acceptance/safety PASS, official=false. Its exact v2/mini
 snapshot/medium/.env/repeat1/$1.20/probes/repair-recheck invocation is consumed.
