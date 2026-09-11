@@ -38,7 +38,44 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: frozen third candidate publicly checked
+## Current seam: opt-in repair-recheck feedback implemented
+
+`--repair-recheck` is implemented, default **off**, under tool surface v36. After
+an accepted mutation changes a diff with a current public failure, the harness
+reruns the latest still-failing registered check before the next inference. Initial
+edits without a current failure and rejected edits do not trigger it. Other checks,
+semantic repair choices and notes stay with the agent; no new action mask or plan
+requirement is introduced. The native tool schema/order and encrypted history are unchanged.
+
+The child is explicitly harness-originated, costs one normal tool action and active
+time, and makes no model/count call. Its exact parent/check/diff identities and
+start/finish receipts support resume; durable results replay without execution.
+Current feedback is delivered through the existing bounded public check state, not
+a fabricated model function call. The option is bound in the exact envelope.
+Pending recovery precedes a new completion-horizon decision, while provider/cleanup
+uncertainty, deadline and workspace boundaries retain their stopping behavior.
+
+The 18 focused tests pass in 62.96s, including six crash boundaries, default-OFF
+behavior, native feedback delivery, current-failure selection, last-mutation horizon,
+budget/deadline/drift, terminal resume and uncertainty precedence. The final 79-file
+regression selection is 1,425 passed / four real-Docker opt-in skips; Ruff passes.
+Four initial failures were an obsolete v35 hash assertion and three frozen-diagnostic
+tests expecting admission under their old runtime. Updated tests require unchanged
+runtime-mismatch rejection, never migrated evidence or relaxed execution gates.
+Their 68-case compatibility/documentation rerun passes in 86.25s. The longest full
+worker took 298.86s: the whole validation cycle is **not** under two minutes.
+
+CLI mock `run_dev_bb4e471f35954f76` at
+`C:\pt\validation\repair-recheck-smoke-20260912a` reaches mutation/check/finish/
+isolated acceptance PASS, safety NOT_RUN, four mock turns/five tools/one edit/$0.
+Its enabled option correctly does not add a recheck without a prior failure; the
+focused synthetic failure tests exercise the child. Runtime `28f08d7c...` and v36
+surface `e02c52b5...` match validation and smoke. Detailed receipts are at
+`C:\pt\validation\repair-recheck-20260912.md`. No live run, provider
+call, Docker start/pull/build, task change or original evidence update is authorized
+by this implementation. Agent-quality benefit remains untested; official=false.
+
+## Prior result: frozen third candidate publicly checked
 
 The separately approved public-only check of the fresh run's third candidate is
 complete at `C:\pt\evaluations\mini-third-candidate-20260912` (`result.md`). Exact
@@ -58,10 +95,10 @@ files verify. No hidden evaluator, patch repair, Docker start/pull/build, retry,
 runtime/task change or original-run update occurred. Task acceptance/safety NOT_RUN;
 official=false/claim_eligible=false. These are operator observations, not agent checks.
 
-Next candidate is an opt-in repair-and-recheck feedback experiment, not another
+This motivated the opt-in repair-and-recheck feedback experiment above, not another
 automatic paid row, budget increase or mandatory notes. Rechecking can supply a
 current counterexample; correct repair and broader behavior preservation remain
-unproven. No such loop change is implemented or authorized by this completed check.
+unproven. Its implementation is a separate follow-up, not authority from this completed check.
 
 Three documentation tests and Ruff pass. Runtime/task bytes did not change, so no
 full runtime suite or mock smoke was rerun. No disposable pytest tree was created.

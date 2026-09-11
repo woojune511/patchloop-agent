@@ -71,6 +71,11 @@ def dev(
     enable_probes: Annotated[
         bool, typer.Option("--enable-probes", help="Enable bounded clean-Python diagnostics.")
     ] = False,
+    repair_recheck: Annotated[
+        bool, typer.Option(
+            "--repair-recheck", help="After a repair, rerun its prior failed public check."
+        )
+    ] = False,
     resume_run_id: Annotated[
         str | None,
         typer.Option("--resume-run-id"),
@@ -92,6 +97,7 @@ def dev(
                 max_cost_usd=_parse_cost(max_cost_usd),
                 repeat=repeat,
                 enable_probes=enable_probes,
+                repair_recheck=repair_recheck,
                 resume_run_id=resume_run_id,
             )
         )

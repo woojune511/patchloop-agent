@@ -75,12 +75,19 @@ the raw-output failure signature for provenance and derives a separate semantic 
 fingerprint for comparisons across diffs. The focus survives intervening inspection
 and restart, distinguishes the same mapped site from a changed traceback location,
 and becomes pending through repair until a recheck passes or supplies a new current
-failure. Rechecking a repair is advice, not a gate: an independent source-supported
+failure. By default, rechecking a repair is advice, not a gate: an independent source-supported
 edit remains possible. A hypothesis or unread helper's header is not a verified
 defect. Source-line
 order does not establish execution history through loops or branches; whether later
 lines ran remains unknown. A failure guides investigation without restricting it to
 the reported file or forcing a claim that a prior hypothesis was falsified.
+
+The optional `--repair-recheck` experiment couples an accepted repair with one
+rerun of the latest still-failing public check on its baseline. The harness supplies
+that current verdict before the next inference, charging the normal tool/time budget.
+It does not fabricate a model call, add tool masks, require notes/plans, or run private
+evaluation early. Other checks and all semantic repair choices remain the agent's.
+This option is off by default; its effect on agent quality has not been live-tested.
 Check output limits preserve complete lines and explicitly report clipping. A small
 literal failure summary preserves public test IDs/comparison text even when a long log
 pushes them out of the delivered tail. Exception labels come from recognized terminal

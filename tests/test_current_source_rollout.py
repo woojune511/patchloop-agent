@@ -167,6 +167,11 @@ def test_frozen_plan_is_read_only_and_has_no_post_cutoff_actions():
         pytest.skip("external frozen diagnostic evidence is not installed")
     source = rollout.SOURCE / "runs/run_dev_9b91e06c13ff4bd3.jsonl"
     before = source.read_bytes()
+    if rollout.runtime_content_hash() != rollout.EXECUTING_RUNTIME:
+        with pytest.raises(ContractError, match="execution runtime changed"):
+            rollout.load_plan()
+        assert source.read_bytes() == before
+        return
     plan = rollout.load_plan()
     assert source.read_bytes() == before
     assert len(plan.prefix) == 222
@@ -246,6 +251,11 @@ def test_real_frozen_checkpoint_initializes_without_execution(tmp_path):
     from patchloop.sandbox import LocalSandbox
     from patchloop.sandbox.probes import DockerProbeSandbox
 
+    if rollout.runtime_content_hash() != rollout.EXECUTING_RUNTIME:
+        with pytest.raises(ContractError, match="execution runtime changed"):
+            rollout.load_plan()
+        assert not list(tmp_path.iterdir())
+        return
     plan = rollout.load_plan()
     branch = rollout.initialize_branch(plan, "B1", tmp_path, LocalSandbox(), DockerProbeSandbox(),
                                         ExecutionDeadline.from_remaining(100))

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from time import monotonic
@@ -64,6 +65,7 @@ from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.model_state import compact_model_state
 from patchloop.dev.native_sources import project_mutation_result, reference_native_sources
 from patchloop.dev.probe_observation import probe_observation, project_probe_result
+from patchloop.dev.repair_recheck import repair_recheck_context, select_repair_recheck
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import (
     DevGatewayStateSnapshot,
@@ -481,7 +483,7 @@ def _cards(
 
 
 def _recent_checks(
-    gateway: DevToolGateway, *, diff_hash: str | None = None,
+    gateway: DevToolGateway, *, diff_hash: str | None = None, pinned_action_id: str | None = None,
 ) -> list[dict[str, Any]]:
     # Keep the result's citation identity with its label even after the native
     # output ages out. Preserve the existing diff/check selection and order;
@@ -530,7 +532,12 @@ def _recent_checks(
                     "truncated": bool(value.get("truncated")) or stdout_clipped or stderr_clipped,
                 }
             )
-    return rows[-3:]
+    selected = rows[-3:]
+    if pinned_action_id is not None:
+        pinned = next((row for row in rows if row["action_id"] == pinned_action_id), None)
+        if pinned is not None and pinned not in selected:
+            selected = [*selected[-2:], pinned]
+    return selected
 
 
 def _workflow_gate(summary: Any, *, ready_to_submit: bool) -> str:
@@ -1139,12 +1146,16 @@ def _build_context(
     snapshot: DevGatewayStateSnapshot | None = None,
     tool_policy_transition: dict[str, Any] | None = None,
     projection: SourceProjection | None = None,
+    repair_recheck: bool = False,
 ) -> str:
     projection = projection or gateway.prepare_context_projection(
         latest_results=latest_tool_results,
     )
     active_snapshot = snapshot or gateway.state_snapshot(projection=projection)
     summary = active_snapshot.diff
+    recheck_context = (
+        repair_recheck_context(journal, summary.patch_hash) if repair_recheck else None
+    )
     active_policy = policy or _tool_policy(
         gateway,
         counters,
@@ -1276,7 +1287,13 @@ def _build_context(
             "untracked_files": summary.untracked_files,
             "truncated": False,
         },
-        "recent_checks": _recent_checks(gateway, diff_hash=summary.patch_hash),
+        "recent_checks": _recent_checks(
+            gateway, diff_hash=summary.patch_hash,
+            pinned_action_id=(
+                recheck_context["last_result"]["action_id"]
+                if recheck_context and recheck_context["last_result"] else None
+            ),
+        ),
         "public_execution_summary": gateway.public_execution_summary(diff_hash=summary.patch_hash),
         "latest_tool_results": [
             project_mutation_result(
@@ -1288,6 +1305,13 @@ def _build_context(
         "recent_attempt_result_next_question": _cards(journal, correction),
         "public_task": package.public.model_dump(mode="json"),
     }
+    if repair_recheck:
+        payload["repair_recheck"] = recheck_context
+        last_recheck = recheck_context["last_result"]
+        if last_recheck is not None and not any(
+            row["action_id"] == last_recheck["action_id"] for row in payload["recent_checks"]
+        ):
+            last_recheck["details_delivery"] = "not_retained; consult current visible_check_status"
     if getattr(gateway, "probe_sandbox", None) is not None:
         latest_ids = {result.action_id for result in latest_tool_results}
         probes = [
@@ -2383,6 +2407,7 @@ def _run_envelope(
         runtime_hash=runtime_hash,
         model_hash=model_hash,
         sandbox_identity_hash=_sandbox_identity_hash(request, package),
+        repair_recheck=request.repair_recheck,
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
         probe_profile_hash=probe_profile_hash() if request.enable_probes else None,
         model=request.model,
@@ -2419,7 +2444,7 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             len(event["payload"].get("tool_calls", []))
             for event in events
             if event["event_type"] == "tool_batch_started"
-        ),
+        ) + sum(event["event_type"] == "repair_recheck_started" for event in events),
         input_count_calls=sum(event["event_type"] == "input_count_started" for event in events),
         protocol_recoveries=consecutive_protocol_recoveries,
     )
@@ -2428,8 +2453,12 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
         if event["event_type"] == "action_finished":
             result = DevToolResult.model_validate(event["payload"]["result"])
             action_results[result.action_id] = result
-        elif event["event_type"] == "tool_batch_finished":
-            action_ids = event["payload"].get("action_ids", [])
+        elif event["event_type"] in {"tool_batch_finished", "repair_recheck_finished"}:
+            action_ids = (
+                [event["payload"]["action_id"]]
+                if event["event_type"] == "repair_recheck_finished"
+                else event["payload"].get("action_ids", [])
+            )
             if not isinstance(action_ids, list) or not action_ids:
                 continue
             results = [action_results.get(str(action_id)) for action_id in action_ids]
@@ -2755,6 +2784,62 @@ def _batch_execution_abort(results: list[DevToolResult]) -> tuple[DevTerminal | 
     return None, None
 
 
+def _run_repair_recheck(
+    *, journal: DevJournal, gateway: DevToolGateway, latest_results: list[DevToolResult],
+    counters: _RunCounters, active_elapsed_ms: Callable[[], int],
+) -> tuple[DevTerminal | None, str | None]:
+    """Drain the opt-in child check before any new inference or horizon decision.
+
+    A child is a real, budgeted gateway action but not a native model function call.
+    Its result enters the next public state, never the model's call/output batch.
+    """
+    selected = select_repair_recheck(
+        journal, latest_results,
+        registered_checks={check.id for check in gateway.public_task.visible_checks},
+    )
+    if selected is None:
+        return None, None
+    call = selected.call(journal.run_id)
+    receipts = {
+        event["event_type"]: event["payload"] for event in journal.events()
+        if event["event_type"] in {"repair_recheck_started", "repair_recheck_finished"}
+        and event["payload"].get("action_id") == call.action_id
+    }
+    identity = selected.payload(journal.run_id)
+    for receipt in receipts.values():
+        if any(receipt.get(key) != value for key, value in identity.items()):
+            raise RecoveryError("repair recheck identity changed")
+    replay = journal.action_result(
+        call.action_id, sha256_json({"tool": call.name, "arguments": call.arguments}),
+    )
+    if "repair_recheck_finished" in receipts and replay is None:
+        raise RecoveryError("completed repair recheck is missing its durable action result")
+    if replay is None and gateway.current_diff_hash != selected.candidate_diff_hash:
+        raise ResumeContractMismatch("repair recheck workspace differs from accepted candidate")
+    if "repair_recheck_started" not in receipts:
+        if counters.tool_actions >= gateway.limits.max_tool_actions:
+            return DevTerminal.LIMIT_REACHED, "tool-action limit reached before repair recheck"
+        if gateway.deadline is not None:
+            gateway.deadline.check()
+        journal.append("repair_recheck_started", {
+            **identity, "active_elapsed_ms": active_elapsed_ms(),
+        })
+        counters.tool_actions += 1
+    # execute() returns a durable result before touching the workspace/deadline.
+    # A pending check is rerun only through the existing exact-container recovery.
+    result = replay if replay is not None else gateway.execute(call)
+    if "repair_recheck_finished" not in receipts:
+        journal.append("repair_recheck_finished", {
+            **identity, "status": result.status, "passed": result.output.get("passed"),
+            "active_elapsed_ms": active_elapsed_ms(),
+        })
+        _update_inspection_counters(counters, [result], gateway)
+    terminal, message = _batch_execution_abort([result])
+    if terminal is None and result.status == "failed":
+        return DevTerminal.TASK_FAILED, "repair recheck gateway action failed"
+    return terminal, message
+
+
 def _record_tool_batch(
     *,
     journal: DevJournal,
@@ -2877,6 +2962,7 @@ def _run_one(
                     "runtime_hash": runtime_hash,
                     "task_hash": package.task_content_hash,
                     "model_hash": model_hash,
+                    "repair_recheck": request.repair_recheck,
                 },
             )
 
@@ -3336,6 +3422,23 @@ def _run_one_active(
                                 else:
                                     stop_result = recovered_completion
     while terminal_code is None and finish_result is None and stop_result is None:
+        if request.repair_recheck:
+            try:
+                terminal_code, terminal_message = _run_repair_recheck(
+                    journal=journal, gateway=gateway, latest_results=latest_tool_results,
+                    counters=counters, active_elapsed_ms=active_elapsed_ms,
+                )
+            except ExecutionDeadlineExceeded:
+                terminal_code = DevTerminal.LIMIT_REACHED
+                terminal_message = "active deadline exhausted before repair recheck"
+            except GitExecutionUncertain:
+                raise
+            except Exception as exc:
+                terminal_code = DevTerminal.TASK_FAILED
+                terminal_message = f"repair recheck failed: {type(exc).__name__}"
+            if terminal_code is not None:
+                stop_remaining = terminal_code == DevTerminal.TASK_FAILED
+                break
         if remaining_active_seconds() <= 0:
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "row wall-time limit reached"
@@ -3385,6 +3488,7 @@ def _run_one_active(
                 snapshot=snapshot,
                 tool_policy_transition=policy_transition,
                 projection=projection,
+                repair_recheck=request.repair_recheck,
             )
             context_payload = json.loads(context)
             projected_spans = list(context_payload["source_spans"])

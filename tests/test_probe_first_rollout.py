@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from dataclasses import replace
 from decimal import Decimal
 from pathlib import Path
@@ -236,6 +237,13 @@ def test_real_frozen_checkpoint_and_packets_are_unchanged_and_no_execution(tmp_p
     from patchloop.sandbox import LocalSandbox
 
     before = {p: p.read_bytes() for p in rollout.DESIGN.iterdir() if p.is_file()}
+    frozen_runtime = json.loads(before[rollout.DESIGN / "manifest.json"])["runtime_hash"]
+    if rollout.view.runtime_content_hash() != frozen_runtime:
+        with pytest.raises(ValueError, match="runtime changed"):
+            rollout.load_plan()
+        assert before == {p: p.read_bytes() for p in before}
+        assert not list(tmp_path.iterdir())
+        return
     plan = rollout.load_plan()
     envelope = rollout.prepare(tmp_path / "plan")
     assert envelope["collector_implemented"] and envelope["kind"] == rollout.SCHEMA

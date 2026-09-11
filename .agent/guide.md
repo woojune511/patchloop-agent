@@ -529,8 +529,9 @@ claims as a current error. Current check status remains authoritative; recheck P
 clears pending and recheck FAIL supplies the new current failure. Preserve original
 native outputs, prior input prefixes and all replay identities. Optional inspection
 and independently evidenced edits remain available under the same budgets.
-The prompt distinguishes completion of this candidate from the separate further-edit
-horizon. Do not change tool masks, force a check or reject a voluntary stop on this basis.
+The default prompt distinguishes completion of this candidate from the separate further-edit
+horizon. Do not change tool masks or reject a voluntary stop on this basis. Only the
+explicit repair-recheck experiment below schedules a check without a model choice.
 Recheck a repair before assuming the old failure persists. A proposed explanation is
 not a verified defect; a helper header does not establish its unread return behavior.
 These are concise task instructions, not required planning or raw-reasoning output.
@@ -551,8 +552,48 @@ action results are restored verbatim, not reclassified by the current parser. Ve
 deadlines, policy hashes, raw-tail failure-signature formula and all workflow gates
 remain unchanged; only captured/retained output and diagnostic semantics change.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v35`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v36`;
 do not migrate old envelopes or journal bytes.
+
+### Opt-in repair-recheck feedback
+
+`DevRunRequest.repair_recheck` / `--repair-recheck` defaults false and is bound in
+the exact run envelope. No tool name, input schema/order, prompt, memory requirement,
+provider continuation or action mask changes. The v36 surface hash records this
+scheduler/output contract; old runtime envelopes remain immutable and mismatched.
+
+After the native mutation batch is durably complete, select the latest still-failing
+registered check on that mutation's baseline, using only action results preceding
+admission. A newer PASS supersedes its earlier FAIL. Trigger only for a successful,
+diff-changing replacement; not rejected/initial edits without current failure,
+historical failures on other diffs, probes or speculative hypotheses. If multiple
+checks fail, choose the latest one by journal sequence, independent of declaration
+order. Rerun exactly that check through the existing gateway before a new inference.
+
+`repair_recheck_started/finished` bind origin=harness, parent mutation, previous
+check action, check ID and baseline/candidate hashes. A deterministic child action
+uses normal action_id+input_hash and sandbox execution identity. Count its reservation
+once as a tool action, not a model/count call. Resume drains pending native actions
+first, then this child, then recomputes the completion horizon. Existing minimum
+completion already includes all invalidated checks; this consumes one reserved check
+without reserving another model turn or changing the conservative B/P calculation.
+
+Do not add the child to a native tool batch or encrypted function-call history. Its
+bounded stdout/stderr use existing recent-check tails in public current state; an
+explicit repair_recheck receipt identifies the harness action and checked diff. Keep
+its available recent-check row pinned; do not falsely reference a native function
+output. No additional source/private information or model-authored interpretation
+is produced. Other checks must still pass on this diff before submission.
+
+Replay completed child results without execution or another charge, including after
+expiry. A check interrupted before a durable result follows existing exact-container
+cleanup/re-execution semantics: this is not a promise of exactly-once physical
+execution across that uncertainty window. Workspace mismatch, cleanup uncertainty,
+deadline and tool-limit boundaries stop before another inference. A semantic FAIL
+instead supplies the new current error and ordinary remaining-budget workflow.
+
+This tests feedback timing, not whether the next repair is correct. Default behavior
+stays off. No live grant, Docker start/pull/build or prior-run migration follows.
 
 ## Local storage hygiene
 
@@ -585,7 +626,8 @@ without durable usage is uncertain and must not be retried automatically.
 
 New runs also own one immutable `dev-run-envelope-v1`. `--resume-run-id` requires
 `repeat=1` and an exact match for provider, task, runtime, model, reasoning,
-credential path hash, cost cap, limits, and sandbox identity, including the opt-in probe
+credential path hash, cost cap, limits, repair_recheck option, and sandbox identity,
+including the opt-in probe
 image/profile identities. Repeat `--enable-probes` only if it was enabled originally.
 Pre-envelope runs
 cannot resume. A run-lifetime OS lock rejects concurrent execution. Generic turn
@@ -711,7 +753,14 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the separately approved frozen-third-candidate public check is complete
+Current seam: opt-in `--repair-recheck` is implemented (v36, default off); see its
+contract above. Focused verification covers public current-failure selection, fresh
+verdict before inference, no fabricated native child call, exact option/envelope
+matching, counters and six crash boundaries. This is local behavior evidence, not a
+live model-quality result. No paid invocation, Docker start/pull/build, task alteration
+or historical evidence update follows automatically.
+
+Prior result: the separately approved frozen-third-candidate public check is complete
 at `C:\pt\evaluations\mini-third-candidate-20260912` (`result.md`). Restore the exact
 30-line `7c97d024...` candidate from native turn23 context/turn22 admission, never
 the source final worktree. Both declared checks ran once on a no-hardlink base clone:
@@ -726,10 +775,11 @@ diff/postimage/scope/policy and 3,388 protected files verify; owned containers a
 No candidate repair, source resume, private evaluator/details, Docker start/pull/build,
 runtime/task change or retry. Task acceptance/safety NOT_RUN, official=false. Preserve
 the original source NOT_RUN/terminal; these are later operator-only observations.
-Next implementation candidate is an opt-in successful-repair plus prior-failed-check
+This motivated an opt-in successful-repair plus prior-failed-check
 feedback transaction, preserving native action/time/replay boundaries. Do not assume
 it makes semantic repairs correct or add mandatory notes/extra action masks. This
-completed two-check grant does not authorize implementing it or another paid run.
+completed two-check grant did not authorize implementation or another paid run;
+the implementation above is a separately requested follow-up.
 
 Prior run: the exact fresh-start native mini grant is consumed by
 `run_dev_91384f8a97354835` at `C:\patchloop-state`; approval and public analysis are
@@ -2896,7 +2946,25 @@ or generalization benefit.
 
 ## Validation checklist
 
-Latest v35 reliability receipt: `C:\pt\pl-fixes-final-b` on code/test commit
+Latest v36 receipt: `C:\pt\validation\repair-recheck-20260912.md`. Eighteen focused
+repair-recheck cases pass in 62.96s; 68 compatibility/docs cases pass in 86.25s;
+Ruff passes. The full four-way sorted-stride selection covers all 79 test files:
+1,425 passed / four real-Docker opt-in skips after replacing three affected files'
+outdated expectations with the green compatibility receipt. Preserve initial red
+receipts; four failures were the old surface hash and frozen-runtime admission
+expectations, not authority to loosen runtime gates or rewrite frozen packets.
+Longest full worker 298.86s; the overall cycle exceeds two minutes.
+Runtime is `sha256:28f08d7c8d20f0f77b900cffe2e1a46101f9f0ba4c7ddb7fd666e63d89079640`;
+v36 surface is `sha256:e02c52b592502dfe3796773c72f0b13482840575fdee16cf0aecfdc21e90f50c`.
+CLI opt-in smoke `run_dev_bb4e471f35954f76` at
+`C:\pt\validation\repair-recheck-smoke-20260912a` reaches isolated acceptance PASS /
+safety NOT_RUN, four mock turns, five tools, one edit, zero count/provider/cost.
+An initial edit without current failure correctly creates no child check. Synthetic
+repair tests separately verify PASS/FAIL child feedback, six crash points, no extra
+model call, last-mutation recheck before horizon, exact envelope and uncertainty stops.
+No new live-quality, hidden pyfakefs or safety claim follows.
+
+Prior v35 reliability receipt: `C:\pt\pl-fixes-final-b` on code/test commit
 `b0da0e7`, all 63 test files, 1,108 passed and four opt-in real-Docker skips; Ruff
 passes. Three-worker full pytest plus preservation is 225.594s; each focused group
 is at most 115.51s. Do not call the whole cycle under two minutes. Initial test-double

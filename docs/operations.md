@@ -53,6 +53,25 @@ parallel public inspection, one admitted mutation, a visible check, automatic
 full-diff projection, finish, and a separate private evaluation. Its result is
 still unofficial.
 
+## Opt-in repair feedback experiment
+
+`patchloop dev --repair-recheck` reruns the latest still-failing registered public
+check after an accepted repair changes that checked diff, before another inference.
+The default is off. Initial edits without a current failure and rejected edits do
+not trigger it; other checks remain model-selected. This is a feedback-timing
+experiment, not evidence that the agent repairs correctly.
+
+The child check uses the normal sandbox, deadline and one tool action; no additional
+model/count call is made. It is recorded as harness-originated, not as a model tool
+choice. Its bounded public result enters the next current-state view. Resume requires
+the same flag and exact envelope/runtime inputs. Completed results replay; an interrupted
+check without a durable result follows the existing owned-container cleanup/recovery
+path. No check starts after expiry, uncertainty or exhausted tool budget.
+
+Provider-free validation does not authorize a live experiment. Approve an exact new
+task/model/reasoning/env/repeat/cap invocation including this flag separately; do not
+reuse an old paid grant or migrate an old run.
+
 ## Explicitly approved live development
 
 First inspect local prerequisites and the task package:
@@ -1268,6 +1287,8 @@ Provider, task, model, reasoning effort, resolved credential-file path, invocati
 cap, limits, runtime content, sandbox identity, and full task-content identity must
 match the stored envelope exactly. Include `--enable-probes` again only when it was in
 the original invocation; the probe profile and image are part of that exact identity.
+Likewise repeat `--repair-recheck` only if enabled in the original run; changing it
+is an envelope mismatch, not a resume-time experiment switch.
 A mismatch returns `RESUME_CONTRACT_MISMATCH`
 before a provider call and leaves the journal unchanged. Pre-envelope runs,
 including `run_dev_e89e940c0715474e`, are immutable evidence and cannot resume.
