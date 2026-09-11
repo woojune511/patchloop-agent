@@ -297,6 +297,7 @@ class Branch:
     new_provider_calls: int = 0
     new_tools: int = 0
     new_cost_nanos: int = 0
+    max_responses: int | None = 8
 
     def elapsed_ms(self):
         return int((self.base_elapsed + self.clock()) * 1000)
@@ -408,8 +409,8 @@ class Branch:
 
     def prepare_request(self, package: Any, adapter: Any):
         self.gateway.deadline.check()
-        if self.new_provider_calls >= 8:
-            self.finish("LIMIT_REACHED", "eight-response follow-up bound reached")
+        if self.max_responses is not None and self.new_provider_calls >= self.max_responses:
+            self.finish("LIMIT_REACHED", "diagnostic follow-up response bound reached")
             return None
         projection = self.gateway.prepare_context_projection(latest_results=self.latest)
         snapshot = self.gateway.state_snapshot(projection=projection)

@@ -58,18 +58,23 @@ def proposal(frozen, preparation_path, preparation_hash, task_dir, result_root):
     raw = preparation_path.read_bytes()
     shared.require(sha256_bytes(raw) == preparation_hash, "preparation hash mismatch")
     prepared = json.loads(raw)
+    profile = episode.profile_for(prepared.get("episode_profile", episode.FACTORIAL.name))
+    cells = profile.cells(frozen)
+    prices = {a: shared.protocol_prices(design.PROTOCOL)[a] for a in profile.arms}
     shared.require(
         prepared["schema_version"] == episode.PREPARATION_SCHEMA
         and prepared["input_contract_hash"] == episode.INPUT_CONTRACT_HASH
         and prepared["source_packet_hash"] == frozen.packet_hash
         and prepared["runtime_hash"] == frozen.packet["runtime_hash"]
         and prepared["prior_sample_responses_reused"] == 0
-        and prepared["max_responses_per_episode"] == episode.MAX_RESPONSES,
+        and prepared["max_responses_per_episode"] == profile.max_responses
+        and prepared["comparison_groups"] == [list(b) for b in profile.groups()]
+        and prepared["max_generation_calls_proposal"] == profile.maximum_calls(cells),
         "preparation contract mismatch",
     )
     store = design.readonly_store(preparation_path.parent)
-    shared.require(len(prepared["cells"]) == len(frozen.cells), "cell count mismatch")
-    for row, cell in zip(prepared["cells"], frozen.cells, strict=True):
+    shared.require(len(prepared["cells"]) == len(cells), "cell count mismatch")
+    for row, cell in zip(prepared["cells"], cells, strict=True):
         request = review.read_json(store, row["request_artifact"])
         shared.require(
             (row["case_id"], row["arm"], row["repeat"])
@@ -96,6 +101,7 @@ def proposal(frozen, preparation_path, preparation_hash, task_dir, result_root):
     contract = {
         **BOUNDARIES,
         "kind": KIND,
+        "episode_profile": profile.name,
         "status": "READY_FOR_EXACT_APPROVAL",
         "paid_execution_authorized": False,
         "actual_provider_calls": 0,
@@ -122,11 +128,11 @@ def proposal(frozen, preparation_path, preparation_hash, task_dir, result_root):
         "credential_path_hash": sha256_text(str((repository_root() / ".env").resolve())),
         "result_root": str(result_root.resolve()),
         "models": {
-            a: shared.model_config("medium", p.model_id).model_dump(mode="json")
-            for a, p in design.PROFILES.items()
+            a: shared.model_config("medium", design.PROFILES[a].model_id).model_dump(mode="json")
+            for a in profile.arms
         },
-        "prices": shared.protocol_prices(design.PROTOCOL),
-        "pricing_hash": sha256_json(shared.protocol_prices(design.PROTOCOL)),
+        "prices": prices,
+        "pricing_hash": sha256_json(prices),
         "pricing_source": "https://developers.openai.com/api/docs/pricing",
         "pricing_review_on_execution_date_required": True,
         "proposed_total_cap_usd": str(CAP),
@@ -135,25 +141,29 @@ def proposal(frozen, preparation_path, preparation_hash, task_dir, result_root):
         "read_only_metadata_tail_seconds": 10,
         "first_requests": prepared["cells"],
         "input_contract_hash": episode.INPUT_CONTRACT_HASH,
-        "comparison_groups": [list(b) for b in design.BLOCKS],
-        "max_responses_per_episode": episode.MAX_RESPONSES,
-        "maximum_generation_calls": len(frozen.cells) * episode.MAX_RESPONSES,
-        "maximum_input_count_calls": len(frozen.cells) * episode.MAX_RESPONSES,
+        "comparison_groups": [list(b) for b in profile.groups()],
+        "max_responses_per_episode": profile.max_responses,
+        "maximum_generation_calls": profile.maximum_calls(cells),
+        "maximum_input_count_calls": profile.maximum_calls(cells),
         "input_token_limit": episode.INPUT_BOUND,
         "output_ceiling": shared.OUTPUT_CEILING,
-        "four_arm_depth_reservation_nanos": sum(
-            shared.full_reservation(episode.INPUT_BOUND, p.pricing())
-            for p in design.PROFILES.values()
+        "active_group_depth_reservation_nanos": sum(
+            shared.full_reservation(episode.INPUT_BOUND, design.PROFILES[a].pricing())
+            for a in profile.arms
         ),
         "schedule": "group order; fixed arm order round-robin at each depth; skip terminal arms",
         "history_factor": "Inherited state only; all new native exchanges retained in all arms",
         "budget_policy": "reserve all active arms; stop whole invocation on cap/uncertainty",
         "limitations": [
-            "$5 does not guarantee all 16 windows or 128 responses",
+            "$5 does not guarantee all planned episodes or maximum responses",
             "steps/cost/deadline censorship is not agent failure",
             "no automatic checks, judge, hidden evaluator, or agent defaults change",
         ],
     }
+    if profile == episode.FACTORIAL:
+        # Retain the legacy diagnostic receipt field, never mislabel a two-arm reservation.
+        contract["four_arm_depth_reservation_nanos"] = contract[
+            "active_group_depth_reservation_nanos"]
     return contract, package
 
 
@@ -424,6 +434,8 @@ def collect(
     """The sole live entry: exact disk revalidation, exclusive root, lock, durable receipt."""
     root = validate_grant(plan, grant)
     plan = load_plan(plan.path, grant.packet_hash)
+    profile = episode.profile_for(plan.packet["episode_profile"])
+    cells = profile.cells(plan.frozen)
     root.mkdir(exist_ok=False)  # Atomic one-invocation claim, including concurrent starts.
     store = ArtifactStore(root)
     journal = DevJournal(root, "run_dev_episode_collection_" + uuid.uuid4().hex[:16])
@@ -441,7 +453,8 @@ def collect(
         "cap_nanos": ledger.cap_nanos,
         "pricing_hash": grant.pricing_hash,
         "pricing_verified_on": grant.pricing_verified_on,
-        "planned_episodes": len(plan.frozen.cells),
+        "planned_episodes": len(cells),
+        "episode_profile": profile.name,
         "provider_free": adapter_factory is not None,
         "request_waits": plan.packet["request_waits"],
     }
@@ -478,6 +491,7 @@ def collect(
 
             class Adapters:
                 def __getitem__(self, arm):
+                    shared.require(arm in profile.arms, "model arm outside approved profile")
                     config = shared.model_config("medium", design.PROFILES[arm].model_id)
                     if adapter_factory is not None:
                         adapter = adapter_factory(config)
@@ -497,16 +511,16 @@ def collect(
                     )
                     return adapter
 
-            for case, repeat, arms in design.BLOCKS:
+            for case, repeat, arms in profile.groups():
                 deadline.check()
-                if plan.packet["four_arm_depth_reservation_nanos"] > ledger.remaining_nanos:
+                if plan.packet["active_group_depth_reservation_nanos"] > ledger.remaining_nanos:
                     code = "DIAGNOSTIC_COST_LIMIT"
                     break
                 group = []
                 for arm in arms:
                     cell = next(
                         c
-                        for c in plan.frozen.cells
+                        for c in cells
                         if (c.case_id, c.arm, c.sample_number) == (case, arm, repeat)
                     )
                     anonymous_id = "episode_" + uuid.uuid4().hex[:16]
@@ -527,6 +541,7 @@ def collect(
                         probe_sandbox=probe,
                         clock=clock,
                         execution_deadline=deadline,
+                        profile=profile,
                     )
                     branches.append((registration, b))
                     group.append(b)
@@ -534,7 +549,8 @@ def collect(
                 while any(b.terminal is None for b in group):
                     deadline.check()
                     episode.run_round(
-                        group, plan.package, Adapters(), ledger, checkpoint=checkpoint
+                        group, plan.package, Adapters(), ledger, checkpoint=checkpoint,
+                        profile=profile,
                     )
                 if any(b.terminal["terminal"] == "DIAGNOSTIC_COST_LIMIT" for b in group):
                     code = "DIAGNOSTIC_COST_LIMIT"
@@ -589,7 +605,7 @@ def collect(
             "review_state": "PARTIAL"
             if any(p["candidate"] is None for p in public)
             else "READY_FOR_BLIND_REVIEW",
-            "unstarted_episodes": len(plan.frozen.cells) - totals["registered_episodes"],
+            "unstarted_episodes": len(cells) - totals["registered_episodes"],
             "elapsed_ms": int((clock() - started) * 1000),
             "review_artifact": review_ref.model_dump(mode="json"),
             "provider_free": adapter_factory is not None,

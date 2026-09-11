@@ -711,6 +711,49 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
+Current seam: the opt-in `mini-recovery-budget-v1` diagnostic is implemented and its
+fresh exact packet is prepared at `C:\pt\analyses\pl43-mini-recovery-design-v1`.
+Read `protocol.md`, `verification.json` and `execution/packet.json` there before any
+collection. The new result root `C:\pt\analyses\pl43-mini-recovery-live-v1` is absent
+and paid execution is **not authorized**. Old grants remain consumed. Default runtime,
+tool surface v35, model/context/notes and task packages are unchanged.
+
+This fixed profile selects A/B mini cells only, two checkpoints x two repetitions,
+in pair order C1/1 AB, C2/1 BA, C1/2 BA, C2/2 AB. It has no independent eight-response
+cutoff, but inherits native budgets/gates, including C1's 27 model/87 tool/4 mutation
+and C2's 20 model/80 tool/1 mutation remainder. Do not reset counters, enlarge native
+limits or read new initial source. `factorial-eight-v1` remains the default four-arm,
+eight-response diagnostic. Preparation binds the profile, exact selected requests,
+balanced groups and response maximum; collector recomputes these before credential
+access. `max_responses=null` means native-budget-bounded, not unlimited execution.
+
+The new mini packet hash is
+`sha256:ce3e9de64c93c324fa78ef2132b7f569be924c6fcb9db0511faa712f9016a976`;
+implementation-set hash is
+`sha256:00c10b9b1d209bc93a23f31b33983d5abb9812af75d8397fc7bb30f5f090cf93`.
+Proposal: mini snapshot `gpt-5.4-mini-2026-03-17`, medium, 25k, root `.env`, shared
+$5/1,800s, count30s/response300s, no retry/resume. Maximum responses/counts188 is a
+native resource ceiling, not a promised sample size. Full A/B depth reservation
+is $0.633, with no cache discount, before per-request JIT counting. Approved paid
+execution requires already-running Docker and pinned check/probe images, never
+start/pull/build. No hidden evaluator, paid judge or automatic candidate checking.
+
+Only inherited pre-checkpoint state differs; all new native state/result/reasoning
+history accumulates in both arms. The eight first requests exactly match the earlier
+instruction-repaired preparation. Two identical no-call rehearsals restore all four
+distinct case/arm checkpoints in 10.377s; 1,366 protected files are unchanged. The
+response8-failure/response9-repair/recheck/finish mock and native horizon stop pass.
+188 related tests pass in groups under two minutes (30/105.92s, 27/106.79s, 131/89.04s),
+plus Ruff; not a full suite or a two-minute aggregate. Separate default smoke
+`run_dev_21fe1d793876457e` reaches isolated evaluator PASS, safety NOT_RUN, zero cost.
+No provider/count API, real task check or Docker execution ran for this preparation.
+
+Seal anonymous public code observations before joining conditions/tokens/costs.
+Report recovery and final-diff checks separately from inspection and diagnostic
+censoring; missing cells are not failures. This does not isolate instruction repair,
+test native continuation reset, establish a model effect or prove missing planning.
+Any default-loop implementation or additional paid work needs a separate decision.
+
 The mini public decision trace is complete at
 `C:\pt\analyses\pl43-mini-decision-trace-v1`. Sixteen exact requests and continuations,
 14 follow-up histories and seven executable observation groups verify: the public
@@ -773,8 +816,8 @@ proves that a remote charge did not occur. No automatic retry, paid judge or hid
 evaluator. Cleanup outcomes are recorded before terminal finalization.
 
 Receipts: `C:\pt\analyses\pl43-request-waits-v1`. No provider/count or Docker execution
-is part of this fix. The next seam is a separately specified diagnostic packet and
-approval, not another default-agent feature or a claim of improved mini performance.
+is part of this fix. The next packet is specified above but remains unapproved;
+it is not another default-agent feature or a claim of improved mini performance.
 Validation covers 192 distinct related cases plus Ruff: focused 32/73.97s, final
 collector 27/112.58s, shared regression 131/108.72s and boundary/docs 18/11.35s
 (overlapping counts). The first collector group took 127.36s; redundant repetition
@@ -809,10 +852,11 @@ Audit at `C:\pt\analyses\pl43-short-episode-assessment-v1` verified 29 wire/cano
 requests, 28 encrypted artifacts, 22 follow-up replay orders, six new public
 check-policy/diff bindings and two submissions. Optional new note proposals: zero;
 inherited notes/native history remain. Last dispatch occupied about 22m26s; no
-response means no token-exhaustion diagnosis. Existing exception conversion does
-not retain a safe error type/phase. A bounded per-request wait and sanitized
-failure-phase receipt are a possible next **provider-free** collector change,
-not yet implemented. Preserve all source/new journals and candidate bytes.
+response means no token-exhaustion diagnosis. The collector used for that run did
+not retain a safe error type/phase. Bounded request waits and sanitized failure-phase
+receipts have since been implemented as described above; they do not recover the
+missing old response or resolve its billing. Preserve all source/new journals and
+candidate bytes.
 
 The exact-grant short-episode collector is in
 `diagnostics/model_state_episode_collector.py`. Only `collect` may access credentials

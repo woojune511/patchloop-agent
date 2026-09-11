@@ -434,6 +434,36 @@ comparison or row 44 is authorized by this completed invocation.
 
 ### Model x state-history diagnostic: row 43
 
+Current unapproved follow-up: `mini-recovery-budget-v1` uses mini-only A/B at both
+checkpoints with two fresh repetitions (eight episodes), no independent eight-response
+cutoff, and the original remaining native budgets/gates. This opt-in preparation
+profile does not change the default four-arm/eight-response diagnostic. First inputs
+are unchanged; both arms accumulate new native state and encrypted reasoning.
+
+Exact packet/protocol: `C:\pt\analyses\pl43-mini-recovery-design-v1`.
+Proposed fresh result root: `C:\pt\analyses\pl43-mini-recovery-live-v1`.
+The proposal fixes `gpt-5.4-mini-2026-03-17`, medium, 25k, root `.env`, one shared
+$5/1,800s invocation, repaired count30s/response300s waits, and A/B depth reserve
+$0.633 at full 272k input/25k output before actual JIT counts. The native upper
+bound of 188 new responses/counts is not a guaranteed sample size. Recheck official
+prices on the execution UTC date. No automatic retry, resume, extra samples,
+Docker start/pull/build, hidden evaluator or default agent changes.
+
+The preparer's `--profile mini-recovery-budget-v1` option selects this fixed design;
+do not overwrite the prepared root. Read-only revalidation of the actual packet:
+
+```powershell
+uv run python -m diagnostics.model_state_episode_collector validate `
+  --packet C:/pt/analyses/pl43-mini-recovery-design-v1/execution/packet.json `
+  --packet-hash sha256:ce3e9de64c93c324fa78ef2132b7f569be924c6fcb9db0511faa712f9016a976
+```
+
+This command does not count tokens, load credentials or execute task actions.
+Exact approval must cover the new packet and its `protocol.md`; old grants are not
+reusable. The protocol seals anonymous public observations before condition mapping
+and distinguishes final-diff checks, recovery, native limits and diagnostic censoring.
+For implemented/provider-free evidence see [current status](current-status.md).
+
 The exact packet grant is consumed. Collection at
 `C:\pt\analyses\pl43-model-state-live` completed 16 responses/counts for
 $0.9615305 / $5 in 159.184s (`run_dev_sample_4bf128b8d21744d5`). The earlier host

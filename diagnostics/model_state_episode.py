@@ -52,6 +52,36 @@ EPISODE_CONTEXT_INSTRUCTIONS = (
 INPUT_CONTRACT_HASH = sha256_text(EPISODE_CONTEXT_INSTRUCTIONS)
 
 
+@dataclass(frozen=True)
+class EpisodeProfile:
+    name: str
+    arms: str
+    max_responses: int | None
+
+    def groups(self):
+        return tuple((case, repeat, "".join(a for a in order if a in self.arms))
+                     for case, repeat, order in design.BLOCKS)
+
+    def cells(self, plan):
+        return tuple(c for c in plan.cells if c.arm in self.arms)
+
+    def maximum_calls(self, cells):
+        if self.max_responses is not None:
+            return len(cells) * self.max_responses
+        return sum(json.loads(json.loads(c.request_json)["input"][1]["content"])
+                   ["remaining_budget"]["model_calls"] for c in cells)
+
+
+FACTORIAL = EpisodeProfile("factorial-eight-v1", "ABCD", MAX_RESPONSES)
+MINI_RECOVERY = EpisodeProfile("mini-recovery-budget-v1", "AB", None)
+PROFILES = {p.name: p for p in (FACTORIAL, MINI_RECOVERY)}
+
+
+def profile_for(name):
+    shared.require(name in PROFILES, "unknown diagnostic episode profile")
+    return PROFILES[name]
+
+
 def episode_request(snapshot: dict) -> dict:
     """Replace only the unsent snapshot instructions; keep every public input byte/order."""
     previous = design.fresh.FRESH_CONTEXT_INSTRUCTIONS.replace(
@@ -71,7 +101,7 @@ class Episode(engine.Branch):
     arm: str = "A"
     seed_request: dict | None = None
     initial_mutations: int = 0
-    max_responses: int = MAX_RESPONSES
+    max_responses: int | None = MAX_RESPONSES
 
     def finish(self, code, message="", **details):
         return super().finish(
@@ -87,7 +117,7 @@ class Episode(engine.Branch):
         if self.terminal is not None:
             return None
         self.gateway.deadline.check()
-        if self.new_provider_calls >= self.max_responses:
+        if self.max_responses is not None and self.new_provider_calls >= self.max_responses:
             self.finish("DIAGNOSTIC_STEP_LIMIT", "short episode observation window ended")
             return None
         if self.new_provider_calls:
@@ -129,9 +159,11 @@ class Episode(engine.Branch):
 
 
 def initialize(plan, cell, root, workspace, package, sandbox, *, probe_sandbox=None,
-               clock=monotonic, execution_deadline=None):
+               clock=monotonic, execution_deadline=None, profile=FACTORIAL):
     """Fresh disposable gateway; inherit observations/counters, never old provider state."""
     shared.require(cell in plan.cells, "cell is not in the frozen design")
+    shared.require(profile_for(profile.name) == profile and cell.arm in profile.arms,
+                   "cell/profile mismatch")
     root = design.fresh_root(root, plan.source_root, plan.packet_path.parent)
     workspace = design.fresh_root(workspace, plan.source_root, plan.packet_path.parent, root)
     events, _ = design.source_events(plan.source_root)
@@ -165,12 +197,14 @@ def initialize(plan, cell, root, workspace, package, sandbox, *, probe_sandbox=N
         store=ArtifactStore(root / "artifacts"), gateway=gateway, counters=counters,
         clock=active, base_elapsed=limits.wall_time_seconds - remaining["active_wall_time_seconds"],
         arm=cell.arm, seed_request=request, initial_mutations=gateway.accepted_mutations,
+        max_responses=profile.max_responses,
     )
     episode.journal.append("diagnostic_episode_started", {
         **BOUNDARIES, "label": episode.label, "source_packet_hash": plan.packet_hash,
         "source_cutoff_hash": cutoff, "source_request_hash": cell.request_hash,
         "first_request_hash": sha256_json(request), "input_contract_hash": INPUT_CONTRACT_HASH,
-        "response_limit": MAX_RESPONSES, "inherited_events_are_not_new_execution": True,
+        "response_limit": profile.max_responses, "episode_profile": profile.name,
+        "inherited_events_are_not_new_execution": True,
         "prior_sample_responses_reused": 0, "prior_encrypted_reasoning_replayed": 0,
     })
     return episode
@@ -198,18 +232,21 @@ class PricedLedger:
 
 
 def run_round(episodes, package, adapters, ledger, *, checkpoint=lambda _: None,
-              request_waits=engine.requests.WAITS):
-    """One counterbalanced four-arm depth, using explicitly supplied adapters only.
+              request_waits=engine.requests.WAITS, profile=FACTORIAL):
+    """One counterbalanced depth, using a fixed profile and explicitly supplied adapters.
 
     This is not a live approval/collector entrypoint. Callers must persist a fresh
     grant and experiment identity before supplying live adapters. Mock tests use
     this same scheduler. Any uncertainty escapes; callers cannot retry a round.
     """
-    shared.require(len(episodes) == 4 and {e.arm for e in episodes} == set("ABCD"),
-                   "a complete four-arm comparison group is required")
+    shared.require(profile_for(profile.name) == profile
+                   and len(episodes) == len(profile.arms)
+                   and {e.arm for e in episodes} == set(profile.arms)
+                   and (profile != MINI_RECOVERY or all(e.max_responses is None for e in episodes)),
+                   "a complete comparison group for the exact profile is required")
     active = [e for e in episodes if e.terminal is None]
     for e in active:
-        if e.new_provider_calls >= e.max_responses:
+        if e.max_responses is not None and e.new_provider_calls >= e.max_responses:
             e.finish("DIAGNOSTIC_STEP_LIMIT", "short episode observation window ended")
     active = [e for e in active if e.terminal is None]
     reservations = []
@@ -245,12 +282,14 @@ def run_round(episodes, package, adapters, ledger, *, checkpoint=lambda _: None,
         raise
 
 
-def prepare(plan, root: Path) -> dict:
+def prepare(plan, root: Path, *, profile=FACTORIAL) -> dict:
     """Freeze the next no-call design. Paid authority/cap is deliberately absent."""
     root = design.fresh_root(root, plan.source_root, plan.packet_path.parent)
+    shared.require(profile_for(profile.name) == profile, "invalid episode profile")
     store = ArtifactStore(root)
     rows = []
-    for cell in plan.cells:
+    cells = profile.cells(plan)
+    for cell in cells:
         request = episode_request(json.loads(cell.request_json))
         ref = store.put_text(design.wire(request).decode("utf-8"), "application/json")
         rows.append({"case_id": cell.case_id, "arm": cell.arm, "repeat": cell.sample_number,
@@ -271,9 +310,10 @@ def prepare(plan, root: Path) -> dict:
             for p in (Path(__file__), Path(engine.__file__), Path(review.__file__),
                       Path(engine.requests.__file__))},
         "inherited_design_hashes": plan.design_hashes,
-        "cells": rows, "comparison_groups": [list(b) for b in design.BLOCKS],
-        "max_responses_per_episode": MAX_RESPONSES,
-        "max_generation_calls_proposal": len(rows) * MAX_RESPONSES,
+        "cells": rows, "comparison_groups": [list(b) for b in profile.groups()],
+        "episode_profile": profile.name,
+        "max_responses_per_episode": profile.max_responses,
+        "max_generation_calls_proposal": profile.maximum_calls(cells),
         "schedule": "Within each group, one response per active arm per round in fixed order.",
         "external_step_limit_changes_agent_budget": False,
         "history_factor": "Inherited pre-checkpoint state only; new native views in all arms.",
@@ -299,9 +339,10 @@ def main(argv=None):
     parser.add_argument("--packet-hash", required=True)
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--output-root", type=Path, required=True)
+    parser.add_argument("--profile", choices=list(PROFILES), default=FACTORIAL.name)
     args = parser.parse_args(argv)
     plan = design.load_plan(args.packet, args.source_root, args.packet_hash)
-    result = prepare(plan, args.output_root)
+    result = prepare(plan, args.output_root, profile=profile_for(args.profile))
     print(canonical_json({k: v for k, v in result.items() if k != "cells"}))
 
 

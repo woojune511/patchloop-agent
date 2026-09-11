@@ -38,7 +38,46 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: diagnostic request waits repaired; paid work remains closed
+## Current seam: mini recovery packet prepared; paid execution not authorized
+
+The opt-in diagnostic profile `mini-recovery-budget-v1` prepares eight fresh mini
+episodes: row43 before turn14/turn21, initial historical-state A/current-state B,
+two repetitions each. Fixed pair order is C1/1 AB, C2/1 BA, C1/2 BA, C2/2 AB.
+Only this profile removes the separate eight-response observation cutoff. Inherited
+native budgets and completion horizon remain: C1 has 27 model calls/4 mutations,
+C2 has 20 calls/1 mutation. The default agent and four-arm diagnostic are unchanged.
+Both variants retain every newly generated native state/tool exchange and encrypted
+continuation; this is not an ongoing current-only context or planning intervention.
+
+Proposed contract: `gpt-5.4-mini-2026-03-17`, medium, 25k output, root `.env`, one
+shared $5/1,800s invocation, with the repaired 30s count/300s response waits below.
+Each full active A/B depth reserves $0.633 before actual JIT counting. The native
+maximum is 188 new responses/counts across eight episodes; cost/time can censor
+earlier. No paid call, input-count API or Docker operation has run for this proposal.
+
+Exact packet and prespecified assessment are at
+`C:\pt\analyses\pl43-mini-recovery-design-v1`; execution packet hash is
+`sha256:ce3e9de64c93c324fa78ef2132b7f569be924c6fcb9db0511faa712f9016a976`.
+The proposed `C:\pt\analyses\pl43-mini-recovery-live-v1` result root remains absent.
+All eight first-request wire inputs match the earlier repaired preparation.
+Two identical no-call checkpoint rehearsals verify source/diff, counters and tools
+in 10.377s. 1,366 protected files remain unchanged. Public code observations must
+be sealed anonymously before the condition mapping is opened; no hidden evaluator.
+
+Validation: 30 focused cases/105.92s, 27 collector cases/106.79s and 131 related
+regressions/89.04s pass, plus Ruff. These are 188 distinct cases, not a full runtime
+rerun or a two-minute aggregate workflow. Mock recovery crosses response eight,
+then mutates, rechecks and finishes; native budget exhaustion still stops before
+counting. Separate default mock `run_dev_21fe1d793876457e` reaches isolated
+`EVALUATOR_PASS`, safety NOT_RUN, zero cost, at `C:\pt\smoke\pl43-mini-recovery-v1`.
+That fixture result is not pyfakefs acceptance or measured model improvement.
+
+Next is exact approval of this new diagnostic packet, not reuse of an old grant.
+Even a better outcome cannot isolate the effects of instruction repair versus the
+longer observation window. Mixed, censored or insufficient results remain unresolved.
+`task_acceptance=NOT_RUN`, `official=false`; no default-loop change follows automatically.
+
+## Prior repair: diagnostic request waits
 
 The short-episode collector now caps input counting at 30 seconds and response
 waiting at 300 seconds, each clipped to the remaining shared/branch execution
@@ -65,8 +104,8 @@ re-enter the closed loop, but this is not a hard process/OS-thread termination p
 No default runtime, model, context, memory, tool schema or task package changed.
 Provider-free receipts belong under `C:\pt\analyses\pl43-request-waits-v1`; no paid
 call, input-count API call, Docker operation or pyfakefs evaluation is authorized by
-this repair. The next step is a separately specified diagnostic packet, not reuse of
-the consumed grant or a claim that mini performance improved.
+this repair. The new mini-only proposal above is separate from the consumed grant;
+it is not a claim that mini performance improved.
 
 Validation: 192 distinct related cases pass (32 focused in 73.97s, 27 final collector
 in 112.58s, 131 shared regressions in 108.72s; the final 18-case boundary/docs check
@@ -139,9 +178,9 @@ authority/location. The default native runtime has the correct separate contract
 Whether this mismatch caused either mini error is **not established**.
 
 The diagnostic snapshot-to-episode instruction repair is implemented above, without
-changing the default agent or forcing plans/notes. Bounded collector waits and
-sanitized failure-phase receipts remain an unimplemented, separate prerequisite for
-further paid comparison. Any later evidence-to-code/unfinished-question
+changing the default agent or forcing plans/notes. The separate bounded collector
+waits and sanitized failure-phase receipts are also implemented above. Any later
+evidence-to-code/unfinished-question
 experiment requires a new packet and approval; the old grant cannot be resumed.
 
 Seven public-trace assertion groups pass; 1,369 bound files remain unchanged.
