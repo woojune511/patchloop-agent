@@ -434,6 +434,19 @@ comparison or row 44 is authorized by this completed invocation.
 
 ### Model x state-history diagnostic: row 43
 
+The exact packet grant is consumed. Collection at
+`C:\pt\analyses\pl43-model-state-live` completed 16 responses/counts for
+$0.9615305 / $5 in 159.184s (`run_dev_sample_4bf128b8d21744d5`). The earlier host
+denial started no process; later explicit transmission/spend approval preceded
+the first actual call. No retry/resume or automatic additional sample is authorized.
+Public assessment at `C:\pt\analyses\pl43-model-state-assessment` records 14 valid
+inspection batches and two admitted candidates, with four actual Docker checks.
+Anonymous observations precede the stored unblinded report. Only GPT-5.4/history
+produced mutations: C1/1 fails the contract but passes regression; C2/2 passes both.
+Inspection is not scored as failed repair. The tiny, non-repeated executable outcome
+does not isolate a cause or justify a default change. See `analysis.md` and
+`evidence-audit.json` in that external assessment root. Hidden acceptance is NOT_RUN.
+
 The standalone `diagnostics.model_state_sampler` compares mini versus GPT-5.4 and
 older state descriptions present versus absent at pre-turn14 and pre-turn21.
 All conditions are fresh requests, without old encrypted reasoning; identical

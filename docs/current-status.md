@@ -38,7 +38,55 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: model x state-history diagnostic (not paid-executed)
+## Current seam: model x state-history diagnostic (cause unresolved)
+
+The explicitly approved frozen packet completed as `run_dev_sample_4bf128b8d21744d5`
+at `C:\pt\analyses\pl43-model-state-live`: 16 independent responses/counts, all four
+balanced blocks, $0.9615305 / $5, 159.184s, no retry/correction/chaining. The earlier
+host rejection started no process; explicit payload/destination/spend approval
+preceded this first actual invocation. This grant is consumed.
+
+Anonymous code and execution observations were frozen before unblinding at
+`C:\pt\analyses\pl43-model-state-assessment`. All batches are valid: 14 inspection
+batches (25 actions), two admitted mutations and four Docker public checks, with
+confirmed cleanup and no check-cache reuse. No hidden evaluator runs.
+
+| Condition | Pre-turn14, repetitions 1 / 2 | Pre-turn21, repetitions 1 / 2 |
+| --- | --- | --- |
+| mini / history | inspect / inspect | inspect / inspect |
+| mini / current | inspect / inspect | inspect / inspect |
+| GPT-5.4 / history | mutate, contract FAIL / inspect | inspect / mutate, both PASS |
+| GPT-5.4 / current | inspect / inspect | inspect / inspect |
+
+The first 29-line candidate raises FileExistsError then calls the unavailable
+`FakeOsModule.raise_os_error`, failing the first public contract call; upstream
+regression passes. The later 39-line candidate delegates non-`..` paths back to
+`FakeFilesystem.makedirs` while retaining the traversal change, passing both public
+checks. Both upstream executions report 517 passed / 570 skipped. Neither proposal
+is credited as original-agent checking/submission or hidden task acceptance.
+
+Actual input falls from 45,804 to 25,970 tokens at turn14 and 85,984 to 46,102 at
+turn21 when only older state descriptions are removed. Every output completes in
+349-3,991 tokens, below 25k. All 16 ordered requests and encrypted continuations,
+27 function references, candidate/check bindings and recorded costs validate.
+
+The shorter input shows no repeated quality improvement; the lone public-pass
+repair does not establish a model or history benefit. Inspection-only responses
+are unassessed repair quality, not failures: this one-response design cannot observe
+their next repair. Conclude **cause unresolved**, retain default runtime/context/
+model/memory/tool policy, and do not automatically buy more samples or adopt a fix.
+All results remain `official=false`, `task_acceptance=NOT_RUN`, `safety_state=NOT_RUN`.
+
+All 1,298 protected runtime/task/history files, `.env`, user-owned `AGENTS.md` and
+the original journal/envelope retain their pre-run hashes. The 16 owned checkpoint
+copies (2,051 files) were recycled with complete content identity and restoration
+mapping in `scratch-recycled.json`; durable results remain in place. The initial
+Windows housekeeping-helper failure and typed-interface correction are recorded
+there, separate from the completed Docker checks. Three documentation tests pass
+in 0.066s and Ruff/diff checks pass. No new full runtime suite is claimed for this
+result-only documentation change.
+
+### Preparation and provider-free validation (before collection)
 
 `diagnostics/model_state_sampler.py` prepares a separate 2x2 comparison at row43
 turns 14 and 21: mini/history, mini/current, GPT-5.4/history, GPT-5.4/current.
@@ -82,9 +130,10 @@ unchanged. No full runtime-suite or private-evaluator smoke rerun is newly claim
 The nine owned temporary roots were recycled, not permanently deleted; exact
 restoration locations remain in `scratch-recycled.json` beside the validation receipts.
 
-The $5 is a ceiling, **not an execution approval**. Paid/count/Docker/hidden-evaluator
-calls are zero. No effect on model quality, state accumulation or native reasoning
-has yet been measured. The next boundary is exact-packet approval, not a live row.
+Preparation itself made zero paid/count/Docker/hidden-evaluator calls; its proposed
+$5 ceiling was not execution approval. The separately approved collection and
+public assessment above are diagnostic evidence, not a new default-agent live row
+or a measurement of native encrypted-continuation effects.
 
 ## Prior seam: explicit draft review does not change proposed behavior
 

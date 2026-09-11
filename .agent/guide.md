@@ -713,6 +713,29 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 The current seam is the standalone model/state-history factorial diagnostic in
 `diagnostics/model_state_sampler.py` and `diagnostics/model_state_review.py`.
+Its exact grant is consumed by `run_dev_sample_4bf128b8d21744d5` at
+`C:\pt\analyses\pl43-model-state-live`: 16 responses/counts, four complete blocks,
+$0.9615305 / $5, 159.184s, no retries/corrections/chaining. The earlier host rejection
+started no process; explicit transmission/spend approval preceded the first dispatch.
+Assessment at `C:\pt\analyses\pl43-model-state-assessment` freezes anonymous code
+and public execution before mapping. Fourteen inspection batches remain unassessed
+repair quality; two admitted mutations are both GPT-5.4/history, at C1/1 and C2/2.
+C1's 29-line patch fails the first contract call (FileExistsError followed by an
+unavailable `FakeOsModule.raise_os_error`); its upstream check passes. C2's 39-line
+patch adds non-parent-path delegation, passing both checks. Both upstream executions
+are 517 passed / 570 skipped. There are 25 inspection actions, two mutations, four
+Docker checks, no check cache reuse and confirmed cleanup. Hidden acceptance/safety
+evaluation remain NOT_RUN. Sixteen ordered requests/continuations, 27 function refs,
+costs and candidate/check bindings validate. Input reduction is 43.3%/46.4%, but no
+repeatable repair-quality benefit is established. Conclude CAUSE_UNRESOLVED: a
+one-response design censors repairs after inspection. Do not adopt a default change,
+force planning/memory, reset continuation or automatically extend paid collection.
+The 1,298 protected files and user/source evidence hashes remain unchanged. The
+16 exact owned checkpoint copies were recycled with identical content; restoration
+and the separate Windows cleanup-helper correction are recorded in
+`scratch-recycled.json` at the assessment root. Do not rewrite absolute historical
+scratch references or sweep other roots. Three result-documentation tests pass in
+0.066s with Ruff/diff checks; no new full runtime-suite claim accompanies this update.
 Keep production runtime/tool surface v35, task packages, optional memory, schemas,
 native history and encrypted continuation unchanged. No planning/memory requirement,
 default model upgrade, default context rewrite or reasoning reset is adopted.
