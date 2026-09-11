@@ -38,14 +38,59 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: short-episode collector ready for exact approval
+## Current seam: partial short-episode result; no automatic continuation
+
+The exact $5 packet below was approved and executed once on 2026-09-11 at
+`C:\pt\analyses\pl43-short-episode-live-v1`, run
+`run_dev_episode_collection_dd2a43b37b8d406c`. The grant is consumed. Terminal is
+`PROVIDER_TIMEOUT_OR_UNKNOWN`: 29 counted dispatches, 28 completed responses,
+31 tool actions, 1,801.237s including read-only finalization. Known completed usage
+costs **$1.420476**, with one additional request's billing unknown. This is not a
+confirmed total cost. No retry, resume, extra sample or hidden evaluator ran.
+
+Blind public observations were sealed before condition mapping. At pre-turn14
+(C1), repetition 1 produced:
+
+| Model / inherited state descriptions | Responses / actions | Public outcome |
+|---|---:|---|
+| mini / historical | 8 / 8 | Mode failure, then accepted repair; final candidate untested at window end |
+| mini / current | 8 / 8 | Missing-helper failure; recovery search at window end |
+| GPT-5.4 / historical | 4 / 4 | Both public checks PASS, same-hash finish |
+| GPT-5.4 / current | 6 / 7 | Both public checks PASS, same-hash finish |
+
+Both submitted candidates passed the existing regression with 517 passed / 570
+skipped. Eight-response windows are censored observations, not proof the mini
+branches could never recover. At pre-turn21 (C2), D and B each returned one
+inspection response; C's first request had no durable response/usage and A was
+never dispatched. No C2 mutation/check occurred; its visible statuses are inherited.
+Repetition 2's eight windows remain unstarted. **The model-associated C1 difference
+is observed, but model/context effects are not replicated or causally resolved.**
+
+The last request occupied roughly 22m26s of the remaining shared deadline. Its
+exception type/phase was not persisted, so provider delay, transport/SDK timeout
+and response-processing failure cannot be separated. This is not evidence of a
+25k output-token ceiling: all 28 returned responses were complete, maximum output
+9,642. A serial request can consume other arms' time despite balanced cost reserves.
+The next provider-free implementation candidate is a bounded per-request wait and
+sanitized failure-phase record in the diagnostic collector, not new agent gates.
+It has not been implemented; no default model/context/memory change is selected.
+
+Read-only audit verified all 29 request identities, 28 continuation artifacts and
+22 follow-up replays, six check-policy/diff bindings and two submission identities.
+There were zero new `memory_update` proposals; this neither erases inherited notes
+nor proves note generation is needed. Details and sealed observations are under
+`C:\pt\analyses\pl43-short-episode-assessment-v1`. The factor changes only inherited
+state descriptions, not ongoing native context accumulation. Task acceptance and
+safety remain `NOT_RUN`, `official=false`. No automatic Docker start/pull/build.
+
+## Prior short-episode collector implementation
 
 `diagnostics/model_state_episode_collector.py` now binds the prepared experiment
 to one exact invocation: immutable packet/implementation/runtime/task identities,
-fixed model prices, a proposed **$5 shared cap**, an exclusive result root and
+fixed model prices, a **$5 shared cap**, an exclusive result root and
 run-lifetime locks. Preparing, validating and inspecting never load a credential,
-call a provider or use Docker. The old paid grant is consumed; this is not a new
-execution approval.
+call a provider or use Docker. The implementation evidence below preceded the
+single paid execution above; it does not confer another execution approval.
 
 The new packet is `C:\pt\analyses\pl43-short-episode-execution-v2\packet.json`,
 `sha256:422ea586587c7a059fd48c65f6fcc9530c41874eb776f4594c5c944cce2a6776`.
@@ -82,11 +127,10 @@ All 1,298 protected files, source journal/envelope, `.env` and user `AGENTS.md`
 retain their hashes. Eight owned temporary roots were recycled with identical
 contents and restoration mappings; durable packets/validation remain in place.
 
-Next is a **fresh exact approval** for that packet, $5 total, root `.env` and one
-new `C:\pt\analyses\pl43-short-episode-live-v1` invocation. Prices must be reviewed
-on its execution UTC date. Docker and pinned images must already be available;
-no automatic start/pull/build, hidden evaluator or paid judge. Default agent/runtime,
-task packages and existing evidence remain unchanged; all results `official=false`.
+That packet's one approved invocation used root `.env` and execution-day verified
+prices. Its occupied result root is immutable and cannot be reused or resumed.
+Any further paid experiment needs a separately bound packet and exact approval.
+Default agent/runtime, task packages and prior evidence remain unchanged.
 
 ## Prior inspection audit and short-episode preparation
 

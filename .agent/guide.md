@@ -711,16 +711,44 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the exact-grant short-episode collector in
+The current seam is read-only interpretation of the completed **partial**
+short-episode invocation, not more paid execution. Run
+`run_dev_episode_collection_dd2a43b37b8d406c` at
+`C:\pt\analyses\pl43-short-episode-live-v1` ended `PROVIDER_TIMEOUT_OR_UNKNOWN` on
+2026-09-11: 29 dispatches, 28 completed responses, 31 actions, 1,801.237s including
+read-only finalization. Known completed cost is $1.420476; one additional charge
+is unknown. No retry/resume or replacement root is authorized. The grant is consumed.
+
+After blind observation sealing, C1/repeat1 maps to mini historical/current: two
+eight-response censored recovery windows; GPT-5.4 historical/current: same-hash
+public checks and finish in four/six responses. Mini historical made a real mode
+repair at response eight; its final candidate was not tested. Mini current hit a
+wrong-receiver missing helper and searched to recover. Do not convert censoring
+to incapability. C2 has one D and one B inspection response, a C dispatch without
+response/usage, and no A dispatch; all C2 check statuses are inherited. Repetition
+two never started. No hidden acceptance, replicated model/context effect or
+default model/prompt/policy/memory change follows from this partial evidence.
+
+Audit at `C:\pt\analyses\pl43-short-episode-assessment-v1` verified 29 wire/canonical
+requests, 28 encrypted artifacts, 22 follow-up replay orders, six new public
+check-policy/diff bindings and two submissions. Optional new note proposals: zero;
+inherited notes/native history remain. Last dispatch occupied about 22m26s; no
+response means no token-exhaustion diagnosis. Existing exception conversion does
+not retain a safe error type/phase. A bounded per-request wait and sanitized
+failure-phase receipt are a possible next **provider-free** collector change,
+not yet implemented. Preserve all source/new journals and candidate bytes.
+
+The exact-grant short-episode collector is in
 `diagnostics/model_state_episode_collector.py`. Only `collect` may access credentials
 or preflight already-running Docker/images; `prepare`, `validate` and `inspect` are
 strictly provider-free. Default runtime/tool surface v35 and task packages stay frozen.
-The proposed packet is `C:\pt\analyses\pl43-short-episode-execution-v2\packet.json`,
+The executed packet is `C:\pt\analyses\pl43-short-episode-execution-v2\packet.json`,
 `sha256:422ea586587c7a059fd48c65f6fcc9530c41874eb776f4594c5c944cce2a6776`, binding
 implementation-set `sha256:df64112be339bb3c00c699446c1a4cb6c0c8e4b8e86899986168bb809fbe9939`.
-It proposes one $5 invocation at `C:\pt\analyses\pl43-short-episode-live-v1` using root
-`.env`, not a reusable grant. The previous paid grant is consumed. Fresh explicit
-approval must match packet, implementation, prices, cap, credential and output path.
+It bound one $5 invocation at `C:\pt\analyses\pl43-short-episode-live-v1` using root
+`.env`, not a reusable grant. Both previous and current paid grants are consumed.
+Any further approval must match a new packet, implementation, prices, cap,
+credential and fresh output path; never reuse this occupied result root.
 Recheck official prices on the execution UTC date. No automatic retry/resume,
 replacement root/model, Docker start/pull/build, hidden evaluator or paid judge.
 
@@ -755,7 +783,8 @@ pair exact public decision arguments and action results. The earlier unapproved
 execution-v1 packet is preserved, superseded and incompatible with the final code.
 Eight owned scratch roots were recycled with full content identity and restoration
 records. All 1,298 protected files and source/user file hashes are unchanged.
-This is not a paid run or quality claim.
+Those tests are implementation evidence, distinct from the partial paid result
+above and not a quality claim.
 
 The preceding provider-free audit/preparation remains in
 `diagnostics/model_state_inspection_audit.py` and `diagnostics/model_state_episode.py`.
