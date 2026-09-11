@@ -434,20 +434,28 @@ comparison or row 44 is authorized by this completed invocation.
 
 ### Model x state-history diagnostic: row 43
 
-Current unapproved follow-up: `mini-recovery-budget-v1` uses mini-only A/B at both
+Completed follow-up: `mini-recovery-budget-v1` used mini-only A/B at both
 checkpoints with two fresh repetitions (eight episodes), no independent eight-response
 cutoff, and the original remaining native budgets/gates. This opt-in preparation
 profile does not change the default four-arm/eight-response diagnostic. First inputs
 are unchanged; both arms accumulate new native state and encrypted reasoning.
 
-Exact packet/protocol: `C:\pt\analyses\pl43-mini-recovery-design-v1`.
-Proposed fresh result root: `C:\pt\analyses\pl43-mini-recovery-live-v1`.
-The proposal fixes `gpt-5.4-mini-2026-03-17`, medium, 25k, root `.env`, one shared
+Exact consumed packet/protocol: `C:\pt\analyses\pl43-mini-recovery-design-v1`.
+Result root: `C:\pt\analyses\pl43-mini-recovery-live-v1`,
+`run_dev_episode_collection_a78ccd1085a8478b`: eight completed episodes, 76 responses
+and input counts, 83 tools, $2.55174405 / $5, 994.987s, billing fully known.
+Public submissions: C1/A 2/2, C1/B 0/2, C2/A and B 0/2. Six native limits exhausted
+accepted mutations; none was diagnostic censoring or an incomplete response.
+Assessment: `C:\pt\analyses\pl43-mini-recovery-assessment-v1\analysis.md`.
+Hidden/task acceptance and safety NOT_RUN; official=false. This does not justify
+default context reduction or further paid work. The exact grant is consumed.
+
+The contract fixed `gpt-5.4-mini-2026-03-17`, medium, 25k, root `.env`, one shared
 $5/1,800s invocation, repaired count30s/response300s waits, and A/B depth reserve
 $0.633 at full 272k input/25k output before actual JIT counts. The native upper
-bound of 188 new responses/counts is not a guaranteed sample size. Recheck official
-prices on the execution UTC date. No automatic retry, resume, extra samples,
-Docker start/pull/build, hidden evaluator or default agent changes.
+bound of 188 new responses/counts was not a guaranteed sample size. Official prices
+were verified on the execution UTC date, 2026-09-11. No automatic retry, resume,
+extra samples, Docker start/pull/build, hidden evaluator or default agent changes.
 
 The preparer's `--profile mini-recovery-budget-v1` option selects this fixed design;
 do not overwrite the prepared root. Read-only revalidation of the actual packet:
@@ -459,9 +467,10 @@ uv run python -m diagnostics.model_state_episode_collector validate `
 ```
 
 This command does not count tokens, load credentials or execute task actions.
-Exact approval must cover the new packet and its `protocol.md`; old grants are not
-reusable. The protocol seals anonymous public observations before condition mapping
-and distinguishes final-diff checks, recovery, native limits and diagnostic censoring.
+It does not authorize re-collection of the consumed packet. New execution requires
+a new exact packet/grant; retain these roots unchanged. The protocol seals anonymous
+public observations before condition mapping and distinguishes final-diff checks,
+recovery, native limits and diagnostic censoring.
 For implemented/provider-free evidence see [current status](current-status.md).
 
 The exact packet grant is consumed. Collection at

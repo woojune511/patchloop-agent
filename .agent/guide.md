@@ -711,12 +711,27 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the opt-in `mini-recovery-budget-v1` diagnostic is implemented and its
-fresh exact packet is prepared at `C:\pt\analyses\pl43-mini-recovery-design-v1`.
-Read `protocol.md`, `verification.json` and `execution/packet.json` there before any
-collection. The new result root `C:\pt\analyses\pl43-mini-recovery-live-v1` is absent
-and paid execution is **not authorized**. Old grants remain consumed. Default runtime,
-tool surface v35, model/context/notes and task packages are unchanged.
+Current seam: the exact `mini-recovery-budget-v1` grant is consumed. Collection
+`run_dev_episode_collection_a78ccd1085a8478b` at
+`C:\pt\analyses\pl43-mini-recovery-live-v1` completed eight episodes, 76 responses
+and count calls, 83 tools, $2.55174405 / $5 in 994.987s, fully known cost. No unknown
+dispatch, incomplete response, protocol error or diagnostic censoring occurred.
+Read `C:\pt\analyses\pl43-mini-recovery-assessment-v1\analysis.md` and its sealed
+blind observations/quantitative/mechanism audits before proposing a next change.
+Default runtime, tool surface v35, model/context/notes and task packages are unchanged.
+
+C1 historical A submitted 2/2; initial-current B 0/2. C2 both 0/2, starting with
+only one accepted mutation remaining. Both submissions followed real repair/recheck
+at responses 13 and 11. All six failures exhausted accepted mutations, not tokens
+or request time. Do not infer that removing history helps, mini cannot recover,
+an eight-response cutoff proves failure, or absent new notes proves absent planning.
+In one failed branch the exact request already delivers the corrected receiver and
+marks old failures historical with pending-recheck guidance. Its subsequent public
+decision misuses that evidence. Preserve this counterexample to a missing-feedback
+diagnosis. A residual unexecuted receiver risk in one passing candidate is a code
+observation, not a new check failure or hidden result. Hidden/task acceptance and
+safety remain NOT_RUN; official=false. Further implementation/evaluation requires
+a separate decision; no automatic paid sample, retry, resume or default-loop change.
 
 This fixed profile selects A/B mini cells only, two checkpoints x two repetitions,
 in pair order C1/1 AB, C2/1 BA, C1/2 BA, C2/2 AB. It has no independent eight-response
@@ -731,12 +746,12 @@ The new mini packet hash is
 `sha256:ce3e9de64c93c324fa78ef2132b7f569be924c6fcb9db0511faa712f9016a976`;
 implementation-set hash is
 `sha256:00c10b9b1d209bc93a23f31b33983d5abb9812af75d8397fc7bb30f5f090cf93`.
-Proposal: mini snapshot `gpt-5.4-mini-2026-03-17`, medium, 25k, root `.env`, shared
+Consumed contract: mini snapshot `gpt-5.4-mini-2026-03-17`, medium, 25k, root `.env`, shared
 $5/1,800s, count30s/response300s, no retry/resume. Maximum responses/counts188 is a
 native resource ceiling, not a promised sample size. Full A/B depth reservation
-is $0.633, with no cache discount, before per-request JIT counting. Approved paid
-execution requires already-running Docker and pinned check/probe images, never
-start/pull/build. No hidden evaluator, paid judge or automatic candidate checking.
+is $0.633, with no cache discount, before per-request JIT counting. Execution used
+already-running Docker and pinned check/probe images, with no start/pull/build,
+hidden evaluator, paid judge or automatic candidate checking by the assessor.
 
 Only inherited pre-checkpoint state differs; all new native state/result/reasoning
 history accumulates in both arms. The eight first requests exactly match the earlier
@@ -748,7 +763,7 @@ plus Ruff; not a full suite or a two-minute aggregate. Separate default smoke
 `run_dev_21fe1d793876457e` reaches isolated evaluator PASS, safety NOT_RUN, zero cost.
 No provider/count API, real task check or Docker execution ran for this preparation.
 
-Seal anonymous public code observations before joining conditions/tokens/costs.
+Anonymous public code observations were sealed before joining conditions/tokens/costs.
 Report recovery and final-diff checks separately from inspection and diagnostic
 censoring; missing cells are not failures. This does not isolate instruction repair,
 test native continuation reset, establish a model effect or prove missing planning.
