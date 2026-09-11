@@ -38,7 +38,49 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: diagnostic episode instructions repaired; paid work remains closed
+## Current seam: diagnostic request waits repaired; paid work remains closed
+
+The short-episode collector now caps input counting at 30 seconds and response
+waiting at 300 seconds, each clipped to the remaining shared/branch execution
+deadline. A diagnostic-only async SDK facade cancels the entire request, including
+a trickling response body; merely passing an HTTPX per-I/O timeout was insufficient.
+No provider worker is launched. Local response parsing is checked before admitting tools.
+These are operational experiment limits, not model latency guarantees: the 28 saved
+completed responses peaked at 60.279 seconds, while the unknown dispatch consumed
+about 22m26s. They do not prove why that old request failed.
+
+Exact new packets/envelopes bind the wait policy and transport implementation.
+Receipts distinguish count/response waiting, local response processing, usage and
+continuation validation, and late pre-tool admission. Only allowlisted error labels,
+phase, IDs/hashes, elapsed time and effective limit are recorded, never SDK messages,
+headers, raw response bodies or plaintext reasoning. A received response can retain
+verified usage even if action parsing fails; late parsed decisions/continuations are
+preserved without executing tools. Unknown billing still stops the whole experiment,
+without retry/resume. Local cancellation does not establish remote billing status.
+Client cleanup is bounded to five seconds per owned client before the existing
+read-only metadata tail; cleanup outcomes are durable, including failures.
+Loop closure does not wait for an OS DNS executor to finish: such work cannot
+re-enter the closed loop, but this is not a hard process/OS-thread termination promise.
+
+No default runtime, model, context, memory, tool schema or task package changed.
+Provider-free receipts belong under `C:\pt\analyses\pl43-request-waits-v1`; no paid
+call, input-count API call, Docker operation or pyfakefs evaluation is authorized by
+this repair. The next step is a separately specified diagnostic packet, not reuse of
+the consumed grant or a claim that mini performance improved.
+
+Validation: 192 distinct related cases pass (32 focused in 73.97s, 27 final collector
+in 112.58s, 131 shared regressions in 108.72s; the final 18-case boundary/docs check
+adds two new cases and repeats sixteen). Ruff passes. The first collector run took
+127.36s; removing redundant multi-group work from the lock test brought its final
+run below two minutes without dropping the separate 16-window schedule test. This
+is not a full-runtime-suite rerun or a two-minute aggregate workflow. Diagnostic
+mock reaches public checks/finish; separate default mock `run_dev_ce016b90431140df`
+at `C:\pt\smoke\pl43-request-waits-v1` reaches isolated `EVALUATOR_PASS`, safety
+NOT_RUN, zero cost and official=false. The 16 saved first requests and 1,366 protected
+files retain their exact bytes/hashes. This is fixture/integrity evidence, not new
+pyfakefs acceptance, a recovered charge or model-quality evidence.
+
+## Prior repair: diagnostic episode instructions
 
 The snapshot-to-episode instruction mismatch below is fixed in diagnostics only.
 Before the first request, `model_state_episode.episode_request` replaces the flat
@@ -66,9 +108,9 @@ checks all 16 independent starting requests and 16 saved mini inputs, including
 14 follow-ups: only instructions change; current source bytes and public histories
 remain identical. No old response was executed or old request rewritten. The 1,367
 protected files outside the two edited diagnostic modules retain their hashes.
-No provider/count call or Docker operation ran. The next separate provider-free
-fix is bounded collector request waits and sanitized failure-phase receipts; that
-issue remains unresolved. New paid comparison requires a new exact packet/approval.
+No provider/count call or Docker operation ran. The separate request-wait repair
+above now follows this instruction change. New paid comparison still requires a
+new exact packet/approval.
 
 ## Prior mini decision trace: diagnostic instruction defect found
 

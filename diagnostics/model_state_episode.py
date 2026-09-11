@@ -197,7 +197,8 @@ class PricedLedger:
         return self.ledger.settle(pricing=self.pricing, **usage)
 
 
-def run_round(episodes, package, adapters, ledger, *, checkpoint=lambda _: None):
+def run_round(episodes, package, adapters, ledger, *, checkpoint=lambda _: None,
+              request_waits=engine.requests.WAITS):
     """One counterbalanced four-arm depth, using explicitly supplied adapters only.
 
     This is not a live approval/collector entrypoint. Callers must persist a fresh
@@ -230,13 +231,16 @@ def run_round(episodes, package, adapters, ledger, *, checkpoint=lambda _: None)
                 if prepared is not None:
                     engine.dispatch(e, adapter, PricedLedger(ledger, design.PROFILES[e.arm]),
                                     prepared, checkpoint=checkpoint,
-                                    expected_model=design.PROFILES[e.arm].model_id)
+                                    expected_model=design.PROFILES[e.arm].model_id,
+                                    request_waits=request_waits)
     except Exception as exc:
         code = exc.code if isinstance(exc, engine.AbortExperiment) else "EXECUTION_ERROR"
         # Do not serialize SDK exception messages or invent unknown billing numbers.
         for e in episodes:
             if e.terminal is None:
-                e.finish("DIAGNOSTIC_ABORTED", code, failure_type=type(exc).__name__,
+                e.finish("DIAGNOSTIC_ABORTED", code,
+                         failure_type=engine.requests.exception_evidence(exc)["exception_type"],
+                         failure=exc.failure if isinstance(exc, engine.AbortExperiment) else None,
                          total_cost_known=False)
         raise
 
@@ -264,7 +268,8 @@ def prepare(plan, root: Path) -> dict:
         "runtime_hash": plan.packet["runtime_hash"],
         "implementation_hashes": {
             p.name: sha256_bytes(p.read_bytes())
-            for p in (Path(__file__), Path(engine.__file__), Path(review.__file__))},
+            for p in (Path(__file__), Path(engine.__file__), Path(review.__file__),
+                      Path(engine.requests.__file__))},
         "inherited_design_hashes": plan.design_hashes,
         "cells": rows, "comparison_groups": [list(b) for b in design.BLOCKS],
         "max_responses_per_episode": MAX_RESPONSES,

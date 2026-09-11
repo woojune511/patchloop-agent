@@ -459,9 +459,16 @@ contract: latest nested state is authoritative, new results are native, and the
 initial archive/source_bodies remain checkpoint evidence. Original and transformed
 request hashes are separate and bound alongside ordered wire and instruction hashes.
 Old episode preparations are rejected, not migrated; existing runs remain read-only.
-The standalone sampler described here is unchanged. Collector request-wait/failure
-recording still needs a separate fix before further paid comparison; local validation
-does not renew a grant. See [current status](current-status.md).
+The standalone sampler described here is unchanged. The short-episode collector
+now binds per-request waits in a new exact packet: count 30s, response 300s, clipped
+to remaining execution time. Async SDK cancellation bounds the whole response wait,
+not just individual reads. Error receipts distinguish waiting from local processing
+without saving SDK messages, response bodies or plaintext reasoning. Verified usage
+and late parsed decisions survive, but no tool executes from a late response.
+Client cleanup is bounded at 5s per owned client, with durable outcomes. Timeouts
+stop all arms; cancellation does not prove zero billing and never permits automatic
+retry/resume. Old grants remain consumed. Local validation is not a renewed grant
+or evidence of better agent performance. See [current status](current-status.md).
 
 Provider-free preparation and validation:
 

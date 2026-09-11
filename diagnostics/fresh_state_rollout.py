@@ -23,6 +23,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from diagnostics import decision_sampler as shared
+from diagnostics import episode_requests as requests
 from diagnostics import fresh_state_design as design
 from diagnostics import fresh_state_sampler as sampler
 from patchloop.agent.model import OpenAIResponsesAdapter, create_openai_client
@@ -574,8 +575,10 @@ def initialize(
 
 
 class AbortExperiment(Exception):
-    def __init__(self, code: str):
+    def __init__(self, code: str, failure: dict | None = None):
+        super().__init__(code)
         self.code = code
+        self.failure = failure
 
 
 def dispatch(
@@ -586,6 +589,7 @@ def dispatch(
     *,
     checkpoint=lambda _: None,
     expected_model: str = shared.MODEL,
+    request_waits: requests.RequestWaits | None = None,
 ):
     turn_id, request, policy = prepared
     shared.require(request["model"] == expected_model, "dispatch model mismatch")
@@ -597,6 +601,43 @@ def dispatch(
         "request_hash": sha256_json(request),
         "ordered_request_hash": sha256_text(wire),
     }
+    kind = "input_count"
+    timeout = branch.gateway.deadline.check()
+    if request_waits is not None:
+        timeout = min(timeout, request_waits.input_count_seconds)
+    wait_started_ms = branch.elapsed_ms()
+    if request_waits is not None and isinstance(adapter.client, requests.DiagnosticClient):
+        adapter.client.observe_response = lambda phase: branch.journal.append(
+            "diagnostic_response_received", {
+                **common, "phase": phase, "request_kind": kind, "count_id": count_id,
+                "call_id": call_id if kind == "provider_response" else None,
+                "active_elapsed_ms": branch.elapsed_ms(),
+            },
+        )
+
+    def failed(code, exc=None, *, phase=None, response_received=None):
+        if request_waits is None:
+            return AbortExperiment(code)
+        observed = getattr(adapter.client, "phase", None)
+        observed = observed if observed in requests.PHASES and observed.startswith(kind) else None
+        details = {
+            **common,
+            "request_kind": kind,
+            "count_id": count_id,
+            "call_id": call_id if kind == "provider_response" else None,
+            "phase": phase or observed or kind + "_wait",
+            **(requests.exception_evidence(exc) if exc is not None else {
+                "category": "contract_validation", "exception_type": None}),
+            "effective_timeout_seconds": timeout,
+            "request_elapsed_ms": max(0, branch.elapsed_ms() - wait_started_ms),
+            "response_received": bool(getattr(adapter.client, "response_received", False))
+            if response_received is None else response_received,
+            "automatic_retry": False,
+        }
+        branch.journal.append("diagnostic_request_failed", details)
+        checkpoint("request_failure_recorded")
+        return AbortExperiment(code, details)
+
     branch.journal.append(
         "input_count_started",
         {
@@ -604,18 +645,26 @@ def dispatch(
             "count_id": count_id,
             "request_artifact": request_ref.model_dump(mode="json"),
             "active_elapsed_ms": branch.elapsed_ms(),
+            **({"effective_timeout_seconds": timeout, "phase": "input_count_wait"}
+               if request_waits is not None else {}),
         },
     )
     try:
         count = adapter.count_input_tokens_v2(
-            request, timeout_seconds=branch.gateway.deadline.check()
+            request, timeout_seconds=timeout
         )
         shared.require(type(count) is int and count > 0, "invalid count")
     except Exception as exc:
-        raise AbortExperiment("COUNT_TIMEOUT_OR_UNKNOWN") from exc
+        raise failed("COUNT_TIMEOUT_OR_UNKNOWN", exc) from exc
+    except (KeyboardInterrupt, SystemExit) as exc:
+        failed("COUNT_TIMEOUT_OR_UNKNOWN", exc)
+        raise
     branch.journal.append(
         "input_count_finished", {"turn_id": turn_id, "count_id": count_id, "input_tokens": count}
     )
+    if request_waits is not None and branch.elapsed_ms() - wait_started_ms >= timeout * 1000:
+        raise failed("LIMIT_REACHED", requests.RequestWaitExpired(),
+                     phase="input_count_response_processing", response_received=True)
     if count > sampler.INPUT_TOKEN_LIMIT:
         raise AbortExperiment("INPUT_LIMIT_EXCEEDED")
     admission = ledger.admit(count, desired_output_ceiling=25000, minimum_output_ceiling=25000)
@@ -623,6 +672,10 @@ def dispatch(
         raise AbortExperiment("COST_CAP_REACHED")
     shared.require(design.wire_json(request) == wire, "count altered exact request")
     timeout = branch.gateway.deadline.check()
+    kind = "provider_response"
+    if request_waits is not None:
+        timeout = min(timeout, request_waits.provider_response_seconds)
+    wait_started_ms = branch.elapsed_ms()
     branch.journal.append(
         "provider_call_started",
         {
@@ -632,17 +685,30 @@ def dispatch(
             "output_ceiling": 25000,
             "reserved_cost_nanos": admission.reserved_cost_nanos,
             "active_elapsed_ms": branch.elapsed_ms(),
+            **({"effective_timeout_seconds": timeout, "phase": "provider_response_wait"}
+               if request_waits is not None else {}),
         },
     )
     branch.counters.model_calls += 1
     branch.new_provider_calls += 1
     checkpoint("dispatch_recorded")
+    processing_error = None
     try:
         raw = adapter.execute_request(
             request, requested_input_tokens=count, timeout_seconds=timeout
         )
     except Exception as exc:
-        raise AbortExperiment("PROVIDER_TIMEOUT_OR_UNKNOWN") from exc
+        raw = (
+            requests.recovered_usage(adapter, count)
+            if request_waits is not None and isinstance(adapter.client, requests.DiagnosticClient)
+            and adapter.client.phase == "provider_response_processing" else None
+        )
+        if raw is None:
+            raise failed("PROVIDER_TIMEOUT_OR_UNKNOWN", exc) from exc
+        processing_error = exc
+    except (KeyboardInterrupt, SystemExit) as exc:
+        failed("PROVIDER_TIMEOUT_OR_UNKNOWN", exc)
+        raise
     checkpoint("provider_returned")
     valid = (
         raw.input_tokens == count
@@ -681,21 +747,44 @@ def dispatch(
     )
     checkpoint("usage_recorded")
     if not valid or ledger.spent_nanos > ledger.cap_nanos:
-        raise AbortExperiment("PROVIDER_TIMEOUT_OR_UNKNOWN")
+        raise failed("PROVIDER_TIMEOUT_OR_UNKNOWN", phase="provider_usage_validation",
+                     response_received=True)
     branch.new_cost_nanos += cost
-    turn = loop._turn_from_openai(raw)
+    if processing_error is not None:
+        raise failed("PROVIDER_RESPONSE_PROCESSING_ERROR", processing_error,
+                     phase="provider_response_processing", response_received=True)
+    try:
+        turn = loop._turn_from_openai(raw)
+    except Exception as exc:
+        raise failed("PROVIDER_RESPONSE_PROCESSING_ERROR", exc,
+                     phase="provider_response_processing", response_received=True) from exc
     if turn.error_code == "provider_continuation_error":
-        raise AbortExperiment("PROVIDER_CONTINUATION_ERROR")
+        raise failed("PROVIDER_CONTINUATION_ERROR", phase="continuation_processing",
+                     response_received=True)
     if "reasoning" in turn.output_item_types:
         if turn.provider_continuation is None:
-            raise AbortExperiment("PROVIDER_CONTINUATION_ERROR")
+            raise failed("PROVIDER_CONTINUATION_ERROR", phase="continuation_processing",
+                         response_received=True)
         try:
             loop._validate_continuation_action_order(turn.provider_continuation, turn.tool_calls)
             ref = loop._store_provider_continuation(branch.store, turn.provider_continuation)
             loop._load_provider_continuation(branch.store, ref)
             turn = turn.model_copy(update={"continuation_ref": ref})
         except Exception as exc:
-            raise AbortExperiment("PROVIDER_CONTINUATION_ERROR") from exc
+            raise failed("PROVIDER_CONTINUATION_ERROR", exc, phase="continuation_processing",
+                         response_received=True) from exc
+    if request_waits is not None and (
+        branch.elapsed_ms() - wait_started_ms >= timeout * 1000
+        or branch.gateway.deadline.remaining_seconds() <= 0
+    ):
+        # Preserve a received decision/continuation, even when it is too late to act.
+        branch.journal.append("diagnostic_response_processed", {
+            **common, "call_id": call_id,
+            "decision_artifact": branch.store.put_json(turn.model_dump(mode="json")).model_dump(
+                mode="json"),
+        })
+        raise failed("LIMIT_REACHED", requests.RequestWaitExpired(),
+                     phase="pre_tool_admission", response_received=True)
     branch.accept(turn_id, turn, policy, checkpoint)
 
 

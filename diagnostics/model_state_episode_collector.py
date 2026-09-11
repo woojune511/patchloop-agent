@@ -11,13 +11,14 @@ import argparse
 import json
 import secrets
 import uuid
-from contextlib import ExitStack, suppress
+from contextlib import ExitStack
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
 from time import monotonic
 
 from diagnostics import decision_sampler as shared
+from diagnostics import episode_requests as requests
 from diagnostics import fresh_state_rollout as engine
 from diagnostics import model_state_episode as episode
 from diagnostics import model_state_review as review
@@ -47,6 +48,7 @@ def implementation_hashes():
             Path(episode.__file__),
             Path(engine.__file__),
             Path(review.__file__),
+            Path(requests.__file__),
         )
     }
 
@@ -129,6 +131,7 @@ def proposal(frozen, preparation_path, preparation_hash, task_dir, result_root):
         "pricing_review_on_execution_date_required": True,
         "proposed_total_cap_usd": str(CAP),
         "active_seconds": SECONDS,
+        "request_waits": requests.WAITS.contract(),
         "read_only_metadata_tail_seconds": 10,
         "first_requests": prepared["cells"],
         "input_contract_hash": episode.INPUT_CONTRACT_HASH,
@@ -268,6 +271,19 @@ def evidence_totals(root, events):
     unknown = bool(calls - {e["call_id"] for e in finished}) or any(
         e.get("billing_known") is not True for e in finished
     )
+    pending = (calls - {e["call_id"] for e in finished}) | (counts - counted)
+    phases = {}
+    for e in all_events:
+        p = e["payload"]
+        key = p.get("call_id") or p.get("count_id")
+        if key in pending and e["event_type"] in {
+            "input_count_started", "provider_call_started", "diagnostic_response_received",
+            "diagnostic_request_failed",
+        }:
+            phases[key] = {
+                "request_id": key, "turn_id": p["turn_id"],
+                "last_recorded_phase": p.get("phase", "unknown_legacy_phase"),
+            }
     return {
         "provider_calls": len(calls),
         "input_count_calls": len(counts),
@@ -282,6 +298,13 @@ def evidence_totals(root, events):
         "total_cost_known": not unknown,
         "input_count_unknown": bool(counts - counted),
         "registered_episodes": len(records),
+        "request_failures": [
+            e["payload"] for e in all_events if e["event_type"] == "diagnostic_request_failed"
+        ],
+        "pending_request_phases": list(phases.values()),
+        "client_cleanup": [
+            e["payload"] for e in events if e["event_type"] == "diagnostic_client_cleanup"
+        ],
     }
 
 
@@ -420,6 +443,7 @@ def collect(
         "pricing_verified_on": grant.pricing_verified_on,
         "planned_episodes": len(plan.frozen.cells),
         "provider_free": adapter_factory is not None,
+        "request_waits": plan.packet["request_waits"],
     }
     envelope_ref = store.put_json(envelope)
     store.write_text_immutable(root / "envelope.json", canonical_json(envelope))
@@ -460,15 +484,10 @@ def collect(
                     else:
                         if config.model_id not in clients:
                             key = shared.load_exact_openai_api_key(grant.credential_file)
-                            client = shared.create_openai_client(config, api_key=key)
+                            client = requests.DiagnosticClient(api_key=key)
                             del key
                             clients[config.model_id] = client
 
-                            def close_client(selected=client):
-                                with suppress(Exception):
-                                    selected.close()
-
-                            locks.callback(close_client)
                         adapter = OpenAIResponsesAdapter(
                             config, api_key="", client=clients[config.model_id]
                         )
@@ -522,12 +541,26 @@ def collect(
                     break
         except engine.AbortExperiment as exc:
             code = exc.code
+            failure_type = exc.failure["exception_type"] if exc.failure else None
         except ExecutionDeadlineExceeded:
             code = "LIMIT_REACHED"
         except (KeyboardInterrupt, SystemExit):
             code = "INTERRUPTED"
         except Exception as exc:
-            code, failure_type = "COLLECTOR_ERROR", type(exc).__name__
+            code = "COLLECTOR_ERROR"
+            failure_type = requests.exception_evidence(exc)["exception_type"]
+        finally:
+            # No background request may outlive the scheduler/lock. Async SDK cancellation
+            # is awaited by the facade; close its owned clients before final provenance.
+            for client in clients.values():
+                try:
+                    client.close(timeout=requests.WAITS.client_cleanup_seconds)
+                    journal.append("diagnostic_client_cleanup", {"status": "closed"})
+                except Exception as exc:
+                    details = {"phase": "client_cleanup", **requests.exception_evidence(exc)}
+                    journal.append("diagnostic_client_cleanup", {"status": "error", **details})
+                    if code == "OBSERVATION_WINDOWS_COMPLETED":
+                        code, failure_type = "CLIENT_CLEANUP_ERROR", details["exception_type"]
         # No call/action retry after any error. Disk journal, not in-memory counters, is authority.
         totals = evidence_totals(root, journal.events())
         if not totals["total_cost_known"]:

@@ -198,6 +198,8 @@ def test_exact_packet_validates_twice_without_execution_or_source_changes(prepar
     assert plan.packet["paid_execution_authorized"] is False
     assert "OLD_OPAQUE" not in canonical_json(plan.packet)
     assert plan.packet["input_contract_hash"] == episode.INPUT_CONTRACT_HASH
+    assert plan.packet["request_waits"] == collector.requests.WAITS.contract()
+    assert "episode_requests.py" in plan.packet["implementation_hashes"]
 
 
 @pytest.mark.parametrize("damage", ["legacy_snapshot", "instruction_hash", "ordered_hash"])
@@ -286,6 +288,16 @@ def test_uncertainty_stops_every_group_and_preserves_known_evidence(prepared, fa
     assert len(client.created) <= 2 and len(client.counted) <= 2
     assert result["unstarted_episodes"] == 12
     assert collector.inspect(prepared[1].result_root) == result
+    phase = {
+        "count": "input_count_wait", "transport": "provider_response_wait",
+        "billing": "provider_usage_validation", "cipher": "continuation_processing",
+    }[failure]
+    assert result["request_failures"][-1]["phase"] == phase
+    assert result["request_failures"][-1]["automatic_retry"] is False
+    if failure in {"count", "transport"}:
+        assert result["failure_type"] == "TimeoutError"
+        assert result["request_failures"][-1]["effective_timeout_seconds"] == (
+            30 if failure == "count" else 300)
     for data in snapshot(prepared[1].result_root).values():
         assert b"SECRET_SDK_SENTINEL" not in data
         assert b"PRIVATE_SPEC_SENTINEL" not in data and b"FUTURE_RESULT_SENTINEL" not in data
@@ -297,6 +309,7 @@ def test_uncertainty_stops_every_group_and_preserves_known_evidence(prepared, fa
         ("dispatch_recorded", "PROVIDER_TIMEOUT_OR_UNKNOWN"),
         ("usage_recorded", "INTERRUPTED"),
         ("actions_finished", "INTERRUPTED"),
+        ("request_failure_recorded", "COUNT_TIMEOUT_OR_UNKNOWN"),
     ],
 )
 def test_crash_inspection_is_read_only_and_never_replays(prepared, point, terminal):
@@ -305,11 +318,15 @@ def test_crash_inspection_is_read_only_and_never_replays(prepared, point, termin
             raise ProcessKilled()
 
     with pytest.raises(ProcessKilled):
-        run(prepared, Client(), checkpoint=killed)
+        run(prepared, Client(failure="count" if point == "request_failure_recorded" else None),
+            checkpoint=killed)
     before = snapshot(prepared[1].result_root)
     result = collector.inspect(prepared[1].result_root)
     assert result["terminal"] == terminal
     assert result["resume_allowed"] is False
+    if point == "request_failure_recorded":
+        assert result["request_failures"][-1]["phase"] == "input_count_wait"
+        assert result["pending_request_phases"][-1]["last_recorded_phase"] == "input_count_wait"
     assert before == snapshot(prepared[1].result_root)
     with pytest.raises(ContractError):
         run(prepared, Client())
@@ -335,6 +352,16 @@ def test_changed_disk_packet_is_rejected_before_credentials(prepared):
     plan.path.write_bytes(plan.path.read_bytes() + b" ")
     with pytest.raises(ContractError, match="packet hash"):
         run(prepared, Client())
+    assert not grant.result_root.exists()
+
+
+def test_changed_wait_limit_is_rejected_even_with_new_packet_hash(prepared):
+    plan, grant = prepared
+    packet = json.loads(plan.path.read_bytes())
+    packet["request_waits"]["provider_response_seconds"] = 1800
+    plan.path.write_text(canonical_json(packet), encoding="utf-8")
+    with pytest.raises(ContractError, match="contract"):
+        collector.load_plan(plan.path, sha256_bytes(plan.path.read_bytes()))
     assert not grant.result_root.exists()
 
 
@@ -405,7 +432,10 @@ def test_unavailable_final_snapshot_preserves_durable_results(prepared, monkeypa
     assert "SECRET_METADATA_SENTINEL" not in canonical_json(public)
 
 
-def test_concurrent_entry_is_rejected_before_count_or_provider(prepared):
+def test_concurrent_entry_is_rejected_before_count_or_provider(prepared, monkeypatch):
+    # One group exercises the same invocation lock; the separate schedule test covers all 16.
+    monkeypatch.setattr(design, "BLOCKS", design.BLOCKS[:1])
+    monkeypatch.setattr(collector, "load_plan", lambda *_: prepared[0])
     client = Client()
     observed = []
 
@@ -418,7 +448,7 @@ def test_concurrent_entry_is_rejected_before_count_or_provider(prepared):
             observed.append(at)
 
     result = run(prepared, client, checkpoint=concurrent)
-    assert result["provider_calls"] == len(observed) == 16
+    assert result["provider_calls"] == len(observed) == 4
 
 
 def test_final_candidate_drift_is_not_bound_to_old_check_result(tmp_path, monkeypatch):

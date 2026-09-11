@@ -747,9 +747,41 @@ and finish; separate default mock `run_dev_e680c529bc3849cb` reaches isolated ev
 PASS, safety NOT_RUN, official=false, under `C:\pt\smoke\pl43-episode-instructions-v1`.
 No provider/count call, real Docker or pyfakefs evaluator was executed.
 
-Next separate provider-free seam is bounded collector per-request wait and sanitized
-failure-phase recording. That issue remains unresolved before paid work. This fix
-does not establish improved mini performance or explain the earlier errors causally.
+The separate **diagnostic request-wait repair is implemented** in
+`diagnostics/episode_requests.py` and the short-episode collector. Count waits are
+30s, response waits 300s, both clipped to the current execution deadline. The async
+SDK facade uses a whole-request timer in addition to per-I/O timeout, zero retries
+and `trust_env=false`. Cancellation finishes before returning to the scheduler;
+there is no provider worker or new resume path. Parsing is local and a late
+response cannot execute tools. Client cleanup has a separate bounded 5s per owned
+client, before the existing 10s read-only metadata tail; no further task runs there.
+Close the owned loop without a default-executor join that could delay failure
+receipts. An OS DNS lookup can outlive cancellation but cannot re-enter that loop;
+do not claim hard process/OS-thread termination or remote request cancellation.
+
+New exact packets/envelopes bind `episode-request-waits-v1` and implementation bytes.
+Old packets/runs are never migrated. Existing sampler/default-agent wire inputs,
+model settings, tool order, public evidence, notes and encrypted replay are unchanged.
+`diagnostic_response_received` precedes parsing; `diagnostic_request_failed` records
+fixed phase/error labels, elapsed/effective wait and request identities, not exception
+messages, headers, response bodies or reasoning summaries. Read-only inspect returns
+durable failures and the last recorded phase of pending attempts; that phase is not
+a diagnosis of the remote cause. Verified usage survives action parsing failure.
+Late parsed decision/continuation artifacts survive without a tool batch. Unknown
+count/provider state retains its terminal priority; local timeout/cancellation never
+proves that a remote charge did not occur. No automatic retry, paid judge or hidden
+evaluator. Cleanup outcomes are recorded before terminal finalization.
+
+Receipts: `C:\pt\analyses\pl43-request-waits-v1`. No provider/count or Docker execution
+is part of this fix. The next seam is a separately specified diagnostic packet and
+approval, not another default-agent feature or a claim of improved mini performance.
+Validation covers 192 distinct related cases plus Ruff: focused 32/73.97s, final
+collector 27/112.58s, shared regression 131/108.72s and boundary/docs 18/11.35s
+(overlapping counts). The first collector group took 127.36s; redundant repetition
+in its lock test was removed, retaining the independent 16-window schedule test.
+Do not claim a two-minute aggregate or full-runtime rerun. Default mock
+`run_dev_ce016b90431140df` reaches isolated evaluation at zero cost, safety NOT_RUN,
+official=false. Saved first inputs (16) and protected files (1,366) are unchanged.
 
 The trace bound 1,369 unchanged files and executed no provider/count call, task,
 Docker or hidden evaluator. Input-size growth is measured, not attention-loss
