@@ -38,7 +38,39 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: mini decision trace; diagnostic instruction defect found
+## Current seam: diagnostic episode instructions repaired; paid work remains closed
+
+The snapshot-to-episode instruction mismatch below is fixed in diagnostics only.
+Before the first request, `model_state_episode.episode_request` replaces the flat
+snapshot notice with the existing native conversation contract plus an initial-archive
+lookup rule. Immutable task/archive and checkpoint `source_bodies` are distinguished
+from later `harness_current_state.state`, native outputs and current file identities.
+Sent messages, public inputs, tool/property order, encrypted replay and the standalone
+one-response sampler are unchanged. No default model, agent policy or memory change.
+
+Preparation v2 binds the instruction hash and separates source request identities
+from new exact first-request identities. The collector verifies both canonical and
+ordered request hashes; old preparations are rejected before task/credential access,
+not migrated. The new preparation is non-executable, not a renewed paid grant.
+
+Validation: 19 focused cases in 63.384s, 25 collector cases in 117.263s, and 76 reused
+sampler/source/conversation/documentation cases in 17.757s pass, plus Ruff. These are
+120 related cases, not the full runtime suite or a two-minute aggregate workflow.
+The collector mock reaches public mutation/checks/finish. A separate default mock
+smoke at `C:\pt\smoke\pl43-episode-instructions-v1` reaches isolated evaluation:
+`run_dev_e680c529bc3849cb`, `EVALUATOR_PASS`, safety NOT_RUN, cost zero, official=false.
+That fixture result is not pyfakefs task acceptance or measured agent improvement.
+
+Read-only real-input verification at `C:\pt\analyses\pl43-episode-instructions-v1`
+checks all 16 independent starting requests and 16 saved mini inputs, including
+14 follow-ups: only instructions change; current source bytes and public histories
+remain identical. No old response was executed or old request rewritten. The 1,367
+protected files outside the two edited diagnostic modules retain their hashes.
+No provider/count call or Docker operation ran. The next separate provider-free
+fix is bounded collector request waits and sanitized failure-phase receipts; that
+issue remains unresolved. New paid comparison requires a new exact packet/approval.
+
+## Prior mini decision trace: diagnostic instruction defect found
 
 Read-only tracing of the two C1/repeat1 mini episodes is complete at
 `C:\pt\analyses\pl43-mini-decision-trace-v1`. The full public task, current observed
@@ -64,11 +96,10 @@ bytes are available and resolve correctly; the instructions misidentify their
 authority/location. The default native runtime has the correct separate contract.
 Whether this mismatch caused either mini error is **not established**.
 
-Next provider-free implementation: align the diagnostic snapshot-to-episode
-instruction contract and test latest-state/native-source authority, without changing
-the default agent or forcing plans/notes. Bounded collector waits and sanitized
-failure-phase receipts remain a separate prerequisite for further paid comparison.
-Neither fix is implemented yet. Any later evidence-to-code/unfinished-question
+The diagnostic snapshot-to-episode instruction repair is implemented above, without
+changing the default agent or forcing plans/notes. Bounded collector waits and
+sanitized failure-phase receipts remain an unimplemented, separate prerequisite for
+further paid comparison. Any later evidence-to-code/unfinished-question
 experiment requires a new packet and approval; the old grant cannot be resumed.
 
 Seven public-trace assertion groups pass; 1,369 bound files remain unchanged.

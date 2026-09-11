@@ -722,17 +722,34 @@ method on the wrapper's `self`. An unanswered Windows `isabs` implementation que
 is a public tracking-gap example, not the cause established for that exception.
 Do not infer absent internal planning, broken feedback or inability to recover.
 
-Next seam is a **provider-free diagnostic instruction repair**, not a default-loop
-change. The sampler's flat snapshot/archive/source_bodies instructions are retained
-when the episode appends nested `harness_current_state.state` and new native results.
-All 14 follow-ups exhibit the mismatch; four post-edit inputs retain historical
-initial source bodies. Exact current evidence still resolves. The native runtime's
-own instructions already explain this contract correctly. Fix the diagnostic
-bridge from its first request, preserving sent items, and test latest state/task
-inheritance/native deliveries after mutation and resume. Do not change the existing
-one-response sampler contract, force plans/notes or claim this defect caused the
-observed mini mistakes. The repair is not implemented yet. Collector per-request
-wait/failure-phase handling below also remains unresolved before paid work.
+The **diagnostic instruction repair is implemented**, not a default-loop change.
+`model_state_episode.episode_request` replaces only the unsent snapshot notice with
+the native conversation instructions plus archive lookup guidance. First-request
+top-level state applies until a later `harness_current_state.state`; only the public
+task is inherited as current authority. Initial archive/source_bodies remain quoted
+checkpoint evidence. New native outputs and latest current_sources determine source
+currency, including verified backward references into the archive. Never rewrite
+sent messages, the one-response sampler, tool/property order or encrypted replay.
+
+Preparation schema v2 binds `input_contract_hash`, original `source_request_hash`,
+new `request_hash` and ordered wire hash. The collector recomputes the exact transformed
+request and rejects old/mismatched preparations before task/credential access. Do not
+migrate or resume old diagnostic packets; read-only saved-input hydration tests are
+not a new resume entrypoint. No plan/note requirement or solution hint is introduced.
+
+At `C:\pt\analyses\pl43-episode-instructions-v1`, all 16 starting cells and 16 saved
+mini inputs preserve exact public information under the instruction-only change;
+14 saved follow-ups still resolve current sources. 1,367 protected files outside the
+two changed diagnostic modules retain their hashes. Related validation passes:
+19 focused/63.384s, 25 collector/117.263s, 76 reused cases/17.757s and Ruff. Do not
+claim a full-runtime rerun or a two-minute aggregate. Diagnostic mock reaches checks
+and finish; separate default mock `run_dev_e680c529bc3849cb` reaches isolated evaluator
+PASS, safety NOT_RUN, official=false, under `C:\pt\smoke\pl43-episode-instructions-v1`.
+No provider/count call, real Docker or pyfakefs evaluator was executed.
+
+Next separate provider-free seam is bounded collector per-request wait and sanitized
+failure-phase recording. That issue remains unresolved before paid work. This fix
+does not establish improved mini performance or explain the earlier errors causally.
 
 The trace bound 1,369 unchanged files and executed no provider/count call, task,
 Docker or hidden evaluator. Input-size growth is measured, not attention-loss
@@ -822,15 +839,18 @@ pre-turn21 reads revisit the already delivered editable body for exact anchors.
 Public explanations can already identify the repair direction; neither explanations
 nor source novelty establish repair quality or semantic necessity. Cause unresolved.
 
-Episode preparation uses all 16 independent frozen starting cells, never selected
-old responses. No old encrypted reasoning crosses the checkpoint. New native
+Episode preparation uses all 16 independent frozen starting public inputs, never
+selected old responses. Current v2 changes only the unsent format instructions and
+binds new first-request identities; historical v1 packets below are evidence only.
+No old encrypted reasoning crosses the checkpoint. New native
 reasoning/calls/results, state views, optional notes and corrections use the existing
 engine in every arm. Only inherited historical state differs: this is not perpetual
 current-only projection. Do not rewrite default agent prompts, model, memory, tool
 policy or runtime identity. The external eight-response window must be labeled
 censored, never charged as an agent LIMIT_REACHED or used to reduce its 40/100/4
-limits. Restore checkpoint counters/mutations and verify the original first request
-and allowed tools before new actions. Public checks/finish remain model-selected;
+limits. Restore checkpoint counters/mutations and verify the prepared first request
+(separately bound to its source request) and allowed tools before new actions.
+Public checks/finish remain model-selected;
 no hidden evaluator, automatic checker or new planning action is added.
 
 The injected scheduler reserves a complete active four-arm depth at the 272k input

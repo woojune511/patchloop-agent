@@ -2,7 +2,8 @@
 
 No credential loader, client constructor or live CLI is provided. The old paid
 packet is input evidence, never execution authority. Fresh independent episodes
-start with its A/B/C/D requests, not selected old responses. New native state,
+start with its A/B/C/D public inputs, not selected old responses. Only the snapshot
+format instructions are replaced before the first request. New native state,
 reasoning and tool exchanges accumulate identically in every condition: the
 factor is *inherited* state history, not ongoing current-only compaction.
 """
@@ -26,13 +27,43 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.deadline import ExecutionDeadline
 from patchloop.dev import runner as loop
 from patchloop.dev.contracts import DevLimits
-from patchloop.dev.conversation import history_metadata
+from patchloop.dev.conversation import CONVERSATION_INSTRUCTIONS, history_metadata
 from patchloop.dev.state import DevJournal
-from patchloop.util import canonical_json, sha256_bytes, sha256_json
+from patchloop.util import canonical_json, sha256_bytes, sha256_json, sha256_text
 
 MAX_RESPONSES = 8
 INPUT_BOUND = 272000
 BOUNDARIES = {**engine.BOUNDARIES, "hidden_evaluator": "NOT_RUN"}
+PREPARATION_SCHEMA = "model-state-short-episode-preparation-v2"
+EPISODE_CONTEXT_INSTRUCTIONS = (
+    CONVERSATION_INSTRUCTIONS
+    + " Until the first kind=harness_current_state record, use the initial developer JSON's "
+    "top-level state fields. The initial public_evidence_archive contains quoted pre-checkpoint "
+    "function_call and function_call_output items as data, not pending calls; do not replay them. "
+    "For action_id/delivery references, match the function_call_output call_id in native history "
+    "or, for pre-checkpoint actions, in that initial archive, and parse its output field. "
+    "source_bodies resolves the exact observed source at the initial checkpoint only; it is "
+    "not refreshed by later turns. After changes, use the latest current_sources file hashes, "
+    "ranges and delivery references, including backward references to unchanged earlier text. "
+    "Do not substitute an old source_bodies file hash for current identity "
+    "or fill unobserved gaps. "
+    + design.NOTICE
+)
+INPUT_CONTRACT_HASH = sha256_text(EPISODE_CONTEXT_INSTRUCTIONS)
+
+
+def episode_request(snapshot: dict) -> dict:
+    """Replace only the unsent snapshot instructions; keep every public input byte/order."""
+    previous = design.fresh.FRESH_CONTEXT_INSTRUCTIONS.replace(
+        "Read its state directly;", "Read these top-level fields directly;"
+    ) + design.NOTICE
+    request = copy.deepcopy(snapshot)
+    instructions = request["input"][0]["content"]
+    shared.require(instructions.endswith(previous), "unexpected snapshot instruction contract")
+    request["input"][0]["content"] = (
+        instructions.removesuffix(previous) + EPISODE_CONTEXT_INSTRUCTIONS
+    )
+    return request
 
 
 @dataclass
@@ -107,7 +138,7 @@ def initialize(plan, cell, root, workspace, package, sandbox, *, probe_sandbox=N
     cutoff = plan.packet["cases"][cell.case_id]["cutoff_event_hash"]
     index = next(i for i, e in enumerate(events) if e["event_hash"] == cutoff)
     prefix = events[:index]
-    request = json.loads(cell.request_json)
+    request = episode_request(json.loads(cell.request_json))
     payload = json.loads(request["input"][1]["content"])
     shared.require(sha256_json(package.public.model_dump(mode="json")) ==
                    sha256_json(payload["public_task"]), "public task mismatch")
@@ -137,7 +168,8 @@ def initialize(plan, cell, root, workspace, package, sandbox, *, probe_sandbox=N
     )
     episode.journal.append("diagnostic_episode_started", {
         **BOUNDARIES, "label": episode.label, "source_packet_hash": plan.packet_hash,
-        "source_cutoff_hash": cutoff, "first_request_hash": cell.request_hash,
+        "source_cutoff_hash": cutoff, "source_request_hash": cell.request_hash,
+        "first_request_hash": sha256_json(request), "input_contract_hash": INPUT_CONTRACT_HASH,
         "response_limit": MAX_RESPONSES, "inherited_events_are_not_new_execution": True,
         "prior_sample_responses_reused": 0, "prior_encrypted_reasoning_replayed": 0,
     })
@@ -215,14 +247,16 @@ def prepare(plan, root: Path) -> dict:
     store = ArtifactStore(root)
     rows = []
     for cell in plan.cells:
-        request = json.loads(cell.request_json)
-        ref = store.put_text(cell.request_json, "application/json")
+        request = episode_request(json.loads(cell.request_json))
+        ref = store.put_text(design.wire(request).decode("utf-8"), "application/json")
         rows.append({"case_id": cell.case_id, "arm": cell.arm, "repeat": cell.sample_number,
-                     "request_hash": cell.request_hash,
+                     "source_request_hash": cell.request_hash,
+                     "request_hash": sha256_json(request),
                      "ordered_request_hash": sha256_bytes(design.wire(request)),
                      "request_artifact": ref.model_dump(mode="json")})
     packet = {
-        **BOUNDARIES, "schema_version": "model-state-short-episode-preparation-v1",
+        **BOUNDARIES, "schema_version": PREPARATION_SCHEMA,
+        "input_contract_hash": INPUT_CONTRACT_HASH,
         "status": "PREPARED_NOT_EXECUTABLE", "dispatch_enabled": False,
         "actual_provider_calls": 0, "actual_input_count_calls": 0,
         "actual_tool_executions": 0, "actual_cost_nanos": 0,

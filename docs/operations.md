@@ -453,6 +453,16 @@ All conditions are fresh requests, without old encrypted reasoning; identical
 public source bodies and the entire quoted tool archive remain in both variants.
 This does not test a native-loop continuation reset or authorize a default change.
 
+The separate short-episode preparer now uses preparation schema v2. It preserves
+these public inputs but replaces the unsent snapshot instructions with a multi-turn
+contract: latest nested state is authoritative, new results are native, and the
+initial archive/source_bodies remain checkpoint evidence. Original and transformed
+request hashes are separate and bound alongside ordered wire and instruction hashes.
+Old episode preparations are rejected, not migrated; existing runs remain read-only.
+The standalone sampler described here is unchanged. Collector request-wait/failure
+recording still needs a separate fix before further paid comparison; local validation
+does not renew a grant. See [current status](current-status.md).
+
 Provider-free preparation and validation:
 
 ```powershell

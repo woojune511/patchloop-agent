@@ -6,6 +6,7 @@ import socket
 import uuid
 from dataclasses import replace
 from decimal import Decimal
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -196,6 +197,34 @@ def test_exact_packet_validates_twice_without_execution_or_source_changes(prepar
     assert plan.packet["maximum_generation_calls"] == 128
     assert plan.packet["paid_execution_authorized"] is False
     assert "OLD_OPAQUE" not in canonical_json(plan.packet)
+    assert plan.packet["input_contract_hash"] == episode.INPUT_CONTRACT_HASH
+
+
+@pytest.mark.parametrize("damage", ["legacy_snapshot", "instruction_hash", "ordered_hash"])
+def test_old_or_mismatched_preparation_fails_before_task_or_credentials(
+    prepared, tmp_path, monkeypatch, damage,
+):
+    plan, _ = prepared
+    parent = json.loads(Path(plan.packet["preparation_path"]).read_bytes())
+    if damage == "legacy_snapshot":
+        parent["schema_version"] = "model-state-short-episode-preparation-v1"
+        del parent["input_contract_hash"]
+    elif damage == "instruction_hash":
+        parent["input_contract_hash"] = "old-contract"
+    else:
+        parent["cells"][0]["ordered_request_hash"] = "wrong-wire-hash"
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("invalid preparation reached task loading")
+
+    monkeypatch.setattr(collector, "load_task_package", forbidden)
+    store = ArtifactStore(Path(plan.packet["preparation_path"]).parent)
+    path = store.root / "invalid-packet.json"
+    store.write_text_immutable(path, canonical_json(parent))
+    with pytest.raises(ContractError, match="preparation contract|prepared request"):
+        collector.proposal(plan.frozen, path, sha256_bytes(path.read_bytes()),
+                           tmp_path, tmp_path / "never-created")
+    assert not (tmp_path / "never-created").exists()
 
 
 def test_all_sixteen_fresh_windows_share_one_cap_and_have_blind_receipts(prepared):

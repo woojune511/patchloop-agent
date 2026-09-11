@@ -57,7 +57,8 @@ def proposal(frozen, preparation_path, preparation_hash, task_dir, result_root):
     shared.require(sha256_bytes(raw) == preparation_hash, "preparation hash mismatch")
     prepared = json.loads(raw)
     shared.require(
-        prepared["schema_version"] == "model-state-short-episode-preparation-v1"
+        prepared["schema_version"] == episode.PREPARATION_SCHEMA
+        and prepared["input_contract_hash"] == episode.INPUT_CONTRACT_HASH
         and prepared["source_packet_hash"] == frozen.packet_hash
         and prepared["runtime_hash"] == frozen.packet["runtime_hash"]
         and prepared["prior_sample_responses_reused"] == 0
@@ -71,8 +72,11 @@ def proposal(frozen, preparation_path, preparation_hash, task_dir, result_root):
         shared.require(
             (row["case_id"], row["arm"], row["repeat"])
             == (cell.case_id, cell.arm, cell.sample_number)
-            and row["request_hash"] == cell.request_hash == sha256_json(request)
-            and design.wire(request) == design.wire(json.loads(cell.request_json)),
+            and row["source_request_hash"] == cell.request_hash
+            and row["request_hash"] == sha256_json(request)
+            and row["ordered_request_hash"] == sha256_bytes(design.wire(request))
+            and design.wire(request) == design.wire(
+                episode.episode_request(json.loads(cell.request_json))),
             "prepared request mismatch",
         )
     package = load_task_package(task_dir)
@@ -127,6 +131,7 @@ def proposal(frozen, preparation_path, preparation_hash, task_dir, result_root):
         "active_seconds": SECONDS,
         "read_only_metadata_tail_seconds": 10,
         "first_requests": prepared["cells"],
+        "input_contract_hash": episode.INPUT_CONTRACT_HASH,
         "comparison_groups": [list(b) for b in design.BLOCKS],
         "max_responses_per_episode": episode.MAX_RESPONSES,
         "maximum_generation_calls": len(frozen.cells) * episode.MAX_RESPONSES,

@@ -63,7 +63,7 @@ def episodes(gateway_factory, monkeypatch):
                    "tools": dev_tool_schemas(finish_enabled=False, check_ids=policy.check_ids,
                                              allowed_tools=policy.allowed_tools)}
         requests, _ = design.factorial_requests(request)
-        branch.seed_request = requests[arm]
+        branch.seed_request = episode.episode_request(requests[arm])
         result.append(branch)
     return result
 
@@ -260,6 +260,13 @@ def test_prepare_only_reuses_every_frozen_cell_not_selected_responses(factorial,
     assert packet["shared_cap_usd"] is None and packet["actual_tool_executions"] == 0
     assert len(packet["cells"]) == 16 and packet["max_generation_calls_proposal"] == 128
     assert packet["prior_sample_responses_reused"] == 0
+    assert packet["schema_version"] == episode.PREPARATION_SCHEMA
+    assert packet["input_contract_hash"] == episode.INPUT_CONTRACT_HASH
+    for row, cell in zip(packet["cells"], plan.cells, strict=True):
+        expected = episode.episode_request(json.loads(cell.request_json))
+        assert row["source_request_hash"] == cell.request_hash
+        assert row["request_hash"] == sha256_json(expected) != cell.request_hash
+        assert review.read_json(ArtifactStore(root), row["request_artifact"]) == expected
     assert before == snapshot(plan.source_root, plan.packet_path.parent)
     for raw in snapshot(root).values():
         assert b"OLD_OPAQUE" not in raw and b"PRIVATE_SPEC_SENTINEL" not in raw
@@ -291,7 +298,13 @@ def test_checkpoint_hydration_restores_counters_without_old_reasoning(factorial,
     assert e.counters.model_calls == counters.model_calls
     assert e.counters.tool_actions == counters.tool_actions
     assert e.gateway.accepted_mutations == e.initial_mutations == 0
-    e.prepare_request(package, None)
+    _, first, _ = e.prepare_request(package, None)
+    assert first == episode.episode_request(json.loads(cell.request_json))
+    started = next(evt["payload"] for evt in e.journal.events()
+                   if evt["event_type"] == "diagnostic_episode_started")
+    assert started["source_request_hash"] == cell.request_hash
+    assert started["first_request_hash"] == sha256_json(first) != cell.request_hash
+    assert started["input_contract_hash"] == episode.INPUT_CONTRACT_HASH
     assert e.new_provider_calls == e.new_tools == 0
     assert before == snapshot(plan.source_root)
     assert not any(evt["event_type"] == "provider_call_started" for evt in e.journal.events())
