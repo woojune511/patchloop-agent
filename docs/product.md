@@ -87,7 +87,9 @@ rerun of the latest still-failing public check on its baseline. The harness supp
 that current verdict before the next inference, charging the normal tool/time budget.
 It does not fabricate a model call, add tool masks, require notes/plans, or run private
 evaluation early. Other checks and all semantic repair choices remain the agent's.
-This option is off by default; its effect on agent quality has not been live-tested.
+This option is off by default. One separately approved fresh-mini run reaches task
+acceptance PASS with verified child feedback; its earlier algorithm/repair choices
+also differ from the prior run, so a causal quality benefit is not established.
 Check output limits preserve complete lines and explicitly report clipping. A small
 literal failure summary preserves public test IDs/comparison text even when a long log
 pushes them out of the delivered tail. Exception labels come from recognized terminal

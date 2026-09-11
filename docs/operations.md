@@ -72,6 +72,16 @@ Provider-free validation does not authorize a live experiment. Approve an exact 
 task/model/reasoning/env/repeat/cap invocation including this flag separately; do not
 reuse an old paid grant or migrate an old run.
 
+The separately approved fresh mini invocation with this flag is complete:
+`run_dev_d484ea8a2a8e4ba4` at `C:\patchloop-state`, receipts under
+`C:\pt\analyses\repair-recheck-live-20260912`. Exact v2/mini snapshot/medium/root
+`.env`/repeat1/$1.20/probes/repair-recheck: EVALUATOR_PASS, task acceptance and safety
+PASS, 15 model/count calls, 16 tools, two edits, $0.208261650/163.312s. One child
+recheck passes before the next inference; the remaining regression and finish are
+model-selected. No provider retry/resume, extra operator check or Docker start/pull/
+build ran. Original evidence is immutable and the grant is consumed. Do not infer
+automatic default adoption or feature causality from this single successful trajectory.
+
 ## Explicitly approved live development
 
 First inspect local prerequisites and the task package:

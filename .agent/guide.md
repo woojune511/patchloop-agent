@@ -753,12 +753,34 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: opt-in `--repair-recheck` is implemented (v36, default off); see its
-contract above. Focused verification covers public current-failure selection, fresh
-verdict before inference, no fabricated native child call, exact option/envelope
-matching, counters and six crash boundaries. This is local behavior evidence, not a
-live model-quality result. No paid invocation, Docker start/pull/build, task alteration
-or historical evidence update follows automatically.
+Current result: separately approved fresh mini `run_dev_d484ea8a2a8e4ba4` completes
+with EVALUATOR_PASS, task acceptance/safety PASS, official=false. Its exact v2/mini
+snapshot/medium/.env/repeat1/$1.20/probes/repair-recheck invocation is consumed.
+Evidence: `C:\pt\analyses\repair-recheck-live-20260912` (`result.md`, `analysis.json`).
+Runtime `28f08d7c...`, v36, default-off option and native limits remain unchanged.
+15 model/count calls, 16 tools, two edits, $0.208261650/163.312s; final +18/-1 patch
+passes both public checks and isolated task acceptance. Regression 517 passed/570
+skipped; private details remain uninspected and never enter the agent context.
+
+Turns1-10 contain nine source inspections and one real-OS probe. Turn11 chooses a
+recursive raw-path repair; turn12 exposes the public intermediate-mode assertion.
+Turn13 correctly replaces recursive `mode` with `PERM_DEF`; the harness child reruns
+that failure and supplies current PASS before turn14. The agent runs the remaining
+regression then finishes at turn15. One child, no additional provider/count call,
+no fabricated native function call, exact checked/worktree/submission hash. Fifteen
+canonical requests/continuations, 14 replay deliveries, 51 artifacts and 3,645 protected
+files verify. All optional notes are null; native evidence and continuation are not.
+
+This is one live success and a feedback-delivery observation, not feature causality:
+the improved initial algorithm and correct repair both occur before the child. No
+default adoption, memory mandate, success-rate or generalization claim follows.
+The next empirical question is reproducibility under an explicitly approved matched
+comparison, not another automatic run or repair of frozen evidence. No further paid
+invocation, Docker start/pull/build, task alteration or historical update is authorized.
+
+Prior implementation: v36 focused tests cover current-failure selection, fresh verdict
+before inference, exact option/envelope matching, counters and six crash boundaries.
+Keep these local reliability tests distinct from the subsequent one-run live evidence.
 
 Prior result: the separately approved frozen-third-candidate public check is complete
 at `C:\pt\evaluations\mini-third-candidate-20260912` (`result.md`). Restore the exact
@@ -804,8 +826,8 @@ verify, but notes are not updated after failures. No forced-note/plan conclusion
 27 canonical request hashes/continuations, 26 replay deliveries, 81 artifacts and
 3,231 protected files verify; exact check containers are absent. Peak input/output
 122,330/6,939 are below limits. No incomplete/protocol/transport uncertainty. The
-subsequent third-candidate check is above; a repair/recheck-loop intervention remains
-a separate decision. Do not repair/rerun frozen patches or launch a paid row automatically.
+subsequent third-candidate check and separately approved repair/recheck-loop observation
+are above. Do not repair/rerun frozen patches or launch a paid row automatically.
 No runtime/task changes; task acceptance/safety NOT_RUN, official=false, no claim.
 
 Prior result: the separately approved independent evaluation of the two frozen mini

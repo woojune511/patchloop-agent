@@ -38,7 +38,50 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: opt-in repair-recheck feedback implemented
+## Current result: fresh mini plus repair-recheck reaches task acceptance PASS
+
+The exact separately approved invocation completed as `run_dev_d484ea8a2a8e4ba4`
+at `C:\patchloop-state`; approval, public trajectory and integrity receipts are at
+`C:\pt\analyses\repair-recheck-live-20260912` (`result.md`, `analysis.json`). Fresh
+v2 task/base, mini `gpt-5.4-mini-2026-03-17`/medium/25k, root `.env`, repeat1,
+$1.20 cap, probes and `--repair-recheck`; runtime `28f08d7c...`/v36 are unchanged.
+
+Result: **EVALUATOR_PASS**, task acceptance PASS and typed safety PASS, 15 model/count
+calls, 16 tools, two accepted edits, $0.208261650 and 163.312 active seconds. The final
+19-line diff (+18/-1, one allowed file) passes both visible checks and isolated
+evaluation. Public regression reports 517 passed/570 skipped. Only aggregate private
+verdicts are observed; no private failure details or feedback entered agent decisions.
+This remains official=false/claim_eligible=false, not a benchmark or success-rate claim.
+
+Nine source inspections and one real-OS probe precede the first mutation at turn11.
+The agent chooses recursive raw-path creation using the existing split/mkdir helpers,
+instead of the previous run's component prepass. Turn12's public check fails at the
+intermediate-mode assertion. Turn13 immediately changes recursive parent creation
+from the caller's mode to PERM_DEF while retaining the requested leaf mode. The harness
+then reruns that exact failed check once: PASS on the new diff, before turn14 inference.
+Turn14 runs the remaining regression check; turn15 submits. No rejected mutation,
+protocol correction, token exhaustion, provider uncertainty or redundant repair occurs.
+
+The child is charged once as a tool action, with no model/count call and no fabricated
+native function call. Its current PASS is present in turn14's reconstructed public
+state. Fifteen exact request hashes/continuations, 14 continuation follow-ups, 51
+referenced artifacts and the check/worktree/submitted patch identity verify; all
+3,645 protected files remain unchanged. Optional memory updates are all null; native
+observations and encrypted continuation are present, not an empty-memory experiment.
+
+Interpretation: feedback timing is live-verified and this mini run solved the task.
+The better initial algorithm and correct mode repair both precede the automatic
+recheck. One different stochastic trajectory cannot establish that recheck caused
+the success, improved success rate, or removes the value of notes. Default stays off.
+Preserve this result; a later matched repeat/comparison needs its own exact approval.
+This grant is consumed: no automatic retry/resume, extra check, model/budget change
+or Docker start/pull/build follows.
+
+Result documentation passes three focused tests (0.054s), Ruff and diff checks.
+Runtime/task bytes are unchanged; no full runtime suite or mock smoke was rerun.
+The documentation tests created no disposable pytest workspace.
+
+## Prior implementation: opt-in repair-recheck feedback
 
 `--repair-recheck` is implemented, default **off**, under tool surface v36. After
 an accepted mutation changes a diff with a current public failure, the harness
@@ -73,7 +116,8 @@ focused synthetic failure tests exercise the child. Runtime `28f08d7c...` and v3
 surface `e02c52b5...` match validation and smoke. Detailed receipts are at
 `C:\pt\validation\repair-recheck-20260912.md`. No live run, provider
 call, Docker start/pull/build, task change or original evidence update is authorized
-by this implementation. Agent-quality benefit remains untested; official=false.
+by that implementation alone. Its later separately approved live observation is
+recorded above; causal agent-quality benefit remains unestablished; official=false.
 
 ## Prior result: frozen third candidate publicly checked
 
@@ -132,8 +176,8 @@ All 27 request hashes and encrypted continuations, 26 continuation follow-ups,
 81 referenced artifacts, check policy/diff identities and 3,231 protected files verify.
 Owned check containers are absent. No retry/resume, extra task check, private diagnosis,
 Docker start/pull/build or default-loop change occurred. The subsequent third-candidate
-check is recorded above. A repair/recheck-loop experiment remains a separate decision,
-not another automatic paid row or budget increase. Task acceptance and
+check and separately approved repair/recheck-loop observation are recorded above.
+Neither authorizes another automatic paid row or budget increase. Task acceptance and
 safety NOT_RUN; official=false/claim_eligible=false. This one run is not a success rate.
 
 Result documentation passes three focused tests (0.050s), Ruff and diff checks.
