@@ -711,8 +711,35 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is read-only interpretation of the completed **partial**
-short-episode invocation, not more paid execution. Run
+The mini public decision trace is complete at
+`C:\pt\analyses\pl43-mini-decision-trace-v1`. Sixteen exact requests and continuations,
+14 follow-up histories and seven executable observation groups verify: the public
+task/source were delivered, new notes/concerns remained empty without rejected
+updates, six tools stayed open, and both eight-response windows ended during real
+recovery. Historical mini repaired ancestor mode immediately; its final diff was
+not retested. Current mini searched for the helper owner after calling a backend
+method on the wrapper's `self`. An unanswered Windows `isabs` implementation query
+is a public tracking-gap example, not the cause established for that exception.
+Do not infer absent internal planning, broken feedback or inability to recover.
+
+Next seam is a **provider-free diagnostic instruction repair**, not a default-loop
+change. The sampler's flat snapshot/archive/source_bodies instructions are retained
+when the episode appends nested `harness_current_state.state` and new native results.
+All 14 follow-ups exhibit the mismatch; four post-edit inputs retain historical
+initial source bodies. Exact current evidence still resolves. The native runtime's
+own instructions already explain this contract correctly. Fix the diagnostic
+bridge from its first request, preserving sent items, and test latest state/task
+inheritance/native deliveries after mutation and resume. Do not change the existing
+one-response sampler contract, force plans/notes or claim this defect caused the
+observed mini mistakes. The repair is not implemented yet. Collector per-request
+wait/failure-phase handling below also remains unresolved before paid work.
+
+The trace bound 1,369 unchanged files and executed no provider/count call, task,
+Docker or hidden evaluator. Input-size growth is measured, not attention-loss
+proof. Retain public-only analysis artifacts and original runs as immutable evidence.
+Any future experiment needs a new packet and exact approval; both grants are consumed.
+
+The preceding result is the completed **partial** short-episode invocation. Run
 `run_dev_episode_collection_dd2a43b37b8d406c` at
 `C:\pt\analyses\pl43-short-episode-live-v1` ended `PROVIDER_TIMEOUT_OR_UNKNOWN` on
 2026-09-11: 29 dispatches, 28 completed responses, 31 actions, 1,801.237s including

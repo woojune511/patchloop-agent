@@ -38,7 +38,47 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: partial short-episode result; no automatic continuation
+## Current seam: mini decision trace; diagnostic instruction defect found
+
+Read-only tracing of the two C1/repeat1 mini episodes is complete at
+`C:\pt\analyses\pl43-mini-decision-trace-v1`. The full public task, current observed
+source and encrypted continuation are present; all 16 responses completed with
+inspection/mutation tools available. New working notes and verification concerns
+remained empty, with no attempted update discarded. This does not establish that
+explicit planning is necessary or that the supplied context is optimal.
+
+Historical-state mini first forwarded leaf mode into parent recursion, then
+immediately removed that argument after the public permission failure. Its repaired
+final diff is untested. Current-state mini used a backend helper on the wrapper's
+`self`, hit AttributeError, then searched for the correct owner. Both eight-response
+windows ended during recovery, not at the agent's global completion horizon.
+An `isabs` search returned only the Windows branch header, without answering its
+stated implementation question; no persistent public open question followed.
+This illustrates a tracking gap, not the proven cause of the helper exception.
+
+One concrete **diagnostic-only input defect** is verified: snapshot instructions
+still direct the model to top-level state, the initial archive and `source_bodies`,
+while all 14 follow-ups append nested `harness_current_state.state` and new native
+results. Four post-edit inputs retain historical initial source bodies. Current
+bytes are available and resolve correctly; the instructions misidentify their
+authority/location. The default native runtime has the correct separate contract.
+Whether this mismatch caused either mini error is **not established**.
+
+Next provider-free implementation: align the diagnostic snapshot-to-episode
+instruction contract and test latest-state/native-source authority, without changing
+the default agent or forcing plans/notes. Bounded collector waits and sanitized
+failure-phase receipts remain a separate prerequisite for further paid comparison.
+Neither fix is implemented yet. Any later evidence-to-code/unfinished-question
+experiment requires a new packet and approval; the old grant cannot be resumed.
+
+Seven public-trace assertion groups pass; 1,369 bound files remain unchanged.
+This analysis adds no provider/count call, task execution or hidden evaluation.
+`task_acceptance=NOT_RUN`, `official=false`; report and hashes are in the external
+analysis root. Current-state condition removes only inherited pre-checkpoint state
+descriptions, not new full-state accumulation; input growth is measured, but its
+performance effect remains unproven.
+
+## Prior partial short-episode result; no automatic continuation
 
 The exact $5 packet below was approved and executed once on 2026-09-11 at
 `C:\pt\analyses\pl43-short-episode-live-v1`, run
@@ -71,8 +111,8 @@ exception type/phase was not persisted, so provider delay, transport/SDK timeout
 and response-processing failure cannot be separated. This is not evidence of a
 25k output-token ceiling: all 28 returned responses were complete, maximum output
 9,642. A serial request can consume other arms' time despite balanced cost reserves.
-The next provider-free implementation candidate is a bounded per-request wait and
-sanitized failure-phase record in the diagnostic collector, not new agent gates.
+An additional provider-free implementation candidate is a bounded per-request wait
+and sanitized failure-phase record in the diagnostic collector, not new agent gates.
 It has not been implemented; no default model/context/memory change is selected.
 
 Read-only audit verified all 29 request identities, 28 continuation artifacts and
