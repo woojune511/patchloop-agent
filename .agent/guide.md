@@ -711,7 +711,68 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the completed draft-review pilot at
+The current seam is the standalone model/state-history factorial diagnostic in
+`diagnostics/model_state_sampler.py` and `diagnostics/model_state_review.py`.
+Keep production runtime/tool surface v35, task packages, optional memory, schemas,
+native history and encrypted continuation unchanged. No planning/memory requirement,
+default model upgrade, default context rewrite or reasoning reset is adopted.
+
+Preparation verifies immutable row43 journal/envelope/CAS at pre-turn14 and pre-turn21.
+Reuse `fresh_state_design` to materialize only previously observed current source and
+quote every prior public call/result. Both input variants start fresh, with no old
+encrypted reasoning. A/C additionally quote older developer records in
+`past_state_views`; B/D leave only that field empty. Model pairs differ only in model
+ID. Preparation checks exact wire equality after removing the designated factor.
+Both arms retain original public task, source hashes/ranges, current diff/errors,
+notes/budgets/tool order and complete public archive. Do not inspect future outcomes
+to select a proposal or add solution hints. This tests history length/repetition too;
+it does not identify the native continuation effect.
+
+Fix mini `gpt-5.4-mini-2026-03-17` versus `gpt-5.4-2026-03-05`, medium/25k, with reviewed
+Standard short-context prices bound outside production pricing. Four blocks:
+C1/1 ACBD, C2/1 DBCA, C1/2 BDAC, C2/2 CADB. One shared proposed $5 cap; maximum 16
+responses/counts. The collector's optional per-arm prices and balanced-block policy
+leave old protocols' defaults unchanged. Reserve all four responses at the 272k
+input admission bound/full output before a block; count actual inputs JIT and stop
+above that bound. No assumed cache discount or ceiling reduction. Conservative
+reservation may leave unused money. All uncertainty stops the invocation without
+retry/resume or replacements; partial blocks remain explicitly censored.
+
+Public assessment is separate from collection and the original agent. Clone the
+base commit and apply the public checkpoint diff, never copy final worktree state.
+Restore host newline differences only when the *whole* historical file hash matches;
+then recheck the canonical full diff. Hydrate prior source/check/mutation evidence
+from the verified prefix into new journals. Use gateway admission and registered
+public checks, not a second heuristic admission framework. Preserve candidate and
+execution-policy evidence on failure; uncertain cleanup stops further execution.
+Cache checks by checkpoint/candidate hash only within the same frozen assessment.
+Keep inspection validity separate from relevance and unobserved mutation quality.
+Only previously PASS declared checks can establish a newly observed regression.
+Freeze anonymous public-code/action observations before `report` exposes model,
+condition and tokens/cost. No paid judge, hidden evaluator, automatic causal verdict
+or task-acceptance credit. `official=false`, `task_acceptance=NOT_RUN` throughout.
+
+The packet and validation receipts require a separate exact execution grant; $5 is
+not approval. Before any later collection revalidate source, runtime, diagnostic
+implementation and pricing on the execution date. Old packets/journals are immutable,
+not migrated after diagnostic hash changes. After data exists, select at most one
+evidence-supported next implementation; insufficient/reversed differences mean
+cause unresolved, not a forced planning/memory experiment or automatic extra run.
+
+Prepared packet: `C:\pt\analyses\pl43-model-state-design\packet.json`,
+`sha256:8e5c7710ea7162f6f91bd31fcdc9b05b5098afc61330108243aa9572d04d72b7`.
+Sampler: `sha256:c3429a2dcef5b24deab165de0908c28a5efdd237799b79f27660d4248ec796ce`.
+No-call receipts at `C:\pt\validation\pl43-model-state`: identical validation twice,
+actual checkpoint clones/hydration, 237 passing tests (35 in 73.68s; 202 in 97.58s;
+parallel XML span 99.382s), and Ruff. The synthetic public-assessment smoke reaches
+mutation/checks/blind freeze/report, not hidden evaluation or measured agent quality.
+All 1,298 protected runtime/task/history files and source run bytes remain identical;
+user `.env`/`AGENTS.md` remain unchanged. No paid invocation or full runtime-suite
+rerun is claimed. The nine exact owned temporary roots were recycled; their
+restoration mappings are in `scratch-recycled.json` beside these receipts. There is
+no authorization for a wider sweep of similarly named roots.
+
+The preceding seam is the completed draft-review pilot at
 `C:\pt\analyses\pl43-draft-review-live`, run `run_dev_sample_28ab0479aac64fe9`.
 The original pre-process denial remains recorded. Subsequent explicit transmission
 approval preceded the first actual invocation: four independent responses/counts,

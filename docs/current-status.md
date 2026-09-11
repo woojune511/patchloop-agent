@@ -38,7 +38,55 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: explicit draft review does not change proposed behavior
+## Current seam: model x state-history diagnostic (not paid-executed)
+
+`diagnostics/model_state_sampler.py` prepares a separate 2x2 comparison at row43
+turns 14 and 21: mini/history, mini/current, GPT-5.4/history, GPT-5.4/current.
+Both models use medium and a fixed 25k output ceiling. Every input starts fresh,
+without old encrypted reasoning, and retains the same public task/current state,
+exact observed sources and complete quoted public call/result archive. Only the
+model and older state descriptions vary. Default runtime/task/tool surface v35,
+native continuation, optional memory and action policy remain unchanged.
+
+The fixed order balances four-arm blocks across two cutoffs and two repetitions,
+up to 16 independent responses under one proposed $5 cap. Each block reserves full
+output plus the 272k input admission bound for all four arms; actual input counting
+still precedes each dispatch. This can stop below $5 rather than shrink output or
+leave a cost-truncated comparison block. Transport/count/billing uncertainty stops
+everything; no retry, model substitution, chaining or automatic follow-up.
+
+`diagnostics/model_state_review.py` separately restores each checkpoint in an
+external workspace, validates exact replacements and total scope, and executes only
+the declared public checks/inspections. Check results can be reused for the same
+checkpoint/candidate hash, without giving the original agent check credit.
+Anonymous observations are frozen before a separate read-only unblinding report.
+Inspection is not automatically a failed mutation; unseen regressions and mutation
+quality after non-mutation remain unassessed. No hidden evaluator or paid judge runs.
+
+The prepared packet is `C:\pt\analyses\pl43-model-state-design\packet.json`, hash
+`sha256:8e5c7710ea7162f6f91bd31fcdc9b05b5098afc61330108243aa9572d04d72b7`.
+Sampler identity:
+`sha256:c3429a2dcef5b24deab165de0908c28a5efdd237799b79f27660d4248ec796ce`.
+Two read-only revalidations agree. Full mini requests are 198,883/113,575 bytes
+(turn14 history/current) and 352,612/187,444 bytes (turn21), not fresh token counts.
+Both actual checkpoints restore exactly without tools: 0/36 diff lines and 0/3
+inherited mutations. Restoring a checkpoint is not executing a sampled proposal.
+
+All 237 focused/regression cases pass in two parallel groups: 35 new/docs tests
+in 73.68s and 202 prior sampler/design tests in 97.58s. XML execution span is 99.382s;
+Ruff passes. The local synthetic diagnostic smoke reaches admitted mutation, both
+public checks, cache reuse, blind freeze and unblinding; it is not a model-quality
+result. Receipts are under `C:\pt\validation\pl43-model-state`. All 1,298 protected
+runtime/task/history files, `.env`, user-owned `AGENTS.md` and source run bytes are
+unchanged. No full runtime-suite or private-evaluator smoke rerun is newly claimed.
+The nine owned temporary roots were recycled, not permanently deleted; exact
+restoration locations remain in `scratch-recycled.json` beside the validation receipts.
+
+The $5 is a ceiling, **not an execution approval**. Paid/count/Docker/hidden-evaluator
+calls are zero. No effect on model quality, state accumulation or native reasoning
+has yet been measured. The next boundary is exact-packet approval, not a live row.
+
+## Prior seam: explicit draft review does not change proposed behavior
 
 The approved pilot completed as `run_dev_sample_28ab0479aac64fe9` at
 `C:\pt\analyses\pl43-draft-review-live`: four independent responses/counts,

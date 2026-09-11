@@ -24,7 +24,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev.conversation import reconstruct_state, validate_model_input
-from patchloop.dev.cost import DevCostLedger, pricing_for_model
+from patchloop.dev.cost import DevCostLedger, ModelPricing, pricing_for_model, usd_to_nanos
 from patchloop.dev.runner import (
     _load_provider_continuation,
     _store_provider_continuation,
@@ -76,10 +76,10 @@ def price_identity() -> dict[str, str]:
     return {key: str(value) for key, value in asdict(pricing_for_model(MODEL)).items()}
 
 
-def model_config(effort: str) -> ModelConfig:
+def model_config(effort: str, model_id: str = MODEL) -> ModelConfig:
     return ModelConfig(
         provider="openai",
-        model_id=MODEL,
+        model_id=model_id,
         reasoning_effort=effort,
         reasoning_continuation="encrypted-v1",
         transport_max_retries=0,
@@ -115,6 +115,24 @@ class Cell:
 
 
 @dataclass(frozen=True)
+class ModelProfile:
+    """A diagnostic-only model and reviewed Standard short-context prices."""
+
+    model_id: str
+    input_per_million_usd: str
+    cached_input_per_million_usd: str
+    output_per_million_usd: str
+
+    def pricing(self) -> ModelPricing:
+        return ModelPricing(*(
+            Decimal(value) for value in (
+                self.input_per_million_usd, self.cached_input_per_million_usd,
+                self.output_per_million_usd,
+            )
+        ))
+
+
+@dataclass(frozen=True)
 class CollectionProtocol:
     """Validated diagnostic schedule; never an agent workflow or model input."""
 
@@ -123,6 +141,47 @@ class CollectionProtocol:
     sampling_order: tuple[tuple[str, str | int], ...]
     input_token_limit: int | None = None
     reserve_future_calls: bool = True
+    model_profiles: dict[str, ModelProfile] | None = None
+    balanced_block_size: int | None = None
+
+
+def cell_profile(protocol: CollectionProtocol, arm: str) -> ModelProfile:
+    if protocol.model_profiles is not None:
+        return protocol.model_profiles[arm]
+    return ModelProfile(MODEL, **price_identity())
+
+
+def protocol_prices(protocol: CollectionProtocol) -> dict:
+    if protocol.model_profiles is None:
+        return price_identity()
+    return {arm: asdict(profile) for arm, profile in protocol.model_profiles.items()}
+
+
+class SharedCostLedger:
+    """One invocation cap; reuse the runtime's integer-nanos arithmetic per price."""
+
+    def __init__(self, cap_usd: Decimal):
+        self.cap_usd = cap_usd
+        self.cap_nanos = usd_to_nanos(cap_usd)
+        self.spent_nanos = 0
+
+    @property
+    def remaining_nanos(self) -> int:
+        return max(0, self.cap_nanos - self.spent_nanos)
+
+    def _calculator(self, pricing: ModelPricing) -> DevCostLedger:
+        result = DevCostLedger(self.cap_usd, pricing)
+        result.spent_nanos = self.spent_nanos
+        return result
+
+    def admit(self, input_tokens: int, *, pricing: ModelPricing, **kwargs):
+        return self._calculator(pricing).admit(input_tokens, **kwargs)
+
+    def settle(self, *, pricing: ModelPricing, **usage) -> int:
+        calculator = self._calculator(pricing)
+        cost = calculator.settle(**usage)
+        self.spent_nanos = calculator.spent_nanos
+        return cost
 
 
 SIX_CELL_PROTOCOL = CollectionProtocol("decision-sampler-v1", EFFORTS, ORDER)
@@ -333,6 +392,7 @@ def _validate_collection_approval(
     expected_sampler_hash: str,
     *,
     protected_roots: tuple[Path, ...] = (),
+    expected_pricing_hash: str | None = None,
 ) -> None:
     require(approval.packet_hash == plan.packet_hash, "approval packet mismatch")
     require(approval.sampler_hash == expected_sampler_hash, "approval sampler mismatch")
@@ -340,7 +400,10 @@ def _validate_collection_approval(
         approval.max_cost_usd == Decimal(plan.packet["proposed_total_cap_usd"]),
         "approval cap mismatch",
     )
-    require(approval.pricing_hash == sha256_json(price_identity()), "reviewed pricing mismatch")
+    require(
+        approval.pricing_hash == (expected_pricing_hash or sha256_json(price_identity())),
+        "reviewed pricing mismatch",
+    )
     require(
         approval.pricing_verified_on == datetime.now(UTC).date().isoformat(),
         "pricing must be reviewed on execution UTC date",
@@ -363,9 +426,9 @@ def _validate_collection_approval(
     )
 
 
-def full_reservation(input_tokens: int) -> int:
+def full_reservation(input_tokens: int, pricing: ModelPricing | None = None) -> int:
     # Use the same reviewed integer-nanos ledger, with no ceiling reduction.
-    ledger = DevCostLedger(Decimal("1000000"), pricing_for_model(MODEL))
+    ledger = DevCostLedger(Decimal("1000000"), pricing or pricing_for_model(MODEL))
     admission = ledger.admit(
         input_tokens, desired_output_ceiling=OUTPUT_CEILING, minimum_output_ceiling=OUTPUT_CEILING
     )
@@ -379,7 +442,7 @@ def inspect_result(root: Path) -> dict:
     require(
         raw["kind"] in {"decision-sampler-v1", "fresh-state-sampler-v1", "failure-order-sampler-v1",
                         "completion-signal-sampler-v1", "requirements-focus-sampler-v1",
-                        "draft-review-sampler-v1"}
+                        "draft-review-sampler-v1", "model-state-factorial-sampler-v1"}
         and (root / "runs").is_dir(),
         "not a diagnostic result root",
     )
@@ -468,7 +531,12 @@ def _collect_validated(
     journal = DevJournal(root, f"run_dev_sample_{uuid.uuid4().hex[:16]}")
     started_at = clock()
     deadline = ExecutionDeadline.from_remaining(ACTIVE_SECONDS, clock=clock)
-    ledger = DevCostLedger(approval.max_cost_usd, pricing_for_model(MODEL))
+    ledger = SharedCostLedger(approval.max_cost_usd)
+    collection_policy = asdict(protocol)
+    # Preserve legacy receipts when the optional multi-model/block protocol is unused.
+    for key in ("model_profiles", "balanced_block_size"):
+        if collection_policy[key] is None:
+            del collection_policy[key]
     envelope = {
         **BOUNDARIES,
         "kind": protocol.kind,
@@ -485,14 +553,15 @@ def _collect_validated(
         "credential_path_hash": sha256_text(str(approval.credential_file.resolve())),
         "result_root": str(root),
         "cap_nanos": ledger.cap_nanos,
-        "pricing": price_identity(),
+        "pricing": protocol_prices(protocol),
         "pricing_hash": approval.pricing_hash,
         "pricing_verified_on": approval.pricing_verified_on,
         "models": [
-            model_config(effort).model_dump(mode="json") for effort in protocol.efforts.values()
+            model_config(effort, cell_profile(protocol, arm).model_id).model_dump(mode="json")
+            for arm, effort in protocol.efforts.items()
         ],
         "sampling_order": protocol.sampling_order,
-        "collection_policy": asdict(protocol),
+        "collection_policy": collection_policy,
         "request_hashes": [c.request_hash for c in plan.cells],
         "ordered_request_hashes": [sha256_text(c.request_json) for c in plan.cells],
         "fixed_output_ceiling": OUTPUT_CEILING,
@@ -539,6 +608,14 @@ def _collect_validated(
             "resume_allowed": False,
             "review_artifact": review.model_dump(mode="json"),
         }
+        if protocol.balanced_block_size is not None:
+            size = protocol.balanced_block_size
+            result.update(
+                planned_comparison_blocks=len(plan.cells) // size,
+                completed_comparison_blocks=len(samples) // size,
+                partial_block_samples=len(samples) % size,
+                uncollected_cells=len(plan.cells) - len(samples),
+            )
         journal.append("terminal", result)
         store.write_text_immutable(root / "result.json", canonical_json(result))
         return result
@@ -550,27 +627,66 @@ def _collect_validated(
         try:
             for index, cell in enumerate(plan.cells):
                 deadline.check()
-                if not protocol.reserve_future_calls:
+                profile = cell_profile(protocol, cell.arm)
+                pricing = profile.pricing()
+                if protocol.balanced_block_size is not None:
+                    size = protocol.balanced_block_size
+                    require(size > 0 and len(plan.cells) % size == 0, "invalid block size")
+                    require(protocol.input_token_limit is not None, "block input bound required")
+                    block_start = index - index % size
+                    block_end = block_start + size
+                    group = plan.cells[block_start:block_end]
+                    require(
+                        len({c.arm for c in group}) == size
+                        and {c.arm for c in group} == set(protocol.efforts)
+                        and len({(c.case_id, c.sample_number) for c in group}) == 1,
+                        "comparison block must contain every arm at one cutoff/repetition",
+                    )
+                    reservations = {
+                        c.arm: full_reservation(
+                            protocol.input_token_limit, cell_profile(protocol, c.arm).pricing()
+                        ) for c in group
+                    }
+                    if index == block_start:
+                        reserve = sum(reservations.values())
+                        if reserve > ledger.remaining_nanos:
+                            return finish("COST_CAP_REACHED")
+                        journal.append("comparison_block_started", {
+                            "block_index": index // size, "case_id": cell.case_id,
+                            "sample_number": cell.sample_number,
+                            "arms": [c.arm for c in group], "reserved_cost_nanos": reserve,
+                            "input_token_limit": protocol.input_token_limit,
+                            "output_ceiling": OUTPUT_CEILING,
+                        })
+                    future = sum(reservations[c.arm] for c in plan.cells[index + 1:block_end])
+                    basis = "remaining balanced block at admitted input bounds and full output"
+                elif not protocol.reserve_future_calls:
                     future = 0
                     basis = "current counted input plus full output; no future trajectory reserve"
                 elif protocol.input_token_limit is None:
                     future = sum(
-                        full_reservation(c.historical_count) for c in plan.cells[index + 1 :]
+                        full_reservation(
+                            c.historical_count, cell_profile(protocol, c.arm).pricing()
+                        )
+                        for c in plan.cells[index + 1 :]
                     )
                     basis = "historical counts; recount before each dispatch"
                 else:
                     # No guessed token counts for repackaged input. Each future response
                     # must satisfy this admission limit, or stop before its generation.
-                    future = (len(plan.cells) - index - 1) * full_reservation(
-                        protocol.input_token_limit
+                    future = sum(
+                        full_reservation(
+                            protocol.input_token_limit, cell_profile(protocol, c.arm).pricing()
+                        ) for c in plan.cells[index + 1 :]
                     )
                     basis = "per-response input admission limit; not an estimated token count"
                 if (
                     protocol.reserve_future_calls and protocol.input_token_limit is None
-                    and full_reservation(cell.historical_count) + future > ledger.remaining_nanos
+                    and full_reservation(cell.historical_count, pricing) + future
+                    > ledger.remaining_nanos
                 ):
                     return finish("COST_CAP_REACHED")
-                config = model_config(protocol.efforts[cell.arm])
+                config = model_config(protocol.efforts[cell.arm], profile.model_id)
                 if adapter_factory is None:
                     if real_client is None:
                         key = load_exact_openai_api_key(approval.credential_file)
@@ -596,6 +712,10 @@ def _collect_validated(
                 }
                 if cell.sample_number is not None:
                     common["sample_number"] = cell.sample_number
+                if protocol.model_profiles is not None:
+                    common.update(
+                        model_id=profile.model_id, pricing_hash=sha256_json(asdict(profile))
+                    )
                 count_timeout = deadline.check()
                 journal.append(
                     "input_count_started",
@@ -620,6 +740,7 @@ def _collect_validated(
                     return finish("INPUT_LIMIT_EXCEEDED")
                 admission = ledger.admit(
                     count,
+                    pricing=pricing,
                     desired_output_ceiling=OUTPUT_CEILING,
                     minimum_output_ceiling=OUTPUT_CEILING,
                 )
@@ -665,13 +786,14 @@ def _collect_validated(
                     <= raw_turn.reasoning_output_tokens
                     <= raw_turn.output_tokens
                     <= OUTPUT_CEILING
-                    and raw_turn.response_model == MODEL
+                    and raw_turn.response_model == config.model_id
                     and bool(raw_turn.response_id)
                     and raw_turn.response_status in {"completed", "incomplete"}
                     and not (raw_turn.error and raw_turn.error.code == "input_token_count_mismatch")
                 )
                 cost = (
                     ledger.settle(
+                        pricing=pricing,
                         input_tokens=raw_turn.input_tokens,
                         cached_input_tokens=raw_turn.cached_input_tokens,
                         output_tokens=raw_turn.output_tokens,

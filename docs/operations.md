@@ -432,6 +432,64 @@ the distinction between delivered information and correct use of it. Read-only e
 is `C:\pt\pl43-review-a`; no additional check/candidate execution, paid retry/resume,
 comparison or row 44 is authorized by this completed invocation.
 
+### Model x state-history diagnostic: row 43
+
+The standalone `diagnostics.model_state_sampler` compares mini versus GPT-5.4 and
+older state descriptions present versus absent at pre-turn14 and pre-turn21.
+All conditions are fresh requests, without old encrypted reasoning; identical
+public source bodies and the entire quoted tool archive remain in both variants.
+This does not test a native-loop continuation reset or authorize a default change.
+
+Provider-free preparation and validation:
+
+```powershell
+uv run python -m diagnostics.model_state_sampler prepare `
+  --source-state-root C:/patchloop-state `
+  --output-root C:/pt/analyses/pl43-model-state-design
+# The packet is already prepared; do not recreate its existing root. Validate:
+uv run python -m diagnostics.model_state_sampler validate `
+  --source-state-root C:/patchloop-state `
+  --packet C:/pt/analyses/pl43-model-state-design/packet.json `
+  --packet-hash sha256:8e5c7710ea7162f6f91bd31fcdc9b05b5098afc61330108243aa9572d04d72b7
+```
+
+`prepare` requires a new external root. `validate` never loads credentials or counts
+tokens. A later exact grant must name this packet/implementation, both snapshots
+`gpt-5.4-mini-2026-03-17` and `gpt-5.4-2026-03-05`, medium, 25k, maximum 16 independent
+responses, root `.env`, new result directory, and shared $5 cap. Transmission to
+`https://api.openai.com/v1` consists of the frozen public task/source/tool/state
+inputs. The key is authentication only. No private evaluator/reference patch or
+old encrypted reasoning is transmitted; new opaque reasoning is stored, never its
+plaintext/summary. The proposed $5 does **not** authorize collection.
+
+After approval, `collect` adds `--approve-up-to-sixteen-responses-zero-tools`,
+`--sampler-hash`, absolute `--credential-file`, fresh `--result-root`,
+`--max-cost-usd 5.00`, `--pricing-hash`, and execution-date `--pricing-verified-on`.
+The official [Standard rates](https://developers.openai.com/api/docs/pricing) are
+bound in packet `pricing.json`. Reserve each balanced four-arm block at full 25k
+output and 272k input bounds with no cache discount, then count actual input JIT.
+Insufficient block reserve stops before counting the next block, potentially below
+$5. Never lower output, substitute a model, retry, resume or buy more samples.
+`inspect --result-root <absolute-root>` is read-only.
+
+The separately authorized `diagnostics.model_state_review evaluate` takes the
+same packet/hash/source plus `--collection-root`, new `--assessment-root`, new
+`--scratch-root C:/pt/tmp/<unique-name>`, `--task <v2-package-directory>` and
+`--approve-public-checks`. It requires already-running Docker and the existing
+digest-pinned image; it never starts/pulls/builds. Each mutation is admitted against
+its exact historical anchor and complete scope, in an isolated checkpoint copy.
+Only the two public checks run; hidden evaluation remains `NOT_RUN`. Invalid or
+missing anchors do not silently become source reads. Inspection-only proposals
+receive bounded validity evidence and unassessed mutation quality, not automatic
+failure. Cache reuse is diagnostic evidence, not original-agent execution credit.
+
+Read the frozen anonymous observations before invoking `report` with the same
+packet/hash/source, collection and assessment roots. `report` is read-only and
+adds conditions, repetitions, model IDs, input/output tokens and costs. No paid
+judge or automatic causal conclusion is used. Compare repeated directions across
+both checkpoints; missing/unevaluable samples remain censored. Even a public-check
+PASS is not task acceptance, native-loop success or a generalization claim.
+
 ### Draft review pilot: row 43
 
 `diagnostics.draft_review_sampler` compares a neutral second opportunity with an
