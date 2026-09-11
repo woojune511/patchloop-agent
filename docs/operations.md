@@ -434,6 +434,19 @@ comparison or row 44 is authorized by this completed invocation.
 
 ### Model x state-history diagnostic: row 43
 
+Later public-only check of native run `run_dev_91384f8a97354835`'s frozen third edit
+is complete at `C:\pt\evaluations\mini-third-candidate-20260912`. Two registered
+checks once each, separate no-hardlink base clone, exact 30-line `7c97d024...` patch.
+Contract fails the same line23 mode assertion as the saved fourth-candidate result;
+the original public bytes example already succeeds. Regression reports 6 failed,
+511 passed, 570 skipped. No new baseline or fourth-candidate check. Operator-only
+evidence must not overwrite the source run or claim overall third-candidate PASS.
+13.189s, $0 model cost, no provider/count/hidden evaluation/repair/resume/retry.
+Scope/postimage/check-policy identities and 3,388 protected files verify. Docker and
+pinned image were already available; no start/pull/build. Read `result.md` before a
+separate repair/recheck-loop experiment decision; no automatic next execution.
+Runtime/task unchanged, task acceptance/safety NOT_RUN, official=false.
+
 The subsequent exact fresh-start default-mini invocation is complete:
 `run_dev_91384f8a97354835` at `C:\patchloop-state`, analysis/approval at
 `C:\pt\analyses\mini-fresh-start-20260912`. New task/base with no checkpoint, notes,
@@ -443,9 +456,9 @@ counts/tools, four edits and three failed public checks, $0.441195300/220.438s.
 Only accepted mutations are exhausted. Final 32-line diff fails the intermediate
 mode assertion; no regression, submission or isolated evaluation ran.
 The unchecked third repair was treated as still failing despite delivered historical
-labels, NOT_RUN and pending-recheck guidance. Its actual outcome remains unmeasured;
-do not repair or check it under this consumed native-run grant. Read `result.md`
-before deciding a separate public-only counterfactual check or loop experiment.
+labels, NOT_RUN and pending-recheck guidance. Its later operator-only public check
+is recorded above under separate approval; the native-run grant remains consumed.
+Do not repair it or infer an implemented loop change from the counterfactual result.
 All request/continuation and check-policy evidence verify, with 3,231 protected files
 unchanged. No default-loop change, retry/resume, further provider call or Docker
 start/pull/build is implied. Task acceptance/safety NOT_RUN, official=false.

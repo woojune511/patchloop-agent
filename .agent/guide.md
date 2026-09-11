@@ -711,7 +711,27 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the exact fresh-start native mini grant is consumed by
+Current seam: the separately approved frozen-third-candidate public check is complete
+at `C:\pt\evaluations\mini-third-candidate-20260912` (`result.md`). Restore the exact
+30-line `7c97d024...` candidate from native turn23 context/turn22 admission, never
+the source final worktree. Both declared checks ran once on a no-hardlink base clone:
+contract FAIL at line23/mode (same as saved fourth-candidate result); upstream
+regression 6 failed/511 passed/570 skipped. Verified public control flow establishes
+the earlier bytes example already works before edit4; not all bytes paths or whole
+candidate correctness. Additional public failures concern parent-file errno and
+broken symlinks/trailing separators. No fourth-candidate or baseline rerun occurred.
+
+13.189s total, 1.176s/10.604s check durations, zero provider/count/model cost. Exact
+diff/postimage/scope/policy and 3,388 protected files verify; owned containers absent.
+No candidate repair, source resume, private evaluator/details, Docker start/pull/build,
+runtime/task change or retry. Task acceptance/safety NOT_RUN, official=false. Preserve
+the original source NOT_RUN/terminal; these are later operator-only observations.
+Next implementation candidate is an opt-in successful-repair plus prior-failed-check
+feedback transaction, preserving native action/time/replay boundaries. Do not assume
+it makes semantic repairs correct or add mandatory notes/extra action masks. This
+completed two-check grant does not authorize implementing it or another paid run.
+
+Prior run: the exact fresh-start native mini grant is consumed by
 `run_dev_91384f8a97354835` at `C:\patchloop-state`; approval and public analysis are
 at `C:\pt\analyses\mini-fresh-start-20260912` (`result.md`, `analysis.json`). No
 checkpoint, answer patch or private feedback was seeded. Runtime a3d7f3c0/v35,
@@ -724,18 +744,18 @@ regression/hidden evaluation, probe, retry/resume or Docker start/pull/build occ
 
 Third edit's new post-image, historical TypeError, current NOT_RUN and explicit
 pending-recheck guidance reach turns23-26. The model nonetheless claims the bytes
-repair was insufficient and spends its final edit before any check/probe. Do not
-call this lost feedback or claim the third candidate passed. Check/probe/read/search
+repair was insufficient and spends its final edit before any check/probe. The later
+public-only check above resolves that bytes question, not overall candidate PASS.
+Do not call this lost feedback. Check/probe/read/search
 remain available all 27 turns. Four proposed note updates produce one retained note
 (first invalid tool-result citation rejected without blocking); delivery/rebinding
 verify, but notes are not updated after failures. No forced-note/plan conclusion.
 
 27 canonical request hashes/continuations, 26 replay deliveries, 81 artifacts and
 3,231 protected files verify; exact check containers are absent. Peak input/output
-122,330/6,939 are below limits. No incomplete/protocol/transport uncertainty. Next
-requires a separate decision: public-only evaluation of the frozen third candidate
-to test the fourth edit's necessity, then one repair/recheck-loop intervention if
-warranted. Do not repair/rerun frozen patches or launch another paid row automatically.
+122,330/6,939 are below limits. No incomplete/protocol/transport uncertainty. The
+subsequent third-candidate check is above; a repair/recheck-loop intervention remains
+a separate decision. Do not repair/rerun frozen patches or launch a paid row automatically.
 No runtime/task changes; task acceptance/safety NOT_RUN, official=false, no claim.
 
 Prior result: the separately approved independent evaluation of the two frozen mini

@@ -38,7 +38,35 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: fresh-start mini run completed; grant consumed
+## Current seam: frozen third candidate publicly checked
+
+The separately approved public-only check of the fresh run's third candidate is
+complete at `C:\pt\evaluations\mini-third-candidate-20260912` (`result.md`). Exact
+30-line candidate `7c97d024...` was restored from the saved turn23 context and turn22
+admission, in a separate no-hardlink base clone. It was not repaired or resumed.
+
+Both registered checks ran once: contract FAIL at the same public line23 permission
+assertion as the fourth candidate; regression 6 failed/511 passed/570 skipped.
+The bytes call and its assertions precede this failure in the verified straight-line
+public script. Thus the fourth edit was unnecessary for that observed bytes case,
+not proof the third candidate was correct. Parent-file errno and broken-symlink/
+trailing-separator failures remain. No fourth-candidate rerun or new baseline ran.
+
+Execution took 13.189s (checks 1.176s/10.604s), with zero provider/count calls and
+$0 model cost. Candidate/diff/policy identities, container cleanup and 3,388 protected
+files verify. No hidden evaluator, patch repair, Docker start/pull/build, retry,
+runtime/task change or original-run update occurred. Task acceptance/safety NOT_RUN;
+official=false/claim_eligible=false. These are operator observations, not agent checks.
+
+Next candidate is an opt-in repair-and-recheck feedback experiment, not another
+automatic paid row, budget increase or mandatory notes. Rechecking can supply a
+current counterexample; correct repair and broader behavior preservation remain
+unproven. No such loop change is implemented or authorized by this completed check.
+
+Three documentation tests and Ruff pass. Runtime/task bytes did not change, so no
+full runtime suite or mock smoke was rerun. No disposable pytest tree was created.
+
+## Prior run: fresh-start mini completed; grant consumed
 
 The separately approved default-mini reproduction completed one new native run,
 `run_dev_91384f8a97354835`, at `C:\patchloop-state`. Read-only approval/analysis is
@@ -58,17 +86,17 @@ After the third edit, the model uses an old bytes error to justify its fourth ed
 without rechecking. Exact inputs already include the post-image, NOT_RUN current
 checks, historical failures and pending-recheck guidance; check/probe/read/search
 remain available. This repeats a stale-verdict-use pattern, not demonstrated feedback
-loss. The third candidate is untested; do not claim it passed or that the fourth edit
-was unnecessary without a separate public-only check. Four optional note updates
+loss. The third candidate was untested in the native run; the separate public-only
+check above establishes the narrower bytes result, not overall PASS. Four note updates
 yield one retained note; receipts and source rebinding verify, but repair outcomes
 are not incorporated. Absent internal planning or a need for mandatory notes is unproven.
 
 All 27 request hashes and encrypted continuations, 26 continuation follow-ups,
 81 referenced artifacts, check policy/diff identities and 3,231 protected files verify.
 Owned check containers are absent. No retry/resume, extra task check, private diagnosis,
-Docker start/pull/build or default-loop change occurred. Next is a separate decision
-on checking the frozen third candidate, then one evidence-backed repair/recheck-loop
-experiment, not another automatic paid row or budget increase. Task acceptance and
+Docker start/pull/build or default-loop change occurred. The subsequent third-candidate
+check is recorded above. A repair/recheck-loop experiment remains a separate decision,
+not another automatic paid row or budget increase. Task acceptance and
 safety NOT_RUN; official=false/claim_eligible=false. This one run is not a success rate.
 
 Result documentation passes three focused tests (0.050s), Ruff and diff checks.
