@@ -38,7 +38,45 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: model x state-history diagnostic (cause unresolved)
+## Current seam: inspection audit and short-episode preparation
+
+The read-only follow-up at `C:\pt\analyses\pl43-inspection-audit-v1` compares all
+25 saved inspections with the exact source bodies in their original requests:
+16 return new source ranges, six return only already delivered ranges, and three
+searches return no matches. Five covered-only reads at pre-turn21 revisit the
+already supplied editable function to acquire an exact anchor. One public decision
+already states the eventual repair direction; it is not evidence of an executed
+repair. New coverage is not proof of usefulness, nor is repeated coverage proof
+of a defective memory. **Cause remains unresolved.**
+
+`diagnostics/model_state_episode.py` reuses the existing short-rollout gateway,
+native continuation, correction and cost arithmetic. It prepares fresh independent
+A/B/C/D starts, never selected old responses, and supports injected short episodes:
+read/search -> returned public evidence -> mutation -> model-requested checks/finish.
+The eight-response observation bound is censoring, not a new agent action mask.
+The history factor is inherited pre-checkpoint state; new native state views,
+encrypted reasoning and calls/results accumulate in every arm. This is not ongoing
+current-only compaction. Production runtime/tool surface v35 is unchanged.
+
+Preparation has no credential/client construction or live CLI. Shared per-model
+round reservation is mock-testable, but a fresh exact grant, pricing review,
+invocation lock/deadline and fail-stop collector binding are still required before
+paid execution. No cap or paid authority is inherited from the completed experiment.
+No provider, Docker or hidden evaluator execution accompanies this implementation.
+
+The new preparation is `C:\pt\analyses\pl43-short-episode-design-v1\packet.json`,
+`sha256:dc8f431ea408ce311270f2e42cd2ccbfc16d3ed6f7b8efa888c87e3ba1b5ac02`.
+Both actual checkpoints restore exact first requests/tool sets with 13/13/0 and
+20/20/3 model/tool/mutation counters. Related provider-free validation passes 111
+tests: 13 new cases in 69.80s, 63 engine/sampler cases in 104.12s, and 35 factorial/
+review/documentation cases in 79.21s, plus Ruff. This is not a full-runtime rerun or
+a claim that the entire debugging/validation cycle took under two minutes.
+Receipts are at `C:\pt\validation\pl43-episodes`. All 1,298 protected files, source
+journal/envelope and user `.env`/`AGENTS.md` retain their hashes. Eight owned scratch
+roots were recycled with content-identity checks and recorded restoration paths;
+pre-existing repository scratch and old experiment records were not changed.
+
+## Completed model x state-history diagnostic (cause unresolved)
 
 The explicitly approved frozen packet completed as `run_dev_sample_4bf128b8d21744d5`
 at `C:\pt\analyses\pl43-model-state-live`: 16 independent responses/counts, all four

@@ -585,8 +585,10 @@ def dispatch(
     prepared: tuple,
     *,
     checkpoint=lambda _: None,
+    expected_model: str = shared.MODEL,
 ):
     turn_id, request, policy = prepared
+    shared.require(request["model"] == expected_model, "dispatch model mismatch")
     wire = design.wire_json(request)
     request_ref = branch.store.put_text(wire, "application/json")
     count_id, call_id = "count_" + uuid.uuid4().hex, "call_" + uuid.uuid4().hex
@@ -646,7 +648,7 @@ def dispatch(
         raw.input_tokens == count
         and 0 <= raw.cached_input_tokens <= count
         and 0 <= raw.reasoning_output_tokens <= raw.output_tokens <= 25000
-        and raw.response_model == shared.MODEL
+        and raw.response_model == expected_model
         and bool(raw.response_id)
         and raw.response_status in {"completed", "incomplete"}
         and not (raw.error and raw.error.code == "input_token_count_mismatch")

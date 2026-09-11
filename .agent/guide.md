@@ -711,7 +711,45 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-The current seam is the standalone model/state-history factorial diagnostic in
+The current seam is provider-free inspection audit and short-episode preparation
+in `diagnostics/model_state_inspection_audit.py` and `diagnostics/model_state_episode.py`.
+The audit at `C:\pt\analyses\pl43-inspection-audit-v1` binds saved inspection results to
+the exact frozen requests by path/raw hash/range/body. It finds 16 new-coverage,
+six covered-only and three zero-match actions in the 14 response batches. Five
+pre-turn21 reads revisit the already delivered editable body for exact anchors.
+Public explanations can already identify the repair direction; neither explanations
+nor source novelty establish repair quality or semantic necessity. Cause unresolved.
+
+Episode preparation uses all 16 independent frozen starting cells, never selected
+old responses. No old encrypted reasoning crosses the checkpoint. New native
+reasoning/calls/results, state views, optional notes and corrections use the existing
+engine in every arm. Only inherited historical state differs: this is not perpetual
+current-only projection. Do not rewrite default agent prompts, model, memory, tool
+policy or runtime identity. The external eight-response window must be labeled
+censored, never charged as an agent LIMIT_REACHED or used to reduce its 40/100/4
+limits. Restore checkpoint counters/mutations and verify the original first request
+and allowed tools before new actions. Public checks/finish remain model-selected;
+no hidden evaluator, automatic checker or new planning action is added.
+
+The injected scheduler reserves a complete active four-arm depth at the 272k input
+bound/full 25k output with per-model prices and a shared cap. It stops every arm on
+count/transport/billing/continuation uncertainty, never retries or resumes. Its only
+CLI is preparation. Before supplying any live adapter, bind a new exact packet/grant,
+reviewed prices, shared active deadline, execution lock, durable final receipt and
+fail-stop collector. The existing $5 grant is consumed; no cap/approval transfers.
+No-call checkpoint rehearsal forbids network, checks and probes while restoring both
+actual source cutoffs into owned external disposable copies. Keep new validation
+receipts at `C:\pt\validation\pl43-episodes`, separate from disposable scratch.
+The prepared successor is `C:\pt\analyses\pl43-short-episode-design-v1\packet.json`
+(`sha256:dc8f431ea408ce311270f2e42cd2ccbfc16d3ed6f7b8efa888c87e3ba1b5ac02`).
+Both real cutoffs restore exact requests/tools/counters without actions. The 13 new
+tests pass in 69.80s; 63 reused-engine/sampler cases pass in 104.12s; 35 factorial/
+review/doc cases pass in 79.21s. Ruff passes. These are 111 related provider-free
+cases, not the full runtime suite or a single under-two-minute end-to-end run.
+Eight owned scratch roots were recycled with content identity and recovery mapping.
+All 1,298 protected runtime/task/history files, source run and user files are unchanged.
+
+The completed standalone model/state-history factorial diagnostic is in
 `diagnostics/model_state_sampler.py` and `diagnostics/model_state_review.py`.
 Its exact grant is consumed by `run_dev_sample_4bf128b8d21744d5` at
 `C:\pt\analyses\pl43-model-state-live`: 16 responses/counts, four complete blocks,
