@@ -711,7 +711,25 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the exact `mini-recovery-budget-v1` grant is consumed. Collection
+Current seam: the separately approved independent evaluation of the two frozen mini
+submissions is complete at `C:\pt\evaluations\pl43-mini-recovery-v1` (`result.md`).
+C1/A/1's unchanged 49-line patch passes task acceptance; C1/A/2's unchanged 28-line
+patch fails it. Both public regression, scope and typed evaluation safety PASS.
+The two evaluator invocations take 8.518s/8.356s; no execution error, provider/count/
+new-probe call, patch repair, agent resume, Docker start/pull/build or retry occurred.
+Both exact artifact/manifest/policy chains and 2,845 protected files verify; owned
+containers are absent. Preserve original diagnostic NOT_RUN/terminal bytes.
+
+Only aggregate private verdicts are returned to the operator. Do not inspect private
+failure details or claim the earlier public receiver-risk finding caused this failure.
+The schema-required model field is unused operator metadata, not a mock task result;
+real Docker evaluation ran. Safety covers these evaluations, not the full source loop.
+One checkpoint-produced mini patch is independently accepted. Fresh-start reliability,
+model success rates and generalization remain unmeasured. Next is a separate decision
+on fresh-start default-mini reproduction, without answer-patch/private-feedback seeds.
+No new paid work or loop change is authorized; official=false/claim_eligible=false.
+
+Prior diagnostic: the exact `mini-recovery-budget-v1` grant is consumed. Collection
 `run_dev_episode_collection_a78ccd1085a8478b` at
 `C:\pt\analyses\pl43-mini-recovery-live-v1` completed eight episodes, 76 responses
 and count calls, 83 tools, $2.55174405 / $5 in 994.987s, fully known cost. No unknown

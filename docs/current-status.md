@@ -38,7 +38,43 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: mini recovery diagnostic completed; grant consumed
+## Current seam: frozen mini submissions independently evaluated
+
+The separately approved operator evaluation of both publicly submitted mini patches
+is complete at `C:\pt\evaluations\pl43-mini-recovery-v1`; read `result.md` there.
+No patch was repaired and no agent was resumed. Each exact artifact was applied once
+by the unchanged evaluator in a fresh no-hardlink workspace at the audited base.
+
+| Diagnostic source | Diff lines | Public regression | Task acceptance | Evaluation safety |
+|---|---|---|---|---|
+| C1/A/1 | 49 | PASS | PASS | PASS |
+| C1/A/2 | 28 | PASS | FAIL | PASS |
+
+Both scope results PASS; evaluation durations are 8.518s and 8.356s. The second
+aggregate failure class is `PRIVATE_EVALUATION_FAILED`, not an infrastructure error.
+No hidden case, error detail or reference solution was opened for diagnosis or fed
+back to the agent. Do not attribute that failure to the earlier public receiver-risk
+observation without independent public evidence.
+
+Submitted/applied/checked hashes and manifest/policy evidence verify; 2,845 protected
+files are unchanged and both evaluations' owned containers are absent. There were
+zero provider/count/probe calls, $0 new model cost, no Docker start/pull/build, retry
+or new live row. The original diagnostic's NOT_RUN records remain immutable.
+Evaluation safety applies to these operator executions, not the whole source agent.
+
+Mini produced one independently accepted patch from this checkpoint. This is not
+a fresh-start full-run result, a 50% overall success rate or cross-task evidence.
+Next is a separately scoped fresh-start reproduction with the existing default mini
+loop, without seeding either patch or private feedback. No context reduction, forced
+notes, default-loop change or further paid execution is authorized by this result.
+All evidence remains official=false and claim_eligible=false.
+
+Evaluator/documentation focused tests pass (12 cases/7.78s), followed by three final
+documentation cases/0.10s, Ruff and diff checks. Runtime is unchanged; no full suite
+or mock smoke rerun. The one owned pytest root was hash-verified and recycled with
+a restoration receipt; both durable evaluation workspaces remain in place.
+
+## Prior diagnostic: mini recovery completed; grant consumed
 
 The exact `mini-recovery-budget-v1` invocation completed all eight fresh checkpoint
 episodes: `run_dev_episode_collection_a78ccd1085a8478b`, 76 responses/count calls,

@@ -434,6 +434,18 @@ comparison or row 44 is authorized by this completed invocation.
 
 ### Model x state-history diagnostic: row 43
 
+The subsequent, separately approved evaluation of the two frozen public submissions
+is complete at `C:\pt\evaluations\pl43-mini-recovery-v1` (`result.md`). Exact C1/A/1
+49-line patch: task acceptance PASS. Exact C1/A/2 28-line patch: task acceptance FAIL,
+aggregate `PRIVATE_EVALUATION_FAILED`. Both public regression/scope/evaluation safety
+PASS. Two unchanged evaluator invocations, two fresh no-hardlink workspaces,
+8.518s/8.356s, zero provider/count/probe calls and $0 model cost. Private case/error
+details were not returned to the agent or used for diagnosis. Do not repair or rerun
+these frozen candidates under this consumed grant. Their original diagnostic records
+remain NOT_RUN; separate operator results do not retroactively rewrite source runs.
+The next fresh-start mini reproduction requires its own exact execution scope; these
+checkpoint results are not an overall success rate. No default-loop change is implied.
+
 Completed follow-up: `mini-recovery-budget-v1` used mini-only A/B at both
 checkpoints with two fresh repetitions (eight episodes), no independent eight-response
 cutoff, and the original remaining native budgets/gates. This opt-in preparation
