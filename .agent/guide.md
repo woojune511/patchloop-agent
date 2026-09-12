@@ -753,7 +753,45 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: one post-compaction response collected; the exact grant is consumed.
+Current seam: provider-free compacted short-episode mechanics, not a live collector.
+`diagnostics.compaction_episode` verifies the completed one-turn collection and
+healthy pre-turn20 source, freezes an immutable packet, and exposes injected
+initialize/execute_seed/step mechanics. CLI supports only prepare/verify. Do not
+construct provider/Docker backends or infer a grant from the packet. Native runtime,
+v36 tools, limits and default loop remain unchanged; old runs cannot be migrated.
+
+Keep the complete compacted input prefix in its original order. Native history
+restoration rejects compacted windows; use original observed public history only as
+a local reconstruction index, never as a second native reasoning prefix on the wire.
+Append the newest encrypted reasoning/calls/matching outputs and exact public reentry
+through the existing public-source projection. No new source read or hidden evidence
+is introduced by reconstruction. Store ordered input bytes and hash those same bytes.
+
+Clone base+cutoff patch into new isolated state, hydrate unique event counters/notes
+and checks, and execute the saved check at most once. Its previously billed response
+consumes one inherited model step and 7.517505s active time, but no new cost. Reuse
+the original repair_recheck option, native tool policy, corrections, gateway and
+JIT full-25k reservation. Terminal/interrupted work is not retryable here; no native
+resume contract is weakened. Deadline/cleanup failures retain native terminal classes
+and bounded metadata survives expiry. No private evaluator is invoked at finish.
+
+Packet `65e1ce83...` at `C:\pt\analyses\compaction-episode-design-20260912` is
+PREPARED_NOT_EXECUTABLE, generation cap unset, max eight new responses. This is an
+external observation bound, not a changed completion budget or action mask. Two
+no-call verifications agree in 0.448505s; exact real-source hydration takes 3.989775s
+and retains counters 19/20/2 plus existing PASS/NOT_RUN checks. Seed execution and
+all actual API/Docker/evaluator work remain zero. 29 mock/local cases pass in 54.005s;
+3,897 protected files and native runtime are unchanged. Receipts live under
+`C:\pt\validation\compactloop-20260912`; local fixture success is not task success.
+Related regression adds 188 PASS/51.188s: final tests total 217/105.193s, excluding
+debugging runs. Ruff passes; native full suite/isolated evaluation were not rerun.
+
+Next add a bounded collector with exact grant/cap, current prices/count-billing
+disclosure, lifetime execution lock, client cleanup, partial receipts and preflight
+of already-running Docker/exact images. No start/pull/build or paid work is authorized
+by this implementation. Acceptance/safety remain NOT_RUN, official=false.
+
+Prior diagnostic: one post-compaction response collected; the exact grant is consumed.
 `run_dev_compactnext_822a9ab18f5f4ce3` used one count and one generation with frozen
 `aa469bad...` inputs. Count/usage agree at 78,485 input tokens; output 117/reasoning 44,
 completed, new encrypted reasoning 1,484 chars. It proposes the remaining registered

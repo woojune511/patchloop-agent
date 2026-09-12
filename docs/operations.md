@@ -224,6 +224,34 @@ it is not a paid resume and does not infer HTTP execution from an unfinished int
 Response collection, public decision/batch shape and actual semantic correctness are
 separate results. Read the proposal before interpreting `PASS_SHAPE_ONLY` as success.
 
+### Short compacted-loop preparation (provider-free only)
+
+`uv run python -m diagnostics.compaction_episode prepare` accepts `--collection-root`,
+`--result-hash`, `--task-dir`, a new external `--output` and optional
+`--max-new-responses` (default 8). It verifies the saved one-response collection,
+healthy cutoff, task and implementation identities, then writes an immutable packet.
+`verify --packet-root <root> --packet-hash <hash>` rechecks it without credentials,
+network, a workspace or tool execution. Current packet: `65e1ce83...` under
+`C:\pt\analyses\compaction-episode-design-20260912`.
+
+The internal `initialize`, `execute_seed` and `step` require explicitly supplied
+backends/adapters. They are mock-validated mechanics, not a live CLI or approval.
+Initialization clones the exact historical checkpoint, not the final old worktree.
+The saved check choice executes once without another provider call; its already-paid
+response still consumes one inherited model call and its recorded active time.
+Subsequent inputs retain the full compacted window and append encrypted continuation,
+matching tool results and the exact current public reentry. Existing tool policy,
+memory, source/scope checks, repair-recheck option and completion budgets are reused.
+The eight-response observation bound censors the diagnostic; it does not narrow the
+model's native action space or claim an impossible completion horizon.
+
+No live/resume subcommand exists. A collector must still bind a lifetime lock, new
+exact generation cap/approval, current prices, separately unconfirmed count billing,
+client cleanup, partial-result receipts and existing Docker/probe image preflight.
+Reserve unchanged 25k output before every new generation; never retry uncertain work
+or reuse the consumed one-turn grant. Hidden evaluation stays NOT_RUN even if public
+checks and finish succeed. Runtime/envelope history is not migrated.
+
 ## Opt-in repair feedback experiment
 
 `patchloop dev --repair-recheck` reruns the latest still-failing registered public

@@ -38,7 +38,48 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: compacted input accepted; one appropriate check proposal, not executed
+## Current seam: short compacted-loop mechanics prepared; no new live execution
+
+`diagnostics.compaction_episode` prepares and verifies a diagnostic continuation of
+the already-collected check proposal below. The native runtime and tool-surface v36
+are unchanged. It restores the healthy pre-turn20 checkpoint in a new isolated
+workspace, reuses the seed decision once, then joins real tool feedback, encrypted
+reasoning and current public state for subsequent bounded decisions. It does not
+resample the seed, prune the full compacted window, reset reasoning or run hidden
+evaluation. The original opt-in repair recheck is retained.
+
+The native history restorer does not accept compacted windows. The diagnostic keeps
+the exact compacted wire prefix separate from a local observed-source reconstruction
+index. Only the full saved prefix plus new exchanges and public reentry are sent;
+the old native encrypted history is not reintroduced as model input. No unobserved
+source or private evaluator evidence is added.
+
+29 provider-free cases pass in 54.005s: seed/check/finish, failed-check repair and
+recheck, parallel results and notes, correction continuity, integrity/cost/deadline
+failures, and crash points without duplicate calls/actions. Sandbox time expiry keeps
+`LIMIT_REACHED`; cleanup uncertainty retains the native abort instead of becoming a
+generic error. These are mocked/local fixture results, not pyfakefs behavior results.
+
+Packet `65e1ce83...` at `C:\pt\analyses\compaction-episode-design-20260912` is
+`PREPARED_NOT_EXECUTABLE`, with an eight-new-response observation bound, not a new
+action mask. Global 40/100/4/1800 and 25k output limits remain unchanged. Two no-call
+verifications match (0.448505s); real checkpoint hydration matches diff, checks and
+19 model /20 tool /2 mutation counters (3.989775s). The already-paid seed consumes
+one further inherited model call and 7.517505s, not a new generation charge. Its actual
+check is still unexecuted. All 3,897 protected files and native runtime are unchanged.
+Evidence: `C:\pt\validation\compactloop-20260912`.
+
+Related regression adds 188 passing cases in 51.188s; final focused+regression total
+is 217 cases /105.193s, excluding earlier debugging runs. Ruff passes. No native full
+suite or isolated evaluator rerun was needed for these diagnostic-only changes.
+
+Only preparation/verification CLI and injected step mechanics exist. Next implement
+the bounded live collector: exact new grant/cap, current prices, count-billing
+disclosure, lifetime lock, client cleanup, partial receipts and existing-image
+preflight. No paid grant is carried over. API/credential/Docker/hidden-evaluator work
+is zero in this stage; acceptance/safety NOT_RUN, official=false.
+
+## Prior diagnostic: compacted input accepted; appropriate check proposal, not executed
 
 The separately approved `aa469bad...` follow-up completed with exactly one input count
 and one generation: `run_dev_compactnext_822a9ab18f5f4ce3`, same mini/medium/.env/repeat1,
