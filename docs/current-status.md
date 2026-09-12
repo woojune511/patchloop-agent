@@ -38,37 +38,42 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: one-turn post-compaction diagnostic prepared; no live grant
+## Current seam: compacted input accepted; one appropriate check proposal, not executed
 
-`diagnostics.compaction_followup` reuses the existing compact receipt verification,
-Responses parser, encrypted-continuation storage, public decision/batch validation,
-integer cost ledger and bounded transport. It proposes one input count followed by
-at most one generation, then stops without tool execution. Source collection, full
-returned window, exact public reentry and even stored JSON member order are preserved.
-The native agent/runtime, tool surface and older diagnostic implementations are unchanged.
+The separately approved `aa469bad...` follow-up completed with exactly one input count
+and one generation: `run_dev_compactnext_822a9ab18f5f4ce3`, same mini/medium/.env/repeat1,
+25k output limit and unchanged frozen request. Both endpoints report 78,485 input
+tokens; output is 117, including 44 reasoning tokens. The response is completed and
+proposes `run_check(parent-traversal-contract)`. The current public state agrees:
+upstream regression PASS, that contract NOT_RUN, gate `needs_visible_checks`.
 
-The frozen `aa469bad...` proposal under
-`C:\pt\analyses\compaction-followup-design-20260912` targets the same mini snapshot,
-medium reasoning, .env, repeat=1 and 25k output. Generation cap is $1.20; the maximum
-272k-input/25k-output no-cache generation reservation is $0.3165. Count billing remains
-UNCONFIRMED and is not included in that cap. Separate exact approval must acknowledge
-this distinction; no total invoice cap or free count is asserted. Deadlines are
-30s count/300s generation within 335s including 5s cleanup. No grant has been issued.
+The original turn20 used 97,810 input and exhausted 25k output entirely on reasoning
+without a tool call. This sample uses 19.76% fewer input tokens and returns a relevant
+action; the new encrypted reasoning item is 1,484 characters. This is positive evidence
+for compaction plus exact public reentry, not isolated causality or repeatability.
+All 22 original messages remain; the historical control was not rerun. The original
+oversized turn21 item was not compacted, and opaque semantic fidelity is unproven.
 
-Before generation, validate the exact counted request and reserve its full output.
-Preserve usage before output processing, continuation without plaintext reasoning,
-and public tool proposals separately. `RESPONSE_COLLECTED` means collection only;
-`PASS_SHAPE_ONLY` validates decision/available-tool/batch form, not all arguments,
-anchor/scope admission, semantic correctness or task success. Errors never trigger a
-correction, retry or replacement request. Result inspection is read-only; uncertain
-dispatch intents do not become proof of HTTP execution or permission to resume.
+Generation model-rate accounting is $0.05939025 (cached input zero), within the actual
+full-output reservation $0.17136375 and approved generation cap $1.20. Count billing is
+UNCONFIRMED outside that cap; total invoice is unknown. Journal duration 7.517505s,
+cleanup CLOSED. `RESPONSE_COLLECTED` and `PASS_SHAPE_ONLY` do not establish full argument
+validation, source/scope admission, actual check results or task success. Tools,
+Docker, hidden evaluation, correction, recompaction and retries were all zero.
+The exact grant is consumed; no automatic continuation or default loop change.
 
-Provider-free verification: 188 focused regression tests PASS in 40.79s; Ruff PASS.
-Two real-input inspections agree in 0.148343s; 3,862 protected files and native runtime
-are unchanged. Evidence: `C:\pt\validation\compactnext-20260912`. Actual credential,
-count/generation/compaction/tool/Docker/hidden-evaluation work is zero. No full native
-suite or task mock smoke was rerun. Follow-up admission and agent behavior remain
-untested live; official=false, acceptance/safety NOT_RUN.
+Two no-call inspections matched the frozen plan in 0.142799s before dispatch, and two
+read-only result checks preserved collection bytes. All 3,879 protected files and
+native runtime remain unchanged. Evidence:
+`C:\pt\analyses\compaction-followup-live-20260912\result.md` and `analysis.json`;
+collection: `C:\pt\analyses\compaction-followup-collection-20260912`.
+The frozen proposal and older receipts retain their original preparation-time values.
+
+The preceding implementation passed 188 focused cases in 40.79s and Ruff under
+`C:\pt\validation\compactnext-20260912`; that was provider-free preparation, not this
+live execution. Next seam is to review a bounded actual-loop validation, not infer
+task acceptance from a proposal or dispatch another paid request. All results remain
+official=false, acceptance/safety NOT_RUN. No native full suite or mock task rerun.
 
 ## Prior diagnostic: one standalone compaction completed; follow-up behavior untested
 

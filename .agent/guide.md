@@ -753,7 +753,30 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: post-compaction one-turn collector prepared; no execution grant.
+Current seam: one post-compaction response collected; the exact grant is consumed.
+`run_dev_compactnext_822a9ab18f5f4ce3` used one count and one generation with frozen
+`aa469bad...` inputs. Count/usage agree at 78,485 input tokens; output 117/reasoning 44,
+completed, new encrypted reasoning 1,484 chars. It proposes the remaining registered
+`parent-traversal-contract` check. The cutoff is needs_visible_checks, upstream
+regression PASS and that contract NOT_RUN; the public decision matches this state.
+No tool, Docker, hidden evaluation, correction, recompaction or retry occurred.
+Generation tariff estimate $0.05939025, actual full-output reservation $0.17136375,
+generation cap $1.20. Count billing remains separately UNCONFIRMED; invoice unknown.
+Cleanup CLOSED, journal 7.517505s. Evidence and later separate authorization:
+`C:\pt\analyses\compaction-followup-live-20260912`; immutable collection:
+`C:\pt\analyses\compaction-followup-collection-20260912`.
+
+Original turn20 exhausted 25k reasoning with no tool at 97,810 input; this sample uses
+19.76% fewer input tokens and proposes a relevant action. Do not equate this with
+check execution, full argument admission, task success or native-loop adoption.
+Historical control is not a fresh replicate; compression, exact reentry and sampling
+effects are not separated, and all 22 original messages remain. The oversized later
+item was not the compaction input. Two preflight inspections match (0.142799s), two
+result reads are byte-idempotent, and 3,879 protected files/runtime remain unchanged.
+Next seam: review bounded actual-loop validation. No paid permission remains; no
+automatic follow-up or migration of old receipts. Acceptance/safety NOT_RUN, official=false.
+
+Prior implementation: post-compaction one-turn collector, provider-free preparation.
 `diagnostics.compaction_followup` independently verifies the terminal, child receipt,
 source reconstruction and CAS artifacts without source locks/writes. The exact
 next count/generation artifacts, JSON member order, complete returned window and
@@ -783,9 +806,10 @@ terminal/CAS/continuation or returns conservative interrupted evidence.
 in 0.148343s. `C:\pt\validation\compactnext-20260912` preserves verification and 3,862
 unchanged-file hashes. Native runtime/tool schema, source collection and prior frozen
 packets are unchanged. No actual API/credential/tool/Docker work, native full suite
-or task mock rerun. Existing 22 retained messages are not pruned; this diagnostic
-does not resolve historical-state interference, task correctness or opaque semantic
-preservation. Follow-up provider admission and tool behavior are still untested.
+or task mock rerun at that preparation stage. Existing 22 retained messages are not
+pruned; this diagnostic does not resolve historical-state interference, task correctness
+or opaque semantic preservation. At preparation, follow-up admission and tool behavior
+were untested; the later one-response result and narrower boundaries are recorded above.
 
 Prior diagnostic: one standalone compaction completed; follow-up request artifacts only.
 The separately approved `03b157e1...` plan completed in

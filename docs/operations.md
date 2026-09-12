@@ -199,15 +199,22 @@ proof that HTTP was reached. Preserve the collection rather than rerunning its o
 `--result-hash`, `--output`, `--env-file`, `--max-generation-cost-usd` and `--repeat 1`.
 It validates the completed compaction source and frozen next requests without loading
 credentials or writing the source/output. Review the resulting exact execution plan.
-`C:\pt\analyses\compaction-followup-design-20260912\README.md` is the current unapproved
-proposal; source generation/count hashes stay `c1e2825b...` / `d5716b19...`.
+The frozen proposal `C:\pt\analyses\compaction-followup-design-20260912\README.md`
+retains its original unapproved preparation state. A later exact grant was used once:
+`run_dev_compactnext_822a9ab18f5f4ce3`, count 1/generation 1, completed, 78,485 input and
+117 output (44 reasoning). The proposed remaining contract check was not executed.
+Authorization/result: `C:\pt\analyses\compaction-followup-live-20260912`.
+The grant is consumed; do not rerun collection. Source generation/count hashes stay
+`c1e2825b...` / `d5716b19...`; old proposal/receipt/run bytes must not be updated.
 
-The proposed $1.20 cap covers generation only. The full 272k-input/25k-output
+The $1.20 cap covers generation only. The full 272k-input/25k-output
 reservation is $0.3165 at the reviewed Standard model rates, without cache savings.
 Count-endpoint billing remains unconfirmed outside this cap. Do not describe this
-as a guaranteed total invoice cap or an approved execution. After a new exact grant
-acknowledging this limitation and checking current prices, `collect` additionally
-requires `--execution-plan-hash` and `--accept-unconfirmed-count-billing`.
+as a guaranteed total invoice cap or standing execution permission. This completed
+generation accounts to $0.05939025 at model rates; count billing/invoice remain unknown.
+Any new collection needs a new exact grant acknowledging this limitation and a current
+price check. `collect` additionally requires `--execution-plan-hash` and
+`--accept-unconfirmed-count-billing`.
 
 At most one count precedes one generation. Count errors, limit/cost/deadline failures
 prevent generation; response/usage/continuation/cleanup failures stop without retry.
