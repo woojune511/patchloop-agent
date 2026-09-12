@@ -297,6 +297,15 @@ as full public reentries accumulated; this one public submission proves neither
 long-loop boundedness nor a compaction causal effect. Do not add a new paid sample
 or change the native context from this approval.
 
+The later provider-free reentry audit at
+`C:\pt\analyses\compaction-reentry-audit-20260913` measured superseded diagnostic
+state messages as 84.5% of first-to-last wire-byte growth. Its 46.3% final-size
+reduction is an in-memory sizing probe with checked source/action preservation,
+not a runnable request, API/token result or adopted context contract. Existing
+append-only native and collector contracts still apply. Any implementation must
+separately preserve complete compact output, native exchanges, current state and
+unique source/harness receipts before a new exact execution packet is considered.
+
 ## Opt-in repair feedback experiment
 
 `patchloop dev --repair-recheck` reruns the latest still-failing registered public

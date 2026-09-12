@@ -38,7 +38,33 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: approved compacted short loop reached public submission
+## Current seam: reentry audit isolates repeated-state growth; no runtime change
+
+Read-only analysis of the five completed compacted requests attributes 439,219 of
+519,521 added wire bytes (84.5%) to superseded post-seed state messages. Reasoning
+items added 47,564 bytes (9.2%); new native calls/results added 26,755 (5.1%). These
+are serialized UTF-8 byte shares, not token shares or model-effect measurements.
+Every new quoted call/result item (12/14/14/12/14) was already present earlier in
+that input. Reentry both expands selected source and quotes dependency-linked old
+results, then the episode appends that one-shot restoration bundle on every turn.
+
+An in-memory size probe retained the entire seed and every native item plus latest
+state, omitting only superseded post-seed reentries: last request 948,877 -> 509,654
+bytes (-46.3%). This trace retained 942 source facts and 22 public action versions;
+no runnable request, count call or behavioral equivalence claim was produced.
+This identifies a snapshot/history lifecycle issue in the diagnostic wrapper, not
+the same measured growth in the default native loop or a compaction quality cause.
+
+Next implementation candidate: one opt-in current-state lifecycle change, preserving
+the standalone compact output, encrypted/native history and independently retained
+public evidence. Prove current-state/reference and harness-receipt/resume preservation
+before another exact experiment packet. Do not adopt the size probe, reset reasoning,
+change tool masks or infer a paid grant. Native/runtime/task/history are unchanged.
+Two guarded audits agree in 0.662391s; seven independent synthetic checks pass.
+All 4,169 protected files/runtime match. Evidence:
+`C:\pt\analyses\compaction-reentry-audit-20260913`; API/count/tool/Docker/hidden calls 0.
+
+## Prior live evidence: approved compacted short loop reached public submission
 
 The exact `1f4b1ff0...` grant was consumed once on 2026-09-13 KST by
 `run_dev_compactcollectloop_770d791800604acd`; child
@@ -65,9 +91,9 @@ build, hidden evaluator, recompaction, automatic retry or paid resume occurred.
 Do not infer a compaction causal effect or generalized mini/native-loop success from
 one branch with no fresh control. Input grew 107,343 -> 231,983 tokens; each turn
 appended another 93,518-106,658-character public reentry while retaining prior ones.
-The last input retained five earlier reentries totaling 497,060 characters. Next
-inspect the repeated state/source-exchange bodies provider-free before selecting a
-context change; neither discard observed evidence nor launch another paid sample.
+The last input retained five earlier reentries totaling 497,060 characters. The
+read-only analysis above now separates those repeated state/source-exchange bodies;
+neither discard observed evidence nor launch another paid sample from this result.
 Task acceptance/safety remain NOT_RUN, official=false.
 
 Two post-run read-only result inspections agree in 0.183008s; all 221 collection files

@@ -753,7 +753,27 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the exact `1f4b1ff0...` compacted short-episode grant is consumed.
+Current seam: provider-free reentry audit completed; native runtime unchanged.
+Five requests grew 519,521 wire bytes, including 439,219 superseded post-seed state
+bytes (84.5%), 47,564 encrypted-reasoning bytes and 26,755 native call/output bytes.
+Each new reentry quoted 12/14/14/12/14 exact items already present earlier in input.
+The diagnostic's one-shot public restoration (inline selected source plus transitive
+quoted call/output archive) is appended every turn. This is snapshot/history lifetime
+coupling, not measured proof of the same growth in the default reference-based loop.
+
+In-memory removal of only post-seed superseded reentries yielded 948,877 -> 509,654
+bytes at the final request (-46.3%), preserving full seed/native items, latest state,
+942 observed source facts and 22 public action versions in this trace. No request
+was published/dispatched/counted; API admissibility/token/model effects remain untested.
+Next candidate is one opt-in snapshot-lifetime change, not a default adoption: preserve
+all standalone compact output, encrypted/call/result ordering, latest complete state,
+and any unique historical source or harness-only receipt as independent evidence.
+Verify reference/currency/current-state/resume equivalence first. Never turn a sizing
+probe into blanket permission to discard old observations, reset reasoning or run paid work.
+Two guarded audits agree (0.662391s), seven synthetic checks PASS, 4,169 protected files
+unchanged; `C:\pt\analyses\compaction-reentry-audit-20260913`. API/count/tools/Docker 0.
+
+Prior live evidence: the exact `1f4b1ff0...` compacted short-episode grant is consumed.
 `run_dev_compactcollectloop_770d791800604acd` / child
 `run_dev_compactepisode_a24b09c546ff4deb` reached PUBLIC_CHECKS_SUBMITTED on
 2026-09-13 KST. Five new responses/counts, seven tools including saved seed and
@@ -769,7 +789,7 @@ full compacted prefix and append prior encrypted reasoning/call/output once;
 reported reasoning context is current_turn, not evidence of effective model use.
 All new memory_update values are null. Acceptance/safety NOT_RUN, official=false.
 
-Next seam is provider-free inspection of repeated public reentry bodies. Actual
+The completed audit above inspects repeated public reentry bodies. Actual
 input grew 107,343 -> 137,253 -> 168,054 -> 202,832 -> 231,983 tokens; every turn
 appended 93,518-106,658 characters while retaining older snapshots. The fifth
 request kept five previous reentries/497,060 characters. Separate source/tool
