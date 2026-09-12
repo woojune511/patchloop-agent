@@ -753,7 +753,29 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: standalone count-only collector implemented; no live execution.
+Current seam: approved count-only diagnostic finished; no remaining execution grant.
+`C:\pt\analyses\count-replay-live-20260912` retains preflight, preservation and analysis;
+collection `C:\pt\analyses\count-replay-collection-20260912`, diagnostic run
+`run_dev_countcollect_82df89236b5c4404`. Control turn20 counts 97,810, matching history.
+Turn21 returns HTTP 400 `string_above_max_length`, param `input[79].encrypted_content`.
+The actual failed HTTP body hash equals the frozen canonical hash; 2,164,348 bytes.
+Exactly two count requests in 2.811447s, zero generation/tools/Docker/hidden evaluation,
+no retries/resume and cleanup CLOSED. Billing is still UNCONFIRMED/null, not proven free.
+
+The rejected encrypted item is 1,701,176 characters, identical to the single-item
+continuation recorded after original turn20, and occurs once in the request. Original
+turn20 input remains an exact prefix. Its response was incomplete/max_output_tokens,
+25k output/reasoning tokens, no tools. This narrows the observed failure to a per-field
+string limit; it is not a recovered historical error body, known numeric server cap,
+proof about responses.create, or explanation of why the provider inflated the opaque
+state. Do not truncate, splice, reset or decrypt it as an unapproved workaround.
+
+3,784 protected file hashes and native runtime are unchanged. All results official=false,
+task acceptance/safety NOT_RUN. Next seam: offline continuation size/admission and
+documented compaction review. A guard can diagnose an oversized item but cannot by
+itself restore a valid continuation; do not claim a task-solving fix from this replay.
+
+Prior implementation: standalone count-only collector; no live execution at that stage.
 `diagnostics/count_collector.py` consumes the unchanged frozen packet below. Exact
 packet/source/reconstruction and credential path validation precede key/client setup.
 An explicit acknowledgement of unconfirmed count billing is required in addition to

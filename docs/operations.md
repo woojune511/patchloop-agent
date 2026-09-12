@@ -104,7 +104,15 @@ this endpoint's price. A [community reply](https://community.openai.com/t/does-p
 describes counting as free, but is not an official pricing guarantee. Do not infer
 charges from generation rates or treat an absent usage field as a zero-dollar receipt.
 
-There is no active execution grant. Separately approve the exact packet, model in that
+The first separately approved collection is complete and its grant is consumed:
+`C:\pt\analyses\count-replay-collection-20260912`, diagnostic run
+`run_dev_countcollect_82df89236b5c4404`. Two count requests in 2.811447s: control 97,810;
+failed case HTTP 400 `string_above_max_length`, `input[79].encrypted_content`.
+Read `C:\pt\analyses\count-replay-live-20260912\result.md` for preserved evidence and
+limits. No generation/task/Docker/retry occurred. Do not invoke that output again;
+the new rejection does not recover the original HTTP error or establish free billing.
+
+There is no remaining execution grant. Separately approve the exact packet, model in that
 packet, credential path, new destination and maximum two counts, including billing
 uncertainty, before invoking the collector with `--accept-unconfirmed-count-billing`.
 That acknowledgement records an operator choice; it neither changes the frozen design

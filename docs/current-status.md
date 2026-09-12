@@ -38,7 +38,31 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: count-only collector implemented; no API execution
+## Current seam: count-only replay observed an encrypted-field length rejection
+
+The separately approved two-count diagnostic is complete. Control turn20 returns the
+same 97,810 tokens; unchanged turn21 returns HTTP 400 `string_above_max_length` at
+`input[79].encrypted_content`. This is a new rejection of the original frozen input,
+not a recovered copy of the original error. No retry, resume, generation, Docker or
+task execution followed. Collector time: 2.811447s; client cleanup CLOSED.
+
+The rejected field has 1,701,176 characters, exactly matching the durable continuation
+stored after the original turn20 response. It appears once in the request; previous
+input is an unchanged prefix. That response exhausted 25k output/reasoning tokens
+without a tool call. The new failed HTTP body is 2,164,348 bytes and matches the frozen
+hash. This identifies a per-field string constraint, not evidence of a total-token
+limit or transport timeout. Exact server length limit and why the provider produced
+such a large opaque item remain unknown; the generation endpoint was not tested.
+
+Evidence: `C:\pt\analyses\count-replay-live-20260912\result.md` and `analysis.json`;
+collection `C:\pt\analyses\count-replay-collection-20260912`, run
+`run_dev_countcollect_82df89236b5c4404`. Two no-call admissions agreed; 3,784 protected
+files and native runtime are unchanged. Count billing remains UNCONFIRMED/null, not
+a proven zero-dollar charge. Acceptance/safety NOT_RUN, official=false; grant consumed.
+Next seam is offline continuation-size/admission and supported compaction investigation,
+not an automatic ciphertext reset, new model run or another count request.
+
+## Prior implementation: count-only collector; provider-free validation
 
 `diagnostics/count_collector.py` now executes the frozen B2 count protocol separately
 from the native agent. It permits only the count endpoint, one attempt per case,
