@@ -38,7 +38,37 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: latest-state diagnostic reached public submission; grant consumed
+## Current seam: native-input audit separates steady growth from the rejection
+
+Read-only reconstruction of all 65 inputs in A1/B1/B2 validates 65 original count
+admissions and 64 generation hashes. Native state accumulation is real: removing
+superseded views in an in-memory sizing probe would reduce the last counted requests
+by 33.70% / 37.53% / 31.47% respectively. These are byte-reduction upper bounds,
+not token savings or deployable requests; historical receipt rescue is not included.
+Source facts, current selection/state and native encrypted/call/output items stay exact.
+Old view observation versions still need reconciliation before any removal contract.
+
+B2 turn20 -> turn21 grows 1,716,122 JSON bytes; 1,701,293 (99.14%) is one new reasoning
+item. Its encrypted field has 1,701,176 characters, once only, matching the earlier
+count endpoint's string_above_max_length evidence. State removal leaves this field
+unchanged. No new count/generation was sent; exact server field limit and generation
+endpoint behavior remain unknown. B1 also completed with 101,831 input tokens, above
+B2's pre-failure 97,810: no token-only saturation/compaction threshold is established.
+
+Two guarded audits agree in 3.855761s; ten accounting/evidence fixtures plus three
+docs checks PASS/0.784s; Ruff PASS. 4,649 protected files and native runtime unchanged.
+No credentials, API/count/compaction, Docker/task/hidden evaluation, or runnable modified
+input. Evidence: `C:\pt\analyses\native-input-audit-20260913`. Acceptance/safety NOT_RUN,
+official=false. Source reconstruction files match source commit 22798e34...; the full
+historical runtime envelope remains non-resumable under the current exact contract.
+
+Next candidate is an explicit native context-window lifecycle design, reusing the
+normal-checkpoint compaction and validated full-window/public-state continuation path.
+Do not blindly prune current append-only native history or promise this prevents a
+future oversized reasoning item. No new implementation, model/tool-policy change,
+default adoption or paid grant follows from this analysis.
+
+## Prior live: latest-state diagnostic reached public submission; grant consumed
 
 The exact `0d45099f...` approval (packet `429d4173...`) was consumed once on
 2026-09-13 KST. Collector `run_dev_compactcollectloop_ef29a44a32a64717`, child

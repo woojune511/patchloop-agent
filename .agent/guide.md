@@ -753,7 +753,36 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: exact latest-state grant consumed; public submission, default unchanged.
+Current seam: native-input audit completed; no runtime change or execution grant.
+`C:\pt\analyses\native-input-audit-20260913` reconstructs all A1/B1/B2 65 input/count
+hashes and 64 generation admissions. Native source references differ from diagnostic
+reentry expansion: superseded state removal upper bounds are A1 33.70%, B1 37.53%,
+B2 pre-failure 31.47% of full compact-JSON bytes. Initial three items, latest full state,
+source facts and native reasoning/call/output are exact. Omitted old state observation
+versions are flagged, not proven lost facts: equivalent native output values were not
+reconciled. Do not turn the sizing probe into a provider-ready prune implementation.
+
+B2 turn20 -> turn21 adds 1,716,122 bytes, including one 1,701,293-byte reasoning item
+(99.14%); its encrypted value is 1,701,176 characters and occurs once. Hash/order match
+the durable continuation and previous count-only per-field rejection. Removing old
+state leaves that value unchanged, so the direct rejection mechanism is not repaired.
+Exact server threshold, modified-request admission and generation endpoint remain
+untested. Native B1 continued at 101,831 input tokens, so do not infer a 97,810-token
+failure threshold or a model-effect explanation from B2. No raw reasoning/ciphertext
+or runnable rewritten request is published; private evaluator artifacts are not parsed.
+
+Two guarded analyses agree/3.855761s; ten external fixtures and three docs checks
+PASS/0.784s, Ruff PASS, 4,649 protected files unchanged. Native reconstruction files
+match source 22798e34..., but full old runtime envelopes are not migrated. API/count/
+credential/task/Docker/hidden calls zero; no native full suite or evaluator smoke.
+Next design candidate: explicit native context-window lifecycle using the tested
+healthy-checkpoint compact/full-window/public-reentry path. Preserve canonical compact
+output, source references, harness receipts, correction consumption, budgets and exact
+resume identity. No simple active-episode pruning, ciphertext reset, arbitrary length
+cutoff, new paid sample or claim that preemptive compaction guarantees prevention.
+Model/planning/memory/tool-mask changes are not supported by this byte audit.
+
+Prior live: exact latest-state grant consumed; public submission, default unchanged.
 Packet `429d4173349ac1306ef1bdcfc4889b75ae5ef4cfd03b4f933518416cb31d7a64`, plan
 `0d45099f800d447291a8cd627e1be22907339ae92afa82670f29c50c632a787a` executed once
 on 2026-09-13 KST. Collector `run_dev_compactcollectloop_ef29a44a32a64717`, child
