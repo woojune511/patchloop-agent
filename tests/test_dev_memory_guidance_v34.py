@@ -118,10 +118,10 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
 
 
 def test_guidance_identity_changes_without_changing_run_schema_or_limits():
-    # v36 adds opt-in repair/recheck semantics; the v33/v34 argument and description
+    # v37 adds opt-in native-window semantics; the v33/v34 argument and description
     # identities above remain independently pinned and unchanged.
     assert dev_tool_surface_hash() == (
-        "sha256:e02c52b592502dfe3796773c72f0b13482840575fdee16cf0aecfdc21e90f50c"
+        "sha256:cb6763e5b863adbd7517dc3da2e44ada6b918feea38de3676578d359092a760c"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

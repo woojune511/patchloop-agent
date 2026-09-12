@@ -1,7 +1,11 @@
 # Native context-window lifecycle — implementation plan
 
-Status: design only, 2026-09-13. No runtime change or paid execution grant.
-Authority baseline: `240f89c72cc47c2ddbabae5ea31247d0915eccdd`; native runtime
+Status: phase 1 implemented and locally verified, 2026-09-13.
+Compaction adapter, scheduler and paid execution are not included in phase 1.
+Receipt: `C:\pt\validation\native-window-20260913`; 138 focused tests/61.77s,
+1,699 full-suite PASS/four Docker opt-in skips, longest worker 382.43s, Ruff PASS.
+65 saved input replays preserve evidence; opt-in mock reaches isolated evaluation.
+Design authority baseline: `240f89c72cc47c2ddbabae5ea31247d0915eccdd`; native runtime
 `sha256:565b95609b8fc0015ac6523d52875d2ba7b2cf240f23be5183ebbd5b48229659`.
 
 ## 1. 목적과 범위
@@ -181,26 +185,29 @@ count terminal, 비용은 `COST_CAP_REACHED`, deadline/B 부족은 `LIMIT_REACHE
 
 Run request/envelope/model identity에는 context policy, T, 1회 한도, 예약/가격 계약과
 acknowledgement를 결속한다. Tool 입력 schema·순서는 그대로지만 전달/복원 의미가
-달라지므로 구현 시 tool-surface는 v37로 올린다. 현재는 여전히 v36이다.
+달라지므로 phase 1에서 tool-surface를 v37로 올렸다. 현재는 context policy와
+첫 window 복원만 결속하며 T/예약/압축 활성화는 후속 단계다.
 기존 envelope/journal migration은 하지 않고 runtime 불일치 resume 거부를 유지한다.
 새 모드의 문서화된 opt-in 외 default 동작은 바꾸지 않는다.
 
 ## 6. 구현 순서와 변경 위치
 
-1. **순수 작업 창부터:** `conversation.py`, `native_sources.py`, `model_state.py`에
+1. **순수 작업 창부터 — 구현됨:** `conversation.py`, `native_sources.py`, `model_state.py`에
    snapshot/archive 의미를 연결한다. 진단의 source/evidence helper를 runtime 쪽 작은
-   module로 추출하고 기본 append 경로 bytes가 동일한지 고정한다. 아직 compact 호출 없음.
+   module로 추출하고 기본 append 경로 bytes가 동일한지 고정한다. 얇은 CLI/request/
+   runner 연결과 seed/이전 input/evidence 복원 검증을 포함한다. Compact 호출 없음.
 2. **압축의 durable 어댑터:** 기존 `compaction_state`의 validation/receipt,
    transport의 deadline/cleanup, `compaction_cost`의 예약 의미를 필요한 만큼 추출한다.
    새 agent framework나 일반적인 remote transaction framework를 만들지 않는다.
-3. **Runner 연결:** prepared-input/count 경계, activation, shared ledger/counters,
+3. **후속 압축 Runner 연결:** prepared-input/count 경계, activation, shared ledger/counters,
    `_build_model_input`, `_load_active_model_input`, `_validate_recorded_continuations`,
    `_restore_counters`, `DevJournal.provider_usage`와 unresolved-work 검사를 갱신한다.
    Compaction receipt를 가짜 tool decision으로 기록하지 않는다.
 4. **무호출 검증과 문서:** opt-in/default, 실패와 resume을 검증한 뒤 실행 packet을
    준비한다. 이 단계 완료만으로 paid 실행이나 default 채택을 하지 않는다.
 
-각 변경에 contracts와 focused tests를 함께 넣는다. 첫 실제 구현 착수 대상은 1번이다.
+각 변경에 contracts와 focused tests를 함께 넣는다. 1번 이후 다음 후보는 2번이며,
+이번 승인으로 압축 API 실행이나 전체 후속 단계가 자동 승인되지는 않는다.
 
 ## 7. 완료 조건과 다음 live의 해석
 

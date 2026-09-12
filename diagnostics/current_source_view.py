@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.dev.conversation import history_metadata, validate_model_input
-from patchloop.dev.native_sources import _lines, _SourceIndex
+from patchloop.dev.native_sources import _SourceIndex
+from patchloop.dev.native_sources import resolve_source_group as _inline_group
 from patchloop.runtime import repository_root
 from patchloop.util import sha256_bytes, sha256_json
 
@@ -24,59 +25,6 @@ def wire(value: Any) -> bytes:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()
 
 
-def _inline_group(group: dict, index: _SourceIndex) -> tuple[dict, dict[int, str], int]:
-    require(isinstance(group, dict), "invalid source group")
-    path, raw_hash = group.get("path"), group.get("file_hash")
-    require(all(isinstance(x, str) and x for x in (path, raw_hash)), "invalid source identity")
-    inline = group.get("inline_spans", [])
-    refs = group.get("content_delivery", {})
-    require(isinstance(inline, list) and isinstance(refs, dict), "invalid source delivery")
-    observed: dict[int, str] = {}
-
-    def add(number: int, line: str) -> None:
-        require((path, raw_hash, number) not in index.conflicts, "conflicting source history")
-        require(number not in observed or observed[number] == line, "conflicting selected lines")
-        observed[number] = line
-
-    for span in inline:
-        require(isinstance(span, dict), "invalid inline span")
-        lines = _lines({**span, "path": path, "file_hash": raw_hash})
-        require(lines is not None, "invalid inline source")
-        for number, line in enumerate(lines, span["start_line"]):
-            add(number, line)
-    already_inline = set(observed)
-    removed = 0
-    for action_id, fields in refs.items():
-        require(isinstance(action_id, str) and bool(action_id)
-                and isinstance(fields, dict) and bool(fields), "invalid source reference")
-        for field, ranges in fields.items():
-            require(isinstance(field, str) and bool(field)
-                    and isinstance(ranges, list) and bool(ranges), "invalid source ranges")
-            delivery = index.deliveries.get((action_id, field, raw_hash))
-            require(delivery is not None and delivery[0] == path, "missing source delivery")
-            _, base, body = delivery
-            for bounds in ranges:
-                require(isinstance(bounds, list) and len(bounds) == 2
-                        and all(type(n) is int for n in bounds), "invalid inclusive range")
-                start, end = bounds
-                require(base <= start <= end < base + len(body), "range outside delivery")
-                removed += 1
-                for number in range(start, end + 1):
-                    add(number, body[number - base])
-    # Use only selected ranges, never all index.observed lines from this file/hash.
-    additions: list[dict] = []
-    for number in sorted(set(observed) - already_inline):
-        if additions and additions[-1]["end_line"] + 1 == number:
-            additions[-1]["end_line"] = number
-            additions[-1]["content"] += "\n" + observed[number]
-        else:
-            additions.append({"start_line": number, "end_line": number,
-                              "content": observed[number]})
-    projected = copy.deepcopy(group)
-    if refs:
-        projected["content_delivery"] = {}
-        projected["inline_spans"] = [*copy.deepcopy(inline), *additions]
-    return projected, observed, removed
 
 
 def inline_current_sources(request: dict) -> tuple[dict, dict]:

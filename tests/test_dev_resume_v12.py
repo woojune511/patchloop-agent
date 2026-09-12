@@ -6,7 +6,6 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
-from native_history_support import input_context
 
 import patchloop.dev.runner as runner
 from patchloop.agent.model import (
@@ -19,6 +18,7 @@ from patchloop.agent.model import RequestedTool as ProviderTool
 from patchloop.contracts import TaskEnvironment
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev.contracts import DevModelTurn, DevRunRequest, PublicTurnDecision, RequestedTool
+from patchloop.dev.conversation import reconstruct_state
 from patchloop.dev.model import MOCK_MUTATIONS
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
@@ -228,8 +228,9 @@ def test_pending_scope_rollback_restores_crlf_after_empty_candidate(
 
 @pytest.mark.parametrize("boundary", ["correction", "next_turn_started"])
 @pytest.mark.parametrize("invalid_shape", ["reasoning_only", "mixed_batch"])
+@pytest.mark.parametrize("context_policy", ["append-v1", "native-window-v1"])
 def test_provider_correction_survives_crash_without_repeating_dispatch(
-    tmp_path, monkeypatch, boundary, invalid_shape,
+    tmp_path, monkeypatch, boundary, invalid_shape, context_policy,
 ) -> None:
     inputs = []
     executions = 0
@@ -307,6 +308,7 @@ def test_provider_correction_survives_crash_without_repeating_dispatch(
     request = _request(tmp_path).model_copy(update={
         "provider": "openai", "model": "gpt-5.4-mini-2026-03-17",
         "env_file": tmp_path / "credential.env", "max_cost_usd": Decimal("1.20"),
+        "context_policy": context_policy,
     })
     with pytest.raises(SimulatedCrash):
         runner.run_dev(request)
@@ -315,7 +317,7 @@ def test_provider_correction_survives_crash_without_repeating_dispatch(
     assert result["terminal"] == "AGENT_STOPPED"
     assert executions == counted == 2
     assert result["accepted_mutations"] == 0
-    context = input_context(inputs[-1])
+    context = reconstruct_state(inputs[-1], context_policy=context_policy)
     cards = context["recent_attempt_result_next_question"]
     assert any(card["attempt"] == "protocol" for card in cards)
     expected_code = (

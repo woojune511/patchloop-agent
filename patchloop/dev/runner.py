@@ -44,6 +44,9 @@ from patchloop.dev.contracts import (
     dev_tool_surface_hash,
 )
 from patchloop.dev.conversation import (
+    APPEND_POLICY,
+    WINDOW_POLICY,
+    WINDOW_RULES,
     assemble_model_input,
     history_metadata,
     validate_model_input,
@@ -67,8 +70,13 @@ from patchloop.dev.inspection_projection import (
 )
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.model_state import compact_model_state
-from patchloop.dev.native_sources import project_mutation_result, reference_native_sources
+from patchloop.dev.native_sources import (
+    PUBLIC_EVIDENCE_KIND,
+    project_mutation_result,
+    reference_native_sources,
+)
 from patchloop.dev.probe_observation import probe_observation, project_probe_result
+from patchloop.dev.public_history import NATIVE
 from patchloop.dev.repair_recheck import repair_recheck_context, select_repair_recheck
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import (
@@ -274,6 +282,7 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "provider": request.provider,
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
+            "context_policy": request.context_policy,
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
@@ -1601,18 +1610,64 @@ def _provider_rejected_call_arguments(call: RequestedTool) -> dict[str, Any]:
 
 def _load_active_model_input(
     payload: dict[str, Any], artifact_store: ArtifactStore,
+    *, context_policy: str = APPEND_POLICY,
 ) -> list[dict[str, Any]]:
     try:
         artifact = Artifact.model_validate(payload.get("model_input_artifact"))
         if payload.get("model_input_hash") != artifact.content_hash:
             raise RecoveryError("model input reference does not match its turn boundary")
-        return validate_model_input(
+        items = validate_model_input(
             json.loads(artifact_store.read_bytes(artifact)), payload.get("native_history"),
+            context_policy=context_policy,
         )
-    except (OSError, ValueError, RecoveryError) as exc:
+        if context_policy == WINDOW_POLICY:
+            window = payload["context_window"]
+            seed_ref = Artifact.model_validate(window["seed_artifact"])
+            seed = json.loads(artifact_store.read_bytes(seed_ref))
+            expected_window_id = "window_" + seed_ref.content_hash.removeprefix("sha256:")
+            if (seed != items[:3]
+                    or seed_ref.content_hash != payload["native_history"]["seed_hash"]
+                    or window["window_id"] != expected_window_id):
+                raise RecoveryError("managed window seed changed")
+            previous = window["previous_input_artifact"]
+            if previous is not None:
+                parent = json.loads(artifact_store.read_bytes(Artifact.model_validate(previous)))
+                before = [i for i in parent if i.get("type") in NATIVE]
+                after = [i for i in items if i.get("type") in NATIVE]
+                if (parent[:3] != seed
+                        or canonical_json(before) != canonical_json(after[:len(before)])):
+                    raise RecoveryError("managed native history changed")
+                for old, current in zip(
+                    WINDOW_RULES.inventory(parent), WINDOW_RULES.inventory(items), strict=True,
+                ):
+                    if any(k not in current or current[k] != v for k, v in old.items()):
+                        raise RecoveryError("managed window lost prior public evidence")
+        return items
+    except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError) as exc:
         raise _ProviderContinuationError(
             "saved active-episode input is unavailable or invalid"
         ) from exc
+
+
+def _window_binding(journal: DevJournal, store: ArtifactStore, items: list[dict]) -> dict:
+    """Bind the first, immutable seed and the last consumed decision, not a started-only turn."""
+    events = journal.events()
+    decision = next((e["payload"] for e in reversed(events)
+                     if e["event_type"] == "turn_decision_recorded"), None)
+    parent = next((e["payload"] for e in reversed(events)
+                   if e["event_type"] == "turn_started" and decision is not None
+                   and e["payload"].get("turn_id") == decision["turn_id"]), None)
+    if decision is not None and parent is None:
+        raise _ProviderContinuationError("managed parent decision has no input")
+    # The seed's wire bytes and canonical identity must be the same artifact;
+    # put_json uses pretty JSON and therefore has a different byte hash.
+    seed = store.put_text(canonical_json(items[:3]), "application/json")
+    return {
+        "window_id": "window_" + seed.content_hash.removeprefix("sha256:"),
+        "seed_artifact": seed.model_dump(mode="json"),
+        "previous_input_artifact": parent["model_input_artifact"] if parent else None,
+        "last_exchange_turn_id": decision["turn_id"] if decision else None,
+    }
 
 
 def _validate_recorded_continuations(
@@ -1637,6 +1692,7 @@ def _validate_recorded_continuations(
 def _build_model_input(
     *, journal: DevJournal, artifact_store: ArtifactStore, context: str,
     latest_tool_results: list[DevToolResult],
+    context_policy: str = APPEND_POLICY,
 ) -> list[dict[str, Any]]:
     """Append the latest exchange to the exact saved active-episode history."""
     events = journal.events()
@@ -1653,13 +1709,16 @@ def _build_model_input(
                        None)
         if started is None:
             raise _ProviderContinuationError("recorded decision has no active-episode input")
-        previous_input = _load_active_model_input(started, artifact_store)
+        previous_input = _load_active_model_input(
+            started, artifact_store, context_policy=context_policy,
+        )
     exchange = _build_latest_exchange(
         journal=journal, artifact_store=artifact_store, context=context,
         latest_tool_results=latest_tool_results,
     )
     new_history = exchange[1:-1]
     prior_history = previous_input[3:] if previous_input is not None else []
+    archive_kind = PUBLIC_EVIDENCE_KIND if context_policy == WINDOW_POLICY else None
     admissions = {
         event["payload"]["action_id"]: event["payload"] for event in events
         if event["event_type"] == "action_started"
@@ -1670,6 +1729,7 @@ def _build_model_input(
             projected = project_mutation_result(
                 result, history=[*prior_history, *new_history[:position]],
                 admission=admissions.get(item["call_id"]),
+                archive_kind=archive_kind,
             )
             new_history[position] = {**item, "output": canonical_json(projected)}
     history = [*(previous_input[3:] if previous_input is not None else []), *new_history]
@@ -1687,11 +1747,11 @@ def _build_model_input(
         native_action_ids=[item["call_id"] for item in history
                            if item.get("type") == "function_call"],
     )
-    state = reference_native_sources(state, history)
-    state = compact_model_state(state, history)
+    state = reference_native_sources(state, history, archive_kind=archive_kind)
+    state = compact_model_state(state, history, archive_kind=archive_kind)
     return assemble_model_input(
         system_prompt=DEV_SYSTEM_PROMPT, state=state, history=new_history,
-        previous_input=previous_input,
+        previous_input=previous_input, context_policy=context_policy,
     )
 
 
@@ -2418,6 +2478,7 @@ def _run_envelope(
         model_hash=model_hash,
         sandbox_identity_hash=_sandbox_identity_hash(request, package),
         repair_recheck=request.repair_recheck,
+        context_policy=request.context_policy,
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
         probe_profile_hash=probe_profile_hash() if request.enable_probes else None,
         model=request.model,
@@ -2973,6 +3034,7 @@ def _run_one(
                     "task_hash": package.task_content_hash,
                     "model_hash": model_hash,
                     "repair_recheck": request.repair_recheck,
+                    "context_policy": request.context_policy,
                 },
             )
 
@@ -3306,7 +3368,9 @@ def _run_one_active(
                         if event["event_type"] == "turn_started"
                         and event["payload"].get("turn_id") == pending_turn_id
                     )
-                    _load_active_model_input(pending_started, artifact_store)
+                    _load_active_model_input(
+                        pending_started, artifact_store, context_policy=request.context_policy,
+                    )
                 if (pending_error != "input_token_count_mismatch"
                         and request.provider == "openai"
                         and "reasoning" in pending_output_item_types):
@@ -3526,12 +3590,15 @@ def _run_one_active(
                 artifact_store=artifact_store,
                 context=context,
                 latest_tool_results=latest_tool_results,
+                context_policy=request.context_policy,
             )
             model_input_text = canonical_json(model_input)
             model_input_artifact = artifact_store.put_text(
                 model_input_text,
                 "application/json",
             )
+            window_binding = (_window_binding(journal, artifact_store, model_input)
+                              if request.context_policy == WINDOW_POLICY else None)
         except _ProviderContinuationError as exc:
             terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
             terminal_message = str(exc)
@@ -3557,7 +3624,10 @@ def _run_one_active(
                 "source_projection_hash": sha256_json(projection.delivered_spans),
                 "model_input_artifact": model_input_artifact.model_dump(mode="json"),
                 "model_input_hash": model_input_artifact.content_hash,
-                "native_history": history_metadata(model_input),
+                "native_history": history_metadata(
+                    model_input, context_policy=request.context_policy,
+                ),
+                **({"context_window": window_binding} if window_binding is not None else {}),
                 "transcript_action_ids": [
                     item["call_id"]
                     for item in model_input

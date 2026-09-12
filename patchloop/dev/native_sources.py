@@ -14,6 +14,26 @@ from typing import Any
 from patchloop.util import canonical_json, sha256_bytes
 
 MAX_CONTENT_REFERENCES = 16
+PUBLIC_EVIDENCE_KIND = "harness_historical_public_evidence_v1"
+
+
+def public_exchanges(history: list[dict], *, archive_kind: str | None = None):
+    """Read visible public exchanges, never impersonate archived items on the wire."""
+    for item in history:
+        if item.get("type") in {"function_call", "function_call_output"}:
+            yield item
+        elif archive_kind and item.get("role") == "developer":
+            try:
+                record = json.loads(item["content"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if isinstance(record, dict) and record.get("kind") == archive_kind:
+                for exchange in record.get("referenced_public_exchanges", []):
+                    if not isinstance(exchange, dict) or exchange.get("type") not in {
+                        "function_call", "function_call_output",
+                    }:
+                        raise ValueError("non-public archive exchange")
+                    yield exchange
 
 
 def _lines(span: Any) -> list[str] | None:
@@ -36,11 +56,13 @@ def _lines(span: Any) -> list[str] | None:
 class _SourceIndex:
     """Resolve backward-only deliveries in memory, including exact rebinding aliases."""
 
-    def __init__(self, history: list[dict[str, Any]]) -> None:
+    def __init__(
+        self, history: list[dict[str, Any]], *, archive_kind: str | None = None,
+    ) -> None:
         self.observed: dict[tuple[str, str], dict[int, tuple[str, str, str]]] = defaultdict(dict)
         self.conflicts: set[tuple[str, str, int]] = set()
         self.deliveries: dict[tuple[str, str, str], tuple[str, int, list[str]]] = {}
-        for item in history:
+        for item in public_exchanges(history, archive_kind=archive_kind):
             self._add(item)
 
     def _resolve(self, span: Any) -> list[str] | None:
@@ -149,6 +171,7 @@ class _SourceIndex:
 def project_mutation_result(
     result: dict[str, Any], *, history: list[dict[str, Any]] | None = None,
     admission: dict[str, Any] | None = None,
+    archive_kind: str | None = None,
 ) -> dict[str, Any]:
     """Reference unchanged complete lines only at the admitted pre-image coordinates.
 
@@ -179,7 +202,7 @@ def project_mutation_result(
             or type(anchor) is not int or anchor < 1):
         return projected
     delta = new.count("\n") - old.count("\n")
-    index = _SourceIndex(history)
+    index = _SourceIndex(history, archive_kind=archive_kind)
     for span in output.get("revalidated_spans", []):
         lines = _lines(span)
         if (lines is None or span.get("path") != args.get("path")
@@ -219,9 +242,10 @@ def project_mutation_result(
 
 def reference_native_sources(
     state: dict[str, Any], history: list[dict[str, Any]],
+    *, archive_kind: str | None = None,
 ) -> dict[str, Any]:
     """Reference exact current lines, with original inline fallback on missing evidence."""
-    index = _SourceIndex(history)
+    index = _SourceIndex(history, archive_kind=archive_kind)
 
     projected = []
     for span in state.get("source_spans", []):
@@ -234,3 +258,62 @@ def reference_native_sources(
         else:
             projected.append(span)
     return {**state, "source_spans": projected} if "source_spans" in state else state
+
+
+def resolve_source_group(group: dict, index: _SourceIndex) -> tuple[dict, dict[int, str], int]:
+    """Expand only selected, previously observed ranges in memory; never read a file."""
+    def require(condition: bool, message: str) -> None:
+        if not condition:
+            raise ValueError(message)
+
+    require(isinstance(group, dict), "invalid source group")
+    path, raw_hash = group.get("path"), group.get("file_hash")
+    require(all(isinstance(x, str) and x for x in (path, raw_hash)), "invalid source identity")
+    inline = group.get("inline_spans", [])
+    refs = group.get("content_delivery", {})
+    require(isinstance(inline, list) and isinstance(refs, dict), "invalid source delivery")
+    observed: dict[int, str] = {}
+
+    def add(number: int, line: str) -> None:
+        require((path, raw_hash, number) not in index.conflicts, "conflicting source history")
+        require(number not in observed or observed[number] == line, "conflicting selected lines")
+        observed[number] = line
+
+    for span in inline:
+        require(isinstance(span, dict), "invalid inline span")
+        lines = _lines({**span, "path": path, "file_hash": raw_hash})
+        require(lines is not None, "invalid inline source")
+        for number, line in enumerate(lines, span["start_line"]):
+            add(number, line)
+    already_inline = set(observed)
+    removed = 0
+    for action_id, fields in refs.items():
+        require(isinstance(action_id, str) and bool(action_id)
+                and isinstance(fields, dict) and bool(fields), "invalid source reference")
+        for field, ranges in fields.items():
+            require(isinstance(field, str) and bool(field)
+                    and isinstance(ranges, list) and bool(ranges), "invalid source ranges")
+            delivery = index.deliveries.get((action_id, field, raw_hash))
+            require(delivery is not None and delivery[0] == path, "missing source delivery")
+            _, base, body = delivery
+            for bounds in ranges:
+                require(isinstance(bounds, list) and len(bounds) == 2
+                        and all(type(n) is int for n in bounds), "invalid inclusive range")
+                start, end = bounds
+                require(base <= start <= end < base + len(body), "range outside delivery")
+                removed += 1
+                for number in range(start, end + 1):
+                    add(number, body[number - base])
+    additions: list[dict] = []
+    for number in sorted(set(observed) - already_inline):
+        if additions and additions[-1]["end_line"] + 1 == number:
+            additions[-1]["end_line"] = number
+            additions[-1]["content"] += "\n" + observed[number]
+        else:
+            additions.append({"start_line": number, "end_line": number,
+                              "content": observed[number]})
+    projected = copy.deepcopy(group)
+    if refs:
+        projected["content_delivery"] = {}
+        projected["inline_spans"] = [*copy.deepcopy(inline), *additions]
+    return projected, observed, removed

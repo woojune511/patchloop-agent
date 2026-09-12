@@ -7,7 +7,7 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ```text
 patchloop/dev/runner.py   loop composition, gates, context, terminal handling
-patchloop/dev/conversation.py  append-only episode, complete current view and reconstruction
+patchloop/dev/conversation.py  default append / opt-in snapshot window, current view and recovery
 patchloop/dev/model_state.py   compact public model view, separate from audit accounting
 patchloop/dev/native_sources.py  exact current-source delivery references into native history
 patchloop/dev/tools.py    tool grammar, spans, mutations, checks, finish
@@ -422,6 +422,7 @@ clears it. `mutation_readiness.state=ready_to_attempt` uses basis
 The complete anchor of a proposed edit still requires separate admission validation;
 readiness does not prove that coverage or semantic sufficiency. From turn two onward, the
 actual model input retains the whole native episode, not only the previous batch.
+The following complete-prefix contract describes default `append-v1`.
 Its order is fixed system instructions, an immutable initial developer-role state JSON,
 one stable user task, then chronological encrypted reasoning/canonical calls/public outputs
 and appended complete developer-role current views. Every previously sent item remains unchanged.
@@ -438,6 +439,29 @@ Old native results and superseded state remain historical, not current PASS or s
 The 24,000-character bound still applies to retained current source, not total history.
 Existing whole-input counting, cap, output bounds and run limits constrain this episode;
 do not silently drop old exchanges, reset reasoning, or introduce paid compaction.
+
+Opt-in `native-window-v1` uses `single-user-managed-window-v1`, not that complete-prefix
+validator. Its immutable seed is the first three items; only recognized post-seed
+`harness_current_state` snapshots expire. Keep at most one current view after the seed.
+`public_history.SnapshotRules` shares the pure diagnostic evidence projector without
+importing diagnostics into runtime. A removed view's unique complete source lines,
+public exchange versions and harness observations are rescued as
+`harness_historical_public_evidence_v1`, at the replaced historical position. Native
+encrypted reasoning/calls/outputs remain exact and ordered; never fabricate native
+results from harness receipts. Known mutable controls, expired notes and consumed
+corrections are not revived. Unknown public observation fields are retained exactly.
+Sources use path/raw hash/inclusive line/LF body; no unseen gap or filesystem read.
+Resolve current references against visible native or quoted public exchange deliveries;
+plain archived source facts without an action ID retain inline fallback rather than
+inventing one. Validate groups chronologically, never using a future delivery.
+Gateway evidence admission and current PASS/notes stay independent of the archive.
+The 24,000-character current-source budget and latest complete batch are unchanged;
+there is no lossy archive cap or compaction call. Preserve default wire equivalence.
+Turn metadata binds policy, seed CAS/hash/window ID, parent input, consumed decision,
+current-state hash and exact public-evidence inventory. Seed CAS uses canonical JSON
+bytes, not pretty JSON with a different byte hash. Resume checks seed, parent native
+prefix and public-evidence inclusion before pending tools/count; broken saved inputs
+end at `PROVIDER_CONTINUATION_ERROR`. A started-only turn is not a consumed decision.
 
 Each new input loads the last decision's hash-verified input artifact, retains every item,
 and appends only that response/executed or rejected batch and its current view. Reasoning-only
@@ -552,7 +576,7 @@ action results are restored verbatim, not reclassified by the current parser. Ve
 deadlines, policy hashes, raw-tail failure-signature formula and all workflow gates
 remain unchanged; only captured/retained output and diagnostic semantics change.
 
-Terminal resume returns that same public result. Current semantics are tool-surface `v36`;
+Terminal resume returns that same public result. Current semantics are tool-surface `v37`;
 do not migrate old envelopes or journal bytes.
 
 ### Opt-in repair-recheck feedback
@@ -626,7 +650,7 @@ without durable usage is uncertain and must not be retried automatically.
 
 New runs also own one immutable `dev-run-envelope-v1`. `--resume-run-id` requires
 `repeat=1` and an exact match for provider, task, runtime, model, reasoning,
-credential path hash, cost cap, limits, repair_recheck option, and sandbox identity,
+credential path hash, cost cap, limits, repair_recheck/context_policy options, and sandbox identity,
 including the opt-in probe
 image/profile identities. Repeat `--enable-probes` only if it was enabled originally.
 Pre-envelope runs
@@ -753,17 +777,23 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: [native context-window implementation plan](plans/native-context-window.md)
-completed; design only, no runtime change or execution grant. Build the pure opt-in
-snapshot/public-evidence layer first. Whole run evidence stays immutable; only our
-post-seed mutable snapshots expire. Keep native order, quoted receipt/source facts,
-current authority and visible delivery resolution. Default append and v36 remain current.
-Only a later implementation adds healthy-boundary standalone compact, full-output seed,
-atomic receipt/activation and pre-dispatch recount. One optional compact spends one
-model call and shared cost/deadline; model-limit reservation is not an enforced invoice
-cap. No fitted length/turn cutoff, opaque reset, pending-call retry or old-run migration.
-Implementation will bind policy/trigger/reservation and v37 semantics in the new envelope;
-the current plan does not modify those contracts or grant any API/Docker execution.
+Current seam: first native-window layer in the
+[implementation plan](plans/native-context-window.md) is implemented under v37.
+Default append wire remains unchanged; policy is opt-in and envelope/model-bound.
+65 saved native inputs replay with exact source facts, public observations, latest
+state and native sequence. Last normal A1/B1/B2 input-array JSON bytes fall
+33.67% / 36.77% / 31.69% after evidence rescue, not token or model-performance gains.
+The giant B2 encrypted item remains exact. Replay takes 14.258s, with 4,571 prior
+protected files unchanged; receipt is `C:\pt\validation\native-window-20260913`.
+138 focused tests PASS/61.77s; all 89 full-suite files yield 1,699 PASS/four real-Docker
+skips, longest worker 382.43s. Ruff passes. Opt-in CLI mock `run_dev_91de969f3e434039`
+reaches isolated acceptance PASS/safety NOT_RUN, four turns/five tools/one edit in
+4.73s; its saved window inputs revalidate. No real API/count/compact or Docker.
+Only later work adds the durable compact adapter, healthy-boundary activation,
+full-output seed, shared cost/deadline and recount. Model-limit reservation is not an
+enforced invoice cap. No fitted cutoff, opaque reset, pending-call retry or old-run
+migration. Trigger/reservation fields and paid/default adoption are not implemented
+or authorized by the snapshot option.
 
 Prior audit: native-input audit completed; no runtime change or execution grant.
 `C:\pt\analyses\native-input-audit-20260913` reconstructs all A1/B1/B2 65 input/count
@@ -3517,6 +3547,25 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+Latest v37 receipt: `C:\pt\validation\native-window-20260913`. Focused 138 cases
+PASS/61.77s (`native-window-focused-green-20260913.xml`); Ruff and three docs checks
+pass. Four sorted-stride groups select all 89 test files exactly once: 491/360/451/397
+PASS, four real-Docker opt-in skips, in 382.43/216.70/324.59/276.08s. Full validation
+does not meet two minutes; focused validation does. Preserve the initial red reports:
+seed CAS pretty-vs-canonical serialization caused eight managed recovery failures;
+one test omitted the pricing argument and three CLI tests mocked a lazy import at
+the wrong module. The canonical seed writer and test doubles were fixed; no gate
+was relaxed. The final runtime stays
+`sha256:0fa12e23139f893cff734664c7b56760d853916cc251475a1521e16b9ca2e5a1`;
+v37 surface is `sha256:cb6763e5b863adbd7517dc3da2e44ada6b918feea38de3676578d359092a760c`.
+65 old inputs preserve source/native/current-state/public-observation inventories;
+the second replay and all 4,571 selected historical/user/task/external file hashes
+match after testing. Mock `run_dev_91de969f3e434039` under
+`C:\pt\validation\native-window-smoke-20260913` uses the new CLI option and reaches
+isolated acceptance PASS/safety NOT_RUN, four mock turns/five tools/one edit, zero
+provider/count/cost. No compaction, real Docker, live-model quality or hidden pyfakefs
+claim follows. Keep reports and this smoke; recycle only the owned pytest roots.
 
 Latest v36 receipt: `C:\pt\validation\repair-recheck-20260912.md`. Eighteen focused
 repair-recheck cases pass in 62.96s; 68 compatibility/docs cases pass in 86.25s;

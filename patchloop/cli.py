@@ -76,6 +76,10 @@ def dev(
             "--repair-recheck", help="After a repair, rerun its prior failed public check."
         )
     ] = False,
+    context_policy: Annotated[
+        Literal["append-v1", "native-window-v1"],
+        typer.Option("--context-policy", help="Opt-in current snapshot window; no compaction API."),
+    ] = "append-v1",
     resume_run_id: Annotated[
         str | None,
         typer.Option("--resume-run-id"),
@@ -98,6 +102,7 @@ def dev(
                 repeat=repeat,
                 enable_probes=enable_probes,
                 repair_recheck=repair_recheck,
+                context_policy=context_policy,
                 resume_run_id=resume_run_id,
             )
         )

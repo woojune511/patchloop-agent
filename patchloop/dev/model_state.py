@@ -10,6 +10,7 @@ import copy
 import json
 from typing import Any
 
+from patchloop.dev.native_sources import public_exchanges
 from patchloop.dev.path_policy import mutation_path_allowed
 
 
@@ -113,6 +114,7 @@ def _source_catalog(view: dict[str, Any]) -> None:
 
 def compact_model_state(
     state: dict[str, Any], history: list[dict[str, Any]],
+    *, archive_kind: str | None = None,
 ) -> dict[str, Any]:
     """Project an already public, source-validated state without changing authority."""
     view = copy.deepcopy(state)
@@ -152,7 +154,7 @@ def compact_model_state(
             item.pop("updated_turn_id", None)
 
     results: dict[str, dict[str, Any]] = {}
-    for item in history:
+    for item in public_exchanges(history, archive_kind=archive_kind):
         if item.get("type") != "function_call_output":
             continue
         result = json.loads(item["output"])

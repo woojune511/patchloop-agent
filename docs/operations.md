@@ -53,6 +53,20 @@ parallel public inspection, one admitted mutation, a visible check, automatic
 full-diff projection, finish, and a separate private evaluation. Its result is
 still unofficial.
 
+## Optional native snapshot window
+
+`--context-policy native-window-v1` enables the experimental snapshot lifetime in a
+new run. The default remains `append-v1`. Old harness state descriptions expire, but
+their unique public evidence and all native encrypted reasoning/tool exchanges stay
+available. This flag does **not** enable a compaction API, reasoning reset, a different
+model or new tool restrictions. Model effectiveness has not been measured.
+
+Repeat the same policy on resume: it is part of the exact model/envelope contract.
+An old runtime-mismatched run cannot be migrated or restarted by adding this option.
+Saved seed, input and evidence corruption stops before another provider/tool action.
+Ordinary live task/model/credential/repeat/cost approval gates still apply. Use the
+mock command above with this flag and a fresh validation state root for a free smoke.
+
 ## Input-count failure diagnostics
 
 `COUNT_TIMEOUT_OR_UNKNOWN` still stops all repetitions, including HTTP rejection;

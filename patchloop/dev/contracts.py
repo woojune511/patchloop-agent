@@ -24,7 +24,8 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v36",
+            "schema_version": "dev-tool-surface-v37",
+            "native_context_policy": "opt-in-exact-public-snapshot-window-v1-no-compaction",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
             "sandbox_exception_cleanup": "typed-uncertainty-preserved-through-gateway-v1",
             "registered_check_capture": "bounded-prefix-drain-verdict-preserving-v1",
@@ -313,6 +314,7 @@ class DevRunRequest(StrictModel):
     state_root: Path | None = None
     enable_probes: bool = False
     repair_recheck: bool = False
+    context_policy: Literal["append-v1", "native-window-v1"] = "append-v1"
     limits: DevLimits = Field(default_factory=DevLimits)
 
     @model_validator(mode="after")
@@ -353,6 +355,7 @@ class DevRunEnvelope(StrictModel):
     model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     repair_recheck: bool = False
+    context_policy: Literal["append-v1", "native-window-v1"] = "append-v1"
     probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     model: str
