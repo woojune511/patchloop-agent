@@ -753,7 +753,41 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the approved comparison stopped on B2 COUNT_TIMEOUT_OR_UNKNOWN.
+Current seam: operator-only input-count diagnostics and metadata-only failure recovery.
+`agent/count_diagnostics.py` measures the actual count-payload fields in canonical
+UTF-8; its hash/size is not claimed to be the wire representation. On SDK errors,
+already-buffered HTTP request body size/hash is recorded separately, without reading
+streams. Retain only status, finite allowlisted error code/type, structural parameter
+paths and validated request IDs; redact other field values. Never stringify/store
+exception messages, response bodies, authorization headers, prompts or ciphertext.
+
+`input_count_started` binds request metadata to count ID/turn ID/request hash.
+`input_count_failed` fsyncs the bounded outcome before terminal; duplicate identical
+failure receipts replay, conflicts reject. COUNT_TIMEOUT_OR_UNKNOWN terminal and
+operator public result expose `input_count_failure`, not agent context. An admitted
+count with no durable outcome is interrupted/unknown, not a proven HTTP error.
+Exact-envelope resume handles either case before credential/workspace/client setup,
+with no recount or next provider request. Durable provider/billing uncertainty still
+has priority; terminal resume returns the recorded result unchanged. Do not migrate
+old envelopes or old terminal evidence. No model/tool/schema/action-mask changes:
+v36 stays unchanged while runtime content identity changes.
+
+Local SDK MockTransport plus fault injection verifies the privacy and stop boundaries;
+42 focused tests PASS in 37.78s, Ruff PASS. All 80 test files, partitioned exactly once,
+pass 1,448 cases with four real-Docker skips in 325.65/320.84/316.56/317.31s. One existing
+JUnit record-property warning remains; do not claim a two-minute full cycle. Mock
+`run_dev_0bd40e245b0742ee` at `C:\pt\validation\countdiag-smoke-0912a` completes
+edit/check/finish/isolated evaluation in 3.889s, four model turns/five tools, zero count
+calls/cost, acceptance PASS, safety NOT_RUN, official=false. Read-only frozen B2 count bodies
+reproduce the original request hashes and measure 448,226 / 2,164,348 canonical UTF-8
+bytes. This is not actual wire capture, token counting, a server size limit, or a
+recovered rejection reason. Receipts: `C:\pt\validation\countdiag-20260912` and
+`C:\pt\validation\countdiag-focus-0912a.xml`. 3,704 previously protected files (the two
+edited runtime files excluded) and all 30 sealed comparison files verify unchanged.
+No live paid/count call, Docker operation or pyfakefs execution. Comparison grant remains
+closed; choose an exact separately authorized next experiment, not retry or reset.
+
+Prior comparison: the approved comparison stopped on B2 COUNT_TIMEOUT_OR_UNKNOWN.
 Evidence: `C:\pt\analyses\repair-recheck-comparison-live-20260912b`
 (`result.md`, `analysis.json`, `failure-analysis.json`, observer). A1 OFF
 `run_dev_2d9ac37041ae4c28`: public PASS/private aggregate FAIL, $0.334105050.
@@ -770,7 +804,7 @@ budget remaining. Turn20 used 25k reasoning tokens without a call; turn21 preser
 the 1,701,176-character encrypted item and all native pairs, but count failed with
 BadRequestError. No paid model request21. Exact server error body/code/parameter
 was not retained: do not assert timeout, a specific size limit or a proven cause.
-Next candidate is safe typed count-error evidence and offline shape/size validation,
+This motivated safe typed count-error evidence and offline shape/size validation,
 not ciphertext truncation/reset or extra live sampling. New paid work needs authority.
 
 The immutable four-run native comparison design remains at

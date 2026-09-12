@@ -230,6 +230,16 @@ class DevJournal:
                     if recorded[-1]["payload"] != normalized_payload:
                         raise ActionConflict(f"provider call {call_id} has conflicting usage")
                     return recorded[-1]
+            if event_type == "input_count_failed":
+                count_id = normalized_payload.get("count_id")
+                if not isinstance(count_id, str) or not count_id:
+                    raise RecoveryError("input count failure requires a count ID")
+                recorded = [event for event in events if event["event_type"] == event_type
+                            and event["payload"].get("count_id") == count_id]
+                if recorded:
+                    if recorded[-1]["payload"] != normalized_payload:
+                        raise ActionConflict(f"input count {count_id} has conflicting failure")
+                    return recorded[-1]
             prior_hash = events[-1]["event_hash"] if events else None
             body = {
                 "schema_version": DEV_RUN_SCHEMA,
@@ -319,6 +329,38 @@ class DevJournal:
         if len(call_ids) != len(set(call_ids)):
             raise RecoveryError("development journal contains duplicate provider usage")
         return rows
+
+    def unresolved_input_count(self) -> dict[str, Any] | None:
+        """Recover a failed/interrupted count without another network request."""
+        pending = None
+        failure = None
+        for event in self.events():
+            kind, payload = event["event_type"], event["payload"]
+            if kind == "input_count_started":
+                if pending is not None:
+                    raise RecoveryError("input counting continued after an unresolved attempt")
+                pending = payload
+            elif kind in {"input_count_finished", "input_count_failed"}:
+                if pending is None or any(
+                    payload.get(key) != pending.get(key) for key in ("count_id", "turn_id")
+                ):
+                    raise RecoveryError("input count outcome does not match its admission")
+                if failure is not None:
+                    raise RecoveryError("input count has conflicting outcomes")
+                if kind == "input_count_failed":
+                    if payload.get("request_hash") != pending.get("request_hash"):
+                        raise RecoveryError("input count failure request hash mismatch")
+                    failure = payload["error"]
+                else:
+                    pending = None
+        if pending is None:
+            return None
+        return {
+            "count_id": pending["count_id"], "turn_id": pending["turn_id"],
+            "request_hash": pending["request_hash"],
+            "request_metadata": pending.get("request_metadata"),
+            "error": failure or {"category": "interrupted", "exception_type": None},
+        }
 
     def latest_active_elapsed_ms(self) -> int:
         values = [

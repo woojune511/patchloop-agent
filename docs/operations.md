@@ -53,6 +53,23 @@ parallel public inspection, one admitted mutation, a visible check, automatic
 full-diff projection, finish, and a separate private evaluation. Its result is
 still unofficial.
 
+## Input-count failure diagnostics
+
+`COUNT_TIMEOUT_OR_UNKNOWN` still stops all repetitions, including HTTP rejection;
+the terminal name does not establish that a timeout occurred. Its optional
+`input_count_failure` contains count/turn/request identity, canonical count-body
+byte size/hash, input/reasoning item counts and encrypted-field lengths. A durable
+`input_count_failed` event additionally records allowlisted HTTP error fields and
+buffered wire-body size/hash when available. Canonical size is not wire size.
+
+Messages, raw bodies, headers, credentials and plaintext reasoning are never logged.
+Unrecognized code/type/parameter/request-ID values are omitted and marked redacted.
+These are operator diagnostics, not model feedback or permission to retry. Exact
+resume after a failed or interrupted count only finishes its terminal metadata;
+it sends no new count/provider request and does not load credentials or a workspace.
+Provider/billing uncertainty retains priority. Already terminal results remain
+idempotent. Old runtime-mismatched envelopes are not migrated.
+
 ## Opt-in repair feedback experiment
 
 `patchloop dev --repair-recheck` reruns the latest still-failing registered public

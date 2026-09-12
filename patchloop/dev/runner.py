@@ -13,6 +13,10 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from patchloop.agent.count_diagnostics import (
+    input_count_error_metadata,
+    input_count_request_metadata,
+)
 from patchloop.agent.model import (
     EncryptedReasoningContinuationItem as ProviderReasoningItem,
 )
@@ -2338,6 +2342,10 @@ def _terminal(
         }
         if completion_horizon is not None:
             payload["completion_horizon"] = completion_horizon
+        if terminal == DevTerminal.COUNT_TIMEOUT_OR_UNKNOWN:
+            failure = journal.unresolved_input_count()
+            if failure is not None:
+                payload["input_count_failure"] = failure
         existing = journal.append("terminal", payload)
     return existing["payload"]
 
@@ -2357,6 +2365,8 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
     }
     if "completion_horizon" in terminal_payload:
         result["completion_horizon"] = terminal_payload["completion_horizon"]
+    if "input_count_failure" in terminal_payload:
+        result["input_count_failure"] = terminal_payload["input_count_failure"]
     return result
 
 
@@ -2992,6 +3002,18 @@ def _run_one(
                 cost_start_nanos=envelope.cost_start_nanos,
                 hashes=hashes,
                 message="durable provider usage exceeded the invocation cap",
+            )
+            return _OneRunResult(_public_result(run_id, terminal), True)
+
+        count_failure = journal.unresolved_input_count()
+        if count_failure is not None:
+            error_type = count_failure["error"].get("exception_type")
+            terminal = _terminal(
+                journal=journal, terminal=DevTerminal.COUNT_TIMEOUT_OR_UNKNOWN,
+                counters=counters, cost_ledger=cost_ledger,
+                cost_start_nanos=envelope.cost_start_nanos, hashes=hashes,
+                message=(f"input count failed: {error_type}" if error_type
+                         else "an earlier input count has no durable outcome record"),
             )
             return _OneRunResult(_public_result(run_id, terminal), True)
 
@@ -3635,12 +3657,14 @@ def _run_one_active(
                 terminal_message = "row wall-time limit reached before input counting"
                 break
             count_id = f"count_{uuid.uuid4().hex}"
+            count_request_hash = sha256_json(request_payload)
             journal.append(
                 "input_count_started",
                 {
                     "count_id": count_id,
                     "turn_id": turn_id,
-                    "request_hash": sha256_json(request_payload),
+                    "request_hash": count_request_hash,
+                    "request_metadata": input_count_request_metadata(request_payload),
                     "active_elapsed_ms": active_elapsed_ms(),
                 },
             )
@@ -3650,9 +3674,15 @@ def _run_one_active(
                     request_payload,
                     timeout_seconds=count_timeout,
                 )
-            except Exception as exc:  # provider timeout/transport state is intentionally opaque
+            except Exception as exc:
+                error_metadata = input_count_error_metadata(exc)
+                journal.append("input_count_failed", {
+                    "count_id": count_id, "turn_id": turn_id,
+                    "request_hash": count_request_hash, "error": error_metadata,
+                    "active_elapsed_ms": active_elapsed_ms(),
+                })
                 terminal_code = DevTerminal.COUNT_TIMEOUT_OR_UNKNOWN
-                terminal_message = f"input count failed: {type(exc).__name__}"
+                terminal_message = f"input count failed: {error_metadata['exception_type']}"
                 stop_remaining = True
                 break
             journal.append(

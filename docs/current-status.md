@@ -38,7 +38,42 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: comparison stopped at B2 input counting; no automatic continuation
+## Current seam: bounded input-count failure evidence; no paid retry
+
+Input counting now records operator-only request shape/size and a durable
+`input_count_failed` receipt before its existing COUNT_TIMEOUT_OR_UNKNOWN terminal.
+The receipt retains HTTP status, allowlisted error code/type/structural parameter and
+request ID, plus the buffered HTTP body size/hash when available. It never retains
+error messages, raw bodies, headers, credentials or reasoning plaintext. Unknown
+field values are omitted, not shortened into logs. Native model context is unchanged.
+
+A failed or interrupted count cannot restart on resume: exact-envelope recovery
+returns the same bounded failure evidence without loading credentials, a workspace,
+Docker or a provider client. Earlier provider/billing uncertainty keeps priority.
+Terminal resume is byte-idempotent. Surface v36 and native inputs/tools/limits remain
+unchanged; runtime content changes, so old nonterminal envelopes are not migrated.
+
+The frozen B2 turn20/21 requests reproduce their original request hashes without any
+API call. Canonical count-body UTF-8 size grows from 448,226 to 2,164,348 bytes;
+the largest encrypted item grows from 30,692 to 1,701,176 characters. These are
+offline canonical measurements, not captured wire bytes or proof of an API limit.
+The original server rejection remains unresolved. Evidence is at
+`C:\pt\validation\countdiag-20260912\offline.json`; 3,704 protected files, excluding
+the two intentionally edited existing runtime files, and 30 sealed comparison files
+are unchanged. No old run, task, credential or historical evidence was modified.
+
+Focused SDK-mock/privacy/count-failure/resume tests: 42 PASS in 37.78s; Ruff PASS.
+The full 80-file provider-free suite passes 1,448 tests; four real-Docker cases skip.
+Four external groups took 325.65/320.84/316.56/317.31s, exceeding the two-minute full
+cycle target; one existing JUnit record-property compatibility warning remains.
+Mock `run_dev_0bd40e245b0742ee` reaches edit/check/finish/isolated EVALUATOR_PASS in
+3.889s: four model turns, five tools, zero count calls/cost, task acceptance PASS,
+safety NOT_RUN. Reports and smoke/offline evidence are under `C:\pt\validation`.
+No live provider/count request, Docker operation or pyfakefs task execution occurred.
+The prior comparison grant remains closed; this change does not authorize a new row,
+ciphertext reset or automatic retry. All results remain official=false.
+
+## Prior comparison: stopped at B2 input counting; no automatic continuation
 
 After the user enabled Docker, the approved OFF/ON/ON/OFF packet `af29b90f...` ran
 under unchanged runtime `28f08d7c...`/v36, v2 task, mini snapshot/medium/.env/probes.
@@ -72,8 +107,8 @@ boundary is a hypothesis, not an established API limit or exact rejection cause.
 The uncertainty rule closed the comparison, leaving A2 NOT_RUN with no retry/resume
 or replacement. Mini task acceptance success recurred, but different initial patches
 and an incomplete comparison prevent a causal recheck/success-rate claim. Default
-stays OFF. Next candidate: safely bounded count-error metadata and offline request
-shape/size inspection, not another paid row or speculative reasoning reset.
+stays OFF. This motivated the bounded count-error implementation and offline request
+shape/size inspection above, not another paid row or speculative reasoning reset.
 64 provider and 65 count request hashes, continuations, 204 referenced artifacts
 (sum across runs), submitted diff identity and owned-container absence verify.
 All 3,706 protected files and prior stop bytes are unchanged; runtime/task unchanged.
