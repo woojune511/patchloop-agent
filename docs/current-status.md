@@ -38,29 +38,42 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: latest-state diagnostic packet prepared; awaiting exact approval
+## Current seam: latest-state diagnostic reached public submission; grant consumed
 
-Fresh packet `429d4173...` / execution plan `0d45099f...` is frozen under
-`C:\pt\analyses\compaction-snapshot-design-20260913`. This proposes one new isolated
-short diagnostic branch from the same healthy pre-turn20/collected-seed checkpoint,
-not a new native live row or native resume. Only the intentional input-policy change
-is `latest-state-v1`; mini-2026-03-17/medium/25k, v36 tools, working notes, probes,
-repair-recheck, inherited budgets and the full compacted seed/native history remain.
+The exact `0d45099f...` approval (packet `429d4173...`) was consumed once on
+2026-09-13 KST. Collector `run_dev_compactcollectloop_ef29a44a32a64717`, child
+`run_dev_compactepisode_999605443f744e56`, ended `PUBLIC_CHECKS_SUBMITTED` in
+101.420s: eight new generations/counts, eleven tools including seed/rechecks, two
+accepted repairs. Generation cost $0.53881155 under $1.20; separately unconfirmed
+count billing is not a guaranteed invoice cap. This is the isolated healthy pre-turn20
+diagnostic with latest-state-v1, mini/medium/25k, inherited probes/repair-recheck,
+not a native live row/resume, new compaction or default-loop adoption.
 
-Repeat 1, at most 8 new generations/counts, shared generation cap $1.20. Count billing
-remains separately unconfirmed, not included in a guaranteed invoice cap. Official
-rates/model limits were rechecked on 2026-09-12 UTC; any changed date/implementation/
-path/condition requires fresh inspection. Intended output
-`C:\pt\analyses\compaction-snapshot-collection-20260913` does not yet exist.
+Probes exposed bytes components versus str traversal constants. The first repair
+incorrectly expected make_string_path on a string literal to match the path type;
+automatic recheck returned the same failure. A helper read then matching_string(path,
+token) repair passed the contract recheck; upstream regression passed (517/570
+skipped) and finish succeeded. Both PASS checks/submission bind `a54bfbd1...`, one
+file/+33/-0/no untracked. Six public container cleanups confirmed; client CLOSED.
 
-Two identical no-call inspections plus packet preparation/verification take 0.553282s;
-tracked HEAD-clean source preflight 0.139227s; 4,204 protected files match. API/count/
-credential/tool/Docker/hidden-evaluator calls 0. Receipts:
-`C:\pt\validation\compactstate-packet-20260913`. No new paid approval is inferred.
-Next: obtain exact approval including count-billing uncertainty, then check already
-running Docker/exact images at execution; no start/pull/build/retry/extra sample.
-Measure input growth, evidence/continuation integrity and public repair/finish separately;
-historical comparison is not a fresh control or proof of causal/quality improvement.
+Actual input tokens: 107,319 -> 111,303 -> 115,395 -> 120,527 -> 123,219 -> 129,082
+-> 135,028 -> 138,566. Final complete request 566,920 UTF-8 bytes versus 1,381,335
+in a read-only same-action append reconstruction (-59.0% bytes, not counted tokens).
+All seed/native encrypted history, current state and cumulative public evidence
+remain exact: 1,279 source facts, 28 exchange versions, 33 observation versions.
+Nineteen historical observation versions rescued; all new memory_update values null.
+Two result inspections agree (0.167361s); two projection replays/inventory checks
+0.492546s. All 4,218 protected files and 234 completed collection files match.
+
+The historical append episode also submitted, using five responses/one repair and
+$0.50483145. Actions/cache hits differ: smaller input growth is demonstrated here,
+not faster solving, lower total cost or better model quality. Default runtime/v36
+unchanged; no automatic retry, extra sample, Docker start/pull/build or hidden
+evaluation. Acceptance/safety NOT_RUN, official=false. Evidence:
+`C:\pt\analyses\compaction-snapshot-live-20260913`; collection:
+`C:\pt\analyses\compaction-snapshot-collection-20260913`.
+Next: interpret this bounded result before any adoption or separately approved paid
+comparison; do not infer a new memory/planning requirement or reuse the grant.
 
 ## Implemented: opt-in diagnostic snapshot lifecycle; default unchanged
 
@@ -93,10 +106,10 @@ The broad regression run slightly exceeded two minutes. These are 110 test execu
 (107 distinct tests), including mock/local repair -> recheck -> public finish and
 crash/no-retry coverage, not a new native full-suite or isolated hidden-evaluator run.
 
-The fresh unapproved execution packet is described above.
+The execution packet was subsequently approved and consumed as described above.
 Old packets/journals remain immutable; changed diagnostic hashes prevent reusing old
-execution contracts, while completed results remain read-only inspectable. No provider,
-input-count, Docker or hidden-evaluator call occurred. Acceptance/safety NOT_RUN,
+execution contracts, while completed results remain read-only inspectable. Implementation
+validation itself made no provider, input-count, Docker or hidden-evaluator calls. Acceptance/safety NOT_RUN,
 official=false; this is not a default-loop adoption or new model-quality result.
 
 ## Prior audit: repeated-state growth isolated

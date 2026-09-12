@@ -319,6 +319,21 @@ reconstruction. Native/default append behavior stays unchanged. These are byte/e
 checks, not provider acceptance or token/quality measurements. Another live diagnostic
 requires a fresh exact packet and approval; read-only old result inspection is still valid.
 
+The separately approved latest-state packet `429d4173...` / plan `0d45099f...` was
+then consumed once on 2026-09-13 KST. Collection
+`C:\pt\analyses\compaction-snapshot-collection-20260913` reached public submission:
+eight new counts/generations, eleven tools, two repairs, 101.420s, $0.53881155 in
+generation cost under $1.20. Count billing/invoice remain unknown. Both public checks
+and patch bind a54bfbd1...; cleanup confirmed. No hidden evaluator, native row/resume,
+Docker start/pull/build, recompaction or retry. Approval/audit:
+`C:\pt\analyses\compaction-snapshot-live-20260913`. This grant is consumed.
+Actual input grew 107,319 -> 138,566 tokens; final wire bytes are 59.0% below a
+read-only same-action append reconstruction with matching source/native/evidence
+inventories. That reconstruction was not dispatched or token-counted. The historical
+append episode used fewer calls/repairs and slightly less generation cost; do not
+infer faster/cheaper solving, a fresh A/B result or default adoption. Acceptance and
+safety remain NOT_RUN, official=false. Only read-only inspection is authorized reuse.
+
 ## Opt-in repair feedback experiment
 
 `patchloop dev --repair-recheck` reruns the latest still-failing registered public

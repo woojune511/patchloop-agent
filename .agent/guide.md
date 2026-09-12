@@ -753,26 +753,39 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: exact latest-state packet prepared, not approved/executed.
-`C:\pt\analyses\compaction-snapshot-design-20260913` binds packet
-`429d4173349ac1306ef1bdcfc4889b75ae5ef4cfd03b4f933518416cb31d7a64`
-and execution plan `0d45099f800d447291a8cd627e1be22907339ae92afa82670f29c50c632a787a`.
-Read its inspection/proposal/price review before collecting. Same healthy pre-turn20
-checkpoint and previously collected seed, new isolated branch, repeat 1, mini/medium/
-25k, latest-state-v1, probes + original repair-recheck; at most 8 new counts/generations
-under one $1.20 generation cap. Count billing is separately unconfirmed: explicit
-acknowledgement is required, never a guaranteed total invoice cap. Price review UTC
-date 2026-09-12 binds inspection; date/code/path/condition drift needs a fresh contract.
-Intended output `C:\pt\analyses\compaction-snapshot-collection-20260913` is absent.
+Current seam: exact latest-state grant consumed; public submission, default unchanged.
+Packet `429d4173349ac1306ef1bdcfc4889b75ae5ef4cfd03b4f933518416cb31d7a64`, plan
+`0d45099f800d447291a8cd627e1be22907339ae92afa82670f29c50c632a787a` executed once
+on 2026-09-13 KST. Collector `run_dev_compactcollectloop_ef29a44a32a64717`, child
+`run_dev_compactepisode_999605443f744e56`: PUBLIC_CHECKS_SUBMITTED, not censored.
+Eight counts/generations, eleven tools including saved seed and automatic rechecks,
+two accepted repairs, 101.420s, generation $0.53881155 under $1.20. Separate count
+billing/invoice remain unknown. Existing images only; six owned public container
+cleanups confirmed, client CLOSED. No native row/resume/recompaction/retry/extra sample.
 
-Prepare/verify and two exact no-call inspections agree (0.553282s); source HEAD-clean
-preflight 0.139227s; 4,204 files unchanged. Evidence:
-`C:\pt\validation\compactstate-packet-20260913`. Runtime/v36/default unchanged;
-no credential/API/count/tool/Docker/hidden evaluation executed. Next wait for the
-specific proposal approval, then use existing collector/preflight, with no automatic
-start/pull/build, retry, recompaction, reasoning reset, resume or additional sample.
-Historical comparison is not a fresh control. Preserve separate input-growth,
-continuation/evidence integrity, public repair/finish and uncertainty/censoring outcomes.
+Two probes exposed bytes/str traversal mismatch. First repair used make_string_path
+on string literals (which preserves str), then the automatic check failed at the same
+site. Helper read -> matching_string(path, token) repair -> contract PASS -> requested
+upstream regression PASS (517 passed/570 skipped) -> finish. Both PASS records and
+submission share a54bfbd1..., one file/+33/-0/no untracked. Source checkpoint/final
+artifact stay isolated; never apply this task-specific candidate to the task package.
+
+Actual input counts 107319/111303/115395/120527/123219/129082/135028/138566.
+Last complete request 566920 bytes, same-trajectory append reconstruction 1381335
+(-58.959% bytes; the shadow was not dispatched/counted). Full seed, each native
+continuation/call/output and latest complete state preserved; cumulative inventories
+match at every turn (final 1279 source facts/28 exchange versions/33 observation
+versions). Nineteen historical observation versions rescued; new memory_update all null.
+Two readonly result inspections 0.167361s, two projection replays/inventory checks
+0.492546s; protected 4218 and completed collection 234 files unchanged.
+
+Collection: `C:\pt\analyses\compaction-snapshot-collection-20260913`; approval/audit:
+`C:\pt\analyses\compaction-snapshot-live-20260913`. Native runtime/v36/default,
+limits and task untouched; acceptance/safety NOT_RUN, official=false. Compare the
+historical five-call/one-repair/$0.50483145 success only descriptively: actions/cache
+hits differ and this is not a fresh control, cheaper run or quality/generalization
+proof. Next interpret the bounded evidence, not automatic adoption or another paid
+sample. Pending/terminal collection has no retry/resume grant; readonly result only.
 
 Implemented: opt-in diagnostic snapshot lifecycle; native runtime unchanged.
 `compaction_episode prepare --context-policy latest-state-v1` binds the mode and
@@ -805,8 +818,9 @@ not a token, API-admission, behavioral or compaction-causality measurement. Rece
 `C:\pt\validation\compactstate-20260913`; final 4,182 protected files match excluding
 two diagnostic modules and the later-edited collector regression test (the initial
 replay receipt verified 4,183 before that test edit). Native runtime unchanged. No API/count,
-credentials, Docker, hidden evaluator or new execution grant. The fresh unapproved
-packet is described above; do not change the default loop from structural tests.
+credentials, Docker, hidden evaluator or new execution grant in implementation validation.
+The packet's later approved result is above; do not change the default loop from
+structural tests or this one diagnostic trajectory.
 
 Validation: 17 focused PASS/21.589s; 89 related regression PASS/123.997s (slightly
 over the two-minute target); 4 final collector/docs PASS/6.424s, Ruff PASS. Total
