@@ -131,8 +131,8 @@ the source journal/envelope, artifacts, reconstruction and implementation identi
 without credentials or API calls. Existing count packets and run bytes stay immutable.
 
 The internal `compaction_state.reserve`, `record_response` and `recover` functions
-provide result storage/recovery, not authorization or a live collector. A future
-approved collector must establish cost/deadline admission before calling compact.
+provide result storage/recovery, not authorization or a live collector. The separate
+collector below establishes conditional cost/deadline admission before calling compact.
 The complete canonical compact output is retained; exact public state and referenced
 observations are appended afterward, without reading fresh source or replaying tools.
 Recovery never retries a missing outcome. The atomic receipt is the completion
@@ -146,9 +146,45 @@ provides usage but no `max_output_tokens` or reasoning-effort parameter. Do not 
 unsupported `store`, `tools` or reasoning fields to that endpoint. It is stateless;
 the following generation still uses store=false, medium reasoning, 25k output and
 the original ordered tools. Do not describe 25k as a compaction spending limit.
-Compaction/count billing admission remains unresolved; usage is not proof of a
-zero charge. No live grant remains. Byte/opaque-field measurements are not token
+Compact uses the separately acknowledged model-limit reservation below; count billing
+remains unresolved, and usage is not proof of a zero charge. No live grant remains.
+Byte/opaque-field measurements are not token
 counts, a known server limit, or proof that compaction fixes the observed rejection.
+
+### One-compaction collector
+
+`diagnostics.compaction_collector inspect` validates an exact proposed invocation
+without loading a credential or creating the output directory. Supply `--packet-root`,
+`--packet-hash`, `--env-file`, `--output`, `--repeat 1` and a positive `--max-cost-usd`.
+It returns an `execution_plan_hash` binding all of those settings, the collector and
+its reviewed cost contract. The frozen preparation packet's disabled-live flag is
+unchanged and is not an execution grant. The separately approved collector is a new
+invocation, not source-run resume.
+
+The [official price table](https://developers.openai.com/api/docs/pricing) states that
+Responses uses model token rates. For this mini snapshot the no-cache reservation is
+400,000 input x $0.75/M + 128,000 output x $4.50/M = $0.876. The input allowance uses
+the entire published [model context window](https://developers.openai.com/api/docs/models/gpt-5.4-mini),
+even above its 272k maximum input. These model limits are an explicitly acknowledged
+planning basis, not a compact-endpoint-specific output guarantee or enforced dollar cap.
+If that distinction is unacceptable, do not execute this collector. Do not send an
+unsupported 25k limit, assume the earlier native token count is exact for compact,
+or use a timer/project budget as proof that a charge cannot exceed the reservation.
+
+After separate exact approval, `collect` uses the same arguments plus
+`--execution-plan-hash` and `--accept-model-limit-reservation`. It makes at most one
+compact request, with zero SDK retries. It never calls the count endpoint or generates
+a follow-up response. Both the full reservation and remaining time are rechecked at
+dispatch; no output ceiling is reduced to fit a small cap. The wait is at most 300s
+within 305s total, reserving 5s for cleanup. Uncertain cleanup is not remote cancellation.
+
+Usage is durably saved before output processing. Cache hits affect model-rate accounting
+only after response; reasoning tokens are already included in output tokens. The
+recorded amount is not invoice verification. Missing usage, an unpriced cache-write
+counter or exceeded model/reservation bounds stops the collection. No later action is
+unlocked by a successful compaction. `recover --output <existing-collection>` reconciles
+only stored receipts, without credentials or a new request; a pending dispatch is not
+proof that HTTP was reached. Preserve the collection rather than rerunning its output.
 
 ## Opt-in repair feedback experiment
 

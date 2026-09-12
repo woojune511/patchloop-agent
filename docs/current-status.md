@@ -38,7 +38,41 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: diagnostic compaction handoff, provider-free only
+## Current seam: one-compaction collector prepared; no paid execution
+
+`diagnostics.compaction_collector` adds provider-free `inspect`, a separately
+approved one-request `collect`, and evidence-only `recover`. It consumes the unchanged
+B2 pre-turn20 packet; native runtime, schemas and existing run bytes are unchanged.
+No token count, generation, tool, Docker or hidden-evaluator call follows compaction.
+The input/output handoff below is reused without changing the frozen design.
+
+The official Responses pricing rule supports model-rate accounting: mini input
+$0.75/M, cached input $0.075/M and output $4.50/M. The collector conservatively
+reserves 400k input plus 128k output tokens ($0.876), with no expected cache saving.
+This applies published model limits as an explicit planning assumption, not a
+documented compact-endpoint output guarantee or server-enforced dollar cap. Exact
+execution-plan approval and `--accept-model-limit-reservation` are required; a strict
+endpoint-enforced cap remains unavailable. The proposed $1.20 plan is not a live grant.
+
+Admission checks the source, model/tier, credential path, repeat=1, destination,
+full reservation and exact plan hash before loading credentials. One durable dispatch
+intent, zero SDK retries and a 300s request/305s execution budget (5s cleanup reserve)
+bound execution. Usage is saved before output processing; malformed output or a crash
+cannot turn observed usage into free work. Price-table accounting and verified invoice
+charges remain distinct. Uncertain outcomes, exceeded assumptions or cleanup failures
+stop, with no retry or paid resume. Recovery only reconstructs recorded evidence.
+
+Verification: 163 focused collector/compaction/transport/count/source/docs tests PASS
+in 30.05s; Ruff PASS. Two identical real-input inspections took 0.094s, with zero
+credential loads or API calls. Execution proposal `03b157e1...` is stored under
+`C:\pt\analyses\compaction-execution-design-20260912`; it proposes $1.20 for one compact
+request and is explicitly unapproved. Native runtime and 3,821 protected files remain
+unchanged, including the old packet. Receipts: `C:\pt\validation\compactcollector-20260912`.
+No actual count/compact/generation/Docker/task execution; no new full native suite or
+task mock smoke. Model-limit applicability and actual compaction behavior remain
+unverified live; do not turn mock success into a hard billing or task-success claim.
+
+## Prior implementation: diagnostic compaction handoff, provider-free only
 
 `diagnostics.compaction_replay` now freezes the original healthy B2 pre-turn20
 input for the standalone compact endpoint. It does not feed back the oversized

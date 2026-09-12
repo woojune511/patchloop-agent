@@ -753,7 +753,50 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: standalone diagnostic compaction handoff; no live execution grant.
+Current seam: one-compaction collector with explicit model-limit reservation; no grant.
+`diagnostics/compaction_collector.py` consumes the unchanged `504756b2...` packet.
+Inspect binds packet, source task/model/tier, credential path hash, new destination,
+repeat=1, budget, cost contract and implementation hashes. Equal decimal cap notation
+is normalized. Collect requires that exact inspection hash plus acknowledgement of
+the conditional reservation, separate from user approval. No previous grant is reused.
+
+`diagnostics/compaction_cost.py` uses official Responses model rates: 0.75/0.075/4.50
+USD per million input/cached/output tokens. Reserve 400k input plus 128k output, $0.876,
+without cache expectations. This deliberately reserves the full context window above
+272k published max input. Applying model limits to compact is a planning assumption,
+not an endpoint-specific output guarantee or server-enforced dollar cap. Retain that
+qualification in plan, receipt and approval; never silently replace a strict hard cap.
+The old native count and 25k generation ceiling are not compact input/output limits.
+No count endpoint is called, so no free-counting assertion enters this contract.
+
+One fresh directory and a run-lifetime lock own each collection. Before dispatch,
+recompute the full reservation and bound request time by min(300s, remaining 305s minus
+5s cleanup). Zero retries; only compact is reachable. Persist usage before validating
+or storing the output window; a later output/receipt/publication failure must retain
+valid observed usage. Save full valid window/next-input artifacts using the existing
+handoff primitives. Numeric tariff accounting is not verified invoice billing.
+Reasoning tokens are a subset of output, not an extra charge. Nonzero unpriced cache
+writes, missing usage, violated reserved bounds, network uncertainty or cleanup failure
+stop. Never automatically call count/create/tools, reset state or start Docker.
+
+The parent collection journal and child handoff journal are distinct, preserving the
+existing handoff contract. Receipt and terminal recovery executes no provider call.
+A durable dispatch intent is not proof of HTTP execution after a crash: known call
+attempts and admitted intents have separate fields; unknown request count is null.
+Recover missing derived result.json from its terminal CAS artifact; reject changed
+source/code for unfinished recovery and verify completed child receipts. Do not claim
+remote cancellation or retry an interrupted collection under a new directory silently.
+
+Provider-free evidence: 163 focused cases PASS/30.05s, Ruff PASS. Two exact real-packet
+inspections agree in 0.094s. Proposed execution `03b157e1...` at
+`C:\pt\analyses\compaction-execution-design-20260912` uses a $1.20 budget for one compact
+request; the $0.876 reservation is conditional on published model limits, not an
+endpoint guarantee. User has not accepted this assumption or granted execution yet.
+`C:\pt\validation\compactcollector-20260912` preserves tests/inspection and 3,821
+unchanged-file hashes. No credential/client/API/Docker/task work, default runtime
+changes, full native suite or task mock rerun. Source packet bytes remain unchanged.
+
+Prior implementation: standalone diagnostic compaction handoff; no live execution grant.
 `diagnostics/compaction_replay.py` freezes B2's healthy pre-turn20 request, preserving
 its original encrypted history and exact model/tool settings. It reuses the unchanged
 count-replay reader and selected-source materializer. Do not feed back the original
