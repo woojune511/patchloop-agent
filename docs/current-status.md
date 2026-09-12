@@ -38,7 +38,31 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: native-input audit separates steady growth from the rejection
+## Current seam: opt-in native context-window design; implementation not started
+
+The [implementation plan](../.agent/plans/native-context-window.md) separates the
+immutable run record from the active model window. First implement provider-free
+latest-state projection with exact historical-public-evidence rescue; only then add
+optional standalone compaction at a healthy completed-batch boundary. Default append
+behavior stays unchanged. Returned compact output remains an immutable seed, and
+current source references must resolve to visible native or quoted public evidence.
+
+Compaction is not an automatic repair for the 1.7M-character encrypted field. Its
+output has no caller-set 25k ceiling; conditional cost reservation and count/invoice
+uncertainty remain explicit. A future opt-in allows at most one compaction, charges
+one of the 40 model calls, uses the shared ledger/deadline, and preserves the minimum
+completion path. Trigger T belongs to an exact later execution packet, not a fitted
+B2 failure threshold. Pending/unknown operations are never retried through compaction.
+
+This turn changed documentation only; runtime/v36, task and historical evidence are
+unchanged. No new API/count/compaction, credential, task/Docker or hidden execution.
+Next authorized implementation seam would be the pure window/snapshot layer, not a
+paid run or default adoption. The design includes default-equivalence, evidence,
+threshold/cost/deadline, and crash/resume tests to execute with implementation.
+Documentation checks: 3 PASS/0.061s; Ruff and diff checks pass. No runtime full-suite
+or mock smoke was run for this documentation-only design.
+
+## Prior audit: native-input growth and the rejection are separate
 
 Read-only reconstruction of all 65 inputs in A1/B1/B2 validates 65 original count
 admissions and 64 generation hashes. Native state accumulation is real: removing

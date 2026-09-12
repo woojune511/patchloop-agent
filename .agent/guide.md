@@ -753,7 +753,19 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: native-input audit completed; no runtime change or execution grant.
+Current seam: [native context-window implementation plan](plans/native-context-window.md)
+completed; design only, no runtime change or execution grant. Build the pure opt-in
+snapshot/public-evidence layer first. Whole run evidence stays immutable; only our
+post-seed mutable snapshots expire. Keep native order, quoted receipt/source facts,
+current authority and visible delivery resolution. Default append and v36 remain current.
+Only a later implementation adds healthy-boundary standalone compact, full-output seed,
+atomic receipt/activation and pre-dispatch recount. One optional compact spends one
+model call and shared cost/deadline; model-limit reservation is not an enforced invoice
+cap. No fitted length/turn cutoff, opaque reset, pending-call retry or old-run migration.
+Implementation will bind policy/trigger/reservation and v37 semantics in the new envelope;
+the current plan does not modify those contracts or grant any API/Docker execution.
+
+Prior audit: native-input audit completed; no runtime change or execution grant.
 `C:\pt\analyses\native-input-audit-20260913` reconstructs all A1/B1/B2 65 input/count
 hashes and 64 generation admissions. Native source references differ from diagnostic
 reentry expansion: superseded state removal upper bounds are A1 33.70%, B1 37.53%,
