@@ -753,7 +753,61 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: approved count-only diagnostic finished; no remaining execution grant.
+Current seam: standalone diagnostic compaction handoff; no live execution grant.
+`diagnostics/compaction_replay.py` freezes B2's healthy pre-turn20 request, preserving
+its original encrypted history and exact model/tool settings. It reuses the unchanged
+count-replay reader and selected-source materializer. Do not feed back the original
+oversized response, reset the reasoning state, add new observations, or modify default
+runtime schemas to make this diagnostic run. Packet identity binds source journal,
+envelope, cutoff, request/reentry artifacts and relevant implementation raw hashes.
+Preparation/verification has no credential, client, task-workspace or execution path.
+
+Use the standalone compact endpoint's entire returned window as canonical input,
+including retained messages/reasoning/calls/results, without pruning or reordering.
+Append the original coding instructions and a self-contained public reentry record:
+exact public_task, latest state/diff/budgets/tools, inline *selected* observed source
+ranges with raw-file hashes, and exact referenced public exchanges as quoted data.
+Keep gaps, historical-check currency and native call/output identities. Resolve
+backward references from public history only; missing promised deliveries fail.
+No native history migration, new user boundary, planning requirement or evidence gain.
+
+`diagnostics/compaction_state.py` provides reserve/record/recover primitives, not a
+live collector. New external roots are exclusively claimed. A reservation is not cost
+admission. Validate output before persisting; reject plaintext reasoning, unknown
+items, missing ciphertext, changed/invented actions and incomplete retained pairs.
+Do not salvage a window by stripping rejected items. SDK serialization warnings may
+contain response text, so do not emit them; explicit validation remains authoritative.
+Record numeric usage separately even when output fails; unknown price is null, not zero.
+
+CAS stores the output and prepared next count/generation bodies; the journal stores
+hashes, never ciphertext. The atomic receipt is the durable completion boundary.
+Recover a receipt written before its journal event without another compact request.
+An orphan CAS object or unfinished attempt is UNKNOWN, never retry permission. A
+missing committed receipt or corrupt artifact is an integrity error. Run-lifetime
+locking prevents concurrent record/recover. Completed recovery is byte-idempotent.
+No tool executor is present, so retained functions and newly prepared requests do not
+execute. Native resume and v36 remain unchanged. The diagnostic transport only adds
+compact to its existing zero-retry, bounded whole-body wait/cleanup mechanism.
+
+The official compact schema exposes usage but no reasoning-effort/max_output_tokens
+parameters; do not invent them or call a next-generation 25k limit a compaction cap.
+Standalone compaction is stateless; next generation stays store=false/medium/25k.
+Before a future live collector, settle cost admission and obtain exact packet approval.
+Compaction reduction and a valid next tool call remain untested live outcomes. Field
+character counts, serialized bytes and rendered tokens are distinct; no numeric server
+field limit is inferred. All results official=false, acceptance/safety NOT_RUN.
+
+Evidence: `C:\pt\analyses\compaction-design-20260912`, packet `504756b2...`;
+133 focused tests PASS in 23.69s and Ruff PASS. Two real-input no-call verifications
+agree (0.264s including preparation), restoring 319 selected source lines and six
+referenced action pairs. The 106,578-byte reentry is exact-state overhead, not actual
+compaction output or token count. `C:\pt\validation\compaction-20260912` retains
+reports and preservation hashes for 3,797 unchanged files. The old count packet still
+verifies; native runtime is unchanged. No credentials/API/Docker/task execution or
+full native/mock-task rerun. An initial new fixture omitted succeeded status and used
+the wrong span-field notation; it was corrected without weakening source validation.
+
+Prior diagnostic: approved count-only collection finished; its grant is consumed.
 `C:\pt\analyses\count-replay-live-20260912` retains preflight, preservation and analysis;
 collection `C:\pt\analyses\count-replay-collection-20260912`, diagnostic run
 `run_dev_countcollect_82df89236b5c4404`. Control turn20 counts 97,810, matching history.

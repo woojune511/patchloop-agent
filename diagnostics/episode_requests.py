@@ -40,7 +40,7 @@ WAITS = RequestWaits()
 PHASES = frozenset({
     "input_count_wait", "input_count_response_processing", "provider_response_wait",
     "provider_response_processing", "provider_usage_validation", "continuation_processing",
-    "pre_tool_admission", "client_cleanup",
+    "pre_tool_admission", "client_cleanup", "compaction_wait", "compaction_processing",
 })
 
 
@@ -104,6 +104,7 @@ class DiagnosticClient:
             raise
         self.responses = SimpleNamespace(
             create=lambda **kw: self._request("provider_response", **kw),
+            compact=lambda **kw: self._request("compaction", **kw),
             input_tokens=SimpleNamespace(count=lambda **kw: self._request("input_count", **kw)),
         )
 
@@ -118,8 +119,12 @@ class DiagnosticClient:
             try:
                 async with timer:
                     api = self.client.responses
-                    method = (api.with_raw_response.create if kind == "provider_response"
-                              else api.input_tokens.with_raw_response.count)
+                    if kind == "compaction":
+                        method = api.with_raw_response.compact
+                    elif kind == "provider_response":
+                        method = api.with_raw_response.create
+                    else:
+                        method = api.input_tokens.with_raw_response.count
                     return await method(**payload, timeout=timeout)
             except TimeoutError as exc:
                 if timer.expired():
@@ -128,7 +133,7 @@ class DiagnosticClient:
 
         raw = self.runner.run(fetch())
         self.response_received = True
-        self.phase = kind + "_processing" if kind == "provider_response" else (
+        self.phase = kind + "_processing" if kind in {"provider_response", "compaction"} else (
             "input_count_response_processing"
         )
         self.observe_response(self.phase)

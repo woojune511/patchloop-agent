@@ -122,6 +122,34 @@ that separate approval is `uv run python -m diagnostics.count_collector` with
 `--packet-root`, `--packet-hash`, `--env-file`, `--output` and the acknowledgement.
 This command has no automatic retry, replacement, repeat, resume or generation mode.
 
+## Diagnostic standalone compaction (not the native loop)
+
+`uv run python -m diagnostics.compaction_replay prepare --source-state-root
+C:\patchloop-state --output-root <new-external-root>` freezes only the healthy
+B2 pre-turn20 input. `verify --root <packet-root> --packet-hash <exact-hash>` checks
+the source journal/envelope, artifacts, reconstruction and implementation identity
+without credentials or API calls. Existing count packets and run bytes stay immutable.
+
+The internal `compaction_state.reserve`, `record_response` and `recover` functions
+provide result storage/recovery, not authorization or a live collector. A future
+approved collector must establish cost/deadline admission before calling compact.
+The complete canonical compact output is retained; exact public state and referenced
+observations are appended afterward, without reading fresh source or replaying tools.
+Recovery never retries a missing outcome. The atomic receipt is the completion
+boundary; an orphan output object alone is insufficient. Corrupted stored results
+stop before a new request. A ready handoff generates request artifacts only: it does
+not automatically count, generate, mutate, run Docker or evaluate the task.
+
+OpenAI's [compaction guide](https://developers.openai.com/api/docs/guides/compaction)
+requires preserving the complete returned window. The [standalone API schema](https://developers.openai.com/api/reference/python/resources/responses/methods/compact)
+provides usage but no `max_output_tokens` or reasoning-effort parameter. Do not send
+unsupported `store`, `tools` or reasoning fields to that endpoint. It is stateless;
+the following generation still uses store=false, medium reasoning, 25k output and
+the original ordered tools. Do not describe 25k as a compaction spending limit.
+Compaction/count billing admission remains unresolved; usage is not proof of a
+zero charge. No live grant remains. Byte/opaque-field measurements are not token
+counts, a known server limit, or proof that compaction fixes the observed rejection.
+
 ## Opt-in repair feedback experiment
 
 `patchloop dev --repair-recheck` reruns the latest still-failing registered public

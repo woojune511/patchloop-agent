@@ -38,7 +38,41 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: count-only replay observed an encrypted-field length rejection
+## Current seam: diagnostic compaction handoff, provider-free only
+
+`diagnostics.compaction_replay` now freezes the original healthy B2 pre-turn20
+input for the standalone compact endpoint. It does not feed back the oversized
+turn20 response, reset encrypted reasoning, or change the default agent/runtime.
+The complete returned compacted window is preserved as-is. A following exact public
+state message restores the task goal, current diff, selected source bodies, budgets
+and referenced public check/mutation evidence from existing observations only.
+
+`diagnostics.compaction_state` reserves one attempt and stores validated output in
+external CAS with a durable receipt and hash-chained journal. Recovery reconstructs
+identical count/generation requests without calling a provider; missing outcomes stop
+UNKNOWN, not retry. Plaintext reasoning, incomplete action pairs and corrupted
+artifacts are rejected. Usage survives an invalid output; charges remain unknown.
+The diagnostic transport supports compact with the existing bounded async wait and
+zero SDK retries. There is no live compaction collector or automatic next request.
+
+The official standalone compact schema has no output-token or reasoning-effort
+parameter. The unchanged medium/25k settings apply to the *next generation*, not to
+the compaction pass. Resolve its cost-admission contract and obtain exact separate
+approval before live collection; the earlier count grant is consumed. A smaller
+opaque item is an experimental outcome, not a guarantee or task-success claim.
+All results remain official=false, task acceptance/safety NOT_RUN.
+
+Validation: 133 focused compaction/transport/count/source/docs tests PASS in 23.69s;
+Ruff PASS. The real packet `C:\pt\analyses\compaction-design-20260912` (`504756b2...`)
+passes two identical no-call verifications in a 0.264s preparation/verification cycle.
+Reentry preserves 319 selected source lines and six referenced public action pairs;
+its 106,578 canonical bytes are not a measured compacted-window size or token count.
+All 3,797 protected files, native runtime and the old count packet remain unchanged.
+Receipts: `C:\pt\validation\compaction-20260912`. No credentials, count, compaction,
+generation, Docker or task execution occurred. Full native suite and task mock smoke
+were not rerun for this diagnostic-only change; SDK transport tests use mock responses.
+
+## Prior diagnostic: count-only replay observed an encrypted-field length rejection
 
 The separately approved two-count diagnostic is complete. Control turn20 returns the
 same 97,810 tokens; unchanged turn21 returns HTTP 400 `string_above_max_length` at
