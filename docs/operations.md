@@ -153,6 +153,13 @@ counts, a known server limit, or proof that compaction fixes the observed reject
 
 ### One-compaction collector
 
+The `03b157e1...` proposal was separately approved and executed once on 2026-09-12.
+Collection `C:\pt\analyses\compaction-collection-20260912` is complete; its grant is
+consumed. Read `C:\pt\analyses\compaction-live-20260912\result.md` for observed sizes,
+usage and limits. Prepared count/generation artifacts are not execution permission.
+No paid retry or follow-up was performed. The frozen proposal's original unapproved
+flag is historical; the later authorization is a separate immutable record.
+
 `diagnostics.compaction_collector inspect` validates an exact proposed invocation
 without loading a credential or creating the output directory. Supply `--packet-root`,
 `--packet-hash`, `--env-file`, `--output`, `--repeat 1` and a positive `--max-cost-usd`.

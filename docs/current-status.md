@@ -38,7 +38,36 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: one-compaction collector prepared; no paid execution
+## Current seam: one standalone compaction completed; follow-up behavior untested
+
+The separately approved one-request diagnostic completed as `COMPACTION_COMPLETE`:
+`run_dev_compactcollect_5d1017bb7cf54445`, B2's healthy pre-turn20 public input,
+`gpt-5.4-mini-2026-03-17`, standard tier. Usage is 93,107 input / 1,069 output tokens;
+model-rate accounting is $0.07464075, not an invoice-verified charge. Journal duration
+is 9.927731s and client cleanup CLOSED. Count/generation/tool/Docker/hidden evaluation
+and retries are all zero. The exact one-compaction grant is consumed.
+
+Encrypted history decreased from 133,464 to 7,308 characters (94.52%). The complete
+returned window is 181,806 canonical bytes; after exact public reentry and unchanged
+generation settings, the prepared request is 315,757 bytes versus 448,333 (29.57% less).
+These are serialized sizes, not input token counts. All 22 original messages remain
+content-equivalent, including 20 developer messages: accumulated state descriptions
+were not removed. Reentry restores the public task, diff, 319 selected source lines
+and six referenced public action pairs; the returned window is not pruned.
+
+Two evidence-only recoveries are byte-idempotent. Source/code/CAS/journal checks pass;
+3,838 protected files and native runtime are unchanged. The original oversized
+1,701,176-character turn20 output was not an input to this healthy-cutoff diagnostic.
+This does not establish repaired turn21 input, next-endpoint admission, valid model
+actions, semantic preservation inside the opaque item or task success. Next seam is a
+separately scoped count/generation diagnostic of the frozen next request, not default
+loop adoption or an automatic extra call. Acceptance/safety NOT_RUN, official=false.
+
+Evidence: `C:\pt\analyses\compaction-live-20260912\result.md` and `analysis.json`;
+collection: `C:\pt\analyses\compaction-collection-20260912`. Original packet/proposal
+remain immutable; the new authorization and result record this later approval.
+
+## Prior implementation: one-compaction collector; provider-free validation
 
 `diagnostics.compaction_collector` adds provider-free `inspect`, a separately
 approved one-request `collect`, and evidence-only `recover`. It consumes the unchanged

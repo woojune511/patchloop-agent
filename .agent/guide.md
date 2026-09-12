@@ -753,7 +753,34 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: one-compaction collector with explicit model-limit reservation; no grant.
+Current seam: one standalone compaction completed; follow-up request is artifacts only.
+The separately approved `03b157e1...` plan completed in
+`run_dev_compactcollect_5d1017bb7cf54445` with exactly one compact call, no count/create,
+tool/Docker/hidden-evaluation work or retry. The grant is consumed. Read
+`C:\pt\analyses\compaction-live-20260912\result.md` and `analysis.json`; preserve the
+collection `C:\pt\analyses\compaction-collection-20260912` and old proposal bytes.
+
+Usage: input 93,107/output 1,069, model-rate estimate $0.07464075, invoice unknown;
+9.927731s journal duration, cleanup CLOSED. Reported use is within the conditional
+reservation, not proof of an endpoint hard cap. Two read-only recoveries preserve all
+collection bytes; source/runtime and 3,838 protected files are unchanged.
+
+The original 19 reasoning items/133,464 encrypted characters become one 7,308-character
+compaction item. All 22 original messages remain text-equivalent (20 developer, one
+system, one user); this is not a current-state-only treatment. The returned window is
+181,806 bytes, next generation request 315,757 versus 448,333 canonical bytes; reentry
+keeps 319 selected public source lines and six referenced action pairs exact. Never
+call these byte/character reductions a measured next-input-token reduction. All output
+items, their order and the exact reentry are retained; generation settings unchanged.
+
+The oversized 1,701,176-character turn20 response was not compacted. Next endpoint
+admission, new reasoning size, useful tool behavior and hidden acceptance remain
+unmeasured. Frozen next-generation hash `c1e2825b...`, count hash `d5716b19...` identify
+artifacts, not authorization. Prepare separately bounded follow-up admission before
+requesting a new grant. Do not silently prune returned messages, reset reasoning or
+adopt compaction in the native loop. Every result remains official=false.
+
+Prior implementation: one-compaction collector with explicit model-limit reservation.
 `diagnostics/compaction_collector.py` consumes the unchanged `504756b2...` packet.
 Inspect binds packet, source task/model/tier, credential path hash, new destination,
 repeat=1, budget, cost contract and implementation hashes. Equal decimal cap notation
