@@ -193,6 +193,30 @@ unlocked by a successful compaction. `recover --output <existing-collection>` re
 only stored receipts, without credentials or a new request; a pending dispatch is not
 proof that HTTP was reached. Preserve the collection rather than rerunning its output.
 
+### Post-compaction diagnostic
+
+`uv run python -m diagnostics.compaction_followup inspect` takes `--collection-root`,
+`--result-hash`, `--output`, `--env-file`, `--max-generation-cost-usd` and `--repeat 1`.
+It validates the completed compaction source and frozen next requests without loading
+credentials or writing the source/output. Review the resulting exact execution plan.
+`C:\pt\analyses\compaction-followup-design-20260912\README.md` is the current unapproved
+proposal; source generation/count hashes stay `c1e2825b...` / `d5716b19...`.
+
+The proposed $1.20 cap covers generation only. The full 272k-input/25k-output
+reservation is $0.3165 at the reviewed Standard model rates, without cache savings.
+Count-endpoint billing remains unconfirmed outside this cap. Do not describe this
+as a guaranteed total invoice cap or an approved execution. After a new exact grant
+acknowledging this limitation and checking current prices, `collect` additionally
+requires `--execution-plan-hash` and `--accept-unconfirmed-count-billing`.
+
+At most one count precedes one generation. Count errors, limit/cost/deadline failures
+prevent generation; response/usage/continuation/cleanup failures stop without retry.
+Output remains 25k; no corrective turn, tool execution, recompaction, Docker or hidden
+evaluation follows. `result --output <existing-root>` reads durable evidence only;
+it is not a paid resume and does not infer HTTP execution from an unfinished intent.
+Response collection, public decision/batch shape and actual semantic correctness are
+separate results. Read the proposal before interpreting `PASS_SHAPE_ONLY` as success.
+
 ## Opt-in repair feedback experiment
 
 `patchloop dev --repair-recheck` reruns the latest still-failing registered public

@@ -753,7 +753,41 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: one standalone compaction completed; follow-up request is artifacts only.
+Current seam: post-compaction one-turn collector prepared; no execution grant.
+`diagnostics.compaction_followup` independently verifies the terminal, child receipt,
+source reconstruction and CAS artifacts without source locks/writes. The exact
+next count/generation artifacts, JSON member order, complete returned window and
+public reentry remain unchanged. It reuses native parsing/continuation storage and
+decision/batch validation, not the multi-cell sampler's scheduling or task executor.
+
+Frozen proposal `aa469bad...` in `C:\pt\analyses\compaction-followup-design-20260912`
+permits, only after exact separate approval, one count then at most one generation.
+Same mini/medium/.env/repeat1/25k settings; proposed generation cap $1.20. Reserve
+272k input +25k output at no-cache rates ($0.3165) before client setup, then recount
+and reserve the actual request immediately before dispatch. Never lower 25k output
+or reuse native/compact usage as the next request count. Count billing is explicitly
+UNCONFIRMED outside the generation cap; separate acknowledgement is not a price or
+an invoice-wide hard cap. Check official rates on execution day; no old grant reused.
+
+30s count, 300s generation, 335s total including 5s cleanup. Store numeric usage before
+parsing, metadata without raw provider error text, encrypted continuation and bounded
+public tool proposals. Do not save plaintext reasoning/summary or assistant prose.
+No tools, correction, recompaction, retries, Docker, hidden evaluator or paid resume.
+`RESPONSE_COLLECTED` is not agent success. `PASS_SHAPE_ONLY` checks public decision,
+allowed tool and batch form; full argument/schema and mutation/source/semantic
+admission remain untested. Incomplete reasoning-only responses retain their error
+and encrypted state without a correction call. Read-only result inspection verifies
+terminal/CAS/continuation or returns conservative interrupted evidence.
+
+188 focused cases PASS/40.79s; Ruff PASS; two real-packet no-call inspections equal
+in 0.148343s. `C:\pt\validation\compactnext-20260912` preserves verification and 3,862
+unchanged-file hashes. Native runtime/tool schema, source collection and prior frozen
+packets are unchanged. No actual API/credential/tool/Docker work, native full suite
+or task mock rerun. Existing 22 retained messages are not pruned; this diagnostic
+does not resolve historical-state interference, task correctness or opaque semantic
+preservation. Follow-up provider admission and tool behavior are still untested.
+
+Prior diagnostic: one standalone compaction completed; follow-up request artifacts only.
 The separately approved `03b157e1...` plan completed in
 `run_dev_compactcollect_5d1017bb7cf54445` with exactly one compact call, no count/create,
 tool/Docker/hidden-evaluation work or retry. The grant is consumed. Read

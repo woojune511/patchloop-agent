@@ -38,7 +38,39 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: one standalone compaction completed; follow-up behavior untested
+## Current seam: one-turn post-compaction diagnostic prepared; no live grant
+
+`diagnostics.compaction_followup` reuses the existing compact receipt verification,
+Responses parser, encrypted-continuation storage, public decision/batch validation,
+integer cost ledger and bounded transport. It proposes one input count followed by
+at most one generation, then stops without tool execution. Source collection, full
+returned window, exact public reentry and even stored JSON member order are preserved.
+The native agent/runtime, tool surface and older diagnostic implementations are unchanged.
+
+The frozen `aa469bad...` proposal under
+`C:\pt\analyses\compaction-followup-design-20260912` targets the same mini snapshot,
+medium reasoning, .env, repeat=1 and 25k output. Generation cap is $1.20; the maximum
+272k-input/25k-output no-cache generation reservation is $0.3165. Count billing remains
+UNCONFIRMED and is not included in that cap. Separate exact approval must acknowledge
+this distinction; no total invoice cap or free count is asserted. Deadlines are
+30s count/300s generation within 335s including 5s cleanup. No grant has been issued.
+
+Before generation, validate the exact counted request and reserve its full output.
+Preserve usage before output processing, continuation without plaintext reasoning,
+and public tool proposals separately. `RESPONSE_COLLECTED` means collection only;
+`PASS_SHAPE_ONLY` validates decision/available-tool/batch form, not all arguments,
+anchor/scope admission, semantic correctness or task success. Errors never trigger a
+correction, retry or replacement request. Result inspection is read-only; uncertain
+dispatch intents do not become proof of HTTP execution or permission to resume.
+
+Provider-free verification: 188 focused regression tests PASS in 40.79s; Ruff PASS.
+Two real-input inspections agree in 0.148343s; 3,862 protected files and native runtime
+are unchanged. Evidence: `C:\pt\validation\compactnext-20260912`. Actual credential,
+count/generation/compaction/tool/Docker/hidden-evaluation work is zero. No full native
+suite or task mock smoke was rerun. Follow-up admission and agent behavior remain
+untested live; official=false, acceptance/safety NOT_RUN.
+
+## Prior diagnostic: one standalone compaction completed; follow-up behavior untested
 
 The separately approved one-request diagnostic completed as `COMPACTION_COMPLETE`:
 `run_dev_compactcollect_5d1017bb7cf54445`, B2's healthy pre-turn20 public input,
