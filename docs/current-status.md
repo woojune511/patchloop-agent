@@ -38,7 +38,31 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: opt-in diagnostic snapshot lifecycle implemented; no live grant
+## Current seam: latest-state diagnostic packet prepared; awaiting exact approval
+
+Fresh packet `429d4173...` / execution plan `0d45099f...` is frozen under
+`C:\pt\analyses\compaction-snapshot-design-20260913`. This proposes one new isolated
+short diagnostic branch from the same healthy pre-turn20/collected-seed checkpoint,
+not a new native live row or native resume. Only the intentional input-policy change
+is `latest-state-v1`; mini-2026-03-17/medium/25k, v36 tools, working notes, probes,
+repair-recheck, inherited budgets and the full compacted seed/native history remain.
+
+Repeat 1, at most 8 new generations/counts, shared generation cap $1.20. Count billing
+remains separately unconfirmed, not included in a guaranteed invoice cap. Official
+rates/model limits were rechecked on 2026-09-12 UTC; any changed date/implementation/
+path/condition requires fresh inspection. Intended output
+`C:\pt\analyses\compaction-snapshot-collection-20260913` does not yet exist.
+
+Two identical no-call inspections plus packet preparation/verification take 0.553282s;
+tracked HEAD-clean source preflight 0.139227s; 4,204 protected files match. API/count/
+credential/tool/Docker/hidden-evaluator calls 0. Receipts:
+`C:\pt\validation\compactstate-packet-20260913`. No new paid approval is inferred.
+Next: obtain exact approval including count-billing uncertainty, then check already
+running Docker/exact images at execution; no start/pull/build/retry/extra sample.
+Measure input growth, evidence/continuation integrity and public repair/finish separately;
+historical comparison is not a fresh control or proof of causal/quality improvement.
+
+## Implemented: opt-in diagnostic snapshot lifecycle; default unchanged
 
 `diagnostics.compaction_episode prepare --context-policy latest-state-v1` now binds
 one diagnostic-only change in the packet/collector: replace superseded post-seed
@@ -69,7 +93,7 @@ The broad regression run slightly exceeded two minutes. These are 110 test execu
 (107 distinct tests), including mock/local repair -> recheck -> public finish and
 crash/no-retry coverage, not a new native full-suite or isolated hidden-evaluator run.
 
-Next: freeze a fresh exact opt-in experiment packet before requesting paid approval.
+The fresh unapproved execution packet is described above.
 Old packets/journals remain immutable; changed diagnostic hashes prevent reusing old
 execution contracts, while completed results remain read-only inspectable. No provider,
 input-count, Docker or hidden-evaluator call occurred. Acceptance/safety NOT_RUN,

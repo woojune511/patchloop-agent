@@ -753,7 +753,28 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: opt-in diagnostic snapshot lifecycle implemented; native runtime unchanged.
+Current seam: exact latest-state packet prepared, not approved/executed.
+`C:\pt\analyses\compaction-snapshot-design-20260913` binds packet
+`429d4173349ac1306ef1bdcfc4889b75ae5ef4cfd03b4f933518416cb31d7a64`
+and execution plan `0d45099f800d447291a8cd627e1be22907339ae92afa82670f29c50c632a787a`.
+Read its inspection/proposal/price review before collecting. Same healthy pre-turn20
+checkpoint and previously collected seed, new isolated branch, repeat 1, mini/medium/
+25k, latest-state-v1, probes + original repair-recheck; at most 8 new counts/generations
+under one $1.20 generation cap. Count billing is separately unconfirmed: explicit
+acknowledgement is required, never a guaranteed total invoice cap. Price review UTC
+date 2026-09-12 binds inspection; date/code/path/condition drift needs a fresh contract.
+Intended output `C:\pt\analyses\compaction-snapshot-collection-20260913` is absent.
+
+Prepare/verify and two exact no-call inspections agree (0.553282s); source HEAD-clean
+preflight 0.139227s; 4,204 files unchanged. Evidence:
+`C:\pt\validation\compactstate-packet-20260913`. Runtime/v36/default unchanged;
+no credential/API/count/tool/Docker/hidden evaluation executed. Next wait for the
+specific proposal approval, then use existing collector/preflight, with no automatic
+start/pull/build, retry, recompaction, reasoning reset, resume or additional sample.
+Historical comparison is not a fresh control. Preserve separate input-growth,
+continuation/evidence integrity, public repair/finish and uncertainty/censoring outcomes.
+
+Implemented: opt-in diagnostic snapshot lifecycle; native runtime unchanged.
 `compaction_episode prepare --context-policy latest-state-v1` binds the mode and
 `compaction_snapshot.py` bytes into the new packet/collector identity. Default is
 `append-v1`; neither native state assembly nor tool-surface v36 changes. A new mode
@@ -784,8 +805,8 @@ not a token, API-admission, behavioral or compaction-causality measurement. Rece
 `C:\pt\validation\compactstate-20260913`; final 4,182 protected files match excluding
 two diagnostic modules and the later-edited collector regression test (the initial
 replay receipt verified 4,183 before that test edit). Native runtime unchanged. No API/count,
-credentials, Docker, hidden evaluator or new execution grant. Next prepare one fresh
-exact opt-in packet; do not change the default loop from these structural tests.
+credentials, Docker, hidden evaluator or new execution grant. The fresh unapproved
+packet is described above; do not change the default loop from structural tests.
 
 Validation: 17 focused PASS/21.589s; 89 related regression PASS/123.997s (slightly
 over the two-minute target); 4 final collector/docs PASS/6.424s, Ruff PASS. Total
