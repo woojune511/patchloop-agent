@@ -753,45 +753,39 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: compacted short-episode collector, provider-free validation only.
-`diagnostics.compaction_episode_collector` adds inspect/collect/result around the
-unchanged `65e1ce83...` episode packet. Keep the old episode module and native runtime
-unchanged. Inspect binds exact new destination, packet/source, credential path hash,
-repeat1, mini/medium/25k, positive generation cap, current UTC price-review date,
-sandbox identities and implementation bytes. It is not a paid grant.
+Current seam: the exact `1f4b1ff0...` compacted short-episode grant is consumed.
+`run_dev_compactcollectloop_770d791800604acd` / child
+`run_dev_compactepisode_a24b09c546ff4deb` reached PUBLIC_CHECKS_SUBMITTED on
+2026-09-13 KST. Five new responses/counts, seven tools including saved seed and
+harness recheck, one accepted mutation, 91.483s, known generation cost $0.50483145
+under $1.20. Separate count billing/invoice remain unknown. No native live row,
+native resume, new compaction, Docker start/pull/build, retry or hidden evaluation.
 
-Collect requires a new exact plan hash and explicit separate count-billing
-acknowledgement. Claim one new output directory; hold its OS execution lock through
-HEAD-clean source preflight, existing-image checks, seed execution, model loop,
-client cleanup and result publication. No Docker start/pull/build, recompaction,
-hidden evaluation or native resume. Reuse the seed once without another generation
-and preserve all compacted input items/order. One shared ledger reserves uncached
-input plus unchanged 25k output at each dispatch; initial worst admitted input
-reservation is $0.3165. Count billing/invoice remain separately unknown.
+Seed bytes-path failure -> search/read helper -> exclude final component from
+precreation -> automatic opt-in contract recheck PASS -> requested upstream check
+PASS (517/570 skipped) -> finish. Two PASS checks and submitted patch share
+`43894e2c...`, one file/+33/-0/no untracked. Five input continuations retain the
+full compacted prefix and append prior encrypted reasoning/call/output once;
+reported reasoning context is current_turn, not evidence of effective model use.
+All new memory_update values are null. Acceptance/safety NOT_RUN, official=false.
 
-Use the inherited whole active-time budget, including setup and five-second client
-cleanup reserve. Existing 30/300-second request waits are also deadline-limited.
-Record safe numeric usage from a parsed SDK response before tool parsing, including
-inconsistent counters; unavailable SDK-decoding evidence stays unknown. Do not
-copy response text, reasoning summaries or error bodies. Unpriced cache-write/tier
-components, count/model/usage or transport uncertainty stop further execution.
-Result inspection is read-only: verify outer/child chain, CAS/continuation and exact
-terminal binding. Missing result-file publication can recover the terminal from CAS;
-an unfinished collection is INCOMPLETE_NO_RETRY, never automatic resumption.
+Next seam is provider-free inspection of repeated public reentry bodies. Actual
+input grew 107,343 -> 137,253 -> 168,054 -> 202,832 -> 231,983 tokens; every turn
+appended 93,518-106,658 characters while retaining older snapshots. The fifth
+request kept five previous reentries/497,060 characters. Separate source/tool
+evidence from repeated state descriptions before proposing one change. Do not
+infer compaction causality from a single branch without a new control, remove
+observations, reset encrypted state or turn this consumed grant into another run.
+Native runtime/v36 and old packet/source bytes remain unchanged.
 
-76 focused collector/episode/transport cases pass in 104.560s, including real local
-fixture check/repair/recheck/finish, cost/deadline/cleanup failures and crash receipts.
-No live task or provider result is implied. Next review the new exact inspection for
-one separately approved collection. Native policy/v36, old packets/runs/.env and
-user-owned files remain unchanged; official=false, acceptance/safety NOT_RUN.
-Follow-up/docs regression adds 28 PASS/14.855s: final pytest 104/119.415s, excluding
-debugging/repeats and non-test work. Ruff passes. Two no-call inspections match in
-0.368666s; frozen execution-plan hash `1f4b1ff0...` at
-`C:\pt\analyses\compaction-episode-collector-design-20260913`, proposed generation cap
-$1.20. No output collection exists. Review date is 2026-09-12 UTC/2026-09-13 KST;
-refresh inspection if the UTC day changes. All 3,917 protected bytes/runtime match.
-Factory-injected execution is marked explicitly, not treated as live evidence.
-Receipts: `C:\pt\validation\compactcollect-20260913`; no native full suite or hidden smoke.
+Collection: `C:\pt\analyses\compaction-episode-collection-20260913`; authorization,
+result analysis and preservation receipts:
+`C:\pt\analyses\compaction-episode-live-20260913`. Two read-only result inspections
+agree (0.183008s); all 221 collection files and 3,937 protected predecessor files
+remain unchanged. Client CLOSED/public containers cleanup confirmed. Collector
+inspect/collect/result contracts are in operations; partial result inspection is
+read-only and never a retry. Prior implementation tests remain 104/119.415s + Ruff
+at `C:\pt\validation\compactcollect-20260913`, not new full-suite/hidden-evaluator evidence.
 
 Prior implementation: provider-free compacted short-episode mechanics, not a live collector.
 `diagnostics.compaction_episode` verifies the completed one-turn collection and

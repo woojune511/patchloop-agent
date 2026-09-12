@@ -38,50 +38,46 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: short compacted-loop collector implemented; no live grant or execution
+## Current seam: approved compacted short loop reached public submission
 
-`diagnostics.compaction_episode_collector` connects the frozen episode mechanics to
-an opt-in collector. `inspect` is provider-free; `collect` needs a new exact plan hash,
-positive shared generation cap, repeat1, current UTC price review and separate
-acknowledgement of unconfirmed count billing. `result` reads completed or partial
-evidence without retry, native resume, provider, workspace or Docker work. The old
-`65e1ce83...` packet and all predecessor bytes stay immutable.
+The exact `1f4b1ff0...` grant was consumed once on 2026-09-13 KST by
+`run_dev_compactcollectloop_770d791800604acd`; child
+`run_dev_compactepisode_a24b09c546ff4deb` ended `PUBLIC_CHECKS_SUBMITTED`.
+This is a short diagnostic continuation of the healthy pre-turn20 checkpoint,
+not a new native live row or native resume. Mini/medium/25k, native v36 policy,
+probes and the original repair-recheck option were unchanged.
 
-The collector claims a new destination and holds its execution lock through source/
-existing-image preflight, seed execution, model steps, client cleanup and publication.
-It executes the saved check once, never regenerates the seed, and shares one ledger
-across at most eight new responses. Full 25k output is reserved before every dispatch,
-never lowered to fit the money. Initial 272k-input/25k-output no-cache reservation is
-$0.3165 at the reviewed mini rates. Count billing remains unconfirmed outside the
-generation cap; invoice total unknown.
+The previously collected seed check ran once without regeneration and failed on a
+bytes parent-traversal path with FileExistsError. Two source inspections preceded
+one accepted replacement excluding the final significant component from precreation.
+The opt-in harness recheck passed, then the model requested upstream regression
+(517 passed, 570 skipped) and finish. Both PASS checks and the submitted artifact
+bind `43894e2c...`: one file, 33 additions/0 deletions, no untracked files.
 
-Inherited active time includes setup and a five-second client cleanup reserve.
-Count/response waits remain 30/300 seconds, tightened by the shared deadline. Usage
-counters from a parsed SDK response survive tool-parsing errors and inconsistent
-arithmetic without raw reasoning or error-body storage. If SDK decoding itself fails,
-unavailable usage stays unknown. Unknown pricing components and count/model/usage/transport
-uncertainty stop further actions. Public submission survives later cleanup failure;
-interrupted intent is not proof of dispatch. Read-only result inspection verifies the
-child journal, CAS, continuation and terminal bindings even if result-file publication
-was interrupted.
+Five new generations/counts, seven tool actions including seed/recheck, one accepted
+mutation, 91.483s. Known generation cost $0.50483145 under the shared $1.20 cap;
+count billing remains separately unconfirmed and invoice total unknown. All five
+requests preserved the compacted prefix and appended prior encrypted continuation/
+matching call outputs once. All new memory updates were null. Client cleanup CLOSED;
+three public Docker checks record confirmed owned-container cleanup. No start/pull/
+build, hidden evaluator, recompaction, automatic retry or paid resume occurred.
 
-76 focused collector/episode/transport cases pass in 104.560s. Mocks reach seed check,
-failed-check repair, original opt-in recheck and public finish, not pyfakefs success.
-Native runtime, v36 schemas, context policy and old episode implementation are unchanged.
-No credential/API/Docker/hidden-evaluator work occurred. Next review the exact new
-inspection for one separately approved collection, not another implementation stage
-or an automatic paid run. Acceptance/safety NOT_RUN, official=false.
+Do not infer a compaction causal effect or generalized mini/native-loop success from
+one branch with no fresh control. Input grew 107,343 -> 231,983 tokens; each turn
+appended another 93,518-106,658-character public reentry while retaining prior ones.
+The last input retained five earlier reentries totaling 497,060 characters. Next
+inspect the repeated state/source-exchange bodies provider-free before selecting a
+context change; neither discard observed evidence nor launch another paid sample.
+Task acceptance/safety remain NOT_RUN, official=false.
 
-Another 28 follow-up/documentation cases pass in 14.855s; final pytest total is
-104 cases /119.415s, excluding earlier debugging/repeats and non-test work. Ruff
-passes. New inspection `1f4b1ff0...` at
-`C:\pt\analyses\compaction-episode-collector-design-20260913` matches twice without
-calls in 0.368666s. Proposed generation cap $1.20, at most eight new responses and
-counts; the proposed collection directory does not exist. Rates were reviewed on
-2026-09-12 UTC (2026-09-13 KST); a later UTC execution date requires a refreshed
-inspection. All 3,917 protected files/runtime match. Injected execution is explicitly
-marked, not presented as live evidence. Receipts: `C:\pt\validation\compactcollect-20260913`.
-Native full suite and isolated evaluator smoke were not rerun.
+Two post-run read-only result inspections agree in 0.183008s; all 221 collection files
+and 3,937 protected predecessor files/runtime match. Original proposal/packet/run/.env
+and user-owned files remain unchanged. Collection:
+`C:\pt\analyses\compaction-episode-collection-20260913`; authorization and analysis:
+`C:\pt\analyses\compaction-episode-live-20260913`.
+The earlier collector validation remains 104 cases/119.415s plus Ruff at
+`C:\pt\validation\compactcollect-20260913`; it is distinct from this live evidence.
+No new full native suite or hidden evaluator smoke is implied by the documentation update.
 
 ## Prior implementation: short compacted-loop mechanics prepared; no new live execution
 

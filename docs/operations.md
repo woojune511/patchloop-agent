@@ -283,6 +283,20 @@ still have a complete CAS-backed terminal; an unfinished collection returns
 request reached the server. Numeric usage, public patch/check evidence and cleanup
 status stay distinct; cleanup uncertainty cannot silently become a clean success.
 
+The exact `1f4b1ff0...` approval was consumed once on 2026-09-13 KST. Collection
+`C:\pt\analyses\compaction-episode-collection-20260913` ended
+`PUBLIC_CHECKS_SUBMITTED`: five new responses/counts, seven tools including seed and
+repair-recheck, one accepted mutation, both visible checks PASS, 91.483s. Generation
+cost $0.50483145 under $1.20; count billing and invoice total remain unknown. Client
+cleanup CLOSED; public container cleanup confirmed. Result inspection is the only
+allowed reuse of this collection, not another collect/resume. Authorization and
+read-only analysis: `C:\pt\analyses\compaction-episode-live-20260913`. Native runtime,
+old packet/proposal and source run bytes are unchanged; hidden evaluation/safety/
+acceptance remain NOT_RUN and official=false. Input grew 107,343 -> 231,983 tokens
+as full public reentries accumulated; this one public submission proves neither
+long-loop boundedness nor a compaction causal effect. Do not add a new paid sample
+or change the native context from this approval.
+
 ## Opt-in repair feedback experiment
 
 `patchloop dev --repair-recheck` reruns the latest still-failing registered public
