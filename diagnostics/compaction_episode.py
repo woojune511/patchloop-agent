@@ -19,6 +19,7 @@ from types import SimpleNamespace
 
 from diagnostics import compaction_followup as followup
 from diagnostics import compaction_replay as compact
+from diagnostics import compaction_snapshot as snapshots
 from diagnostics import count_replay as original
 from diagnostics import fresh_state_rollout as engine
 from diagnostics import model_state_review as review
@@ -70,6 +71,7 @@ def implementation():
             p.name: sha256_bytes(p.read_bytes())
             for p in (
                 Path(__file__),
+                Path(snapshots.__file__),
                 Path(followup.__file__),
                 Path(engine.__file__),
                 Path(review.__file__),
@@ -212,7 +214,9 @@ def load_source(collection_root: Path, result_hash: str, task_dir: Path) -> Plan
     )
 
 
-def proposal(plan: Plan, max_new_responses: int = MAX_NEW_RESPONSES) -> dict:
+def proposal(plan: Plan, max_new_responses: int = MAX_NEW_RESPONSES, *,
+             context_policy: str = snapshots.APPEND) -> dict:
+    require(context_policy in snapshots.POLICIES, "unknown compaction context policy")
     remaining = plan.state["remaining_budget"]
     require(
         type(max_new_responses) is int and 1 <= max_new_responses <= remaining["model_calls"] - 1,
@@ -246,6 +250,7 @@ def proposal(plan: Plan, max_new_responses: int = MAX_NEW_RESPONSES) -> dict:
         "waits": engine.requests.WAITS.contract(),
         "automatic_retry_or_resume": False,
         "current_state": "native projection, selected observed sources and exact public reentry",
+        "context_policy": context_policy,
         "before_live": [
             "exact new grant and positive generation cap with count billing disclosure",
             "official price review and JIT unchanged-25k output reservation",
@@ -261,10 +266,11 @@ def prepare(
     task_dir: Path,
     output: Path,
     max_new_responses: int = MAX_NEW_RESPONSES,
+    context_policy: str = snapshots.APPEND,
 ) -> dict:
     plan = load_source(collection_root, result_hash, task_dir)
     output = compact.new_external_root(output, collection_root, plan.source_root)
-    packet = proposal(plan, max_new_responses)
+    packet = proposal(plan, max_new_responses, context_policy=context_policy)
     store = ArtifactStore(output)
     store.write_text_immutable(output / "packet.json", canonical_json(packet))
     digest = sha256_json(packet)
@@ -272,6 +278,7 @@ def prepare(
     return {
         "packet_hash": digest,
         "max_new_responses": max_new_responses,
+        "context_policy": context_policy,
         "status": packet["status"],
         "api_requests": 0,
         "tool_executions": 0,
@@ -286,7 +293,9 @@ def verify(packet_root: Path, packet_hash: str) -> tuple[Plan, dict]:
     plan = load_source(
         Path(source["collection_root"]), source["result_hash"], Path(source["task_dir"])
     )
-    require(packet == proposal(plan, packet["max_new_responses"]), "episode contract changed")
+    require(packet == proposal(plan, packet["max_new_responses"],
+                               context_policy=packet.get("context_policy", snapshots.APPEND)),
+            "episode contract changed")
     return plan, packet
 
 
@@ -297,6 +306,7 @@ class Episode(engine.Branch):
     original_history: list[dict] = field(default_factory=list, repr=False)
     initial_mutations: int = 0
     repair_recheck: bool = False
+    context_policy: str = snapshots.APPEND
 
     def finish(self, code, message="", **details):
         if self.terminal is None:
@@ -312,6 +322,7 @@ class Episode(engine.Branch):
             self.terminal = {
                 **BOUNDARIES,
                 "branch": self.label,
+                "context_policy": self.context_policy,
                 "terminal": code,
                 "message": message,
                 "provider_calls": self.new_provider_calls,
@@ -452,7 +463,10 @@ class Episode(engine.Branch):
             ],
         )
         reentry, metrics = compact.public_reentry(projection_input)
-        items = [*saved, *added, reentry[-1]]
+        items, lifecycle = snapshots.compose(
+            seed=self.seed_request["input"], saved=saved, added=added,
+            reentry=reentry[-1], policy=self.context_policy,
+        )
         request = {
             **copy.deepcopy(self.seed_request),
             "input": items,
@@ -482,6 +496,7 @@ class Episode(engine.Branch):
                 "context_hash": context_ref.content_hash,
                 "model_input_artifact": ref.model_dump(mode="json"),
                 "model_input_hash": ref.content_hash,
+                "state_lifecycle": lifecycle,
                 "available_tool_names": sorted(policy.allowed_tools),
                 "workflow_gate": policy.workflow_gate,
                 "max_parallel_reads": policy.max_parallel_reads,
@@ -490,12 +505,16 @@ class Episode(engine.Branch):
             },
         )
         self.journal.append(
-            "compacted_context_appended",
+            "compacted_context_appended" if self.context_policy == snapshots.APPEND
+            else "compacted_context_projected",
             {
                 "turn_id": turn_id,
                 "seed_input_hash": sha256_json(self.seed_request["input"]),
-                "prefix_item_count": len(saved),
+                **({"prefix_item_count": len(saved)} if self.context_policy == snapshots.APPEND
+                   else {"previous_input_item_count": len(saved),
+                         "preserved_seed_item_count": len(self.seed_request["input"])}),
                 "added_exchange_items": len(added),
+                "state_lifecycle": lifecycle,
                 **metrics,
             },
         )
@@ -517,7 +536,9 @@ def initialize(
 ) -> Episode:
     """New isolated checkpoint only; backends are explicit, seed execution is separate."""
     require(
-        packet == proposal(plan, packet["max_new_responses"]), "changed initialization contract"
+        packet == proposal(plan, packet["max_new_responses"],
+                           context_policy=packet.get("context_policy", snapshots.APPEND)),
+        "changed initialization contract"
     )
     require(
         sha256_json(plan.request) == plan.identity["request_hash"]
@@ -629,6 +650,7 @@ def initialize(
         initial_mutations=gateway.accepted_mutations,
         repair_recheck=plan.identity["repair_recheck"],
         max_responses=packet["max_new_responses"],
+        context_policy=packet["context_policy"],
     )
 
 
@@ -748,6 +770,7 @@ def main():
         p.add_argument("--" + key, type=Path, required=True)
     p.add_argument("--result-hash", required=True)
     p.add_argument("--max-new-responses", type=int, default=MAX_NEW_RESPONSES)
+    p.add_argument("--context-policy", choices=snapshots.POLICIES, default=snapshots.APPEND)
     p = modes.add_parser("verify")
     p.add_argument("--packet-root", type=Path, required=True)
     p.add_argument("--packet-hash", required=True)

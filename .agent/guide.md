@@ -753,7 +753,48 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: provider-free reentry audit completed; native runtime unchanged.
+Current seam: opt-in diagnostic snapshot lifecycle implemented; native runtime unchanged.
+`compaction_episode prepare --context-policy latest-state-v1` binds the mode and
+`compaction_snapshot.py` bytes into the new packet/collector identity. Default is
+`append-v1`; neither native state assembly nor tool-surface v36 changes. A new mode
+is not permission to reuse an old execution packet or reset encrypted continuation.
+
+Keep the whole seed window byte-equivalent and every subsequent native item in order.
+Only our post-seed `diagnostic_compaction_reentry` snapshots expire. Before replacement,
+retain missing public exchange versions, complete source lines (LF comparison, raw
+file hash, no filled gaps), and public receipt values in historical evidence messages
+at the old snapshot position. Existing archives remain immutable, exact versions are
+deduplicated, and unknown public fields are retained conservatively. No filesystem
+source lookup, summary model, new planning hints or lossy evidence cap is introduced.
+The already bounded episode/global limits still bound this diagnostic.
+
+The current reentry is unchanged and overrides historical evidence, including old
+PASS/currency/failure fields. Do not inherit missing current fields, revive expired
+notes or reissue consumed protocol correction. Gateway admission/current-source/notes
+policy is untouched. Projection happens before the actual ordered input CAS, counting
+and dispatch; turn_started binds lifecycle hashes/counts as well as exact wire input.
+Recovery is deterministic reconstruction from that input, not a new paid resume path.
+Interrupted/pending/terminal collection still stops without retry; old completed result
+inspection continues to validate its saved contract, not the new implementation.
+
+Provider-free historical replay agrees twice (0.653178s). Final complete request
+948,877 -> 517,178 UTF-8 bytes (-45.5%); 942 source facts/22 public exchange versions,
+latest complete state and seven rescued past observation versions preserved. This is
+not a token, API-admission, behavioral or compaction-causality measurement. Receipts:
+`C:\pt\validation\compactstate-20260913`; 4,183 protected files match excluding the
+two authorized diagnostic code edits; native runtime hash unchanged. No API/count,
+credentials, Docker, hidden evaluator or new execution grant. Next prepare one fresh
+exact opt-in packet; do not change the default loop from these structural tests.
+
+Validation: 17 focused PASS/21.589s; 89 related regression PASS/123.997s (slightly
+over the two-minute target); 4 final collector/docs PASS/6.424s, Ruff PASS. Total
+110 test executions/107 distinct, process-time sum 152.010s, not elapsed wall time.
+Injected collector proves packet-mode admission and counted/dispatched/CAS input
+identity; mock/local repair reaches recheck and public finish. Native full suite and
+isolated evaluator were not rerun for this diagnostic-only change. Dispose only the
+four owned compactstate test roots after processes exit; preserve receipts separately.
+
+Prior seam: provider-free reentry audit completed; native runtime unchanged.
 Five requests grew 519,521 wire bytes, including 439,219 superseded post-seed state
 bytes (84.5%), 47,564 encrypted-reasoning bytes and 26,755 native call/output bytes.
 Each new reentry quoted 12/14/14/12/14 exact items already present earlier in input.
@@ -765,11 +806,9 @@ In-memory removal of only post-seed superseded reentries yielded 948,877 -> 509,
 bytes at the final request (-46.3%), preserving full seed/native items, latest state,
 942 observed source facts and 22 public action versions in this trace. No request
 was published/dispatched/counted; API admissibility/token/model effects remain untested.
-Next candidate is one opt-in snapshot-lifetime change, not a default adoption: preserve
-all standalone compact output, encrypted/call/result ordering, latest complete state,
-and any unique historical source or harness-only receipt as independent evidence.
-Verify reference/currency/current-state/resume equivalence first. Never turn a sizing
-probe into blanket permission to discard old observations, reset reasoning or run paid work.
+The opt-in implementation above follows that candidate, not a default adoption.
+Never turn a sizing probe into blanket permission to discard old observations,
+reset reasoning or run paid work.
 Two guarded audits agree (0.662391s), seven synthetic checks PASS, 4,169 protected files
 unchanged; `C:\pt\analyses\compaction-reentry-audit-20260913`. API/count/tools/Docker 0.
 

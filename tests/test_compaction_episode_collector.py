@@ -271,6 +271,40 @@ def test_failed_seed_repair_native_recheck_then_finish(ready):
     assert result["episode"]["terminal"]["accepted_mutations_since_checkpoint"] == 1
 
 
+def test_latest_state_packet_binds_collector_and_exact_counted_projected_input(ready):
+    old_admission = collector.inspect(**ready.kwargs)
+    ready.packet = episode.proposal(ready.source, context_policy=episode.snapshots.LATEST)
+    ready.kwargs["packet_hash"] = sha256_json(ready.packet)
+    current = collector.inspect(**ready.kwargs)
+    assert current["plan"]["context_policy"] == "latest-state-v1"
+    assert current["execution_plan_hash"] != old_admission["execution_plan_hash"]
+    with pytest.raises(ContractError):
+        collector.collect(**ready.kwargs,
+                          execution_plan_hash=old_admission["execution_plan_hash"],
+                          accept_unconfirmed_count_billing=True)
+    assert not ready.kwargs["output"].exists() and ready.loaded == []
+    client = Client([
+        reply([tool("read_file", "read", path="mini_data_utils/csvlite.py",
+                    start_line=1, end_line=10)]),
+        reply([tool("finish_task", "finish")], index=2),
+    ])
+    result = run(ready, client)
+    assert result["result"] == "PUBLIC_CHECKS_SUBMITTED"
+    assert result["episode"]["terminal"]["context_policy"] == "latest-state-v1"
+    assert [call[0] for call in client.calls] == ["count", "create", "count", "create"]
+    assert client.calls[2][1]["input"] == client.calls[3][1]["input"]
+    branch = ready.branches[0]
+    last = [e["payload"] for e in branch.journal.events()
+            if e["event_type"] == "turn_started"][-1]
+    assert last["state_lifecycle"]["removed_snapshot_count"] == 1
+    assert last["state_lifecycle"]["projected_input_hash"] == sha256_json(
+        client.calls[3][1]["input"]
+    )
+    before = snapshot(ready.kwargs["output"])
+    assert collector.inspect_result(ready.kwargs["output"]) == result
+    assert snapshot(ready.kwargs["output"]) == before
+
+
 def test_incomplete_correction_keeps_encrypted_state_without_plain_reasoning(ready):
     client = Client([reply([], incomplete=True), reply([tool("finish_task", "finish")], index=2)])
     result = run(ready, client)

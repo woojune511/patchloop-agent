@@ -228,11 +228,13 @@ separate results. Read the proposal before interpreting `PASS_SHAPE_ONLY` as suc
 
 `uv run python -m diagnostics.compaction_episode prepare` accepts `--collection-root`,
 `--result-hash`, `--task-dir`, a new external `--output` and optional
-`--max-new-responses` (default 8). It verifies the saved one-response collection,
+`--max-new-responses` (default 8) and `--context-policy` (default `append-v1`).
+It verifies the saved one-response collection,
 healthy cutoff, task and implementation identities, then writes an immutable packet.
 `verify --packet-root <root> --packet-hash <hash>` rechecks it without credentials,
-network, a workspace or tool execution. Current packet: `65e1ce83...` under
-`C:\pt\analyses\compaction-episode-design-20260912`.
+network, a workspace or tool execution. Historical packet `65e1ce83...` under
+`C:\pt\analyses\compaction-episode-design-20260912` is immutable evidence, not a
+current executable contract after diagnostic code changes.
 
 The internal `initialize`, `execute_seed` and `step` require explicitly supplied
 backends/adapters. They are mock-validated mechanics, not a live CLI or approval.
@@ -242,6 +244,15 @@ response still consumes one inherited model call and its recorded active time.
 Subsequent inputs retain the full compacted window and append encrypted continuation,
 matching tool results and the exact current public reentry. Existing tool policy,
 memory, source/scope checks, repair-recheck option and completion budgets are reused.
+The explicit `latest-state-v1` option changes only our post-seed snapshot lifetime:
+superseded reentries are replaced, but unique public source/exchange/check/probe
+observations are kept as quoted historical evidence. No source file is read implicitly.
+The entire seed, including all standalone compact output, stays unchanged, following
+the [standalone compaction contract](https://developers.openai.com/api/docs/guides/compaction).
+Latest state is complete; old evidence cannot supply current PASS, expired notes or
+already-consumed correction. The mode and projector bytes bind the packet/collector
+plan; there is no unbound collect-time switch. Count and generation receive exactly
+the ordered input stored in that turn's artifact. Default/native append behavior is unchanged.
 The eight-response observation bound censors the diagnostic; it does not narrow the
 model's native action space or claim an impossible completion horizon.
 
@@ -301,10 +312,12 @@ The later provider-free reentry audit at
 `C:\pt\analyses\compaction-reentry-audit-20260913` measured superseded diagnostic
 state messages as 84.5% of first-to-last wire-byte growth. Its 46.3% final-size
 reduction is an in-memory sizing probe with checked source/action preservation,
-not a runnable request, API/token result or adopted context contract. Existing
-append-only native and collector contracts still apply. Any implementation must
-separately preserve complete compact output, native exchanges, current state and
-unique source/harness receipts before a new exact execution packet is considered.
+not a runnable request, API/token result or adopted context contract. The later opt-in
+implementation at `C:\pt\validation\compactstate-20260913` rescues unique historical
+observations as well, yielding 517,178 final request bytes (-45.5%) in saved-request
+reconstruction. Native/default append behavior stays unchanged. These are byte/evidence
+checks, not provider acceptance or token/quality measurements. Another live diagnostic
+requires a fresh exact packet and approval; read-only old result inspection is still valid.
 
 ## Opt-in repair feedback experiment
 

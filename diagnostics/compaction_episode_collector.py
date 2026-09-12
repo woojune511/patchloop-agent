@@ -109,6 +109,7 @@ def inspect(
         "output_ceiling": 25000,
         "input_limit": followup.INPUT_LIMIT,
         "global_limits": packet["global_limits"],
+        "context_policy": packet["context_policy"],
         "max_new_responses": packet["max_new_responses"],
         "max_new_input_counts": packet["max_new_input_counts"],
         "seed_executions": 1,

@@ -38,7 +38,43 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: reentry audit isolates repeated-state growth; no runtime change
+## Current seam: opt-in diagnostic snapshot lifecycle implemented; no live grant
+
+`diagnostics.compaction_episode prepare --context-policy latest-state-v1` now binds
+one diagnostic-only change in the packet/collector: replace superseded post-seed
+state messages, retaining unique public evidence separately as quoted history.
+The default remains `append-v1`; the native agent, v36 tools, notes/policy, limits
+and task are unchanged. The entire seed (including standalone compact output),
+native encrypted/call/result sequence and latest complete reentry stay exact.
+
+Source is rescued as complete LF lines with original raw-file hashes and gaps;
+public exchange versions and harness-only check/probe receipts are retained exactly.
+Historical PASS/currency flags cannot replace the latest check table. Old corrections
+and expired note interpretations are not reintroduced as current instructions/memory.
+The projection precedes input counting/artifact recording; those artifacts deterministically
+reconstruct it. Pending/terminal diagnostic work still cannot be retried or resumed.
+
+Two provider-free replays of the five saved requests agree in 0.653178s. Final complete
+request: 948,877 -> 517,178 serialized UTF-8 bytes (-45.5%), preserving 942 source
+facts, 22 public exchange versions and latest state/notes/checks. Seven unique past
+observation versions were separately rescued; this is deliberately less aggressive
+than the earlier size-only probe. This does not measure tokens, API acceptance or behavior.
+All 4,183 protected files match, excluding the two explicitly edited diagnostic modules;
+runtime hash is unchanged. Receipts: `C:\pt\validation\compactstate-20260913`.
+
+Validation: 17 focused tests PASS/21.589s, 89 related regressions PASS/123.997s,
+then collector-mode binding plus three documentation checks PASS/6.424s; Ruff passes.
+The broad regression run slightly exceeded two minutes. These are 110 test executions
+(107 distinct tests), including mock/local repair -> recheck -> public finish and
+crash/no-retry coverage, not a new native full-suite or isolated hidden-evaluator run.
+
+Next: freeze a fresh exact opt-in experiment packet before requesting paid approval.
+Old packets/journals remain immutable; changed diagnostic hashes prevent reusing old
+execution contracts, while completed results remain read-only inspectable. No provider,
+input-count, Docker or hidden-evaluator call occurred. Acceptance/safety NOT_RUN,
+official=false; this is not a default-loop adoption or new model-quality result.
+
+## Prior audit: repeated-state growth isolated
 
 Read-only analysis of the five completed compacted requests attributes 439,219 of
 519,521 added wire bytes (84.5%) to superseded post-seed state messages. Reasoning
@@ -55,11 +91,8 @@ no runnable request, count call or behavioral equivalence claim was produced.
 This identifies a snapshot/history lifecycle issue in the diagnostic wrapper, not
 the same measured growth in the default native loop or a compaction quality cause.
 
-Next implementation candidate: one opt-in current-state lifecycle change, preserving
-the standalone compact output, encrypted/native history and independently retained
-public evidence. Prove current-state/reference and harness-receipt/resume preservation
-before another exact experiment packet. Do not adopt the size probe, reset reasoning,
-change tool masks or infer a paid grant. Native/runtime/task/history are unchanged.
+That audit motivated the opt-in implementation above, not adoption of its size probe.
+Do not reset reasoning, change tool masks or infer a paid grant from the audit.
 Two guarded audits agree in 0.662391s; seven independent synthetic checks pass.
 All 4,169 protected files/runtime match. Evidence:
 `C:\pt\analyses\compaction-reentry-audit-20260913`; API/count/tool/Docker/hidden calls 0.
