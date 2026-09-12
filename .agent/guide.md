@@ -753,7 +753,47 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: provider-free compacted short-episode mechanics, not a live collector.
+Current seam: compacted short-episode collector, provider-free validation only.
+`diagnostics.compaction_episode_collector` adds inspect/collect/result around the
+unchanged `65e1ce83...` episode packet. Keep the old episode module and native runtime
+unchanged. Inspect binds exact new destination, packet/source, credential path hash,
+repeat1, mini/medium/25k, positive generation cap, current UTC price-review date,
+sandbox identities and implementation bytes. It is not a paid grant.
+
+Collect requires a new exact plan hash and explicit separate count-billing
+acknowledgement. Claim one new output directory; hold its OS execution lock through
+HEAD-clean source preflight, existing-image checks, seed execution, model loop,
+client cleanup and result publication. No Docker start/pull/build, recompaction,
+hidden evaluation or native resume. Reuse the seed once without another generation
+and preserve all compacted input items/order. One shared ledger reserves uncached
+input plus unchanged 25k output at each dispatch; initial worst admitted input
+reservation is $0.3165. Count billing/invoice remain separately unknown.
+
+Use the inherited whole active-time budget, including setup and five-second client
+cleanup reserve. Existing 30/300-second request waits are also deadline-limited.
+Record safe numeric usage from a parsed SDK response before tool parsing, including
+inconsistent counters; unavailable SDK-decoding evidence stays unknown. Do not
+copy response text, reasoning summaries or error bodies. Unpriced cache-write/tier
+components, count/model/usage or transport uncertainty stop further execution.
+Result inspection is read-only: verify outer/child chain, CAS/continuation and exact
+terminal binding. Missing result-file publication can recover the terminal from CAS;
+an unfinished collection is INCOMPLETE_NO_RETRY, never automatic resumption.
+
+76 focused collector/episode/transport cases pass in 104.560s, including real local
+fixture check/repair/recheck/finish, cost/deadline/cleanup failures and crash receipts.
+No live task or provider result is implied. Next review the new exact inspection for
+one separately approved collection. Native policy/v36, old packets/runs/.env and
+user-owned files remain unchanged; official=false, acceptance/safety NOT_RUN.
+Follow-up/docs regression adds 28 PASS/14.855s: final pytest 104/119.415s, excluding
+debugging/repeats and non-test work. Ruff passes. Two no-call inspections match in
+0.368666s; frozen execution-plan hash `1f4b1ff0...` at
+`C:\pt\analyses\compaction-episode-collector-design-20260913`, proposed generation cap
+$1.20. No output collection exists. Review date is 2026-09-12 UTC/2026-09-13 KST;
+refresh inspection if the UTC day changes. All 3,917 protected bytes/runtime match.
+Factory-injected execution is marked explicitly, not treated as live evidence.
+Receipts: `C:\pt\validation\compactcollect-20260913`; no native full suite or hidden smoke.
+
+Prior implementation: provider-free compacted short-episode mechanics, not a live collector.
 `diagnostics.compaction_episode` verifies the completed one-turn collection and
 healthy pre-turn20 source, freezes an immutable packet, and exposes injected
 initialize/execute_seed/step mechanics. CLI supports only prepare/verify. Do not

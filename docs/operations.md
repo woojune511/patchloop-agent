@@ -245,12 +245,43 @@ memory, source/scope checks, repair-recheck option and completion budgets are re
 The eight-response observation bound censors the diagnostic; it does not narrow the
 model's native action space or claim an impossible completion horizon.
 
-No live/resume subcommand exists. A collector must still bind a lifetime lock, new
+That preparation module has no live/resume subcommand. A collector must bind a lifetime lock, new
 exact generation cap/approval, current prices, separately unconfirmed count billing,
 client cleanup, partial-result receipts and existing Docker/probe image preflight.
 Reserve unchanged 25k output before every new generation; never retry uncertain work
 or reuse the consumed one-turn grant. Hidden evaluation stays NOT_RUN even if public
 checks and finish succeed. Runtime/envelope history is not migrated.
+
+### Short compacted-loop collector (separate exact approval)
+
+`uv run python -m diagnostics.compaction_episode_collector inspect` accepts the frozen
+`--packet-root`/`--packet-hash`, a new external `--output`, exact `--env-file`,
+`--max-generation-cost-usd`, `--repeat 1` and `--prices-verified-on YYYY-MM-DD` (UTC).
+It does not load credentials, call APIs, check Docker or create output. Inspect's
+`execution_plan_hash` binds these values and the current collector bytes; a date,
+cap, path or implementation change requires another inspection and exact approval.
+
+Only after that approval, `collect` accepts the same fields plus
+`--execution-plan-hash` and `--accept-unconfirmed-count-billing`. It claims one new
+directory, locks the entire collector lifetime, checks tracked/HEAD-clean task,
+runtime and diagnostic code, then preflights existing exact evaluator/probe images.
+It never starts Docker, pulls/builds an image, changes the frozen packet or runs the
+hidden evaluator. The seed check executes once before another model decision; its
+already-paid generation is not charged again. Subsequent decisions share one cap,
+retain the full compacted window and reuse native policy, memory and repair feedback.
+
+The eight-response bound is an observation limit, not an action mask. The inherited
+time budget includes setup and five seconds for client cleanup. Count/generation
+waits are at most 30/300 seconds. Reserve uncached input plus all 25k output before
+each dispatch; do not shrink output or retry unknown requests. Count billing remains
+unconfirmed and separate from the generation cap; no total invoice guarantee exists.
+
+`result --output <existing-collection>` validates durable outer/child journals and
+artifacts without API, Docker or workspace execution. A missing final JSON file can
+still have a complete CAS-backed terminal; an unfinished collection returns
+`INCOMPLETE_NO_RETRY`. This neither retries a decision nor infers that an admitted
+request reached the server. Numeric usage, public patch/check evidence and cleanup
+status stay distinct; cleanup uncertainty cannot silently become a clean success.
 
 ## Opt-in repair feedback experiment
 
