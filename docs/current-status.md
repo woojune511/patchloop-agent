@@ -59,7 +59,8 @@ request: 948,877 -> 517,178 serialized UTF-8 bytes (-45.5%), preserving 942 sour
 facts, 22 public exchange versions and latest state/notes/checks. Seven unique past
 observation versions were separately rescued; this is deliberately less aggressive
 than the earlier size-only probe. This does not measure tokens, API acceptance or behavior.
-All 4,183 protected files match, excluding the two explicitly edited diagnostic modules;
+Final preservation: 4,182 files match, excluding the two edited diagnostic modules
+and the collector regression test added after the initial 4,183-file replay receipt;
 runtime hash is unchanged. Receipts: `C:\pt\validation\compactstate-20260913`.
 
 Validation: 17 focused tests PASS/21.589s, 89 related regressions PASS/123.997s,

@@ -781,8 +781,9 @@ Provider-free historical replay agrees twice (0.653178s). Final complete request
 948,877 -> 517,178 UTF-8 bytes (-45.5%); 942 source facts/22 public exchange versions,
 latest complete state and seven rescued past observation versions preserved. This is
 not a token, API-admission, behavioral or compaction-causality measurement. Receipts:
-`C:\pt\validation\compactstate-20260913`; 4,183 protected files match excluding the
-two authorized diagnostic code edits; native runtime hash unchanged. No API/count,
+`C:\pt\validation\compactstate-20260913`; final 4,182 protected files match excluding
+two diagnostic modules and the later-edited collector regression test (the initial
+replay receipt verified 4,183 before that test edit). Native runtime unchanged. No API/count,
 credentials, Docker, hidden evaluator or new execution grant. Next prepare one fresh
 exact opt-in packet; do not change the default loop from these structural tests.
 
