@@ -753,7 +753,43 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: standalone frozen count-only design, no live entry point.
+Current seam: standalone count-only collector implemented; no live execution.
+`diagnostics/count_collector.py` consumes the unchanged frozen packet below. Exact
+packet/source/reconstruction and credential path validation precede key/client setup.
+An explicit acknowledgement of unconfirmed count billing is required in addition to
+fresh exact approval; the old packet's disabled-live flag is not a transferable grant.
+The acknowledgement is not an official pricing statement or enforceable dollar cap.
+Native admission/billing rules are unchanged. Never infer zero cost from missing usage.
+
+An atomic new-directory claim prevents concurrent reuse and retry of the same
+invocation. Durable `input_count_started` precedes dispatch; outcomes retain safe
+allowlisted error fields, never exception messages, raw bodies, headers or ciphertext.
+Pending after a crash means UNKNOWN; no resume/retry path exists. The pure reducer
+allows case 2 only after the 97,810-token control. Client/setup, count, persistence or
+cleanup failure never unlocks another request. Preserve received counts even when the
+post-response deadline check stops further work. A terminal result artifact survives
+failure to publish the derived result.json; recorded source state is never modified.
+
+Reuse `episode_requests.DiagnosticClient`: official endpoint, trust_env=false, zero
+SDK retries, outer whole-request cancellation plus per-I/O timeouts. Count limits are
+30s/request, 65s total active execution including 5s cleanup reserve. Recheck remaining
+time after admission fsync. Cleanup timeout/uncertainty is explicit; never claim remote
+or OS-thread termination. A future invocation records collector and transport hashes
+in its own dev-run-v1 journal. Only count calls are reachable, never generation,
+tools, task workspaces, Docker or evaluators. Default runtime and v36 are unchanged.
+
+Collector validation: 32 focused new cases; 159 combined count/transport/sampler/docs
+cases PASS in 65.77s, Ruff PASS. Two read-only admissions of the real frozen packet
+agree in 0.547s and 3,776 protected file hashes are unchanged. Receipts under
+`C:\pt\validation\countcollector-20260912` and `countcollector-focus-0912a.xml`.
+No real credential/count/generation/task/Docker action; full runtime suite and mock
+task smoke were not rerun for this diagnostic-only seam. Original rejection remains
+UNRESOLVED. Initial new-test socket guard incorrectly blocked Windows asyncio's
+internal socketpair; restricting that guard to real HTTP transports fixed the tests
+without weakening the production transport. Do not misclassify that fixture failure
+as a reproduced provider rejection.
+
+Prior preparation: standalone frozen count-only design, no live entry point at that stage.
 `diagnostics/count_replay.py` reconstructs frozen B2 turns 20/21 using the saved
 public input/context, native call/output order and registered schemas. Original
 generation-request and count-body hashes must match before preparation. A harness
@@ -771,7 +807,7 @@ an error, unfinished attempt or changed count ends the sequence. Maximum two cou
 one attempt per case, no generation/tools/Docker/private evaluation or source resume.
 Both succeeding means NOT_REPRODUCED, not proven transient cause or safe-size evidence.
 
-Only preparation and mock scheduling were implemented, not an executable live client.
+At that stage only preparation and mock scheduling existed, not an executable live client.
 Count-only billing remains UNCONFIRMED after reviewing the official counting guide
 and pricing page; do not assume free, infer it from generation rates or reuse the old
 comparison grant. Resolve the billing/cap contract and obtain exact packet approval

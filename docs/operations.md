@@ -78,18 +78,41 @@ the human packet/journal retain hashes and sizes, not those bodies. Keep this ne
 diagnostic separate from native resume. Verification requires the expected packet
 hash and checks original journal/envelope/CAS plus current reconstruction identity.
 
-Proposed collection is control first, then failed case, one attempt each; a changed
+`diagnostics.count_collector` implements control first, then failed case, one attempt
+each; a changed
 97,810-token control, any error or missing outcome stops the sequence. No generation,
 tools, Docker, private evaluator, retry, replacement or continuation reset. These
-rules are simulated, not evidence that a live diagnostic ran. Both counts succeeding
+rules are mock-tested, not evidence that a live diagnostic ran. Both counts succeeding
 would mean only NOT_REPRODUCED; a new rejection would not recover the old error body.
 
-Count-only billing is UNCONFIRMED: the reviewed official
+The collector requires the expected packet hash, original credential-file path and
+a new external `--output` directory. Validation precedes credential/client creation.
+The directory is an exclusive one-invocation claim, not a resumable queue. Each attempt
+is journaled before dispatch; a crash with no outcome stays UNKNOWN. Do not reopen,
+delete or replace that directory to retry. Results and safe HTTP diagnostics are in
+its `result.json` and hash-chained journal; request bodies stay in the original CAS.
+
+Whole count waits are bounded by min(30s, remaining 65s execution deadline minus 5s
+cleanup reserve). Cleanup is itself bounded by remaining time and reported separately;
+UNKNOWN cleanup stops execution and does not claim OS-thread or remote cancellation.
+No generation request, task tool, Docker operation or hidden evaluator is reachable.
+
+Count-only billing remains UNCONFIRMED: the reviewed official
 [counting guide](https://developers.openai.com/api/docs/guides/token-counting) and
 [pricing page](https://developers.openai.com/api/docs/pricing) do not explicitly state
-this endpoint's price. There is no active execution grant or assumed zero-cost
-exception. Resolve billing/cap and exact packet approval before adding live execution;
-do not reuse the closed comparison's remaining budget.
+this endpoint's price. A [community reply](https://community.openai.com/t/does-post-responses-input-tokens-cost-money/1380071/2)
+describes counting as free, but is not an official pricing guarantee. Do not infer
+charges from generation rates or treat an absent usage field as a zero-dollar receipt.
+
+There is no active execution grant. Separately approve the exact packet, model in that
+packet, credential path, new destination and maximum two counts, including billing
+uncertainty, before invoking the collector with `--accept-unconfirmed-count-billing`.
+That acknowledgement records an operator choice; it neither changes the frozen design
+nor establishes a price or enforceable dollar cap. Without it, execution rejects before
+credential access. Do not reuse the closed comparison's budget. Basic invocation after
+that separate approval is `uv run python -m diagnostics.count_collector` with
+`--packet-root`, `--packet-hash`, `--env-file`, `--output` and the acknowledgement.
+This command has no automatic retry, replacement, repeat, resume or generation mode.
 
 ## Opt-in repair feedback experiment
 

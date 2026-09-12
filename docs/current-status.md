@@ -38,7 +38,40 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: frozen count-only design; no API execution
+## Current seam: count-only collector implemented; no API execution
+
+`diagnostics/count_collector.py` now executes the frozen B2 count protocol separately
+from the native agent. It permits only the count endpoint, one attempt per case,
+control first; case 2 requires the original 97,810-token control. Errors, interruption,
+changed control or deadline exhaustion stop the sequence without retry or resume.
+The collector reuses the diagnostic async client: zero SDK retries, at most 30s per
+request within a 65s execution deadline, including a reserved 5s for client cleanup.
+Only safe error fields and body hashes/sizes are retained, never raw error bodies.
+
+Admission validates the original packet/source/current reconstruction and credential
+path before loading a key. A new external destination is claimed exclusively; started
+attempts are durable before dispatch, and an interrupted destination cannot be reused.
+Cleanup uncertainty is explicit, not a claim of remote cancellation. The collector's
+code/transport hashes and outcomes live in a new journal; old packet/run bytes stay
+unchanged. Runtime, tool surface, model inputs and native billing policies are unchanged.
+
+The prior design's disabled live flag remains immutable and is not an execution grant.
+A future collector invocation requires exact separate approval that acknowledges
+unconfirmed count billing; its explicit CLI acknowledgement is not evidence of free
+counting or a dollar cap. Community replies support a free-counting expectation, but
+are not an official pricing guarantee. Count cost remains `null`, not inferred zero.
+No actual count/model request, credential load, Docker or task execution occurred.
+The previous comparison grant is closed; all results remain official=false.
+
+Focused collector/count/transport/sampler/docs regression: 159 PASS in 65.77s;
+Ruff PASS. Two real-packet read-only admissions agree (0.547s); 3,776 protected files,
+including the frozen packet, old runs, runtime and `.env`, match their original hashes.
+Receipts: `C:\pt\validation\countcollector-20260912` and
+`C:\pt\validation\countcollector-focus-0912a.xml`. Full runtime suite and mock task
+smoke were not rerun for this standalone diagnostic-only change. The original B2
+rejection cause is still unresolved; mock success is not a reproduced live result.
+
+## Prior preparation: frozen count-only design
 
 `diagnostics/count_replay.py` prepares and verifies a new operator-only packet from
 B2 turns 20/21. It reconstructs each original request and native call/output order,
@@ -57,10 +90,10 @@ The focused count/diagnostic/sampler/docs regression passes 112 tests in 50.68s;
 Ruff passes. No new full runtime suite or mock smoke was needed for this standalone
 diagnostic-only change; prior runtime validation below remains historical evidence.
 
-Actual execution remains disabled. The official token-counting guide and pricing
+At preparation, execution was disabled. The official token-counting guide and pricing
 page reviewed on 2026-09-12 do not explicitly establish count-only endpoint billing;
 do not label it free or treat generation token prices as its proven price. Resolve
-that cost contract and obtain exact separate approval before a future live collector.
+that cost uncertainty and obtain exact separate approval before live collection.
 The old comparison grant is closed. All evidence remains official=false.
 
 ## Prior implementation: bounded input-count failure evidence; no paid retry
