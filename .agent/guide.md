@@ -753,18 +753,29 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: approved four-run native comparison blocked before any admission.
-Evidence: `C:\pt\analyses\repair-recheck-comparison-live-20260912`
-(`preflight-stop.json`, `result.md`, observer). Initial Docker availability check
-failed; `docker version` confirms missing `dockerDesktopLinuxEngine` pipe and no
-Desktop/backend process is observed. Four cells NOT_RUN, zero provider/count/task
-calls, no new native run, $0. All 3,677 protected files and existing run IDs unchanged.
-Do not retry automatically or start/pull/build Docker; wait for readiness and user
-direction. The observer marks this attempt closed before cell admission.
+Current seam: the approved comparison stopped on B2 COUNT_TIMEOUT_OR_UNKNOWN.
+Evidence: `C:\pt\analyses\repair-recheck-comparison-live-20260912b`
+(`result.md`, `analysis.json`, `failure-analysis.json`, observer). A1 OFF
+`run_dev_2d9ac37041ae4c28`: public PASS/private aggregate FAIL, $0.334105050.
+B1 ON `run_dev_1cd3d953c69240e7`: task acceptance/safety PASS, $0.333564450.
+B2 ON `run_dev_03b4fcac720b4760`: unsubmitted, $0.484494900; A2 OFF NOT_RUN.
+Total $1.152164400, 64 model/65 count/72 tool calls, no retry/resume/replacement.
+All 3,706 protected files, prior Docker preflight-stop record and old native runs
+remain unchanged. Current native runtime/task unchanged, official=false.
+
+B2 repaired seven public regression failures and its harness child returned PASS
+before turn20. The other contract check remained NOT_RUN on the new diff. Read,
+search, check and mutation remained available, with 21 model/80 tool/two mutation
+budget remaining. Turn20 used 25k reasoning tokens without a call; turn21 preserved
+the 1,701,176-character encrypted item and all native pairs, but count failed with
+BadRequestError. No paid model request21. Exact server error body/code/parameter
+was not retained: do not assert timeout, a specific size limit or a proven cause.
+Next candidate is safe typed count-error evidence and offline shape/size validation,
+not ciphertext truncation/reset or extra live sampling. New paid work needs authority.
 
 The immutable four-run native comparison design remains at
 `C:\pt\analyses\repair-recheck-comparison-20260912`; packet hash `af29b90f...`.
-Its exact $4.80 scope was approved. OFF/ON/ON/OFF, two fresh runs each, same runtime v36/
+Its exact $4.80 scope was approved and is now closed. OFF/ON/ON/OFF, same runtime v36/
 `28f08d7c...`, task v2, mini snapshot/medium/.env/probes, each repeat1/$1.20, total
 $4.80 with no budget transfer. Keep 40/100/4/1,800 and native output admission.
 Previous rows are context only, never substitute controls or answer seeds. The option
@@ -780,7 +791,7 @@ evaluation follows ordinary finish; read aggregate verdicts only. Include no-chi
 and non-submission rows with NOT_EXERCISED/NOT_RUN labels, not selected-success bias.
 No implementation/default adoption or generalization claim follows from this design.
 
-Current result: separately approved fresh mini `run_dev_d484ea8a2a8e4ba4` completes
+Prior single-row result: separately approved fresh mini `run_dev_d484ea8a2a8e4ba4` completes
 with EVALUATOR_PASS, task acceptance/safety PASS, official=false. Its exact v2/mini
 snapshot/medium/.env/repeat1/$1.20/probes/repair-recheck invocation is consumed.
 Evidence: `C:\pt\analyses\repair-recheck-live-20260912` (`result.md`, `analysis.json`).
@@ -801,13 +812,13 @@ files verify. All optional notes are null; native evidence and continuation are 
 This is one live success and a feedback-delivery observation, not feature causality:
 the improved initial algorithm and correct repair both occur before the child. No
 default adoption, memory mandate, success-rate or generalization claim follows.
-The next empirical question is reproducibility under an explicitly approved matched
-comparison, not another automatic run or repair of frozen evidence. No further paid
-invocation, Docker start/pull/build, task alteration or historical update is authorized.
+This single-row result motivated the subsequently admitted comparison above, which
+did not complete. No further paid invocation, Docker start/pull/build, task alteration
+or historical update is authorized; prioritize the current evidence-visibility seam.
 
 Prior implementation: v36 focused tests cover current-failure selection, fresh verdict
 before inference, exact option/envelope matching, counters and six crash boundaries.
-Keep these local reliability tests distinct from the subsequent one-run live evidence.
+Keep these local reliability tests distinct from the subsequent live observations.
 
 Prior result: the separately approved frozen-third-candidate public check is complete
 at `C:\pt\evaluations\mini-third-candidate-20260912` (`result.md`). Restore the exact

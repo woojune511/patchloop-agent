@@ -38,46 +38,49 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: approved four-run comparison stopped before admission; Docker unavailable
+## Current seam: comparison stopped at B2 input counting; no automatic continuation
 
-The user approved the exact four-run proposal below. Execution stopped in the initial
-read-only preflight, before any native run or cell admission: `Docker is unavailable;
-dev-head never starts or installs it`. A separate `docker version` returns exit1:
-the `desktop-linux` engine pipe `//./pipe/dockerDesktopLinuxEngine` is absent, and
-no Docker Desktop/backend process is observed. The client is installed.
+After the user enabled Docker, the approved OFF/ON/ON/OFF packet `af29b90f...` ran
+under unchanged runtime `28f08d7c...`/v36, v2 task, mini snapshot/medium/.env/probes.
+Each repeat1 invocation retained its $1.20 cap; total maximum was $4.80. Evidence:
+`C:\pt\analyses\repair-recheck-comparison-live-20260912b` (`result.md`,
+`analysis.json`, `failure-analysis.json`, observer). The earlier zero-call Docker
+preflight stop and original design remain immutable at their prior paths.
 
-All four cells are NOT_RUN: zero provider/count/task calls, zero new native runs,
-**$0 cost**, task acceptance/safety NOT_RUN. This is infrastructure unavailability,
-not an agent failure or comparison result. All 3,677 protected files and existing
-native run IDs verify unchanged. Approval and stop evidence are recorded at
-`C:\pt\analyses\repair-recheck-comparison-live-20260912` (`result.md`,
-`preflight-stop.json`, hash-chained observer). No Docker start/pull/build or automatic
-retry/resume ran. Wait for Docker readiness and user direction; preserve this attempt.
+| Cell | Run suffix | Current public checks | Task acceptance | Cost |
+| --- | --- | --- | --- | --- |
+| A1 OFF | `2d9ac37041ae4c28` | both PASS | FAIL | $0.334105050 |
+| B1 ON | `1cd3d953c69240e7` | both PASS | PASS | $0.333564450 |
+| B2 ON | `03b4fcac720b4760` | regression PASS; contract NOT_RUN | NOT_RUN | $0.484494900 |
+| A2 OFF | no run | NOT_RUN | NOT_RUN | $0 |
 
-The original proposal remains frozen at `C:\pt\analyses\repair-recheck-comparison-20260912`
-(`README.md`, `packet.json`), canonical packet hash `af29b90f...`. Same v36/runtime
-`28f08d7c...`, v2 task, mini snapshot/medium/.env/probes and native limits. Four new,
-independent repeat1 invocations run OFF/ON/ON/OFF, each capped at $1.20, combined
-maximum $4.80 with no transfer of unused row allowance. Prior successful/failed rows
-are reference observations, not control samples. No provider/count/task call ran.
+Total recorded model usage: $1.152164400, 64 model calls, 65 count attempts, 72 tools,
+seven accepted edits and 706.868 active seconds. Safety A1/B1 PASS, B2/A2 NOT_RUN;
+all official=false/claim_eligible=false. Only aggregate private verdicts were read.
+A1 repaired its mode failure and selected manual recheck. B1's two harness rechecks
+exposed a new NameError then PASS; B2's harness recheck repaired seven regression
+failures. All three child results reached the next inference on the correct diff.
 
-This compares the native option including its first-context policy notice, not
-check timing alone. An initial-context test confirms that notice is the only
-synthetic pre-action context difference. All attempted rows remain in the comparison;
-no-child rows are NOT_EXERCISED for that path, not discarded. Submission/task acceptance,
-repair/check chronology, resource use and typed safety are separate outcomes.
-Only aggregate private evaluation after normal finish is permitted. No hidden-detail
-inspection, cross-run hints, retry/resume, extra sample or default adoption follows.
+B2 turn20 still had checks/read/search/mutation/probe/stop available, 21 model calls,
+80 tools and two edits remaining. It consumed all 25,000 output tokens as reasoning
+without a tool call. The next correction retained the encrypted item (1,701,176
+characters) and all 19 native call/output pairs. Turn21 input counting failed with
+BadRequestError; terminal COUNT_TIMEOUT_OR_UNKNOWN, not a proven timeout. No model
+request21 dispatched. The detailed server error was not retained; a size/continuation
+boundary is a hypothesis, not an established API limit or exact rejection cause.
 
-Eighteen repair-recheck and three documentation tests pass in 68.174s; two packet/
-context tests pass in 1.06s. Native runtime/task are unchanged. The preparer has no
-paid execution entry point. Price and read-only Docker/image preflight agreed with
-the proposed inputs during preparation; Docker readiness did not persist to execution.
-The four-run $4.80 scope was approved, but no row was admitted. Uncertainty stops
-the whole comparison with remaining rows NOT_RUN; approval does not start Docker.
-This is a small within-task reproducibility diagnostic, not a generalization claim.
+The uncertainty rule closed the comparison, leaving A2 NOT_RUN with no retry/resume
+or replacement. Mini task acceptance success recurred, but different initial patches
+and an incomplete comparison prevent a causal recheck/success-rate claim. Default
+stays OFF. Next candidate: safely bounded count-error metadata and offline request
+shape/size inspection, not another paid row or speculative reasoning reset.
+64 provider and 65 count request hashes, continuations, 204 referenced artifacts
+(sum across runs), submitted diff identity and owned-container absence verify.
+All 3,706 protected files and prior stop bytes are unchanged; runtime/task unchanged.
+Result documentation: three tests PASS (0.057s), Ruff/diff checks PASS; no full runtime
+suite or mock smoke rerun, and no disposable documentation-test workspace created.
 
-## Latest live result: fresh mini plus repair-recheck reaches task acceptance PASS
+## Prior single-row result: fresh mini plus repair-recheck reaches task acceptance PASS
 
 The exact separately approved invocation completed as `run_dev_d484ea8a2a8e4ba4`
 at `C:\patchloop-state`; approval, public trajectory and integrity receipts are at

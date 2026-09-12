@@ -82,13 +82,18 @@ model-selected. No provider retry/resume, extra operator check or Docker start/p
 build ran. Original evidence is immutable and the grant is consumed. Do not infer
 automatic default adoption or feature causality from this single successful trajectory.
 
-The next comparison was approved but **stopped before any row admission** because
-Docker was unavailable. `docker version` reports a missing Linux engine pipe;
-no Docker Desktop/backend process was observed. All four cells are NOT_RUN and
-cost $0; no provider/count/task calls or new native run occurred. Stop receipts are
-at `C:\pt\analyses\repair-recheck-comparison-live-20260912`. Do not start Docker or
-retry automatically; wait for Docker readiness and user direction. This is not a
-task failure. The immutable original preparation packet remains at
+The approved comparison ran after the user enabled Docker, then **stopped at B2
+input counting**. A1 OFF: both public checks PASS, task acceptance FAIL; B1 ON:
+task acceptance/safety PASS; B2 ON: regression repaired, other current-diff check
+still NOT_RUN, then 25k reasoning-only incomplete and correction-count BadRequestError.
+Native terminal COUNT_TIMEOUT_OR_UNKNOWN does not establish a timeout. Detailed
+server rejection data was not retained. A2 OFF stays NOT_RUN; no retry/resume or
+replacement follows, and unused budget is not permission for another invocation.
+Total recorded usage $1.152164400; receipts at
+`C:\pt\analyses\repair-recheck-comparison-live-20260912b`. All three automatic
+rechecks were current-diff-bound and delivered before inference; the incomplete,
+different-trajectory comparison does not establish feature causality. Default OFF.
+Preserve the earlier zero-call Docker stop at its original path. The design remains at
 `C:\pt\analyses\repair-recheck-comparison-20260912` (canonical packet `af29b90f...`).
 It proposes four independent native repeat1 invocations in OFF/ON/ON/OFF order under
 identical v2/mini snapshot/medium/.env/probes/runtime settings. Each row has its own
