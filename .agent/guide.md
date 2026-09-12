@@ -753,7 +753,37 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: operator-only input-count diagnostics and metadata-only failure recovery.
+Current seam: standalone frozen count-only design, no live entry point.
+`diagnostics/count_replay.py` reconstructs frozen B2 turns 20/21 using the saved
+public input/context, native call/output order and registered schemas. Original
+generation-request and count-body hashes must match before preparation. A harness
+check is not a synthetic native call. Preserve empty reasoning summary arrays as
+wire structure; reject nonempty summaries/plaintext rather than stripping and
+silently changing the request. Context identity hashes artifact bytes, while model
+input identity uses canonical JSON. Do not read unobserved source or private files.
+
+The new external packet at `C:\pt\analyses\count-replay-design-20260912` binds
+source journal/envelope, cutoff hashes, request artifacts and reconstruction
+implementation identity. Prepare requires a new root outside repo/source state.
+Verify is read-only; two repetitions must agree exactly. The pure protocol reducer
+permits a second count only after the control returns its historical 97,810 tokens;
+an error, unfinished attempt or changed count ends the sequence. Maximum two counts,
+one attempt per case, no generation/tools/Docker/private evaluation or source resume.
+Both succeeding means NOT_REPRODUCED, not proven transient cause or safe-size evidence.
+
+Only preparation and mock scheduling were implemented, not an executable live client.
+Count-only billing remains UNCONFIRMED after reviewing the official counting guide
+and pricing page; do not assume free, infer it from generation rates or reuse the old
+comparison grant. Resolve the billing/cap contract and obtain exact packet approval
+before a separately scoped collector. Runtime, task, v36, model/output settings,
+continuation and default repair-recheck behavior remain unchanged.
+Packet `f8342755...`: two identical no-call verifications, 0.443s preparation/rehearsal,
+3,759 protected files unchanged. Count/diagnostic/sampler/docs focused regression:
+112 PASS/50.68s; Ruff PASS. No new full runtime suite or smoke for this diagnostic-only
+seam. Receipts: `C:\pt\validation\countreplay-20260912` and
+`C:\pt\validation\countreplay-focus-0912a.xml`. Keep prior runtime test results dated.
+
+Prior implementation: operator-only input-count diagnostics and failure recovery.
 `agent/count_diagnostics.py` measures the actual count-payload fields in canonical
 UTF-8; its hash/size is not claimed to be the wire representation. On SDK errors,
 already-buffered HTTP request body size/hash is recorded separately, without reading

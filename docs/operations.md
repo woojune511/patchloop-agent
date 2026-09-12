@@ -70,6 +70,27 @@ it sends no new count/provider request and does not load credentials or a worksp
 Provider/billing uncertainty retains priority. Already terminal results remain
 idempotent. Old runtime-mismatched envelopes are not migrated.
 
+The standalone `diagnostics.count_replay` has only `prepare` and `verify` commands;
+neither creates a client, reads a credential, counts tokens or runs a task. The frozen
+B2 turn20/21 design is at `C:\pt\analyses\count-replay-design-20260912`. Its canonical
+request body artifacts contain the original public history and encrypted state;
+the human packet/journal retain hashes and sizes, not those bodies. Keep this new
+diagnostic separate from native resume. Verification requires the expected packet
+hash and checks original journal/envelope/CAS plus current reconstruction identity.
+
+Proposed collection is control first, then failed case, one attempt each; a changed
+97,810-token control, any error or missing outcome stops the sequence. No generation,
+tools, Docker, private evaluator, retry, replacement or continuation reset. These
+rules are simulated, not evidence that a live diagnostic ran. Both counts succeeding
+would mean only NOT_REPRODUCED; a new rejection would not recover the old error body.
+
+Count-only billing is UNCONFIRMED: the reviewed official
+[counting guide](https://developers.openai.com/api/docs/guides/token-counting) and
+[pricing page](https://developers.openai.com/api/docs/pricing) do not explicitly state
+this endpoint's price. There is no active execution grant or assumed zero-cost
+exception. Resolve billing/cap and exact packet approval before adding live execution;
+do not reuse the closed comparison's remaining budget.
+
 ## Opt-in repair feedback experiment
 
 `patchloop dev --repair-recheck` reruns the latest still-failing registered public

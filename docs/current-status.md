@@ -38,7 +38,32 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: bounded input-count failure evidence; no paid retry
+## Current seam: frozen count-only design; no API execution
+
+`diagnostics/count_replay.py` prepares and verifies a new operator-only packet from
+B2 turns 20/21. It reconstructs each original request and native call/output order,
+then freezes only the exact count body. No new source, changed context, continuation
+reset, model request, tool execution or old-run resume is introduced. The default
+agent/runtime and v36 surface are unchanged. The module has no live collection mode.
+
+The proposed order is successful-count control first, failed-count case second,
+at most one request each. Any error, interruption or changed control count stops
+before another request. Two successes mean NOT_REPRODUCED, not proof of a transient
+historical error. Source/CAS/config tampering and stop rules are tested without a
+provider. The exact frozen design and two no-call verifications are retained under
+`C:\pt\analyses\count-replay-design-20260912` (packet `f8342755...`). Both verify
+identically in a 0.443s preparation/rehearsal cycle; 3,759 protected files are unchanged.
+The focused count/diagnostic/sampler/docs regression passes 112 tests in 50.68s;
+Ruff passes. No new full runtime suite or mock smoke was needed for this standalone
+diagnostic-only change; prior runtime validation below remains historical evidence.
+
+Actual execution remains disabled. The official token-counting guide and pricing
+page reviewed on 2026-09-12 do not explicitly establish count-only endpoint billing;
+do not label it free or treat generation token prices as its proven price. Resolve
+that cost contract and obtain exact separate approval before a future live collector.
+The old comparison grant is closed. All evidence remains official=false.
+
+## Prior implementation: bounded input-count failure evidence; no paid retry
 
 Input counting now records operator-only request shape/size and a durable
 `input_count_failed` receipt before its existing COUNT_TIMEOUT_OR_UNKNOWN terminal.
