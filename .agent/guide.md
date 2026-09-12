@@ -753,9 +753,18 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: prepare-only four-run native comparison at
+Current seam: approved four-run native comparison blocked before any admission.
+Evidence: `C:\pt\analyses\repair-recheck-comparison-live-20260912`
+(`preflight-stop.json`, `result.md`, observer). Initial Docker availability check
+failed; `docker version` confirms missing `dockerDesktopLinuxEngine` pipe and no
+Desktop/backend process is observed. Four cells NOT_RUN, zero provider/count/task
+calls, no new native run, $0. All 3,677 protected files and existing run IDs unchanged.
+Do not retry automatically or start/pull/build Docker; wait for readiness and user
+direction. The observer marks this attempt closed before cell admission.
+
+The immutable four-run native comparison design remains at
 `C:\pt\analyses\repair-recheck-comparison-20260912`; packet hash `af29b90f...`.
-No execution authority yet. OFF/ON/ON/OFF, two fresh runs each, same runtime v36/
+Its exact $4.80 scope was approved. OFF/ON/ON/OFF, two fresh runs each, same runtime v36/
 `28f08d7c...`, task v2, mini snapshot/medium/.env/probes, each repeat1/$1.20, total
 $4.80 with no budget transfer. Keep 40/100/4/1,800 and native output admission.
 Previous rows are context only, never substitute controls or answer seeds. The option

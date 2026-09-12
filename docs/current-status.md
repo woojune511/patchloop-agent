@@ -38,9 +38,23 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: four-run repair-recheck comparison prepared; live unapproved
+## Current seam: approved four-run comparison stopped before admission; Docker unavailable
 
-The next proposal is frozen at `C:\pt\analyses\repair-recheck-comparison-20260912`
+The user approved the exact four-run proposal below. Execution stopped in the initial
+read-only preflight, before any native run or cell admission: `Docker is unavailable;
+dev-head never starts or installs it`. A separate `docker version` returns exit1:
+the `desktop-linux` engine pipe `//./pipe/dockerDesktopLinuxEngine` is absent, and
+no Docker Desktop/backend process is observed. The client is installed.
+
+All four cells are NOT_RUN: zero provider/count/task calls, zero new native runs,
+**$0 cost**, task acceptance/safety NOT_RUN. This is infrastructure unavailability,
+not an agent failure or comparison result. All 3,677 protected files and existing
+native run IDs verify unchanged. Approval and stop evidence are recorded at
+`C:\pt\analyses\repair-recheck-comparison-live-20260912` (`result.md`,
+`preflight-stop.json`, hash-chained observer). No Docker start/pull/build or automatic
+retry/resume ran. Wait for Docker readiness and user direction; preserve this attempt.
+
+The original proposal remains frozen at `C:\pt\analyses\repair-recheck-comparison-20260912`
 (`README.md`, `packet.json`), canonical packet hash `af29b90f...`. Same v36/runtime
 `28f08d7c...`, v2 task, mini snapshot/medium/.env/probes and native limits. Four new,
 independent repeat1 invocations run OFF/ON/ON/OFF, each capped at $1.20, combined
@@ -57,9 +71,10 @@ inspection, cross-run hints, retry/resume, extra sample or default adoption foll
 
 Eighteen repair-recheck and three documentation tests pass in 68.174s; two packet/
 context tests pass in 1.06s. Native runtime/task are unchanged. The preparer has no
-paid execution entry point. Price and read-only Docker/image preflight agree with
-the proposed inputs. Fresh exact approval of the packet and four-run $4.80 scope is
-still required; uncertainty stops the whole comparison with remaining rows NOT_RUN.
+paid execution entry point. Price and read-only Docker/image preflight agreed with
+the proposed inputs during preparation; Docker readiness did not persist to execution.
+The four-run $4.80 scope was approved, but no row was admitted. Uncertainty stops
+the whole comparison with remaining rows NOT_RUN; approval does not start Docker.
 This is a small within-task reproducibility diagnostic, not a generalization claim.
 
 ## Latest live result: fresh mini plus repair-recheck reaches task acceptance PASS
