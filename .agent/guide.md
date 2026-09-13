@@ -30,8 +30,8 @@ tasks/                    public/private packages and declared checks
 ## Loop and tool contract
 
 The only runtime is mutable `dev-head`. Its public workflow gates are
-`needs_mutation`, `needs_visible_checks`, and `ready_to_submit`; there is no plan
-state or plan tool.
+`needs_mutation`, `needs_visible_checks`, and `ready_to_submit`; there is no separate
+planning workflow phase or plan tool. Opt-in working_plan is only public working data.
 
 One model response may request either, when that tool family is exposed by the
 current gate and action horizon:
@@ -777,12 +777,13 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: opt-in brief planning (`none` default, append-only `brief-v1`) and
-fresh-run A/B. The prior supplied-case/advice packets below are closed diagnostics,
+Current seam: opt-in brief planning implemented; first A/B stopped, no adoption.
+Planning stays `none` by default, append-only `brief-v1` remains experimental.
+The prior supplied-case/advice packets below are closed diagnostics,
 not a pending execution queue. See [planning-experiment.md](planning-experiment.md) for the exact
 runtime/experiment contract. User approved this cycle's $40 aggregate envelope,
 <=32 fresh mini/medium/$1.20/repeat1 invocations, probes+repair-recheck both arms;
-do not ask per-run approval inside that boundary or reopen old grants.
+do not reopen old grants or bypass the cycle's recorded stop with remaining funds.
 
 `patchloop/dev/working_plan.py` derives review requests from public durable events
 and records one nonblocking turn annotation before tools. Only ON adds plan_update
@@ -802,12 +803,37 @@ integrity intact qualifies for frozen loguru-v3 then hf-v1 A1/B1/B2/A2. Otherwis
 choose one justified change or stop, never fill the budget. Private evaluator
 details cannot inform plan prompts; public traces only. Docker prepared images
 only, no auto-start/pull/build. Focused66PASS/4unsupported skips in104.018s;
-full2067PASS/8skips in640.392s across101files/fourworkers, exceeding the overall
+full2067PASS/8skips in640.416s across101files/fourworkers, exceeding the overall
 two-minute target. Six local historical-checkpoint tests explicitly verify runtime
 mismatch rejection instead of migrating their closed evidence; their compatible
 replay branches remain. Ruff and OFF/ON mock smoke pass, each4model/5tool/1edit
 through isolated acceptance PASS/safety NOT_RUN. 9658protected hashes and OFF
-prompt/schema/decision-wire identity match. No paid planning group executed yet.
+prompt/schema/decision-wire identity match.
+
+Frozen first group g01-pyfakefs at5bdb524a executed all8 attempted slots:
+A1 LIMIT, B1 AGENT_STOPPED, B2/A2/B3 EVALUATOR_FAIL, A3 LIMIT,
+A4 EVALUATOR_PASS, B4 COUNT_TIMEOUT_OR_UNKNOWN. Acceptance A1/4 vsB0/4;
+both submitted2/4, four isolated safetyPASS. Model-rate cost4.064418300USD;
+uncached equivalent A5.158878750/B4.450518750, not extra charge or isolated efficiency.
+ON drafts4/4; actual dispatched inputs93 verified (89carry an existing plan).
+Post-initial valid review decisions30, substantive plan replacements1. B1's only
+revision follows a rejected disallowed-file edit; B2/B3/B4 keep their initial text.
+B1 final input says parent-traversal NOT_RUN/current diff, remaining12model/69tool,
+run_check available, minimum2calls; it nevertheless stops claiming completion.
+No missing-delivery or impossible-horizon cause is established for that choice.
+
+B4 run_dev_5385c29659c640b5 seq263 returns reasoning-only incomplete at25000tokens.
+Its single encrypted item is1717452characters. Seq268 input-count HTTP400 rejects
+input[83].encrypted_content with string_above_max_length; observed body2174995bytes.
+This is an explicit size rejection despite the generic COUNT_TIMEOUT_OR_UNKNOWN
+terminal name, not a timeout or oversized plan. All191 model calls have durable
+usage; count attempts192. No next correction dispatch, retry, reset, second group
+or extension. Cycle stop is authoritative; unused budget is not a restart grant.
+No public-trace-backed planning revision is tested or selected after that stop.
+Next separate investigation: provider-returned continuation/count size contract,
+without inferring a hidden failure cause or changing this frozen comparison.
+Public result/metrics/delivery and errors are under reviews/ and result.md in
+the cycle root; no hidden evaluator detail was used to diagnose planning behavior.
 Receipt roots: C:\pt\validation\planning-cycle-20260914 and
 C:\pt\analyses\planning-cycle-20260914. Preserve all pre-existing evidence.
 

@@ -103,3 +103,19 @@ Then run Ruff, the entire provider-free suite with external short temporary root
 and mock smoke. Record actual timing rather than claiming the two-minute target
 was met without measurement. Preserve credentials, user changes, task/history and
 all existing external evidence. Every result remains `official=false`.
+
+## First cycle outcome (2026-09-14)
+
+The first eight attempted trials at `5bdb524a` produced OFF acceptance 1/4 vs ON
+0/4, with 2/4 submitted in each arm and $4.064418300 durable model-rate cost.
+All ON drafts were created/delivered, but only one of 30 post-initial valid review
+decisions replaced its plan. This is not evidence of efficacy or of a causal
+relationship between plan staleness and task failure.
+
+B4's reasoning-only 25,000-token incomplete response returned a single encrypted
+item of 1,717,452 characters. The next input count received HTTP 400
+`string_above_max_length`; the native `COUNT_TIMEOUT_OR_UNKNOWN` terminal and
+cycle stop were recorded. No retry, second version or extension ran. Preserve the
+stop: leftover budget is not permission to reset continuation or bypass admission.
+The cycle result and public-only review are at
+`C:\pt\analyses\planning-cycle-20260914\result.md` and its `reviews` directory.

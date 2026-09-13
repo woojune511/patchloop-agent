@@ -59,7 +59,11 @@ still unofficial.
 requires `--context-policy append-v1`. Resume must repeat the same option along
 with the existing exact task/model/environment/cap/limits. No old run migration.
 
-For the currently user-authorized $40 cycle, use `diagnostics.planning_cycle`:
+`diagnostics.planning_cycle` implements the user-authorized bounded cycle. The
+2026-09-14 cycle below is now stopped after eight attempts ($4.064418300 recorded
+model-rate cost). B4's input-count HTTP 400 rejected an oversized encrypted item;
+no next group or paid retry is queued. The commands below document its original
+interface, not permission to recreate the experiment under a different root:
 
 ```powershell
 uv run python -m diagnostics.planning_cycle init --root C:\pt\analyses\planning-cycle-20260914 --pricing-verified-on <actual-UTC-date>
@@ -80,8 +84,9 @@ mode; tests also mock probe-image preflight, and never claim it as live evidence
 The authorized group order, stage thresholds and metrics are specified in
 [the experiment contract](../.agent/planning-experiment.md). Do not add runs to use leftover
 budget or use hidden details to revise planning instructions. Close with `close
---reason ...` when there is no justified next change. Old experiment approvals
-below remain consumed; this cycle does not reopen them.
+--reason ...` when there is no justified next change or a terminal cycle stop has
+been reviewed. A recorded stop is never cleared to spend the remaining budget.
+Old experiment approvals below remain consumed; this cycle does not reopen them.
 
 ## Closed supplied public-case lifecycle experiment
 

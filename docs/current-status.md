@@ -5,7 +5,7 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: opt-in brief planning and fresh-run comparison
+## Current seam: brief planning implemented; comparison stopped
 
 The supplied public-case/advice experiments below are closed diagnostics, not the
 next execution queue. The current intervention is `--planning-policy brief-v1`,
@@ -20,9 +20,26 @@ with probes and repair-recheck enabled in both arms and the existing 40/100/4/18
 limits. First compare four OFF/four ON pyfakefs-v2 runs; at most two justified
 single-axis planning revisions and qualified loguru-v3/hf-v1 extension follow.
 Maximum 32 runs/$38.40 of reserved invocation caps; unused budget is not a target.
-No live planning comparison has run yet. Focused validation passes 66 tests with
+The first eight fresh runs executed at `5bdb524a`: OFF acceptance 1/4, ON 0/4;
+both arms submitted 2/4. Durable model-rate cost is $4.064418300, not invoice/count
+billing verification. B4 stopped the cycle at `COUNT_TIMEOUT_OR_UNKNOWN`: a known
+HTTP 400 `string_above_max_length` for `input[83].encrypted_content`, not an actual
+timeout. Its preceding response spent all 25,000 output tokens in reasoning,
+returned no action and produced one 1,717,452-character encrypted item. The next
+model call was never dispatched. No retry, second version or extension ran.
+
+All four ON drafts were created and actual delivery verified. Only 1/30 valid
+post-initial review decisions updated the plan; three plans remained exact initial
+inspection/edit/check descriptions. B1 stopped with an incorrect completion claim
+despite a current NOT_RUN check and `run_check` being available. These observations
+do not establish that plan staleness caused task failure. Keep planning OFF; no
+benefit/adoption claim. The cycle is stopped, not a pending paid queue. A separate
+provider-returned continuation-size contract investigation precedes any future
+comparison; do not reset state or change ceilings to bypass this stop.
+
+Focused validation passes 66 tests with
 4 unsupported-combination skips in 104.018s. The complete rerun passes 2067 tests
-with 8 skips in 640.392s (101 files, four isolated workers); the two-minute overall
+with 8 skips in 640.416s (101 files, four isolated workers); the two-minute overall
 target was not met. Six old live-checkpoint tests now verify read-only rejection
 on runtime mismatch, preserving their compatible-runtime replay assertions and
 all old code/packet bytes. Ruff and both OFF/ON mock smoke pass; each mock makes
@@ -34,7 +51,7 @@ reuses completed results or exact native recovery. It stops the whole cycle on
 provider/count/cost/integrity/cleanup uncertainty. Prepared Docker/images only;
 no automatic start/pull/build. Details and the predeclared decision rule are in
 [the planning experiment contract](../.agent/planning-experiment.md). External evidence
-will live at `C:\pt\analyses\planning-cycle-20260914`; local receipts live under
+are at `C:\pt\analyses\planning-cycle-20260914\result.md`; local receipts live under
 `C:\pt\validation\planning-cycle-20260914`. All results remain `official=false`.
 
 ## Targets and limits
