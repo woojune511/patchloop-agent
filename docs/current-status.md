@@ -38,7 +38,43 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: native context A/B completed; four-row approval consumed
+## Current seam: public counterexamples reproduced; no runtime change
+
+The approved provider-free diagnostic fixed 14 public-spec-derived POSIX cases
+before execution and compared actual Linux os.makedirs with BASE/A1/B1/B2/A2.
+The five existing-public-sandbox executions completed in 21.313s, with identical
+real/fake initial fixtures and identical real-OS oracle results across subjects.
+The pinned public Python image reports Linux/Python 3.12.13, umask 0o022.
+No provider, hidden evaluator, Windows/macOS, new agent run or patch repair ran.
+
+Actual-OS agreement: BASE 1/14, A1 11/14, B1 11/14, B2 8/14, A2 7/14. These are
+selected post-hoc diagnostic cases, not hidden scores or a new A/B success ranking.
+A2's predicted `a/../b/../c` omission is now reproduced: real OS leaves a, b and c;
+A2 leaves only a and c. The same bytes-path case agrees, consistent with a string-only
+`component == ".."` early break. B2 mishandles existing destinations and the modes
+of directories created before an error, as well as link traversal.
+
+Even B1, which passed the prior isolated evaluation, differs on three cases:
+`file/../leaf` creates leaf instead of raising ENOTDIR; link-plus-parent traversal
+creates the destination in the wrong directory. This supplements, not rewrites,
+the prior EVALUATOR_PASS: finite check success is not all-input correctness.
+All four candidates differ on the two valid-directory-link traversal cases.
+The remaining demonstrated issue is incomplete preservation of path semantics;
+planning/memory/context-policy causality and benefit from requiring probes are
+still unproven. These operator cases must not be described as agent-authored checks
+or automatically injected into the default prompt/task as repair hints.
+
+Evidence: `C:\pt\analyses\public-counterexamples-20260913` (`packet.json`,
+`results.json`, `result.md` and per-subject sandbox receipts). Packet `06cd6fb9...`;
+5,514 historical/task/user/analysis file hashes verify. Five owned container cleanups
+are confirmed and absent. The owned 128-file temporary clone was recycled with
+hash-verified recovery receipt. Six diagnostic utility tests pass in 0.08s; final
+docs/Ruff and cleanup receipts are bound by completion.json. No runtime/default change or
+full-suite/mock rerun; all diagnostic task_acceptance flags are NOT_RUN and official=false.
+Next decision: one generic behavior experiment for public-requirement combination
+checks, without treating this task's counterexamples as cross-task solution hints.
+
+## Prior native context A/B completed; four-row approval consumed
 
 The exact `8f016079...` packet ran once in A1/B1/B2/A2 order, append/window/window/
 append. All four were fresh pyfakefs v2/mini-2026-03-17/medium/root `.env` repeat1

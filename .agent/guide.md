@@ -777,7 +777,35 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: native context A/B completed; exact four-row approval consumed.
+Current seam: provider-free public counterexample diagnostic completed.
+Evidence: `C:\pt\analyses\public-counterexamples-20260913`, packet `06cd6fb9...`.
+Four saved candidates plus local BASE clone, 14 fixed public-spec cases each,
+existing public probe sandbox, Linux/Python 3.12.13/umask 0o022. Setup snapshots
+match before each operation; real os.makedirs outputs match across all five subjects.
+Compare errors and full filesystem side effects, including modes after an error.
+Agreement BASE/A1/B1/B2/A2 = 1/11/11/8/7 of 14, not a hidden score or global ranking.
+A2 omits b from a/../b/../c; bytes variant agrees while the str early-break path fails.
+B1 still accepts file/../leaf and resolves two directory-link/.. destinations wrongly.
+B2 has existing-target/error-path mode/link failures. Preserve original EVALUATOR_PASS
+and FAIL records; the new public counterexamples supplement their finite coverage.
+Do not infer exact hidden failures or invalidate old results by rewriting them.
+All candidates differ on the two valid-link traversal cases. This proves candidate
+semantic defects, not missing planning/memory/context as their isolated cause.
+No agent in the prior four runs called run_probe; these are operator-authored checks.
+Do not give the agent credit, add the cases to immutable tasks, force probe use, or
+inject task-specific solutions into default prompts under this diagnostic approval.
+5 sandbox calls/70 comparisons in 21.313102s, zero provider/count/generation cost;
+hidden evaluator, Windows/macOS and task_acceptance NOT_RUN, official/claim flags false.
+5,514 protected file hashes match; 5 own container cleanups confirmed/absent.
+Six diagnostic tests PASS/0.08s; docs/Ruff/read-only final receipt completion.json.
+Only owned C:\pt\tmp\ce0913a was recycled after process completion: 128 files with
+before/after hashes and exact restoration path in cleanup.json. Original candidate
+workspaces remain in place. No Docker start/pull/build,
+runtime/task/default edits, full-suite/mock rerun or new paid authorization.
+Next decision: one generic public-requirement combination-check behavior experiment,
+with independent evaluation before adoption; do not generalize this post-hoc panel.
+
+Prior seam: native context A/B completed; exact four-row approval consumed.
 Immutable design: `C:\pt\analyses\native-window-comparison-20260913\packet.json`, hash
 `sha256:8f0160790dc5916f5b6f28b98a4170ee2683604d69ebcf422fda291b018dd808`.
 Live evidence: `C:\pt\analyses\native-window-comparison-live-20260913`.
