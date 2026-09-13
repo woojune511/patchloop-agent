@@ -777,7 +777,50 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: voluntary counterexample-review packet completed; approval consumed.
+Current seam: failure-given repair input/criteria preparation only; no paid authority.
+`diagnostics/failure_given_repair.py` has only prepare/validate entry points. Packet:
+`C:\pt\analyses\failure-given-repair-20260914\ready`, SHA-256
+`8a1ea07a28fa7035419445cd7634fa23fddc586a08bdac1d9604ec42e946e7b3`.
+Restore the identical A2 pre-turn22 native request using the existing public-prefix
+restorer. Verify the sealed operator panel completion, packet, source, A2 receipt
+and hash-chained journal, public spec, diff and target raw file identity. Project only
+the selected multi_parent case: str a/../b/../c, initially empty cwd, Linux/umask022,
+mode0777/exist_ok=false; real a, b, c versus fake a, c, no exceptions, mode0755.
+Other cases, candidate diagnoses, source locations and repair hints are not input.
+
+The sole overlay is state.operator_public_feedback in the latest unsent snapshot.
+Do not append another user message: native v38 requires one immutable task message.
+Keep historical items, 21 opaque reasoning items/native action pairs, prompt, tools,
+notes, budgets and actual check status unchanged. No review suffix, forged native
+action, failed-check credit, enforced probe or finish gate. Mark origin as
+operator_executed_public_diagnostic; the observed diff is the report's only authority.
+After native construction a future adapter must overlay the same report once in the
+latest view and matching context artifact, relabel it historical_candidate after a
+diff change, and preserve all already-sent items. Read-only restoration is tested; NOT a
+tested execution/recovery adapter yet. Initial wire delta: 1,601 bytes, not tokens.
+
+Rubric: observed acknowledgment != semantic repair; admission != correctness;
+same-case agent probe != operator audit; inherited visible PASS != new execution;
+finish != bug resolution. Freeze an independent one-case reproduction from the
+existing public panel, for post-episode operator checks only. Never give the agent
+credit for that audit or feed its result back into a finished diagnostic branch.
+Current public checks remain the registered two, not this additional diagnostic.
+One selected case/checkpoint cannot distinguish all model/context causes or prove
+autonomous discovery/generalization. Old no-feedback responses are not fresh controls.
+
+Plan two independent F1/F2 continuations, <=8 calls each, $0.50 each/$1 total,
+no transfer/retry/resume/extra sample, full25k admission and unchanged mini/medium.
+Prices must be reviewed and the exact request counted before later live admission.
+No credentials/provider/Docker/patch execution in preparation; task/private/safety
+NOT_RUN, official=false. New model calls need an executable packet and fresh grant.
+55 focused tests and Ruff pass; actual prefix replays twice with forbidden network/process/
+secret access; 6,391 protected hashes match. Validation root:
+`C:\pt\validation\failure-given-repair-20260914`. Runtime/default/task unchanged;
+full runtime suite and isolated evaluator smoke not rerun for this no-call design.
+Next scoped implementation reuses the bounded collector, with real native feedback,
+currency/correction/recovery tests before paid authorization, not more agent gates.
+
+Prior seam: voluntary counterexample-review packet completed; approval consumed.
 Evidence: `C:\pt\analyses\counterexample-review-live-20260913`.
 Exact packet `6502091980b8b38dc6c47e730c6418c51e95a953cec4c793e3b6e16b6434e367`
 ran once, A1/B1/B2/A2, mini-2026-03-17/medium/.env, $0.50 each/$2 total, v38 intact.

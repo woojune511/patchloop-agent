@@ -38,7 +38,39 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: counterexample-review comparison completed; no adoption
+## Current seam: failure-given repair inputs prepared; no execution
+
+The next diagnostic separates autonomous bug discovery from repair after a concrete
+public failure report. `diagnostics/failure_given_repair.py` restores the same A2
+pre-turn22 checkpoint and adds only `operator_public_feedback` to its latest unsent
+current-state snapshot. The chosen `a/../b/../c` observation is bound to the existing
+public Linux receipt and identical `43fb9b2b...` patch: real OS creates a, b and c,
+while the candidate creates a and c. No source location or replacement hint is supplied.
+
+The 21 encrypted items, 21 native action/result pairs, system prompt, tools, notes,
+current visible PASS and budgets remain unchanged. No fake tool result, extra user
+message, failed-check gate, repair allowance or mandatory probe is added. After an
+edit the report is historical, not evidence that the new candidate still fails.
+The serialized request grows by 1,601 bytes (472,214 to 473,815); input tokens are
+not counted. Only the selected public case is projected, not the other panel cases.
+
+Evidence: `C:\pt\analyses\failure-given-repair-20260914\ready`, packet `8a1ea07a...`.
+Two independent mini/medium continuations, <=8 new calls each and planning caps of
+$0.50 each/$1 total are specified, not approved or guaranteed funded. The rubric
+separates acknowledgment, admitted repair, agent same-case recheck, operator audit,
+current visible checks and finish. Earlier runs are not new randomized controls.
+The independent single-case reproduction is prepared, not executed or delivered as
+agent-authored code. Hidden/task acceptance/safety stay NOT_RUN; official=false.
+
+55 focused preparation/restoration/documentation tests and Ruff pass. Actual prefix replay
+validates twice with process/network/secret-file access disabled; 6,391 protected
+hashes match. Receipts: `C:\pt\validation\failure-given-repair-20260914`.
+The module exposes prepare/validate only. Next: connect the existing bounded
+collector and mock-test feedback currency/recovery, then obtain exact paid approval.
+No provider/count/Docker/candidate execution, default/runtime/task change, full runtime
+suite or isolated-evaluator smoke is included in this input-only preparation.
+
+## Prior counterexample-review comparison completed; no adoption
 
 The exact `65020919...` packet ran once in A1/B1/B2/A2 round-robin order using the
 approved mini/medium/.env settings, unchanged v38 and $0.50 each/$2 total caps.
