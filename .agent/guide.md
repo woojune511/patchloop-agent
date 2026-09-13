@@ -777,7 +777,38 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: voluntary counterexample-review collector, mock verified; paid run pending.
+Current seam: voluntary counterexample-review packet completed; approval consumed.
+Evidence: `C:\pt\analyses\counterexample-review-live-20260913`.
+Exact packet `6502091980b8b38dc6c47e730c6418c51e95a953cec4c793e3b6e16b6434e367`
+ran once, A1/B1/B2/A2, mini-2026-03-17/medium/.env, $0.50 each/$2 total, v38 intact.
+A1/A2/B2 immediately finished; B1 probed Windows-mode bytes parent traversal, saw
+two existence assertions pass, then finished. All submitted unchanged `43fb9b2b...`.
+Five provider/counts and tools, no new mutation/registered check; 57.693s,
+$0.194283150 known model cost. Current public PASS was inherited, not re-executed.
+Hidden/task_acceptance/safety NOT_RUN and official=false; not four task successes.
+Initial requests, encrypted/native prefixes, suffix counts and usage costs verify.
+One real probe/cleanup confirmed and exact container absent. No truncation, cap,
+deadline or action-mask closure caused submission; no new failure exercised repair.
+The selected probe is public-grounded and falsifiable but narrow (Windows emulation
+plus bytes, one parent traversal), not an OS-wide differential test or a defect found.
+Do not infer repeatable quality improvement, memory/planning causality or adopt B.
+Code content was label-masked before key opening, but prior operator status exposed
+arm/count metadata; document this limited masking, not independent blinded scoring.
+Terminal note updates in A1/A2/B1 tried unknown v1/v2 concern IDs. Gateway rejected
+those resolutions non-blockingly. A2/B1 notes reference a historical failed check
+while describing current PASS; typed historical evidence remains FAIL. These notes
+accompanied finish and did not feed an earlier choice here; no causal attribution.
+5,571 protected hashes verify. `approval.json` records the user's new authority:
+the immutable execution envelope copied the prepared paid_execution_authorized=false
+flag, so do not rewrite it or confuse that stale plan flag with absent user approval.
+Model-rate cost != invoice/count-endpoint billing. First A/B had zero cache and
+second samples reused 102,784 tokens each; cost/behavior effects remain separate.
+No further paid run/resume/retry, operator cases, hidden evaluator or default change
+is authorized. Keep these workspaces as actual execution evidence, not pytest scratch.
+Next scoped decision concerns discriminating test selection and completion confidence;
+do not infer a need for more hard gates from one post-hoc checkpoint/two samples.
+
+Prior seam: counterexample-review collector implementation and frozen preparation.
 `diagnostics/counterexample_review.py` restores A2 `run_dev_8d592587618448b7` turn22
 from its public prefix. Artifacts: `C:\pt\analyses\counterexample-review-20260913`.
 Both current checks PASS, 19 model/78 tool/2 accepted mutations remain, 1619 seconds.

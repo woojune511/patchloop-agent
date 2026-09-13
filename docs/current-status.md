@@ -38,7 +38,45 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: counterexample-review collector connected; paid execution pending
+## Current seam: counterexample-review comparison completed; no adoption
+
+The exact `65020919...` packet ran once in A1/B1/B2/A2 round-robin order using the
+approved mini/medium/.env settings, unchanged v38 and $0.50 each/$2 total caps.
+All four continuations submitted the unchanged public-PASS checkpoint patch
+`43fb9b2b...`. A1, A2 and B2 finished immediately; B1 ran one Windows-mode bytes
+parent-traversal probe, saw both directory assertions pass, then finished.
+
+Five provider/count calls, five tool actions, zero new mutations and zero new
+registered checks completed in 57.693s. Known model-rate cost: $0.194283150.
+The public PASS receipts were inherited on the identical diff, not newly executed
+tests. Hidden evaluation/task acceptance/safety remain NOT_RUN; official=false.
+The previously demonstrated public counterexamples remain unrepaired because
+candidate bytes are identical. This is not four new task successes.
+
+Initial A/B bytes, all encrypted/native history prefixes and the single B suffix
+match the approved design. B1's real probe result reached its next request and
+was acknowledged in its public finish rationale. There was no cap, deadline,
+output saturation or unavailable-probe termination. The narrow Windows/bytes case
+was meaningful but did not expose a remaining bug; failure repair was unexercised.
+One extra probe in two B samples is not a repeatable improvement in patch quality.
+Do not adopt the instruction or infer planning/memory causality from this panel.
+
+Cost is cache-sensitive: first A/B requests had zero cached input; second samples
+each reused 102,784 tokens. Model-rate totals are not invoice/count-billing proof.
+Code evidence was label-masked, but operator progress already showed arm/count
+metadata, so this was not independent fully blinded judging. Terminal-only note
+updates also tried nonexistent concern IDs; these were rejected without blocking
+finish and cannot explain an earlier choice in these continuations.
+
+Evidence: `C:\pt\analyses\counterexample-review-live-20260913` (`result.json`,
+`audit.json`, `blind-observations.json`, `interpretation.json`, `result.md`).
+5,571 protected hashes verify; one owned probe-container cleanup is confirmed and
+its exact container is absent. No Docker start/pull/build, retry, resume, extra
+sample, operator repair or hidden execution occurred. The approval is consumed;
+unused budget does not authorize more calls. Next is a separately scoped decision
+about discriminating-case selection and completion confidence, not another paid run.
+
+## Prior counterexample-review preparation (approval consumed above)
 
 The approved no-call preparation selects A2 (`run_dev_8d592587618448b7`) immediately
 before turn22: both current visible checks PASS, with 19 model/78 tool calls and
@@ -83,9 +121,9 @@ packet: `C:\pt\analyses\counterexample-review-executable-20260913`, `plan.json` 
 restoration; 5,556 protected file hashes match. Receipts: `validation.json`,
 `final-validation.json`, `result.md`. The follow-up Ruff receipt resolves a single
 line-length error in the external audit helper, with collector/runtime bytes unchanged.
-The next step is separate exact paid approval, then existing-image preflight and
-one execution of this four-branch packet, not a new unconstrained live row.
-Provider/count/Docker/actual candidate/hidden execution NOT_RUN, official=false.
+At preparation time, paid approval and actual execution were pending; the completed
+invocation is recorded above. This historical preparation did not itself execute
+provider/count/Docker/candidate/hidden work and remains official=false.
 The full runtime suite and isolated-evaluator smoke were not rerun for this
 diagnostics-only change; synthetic gateway rollouts cover probe/mutation/check/finish.
 
