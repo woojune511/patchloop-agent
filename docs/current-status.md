@@ -38,7 +38,44 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: current-failure collector, provider-free validation
+## Current seam: current-failure A/B executed; local repair signal, no adoption
+
+The exact `4eacdc10...` packet ran once: A1/B1/B2/A2 from the frozen nested A2
+checkpoint, mini/medium/25k, $1 each/$4 total. A1/A2 submitted the unchanged
+`5c3c2067...` candidate and both fail the independent public case. B1/B2 each
+made an immediate stack/pop repair and both pass that case. B1's new bytes/str
+concatenation regression fails the visible parent-traversal check at fake_os.py:955;
+B2 passes both visible checks and submits `6d7c7010...` (517 upstream tests pass,
+570 skip). Public-case repair is not hidden acceptance or broad correctness.
+
+B1 spent its last inherited mutation allowance; after the check failure, 14 model
+calls/73 tool actions but zero mutations remained. The horizon stopped it before
+another count/provider call. This is not token, cost or transport exhaustion.
+No branch ran an agent probe. B2 still said no further probe was needed despite
+having that tool; its same-case PASS comes only from the post-episode operator.
+
+Native/opaque history, exact frozen first requests and B-only report delivery pass
+integrity checks. B's report becomes historical after mutation. Initial notes and
+guidance are identical across arms; B2's later note updates reach subsequent requests.
+Both B repairs preceded new notes. Memory delivery is not missing, but model-authored
+interpretation and completion judgment can remain wrong. No mandatory gate is justified.
+
+Evidence: `C:\pt\analyses\current-failure-feedback-live-20260914` (`result.md`,
+audit/interpretation/transcript/context and container receipts); validation same-name
+under `C:\pt\validation`. Eight Responses/counts/actions, three operator executions
+with one identical-candidate reuse, 111.427s, known model-rate cost $0.469017450.
+All 7852 protected hashes match; six owned containers are absent. Count billing/invoice
+UNVERIFIED; cached-token differences are not efficiency evidence. Collector stdout
+revealed labeled outcomes before masked code review, so do not claim a fully blind review.
+
+Next: design one generic public-case verification/completion loop experiment, keeping
+registered-check PASS distinct from reproduced-case resolution. No hardcoded fix,
+forced memory/plan, default adoption or automatic paid continuation. One selected
+checkpoint/two samples per arm do not establish generalization or autonomous discovery.
+This approval is consumed. Runtime/task are unchanged; hidden/task acceptance and
+safety NOT_RUN, official=false; no retry/resume/extra sample or Docker start/pull/build.
+
+## Prior current-failure collector, provider-free validation
 
 `diagnostics.current_failure_feedback_rollout` now connects the frozen comparison
 to the existing bounded dispatcher, public gateway, recovery and operator audit.

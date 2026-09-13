@@ -777,7 +777,44 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: current-failure collector implemented, no paid authority yet.
+Current seam: current-failure A/B completed; exact approval consumed, no adoption.
+Packet 4eacdc10d51c4e3589f25013504f399621dfa1909bc00f6a8fa7276b7113ab0c,
+mini/medium/25k, root .env, A1/B1/B2/A2, <=8 new responses and $1 each/$4 total.
+Evidence C:\pt\analyses\current-failure-feedback-live-20260914; validation same-name
+under C:\pt\validation. Source prefix and previous packets remain immutable.
+
+A1/A2: unchanged 5c3c2067..., finish on first response, independent public case FAIL.
+B1: immediate stack/pop edit 02319966..., public case PASS, new visible bytes/str
+TypeError at fake_os.py:955 (`drive + ... else ""`). After its fourth total accepted
+mutation and failing check, no mutation remains; LIMIT_REACHED before a third count/
+provider dispatch with model14/tool73 remaining. Do not call this a token/cost failure.
+Static absolute-prefix risk is separate from the observed TypeError, not its substitute.
+B2: stack/pop edit 6d7c7010..., both registered checks PASS, finish; operator case PASS.
+Upstream receipt: 517 passed/570 skipped. Neither B executed a same-case probe; the
+optional tool was offered at B2 finish, whose basis said no further probe was necessary.
+Operator evidence is post-episode, never agent credit or feedback to these finished runs.
+
+All first inputs equal frozen bytes, native/opaque prefixes preserved, B-only current
+feedback recorded once/latest view and historical after edits. Initial notes/guidance
+match across arms; B2 notes appear in following requests. Both repairs precede new
+memory updates. Inherited wrong n2 interpretation is model_authored_unverified, not
+harness truth; A retained it, B explicitly reversed its mechanism. Unknown verification
+concern resolutions in A1/A2/B2 are non-blocking diagnostics, not this failure's cause.
+No reasoning reset, tool closure or lost-current-feedback defect was observed here.
+
+Eight Responses, eight counts/actions, two accepted new mutations, three new visible
+checks and three operator executions (A candidate reused). 111.427s; known model-rate
+cost 0.469017450 USD. Input1015527/cached480256/output7010/reasoning4596 tokens.
+Count billing/invoice UNVERIFIED. All7852 protected hashes match; six owned containers
+have confirmed cleanup and inspect absence. Default runtime/task/user state unchanged.
+Collector stdout exposed labeled outcomes before masked code review: not fully blind.
+Only one selected checkpoint/two per arm; local repair contrast is not generalization,
+autonomous discovery, hidden acceptance, or proof of a unique internal model cause.
+Next design one public-case verification/completion loop experiment, not another
+hard gate or forced notes/plan. No automatic implementation/extra paid sample under
+this grant. Task acceptance/safety NOT_RUN; official=false. Keep all run bytes.
+
+Prior seam: current-failure collector implemented, no paid authority at preparation.
 `diagnostics/current_failure_feedback_rollout.py` reuses feedback.execute_packet,
 native.initialize_branch and the existing dispatcher/reconciliation/operator audit.
 Load the immutable current-failure design, validate nested A2's exact cutoff, and
