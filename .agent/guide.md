@@ -777,7 +777,48 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: experimental report-aware review, not a default runtime/memory change.
+Current seam: report-review A/B completed; mixed evidence, grant consumed, no adoption.
+Exact 08e28fe788bb5084c43c1133532a0cd64f1dadb009bdf9dad2a7d762a26174e5 executed once
+with four independent A1/B1/B2/A2 branches under $0.50 each/$2 total, mini/medium/25k,
+root .env, same A2 pre-turn22, append-v1/probes/recheck and immutable opaque/native history.
+Evidence C:\pt\analyses\report-review-live-20260914; validation same-name under
+C:\pt\validation. All initial requests, 19 counted request hashes, 18 usage/model/count
+bindings, public report currency, B review artifacts and preserved prefixes verify.
+
+A1: two accepted repairs, two new registered PASS, then COST_CAP_REACHED before a
+fifth provider dispatch; final34-line unsubmitted candidate passes operator case.
+B1: one29-line stack repair, probe with fs.path AttributeError, corrected probe prints
+a/b/c directory existence and0755, two new registered PASS, finish; operator case PASS.
+B2/A2: one23-line break-to-continue repair, two new registered PASS, finish, no probe;
+operator case FAIL at a,a/b,c, same candidate hash5c3c2067... reused once by operator.
+Blind final-code observations preceded opening condition mapping/operator outcomes;
+prior knowledge of similar patches was disclosed. No new candidate execution in analysis.
+
+B1's probe is relevant exact-input evidence, not full fixture/oracle equivalence; it
+does not explicitly set cwd/umask or enumerate all entries. The correct mutation came
+before probing, so no causal claim that probing produced the repair. B2's last request
+still had modified_unverified, optional run_probe advice and the tool itself; 16/75/1
+model/tool/mutation budget remained. Soft delivery succeeded but was not a reliable
+verification trigger. A2's active notes retained a wrong causal belief; B1/B2 notes were
+created only with finish and cannot explain earlier choices. Nonexistent v1/v2 resolutions
+were non-blockingly rejected; gateway source binding does not certify interpretation.
+
+Both arms have one final-case PASS and one FAIL; one checkpoint/two samples each is not
+a general rate or evidence of B superiority. A1 was cost-censored, not agent refusal or
+semantic failure. $0.374432250 spent, $0.125567750 left; next130053input+25000output
+uncached reservation $0.210039750 exceeds remaining. Do not lower output, transfer caps
+or run a replacement. A1 cache0 versus substantial other-arm cache confounds paid cost.
+18Responses/19counts/18actions/3operator executions,224.595s,$0.729577950 known model cost;
+count billing/invoice UNVERIFIED.13owned container cleanups and exact absence verified;
+6919protected hashes match. Task acceptance/safety NOT_RUN; official=false. No hidden
+execution, runtime/task mutation, paid retry/resume/additional sample or Docker start/pull/build.
+
+Next scoped candidate is a design for current-diff failure feedback on the common wrong
+patch, giving actual relative entries a,a/b,c (not a source repair hint) to distinguish
+not initiating verification from failing to repair after explicit evidence. No additional
+execution authority remains. Do not adopt B or invent a hard gate/mandatory notes now.
+
+Prior seam: experimental report-aware review, not a default runtime/memory change.
 `diagnostics/report_verification_review.py` uses the existing native projection hook
 and failure-given executor, whose RolloutProtocol supplies only frozen design/order/
 caps/validation/branch initialization. Old F1/F2 command defaults remain unchanged;

@@ -38,7 +38,46 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: report-aware review comparison, not default adoption
+## Current seam: report-aware review executed; mixed result, no adoption
+
+The approved `08e28fe7...` packet ran once in fixed A1/B1/B2/A2 order. Final candidate
+case outcomes are A1 PASS, A2 FAIL, B1 PASS, B2 FAIL: one of two in each arm, not a
+general success rate. All eight new registered checks PASS. A1's candidate was not
+submitted: full25k cost reservation censored it before its fifth provider dispatch.
+B1/B2/A2 submitted; hidden/task acceptance and safety remain NOT_RUN, official=false.
+
+B1 repaired with a component stack, then probed the reported path. The first probe
+used nonexistent fs.path; the agent corrected the probe and observed a/b/c directories
+with mode0755. This is relevant same-input evidence, not a complete oracle reproduction
+(fixture/cwd/umask are not explicitly set; all entries are not enumerated). The separate
+fixed operator case PASS is independent evidence. The correct mutation preceded probes.
+B2 still submitted break-to-continue code producing a,a/b,c, exactly like A2. Its final
+view retained modified_unverified, recommended run_probe, and actually offered that tool;
+16 model calls/75 tool actions/one mutation remained. Delivery worked; consistent action
+selection and causal repair did not. The internal model cause remains unseparated.
+
+A2 wrote/reused an incorrect causal note before submission, so absent memory alone is
+not an adequate explanation. B1/B2 wrote notes only alongside finish, not before their
+earlier choices; nonexistent v1/v2 resolutions were rejected without blocking valid tools.
+No report loss, missing opaque/native history, tool closure or protocol error was found.
+This small comparison does not justify default adoption or another mandatory gate.
+
+Evidence: `C:\pt\analyses\report-review-live-20260914`; result.md/audit.json,
+public-transcript/context-notes-audit, blind-review, interpretation and container records.
+18 Responses, 19 counts, 18 agent actions, three separate operator executions with one
+identical-candidate reuse; 224.595s; known model-rate cost $0.729577950. A1 had no cache
+hits and was censored with $0.125567750 left against a $0.210039750 next-call reserve
+(130053 input plus full25000 output). Other branches had cache hits, so neither cost
+nor submit count isolates efficiency. Count billing/invoice remains UNVERIFIED.
+All 6919 protected hashes match; 13 owned cleanup receipts and exact container absence
+verify. No retry/extra sample/resume, Docker start/pull/build or runtime/task change.
+
+Next candidate: design, not execute, one current-failure-feedback diagnostic on the
+common failed patch using actual a,a/b,c observations, separating verification initiation
+from repair after concrete evidence. Do not expand tools, force notes/plans or adopt B
+on these samples. This grant is consumed; remaining funds authorize no further execution.
+
+## Prior report-aware review preparation, not default adoption
 
 `diagnostics/report_verification_review.py` connects the existing public bug report
 to a harness-authored working-context entry and completion advice, only in experimental
