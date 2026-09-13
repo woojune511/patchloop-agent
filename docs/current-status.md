@@ -38,7 +38,37 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: v38 opt-in native compaction runner
+## Current seam: native compaction pilot prepared, not approved
+
+One new native-run packet is frozen at
+`C:\pt\analyses\native-compaction-pilot-design-20260913` (packet byte hash
+`30bec892489cc9bd379f8dd6ec1e4101f7171b0c47d5ae264de44e3b408aedfc`).
+It proposes the same pyfakefs v2/mini snapshot/medium/root `.env`/repeat 1 with probes
+and repair-recheck, plus `native-window-v1`, a fixed **60,000 input-token** compact
+threshold, one compact maximum, and explicit conditional-reservation acknowledgement.
+The proposed shared generation/compact planning cap is **$2.00**, requiring new
+approval; it is not an endpoint-enforced invoice cap. The old $1.20 would lose the
+optional $0.876 reserve after $0.324 of prior spend. Native limits remain unchanged.
+
+All 65 saved A1/B1/B2 inputs replay with identical public evidence/native order;
+15 local threshold/budget/guard cases pass. Historical append counts first cross
+60k at turns 15/17/16, but new-window token counts and trigger timing are UNKNOWN.
+Bytes are not tokens: this is a round pilot threshold, not an optimum or a fix proven
+to prevent encrypted-field rejection. A run ending before compact stays NOT_EXERCISED;
+there is no forced compaction, extra sample or automatic threshold adjustment.
+
+The packet tests native activation/recount and subsequent actions, not a fresh A/B
+quality comparison. Ordinary isolated evaluation occurs only after native finish;
+read only aggregate private verdicts. No credential values, provider/count/compact,
+Docker or task execution were used in preparation. Runtime/default policy/task bytes
+are unchanged. Next is exact packet approval and read-only live preflight, not execution
+under any previous grant.
+
+Two no-call verifications agree (0.578s/0.559s); 5,050 protected files remain identical.
+Three documentation tests and `uv run ruff check patchloop tests` pass. The unchanged
+runtime uses the dated full-suite/mock receipt below; neither was rerun for this packet.
+
+## Verified runtime: v38 opt-in native compaction runner
 
 Phase 3 connects the durable compact adapter to the existing agent loop, without
 changing default `append-v1` or enabling compact via `native-window-v1` alone.
@@ -71,7 +101,8 @@ Evidence: `C:\pt\validation\native-compact-runner-final-20260913`. A fresh syste
 notice after compact supersedes the retained no-compaction/task-inheritance text;
 the original seed remains unchanged. No real provider/count/
 compact, Docker operation or task-package modification occurred. Next is a separate
-exact opt-in experimental packet, not default adoption or a model-quality claim.
+exact opt-in experimental packet (now prepared above), not default adoption or a
+model-quality claim.
 
 ## Prior layer: durable compact adapter, before runner integration
 

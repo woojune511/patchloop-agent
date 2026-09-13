@@ -777,7 +777,34 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: v38 opt-in runner compaction (phase 3).
+Current seam: the first v38 native compaction pilot packet is prepared, NOT approved.
+`C:\pt\analyses\native-compaction-pilot-design-20260913\packet.json` byte hash:
+`sha256:30bec892489cc9bd379f8dd6ec1e4101f7171b0c47d5ae264de44e3b408aedfc`.
+One fresh pyfakefs v2/mini-2026-03-17/medium/root `.env`/repeat1 run under
+`C:\patchloop-state`, probes and repair-recheck ON, native-window-v1, T=60000,
+one compact maximum and conditional model-limit reservation acknowledgement.
+Proposed shared cap $2.00 (not $1.20); both increase and conditional invoice boundary
+require the new exact approval. No previous grant applies. No default T/adoption.
+Reuse existing run_dev; do not create a second runner. Prepare/verify scripts cannot
+load credentials or invoke providers/count/Docker/task execution. Verify the frozen
+packet hash twice, runtime/tool/model/task hashes, source cleanliness and credential
+integrity, then perform read-only Docker/image/pricing checks only at approved admission.
+One external admission record; no retry/resume/extra sample/answer seed/hidden feedback.
+Native private evaluation after finish is aggregate-only and always official=false.
+
+65 saved inputs replay with exact evidence/native order; 15 threshold/budget/guard
+cases pass. Historical APPEND first 60k crossings are A1 turn15 64852, B1 turn17 61805,
+B2 turn16 62141. New-window token counts/trigger timing remain UNKNOWN; do not scale
+tokens by serialized bytes or present these as matched behavioral controls. T is a
+round early pilot value, not a fitted optimum or encrypted-field safety boundary.
+Below-threshold/ineligible paths remain NOT_EXERCISED without forcing a second run.
+Report snapshot integrity, compaction/activation/recount, actual token/byte/field
+growth, agent actions/submission and acceptance/safety as separate axes.
+Two exact no-call verifications match (0.578s/0.559s); wrong packet hash rejects.
+All 5,050 protected files remain unchanged, three docs tests/Ruff pass. No new full
+runtime/mock claim: the phase-3 receipt below still binds the unchanged runtime.
+
+Implemented runtime: v38 opt-in runner compaction (phase 3).
 The default append wire remains unchanged. `native-window-v1` alone only expires
 snapshots. Compact additionally requires positive `compact_at_input_tokens < 272000`,
 the exact mini snapshot and `accept_compaction_model_limit_reservation=true`.
@@ -828,7 +855,7 @@ reaches mutation/check/finish/isolated acceptance PASS in 4.468s, safety NOT_RUN
 The ordinary mock does not call compact; injected-provider tests cover that branch.
 Runtime `sha256:a6595319b770bc91e733e138273ee22de698a9fd707ce5543cfe06d0dd67d765`;
 v38 surface `sha256:5393d4fb6eab34c4db114fcfa18187e332cd1daac6cb07967d31da9e93003979`.
-Next: exact experimental opt-in packet and separate approval; no default adoption.
+Next: execute only after approval of the prepared packet above; no default adoption.
 
 Prior layer: durable compact handoff, before native runner integration.
 `patchloop/dev/compaction.py` implements prepare/execute/recover under the existing

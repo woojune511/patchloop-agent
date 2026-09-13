@@ -1,13 +1,20 @@
 # Native context-window lifecycle — implementation plan
 
-Status: phases 1 and 2 implemented and locally verified, 2026-09-13.
+Status: all three phases implemented and locally verified, 2026-09-13.
+Final phase 3: `C:\pt\validation\native-compact-runner-final-20260913`; 44 new tests,
+109 compatibility cases, 1,803 full-suite PASS/four Docker skips, Ruff and mock PASS.
+The opt-in pilot packet is prepared at `C:\pt\analyses\native-compaction-pilot-design-20260913`:
+T=60000, one new mini/medium/v2 run, proposed shared $2 conditional budget. Its exact
+execution approval is still missing; this is neither a default nor an optimal T claim.
+
+Earlier layer receipts (superseded implementation status, immutable evidence):
 Phase 2 receipt: `C:\pt\validation\native-compact-adapter-20260913`;
 60 adapter tests/9.586s plus 100 compact/transport regressions/30.395s PASS.
 Full 1,759 PASS/four real-Docker opt-in skips, longest worker 362.932s; Ruff PASS.
 Mock `run_dev_702e01bb86114453` reaches isolated acceptance PASS in 4.628s (cost zero).
 One old compact response revalidates without altering any of its 23 ordered items.
 Shared validation/transport/cost and durable response handoff are implemented;
-scheduler, window activation, runtime ledger settlement and paid execution are not.
+scheduler/window activation/ledger were not yet connected at that earlier layer.
 Receipt: `C:\pt\validation\native-window-20260913`; 138 focused tests/61.77s,
 1,699 full-suite PASS/four Docker opt-in skips, longest worker 382.43s, Ruff PASS.
 65 saved input replays preserve evidence; opt-in mock reaches isolated evaluation.
@@ -209,7 +216,7 @@ acknowledgement를 결속한다. Tool 입력 schema·순서는 그대로지만 �
    `_build_model_input`, `_load_active_model_input`, `_validate_recorded_continuations`,
    `_restore_counters`, `DevJournal.provider_usage`와 unresolved-work 검사를 갱신한다.
    Compaction receipt를 가짜 tool decision으로 기록하지 않는다.
-4. **무호출 검증과 문서 — 완료, 실행 packet은 후속:** opt-in/default, 실패와 resume을
+4. **무호출 검증과 문서 — 완료, 실행 packet 준비됨/승인 대기:** opt-in/default, 실패와 resume을
    검증했다. 새 44개/기존 109개 집중 검사, Ruff, 전체 1,803 PASS/4 skip와 mock
    격리 평가를 통과했다. 이 완료만으로 paid 실행이나 default 채택을 하지 않는다.
 
