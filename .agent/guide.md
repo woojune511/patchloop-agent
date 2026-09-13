@@ -777,7 +777,54 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: first native-window layer in the
+Current seam: durable compact handoff, still disconnected from the native runner.
+`patchloop/dev/compaction.py` implements prepare/execute/recover under the existing
+run execution lock, at most one admitted request. Preparation has no client, and
+execute requires an explicitly supplied owned zero-retry bounded client factory.
+There is no default client, credential loader, CLI entry point, count/create call,
+tool executor, scheduling threshold or window activation in this module.
+
+`patchloop/agent/compaction.py` and `request_transport.py` hold shared validation
+and bounded whole-body async transport; diagnostics retain compatibility exports.
+`patchloop/dev/compaction_cost.py` preserves the reviewed 2026-09-12 mini contract
+and $0.876 full-model-limit reservation; no new rates/model/endpoint cap are inferred.
+Quote against remaining invocation budget, recheck before dispatch, and do not lower
+the reserve or manufacture max_output_tokens/reasoning parameters. The handoff exports
+known usage/cost but does not mutate the caller's ledger: the runner layer must settle
+unique durable attempts once and count compact against the existing model budget.
+
+Preparation binds source input/seed CAS, boundary, policy/runtime hashes, the full
+cost contract and reservation. Output retains every validated provider item in order;
+retained message role/text/multiplicity and exact actions must correspond to source.
+Reject unsupported output as a whole, including unobserved plaintext messages and
+reasoning summaries. Never log SDK serialization warnings or raw exception bodies.
+Usage is separately durable before output serialization/validation/CAS writes.
+Journal records hashes, numeric accounting and bounded failure labels, not ciphertext.
+
+Use the caller's monotonic deadline, min(300s, remaining minus 5s cleanup reserve),
+and only the owned client's bounded close. Store active elapsed independently of
+process downtime. Late valid output/usage is preserved, not permission for more work;
+cleanup uncertainty stops even with a valid window. Do not claim remote cancellation.
+The atomic receipt binds source/policy, complete output/order, usage/cost, cleanup and
+elapsed time. Receipt verification precedes any recovery write. A receipt before its
+marker is finalized once; a durable validated-output event plus confirmed cleanup can
+finish a missing receipt. Orphan CAS, started-only and usage-only states cannot supply
+a window. Unknown outcomes never retry. Completed recovery is byte-idempotent, with
+no client, count, task, clock reset or cost re-settlement. Source/receipt/CAS corruption
+and runtime/policy mismatch reject without changing the journal.
+
+Evidence: 60 adapter tests PASS/9.586s and 100 existing compact/transport tests
+PASS/30.395s; `C:\pt\validation\native-compact-adapter-20260913`. All 90 files yield
+1,759 PASS/four real-Docker opt-in skips, longest worker 362.932s; Ruff PASS. Mock
+`run_dev_702e01bb86114453` reaches mutation/check/finish/isolated acceptance PASS in
+4.628s, four mock turns/five tools, safety NOT_RUN and cost zero. A read-only check
+of the saved actual compact response preserves all 23 items and 22 public messages.
+v37 schema/tool policy and default append behavior stay exact.
+Next is phase 3 of [the plan](plans/native-context-window.md): prepared-input/count,
+healthy-boundary activation, public reentry, shared counters/cost and recount. No
+paid grant, default adoption, encrypted-state reset or old-run migration follows.
+
+Prior layer: first native-window layer in the
 [implementation plan](plans/native-context-window.md) is implemented under v37.
 Default append wire remains unchanged; policy is opt-in and envelope/model-bound.
 65 saved native inputs replay with exact source facts, public observations, latest
@@ -3547,6 +3594,20 @@ submissions with at least two private passes; that threshold itself proves no qu
 or generalization benefit.
 
 ## Validation checklist
+
+Latest adapter-only v37 receipt: `C:\pt\validation\native-compact-adapter-20260913`.
+Runtime `sha256:15b7fb6ce5168931cd82865deb1bc8adce519c441963408522754437abd3ad9b`;
+surface remains `sha256:cb6763e5b863adbd7517dc3da2e44ada6b918feea38de3676578d359092a760c`.
+60 new adapter cases PASS/9.586s; 100 compact/transport compatibility cases
+PASS/30.395s. Four sorted-stride groups cover all 90 files exactly once:
+431/506/398/424 PASS, four real-Docker opt-in skips, in
+297.067/362.932/290.525/280.210s. Focused verification meets two minutes, full does
+not. Ruff PASS. Mock `run_dev_702e01bb86114453` uses the opt-in snapshot window and
+reaches isolated acceptance PASS/safety NOT_RUN in 4.628s, zero provider/count/cost.
+The saved actual compact window (23 items/22 public messages) validates unchanged;
+this is compatibility, not a new provider experiment or native resume. No actual
+compact, provider, count or Docker operation. Preserve the reports and smoke state;
+recycle only the six owned adapter pytest roots after checking completed processes.
 
 Latest v37 receipt: `C:\pt\validation\native-window-20260913`. Focused 138 cases
 PASS/61.77s (`native-window-focused-green-20260913.xml`); Ruff and three docs checks

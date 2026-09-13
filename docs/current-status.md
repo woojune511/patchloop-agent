@@ -38,7 +38,38 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: v37 opt-in native snapshot window; no compaction
+## Current seam: durable compact adapter; runner activation is still absent
+
+Phase 2 of the [implementation plan](../.agent/plans/native-context-window.md) adds
+a run-scoped compaction handoff. It reuses shared response validation, bounded
+transport and the previously reviewed conditional cost reservation. Preparation
+binds input/seed/policy/runtime and remaining invocation budget; dispatch requires
+an explicitly supplied client. No CLI or runner path calls this adapter yet.
+
+The complete validated output stays in CAS, in provider order. Retained public
+messages/actions must match observed input; opaque state is never decoded. Usage is
+durable before output validation. Recovery verifies source, output and receipt;
+started/usage-only crashes never authorize retry. The caller's deadline also bounds
+request and owned-client cleanup. Unknown cleanup or billing prevents activation.
+An atomic receipt does not itself activate a window or settle the runner's ledger.
+
+Provider-free checks: 60 adapter cases PASS/9.586s and 100 existing compact/transport
+cases PASS/30.395s. All 90 test files yield 1,759 PASS/four real-Docker opt-in skips;
+longest full worker 362.932s (focused meets two minutes, full does not). Ruff passes.
+Mock `run_dev_702e01bb86114453` reaches mutation/check/finish/isolated acceptance PASS
+in 4.628s, four model/five tool actions, zero cost; safety NOT_RUN. The saved real
+compact response's 23 items/22 public messages pass the shared validator read-only.
+Evidence: `C:\pt\validation\native-compact-adapter-20260913`.
+Runtime: `sha256:15b7fb6ce5168931cd82865deb1bc8adce519c441963408522754437abd3ad9b`.
+All 4,571 prior protected files and 112 phase-1 evidence files are unchanged.
+Default input behavior and v37 surface are unchanged. No real provider/count/compact,
+credential loading, Docker execution or task-package modification occurred.
+
+Next is the separate runner layer: prepared-input/count boundaries, healthy-boundary
+activation, shared cost/counters, public-evidence reentry and post-compact recount.
+Threshold T, compact CLI admission and a paid packet are not implemented or authorized.
+
+## Prior layer: v37 opt-in native snapshot window; no compaction
 
 The first layer of the [implementation plan](../.agent/plans/native-context-window.md)
 is implemented. Default `append-v1` preserves its input wire and append-only contract.
@@ -68,10 +99,9 @@ worker is 382.43s, so the full cycle exceeds two minutes. Opt-in CLI mock
 4.73s, with four mock turns, five tools and one mutation; safety NOT_RUN, cost zero.
 All four saved window inputs revalidate, and the 65-input replay/protected-file check
 still matches after the suite. No real provider/count/compaction or Docker execution.
-Next implementation candidate is the durable compact adapter, then bounded activation/
-scheduling with exact cost/deadline and healthy-boundary recovery. Those layers,
-threshold T, a paid packet and default adoption remain separate; the new flag alone
-does not call compaction or reset reasoning.
+That layer's next candidate was the durable compact adapter (now implemented above).
+Runner scheduling, threshold T, a paid packet and default adoption remain separate;
+the new flag alone does not call compaction or reset reasoning.
 
 ## Prior audit: native-input growth and the rejection are separate
 

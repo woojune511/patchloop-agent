@@ -67,6 +67,13 @@ Saved seed, input and evidence corruption stops before another provider/tool act
 Ordinary live task/model/credential/repeat/cost approval gates still apply. Use the
 mock command above with this flag and a fresh validation state root for a free smoke.
 
+The internal durable compaction adapter is implemented but not connected to the CLI
+or runner. It does not make this flag call compact. A future scheduler must explicitly
+admit one attempt under the remaining shared budget, use the caller's active deadline,
+and recount the complete new generation input. Its model-limit cost reservation is
+conditional, not a server-enforced invoice cap. Do not invoke the internal adapter or
+reuse a historical diagnostic grant as a substitute for an exact new live approval.
+
 ## Input-count failure diagnostics
 
 `COUNT_TIMEOUT_OR_UNKNOWN` still stops all repetitions, including HTTP rejection;

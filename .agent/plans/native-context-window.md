@@ -1,7 +1,13 @@
 # Native context-window lifecycle — implementation plan
 
-Status: phase 1 implemented and locally verified, 2026-09-13.
-Compaction adapter, scheduler and paid execution are not included in phase 1.
+Status: phases 1 and 2 implemented and locally verified, 2026-09-13.
+Phase 2 receipt: `C:\pt\validation\native-compact-adapter-20260913`;
+60 adapter tests/9.586s plus 100 compact/transport regressions/30.395s PASS.
+Full 1,759 PASS/four real-Docker opt-in skips, longest worker 362.932s; Ruff PASS.
+Mock `run_dev_702e01bb86114453` reaches isolated acceptance PASS in 4.628s (cost zero).
+One old compact response revalidates without altering any of its 23 ordered items.
+Shared validation/transport/cost and durable response handoff are implemented;
+scheduler, window activation, runtime ledger settlement and paid execution are not.
 Receipt: `C:\pt\validation\native-window-20260913`; 138 focused tests/61.77s,
 1,699 full-suite PASS/four Docker opt-in skips, longest worker 382.43s, Ruff PASS.
 65 saved input replays preserve evidence; opt-in mock reaches isolated evaluation.
@@ -196,7 +202,7 @@ acknowledgement를 결속한다. Tool 입력 schema·순서는 그대로지만 �
    snapshot/archive 의미를 연결한다. 진단의 source/evidence helper를 runtime 쪽 작은
    module로 추출하고 기본 append 경로 bytes가 동일한지 고정한다. 얇은 CLI/request/
    runner 연결과 seed/이전 input/evidence 복원 검증을 포함한다. Compact 호출 없음.
-2. **압축의 durable 어댑터:** 기존 `compaction_state`의 validation/receipt,
+2. **압축의 durable 어댑터 — 구현됨:** 기존 `compaction_state`의 validation/receipt,
    transport의 deadline/cleanup, `compaction_cost`의 예약 의미를 필요한 만큼 추출한다.
    새 agent framework나 일반적인 remote transaction framework를 만들지 않는다.
 3. **후속 압축 Runner 연결:** prepared-input/count 경계, activation, shared ledger/counters,
