@@ -191,8 +191,8 @@ count terminal, 비용은 `COST_CAP_REACHED`, deadline/B 부족은 `LIMIT_REACHE
 
 Run request/envelope/model identity에는 context policy, T, 1회 한도, 예약/가격 계약과
 acknowledgement를 결속한다. Tool 입력 schema·순서는 그대로지만 전달/복원 의미가
-달라지므로 phase 1에서 tool-surface를 v37로 올렸다. 현재는 context policy와
-첫 window 복원만 결속하며 T/예약/압축 활성화는 후속 단계다.
+달라지므로 phase 1에서 tool-surface를 v37로 올렸고, phase 3에서는 v38로 올렸다.
+현재 context policy, T/예약, 준비 입력의 계수와 압축 활성화·복원까지 결속한다.
 기존 envelope/journal migration은 하지 않고 runtime 불일치 resume 거부를 유지한다.
 새 모드의 문서화된 opt-in 외 default 동작은 바꾸지 않는다.
 
@@ -205,15 +205,18 @@ acknowledgement를 결속한다. Tool 입력 schema·순서는 그대로지만 �
 2. **압축의 durable 어댑터 — 구현됨:** 기존 `compaction_state`의 validation/receipt,
    transport의 deadline/cleanup, `compaction_cost`의 예약 의미를 필요한 만큼 추출한다.
    새 agent framework나 일반적인 remote transaction framework를 만들지 않는다.
-3. **후속 압축 Runner 연결:** prepared-input/count 경계, activation, shared ledger/counters,
+3. **압축 Runner 연결 — 구현·무호출 검증 완료:** prepared-input/count 경계, activation, shared ledger/counters,
    `_build_model_input`, `_load_active_model_input`, `_validate_recorded_continuations`,
    `_restore_counters`, `DevJournal.provider_usage`와 unresolved-work 검사를 갱신한다.
    Compaction receipt를 가짜 tool decision으로 기록하지 않는다.
-4. **무호출 검증과 문서:** opt-in/default, 실패와 resume을 검증한 뒤 실행 packet을
-   준비한다. 이 단계 완료만으로 paid 실행이나 default 채택을 하지 않는다.
+4. **무호출 검증과 문서 — 완료, 실행 packet은 후속:** opt-in/default, 실패와 resume을
+   검증했다. 새 44개/기존 109개 집중 검사, Ruff, 전체 1,803 PASS/4 skip와 mock
+   격리 평가를 통과했다. 이 완료만으로 paid 실행이나 default 채택을 하지 않는다.
 
-각 변경에 contracts와 focused tests를 함께 넣는다. 1번 이후 다음 후보는 2번이며,
-이번 승인으로 압축 API 실행이나 전체 후속 단계가 자동 승인되지는 않는다.
+각 변경에 contracts와 focused tests를 함께 넣는다. 3번은 v38로 연결하며,
+`--compact-at-input-tokens T`와 `--accept-compaction-model-limit-reservation`을
+별도로 요구한다. 다음은 검증 결과를 결속한 새 실행 packet이며, 이 구현 승인으로
+압축 API 실행이나 default 채택이 승인되지는 않는다.
 
 ## 7. 완료 조건과 다음 live의 해석
 

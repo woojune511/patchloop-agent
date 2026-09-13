@@ -38,7 +38,42 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: durable compact adapter; runner activation is still absent
+## Current seam: v38 opt-in native compaction runner
+
+Phase 3 connects the durable compact adapter to the existing agent loop, without
+changing default `append-v1` or enabling compact via `native-window-v1` alone.
+New mini-snapshot runs must additionally set a positive counted-input threshold
+and explicitly acknowledge the conditional model-limit reservation. No threshold
+is selected by default; no paid packet or execution is authorized by implementation.
+
+The runner freezes each candidate input before counting. Only a healthy completed
+tool batch can compact, with one spare model call beyond minimum completion, a
+full shared-cost reservation and the existing active deadline. The entire returned
+window becomes an immutable seed; missing exact public evidence reenters once as
+quoted history. Latest state explicitly repeats the public task and alone supplies
+current notes/checks/budgets/tools. A fresh post-compact request is counted again.
+
+Durable count/input pairs, seed activation and consumed-exchange cursors recover
+without repeating generation or mutation. Compact usage counts against the same
+invocation cap, its dispatch against the 40-model budget, and elapsed time against
+1,800 active seconds; downtime is excluded. Interrupted/unknown calls never retry.
+Tool argument schema/order, 100 tools, four accepted mutations and 25k generation
+ceiling remain unchanged. Tool-surface identity is v38; old runs are not migrated.
+
+Provider-free checks: 44 new cases PASS/52.149s; 109 compatibility cases PASS/18.694s;
+Ruff PASS. All 91 test files yield 1,803 PASS/four real-Docker opt-in skips. Longest
+full worker is 384.729s: focused checks meet two minutes, the full suite does not.
+Mock `run_dev_05c974e7447c4506` reaches mutation/check/finish/isolated acceptance PASS
+in 4.468s, four model/five tool actions, safety NOT_RUN and cost zero. Compact itself
+is exercised by injected-provider runner tests, not by the ordinary mock adapter.
+Runtime: `sha256:a6595319b770bc91e733e138273ee22de698a9fd707ce5543cfe06d0dd67d765`.
+Evidence: `C:\pt\validation\native-compact-runner-final-20260913`. A fresh system
+notice after compact supersedes the retained no-compaction/task-inheritance text;
+the original seed remains unchanged. No real provider/count/
+compact, Docker operation or task-package modification occurred. Next is a separate
+exact opt-in experimental packet, not default adoption or a model-quality claim.
+
+## Prior layer: durable compact adapter, before runner integration
 
 Phase 2 of the [implementation plan](../.agent/plans/native-context-window.md) adds
 a run-scoped compaction handoff. It reuses shared response validation, bounded
@@ -65,9 +100,8 @@ All 4,571 prior protected files and 112 phase-1 evidence files are unchanged.
 Default input behavior and v37 surface are unchanged. No real provider/count/compact,
 credential loading, Docker execution or task-package modification occurred.
 
-Next is the separate runner layer: prepared-input/count boundaries, healthy-boundary
-activation, shared cost/counters, public-evidence reentry and post-compact recount.
-Threshold T, compact CLI admission and a paid packet are not implemented or authorized.
+At that layer, runner integration and CLI admission remained unimplemented; the
+new section above supersedes that next seam. Its historical receipt is unchanged.
 
 ## Prior layer: v37 opt-in native snapshot window; no compaction
 

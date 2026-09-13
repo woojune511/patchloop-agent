@@ -24,8 +24,8 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash() -> str:
     return sha256_json(
         {
-            "schema_version": "dev-tool-surface-v37",
-            "native_context_policy": "opt-in-exact-public-snapshot-window-v1-no-compaction",
+            "schema_version": "dev-tool-surface-v38",
+            "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
             "sandbox_exception_cleanup": "typed-uncertainty-preserved-through-gateway-v1",
             "registered_check_capture": "bounded-prefix-drain-verdict-preserving-v1",
@@ -315,6 +315,8 @@ class DevRunRequest(StrictModel):
     enable_probes: bool = False
     repair_recheck: bool = False
     context_policy: Literal["append-v1", "native-window-v1"] = "append-v1"
+    compact_at_input_tokens: int | None = Field(default=None, gt=0, lt=272_000)
+    accept_compaction_model_limit_reservation: bool = False
     limits: DevLimits = Field(default_factory=DevLimits)
 
     @model_validator(mode="after")
@@ -328,6 +330,14 @@ class DevRunRequest(StrictModel):
             raise ValueError("--provider mock forbids --env-file and --max-cost-usd")
         if self.resume_run_id is not None and self.repeat != 1:
             raise ValueError("--resume-run-id requires --repeat 1")
+        if self.compact_at_input_tokens is not None:
+            if (self.context_policy != "native-window-v1" or self.provider != "openai"
+                    or self.model != "gpt-5.4-mini-2026-03-17"
+                    or not self.accept_compaction_model_limit_reservation):
+                raise ValueError("compaction requires native-window-v1, OpenAI mini snapshot, "
+                                 "and explicit conditional model-limit reservation acknowledgement")
+        elif self.accept_compaction_model_limit_reservation:
+            raise ValueError("compaction acknowledgement requires --compact-at-input-tokens")
         return self
 
 
@@ -356,6 +366,7 @@ class DevRunEnvelope(StrictModel):
     sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     repair_recheck: bool = False
     context_policy: Literal["append-v1", "native-window-v1"] = "append-v1"
+    compaction_contract: dict[str, Any] | None = None
     probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     model: str

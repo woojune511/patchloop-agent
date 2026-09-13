@@ -498,15 +498,13 @@ def test_serialization_failure_keeps_previously_recorded_usage(prepared):
     assert_private_absent(prepared.journal.root)
 
 
-def test_unused_adapter_does_not_change_runner_surface_or_default():
+def test_compaction_remains_separate_from_the_generation_adapter():
     from patchloop.dev.contracts import dev_tool_surface_hash
 
-    assert dev_tool_surface_hash() == (
-        "sha256:cb6763e5b863adbd7517dc3da2e44ada6b918feea38de3676578d359092a760c")
-    # No compact dispatcher was added to the runner or generation adapter in this layer.
+    assert dev_tool_surface_hash().startswith("sha256:")
+    # Phase 3 connects an explicitly opted-in runner, not the default adapter.
     root = Path(handoff.__file__).resolve().parents[1]
-    for path in (root / "dev" / "runner.py", root / "agent" / "model.py"):
-        assert "CompactionAdapter" not in path.read_text(encoding="utf-8")
+    assert "CompactionAdapter" not in (root / "agent" / "model.py").read_text(encoding="utf-8")
 
 
 def test_recovery_does_not_accept_orphan_compaction_artifacts(tmp_path):

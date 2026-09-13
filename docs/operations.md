@@ -67,12 +67,26 @@ Saved seed, input and evidence corruption stops before another provider/tool act
 Ordinary live task/model/credential/repeat/cost approval gates still apply. Use the
 mock command above with this flag and a fresh validation state root for a free smoke.
 
-The internal durable compaction adapter is implemented but not connected to the CLI
-or runner. It does not make this flag call compact. A future scheduler must explicitly
-admit one attempt under the remaining shared budget, use the caller's active deadline,
-and recount the complete new generation input. Its model-limit cost reservation is
-conditional, not a server-enforced invoice cap. Do not invoke the internal adapter or
-reuse a historical diagnostic grant as a substitute for an exact new live approval.
+Standalone compaction is a second, separate opt-in for new OpenAI runs using the exact
+`gpt-5.4-mini-2026-03-17` snapshot. It requires both
+`--compact-at-input-tokens T` (positive, less than 272,000) and
+`--accept-compaction-model-limit-reservation`, alongside `native-window-v1`.
+There is no default T. A live approval must explicitly include these options, the
+ordinary task/model/reasoning/credential/repeat/cap, and the conditional cost contract.
+Neither this documentation nor an earlier diagnostic grant authorizes a new run.
+
+At most one compact request shares the invocation cost cap and 40-model budget.
+Its $0.876 full-model-limit reservation is conditional, **not a server-enforced
+invoice cap**. If this optional reserve or the spare completion call is unavailable,
+otherwise viable generation stays open. An interrupted count or provider call is
+never repaired by compaction/retry. A completed compact preserves its whole output,
+reenters missing public evidence, refreshes state/tools/budgets, and counts the exact
+new request before generation. It shares the active deadline and five-second client
+cleanup reserve. Repeat the same T/acknowledgement on exact resume; no old-run migration.
+
+Public `call_counts.model` includes compact dispatches; opted-in runs additionally
+separate `decision` and `compaction`. Input counts are separate. No free local mock
+smoke invokes compact; focused tests inject fake clients to exercise this branch.
 
 ## Input-count failure diagnostics
 

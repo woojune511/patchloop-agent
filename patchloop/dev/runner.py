@@ -22,10 +22,13 @@ from patchloop.agent.model import (
 )
 from patchloop.agent.model import FunctionCallContinuationRef as ProviderFunctionCallRef
 from patchloop.agent.model import OpenAIResponsesAdapter
+from patchloop.agent.request_transport import BoundedResponsesClient
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
+from patchloop.dev import native_compaction
 from patchloop.dev.check_feedback import output_tail
+from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.context import SourceProjection, build_observed_source_index
 from patchloop.dev.contracts import (
     DEV_RUNTIME_ID,
@@ -73,6 +76,7 @@ from patchloop.dev.model_state import compact_model_state
 from patchloop.dev.native_sources import (
     PUBLIC_EVIDENCE_KIND,
     project_mutation_result,
+    public_exchanges,
     reference_native_sources,
 )
 from patchloop.dev.probe_observation import probe_observation, project_probe_result
@@ -114,6 +118,7 @@ _EVIDENCE_PLATEAU_WARNING_TURNS = 2
 @dataclass
 class _RunCounters:
     model_calls: int = 0
+    compaction_calls: int = 0
     tool_actions: int = 0
     input_count_calls: int = 0
     protocol_recoveries: int = 0
@@ -283,6 +288,7 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
+            "compaction_contract": native_compaction.policy_contract(request),
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
@@ -1616,29 +1622,35 @@ def _load_active_model_input(
         artifact = Artifact.model_validate(payload.get("model_input_artifact"))
         if payload.get("model_input_hash") != artifact.content_hash:
             raise RecoveryError("model input reference does not match its turn boundary")
+        compact_binding = payload.get("context_window", {}).get("compaction")
+        compact_window = (native_compaction.load_window(compact_binding, artifact_store)
+                          if compact_binding else None)
         items = validate_model_input(
             json.loads(artifact_store.read_bytes(artifact)), payload.get("native_history"),
-            context_policy=context_policy,
+            context_policy=context_policy, window=compact_window,
         )
         if context_policy == WINDOW_POLICY:
             window = payload["context_window"]
             seed_ref = Artifact.model_validate(window["seed_artifact"])
             seed = json.loads(artifact_store.read_bytes(seed_ref))
             expected_window_id = "window_" + seed_ref.content_hash.removeprefix("sha256:")
-            if (seed != items[:3]
+            if (seed != items[:len(compact_window.seed) if compact_window else 3]
                     or seed_ref.content_hash != payload["native_history"]["seed_hash"]
                     or window["window_id"] != expected_window_id):
                 raise RecoveryError("managed window seed changed")
             previous = window["previous_input_artifact"]
             if previous is not None:
                 parent = json.loads(artifact_store.read_bytes(Artifact.model_validate(previous)))
+                if compact_window:
+                    compact_window.verify_prefix(parent)
                 before = [i for i in parent if i.get("type") in NATIVE]
                 after = [i for i in items if i.get("type") in NATIVE]
-                if (parent[:3] != seed
+                if (parent[:len(seed)] != seed
                         or canonical_json(before) != canonical_json(after[:len(before)])):
                     raise RecoveryError("managed native history changed")
+                rules = compact_window.rules if compact_window else WINDOW_RULES
                 for old, current in zip(
-                    WINDOW_RULES.inventory(parent), WINDOW_RULES.inventory(items), strict=True,
+                    rules.inventory(parent), rules.inventory(items), strict=True,
                 ):
                     if any(k not in current or current[k] != v for k, v in old.items()):
                         raise RecoveryError("managed window lost prior public evidence")
@@ -1654,19 +1666,24 @@ def _window_binding(journal: DevJournal, store: ArtifactStore, items: list[dict]
     events = journal.events()
     decision = next((e["payload"] for e in reversed(events)
                      if e["event_type"] == "turn_decision_recorded"), None)
+    activation, compact_window = native_compaction.active_window(journal, store)
     parent = next((e["payload"] for e in reversed(events)
                    if e["event_type"] == "turn_started" and decision is not None
                    and e["payload"].get("turn_id") == decision["turn_id"]), None)
     if decision is not None and parent is None:
         raise _ProviderContinuationError("managed parent decision has no input")
+    if activation and decision and decision["turn_id"] == activation["last_exchange_turn_id"]:
+        parent = None
     # The seed's wire bytes and canonical identity must be the same artifact;
     # put_json uses pretty JSON and therefore has a different byte hash.
-    seed = store.put_text(canonical_json(items[:3]), "application/json")
+    seed = store.put_text(canonical_json(compact_window.seed if compact_window else items[:3]),
+                          "application/json")
     return {
         "window_id": "window_" + seed.content_hash.removeprefix("sha256:"),
         "seed_artifact": seed.model_dump(mode="json"),
         "previous_input_artifact": parent["model_input_artifact"] if parent else None,
         "last_exchange_turn_id": decision["turn_id"] if decision else None,
+        **({"compaction": activation} if activation else {}),
     }
 
 
@@ -1702,7 +1719,12 @@ def _build_model_input(
         None,
     )
     previous_input: list[dict[str, Any]] | None = None
-    if decision is not None:
+    activation, compact_window = native_compaction.active_window(journal, artifact_store)
+    already_consumed = bool(activation and decision and decision["payload"]["turn_id"]
+                            == activation["last_exchange_turn_id"])
+    if already_consumed:
+        previous_input = compact_window.base
+    elif decision is not None:
         started = next((event["payload"] for event in reversed(events)
                         if event["event_type"] == "turn_started"
                         and event["payload"].get("turn_id") == decision["payload"].get("turn_id")),
@@ -1716,8 +1738,9 @@ def _build_model_input(
         journal=journal, artifact_store=artifact_store, context=context,
         latest_tool_results=latest_tool_results,
     )
-    new_history = exchange[1:-1]
-    prior_history = previous_input[3:] if previous_input is not None else []
+    new_history = [] if already_consumed else exchange[1:-1]
+    prior_history = (compact_window.delivery_history(previous_input) if compact_window
+                     else previous_input[3:] if previous_input is not None else [])
     archive_kind = PUBLIC_EVIDENCE_KIND if context_policy == WINDOW_POLICY else None
     admissions = {
         event["payload"]["action_id"]: event["payload"] for event in events
@@ -1732,11 +1755,12 @@ def _build_model_input(
                 archive_kind=archive_kind,
             )
             new_history[position] = {**item, "output": canonical_json(projected)}
-    history = [*(previous_input[3:] if previous_input is not None else []), *new_history]
+    history = [*prior_history, *new_history]
     # Re-project only derived references. Earlier native results/receipts remain
     # byte-identical, with their original action, file and diff identities.
     state = json.loads(exchange[-1]["content"])
-    output_ids = {item["call_id"] for item in history
+    public_history = list(public_exchanges(history, archive_kind=archive_kind))
+    output_ids = {item["call_id"] for item in public_history
                   if item.get("type") == "function_call_output"}
     if latest_tool_results and all(
         result.action_id in output_ids for result in latest_tool_results
@@ -1744,7 +1768,7 @@ def _build_model_input(
         _deduplicate_native_state(state, latest_tool_results)
     state = project_inspection_context(
         state,
-        native_action_ids=[item["call_id"] for item in history
+        native_action_ids=[item["call_id"] for item in public_history
                            if item.get("type") == "function_call"],
     )
     state = reference_native_sources(state, history, archive_kind=archive_kind)
@@ -1752,6 +1776,7 @@ def _build_model_input(
     return assemble_model_input(
         system_prompt=DEV_SYSTEM_PROMPT, state=state, history=new_history,
         previous_input=previous_input, context_policy=context_policy,
+        window=compact_window,
     )
 
 
@@ -2402,6 +2427,11 @@ def _terminal(
         }
         if completion_horizon is not None:
             payload["completion_horizon"] = completion_horizon
+        if journal.load_envelope().compaction_contract is not None:
+            payload["call_counts"].update(
+                compaction=counters.compaction_calls,
+                decision=counters.model_calls - counters.compaction_calls,
+            )
         if terminal == DevTerminal.COUNT_TIMEOUT_OR_UNKNOWN:
             failure = journal.unresolved_input_count()
             if failure is not None:
@@ -2479,6 +2509,7 @@ def _run_envelope(
         sandbox_identity_hash=_sandbox_identity_hash(request, package),
         repair_recheck=request.repair_recheck,
         context_policy=request.context_policy,
+        compaction_contract=native_compaction.policy_contract(request),
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
         probe_profile_hash=probe_profile_hash() if request.enable_probes else None,
         model=request.model,
@@ -2508,7 +2539,9 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             consecutive_protocol_recoveries = 0
     counters = _RunCounters(
         model_calls=sum(
-            event["event_type"] in {"provider_call_started", "model_call_finished"}
+            event["event_type"] in {
+                "provider_call_started", "model_call_finished", "compaction_started",
+            }
             for event in events
         ),
         tool_actions=sum(
@@ -2517,6 +2550,7 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             if event["event_type"] == "tool_batch_started"
         ) + sum(event["event_type"] == "repair_recheck_started" for event in events),
         input_count_calls=sum(event["event_type"] == "input_count_started" for event in events),
+        compaction_calls=sum(event["event_type"] == "compaction_started" for event in events),
         protocol_recoveries=consecutive_protocol_recoveries,
     )
     action_results: dict[str, DevToolResult] = {}
@@ -3079,6 +3113,28 @@ def _run_one(
             )
             return _OneRunResult(_public_result(run_id, terminal), True)
 
+        if envelope.compaction_contract is not None:
+            try:
+                receipt = CompactionAdapter(
+                    journal, policy_hash=sha256_json(envelope.compaction_contract),
+                ).recover_locked()
+                compact_store = ArtifactStore(state_root / "artifacts")
+                native_compaction.active_window(journal, compact_store)
+                if receipt and receipt.get("ready_for_activation"):
+                    native_compaction.ready_source(journal, compact_store, receipt)
+                recovery_terminal = receipt.get("terminal") if receipt else None
+                recovery_message = receipt.get("message") if receipt else None
+            except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError):
+                recovery_terminal = DevTerminal.PROVIDER_CONTINUATION_ERROR.value
+                recovery_message = "compaction recovery evidence is unavailable or invalid"
+            if recovery_terminal is not None:
+                terminal = _terminal(
+                    journal=journal, terminal=DevTerminal(recovery_terminal), counters=counters,
+                    cost_ledger=cost_ledger, cost_start_nanos=envelope.cost_start_nanos,
+                    hashes=hashes, message=recovery_message,
+                )
+                return _OneRunResult(_public_result(run_id, terminal), True)
+
         if resuming:
             store = ArtifactStore(state_root / "artifacts")
             completion = load_evaluation_completion(journal, store, envelope)
@@ -3507,6 +3563,13 @@ def _run_one_active(
                                     finish_result = recovered_completion
                                 else:
                                     stop_result = recovered_completion
+    compact_adapter = (CompactionAdapter(
+        journal, policy_hash=sha256_json(envelope.compaction_contract),
+    ) if envelope.compaction_contract is not None else None)
+    if compact_adapter is not None and terminal_code is None:
+        recovered_receipt = compact_adapter.recover_locked()
+        if recovered_receipt and recovered_receipt.get("ready_for_activation"):
+            native_compaction.activate(journal, artifact_store, recovered_receipt)
     while terminal_code is None and finish_result is None and stop_result is None:
         if request.repair_recheck:
             try:
@@ -3615,62 +3678,138 @@ def _run_one_active(
             allowed_tools=policy.allowed_tools,
             read_paths=policy.targeted_read_paths,
         )
-        journal.append(
-            "turn_started",
-            {
-                "turn_id": turn_id,
-                "context_artifact": context_artifact.model_dump(mode="json"),
-                "context_hash": context_artifact.content_hash,
-                "source_projection_hash": sha256_json(projection.delivered_spans),
-                "model_input_artifact": model_input_artifact.model_dump(mode="json"),
-                "model_input_hash": model_input_artifact.content_hash,
-                "native_history": history_metadata(
-                    model_input, context_policy=request.context_policy,
-                ),
-                **({"context_window": window_binding} if window_binding is not None else {}),
-                "transcript_action_ids": [
-                    item["call_id"]
-                    for item in model_input
-                    if item.get("type") == "function_call_output"
-                ],
-                "available_tool_names": sorted(policy.allowed_tools),
-                "workflow_gate": policy.workflow_gate,
-                "max_parallel_reads": policy.max_parallel_reads,
-                "targeted_read_paths": list(policy.targeted_read_paths),
-                "minimum_completion_calls": policy.minimum_completion_calls,
-                "completion_budget_calls": policy.completion_budget_calls,
-                "feedback_recovery_reserve_calls": (policy.feedback_recovery_reserve_calls),
-                "mutation_recovery_reserve_calls": (policy.mutation_recovery_reserve_calls),
-                "check_recovery_reserve_calls": (policy.check_recovery_reserve_calls),
-                "check_recovery_reserve_ids": list(policy.check_recovery_reserve_ids),
-                "completion_possible": policy.completion_possible,
-                "protected_completion_possible": (policy.protected_completion_possible),
-                "mutation_completion_horizon": _mutation_completion_horizon(policy),
-                "exploration_state": policy.exploration_state,
-                "commitment_action_state": policy.commitment_action_state,
-                "closure_reason": policy.closure_reason,
-                "targeted_check_repair_inspection": (policy.targeted_check_repair_inspection),
-                "targeted_check_repair_required": (policy.targeted_check_repair_required),
-                "targeted_mutation_repair_inspection": (
-                    policy.targeted_mutation_repair_inspection
-                ),
-                "commitment_signal": _commitment_signal(
-                    gateway,
-                    counters,
-                    policy,
-                    snapshot=snapshot,
-                ),
-                "consecutive_no_marginal_evidence_gain_inspection_turns": (
-                    counters.consecutive_no_evidence_gain_turns
-                ),
-                "projected_span_ids": [
-                    span["span_id"]
-                    for span in projected_spans
-                    if isinstance(span, dict) and isinstance(span.get("span_id"), str)
-                ],
-                "active_elapsed_ms": int(elapsed_seconds * 1_000),
-            },
-        )
+        turn_payload = {
+            "turn_id": turn_id,
+            "context_artifact": context_artifact.model_dump(mode="json"),
+            "context_hash": context_artifact.content_hash,
+            "source_projection_hash": sha256_json(projection.delivered_spans),
+            "model_input_artifact": model_input_artifact.model_dump(mode="json"),
+            "model_input_hash": model_input_artifact.content_hash,
+            "native_history": history_metadata(
+                model_input, context_policy=request.context_policy,
+                window=native_compaction.active_window(journal, artifact_store)[1],
+            ),
+            **({"context_window": window_binding} if window_binding is not None else {}),
+            "transcript_action_ids": [
+                item["call_id"]
+                for item in model_input
+                if item.get("type") == "function_call_output"
+            ],
+            "available_tool_names": sorted(policy.allowed_tools),
+            "workflow_gate": policy.workflow_gate,
+            "max_parallel_reads": policy.max_parallel_reads,
+            "targeted_read_paths": list(policy.targeted_read_paths),
+            "minimum_completion_calls": policy.minimum_completion_calls,
+            "completion_budget_calls": policy.completion_budget_calls,
+            "feedback_recovery_reserve_calls": (policy.feedback_recovery_reserve_calls),
+            "mutation_recovery_reserve_calls": (policy.mutation_recovery_reserve_calls),
+            "check_recovery_reserve_calls": (policy.check_recovery_reserve_calls),
+            "check_recovery_reserve_ids": list(policy.check_recovery_reserve_ids),
+            "completion_possible": policy.completion_possible,
+            "protected_completion_possible": (policy.protected_completion_possible),
+            "mutation_completion_horizon": _mutation_completion_horizon(policy),
+            "exploration_state": policy.exploration_state,
+            "commitment_action_state": policy.commitment_action_state,
+            "closure_reason": policy.closure_reason,
+            "targeted_check_repair_inspection": (policy.targeted_check_repair_inspection),
+            "targeted_check_repair_required": (policy.targeted_check_repair_required),
+            "targeted_mutation_repair_inspection": (
+                policy.targeted_mutation_repair_inspection
+            ),
+            "commitment_signal": _commitment_signal(
+                gateway,
+                counters,
+                policy,
+                snapshot=snapshot,
+            ),
+            "consecutive_no_marginal_evidence_gain_inspection_turns": (
+                counters.consecutive_no_evidence_gain_turns
+            ),
+            "projected_span_ids": [
+                span["span_id"]
+                for span in projected_spans
+                if isinstance(span, dict) and isinstance(span.get("span_id"), str)
+            ],
+            "active_elapsed_ms": int(elapsed_seconds * 1_000),
+        }
+        prepared_count = None
+        if compact_adapter is not None:
+            try:
+                request_payload = openai_adapter.request_payload(
+                    model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
+                )
+                request_payload["parallel_tool_calls"] = True
+                request_payload["tool_choice"] = "required"
+                boundary, bundle = native_compaction.prepared_input(
+                    journal, artifact_store, turn_payload, request_payload, policy_transition,
+                )
+                turn_payload = bundle["turn"]
+                model_input = _load_active_model_input(
+                    turn_payload, artifact_store, context_policy=request.context_policy,
+                )
+                if bundle["request"]["tools"] != schemas:
+                    raise RecoveryError("prepared input tool policy changed")
+                turn_id = turn_payload["turn_id"]
+                schemas = bundle["request"]["tools"]
+                policy_transition = bundle["transition"]
+                prepared_count = native_compaction.count_prepared(
+                    journal, boundary, bundle, openai_adapter, deadline, active_elapsed_ms,
+                )
+                counters.input_count_calls = _restore_counters(journal).input_count_calls
+                prior_preparation = next((e["payload"] for e in journal.events()
+                                          if e["event_type"] == "compaction_prepared"), None)
+                if ((prior_preparation is None
+                     or prior_preparation["boundary_id"] == boundary["boundary_id"])
+                        and native_compaction.eligible(
+                            journal, threshold=request.compact_at_input_tokens,
+                            input_tokens=prepared_count[1],
+                            remaining_model_calls=(
+                                request.limits.max_model_calls - counters.model_calls
+                            ),
+                            minimum_completion_calls=policy.minimum_completion_calls,
+                            ledger=cost_ledger, deadline=deadline, correction=correction,
+                        )):
+                    if prior_preparation is None:
+                        compact_adapter.prepare_locked(
+                            source_input=Artifact.model_validate(turn_payload["model_input_artifact"]),
+                            source_seed=Artifact.model_validate(turn_payload["context_window"]["seed_artifact"]),
+                            boundary_id=boundary["boundary_id"], ledger=cost_ledger,
+                            accept_model_limit_reservation=request.accept_compaction_model_limit_reservation,
+                            active_elapsed_seconds=active_elapsed_ms() / 1_000,
+                        )
+                    receipt = compact_adapter.execute_locked(
+                        client_factory=lambda: BoundedResponsesClient(api_key=api_key),
+                        ledger=cost_ledger, deadline=deadline,
+                        active_elapsed_seconds=active_elapsed_ms() / 1_000,
+                    )
+                    cost_ledger.restore_settled_usage(
+                        journal.provider_usage(), base_spent_nanos=cost_start_nanos,
+                    )
+                    counters = _restore_counters(journal)
+                    if receipt["terminal"]:
+                        terminal_code = DevTerminal(receipt["terminal"])
+                        terminal_message = receipt["message"]
+                        stop_remaining = True
+                        break
+                    native_compaction.activate(journal, artifact_store, receipt)
+                    # Not a decision: refresh budgets, current state and schemas;
+                    # then count the full post-compaction request from scratch.
+                    continue
+                turn_payload = {**turn_payload, "prepared_input": boundary,
+                                "selected_count_id": prepared_count[0],
+                                "counted_request_hash": boundary["request_hash"]}
+            except native_compaction.CountFailure as exc:
+                counters = _restore_counters(journal)
+                terminal_code = DevTerminal.COUNT_TIMEOUT_OR_UNKNOWN
+                terminal_message, stop_remaining = str(exc), True
+                break
+            except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError):
+                counters = _restore_counters(journal)
+                terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
+                terminal_message = "prepared input or compacted window is unavailable or invalid"
+                stop_remaining = True
+                break
+        journal.append("turn_started", turn_payload)
         if policy_transition is not None:
             journal.append(
                 "tool_policy_transition",
@@ -3710,60 +3849,63 @@ def _run_one_active(
         else:
             assert openai_adapter is not None and cost_ledger is not None
             try:
-                request_payload = openai_adapter.request_payload(
-                    model_input,
-                    schemas,
-                    system_prompt=DEV_SYSTEM_PROMPT,
-                )
+                request_payload = (bundle["request"] if prepared_count
+                                   else openai_adapter.request_payload(
+                                       model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
+                                   ))
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
                 terminal_message = f"provider request construction failed: {type(exc).__name__}"
                 break
             request_payload["parallel_tool_calls"] = True
             request_payload["tool_choice"] = "required"
-            count_timeout = remaining_active_seconds()
-            if count_timeout <= 0:
-                terminal_code = DevTerminal.LIMIT_REACHED
-                terminal_message = "row wall-time limit reached before input counting"
-                break
-            count_id = f"count_{uuid.uuid4().hex}"
-            count_request_hash = sha256_json(request_payload)
-            journal.append(
-                "input_count_started",
-                {
-                    "count_id": count_id,
-                    "turn_id": turn_id,
-                    "request_hash": count_request_hash,
-                    "request_metadata": input_count_request_metadata(request_payload),
-                    "active_elapsed_ms": active_elapsed_ms(),
-                },
-            )
-            counters.input_count_calls += 1
-            try:
-                input_tokens = openai_adapter.count_input_tokens_v2(
-                    request_payload,
-                    timeout_seconds=count_timeout,
+            if prepared_count:
+                count_id, input_tokens = prepared_count
+                count_request_hash = boundary["request_hash"]
+            else:
+                count_timeout = remaining_active_seconds()
+                if count_timeout <= 0:
+                    terminal_code = DevTerminal.LIMIT_REACHED
+                    terminal_message = "row wall-time limit reached before input counting"
+                    break
+                count_id = f"count_{uuid.uuid4().hex}"
+                count_request_hash = sha256_json(request_payload)
+                journal.append(
+                    "input_count_started",
+                    {
+                        "count_id": count_id,
+                        "turn_id": turn_id,
+                        "request_hash": count_request_hash,
+                        "request_metadata": input_count_request_metadata(request_payload),
+                        "active_elapsed_ms": active_elapsed_ms(),
+                    },
                 )
-            except Exception as exc:
-                error_metadata = input_count_error_metadata(exc)
-                journal.append("input_count_failed", {
-                    "count_id": count_id, "turn_id": turn_id,
-                    "request_hash": count_request_hash, "error": error_metadata,
-                    "active_elapsed_ms": active_elapsed_ms(),
-                })
-                terminal_code = DevTerminal.COUNT_TIMEOUT_OR_UNKNOWN
-                terminal_message = f"input count failed: {error_metadata['exception_type']}"
-                stop_remaining = True
-                break
-            journal.append(
-                "input_count_finished",
-                {
-                    "count_id": count_id,
-                    "turn_id": turn_id,
-                    "input_tokens": input_tokens,
-                    "active_elapsed_ms": active_elapsed_ms(),
-                },
-            )
+                counters.input_count_calls += 1
+                try:
+                    input_tokens = openai_adapter.count_input_tokens_v2(
+                        request_payload,
+                        timeout_seconds=count_timeout,
+                    )
+                except Exception as exc:
+                    error_metadata = input_count_error_metadata(exc)
+                    journal.append("input_count_failed", {
+                        "count_id": count_id, "turn_id": turn_id,
+                        "request_hash": count_request_hash, "error": error_metadata,
+                        "active_elapsed_ms": active_elapsed_ms(),
+                    })
+                    terminal_code = DevTerminal.COUNT_TIMEOUT_OR_UNKNOWN
+                    terminal_message = f"input count failed: {error_metadata['exception_type']}"
+                    stop_remaining = True
+                    break
+                journal.append(
+                    "input_count_finished",
+                    {
+                        "count_id": count_id,
+                        "turn_id": turn_id,
+                        "input_tokens": input_tokens,
+                        "active_elapsed_ms": active_elapsed_ms(),
+                    },
+                )
             admission = cost_ledger.admit(input_tokens)
             if admission is None:
                 terminal_code = DevTerminal.COST_CAP_REACHED
@@ -3783,6 +3925,9 @@ def _run_one_active(
                     "call_id": call_id,
                     "turn_id": turn_id,
                     "request_hash": sha256_json(request_payload),
+                    **({"prepared_boundary_id": boundary["boundary_id"],
+                        "selected_count_id": count_id, "counted_request_hash": count_request_hash}
+                       if prepared_count else {}),
                     "input_tokens": input_tokens,
                     "output_ceiling": admission.output_ceiling,
                     "reserved_cost_nanos": admission.reserved_cost_nanos,

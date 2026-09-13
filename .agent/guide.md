@@ -777,7 +777,60 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: durable compact handoff, still disconnected from the native runner.
+Current seam: v38 opt-in runner compaction (phase 3).
+The default append wire remains unchanged. `native-window-v1` alone only expires
+snapshots. Compact additionally requires positive `compact_at_input_tokens < 272000`,
+the exact mini snapshot and `accept_compaction_model_limit_reservation=true`.
+Bind T, maximum one request, acknowledgement and the reviewed cost/limit contract
+into request/model/envelope identity. Do not choose a default T from prior counts.
+
+`native_compaction.py` owns prepared-input/count and activation bindings, not a new
+agent framework. A `model_input_prepared` boundary is NOT a model decision. Persist
+exact input/state/schemas/request, current public cursor and request hash before
+counting. Resume completed counts with that exact bundle; the final `turn_started`
+selects its count ID. A healthy completed batch, no pending correction, input within
+the reviewed limit, remaining model calls >= B+1, full remaining cost reserve and
+active time are necessary for compact. Repair-recheck/pending action recovery run
+first. Optional compaction unavailability alone never closes generation.
+
+Compose the adapter's `*_locked` methods with the RUN-LIFETIME execution lock;
+never reacquire it. Use an explicitly created owned bounded client only at admission.
+Compact dispatch consumes one model call, no tool/mutation. Its separately durable
+usage joins `provider_usage()` and the invocation ledger exactly once, including
+usage-only failures. Active elapsed seconds include request/cleanup, not downtime.
+Unknown count/provider/billing/cleanup stops without retry or a replacement request.
+
+`CompactedWindow` keeps every returned item in exact order. Its semantic source index
+is local lookup data, NOT another model message: each indexed fact is actually in
+the seed or its missing-evidence archive. Rescue only absent public exchanges,
+source bodies and observations; never manufacture native calls or observations.
+Latest state explicitly contains the unchanged public_task; seed-era notes/PASS/
+correction/tool lists are historical. The activation binds source input, preparation,
+receipt, whole seed, base and consumed exchange. Skip that already-consumed exchange
+once, then append future native reasoning/calls/results normally. Rebuild policy and
+recount the full new request after activation; do not reuse its precursor count.
+
+After compact, a fresh SYSTEM notice explicitly supersedes the old system's
+no-compaction and initial-task inheritance descriptions. A developer-only reentry
+would not resolve that priority conflict. Retain the old seed unchanged; supersede
+its obsolete control description at the same instruction level, not by pruning it.
+The authority regression is in `tests/test_dev_native_compaction.py`.
+
+Started-without-response and usage-only compact crashes terminate. A complete receipt
+before activation validates read-only before resume credentials/workspace; activation
+and later generation boundaries are idempotent. Terminal resume stays read-only.
+No encrypted-state reset, schema reordering, new terminal or journal migration.
+Current verification: `C:\pt\validation\native-compact-runner-final-20260913` (provider-free).
+44 new cases PASS/52.149s, 109 compatibility cases PASS/18.694s, Ruff PASS; all
+91 files yield 1,803 PASS/four real-Docker skips, longest worker 384.729s. Full suite
+exceeds two minutes; focused validation meets the target. Mock `run_dev_05c974e7447c4506`
+reaches mutation/check/finish/isolated acceptance PASS in 4.468s, safety NOT_RUN/cost 0.
+The ordinary mock does not call compact; injected-provider tests cover that branch.
+Runtime `sha256:a6595319b770bc91e733e138273ee22de698a9fd707ce5543cfe06d0dd67d765`;
+v38 surface `sha256:5393d4fb6eab34c4db114fcfa18187e332cd1daac6cb07967d31da9e93003979`.
+Next: exact experimental opt-in packet and separate approval; no default adoption.
+
+Prior layer: durable compact handoff, before native runner integration.
 `patchloop/dev/compaction.py` implements prepare/execute/recover under the existing
 run execution lock, at most one admitted request. Preparation has no client, and
 execute requires an explicitly supplied owned zero-retry bounded client factory.
@@ -820,9 +873,8 @@ PASS/30.395s; `C:\pt\validation\native-compact-adapter-20260913`. All 90 files y
 4.628s, four mock turns/five tools, safety NOT_RUN and cost zero. A read-only check
 of the saved actual compact response preserves all 23 items and 22 public messages.
 v37 schema/tool policy and default append behavior stay exact.
-Next is phase 3 of [the plan](plans/native-context-window.md): prepared-input/count,
-healthy-boundary activation, public reentry, shared counters/cost and recount. No
-paid grant, default adoption, encrypted-state reset or old-run migration follows.
+That layer's next seam was phase 3 of [the plan](plans/native-context-window.md),
+now covered above. Its saved evidence is unchanged; no paid grant follows.
 
 Prior layer: first native-window layer in the
 [implementation plan](plans/native-context-window.md) is implemented under v37.

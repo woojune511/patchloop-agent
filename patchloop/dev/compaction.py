@@ -1,9 +1,9 @@
-"""One durable compaction handoff, not a runner policy or window activation.
+"""One durable compaction handoff, separate from policy and window activation.
 
 Only execute() accepts an explicitly supplied, owned client factory. Preparation
 and recovery cannot count, generate, load credentials or execute retained actions.
-The runtime does not call this adapter yet. Its caller must authorize the exact
-run and conditional cost assumption before preparing an attempt.
+The optional runner composes locked methods inside its run-lifetime lock. Its
+caller must authorize the exact run and conditional cost assumption first.
 """
 
 from __future__ import annotations
@@ -109,44 +109,73 @@ class CompactionAdapter:
             "invalid compaction boundary ID",
         )
         with self.journal.execution_lock():
-            require(self.journal.terminal() is None, "terminal run cannot prepare compaction")
-            items, seed = self._read(source_input), self._read(source_seed)
-            require(
-                isinstance(items, list)
-                and all(isinstance(i, dict) for i in items)
-                and isinstance(seed, list)
-                and bool(seed)
-                and items[: len(seed)] == seed,
-                "source window does not contain the exact seed",
+            return self.prepare_locked(
+                source_input=source_input,
+                source_seed=source_seed,
+                boundary_id=boundary_id,
+                ledger=ledger,
+                accept_model_limit_reservation=accept_model_limit_reservation,
+                active_elapsed_seconds=active_elapsed_seconds,
             )
-            request = {"model": cost.MODEL, "input": items, "service_tier": "default"}
-            binding = {
-                "kind": "native-compaction-attempt-v1",
-                "run_id": self.journal.run_id,
-                "boundary_id": boundary_id,
-                "policy_hash": self.policy_hash,
-                "runtime_hash": runtime_content_hash(),
-                "source_input": source_input.model_dump(mode="json"),
-                "source_seed": source_seed.model_dump(mode="json"),
-                "request_hash": sha256_json(request),
-                "cost_contract": cost.CONTRACT,
-                "cost_contract_hash": sha256_json(cost.CONTRACT),
-                "reservation": cost.reserve_from_ledger(ledger),
-                "accept_model_limit_reservation": True,
-                "active_elapsed_seconds": _elapsed(active_elapsed_seconds),
-                "request_seconds": REQUEST_SECONDS,
-                "cleanup_reserve_seconds": CLEANUP_SECONDS,
-            }
-            existing = self._events().get("compaction_prepared")
-            if existing is not None:
-                require(existing == binding, "compaction preparation contract mismatch")
-                return existing
-            require(
-                not self._events() and not self.receipt_path.exists(),
-                "compaction preparation is missing",
-            )
-            self.journal.append("compaction_prepared", binding)
-            return binding
+
+    def prepare_locked(
+        self,
+        *,
+        source_input: Artifact,
+        source_seed: Artifact,
+        boundary_id: str,
+        ledger: DevCostLedger,
+        accept_model_limit_reservation: bool,
+        active_elapsed_seconds: float,
+    ) -> dict:
+        """Persist source/cost identity; no client is available on this path."""
+        require(
+            accept_model_limit_reservation is True,
+            "compaction requires acknowledgement of its conditional reservation",
+        )
+        require(
+            isinstance(boundary_id, str) and re.fullmatch(r"[a-zA-Z0-9_-]{1,128}", boundary_id),
+            "invalid compaction boundary ID",
+        )
+        self.journal.require_execution_lock()
+        require(self.journal.terminal() is None, "terminal run cannot prepare compaction")
+        items, seed = self._read(source_input), self._read(source_seed)
+        require(
+            isinstance(items, list)
+            and all(isinstance(i, dict) for i in items)
+            and isinstance(seed, list)
+            and bool(seed)
+            and items[: len(seed)] == seed,
+            "source window does not contain the exact seed",
+        )
+        request = {"model": cost.MODEL, "input": items, "service_tier": "default"}
+        binding = {
+            "kind": "native-compaction-attempt-v1",
+            "run_id": self.journal.run_id,
+            "boundary_id": boundary_id,
+            "policy_hash": self.policy_hash,
+            "runtime_hash": runtime_content_hash(),
+            "source_input": source_input.model_dump(mode="json"),
+            "source_seed": source_seed.model_dump(mode="json"),
+            "request_hash": sha256_json(request),
+            "cost_contract": cost.CONTRACT,
+            "cost_contract_hash": sha256_json(cost.CONTRACT),
+            "reservation": cost.reserve_from_ledger(ledger),
+            "accept_model_limit_reservation": True,
+            "active_elapsed_seconds": _elapsed(active_elapsed_seconds),
+            "request_seconds": REQUEST_SECONDS,
+            "cleanup_reserve_seconds": CLEANUP_SECONDS,
+        }
+        existing = self._events().get("compaction_prepared")
+        if existing is not None:
+            require(existing == binding, "compaction preparation contract mismatch")
+            return existing
+        require(
+            not self._events() and not self.receipt_path.exists(),
+            "compaction preparation is missing",
+        )
+        self.journal.append("compaction_prepared", binding)
+        return binding
 
     def _load(self):
         events = self._events()
@@ -190,101 +219,118 @@ class CompactionAdapter:
         The factory transfers ownership of exactly one zero-retry bounded client.
         A stored started event consumes the attempt even without a response.
         """
-        began = deadline.clock()
         with self.journal.execution_lock():
-            events, binding, request = self._load()
-            require(binding is not None, "compaction must be prepared before dispatch")
-            if len(events) > 1 or self.receipt_path.exists():
-                return self._recover_locked()
-            require(self.journal.terminal() is None, "terminal run cannot dispatch compaction")
-            require(
-                cost.reserve_from_ledger(ledger) == binding["reservation"],
-                "compaction remaining cost changed after preparation",
-            )
-            base = _elapsed(active_elapsed_seconds)
-            require(
-                base >= binding["active_elapsed_seconds"], "active elapsed time moved backwards"
+            return self.execute_locked(
+                client_factory=client_factory,
+                ledger=ledger,
+                deadline=deadline,
+                active_elapsed_seconds=active_elapsed_seconds,
             )
 
-            def elapsed():
-                return _elapsed(base + max(0.0, deadline.clock() - began))
+    def execute_locked(
+        self,
+        *,
+        client_factory,
+        ledger: DevCostLedger,
+        deadline: ExecutionDeadline,
+        active_elapsed_seconds: float,
+    ) -> dict:
+        """One explicitly admitted compact request; never count/create/tools/retry.
 
-            def record(name, payload):
-                self.journal.append(
-                    name,
-                    {
-                        **payload,
-                        "binding_hash": sha256_json(binding),
-                        "active_elapsed_seconds": elapsed(),
-                    },
-                )
+        The factory transfers ownership of exactly one zero-retry bounded client.
+        A stored started event consumes the attempt even without a response.
+        """
+        began = deadline.clock()
+        self.journal.require_execution_lock()
+        events, binding, request = self._load()
+        require(binding is not None, "compaction must be prepared before dispatch")
+        if len(events) > 1 or self.receipt_path.exists():
+            return self.recover_locked()
+        require(self.journal.terminal() is None, "terminal run cannot dispatch compaction")
+        require(
+            cost.reserve_from_ledger(ledger) == binding["reservation"],
+            "compaction remaining cost changed after preparation",
+        )
+        base = _elapsed(active_elapsed_seconds)
+        require(base >= binding["active_elapsed_seconds"], "active elapsed time moved backwards")
 
-            def failure(exc, *, attempted):
-                record(
-                    "compaction_request_failed",
-                    {
-                        "request_attempted": attempted,
-                        "deadline_exhausted": isinstance(exc, ExecutionDeadlineExceeded),
-                        "failure": exception_evidence(exc),
-                    },
-                )
+        def elapsed():
+            return _elapsed(base + max(0.0, deadline.clock() - began))
 
-            client = None
+        def record(name, payload):
+            self.journal.append(
+                name,
+                {
+                    **payload,
+                    "binding_hash": sha256_json(binding),
+                    "active_elapsed_seconds": elapsed(),
+                },
+            )
+
+        def failure(exc, *, attempted):
+            record(
+                "compaction_request_failed",
+                {
+                    "request_attempted": attempted,
+                    "deadline_exhausted": isinstance(exc, ExecutionDeadlineExceeded),
+                    "failure": exception_evidence(exc),
+                },
+            )
+
+        client = None
+        try:
             try:
+                deadline.check(reserve_seconds=CLEANUP_SECONDS)
+                client = client_factory()
+                require(client.max_retries == 0, "compaction requires zero SDK retries")
+                require(
+                    cost.reserve_from_ledger(ledger) == binding["reservation"],
+                    "compaction remaining cost changed before dispatch",
+                )
+                timeout = deadline.bounded_timeout(REQUEST_SECONDS, reserve_seconds=CLEANUP_SECONDS)
+            except BaseException as exc:
+                failure(exc, attempted=False)
+            else:
+                record(
+                    "compaction_started",
+                    {
+                        "request_hash": binding["request_hash"],
+                        "effective_timeout_seconds": timeout,
+                        "reserved_cost_nanos": binding["reservation"]["reserved_cost_nanos"],
+                    },
+                )
+                attempted = False
                 try:
-                    deadline.check(reserve_seconds=CLEANUP_SECONDS)
-                    client = client_factory()
-                    require(client.max_retries == 0, "compaction requires zero SDK retries")
-                    require(
-                        cost.reserve_from_ledger(ledger) == binding["reservation"],
-                        "compaction remaining cost changed before dispatch",
-                    )
                     timeout = deadline.bounded_timeout(
                         REQUEST_SECONDS, reserve_seconds=CLEANUP_SECONDS
                     )
+                    attempted = True
+                    response = client.responses.compact(**request, timeout=timeout)
                 except BaseException as exc:
-                    failure(exc, attempted=False)
+                    failure(exc, attempted=attempted)
                 else:
-                    record(
-                        "compaction_started",
-                        {
-                            "request_hash": binding["request_hash"],
-                            "effective_timeout_seconds": timeout,
-                            "reserved_cost_nanos": binding["reservation"]["reserved_cost_nanos"],
-                        },
-                    )
-                    attempted = False
-                    try:
-                        timeout = deadline.bounded_timeout(
-                            REQUEST_SECONDS, reserve_seconds=CLEANUP_SECONDS
-                        )
-                        attempted = True
-                        response = client.responses.compact(**request, timeout=timeout)
-                    except BaseException as exc:
-                        failure(exc, attempted=attempted)
-                    else:
-                        self._record_response(response, request["input"], record)
-            finally:
-                cleanup = {"status": "NOT_CREATED", "timeout_seconds": 0.0}
-                if client is not None:
-                    wait = min(CLEANUP_SECONDS, deadline.remaining_seconds())
-                    cleanup = {"status": "UNKNOWN", "timeout_seconds": wait}
-                    try:
-                        deadline.check()
-                        client.close(timeout=wait)
-                        cleanup["status"] = "CLOSED"
-                    except BaseException as exc:
-                        cleanup["failure"] = exception_evidence(exc)
-                record(
-                    "compaction_cleanup_recorded",
-                    {
-                        "cleanup": cleanup,
-                        "deadline_exhausted": deadline.remaining_seconds() <= 0,
-                    },
-                )
-            return self._recover_locked()
+                    self._record_response(response, request["input"], record, binding)
+        finally:
+            cleanup = {"status": "NOT_CREATED", "timeout_seconds": 0.0}
+            if client is not None:
+                wait = min(CLEANUP_SECONDS, deadline.remaining_seconds())
+                cleanup = {"status": "UNKNOWN", "timeout_seconds": wait}
+                try:
+                    deadline.check()
+                    client.close(timeout=wait)
+                    cleanup["status"] = "CLOSED"
+                except BaseException as exc:
+                    cleanup["failure"] = exception_evidence(exc)
+            record(
+                "compaction_cleanup_recorded",
+                {
+                    "cleanup": cleanup,
+                    "deadline_exhausted": deadline.remaining_seconds() <= 0,
+                },
+            )
+        return self.recover_locked()
 
-    def _record_response(self, response, original, record):
+    def _record_response(self, response, original, record, binding):
         # Capture usage before output serialization, validation or artifact writes.
         raw_usage = (
             response.get("usage")
@@ -302,7 +348,19 @@ class CompactionAdapter:
             usage = usage_fields({"usage": _plain(raw_usage)})
         except (ContractError, TypeError, ValueError):
             usage = None
-        record("compaction_usage_recorded", {"usage": usage, "response_id": response_id})
+        accounting = cost.account(
+            usage,
+            Decimal(binding["reservation"]["available_nanos"]) / Decimal(1_000_000_000),
+        )
+        record(
+            "compaction_usage_recorded",
+            {
+                "usage": usage,
+                "response_id": response_id,
+                "accounting": accounting,
+                "call_id": "compact_" + binding["boundary_id"],
+            },
+        )
         try:
             window = validated_window(_plain(response), original)
         except (ContractError, TypeError, ValueError, AttributeError):
@@ -324,9 +382,10 @@ class CompactionAdapter:
     def recover(self) -> dict | None:
         """Verify durable data; missing results stop, never replay a remote call."""
         with self.journal.execution_lock():
-            return self._recover_locked()
+            return self.recover_locked()
 
-    def _recover_locked(self):
+    def recover_locked(self):
+        self.journal.require_execution_lock()
         events, binding, request = self._load()
         if binding is None:
             return None
@@ -352,6 +411,12 @@ class CompactionAdapter:
             usage.get("usage"),
             Decimal(binding["reservation"]["available_nanos"]) / Decimal(1_000_000_000),
         )
+        if usage:
+            require(
+                usage.get("accounting") == accounting
+                and usage.get("call_id") == "compact_" + binding["boundary_id"],
+                "compaction durable usage accounting mismatch",
+            )
         if attempted is False:
             accounting = {"status": "NOT_RUN", "model_rate_cost_nanos": 0, "invoice_cost_usd": None}
         terminal, reason = None, "validated compaction receipt; activation not performed"

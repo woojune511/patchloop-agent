@@ -2,7 +2,8 @@
 
 Default views append unchanged. The optional managed window expires only harness
 snapshots, preserving exact public evidence and native exchanges. Neither policy
-introduces compaction, synthetic tool calls, provider storage or a new user boundary.
+introduces synthetic tool calls or provider storage. A separately admitted compact
+window keeps its entire provider seed and explicit public evidence reentry.
 """
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from patchloop.dev.compacted_window import CompactedWindow
 from patchloop.dev.native_sources import PUBLIC_EVIDENCE_KIND
 from patchloop.dev.public_history import MUTABLE_FIELDS, SnapshotRules
 from patchloop.errors import ContractError, RecoveryError
@@ -85,10 +87,11 @@ def _archive_view(view: Any) -> bool:
 
 def history_metadata(
     items: list[dict[str, Any]], *, context_policy: str = APPEND_POLICY,
+    window: CompactedWindow | None = None,
 ) -> dict[str, Any]:
     """Content-free audit of exactly the native history following the stable task."""
     _policy(context_policy)
-    history = items[3:]
+    history = items[len(window.base) if window else 3:]
     metadata = {
         "schema_version": CONVERSATION_SCHEMA,
         "user_message_count": sum(item.get("role") == "user" for item in items),
@@ -99,25 +102,32 @@ def history_metadata(
             item.get("type") == "function_call_output" for item in history
         ),
         "state_update_count": sum(item.get("role") == "developer" for item in history),
-        "current_state_hash": sha256_json(reconstruct_state(items, context_policy=context_policy)),
+        "current_state_hash": sha256_json(reconstruct_state(
+            items, context_policy=context_policy, window=window,
+        )),
         "history_hash": sha256_json(history),
     }
     if context_policy == WINDOW_POLICY:
         try:
-            facts, exchanges, records = WINDOW_RULES.inventory(items)
+            if window:
+                window.verify_prefix(items)
+            facts, exchanges, records = (window.rules if window else WINDOW_RULES).inventory(items)
             archives = sum(_archive_view(WINDOW_RULES.payload(item)) for item in history)
             snapshots = metadata["state_update_count"] - archives
             if snapshots > 1:
                 raise ValueError("multiple current snapshots in managed window")
             metadata.update(
                 schema_version=WINDOW_SCHEMA, context_policy=WINDOW_POLICY,
-                seed_hash=sha256_json(items[:3]), state_update_count=snapshots,
+                seed_hash=sha256_json(window.seed if window else items[:3]),
+                state_update_count=snapshots,
                 historical_evidence_count=archives,
                 evidence_inventory_hash=sha256_json({
                     "source_facts": [[*key, value] for key, value in sorted(facts.items())],
                     "exchange_hashes": sorted(exchanges), "observation_hashes": sorted(records),
                 }),
             )
+            if window:
+                metadata["compacted_window"] = window.binding
         except (ContractError, KeyError, TypeError, ValueError) as exc:
             raise RecoveryError("invalid managed-window public evidence") from exc
     return metadata
@@ -125,18 +135,19 @@ def history_metadata(
 
 def validate_model_input(
     items: Any, metadata: Any, *, context_policy: str = APPEND_POLICY,
+    window: CompactedWindow | None = None,
 ) -> list[dict[str, Any]]:
     """Validate a saved current-runtime input, not migrate an earlier wire format."""
     if (
         not isinstance(items, list) or len(items) < 3
         or not all(isinstance(item, dict) for item in items)
-        or items[0].get("role") != "system"
-        or items[1].get("role") != "developer"
-        or items[2] != TASK_MESSAGE
+        or (window is None and (items[0].get("role") != "system"
+                                or items[1].get("role") != "developer"
+                                or items[2] != TASK_MESSAGE))
         or any(item.get("type") not in {"reasoning", "function_call", "function_call_output"}
                and item.get("role") != "developer"
-               for item in items[3:])
-        or metadata != history_metadata(items, context_policy=context_policy)
+               for item in items[len(window.base) if window else 3:])
+        or metadata != history_metadata(items, context_policy=context_policy, window=window)
     ):
         raise RecoveryError("saved active-episode input has an invalid history contract")
     return items
@@ -144,10 +155,25 @@ def validate_model_input(
 
 def reconstruct_state(
     items: list[dict[str, Any]], *, context_policy: str = APPEND_POLICY,
+    window: CompactedWindow | None = None,
 ) -> dict[str, Any]:
     """Read the latest complete view plus the immutable task, without replaying edits."""
     _policy(context_policy)
     try:
+        if window:
+            window.verify_prefix(items)
+            views = [WINDOW_RULES.payload(i) for i in items[len(window.base):]]
+            for item, view in zip(items[len(window.base):], views, strict=True):
+                if item.get("role") == "developer" and not (
+                    _archive_view(view) or (isinstance(view, dict)
+                    and set(view) == {"kind", "state"} and view["kind"] == STATE_KIND
+                    and isinstance(view["state"], dict))
+                ):
+                    raise ValueError("invalid compacted current-state view")
+            views = [v for v in views if v and v["kind"] == STATE_KIND]
+            if not views or views[-1]["state"].get("public_task") != window.public_task:
+                raise ValueError("compacted current state must contain the exact public task")
+            return views[-1]["state"]
         state = json.loads(items[1]["content"])
         if not isinstance(state, dict):
             raise ValueError("initial state is not an object")
@@ -176,8 +202,21 @@ def assemble_model_input(
     *, system_prompt: str, state: dict[str, Any], history: list[dict[str, Any]],
     previous_input: list[dict[str, Any]] | None = None,
     context_policy: str = APPEND_POLICY,
+    window: CompactedWindow | None = None,
 ) -> list[dict[str, Any]]:
     _policy(context_policy)
+    if window:
+        if context_policy != WINDOW_POLICY or state.get("public_task") != window.public_task:
+            raise RecoveryError("compacted window requires the unchanged public task")
+        latest = {"role": "developer", "content": canonical_json({
+            "kind": STATE_KIND, "state": state,
+        })}
+        items, _ = window.rules.compose(
+            seed=window.base, saved=previous_input if previous_input is not None else window.base,
+            added=history, reentry=latest, policy=context_policy, replace=True,
+        )
+        history_metadata(items, context_policy=context_policy, window=window)
+        return items
     if context_policy == WINDOW_POLICY:
         return _assemble_window(system_prompt=system_prompt, state=state, history=history,
                                 previous_input=previous_input)

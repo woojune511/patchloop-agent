@@ -80,6 +80,14 @@ def dev(
         Literal["append-v1", "native-window-v1"],
         typer.Option("--context-policy", help="Opt-in current snapshot window; no compaction API."),
     ] = "append-v1",
+    compact_at_input_tokens: Annotated[
+        int | None, typer.Option("--compact-at-input-tokens", min=1, max=271_999,
+                                 help="Opt-in one compact at this counted-input threshold.")
+    ] = None,
+    accept_compaction_model_limit_reservation: Annotated[
+        bool, typer.Option("--accept-compaction-model-limit-reservation",
+                           help="Accept a conditional reservation, not an enforced invoice cap.")
+    ] = False,
     resume_run_id: Annotated[
         str | None,
         typer.Option("--resume-run-id"),
@@ -103,6 +111,8 @@ def dev(
                 enable_probes=enable_probes,
                 repair_recheck=repair_recheck,
                 context_policy=context_policy,
+                compact_at_input_tokens=compact_at_input_tokens,
+                accept_compaction_model_limit_reservation=accept_compaction_model_limit_reservation,
                 resume_run_id=resume_run_id,
             )
         )

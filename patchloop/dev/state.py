@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import threading
 from collections.abc import Iterator
@@ -15,7 +16,7 @@ from patchloop.errors import ActionConflict, RecoveryError
 from patchloop.util import canonical_json, sha256_json, utc_now
 
 _PROCESS_LOCK = threading.RLock()
-_ACTIVE_EXECUTIONS: set[str] = set()
+_ACTIVE_EXECUTIONS: dict[str, int] = {}
 _UNIQUE_TURN_EVENTS = {
     "working_notes_updated",
     "turn_started",
@@ -26,7 +27,8 @@ _UNIQUE_TURN_EVENTS = {
     "tool_policy_transition",
 }
 _UNIQUE_ACTION_EVENTS = {"attempt_card", "repair_recheck_started", "repair_recheck_finished"}
-_UNIQUE_RUN_EVENTS = {"manifest_recorded", "submission_recorded", "evaluator_finished"}
+_UNIQUE_RUN_EVENTS = {"manifest_recorded", "submission_recorded", "evaluator_finished",
+                      "context_window_activated"}
 
 
 @contextmanager
@@ -79,7 +81,7 @@ class DevJournal:
         with _PROCESS_LOCK:
             if key in _ACTIVE_EXECUTIONS:
                 raise RecoveryError("development run is already active")
-            _ACTIVE_EXECUTIONS.add(key)
+            _ACTIVE_EXECUTIONS[key] = threading.get_ident()
         stream = None
         acquired = False
         try:
@@ -116,7 +118,13 @@ class DevJournal:
                         fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
                 stream.close()
             with _PROCESS_LOCK:
-                _ACTIVE_EXECUTIONS.discard(key)
+                _ACTIVE_EXECUTIONS.pop(key, None)
+
+    def require_execution_lock(self) -> None:
+        """Compose a run-scoped helper without nesting the run-lifetime OS lock."""
+        with _PROCESS_LOCK:
+            if _ACTIVE_EXECUTIONS.get(str(self.execution_lock_path)) != threading.get_ident():
+                raise RecoveryError("current thread does not own the development run lock")
 
     def write_envelope(self, envelope: DevRunEnvelope) -> None:
         if envelope.run_id != self.run_id:
@@ -325,6 +333,12 @@ class DevJournal:
             for event in self.events()
             if event["event_type"] == "provider_call_finished"
         ]
+        for event in self.events():
+            if event["event_type"] == "compaction_usage_recorded":
+                payload = event["payload"]
+                amount = payload["accounting"]["model_rate_cost_nanos"]
+                if amount is not None:
+                    rows.append({"call_id": payload["call_id"], "cost_nanos": amount})
         call_ids = [row.get("call_id") for row in rows]
         if len(call_ids) != len(set(call_ids)):
             raise RecoveryError("development journal contains duplicate provider usage")
@@ -368,6 +382,12 @@ class DevJournal:
             for event in self.events()
             if type(event["payload"].get("active_elapsed_ms")) is int
         ]
+        for event in self.events():
+            if "active_elapsed_seconds" in event["payload"]:
+                seconds = event["payload"]["active_elapsed_seconds"]
+                if type(seconds) not in (int, float) or not math.isfinite(seconds) or seconds < 0:
+                    raise RecoveryError("invalid compaction active time")
+                values.append(math.ceil(seconds * 1_000))
         if any(value < 0 for value in values):
             raise RecoveryError("development journal has invalid active elapsed time")
         return max(values, default=0)
