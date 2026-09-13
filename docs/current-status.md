@@ -38,7 +38,7 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: counterexample-review inputs frozen; execution not enabled
+## Current seam: counterexample-review collector connected; paid execution pending
 
 The approved no-call preparation selects A2 (`run_dev_8d592587618448b7`) immediately
 before turn22: both current visible checks PASS, with 19 model/78 tool calls and
@@ -59,13 +59,35 @@ are $0.50 each/$2 total, no transfer; caps can censor an episode and do not guar
 32 funded calls. No paid authorization is included. Prompt-prefix cache effects and
 behavior are scored separately; one selected checkpoint cannot establish generality.
 
-Evidence: `C:\pt\analyses\counterexample-review-20260913` (`packet.json`, `protocol.json`,
-`A.json`, `B.json`, `result.md`). The new diagnostics-only preparer has no execution
-command. Next: adapt the existing short-rollout engine to the exact v38 prefix and
-mock-test feedback/accounting/stops, then seal an executable packet for separate
-approval. In particular, inherited accepted mutations must be derived as two, not
-copied from an older diagnostic's hard-coded three. Runtime/default/task bytes are
-unchanged; provider/count/Docker/candidate/hidden execution NOT_RUN, official=false.
+The diagnostics-only collector now reuses native request construction, the existing
+bounded dispatcher, gateway and reconciliation. It restores the two inherited
+accepted mutations and the automatic repair-recheck events, counts new automatic
+checks as tools, and returns their feedback through the native runtime path.
+Both initial requests match the frozen bytes. Subsequent B requests retain the
+suffix once; B can still mutate or finish without a probe. Memory, encrypted
+continuation, ordinary tool policy and default runtime are unchanged.
+
+Each branch has its own $0.50 ledger, full-25k admission and eight-response bound.
+Cost/turn censoring leaves other branches available, with no budget transfer.
+Count/provider/billing uncertainty or unconfirmed sandbox cleanup stops the whole
+experiment. Pending durable actions reconcile before a new dispatch; no uncertain
+provider/check/probe is retried. Public terminal receipts use the last recorded
+diff, not a new Git operation after deadline or a claim about an uncertain worktree.
+The executable command requires the exact packet hash and a fresh exclusive result
+root. It has no experiment resume or automatic retry.
+
+Immutable design: `C:\pt\analyses\counterexample-review-20260913`. New executable
+packet: `C:\pt\analyses\counterexample-review-executable-20260913`, `plan.json` hash
+`6502091980b8b38dc6c47e730c6418c51e95a953cec4c793e3b6e16b6434e367`.
+85 focused tests passed in 93.071s, including mock lifecycle and real-prefix no-call
+restoration; 5,556 protected file hashes match. Receipts: `validation.json`,
+`final-validation.json`, `result.md`. The follow-up Ruff receipt resolves a single
+line-length error in the external audit helper, with collector/runtime bytes unchanged.
+The next step is separate exact paid approval, then existing-image preflight and
+one execution of this four-branch packet, not a new unconstrained live row.
+Provider/count/Docker/actual candidate/hidden execution NOT_RUN, official=false.
+The full runtime suite and isolated-evaluator smoke were not rerun for this
+diagnostics-only change; synthetic gateway rollouts cover probe/mutation/check/finish.
 
 ## Prior public counterexamples reproduced; no runtime change
 

@@ -777,7 +777,7 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: voluntary counterexample-review no-call design, not executable yet.
+Current seam: voluntary counterexample-review collector, mock verified; paid run pending.
 `diagnostics/counterexample_review.py` restores A2 `run_dev_8d592587618448b7` turn22
 from its public prefix. Artifacts: `C:\pt\analyses\counterexample-review-20260913`.
 Both current checks PASS, 19 model/78 tool/2 accepted mutations remain, 1619 seconds.
@@ -789,15 +789,44 @@ The first system-message suffix changes cache-prefix identity; report that cost 
 Four new branches A1/B1/B2/A2, round-robin, <=8 calls each, $0.50 each/$2 shared
 planning cap, no transfer, no paid approval. Exact counting/full25k admission required
 later; do not lower output to fund a tail or treat censored samples as semantic failures.
-`prepare`/`validate` only; no collector, credentials, workspace, Docker or model call.
+The immutable design module remains `prepare`/`validate` only. The separate
+`diagnostics/counterexample_review_rollout.py` adds `prepare`/`validate`/`run` without
+altering the frozen design or any default runtime/task/prompt/tool-policy bytes.
+Executable packet: `C:\pt\analyses\counterexample-review-executable-20260913`;
+`plan.json` SHA-256 `6502091980b8b38dc6c47e730c6418c51e95a953cec4c793e3b6e16b6434e367`.
+Approval must identify that exact packet, task/model/medium/root .env, four branches,
+<=8 new calls each, $0.50 each/$2 total, probes/recheck ON and a fresh external result
+root. `run` requires `--approval-packet-hash`, `--credential-file`, `--max-cost-usd 2`
+and `--pricing-verified-on` equal to the current UTC date. The date is an operator
+price-review assertion, not an automatic price lookup. No paid authorization yet.
+SDK retries zero, count wait 30s, response wait 300s, client cleanup 5s; effective
+limits are clipped by branch-active/global 1800s deadlines. No Docker start/pull/build.
+Count/transport/billing/continuation or unconfirmed cleanup aborts the experiment;
+branch cost/8-response bounds censor only that branch. No lowering the 25k ceiling,
+transferring budget, automatic replacement samples, experiment resume or root reuse.
 The source context contains larger storage representations than the sent view: prove
 the full native request by `_build_model_input` replay, then compare stable identity
 fields. Do not mistake intentional native-reference projection for evidence loss.
-Next scoped implementation is the existing short-rollout adapter plus mocks, not a
-default runtime change. Existing diagnostic engines bind old checkpoints/runtime and
-some compute mutations since checkpoint using a hard-coded 3; this seed has 2.
-Restore prefix counters, preserve independent branches/native feedback, verify exact
-cap/ceiling/deadline/idempotency/all-branch stops before a new paid packet approval.
+The adapter uses the existing dispatcher/reconciliation plus active native context
+and repair-recheck paths. Import both repair_recheck events; otherwise the inherited
+tool count and feedback are wrong. Derive the two accepted mutations from the restored
+gateway, not an older collector's hard-coded three. Count new harness rechecks as
+tool actions, preserve their real origin, and never fabricate native function calls.
+Resolve durable work before budget admission. Terminal finalization uses the last
+recorded diff/check identity without running Git after deadline; pending worktree
+state is not claimed current. A/B initial request bytes and all source/notes/native
+items are restored exactly. No forced probe or finish gate is inherited from the
+older probe-first collector. B retains its sole system suffix through native history.
+Tests cover optional probe/repair/check/finish, correction/continuation, fault replay,
+automatic recheck, actual-prefix no-call restoration, per-branch caps, all-branch
+uncertainty stops and deadline receipts. External validation/preservation/cleanup
+receipts accompany the packet. Real provider/count, Docker, pyfakefs candidate checks
+and hidden evaluation remain NOT_RUN. Full runtime suite/isolated-evaluator smoke
+not rerun: runtime/default/task unchanged. Next is exact paid approval, not more
+default agent scaffolding or an assumed benefit from the review instruction.
+85 focused tests PASS/93.071s; 5,556 protected hashes verified. `final-validation.json`
+records the final Ruff/docs checks after wrapping an external audit-helper long line;
+the original validation receipt is retained, including that corrected lint failure.
 Score useful model-authored cases, actual execution, evidence-responsive repair,
 same-case recheck, current visible checks/finish, cost and censoring separately.
 No hidden evaluator or paid judge. Single post-hoc seed/two samples per arm are not
