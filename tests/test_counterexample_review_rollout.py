@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from dataclasses import replace
 from decimal import Decimal
 from types import SimpleNamespace
@@ -414,6 +415,12 @@ def test_real_frozen_source_restores_exact_requests_counts_notes_and_no_executio
     if not rollout.DESIGN.exists():
         pytest.skip("external evidence is not installed")
     before = {p: sha256_bytes(p.read_bytes()) for p in rollout.DESIGN.rglob("*") if p.is_file()}
+    saved = json.loads((rollout.DESIGN / "packet.json").read_bytes())
+    if saved["runtime_hash"] != rollout.design.runtime_content_hash():
+        with pytest.raises(ValueError, match="source runtime/config mismatch"):
+            rollout.load_plan()
+        assert before == {p: sha256_bytes(p.read_bytes()) for p in before}
+        return
     plan = rollout.load_plan()
     envelope = rollout.prepare(tmp_path / "plan")
     assert rollout.validate(tmp_path / "plan")[1] == envelope

@@ -5,6 +5,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
+## Current seam: opt-in brief planning and fresh-run comparison
+
+The supplied public-case/advice experiments below are closed diagnostics, not the
+next execution queue. The current intervention is `--planning-policy brief-v1`,
+OFF by default and append-v1 only: a short public work plan updated alongside a
+normal tool action. No planner API, mandatory probe, stronger tool mask, memory
+rewrite or context-policy change is added. Plans are unverified model-authored
+records; they do not grant check PASS or submission eligibility.
+
+The user authorized this improvement cycle up to $40 without repeated per-run
+approval. Each fresh mini/medium invocation remains repeat=1, capped at $1.20,
+with probes and repair-recheck enabled in both arms and the existing 40/100/4/1800
+limits. First compare four OFF/four ON pyfakefs-v2 runs; at most two justified
+single-axis planning revisions and qualified loguru-v3/hf-v1 extension follow.
+Maximum 32 runs/$38.40 of reserved invocation caps; unused budget is not a target.
+No live planning comparison has run yet. Focused validation passes 66 tests with
+4 unsupported-combination skips in 104.018s. The complete rerun passes 2067 tests
+with 8 skips in 640.392s (101 files, four isolated workers); the two-minute overall
+target was not met. Six old live-checkpoint tests now verify read-only rejection
+on runtime mismatch, preserving their compatible-runtime replay assertions and
+all old code/packet bytes. Ruff and both OFF/ON mock smoke pass; each mock makes
+one edit, checks, submits and reaches isolated acceptance PASS/safety NOT_RUN.
+The OFF prompt/schema/decision wire is unchanged, and 9658 protected files match.
+
+`diagnostics.planning_cycle` freezes each group's runtime/task/configuration and
+reuses completed results or exact native recovery. It stops the whole cycle on
+provider/count/cost/integrity/cleanup uncertainty. Prepared Docker/images only;
+no automatic start/pull/build. Details and the predeclared decision rule are in
+[the planning experiment contract](../.agent/planning-experiment.md). External evidence
+will live at `C:\pt\analyses\planning-cycle-20260914`; local receipts live under
+`C:\pt\validation\planning-cycle-20260914`. All results remain `official=false`.
+
 ## Targets and limits
 
 - focused local validation: under 2 minutes
@@ -38,7 +70,7 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: supplied-case A/B completed, no behavioral improvement
+## Closed diagnostic: supplied-case A/B, no behavioral improvement
 
 The exact `1f8bc6f5...` packet ran once from the frozen A2 checkpoint. All four
 branches chose finish on their first response, submitted unchanged `5c3c2067...`
@@ -59,9 +91,9 @@ Initial delivery/advice works, but no probe/edit means later case replay, histor
 currency and delivery dedup remain mock-tested, not exercised by this live comparison.
 Do not adopt this advice by default or claim an autonomy gain. The prior current-failure
 experiment elicited repairs when concrete failure was supplied; merely supplying its
-program/status did not elicit observation here. Next consider the public-verification
-step itself, not another longer reminder or tool mask. No new implementation/run is
-authorized; this one-checkpoint/two-per-arm contrast does not identify an internal cause.
+program/status did not elicit observation here. The next direction was subsequently
+replaced by the explicitly approved planning cycle above. This old packet grants no
+new execution; its one-checkpoint/two-per-arm contrast does not identify an internal cause.
 
 Evidence: `C:\pt\analyses\public-case-live-20260914` (`result.md`, masked-code review,
 audit/transcript/context and immutable journals); same-name validation receipts.

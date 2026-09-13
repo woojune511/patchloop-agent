@@ -26,7 +26,7 @@ from patchloop.agent.request_transport import BoundedResponsesClient
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import native_compaction
+from patchloop.dev import native_compaction, working_plan
 from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.context import SourceProjection, build_observed_source_index
@@ -289,6 +289,8 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
             "compaction_contract": native_compaction.policy_contract(request),
+            **({"planning_contract": working_plan.contract()}
+               if request.planning_policy != "none" else {}),
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
@@ -399,6 +401,7 @@ def _manifest(
 ) -> RunManifest:
     return RunManifest(
         run_id=run_id,
+        planning_policy=request.planning_policy,
         task_id=package.public.task_id,
         task_version=package.public.task_version,
         base_commit=package.public.repository.base_commit,
@@ -407,7 +410,7 @@ def _manifest(
         task_content_hash=package.task_content_hash,
         runtime_content_hash=runtime_hash,
         model_hash=model_hash,
-        tool_surface_hash=dev_tool_surface_hash(),
+        tool_surface_hash=dev_tool_surface_hash(planning_policy=request.planning_policy),
         sandbox_identity_hash=_sandbox_identity_hash(request, package),
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
         probe_profile_hash=probe_profile_hash() if request.enable_probes else None,
@@ -1166,6 +1169,7 @@ def _build_context(
     tool_policy_transition: dict[str, Any] | None = None,
     projection: SourceProjection | None = None,
     repair_recheck: bool = False,
+    planning_policy: str = "none",
 ) -> str:
     projection = projection or gateway.prepare_context_projection(
         latest_results=latest_tool_results,
@@ -1324,6 +1328,10 @@ def _build_context(
         "recent_attempt_result_next_question": _cards(journal, correction),
         "public_task": package.public.model_dump(mode="json"),
     }
+    if planning_policy != "none":
+        payload["working_plan"] = working_plan.project(
+            journal.events(), diff_hash=summary.patch_hash, gate=active_policy.workflow_gate,
+        )
     if repair_recheck:
         payload["repair_recheck"] = recheck_context
         last_recheck = recheck_context["last_result"]
@@ -1710,6 +1718,7 @@ def _build_model_input(
     *, journal: DevJournal, artifact_store: ArtifactStore, context: str,
     latest_tool_results: list[DevToolResult],
     context_policy: str = APPEND_POLICY,
+    planning_policy: str = "none",
 ) -> list[dict[str, Any]]:
     """Append the latest exchange to the exact saved active-episode history."""
     events = journal.events()
@@ -1774,7 +1783,9 @@ def _build_model_input(
     state = reference_native_sources(state, history, archive_kind=archive_kind)
     state = compact_model_state(state, history, archive_kind=archive_kind)
     return assemble_model_input(
-        system_prompt=DEV_SYSTEM_PROMPT, state=state, history=new_history,
+        system_prompt=(DEV_SYSTEM_PROMPT + "\n\n" + working_plan.INSTRUCTIONS
+                       if planning_policy != "none" else DEV_SYSTEM_PROMPT),
+        state=state, history=new_history,
         previous_input=previous_input, context_policy=context_policy,
         window=compact_window,
     )
@@ -1962,6 +1973,9 @@ def _build_latest_exchange(
         None,
     )
     note_receipt = note_update.get("receipt") if note_update is not None else None
+    plan_receipt = next((event["payload"]["receipt"] for event in reversed(events)
+                         if event["event_type"] == working_plan.EVENT
+                         and event["payload"].get("turn_id") == turn_id), None)
     notes = current_payload.get("working_notes", {})
     lifecycle = (notes.get("last_source_lifecycle") or {}) if isinstance(notes, dict) else {}
     output_items = []
@@ -1989,6 +2003,8 @@ def _build_latest_exchange(
                     "delivery": "preceding_function_call_output",
                 }
                 notes.pop("last_update_diagnostics", None)
+        if isinstance(plan_receipt, dict) and plan_receipt.get("action_id") == action_id:
+            public_result["plan_update_result"] = plan_receipt
         if isinstance(notes, dict) and (note_owner or expiry_owner):
             # Source expiry belongs to the mutation even without a new annotation.
             # Never attach a historical expiry to an unrelated later read/check.
@@ -2508,6 +2524,7 @@ def _run_envelope(
         model_hash=model_hash,
         sandbox_identity_hash=_sandbox_identity_hash(request, package),
         repair_recheck=request.repair_recheck,
+        planning_policy=request.planning_policy,
         context_policy=request.context_policy,
         compaction_contract=native_compaction.policy_contract(request),
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
@@ -2943,6 +2960,20 @@ def _run_repair_recheck(
     if terminal is None and result.status == "failed":
         return DevTerminal.TASK_FAILED, "repair recheck gateway action failed"
     return terminal, message
+
+
+def _record_planning_decision(
+    policy: str, *, journal: DevJournal, gateway: DevToolGateway,
+    calls: list[RequestedTool], turn_id: str,
+) -> None:
+    if policy == "none":
+        return
+    started = next(e["payload"] for e in reversed(journal.events())
+                   if e["event_type"] == "turn_started" and e["payload"]["turn_id"] == turn_id)
+    working_plan.record(
+        journal, calls, turn_id=turn_id, diff_hash=gateway.current_diff_hash,
+        gate=started["workflow_gate"],
+    )
 
 
 def _record_tool_batch(
@@ -3530,6 +3561,10 @@ def _run_one_active(
                             gateway.record_working_notes_update(
                                 pending_calls, turn_id=pending_turn_id,
                             )
+                            _record_planning_decision(
+                                request.planning_policy, journal=journal, gateway=gateway,
+                                calls=pending_calls, turn_id=pending_turn_id,
+                            )
                             recovered_results = gateway.execute_batch(pending_calls)
                         except ExecutionDeadlineExceeded:
                             terminal_code = DevTerminal.LIMIT_REACHED
@@ -3638,6 +3673,7 @@ def _run_one_active(
                 tool_policy_transition=policy_transition,
                 projection=projection,
                 repair_recheck=request.repair_recheck,
+                planning_policy=request.planning_policy,
             )
             context_payload = json.loads(context)
             projected_spans = list(context_payload["source_spans"])
@@ -3654,6 +3690,7 @@ def _run_one_active(
                 context=context,
                 latest_tool_results=latest_tool_results,
                 context_policy=request.context_policy,
+                planning_policy=request.planning_policy,
             )
             model_input_text = canonical_json(model_input)
             model_input_artifact = artifact_store.put_text(
@@ -3677,6 +3714,7 @@ def _run_one_active(
             check_ids=policy.check_ids,
             allowed_tools=policy.allowed_tools,
             read_paths=policy.targeted_read_paths,
+            planning_policy=request.planning_policy,
         )
         turn_payload = {
             "turn_id": turn_id,
@@ -4120,6 +4158,10 @@ def _run_one_active(
         try:
             deadline.check()
             gateway.record_working_notes_update(turn.tool_calls, turn_id=turn_id)
+            _record_planning_decision(
+                request.planning_policy, journal=journal, gateway=gateway,
+                calls=turn.tool_calls, turn_id=turn_id,
+            )
             results = gateway.execute_batch(turn.tool_calls)
         except ExecutionDeadlineExceeded:
             terminal_code = DevTerminal.LIMIT_REACHED

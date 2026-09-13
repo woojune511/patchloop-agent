@@ -80,6 +80,10 @@ def dev(
         Literal["append-v1", "native-window-v1"],
         typer.Option("--context-policy", help="Opt-in current snapshot window; no compaction API."),
     ] = "append-v1",
+    planning_policy: Annotated[
+        Literal["none", "brief-v1"],
+        typer.Option("--planning-policy", help="Opt-in bounded public planning; append-v1 only."),
+    ] = "none",
     compact_at_input_tokens: Annotated[
         int | None, typer.Option("--compact-at-input-tokens", min=1, max=271_999,
                                  help="Opt-in one compact at this counted-input threshold.")
@@ -111,6 +115,7 @@ def dev(
                 enable_probes=enable_probes,
                 repair_recheck=repair_recheck,
                 context_policy=context_policy,
+                planning_policy=planning_policy,
                 compact_at_input_tokens=compact_at_input_tokens,
                 accept_compaction_model_limit_reservation=accept_compaction_model_limit_reservation,
                 resume_run_id=resume_run_id,

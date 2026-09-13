@@ -434,6 +434,11 @@ def test_approval_contract_before_key_provider_or_result_root(tmp_path, monkeypa
 def test_real_packet_and_checkpoint_restore_with_no_provider_or_candidate_execution(tmp_path):
     if not rollout.DESIGN.exists():
         pytest.skip("external evidence unavailable")
+    saved = json.loads((rollout.DESIGN / "packet.json").read_bytes())
+    if saved["runtime_hash"] != rollout.design.runtime_content_hash():
+        with pytest.raises(ValueError, match="source runtime/config mismatch"):
+            rollout.load_plan()
+        return
     plan = rollout.load_plan()
     envelope = rollout.prepare(tmp_path / "executable")
     assert rollout.validate(tmp_path / "executable")[1] == envelope

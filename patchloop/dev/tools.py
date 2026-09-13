@@ -142,6 +142,7 @@ def dev_tool_schemas(
     check_ids: Sequence[str] = (),
     allowed_tools: Sequence[str] | None = None,
     read_paths: Sequence[str] = (),
+    planning_policy: str = "none",
 ) -> list[dict[str, Any]]:
     check_id_schema: dict[str, Any] = {"type": "string", "minLength": 1}
     if check_ids:
@@ -375,6 +376,14 @@ def dev_tool_schemas(
         parameters["properties"]["turn_decision"] = _public_turn_decision_schema(
             decision_modes[name]
         )
+        if planning_policy != "none":
+            from patchloop.dev.working_plan import POLICY, update_schema
+
+            if planning_policy != POLICY:
+                raise ContractError("unknown planning policy")
+            decision = parameters["properties"]["turn_decision"]
+            decision["properties"]["plan_update"] = update_schema()
+            decision["required"].append("plan_update")
         parameters["required"].append("turn_decision")
         projected.append(schema)
     return projected

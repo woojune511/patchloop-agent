@@ -53,7 +53,37 @@ parallel public inspection, one admitted mutation, a visible check, automatic
 full-diff projection, finish, and a separate private evaluation. Its result is
 still unofficial.
 
-## Supplied public-case lifecycle experiment
+## Brief planning improvement cycle
+
+`patchloop dev --planning-policy none|brief-v1` defaults to `none`; `brief-v1`
+requires `--context-policy append-v1`. Resume must repeat the same option along
+with the existing exact task/model/environment/cap/limits. No old run migration.
+
+For the currently user-authorized $40 cycle, use `diagnostics.planning_cycle`:
+
+```powershell
+uv run python -m diagnostics.planning_cycle init --root C:\pt\analyses\planning-cycle-20260914 --pricing-verified-on <actual-UTC-date>
+uv run python -m diagnostics.planning_cycle prepare --root C:\pt\analyses\planning-cycle-20260914 --hypothesis "Short public plans may improve consistent completion."
+uv run python -m diagnostics.planning_cycle run --root C:\pt\analyses\planning-cycle-20260914 --group g01-pyfakefs
+uv run python -m diagnostics.planning_cycle status --root C:\pt\analyses\planning-cycle-20260914
+```
+
+Init requires a new external root; prepare is credential/provider-free and freezes
+the exact packet. Confirm official prices and existing Docker/image readiness
+before running. The execution command admits the entire group, uses the normal
+runner and records durable per-slot results. Reissuing a completed group is
+read-only. An interrupted process may use exact native recovery; unresolved count
+or dispatch is never retried. A recorded cycle stop prevents further dispatch.
+No automatic Docker operation is authorized. `--provider mock` is a local fixture
+mode; tests also mock probe-image preflight, and never claim it as live evidence.
+
+The authorized group order, stage thresholds and metrics are specified in
+[the experiment contract](../.agent/planning-experiment.md). Do not add runs to use leftover
+budget or use hidden details to revise planning instructions. Close with `close
+--reason ...` when there is no justified next change. Old experiment approvals
+below remain consumed; this cycle does not reopen them.
+
+## Closed supplied public-case lifecycle experiment
 
 `diagnostics.public_case_rollout` adds no default agent option. Its `prepare` and
 `validate` commands take `--plan-root` and use no key, input count, provider or

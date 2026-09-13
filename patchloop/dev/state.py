@@ -18,6 +18,7 @@ from patchloop.util import canonical_json, sha256_json, utc_now
 _PROCESS_LOCK = threading.RLock()
 _ACTIVE_EXECUTIONS: dict[str, int] = {}
 _UNIQUE_TURN_EVENTS = {
+    "working_plan_updated",
     "working_notes_updated",
     "turn_started",
     "turn_decision_recorded",

@@ -655,6 +655,13 @@ def test_real_checkpoint_frozen_inputs_and_no_call_reconstruction(tmp_path, monk
 
     monkeypatch.setattr(socket.socket, "connect", forbidden)
     monkeypatch.setattr(rollout.feedback, "load_exact_openai_api_key", forbidden)
+    saved = json.loads((rollout.checkpoint.DESIGN / "packet.json").read_bytes())
+    if saved["runtime_hash"] != rollout.checkpoint.design.seed.runtime_content_hash():
+        with monkeypatch.context() as scoped:
+            scoped.setattr(subprocess, "Popen", forbidden)
+            with pytest.raises(ValueError, match="source runtime/config mismatch"):
+                rollout.load_plan()
+        return
     with monkeypatch.context() as scoped:
         scoped.setattr(subprocess, "Popen", forbidden)
         plan = rollout.load_plan()

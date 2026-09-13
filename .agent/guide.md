@@ -777,7 +777,41 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: supplied-case live A/B completed; exact approval consumed, no adoption.
+Current seam: opt-in brief planning (`none` default, append-only `brief-v1`) and
+fresh-run A/B. The prior supplied-case/advice packets below are closed diagnostics,
+not a pending execution queue. See [planning-experiment.md](planning-experiment.md) for the exact
+runtime/experiment contract. User approved this cycle's $40 aggregate envelope,
+<=32 fresh mini/medium/$1.20/repeat1 invocations, probes+repair-recheck both arms;
+do not ask per-run approval inside that boundary or reopen old grants.
+
+`patchloop/dev/working_plan.py` derives review requests from public durable events
+and records one nonblocking turn annotation before tools. Only ON adds plan_update
+and working_plan. First non-null wins; <=3000 whole text; null preserves; invalid
+annotations do not block actions or trigger correction calls. Unchanged text is
+not a substantive update. Plans are model_authored_unverified, past diff remains
+marked historical, no gate authority. Notes/concerns/native history/encrypted
+continuation remain independent. Planning contract binds prompt/model/envelope
+and tool hash (v38 base plus ON planning contract); evaluator manifest must carry
+the same policy. OFF prompt/schema/decision wire remains unchanged.
+
+`diagnostics/planning_cycle.py` freezes groups and delegates to run_dev. Lifetime
+control lock, independent state per slot, durable usage/cap restoration, exact
+resume and completed-receipt reuse. Initial order A1/B1/B2/A2/B3/A3/A4/B4 on
+pyfakefs-v2; <=2 one-axis evidence-supported revisions. B>=2/4 PASS and B>A with
+integrity intact qualifies for frozen loguru-v3 then hf-v1 A1/B1/B2/A2. Otherwise
+choose one justified change or stop, never fill the budget. Private evaluator
+details cannot inform plan prompts; public traces only. Docker prepared images
+only, no auto-start/pull/build. Focused66PASS/4unsupported skips in104.018s;
+full2067PASS/8skips in640.392s across101files/fourworkers, exceeding the overall
+two-minute target. Six local historical-checkpoint tests explicitly verify runtime
+mismatch rejection instead of migrating their closed evidence; their compatible
+replay branches remain. Ruff and OFF/ON mock smoke pass, each4model/5tool/1edit
+through isolated acceptance PASS/safety NOT_RUN. 9658protected hashes and OFF
+prompt/schema/decision-wire identity match. No paid planning group executed yet.
+Receipt roots: C:\pt\validation\planning-cycle-20260914 and
+C:\pt\analyses\planning-cycle-20260914. Preserve all pre-existing evidence.
+
+Closed prior seam: supplied-case live A/B completed; approval consumed, no adoption.
 Packet1f8bc6f58dbc23c14b253a1bec448818fbdaaad7c215fd57734944fa9ca2441b ran
 mini/medium/25k,A1/B1/B2/A2,1USD each/4USD total, original report-only nested A2 seed.
 All branches finish immediately, no new mutations/checks/probes; unchanged23-line

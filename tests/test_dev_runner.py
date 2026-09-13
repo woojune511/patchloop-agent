@@ -913,7 +913,8 @@ def test_failed_read_batch_retains_its_bounded_action_decision(gateway_factory) 
     assert card["result"]["actions"][0]["status"] == "failed"
 
 
-def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
+@pytest.mark.parametrize("planning_policy", ["none", "brief-v1"])
+def test_openai_request_requires_a_tool_and_records_only_output_shape(planning_policy) -> None:
     observed: dict[str, dict] = {}
 
     class FakeInputTokens:
@@ -963,7 +964,8 @@ def test_openai_request_requires_a_tool_and_records_only_output_shape() -> None:
     )
     request = adapter.request_payload(
         "{}",
-        dev_tool_schemas(finish_enabled=False, check_ids=["public-check"]),
+        dev_tool_schemas(finish_enabled=False, check_ids=["public-check"],
+                         planning_policy=planning_policy),
         system_prompt="test prompt",
     )
 

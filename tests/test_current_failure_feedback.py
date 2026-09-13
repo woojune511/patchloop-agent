@@ -207,6 +207,13 @@ def test_packet_immutable_repeated_validation_without_network_or_credentials(
 @pytest.mark.skipif(not design.SOURCE.is_dir(), reason="local immutable diagnostic absent")
 def test_actual_nested_checkpoint_replays_only_public_prefix_and_single_observation(monkeypatch):
     forbid_execution(monkeypatch)
+    # Closed packets remain evidence; a changed runtime must not re-execute their restore.
+    source = design.SealedSource(design.SOURCE)
+    saved = json.loads(source.read("envelope.json"))
+    if saved["runtime_hash"] != design.seed.runtime_content_hash():
+        with pytest.raises(ValueError, match="source runtime/config mismatch"):
+            design.compile_packet(design.SOURCE)
+        return
     packet, files = design.compile_packet(design.SOURCE)
     a, b = json.loads(files["A.json"]), json.loads(files["B.json"])
     state = reconstruct_state(a["input"])

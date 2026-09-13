@@ -225,6 +225,11 @@ def test_real_checkpoint_packet_and_two_exact_inputs_no_candidate_execution(tmp_
 
     monkeypatch.setattr(socket.socket, "connect", forbidden)
     monkeypatch.setattr(rollout.feedback, "load_exact_openai_api_key", forbidden)
+    saved = json.loads((rollout.feedback.DESIGN / "packet.json").read_bytes())
+    if saved["runtime_hash"] != rollout.feedback.design.runtime_content_hash():
+        with pytest.raises(ValueError, match="source runtime/config mismatch"):
+            rollout.load_plan()
+        return
     packet = tmp_path / "packet"
     envelope = rollout.prepare(packet)
     plan, again = rollout.validate(packet)

@@ -157,6 +157,23 @@ class MockDevAdapter:
             raise ContractError(f"no dev-head mock script for task: {task_id}") from exc
 
     def next_turn(self, context: str, tools: list[dict]) -> DevModelTurn:
+        turn = self._next_action(context, tools)
+        payload = json.loads(context)
+        planning = payload.get("working_plan")
+        if planning is not None:
+            for call in turn.tool_calls:
+                call.turn_decision.plan_update = None
+            if planning["review_request"]["requested"]:
+                turn.tool_calls[0].turn_decision.plan_update = (
+                    "Goal: " + payload["public_task"]["issue"]["title"] + ". "
+                    "Inspect the parser lifetime, make an exact small replacement, "
+                    "verify the current diff with public checks, then submit. "
+                    "Current stage: " + payload["workflow_gate"] + ". "
+                    "Untested behavior remains an assumption until observed."
+                )
+        return turn
+
+    def _next_action(self, context: str, tools: list[dict]) -> DevModelTurn:
         del tools
         try:
             payload = json.loads(context)

@@ -164,6 +164,17 @@ def compact_model_state(
 
     _check_followup(view, results)
 
+    plan = view.get("working_plan")
+    if isinstance(plan, dict):
+        receipt = plan.get("last_update_result")
+        if isinstance(receipt, dict):
+            delivered = results.get(receipt.get("action_id"), {}).get("plan_update_result")
+            if delivered == receipt:
+                plan["last_update_result"] = {
+                    **_select(receipt, ("turn_id", "action_id", "status")),
+                    "delivery": "preceding_function_call_output",
+                }
+
     if isinstance(notes, dict):
         receipt = notes.get("last_update_result")
         if isinstance(receipt, dict) and isinstance(receipt.get("turn_id"), str):

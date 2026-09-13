@@ -37,6 +37,12 @@ public task ──> dev-head ──> constrained model/tool loop
 `dev-head` derives its next gate from public execution facts: `needs_mutation`,
 `needs_visible_checks`, or `ready_to_submit`. There is no separate planning phase,
 runtime-version switch, cross-run memory retrieval, or candidate/qualification workflow.
+The optional append-only `brief-v1` experiment adds a short public working plan to
+the same tool decision, not a separate planning phase. It is OFF by default. The
+model can maintain goals, remaining work, hypotheses, verification and assumptions
+in up to 3,000 characters. Public mutation/check/probe results request reconsideration;
+invalid or absent plans never block the actual action. Plans remain unverified and
+separate from notes, concerns and the evidence-derived submission gate.
 The latest tool batch's observations are guaranteed in the next stateless request. Prior
 inspection intent stays in the exact native call arguments, not repeated as a tool finding:
 result/ledger/history copies use action-bound references. Source and actual check results

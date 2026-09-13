@@ -353,6 +353,13 @@ def test_real_nested_prefix_exact_first_requests_budget_and_notes_without_execut
 
     monkeypatch.setattr(socket.socket, "connect", forbidden)
     monkeypatch.setattr(rollout.feedback, "load_exact_openai_api_key", forbidden)
+    saved = json.loads((rollout.DESIGN / "packet.json").read_bytes())
+    if saved["runtime_hash"] != rollout.design.seed.runtime_content_hash():
+        with monkeypatch.context() as scoped:
+            scoped.setattr(subprocess, "Popen", forbidden)
+            with pytest.raises(ValueError, match="source runtime/config mismatch"):
+                rollout.load_plan()
+        return
     # Loading/validating the plan cannot execute processes. Only the later local
     # clone/patch restore below uses Git, never the candidate's code or a sandbox.
     with monkeypatch.context() as scoped:

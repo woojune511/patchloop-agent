@@ -229,9 +229,12 @@ def test_pending_scope_rollback_restores_crlf_after_empty_candidate(
 @pytest.mark.parametrize("boundary", ["correction", "next_turn_started"])
 @pytest.mark.parametrize("invalid_shape", ["reasoning_only", "mixed_batch"])
 @pytest.mark.parametrize("context_policy", ["append-v1", "native-window-v1"])
+@pytest.mark.parametrize("planning_policy", ["none", "brief-v1"])
 def test_provider_correction_survives_crash_without_repeating_dispatch(
-    tmp_path, monkeypatch, boundary, invalid_shape, context_policy,
+    tmp_path, monkeypatch, boundary, invalid_shape, context_policy, planning_policy,
 ) -> None:
+    if planning_policy != "none" and context_policy != "append-v1":
+        pytest.skip("brief planning is append-only")
     inputs = []
     executions = 0
     counted = 0
@@ -309,6 +312,7 @@ def test_provider_correction_survives_crash_without_repeating_dispatch(
         "provider": "openai", "model": "gpt-5.4-mini-2026-03-17",
         "env_file": tmp_path / "credential.env", "max_cost_usd": Decimal("1.20"),
         "context_policy": context_policy,
+        "planning_policy": planning_policy,
     })
     with pytest.raises(SimulatedCrash):
         runner.run_dev(request)
@@ -327,6 +331,9 @@ def test_provider_correction_survives_crash_without_repeating_dispatch(
     if invalid_shape == "reasoning_only":
         assert "max_output_tokens" in json.dumps(cards)
     assert sum(item.get("type") == "reasoning" for item in inputs[-1]) == 1
+    if planning_policy != "none":
+        assert context["working_plan"]["plan"] is None
+        assert context["working_plan"]["review_request"]["requested"] is True
     journal = DevJournal(tmp_path, run_id)
     assert len([r for r in journal.events() if r["event_type"] == "provider_call_started"]) == 2
     before = journal.path.read_bytes()

@@ -8,7 +8,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from patchloop.contracts import Artifact
 from patchloop.util import sha256_json
@@ -21,8 +21,8 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 })
 
 
-def dev_tool_surface_hash() -> str:
-    return sha256_json(
+def dev_tool_surface_hash(*, planning_policy: str = "none") -> str:
+    base = sha256_json(
         {
             "schema_version": "dev-tool-surface-v38",
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
@@ -114,6 +114,13 @@ def dev_tool_surface_hash() -> str:
             "provider_tool_validation": "schema-exact-null-bounded-diagnostic-v1",
         }
     )
+    if planning_policy == "none":
+        return base
+    from patchloop.dev.working_plan import POLICY, contract
+
+    if planning_policy != POLICY:
+        raise ValueError("unknown planning policy")
+    return sha256_json({"base_tool_surface_hash": base, "planning": contract()})
 
 
 class StrictModel(BaseModel):
@@ -185,6 +192,15 @@ class PublicTurnDecision(StrictModel):
     evidence_goal: str | None = Field(default=None, min_length=1, max_length=500)
     # Notes are parsed independently: an invalid annotation must not reject an action.
     memory_update: Any = None
+    # Independent annotation parsing must not turn a bad plan into a tool failure.
+    plan_update: Any = None
+
+    @model_serializer(mode="wrap")
+    def preserve_optional_plan_wire(self, handler: Any) -> dict[str, Any]:
+        result = handler(self)
+        if "plan_update" not in self.model_fields_set:
+            result.pop("plan_update", None)
+        return result
 
     @model_validator(mode="after")
     def evidence_goal_matches_mode(self) -> PublicTurnDecision:
@@ -314,6 +330,7 @@ class DevRunRequest(StrictModel):
     state_root: Path | None = None
     enable_probes: bool = False
     repair_recheck: bool = False
+    planning_policy: Literal["none", "brief-v1"] = "none"
     context_policy: Literal["append-v1", "native-window-v1"] = "append-v1"
     compact_at_input_tokens: int | None = Field(default=None, gt=0, lt=272_000)
     accept_compaction_model_limit_reservation: bool = False
@@ -321,6 +338,8 @@ class DevRunRequest(StrictModel):
 
     @model_validator(mode="after")
     def provider_options_match(self) -> DevRunRequest:
+        if self.planning_policy != "none" and self.context_policy != "append-v1":
+            raise ValueError("brief-v1 planning requires append-v1")
         if self.provider == "openai":
             if self.env_file is None:
                 raise ValueError("--provider openai requires --env-file")
@@ -365,6 +384,7 @@ class DevRunEnvelope(StrictModel):
     model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     repair_recheck: bool = False
+    planning_policy: Literal["none", "brief-v1"] = "none"
     context_policy: Literal["append-v1", "native-window-v1"] = "append-v1"
     compaction_contract: dict[str, Any] | None = None
     probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
@@ -387,6 +407,8 @@ class DevRunEnvelope(StrictModel):
 
     @model_validator(mode="after")
     def provider_boundary_is_exact(self) -> DevRunEnvelope:
+        if self.planning_policy != "none" and self.context_policy != "append-v1":
+            raise ValueError("brief-v1 planning requires append-v1")
         if (self.probe_image_digest is None) != (self.probe_profile_hash is None):
             raise ValueError("probe image and profile identities must be paired")
         if self.cost_start_nanos > self.max_cost_nanos:
