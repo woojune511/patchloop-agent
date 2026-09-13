@@ -38,40 +38,59 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: context A/B packet prepared; no paid execution authorized
+## Current seam: native context A/B completed; four-row approval consumed
 
-The next question is whether the native-window configuration changes small-model
-behavior and cost relative to append-v1. A new preparation-only packet is at
-`C:\pt\analyses\native-window-comparison-20260913`; byte hash `8f016079...`.
-It fixes fresh A1/B1/B2/A2 rows, append/window/window/append, on the unchanged v38
-runtime and pyfakefs v2/mini-2026-03-17/medium/root `.env`. Probes and repair-recheck
-are ON in both, each repeat1/$1.20, total $4.80 with no budget transfer. API compact
-is OFF in both; encrypted reasoning/native exchanges remain intact. The 40/100/4/
-1,800 limits and native 25k desired-output admission are unchanged.
+The exact `8f016079...` packet ran once in A1/B1/B2/A2 order, append/window/window/
+append. All four were fresh pyfakefs v2/mini-2026-03-17/medium/root `.env` repeat1
+runs on unchanged v38, probes/repair-recheck ON, $1.20 each/$4.80 total, no transfer.
+API compact was disabled in both arms; encrypted continuation was retained. All
+96 generation ceilings stayed 25k; 40/100/4/1,800 limits and defaults are unchanged.
 
-The sole request difference is context_policy. Its existing system notice and exact
-public archive representation are part of the treatment, so this is not a pure text
-deletion ablation. Runtime model_hash includes that policy and legitimately differs;
-the actual model is the same. Subsequent agent-selected trajectories can diverge.
-Nineteen saved pilot inputs reconstruct exactly under the window policy; fixed-prefix
-append/window projections retain identical current state, public evidence and native
-items. This read-only check is not a behavioral control or new token measurement.
+| Row | Context | Terminal | Task acceptance | Model/tool calls | Known cost USD |
+|---|---|---|---|---|---:|
+| A1 | append | AGENT_STOPPED | NOT_RUN | 26/28 | 0.556358850 |
+| B1 | window | EVALUATOR_PASS | PASS | 21/28 | 0.380706000 |
+| B2 | window | EVALUATOR_FAIL | FAIL | 27/38 | 0.541517400 |
+| A2 | append | EVALUATOR_FAIL | FAIL | 22/23 | 0.369103950 |
 
-The packet fixes submission/aggregate acceptance, public repair/check outcomes,
-calls/tokens/costs, integrity and separate safety scoring. Count/invoice billing is
-not independently verified: $4.80 is the known generation-rate ledger limit, not a
-guaranteed invoice total. Uncertainty stops all remaining rows without retries,
-resumes or replacements. Two rows per arm only provide a descriptive within-task
-signal; prior rows are neither controls nor answer seeds. Docker readiness is not
-checked during preparation. Exact packet approval and live admission are still required.
+Total known model-rate cost **$1.847686200**; invoice/count billing remains
+independently unverified. Three submissions have both current visible checks PASS
+and safety PASS. A1 has no submission/evaluation: NOT_RUN is not a hidden-test FAIL.
+All results remain `official=false`/`claim_eligible=false`. There were 96 input counts,
+117 tools, nine automatic repair-rechecks and 1,000.949 active seconds; no probe call.
 
-Provider-free validation: 31 focused/packet/documentation cases PASS in 12.474s,
-including two identical full packet verifications and a wrong-hash rejection.
-Repository Ruff passes; the frozen operator script has one nonfunctional 101-column
-E501 style warning, retained in its own receipt. All 5,160 protected files verify.
-The owned 267-file pytest scratch was recycled, with a restoration receipt. No real
-provider/count/compact/Docker/task execution occurred. Full runtime suite and mock
-were not rerun for this packet/documentation-only change; the v38 receipt below applies.
+B has 2/2 submissions and 1/2 acceptance PASS versus A's 1/2 submissions and 0/2 PASS.
+With only two rows per arm this is a descriptive signal, not adoption evidence.
+Both arms used 48 model calls. B used 25.90% fewer input tokens, but only 0.35% less
+known cost because its cached-input share was lower (59.10% vs 73.60%). B also used
+more inspections (41 vs 33). Different trajectories and the window system notice/
+archive representation prevent a pure deletion-only causal interpretation.
+
+The public-code distinction is solution completeness, not demonstrated evidence
+loss: B1 handles all raw prefixes using existing mkdir behavior; A2 stops prefix
+creation at the first `..`; B2 delegates only non-`..` paths back to the original
+implementation while leaving manual entry handling in its traversal branch. A1
+stops after remaining public regression failures and repeated 52/50 scope rejections.
+Private failure details were not inspected, so these public observations are not an
+exact attribution of hidden failures. No additional candidate checks were executed.
+
+All 96 saved inputs replay exactly from their then-available journal prefixes;
+count/dispatch hashes, native ordering and submission/current-PASS diff binding
+verify. A1/B1/B2 never proposed notes. A2 made six memory updates, one finding was
+created/updated and delivered on 17 turns; an invalid citation was rejected without
+blocking its action. This is real note use, not proof of a correct plan or solution.
+Two read-only audits agree (3.717s each), 5,483 protected files verify, and 19 public
+check container cleanups are confirmed. No retry/resume/extra sample, Docker start/
+pull/build, task/runtime/default edit, or private feedback occurred.
+
+Evidence: `C:\pt\analyses\native-window-comparison-live-20260913` (`result.md`,
+`analysis.json`, approval/observer/result and final validation receipt). The original
+preparation packet and its 31-case/12.474s receipt are immutable. New operator stop
+tests pass (10/0.81s); docs/Ruff verification is recorded in `completion.json`.
+Full runtime tests/mock were not rerun because runtime bytes are unchanged.
+Next: a separate decision on provider-free public-spec edge-case validation before
+choosing one loop change. Do not automatically adopt window, force notes or add
+paid samples; this experiment does not isolate a single remaining cause.
 
 ## Prior native-window pilot succeeds; compact not exercised
 

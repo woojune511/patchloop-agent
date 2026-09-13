@@ -777,42 +777,57 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: provider-free native context A/B preparation; no paid grant.
-Packet: `C:\pt\analyses\native-window-comparison-20260913\packet.json`, byte hash
+Current seam: native context A/B completed; exact four-row approval consumed.
+Immutable design: `C:\pt\analyses\native-window-comparison-20260913\packet.json`, hash
 `sha256:8f0160790dc5916f5b6f28b98a4170ee2683604d69ebcf422fda291b018dd808`.
-A1/B1/B2/A2 = append/window/window/append, fresh repeat1 rows under
-`C:\patchloop-state`, pyfakefs v2, mini-2026-03-17/medium, root `.env`, probes and
-repair-recheck ON. Per-row $1.20, total $4.80, no budget transfer. Both compact
-thresholds are null and acknowledgements false; retain encrypted-v1 continuation.
-No runtime/tool/task/default/output/global-limit change. Existing native cost
-admission may reduce the desired 25k ceiling; report actual values in every row.
-The sole request factor context_policy includes WINDOW_INSTRUCTIONS and exact
-public archive representation. Do not claim pure deletion-only causality or equal
-future trajectories. model_hash binds context_policy, so it differs by arm even
-though the model snapshot/reasoning/pricing remain equal. Both envelopes bind the
-same source/task/sandbox/limits/cap, except policy and its derived model hash.
-The preparation script only supports prepare/verify and forbids real transports,
-credential parsing and native execution. Nineteen saved pilot boundary projections
-have equal public state/evidence/native items; window reconstruction is exact.
-This is fixed-trajectory integrity/serialization evidence, not a behavioral A/B
-or new token count. Old rows and artifacts must never seed the fresh executions.
-After separate exact four-row/$4.80 packet approval, use existing run_dev once
-per row with an external hash-chained admission observer. Check prior terminal,
-durable cost, unresolved calls and exact cleanup before advancing. Count/provider/
-billing/continuation/integrity/preflight/safety uncertainty stops the whole schedule.
-No retry/resume/extra sample/operator repair/Docker start/pull/build; retain NOT_RUN
-rows. Count billing/invoice totals are unverified; do not promise a hard invoice cap.
-Scoring uses submission/aggregate acceptance, public failure-to-current-diff PASS,
-first mutation, tokens/cache/cost and separate safety. No private evaluator details
-or feedback; no default adoption or generalization from two rows per arm.
-Validation: 31 focused/packet/docs cases PASS/12.474s, including two identical
-real-packet verifications (2.635s together) and wrong-hash refusal. Repository Ruff
-PASS. Frozen prepare.py retains one E501 at 101 columns; ruff-operator.txt records
-that style-only limitation, not an all-green operator lint claim. No runtime change
-or full-suite/mock rerun. All 5,160 protected files verify. Only the owned 267-file
-pytest root was recycled; cleanup.json records restoration and its independently
-checked exact path after a PowerShell parent-parameter warning. No Docker or real
-provider/count/compact/task call, credential parsing, or old-run mutation occurred.
+Live evidence: `C:\pt\analyses\native-window-comparison-live-20260913`.
+A1/B1/B2/A2 used append/window/window/append, fresh repeat1 rows, pyfakefs v2,
+mini-2026-03-17/medium, root `.env`, probes/repair-recheck ON; $1.20 each/$4.80 total.
+Both compact thresholds null, acknowledgement false; encrypted-v1 intact.
+Unchanged v38 runtime/tool/default/task, 40/100/4/1800; all output ceilings 25k.
+
+- A1 `run_dev_c2ec79e5f30648d4`: AGENT_STOPPED, acceptance/safety NOT_RUN;
+  26 model/28 tools, 3 accepted/3 rejected mutations, 329.021s, $0.556358850.
+- B1 `run_dev_e54abd76ccf54c4a`: EVALUATOR_PASS, acceptance/safety PASS;
+  21/28, 4 accepted/0 rejected, 228.900s, $0.380706000, patch `4f56e7c2...`.
+- B2 `run_dev_55e85c0941ed4081`: EVALUATOR_FAIL, acceptance FAIL/safety PASS;
+  27/38, 4 accepted/3 rejected, 249.998s, $0.541517400, patch `9970b739...`.
+- A2 `run_dev_8d592587618448b7`: EVALUATOR_FAIL, acceptance FAIL/safety PASS;
+  22/23, 2 accepted/1 rejected, 193.030s, $0.369103950, patch `43fb9b2b...`.
+
+96 generation/counts, 117 tools, nine repair-rechecks; probes NOT_EXERCISED,
+compact DISABLED. Known model-rate total $1.847686200; count billing/invoice total
+remain unverified. No retry/resume/extra sample/budget transfer/operator repair,
+Docker start/pull/build or old-run mutation. Approval is closed, not reusable.
+B has more submissions/acceptance, but only two rows per arm. The context policy
+includes its WINDOW_INSTRUCTIONS and archive representation, with different
+subsequent trajectories: no pure deletion-only effect or generalization claim.
+Both arms used 48 model calls. B input tokens are 25.90% lower but known cost only
+0.35% lower (A cached share 73.60%, B 59.10%); inspections A33/B41. Runtime
+model_hash differs only because it binds policy; the actual model snapshot is equal.
+
+Public-code observations: B1 processes all raw prefixes through existing mkdir;
+A2 pre-creates only until the first `..`; B2 retains manual entry handling for `..`
+paths while falling back for other paths. A1 stopped with public regression FAIL
+and repeated 52/50 scope rejection. Do not map these observations to exact hidden
+failures: private details were not read and no new candidate checks were run.
+No submission means acceptance NOT_RUN, not hidden FAIL. All official/claim flags false.
+A1/B1/B2 memory_update all null; A2 six updates, one created/updated finding
+delivered on 17 turns. Invalid current_state citation was rejected nonblockingly.
+Successful storage/delivery is not evidence of semantic correctness or memory benefit.
+
+All 96 current-input/count/dispatch requests reconstruct from available prefixes;
+native encrypted/call-output ordering and current task/diff match. Final submitted
+patches match workspace and both current visible PASS records. Two read-only audits
+agree (3.716853s/3.717737s), 5,483 protected hashes verify; 19 public check container
+cleanups are confirmed/absent. Only aggregate private evaluator verdicts were read.
+The auditor's initial compact-preparation-field assumption was corrected to the
+disabled-compact turn_started/count path; this did not alter runtime/live evidence.
+Operator stop-policy tests: 10 PASS/0.81s. Final docs/Ruff receipt: completion.json.
+No full-suite/mock rerun for this unchanged runtime. Preserve the original design,
+including its 31-case/12.474s receipt and frozen 101-column E501 warning.
+Next decision: provider-free public-spec edge-case validation before one loop change;
+no automatic window adoption, mandatory notes, new task or paid comparison.
 
 Prior seam: v38 native-window pilot completed; exact approval consumed once.
 Evidence: `C:\pt\analyses\native-compaction-pilot-live-20260913`.
