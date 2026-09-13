@@ -158,6 +158,8 @@ def validate(root: Path) -> tuple[Plan, dict]:
 @dataclass
 class Branch(recovery.Branch):
     inherited_accepted_mutations: int = 0
+    diagnostic_schema = SCHEMA
+    run_id_prefix = "run_dev_review_"
 
     def _forced_turn(self, turn_id):
         return False  # Reuse reconciliation, never the predecessor's forced-probe mask.
@@ -205,6 +207,17 @@ class Branch(recovery.Branch):
                 self.finish("PUBLIC_CHECKS_SUBMITTED",
                             submitted_artifact=artifact.model_dump(mode="json"))
 
+    def project_request(self, request, context):
+        """Diagnostic-only intervention before both artifacts are recorded."""
+        suffix_count = request["input"][0]["content"].count(design.PROMPT_SUFFIX)
+        if self.label.startswith("B") and suffix_count == 0:
+            request["input"][0]["content"] += design.PROMPT_SUFFIX
+            suffix_count = 1
+        shared.require(suffix_count == int(self.label.startswith("B")), "instruction drift")
+        return request, context, "review_instruction_recorded", {
+            "arm": self.label[0], "suffix_count": suffix_count,
+        }
+
     def prepare_request(self, package, adapter):
         self.reconcile()  # Recorded work first; uncertain provider calls are never retried.
         if self.terminal is not None:
@@ -250,13 +263,7 @@ class Branch(recovery.Branch):
                 finish_enabled="finish_task" in policy.allowed_tools, check_ids=policy.check_ids,
                 allowed_tools=policy.allowed_tools, read_paths=policy.targeted_read_paths)
             request = adapter.request_payload(items, schemas, system_prompt=loop.DEV_SYSTEM_PROMPT)
-        # The suffix is already in frozen B. On an unconsumed first-turn recovery the
-        # ordinary builder may still return the inherited A prefix; add exactly once.
-        suffix_count = request["input"][0]["content"].count(design.PROMPT_SUFFIX)
-        if self.label.startswith("B") and suffix_count == 0:
-            request["input"][0]["content"] += design.PROMPT_SUFFIX
-            suffix_count = 1
-        shared.require(suffix_count == int(self.label.startswith("B")), "instruction drift")
+        request, context, event_kind, event_details = self.project_request(request, context)
         for key, value in shared.SETTINGS.items():
             shared.require(request.get(key) == value, "dispatch settings drift")
         shared.require(request["reasoning"] == {"effort": "medium"}, "reasoning drift")
@@ -273,8 +280,8 @@ class Branch(recovery.Branch):
             "targeted_read_paths": list(policy.targeted_read_paths),
             "active_elapsed_ms": self.elapsed_ms(),
         })
-        self.journal.append("review_instruction_recorded", {
-            "turn_id": turn_id, "arm": self.label[0], "suffix_count": suffix_count,
+        self.journal.append(event_kind, {
+            "turn_id": turn_id, **event_details,
             "request_hash": sha256_bytes(design.wire(request)),
             "tools_hash": sha256_bytes(design.wire(request["tools"])),
         })
@@ -284,12 +291,12 @@ class Branch(recovery.Branch):
         return turn_id, request, policy
 
 
-def initialize_branch(plan, label, root, sandbox, probe, deadline):
+def initialize_branch(plan, label, root, sandbox, probe, deadline, *, branch_class=Branch):
     branch_root = root / label
     store = ArtifactStore(branch_root / "artifacts")
-    journal = DevJournal(branch_root, "run_dev_review_" + uuid.uuid4().hex[:16])
+    journal = DevJournal(branch_root, branch_class.run_id_prefix + uuid.uuid4().hex[:16])
     journal.append("diagnostic_branch_started", {
-        **BOUNDARIES, "kind": SCHEMA, "label": label,
+        **BOUNDARIES, "kind": branch_class.diagnostic_schema, "label": label,
         "source_run_id": plan.checkpoint["source_run_id"],
         "source_cutoff_event_hash": plan.checkpoint["cutoff_event_hash"],
         "inherited_events_are_not_new_execution": True,
@@ -335,10 +342,10 @@ def initialize_branch(plan, label, root, sandbox, probe, deadline):
                        "inherited current checks differ")
         loop._validate_resumed_workspace(workspace, journal, deadline=branch_deadline)
         loop._validate_recorded_continuations(journal.events(), store)
-    return Branch(label, journal, store, gateway, counters, active, 1800 - remaining,
-                  latest=journal.latest_tool_batch_results(),
-                  initial_request=plan.arms[label[0]], initial_context=plan.initial_context,
-                  inherited_accepted_mutations=gateway.accepted_mutations)
+    return branch_class(label, journal, store, gateway, counters, active, 1800 - remaining,
+                        latest=journal.latest_tool_batch_results(),
+                        initial_request=plan.arms[label[0]], initial_context=plan.initial_context,
+                        inherited_accepted_mutations=gateway.accepted_mutations)
 
 
 def uncertainty(branches):
@@ -354,9 +361,12 @@ def uncertainty(branches):
     return None
 
 
-def drive(plan, branches, adapter_factory, *, checkpoint=lambda _: None, progress=lambda _: None):
+def drive(plan, branches, adapter_factory, *, checkpoint=lambda _: None, progress=lambda _: None,
+          branch_cap=BRANCH_CAP, total_cap=TOTAL_CAP):
     """Same action space, isolated non-transferable ledgers, one sequential dispatch."""
-    ledgers = {b.label: DevCostLedger(BRANCH_CAP, pricing_for_model(design.MODEL))
+    shared.require(branch_cap > 0 and branch_cap * len(branches) <= total_cap,
+                   "non-transferable branch caps exceed the total")
+    ledgers = {b.label: DevCostLedger(branch_cap, pricing_for_model(design.MODEL))
                for b in branches}
     terminal = "ROLLOUTS_COMPLETED"
     try:
@@ -396,7 +406,7 @@ def drive(plan, branches, adapter_factory, *, checkpoint=lambda _: None, progres
         if branch.terminal is None:
             branch.finish(terminal, "experiment stopped; outcome censored", censored=True)
     spent = sum(b.new_cost_nanos for b in branches)
-    shared.require(spent <= int(TOTAL_CAP * 1_000_000_000), "shared cap violated")
+    shared.require(spent <= int(total_cap * 1_000_000_000), "shared cap violated")
     return {
         **BOUNDARIES, "terminal": terminal, "branches": [b.terminal for b in branches],
         "new_provider_calls": sum(b.new_provider_calls for b in branches),

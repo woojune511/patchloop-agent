@@ -777,7 +777,7 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: failure-given repair input/criteria preparation only; no paid authority.
+Current seam: failure-given repair collector implemented/mock-verified; no paid authority.
 `diagnostics/failure_given_repair.py` has only prepare/validate entry points. Packet:
 `C:\pt\analyses\failure-given-repair-20260914\ready`, SHA-256
 `8a1ea07a28fa7035419445cd7634fa23fddc586a08bdac1d9604ec42e946e7b3`.
@@ -794,10 +794,12 @@ Keep historical items, 21 opaque reasoning items/native action pairs, prompt, to
 notes, budgets and actual check status unchanged. No review suffix, forged native
 action, failed-check credit, enforced probe or finish gate. Mark origin as
 operator_executed_public_diagnostic; the observed diff is the report's only authority.
-After native construction a future adapter must overlay the same report once in the
-latest view and matching context artifact, relabel it historical_candidate after a
-diff change, and preserve all already-sent items. Read-only restoration is tested; NOT a
-tested execution/recovery adapter yet. Initial wire delta: 1,601 bytes, not tokens.
+The diagnostics-only collector now overlays the report once after native construction
+in the latest view and matching context artifact. It relabels historical_candidate
+after a diff change and preserves all already-sent items. The binding and each turn's
+projection are journaled separately from actual tool results. Validate the report
+artifact before pending replay; provider/count uncertainty retains precedence, and an
+already terminal branch recovers read-only. Initial wire delta: 1,601 bytes, not tokens.
 
 Rubric: observed acknowledgment != semantic repair; admission != correctness;
 same-case agent probe != operator audit; inherited visible PASS != new execution;
@@ -808,17 +810,45 @@ Current public checks remain the registered two, not this additional diagnostic.
 One selected case/checkpoint cannot distinguish all model/context causes or prove
 autonomous discovery/generalization. Old no-feedback responses are not fresh controls.
 
-Plan two independent F1/F2 continuations, <=8 calls each, $0.50 each/$1 total,
-no transfer/retry/resume/extra sample, full25k admission and unchanged mini/medium.
-Prices must be reviewed and the exact request counted before later live admission.
-No credentials/provider/Docker/patch execution in preparation; task/private/safety
-NOT_RUN, official=false. New model calls need an executable packet and fresh grant.
-55 focused tests and Ruff pass; actual prefix replays twice with forbidden network/process/
-secret access; 6,391 protected hashes match. Validation root:
-`C:\pt\validation\failure-given-repair-20260914`. Runtime/default/task unchanged;
-full runtime suite and isolated evaluator smoke not rerun for this no-call design.
-Next scoped implementation reuses the bounded collector, with real native feedback,
-currency/correction/recovery tests before paid authorization, not more agent gates.
+Executable: `diagnostics/failure_given_repair_rollout.py` prepare/validate/run, reusing
+the predecessor's branch engine through project_request, branch class and cap parameters.
+The old A/B defaults are regression-tested; old envelopes/receipts are not rewritten
+or migrated across implementation-hash changes. No default agent/prompt/tool change.
+Packet `C:\pt\analyses\failure-given-executable-20260914`, plan.json SHA-256
+`0291bb5e23b35a9c3f8b4950bef6a3ab8328b00ed98d182c9a48daa3730597f0`.
+Two independent F1/F2 continuations, <=8 new calls each, $0.50 each/$1 total,
+no transfer/retry/experiment resume/extra sample, full25k admission, mini/medium,
+same v2 task/root .env/probes/repair-recheck. Branch cap/turn exhaustion censors only
+that branch; count/provider/billing uncertainty, cleanup uncertainty or shared deadline
+stops all. Pending durable actions reconcile before new admission; unknown calls never
+retry. In-process/reopened-state reconciliation tests do not authorize live resume.
+
+After ordinary episode completion, operator_audits uses the frozen one-case source,
+verifies final diff and execution provenance, and caches only identical candidate hashes.
+Record started identity/result artifact/finished event separately in the observer journal;
+never increment agent action counts or alter completion evidence. Preserve partial output
+on error and stop further execution; never audit after an uncertain experiment. The
+operator audit can reveal an unchanged bug even after inherited-PASS finish.
+
+Official global/default pricing was reviewed 2026-09-13 UTC; mini remains $0.75 input,
+$0.075 cached input and $4.50 output per million. No cached discount in admission.
+run requires the exact --approval-packet-hash, --credential-file, --max-cost-usd 1,
+fresh absolute --result-root and --pricing-verified-on equal to current UTC date.
+The date is an operator review assertion, not a live lookup. Price/transport uncertainty
+stops; no lowered output to fund the tail. A prepared plan has paid_execution_authorized
+false; an explicitly granted real execution records true, while a mock stays false.
+Count endpoint billing/invoice remains UNVERIFIED, independent of model-rate usage.
+
+111 focused collector/design/documentation tests pass (72.032s parallel batch). Final
+Ruff corrects external helper line wraps only. Mock tests cover currency, rollback,
+optional finish, correction, six crash points, corruption, caps, audit success/error/cache,
+cleanup/deadline stop and one-shot approval. Actual prefix clone/replay exactly preserves
+the initial request/cipher history/counters without candidate execution. Preparation and
+two validations forbid network/process/credential loading; 6,418 protected hashes match.
+Receipts: `C:\pt\validation\failure-given-rollout-20260914`. No provider/count/Docker
+or pyfakefs candidate execution; full runtime suite and isolated evaluator smoke not rerun.
+Task/private/safety NOT_RUN; official=false. Next: obtain exact separate paid approval,
+not another runtime implementation or automatic invocation. Mock PASS is not repair evidence.
 
 Prior seam: voluntary counterexample-review packet completed; approval consumed.
 Evidence: `C:\pt\analyses\counterexample-review-live-20260913`.

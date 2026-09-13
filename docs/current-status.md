@@ -38,7 +38,7 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: failure-given repair inputs prepared; no execution
+## Current seam: failure-given collector mock-verified; paid approval pending
 
 The next diagnostic separates autonomous bug discovery from repair after a concrete
 public failure report. `diagnostics/failure_given_repair.py` restores the same A2
@@ -54,21 +54,43 @@ edit the report is historical, not evidence that the new candidate still fails.
 The serialized request grows by 1,601 bytes (472,214 to 473,815); input tokens are
 not counted. Only the selected public case is projected, not the other panel cases.
 
-Evidence: `C:\pt\analyses\failure-given-repair-20260914\ready`, packet `8a1ea07a...`.
-Two independent mini/medium continuations, <=8 new calls each and planning caps of
-$0.50 each/$1 total are specified, not approved or guaranteed funded. The rubric
+The frozen input design remains `C:\pt\analyses\failure-given-repair-20260914\ready`,
+packet `8a1ea07a...`. The new diagnostics-only
+`diagnostics/failure_given_repair_rollout.py` reuses the existing bounded collector,
+gateway, dispatch and reconciliation, with one request/context projection hook.
+Mock coverage includes mutation/probe/check/finish, rollback, correction restoration,
+six crash boundaries, report corruption before pending mutation, terminal idempotency,
+non-transferable cost/turn caps and experiment-wide uncertainty stops.
+
+After settled episodes only, a separate operator audit can run the frozen public
+case on each distinct final candidate. Identical diffs reuse that audit, not agent
+credit. Its receipts are not fed back into finished branches. Execution errors retain
+evidence and stop further audits; an uncertain experiment starts no audit. The rubric
 separates acknowledgment, admitted repair, agent same-case recheck, operator audit,
 current visible checks and finish. Earlier runs are not new randomized controls.
-The independent single-case reproduction is prepared, not executed or delivered as
-agent-authored code. Hidden/task acceptance/safety stay NOT_RUN; official=false.
 
-55 focused preparation/restoration/documentation tests and Ruff pass. Actual prefix replay
-validates twice with process/network/secret-file access disabled; 6,391 protected
-hashes match. Receipts: `C:\pt\validation\failure-given-repair-20260914`.
-The module exposes prepare/validate only. Next: connect the existing bounded
-collector and mock-test feedback currency/recovery, then obtain exact paid approval.
-No provider/count/Docker/candidate execution, default/runtime/task change, full runtime
-suite or isolated-evaluator smoke is included in this input-only preparation.
+Executable packet: `C:\pt\analyses\failure-given-executable-20260914`, `plan.json`
+SHA-256 `0291bb5e23b35a9c3f8b4950bef6a3ab8328b00ed98d182c9a48daa3730597f0`.
+It fixes two independent F1/F2 continuations on the same v2 checkpoint:
+mini-2026-03-17/medium/25k, root `.env`, probes/repair-recheck retained, <=8 new calls
+each, $0.50 each/$1 total, no transfer, retry, experiment resume or extra sample.
+Full-output reservation can censor a branch; eight calls are not guaranteed funded.
+Official global/default-tier prices were reviewed on 2026-09-13 UTC. The executable
+requires an exact packet grant and current UTC price-review assertion; prepared
+authorization remains false. Model-rate accounting is not count-endpoint/invoice proof.
+
+111 focused collector/design/documentation tests passed in a 72.032s parallel batch;
+final Ruff resolves two line-length findings in the external verification helper only.
+Actual checkpoint clone/replay preserves the frozen initial request, inherited
+21 model calls/22 actions/two mutations and all 21 encrypted items, without executing
+candidate source. Packet preparation/revalidation forbids network/process/credential
+loading; 6,418 protected hashes match. Receipts:
+`C:\pt\validation\failure-given-rollout-20260914`.
+Next is separate approval of this executable packet, then one diagnostic invocation.
+No provider/count/Docker/pyfakefs-candidate/hidden execution occurred in this change.
+The default v38 runtime and task are unchanged; the full runtime suite and isolated
+evaluator smoke were not rerun. Synthetic checks/probes test plumbing, not model repair.
+Task acceptance/safety remain NOT_RUN; all evidence remains official=false.
 
 ## Prior counterexample-review comparison completed; no adoption
 
