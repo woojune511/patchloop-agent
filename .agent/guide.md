@@ -777,7 +777,48 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: current-failure A/B completed; exact approval consumed, no adoption.
+Current seam: public-case replay/lifecycle design only; not implemented or authorized.
+Detailed plan C:\pt\analyses\public-case-loop-design-20260914\design.md; validation
+same-name under C:\pt\validation. Reuse run_probe's existing question/python_source,
+action/input/source/diff and policy identities, native source/result delivery references
+and bounded diagnostic collector. Do not reinterpret verification concerns as a case
+oracle: they deliberately bind model interpretation, not semantic relevance.
+
+Prototype accepts one supplied public case with immutable source/provenance. Case ID/
+hash are harness-owned; no new model fields/tools or planning/notes requirement. Both
+A/B receive identical source/report once, followed by verified native delivery refs.
+Only B gains public_case_status and lifecycle-based completion advice. Match actual
+probe source bytes and current diff/environment from durable execution receipts; not
+question text, model concern resolve or any recent probe. A modified source remains a
+valid probe but is not silently matched as the same program. Do not judge equivalence.
+States describe missing/current/incomplete evidence with last historical references;
+behavior_verdict remains NOT_ASSESSED. Same-case execution is not semantic success.
+Keep current result after unrelated probes; edits make it historical, rollback preserves
+baseline. No automatic repeat or gate; guidance names only offered actions and keeps
+existing required check/mutation priorities. Rebuild from journal after pending replay;
+no new provider/probe for read-only reconstruction. Append-v1 only in this prototype.
+
+Use the previously sealed report-only A2 cutoff and public verification-case.py, not a
+later repaired candidate or new failure observation. Source fits existing probe bounds;
+syntax-only validation does not execute it. Compare fresh A1/B1/B2/A2, <=8 new responses,
+mini/medium/25k with inherited16/75/1 and proposed1USD each/4USD total, approval required
+after implementation and executable packet. This tests use of a supplied reproduction,
+not autonomous generation, a pure individual-field effect, or hidden acceptance.
+No source/task/runtime change at design; no provider/count/Docker/candidate execution.
+Next implement a small diagnostic reducer/projection, not default adoption. Test exact
+source/diff matching, unrelated probes, historical/rollback/replay, source delivery
+dedup/fallback, nonzero/false/timeout results, corruption and budget policy; do not turn
+healthy execution into a semantic PASS or note errors into main-action rejection.
+Hide labeled verdict progress until masked code observations in any later comparison;
+still disclose recognizable baselines. No automatic paid samples under consumed grants.
+
+Design feasibility source/hash/cutoff checks run with sockets, Popen and key loading
+forbidden: 0.447s, 3222-character/UTF-8-byte public program, AST only. Existing-contract
+tests80/Ruff PASS in16.413s; not proposed-feature verification. All8751 protected hashes
+match; only owned pcl0914-basis scratch recycled and hash-verified. No default runtime
+suite, live invocation, candidate execution or hidden evaluation was newly performed.
+
+Prior seam: current-failure A/B completed; exact approval consumed, no adoption.
 Packet 4eacdc10d51c4e3589f25013504f399621dfa1909bc00f6a8fa7276b7113ab0c,
 mini/medium/25k, root .env, A1/B1/B2/A2, <=8 new responses and $1 each/$4 total.
 Evidence C:\pt\analyses\current-failure-feedback-live-20260914; validation same-name

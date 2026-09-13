@@ -38,7 +38,37 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: current-failure A/B executed; local repair signal, no adoption
+## Current seam: public-case replay/lifecycle design, not implemented
+
+The next experiment is specified at
+`C:\pt\analyses\public-case-loop-design-20260914\design.md`. It is design-only,
+with no provider/count, Docker or candidate execution and no default runtime change.
+Existing `run_probe` already binds source/diff identity; verification concerns bind
+model judgments, not same-case semantic coverage. The earlier report-review arm
+already supplied reminders, so another longer reminder is not the selected change.
+
+Both fresh comparison arms will receive the same sealed public reproduction program.
+Only B adds bounded exact-program/current-diff execution tracking and corresponding
+advice. Retain actual output references; process completion, registered-check PASS
+and concern resolution never become automatic case PASS. Current results become
+historical after edits; unrelated newer probes do not erase matching evidence.
+Use the existing run_probe inputs, voluntary actions, native/opaque history and caps.
+Do not add forced probes, submission gates, case-ID tool shortcuts or planning tools.
+
+This tests use of a supplied case, not autonomous counterexample generation. Reuse
+the report-only A2 checkpoint; add no later failure result, other branch's repair or
+hidden material. Source is identical across A/B; differences are lifecycle/advice as
+a single treatment, not separated subfield effects. Proposed $1 each/$4 total is not
+approval. Next implement the small diagnostics-only adapter/reducer and no-call/mock
+tests, then freeze an executable packet before seeking a new exact execution grant.
+
+Existing-contract validation: 80 tests and Ruff PASS in 16.413s; no-call source/cutoff
+feasibility 0.447s. The frozen public source is 3222 characters/UTF-8 bytes and fits
+the unchanged probe limit. All 8751 protected hashes match. This validates design
+dependencies, not a new feature or agent improvement. One owned pytest root was
+recycled with content hashes/restoration mapping; actual run/workspace bytes remain.
+
+## Prior current-failure A/B executed; local repair signal, no adoption
 
 The exact `4eacdc10...` packet ran once: A1/B1/B2/A2 from the frozen nested A2
 checkpoint, mini/medium/25k, $1 each/$4 total. A1/A2 submitted the unchanged
