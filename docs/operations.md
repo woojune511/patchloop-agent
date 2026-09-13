@@ -55,14 +55,23 @@ still unofficial.
 
 ## Current-candidate feedback preparation
 
+The executable adapter is `diagnostics.current_failure_feedback_rollout` with
+`prepare`, `validate`, and `run`, each taking `--plan-root`. `run` also needs a fresh
+`--result-root`, exact `--approval-packet-hash`, root `--credential-file .env`,
+`--max-cost-usd 4.00`, and same-UTC-day `--pricing-verified-on`. It preserves the
+frozen A1/B1/B2/A2 comparison, $1 nontransferable branch caps and full25k reservation.
+Preparation/validation are no-call operations; this documentation is not live
+approval. No retry/resume/extra sample or automatic Docker start/pull/build exists.
+Only the frozen public case is audited; hidden/task acceptance remains NOT_RUN.
+
 `uv run python -m diagnostics.current_failure_feedback prepare --output-root <fresh-external-root>`
 freezes A/B inputs from the sealed report-only A2 pre-finish checkpoint. `validate
 --root <packet-root>` reconstructs and verifies them without a provider, credential
 loader, subprocess or sandbox. There is no run command. B adds only the existing
 public reproduction's failure on the current candidate; old native history and
 registered-check PASS are unchanged. The proposed $1 each/$4 total is not approval.
-Collector adaptation, mock recovery/cost validation and exact executable approval
-are required before further paid execution. Preserve previous packets/run bytes.
+The separate adapter supplies execution; exact executable approval is still required
+before further paid work. Preserve the original preparation packet and run bytes.
 
 ## Report-aware diagnostic comparison
 

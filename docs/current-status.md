@@ -38,7 +38,44 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: current-candidate failure comparison, inputs only
+## Current seam: current-failure collector, provider-free validation
+
+`diagnostics.current_failure_feedback_rollout` now connects the frozen comparison
+to the existing bounded dispatcher, public gateway, recovery and operator audit.
+It restores the nested A2 prefix against the original run's runtime/task/base
+contract. The inherited 24 model calls, 25 tool actions and three accepted edits
+leave 16/75/1; old provider usage is evidence, not new diagnostic cost.
+
+Both arms keep the original report. Only B durably binds the newer current-diff
+observation, projecting it once in each unsent request/context. After a mutation
+it becomes historical; rollback keeps it current. Notes, opaque/native history,
+registered PASS, completion guidance, tool order and voluntary finish stay intact.
+Report corruption blocks pending tools, while provider/count uncertainty keeps
+its prior priority. Recorded terminal recovery is read-only; there is no resume
+command or permission to retry an interrupted paid experiment.
+
+The proposed one-shot packet is A1/B1/B2/A2, mini/medium/25k, eight new responses
+maximum per branch, $1 each/$4 total, root .env, probes/recheck enabled. Full output
+reservation and independent caps remain; unused branch funds do not transfer.
+The fixed public case audit runs only after settled episodes, with same-candidate
+reuse and no agent credit/feedback. No hidden evaluation or default agent change.
+Actual paid execution still requires separate approval of the executable packet;
+the previous input-preparation grant is not that approval.
+
+Executable packet: `C:\pt\analyses\current-failure-feedback-rollout-20260914`
+(`result.md`, `plan.json`); validation receipts use the same name under
+`C:\pt\validation`. Plan SHA-256:
+`4eacdc10d51c4e3589f25013504f399621dfa1909bc00f6a8fa7276b7113ab0c`.
+106 focused/compatibility/documentation tests and Ruff PASS in 52.829s. No-call
+preparation and two validations took 1.400s with network/process/key loading blocked;
+all 7830 protected hashes match. Mock four-arm execution covers repair/check/finish,
+independent caps, uncertain dispatch and pending replay; it is not semantic repair
+evidence. No real provider/count, Docker or candidate-code execution occurred. Full
+runtime suite/isolated-evaluator smoke were not rerun: default runtime is unchanged.
+Next: separately approve this exact four-branch packet, then verify current prices
+and already running Docker/images before the one-shot comparison. No default adoption.
+
+## Prior current-candidate comparison input preparation
 
 `diagnostics.current_failure_feedback` prepares/validates the next comparison; it
 has no run command. Both arms restore report-only A2 immediately before its last
@@ -60,8 +97,8 @@ Proposed next execution is fresh A1/B1/B2/A2, at most eight new responses each,
 mini/medium/25k, with a planning-only $1 per branch/$4 total cap. This raises the
 old $0.50 branch cap to reduce known censoring of repair/check/finish, but does not
 guarantee eight funded calls. No paid execution is approved by preparation.
-Next: adapt the existing collector to this nested checkpoint, mock its lifecycle
-and recovery, then seal an executable packet and obtain separate exact approval.
+Its then-next step was collector adaptation, mock recovery and executable sealing;
+that step is now completed above, without granting paid execution.
 No default runtime/task change, new candidate execution or Docker operation.
 
 Prepared inputs: `C:\pt\analyses\current-failure-feedback-20260914` (design.md and

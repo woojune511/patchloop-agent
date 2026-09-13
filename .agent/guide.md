@@ -777,7 +777,50 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: current-candidate feedback inputs prepared, not an executable grant.
+Current seam: current-failure collector implemented, no paid authority yet.
+`diagnostics/current_failure_feedback_rollout.py` reuses feedback.execute_packet,
+native.initialize_branch and the existing dispatcher/reconciliation/operator audit.
+Load the immutable current-failure design, validate nested A2's exact cutoff, and
+match its runtime/task/tool identity against the original envelope. Do not invent
+a DevRunEnvelope for the diagnostic or resume the terminal source. Import all prefix
+events as inherited; validate exact workspace diff, counters, checks and continuations.
+Remaining 16 model/75 tool/one accepted mutation is retained; new cost starts at zero.
+
+Initialize both from frozen A; the projection hook adds B exactly once. Bind the old
+report to both branches and current_candidate_feedback_bound to B only (explicit null
+for A), without action/check/allowance credit. Project native/current-context fields
+together and journal request/report hashes and currency. Preserve notes and native
+delivery references; never replace them with raw context bodies. Accepted edits make
+the newer observation historical; rejected edits keep baseline currency. No current
+failure or mandatory read/probe/check is forged. Finish remains voluntary.
+
+Validate both report bindings before pending replay. Unknown provider/count outcome
+retains priority over feedback corruption; no new tools/provider calls follow either.
+Already recorded terminal recovery is read-only, not a paid-resume command. Protect
+the entire immutable source experiment parent, not only the nested A2 directory.
+Prepare/validate/run require a new exact executable packet; A1/B1/B2/A2, mini/medium/25k,
+root .env, <=8 new calls each, $1 each/$4 total, no transfer/retry/extra sample/resume.
+Official standard mini rates rechecked 2026-09-13 UTC: input0.75/cached0.075/output4.50
+per million; full25k uncached admission, count billing/invoice UNVERIFIED. Recheck the
+price date and existing Docker/image readiness only for a separately approved run.
+No default runtime/task schema change, forced notes, reasoning reset or hidden test.
+
+Executable packet C:\pt\analyses\current-failure-feedback-rollout-20260914; receipts
+same name under C:\pt\validation. Plan hash
+4eacdc10d51c4e3589f25013504f399621dfa1909bc00f6a8fa7276b7113ab0c.
+24 new tests plus selected preparation/lifecycle/docs regressions total 106 PASS;
+Ruff PASS; final focused wall time 52.829s across three owned independent roots.
+No-call prepare/two validates 1.400s, all 7830 protected hashes unchanged. Real nested
+prefix restoration uses local Git only; no candidate/check/probe code executes.
+Mocks cover six crash points, corrupted report before pending mutation, count/provider/
+billing uncertainty priority, full25k admission and nontransferable caps, rollback
+currency, optional finish and four-arm repair/check/finish plus independent audit.
+Initial test-only CAS sharing and output-token fixture errors were corrected; cap and
+integrity contracts were not relaxed. Mock verdicts do not prove semantic repair.
+Full runtime suite/isolated-evaluator smoke NOT_RERUN; runtime unchanged. Next is exact
+packet approval and readiness/pricing review, not another automatic paid continuation.
+
+Prior seam: current-candidate feedback inputs prepared, not an executable grant.
 `diagnostics/current_failure_feedback.py` has prepare/validate only. Select report-only
 A2 of report-review-live-20260914 before turn_25853d06430f4e199d6b7b8ae68fd82f; verify
 the sealed journal, native prefix, current context and count/dispatch request identities.
@@ -796,8 +839,8 @@ Planning caps $1 each/$4 total reduce the known $0.50 censoring risk, but guaran
 neither eight funded calls nor permission to spend. No transfer/retry/resume/additional
 sample, reasoning reset, tool reordering or default adoption. Copy no future finish,
 later note update, another branch's repair or hidden evaluation into the input.
-Next implement only the bounded collector adaptation and mock nested-prefix recovery/
-overlay/cost cases, review prices, seal an executable packet and obtain exact approval.
+Its then-next step was collector adaptation, mock nested-prefix recovery/overlay/cost
+and executable sealing; completed above, with paid execution still unapproved.
 Actual same-case audit is later operator execution, never agent credit; exploration
 is not automatic failure, and resource censoring leaves ability unevaluated.
 
@@ -807,7 +850,7 @@ New 24 tests plus prior preparation/review/docs regressions total 91 PASS; Ruff 
 47.747s. Real prefix restores all 24 opaque/native pairs without candidate execution;
 A/B 540827/542123 bytes, +1296, not token counts. No-call prepare/two validates 0.412s;
 7809 protected hashes unchanged. Full runtime suite/isolated smoke NOT_RERUN because
-runtime and tools are unchanged. New executable adapter is still unimplemented.
+runtime and tools were unchanged. The executable adapter was not part of that seam.
 
 Prior seam: report-review A/B completed; mixed evidence, grant consumed, no adoption.
 Exact 08e28fe788bb5084c43c1133532a0cd64f1dadb009bdf9dad2a7d762a26174e5 executed once
