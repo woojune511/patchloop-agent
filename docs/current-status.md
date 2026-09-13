@@ -38,7 +38,45 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: failure-given collector mock-verified; paid approval pending
+## Current seam: failure-given repair diagnostic completed; approval consumed
+
+The exact `0291bb5e...` executable packet ran once: two independent F1/F2
+mini/medium/25k continuations, $0.50 each/$1 total, existing Docker/images only.
+Both immediately used the supplied missing-b report for an accepted mutation, ran
+the two registered visible checks on their new diff, and submitted after four calls.
+Neither ran a probe on the concrete report. An independent post-episode public
+audit found F1 FAIL (a, a/b, c) and F2 PASS (a, b, c), not two bug repairs.
+
+F1 changed break to continue without moving the accumulated prefix upward at '..',
+so b was created beneath a. F2 popped a component stack at '..', fixing the supplied
+str/empty-cwd/Linux case. Both registered checks PASS even for the failing F1;
+registered completion is not evidence for this additional reported behavior.
+F2's success is local repair evidence, not all-path correctness or hidden acceptance.
+
+All eight requests retain the report, opaque/native history and run_probe availability.
+After mutation the report is correctly historical evidence, not a resolved finding.
+The old working question still concerns the registered contract; no report-specific
+verification concern was created. F1 never updates notes. F2 writes only at finish,
+with a non-blocking rejection of nonexistent v1/v2 resolutions; this terminal update
+cannot explain an earlier decision. No cap, timeout, incomplete output or tool closure
+forced submission. The exact prompt/memory cause remains unseparated.
+
+Evidence: `C:\pt\analyses\failure-given-live-20260914` (`result.json`, `audit.json`,
+`public-transcript.json`, `context-notes-audit.json`, `interpretation.json`, `result.md`).
+Eight provider/count calls, eight agent actions, two operator case audits; 103.400s;
+known model-rate cost $0.352175400. F2's lower cost is cache-dependent, not evidence
+of less reasoning. Count billing/invoice remain UNVERIFIED. Six owned container
+cleanups and exact absence verify; 6,438 protected hashes match. No retry, resume,
+extra sample, operator repair, broader panel, hidden evaluation or default runtime
+change. Task acceptance/safety remain NOT_RUN; official=false.
+
+Next: scope one generic report-to-verification context/lifecycle comparison, keeping
+the triggering input and current-diff confirmation distinct from registered-check
+completion. Do not adopt a hard gate, larger cap/model or claim memory causality from
+two samples of one checkpoint. The grant is consumed; remaining funds authorize no
+further calls. Execution/validation records are preserved outside the repository.
+
+## Prior failure-given collector preparation (approval consumed above)
 
 The next diagnostic separates autonomous bug discovery from repair after a concrete
 public failure report. `diagnostics/failure_given_repair.py` restores the same A2
@@ -86,8 +124,8 @@ Actual checkpoint clone/replay preserves the frozen initial request, inherited
 candidate source. Packet preparation/revalidation forbids network/process/credential
 loading; 6,418 protected hashes match. Receipts:
 `C:\pt\validation\failure-given-rollout-20260914`.
-Next is separate approval of this executable packet, then one diagnostic invocation.
-No provider/count/Docker/pyfakefs-candidate/hidden execution occurred in this change.
+At preparation time, separate approval was pending; the invocation is recorded above.
+No provider/count/Docker/pyfakefs-candidate/hidden execution occurred in preparation.
 The default v38 runtime and task are unchanged; the full runtime suite and isolated
 evaluator smoke were not rerun. Synthetic checks/probes test plumbing, not model repair.
 Task acceptance/safety remain NOT_RUN; all evidence remains official=false.

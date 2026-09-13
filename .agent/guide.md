@@ -777,7 +777,41 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: failure-given repair collector implemented/mock-verified; no paid authority.
+Current seam: failure-given diagnostic completed; no adoption or further paid authority.
+Evidence: `C:\pt\analyses\failure-given-live-20260914`, exact packet `0291bb5e...`.
+The new user proceed grant executed F1/F2 once, mini/medium/25k/root .env,
+$0.50 each/$1 total, native history/probes/recheck unchanged. Each branch selected
+replace_text -> parent-traversal-contract -> upstream-fake-os-regression -> finish.
+One accepted mutation and two new current-diff PASS checks per branch; no agent probe.
+The post-episode fixed public case failed F1 (a,a/b,c) and passed F2 (a,b,c).
+F1's break-to-continue repair leaves the prefix at a; F2 pops the prefix component
+stack. PASS applies only to the selected str/empty-cwd/Linux case, not all paths.
+
+Validate read-only from audit.json/context-notes-audit.json: exact first requests,
+21 inherited opaque items/native pairs, all native prefixes and report currency match.
+run_probe remains available in every request. No exhausted cap, output/deadline,
+protocol error or mandatory tool mask explains finish. The working open question still
+targets the old registered contract; verification items stay empty throughout inference.
+F1 has no note update. F2 creates a note only with finish; nonexistent v1/v2 resolve
+requests are non-blockingly rejected. Do not attribute earlier behavior to that update.
+The generic memory_events extractor in public-transcript.json misses the actual
+working_notes_updated name; context-notes-audit.json contains the authoritative
+supplement, without rewriting the original extraction or run journal.
+
+Eight provider/count calls and eight agent actions, two operator audits, 103.400s,
+$0.352175400 model-rate cost. F1/F2 costs $0.274092300/$0.078083100 reflect markedly
+different cache usage, not reasoning efficiency. Count billing/invoice UNVERIFIED.
+Six exact owned container cleanups/absence verify; 6,438 protected hashes match.
+No Docker start/pull/build, retry/resume/extra sample, broad panel, hidden execution
+or runtime change. official=false, task acceptance/safety NOT_RUN; grant consumed.
+Keep actual run workspaces/receipts immutable, not disposable pytest scratch.
+Next scoped candidate: connect a concrete public report's input/expected observables
+to current-diff verification status in existing context/working memory, separately
+from registered-check completion. Design one comparison before adoption. The reported
+case was recognized; reliable same-case checking was absent. This does not prove
+a single memory/prompt cause, a generic 50 percent rate or autonomous bug discovery.
+
+Prior seam: failure-given collector implemented/mock-verified; approval pending then.
 `diagnostics/failure_given_repair.py` has only prepare/validate entry points. Packet:
 `C:\pt\analyses\failure-given-repair-20260914\ready`, SHA-256
 `8a1ea07a28fa7035419445cd7634fa23fddc586a08bdac1d9604ec42e946e7b3`.
