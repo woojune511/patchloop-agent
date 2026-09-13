@@ -38,35 +38,43 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: native compaction pilot prepared, not approved
+## Current seam: native-window pilot succeeds; compact not exercised
 
-One new native-run packet is frozen at
-`C:\pt\analyses\native-compaction-pilot-design-20260913` (packet byte hash
-`30bec892489cc9bd379f8dd6ec1e4101f7171b0c47d5ae264de44e3b408aedfc`).
-It proposes the same pyfakefs v2/mini snapshot/medium/root `.env`/repeat 1 with probes
-and repair-recheck, plus `native-window-v1`, a fixed **60,000 input-token** compact
-threshold, one compact maximum, and explicit conditional-reservation acknowledgement.
-The proposed shared generation/compact planning cap is **$2.00**, requiring new
-approval; it is not an endpoint-enforced invoice cap. The old $1.20 would lose the
-optional $0.876 reserve after $0.324 of prior spend. Native limits remain unchanged.
+The exact `30bec892...` packet approval was consumed once. Fresh run
+`run_dev_ebfe33596eed4353` reaches **EVALUATOR_PASS**, task acceptance **PASS** and
+safety **PASS**, with `official=false`/`claim_eligible=false`. It uses pyfakefs v2,
+mini-2026-03-17/medium, native-window-v1, probes/repair-recheck, root `.env`, repeat 1,
+T=60000 and the approved shared $2 conditional planning budget.
 
-All 65 saved A1/B1/B2 inputs replay with identical public evidence/native order;
-15 local threshold/budget/guard cases pass. Historical append counts first cross
-60k at turns 15/17/16, but new-window token counts and trigger timing are UNKNOWN.
-Bytes are not tokens: this is a round pilot threshold, not an optimum or a fix proven
-to prevent encrypted-field rejection. A run ending before compact stays NOT_EXERCISED;
-there is no forced compaction, extra sample or automatic threshold adjustment.
+There were 19 generation/count calls, 20 tool actions, two accepted mutations and
+121.047 active seconds. Known model-rate cost is **$0.19483845**; count billing and
+the invoice total remain separately unverified. All generation ceilings stayed 25k.
+Peak counted input was **45,507 tokens**, below 60k, so compact is **NOT_EXERCISED**,
+not a successful compact/activation/recount test. No forced call or extra sample followed.
 
-The packet tests native activation/recount and subsequent actions, not a fresh A/B
-quality comparison. Ordinary isolated evaluation occurs only after native finish;
-read only aggregate private verdicts. No credential values, provider/count/compact,
-Docker or task execution were used in preparation. Runtime/default policy/task bytes
-are unchanged. Next is exact packet approval and read-only live preflight, not execution
-under any previous grant.
+After 14 inspections, turn15 implements raw-path recursive creation. Turn16's public
+check identifies intermediate-directory mode; turn17 separates parent default mode
+from the requested leaf mode, and the automatic child recheck passes. Turn18 passes
+upstream regression (517 passed/570 skipped), then turn19 finishes. The +23/-1 patch,
+both current visible PASS records and submission share `ab096b01...`. Private evidence
+is read only as aggregate verdicts, never as agent feedback.
 
-Two no-call verifications agree (0.578s/0.559s); 5,050 protected files remain identical.
-Three documentation tests and `uv run ruff check patchloop tests` pass. The unchanged
-runtime uses the dated full-suite/mock receipt below; neither was rerun for this packet.
+All 19 prepared/count/dispatch inputs reconstruct exactly from their available journal
+prefixes; current task/diff, public evidence and once-only native pairs remain bound.
+The final input retains 735 source-version line facts, 36 public exchange versions,
+15 observation versions and 18 prior reasoning items. All memory updates are null;
+this run does not demonstrate model-authored working-note use. Two read-only audits
+agree (1.120s/1.019s); 81 artifacts and 5,061 protected files verify. Three public check
+container cleanups are confirmed and those exact containers are absent.
+
+Evidence: `C:\pt\analyses\native-compaction-pilot-live-20260913` (`result.md`,
+`analysis.json`, immutable approval/observer/result). The design packet remains unchanged.
+No runtime/task/default change, retry, resume, answer seeding, Docker start/pull/build
+or additional paid request occurred. This one successful trajectory is not a matched
+A/B result or proof of a causal quality/cost improvement. Native compact and long-window
+failure prevention remain untested live; any next experiment needs a separate decision.
+Three documentation tests and Ruff pass after recording the result. Full runtime
+tests/mock were not rerun for these documentation-only changes; their dated receipt follows.
 
 ## Verified runtime: v38 opt-in native compaction runner
 

@@ -777,14 +777,34 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the first v38 native compaction pilot packet is prepared, NOT approved.
+Current seam: v38 native-window pilot completed; exact approval consumed once.
+Evidence: `C:\pt\analyses\native-compaction-pilot-live-20260913`.
+Fresh `run_dev_ebfe33596eed4353`: EVALUATOR_PASS, acceptance/safety PASS, official=false;
+19 model/19 count/20 tools/two accepted mutations, 121.047 active seconds, $0.19483845
+known model-rate cost. Invoice/count billing are unverified, not promised free.
+All generation ceilings stayed 25k. Peak input 45507 < 60000 means compact NOT_EXERCISED;
+no native compact activation/recount or long-window prevention claim. No extra sample.
+Fourteen inspections precede mutation15; check16 maps the intermediate-mode assertion;
+mutation17 fixes parent-vs-leaf mode, harness recheck passes, regression18 passes
+(517/570 skipped), finish19 binds the +23/-1 submission to both current visible PASSes.
+All 19 model inputs replay exactly from public journal prefixes, with native pairs,
+current task/diff and prior source facts intact. Nineteen memory updates are null.
+Two read-only audits match (1.120s/1.019s); 81 artifacts, 5,061 prior protected files,
+worktree/submission hash and three public container cleanup receipts verify.
+Private artifacts are hash-checked, not parsed; only aggregate acceptance/safety is read.
+The generic `.patchloop-hidden/**` forbidden-path glob is explicitly in public.yaml;
+do not mistake that public restriction for leaked private test filenames/content.
+Runtime/default/task unchanged. This single trajectory is not a causal A/B comparison.
+Do not lower T, force compact, retry/resume or run another sample under this closed grant.
+
+Consumed design (immutable):
 `C:\pt\analyses\native-compaction-pilot-design-20260913\packet.json` byte hash:
 `sha256:30bec892489cc9bd379f8dd6ec1e4101f7171b0c47d5ae264de44e3b408aedfc`.
 One fresh pyfakefs v2/mini-2026-03-17/medium/root `.env`/repeat1 run under
 `C:\patchloop-state`, probes and repair-recheck ON, native-window-v1, T=60000,
 one compact maximum and conditional model-limit reservation acknowledgement.
-Proposed shared cap $2.00 (not $1.20); both increase and conditional invoice boundary
-require the new exact approval. No previous grant applies. No default T/adoption.
+The shared cap $2.00 (not $1.20) and conditional invoice boundary were approved for
+this one run only. No default T/adoption or reusable paid authority follows.
 Reuse existing run_dev; do not create a second runner. Prepare/verify scripts cannot
 load credentials or invoke providers/count/Docker/task execution. Verify the frozen
 packet hash twice, runtime/tool/model/task hashes, source cleanliness and credential
@@ -794,8 +814,8 @@ Native private evaluation after finish is aggregate-only and always official=fal
 
 65 saved inputs replay with exact evidence/native order; 15 threshold/budget/guard
 cases pass. Historical APPEND first 60k crossings are A1 turn15 64852, B1 turn17 61805,
-B2 turn16 62141. New-window token counts/trigger timing remain UNKNOWN; do not scale
-tokens by serialized bytes or present these as matched behavioral controls. T is a
+B2 turn16 62141. At design time, new-window token counts/trigger timing were UNKNOWN;
+do not scale tokens by serialized bytes or treat these as matched behavioral controls. T is a
 round early pilot value, not a fitted optimum or encrypted-field safety boundary.
 Below-threshold/ineligible paths remain NOT_EXERCISED without forcing a second run.
 Report snapshot integrity, compaction/activation/recount, actual token/byte/field
@@ -855,7 +875,7 @@ reaches mutation/check/finish/isolated acceptance PASS in 4.468s, safety NOT_RUN
 The ordinary mock does not call compact; injected-provider tests cover that branch.
 Runtime `sha256:a6595319b770bc91e733e138273ee22de698a9fd707ce5543cfe06d0dd67d765`;
 v38 surface `sha256:5393d4fb6eab34c4db114fcfa18187e332cd1daac6cb07967d31da9e93003979`.
-Next: execute only after approval of the prepared packet above; no default adoption.
+The pilot above consumed its grant without exercising compact; no default adoption.
 
 Prior layer: durable compact handoff, before native runner integration.
 `patchloop/dev/compaction.py` implements prepare/execute/recover under the existing

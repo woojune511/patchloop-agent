@@ -5,7 +5,10 @@ Final phase 3: `C:\pt\validation\native-compact-runner-final-20260913`; 44 new t
 109 compatibility cases, 1,803 full-suite PASS/four Docker skips, Ruff and mock PASS.
 The opt-in pilot packet is prepared at `C:\pt\analyses\native-compaction-pilot-design-20260913`:
 T=60000, one new mini/medium/v2 run, proposed shared $2 conditional budget. Its exact
-execution approval is still missing; this is neither a default nor an optimal T claim.
+approval was subsequently consumed by `run_dev_ebfe33596eed4353`: task acceptance/safety
+PASS, $0.19483845, 19 decisions. Peak counted input 45507 stayed below T, so native
+compact/activation/recount remains NOT_EXERCISED live. No further paid grant remains;
+this is neither a default, optimal T, nor causal quality-improvement claim.
 
 Earlier layer receipts (superseded implementation status, immutable evidence):
 Phase 2 receipt: `C:\pt\validation\native-compact-adapter-20260913`;
@@ -216,7 +219,7 @@ acknowledgement를 결속한다. Tool 입력 schema·순서는 그대로지만 �
    `_build_model_input`, `_load_active_model_input`, `_validate_recorded_continuations`,
    `_restore_counters`, `DevJournal.provider_usage`와 unresolved-work 검사를 갱신한다.
    Compaction receipt를 가짜 tool decision으로 기록하지 않는다.
-4. **무호출 검증과 문서 — 완료, 실행 packet 준비됨/승인 대기:** opt-in/default, 실패와 resume을
+4. **무호출 검증과 문서 — 완료, pilot 1회 종료/compact 미발동:** opt-in/default, 실패와 resume을
    검증했다. 새 44개/기존 109개 집중 검사, Ruff, 전체 1,803 PASS/4 skip와 mock
    격리 평가를 통과했다. 이 완료만으로 paid 실행이나 default 채택을 하지 않는다.
 
