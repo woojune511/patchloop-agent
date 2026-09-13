@@ -38,7 +38,49 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: failure-given repair diagnostic completed; approval consumed
+## Current seam: report-aware review comparison, not default adoption
+
+`diagnostics/report_verification_review.py` connects the existing public bug report
+to a harness-authored working-context entry and completion advice, only in experimental
+arm B. Arm A stays report-only. It retains the report's input/fixture/expected output
+by reference, distinguishes the original failure from a modified-but-unverified
+candidate, and references current-diff probe results for semantic review. An edit,
+registered-check PASS, probe exit zero or model note resolution never becomes an
+automatic case verdict. Existing notes/questions, native encrypted reasoning and
+tool exchanges, action space, budgets and submission eligibility are unchanged.
+
+When registered checks pass but no current-diff probe is recorded in the recent view,
+B suggests the optional probe if actually available; finish remains offered. With
+probe evidence, B asks the model to compare its actual case and output, not repeat
+the probe automatically. Unrelated or inconclusive probes do not prove repair. This
+is a salience/lifecycle experiment, not a semantic verifier or forced planning/memory.
+
+The diagnostics-only collector reuses the existing bounded execution/admission/audit
+path. Prepare/validate/run support fresh A1/B1/B2/A2 branches at the same A2 pre-turn22
+checkpoint, two samples per arm, at most eight new responses and $0.50 per branch/
+$2 total proposed cap. Preparation authorizes no paid execution. Prior F1/F2 motivate
+the comparison but are not fresh controls. No hidden evaluation, larger model/cap,
+default runtime change or further execution under the consumed grant is authorized.
+
+Validation and exact packet receipts are retained under
+`C:\pt\validation\report-review-20260914`; the prepared comparison belongs under
+`C:\pt\analyses\report-review-20260914`. Provider-free results establish input,
+lifecycle and recovery behavior only, not improved agent repair. Runtime/task/user
+and historical bytes remain protected. A separate exact-packet approval is needed
+before a live comparison, with a fresh price review and already running Docker/images.
+
+Frozen plan SHA-256: `08e28fe788bb5084c43c1133532a0cd64f1dadb009bdf9dad2a7d762a26174e5`.
+Final focused/compatibility validation: 123 tests and Ruff PASS in 73.259s. Mock cases
+cover optional finish, probe evidence/currency, rollback, pending replay and four-arm
+execution; the real checkpoint restores without executing candidate code. Preparation
+plus two validations took 1.644s with network/process/credential loading forbidden.
+A/B serialized requests are 473,815/474,905 bytes (+1,090, not token counts). Read-only
+projection of all eight prior F1/F2 turns preserves native prefixes and leaves both
+post-edit cases unverified at submission. This is not evidence of changed agent behavior.
+All 6,892 protected hashes match. No provider/count/Docker operation or candidate/private
+execution occurred; full runtime suite and isolated-evaluator smoke were not rerun.
+
+## Prior failure-given repair diagnostic completed; approval consumed
 
 The exact `0291bb5e...` executable packet ran once: two independent F1/F2
 mini/medium/25k continuations, $0.50 each/$1 total, existing Docker/images only.

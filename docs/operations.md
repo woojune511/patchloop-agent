@@ -53,6 +53,16 @@ parallel public inspection, one admitted mutation, a visible check, automatic
 full-diff projection, finish, and a separate private evaluation. Its result is
 still unofficial.
 
+## Report-aware diagnostic comparison
+
+The separate `diagnostics.report_verification_review` command prepares/validates an
+experimental report-aware context comparison; it does not enable a default agent
+setting. Its `run` requires approval of the exact immutable plan, root `.env`, a
+fresh external result directory, $2 total cap and same-day UTC price-review assertion.
+It has no automatic retry or resume. Prepared packets authorize no provider/count
+call or Docker operation; never reuse a consumed earlier experiment grant. Detailed
+conditions and evidence limits are in the current status and internal agent guide.
+
 ## Optional native snapshot window
 
 `--context-policy native-window-v1` enables the experimental snapshot lifetime in a

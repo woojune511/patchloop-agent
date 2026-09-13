@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
@@ -240,13 +241,36 @@ def operator_audits(plan, branches, probe, observer, store, deadline):
 def run(plan_root, result_root, *, approval_packet_hash, credential_file, cap,
         pricing_verified_on, adapter_factory=None, sandbox=None, probe=None,
         checkpoint=lambda _: None, progress=lambda _: None):
-    plan, envelope = validate(plan_root)
+    return execute_packet(
+        plan_root, result_root,
+        protocol=RolloutProtocol(DESIGN, ORDER, BRANCH_CAP, TOTAL_CAP, validate, initialize_branch),
+        approval_packet_hash=approval_packet_hash, credential_file=credential_file, cap=cap,
+        pricing_verified_on=pricing_verified_on, adapter_factory=adapter_factory,
+        sandbox=sandbox, probe=probe, checkpoint=checkpoint, progress=progress)
+
+
+@dataclass(frozen=True)
+class RolloutProtocol:
+    """Only the frozen design varies; admission, execution and audit stay shared."""
+
+    design_root: Path
+    order: tuple[str, ...]
+    branch_cap: Decimal
+    total_cap: Decimal
+    validate: Callable
+    initialize: Callable
+
+
+def execute_packet(plan_root, result_root, *, protocol, approval_packet_hash, credential_file, cap,
+                   pricing_verified_on, adapter_factory=None, sandbox=None, probe=None,
+                   checkpoint=lambda _: None, progress=lambda _: None):
+    plan, envelope = protocol.validate(plan_root)
     require(approval_packet_hash == sha256_bytes((plan_root / "plan.json").read_bytes()),
             "exact executable packet approval required")
-    require(cap == TOTAL_CAP and credential_file.resolve() == repository_root() / ".env",
+    require(cap == protocol.total_cap and credential_file.resolve() == repository_root() / ".env",
             "exact cap/credential path required")
     require(pricing_verified_on == utc_now().date().isoformat(), "price review date mismatch")
-    root = native.fresh_root(result_root, repository_root(), DESIGN, plan_root,
+    root = native.fresh_root(result_root, repository_root(), protocol.design_root, plan_root,
                              Path(plan.checkpoint["source_root"]))
     root.mkdir()  # Exclusive one-shot; no resume, retry or replacement sample command.
     store, observer = ArtifactStore(root), DevJournal(root, "run_dev_feedback_observer")
@@ -275,8 +299,8 @@ def run(plan_root, result_root, *, approval_packet_hash, credential_file, cap,
                         and identity["profile_hash"] == plan.envelope["probe_profile_hash"],
                         "probe identity mismatch")
             require(sandbox is not None and probe is not None, "registered backends required")
-            for label in ORDER:
-                branches.append(initialize_branch(plan, label, root, sandbox, probe, deadline))
+            for label in protocol.order:
+                branches.append(protocol.initialize(plan, label, root, sandbox, probe, deadline))
 
             def adapter(config):
                 nonlocal client
@@ -292,7 +316,9 @@ def run(plan_root, result_root, *, approval_packet_hash, credential_file, cap,
                 observer.append("diagnostic_branch_progress", value)
                 progress(value)
 
-            result = drive(plan, branches, adapter, checkpoint=checkpoint, progress=report_progress)
+            result = native.drive(
+                plan, branches, adapter, branch_cap=protocol.branch_cap,
+                total_cap=protocol.total_cap, checkpoint=checkpoint, progress=report_progress)
             result["operator_case_audits"] = []
             if result["terminal"] == "ROLLOUTS_COMPLETED":
                 result["operator_case_audits"] = operator_audits(

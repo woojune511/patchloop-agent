@@ -777,7 +777,66 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: failure-given diagnostic completed; no adoption or further paid authority.
+Current seam: experimental report-aware review, not a default runtime/memory change.
+`diagnostics/report_verification_review.py` uses the existing native projection hook
+and failure-given executor, whose RolloutProtocol supplies only frozen design/order/
+caps/validation/branch initialization. Old F1/F2 command defaults remain unchanged;
+implementation hashes invalidate old executable envelopes without rewriting any bytes.
+
+Compare fresh report-only A against B's working_notes.reported_issue_review plus
+completion_guidance. Both use the same A2 pre-turn22 task, source/diff, report, 21 opaque
+continuations/native exchanges, append-v1, mini/medium/25k, root .env, probes and
+repair-recheck. Order A1/B1/B2/A2, two per arm, <=8 new calls each, $0.50 each/$2 total
+proposed, no transfer/retry/extra sample/diagnostic resume. Preparation is not approval.
+Keep all previous sent items, model-authored findings/questions and note schema intact.
+Initialize both from A and apply B once to the constructed unsent view; never replace
+native note delivery references with raw context-body notes. Journal each projection's
+arm/report/review/request hash against its turn. Reconstruct from the bound report and
+already delivered public probe observations after pending replay; no separate mutable
+memory cache and no extra inference.
+
+The entry is explicitly harness-authored, not a forged model finding/verification ID.
+Use report_ref instead of repeating input/expected body. Original-diff evidence remains
+reported failure; changed diff without recent current probes is modified_unverified;
+current probes become probe_evidence_available_for_review. Their action references
+are bounded to the existing latest-three projection, not selected by source substring
+or presumed relevance. Every automatic behavior verdict remains NOT_ASSESSED. Never
+treat exit zero, current line entry, registered PASS, model resolved/dismissed notes
+or an arbitrary probe as proof that this concrete case was checked correctly.
+Rollback to the same diff retains evidence; changed diff expires its authority.
+
+Keep gate, tool list, budgets and submission_ready exact. At ready_to_submit with
+no current probe, advise run_probe only if offered; finish stays optional/eligible.
+Once evidence exists, ask for input/fixture/output comparison, not an automatic
+probe loop. If probes are unavailable, preserve uncertainty without recommending a
+masked action. The model still decides whether the evidence is relevant/conclusive.
+This comparison jointly changes salience and advice, not an isolated proof of memory
+causality. No forced plan/note/new tool, no source repair hint or extra public case.
+
+Executable packet: C:\pt\analyses\report-review-20260914; validation receipts:
+C:\pt\validation\report-review-20260914. Prepare/validate use no credentials,
+network/process or sandbox; actual prefix clone/replay uses only local Git and mock
+backends without candidate execution. Retain the original single-case post-episode
+operator audit and blind semantic scoring, not agent credit or feedback. Existing
+runtime/task/user/historical/external evidence is immutable. No new paid or Docker
+execution is authorized; require exact packet approval and current official price
+review. Task acceptance/safety remain NOT_RUN and official=false.
+
+Frozen plan SHA-256: 08e28fe788bb5084c43c1133532a0cd64f1dadb009bdf9dad2a7d762a26174e5.
+Final 123 focused/compatibility tests plus Ruff PASS in 73.259s; no full runtime
+suite/isolated-evaluator smoke rerun because active runtime is unchanged. Mock covers
+mutation, both probe execution outcomes without semantic credit, visible check, optional
+finish, rollback, four-branch observer separation and crash replay. Actual source clone
+only restores the prefix; no candidate execution. New test initially conflated raw-note
+interpretation prose with native delivery projection; preserve that existing deduplication
+and compare only the two intentional new field paths. Both branch types start from A,
+so the first live-shaped B request exactly matches the frozen B rather than rehydrating
+raw note bodies into it. Old defaults and recovery/cost/uncertainty tests pass unchanged.
+No-call preparation/two validations: 1.644s; network/process/key loader forbidden.
+A/B wire 473815/474905 bytes, +1090; input tokens NOT_COUNTED. Eight prior F1/F2 views
+compared read-only, not counterfactual success evidence. 6892 protected hashes match.
+
+Prior seam: failure-given diagnostic completed; no adoption or further paid authority.
 Evidence: `C:\pt\analyses\failure-given-live-20260914`, exact packet `0291bb5e...`.
 The new user proceed grant executed F1/F2 once, mini/medium/25k/root .env,
 $0.50 each/$1 total, native history/probes/recheck unchanged. Each branch selected
