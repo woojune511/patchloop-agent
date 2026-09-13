@@ -777,7 +777,33 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: provider-free public counterexample diagnostic completed.
+Current seam: voluntary counterexample-review no-call design, not executable yet.
+`diagnostics/counterexample_review.py` restores A2 `run_dev_8d592587618448b7` turn22
+from its public prefix. Artifacts: `C:\pt\analyses\counterexample-review-20260913`.
+Both current checks PASS, 19 model/78 tool/2 accepted mutations remain, 1619 seconds.
+A unchanged; B appends one generic falsification/verification system suffix once.
+Do not inject the operator's 14 cases or findings. Preserve task/source/notes/native
+results, all 21 encrypted reasoning items and 21 action pairs, and exact tool order.
+No forced tool_choice or finish gate; the original prompt already mentions probes.
+The first system-message suffix changes cache-prefix identity; report that cost effect.
+Four new branches A1/B1/B2/A2, round-robin, <=8 calls each, $0.50 each/$2 shared
+planning cap, no transfer, no paid approval. Exact counting/full25k admission required
+later; do not lower output to fund a tail or treat censored samples as semantic failures.
+`prepare`/`validate` only; no collector, credentials, workspace, Docker or model call.
+The source context contains larger storage representations than the sent view: prove
+the full native request by `_build_model_input` replay, then compare stable identity
+fields. Do not mistake intentional native-reference projection for evidence loss.
+Next scoped implementation is the existing short-rollout adapter plus mocks, not a
+default runtime change. Existing diagnostic engines bind old checkpoints/runtime and
+some compute mutations since checkpoint using a hard-coded 3; this seed has 2.
+Restore prefix counters, preserve independent branches/native feedback, verify exact
+cap/ceiling/deadline/idempotency/all-branch stops before a new paid packet approval.
+Score useful model-authored cases, actual execution, evidence-responsive repair,
+same-case recheck, current visible checks/finish, cost and censoring separately.
+No hidden evaluator or paid judge. Single post-hoc seed/two samples per arm are not
+general capability or default-adoption evidence. Runtime v38/task/default unchanged.
+
+Prior seam: provider-free public counterexample diagnostic completed.
 Evidence: `C:\pt\analyses\public-counterexamples-20260913`, packet `06cd6fb9...`.
 Four saved candidates plus local BASE clone, 14 fixed public-spec cases each,
 existing public probe sandbox, Linux/Python 3.12.13/umask 0o022. Setup snapshots

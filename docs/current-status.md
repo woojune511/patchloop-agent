@@ -38,7 +38,36 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: public counterexamples reproduced; no runtime change
+## Current seam: counterexample-review inputs frozen; execution not enabled
+
+The approved no-call preparation selects A2 (`run_dev_8d592587618448b7`) immediately
+before turn22: both current visible checks PASS, with 19 model/78 tool calls and
+two accepted mutations remaining. Its saved native request replays exactly from
+the public prefix and matches the original count/dispatch hashes.
+
+Control A keeps that request unchanged. B adds one generic system-prompt suffix:
+seek an unestablished patch assumption, derive a potentially refuting public input,
+probe it, and respond to the observation. No concrete operator counterexamples,
+new source, forced tool choice, required plan/note, or reasoning reset is added.
+All 21 encrypted items, 21 native call/result pairs, task, memory and tools stay equal.
+The existing prompt already suggests probing concrete uncertainty; this tests a
+more explicit proactive review instruction, not newly available tools.
+
+Design: two new samples per arm, A1/B1/B2/A2 round-robin, up to eight new calls each,
+mini-2026-03-17/medium/25k, append-v1, probes/repair-recheck retained. Planning caps
+are $0.50 each/$2 total, no transfer; caps can censor an episode and do not guarantee
+32 funded calls. No paid authorization is included. Prompt-prefix cache effects and
+behavior are scored separately; one selected checkpoint cannot establish generality.
+
+Evidence: `C:\pt\analyses\counterexample-review-20260913` (`packet.json`, `protocol.json`,
+`A.json`, `B.json`, `result.md`). The new diagnostics-only preparer has no execution
+command. Next: adapt the existing short-rollout engine to the exact v38 prefix and
+mock-test feedback/accounting/stops, then seal an executable packet for separate
+approval. In particular, inherited accepted mutations must be derived as two, not
+copied from an older diagnostic's hard-coded three. Runtime/default/task bytes are
+unchanged; provider/count/Docker/candidate/hidden execution NOT_RUN, official=false.
+
+## Prior public counterexamples reproduced; no runtime change
 
 The approved provider-free diagnostic fixed 14 public-spec-derived POSIX cases
 before execution and compared actual Linux os.makedirs with BASE/A1/B1/B2/A2.
