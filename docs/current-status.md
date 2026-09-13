@@ -38,7 +38,46 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: supplied public-case lifecycle implemented, no paid authority
+## Current seam: supplied-case A/B completed, no behavioral improvement
+
+The exact `1f8bc6f5...` packet ran once from the frozen A2 checkpoint. All four
+branches chose finish on their first response, submitted unchanged `5c3c2067...`
+(23 added lines), and made no new mutation, registered check or probe. Both inherited
+registered checks remain PASS, but the fixed operator public case is FAIL: expected
+`a,b,c`; actual `a,a/b,c`. One identical final candidate was audited once and reused.
+
+Both B requests contain the same supplied code, `no_current_result`, and advisory
+`next_action=run_probe`; the tool is available. Each first view retains 16 model/75
+tool/one mutation and 1590 seconds. No context loss, action mask, token/cost/horizon
+exhaustion or provider uncertainty explains this immediate finish. Public decisions
+cite check PASS and retain the wrong n2 interpretation of skipping `..`. Memory is
+present, but its interpretation is model-authored and unverified. Its causal influence
+was not separately tested. Unknown concern-ID updates were rejected non-blockingly;
+those errors did not prevent probes or terminate a repair attempt.
+
+Initial delivery/advice works, but no probe/edit means later case replay, historical
+currency and delivery dedup remain mock-tested, not exercised by this live comparison.
+Do not adopt this advice by default or claim an autonomy gain. The prior current-failure
+experiment elicited repairs when concrete failure was supplied; merely supplying its
+program/status did not elicit observation here. Next consider the public-verification
+step itself, not another longer reminder or tool mask. No new implementation/run is
+authorized; this one-checkpoint/two-per-arm contrast does not identify an internal cause.
+
+Evidence: `C:\pt\analyses\public-case-live-20260914` (`result.md`, masked-code review,
+audit/transcript/context and immutable journals); same-name validation receipts.
+Four Responses/counts/actions, 40.638s, known model-rate cost $0.130343400. Count
+billing/invoice UNVERIFIED; cached-input differences are not efficiency evidence.
+All 8782 protected hashes match; the single operator container is confirmed absent.
+Actual wire matches the approved manifest hashes. Stored A/B JSON files use canonical
+object-key order, so a prior audit's file-equals-wire assumption was corrected without
+changing requests or rerunning. Masked code observations preceded labeled verdicts,
+though the recognizable baseline prevents a claim of perfect blinding.
+
+Approval consumed; no automatic paid retry/resume/extra samples, Docker start/pull/build,
+hidden evaluator or default runtime/task changes. Task acceptance/safety NOT_RUN,
+official=false. This is a failed behavior intervention, not a missing live result.
+
+## Prior supplied public-case lifecycle implementation
 
 `diagnostics.public_case_lifecycle` and `diagnostics.public_case_rollout` implement
 the selected small experiment. Both arms receive the same frozen public program and

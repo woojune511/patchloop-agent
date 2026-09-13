@@ -777,7 +777,40 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: supplied-case reducer/collector implemented in diagnostics only.
+Current seam: supplied-case live A/B completed; exact approval consumed, no adoption.
+Packet1f8bc6f58dbc23c14b253a1bec448818fbdaaad7c215fd57734944fa9ca2441b ran
+mini/medium/25k,A1/B1/B2/A2,1USD each/4USD total, original report-only nested A2 seed.
+All branches finish immediately, no new mutations/checks/probes; unchanged23-line
+5c3c2067... patch and inherited two registered PASS. One distinct operator case FAIL
+reused across all four: expected a,b,c; actual a,a/b,c. Prefix skips '..' without
+moving to parent. This is public-case failure, not hidden/task-acceptance evidence.
+
+Actual A/B inputs match approved ordered hashes, same public program/native source
+and24 encrypted reasoning items. B's no_current_result/NOT_ASSESSED and optional
+run_probe advice are present with tool available, budget16/75/1 and1590s. Wrong n2
+model_authored_unverified interpretation is preserved and repeated in final notes;
+delivery is working, interpretation/completion judgment remains wrong. Do not assert
+memory or opaque reasoning caused it: no intervention isolated them. Unknown v1/v2
+concern updates in B1/B2/A2 are nonblocking errors, not a mandatory-probe/stop defect.
+
+No new paid turn replay/probe/edit occurred after first delivery, so later source
+dedup, result retention and diff-currency lifecycle are NOT_EXERCISED live, despite
+mock coverage. This weakens the advice's behavioral value, not its pure reducer tests.
+Next candidate: generic public-verification observation step, not more reminders,
+tool restriction, forced notes or default adoption. Supplied case use is separate
+from autonomous case discovery; one checkpoint/two samples cannot generalize.
+
+Evidence C:\pt\analyses\public-case-live-20260914; validation same-name directory.
+Four Responses/counts/actions,40.638s,0.130343400USD known model-rate cost,8782 protected
+hashes preserved. One operator container cleanup/inspect absence confirmed. Canonical
+A/B object files differ in outer key order from dispatch wire; actual wire is exactly
+the manifest-approved ordered request. Audit checks both and records the old helper
+assumption failure; do not rewrite frozen files, weaken dispatch identity or rerun.
+Code observations were recorded before labeled outcomes; recognizable baseline still
+limits blinding. No private evaluator/runtime/task/.env/user/history changes. Keep
+task_acceptance/safety NOT_RUN,official=false; no new paid/sample/resume authorization.
+
+Prior seam: supplied-case reducer/collector implemented in diagnostics only.
 `public_case_lifecycle.py` defines the bounded operator-public program, pure exact
 source/action/input/full-diff/task-environment receipt reducer, native definition
 delivery and B-only status/advice. `public_case_rollout.py` reuses the nested A2

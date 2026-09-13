@@ -61,6 +61,11 @@ sandbox. The frozen packet is `C:\pt\analyses\public-case-rollout-20260914`.
 Both arms receive the same public program/original report; only B gets exact-program
 execution tracking and optional advice. No newer candidate failure is injected.
 
+The `1f8bc6f5...` packet has now executed once; its approval is consumed. Evidence is
+at `C:\pt\analyses\public-case-live-20260914`: four immediate unchanged submissions,
+no agent probes, fixed public case FAIL. Do not replay the command as an authorized
+follow-up. Any new comparison needs a separate exact packet and grant.
+
 After separate exact approval, `run` additionally requires a fresh `--result-root`,
 `--approval-packet-hash`, `--credential-file .env`, `--max-cost-usd 4.00` and the
 same-UTC-day `--pricing-verified-on`. Four fresh branches A1/B1/B2/A2 each retain a
