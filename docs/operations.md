@@ -53,6 +53,17 @@ parallel public inspection, one admitted mutation, a visible check, automatic
 full-diff projection, finish, and a separate private evaluation. Its result is
 still unofficial.
 
+## Current-candidate feedback preparation
+
+`uv run python -m diagnostics.current_failure_feedback prepare --output-root <fresh-external-root>`
+freezes A/B inputs from the sealed report-only A2 pre-finish checkpoint. `validate
+--root <packet-root>` reconstructs and verifies them without a provider, credential
+loader, subprocess or sandbox. There is no run command. B adds only the existing
+public reproduction's failure on the current candidate; old native history and
+registered-check PASS are unchanged. The proposed $1 each/$4 total is not approval.
+Collector adaptation, mock recovery/cost validation and exact executable approval
+are required before further paid execution. Preserve previous packets/run bytes.
+
 ## Report-aware diagnostic comparison
 
 The separate `diagnostics.report_verification_review` command prepares/validates an

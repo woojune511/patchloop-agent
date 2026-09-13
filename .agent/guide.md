@@ -777,7 +777,39 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: report-review A/B completed; mixed evidence, grant consumed, no adoption.
+Current seam: current-candidate feedback inputs prepared, not an executable grant.
+`diagnostics/current_failure_feedback.py` has prepare/validate only. Select report-only
+A2 of report-review-live-20260914 before turn_25853d06430f4e199d6b7b8ae68fd82f; verify
+the sealed journal, native prefix, current context and count/dispatch request identities.
+The old collector's unsent overlay used insertion-order JSON; compare that reconstructed
+view structurally while preserving its counted bytes and all sent items exactly.
+Keep all 24 opaque/native exchanges, source delivery, notes, original historical report,
+tools, current registered PASS and voluntary finish. Current diff 5c3c2067... matches the
+sealed operator observation (B2 execution reused by A2 on the identical candidate).
+Only B adds operator_current_candidate_feedback: actual relative entries a,a/b,c versus
+expected a,b,c, with existing input/fixture/oracle referenced, no diagnosis/source hint.
+It is operator evidence, not a fake tool/check/model note or an allowance; after edits
+currency becomes historical and never automatically PASS/FAIL for the new diff.
+
+Prepare fresh A1/B1/B2/A2 continuations, <=8 new responses each, mini/medium/25k.
+Planning caps $1 each/$4 total reduce the known $0.50 censoring risk, but guarantee
+neither eight funded calls nor permission to spend. No transfer/retry/resume/additional
+sample, reasoning reset, tool reordering or default adoption. Copy no future finish,
+later note update, another branch's repair or hidden evaluation into the input.
+Next implement only the bounded collector adaptation and mock nested-prefix recovery/
+overlay/cost cases, review prices, seal an executable packet and obtain exact approval.
+Actual same-case audit is later operator execution, never agent credit; exploration
+is not automatic failure, and resource censoring leaves ability unevaluated.
+
+Inputs at C:\pt\analyses\current-failure-feedback-20260914, receipts same-name under
+C:\pt\validation. Packet 17b1b872cdd8a8ded90df17451885571f1c497d40501ba1af695edf30c8d9cf2.
+New 24 tests plus prior preparation/review/docs regressions total 91 PASS; Ruff PASS;
+47.747s. Real prefix restores all 24 opaque/native pairs without candidate execution;
+A/B 540827/542123 bytes, +1296, not token counts. No-call prepare/two validates 0.412s;
+7809 protected hashes unchanged. Full runtime suite/isolated smoke NOT_RERUN because
+runtime and tools are unchanged. New executable adapter is still unimplemented.
+
+Prior seam: report-review A/B completed; mixed evidence, grant consumed, no adoption.
 Exact 08e28fe788bb5084c43c1133532a0cd64f1dadb009bdf9dad2a7d762a26174e5 executed once
 with four independent A1/B1/B2/A2 branches under $0.50 each/$2 total, mini/medium/25k,
 root .env, same A2 pre-turn22, append-v1/probes/recheck and immutable opaque/native history.

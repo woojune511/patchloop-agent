@@ -38,7 +38,40 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: report-aware review executed; mixed result, no adoption
+## Current seam: current-candidate failure comparison, inputs only
+
+`diagnostics.current_failure_feedback` prepares/validates the next comparison; it
+has no run command. Both arms restore report-only A2 immediately before its last
+decision (`turn_25853d06430f4e199d6b7b8ae68fd82f`), on failed diff `5c3c2067...`.
+A retains the old historical report; B adds the independently observed current
+result: relative entries `a`, `a/b`, `c`, versus expected `a`, `b`, `c`. The input,
+fixture and expected behavior come from the same existing public reproduction.
+No fix hint, new source, fake failed check or mandatory action is added.
+
+All 24 opaque reasoning items/native call-result pairs, notes, source delivery,
+tools, registered PASS and finish eligibility remain unchanged. A's request is
+byte-identical to its recorded input count request (540827 bytes); B adds 1296 bytes.
+Only the latest unsent snapshot differs. After an edit the supplied failure is
+historical, not a verdict on the new candidate. The old final response and other
+branches' repair code are not inputs. This is a post-hoc selected failure case,
+not autonomous discovery or evidence that the new agent would have succeeded.
+
+Proposed next execution is fresh A1/B1/B2/A2, at most eight new responses each,
+mini/medium/25k, with a planning-only $1 per branch/$4 total cap. This raises the
+old $0.50 branch cap to reduce known censoring of repair/check/finish, but does not
+guarantee eight funded calls. No paid execution is approved by preparation.
+Next: adapt the existing collector to this nested checkpoint, mock its lifecycle
+and recovery, then seal an executable packet and obtain separate exact approval.
+No default runtime/task change, new candidate execution or Docker operation.
+
+Prepared inputs: `C:\pt\analyses\current-failure-feedback-20260914` (design.md and
+packet.json); receipts: `C:\pt\validation\current-failure-feedback-20260914`.
+91 focused/compatibility/documentation tests plus Ruff PASS in 47.747s; no-call
+preparation and two validations took 0.412s. All 7809 protected hashes match. Full
+runtime suite and isolated-evaluator smoke were not rerun: this adds only an
+input-preparation diagnostic, not an execution/default-runtime change.
+
+## Prior report-aware review execution: mixed result, no adoption
 
 The approved `08e28fe7...` packet ran once in fixed A1/B1/B2/A2 order. Final candidate
 case outcomes are A1 PASS, A2 FAIL, B1 PASS, B2 FAIL: one of two in each arm, not a
