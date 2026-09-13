@@ -53,7 +53,31 @@ parallel public inspection, one admitted mutation, a visible check, automatic
 full-diff projection, finish, and a separate private evaluation. Its result is
 still unofficial.
 
-## Current-candidate feedback preparation
+## Supplied public-case lifecycle experiment
+
+`diagnostics.public_case_rollout` adds no default agent option. Its `prepare` and
+`validate` commands take `--plan-root` and use no key, input count, provider or
+sandbox. The frozen packet is `C:\pt\analyses\public-case-rollout-20260914`.
+Both arms receive the same public program/original report; only B gets exact-program
+execution tracking and optional advice. No newer candidate failure is injected.
+
+After separate exact approval, `run` additionally requires a fresh `--result-root`,
+`--approval-packet-hash`, `--credential-file .env`, `--max-cost-usd 4.00` and the
+same-UTC-day `--pricing-verified-on`. Four fresh branches A1/B1/B2/A2 each retain a
+nontransferable $1 cap, <=8 new responses and the complete 25k output reservation.
+The current model remains `gpt-5.4-mini-2026-03-17`, reasoning medium. Existing
+Docker/image readiness is required; no automatic start/pull/build, retry, resume
+or replacement sample. This documentation and local mock validation are not approval.
+
+Case completion means a complete execution receipt, never automatic behavioral PASS.
+Separate agent probe/output review, public checks, mutation/finish and the post-episode
+operator case audit. Hidden/task acceptance and safety stay NOT_RUN, official=false.
+The CLI reports only aggregate status/cost. Record masked public code observations
+before opening labeled operator verdicts; the detailed immutable result stays on disk.
+Recognizable original code still prevents a claim of perfect blinding. Do not feed
+post-episode audit results back into an already finished branch.
+
+## Prior current-candidate feedback preparation
 
 The executable adapter is `diagnostics.current_failure_feedback_rollout` with
 `prepare`, `validate`, and `run`, each taking `--plan-root`. `run` also needs a fresh

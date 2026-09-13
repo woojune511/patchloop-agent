@@ -777,7 +777,52 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: public-case replay/lifecycle design only; not implemented or authorized.
+Current seam: supplied-case reducer/collector implemented in diagnostics only.
+`public_case_lifecycle.py` defines the bounded operator-public program, pure exact
+source/action/input/full-diff/task-environment receipt reducer, native definition
+delivery and B-only status/advice. `public_case_rollout.py` reuses the nested A2
+checkpoint loader and original feedback Branch/dispatcher/recovery/operator audit.
+Do not inherit current_failure_feedback's newer observation or its treatment Branch.
+Both first inputs use the original report plus identical supplied code; only B adds
+public_case_status and completion_guidance. Extra source is a supplied public example,
+not autonomous counterexample discovery. No runtime schema or tool-surface change.
+
+Case/source/task identity and case-result receipt CAS bindings are journaled without
+action/check credit. Verify bindings before pending tools; preserve provider/count
+uncertainty priority, then settle pending work and derive the view. Terminal recovery
+remains read-only. Reject damaged case/receipt bindings before new execution; do not
+turn semantic probe failure into integrity failure. Normal exit with stdout false
+is execution completed, behavior NOT_ASSESSED. No stdout parsing becomes an oracle.
+Search the full durable case history, not the bounded recent-probes view; mutation
+expires currency, rollback retains it, unrelated probes do not evict matching results.
+
+Inline case definition once; subsequent input_item_index/item_hash/field references
+must resolve to the exact earlier inline body. Missing reference -> same bounded
+inline definition and delivery diagnostic. Never alter sent native/opaque items.
+Current/last-historical result refs carry exact action/input/diff/policy/snapshot
+identities; source/result bodies are not repeated in case status. Guidance is optional,
+keeps required repair/check priority, names only offered actions, and does not advise
+automatic repetition when complete current output already exists. Existing submission
+eligibility, model notes, probes, action counters and cost limits stay unchanged.
+
+Prepare/validate/run entry points use a fresh exact packet, A1/B1/B2/A2, <=8 new calls
+per branch, mini/medium/25k and nontransferable1USD/4USD. Output CLI emits only aggregate
+execution status/cost, not labeled candidate/case verdicts; retain detailed immutable
+receipts for masked code review before unblinding. Recognizable baselines still limit
+blinding. Packet C:\pt\analyses\public-case-rollout-20260914; focused receipts same-name
+under C:\pt\validation. No paid approval or default adoption follows from preparation.
+All43 new lifecycle/collector tests and125 selected regressions pass; focused validation
+plus final Ruff/docs recheck105.471s. Four-arm mock covers repair/check/optional probe/finish
+and independent operator audit; source/receipt corruption, six crash boundaries,
+cost/billing uncertainty, full25k nontransferable caps and real nested-prefix local
+Git restoration are covered. No-call prepare/two validates2.228s,8761 protected hashes
+unchanged. The validation helper's line-length-only lint error is corrected; retain
+its original failed receipt and subsequent verification. No Docker/count/provider/
+actual candidate or hidden evaluation was performed. Full runtime suite/isolated
+evaluator smoke NOT_RERUN_RUNTIME_UNCHANGED. Four owned pytest roots recycled with
+content hashes/restoration mappings; no durable or user-owned workspaces moved.
+
+Prior seam: public-case replay/lifecycle design only, now implemented above.
 Detailed plan C:\pt\analyses\public-case-loop-design-20260914\design.md; validation
 same-name under C:\pt\validation. Reuse run_probe's existing question/python_source,
 action/input/source/diff and policy identities, native source/result delivery references

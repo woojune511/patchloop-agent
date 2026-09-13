@@ -38,7 +38,46 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: public-case replay/lifecycle design, not implemented
+## Current seam: supplied public-case lifecycle implemented, no paid authority
+
+`diagnostics.public_case_lifecycle` and `diagnostics.public_case_rollout` implement
+the selected small experiment. Both arms receive the same frozen public program and
+original report. Only B adds exact-program/current-diff execution references and
+advice; default runtime, tools, notes, gates and budgets are unchanged.
+
+Case identity is harness-owned. Match raw UTF-8 source and the durable action/input,
+full diff, task/environment and execution receipt. Preserve exact-case evidence after
+unrelated probes, make it historical after edits, and retain currency after rollback.
+Process completion (including stdout false), check PASS and concern resolution never
+become semantic PASS: behavior remains NOT_ASSESSED. Guidance uses only offered tools,
+keeps required repair/check priorities, and does not require a probe before finish.
+
+The identical public source is delivered once per native append history, followed by
+a verified source reference; missing delivery falls back to the same bounded body.
+Result bodies stay in native feedback, not duplicated in the status. Case/receipt
+bindings are durable and replayable without extra tools or provider calls. Unknown
+dispatch/cost and existing cleanup/deadline rules retain priority. CLI output hides
+labeled candidate/case verdicts so masked code observations can precede unblinding.
+
+Fresh executable preparation: `C:\pt\analyses\public-case-rollout-20260914`; receipts
+under the same name in `C:\pt\validation`. First inputs retain the report-only A2
+cutoff/native prefix; no newer failure report, repaired branch or private material
+is added. This tests use of a supplied case, not autonomous case generation.
+Preparation uses no credentials/count/provider/Docker/candidate execution. All 43 new
+tests and 125 selected regressions pass; the four-arm mock covers repair, public check,
+optional exact-case probe, finish and separate operator audit. No hidden evaluator or
+full default runtime suite was rerun. This is contract verification, not agent success.
+No-call preparation/two identical validations took 2.228s; 8761 protected hashes match.
+Focused validation plus final Ruff/docs recheck took 105.471s. A validation-helper-only
+line-length error was corrected; its failed receipt is retained. Four owned pytest
+roots were recycled with content-hash/restoration receipts; no durable run was moved.
+
+Proposed A1/B1/B2/A2 remains mini/medium/25k, <=8 new responses and $1 each/$4 total,
+with inherited 16 model/75 tool/one mutation. Exact new approval is required after
+local validation; no retry/resume/extra samples or Docker start/pull/build is authorized.
+Task acceptance/safety NOT_RUN, official=false; no default adoption or quality claim.
+
+## Prior public-case replay/lifecycle design
 
 The next experiment is specified at
 `C:\pt\analyses\public-case-loop-design-20260914\design.md`. It is design-only,
@@ -59,8 +98,8 @@ This tests use of a supplied case, not autonomous counterexample generation. Reu
 the report-only A2 checkpoint; add no later failure result, other branch's repair or
 hidden material. Source is identical across A/B; differences are lifecycle/advice as
 a single treatment, not separated subfield effects. Proposed $1 each/$4 total is not
-approval. Next implement the small diagnostics-only adapter/reducer and no-call/mock
-tests, then freeze an executable packet before seeking a new exact execution grant.
+approval. The implementation above follows this design; an exact execution grant
+still requires the new locally verified executable packet.
 
 Existing-contract validation: 80 tests and Ruff PASS in 16.413s; no-call source/cutoff
 feasibility 0.447s. The frozen public source is 3222 characters/UTF-8 bytes and fits
