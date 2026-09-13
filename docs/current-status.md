@@ -38,7 +38,42 @@ human operations guide and agent guide now document that lifecycle. Three focuse
 documentation tests and Ruff pass. Runtime/task bytes are unchanged; no new full
 runtime suite, mock smoke, Docker operation or provider invocation was required.
 
-## Current seam: native-window pilot succeeds; compact not exercised
+## Current seam: context A/B packet prepared; no paid execution authorized
+
+The next question is whether the native-window configuration changes small-model
+behavior and cost relative to append-v1. A new preparation-only packet is at
+`C:\pt\analyses\native-window-comparison-20260913`; byte hash `8f016079...`.
+It fixes fresh A1/B1/B2/A2 rows, append/window/window/append, on the unchanged v38
+runtime and pyfakefs v2/mini-2026-03-17/medium/root `.env`. Probes and repair-recheck
+are ON in both, each repeat1/$1.20, total $4.80 with no budget transfer. API compact
+is OFF in both; encrypted reasoning/native exchanges remain intact. The 40/100/4/
+1,800 limits and native 25k desired-output admission are unchanged.
+
+The sole request difference is context_policy. Its existing system notice and exact
+public archive representation are part of the treatment, so this is not a pure text
+deletion ablation. Runtime model_hash includes that policy and legitimately differs;
+the actual model is the same. Subsequent agent-selected trajectories can diverge.
+Nineteen saved pilot inputs reconstruct exactly under the window policy; fixed-prefix
+append/window projections retain identical current state, public evidence and native
+items. This read-only check is not a behavioral control or new token measurement.
+
+The packet fixes submission/aggregate acceptance, public repair/check outcomes,
+calls/tokens/costs, integrity and separate safety scoring. Count/invoice billing is
+not independently verified: $4.80 is the known generation-rate ledger limit, not a
+guaranteed invoice total. Uncertainty stops all remaining rows without retries,
+resumes or replacements. Two rows per arm only provide a descriptive within-task
+signal; prior rows are neither controls nor answer seeds. Docker readiness is not
+checked during preparation. Exact packet approval and live admission are still required.
+
+Provider-free validation: 31 focused/packet/documentation cases PASS in 12.474s,
+including two identical full packet verifications and a wrong-hash rejection.
+Repository Ruff passes; the frozen operator script has one nonfunctional 101-column
+E501 style warning, retained in its own receipt. All 5,160 protected files verify.
+The owned 267-file pytest scratch was recycled, with a restoration receipt. No real
+provider/count/compact/Docker/task execution occurred. Full runtime suite and mock
+were not rerun for this packet/documentation-only change; the v38 receipt below applies.
+
+## Prior native-window pilot succeeds; compact not exercised
 
 The exact `30bec892...` packet approval was consumed once. Fresh run
 `run_dev_ebfe33596eed4353` reaches **EVALUATOR_PASS**, task acceptance **PASS** and
