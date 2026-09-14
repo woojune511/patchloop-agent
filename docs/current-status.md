@@ -5,7 +5,50 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: eight-run plan-format comparison closed; no efficacy signal
+## Current seam: all seven plan-format submissions have public behavior defects
+
+Provider-free diagnosis of the exact seven submitted CAS patches found Linux
+public-goal discrepancies in every candidate. BASE plus seven fresh clones ran
+16 cases with same-image Python3.10.19 native/fake controls; no patch repair.
+Trailing separators bypass parent creation or precreate the leaf; relative-prefix
+handling omits the first component or roots at the wrong place; exception ordering
+loses side effects. A1/B1 `staging/.` and B3 relative file-parent behavior are new
+regressions; file/../child is already wrong in BASE. These are public defects, not
+attribution of the historical hidden assertions. A2 was unsubmitted and remains
+in the earlier all-run success denominator, not this submitted-code matrix.
+
+B2 gives the clearest evidence-to-candidate gap: its original relative probe
+`a/../b/../c` observes native creation of `a`, `b`, `c`, but its candidate creates
+only `b`, `c`. Both probe questions/stdout, the full task and revision6 plan were
+in the actual first-edit input; notes were empty. The initial code skips creation
+of the first relative component; the only later edit removes the caller mode
+argument, leaving that path logic unchanged. Presence is not comprehension, but
+missing delivery does not explain this instance. Correction: the matrix's first
+B2 case is a relative variant; its original absolute a/b/../c probe PASSES the
+candidate. A separate same-image replay confirms first-original PASS/second FAIL.
+
+Linux mismatches /16: BASE14, A1/B1/A3=6, B2=12, B3=13, A4/B4=4. This targeted,
+post-hoc case set is not a new benchmark or A/B success rate. Native Windows uses
+host Python3.14.5 versus fake-on-Linux3.10.19; retain that qualification. Return
+status alone is insufficient: B4 raises the expected EEXIST but misses a directory
+that native creates before raising. Do not infer all visible tests are absolute:
+the custom traversal check is, while upstream regression covers other behavior.
+
+Next design candidate is a small reusable public behavior case connecting reference
+observations to execution on the current patch. run_probe already supports edited
+code; replaying native-only source does not test the candidate. Existing concerns
+are model interpretations, not executable assertions. No new implementation, paid
+sample, forced probe/tool mask or default adoption follows from this diagnosis.
+This does not isolate segmented-v1's causal effect or rule out other context flaws.
+
+Matrix13.976s, one supplementary B2 Docker execution; owned cleanup confirmed in
+all nine. Evidence24 PASS/0.281s, Ruff/diff PASS. No provider/count/compact/hidden
+execution, credential loading, Desktop start/pull/build or old resume; runtime
+unchanged, no full-suite/mock repeat.9658 protected files/eight old journals/closed
+report plus39 recent and22 comparison records unchanged. task_acceptance NOT_RUN,
+official=false. Report: `C:\pt\analyses\plan-format-public-20260915\result.md`.
+
+## Prior seam: eight-run plan-format comparison closed; no efficacy signal
 
 At `d2e7e98d`, packet `c1ec4594...` compared old `brief-v1` (A) with
 `brief-evidence-v1` (B), four fresh runs each in A1/B1/B2/A2/B3/A3/A4/B4 order.

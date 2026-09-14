@@ -805,7 +805,38 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: fresh plan-format comparison completed, no default adoption or expansion.
+Current seam: exact submitted-code public diagnosis completed; no runtime change.
+All seven plan-format submissions fail at least one same-image Linux public case.
+16 cases on BASE+seven fresh patch-identity/scope-verified clones; preserve A2 as
+unsubmitted, still in the earlier success denominator. Main defects: empty-tail
+handling, relative prefix/root construction, error-before-side-effect ordering.
+A1/B1 dot_leaf and B3 relative file_parent regress BASE; file_dotdot is preexisting.
+B2's relative a/../b/../c probe expects directories a, b, c; candidate creates b, c.
+Both native probe questions/stdout, full task and revision6 plan were present in
+the actual first mutation input (notes0). Initial path logic skips the first
+component; second/last edit only removes caller mode. This is a verification gap,
+not missing transport in that input. Correct the original first-probe attribution:
+the matrix uses a relative a/b/../c variant; the original absolute probe PASSES.
+Separate original-form replay confirms first PASS/second FAIL. Do not reuse the
+earlier mistaken two-original-probes-fail statement. Presence is not comprehension.
+Linux mismatches/16 BASE14,A1/B1/A3=6,B2=12,B3=13,A4/B4=4 are post-hoc diagnostic
+counts, not new performance scores. Native Windows3.14.5 vs fake/Linux3.10.19 stays
+qualified. B4 EEXIST matches but its pre-error directory side effect is missing.
+No private/reference read or exact historical hidden-assertion attribution.
+Next design candidate: preserve/reuse public behavior cases against the current
+candidate, explicitly distinct from native reference-only observation. run_probe
+already executes edited code and binds the diff; healthy execution/concern resolution
+is not assertion success. Do not naively replay native-only source as candidate
+verification, add mandatory quotas/tool masks, or call another plan warning a fix.
+No implementation/paid sample/default change here; segmented causality remains open.
+Matrix13.976s plus one supplementary execution, nine owned cleanups confirmed;
+evidence24PASS/0.281s, Ruff/diffPASS. No provider/count/compact/hidden execution,
+credential loading, Docker start/pull/build, old resume, full/mock repeat. Preserve
+9658 files/eight old journals/closed report plus39 recent and22 comparison records;
+runtime unchanged, task_acceptanceNOT_RUN, official=false. Evidence:
+C:\pt\analyses\plan-format-public-20260915\result.md.
+
+Prior seam: fresh plan-format comparison completed, no default adoption or expansion.
 Packet c1ec4594 at d2e7e98d ran A1/B1/B2/A2/B3/A3/A4/B4 once under the user's
 no-per-run-approval delegation. A=brief-v1, B=brief-evidence-v1; both segmented-v1,
 mini 2026-03-17/medium, pyfakefs v2, probes/repair-recheck, same fresh starts/limits.
