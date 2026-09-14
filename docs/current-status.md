@@ -5,7 +5,48 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: public POSIX counterexample rejected the proposed B failure
+## Current seam: B's public defects and premature verification closure identified
+
+Both B submissions miss traversal side effects for Linux
+`makedirs("staging/../release/")`: the trailing separator makes `tail` empty and
+bypasses their new recursive-parent guard. Without the trailing slash both work.
+Both also introduce EEXIST for `makedirs("staging/.")`, where real Linux and the
+original base succeed. Fourteen public-goal cases, fake Linux/Windows and native
+controls reproduce these defects without private test details or candidate repair.
+The original B public terminals remain PRIVATE_EVALUATION_FAILED; these examples
+are not claimed to identify the exact historical hidden failing assertions.
+
+The incomplete guards were already in first mutations at B1turn17/B2turn11,
+before any noninitial segment event. Initial creation of these defects is not
+caused by discarding earlier reasoning segments. Public goal/diff/plans/notes and
+planning instructions verify in the first-edit/final actual inputs. At finish,
+read/search/probe/mutation were still available; remaining calls14/27 and edits1/3.
+Both executed zero probes. B1 corrected reported permissions and broken-link errors;
+the remaining weakness is checking an incomplete hypothesis beyond passing visible
+checks. Plans9/2 were delivered, but narrowed to check completion and submission.
+No transport, forced-stop or old-submission defect was found. The causal effect of
+the combined segmented policy remains unseparated; no default adoption/removal.
+
+Native Windows/Python3.14.5 disagrees with the assumed universal intermediate side
+effect; B matches the simple existing-base case and A does not. Fake modes run on
+Linux/Python3.10.19, so retain this version/host qualification. The Linux/native
+controls use the same image/Python. A acceptance PASS is not complete conformance.
+Do not interpret this targeted post-hoc matrix as new A/B performance evidence.
+
+Five isolated pinned-Docker observations, host controls, exact patch/scope checks:
+8.766s; evidence tests13 PASS/0.14s, Ruff/diff PASS, all cleanup confirmed. No paid,
+count/compact, hidden rerun, Docker start/pull/build, runtime/task/prompt change or
+old resume. 9658 protected files/eight old journals/closed report plus19 recent
+inputs preserved. No full-suite/mock repeat for operator-only work.
+Report: `C:\pt\analyses\b-failure-public-20260915\result.md`.
+
+Next design candidate: one planning-content contrast connecting a specific
+assumption, its observed evidence and an untested discriminating case to the next
+action. Current prose instructions already ask for this; do not call another
+warning a transport fix. No extra planner, mandatory task-specific probe, stronger
+tool mask or diagnostic-hint injection. No implementation/new paid packet yet.
+
+## Prior seam: public POSIX counterexample rejected the proposed B failure
 
 The provider-free `makedirs("staging/../release")` case from an existing current
 directory passes in all four submitted A1/A2/B1/B2 patches. Each creates both

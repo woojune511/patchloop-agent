@@ -804,7 +804,30 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: provider-free public POSIX relative-parent case completed; hypothesis rejected.
+Current seam: B public defect/loop analysis completed; no runtime or task repair.
+B1/B2 skip recursive creation when trailing separator makes tail empty: Linux
+staging/../release/ creates only release, while native creates staging too. Both
+introduce EEXIST for staging/.; base/native succeed.14 public cases in fake Linux/
+Windows with native controls, exact final CAS patches, no private/reference reads.
+These code structures appear in first edits B1turn17/B2turn11, before noninitial
+segments; initial defect creation is not a later encrypted-history reset effect.
+First-edit/final actual inputs validate goal/diff/plan/notes and current planning
+instructions. At finish read/search/probe/edit remain, calls14/27 and edits1/3.
+No probes selected. B1 responds correctly to provided mode/link failures, but plans
+9/2 close verification after visible checks, not after testing distinguishing cases.
+This is a verified behavioral-coverage weakness, not a proven context-policy cause.
+Public terminal PRIVATE_EVALUATION_FAILED is preserved; do not claim exact hidden
+failure attribution. Windows host3.14.5 control differs from fake-on-Linux3.10.19;
+B matches the simple case and A adds a side effect. No universal A superiority.
+Matrix8.766s, evidence13PASS/0.14s, Ruff/diffPASS, owned cleanup confirmed. Preserved
+9658files/eight old journals/closed report plus19 recent inputs. Provider/count/
+compact/hidden executions0, no Docker start/pull/build, old resume, full/mock repeat.
+Evidence C:\pt\analyses\b-failure-public-20260915. Next design only: one plan-content
+contrast mapping assumptions to observations and a discriminating case. Existing
+instructions already request specificity; no new warning-as-fix, task-specific
+hint injection, mandatory probe, extra planner, stronger mask or paid packet yet.
+
+Prior seam: provider-free public POSIX relative-parent case completed; hypothesis rejected.
 From an existing cwd, makedirs("staging/../release") creates both directories in all
 four exact A1/A2/B1/B2 submissions, matching real Linux controls. Base misses staging.
 exists("staging/..") is false: FakeFilesystem._valid_relative_path checks the missing
