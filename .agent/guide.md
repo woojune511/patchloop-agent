@@ -805,7 +805,36 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: brief-evidence-v1 plan-content option implemented and locally verified.
+Current seam: fresh plan-format comparison completed, no default adoption or expansion.
+Packet c1ec4594 at d2e7e98d ran A1/B1/B2/A2/B3/A3/A4/B4 once under the user's
+no-per-run-approval delegation. A=brief-v1, B=brief-evidence-v1; both segmented-v1,
+mini 2026-03-17/medium, pyfakefs v2, probes/repair-recheck, same fresh starts/limits.
+Only plan instructions differed. A/B acceptance0/4 each, submissions3/4 vs4/4.
+Seven visible-PASS submissions ended EVALUATOR_FAIL/PRIVATE_EVALUATION_FAILED,
+safetyPASS; A2's four edits ended with visibleFAIL and pre-dispatch LIMIT_REACHED,
+acceptance/safetyNOT_RUN. Do not omit it from the all-run denominator.
+Recorded USD2.560404000 of9.60 (A1.514111850/B1.046292150), noncached equivalent
+4.033956000.172model/172count/211tools,38m3.623s, no uncertainty/retry/extra sample.
+All172 actual request/goal/diff/plan/note and seven submission identities verify.
+B28/28 plan texts follow headings, but major-result changes12/20 (A19/26) do not
+prove semantic review. New B4 notes19/21 inputs, revision7, still acceptanceFAIL.
+B1/B2 finish-time revisions5/12 versus last input4/11 are not dropped delivery.
+Max53946 inputtokens/283594 requestbytes/113164 encryptedbytes; no size-pressure
+or incomplete-response path. No private details used for diagnosis.
+All B finishes still offered reads/search/probe/edit (calls27/25/17/20, edits2/2/2/1).
+B2's two probes exercised native OS on an empty diff, not the edited candidate.
+B1/B2 close uncertainty after visiblePASS; B3 retained its pre-repair plan; B4
+planned regression then submit. A2/A4 also have public API/anchor/bytes mistakes.
+These are observed behavior limits, not proof that all harness/context problems
+are excluded or that planning itself cannot help. Stop this format-only tuning
+branch; next candidate is provider-free reproduction of public behavior on exact
+submissions before another prompt change. No forced probe/tool mask/new paid
+sample/default adoption follows. Evidence: C:\pt\analyses\evidence-plan-compare-20260915.
+Mock9PASS/4.00s, receipt7PASS/1.03s, Ruff/diffPASS; runtime unchanged, no full/mock
+repeat.9658 protectedfiles/eight old journals/closed report plus39 recentfiles intact.
+Already-prepared Docker/images only; no Desktop start/pull/build or old resume.
+
+Prior seam: brief-evidence-v1 plan-content option implemented and locally verified.
 Only the experimental planning instructions differ from brief-v1: within the same
 3000-character string request Behavior, Evidence / open assumptions, and Next
 discriminating action. Not a new structured schema, planner call, mandatory probe,

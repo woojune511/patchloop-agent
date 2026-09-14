@@ -5,7 +5,61 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: opt-in evidence-linked plan format implemented and locally verified
+## Current seam: eight-run plan-format comparison closed; no efficacy signal
+
+At `d2e7e98d`, packet `c1ec4594...` compared old `brief-v1` (A) with
+`brief-evidence-v1` (B), four fresh runs each in A1/B1/B2/A2/B3/A3/A4/B4 order.
+Both used segmented-v1, mini 2026-03-17/medium, pyfakefs v2, probes/repair-recheck
+and unchanged limits. Only the opted-in planning instructions differed. The user's
+delegation covered this fixed group without per-run approval; no old grant reused.
+
+| Result | A: brief-v1 | B: brief-evidence-v1 |
+| --- | ---: | ---: |
+| Task acceptance PASS / all runs | 0/4 | 0/4 |
+| Submitted / all runs | 3/4 | 4/4 |
+| Recorded USD | 1.514111850 | 1.046292150 |
+| Noncached-equivalent USD | 2.303030250 | 1.730925750 |
+| Input tokens | 2,315,379 | 1,687,141 |
+
+All seven submissions passed both current-diff visible checks, then EVALUATOR_FAIL
+with public class PRIVATE_EVALUATION_FAILED; safety PASS. A2 exhausted four accepted
+edits with a failing visible check: pre-dispatch LIMIT_REACHED, evaluation/safety
+NOT_RUN, still included in the success denominator. Total $2.560404000 of $9.60;
+172 generation/172 count/211 tools, 23 edits, 38m3.623s. No unknown usage, retry,
+extra sample, compact call or cleanup uncertainty. Cheaper failed trajectories
+do not establish better cost per success; four samples per arm are exploratory.
+
+All172 exact request hashes, public goal/diff/plan/notes and seven submitted patch
+identities verify. All eight created plans; all28 B plan texts used the headings.
+Major-result plan changes: A19/26, B12/20; changes/nulls are not proof of meaningful
+review. New B4 delivered notes in19/21 requests and plan revision7, yet failed.
+B1/B2 last stored revisions5/12 versus delivered4/11 are finish-time updates,
+not lost next-turn delivery. Maximum input53946 tokens/request283594 UTF-8 bytes/
+encrypted item113164 bytes stayed inside segmented management bounds; only
+major-result transitions occurred, no size-pressure or incomplete-response path.
+
+Public traces show insufficient candidate verification despite working delivery:
+B1/B2 closed uncertainty after visible PASS; B3 kept its pre-repair plan; B4 planned
+regression then submission. B2's two valid probes observed native OS behavior on
+an empty diff, not the edited fake candidate. All B final inputs still offered
+read/search/probe/edit with remaining calls27/25/17/20 and edits2/2/2/1.
+A2/A4 also made concrete object-API/anchor/bytes errors; do not reduce every failure
+to premature submission. No private details/reference patches were used to explain
+these runs, so exact hidden failing assertions remain unattributed.
+
+Do not adopt the new plan format by default, expand tasks or add paid samples from
+this completed group. This tests neither planning ON/OFF nor segmented-v1's causal
+effect. Next candidate is provider-free public-behavior reproduction on these exact
+submissions before another prompt change, not a stronger tool mask or forced probe.
+No such post-hoc sandbox execution is included here. Report and frozen receipts:
+`C:\pt\analyses\evidence-plan-compare-20260915\result.md`.
+
+Operator mock9 PASS/4.00s and final receipt7 PASS/1.03s; repository Ruff, operator
+F/I and diff checks PASS. Runtime unchanged, so no new full-suite/mock-smoke claim.
+9658 protected files/eight old journals/closed report plus39 recent inputs unchanged.
+Only prepared Docker/images were used; no Desktop start/pull/build or old resume.
+
+## Prior seam: opt-in evidence-linked plan format implemented and locally verified
 
 `--planning-policy brief-evidence-v1` reuses the existing <=3,000-character whole
 `plan_update` with three short headings: `Behavior`, `Evidence / open assumptions`,
