@@ -5,7 +5,30 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: oversized-continuation compact diagnostic prepared; no paid call
+## Current seam: oversized-continuation diagnostic complete; compact also rejects the item
+
+The separately approved packet `9cf5b985...` ran once at `6bf1aa68` on 2026-09-14.
+Standalone compact returned HTTP 400 `string_above_max_length` for the same
+`input[83].encrypted_content` that input counting rejected in B4. Terminal:
+`COMPACT_ENDPOINT_REJECTED_INPUT_SIZE`; no compacted window or usage was returned.
+Exactly one compact attempt, no retries/count/generation/tools/Docker/activation;
+client cleanup CLOSED. Model-rate and invoice costs remain unknown, not zero.
+
+This rules out post-failure standalone compact of this exact unchanged window as
+a working recovery path. It is not just a count-endpoint failure or oversized plan.
+No numeric field limit, context-token fit, reason for the preceding reasoning-only
+response, or guaranteed prevention by earlier compaction is established. The next
+step is to clarify provider continuation input/output compatibility before selecting
+a preventive runtime change; do not restart the planning comparison or retry this
+input under the consumed grant. No default runtime/planning change was made.
+
+Result, authorization and audit: `C:\pt\analyses\oversized-continuation-live-20260914`.
+Durable output: the prepared packet's `execution` directory. Two result-only
+recoveries are byte-idempotent; 9658 protected files, all eight source journals and
+the closed cycle result remain unchanged. The preparation's NOT_AUTHORIZED flags
+are historical; the separate live `approval.json` records the user's later grant.
+
+### Prior preparation: one standalone request, provider-free validation
 
 `diagnostics.oversized_compaction` now prepares, inspects and collects at most one
 separately authorized standalone compact request. It uses B4's exact failed input
@@ -21,11 +44,11 @@ claim and execution lock prevent reuse; interrupted work recovers evidence only.
 Usage persists before output validation. Only a complete valid public/opaque
 window is retained; malformed output is rejected without saving plaintext reasoning.
 
-The proposed $1.20 diagnostic budget reserves $0.876 using published model limits;
-this is **not an API-enforced dollar/output cap**. Fresh exact approval accepting
-that limitation is still required; the closed $40 cycle is not reused. No API/count/
-compact call, credential-client load or Docker operation occurred. The input's
-context fit and compact endpoint acceptance remain unverified. Official contract:
+The $1.20 diagnostic budget reserved $0.876 using published model limits;
+this is **not an API-enforced dollar/output cap**. The separate approval accepting
+that limitation was consumed by the call above; the closed $40 cycle is not reused.
+The preparation itself made no API call or credential-client load. Source context
+fit remains unverified despite the known field-size rejection. Official contract:
 [compact parameters](https://developers.openai.com/api/reference/python/resources/responses/methods/compact),
 [whole-window handling](https://developers.openai.com/api/docs/guides/compaction).
 

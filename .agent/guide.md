@@ -777,7 +777,26 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: one oversized-continuation compact diagnostic executable, provider-free only.
+Current seam: approved oversized-continuation compact attempt completed; grant consumed.
+Packet9cf5b985... executed once at6bf1aa68 on2026-09-14. Same B4 input85items,
+encrypted field1717452chars once. Compact also returns HTTP400
+string_above_max_length at input[83].encrypted_content. Terminal
+COMPACT_ENDPOINT_REJECTED_INPUT_SIZE; window/usage absent, billingUNKNOWN not zero.
+One compact attempt, zero count/create/tools/Docker/evaluator/activation/retry;
+client CLOSED. No further call/source resume/planning group authorized by this grant.
+Result C:\pt\analyses\oversized-continuation-live-20260914; durable journal/result
+under the executable packet's execution directory. Two result-only recoveries are
+byte-idempotent;9658protected files/eight original journals/closed result unchanged.
+New approval.json records subsequent authority; never rewrite preparation flags.
+
+The exact oversized post-failure window cannot be recovered by this standalone
+compact path. This is not a count-only issue. Do not infer a numeric field limit,
+context fit, model reasoning cause, or guaranteed prevention from earlier compact.
+Next: clarify provider-returned continuation re-input compatibility, then select
+one preventive design; no automatic support submission, new paid probe, ceiling
+change, state reset or default/planning adoption. Runtime bytes remain unchanged.
+
+Prior seam: one oversized-continuation compact diagnostic executable, provider-free only.
 `diagnostics.oversized_compaction` adds prepare/inspect/collect/recover for the frozen
 B4 failed correction input, not the old healthy B2 compaction packet. Keep old
 diagnostic code/packets, B4 terminal and closed planning-cycle state immutable.
@@ -813,8 +832,9 @@ Verification:205focused/shared compact tests PASS/87.33s, Ruff PASS, OFF/ON mock
 smoke each4mock turns/5tools/1edit through isolated acceptancePASS/safetyNOT_RUN.
 9658protected files/eight journals/closed result match. Full suite not repeated;
 runtime unchanged from preceding2069PASS. Evidence C:\pt\validation\oversized-compact-20260914.
-No paid call, credential-client load, Docker operation, source resume or cycle reopen.
-Next decision is the exact standalone compatibility call, not a new planning group.
+Preparation made no paid call, credential-client load, Docker operation, source resume
+or cycle reopen. The separate compatibility call is now completed above, not a new
+planning group or permission to reuse remaining budget.
 
 Prior seam: brief-planning content guidance revised locally; first A/B closed, no adoption.
 Planning stays `none` by default, append-only `brief-v1` remains experimental.
