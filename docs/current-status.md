@@ -5,7 +5,47 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: opt-in reusable public probe cases implemented and locally verified
+## Current seam: reusable-probe comparison closed; mechanism unused, no observed advantage
+
+Fresh fixed A=probe-policy none/B=cases-v1, four runs each at `a1156982`, used
+pyfakefs v2, mini 2026-03-17/medium, segmented-v1, brief-evidence-v1, probes and
+repair-recheck. Only the probe option differed; no previous case/code/plan was
+injected. The user's delegation covered this new eight-run group, not an old grant.
+
+| Result | A: none | B: cases-v1 |
+| --- | ---: | ---: |
+| Task acceptance PASS / all runs | 1/4 | 1/4 |
+| Submitted / all runs | 4/4 | 3/4 |
+| Recorded USD | 0.932819850 | 1.170729300 |
+| Uncached-equivalent USD | 1.596026250 | 1.965868500 |
+| Probe calls / cases / replays | 0/0/0 | 0/0/0 |
+
+All 161 exact requests offered run_probe; all 90 B inputs carried the new schema
+and empty current catalog. No invocation tested the live storage/comparison/replay
+path. This is not evidence that the capability was hidden or that reuse improved
+performance. Tied four-run samples establish neither equivalence nor a causal effect.
+Retain default OFF and stop this group; no extension, extra sample or stronger mask.
+
+Seven submissions passed current-diff visible checks; isolated acceptance passed
+only A4/B1, with safety PASS for all seven. B3 exhausted four edits with a public
+regression failure and stopped before another dispatch: LIMIT_REACHED, evaluation
+NOT_RUN, still in the denominator. Public trace shows wrong-object helper calls and
+file-parent error regressions in B3; no hidden assertion details were read. Both
+successful patches recursively process parents, but differ in size/implementation.
+
+Public task/diff/plan/notes delivery verified in every request. Explicit findings
+appeared only in A1/B1; no annotation loss was found. Maximum input 52,067 tokens,
+request 286,473 UTF-8 bytes, encrypted item 70,776 bytes. 161 generation/count calls,
+183 tools, 18 accepted edits; $2.103549150 of $9.60, 35m40.173s. No retry, unknown
+usage, compact, post-hoc sandbox run or Docker start/pull/build. Runtime unchanged.
+Operator 9 PASS/3.16s, receipt 6 PASS/1.33s; Ruff/diff PASS. Prior full suite/mock
+results are not new executions. 9,658 protected files plus 81 recent records remain
+unchanged. Two new pytest roots recycled; durable new runs preserved. official=false.
+Report: `C:\pt\analyses\probe-cases-compare-20260915\result.md`.
+Next analysis should examine verification sufficiency/repair choices, not presume
+another storage feature or compulsory probe is justified by non-use.
+
+## Prior seam: opt-in reusable public probe cases implemented and locally verified
 
 `--enable-probes --probe-policy cases-v1` connects an already completed public JSON
 observation to a model-authored candidate program and allows exact rerun by case ID.

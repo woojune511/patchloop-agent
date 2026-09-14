@@ -818,7 +818,29 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: cases-v1 opt-in reusable public JSON observations implemented.
+Current seam: fixed cases-v1 comparison closed at a1156982, no observed advantage.
+A=none/B=cases-v1, four fresh pyfakefs-v2 runs each, both mini/medium/segmented-v1/
+brief-evidence-v1/probes/repair-recheck; new delegation, no old packet reuse.
+Acceptance 1/4 each; submissions A4/4 vs B3/4; cost A$0.932819850/B$1.170729300,
+total $2.103549150 of $9.60, 35m40.173s. All 161 requests offered run_probe, all
+90 B requests had the new schema/catalog, but every run made zero probe/case calls.
+No live execution of the new case path; previous mock evidence is not live evidence.
+Keep default OFF, close the group, no extra samples or stronger masks. A tie at this
+size proves neither equivalence nor no possible effect. Check verification choices
+before proposing more memory/storage features; never mandate probes from non-use.
+Seven checked submissions; A4/B1 acceptance PASS, other five FAIL; all safety PASS.
+B3 still failed public regression after its fourth edit, so horizon LIMIT_REACHED,
+evaluation/safety NOT_RUN. Its public errors included wrong-object helper calls and
+file-parent error returns. Do not attribute historical hidden assertions from this.
+Every actual public task/diff/plan/note binding verified; no annotation loss. Both
+successful patches recursively processed parents; that is descriptive, not an oracle.
+161 generation/count, 183 tools, 18 edits; no unknown billing, retry, compact, extra
+sandbox execution or Desktop start/pull/build. Operator9 PASS/3.16s, receipt6 PASS/
+1.33s, Ruff/diff PASS; runtime unchanged, no repeated full suite/mock. Preserve
+9658 protected files and81 recent records; two owned scratch roots recycled.
+Report: C:\pt\analyses\probe-cases-compare-20260915\result.md. official=false.
+
+Prior seam: cases-v1 opt-in reusable public JSON observations implemented.
 Default OFF retains existing prompt/tool wire/v39 base identity. No new tool,
 model call, mask or finish obligation. Same run_probe accepts a prior public JSON
 reference and candidate source; explicit ID replay runs the saved candidate only.

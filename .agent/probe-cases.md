@@ -113,3 +113,15 @@ The feature makes a selected experiment reusable and its observation comparison
 explicit. It does not prove that a small model will select useful references,
 write a real candidate experiment, interpret a mismatch, or repair the defect.
 Keep it opt-in until a separately frozen behavioral comparison supports adoption.
+
+## First live comparison (2026-09-15)
+
+Four fresh OFF/four ON pyfakefs-v2 trials at a1156982, with the same mini/medium,
+segmented-v1 and brief-evidence-v1, achieved acceptance 1/4 each. All 161 requests
+offered run_probe and all 90 ON inputs included this contract/catalog, but no run
+invoked a probe. The new execution path therefore remains mock-verified, not
+live-exercised by this group. Total cost $2.103549150; no retry or extra sample.
+Do not treat tied small samples as proof of equivalence, or B1's success as evidence
+of case reuse. Default remains OFF. Investigate verification selection before
+adding storage features or requiring probes. Preserve the closed group's records:
+`C:\pt\analyses\probe-cases-compare-20260915\result.md`.
