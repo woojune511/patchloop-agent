@@ -303,6 +303,16 @@ included in the submitted patch. Each costs one model turn and one tool action a
 is available only when the remaining protected completion budget still fits afterward.
 The capability is off by default and requires explicit `--enable-probes` configuration.
 
+Experimental `--probe-policy cases-v1` additionally connects a completed public JSON
+observation to a model-written candidate program and saves that program for explicit
+rerun by ID. After an edit the old comparison is historical; a rerun compares the
+current implementation's output with the same recorded expectation. Up to three
+cases remain in current working state, without copying their code into each prompt.
+The reference and test design are model-selected: matching JSON is not proof that
+the reference is right or the intended project behavior was tested. Cases neither
+block submission nor run automatically. Default probes and planning stay unchanged.
+See the [case contract](../.agent/probe-cases.md).
+
 The model-facing probe observation distinguishes `execution_status=completed` from
 `behavior_verdict=not_assessed`: normal exit is not an answer to the experiment's question.
 Bounded observed/not-observed changed-line excerpts accompany the actual output; unknown

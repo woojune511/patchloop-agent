@@ -257,6 +257,7 @@ class RunManifest(StrictModel):
     official: Literal[False] = False
     runtime_id: Literal["dev-head"] = "dev-head"
     planning_policy: Literal["none", "brief-v1", "brief-evidence-v1"] = "none"
+    probe_policy: Literal["none", "cases-v1"] = "none"
     run_id: str = Field(pattern=r"^run_[a-zA-Z0-9_-]+$")
     task_id: str
     task_version: int = Field(ge=1)

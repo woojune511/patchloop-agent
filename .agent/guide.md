@@ -13,6 +13,7 @@ patchloop/dev/model_state.py   compact public model view, separate from audit ac
 patchloop/dev/native_sources.py  exact current-source delivery references into native history
 patchloop/dev/tools.py    tool grammar, spans, mutations, checks, finish
 patchloop/dev/check_feedback.py  complete-line public output and terminal diagnostics
+patchloop/dev/probe_cases.py  opt-in public JSON reference/candidate comparison and exact rerun
 patchloop/dev/state.py    append-only JSONL, action/provider recovery
 patchloop/dev/evaluation_completion.py  durable evaluator receipt and read-only recovery validation
 patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
@@ -147,6 +148,18 @@ not a new mount or required experiment. A probe result is diagnostic:
 it never grants source-span coverage, visible-check PASS, or finish credit, and failure
 does not force mutation or consume a check-repair allowance. See
 [the probe runtime contract](../docker/README.md) for image and isolation details.
+
+`--probe-policy cases-v1` (requires --enable-probes, default none) extends only
+run_probe with nullable reference_action_id/case_id and nullable source/question
+for ID replay. A prior healthy bounded JSON probe can supply an observed reference;
+new model-authored candidate code compares against it and is saved for exact explicit
+rerun. Three recently executed cases appear in probe_cases, with diff currency and
+model-authored-unverified relevance. A match is JSON equality, not trusted oracle
+truth, project-code coverage, visible PASS or automatic concern resolution. Keep
+ordinary probes, allowed tools, budgets and finish unchanged. Bind prepared source
+at admission and definition/result in the same action_finished; recover only within
+the exact run. Treat the catalog as current mutable state across segment/window
+replacement, never archived current credit. See [probe-cases.md](probe-cases.md).
 
 V28 projects an `observation` ahead of native probe `output`: `execution_status=completed`
 means the recorded process exited normally, while `behavior_verdict=not_assessed` never
@@ -805,7 +818,25 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: exact submitted-code public diagnosis completed; no runtime change.
+Current seam: cases-v1 opt-in reusable public JSON observations implemented.
+Default OFF retains existing prompt/tool wire/v39 base identity. No new tool,
+model call, mask or finish obligation. Same run_probe accepts a prior public JSON
+reference and candidate source; explicit ID replay runs the saved candidate only.
+Three recent cases have current/historical diff currency. Reference/program
+relevance is model-authored-unverified; JSON match is not semantic/task acceptance.
+Admission binds resolved source; definition/result commit together in action_finished.
+Resume verifies identity, replays completed work and keeps existing interrupted-probe
+cleanup/rerun rules. Cases are mutable current state, not historical current credit.
+Contract: probe-cases.md. Focused 74 PASS/69.014s; full 2,259 PASS/8 SKIP in 824.218s;
+Ruff/diff PASS. Only the focused subset meets two minutes. Fresh OFF/ON mock both
+isolated PASS/safety NOT_RUN, 4/5 versus 7/8 model/tool calls, one edit each. ON reference
+executes once and candidate twice (mismatch then match); this is not model efficacy.
+No paid/count/compact, credentials, real Docker or old resume. 9,658 protected
+files/eight old journals/closed report plus 92 recent evidence files unchanged.
+Report: C:\pt\validation\probe-cases-20260915\result.md. Next step would be a
+fresh fixed behavioral comparison, not default adoption or old sample reuse.
+
+Prior seam: exact submitted-code public diagnosis completed; no runtime change.
 All seven plan-format submissions fail at least one same-image Linux public case.
 16 cases on BASE+seven fresh patch-identity/scope-verified clones; preserve A2 as
 unsubmitted, still in the earlier success denominator. Main defects: empty-tail

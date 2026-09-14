@@ -5,7 +5,40 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: all seven plan-format submissions have public behavior defects
+## Current seam: opt-in reusable public probe cases implemented and locally verified
+
+`--enable-probes --probe-policy cases-v1` connects an already completed public JSON
+observation to a model-authored candidate program and allows exact rerun by case ID.
+The same run_probe tool executes only the candidate on rerun; the reference is not
+re-executed. Up to three recently executed cases remain in current working state,
+with source/reference identity and current/historical diff currency. Store prepared
+code at action admission and case definition/result together at completion. Window
+and segmented views replace old case state without reviving historical matches.
+
+Default none preserves the existing system prompt, schemas/order and v39 surface
+hash. The opt-in contract binds model/envelope/manifest/tool identity. No new tool,
+planner/model call, automatic experiment, required probe, action mask or finish gate.
+JSON equality to the selected reference is matched/mismatched/not_compared, not task
+acceptance, a trusted oracle, or proof the program exercised the intended project.
+Reference stdout is bounded to 2,048 UTF-8 bytes; normal probe source/execution limits
+and all global budgets stay unchanged. Plans/notes/concerns are not auto-updated.
+See [the exact contract](../.agent/probe-cases.md).
+
+Focused 74 PASS/69.014s; full 2,259 PASS/8 SKIP in 824.218s; Ruff/diff PASS.
+The focused subset meets two minutes; the full four-worker suite does not.
+Fresh OFF/ON mock transcripts both reach isolated task acceptance PASS, safety NOT_RUN.
+OFF keeps 4 model/5 tools; scripted ON uses 7 model/8 tools/1 mutation,
+reference once and candidate twice, mismatch then
+match across the edit. Actual input receipts preserve the case through handoff.
+This is deterministic transport/execution evidence, not real-model improvement.
+No paid/count/compact call, credential loading, real Docker operation or old resume.
+9,658 protected files/eight original journals/closed report plus 92 recent evidence
+files verified unchanged. No change to task packages or historical reports.
+Report: `C:\pt\validation\probe-cases-20260915\result.md`. All results remain official=false.
+Next behavioral step is a fresh fixed comparison with only this option changed;
+neither prior planning samples nor a passing mock establish its effectiveness.
+
+## Prior seam: all seven plan-format submissions have public behavior defects
 
 Provider-free diagnosis of the exact seven submitted CAS patches found Linux
 public-goal discrepancies in every candidate. BASE plus seven fresh clones ran

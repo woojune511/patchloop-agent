@@ -285,6 +285,8 @@ def _runtime_hash() -> str:
 
 
 def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
+    from patchloop.dev import probe_cases
+
     return sha256_json(
         {
             "provider": request.provider,
@@ -296,6 +298,8 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "compaction_contract": native_compaction.policy_contract(request),
             **({"planning_contract": working_plan.contract(request.planning_policy)}
                if request.planning_policy != "none" else {}),
+            **({"probe_case_contract": probe_cases.contract()}
+               if request.probe_policy != "none" else {}),
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
@@ -407,6 +411,7 @@ def _manifest(
     return RunManifest(
         run_id=run_id,
         planning_policy=request.planning_policy,
+        probe_policy=request.probe_policy,
         task_id=package.public.task_id,
         task_version=package.public.task_version,
         base_commit=package.public.repository.base_commit,
@@ -415,7 +420,9 @@ def _manifest(
         task_content_hash=package.task_content_hash,
         runtime_content_hash=runtime_hash,
         model_hash=model_hash,
-        tool_surface_hash=dev_tool_surface_hash(planning_policy=request.planning_policy),
+        tool_surface_hash=dev_tool_surface_hash(
+            planning_policy=request.planning_policy, probe_policy=request.probe_policy,
+        ),
         sandbox_identity_hash=_sandbox_identity_hash(request, package),
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
         probe_profile_hash=probe_profile_hash() if request.enable_probes else None,
@@ -1338,6 +1345,10 @@ def _build_context(
             journal.events(), diff_hash=summary.patch_hash, gate=active_policy.workflow_gate,
             policy=planning_policy,
         )
+    if gateway.probe_policy != "none":
+        from patchloop.dev import probe_cases
+
+        payload["probe_cases"] = probe_cases.project(journal.events(), summary.patch_hash)
     if repair_recheck:
         payload["repair_recheck"] = recheck_context
         last_recheck = recheck_context["last_result"]
@@ -2701,6 +2712,7 @@ def _run_envelope(
         sandbox_identity_hash=_sandbox_identity_hash(request, package),
         repair_recheck=request.repair_recheck,
         planning_policy=request.planning_policy,
+        probe_policy=request.probe_policy,
         context_policy=request.context_policy,
         segment_contract=(segments.contract()
                           if request.context_policy == segments.POLICY else None),
@@ -3592,6 +3604,7 @@ def _run_one_active(
         limits=request.limits,
         deadline=deadline,
         probe_sandbox=probe_sandbox,
+        probe_policy=request.probe_policy,
     )
     correction: dict[str, Any] | None = _pending_protocol_correction(journal)
     latest_tool_results = journal.latest_tool_batch_results() if resuming else []
@@ -3943,6 +3956,7 @@ def _run_one_active(
             allowed_tools=policy.allowed_tools,
             read_paths=policy.targeted_read_paths,
             planning_policy=request.planning_policy,
+            probe_policy=request.probe_policy,
         )
         turn_payload = {
             "turn_id": turn_id,

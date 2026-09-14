@@ -16,6 +16,7 @@ from pydantic import ValidationError
 
 from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
+from patchloop.dev import probe_cases
 from patchloop.dev.check_feedback import check_failure_diagnostics, output_tail
 from patchloop.dev.context import (
     SourceProjection,
@@ -143,7 +144,10 @@ def dev_tool_schemas(
     allowed_tools: Sequence[str] | None = None,
     read_paths: Sequence[str] = (),
     planning_policy: str = "none",
+    probe_policy: str = "none",
 ) -> list[dict[str, Any]]:
+    if probe_policy not in {"none", probe_cases.POLICY}:
+        raise ContractError("unknown probe policy")
     check_id_schema: dict[str, Any] = {"type": "string", "minLength": 1}
     if check_ids:
         check_id_schema["enum"] = list(check_ids)
@@ -352,6 +356,8 @@ def dev_tool_schemas(
                 "additionalProperties": False,
             },
         })
+        if probe_policy == probe_cases.POLICY:
+            probe_cases.extend_schema(schemas[-1])
     decision_modes = {
         "search_files": "inspect",
         "read_file": "inspect",
@@ -450,6 +456,7 @@ class DevToolGateway:
         limits: DevLimits,
         deadline: ExecutionDeadline | None = None,
         probe_sandbox: DockerProbeSandbox | None = None,
+        probe_policy: str = "none",
     ) -> None:
         self.workspace = workspace.resolve()
         self.public_task = public_task
@@ -458,6 +465,9 @@ class DevToolGateway:
         self.limits = limits
         self.deadline = deadline
         self.probe_sandbox = probe_sandbox
+        if probe_policy not in {"none", probe_cases.POLICY}:
+            raise ContractError("unknown probe policy")
+        self.probe_policy = probe_policy
         self._lock = threading.RLock()
         self.spans: dict[str, dict[str, Any]] = {}
         self._observation_seq = 0
@@ -2277,6 +2287,14 @@ class DevToolGateway:
         mutation_admitted: bool | None = None
         mutation_anchor_evidence_span_id: str | None = None
         candidate_summary: DiffSummary | None = None
+        prepared_probe: dict[str, Any] | None = None
+        if call.name == "run_probe" and self.probe_policy == probe_cases.POLICY:
+            try:
+                prepared_probe = probe_cases.prepare(call.arguments, self.journal.events())
+                if pending is not None and pending.get("probe_case_request") != prepared_probe:
+                    raise RecoveryError("pending probe case differs from its admitted program")
+            except (PatchLoopError, ValidationError, ValueError) as exc:
+                preflight_error = exc
         if pending is None:
             if call.name == "replace_text":
                 try:
@@ -2303,6 +2321,9 @@ class DevToolGateway:
                     "turn_decision": turn_decision,
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
+                    **({"probe_case_request": prepared_probe}
+                       if call.name == "run_probe" and self.probe_policy == probe_cases.POLICY
+                       else {}),
                     "mutation_expected_worktree_diff_hash": (
                         candidate_summary.patch_hash if candidate_summary is not None else None
                     ),
@@ -2386,9 +2407,12 @@ class DevToolGateway:
                 if pending is not None and pending["baseline_diff_hash"] != baseline:
                     raise RecoveryError("pending probe workspace no longer matches admitted diff")
                 output = self._run_probe(
-                    **call.arguments,
+                    **({key: prepared_probe[key] for key in ("question", "python_source")}
+                       if prepared_probe is not None else call.arguments),
                     execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
                 )
+                if prepared_probe is not None and prepared_probe["case"] is not None:
+                    output["case_comparison"] = probe_cases.compare(prepared_probe["case"], output)
                 evidence_cache_hit = False
             elif call.name in READ_TOOLS:
                 if self.deadline is not None:
@@ -2471,6 +2495,9 @@ class DevToolGateway:
             "input_hash": input_hash,
             "result": result.model_dump(mode="json"),
         }
+        if (result.status == "succeeded" and prepared_probe is not None
+                and prepared_probe["case"] is not None):
+            finished_payload["probe_case"] = prepared_probe["case"]
         if result.status == "succeeded" and result.tool == "replace_text":
             finished_payload["working_notes_state"] = self._refreshed_working_notes_state(
                 action_id=call.action_id,

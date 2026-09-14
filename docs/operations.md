@@ -1735,6 +1735,19 @@ This is safe recovery of an isolated experiment, not an exactly-once process gua
 Cleanup uncertainty stops further execution. Durable completed results use normal
 `action_id + input_hash` replay.
 
+Opt-in `--enable-probes --probe-policy cases-v1` adds reusable public JSON cases
+to the same run_probe action. First obtain a reference observation with an ordinary
+probe. Then submit candidate Python source plus that result's reference_action_id;
+the host compares JSON and returns a case_id. Rerun with case_id and all three
+question/source/reference fields null. The original reference is not re-executed.
+Reference stdout must be one complete JSON value at most 2,048 UTF-8 bytes; candidate
+source/execution limits are unchanged. Failed or non-JSON candidate results remain
+diagnostics, and cases never grant visible-check credit or trigger automatic actions.
+This option is OFF by default, retains at most three recently used cases, and has
+its own model/envelope/manifest/tool identity. Repeat the exact option on resume.
+No prepared Docker image is started/pulled/built and no paid run is authorized by
+enabling a config in code. See [the full contract](../.agent/probe-cases.md).
+
 The full submitted patch is stored by content hash. A separate
 manifest is atomically recorded before evaluator execution and binds the exact
 task bytes, full runtime bytes, model/tool/sandbox identities, visible-check diff,
@@ -1789,6 +1802,8 @@ Provider, task, model, reasoning effort, resolved credential-file path, invocati
 cap, limits, runtime content, sandbox identity, and full task-content identity must
 match the stored envelope exactly. Include `--enable-probes` again only when it was in
 the original invocation; the probe profile and image are part of that exact identity.
+Repeat `--probe-policy cases-v1` only if it was originally enabled; saved case
+programs and reference identities are restored from that run, never another run.
 Likewise repeat `--repair-recheck` only if enabled in the original run; changing it
 is an envelope mismatch, not a resume-time experiment switch.
 A mismatch returns `RESUME_CONTRACT_MISMATCH`

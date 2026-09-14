@@ -71,6 +71,10 @@ def dev(
     enable_probes: Annotated[
         bool, typer.Option("--enable-probes", help="Enable bounded clean-Python diagnostics.")
     ] = False,
+    probe_policy: Annotated[
+        Literal["none", "cases-v1"],
+        typer.Option("--probe-policy", help="Opt-in reusable reference/candidate experiments."),
+    ] = "none",
     repair_recheck: Annotated[
         bool, typer.Option(
             "--repair-recheck", help="After a repair, rerun its prior failed public check."
@@ -113,6 +117,7 @@ def dev(
                 max_cost_usd=_parse_cost(max_cost_usd),
                 repeat=repeat,
                 enable_probes=enable_probes,
+                probe_policy=probe_policy,
                 repair_recheck=repair_recheck,
                 context_policy=context_policy,
                 planning_policy=planning_policy,

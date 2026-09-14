@@ -11,7 +11,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from patchloop.contracts import Artifact
-from patchloop.dev import segments
+from patchloop.dev import probe_cases, segments
 from patchloop.util import sha256_json
 
 DEV_RUN_SCHEMA = "dev-run-v1"
@@ -22,7 +22,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 })
 
 
-def dev_tool_surface_hash(*, planning_policy: str = "none") -> str:
+def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = "none") -> str:
     base = sha256_json(
         {
             "schema_version": "dev-tool-surface-v39",
@@ -116,11 +116,15 @@ def dev_tool_surface_hash(*, planning_policy: str = "none") -> str:
             "provider_tool_validation": "schema-exact-null-bounded-diagnostic-v1",
         }
     )
-    if planning_policy == "none":
-        return base
-    from patchloop.dev.working_plan import contract
+    if planning_policy != "none":
+        from patchloop.dev.working_plan import contract
 
-    return sha256_json({"base_tool_surface_hash": base, "planning": contract(planning_policy)})
+        base = sha256_json({"base_tool_surface_hash": base, "planning": contract(planning_policy)})
+    if probe_policy == "none":
+        return base
+    if probe_policy != probe_cases.POLICY:
+        raise ValueError("unknown probe policy")
+    return sha256_json({"base_tool_surface_hash": base, "probe_cases": probe_cases.contract()})
 
 
 class StrictModel(BaseModel):
@@ -330,6 +334,7 @@ class DevRunRequest(StrictModel):
     )
     state_root: Path | None = None
     enable_probes: bool = False
+    probe_policy: Literal["none", "cases-v1"] = "none"
     repair_recheck: bool = False
     planning_policy: Literal["none", "brief-v1", "brief-evidence-v1"] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
@@ -339,6 +344,8 @@ class DevRunRequest(StrictModel):
 
     @model_validator(mode="after")
     def provider_options_match(self) -> DevRunRequest:
+        if self.probe_policy != "none" and not self.enable_probes:
+            raise ValueError("--probe-policy cases-v1 requires --enable-probes")
         if self.planning_policy != "none" and self.context_policy not in {
             "append-v1", "segmented-v1",
         }:
@@ -390,6 +397,7 @@ class DevRunEnvelope(StrictModel):
     planning_policy: Literal["none", "brief-v1", "brief-evidence-v1"] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
     segment_contract: dict[str, Any] | None = None
+    probe_policy: Literal["none", "cases-v1"] = "none"
     compaction_contract: dict[str, Any] | None = None
     probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
@@ -411,6 +419,8 @@ class DevRunEnvelope(StrictModel):
 
     @model_validator(mode="after")
     def provider_boundary_is_exact(self) -> DevRunEnvelope:
+        if self.probe_policy != "none" and self.probe_image_digest is None:
+            raise ValueError("probe cases require enabled probe identities")
         if self.planning_policy != "none" and self.context_policy not in {
             "append-v1", "segmented-v1",
         }:

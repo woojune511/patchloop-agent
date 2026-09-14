@@ -468,7 +468,9 @@ class EvaluationEngine:
             "private_spec_hash": package.private_spec_hash,
             "task_content_hash": package.task_content_hash,
             "runtime_content_hash": runtime_content_hash(),
-            "tool_surface_hash": dev_tool_surface_hash(planning_policy=manifest.planning_policy),
+            "tool_surface_hash": dev_tool_surface_hash(
+                planning_policy=manifest.planning_policy, probe_policy=manifest.probe_policy,
+            ),
             "sandbox_backend": backend,
             "evaluator_image_digest": image_digest,
             "sandbox_identity_hash": sandbox_identity_hash,
