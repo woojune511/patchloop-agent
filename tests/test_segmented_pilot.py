@@ -50,6 +50,7 @@ def test_no_call_packet_exact_contrast_and_read_only_inspect(prepared):
     assert a["resume_run_id"] is a["state_root"] is a["compact_at_input_tokens"] is None
     assert not (root / "state").exists()
     assert packet["order"] == ["A1", "B1", "B2", "A2"]
+    assert packet["order_policy"] == "a-first"
     assert packet["run_cap_nanos"] == 1_200_000_000
     assert packet["cap_nanos"] == len(packet["slots"]) * packet["run_cap_nanos"] == 4_800_000_000
     assert packet["authorization"].startswith("NOT_AUTHORIZED")
@@ -153,3 +154,66 @@ def test_hash_is_exact_content_identity(prepared):
     _, receipt, packet = prepared
     assert receipt["packet_hash"] == sha256_json(packet)
     assert not receipt["authorized"]
+
+
+def test_b_first_mirrors_order_without_changing_frozen_inputs(prepared, tmp_path):
+    _, _, original = prepared
+    root = tmp_path / "fresh-b-first"
+    receipt = pilot.prepare(root, pricing_verified_on="2026-09-14", order="b-first")
+    packet = json.loads((root / "packet.json").read_bytes())
+    assert packet["order_policy"] == "b-first"
+    assert packet["order"] == ["B1", "A1", "A2", "B2"]
+    assert packet["frozen"] == original["frozen"]
+    assert packet["cap_nanos"] == original["cap_nanos"] == 4_800_000_000
+    assert "before B1" in packet["execution_protocol"][0]
+    assert [slot["label"] for slot in packet["slots"]] == packet["order"]
+    for slot in packet["slots"]:
+        req = DevRunRequest.model_validate(slot["request"])
+        assert req.state_root == root / "state" / slot["label"]
+        assert req.resume_run_id is None
+    assert not (root / "state").exists()
+    assert pilot.inspect(root, packet_hash=receipt["packet_hash"])["order"] == packet["order"]
+
+
+def test_unknown_order_rejected_before_freezing_or_creating_packet(tmp_path, monkeypatch):
+    monkeypatch.setattr(pilot, "freeze", lambda: pytest.fail("must reject before freeze"))
+    root = tmp_path / "uncreated"
+    with pytest.raises(RecoveryError, match="unknown pilot order"):
+        pilot.prepare(root, pricing_verified_on="2026-09-14", order="adaptive")
+    assert not root.exists()
+
+
+@pytest.mark.parametrize("change, message", [
+    ("order", "order mismatch"), ("unknown_order", "order mismatch"),
+    ("slots", "slot/order contract"), ("state_root", "slot/order contract"),
+    ("request", "slot/order contract"), ("cap_nanos", "budget contract"),
+    ("run_cap_nanos", "budget contract"),
+])
+def test_rehashed_inconsistent_packet_still_rejected(prepared, change, message):
+    root, _, packet = prepared
+    if change == "order":
+        packet["order"] = list(reversed(packet["order"]))
+    elif change == "unknown_order":
+        packet["order_policy"] = "adaptive"
+    elif change == "slots":
+        packet["slots"].reverse()
+    elif change == "state_root":
+        packet["slots"][1]["request"]["state_root"] = packet["slots"][0]["request"]["state_root"]
+    elif change == "request":
+        packet["slots"][0]["request"]["planning_policy"] = "none"
+    else:
+        packet[change] += 1
+    (root / "packet.json").write_text(canonical_json(packet), encoding="utf-8")
+    with pytest.raises(RecoveryError, match=message):
+        pilot.inspect(root, packet_hash=sha256_json(packet))
+
+
+def test_cli_exposes_explicit_b_first_order(tmp_path, monkeypatch, capsys):
+    root = tmp_path / "cli-packet"
+    monkeypatch.setattr("sys.argv", ["segmented_pilot", "prepare", "--root", str(root),
+                                   "--pricing-verified-on", "2026-09-14", "--order", "b-first"])
+    pilot.main()
+    receipt = json.loads(capsys.readouterr().out)
+    assert pilot.inspect(root, packet_hash=receipt["packet_hash"])["order"] == [
+        "B1", "A1", "A2", "B2",
+    ]

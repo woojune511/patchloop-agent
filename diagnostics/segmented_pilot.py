@@ -31,6 +31,7 @@ SCHEMA = "segmented-context-pilot-packet-v1"
 MODEL = "gpt-5.4-mini-2026-03-17"
 TASK = "tasks/dev-train/pyfakefs-makedirs-parent-traversal-v2/public.yaml"
 ORDER = ("A1", "B1", "B2", "A2")
+ORDERS = {"a-first": ORDER, "b-first": ("B1", "A1", "A2", "B2")}
 POLICIES = {"A": "append-v1", "B": "segmented-v1"}
 RUN_CAP = Decimal("1.20")
 CAP = RUN_CAP * len(ORDER)
@@ -121,7 +122,9 @@ def freeze():
     }
 
 
-def prepare(root, *, pricing_verified_on):
+def prepare(root, *, pricing_verified_on, order="a-first"):
+    require(order in ORDERS, "unknown pilot order")
+    sequence = ORDERS[order]
     root = root.resolve()
     require(not root.is_relative_to(repository_root().resolve()), "packet root must be external")
     require(not root.exists(), "packet preparation requires an unused directory")
@@ -135,10 +138,12 @@ def prepare(root, *, pricing_verified_on):
         "old_grants": "closed planning/compact grants are not reused",
         "pricing": {**PRICE, "verified_on": pricing_verified_on},
         "cap_nanos": usd_to_nanos(CAP), "run_cap_nanos": usd_to_nanos(RUN_CAP),
-        "order": list(ORDER), "frozen": frozen,
+        "order_policy": order, "order": list(sequence), "frozen": frozen,
+        "order_scope": "Predeclared balanced mirror order; two fresh samples per arm. "
+        "No adaptive reordering, prior sample reuse or replacement of stopped slots.",
         "slots": [{"label": label, "arm": label[0], "request": {
             **frozen["requests"][label[0]], "state_root": str(root / "state" / label),
-        }} for label in ORDER],
+        }} for label in sequence],
         "hypothesis": "Bounded current working state with short native reasoning segments "
         "may avoid oversized replay and improve useful repair/recheck/submission behavior.",
         "inference_limit": "Two fresh runs per arm are exploratory. This compares the combined "
@@ -158,11 +163,12 @@ def prepare(root, *, pricing_verified_on):
                         "largest encrypted item bytes", "counted input tokens",
                         "native/public reference integrity and required-state preservation"],
             "cost": ["durable settled usage", "cached and uncached input/output tokens",
+                     "SDK usage field presence, count relation/delta and billing_state",
                      "noncached-equivalent model-rate cost; not an invoice claim"],
         },
         "execution_protocol": [
             "Re-inspect exact packet hash and fresh official pricing before the approved group; "
-            "reserve all four invocation caps ($4.80) before A1.",
+            f"reserve all four invocation caps ($4.80) before {sequence[0]}.",
             "Use the existing runner with each exact slot request, sequentially. A single "
             "operator owns this group; do not invoke the closed planning-cycle executor.",
             "Before each slot verify runtime/task/config identity and existing local Docker "
@@ -171,6 +177,8 @@ def prepare(root, *, pricing_verified_on):
             "is not a new run; only existing exact-match recovery is eligible.",
             "Count/transport/billing/cleanup or execution-state uncertainty, integrity failure "
             "or mismatch stops the whole group. No retry, fallback, replacement or extra sample.",
+            "Preserve bounded provider_usage_failure diagnostics. Distinguish absent/null/zero "
+            "usage from a proven count mismatch; an UNKNOWN bill is not zero-cost output.",
             "Settled normal task failures proceed to the next independent planned slot. "
             "Run visible checks and isolated evaluator only through the existing runner.",
             "Non-submissions have task_acceptance NOT_RUN, not evaluator FAIL. Hidden details "
@@ -193,6 +201,13 @@ def inspect(root, *, packet_hash):
     packet = json.loads((root / "packet.json").read_text(encoding="utf-8"))
     require(sha256_json(packet) == packet_hash, "packet content hash mismatch")
     require(packet["schema"] == SCHEMA and packet["root"] == str(root), "packet identity mismatch")
+    sequence = ORDERS.get(packet.get("order_policy"))
+    require(sequence is not None and packet["order"] == list(sequence), "packet order mismatch")
+    require(packet["slots"] == [{"label": label, "arm": label[0], "request": {
+        **packet["frozen"]["requests"][label[0]], "state_root": str(root / "state" / label),
+    }} for label in sequence], "packet slot/order contract mismatch")
+    require(packet["run_cap_nanos"] == usd_to_nanos(RUN_CAP) and
+            packet["cap_nanos"] == usd_to_nanos(CAP), "packet budget contract mismatch")
     require(packet["frozen"] == freeze(), "frozen runtime/task/config contract changed")
     return {"packet_hash": packet_hash, "integrity": "PASS", "authorized": False,
             "order": packet["order"], "cap_nanos": packet["cap_nanos"],
@@ -206,11 +221,12 @@ def main():
     prep = commands.add_parser("prepare")
     prep.add_argument("--root", type=Path, required=True)
     prep.add_argument("--pricing-verified-on", required=True)
+    prep.add_argument("--order", choices=tuple(ORDERS), default="a-first")
     check = commands.add_parser("inspect")
     check.add_argument("--root", type=Path, required=True)
     check.add_argument("--packet-hash", required=True)
     args = parser.parse_args()
-    result = (prepare(args.root, pricing_verified_on=args.pricing_verified_on)
+    result = (prepare(args.root, pricing_verified_on=args.pricing_verified_on, order=args.order)
               if args.command == "prepare" else inspect(args.root, packet_hash=args.packet_hash))
     print(canonical_json(result))
 

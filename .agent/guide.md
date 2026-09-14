@@ -804,7 +804,22 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: approved packet1615423f stopped at A1, group closed to automatic dispatch.
+Current seam: prepare a new B1/A1/A2/B2 segmented-policy pilot, provider-free only.
+Use `diagnostics.segmented_pilot prepare --order b-first` and read-only inspect.
+Default a-first stays unchanged; runtime/prompt/tool policies are not changed.
+Both arms use brief-v1/probes/repair-recheck, mini snapshot/medium, pyfakefs v2,
+root .env/repeat1 and fresh slot workspaces; proposed caps1.20USD each/4.80USD group.
+Destination C:\pt\analyses\segmented-pilot-bfirst-20260914. No credentials, provider/count,
+Docker or old grants during preparation. Inspection checks frozen identities plus
+order/slot/config/cap consistency. Current usage diagnostics distinguish SDK presence
+and count relations; UNKNOWN billing still stops the entire invocation/group.
+The runtime is unchanged since the usage-evidence full-suite receipt. Run focused
+preparer/usage/source-gate tests, Ruff and local mock; do not repeat an unchanged
+18-minute full suite merely for a diagnostics ordering option. Record actual timings.
+No prior sample reuse, default change or efficacy claim; exact packet approval remains
+the next paid gate. See current-status for the packet and latest verification receipt.
+
+Prior seam: approved packet1615423f stopped at A1, group closed to automatic dispatch.
 At c3ae0bff, run_dev_f2f219820e874648 used16model/16count/20tools/3edits in364.384s.
 Response16 reasoning-only incomplete/max_output_tokens, normalized usage0 vs count79749;
 PROVIDER_TIMEOUT_OR_UNKNOWN is the usage guard, not a proven network timeout.
@@ -813,7 +828,8 @@ Known first15 cost0.218970USD; final billingUNKNOWN. B1/B2/A2 NOT_STARTED, no su
 or evaluator. Plan revision12 delivered, findings0; all16request identities/public state
 validate. Final request355075bytes; new returned cipher1675704bytes stored, never resent.
 No A/B efficacy inference. Preserve packet/preparation/approval/run bytes and uncertainty
-stop. Next candidate: provider-free usage evidence diagnosis, not another paid retry.
+stop. Usage evidence diagnosis is now implemented and locally verified; it cannot
+recover A1's original missing/null/zero distinction. This group is not retried.
 See C:\pt\analyses\segmented-pilot-20260914\live-result.md and current-status.
 
 Prior seam: new four-run segmented-policy pilot packet, preparation only.

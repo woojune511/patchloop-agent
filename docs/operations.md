@@ -53,6 +53,27 @@ parallel public inspection, one admitted mutation, a visible check, automatic
 full-diff projection, finish, and a separate private evaluation. Its result is
 still unofficial.
 
+## Segmented comparison packet preparation
+
+`diagnostics.segmented_pilot` only prepares/inspects a fresh external packet; it
+has no execution or credential API. `--order a-first` (the default) fixes A1/B1/B2/A2;
+`--order b-first` fixes B1/A1/A2/B2. A is append-v1 and B segmented-v1, both with
+brief-v1 planning. The four slots always retain separate fresh state roots,
+repeat1, $1.20 invocation caps and a $4.80 group cap. Do not reuse a stopped packet.
+
+```powershell
+uv run python -m diagnostics.segmented_pilot prepare --root <new-external-root> --pricing-verified-on <actual-UTC-date> --order b-first
+uv run python -m diagnostics.segmented_pilot inspect --root <same-root> --packet-hash <returned-hash>
+```
+
+The operator must first verify official standard/global model prices. Inspect is
+read-only and rejects changed runtime/task/config, order, slot paths or budgets.
+Preparation neither loads `.env` nor checks Docker; task-only serialization does
+not establish real token fit. Exact packet approval and existing image readiness
+are separate execution gates. Use the normal runner, not the closed planning-cycle
+executor. Preserve usage field presence/count relations and report UNKNOWN billing;
+uncertainty stops the whole group without retry or replacement samples.
+
 ## Brief planning improvement cycle
 
 `patchloop dev --planning-policy none|brief-v1` defaults to `none`; `brief-v1`

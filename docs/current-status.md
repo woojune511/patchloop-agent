@@ -5,7 +5,31 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: provider usage evidence (provider-free)
+## Current seam: B-first segmented comparison preparation (provider-free)
+
+Prepare a separate B1/A1/A2/B2 packet after the usage-diagnostics repair. The old
+group stopped before any B sample, so this predeclared balanced mirror starts B;
+it does not resume the old group or reuse A1. A=append-v1, B=segmented-v1, both
+brief-v1 planning/probes/repair-recheck, mini 2026-03-17/medium, pyfakefs v2,
+root `.env`, repeat1, unchanged limits and desired25k output ceiling. Proposed cap:
+$1.20 per fresh slot / $4.80 total, two samples per arm. No default agent change.
+
+`diagnostics.segmented_pilot prepare --order b-first` selects this order; the
+existing default stays a-first. Inspection binds the order, exact fresh slot paths,
+requests and caps as well as runtime/task/config identities. Cost observations
+include SDK field presence, count relation and UNKNOWN billing, not just legacy sums.
+Preparation cannot execute runs, load credentials or inspect Docker. Actual input
+fit is still measured only by the runner at dispatch, not by the task-only rehearsal.
+Destination: `C:\pt\analyses\segmented-pilot-bfirst-20260914`.
+This is a new packet proposal, not approval or evidence of A/B improvement. The
+stopped packet/grant remains closed; exact new-packet approval precedes paid work.
+Focused packet/usage/source-gate tests56 PASS/7.163s; Ruff/diff checks PASS. Local
+CSV mock append/OFF and segmented/brief-v1 both reach isolated acceptance PASS,
+safety NOT_RUN (3.917s/4.521s); segmented delivers revision2 across two segments.
+Receipt: `C:\pt\validation\segmented-pilot-bfirst-20260914`. Production runtime
+hash is unchanged from the prior full-suite receipt, so the full suite is not repeated.
+
+## Prior seam: provider usage evidence (provider-free)
 
 The adapter now preserves missing/null/literal-zero/invalid SDK usage fields before
 compatibility defaults, plus count relation/delta and bounded failure kind.
@@ -31,7 +55,7 @@ blocks preparation. Final combined receipt:2192 PASS/8 SKIP, not a second full r
 Local CSV mock append/OFF and segmented/brief-v1 both reach edit/check/finish/isolated
 acceptance PASS, safety NOT_RUN (8.459s/10.079s); segmented delivers plan revision2
 across two segments. Protected9658 files, eight old journals, A1 and packet unchanged.
-Next candidate: a separately frozen comparison packet for the changed runtime;
+Follow-up: a separately frozen comparison packet for the changed runtime;
 the stopped A1/B1/B2/A2 group remains closed, with no automatic paid execution.
 
 ## Prior seam: approved segmented pilot stopped on A1 usage uncertainty
