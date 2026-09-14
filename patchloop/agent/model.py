@@ -9,6 +9,11 @@ from typing import Any, Literal, Protocol
 import httpx
 from openai import OpenAI
 
+from patchloop.agent.usage_diagnostics import (
+    provider_usage_evidence,
+    usage_failure_message,
+    usage_token_value,
+)
 from patchloop.contracts import ModelConfig
 from patchloop.errors import ContractError
 from patchloop.util import sha256_json
@@ -59,6 +64,7 @@ class ModelTurn:
     response_status: str | None = None
     response_reasoning_context: Literal["current_turn", "all_turns"] | None = None
     response_incomplete_reason: str | None = None
+    usage_evidence: dict[str, Any] | None = None
     error: ModelTurnError | None = None
     output_item_count: int = 0
     non_tool_output_item_count: int = 0
@@ -183,17 +189,11 @@ class OpenAIResponsesAdapter:
         if timeout_seconds is not None:
             payload["timeout"] = timeout_seconds
         response = self.client.responses.create(**payload)
-        usage = getattr(response, "usage", None)
-        input_details = getattr(usage, "input_tokens_details", None) if usage else None
-        output_details = getattr(usage, "output_tokens_details", None) if usage else None
-        input_tokens = int(getattr(usage, "input_tokens", 0) or 0) if usage else 0
-        cached_input_tokens = int(
-            (getattr(input_details, "cached_tokens", 0) if input_details else 0) or 0
-        )
-        output_tokens = int(getattr(usage, "output_tokens", 0) or 0) if usage else 0
-        reasoning_output_tokens = int(
-            (getattr(output_details, "reasoning_tokens", 0) if output_details else 0) or 0
-        )
+        usage_evidence = provider_usage_evidence(response, requested_input_tokens)
+        input_tokens = usage_token_value(usage_evidence, "input_tokens")
+        cached_input_tokens = usage_token_value(usage_evidence, "cached_input_tokens")
+        output_tokens = usage_token_value(usage_evidence, "output_tokens")
+        reasoning_output_tokens = usage_token_value(usage_evidence, "reasoning_output_tokens")
         response_status = getattr(response, "status", None)
         response_reasoning = getattr(response, "reasoning", None)
         reasoning_context = (
@@ -207,10 +207,12 @@ class OpenAIResponsesAdapter:
             else getattr(incomplete_details, "reason", None)
         )
         error: ModelTurnError | None = None
-        if usage is None or requested_input_tokens != input_tokens:
+        if usage_evidence["failure_kind"] is not None:
             error = ModelTurnError(
+                # Compatibility umbrella: existing consumers must still stop all
+                # paid work. The evidence distinguishes absence from mismatch.
                 "input_token_count_mismatch",
-                "pre-dispatch input count did not match provider usage",
+                usage_failure_message(usage_evidence),
             )
         elif response_status not in {None, "completed"} or incomplete_reason:
             error = ModelTurnError(
@@ -303,6 +305,7 @@ class OpenAIResponsesAdapter:
                 and reasoning_context in {"current_turn", "all_turns"} else None
             ),
             response_incomplete_reason=incomplete_reason,
+            usage_evidence=usage_evidence,
             error=error,
             output_item_count=len(output_items),
             non_tool_output_item_count=sum(

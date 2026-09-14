@@ -206,6 +206,22 @@ smoke invokes compact; focused tests inject fake clients to exercise this branch
 
 ## Input-count failure diagnostics
 
+Generation responses also carry operator-only `provider-usage-evidence-v1` on
+provider/decision events. It separates SDK-observed missing usage, explicit null,
+literal zero, invalid billing counters and an actual input-count mismatch. Missing
+or null counters are never evidence that the response was free. The optional
+cache-breakdown fallback remains zero discount (conservative), and is marked;
+reasoning/total counts are diagnostic rather than new execution gates.
+
+Uncertain usage keeps the compatibility `input_token_count_mismatch` error and
+`PROVIDER_TIMEOUT_OR_UNKNOWN` terminal. `provider_usage_failure` preserves the
+precise evidence and incomplete reason in terminal/public results;
+`billing_state=UNKNOWN` qualifies the legacy recorded `cost_nanos` sum. No retry,
+protocol correction or later repetition runs. Exact recovery restores the evidence
+before workspace/continuation work, with no new request or tool. The diagnostic is
+SDK-observed, not raw HTTP capture; it never dumps response text or reasoning and
+does not enter agent context. Old missing fields cannot be reconstructed from zeros.
+
 `COUNT_TIMEOUT_OR_UNKNOWN` still stops all repetitions, including HTTP rejection;
 the terminal name does not establish that a timeout occurred. Its optional
 `input_count_failure` contains count/turn/request identity, canonical count-body

@@ -12,7 +12,7 @@ from diagnostics import segmented_pilot as pilot
 from patchloop.dev import runner, segments
 from patchloop.dev.contracts import DevRunRequest
 from patchloop.dev.conversation import reconstruct_state
-from patchloop.errors import RecoveryError
+from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import canonical_json, sha256_json
 
 
@@ -26,6 +26,10 @@ def no_external_execution(monkeypatch):
     monkeypatch.setattr(runner.DockerSandbox, "available", forbidden)
     monkeypatch.setattr(runner.DockerProbeSandbox, "preflight", forbidden)
     monkeypatch.setattr(httpx.Client, "send", forbidden)
+    # Packet tests assume admitted source, not a committed developer checkout.
+    # The real tracked/HEAD-clean gate has isolated Git-repository tests in
+    # test_dev_runner; keep that production gate intact.
+    monkeypatch.setattr(runner, "_live_source_preflight", lambda *args, **kwargs: None)
 
 
 @pytest.fixture
@@ -129,6 +133,20 @@ def test_price_mismatch_fails_without_creating_packet(tmp_path, monkeypatch):
     with pytest.raises(RecoveryError, match="price changed"):
         pilot.prepare(root, pricing_verified_on="2026-09-14")
     assert not root.exists()
+
+
+def test_source_preflight_rejection_blocks_packet_creation(tmp_path, monkeypatch):
+    observed = []
+
+    def reject(task_dir, package):
+        observed.append(package.public.task_id)
+        raise ContractError("uncommitted test source")
+
+    monkeypatch.setattr(runner, "_live_source_preflight", reject)
+    root = tmp_path / "uncreated"
+    with pytest.raises(ContractError, match="uncommitted test source"):
+        pilot.prepare(root, pricing_verified_on="2026-09-14")
+    assert len(observed) == 1 and not root.exists()
 
 
 def test_hash_is_exact_content_identity(prepared):

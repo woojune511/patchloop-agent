@@ -5,7 +5,36 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: approved segmented pilot stopped on A1 usage uncertainty
+## Current seam: provider usage evidence (provider-free)
+
+The adapter now preserves missing/null/literal-zero/invalid SDK usage fields before
+compatibility defaults, plus count relation/delta and bounded failure kind.
+Missing output usage cannot silently become free output; malformed cache counts
+cannot silently be clamped into accepted usage. The existing absent-cache-breakdown
+no-discount fallback is preserved and marked. Reasoning/total counts remain telemetry.
+Provider/decision events, crash recovery and terminal/public `provider_usage_failure`
+retain this evidence; `billing_state=UNKNOWN` qualifies the legacy cost sum.
+The compatibility error/terminal and whole-invocation stop remain; no correction,
+retry, later repetition or continuation recovery can bypass billing uncertainty.
+
+This is observability/accounting validation, not a repair of the provider's
+reasoning-only response. A1's missing-vs-null-vs-zero condition is still unknowable
+from its old normalized counters. No old run/packet/approval is changed or reused.
+No input/schema/tool-policy/planning/model change, paid call or Docker operation.
+Tool-surface remains v39; runtime content changes and exact old resumes are not migrated.
+Verification receipts: `C:\pt\validation\usage-evidence-20260914`.
+Focused136 PASS/76.190s; final affected81 PASS/111.011s; Ruff/diff checks PASS.
+Full105-module/2199-case run took1100.846s and found11 packet-test setup failures:
+those unit tests incorrectly required a committed developer checkout. Only their
+fixture changed afterwards, with a regression proving the real source gate still
+blocks preparation. Final combined receipt:2192 PASS/8 SKIP, not a second full run.
+Local CSV mock append/OFF and segmented/brief-v1 both reach edit/check/finish/isolated
+acceptance PASS, safety NOT_RUN (8.459s/10.079s); segmented delivers plan revision2
+across two segments. Protected9658 files, eight old journals, A1 and packet unchanged.
+Next candidate: a separately frozen comparison packet for the changed runtime;
+the stopped A1/B1/B2/A2 group remains closed, with no automatic paid execution.
+
+## Prior seam: approved segmented pilot stopped on A1 usage uncertainty
 
 The new packet `1615423f...` was approved and dispatched at `c3ae0bff` on 2026-09-14.
 A1/append-v1 (`run_dev_f2f219820e874648`) ended `PROVIDER_TIMEOUT_OR_UNKNOWN` after

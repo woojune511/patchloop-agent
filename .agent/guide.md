@@ -738,6 +738,23 @@ recovery: reported `current_turn`/`all_turns`, null when absent/unrecognized. Do
 GPT-5.6-only `all_turns` on GPT-5.4 mini. Wire integrity and reported mode establish
 availability only, not effective model use. No output ceiling or model configuration changes.
 
+Generation usage is recorded before zero defaults in operator-only
+`provider-usage-evidence-v1`: SDK-observed missing/null/integer/invalid fields,
+input-count relation and numeric delta, and a bounded failure kind. Preserve it on
+provider/decision events, decision recovery and `provider_usage_failure` in terminal
+and public results. Do not call a missing/null value a reported zero, or a missing
+usage record an observed count mismatch. Input/output counters must be usable;
+an absent optional cache breakdown retains the conservative no-discount default,
+explicitly marked. Reasoning/total counts are diagnostic, not new admission gates.
+The legacy `input_token_count_mismatch` error umbrella and
+`PROVIDER_TIMEOUT_OR_UNKNOWN` terminal remain fail-closed; `billing_state=UNKNOWN`
+means the legacy `cost_nanos` sum is not a final bill. Continuation storage/integrity
+cannot override this uncertainty. Resume finalizes the durable response without
+credentials, workspace, count, provider or tool execution. These diagnostics do not
+alter model input, schemas, planning, context policy or the v39 tool-surface hash;
+the runtime content hash changes, with no old-envelope migration. SDK decoding is
+not raw-wire capture: no response body, unknown fields, text or reasoning is logged.
+
 After finish, the canonical submitted diff is content-addressed and an immutable
 manifest is recorded before evaluator execution. It binds task bytes, full runtime
 bytes, model/tool/sandbox identities, the visible-check diff, changed files, and

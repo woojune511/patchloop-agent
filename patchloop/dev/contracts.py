@@ -285,6 +285,7 @@ class DevModelTurn(StrictModel):
     response_status: str | None = None
     response_reasoning_context: Literal["current_turn", "all_turns"] | None = None
     incomplete_reason: str | None = None
+    usage_evidence: dict[str, Any] | None = None
     error_code: str | None = None
     output_item_count: int = Field(default=0, ge=0)
     non_tool_output_item_count: int = Field(default=0, ge=0)

@@ -23,6 +23,7 @@ from patchloop.agent.model import (
 from patchloop.agent.model import FunctionCallContinuationRef as ProviderFunctionCallRef
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.agent.request_transport import BoundedResponsesClient
+from patchloop.agent.usage_diagnostics import usage_failure_message
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
@@ -1480,6 +1481,7 @@ def _turn_from_openai(turn: Any) -> DevModelTurn:
         response_status=turn.response_status,
         response_reasoning_context=turn.response_reasoning_context,
         incomplete_reason=turn.response_incomplete_reason,
+        usage_evidence=turn.usage_evidence,
         error_code=turn.error.code if turn.error else conversion_error,
         output_item_count=turn.output_item_count,
         non_tool_output_item_count=turn.non_tool_output_item_count,
@@ -2531,6 +2533,23 @@ def _milestones(journal: DevJournal) -> dict[str, Any]:
     }
 
 
+def _provider_usage_failure(journal: DevJournal) -> dict[str, Any] | None:
+    """Operator evidence only; never inject provider billing metadata into context."""
+    for event in reversed(journal.events()):
+        if event["event_type"] != "provider_call_finished":
+            continue
+        payload = event["payload"]
+        if payload.get("error_code") != "input_token_count_mismatch":
+            continue
+        return {
+            key: payload.get(key) for key in (
+                "call_id", "turn_id", "response_id", "response_status", "incomplete_reason",
+                "usage_evidence",
+            )
+        }
+    return None
+
+
 def _terminal(
     *,
     journal: DevJournal,
@@ -2596,6 +2615,13 @@ def _terminal(
             failure = journal.unresolved_input_count()
             if failure is not None:
                 payload["input_count_failure"] = failure
+        if terminal == DevTerminal.PROVIDER_TIMEOUT_OR_UNKNOWN:
+            usage_failure = _provider_usage_failure(journal)
+            if usage_failure is not None:
+                payload["provider_usage_failure"] = usage_failure
+                # cost_nanos is still the legacy sum of recorded counters, not an
+                # invoice or evidence of a free response when usage was missing.
+                payload["billing_state"] = "UNKNOWN"
         existing = journal.append("terminal", payload)
     return existing["payload"]
 
@@ -2619,6 +2645,9 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
         result["input_count_failure"] = terminal_payload["input_count_failure"]
     if "context_management" in terminal_payload:
         result["context_management"] = terminal_payload["context_management"]
+    if "provider_usage_failure" in terminal_payload:
+        result["provider_usage_failure"] = terminal_payload["provider_usage_failure"]
+        result["billing_state"] = terminal_payload["billing_state"]
     return result
 
 
@@ -2930,6 +2959,8 @@ def _recover_unrecorded_decision(journal: DevJournal) -> None:
                 "error_code": payload.get("error_code"),
                 "incomplete_reason": payload.get("incomplete_reason"),
                 "response_reasoning_context": payload.get("response_reasoning_context"),
+                **({"usage_evidence": payload["usage_evidence"]}
+                   if payload.get("usage_evidence") is not None else {}),
                 "tool_contract_failure": payload.get("tool_contract_failure"),
                 "output_item_count": payload.get("output_item_count", 0),
                 "non_tool_output_item_count": payload.get("non_tool_output_item_count", 0),
@@ -3266,6 +3297,19 @@ def _run_one(
                 cost_start_nanos=envelope.cost_start_nanos,
                 hashes=hashes,
                 message="an earlier provider dispatch has no durable usage record",
+            )
+            return _OneRunResult(_public_result(run_id, terminal), True)
+        usage_failure = _provider_usage_failure(journal)
+        if usage_failure is not None:
+            # A completed response with uncertain usage is not a retryable
+            # protocol failure. Finalize it before workspace/continuation work,
+            # including segmented-context integrity checks on resume.
+            _recover_unrecorded_decision(journal)
+            terminal = _terminal(
+                journal=journal, terminal=DevTerminal.PROVIDER_TIMEOUT_OR_UNKNOWN,
+                counters=counters, cost_ledger=cost_ledger,
+                cost_start_nanos=envelope.cost_start_nanos, hashes=hashes,
+                message=usage_failure_message(usage_failure.get("usage_evidence")),
             )
             return _OneRunResult(_public_result(run_id, terminal), True)
         if cost_ledger is not None and cost_ledger.spent_nanos > cost_ledger.cap_nanos:
@@ -4256,7 +4300,8 @@ def _run_one_active(
                     continuation_failure = (
                         "provider reasoning continuation could not be stored durably"
                     )
-                    turn = turn.model_copy(update={"error_code": "provider_continuation_error"})
+                    if turn.error_code != "input_token_count_mismatch":
+                        turn = turn.model_copy(update={"error_code": "provider_continuation_error"})
             if continuation_ref is not None:
                 turn = turn.model_copy(update={"continuation_ref": continuation_ref})
             journal.append(
@@ -4272,6 +4317,8 @@ def _run_one_active(
                     "cached_input_tokens": turn.cached_input_tokens,
                     "output_tokens": turn.output_tokens,
                     "reasoning_output_tokens": turn.reasoning_output_tokens,
+                    **({"usage_evidence": turn.usage_evidence}
+                       if turn.usage_evidence is not None else {}),
                     "cost_nanos": cost_nanos,
                     "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls],
                     "error_code": turn.error_code,
@@ -4301,6 +4348,8 @@ def _run_one_active(
                 "error_code": turn.error_code,
                 "incomplete_reason": turn.incomplete_reason,
                 "response_reasoning_context": turn.response_reasoning_context,
+                **({"usage_evidence": turn.usage_evidence}
+                   if turn.usage_evidence is not None else {}),
                 "tool_contract_failure": (
                     turn.tool_contract_failure.model_dump(mode="json")
                     if turn.tool_contract_failure is not None
@@ -4326,7 +4375,7 @@ def _run_one_active(
                 break
             if turn.error_code == "input_token_count_mismatch":
                 terminal_code = DevTerminal.PROVIDER_TIMEOUT_OR_UNKNOWN
-                terminal_message = "provider usage disagreed with the pre-dispatch input count"
+                terminal_message = usage_failure_message(turn.usage_evidence)
                 stop_remaining = True
                 break
             if turn.error_code == "provider_continuation_error":
