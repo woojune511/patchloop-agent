@@ -777,7 +777,46 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: brief-planning content guidance revised locally; first A/B closed, no adoption.
+Current seam: one oversized-continuation compact diagnostic executable, provider-free only.
+`diagnostics.oversized_compaction` adds prepare/inspect/collect/recover for the frozen
+B4 failed correction input, not the old healthy B2 compaction packet. Keep old
+diagnostic code/packets, B4 terminal and closed planning-cycle state immutable.
+Packet C:\pt\analyses\oversized-continuation-executable-20260914, SHA-256
+9cf5b98598431dd5b768a952ffc6685261b2e2d434f8fd12e7350c6592b02ad4.
+85 original items; canonical request b427029f.../2152406bytes; largest encrypted
+field1717452chars exactly once. Do not truncate, prune, append a reentry, reset
+reasoning, retry count or activate the returned window in an old/new agent run.
+
+Separate exact approval plus --accept-model-limit-reservation is required for
+collect. It binds mini snapshot/default tier/root .env/repeat1/proposed1.20USD,
+current executor/runtime/installed SDK, source journal/envelope/input and destination.
+400k input +128k output at0.75/0.075/4.50 per million reserves0.876USD without cache
+assumptions. This is conditional on model limits, NOT an endpoint-enforced dollar
+or output ceiling. Source context fit UNVERIFIED; old count is not reused. Pricing
+review must be fresh on the UTC execution date; never repurpose the closed $40 grant.
+Only body fields model/input/service_tier; no unsupported max_output_tokens,
+reasoning/tools/store. One compact maximum; no count/create/tool/evaluator calls.
+300s request wait within305s active deadline/5s cleanup; zero SDK retries.
+
+Exact packet has a single exclusively claimed execution directory plus OS lock.
+Known400 string_above_max_length is reported as endpoint input-size rejection,
+not timeout or an inferred numeric threshold; tariff/invoice usage may remain unknown.
+Persist numeric usage before validating output. Preserve the entire valid window
+and original retained public pairs; reject plaintext/new messages/changed calls/
+missing ciphertext, never salvage by dropping items. Invalid usage/tier, exceeded
+reservation, request or cleanup uncertainty stops. No next count/generation admission
+or quality claim follows a successful window. Receipt-only recovery cannot retry;
+missing result.json can be restored from terminal CAS. Interrupted reconciliation
+requires current exact contract; completed terminal is readable after code changes.
+
+Verification:205focused/shared compact tests PASS/87.33s, Ruff PASS, OFF/ON mock
+smoke each4mock turns/5tools/1edit through isolated acceptancePASS/safetyNOT_RUN.
+9658protected files/eight journals/closed result match. Full suite not repeated;
+runtime unchanged from preceding2069PASS. Evidence C:\pt\validation\oversized-compact-20260914.
+No paid call, credential-client load, Docker operation, source resume or cycle reopen.
+Next decision is the exact standalone compatibility call, not a new planning group.
+
+Prior seam: brief-planning content guidance revised locally; first A/B closed, no adoption.
 Planning stays `none` by default, append-only `brief-v1` remains experimental.
 The prior supplied-case/advice packets below are closed diagnostics,
 not a pending execution queue. See [planning-experiment.md](planning-experiment.md) for the exact

@@ -5,7 +5,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: planning content guidance revised; comparison remains closed
+## Current seam: oversized-continuation compact diagnostic prepared; no paid call
+
+`diagnostics.oversized_compaction` now prepares, inspects and collects at most one
+separately authorized standalone compact request. It uses B4's exact failed input
+(85 items, one 1,717,452-character encrypted item), not a healthy earlier cutoff.
+It does not retry count, generate an action, activate a window, or resume B4/the
+closed planning cycle. The native runtime and planning defaults are unchanged.
+
+The executable packet is `C:\pt\analyses\oversized-continuation-executable-20260914`;
+its full hash, commands and claim boundaries are in its `result.md`. Two no-call
+inspections agree. Source/request, installed SDK, implementation, credential path,
+cost reservation and destination are bound before dispatch. A fresh-directory
+claim and execution lock prevent reuse; interrupted work recovers evidence only.
+Usage persists before output validation. Only a complete valid public/opaque
+window is retained; malformed output is rejected without saving plaintext reasoning.
+
+The proposed $1.20 diagnostic budget reserves $0.876 using published model limits;
+this is **not an API-enforced dollar/output cap**. Fresh exact approval accepting
+that limitation is still required; the closed $40 cycle is not reused. No API/count/
+compact call, credential-client load or Docker operation occurred. The input's
+context fit and compact endpoint acceptance remain unverified. Official contract:
+[compact parameters](https://developers.openai.com/api/reference/python/resources/responses/methods/compact),
+[whole-window handling](https://developers.openai.com/api/docs/guides/compaction).
+
+Provider-free validation: 205 focused/compaction regression tests PASS in 87.33s,
+Ruff PASS, and OFF/ON mock smoke each reaches edit, checks, finish and isolated
+acceptance PASS/safety NOT_RUN (four mock turns/five actions, zero provider cost).
+9658 protected files, all eight original journals and the closed-cycle result match.
+Receipts: `C:\pt\validation\oversized-compact-20260914`. The full suite was not
+repeated: runtime bytes still match the preceding 2069-pass verification below.
+
+### Prior intervention: planning content guidance revised; comparison remains closed
 
 The supplied public-case/advice experiments below are closed diagnostics, not the
 next execution queue. The current intervention is `--planning-policy brief-v1`,
