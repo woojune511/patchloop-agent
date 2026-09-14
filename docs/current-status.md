@@ -5,7 +5,34 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: B-first segmented comparison completed; no default adoption
+## Current seam: public POSIX counterexample rejected the proposed B failure
+
+The provider-free `makedirs("staging/../release")` case from an existing current
+directory passes in all four submitted A1/A2/B1/B2 patches. Each creates both
+`staging` and `release`, matching real Linux `os.makedirs`; the unmodified base
+creates only `release`. This rules out the proposed POSIX parent-existence shortcut,
+not the earlier B task-acceptance FAILs or all traversal defects.
+
+The missed dependency was `FakeFilesystem._valid_relative_path`: POSIX prefix
+validation precedes normalization, so `exists("staging/..")` returns false and
+B's guard correctly enters recursion. The earlier static inference was wrong.
+No context/planning/tool-policy repair follows from this result. B's acceptance
+failure remains causally unresolved; do not adopt segmented-v1 from input savings.
+
+One public program ran on five fresh local clones (base plus four exact CAS patches),
+with native controls and the already-present pinned image. Full diff identity and
+scope checks pass; all cleanup confirmed. Execution8.354s; receipt tests7 PASS/0.13s;
+repository/diagnostic Ruff and diff checks PASS. No runtime/task/candidate changes,
+paid/count/compact call, hidden evaluation, Docker start/pull/build or old-run resume.
+9658 protected files/eight old journals/closed report and14 recent evidence files
+remain unchanged. No full-suite/mock repeat for an operator-only diagnostic.
+
+Next candidate: the same public behavior in Windows mode, where prefix validation
+takes a different branch, with a native Windows control. Not executed or proven
+here; no new paid packet. Report and receipts:
+`C:\pt\analyses\relative-parent-case-20260915\result.md`.
+
+## Prior seam: B-first segmented comparison completed; no default adoption
 
 Approved packet `1cb64071...` ran once in B1/A1/A2/B2 order at `53a6470c`.
 A=append-v1, B=segmented-v1; both mini 2026-03-17/medium, brief-v1 planning,

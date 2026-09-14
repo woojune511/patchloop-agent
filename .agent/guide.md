@@ -804,7 +804,22 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: packet1cb64071 completed once at53a6470c; grant consumed, no next paid run.
+Current seam: provider-free public POSIX relative-parent case completed; hypothesis rejected.
+From an existing cwd, makedirs("staging/../release") creates both directories in all
+four exact A1/A2/B1/B2 submissions, matching real Linux controls. Base misses staging.
+exists("staging/..") is false: FakeFilesystem._valid_relative_path checks the missing
+prefix before normalization. The prior parent-existence shortcut inference missed
+this dependency; do not turn it into a context/planning/tool-mask fix or hidden cause.
+One case/five new local no-hardlink workspaces/exact patches, scope and diff identity
+PASS, pinned Docker/no network/read-only source/confirmed cleanup. Execution8.354s,
+receipt7PASS/0.13s, Ruff/diffPASS; runtime unchanged. No paid/count/compact/hidden call,
+old resume, Docker start/pull/build, task edit or full-suite/mock repeat. Preserved9658
+files/eight older journals/closed report plus14 recent journal/patch/packet/result files.
+Next candidate only: same case in Windows mode, whose validation differs, with a native
+Windows control; not executed yet. B's acceptance cause remains unresolved. No new
+paid packet or default segmented adoption. Evidence C:\pt\analyses\relative-parent-case-20260915.
+
+Prior seam: packet1cb64071 completed once at53a6470c; grant consumed, no next paid run.
 B1/A1/A2/B2 acceptanceFAIL/PASS/PASS/FAIL; all submitted, safetyPASS. Total1.627875600USD
 of4.80USD,84model/84count/97tools, no uncertainty or transport retry. One permitted
 A1 protocol recovery followed a usage-confirmed25k reasoning-only incomplete response.
