@@ -804,7 +804,23 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: new B1/A1/A2/B2 segmented-policy pilot prepared, provider-free only.
+Current seam: packet1cb64071 completed once at53a6470c; grant consumed, no next paid run.
+B1/A1/A2/B2 acceptanceFAIL/PASS/PASS/FAIL; all submitted, safetyPASS. Total1.627875600USD
+of4.80USD,84model/84count/97tools, no uncertainty or transport retry. One permitted
+A1 protocol recovery followed a usage-confirmed25k reasoning-only incomplete response.
+A2/2 versus B0/2 is exploratory; do not adopt segmented-v1 from smaller input alone.
+B input1026380 vs A2322228tokens, maximum47679 vs134129; noncached costs0.922425 vs2.065041.
+All84 request identities/public task/diff/plan/notes/concerns and four submission identities
+validate. Stored/delivered plan revisions B1=9/9,A1=5/4,A2=7/6,B2=2/2; final finish updates
+need no next model request. B1/A2 notes expired source_changed, not dropped in transit;
+their unresolved concerns remained visible. No hidden details used for causal analysis.
+Next: one provider-free public-goal case for B's parent-existence recursion guard on
+relative parent traversal from an existing base. Static candidate difference is a
+hypothesis, not a demonstrated hidden-test cause. No agent change or extra paid sample yet.
+Live report C:\pt\analyses\segmented-pilot-bfirst-20260914\live-result.md; preserved9658files,
+eight old journals/old A1/packet. Operator mock5PASS/0.921s, Ruff/diffPASS, runtime unchanged.
+
+Prior seam: new B1/A1/A2/B2 segmented-policy pilot prepared, provider-free only.
 Use `diagnostics.segmented_pilot prepare --order b-first` and read-only inspect.
 Default a-first stays unchanged; runtime/prompt/tool policies are not changed.
 Both arms use brief-v1/probes/repair-recheck, mini snapshot/medium, pyfakefs v2,

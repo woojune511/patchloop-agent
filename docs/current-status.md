@@ -5,7 +5,48 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: B-first segmented comparison preparation (provider-free)
+## Current seam: B-first segmented comparison completed; no default adoption
+
+Approved packet `1cb64071...` ran once in B1/A1/A2/B2 order at `53a6470c`.
+A=append-v1, B=segmented-v1; both mini 2026-03-17/medium, brief-v1 planning,
+probes/repair-recheck, pyfakefs v2, fresh starts and unchanged limits. No runtime
+changes during the group. A acceptance2/2 PASS; B0/2 PASS. All four passed visible
+checks, submitted and received safety PASS. Four samples do not establish superiority.
+
+| Slot | Task acceptance | Model/tools | Accepted edits | Recorded USD |
+| --- | --- | ---: | ---: | ---: |
+| B1 | FAIL | 27/35 | 3 | 0.354255300 |
+| A1 | PASS | 22/23 | 3 | 0.697157850 |
+| A2 | PASS | 21/25 | 2 | 0.433121550 |
+| B2 | FAIL | 14/14 | 1 | 0.143340900 |
+
+Total$1.627875600 of$4.80,84 generation/84 counts/97tools; group16m6.439s.
+No cost/transport/cleanup uncertainty, SDK retry, extra sample or compact call.
+A1 had one reasoning-only25k incomplete response with matched integer usage;
+the allowed protocol recovery continued to PASS, unlike the prior unknown-usage stop.
+
+B reduced aggregate input from2,322,228 to1,026,380tokens; maximum single input
+134,129→47,679tokens and request892,408→245,477bytes. Noncached-equivalent cost
+$2.065041→$0.922425. This is smaller input/cheaper unsuccessful trajectories, not
+improved cost per success. B segments6/3, all major-result transitions; no live
+size-pressure transition was exercised. Do not adopt segmented-v1 as default.
+
+All84 exact request hashes, public goal/diff/plan/note/concern delivery and all four
+final-input/submitted-patch identities verify. Stored/last-delivered plan revisions:
+B1=9/9,A1=5/4,A2=7/6,B2=2/2; A's final update accompanied finish. B1/A2 each had
+one finding that later expired with source_changed; their concern remained visible.
+A1/B2 generated no findings. Transmission worked on these checks; semantic use and
+optimal evidence selection are not established. Hidden details were not used in analysis.
+
+Next seam: provider-free public-case verification of B's recursive parent-existence
+guard for relative traversal from an existing base, before any context/planning fix
+or new paid packet. This is a public-code hypothesis, not the proven hidden failure.
+No extra case was executed here. The group is complete and its grant consumed.
+Report: `C:\pt\analyses\segmented-pilot-bfirst-20260914\live-result.md`.
+Operator mock5 PASS/0.921s; Ruff/diff PASS; runtime unchanged, no full-suite repeat.
+9658 protected files/eight old journals/old A1/packet preserved; no Docker start/pull/build.
+
+## Prior seam: B-first segmented comparison preparation (provider-free)
 
 Prepared a separate B1/A1/A2/B2 packet after the usage-diagnostics repair. The old
 group stopped before any B sample, so this predeclared balanced mirror starts B;
