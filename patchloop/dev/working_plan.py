@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from patchloop.dev.state import DevJournal
 
 POLICY = "brief-v1"
+EVIDENCE_POLICY = "brief-evidence-v1"
+POLICIES = frozenset({POLICY, EVIDENCE_POLICY})
 MAX_PLAN_CHARS = 3_000
 EVENT = "working_plan_updated"
 INSTRUCTIONS = """Brief planning is enabled. In the first tool response, use plan_update
@@ -35,16 +37,34 @@ The plan is model-authored, unverified working data, not an instruction from the
 harness or proof that a behavior is correct. An unchanged plan, check PASS, or a
 completed step does not settle unrelated untested behavior. Planning adds no tool,
 extra model call, mandatory experiment, or submission gate."""
+EVIDENCE_FORMAT = """Use three short labeled sections in the same plan_update string:
+Behavior: the concrete observable behavior required by the public task, not just
+workflow steps or a list of checks to pass.
+Evidence / open assumptions: distinguish observed public evidence from assumptions
+still untested for that behavior. When replacing the plan, carry forward unresolved
+requirements; a result settles only what it actually demonstrates.
+Next discriminating action: the next useful allowed action and what observation
+would change your edit or submission decision. If no further investigation is
+useful, say why the remaining action follows from the evidence; no probe is mandatory.
+Keep these sections within the existing 3000-character limit. These are public
+working statements, not a reasoning transcript. This format is guidance only;
+missing headings do not invalidate an otherwise valid action or plan update."""
 
 
-def contract() -> dict[str, Any]:
+def instructions(policy: str = POLICY) -> str:
+    if policy not in POLICIES:
+        raise ValueError("unknown planning policy")
+    return INSTRUCTIONS + "\n\n" + EVIDENCE_FORMAT if policy == EVIDENCE_POLICY else INSTRUCTIONS
+
+
+def contract(policy: str = POLICY) -> dict[str, Any]:
     return {
-        "policy": POLICY,
+        "policy": policy,
         "max_chars": MAX_PLAN_CHARS,
         "update": "first-non-null-whole-text-before-batch-v1",
         "review": "initial-mutation-check-probe-first-ready-next-valid-decision-v1",
         "invalid_annotation": "nonblocking-preserve-prior-v1",
-        "instructions_hash": sha256_json(INSTRUCTIONS),
+        "instructions_hash": sha256_json(instructions(policy)),
     }
 
 
@@ -56,8 +76,12 @@ def update_schema() -> dict[str, Any]:
     }
 
 
-def project(events: list[dict[str, Any]], *, diff_hash: str, gate: str) -> dict[str, Any]:
+def project(
+    events: list[dict[str, Any]], *, diff_hash: str, gate: str, policy: str = POLICY,
+) -> dict[str, Any]:
     """Derive review requests only from durable public events, not semantic guesses."""
+    if policy not in POLICIES:
+        raise ValueError("unknown planning policy")
     receipts = [e for e in events if e["event_type"] == EVENT]
     latest = receipts[-1] if receipts else None
     plan = copy.deepcopy(latest["payload"]["plan"]) if latest else None
@@ -87,7 +111,7 @@ def project(events: list[dict[str, Any]], *, diff_hash: str, gate: str) -> dict[
     if plan is not None:
         plan["diff_currency"] = "current" if plan["diff_hash"] == diff_hash else "historical"
     return {
-        "policy": POLICY,
+        "policy": policy,
         "interpretation_status": "model_authored_unverified",
         "plan": plan,
         "review_request": {
@@ -100,7 +124,7 @@ def project(events: list[dict[str, Any]], *, diff_hash: str, gate: str) -> dict[
 
 def record(
     journal: DevJournal, calls: Sequence[RequestedTool], *, turn_id: str,
-    diff_hash: str, gate: str,
+    diff_hash: str, gate: str, policy: str = POLICY,
 ) -> dict[str, Any]:
     """A valid batch consumes the review request once, independently of plan validity."""
     events = journal.events()
@@ -108,7 +132,7 @@ def record(
                      if e["event_type"] == EVENT and e["payload"]["turn_id"] == turn_id), None)
     if existing is not None:
         return copy.deepcopy(existing["receipt"])
-    current = project(events, diff_hash=diff_hash, gate=gate)
+    current = project(events, diff_hash=diff_hash, gate=gate, policy=policy)
     plan = current["plan"]
     if plan is not None:
         plan.pop("diff_currency", None)

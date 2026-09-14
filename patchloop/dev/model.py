@@ -171,6 +171,17 @@ class MockDevAdapter:
                     "Current stage: " + payload["workflow_gate"] + ". "
                     "Untested behavior remains an assumption until observed."
                 )
+                if planning["policy"] == "brief-evidence-v1":
+                    # Scripted public smoke data tests transport, not planning quality.
+                    turn.tool_calls[0].turn_decision.plan_update = (
+                        "Behavior: " + payload["public_task"]["issue"]["title"] + ".\n"
+                        "Evidence / open assumptions: Current stage: "
+                        + payload["workflow_gate"] + ". Untested behavior remains open; "
+                        "a public check establishes only the observed behavior.\n"
+                        "Next discriminating action: " + turn.tool_calls[0].name
+                        + " for the next scripted public obligation; use results bound "
+                        "to the current diff to decide whether to repair or submit."
+                    )
         return turn
 
     def _next_action(self, context: str, tools: list[dict]) -> DevModelTurn:

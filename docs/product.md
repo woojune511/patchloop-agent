@@ -43,6 +43,10 @@ model can maintain goals, remaining work, hypotheses, verification and assumptio
 in up to 3,000 characters. Public mutation/check/probe results request reconsideration;
 invalid or absent plans never block the actual action. Plans remain unverified and
 separate from notes, concerns and the evidence-derived submission gate.
+The separate `brief-evidence-v1` content contrast requests three headings in that
+same text: required behavior, evidence/open assumptions, and the next discriminating
+action. Format is guidance, not enforcement or proof of better planning. The old
+brief-v1 instructions and default OFF remain unchanged.
 It supports append and the opt-in `segmented-v1` context policy. Segmented mode
 keeps native reasoning inside a short work interval, then hands off current public
 execution facts and latest unverified notes/plan without another model call. Historical

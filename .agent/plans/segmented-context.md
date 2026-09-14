@@ -71,8 +71,10 @@ resegmentation cannot repair them. Generating huge reasoning remains a model ris
 
 `segments.py` binds thresholds/instructions/boundary semantics into model hash,
 envelope segment contract and v39 tool-surface identity. Tool names/input formats
-are unchanged; planning OFF adds no plan fields. Segmented planning supports `none`
-and `brief-v1`; existing native-window planning restrictions remain unchanged.
+are unchanged; planning OFF adds no plan fields. Segmented planning supports `none`,
+`brief-v1` and opt-in `brief-evidence-v1`; the latter changes only plan-format
+instructions, not segment timing or handoff semantics. The selected planning
+contract is bound separately. Existing native-window restrictions remain unchanged.
 
 Under the run execution lock, write the handoff CAS before `context_segment_started`.
 The event binds previous/current segment ID, reason, seed/state/contract hashes,

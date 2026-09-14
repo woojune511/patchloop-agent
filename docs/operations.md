@@ -76,8 +76,10 @@ uncertainty stops the whole group without retry or replacement samples.
 
 ## Brief planning improvement cycle
 
-`patchloop dev --planning-policy none|brief-v1` defaults to `none`; `brief-v1`
-supports `--context-policy append-v1` or `segmented-v1`. Resume repeats the option along
+`patchloop dev --planning-policy none|brief-v1|brief-evidence-v1` defaults to `none`;
+both brief variants support `--context-policy append-v1` or `segmented-v1`.
+`brief-evidence-v1` only adds evidence-linked headings inside the existing plan text;
+it does not enforce a plan, add a tool or require a probe. Resume repeats the option along
 with the existing exact task/model/environment/cap/limits. No old run migration.
 
 `diagnostics.planning_cycle` implements the user-authorized bounded cycle. The
@@ -171,8 +173,8 @@ conditions and evidence limits are in the current status and internal agent guid
 ## Optional short reasoning segments
 
 `--context-policy segmented-v1` uses current public working state between short
-native reasoning segments. Planning `none` and `brief-v1` are both supported; defaults
-stay append/OFF. It never calls compact or a handoff model. Do not combine it with
+native reasoning segments. Planning `none`, `brief-v1` and `brief-evidence-v1` are
+supported; defaults stay append/OFF. It never calls compact or a handoff model. Do not combine it with
 native-compaction options. Same-policy exact resume only; no old-run migration.
 
 After a mutation/check/probe result is delivered to the next normal decision and

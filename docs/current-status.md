@@ -5,7 +5,37 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: B's public defects and premature verification closure identified
+## Current seam: opt-in evidence-linked plan format implemented and locally verified
+
+`--planning-policy brief-evidence-v1` reuses the existing <=3,000-character whole
+`plan_update` with three short headings: `Behavior`, `Evidence / open assumptions`,
+and `Next discriminating action`. The content contrast connects required behavior,
+observed evidence/unresolved assumptions, and the observation that would change
+the next edit or submission decision. No task-specific case, repair or hidden hint.
+This is a testable format hypothesis, not a demonstrated fix for model reasoning.
+Existing brief-v1 prose already requests evidence-aware planning.
+
+Append and segmented contexts are supported. Default none, old brief-v1 instructions,
+tool schemas/order, review timing, notes, gates, continuation and global budgets stay
+unchanged. Bad/missing headings are not an action error; null preserves the prior
+plan. The new instruction contract has its own model/envelope/manifest/tool identity
+over the unchanged v39 base. No old-run migration or closed-cycle restart.
+
+Provider-free verification: focused33 PASS/53.18s, Ruff/diff PASS; full2228 PASS/
+8 skips/731.984s (106 files, four external-temp workers; no runtime/test change
+during execution). OFF/old/new mock each4 model/5 tools/1 edit/2 segments through
+isolated acceptance PASS, safety NOT_RUN; both ON revision2 plans are verified in
+the next actual input. New instruction text adds904 UTF-8 bytes, not a token count.
+Preserved9658 protected files/eight old journals/closed report plus39 recent inputs
+and diagnosis files. No provider/count/compact, credential-value loading, Docker
+operation or paid comparison. Report and immutable verification receipts:
+`C:\pt\validation\evidence-planning-20260915\result.md`.
+Next behavioral step is a separately
+frozen fresh-run comparison of old/new planning with the same context/model; it is
+not executed or authorized by a passing mock. See the
+[planning contract](../.agent/planning-experiment.md).
+
+## Prior seam: B's public defects and premature verification closure identified
 
 Both B submissions miss traversal side effects for Linux
 `makedirs("staging/../release/")`: the trailing separator makes `tail` empty and
@@ -40,11 +70,12 @@ old resume. 9658 protected files/eight old journals/closed report plus19 recent
 inputs preserved. No full-suite/mock repeat for operator-only work.
 Report: `C:\pt\analyses\b-failure-public-20260915\result.md`.
 
-Next design candidate: one planning-content contrast connecting a specific
+The diagnosis proposed one planning-content contrast connecting a specific
 assumption, its observed evidence and an untested discriminating case to the next
 action. Current prose instructions already ask for this; do not call another
 warning a transport fix. No extra planner, mandatory task-specific probe, stronger
-tool mask or diagnostic-hint injection. No implementation/new paid packet yet.
+tool mask or diagnostic-hint injection. It did not itself implement or authorize a
+new paid packet; the opt-in implementation is recorded above.
 
 ## Prior seam: public POSIX counterexample rejected the proposed B failure
 

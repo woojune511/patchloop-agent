@@ -9,7 +9,8 @@ missing internal planning caused the behavior; this is a new intervention.
 
 ## Runtime contract
 
-`--planning-policy none|brief-v1` defaults OFF. Brief planning is append-v1 only.
+`--planning-policy none|brief-v1|brief-evidence-v1` defaults OFF. Both brief variants
+support append-v1 and segmented-v1, not native-window-v1.
 Only ON adds nullable `plan_update` to existing `turn_decision` schemas and adds
 brief instructions. There is no planning tool, separate response, API call or
 planner model. OFF keeps the old system prompt, tool schema/order and absent
@@ -48,6 +49,47 @@ from working notes and verification concerns. The harness validates formatting,
 not the truth of a model-authored interpretation. Planning never changes evidence,
 source admission, check PASS, tool masks, costs, counters or finish eligibility.
 Only public inputs are available; hidden/private/reference data never enters plans.
+
+## Opt-in content contrast (2026-09-15)
+
+`brief-evidence-v1` preserves all brief-v1 instructions and appends one format request:
+
+- `Behavior`: observable behavior required by the public task, not a workflow list.
+- `Evidence / open assumptions`: observed evidence versus untested assumptions;
+  carry unresolved requirements forward when replacing the plan.
+- `Next discriminating action`: the next useful allowed action and the observation
+  that would change the edit/submission decision. No mandatory probe.
+
+These are headings inside the existing string, not fields or a parsed section schema.
+Missing sections remain valid text; no content validator, extra call or stronger mask.
+Maximum length, review timing, null/parallel/replay behavior, native identity, notes,
+gates and budgets are unchanged. The entire selected instruction text is hash-bound
+in the planning contract. Existing none/brief-v1 tool hashes and schemas stay exact;
+the new policy gets a distinct v39 wrapper, model/envelope and manifest identity.
+
+Public B diagnosis found plans narrowing to visible checks despite delivered goals,
+remaining tools and budget. Existing instructions already request evidence-aware
+plans: this contrast tests salience/format, not a missing transport feature or a
+proven causal repair. It contains no task-specific diagnostic case or code fix.
+The [official prompt/evaluation guidance](https://developers.openai.com/api/docs/guides/model-optimization#write-effective-prompts)
+supports explicit output goals and measured comparison, not an efficacy claim here.
+
+This implementation is provider-free only. Tests verify preservation of authored
+open statements, update/null/invalid/parallel behavior, actual next-input delivery,
+segmented handoff, exact replay and unchanged action/evaluator boundaries. They do
+not show that a real model authors useful plans, keeps all assumptions, or solves
+more tasks. Frozen old comparators and results below are unchanged; they are not
+executors or authorization for this new policy. A later fresh old/new-format
+comparison must fix the same model/context and a new exact packet before dispatch.
+
+Local receipts: `C:\pt\validation\evidence-planning-20260915\verification.json`.
+Focused33 PASS/53.18s; full2228 PASS/8 skips/731.984s, Ruff/diff PASS. Local OFF/old/new
+smoke each uses4 model/5 tool decisions, one accepted edit and two segments through
+isolated smoke acceptance PASS/safety NOT_RUN; both ON revision2 plans are present
+in the final actual input. No provider/count/compact/Docker dispatch. The new planning
+instructions add904 UTF-8 bytes; no real token/efficacy measurement. Initial crash
+fixture failures were corrected to match random-ID mutation events; no runtime
+repair was needed for them. Full verification ran with fixed runtime/test hashes.
 
 ## Predeclared comparison
 

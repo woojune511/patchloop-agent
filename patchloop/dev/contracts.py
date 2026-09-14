@@ -118,11 +118,9 @@ def dev_tool_surface_hash(*, planning_policy: str = "none") -> str:
     )
     if planning_policy == "none":
         return base
-    from patchloop.dev.working_plan import POLICY, contract
+    from patchloop.dev.working_plan import contract
 
-    if planning_policy != POLICY:
-        raise ValueError("unknown planning policy")
-    return sha256_json({"base_tool_surface_hash": base, "planning": contract()})
+    return sha256_json({"base_tool_surface_hash": base, "planning": contract(planning_policy)})
 
 
 class StrictModel(BaseModel):
@@ -333,7 +331,7 @@ class DevRunRequest(StrictModel):
     state_root: Path | None = None
     enable_probes: bool = False
     repair_recheck: bool = False
-    planning_policy: Literal["none", "brief-v1"] = "none"
+    planning_policy: Literal["none", "brief-v1", "brief-evidence-v1"] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
     compact_at_input_tokens: int | None = Field(default=None, gt=0, lt=272_000)
     accept_compaction_model_limit_reservation: bool = False
@@ -344,7 +342,7 @@ class DevRunRequest(StrictModel):
         if self.planning_policy != "none" and self.context_policy not in {
             "append-v1", "segmented-v1",
         }:
-            raise ValueError("brief-v1 planning requires append-v1 or segmented-v1")
+            raise ValueError(f"{self.planning_policy} planning requires append-v1 or segmented-v1")
         if self.provider == "openai":
             if self.env_file is None:
                 raise ValueError("--provider openai requires --env-file")
@@ -389,7 +387,7 @@ class DevRunEnvelope(StrictModel):
     model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     repair_recheck: bool = False
-    planning_policy: Literal["none", "brief-v1"] = "none"
+    planning_policy: Literal["none", "brief-v1", "brief-evidence-v1"] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
     segment_contract: dict[str, Any] | None = None
     compaction_contract: dict[str, Any] | None = None
@@ -416,7 +414,7 @@ class DevRunEnvelope(StrictModel):
         if self.planning_policy != "none" and self.context_policy not in {
             "append-v1", "segmented-v1",
         }:
-            raise ValueError("brief-v1 planning requires append-v1 or segmented-v1")
+            raise ValueError(f"{self.planning_policy} planning requires append-v1 or segmented-v1")
         if (self.context_policy == segments.POLICY) != (self.segment_contract is not None):
             raise ValueError("segmented context requires its exact contract")
         if self.context_policy == segments.POLICY and self.compaction_contract is not None:

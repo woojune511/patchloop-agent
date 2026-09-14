@@ -377,9 +377,9 @@ def dev_tool_schemas(
             decision_modes[name]
         )
         if planning_policy != "none":
-            from patchloop.dev.working_plan import POLICY, update_schema
+            from patchloop.dev.working_plan import POLICIES, update_schema
 
-            if planning_policy != POLICY:
+            if planning_policy not in POLICIES:
                 raise ContractError("unknown planning policy")
             decision = parameters["properties"]["turn_decision"]
             decision["properties"]["plan_update"] = update_schema()

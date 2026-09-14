@@ -294,7 +294,7 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             **({"segment_contract": segments.contract()}
                if request.context_policy == segments.POLICY else {}),
             "compaction_contract": native_compaction.policy_contract(request),
-            **({"planning_contract": working_plan.contract()}
+            **({"planning_contract": working_plan.contract(request.planning_policy)}
                if request.planning_policy != "none" else {}),
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
@@ -1336,6 +1336,7 @@ def _build_context(
     if planning_policy != "none":
         payload["working_plan"] = working_plan.project(
             journal.events(), diff_hash=summary.patch_hash, gate=active_policy.workflow_gate,
+            policy=planning_policy,
         )
     if repair_recheck:
         payload["repair_recheck"] = recheck_context
@@ -1801,7 +1802,7 @@ def _build_model_input(
     state = reference_native_sources(state, history, archive_kind=archive_kind)
     state = compact_model_state(state, history, archive_kind=archive_kind)
     return assemble_model_input(
-        system_prompt=(DEV_SYSTEM_PROMPT + "\n\n" + working_plan.INSTRUCTIONS
+        system_prompt=(DEV_SYSTEM_PROMPT + "\n\n" + working_plan.instructions(planning_policy)
                        if planning_policy != "none" else DEV_SYSTEM_PROMPT),
         state=state, history=new_history,
         previous_input=previous_input, context_policy=context_policy,
@@ -1867,7 +1868,7 @@ def _build_segmented_model_input(
         journal=journal, artifact_store=store, context=context, latest_tool_results=latest_results,
     )
     reason = force_reason or segments.boundary_reason(journal, binding)
-    prompt = (DEV_SYSTEM_PROMPT + "\n\n" + working_plan.INSTRUCTIONS
+    prompt = (DEV_SYSTEM_PROMPT + "\n\n" + working_plan.instructions(planning_policy)
               if planning_policy != "none" else DEV_SYSTEM_PROMPT)
     if reason and not segments.is_fresh(journal, binding):
         state = json.loads(context)
@@ -1902,7 +1903,7 @@ def _build_segmented_model_input(
     if planning_policy != "none":
         state["working_plan"] = working_plan.project(
             journal.events(), diff_hash=state["current_diff"]["patch_hash"],
-            gate=state["workflow_gate"],
+            gate=state["workflow_gate"], policy=planning_policy,
         )
     state["segment_handoff"] = {
         "segment_id": binding["segment_id"], "reason": binding["reason"],
@@ -3151,7 +3152,7 @@ def _record_planning_decision(
                    if e["event_type"] == "turn_started" and e["payload"]["turn_id"] == turn_id)
     working_plan.record(
         journal, calls, turn_id=turn_id, diff_hash=gateway.current_diff_hash,
-        gate=started["workflow_gate"],
+        gate=started["workflow_gate"], policy=policy,
     )
 
 

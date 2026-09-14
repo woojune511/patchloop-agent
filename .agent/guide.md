@@ -267,7 +267,8 @@ complete candidate; no extra filesystem read or semantic check is added for thes
 
 ## Context boundary
 
-V39 additionally offers `--context-policy segmented-v1`, with planning none/brief-v1.
+V39 additionally offers `--context-policy segmented-v1`, with planning none,
+brief-v1 or the opt-in brief-evidence-v1 content contrast.
 Default append/OFF stays unchanged. Follow [segmented-context.md](plans/segmented-context.md)
 for its intentionally lossy between-segment protocol, current-public-state ownership,
 60k-token / 1-MiB-request / 256-KiB-encrypted-field management bounds and exact resume.
@@ -804,7 +805,28 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: B public defect/loop analysis completed; no runtime or task repair.
+Current seam: brief-evidence-v1 plan-content option implemented and locally verified.
+Only the experimental planning instructions differ from brief-v1: within the same
+3000-character string request Behavior, Evidence / open assumptions, and Next
+discriminating action. Not a new structured schema, planner call, mandatory probe,
+source fact or semantic gate. Retain null/full replacement/nonblocking annotation,
+first-non-null parallel ownership, durable review receipts and exact replay.
+Both append-v1/segmented-v1 work; none/default and brief-v1 prompts/schema/hash stay
+stable. The new instruction hash binds model/envelope/manifest/tool identity over
+v39; old runs are not migrated. Do not inject B diagnostic cases/repairs or infer
+real planning improvement from mock delivery. New provider-free receipts live at
+C:\pt\validation\evidence-planning-20260915; no paid packet/run or Docker operation.
+Focused33PASS/53.18s; Ruff/diffPASS; full2228PASS/8skip/731.984s (106 files, four
+external-temp workers), runtime/test hashes fixed throughout. OFF/old/new local
+smoke each4model/5tools/1edit/2segments, isolated acceptancePASS/safetyNOT_RUN;
+ON final-input revision2 and exact journal text verify. Preserve9658files/eight old
+journals/closed report plus39 recent inputs/diagnosis files. Only the focused target
+is below two minutes, not the full suite. The first crash-fixture pass assumed a
+sequential turn ID; corrected to the real mutation event, not a runtime defect.
+Next possible step is a fresh old/new-format comparison with context/model fixed,
+not another consumed planning-cycle or B4 resume. See planning-experiment.md.
+
+Prior seam: B public defect/loop analysis completed; no runtime or task repair.
 B1/B2 skip recursive creation when trailing separator makes tail empty: Linux
 staging/../release/ creates only release, while native creates staging too. Both
 introduce EEXIST for staging/.; base/native succeed.14 public cases in fake Linux/
@@ -822,10 +844,11 @@ B matches the simple case and A adds a side effect. No universal A superiority.
 Matrix8.766s, evidence13PASS/0.14s, Ruff/diffPASS, owned cleanup confirmed. Preserved
 9658files/eight old journals/closed report plus19 recent inputs. Provider/count/
 compact/hidden executions0, no Docker start/pull/build, old resume, full/mock repeat.
-Evidence C:\pt\analyses\b-failure-public-20260915. Next design only: one plan-content
+Evidence C:\pt\analyses\b-failure-public-20260915. This analysis proposed one plan-content
 contrast mapping assumptions to observations and a discriminating case. Existing
 instructions already request specificity; no new warning-as-fix, task-specific
-hint injection, mandatory probe, extra planner, stronger mask or paid packet yet.
+hint injection, mandatory probe, extra planner or stronger mask. The opt-in
+implementation is recorded above; no new paid packet was part of this diagnosis.
 
 Prior seam: provider-free public POSIX relative-parent case completed; hypothesis rejected.
 From an existing cwd, makedirs("staging/../release") creates both directories in all

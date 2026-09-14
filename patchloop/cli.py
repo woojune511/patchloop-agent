@@ -81,7 +81,7 @@ def dev(
         typer.Option("--context-policy", help="Opt-in snapshot window or bounded public handoffs."),
     ] = "append-v1",
     planning_policy: Annotated[
-        Literal["none", "brief-v1"],
+        Literal["none", "brief-v1", "brief-evidence-v1"],
         typer.Option("--planning-policy", help="Public planning; append-v1 or segmented-v1."),
     ] = "none",
     compact_at_input_tokens: Annotated[

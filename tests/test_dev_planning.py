@@ -223,7 +223,7 @@ def test_plan_crash_resume_no_duplicate_action_or_model(tmp_path, monkeypatch, b
     assert journal.path.read_bytes() == before
 
 
-@pytest.mark.parametrize("policy", ["none", "brief-v1"])
+@pytest.mark.parametrize("policy", ["none", "brief-v1", "brief-evidence-v1"])
 def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
     result = runner.run_dev(request(tmp_path, policy))["runs"][0]
     assert result["terminal"] == "EVALUATOR_PASS"
@@ -243,6 +243,7 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
         assert ("working_plan" in context) == (policy != "none")
         assert (plans.INSTRUCTIONS in items[0]["content"]) == (policy != "none")
         if policy != "none":
+            assert context["working_plan"]["policy"] == policy
             plans_seen.append(context["working_plan"]["plan"])
         if previous:
             assert items[:len(previous)] == previous

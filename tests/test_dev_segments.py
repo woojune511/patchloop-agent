@@ -106,7 +106,7 @@ def assert_submitted(result):
     assert result["evaluator"]["task_acceptance"] == "ERROR"
 
 
-@pytest.mark.parametrize("planning", ["none", "brief-v1"])
+@pytest.mark.parametrize("planning", ["none", "brief-v1", "brief-evidence-v1"])
 def test_real_mock_smoke_reaches_isolated_acceptance(tmp_path, planning):
     request = mock_request(tmp_path, planning).model_copy(update={
         "context_policy": segments.POLICY,
@@ -133,7 +133,7 @@ def test_request_bytes_are_final_utf8_not_character_or_token_estimates():
         "request_bytes", "encrypted_item_bytes"]
 
 
-@pytest.mark.parametrize("planning", ["none", "brief-v1"])
+@pytest.mark.parametrize("planning", ["none", "brief-v1", "brief-evidence-v1"])
 def test_options_default_identity_and_compaction_exclusion(tmp_path, planning):
     base = mock_request(tmp_path, planning)
     new = DevRunRequest.model_validate({**base.model_dump(), "context_policy": segments.POLICY})
@@ -165,7 +165,7 @@ def test_current_snapshot_replaces_notes_plan_and_checks_without_native_rewritin
     assert validate_model_input(after, metadata, context_policy=segments.POLICY) == after
 
 
-@pytest.mark.parametrize("planning", ["none", "brief-v1"])
+@pytest.mark.parametrize("planning", ["none", "brief-v1", "brief-evidence-v1"])
 def test_real_gateway_mock_provider_reaches_handoff_and_submission(
     tmp_path, monkeypatch, planning,
 ):
@@ -190,6 +190,7 @@ def test_real_gateway_mock_provider_reaches_handoff_and_submission(
     assert views[-1]["visible_check_status"][0]["status"] == "PASS"
     assert bool(views[-1].get("working_plan")) == (planning != "none")
     if planning != "none":
+        assert all(v["working_plan"]["policy"] == planning for v in views)
         assert views[-1]["working_plan"]["plan"]["revision"] >= 2
         assert "context_handoff" in views[-1]["working_plan"]["review_request"]["reasons"]
     journal, store = records(request)
