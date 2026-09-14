@@ -787,7 +787,19 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: new four-run segmented-policy pilot packet, preparation only.
+Current seam: approved packet1615423f stopped at A1, group closed to automatic dispatch.
+At c3ae0bff, run_dev_f2f219820e874648 used16model/16count/20tools/3edits in364.384s.
+Response16 reasoning-only incomplete/max_output_tokens, normalized usage0 vs count79749;
+PROVIDER_TIMEOUT_OR_UNKNOWN is the usage guard, not a proven network timeout.
+Missing usage vs literal zero is not distinguishable in the saved current adapter evidence.
+Known first15 cost0.218970USD; final billingUNKNOWN. B1/B2/A2 NOT_STARTED, no submission
+or evaluator. Plan revision12 delivered, findings0; all16request identities/public state
+validate. Final request355075bytes; new returned cipher1675704bytes stored, never resent.
+No A/B efficacy inference. Preserve packet/preparation/approval/run bytes and uncertainty
+stop. Next candidate: provider-free usage evidence diagnosis, not another paid retry.
+See C:\pt\analyses\segmented-pilot-20260914\live-result.md and current-status.
+
+Prior seam: new four-run segmented-policy pilot packet, preparation only.
 Use `diagnostics.segmented_pilot prepare/inspect`, not the closed planning executor.
 Destination C:\pt\analyses\segmented-pilot-20260914; A1/B1/B2/A2, append vs segmented,
 both planning brief-v1/probes/repair-recheck, mini snapshot/medium, pyfakefs v2,

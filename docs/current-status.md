@@ -5,7 +5,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: fresh segmented-policy pilot preparation (no paid execution)
+## Current seam: approved segmented pilot stopped on A1 usage uncertainty
+
+The new packet `1615423f...` was approved and dispatched at `c3ae0bff` on 2026-09-14.
+A1/append-v1 (`run_dev_f2f219820e874648`) ended `PROVIDER_TIMEOUT_OR_UNKNOWN` after
+16 model calls / 16 counts / 20 tools / 3 accepted edits, 364.384s. This was **not
+a demonstrated transport timeout**: response 16 returned reasoning-only incomplete,
+reason `max_output_tokens`, but its normalized usage counters were all zero against
+a successful pre-dispatch count of 79,749. The adapter's missing-usage/zero-value
+normalization does not preserve which raw condition occurred. Billing is UNKNOWN;
+recorded model-rate cost for the first 15 responses is $0.218970, not total invoice cost.
+
+The frozen group stopped without retry. B1/B2/A2 were NOT_STARTED; no submission
+or evaluator, so task acceptance and safety are NOT_RUN. No A/B efficacy conclusion.
+All 16 final request hashes, public task/current diff and plan/note delivery validate.
+Plan created once, updated 11 times; revision12/263chars reached the last request.
+Three of four consumed major-result review opportunities updated the plan; initial
+draft is counted separately, and the final pending review had no normal decision.
+Explicit findings stayed empty in all 16 requests. First edit was call9; two of
+13 inspections gained no new coverage. Mode and upstream failures each received a
+repair and passing recheck, but the earlier contract PASS expired after the last edit.
+
+Last input: 355,075 complete serialized UTF-8 request bytes / 69 items, largest
+replayed cipher28,600bytes. The response produced a new1,675,704-byte encrypted item,
+stored but never resent. This is not the previous oversized-input rejection, nor
+proof of exactly25k tokens consumed: reliable final usage is unavailable. Read/search,
+replace/check/probe/stop remained available and completion was possible.
+Runtime/packet/9658protected files/eight old journals/closed result are unchanged.
+Result: `C:\pt\analyses\segmented-pilot-20260914\live-result.md`.
+Next candidate is provider-free diagnosis of missing/zero/mismatched usage evidence;
+do not weaken uncertainty stops or restart this group automatically.
+
+## Prior seam: fresh segmented-policy pilot preparation (no paid execution)
 
 `diagnostics.segmented_pilot` prepares/inspects a separate four-run packet; it cannot
 execute runs or load credentials. Proposed order A1/B1/B2/A2, A=append-v1,
