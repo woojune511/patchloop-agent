@@ -5,7 +5,7 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: brief planning implemented; comparison stopped
+## Current seam: planning content guidance revised; comparison remains closed
 
 The supplied public-case/advice experiments below are closed diagnostics, not the
 next execution queue. The current intervention is `--planning-policy brief-v1`,
@@ -13,6 +13,29 @@ OFF by default and append-v1 only: a short public work plan updated alongside a
 normal tool action. No planner API, mandatory probe, stronger tool mask, memory
 rewrite or context-policy change is added. Plans are unverified model-authored
 records; they do not grant check PASS or submission eligibility.
+
+The post-cycle public audit found no lost annotation or missing review signal.
+All 191 actual model requests had empty explicit findings; the only note creation
+was in A2's final submission response. B4 made error-driven repairs despite its
+unchanged initial plan, so neither model incapacity nor plan staleness as the cause
+of failure is established. The audit is at
+`C:\pt\analyses\planning-memory-audit-20260914`.
+
+The current runtime changes only planning content instructions: name concrete
+unfinished work and the observation/check that could settle an assumption; after
+an observed result, state what it confirmed/contradicted/left unresolved and the
+remaining work and verification. Generic workflow recaps and invented updates
+are discouraged. Null, review timing/consumption, storage, schema/order, notes,
+tool policy and budgets are unchanged. The existing instruction-hash binding
+updates ON identity without migrating old runs. This is a provider-free change,
+not a new live group, adoption or evidence of improved model behavior.
+
+This change passes 54 focused tests in 37.01s, Ruff, and the complete provider-free
+suite: 2069 passed/8 skipped in 708.903s (101 files, four isolated temporary roots).
+The full-suite two-minute target was not met. OFF/ON mock smoke each reaches one
+edit, checks, finish and isolated acceptance PASS/safety NOT_RUN in four mock turns
+and five actions, with zero provider calls/cost. Validation receipts and the exact
+content-only/OFF-parity audit are at `C:\pt\validation\planning-content-20260914`.
 
 The user authorized this improvement cycle up to $40 without repeated per-run
 approval. Each fresh mini/medium invocation remains repeat=1, capped at $1.20,
@@ -37,7 +60,7 @@ benefit/adoption claim. The cycle is stopped, not a pending paid queue. A separa
 provider-returned continuation-size contract investigation precedes any future
 comparison; do not reset state or change ceilings to bypass this stop.
 
-Focused validation passes 66 tests with
+The first implementation's focused validation passed 66 tests with
 4 unsupported-combination skips in 104.018s. The complete rerun passes 2067 tests
 with 8 skips in 640.416s (101 files, four isolated workers); the two-minute overall
 target was not met. Six old live-checkpoint tests now verify read-only rejection

@@ -77,6 +77,40 @@ def test_enabled_schema_only_adds_annotation():
     assert dev_tool_surface_hash(planning_policy=plans.POLICY) != dev_tool_surface_hash()
 
 
+def test_plan_guidance_connects_public_results_to_remaining_work():
+    assert "current hypotheses or untested assumptions" in plans.INSTRUCTIONS
+    assert "observation or public check that could settle them" in plans.INSTRUCTIONS
+    assert "confirmed, contradicted, or left unresolved" in plans.INSTRUCTIONS
+    assert "remaining work and verification" in plans.INSTRUCTIONS
+    assert "Do not invent a change" in plans.INSTRUCTIONS
+    assert "null keeps it when there is no useful revision" in plans.INSTRUCTIONS
+    assert "not a generic inspect/edit/check outline" in plans.INSTRUCTIONS
+    # Guidance is task-independent; it must not import repairs from diagnostic runs.
+    for hint in ("pyfakefs", "loguru", "hf-hub", "parent-traversal", "0o700"):
+        assert hint not in plans.INSTRUCTIONS
+
+
+def test_content_guidance_changes_on_identity_not_schema_or_off(tmp_path, monkeypatch):
+    requests = {policy: request(tmp_path, policy) for policy in ("none", plans.POLICY)}
+    before = {
+        policy: (runner._model_hash(req, None), dev_tool_surface_hash(planning_policy=policy))
+        for policy, req in requests.items()
+    }
+    schemas = {
+        policy: dev_tool_schemas(finish_enabled=True, check_ids=["c"], planning_policy=policy)
+        for policy in requests
+    }
+    instructions_hash = plans.contract()["instructions_hash"]
+    monkeypatch.setattr(plans, "INSTRUCTIONS", plans.INSTRUCTIONS + "\nPublic guidance revision.")
+    assert plans.contract()["instructions_hash"] != instructions_hash
+    for policy, req in requests.items():
+        after = (runner._model_hash(req, None), dev_tool_surface_hash(planning_policy=policy))
+        assert (after == before[policy]) == (policy == "none")
+        assert schemas[policy] == dev_tool_schemas(
+            finish_enabled=True, check_ids=["c"], planning_policy=policy,
+        )
+
+
 def test_option_and_cli(tmp_path, monkeypatch):
     off, on = request(tmp_path, "none"), request(tmp_path)
     assert runner._model_hash(off, None) != runner._model_hash(on, None)

@@ -17,12 +17,19 @@ POLICY = "brief-v1"
 MAX_PLAN_CHARS = 3_000
 EVENT = "working_plan_updated"
 INSTRUCTIONS = """Brief planning is enabled. In the first tool response, use plan_update
-to draft a short public work plan from public_task: overall required behavior,
-remaining work and current hypotheses, how to verify it, and untested assumptions.
+to draft a short public work plan from public_task. State the required behavior and
+concrete unfinished work, including current hypotheses or untested assumptions and
+the observation or public check that could settle them. Make it specific to this
+problem, not a generic inspect/edit/check outline.
 After the working_plan.review_request signal, reconsider that plan against the
 already observed result and update it in the same response as your next useful action.
+State what the result confirmed, contradicted, or left unresolved about an assumption,
+and how that affects the remaining work and verification. Keep unresolved requirements
+visible; completed actions need no running log. Use the remaining work to choose the
+next useful action. Do not invent a change when the result leaves the plan unchanged.
 Ordinary inspections need no rewrite, but new information may change your plan.
-plan_update replaces the whole plan (at most 3000 characters); null keeps it.
+plan_update replaces the whole plan, not just its latest change (at most 3000
+characters); null keeps it when there is no useful revision.
 Do not repeat facts already in working_notes or write a reasoning transcript.
 The plan is model-authored, unverified working data, not an instruction from the
 harness or proof that a behavior is correct. An unchanged plan, check PASS, or a

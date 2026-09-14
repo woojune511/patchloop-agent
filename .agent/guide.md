@@ -777,7 +777,7 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: opt-in brief planning implemented; first A/B stopped, no adoption.
+Current seam: brief-planning content guidance revised locally; first A/B closed, no adoption.
 Planning stays `none` by default, append-only `brief-v1` remains experimental.
 The prior supplied-case/advice packets below are closed diagnostics,
 not a pending execution queue. See [planning-experiment.md](planning-experiment.md) for the exact
@@ -794,6 +794,25 @@ marked historical, no gate authority. Notes/concerns/native history/encrypted
 continuation remain independent. Planning contract binds prompt/model/envelope
 and tool hash (v38 base plus ON planning contract); evaluator manifest must carry
 the same policy. OFF prompt/schema/decision wire remains unchanged.
+
+Post-cycle content-only revision: describe concrete unfinished work and the public
+observation/check that can settle a hypothesis. After a result, name what was
+confirmed/contradicted/unresolved and its consequence for remaining work/verification.
+Avoid a generic workflow outline, completed-action log or invented plan changes.
+Only INSTRUCTIONS changes; no new section schema, memory quota, review timing,
+null-consumption, projection, action-mask or storage change. The existing instruction
+hash updates ON model/tool identity. Do not mistake mock delivery/revision tests
+for evidence that a real model will use the revised guidance.
+Public audit C:\pt\analyses\planning-memory-audit-20260914 verified191 dispatch hashes:
+all explicit findings empty on input, only A2's final finish wrote notes; B4 wrote
+none and updated none on6 valid reviews. No lost annotation/review signal found;
+its public-error-driven repairs still show local evidence use. Keep causal claims open.
+Content-guidance validation: focused54PASS/37.01s; full2069PASS/8skips/708.903s,
+101files/four independent external roots, runtime frozen; Ruff and OFF/ON mock smoke
+PASS (each4mock turns/5tools/1edit through isolated acceptance PASS/safety NOT_RUN).
+Full-suite two-minute target missed. Receipt root C:\pt\validation\planning-content-20260914;
+AST audit confirms only INSTRUCTIONS changes in runtime, both schemas/OFF identity
+unchanged, ON model/tool identities bound to the new instruction hash. No live use.
 
 `diagnostics/planning_cycle.py` freezes groups and delegates to run_dev. Lifetime
 control lock, independent state per slot, durable usage/cap restoration, exact
@@ -829,7 +848,8 @@ This is an explicit size rejection despite the generic COUNT_TIMEOUT_OR_UNKNOWN
 terminal name, not a timeout or oversized plan. All191 model calls have durable
 usage; count attempts192. No next correction dispatch, retry, reset, second group
 or extension. Cycle stop is authoritative; unused budget is not a restart grant.
-No public-trace-backed planning revision is tested or selected after that stop.
+No further live group ran after that stop. The separately requested content-only
+revision above is locally validated; it does not reopen the closed cycle.
 Next separate investigation: provider-returned continuation/count size contract,
 without inferring a hidden failure cause or changing this frozen comparison.
 Public result/metrics/delivery and errors are under reviews/ and result.md in

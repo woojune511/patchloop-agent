@@ -18,7 +18,13 @@ to model/envelope/tool identity and the evaluator manifest. No historical migrat
 
 A nonempty plan up to 3,000 characters replaces the whole plan. It should state
 the public task goal, remaining work/current hypotheses, verification and untested
-assumptions, not raw reasoning. Null keeps the existing plan. Identical text is
+assumptions, not raw reasoning. Content guidance now asks for concrete unfinished
+work and the observation/check that could settle an assumption, not a generic
+inspect/edit/check outline. After a review signal, describe what the observed result
+confirmed, contradicted or left unresolved and the resulting remaining work and
+verification. Do not keep a completed-action log or invent changes to raise revision
+counts. This is task-independent guidance, not a required section schema or semantic
+validator. Null keeps the existing plan when there is no useful revision. Identical text is
 recorded as unchanged, not counted as a new substantive review. The first non-null
 annotation in a parallel batch owns the update; further annotations or an invalid
 first value receive a short diagnostic. The prior plan and valid tool action
@@ -119,3 +125,30 @@ cycle stop were recorded. No retry, second version or extension ran. Preserve th
 stop: leftover budget is not permission to reset continuation or bypass admission.
 The cycle result and public-only review are at
 `C:\pt\analyses\planning-cycle-20260914\result.md` and its `reviews` directory.
+
+## Post-cycle content-guidance change (2026-09-14)
+
+The read-only memory/plan audit verified all 191 actual dispatched request hashes.
+B4's 20 normal tool decisions contained no memory update; its six post-result valid
+review decisions made no plan replacement. Across all eight trials, the only note
+creation was in A2's final finish response, too late for another model request.
+No submitted annotation loss or missing review signal was found. B4 still made
+public-error-driven repairs, so empty notes do not imply no evidence use, and stale
+plans are not established as the cause of task failure. Audit/62-test receipts:
+`C:\pt\analyses\planning-memory-audit-20260914`.
+
+Only `working_plan.INSTRUCTIONS` changes in the runtime. Timing, null consumption,
+storage, projection, schema/order, notes, tools and gates stay unchanged. The existing
+instructions hash changes ON model/tool identity; no new policy name or historical
+migration is introduced. OFF remains the default. This change is provider-free only,
+not a second live comparison group or evidence of better planning/task performance.
+The closed cycle and continuation-size stop remain in force.
+
+The instruction-only choice follows [OpenAI's function guidance](https://developers.openai.com/api/docs/guides/function-calling#best-practices-for-defining-functions)
+to state purpose and use conditions clearly. It does not import a task-specific
+solution, add a planner call or establish that this prompt will improve mini's behavior.
+
+Current validation: focused 54 passed/37.01s; full 2069 passed/8 skipped/708.903s;
+Ruff and both OFF/ON mock smoke pass through isolated evaluation, provider cost zero.
+The full-suite two-minute target was not met. Runtime AST/parity/identity and test
+receipts are at `C:\pt\validation\planning-content-20260914`. No paid comparison ran.
