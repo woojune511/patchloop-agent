@@ -46,6 +46,7 @@ def cursor(journal):
         "action_finished",
         "repair_recheck_finished",
         "context_window_activated",
+        "context_segment_started",
     }
     return next(
         (e["event_hash"] for e in reversed(journal.events()) if e["event_type"] in kinds), None

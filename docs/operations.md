@@ -56,7 +56,7 @@ still unofficial.
 ## Brief planning improvement cycle
 
 `patchloop dev --planning-policy none|brief-v1` defaults to `none`; `brief-v1`
-requires `--context-policy append-v1`. Resume must repeat the same option along
+supports `--context-policy append-v1` or `segmented-v1`. Resume repeats the option along
 with the existing exact task/model/environment/cap/limits. No old run migration.
 
 `diagnostics.planning_cycle` implements the user-authorized bounded cycle. The
@@ -146,6 +146,28 @@ fresh external result directory, $2 total cap and same-day UTC price-review asse
 It has no automatic retry or resume. Prepared packets authorize no provider/count
 call or Docker operation; never reuse a consumed earlier experiment grant. Detailed
 conditions and evidence limits are in the current status and internal agent guide.
+
+## Optional short reasoning segments
+
+`--context-policy segmented-v1` uses current public working state between short
+native reasoning segments. Planning `none` and `brief-v1` are both supported; defaults
+stay append/OFF. It never calls compact or a handoff model. Do not combine it with
+native-compaction options. Same-policy exact resume only; no old-run migration.
+
+After a mutation/check/probe result is delivered to the next normal decision and
+its batch completes, a new segment starts. Earlier encrypted reasoning and native
+exchanges leave the next input; required results are explicitly quoted public records.
+Task/diff/current failures and checks/budgets/last mutations remain. Notes and plans
+are latest, source-qualified model assertions, not execution facts or new finish gates.
+
+Management ceilings are 60,000 counted input tokens, 1 MiB serialized UTF-8 JSON
+and 256 KiB per encrypted field. Bytes are checked before count; token-triggered
+reconstruction is counted again. Fresh state still too large ends `LIMIT_REACHED`.
+These values are experimental, not advertised API limits. Uncertain counts/provider
+outcomes/costs or corrupt artifacts stop without retry/resegmentation. Global limits
+do not reset. Public results report `context_management`; no real-token or efficacy
+claim follows a byte-size audit. The current implementation grant is provider-free
+only; a new paid comparison needs a separate packet, not a B4/cycle restart.
 
 ## Optional native snapshot window
 

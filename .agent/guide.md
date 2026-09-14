@@ -8,6 +8,7 @@ active contracts for navigation; checked-in source remains the behavioral author
 ```text
 patchloop/dev/runner.py   loop composition, gates, context, terminal handling
 patchloop/dev/conversation.py  default append / opt-in snapshot window, current view and recovery
+patchloop/dev/segments.py  opt-in public handoff boundaries, request size guards and recovery
 patchloop/dev/model_state.py   compact public model view, separate from audit accounting
 patchloop/dev/native_sources.py  exact current-source delivery references into native history
 patchloop/dev/tools.py    tool grammar, spans, mutations, checks, finish
@@ -265,6 +266,15 @@ reconciliation continue to use `action_started.baseline_diff_hash` and the admit
 complete candidate; no extra filesystem read or semantic check is added for these labels.
 
 ## Context boundary
+
+V39 additionally offers `--context-policy segmented-v1`, with planning none/brief-v1.
+Default append/OFF stays unchanged. Follow [segmented-context.md](plans/segmented-context.md)
+for its intentionally lossy between-segment protocol, current-public-state ownership,
+60k-token / 1-MiB-request / 256-KiB-encrypted-field management bounds and exact resume.
+No compact/summary call, budget reset, old-run migration, mandatory plan or new tool
+schema. Preserve native identity within each segment; quote actual public results
+across segments and ensure all delivery references resolve in the actual input.
+The existing 24k source selection and source/notes/check currency remain authoritative.
 
 The complete deterministic audit context artifact puts current workflow gate, remaining budget,
 action horizon, mutation readiness, mutation scope budget, and the bounded evidence
@@ -777,7 +787,19 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: approved oversized-continuation compact attempt completed; grant consumed.
+Current seam: v39 segmented-v1 implemented for provider-free verification.
+See [segmented-context.md](plans/segmented-context.md). New segment CAS/event and
+prepared counts recover once, after pending tools. Required public state survives
+empty notes; stale plans/checks never gain authority. B4 is a read-only size/evidence
+comparison, not resumed. No new paid work, compact, Docker or planning-cycle restart.
+After verification, select a new behavioral packet rather than reusing old grants.
+Receipt C:\pt\validation\segmented-context-20260914: final focus44PASS/81.734s,
+shared139PASS/104.212s, full103files/762.928s plus one stale-hash fixture repaired
+and targeted rerun; combined2147PASS/8skips, production runtime unchanged throughout.
+Ruff PASS, OFF/ON local smoke each4turns/5tools/1mutation/2segments to isolated
+acceptancePASS/safetyNOT_RUN. 9658protected files/eight journals/closed result unchanged.
+
+Prior seam: approved oversized-continuation compact attempt completed; grant consumed.
 Packet9cf5b985... executed once at6bf1aa68 on2026-09-14. Same B4 input85items,
 encrypted field1717452chars once. Compact also returns HTTP400
 string_above_max_length at input[83].encrypted_content. Terminal

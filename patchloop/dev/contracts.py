@@ -11,6 +11,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from patchloop.contracts import Artifact
+from patchloop.dev import segments
 from patchloop.util import sha256_json
 
 DEV_RUN_SCHEMA = "dev-run-v1"
@@ -24,7 +25,8 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash(*, planning_policy: str = "none") -> str:
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v38",
+            "schema_version": "dev-tool-surface-v39",
+            "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
             "sandbox_exception_cleanup": "typed-uncertainty-preserved-through-gateway-v1",
@@ -331,15 +333,17 @@ class DevRunRequest(StrictModel):
     enable_probes: bool = False
     repair_recheck: bool = False
     planning_policy: Literal["none", "brief-v1"] = "none"
-    context_policy: Literal["append-v1", "native-window-v1"] = "append-v1"
+    context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
     compact_at_input_tokens: int | None = Field(default=None, gt=0, lt=272_000)
     accept_compaction_model_limit_reservation: bool = False
     limits: DevLimits = Field(default_factory=DevLimits)
 
     @model_validator(mode="after")
     def provider_options_match(self) -> DevRunRequest:
-        if self.planning_policy != "none" and self.context_policy != "append-v1":
-            raise ValueError("brief-v1 planning requires append-v1")
+        if self.planning_policy != "none" and self.context_policy not in {
+            "append-v1", "segmented-v1",
+        }:
+            raise ValueError("brief-v1 planning requires append-v1 or segmented-v1")
         if self.provider == "openai":
             if self.env_file is None:
                 raise ValueError("--provider openai requires --env-file")
@@ -385,7 +389,8 @@ class DevRunEnvelope(StrictModel):
     sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     repair_recheck: bool = False
     planning_policy: Literal["none", "brief-v1"] = "none"
-    context_policy: Literal["append-v1", "native-window-v1"] = "append-v1"
+    context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
+    segment_contract: dict[str, Any] | None = None
     compaction_contract: dict[str, Any] | None = None
     probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
@@ -407,8 +412,14 @@ class DevRunEnvelope(StrictModel):
 
     @model_validator(mode="after")
     def provider_boundary_is_exact(self) -> DevRunEnvelope:
-        if self.planning_policy != "none" and self.context_policy != "append-v1":
-            raise ValueError("brief-v1 planning requires append-v1")
+        if self.planning_policy != "none" and self.context_policy not in {
+            "append-v1", "segmented-v1",
+        }:
+            raise ValueError("brief-v1 planning requires append-v1 or segmented-v1")
+        if (self.context_policy == segments.POLICY) != (self.segment_contract is not None):
+            raise ValueError("segmented context requires its exact contract")
+        if self.context_policy == segments.POLICY and self.compaction_contract is not None:
+            raise ValueError("segmented context forbids compaction")
         if (self.probe_image_digest is None) != (self.probe_profile_hash is None):
             raise ValueError("probe image and profile identities must be paired")
         if self.cost_start_nanos > self.max_cost_nanos:

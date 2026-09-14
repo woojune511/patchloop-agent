@@ -5,7 +5,44 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: oversized-continuation diagnostic complete; compact also rejects the item
+## Current seam: v39 segmented public working state (provider-free)
+
+Implemented opt-in `--context-policy segmented-v1`, supporting planning none/brief-v1.
+Defaults stay append/OFF. Native reasoning/call/result identity stays exact inside
+each segment; after major-result review or size pressure, the next segment receives
+current public facts and latest unverified notes/plan, not older reasoning/history.
+No summary/planner/compact call or new action schema. Required task/diff/check/failure/
+mutation evidence and global execution/cost limits do not depend on model annotations.
+
+Experimental management bounds: 60,000 counted input tokens, 1 MiB complete UTF-8
+request JSON and 256 KiB per encrypted item. Byte checks precede counting; changed
+requests are recounted. A fresh handoff still too large ends LIMIT_REACHED. These
+are not inferred API limits. Unknown provider/count/cost state or corrupt artifacts
+cannot be bypassed by segment switching. CAS-before-event handoffs and native/count
+recovery preserve global counters and pending-action idempotency; no old migration.
+
+B4 read-only projection with identical current schemas/settings: 2,175,132 -> 99,185
+bytes (85 -> 5 items). All 261 selected source lines, exact task/diff/check status,
+bounded mutations/correction remain; total retained observed lines 815. No unseen
+source added. Previous-segment reasoning/native history is omitted, while historical
+plan revision 1 and empty findings remain unchanged. No task-success inference.
+Evidence: `C:\pt\validation\segmented-context-20260914\b4-comparison-verified.json`.
+
+Validation: final segmented/hash-contract focus 44 PASS / 81.734s; shared planning,
+window/continuation/source focus 139 PASS / 104.212s. Full 103-file suite took
+762.928s: one stale v38 expected hash failed, then the repaired module and strengthened
+mutation crash cases passed targeted rerun with production runtime unchanged.
+Combined receipt: 2147 PASS / 8 skips; not a second full-suite invocation.
+Ruff/diff checks PASS. Final planning OFF/ON local smoke each uses four mock turns,
+five tools, one mutation, two segments through isolated acceptance PASS / safety
+NOT_RUN (3.649s / 4.061s). ON revision 2 is delivered after handoff; empty OFF/ON
+findings remain empty. Source-note tests separately prove retention and expiry.
+9658 protected files, eight original journals and closed-cycle result are unchanged.
+No real provider/count/compact call, Docker execution, old-run resume or new paid
+comparison occurred. The closed planning cycle and B4 remain immutable.
+Contract and remaining performance risks: `.agent/plans/segmented-context.md`.
+
+## Prior seam: oversized-continuation diagnostic complete; compact also rejects the item
 
 The separately approved packet `9cf5b985...` ran once at `6bf1aa68` on 2026-09-14.
 Standalone compact returned HTTP 400 `string_above_max_length` for the same

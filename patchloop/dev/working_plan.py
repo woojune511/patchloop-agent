@@ -65,6 +65,9 @@ def project(events: list[dict[str, Any]], *, diff_hash: str, gate: str) -> dict[
     reasons: list[str] = []
     if plan is None:
         reasons.append("initial_plan")
+    if any(e["event_type"] == "context_segment_started" and e["sequence"] > boundary
+           for e in events):
+        reasons.append("context_handoff")
     relevant = []
     for event in events:
         if event["sequence"] <= boundary or event["event_type"] != "action_finished":

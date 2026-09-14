@@ -26,7 +26,7 @@ from patchloop.agent.request_transport import BoundedResponsesClient
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import native_compaction, working_plan
+from patchloop.dev import native_compaction, segments, working_plan
 from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.context import SourceProjection, build_observed_source_index
@@ -48,10 +48,12 @@ from patchloop.dev.contracts import (
 )
 from patchloop.dev.conversation import (
     APPEND_POLICY,
+    SEGMENT_RULES,
     WINDOW_POLICY,
     WINDOW_RULES,
     assemble_model_input,
     history_metadata,
+    segment_seed,
     validate_model_input,
 )
 from patchloop.dev.cost import (
@@ -288,6 +290,8 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
+            **({"segment_contract": segments.contract()}
+               if request.context_policy == segments.POLICY else {}),
             "compaction_contract": native_compaction.policy_contract(request),
             **({"planning_contract": working_plan.contract()}
                if request.planning_policy != "none" else {}),
@@ -1637,6 +1641,8 @@ def _load_active_model_input(
             json.loads(artifact_store.read_bytes(artifact)), payload.get("native_history"),
             context_policy=context_policy, window=compact_window,
         )
+        if context_policy == segments.POLICY:
+            segments.validate_input_binding(items, payload["context_segment"], artifact_store)
         if context_policy == WINDOW_POLICY:
             window = payload["context_window"]
             seed_ref = Artifact.model_validate(window["seed_artifact"])
@@ -1719,10 +1725,20 @@ def _build_model_input(
     latest_tool_results: list[DevToolResult],
     context_policy: str = APPEND_POLICY,
     planning_policy: str = "none",
+    force_segment_reason: str | None = None,
 ) -> list[dict[str, Any]]:
     """Append the latest exchange to the exact saved active-episode history."""
     events = journal.events()
     _validate_recorded_continuations(events, artifact_store)
+    if context_policy == segments.POLICY:
+        try:
+            return _build_segmented_model_input(
+                journal=journal, store=artifact_store, context=context,
+                latest_results=latest_tool_results, planning_policy=planning_policy,
+                force_reason=force_segment_reason,
+            )
+        except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError) as exc:
+            raise _ProviderContinuationError("segmented public handoff is invalid") from exc
     decision = next(
         (event for event in reversed(events) if event["event_type"] == "turn_decision_recorded"),
         None,
@@ -1789,6 +1805,126 @@ def _build_model_input(
         previous_input=previous_input, context_policy=context_policy,
         window=compact_window,
     )
+
+
+def _segment_public_base(prompt, state, latest_results, calls):
+    """Build a public-only seed from already observed records; no source reads."""
+    base = segment_seed(prompt, state["public_task"])
+    ids = {r.action_id for r in latest_results}
+    quoted = [{"type": "function_call", "call_id": c["action_id"], "name": c["name"],
+               "arguments": canonical_json(_provider_tool_arguments(
+                   RequestedTool.model_validate(c)))} for c in calls]
+    quoted += [{"type": "function_call_output", "call_id": r.action_id,
+                "output": canonical_json(project_mutation_result(project_probe_result(
+                    r.model_dump(mode="json", exclude={"replayed"})
+                )))} for r in latest_results]
+    if {c["call_id"] for c in quoted if c["type"] == "function_call"} != ids:
+        raise _ProviderContinuationError("handoff latest batch has no matching public calls")
+    if quoted:
+        base.append(SEGMENT_RULES.archive(exchanges=quoted))
+    return base
+
+
+def _segment_current_view(state, history, latest_results):
+    public = list(public_exchanges(history, archive_kind=PUBLIC_EVIDENCE_KIND))
+    output_ids = {i["call_id"] for i in public if i.get("type") == "function_call_output"}
+    if latest_results and all(r.action_id in output_ids for r in latest_results):
+        _deduplicate_native_state(state, latest_results)
+    state = project_inspection_context(
+        state, native_action_ids=[i["call_id"] for i in public if i.get("type") == "function_call"],
+    )
+    state = reference_native_sources(state, history, archive_kind=PUBLIC_EVIDENCE_KIND)
+    view = compact_model_state(state, history, archive_kind=PUBLIC_EVIDENCE_KIND)
+    # Full native history no longer substitutes for these bounded working records.
+    for key in ("recent_attempt_result_next_question", "evidence_ledger"):
+        if key in state:
+            view[key] = state[key]
+    if isinstance(view.get("working_notes"), dict):
+        view["working_notes"]["interpretation_status"] = "model_authored_unverified"
+    return view
+
+
+def _build_segmented_model_input(
+    *, journal, store, context, latest_results, planning_policy, force_reason=None,
+):
+    """A public, explicitly lossy handoff; never splice or fabricate native history."""
+    events = journal.events()
+    binding, handoff = segments.active(journal, store)
+    decision = next((e["payload"] for e in reversed(events)
+                     if e["event_type"] == "turn_decision_recorded"), None)
+    parent = next((e["payload"] for e in reversed(events)
+                   if decision and e["event_type"] == "turn_started"
+                   and e["payload"]["turn_id"] == decision["turn_id"]), None)
+    if decision and parent is None:
+        raise _ProviderContinuationError("segment decision has no input")
+    previous = (_load_active_model_input(parent, store, context_policy=segments.POLICY)
+                if parent else None)
+    # Validate even an exchange about to be archived (including encrypted-only
+    # incomplete responses). Forgetting cannot turn corruption into recovery.
+    exchange = _build_latest_exchange(
+        journal=journal, artifact_store=store, context=context, latest_tool_results=latest_results,
+    )
+    reason = force_reason or segments.boundary_reason(journal, binding)
+    prompt = (DEV_SYSTEM_PROMPT + "\n\n" + working_plan.INSTRUCTIONS
+              if planning_policy != "none" else DEV_SYSTEM_PROMPT)
+    if reason and not segments.is_fresh(journal, binding):
+        state = json.loads(context)
+        # Canonical gateway records are quoted data, not top-level provider
+        # output items. Include the matching real arguments for source/intent refs.
+        ids = {r.action_id for r in latest_results}
+        calls = [c for e in events if e["event_type"] == "turn_decision_recorded"
+                 for c in e["payload"].get("tool_calls", []) if c["action_id"] in ids]
+        base = _segment_public_base(prompt, state, latest_results, calls)
+        binding = segments.start(
+            journal, store, base=base, state=state, reason=reason,
+            parent_input_artifact=parent["model_input_artifact"] if parent else None,
+        )
+        handoff = segments.load_binding(binding, store)
+    if binding is None or handoff is None:
+        raise _ProviderContinuationError("segmented input has no durable seed")
+    fresh = segments.is_fresh(journal, binding)
+    if fresh:
+        previous, added = handoff["base"], []
+    else:
+        added = exchange[1:-1]
+        admissions = {e["payload"]["action_id"]: e["payload"] for e in events
+                      if e["event_type"] == "action_started"}
+        for position, item in enumerate(added):
+            if item.get("type") == "function_call_output":
+                added[position] = {**item, "output": canonical_json(project_mutation_result(
+                    json.loads(item["output"]), history=[*previous[3:], *added[:position]],
+                    admission=admissions.get(item["call_id"]), archive_kind=PUBLIC_EVIDENCE_KIND,
+                ))}
+    history = [*previous[3:], *added]
+    state = json.loads(context)  # Always use current facts, not an old handoff's controls.
+    if planning_policy != "none":
+        state["working_plan"] = working_plan.project(
+            journal.events(), diff_hash=state["current_diff"]["patch_hash"],
+            gate=state["workflow_gate"],
+        )
+    state["segment_handoff"] = {
+        "segment_id": binding["segment_id"], "reason": binding["reason"],
+        "review_requested": fresh, "previous_reasoning_available": False,
+        "interpretation": "public execution facts and unverified model-authored notes/plan",
+    }
+    view = _segment_current_view(state, history, latest_results)
+    return assemble_model_input(
+        system_prompt=prompt, state=view, history=added, previous_input=previous,
+        context_policy=segments.POLICY,
+    )
+
+
+def _segment_input_binding(journal, store):
+    binding, _ = segments.active(journal, store)
+    parent = None
+    if not segments.is_fresh(journal, binding):
+        events = journal.events()
+        decision = next(e["payload"] for e in reversed(events)
+                        if e["event_type"] == "turn_decision_recorded")
+        parent = next(e["payload"]["model_input_artifact"] for e in reversed(events)
+                      if e["event_type"] == "turn_started"
+                      and e["payload"]["turn_id"] == decision["turn_id"])
+    return segments.input_binding(journal, store, parent_input_artifact=parent)
 
 
 def _build_latest_exchange(
@@ -2443,6 +2579,14 @@ def _terminal(
         }
         if completion_horizon is not None:
             payload["completion_horizon"] = completion_horizon
+        segment_events = [e for e in journal.events() if e["event_type"] == segments.EVENT]
+        if segment_events:
+            payload["context_management"] = {
+                "policy": segments.POLICY, "segment_count": len(segment_events),
+                "transition_reasons": [e["payload"]["reason"] for e in segment_events],
+                "limit": next((e["payload"] for e in reversed(journal.events())
+                               if e["event_type"] == "context_limit_reached"), None),
+            }
         if journal.load_envelope().compaction_contract is not None:
             payload["call_counts"].update(
                 compaction=counters.compaction_calls,
@@ -2473,6 +2617,8 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
         result["completion_horizon"] = terminal_payload["completion_horizon"]
     if "input_count_failure" in terminal_payload:
         result["input_count_failure"] = terminal_payload["input_count_failure"]
+    if "context_management" in terminal_payload:
+        result["context_management"] = terminal_payload["context_management"]
     return result
 
 
@@ -2526,6 +2672,8 @@ def _run_envelope(
         repair_recheck=request.repair_recheck,
         planning_policy=request.planning_policy,
         context_policy=request.context_policy,
+        segment_contract=(segments.contract()
+                          if request.context_policy == segments.POLICY else None),
         compaction_contract=native_compaction.policy_contract(request),
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
         probe_profile_hash=probe_profile_hash() if request.enable_probes else None,
@@ -3166,6 +3314,32 @@ def _run_one(
                 )
                 return _OneRunResult(_public_result(run_id, terminal), True)
 
+        if request.context_policy == segments.POLICY:
+            try:
+                segment_store = ArtifactStore(state_root / "artifacts")
+                segments.active(journal, segment_store)
+                _validate_recorded_continuations(journal.events(), segment_store)
+                for event in journal.events():
+                    if event["event_type"] == "turn_started":
+                        _load_active_model_input(
+                            event["payload"], segment_store, context_policy=segments.POLICY,
+                        )
+                    elif event["event_type"] == "model_input_prepared":
+                        prepared = native_compaction.read_json(
+                            segment_store, event["payload"]["artifact"],
+                        )
+                        _load_active_model_input(
+                            prepared["turn"], segment_store, context_policy=segments.POLICY,
+                        )
+            except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError):
+                terminal = _terminal(
+                    journal=journal, terminal=DevTerminal.PROVIDER_CONTINUATION_ERROR,
+                    counters=counters, cost_ledger=cost_ledger,
+                    cost_start_nanos=envelope.cost_start_nanos, hashes=hashes,
+                    message="segment recovery evidence is unavailable or invalid",
+                )
+                return _OneRunResult(_public_result(run_id, terminal), True)
+
         if resuming:
             store = ArtifactStore(state_root / "artifacts")
             completion = load_evaluation_completion(journal, store, envelope)
@@ -3676,6 +3850,15 @@ def _run_one_active(
                 planning_policy=request.planning_policy,
             )
             context_payload = json.loads(context)
+            if request.context_policy == segments.POLICY:
+                context_payload["remaining_budget"]["cost"] = {
+                    "currency": "USD", "unit": "nanodollar",
+                    "invocation_cap": cost_ledger.cap_nanos if cost_ledger else None,
+                    "settled_usage": cost_ledger.spent_nanos if cost_ledger else 0,
+                    "remaining": cost_ledger.remaining_nanos if cost_ledger else None,
+                    "provider": request.provider,
+                }
+                context = canonical_json(context_payload)
             projected_spans = list(context_payload["source_spans"])
             for projected_result in context_payload["latest_tool_results"]:
                 output = projected_result.get("output", {})
@@ -3728,6 +3911,8 @@ def _run_one_active(
                 window=native_compaction.active_window(journal, artifact_store)[1],
             ),
             **({"context_window": window_binding} if window_binding is not None else {}),
+            **({"context_segment": _segment_input_binding(journal, artifact_store)}
+               if request.context_policy == segments.POLICY else {}),
             "transcript_action_ids": [
                 item["call_id"]
                 for item in model_input
@@ -3771,7 +3956,41 @@ def _run_one_active(
             "active_elapsed_ms": int(elapsed_seconds * 1_000),
         }
         prepared_count = None
-        if compact_adapter is not None:
+        if request.context_policy == segments.POLICY:
+            try:
+                request_payload = (openai_adapter.request_payload(
+                    model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
+                ) if openai_adapter is not None else {
+                    "model": request.model, "input": model_input, "tools": schemas,
+                    "max_output_tokens": DEFAULT_OUTPUT_CEILING,
+                })
+                request_payload.update(parallel_tool_calls=True, tool_choice="required")
+                sizes = segments.request_sizes(request_payload)
+                reasons = segments.size_reasons(sizes)
+                turn_payload["context_request_sizes"] = sizes
+                if reasons:
+                    binding, _ = segments.active(journal, artifact_store)
+                    if segments.is_fresh(journal, binding):
+                        segments.record_limit(journal, sizes=sizes)
+                        terminal_code = DevTerminal.LIMIT_REACHED
+                        terminal_message = "fresh public state exceeds segment request size limit"
+                        break
+                    _build_model_input(
+                        journal=journal, artifact_store=artifact_store, context=context,
+                        latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
+                        planning_policy=request.planning_policy,
+                        force_segment_reason="+".join(reasons),
+                    )
+                    continue
+            except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError) as exc:
+                terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
+                terminal_message = (
+                    f"segment request is unavailable or invalid: {type(exc).__name__}"
+                )
+                break
+        if compact_adapter is not None or (
+            request.context_policy == segments.POLICY and openai_adapter is not None
+        ):
             try:
                 request_payload = openai_adapter.request_payload(
                     model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
@@ -3794,9 +4013,24 @@ def _run_one_active(
                     journal, boundary, bundle, openai_adapter, deadline, active_elapsed_ms,
                 )
                 counters.input_count_calls = _restore_counters(journal).input_count_calls
+                if (request.context_policy == segments.POLICY
+                        and prepared_count[1] > segments.MAX_INPUT_TOKENS):
+                    binding, _ = segments.active(journal, artifact_store)
+                    if segments.is_fresh(journal, binding):
+                        segments.record_limit(journal, input_tokens=prepared_count[1])
+                        terminal_code = DevTerminal.LIMIT_REACHED
+                        terminal_message = "fresh public state exceeds segment input token limit"
+                        break
+                    _build_model_input(
+                        journal=journal, artifact_store=artifact_store, context=context,
+                        latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
+                        planning_policy=request.planning_policy,
+                        force_segment_reason="input_tokens",
+                    )
+                    continue
                 prior_preparation = next((e["payload"] for e in journal.events()
                                           if e["event_type"] == "compaction_prepared"), None)
-                if ((prior_preparation is None
+                if (compact_adapter is not None and (prior_preparation is None
                      or prior_preparation["boundary_id"] == boundary["boundary_id"])
                         and native_compaction.eligible(
                             journal, threshold=request.compact_at_input_tokens,
@@ -3951,6 +4185,13 @@ def _run_one_active(
                 stop_remaining = True
                 break
             request_payload["max_output_tokens"] = admission.output_ceiling
+            if request.context_policy == segments.POLICY:
+                final_sizes = segments.request_sizes(request_payload)
+                if segments.size_reasons(final_sizes):
+                    segments.record_limit(journal, sizes=final_sizes)
+                    terminal_code = DevTerminal.LIMIT_REACHED
+                    terminal_message = "admitted request exceeds segment byte limit"
+                    break
             dispatch_timeout = remaining_active_seconds()
             if dispatch_timeout <= 0:
                 terminal_code = DevTerminal.LIMIT_REACHED

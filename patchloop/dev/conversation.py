@@ -9,8 +9,10 @@ window keeps its entire provider seed and explicit public evidence reentry.
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from typing import Any
 
+from patchloop.dev import segments
 from patchloop.dev.compacted_window import CompactedWindow
 from patchloop.dev.native_sources import PUBLIC_EVIDENCE_KIND
 from patchloop.dev.public_history import MUTABLE_FIELDS, SnapshotRules
@@ -66,10 +68,15 @@ WINDOW_RULES = SnapshotRules(
     initial_state_index=1,
     mutable_fields=MUTABLE_FIELDS | {"protocol_correction"},
 )
+SEGMENT_RULES = replace(WINDOW_RULES, mutable_fields=WINDOW_RULES.mutable_fields | {
+    "working_plan", "segment_handoff", "current_public_failure", "pending_recheck",
+    "last_successful_mutation", "last_failed_mutation", "recent_checks", "recent_probes",
+    "latest_tool_results", "public_execution_summary", "repair_recheck",
+})
 
 
 def _policy(context_policy: str) -> None:
-    if context_policy not in {APPEND_POLICY, WINDOW_POLICY}:
+    if context_policy not in {APPEND_POLICY, WINDOW_POLICY, segments.POLICY}:
         raise RecoveryError("unknown native context policy")
 
 
@@ -107,17 +114,19 @@ def history_metadata(
         )),
         "history_hash": sha256_json(history),
     }
-    if context_policy == WINDOW_POLICY:
+    if context_policy in {WINDOW_POLICY, segments.POLICY}:
         try:
             if window:
                 window.verify_prefix(items)
-            facts, exchanges, records = (window.rules if window else WINDOW_RULES).inventory(items)
+            rules = SEGMENT_RULES if context_policy == segments.POLICY else WINDOW_RULES
+            facts, exchanges, records = (window.rules if window else rules).inventory(items)
             archives = sum(_archive_view(WINDOW_RULES.payload(item)) for item in history)
             snapshots = metadata["state_update_count"] - archives
             if snapshots > 1:
                 raise ValueError("multiple current snapshots in managed window")
             metadata.update(
-                schema_version=WINDOW_SCHEMA, context_policy=WINDOW_POLICY,
+                schema_version=(segments.SCHEMA if context_policy == segments.POLICY
+                                else WINDOW_SCHEMA), context_policy=context_policy,
                 seed_hash=sha256_json(window.seed if window else items[:3]),
                 state_update_count=snapshots,
                 historical_evidence_count=archives,
@@ -182,7 +191,7 @@ def reconstruct_state(
             if item.get("role") != "developer":
                 continue
             view = json.loads(item["content"])
-            if context_policy == WINDOW_POLICY and _archive_view(view):
+            if context_policy in {WINDOW_POLICY, segments.POLICY} and _archive_view(view):
                 continue
             if (
                 not isinstance(view, dict) or set(view) != {"kind", "state"}
@@ -205,6 +214,24 @@ def assemble_model_input(
     window: CompactedWindow | None = None,
 ) -> list[dict[str, Any]]:
     _policy(context_policy)
+    if context_policy == segments.POLICY:
+        if window is not None:
+            raise RecoveryError("segmented-v1 forbids native compaction")
+        if previous_input is None:
+            previous_input = segment_seed(system_prompt, state["public_task"])
+        if reconstruct_state(previous_input, context_policy=context_policy).get("public_task") != (
+            state.get("public_task")
+        ):
+            raise RecoveryError("immutable segmented task changed")
+        latest = {"role": "developer", "content": canonical_json({
+            "kind": STATE_KIND, "state": {k: v for k, v in state.items() if k != "public_task"},
+        })}
+        items, _ = SEGMENT_RULES.compose(
+            seed=previous_input[:3], saved=previous_input, added=history,
+            reentry=latest, policy=context_policy, replace=True,
+        )
+        history_metadata(items, context_policy=context_policy)
+        return items
     if window:
         if context_policy != WINDOW_POLICY or state.get("public_task") != window.public_task:
             raise RecoveryError("compacted window requires the unchanged public task")
@@ -245,6 +272,16 @@ def assemble_model_input(
         )},
         dict(TASK_MESSAGE),
         *history,
+    ]
+
+
+def segment_seed(system_prompt: str, public_task: dict) -> list[dict]:
+    """An explicit independent request for the unchanged task, not fake tool feedback."""
+    return [
+        {"role": "system", "content": system_prompt + "\n" + CONVERSATION_INSTRUCTIONS
+         + "\n" + segments.INSTRUCTIONS},
+        {"role": "developer", "content": canonical_json({"public_task": public_task})},
+        dict(TASK_MESSAGE),
     ]
 
 

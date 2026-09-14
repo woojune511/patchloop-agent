@@ -118,10 +118,10 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
 
 
 def test_guidance_identity_changes_without_changing_run_schema_or_limits():
-    # v38 adds opt-in compaction boundaries; the v33/v34 argument and description
+    # v39 adds opt-in segment boundaries; the v33/v34 argument and description
     # identities above remain independently pinned and unchanged.
     assert dev_tool_surface_hash() == (
-        "sha256:5393d4fb6eab34c4db114fcfa18187e332cd1daac6cb07967d31da9e93003979"
+        "sha256:a076ac52db8457c004fc689272bdd557e4911e19c98517e4530fbf32a3dc0745"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

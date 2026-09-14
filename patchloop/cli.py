@@ -77,12 +77,12 @@ def dev(
         )
     ] = False,
     context_policy: Annotated[
-        Literal["append-v1", "native-window-v1"],
-        typer.Option("--context-policy", help="Opt-in current snapshot window; no compaction API."),
+        Literal["append-v1", "native-window-v1", "segmented-v1"],
+        typer.Option("--context-policy", help="Opt-in snapshot window or bounded public handoffs."),
     ] = "append-v1",
     planning_policy: Annotated[
         Literal["none", "brief-v1"],
-        typer.Option("--planning-policy", help="Opt-in bounded public planning; append-v1 only."),
+        typer.Option("--planning-policy", help="Public planning; append-v1 or segmented-v1."),
     ] = "none",
     compact_at_input_tokens: Annotated[
         int | None, typer.Option("--compact-at-input-tokens", min=1, max=271_999,
