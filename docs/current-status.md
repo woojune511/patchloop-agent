@@ -5,7 +5,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: v39 segmented public working state (provider-free)
+## Current seam: fresh segmented-policy pilot preparation (no paid execution)
+
+`diagnostics.segmented_pilot` prepares/inspects a separate four-run packet; it cannot
+execute runs or load credentials. Proposed order A1/B1/B2/A2, A=append-v1,
+B=segmented-v1. Both use brief-v1 planning, probes, repair-recheck, pyfakefs
+parent-traversal v2, mini snapshot 2026-03-17/medium, root `.env`, repeat 1,
+unchanged 40/100/4/1800 limits and 25k desired output ceiling. Proposed new cap:
+$1.20 per invocation / $4.80 group. Closed planning/compact grants are not reused.
+
+Packet destination: `C:\pt\analyses\segmented-pilot-20260914`. Freeze runtime/task/
+model/sandbox/schema identities and distinct fresh slot roots. The task-only input
+rehearsal verifies equal public information, not a real initial request or token fit.
+Actual dynamic requests remain journaled and counted by the existing runner.
+Official standard/global mini prices were checked on 2026-09-14 against the
+[API pricing table](https://developers.openai.com/api/docs/pricing):
+$0.75 input / $0.075 cached input / $4.50 output per million tokens.
+
+This is a combined-policy exploratory comparison, not an isolated test of reasoning
+reset or state compression. Record acceptance/submission, repair/recheck, actual
+plan/note delivery, request bytes/tokens and settled/noncached-equivalent cost.
+Two samples per arm do not establish superiority. Stop the entire group on cost,
+provider/count, execution/cleanup or integrity uncertainty; report unstarted slots.
+Preparation does not authorize execution. Exact new packet approval is the next gate;
+no B4 resume, old sample reuse, Docker start/pull/build or default-agent change.
+Validation: 12 packet + 35 segmented regression tests PASS in 75.540s, Ruff/diff
+checks PASS. Local CSV mock reaches one edit, checks, finish and isolated acceptance
+PASS/safety NOT_RUN in 5.503s (four mock turns, five tools, two segments, zero cost;
+no real probe/Docker). Receipts: `C:\pt\validation\segmented-pilot-20260914`.
+The runtime hash is unchanged from the prior full suite, so it was not repeated.
+9658 protected files, eight old journals and the closed-cycle result remain unchanged.
+
+## Prior seam: v39 segmented public working state (provider-free)
 
 Implemented opt-in `--context-policy segmented-v1`, supporting planning none/brief-v1.
 Defaults stay append/OFF. Native reasoning/call/result identity stays exact inside

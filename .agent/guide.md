@@ -787,7 +787,22 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: v39 segmented-v1 implemented for provider-free verification.
+Current seam: new four-run segmented-policy pilot packet, preparation only.
+Use `diagnostics.segmented_pilot prepare/inspect`, not the closed planning executor.
+Destination C:\pt\analyses\segmented-pilot-20260914; A1/B1/B2/A2, append vs segmented,
+both planning brief-v1/probes/repair-recheck, mini snapshot/medium, pyfakefs v2,
+root .env/repeat1, proposed1.20USD per slot/4.80USD total. No grant is inherited.
+Only context_policy differs in arm config; fresh slot paths differ intentionally.
+Task-only serialization is not a real counted model input. Actual requests are
+frozen at dispatch by dev-head. A combined-policy, two-per-arm pilot cannot isolate
+reasoning reset or prove performance. Exact packet approval remains required.
+Preparation reads no credentials, calls no provider/count or Docker, and leaves
+closed runs untouched. See current-status for outcomes/stop rules and validation.
+Focused packet/segmented tests47PASS/75.540s; Ruff/diffPASS, local CSV mock reaches
+isolated acceptancePASS/safetyNOT_RUN in5.503s/two segments. Runtime hash unchanged;
+no new full suite or real probe/Docker. Receipt C:\pt\validation\segmented-pilot-20260914.
+
+Prior seam: v39 segmented-v1 implemented for provider-free verification.
 See [segmented-context.md](plans/segmented-context.md). New segment CAS/event and
 prepared counts recover once, after pending tools. Required public state survives
 empty notes; stale plans/checks never gain authority. B4 is a read-only size/evidence
