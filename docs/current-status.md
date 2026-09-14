@@ -7,7 +7,7 @@ claim commands are absent.
 
 ## Current seam: B-first segmented comparison preparation (provider-free)
 
-Prepare a separate B1/A1/A2/B2 packet after the usage-diagnostics repair. The old
+Prepared a separate B1/A1/A2/B2 packet after the usage-diagnostics repair. The old
 group stopped before any B sample, so this predeclared balanced mirror starts B;
 it does not resume the old group or reuse A1. A=append-v1, B=segmented-v1, both
 brief-v1 planning/probes/repair-recheck, mini 2026-03-17/medium, pyfakefs v2,
@@ -21,6 +21,9 @@ include SDK field presence, count relation and UNKNOWN billing, not just legacy 
 Preparation cannot execute runs, load credentials or inspect Docker. Actual input
 fit is still measured only by the runner at dispatch, not by the task-only rehearsal.
 Destination: `C:\pt\analyses\segmented-pilot-bfirst-20260914`.
+Packet `1cb640713918beacd3f45dfa3d20b5688111060def697a4910fe9eba5a4a4097`,
+prepared at `cba713fb`; repeated read-only inspect PASS. No live state/approval
+created, provider/count/compact/Docker calls0. See that directory's `result.md`.
 This is a new packet proposal, not approval or evidence of A/B improvement. The
 stopped packet/grant remains closed; exact new-packet approval precedes paid work.
 Focused packet/usage/source-gate tests56 PASS/7.163s; Ruff/diff checks PASS. Local
@@ -28,6 +31,10 @@ CSV mock append/OFF and segmented/brief-v1 both reach isolated acceptance PASS,
 safety NOT_RUN (3.917s/4.521s); segmented delivers revision2 across two segments.
 Receipt: `C:\pt\validation\segmented-pilot-bfirst-20260914`. Production runtime
 hash is unchanged from the prior full-suite receipt, so the full suite is not repeated.
+Focused command/Ruff/mock command total18.20s. Protected9658 files, eight planning
+journals, old A1 and old packet unchanged; .env only integrity-hashed, not loaded.
+Official standard/global rates checked2026-09-14: $0.75/$0.075/$4.50 per million
+input/cached-input/output tokens ([API pricing](https://developers.openai.com/api/docs/pricing)).
 
 ## Prior seam: provider usage evidence (provider-free)
 

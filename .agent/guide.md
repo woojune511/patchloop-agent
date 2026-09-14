@@ -804,7 +804,7 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: prepare a new B1/A1/A2/B2 segmented-policy pilot, provider-free only.
+Current seam: new B1/A1/A2/B2 segmented-policy pilot prepared, provider-free only.
 Use `diagnostics.segmented_pilot prepare --order b-first` and read-only inspect.
 Default a-first stays unchanged; runtime/prompt/tool policies are not changed.
 Both arms use brief-v1/probes/repair-recheck, mini snapshot/medium, pyfakefs v2,
@@ -816,6 +816,10 @@ and count relations; UNKNOWN billing still stops the entire invocation/group.
 The runtime is unchanged since the usage-evidence full-suite receipt. Run focused
 preparer/usage/source-gate tests, Ruff and local mock; do not repeat an unchanged
 18-minute full suite merely for a diagnostics ordering option. Record actual timings.
+Packet1cb64071 frozen atcba713fb; repeated inspectPASS, focused56PASS/7.163s,
+Ruff/diffPASS and CSV mock acceptancePASS/safetyNOT_RUN, segmented planrev2/two segments.
+Focused command/Ruff/mock total18.20s; all provider/count/compact/Docker calls0.
+Protected evidence hashes preserved (.env integrity only, never credential-loaded).
 No prior sample reuse, default change or efficacy claim; exact packet approval remains
 the next paid gate. See current-status for the packet and latest verification receipt.
 
