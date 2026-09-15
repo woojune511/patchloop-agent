@@ -6,7 +6,41 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: AnyIO v2 repairs a public failure but still fails acceptance
+## Current seam: public review reproduces fixture context loss and a false PASS gap
+
+The final v2 submitted diff 5c86ad61... was reviewed against pinned public source,
+tests and documentation. AnyIO documents that async fixture setup/test/teardown
+share one task. The patch cancels and clears that task, then recreates it. Its
+non-Exception branch also resets the runner for pytest Skipped/OutcomeException.
+
+One frozen provider-free diagnostic ran five public cases on independent BASE and
+SUBMITTED clones in the existing pinned image: two containers, ten observations,
+17.403s, no retry/new repair candidate/private evaluation. Normal context setup/
+cleanup passes both. BASE preserves fixture context after skip and during interrupt
+cleanup, but resumes interrupted test code. SUBMITTED prevents resumption but loses
+the fixture context: skip then context read fails and token reset raises ValueError;
+interrupt teardown similarly fails token reset or task-group cancel-scope task identity.
+
+The ordinary task-group control exposes why v2 could say PASS: cleanup-body completion
+is logged before task-group __aexit__, and the final xfail test classifies the teardown
+error as xfailed. Call outcomes still match 1 PASS/1 FAIL/1 SKIP/1 XFAIL; the old
+failed-only fixture-error predicate ignores that extra xfailed teardown. The revised
+diagnostic observes no completion after the context-manager exit. This is a confirmed
+public check gap, not an identified hidden evaluator failure.
+
+The old trace has 17 source inspections, none of docs or tests. The existing worker's
+OutcomeException exemption was delivered; the CancelScope task-identity guard was not.
+The contextvar fixture example belongs to deselected test_plugin. Neither model-context
+loss nor insufficient model capability is established by these observations.
+
+Design checks 8 PASS/0.08s; diagnostics/active-code Ruff and docs layout PASS. Runtime,
+task v2 and earlier evidence remain unchanged; prior full/mock validation retained.
+No model/count calls or additional model cost; all official=false. Next implementation:
+add a versioned public check that verifies same-task/context continuity, completion
+after task-group exit and teardown outcomes independently of final-test xfail status.
+Report: `C:\pt\analyses\anyio-v2-fixture-review-20260916-v1\result.md`.
+
+## Prior seam: AnyIO v2 repairs a public failure but still fails acceptance
 
 One authorized fresh run used AnyIO v2 with the same GPT-5.4-2026-03-05/medium,
 brief-v1/segmented-v1, enabled probes, probe-policy none, repair-recheck and $1.20
