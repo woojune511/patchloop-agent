@@ -1,0 +1,302 @@
+schema_version: task-public-v1
+task_id: anyio-interrupt-runner-cleanup
+task_version: 2
+split: dev-train
+repository:
+  url: https://github.com/agronholm/anyio.git
+  base_commit: cb245dba9883516f2ed4c23899de157183a1cb50
+  language: python
+issue:
+  title: Async pytest tests resume after KeyboardInterrupt during fixture teardown
+  description: |
+    On the asyncio backend, interrupting an async pytest test that uses an
+    async-generator fixture can leave the test runner alive. When pytest later
+    re-enters the event loop to tear the fixture down, the interrupted test may
+    resume and execute code that should never run.
+
+    Ensure the interrupt still propagates, the interrupted test cannot resume,
+    and async fixture cleanup completes exactly once. Preserve normal pytest
+    pass, failure, skip, and expected-failure outcomes, including fixtures whose
+    lifetime spans more than one test.
+constraints:
+  allowed_paths:
+    - src/anyio/**
+  forbidden_paths:
+    - tests/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - uv.lock
+    - requirements.txt
+  max_changed_files: 1
+  max_diff_lines: 50
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: interrupt-lifecycle-contract
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -B
+      - -c
+      - |
+        """Public issue reproducer: executed only inside the pinned, offline container."""
+        from __future__ import annotations
+
+        import json
+        import os
+        import subprocess
+        import sys
+        import tempfile
+        from collections import Counter
+        from pathlib import Path
+
+        CASES = (
+            ("interrupt_function", "interrupt", "function"),
+            ("interrupt_module", "interrupt", "module"),
+            ("explicit_cancel", "cancel", "function"),
+            ("ordinary_module", "ordinary", "module"),
+        )
+        EMITTER = '''import json
+        from pathlib import Path
+
+        def emit(event, **details):
+            with Path("events.jsonl").open("a", encoding="utf-8") as stream:
+                stream.write(json.dumps({"event": event, **details}) + "\\n")
+        '''
+        CONFTEST = '''from event_log import emit
+
+        def pytest_keyboard_interrupt(excinfo):
+            emit("keyboard_interrupt_observed", exception=excinfo.typename)
+
+        def pytest_runtest_logreport(report):
+            outcome = "xfailed" if report.skipped and hasattr(report, "wasxfail") else report.outcome
+            emit("pytest_report", nodeid=report.nodeid, phase=report.when, outcome=outcome)
+
+        def pytest_sessionfinish(session, exitstatus):
+            emit("session_finished", exitstatus=int(exitstatus))
+        '''
+
+
+        def module_text(kind: str, scope: str) -> str:
+            header = f'''import asyncio
+        import pytest
+        from anyio import create_task_group
+        from event_log import emit
+
+        @pytest.fixture(scope="module")
+        def anyio_backend():
+            return "asyncio"
+
+        @pytest.fixture(scope={scope!r})
+        async def resource():
+            token = object()
+            emit("fixture_setup", resource_id=id(token), task_id=id(asyncio.current_task()))
+        '''
+            fixture_body = '''try:
+            yield token
+        finally:
+            emit("fixture_cleanup_started", task_id=id(asyncio.current_task()))
+            await asyncio.sleep(0)
+            emit("fixture_cleanup_completed")
+        '''
+            if kind == "ordinary":
+                header += "    async with create_task_group():\n"
+                indent = "        "
+            else:
+                indent = "    "
+            header += "\n".join(indent + line for line in fixture_body.splitlines()) + "\n\n"
+            if kind == "ordinary":
+                return header + '''@pytest.mark.anyio
+        async def test_1_pass(resource):
+            emit("ordinary_pass", resource_id=id(resource))
+            await asyncio.sleep(0)
+            assert resource is not None
+
+        @pytest.mark.anyio
+        async def test_2_failure(resource):
+            emit("ordinary_failure", resource_id=id(resource))
+            assert False, "intentional public failure control"
+
+        @pytest.mark.anyio
+        async def test_3_skip(resource):
+            emit("ordinary_skip", resource_id=id(resource))
+            pytest.skip("intentional public skip control")
+
+        @pytest.mark.anyio
+        @pytest.mark.xfail(strict=True, reason="intentional public expected-failure control")
+        async def test_4_xfail(resource):
+            emit("ordinary_xfail", resource_id=id(resource))
+            assert False
+        '''
+            if scope == "module":
+                header += '''@pytest.mark.anyio
+        async def test_0_prior(resource):
+            emit("prior_test", resource_id=id(resource))
+            await asyncio.sleep(0)
+
+        '''
+            return header + f'''def interrupt():
+            emit("callback_keyboard_interrupt")
+            raise KeyboardInterrupt
+
+        @pytest.mark.anyio
+        async def test_1_interruption(resource):
+            emit("test_started", resource_id=id(resource))
+            loop = asyncio.get_running_loop()
+            if {kind!r} == "interrupt":
+                loop.call_soon(interrupt)
+            else:
+                loop.call_soon(asyncio.current_task().cancel)
+            try:
+                await asyncio.sleep(0)
+                emit("post_interrupt")
+            except asyncio.CancelledError:
+                emit("test_cancel_handler")
+                raise
+            finally:
+                emit("test_finally")
+        '''
+
+
+        def assess(record: dict, kind: str) -> dict:
+            events = record["events"]
+            counts = Counter(e["event"] for e in events)
+            calls = Counter(e["outcome"] for e in events
+                            if e["event"] == "pytest_report" and e["phase"] == "call")
+            assertions = {
+                "fixture_setup_once": counts["fixture_setup"] == 1,
+                "fixture_cleanup_started_once": counts["fixture_cleanup_started"] == 1,
+                "fixture_cleanup_completed_once": counts["fixture_cleanup_completed"] == 1,
+                "no_fixture_error": not any(e["event"] == "pytest_report"
+                                            and e["phase"] in {"setup", "teardown"}
+                                            and e["outcome"] == "failed" for e in events),
+            }
+            if kind == "interrupt":
+                assertions.update(
+                    interrupt_propagated=record["exit_code"] == 2 and any(
+                        e["event"] == "keyboard_interrupt_observed"
+                        and e["exception"] == "KeyboardInterrupt" for e in events),
+                    interrupted_test_never_resumed=counts["post_interrupt"] == 0,
+                    interrupt_callback_observed=counts["callback_keyboard_interrupt"] == 1,
+                )
+            elif kind == "ordinary":
+                assertions.update(
+                    expected_outcomes=dict(calls) == {"passed": 1, "failed": 1,
+                                                     "skipped": 1, "xfailed": 1},
+                    expected_exit=record["exit_code"] == 1,
+                    shared_fixture=len({e["resource_id"] for e in events if "resource_id" in e}) == 1,
+                )
+            else:
+                assertions.update(cancel_handler_entered=counts["test_cancel_handler"] == 1,
+                                  cancelled_test_never_resumed=counts["post_interrupt"] == 0)
+            return {"assertions": assertions, "event_counts": dict(counts),
+                    "call_outcomes": dict(calls), "passed": all(assertions.values()),
+                    "scope": "public_requirement_case" if kind == "interrupt" else "public_control"}
+
+
+        def run_cases() -> list[dict]:
+            import anyio
+            import anyio._backends._asyncio as backend
+
+            source_root = Path("/workspace/src")
+            assert Path(anyio.__file__).resolve().is_relative_to(source_root)
+            assert Path(backend.__file__).resolve().is_relative_to(source_root)
+            results = []
+            with tempfile.TemporaryDirectory(prefix="public-interrupt-", dir="/tmp") as scratch:
+                for case_id, kind, scope in CASES:
+                    path = Path(scratch) / case_id
+                    path.mkdir()
+                    for name, text in (("event_log.py", EMITTER), ("conftest.py", CONFTEST),
+                                       ("test_public.py", module_text(kind, scope)),
+                                       ("pytest.ini", "[pytest]\n")):
+                        (path / name).write_text(text, encoding="utf-8")
+                    record = {"case_id": case_id, "kind": kind, "fixture_scope": scope,
+                              "timed_out": False}
+                    try:
+                        result = subprocess.run(
+                            [sys.executable, "-B", "-m", "pytest", "-q", "--no-header",
+                             "-p", "no:cacheprovider", "-p", "anyio.pytest_plugin",
+                             "-c", str(path / "pytest.ini"), "--confcutdir", str(path),
+                             "--basetemp", str(path / "pytest-tmp"), "test_public.py"],
+                            cwd=path, env={**os.environ, "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+                                           "PYTHONPATH": "/workspace/src", "PYTHONDONTWRITEBYTECODE": "1"},
+                            text=True, encoding="utf-8", capture_output=True, timeout=15, check=False,
+                        )
+                        record.update(exit_code=result.returncode, stdout=result.stdout,
+                                      stderr=result.stderr)
+                    except subprocess.TimeoutExpired:
+                        record.update(timed_out=True, exit_code=None, stdout="", stderr="")
+                    event_file = path / "events.jsonl"
+                    record["events"] = [json.loads(line) for line in event_file.read_text(
+                        encoding="utf-8").splitlines()] if event_file.is_file() else []
+                    results.append(record)
+                    if record["timed_out"]:
+                        break
+            return results
+
+
+        def report(results: list[dict]) -> int:
+            expected = [case_id for case_id, _, _ in CASES]
+            observed = [record["case_id"] for record in results]
+            complete = observed == expected
+            passed = 0
+            for record in results:
+                assessment = assess(record, record["kind"])
+                checks = assessment["assertions"]
+                checks["completed_before_timeout"] = not record["timed_out"]
+                checks["pytest_session_finished"] = assessment["event_counts"].get("session_finished") == 1
+                expected_exit = 2 if record["kind"] == "interrupt" else 1
+                checks["expected_pytest_exit"] = record["exit_code"] == expected_exit
+                failed = [name for name, value in checks.items() if not value]
+                if not failed:
+                    passed += 1
+                    print("PASS " + record["case_id"], flush=True)
+                    continue
+                print("FAIL " + record["case_id"] + ": " + ", ".join(failed), flush=True)
+                print("  observed_event_counts=" + json.dumps(assessment["event_counts"], sort_keys=True))
+                print("  observed_event_order=" + json.dumps([event["event"] for event in record["events"]]))
+                print("  pytest_exit=" + str(record["exit_code"]))
+                if record["exit_code"] != expected_exit or not record["events"]:
+                    print((record["stdout"] + record["stderr"])[-4000:])
+            if not complete:
+                print("FAIL case_completion: expected=" + repr(expected) + " observed=" + repr(observed))
+            print(str(passed) + " passed, " + str(len(CASES) - passed) + " failed", flush=True)
+            return 0 if complete and passed == len(CASES) else 1
+
+
+        def main() -> int:
+            return report(run_cases())
+
+
+        if __name__ == "__main__":
+            raise SystemExit(main())
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+  - id: upstream-pytest-plugin-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - tests/test_pytest_plugin.py
+      - --deselect
+      - tests/test_pytest_plugin.py::test_plugin
+      - --deselect
+      - tests/test_pytest_plugin.py::test_hypothesis_module_mark
+      - --deselect
+      - tests/test_pytest_plugin.py::test_hypothesis_function_mark
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/src
+tags:
+  - swe-rebench
+  - real-repository
+  - asyncio
+  - pytest-plugin
+  - interrupt-lifecycle
+  - memory-development

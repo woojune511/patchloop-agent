@@ -6,7 +6,37 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: public failure feedback reached GPT-5.4 but it submitted unchanged
+## Current seam: AnyIO v2 registers the interrupt reproduction as a public check
+
+`tasks/dev-train/anyio-interrupt-runner-cleanup-v2` adds the public
+interrupt-lifecycle-contract check before the existing pytest-plugin regression.
+The command preserves the frozen public reproduction/assessment cases but now
+returns FAIL when their semantic assertions fail. Collecting observations is no
+longer process success. Expected child pytest interrupt/failure exits are handled
+separately from the parent check verdict.
+
+The existing gateway gives this failure current-diff identity, blocks finish and
+permits the same check after mutation. Both append-v1 and segmented-v1 inputs were
+verified, including historical failure preservation and action replay after restart.
+No runtime, planning, probe, segment or cost-policy change. Task v1 is unchanged;
+v2 preserves its issue, source, constraints and old regression, and copies private
+artifacts unchanged with only private metadata's task version incremented.
+
+Real checks in the existing AnyIO image still reject BASE and submitted 7ffaade0...
+for function/module test resumption. BASE additionally fails the cancellation
+control; the submitted patch passes both controls. Both pass 32 regression tests
+(3 deselected). The registered reproducer exits 1 and the actual model-input
+projection contains current FAIL with submission disabled. Four checks completed
+in 40.364s, with no model call, remote source fetch or private AnyIO evaluation.
+
+Focused 13 PASS/15.116s; full regression 2354 PASS/8 SKIP in 2394.457s with
+--durations=20 recorded. Standalone mock reaches edit/check/submit/isolated fixture
+evaluation in 5.443s with four inputs verified. Ruff PASS. All evidence is
+official=false; a real corrected AnyIO candidate and model behavior on v2 remain
+unobserved. V1/v2 results cannot be pooled as an unchanged task.
+Report:`C:\pt\analyses\anyio-public-check-v2-20260916-v1\result.md`.
+
+## Prior seam: public failure feedback reached GPT-5.4 but it submitted unchanged
 
 One authorized pre-submission continuation used GPT-5.4-2026-03-05/medium with
 the same brief-v1/segmented-v1 runtime, tools and prepared-source checkpoint.
