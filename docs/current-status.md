@@ -5,7 +5,35 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: submission-guidance diagnostic closed; no observed action change
+## Current seam: verification narrowing traced; no transport loss found in two runs
+
+Read-only A1/A3 public trace audit verified task/diff/plan/notes and count/dispatch
+identity across all 32 requests. A1's first edit at T14 already framed verification
+as enough for registered checks; A3 T13 said submit if the first check passes before
+that check ran. All original public goals remained present. A1 v1's original concern
+survived projection and was explicitly resolved by the model at T17 using upstream
+PASS; A3 never requested a memory update. No plan/concern transport loss was found.
+The projection omits only repeated interpretation text and concern turn metadata,
+not original statement/progress/status/evidence. No runtime fix was made.
+
+Public static review: A1 bypassed an already observed file-versus-directory guard
+in its new traversal branch; A3's prefix stack discards leading relative `..`.
+These are unexecuted public-code observations, not newly reproduced hidden failures.
+The focused visible check has four absolute-path calls; its PASS alone cannot settle
+all relative/symlink/existing-target assumptions. Do not infer complete upstream
+test coverage from its aggregate result. All 32 requests offered run_probe; the
+last inputs still had three edits and 24/26 model calls. This was not forced by budget.
+
+Next candidate is one plan-content axis after edits: connect a newly assumed/bypassed
+behavior to a concrete discriminating public input/observation, not another goal recap.
+No implementation/adoption/new paid packet yet; no mandatory probe, judge or stronger
+mask. This does not isolate model ability from earlier prompt/workflow effects.
+53 focused contract tests PASS/1.140s; documentation3 PASS, Ruff PASS. 184 recent
+and 9,658 historical protected files unchanged; one owned pytest root recycled.
+No provider/count/candidate/Docker/evaluator execution or repeated full suite/mock.
+Report: `C:\pt\analyses\verification-narrowing-20260915\result.md`. official=false.
+
+## Prior seam: submission-guidance diagnostic closed; no observed action change
 
 Eight independent responses at the two fixed public checkpoints all selected
 finish_task: current recommendation A4/4, eligibility-facts-only B4/4. Zero probe,

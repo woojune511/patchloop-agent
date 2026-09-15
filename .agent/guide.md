@@ -818,7 +818,26 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: submission-guidance diagnostic closed; no observed action difference.
+Current seam: read-only verification-narrowing analysis, no runtime change.
+A1/A3: all 32 request task/diff/plan/notes and dispatch/count identities verified.
+A1 T14 first-edit plan narrows to registered checks; A3 T13 says submit on first
+check PASS before its result. A1 v1 original survives; the model resolves it at T17
+using regression PASS. A3 supplies no memory updates. No dropped plan/concern found.
+Projection removes constant explanations/creation-update turn IDs, not behavior
+statements or evidence. The gateway binds evidence identity, not semantic coverage;
+do not recast its intended advisory boundary as a discovered storage bug.
+Static public candidates: A1 bypasses an observed directory-type guard; A3 drops
+leading relative `..`. No candidate re-execution or hidden assertion attribution.
+All requests offer probe; final budgets include three edits and 24/26 model calls.
+Next unimplemented candidate: edit-review plan content tying one newly assumed or
+bypassed behavior to a discriminating public input/observation. No injected cases,
+mandatory probe, extra model call, judge or stronger mask. No new paid packet.
+53 focused contract tests PASS/1.140s, documentation3 PASS, Ruff PASS; 184 recent
+and 9658 historical protected files unchanged. One owned pytest root recycled.
+No provider/count/Docker/evaluation; no repeated full suite/mock. Report:
+C:\pt\analyses\verification-narrowing-20260915\result.md. official=false.
+
+Prior seam: submission-guidance diagnostic closed; no observed action difference.
 All eight independent responses selected finish_task: A4/4, B4/4; zero probes/edits/
 inspections. The two source plans already said submit after regression PASS. C1
 revision15/n1/v1 delivered, four proposed note/plan updates and concern resolutions;
