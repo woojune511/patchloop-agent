@@ -6,7 +6,30 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: three-task baseline stopped; line-table compatibility fixed
+## Current seam: anyio last-candidate verification after collector repair
+
+The user requested checking correctness after the collector fix. One provider-free
+operator diagnostic evaluated N1's exact last candidate, which the agent had not
+submitted. Candidate `sha256:cb98c62f6c9fbf9cd5a873b8d4a32703805272cd12321a22cd4cafd748f6a3d8`:
+one file,22 additions/6 deletions. The fixed runtime remains `8cf66ab8` with the same
+content hash as its completed2341 PASS/8 SKIP validation.
+
+A fresh prepared-source clone and the existing pinned anyio image ran the declared
+public check once:31 PASS,1 FAIL,3 deselected; line collection completed. The public
+failure is `test_module_scoped_task_group_fixture`: fixture setup and teardown enter
+and exit a cancel scope in different asyncio tasks after the candidate creates a new
+Task for each runner request. A second clean workspace received the identical artifact
+for one isolated evaluation:acceptance FAIL/safety PASS,PUBLIC_REGRESSION_FAILED.
+Only the aggregate evaluator summary was inspected; diagnosis uses public evidence.
+
+No model/count calls or added model cost. All4477 prior experiment files remained
+byte-identical; no containers remained. No agent resumption, repair, submission or
+replacement baseline row occurred. The original six-run comparison stays closed and
+incomplete. This establishes failure of that intermediate candidate, not how the model
+would recover after valid feedback. All official=false.
+Report:`C:\pt\analyses\anyio-final-patch-check-20260916-v1\result.md`.
+
+## Prior seam: three-task baseline stopped; line-table compatibility fixed
 
 The user authorized the proposed six-run baseline without further confirmation:
 tox-cross-section-empty-substitution, pdm-ignore-active-venv-resolution and
