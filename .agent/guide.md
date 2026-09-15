@@ -841,7 +841,18 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: prepared source implementation and context-only A4/B4 are complete.
+Current seam: anyio public verification-gap audit is complete; runtime unchanged.
+All 10 actual public inputs were verified; the final plan and v1 remain present.
+The model resolves v1 using regression PASS; its 14 inspections never inspect
+test assertions. The public
+interrupt case does not combine async-generator teardown with no-resumption and
+exactly-once assertions. A stdlib host control distinguishes loop KeyboardInterrupt
+from coroutine cancellation; it is not a pinned-image AnyIO candidate verdict.
+Next diagnostic is that combined public scenario on base/frozen submission, not
+another prompt variation or a new paid grant. See current-status.md and
+C:\pt\analyses\anyio-verification-gap-20260916-v1\result.md. official=false.
+
+Prior seam: prepared source implementation and context-only A4/B4 are complete.
 Implementation c2802f9 adds optional independent local run/evaluator clones; source
 identity stays outside model context. Final focused26 PASS/26.980s; full2332 PASS/
 8 SKIP/739.561s with --durations=15 and fixed runtime/tests. One final Ruff line-wrap

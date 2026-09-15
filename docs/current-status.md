@@ -6,7 +6,35 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: fresh anyio run completed; public PASS, acceptance FAIL
+## Current seam: anyio verification gap traced to an untested interrupt assumption
+
+The public-only follow-up reconstructed all ten actual requests from the fresh
+anyio run. The initial plan retains all required behavior; the final input still
+contains unresolved v1 and the current plan/diff/check. The model resolves v1 with
+regression PASS and submits. All 14 inspections target implementation source;
+none inspects test assertions. Public tracked tests are readable. Verification
+already narrows to the suite before the final segment transition; no lost concern
+or forced budget closure explains this decision.
+
+The public interrupt test lacks an async-generator fixture and post-interrupt or
+cleanup-count assertions. Separate fixture regressions do not test that combined
+scenario. The candidate adds CancelledError cleanup, while TestRunner calls
+run_until_complete, not Runner.run's SIGINT cancellation path. A stdlib-only host
+control confirms callback KeyboardInterrupt can leave work pending: it resumes
+during async-generator teardown without entering the cancellation handler.
+Explicit cancellation does enter it and prevents resumption. Host Python 3.14.5,
+0.0585s; no AnyIO candidate or pinned-image execution. This is a mechanism
+hypothesis supported by public source/control, not a reproduced hidden failure.
+
+Next diagnostic: one public interrupt/reentry case with a post-interrupt sentinel
+and exactly-once cleanup assertion, on the base and frozen submitted patch, before
+another prompt change. Not executed here; no new paid sample or runtime change.
+Request/concern audit 10/10 in 0.7205s; focused 61 PASS/2.69s; Ruff PASS. All 891 source
+analysis/user files unchanged. Prior full regression/mock remain applicable.
+No provider/count/Docker/evaluation or task-package modification. official=false.
+Report:`C:\pt\analyses\anyio-verification-gap-20260916-v1\result.md`.
+
+## Prior seam: fresh anyio run completed; public PASS, acceptance FAIL
 
 The user approved one fresh anyio run after collector repair:exact dev-train task,
 gpt-5.4-2026-03-05/medium,segmented-v1,brief-v1,probes enabled,probe-policy none,
