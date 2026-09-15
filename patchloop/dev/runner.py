@@ -100,6 +100,7 @@ from patchloop.errors import (
     ResumeContractMismatch,
 )
 from patchloop.git_execution import GitExecutionUncertain, run_git
+from patchloop.prepared_source import admission_hash, load_source
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import (
     git_commit,
@@ -2695,6 +2696,7 @@ def _run_envelope(
     cost_ledger: DevCostLedger | None,
     cost_start_nanos: int,
     created_at: Any | None = None,
+    prepared_source_hash: str | None = None,
 ) -> DevRunEnvelope:
     return DevRunEnvelope(
         run_id=run_id,
@@ -2704,6 +2706,9 @@ def _run_envelope(
         task_version=package.public.task_version,
         split=package.public.split,
         base_commit=package.public.repository.base_commit,
+        prepared_source_path=(str(request.prepared_source.resolve())
+                              if request.prepared_source is not None else None),
+        prepared_source_hash=prepared_source_hash,
         public_spec_hash=package.public_spec_hash,
         private_spec_hash=package.private_spec_hash,
         task_content_hash=package.task_content_hash,
@@ -3253,6 +3258,7 @@ def _run_one(
                 cost_ledger=cost_ledger,
                 cost_start_nanos=envelope.cost_start_nanos,
                 created_at=envelope.created_at,
+                prepared_source_hash=envelope.prepared_source_hash,
             )
             _validate_resume_envelope(envelope, expected)
             if cost_ledger is not None:
@@ -3277,6 +3283,7 @@ def _run_one(
                 model_hash=model_hash,
                 cost_ledger=cost_ledger,
                 cost_start_nanos=cost_start_nanos,
+                prepared_source_hash=admission_hash(request.prepared_source),
             )
             journal.write_envelope(envelope)
             journal.append(
@@ -3508,6 +3515,9 @@ def _run_one_active(
     workspace_manager = WorkspaceManager(
         repository_root() / "fixtures" / "repositories",
         state_root / "workspaces",
+        **({"prepared_source": request.prepared_source,
+            "prepared_source_hash": envelope.prepared_source_hash}
+           if request.prepared_source is not None else {}),
     )
     workspace_path = state_root / "workspaces" / run_id / "repo"
     try:
@@ -3515,6 +3525,12 @@ def _run_one_active(
             _live_source_preflight(task_dir, package, deadline=deadline)
         if resuming and not workspace_path.exists():
             raise RecoveryError("resumable development workspace is missing")
+        if request.prepared_source is not None and workspace_path.exists():
+            load_source(
+                request.prepared_source, package.public.repository.url,
+                package.public.repository.base_commit,
+                expected_hash=envelope.prepared_source_hash, deadline=deadline,
+            )
         workspace = (
             workspace_manager.validate_managed_workspace(workspace_path)
             if workspace_path.exists()
@@ -3525,6 +3541,14 @@ def _run_one_active(
                 deadline=deadline,
             )
         )
+        if request.prepared_source is not None and not any(
+            event["event_type"] == "prepared_source_bound" for event in journal.events()
+        ):
+            journal.append("prepared_source_bound", {
+                "manifest_hash": envelope.prepared_source_hash,
+                "repository_url": package.public.repository.url,
+                "base_commit": package.public.repository.base_commit,
+            })
     except (ExecutionDeadlineExceeded, GitExecutionUncertain):
         raise
     except PatchLoopError as exc:

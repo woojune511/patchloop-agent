@@ -17,7 +17,7 @@ from patchloop.errors import ContractError, PatchLoopError
 from patchloop.task_loader import load_task_package
 
 app = typer.Typer(no_args_is_help=True, help="PatchLoop mutable development harness")
-task_app = typer.Typer(no_args_is_help=True, help="Validate audited task packages")
+task_app = typer.Typer(no_args_is_help=True, help="Validate tasks and prepare audited sources")
 app.add_typer(task_app, name="task")
 
 
@@ -68,6 +68,9 @@ def dev(
         typer.Option("--max-cost-usd"),
     ] = None,
     repeat: Annotated[int, typer.Option("--repeat", min=1, max=6)] = 1,
+    prepared_source: Annotated[
+        Path | None, typer.Option("--prepared-source", help="Use an immutable prepared source.")
+    ] = None,
     enable_probes: Annotated[
         bool, typer.Option("--enable-probes", help="Enable bounded clean-Python diagnostics.")
     ] = False,
@@ -116,6 +119,7 @@ def dev(
                 env_file=env_file,
                 max_cost_usd=_parse_cost(max_cost_usd),
                 repeat=repeat,
+                prepared_source=prepared_source,
                 enable_probes=enable_probes,
                 probe_policy=probe_policy,
                 repair_recheck=repair_recheck,
@@ -144,6 +148,29 @@ def validate_task(task_dir: Annotated[Path, typer.Argument(exists=True, file_oka
             "private_spec_hash": package.private_spec_hash,
             "task_content_hash": package.task_content_hash,
         }
+
+    _guarded(operation)
+
+
+@task_app.command("prepare-source")
+def prepare_task_source(
+    task_dir: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+    output: Annotated[Path, typer.Option("--output", help="New directory outside the repository")],
+) -> None:
+    """Fetch an audited base once; publish a descriptor for offline independent clones."""
+    from patchloop.deadline import ExecutionDeadline
+    from patchloop.prepared_source import admission_hash, prepare_source
+    from patchloop.runtime import repository_root
+
+    def operation() -> object:
+        package = load_task_package(task_dir)
+        path = prepare_source(
+            repository_url=package.public.repository.url,
+            base_commit=package.public.repository.base_commit, output=output,
+            fixture_root=repository_root() / "fixtures/repositories",
+            deadline=ExecutionDeadline.from_remaining(120),
+        )
+        return {"ok": True, "prepared_source": str(path), "content_hash": admission_hash(path)}
 
     _guarded(operation)
 

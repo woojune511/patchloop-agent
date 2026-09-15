@@ -666,6 +666,18 @@ references may therefore point to recycled scratch, not missing durable run evid
 
 ## State and recovery
 
+Optional prepared source: `patchloop task prepare-source <task-dir> --output <external>`
+publishes a new `prepared-source-v1` descriptor only after exact source checkout,
+Git tree and raw public content verification. `--prepared-source` binds descriptor
+path/hash in the run envelope and `prepared_source_bound` journal event, not model
+context. Both run and evaluator use the same WorkspaceManager option. Clone with
+independent Git objects, restore exact public bytes to handle checkout filters,
+rebuild the index and require unchanged HEAD/tree/clean state/content. No fallback
+fetch, shared objects, automatic refresh or old-run migration. Active resume checks
+the original descriptor hash/source again; terminal/completed-evaluation recovery
+uses the envelope without requiring the source directory. Missing/bad preparation
+uses the existing preflight failure path. An absent option retains ordinary creation.
+
 Each run owns an external `dev-run-v1` JSONL stream with sequence, prior hash, and
 event hash. Mutations and checks use `action_id + input_hash`; identical input
 replays the durable result, conflicting reuse fails closed, and an admitted

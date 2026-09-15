@@ -2,10 +2,37 @@
 
 `dev-head` is the only active coding-agent runtime. It is mutable, development-only,
 and always records `official=false`. The available commands are `patchloop dev`,
-`patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
+`patchloop doctor`, `patchloop task validate`, and `patchloop task prepare-source`;
+legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: edit-assumption comparison stopped; effect unresolved
+## Current seam: prepared sources verified; context comparison ready
+
+Optional `--prepared-source` uses one audited source for independent run/evaluator
+workspaces without another remote fetch. The preparation command binds original
+URL/base, Git commit/tree and exact public worktree bytes; source path/hash stay in
+the envelope/journal, never agent context. Invalid/missing/changed source stops
+preflight without fallback. Existing source creation is unchanged when omitted.
+Active resume revalidates source; terminal/completed-evaluation recovery is metadata-only.
+
+The user authorized implementation plus one new context-only A4/B4 comparison:
+A=append-v1, B=segmented-v1, same brief-v1 planning, mini 2026-03-17/medium,
+pyfakefs v2, probes/probe-policy none, repair-recheck, root .env, repeat1,
+$1.20/run/$9.60 aggregate and unchanged global limits. Fixed order
+A1/B1/B2/A2/B3/A3/A4/B4; all fresh, no prior patches/notes/cases. No default adoption.
+Focused/wire plus snapshot-drift verification passes 33 cases; the final source
+suite passes 26/26 in26.980s. Full regression:2332 PASS/8 SKIP across110 files,
+739.561s, four workers with --durations=15; runtime/test hashes stayed fixed.
+One final Ruff line-wrap has identical Python AST; Ruff and both final-runtime
+mock runs PASS. Each mock has one edit,4 model/5 tool calls, isolated acceptance
+PASS/safety NOT_RUN. All8 actual inputs preserve task/diff/check state without
+source metadata. No provider/count/real Docker calls in this validation.
+The exact pyfakefs source is prepared and two independent clones rehearse without
+fetch. Live comparison has not started yet. Full regression exceeds two minutes;
+focused validation remains below the target. No context or planning policy changed.
+Records: `C:\pt\analyses\context-policy-compare-20260915-v1`. official=false.
+
+## Prior seam: edit-assumption comparison stopped; effect unresolved
 
 User proceed/delegation covers one new A4/B4 group: A=brief-evidence-v1,
 B=brief-assumption-v1, order A1/B1/B2/A2/B3/A3/A4/B4. Both use pyfakefs parent-traversal

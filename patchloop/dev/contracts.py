@@ -333,6 +333,7 @@ class DevRunRequest(StrictModel):
         pattern=r"^run_dev_[a-zA-Z0-9_-]+$",
     )
     state_root: Path | None = None
+    prepared_source: Path | None = None
     enable_probes: bool = False
     probe_policy: Literal["none", "cases-v1"] = "none"
     repair_recheck: bool = False
@@ -389,6 +390,8 @@ class DevRunEnvelope(StrictModel):
         "cross-repo-heldout",
     ]
     base_commit: str
+    prepared_source_path: str | None = None
+    prepared_source_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     task_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")

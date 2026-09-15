@@ -53,6 +53,22 @@ parallel public inspection, one admitted mutation, a visible check, automatic
 full-diff projection, finish, and a separate private evaluation. Its result is
 still unofficial.
 
+## Prepare an audited source once
+
+`patchloop task prepare-source <task-dir> --output <new-external-directory>` fetches
+the task's exact remote commit once and publishes `prepared-source.json` only after
+validating its Git tree and public worktree bytes. It also supports the existing
+audited local snapshots for mock verification. Preparation makes no model/count or
+Docker call, uses a 120-second deadline, and never overwrites an earlier preparation.
+
+Pass `--prepared-source <prepared-source.json>` to `patchloop dev` to create independent
+execution and evaluation workspaces from that source without another remote fetch.
+The descriptor is bound to the run envelope and hash-chained journal. Missing, changed
+or mismatched source fails preflight; there is no remote fallback. Active recovery
+revalidates the source, while terminal/completed-evaluation recovery remains metadata-only.
+Without this option the existing workspace path is unchanged. Prepared source, run
+workspaces and descriptors are durable external evidence, not disposable pytest state.
+
 ## Segmented comparison packet preparation
 
 `diagnostics.segmented_pilot` only prepares/inspects a fresh external packet; it

@@ -75,10 +75,15 @@ def _git(
 
 
 class WorkspaceManager:
-    def __init__(self, fixture_root: str | Path, workspace_root: str | Path) -> None:
+    def __init__(
+        self, fixture_root: str | Path, workspace_root: str | Path, *,
+        prepared_source: Path | None = None, prepared_source_hash: str | None = None,
+    ) -> None:
         self.fixture_root = Path(fixture_root).resolve()
         self.workspace_root = Path(workspace_root).resolve()
         self.workspace_root.mkdir(parents=True, exist_ok=True)
+        self.prepared_source = prepared_source
+        self.prepared_source_hash = prepared_source_hash
 
     def resolve_repository(self, url: str) -> Path:
         prefix = "snapshot://"
@@ -111,7 +116,34 @@ class WorkspaceManager:
         if staging.exists():
             shutil.rmtree(staging)
         try:
-            if repository_url in ALLOWED_REMOTE_REPOSITORIES:
+            if self.prepared_source is not None:
+                from patchloop.prepared_source import load_source, validate_checkout
+
+                source, source_repo = load_source(
+                    self.prepared_source, repository_url, expected_revision or "",
+                    expected_hash=self.prepared_source_hash, deadline=deadline,
+                )
+                _git(
+                    run_root, "clone", "--quiet", "--no-hardlinks", "--no-reject-shallow",
+                    "--no-checkout", "-c", "core.longpaths=true", str(source_repo), str(staging),
+                    deadline=deadline,
+                )
+                _git(staging, "remote", "set-url", "origin", repository_url, deadline=deadline)
+                _git(staging, "checkout", "--quiet", "--detach", source.git_commit,
+                     deadline=deadline)
+                # Git's checkout filters may change line endings relative to an audited
+                # snapshot. Preserve the prepared public bytes, never its Git metadata.
+                shutil.copytree(source_repo, staging, dirs_exist_ok=True, symlinks=True,
+                                ignore=shutil.ignore_patterns(".git"))
+                # Rebuild the index's stat/normalization cache for those exact bytes.
+                # validate_checkout rejects any staged change relative to the bound HEAD.
+                _git(staging, "add", "--all", deadline=deadline)
+                validate_checkout(staging, source, deadline=deadline)
+                load_source(
+                    self.prepared_source, repository_url, expected_revision or "",
+                    expected_hash=self.prepared_source_hash, deadline=deadline,
+                )
+            elif repository_url in ALLOWED_REMOTE_REPOSITORIES:
                 if (
                     not expected_revision
                     or re.fullmatch(r"[0-9a-f]{40}", expected_revision) is None
