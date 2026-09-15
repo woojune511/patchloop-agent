@@ -109,6 +109,47 @@ def test_failing_line_is_entered_not_a_correctness_claim(tmp_path):
     assert "PATCHLOOP-LINES" not in result.stderr
 
 
+@pytest.mark.parametrize("asynchronous", [False, True])
+@pytest.mark.parametrize("exit_code", [0, 7])
+def test_generator_metadata_preserves_check_exit_and_line_report(tmp_path, asynchronous, exit_code):
+    # Python 3.13+ can emit source-less bytecode entries inside generator code.
+    source = ("async " if asynchronous else "") + (
+        "def values():\n"
+        "    try:\n"
+        "        yield 7\n"
+        "    finally:\n"
+        "        pass\n"
+    )
+    targets = request(tmp_path, source.encode())
+    if asynchronous:
+        program = (
+            "import sample\n"
+            "async def main():\n"
+            "    generator = sample.values()\n"
+            "    print(await anext(generator))\n"
+            "    await generator.aclose()\n"
+            "try:\n"
+            "    main().send(None)\n"
+            "except StopIteration:\n"
+            "    pass\n"
+        )
+    else:
+        program = ("import sample; generator = sample.values(); "
+                   "print(next(generator)); generator.close()\n")
+    program += f"raise SystemExit({exit_code})\n"
+    check = RegisteredCheck(id="generator", command=[sys.executable, "-c", program])
+    plain = LocalSandbox().run_check(tmp_path, check)
+    traced = LocalSandbox().run_check(tmp_path, check, execution_targets=targets)
+    assert plain.exit_code == exit_code, plain.stderr
+    assert traced.exit_code == plain.exit_code == exit_code
+    assert traced.passed is plain.passed is (exit_code == 0)
+    assert traced.stdout.splitlines() == plain.stdout.splitlines() == ["7"]
+    assert traced.stderr == plain.stderr == ""
+    row = traced.public_execution["files"][0]
+    assert row["status"] == "collected"
+    assert row["not_observed_changed_ranges"] == []
+
+
 @pytest.mark.parametrize("source", [
     "import sample; import sys; sys.settrace(None); assert sample.choose(True) == 7",
     "import os; os._exit(0)",

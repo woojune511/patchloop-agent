@@ -187,6 +187,11 @@ from `not_observed_changed_ranges`. Collect only the launch thread, not other th
 subprocesses, branches, values, variable locals, source bodies or assertions. A line event
 means entry, not successful completion or semantic correctness.
 
+Python 3.13+ can return `None` line numbers from `dis.findlinestarts` for bytecode
+without a source line. Exclude those entries while visiting nested code objects;
+generator and async-generator metadata must preserve the registered check's
+output and exit status. See [Python's line-table contract](https://docs.python.org/3.13/library/dis.html#dis.findlinestarts).
+
 The same stdlib collector is copied outside the workspace, read-only: a separate mount
 for registered checks, the existing trusted mount for probes. Preserve the declared check
 command in results. Instrument Python `-c`, `-m`, and script launches by executable basename:

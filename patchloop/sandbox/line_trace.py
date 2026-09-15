@@ -48,7 +48,9 @@ class LineTrace:
                 pending = [code]
                 while pending:
                     current = pending.pop()
-                    lines.update(line for _, line in dis.findlinestarts(current) if line > 0)
+                    # Python 3.13+ also reports bytecode with no source line.
+                    lines.update(line for _, line in dis.findlinestarts(current)
+                                 if line is not None and line > 0)
                     pending.extend(c for c in current.co_consts if isinstance(c, types.CodeType))
                 executable = lines.intersection(target["changed_lines"])
                 row.update(status="collected", executable=sorted(executable))

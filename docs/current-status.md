@@ -6,7 +6,7 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: GPT-5.4 baseline across three dev-train tasks
+## Current seam: three-task baseline stopped; line-table compatibility fixed
 
 The user authorized the proposed six-run baseline without further confirmation:
 tox-cross-section-empty-substitution, pdm-ignore-active-venv-resolution and
@@ -17,16 +17,33 @@ $1.20/run and a new $7.20 aggregate cap. Fresh prepared-source clones for every 
 and isolated evaluation; no historical plans, patches, notes or cases injected.
 Root: `C:\pt\analyses\gpt54-multitask-baseline-20260916-v1`.
 
-All three exact sources are prepared; six offline run/evaluation clones verified.
-The required Docker images already exist. Operator tests:13 PASS/3.24s; Ruff PASS.
-One mock reaches mutation, public check, submission and isolated acceptance PASS;
-all four actual inputs preserve public task/diff/check state. Runtime hash remains
-the tested model-comparison hash; no runtime change or full-suite rerun is needed.
-Public trace/usage audits run before the next slot. Count/provider/billing/continuation/
-cleanup/integrity uncertainty stops the group; settled ordinary task failure continues.
-No retries, replacements, resume, extra samples, image start/pull/build or default adoption.
-Purpose: locate remaining coding-agent bottlenecks across tasks. All results official=false;
-no mini comparison, hidden-detail diagnosis or benchmark-wide claim is authorized here.
+All three exact sources were prepared; six offline run/evaluation clones verified.
+Operator tests:13 PASS/3.24s; Ruff PASS; pre-run mock reaches isolated acceptance PASS.
+T1:acceptance PASS/safety PASS,6 model calls,1 edit,$0.223374500.
+P1:acceptance FAIL/safety PASS,5 calls,1 edit,$0.190006500 after its public check passed.
+N1 was interrupted on infrastructure failure: all three public check attempts failed
+inside line_trace.py before the target tests started. Python 3.13's dis.findlinestarts
+can report None, and the collector compared it to zero. The model changed callback
+shapes to work around that error; those actions do not establish task-solving quality.
+
+The operator closed the group without replay or replacement. N1 has18 known generation
+usage records,$0.869843500,3 edits and2 probes; its19th input count was interrupted.
+Total recorded cost:$1.283224500. One unresolved count, no unresolved generation or tool
+action, no remaining Docker containers. N1's original journal remains unterminated and
+unchanged; separate interruption/group-stop receipts record the boundary. N2/P2/T2 never
+started. All29 dispatched inputs preserve public task/diff/check state and exact wire
+hashes; prepared-source information is absent. No hidden evaluation details were read.
+The incomplete baseline supports no further model/policy/default-adoption conclusion.
+
+After closing the frozen group, skip None line numbers in the collector. Four synthetic
+generator/async-generator exit0/7 cases reproduce the old failure and pass after the fix.
+Focused114 PASS/17.340s; Ruff PASS; full2341 PASS/8 SKIP,693.812s,110 files/four processes
+with --durations=15 and unchanged runtime/test hashes. Fixed-runtime mock reaches isolated
+acceptance PASS with all4 inputs verified. Two synthetic checks in the existing anyio
+Python3.13.13 image preserve exit0/7, line collection and confirmed cleanup; no task
+candidate or private test was rerun. Validation:`C:\pt\validation\line-trace-none-20260916-v1`.
+No retries, extra paid samples, automatic resume, image start/pull/build or default change.
+Report:`C:\pt\analyses\gpt54-multitask-baseline-20260916-v1\result.md`. All official=false.
 
 ## Prior seam: model A4/B4 closed; GPT-5.4 follow-up signal
 
