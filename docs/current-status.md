@@ -6,7 +6,45 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: public AnyIO reproduction confirms the submitted patch still resumes tests
+## Current seam: public failure feedback reached GPT-5.4 but it submitted unchanged
+
+One authorized pre-submission continuation used GPT-5.4-2026-03-05/medium with
+the same brief-v1/segmented-v1 runtime, tools and prepared-source checkpoint.
+Only the frozen public callback-interrupt code and observed failure were added.
+The exact counted/sent input contains that current-diff failure, the existing
+plan, public task/diff/check state and unchanged system instructions. The model
+made one finish_task call with no new inspection, probe, check or mutation.
+
+Its public action basis and plan still treat the prior regression PASS as enough
+to submit and resolve v1. The input also retains ready_to_submit and finish_task
+completion guidance: the added public failure is not a registered failed check
+or a new structured verification concern. This is an observed integration gap;
+the relative effects of that state and model behavior are not isolated.
+
+The unchanged 7ffaade0... patch fails both frozen function/module interruption
+cases again, with post_interrupt execution and exactly one cleanup. Cancellation
+and ordinary shared-fixture controls pass; regression remains 32 PASS/3 deselected.
+One generation/count/tool call cost $0.052737500, with 18,203 input/482 output
+tokens and a 25,000 output ceiling. The full new $1.20 ledger, 31 model calls and
+3 mutations were available; no budget or input limit forced submission. No
+retry, replacement, private evaluation or remaining container. All results are
+official=false; acceptance NOT_RUN. Original evidence remains unchanged.
+
+The external operator preserves the exact public journal prefix through event
+146 in a distinct state root, with copied artifact bytes and an independent
+prepared-source workspace. The old run ID remains solely to preserve inherited
+bindings; the diagnostic ID identifies the fork. New usage excludes old usage.
+Validation: 8 operator tests/29.886s, 82 selected tests/146.483s including isolated
+mock evaluation, Ruff PASS. Runtime unchanged; prior full 2341 PASS/8 SKIP retained.
+
+Next seam: connect the frozen reproducer to the existing registered public-check
+and failure-feedback path in a versioned successor task. Use semantic assertions
+for FAIL and enable a rerun after mutation; preserve the original package and
+old-diff evidence. Start with provider-free tests. No further paid execution is
+included in this diagnostic.
+Report:`C:\pt\analyses\anyio-failure-repair-20260916-v1\result.md`.
+
+## Prior seam: public AnyIO reproduction confirms the submitted patch still resumes tests
 
 One frozen public diagnostic ran on independent prepared-source BASE/SUBMITTED
 clones in the existing pinned AnyIO image, Python 3.13.13/pytest 9.0.3. The exact
