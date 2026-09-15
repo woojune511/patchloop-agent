@@ -6,7 +6,7 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: prepared sources verified; context comparison ready
+## Current seam: prepared sources verified; context A4/B4 closed, direction unresolved
 
 Optional `--prepared-source` uses one audited source for independent run/evaluator
 workspaces without another remote fetch. The preparation command binds original
@@ -28,9 +28,34 @@ mock runs PASS. Each mock has one edit,4 model/5 tool calls, isolated acceptance
 PASS/safety NOT_RUN. All8 actual inputs preserve task/diff/check state without
 source metadata. No provider/count/real Docker calls in this validation.
 The exact pyfakefs source is prepared and two independent clones rehearse without
-fetch. Live comparison has not started yet. Full regression exceeds two minutes;
-focused validation remains below the target. No context or planning policy changed.
-Records: `C:\pt\analyses\context-policy-compare-20260915-v1`. official=false.
+fetch. Full regression exceeds two minutes; focused validation remains below the
+target. No context or planning policy changed. Implementation commit:c2802f9.
+
+All8 live runs completed once in the fixed order without infrastructure/uncertainty
+stop. A:0/4 acceptance PASS,0 submissions,4 NOT_RUN. B:1/4 PASS,2 submissions,
+1 acceptance FAIL,2 NOT_RUN. Submitted rows have safety PASS; others NOT_RUN.
+A1/A2/A3/B3/B4 stop at completion horizon with accepted_mutations as the sole
+blocking resource. A4 voluntarily stops after incorrectly claiming both current
+checks passed; its actual input still shows contract NOT_RUN on the final diff.
+No cost/input-limit terminal. No extra candidate execution to infer missing acceptance.
+
+Recorded cost A$1.974031950/B$1.580162850,total$3.554194800 under$9.60;
+uncached equivalent A$5.038812750/B$2.519849250,total$7.558662000, not a bill.
+Max input tokens A170130/B45964; request bytes A737210/B257002. B segment counts
+9/9/6/6, all26 noninitial transitions major_result_reviewed. First accepted edit
+calls A15/14/20/16 versus B24/14/15/12. Exact rejected-proposal repeats:0 both arms.
+All30 accepted candidates have same-diff public checks;39 checks and5 probes total.
+B2's candidate probe informs a subsequent successful repair; B3's probe fails
+before its intended observations. Probe/plan counts alone are not improvement evidence.
+
+All204 actual request hashes/task/diff/check/plan/notes/feedback deliveries verified;
+204 known usage records, all completed,259 tool actions. Source metadata stays
+outside model input; original source and frozen configuration remain unchanged.
+9658 historical and1741 recent protected files unchanged. No retry/replacement/
+auto-resume/default adoption. Acceptance gap1 is direction unresolved by the fixed
+rule. Next candidate: model-only comparison under fixed base settings, outside this
+closed grant. Report: `C:\pt\analyses\context-policy-compare-20260915-v1\result.md`.
+All results official=false; no hidden evaluator details used for diagnosis.
 
 ## Prior seam: edit-assumption comparison stopped; effect unresolved
 

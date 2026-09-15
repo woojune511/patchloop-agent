@@ -830,7 +830,28 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: edit-assumption comparison stopped and closed; effect unresolved.
+Current seam: prepared source implementation and context-only A4/B4 are complete.
+Implementation c2802f9 adds optional independent local run/evaluator clones; source
+identity stays outside model context. Final focused26 PASS/26.980s; full2332 PASS/
+8 SKIP/739.561s with --durations=15 and fixed runtime/tests. One final Ruff line-wrap
+has identical AST; final mock A/B both reach isolated acceptance PASS/safety NOT_RUN.
+Prepared remote source rehearsal works with fetch forbidden. No source fallback.
+Eight fresh mini/medium/brief-v1 runs at$1.20 each/$9.60 total completed once in
+A1/B1/B2/A2/B3/A3/A4/B4 order. A acceptance0/4,submitted0,NOT_RUN4; B acceptance1/4,
+submitted2,FAIL1,NOT_RUN2. No infrastructure/uncertainty stop. Five completion-horizon
+terminals name accepted_mutations as sole blocker; A4 stops on a false current-PASS
+claim despite delivered contract NOT_RUN. No cost/input-limit termination.
+Total recorded$3.554194800,uncached equivalent$7.558662000; max tokens A170130/B45964.
+B segments9/9/6/6: initial plus26 major_result_reviewed transitions. All204 actual
+requests retain public task/diff/check/plan/notes/feedback; known usage204,tools259.
+All30 accepted candidates receive same-diff public checks. Exact rejected proposal
+repeats0 both arms. B2 probe informs a repair; B3 probe fails before observations.
+Same source/runtime throughout;9658 historical and1741 recent files unchanged.
+Gap1 means direction unresolved. Next candidate is model-only comparison with fixed
+base settings, not part of this closed grant. No default adoption or extra sample.
+Report:C:\pt\analyses\context-policy-compare-20260915-v1\result.md. official=false.
+
+Prior seam: edit-assumption comparison stopped and closed; effect unresolved.
 Fixed A=brief-evidence-v1/B=brief-assumption-v1, planned A4/B4, order
 A1/B1/B2/A2/B3/A3/A4/B4; pyfakefs v2, mini 2026-03-17/medium, segmented-v1,
 probes/probe-policy none, repair-recheck, root .env, repeat1, $1.20/run/$9.60.
