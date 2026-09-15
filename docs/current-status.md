@@ -5,7 +5,29 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: bounded submission-guidance diagnostic
+## Current seam: submission-guidance diagnostic closed; no observed action change
+
+Eight independent responses at the two fixed public checkpoints all selected
+finish_task: current recommendation A4/4, eligibility-facts-only B4/4. Zero probe,
+inspection or edit selections. Removing the latest recommendation did not change
+the action here; the cause remains unresolved, not proof the whole harness is sound.
+Both source plans already said to submit after the remaining regression passes.
+C1 revision15/n1/v1 were delivered; all four responses proposed plan/note updates
+and resolving the concern by PASS. C2 revision14 had no notes; all four updates were
+null. These are unexecuted annotation proposals, not a new gateway-delivery test.
+The full public task was present. Examine earlier verification-criterion narrowing
+before adding storage features or forcing probes. Keep runtime/default guidance
+unchanged, close the packet, no automatic further sample or default adoption.
+
+Eight count/generation calls, all usage known, four complete pairs, 44.583s;
+$0.058860900 of $1.20 (uncached equivalent $0.128758500). B removes 172 UTF-8 bytes /
+31 input tokens per request. All eight returned continuations/identities verified.
+No tools, correction, retry, normal live row, hidden evaluation or Docker operation.
+Task acceptance/safety NOT_RUN; response selection is not submission or task success.
+9,658 protected files and 138 recent records unchanged; two owned pytest roots recycled.
+Report: `C:\pt\analyses\submission-guidance-20260915\result.md`. official=false.
+
+### Closed diagnostic contract
 
 `diagnostics.submission_guidance_sampler` compares the last current-state action
 recommendation with submission-eligibility facts, not a new runtime default.

@@ -818,7 +818,24 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: latest submission-guidance ablation, diagnostics only.
+Current seam: submission-guidance diagnostic closed; no observed action difference.
+All eight independent responses selected finish_task: A4/4, B4/4; zero probes/edits/
+inspections. The two source plans already said submit after regression PASS. C1
+revision15/n1/v1 delivered, four proposed note/plan updates and concern resolutions;
+C2 revision14/no notes, four null updates. Proposals were not gateway-applied.
+No evidence of missing goal/plan here, no proof of adequate semantic verification.
+Latest-guidance removal alone did not isolate the cause. Keep runtime/defaults,
+close the group, no extra sample/forced probe/tool-mask change. Next proposed analysis:
+earlier public plan/concern revisions around the first edit, to distinguish absent,
+lost, or unjustifiably resolved implementation assumptions. Not a new paid grant.
+Eight count/generation, four complete pairs, all costs known: $0.058860900/$1.20,
+uncached equivalent $0.128758500, 44.583s. B minus 172 bytes/31 input tokens per request.
+No tools/correction/retry/evaluation/Docker; task acceptance and safety NOT_RUN.
+Eight continuation/request identities pass; 9658 protected and 138 recent files intact.
+Two owned pytest roots recycled; durable evidence retained. Report:
+C:\pt\analyses\submission-guidance-20260915\result.md. official=false.
+
+Closed submission-guidance ablation contract, diagnostics only:
 Use diagnostics.submission_guidance_sampler: C1=probe group A1 turn17,
 C2=A3 turn15. A reconstructs the original canonical request with frozen builder
 property order; B only changes the latest guidance message/next_action to eligibility
@@ -835,7 +852,7 @@ states, a different treatment. Preserve old bytes; do not recollect that packet.
 Normal dev-head is unchanged; shared collector only adds read-only kind recognition.
 External record: C:\pt\analyses\submission-guidance-20260915. official=false.
 Provider-free: 23 new tests, 115 combined tests/mock isolated evaluation in64.549s,
-Ruff/diff PASS. No repeated normal-runtime full suite; no efficacy claim yet.
+Ruff/diff PASS. No repeated normal-runtime full suite; no efficacy claim.
 
 Prior seam: fixed cases-v1 comparison closed at a1156982, no observed advantage.
 A=none/B=cases-v1, four fresh pyfakefs-v2 runs each, both mini/medium/segmented-v1/
