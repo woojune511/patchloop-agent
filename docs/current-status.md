@@ -5,7 +5,31 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: reusable-probe comparison closed; mechanism unused, no observed advantage
+## Current seam: bounded submission-guidance diagnostic
+
+`diagnostics.submission_guidance_sampler` compares the last current-state action
+recommendation with submission-eligibility facts, not a new runtime default.
+Two public checkpoints from the closed probe group are fixed: A1 turn17 and A3
+turn15. A reconstructs the recorded request; B changes only the latest
+completion_guidance.message and next_action (null). Current diff, PASS table,
+budgets, tools/order, goals, sources, notes, concerns and authored plan stay exact.
+Both source segments already contain no native reasoning; no reset is introduced.
+Earlier cues and authored plans remain, so this does not remove every submission cue.
+
+The user's proceed/delegation covers eight independent responses, two per arm at
+each checkpoint, mini 2026-03-17/medium/25k, root .env and one shared $1.20 cap.
+Reserve complete A/B pairs, count immediately before each dispatch and stop on
+uncertainty. No sampled tool execution, chaining, retry/resume, correction, hidden
+evaluation, new live row or additional sample. This is a new diagnostic grant,
+not reuse of the closed group or the old completion-signal experiment.
+The output is action-selection evidence, not task success or a runtime improvement.
+No default guidance, plan/memory contract, tool mask, task or global limit changes.
+Results belong under `C:\pt\analyses\submission-guidance-20260915`.
+Provider-free validation: 23 new cases; 115 combined sampler/documentation/mock
+cases PASS in 64.549s, Ruff/diff PASS. The mock reaches isolated evaluation.
+No normal runtime change; the preceding full-suite result is not a new execution.
+
+## Prior seam: reusable-probe comparison closed; mechanism unused, no observed advantage
 
 Fresh fixed A=probe-policy none/B=cases-v1, four runs each at `a1156982`, used
 pyfakefs v2, mini 2026-03-17/medium, segmented-v1, brief-evidence-v1, probes and

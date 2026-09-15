@@ -442,7 +442,8 @@ def inspect_result(root: Path) -> dict:
     require(
         raw["kind"] in {"decision-sampler-v1", "fresh-state-sampler-v1", "failure-order-sampler-v1",
                         "completion-signal-sampler-v1", "requirements-focus-sampler-v1",
-                        "draft-review-sampler-v1", "model-state-factorial-sampler-v1"}
+                        "draft-review-sampler-v1", "model-state-factorial-sampler-v1",
+                        "submission-guidance-sampler-v1"}
         and (root / "runs").is_dir(),
         "not a diagnostic result root",
     )

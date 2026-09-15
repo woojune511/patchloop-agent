@@ -818,7 +818,26 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: fixed cases-v1 comparison closed at a1156982, no observed advantage.
+Current seam: latest submission-guidance ablation, diagnostics only.
+Use diagnostics.submission_guidance_sampler: C1=probe group A1 turn17,
+C2=A3 turn15. A reconstructs the original canonical request with frozen builder
+property order; B only changes the latest guidance message/next_action to eligibility
+facts/null. No source/plan/notes/concern/history/tool changes or new reasoning reset;
+both recorded segments already contain zero reasoning items. Other submission cues
+remain. Compare two independent samples per arm/checkpoint in C1 AB/C2 BA/C1 BA/C2 AB
+order. New proceed/delegation, mini/medium/25k, root .env, shared $1.20, full-pair
+reservation, immediate count, zero retry/chaining/correction/tool/hidden execution.
+No new normal run or extra samples. Anonymous action review precedes unblinding;
+probe/inspection selection is not verification success. Same or mixed selections
+leave the cause unresolved; no automatic default adoption or follow-up. Old
+completion-signal collection omitted an edit forecast on zero-edit unchecked
+states, a different treatment. Preserve old bytes; do not recollect that packet.
+Normal dev-head is unchanged; shared collector only adds read-only kind recognition.
+External record: C:\pt\analyses\submission-guidance-20260915. official=false.
+Provider-free: 23 new tests, 115 combined tests/mock isolated evaluation in64.549s,
+Ruff/diff PASS. No repeated normal-runtime full suite; no efficacy claim yet.
+
+Prior seam: fixed cases-v1 comparison closed at a1156982, no observed advantage.
 A=none/B=cases-v1, four fresh pyfakefs-v2 runs each, both mini/medium/segmented-v1/
 brief-evidence-v1/probes/repair-recheck; new delegation, no old packet reuse.
 Acceptance 1/4 each; submissions A4/4 vs B3/4; cost A$0.932819850/B$1.170729300,
