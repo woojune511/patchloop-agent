@@ -6,7 +6,32 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: prepared sources verified; context A4/B4 closed, direction unresolved
+## Current seam: model-only comparison preparation
+
+The user's follow-up proceed authorizes one fresh model-only A4/B4 group after the
+closed context comparison. A=`gpt-5.4-mini-2026-03-17`, B=`gpt-5.4-2026-03-05`;
+both medium, segmented-v1, brief-v1, pyfakefs parent-traversal v2, probes enabled,
+probe-policy none and repair-recheck. Same source bytes, fresh workspace per run,
+root .env, repeat1, $1.20/run and new $9.60 aggregate cap; fixed order
+A1/B1/B2/A2/B3/A3/A4/B4 and unchanged 40/100/4/1800s/25000 limits. No prior agent
+state is injected. New root: `C:\pt\analyses\model-only-compare-20260916-v1`.
+
+The exact full GPT-5.4 snapshot now has reviewed standard short-context prices
+($2.50 input/$0.25 cached input/$15 output per million tokens). It requires the
+existing counted segmented input bound below 272K, where official pricing increases.
+No context/plan/tool behavior changes. Focused contracts/segments:62 PASS/104.867s;
+full regression:2337 PASS/8 SKIP in667.570s across110 files/four processes with
+--durations=15 and unchanged runtime/test hashes. Ruff PASS. The final no-call
+operator/wire tests pass10/10 in2.80s; an initial test-only missing price-review
+fixture was corrected. Both mock runs reach one edit, public check, submission and
+isolated acceptance PASS; all8 inputs preserve public task/diff/check state.
+Two real-source clones rehearse without Git network/provider/Docker calls.
+No new live calls yet; runtime/task/source/prices freeze before execution.
+All results official=false; no automatic default adoption,
+extra samples or retries. This comparison measures performance under the same
+money cap; model price and budget exits must be reported separately.
+
+## Prior seam: prepared sources verified; context A4/B4 closed, direction unresolved
 
 Optional `--prepared-source` uses one audited source for independent run/evaluator
 workspaces without another remote fetch. The preparation command binds original

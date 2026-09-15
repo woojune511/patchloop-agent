@@ -358,6 +358,12 @@ class DevRunRequest(StrictModel):
                 raise ValueError("--provider openai requires --env-file")
             if self.max_cost_usd is None or self.max_cost_usd <= 0:
                 raise ValueError("--provider openai requires a positive --max-cost-usd")
+            if self.model == "gpt-5.4-2026-03-05" and (
+                self.context_policy != segments.POLICY or segments.MAX_INPUT_TOKENS >= 272_000
+            ):
+                raise ValueError(
+                    "reviewed GPT-5.4 pricing requires segmented-v1 with counted input below 272K"
+                )
         elif self.env_file is not None or self.max_cost_usd is not None:
             raise ValueError("--provider mock forbids --env-file and --max-cost-usd")
         if self.resume_run_id is not None and self.repeat != 1:

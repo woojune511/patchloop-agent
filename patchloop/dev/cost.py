@@ -16,7 +16,7 @@ TOKENS_PER_MILLION = Decimal("1000000")
 DEFAULT_OUTPUT_CEILING = 25_000
 MINIMUM_OUTPUT_CEILING = 128
 PRICING_SOURCE = "https://developers.openai.com/api/docs/pricing"
-PRICING_VERIFIED_ON = "2026-09-01"
+PRICING_VERIFIED_ON = "2026-09-15"
 
 
 @dataclass(frozen=True)
@@ -33,6 +33,9 @@ class ModelPricing:
 OPENAI_MODEL_PRICING: dict[str, ModelPricing] = {
     "gpt-5.4-mini": ModelPricing(Decimal("0.75"), Decimal("0.075"), Decimal("4.5")),
     "gpt-5.4-mini-2026-03-17": ModelPricing(Decimal("0.75"), Decimal("0.075"), Decimal("4.5")),
+    # DevRunRequest restricts this snapshot to segmented-v1's counted 60K bound,
+    # below the >272K input threshold where the official rates increase.
+    "gpt-5.4-2026-03-05": ModelPricing(Decimal("2.5"), Decimal("0.25"), Decimal("15")),
 }
 
 

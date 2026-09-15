@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from typer.testing import CliRunner
 
 from patchloop.cli import app
+from patchloop.dev import segments
 from patchloop.dev.contracts import (
     DevRunRequest,
     PublicTurnDecision,
@@ -265,6 +266,35 @@ def test_provider_options_fail_closed() -> None:
             repeat=2,
             resume_run_id="run_dev_existing0001",
         )
+
+
+def test_full_model_price_reserves_uncached_input_and_settles_reported_cache() -> None:
+    ledger = DevCostLedger(Decimal("1.20"), pricing_for_model("gpt-5.4-2026-03-05"))
+    admission = ledger.admit(60_000)
+    assert admission is not None
+    assert admission.output_ceiling == 25_000
+    assert admission.reserved_cost_nanos == 525_000_000
+    assert ledger.settle(
+        input_tokens=60_000, cached_input_tokens=40_000, output_tokens=25_000,
+    ) == 435_000_000
+    with pytest.raises(ContractError, match="no dev-head price"):
+        pricing_for_model("gpt-5.4")
+
+
+@pytest.mark.parametrize("policy", ["append-v1", "native-window-v1", "segmented-v1"])
+def test_full_model_short_context_price_requires_counted_segment_bound(policy, monkeypatch) -> None:
+    config = dict(
+        provider="openai", task=Path("tasks/dev-train/pyfakefs-makedirs-parent-traversal-v2"),
+        model="gpt-5.4-2026-03-05", env_file=Path("credential.env"),
+        max_cost_usd=Decimal("1.20"), context_policy=policy,
+    )
+    if policy == "segmented-v1":
+        assert DevRunRequest(**config).context_policy == policy
+        monkeypatch.setattr(segments, "MAX_INPUT_TOKENS", 272_000)
+    with pytest.raises(ValidationError, match="reviewed GPT-5.4 pricing requires"):
+        DevRunRequest(**config)
+    # The existing mini context options do not depend on this new model's prices.
+    assert DevRunRequest(**{**config, "model": "gpt-5.4-mini-2026-03-17"})
 
 
 def test_cli_exposes_only_dev_doctor_and_task_commands() -> None:

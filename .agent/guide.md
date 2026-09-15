@@ -754,6 +754,12 @@ no network, read-only root/source, bounded tmpfs and resource limits are host-co
 Actual request input is counted immediately before generation. The ledger reserves
 uncached input plus a conservative output ceiling, lowers that ceiling when needed,
 and emits `COST_CAP_REACHED` without generation when the minimum request cannot fit.
+The exact `gpt-5.4-2026-03-05` snapshot is supported only with `segmented-v1` and
+its counted 60,000-token input bound. Its reviewed standard rates are $2.50 input,
+$0.25 cached input and $15 output per million tokens (2026-09-15 UTC). Request
+validation rejects other context policies and a segment bound at/above 272K;
+the existing pre-dispatch segment check prevents entering the higher-priced input
+range. No alias or general long-context price support is implied.
 Transport retry is zero. Count, provider, or billing uncertainty stops remaining
 repetitions. Provider completion records structural output evidence only: item
 count, non-tool count, item types, a shape hash, and an encrypted-continuation artifact

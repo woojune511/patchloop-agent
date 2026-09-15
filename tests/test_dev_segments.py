@@ -299,6 +299,26 @@ def test_fresh_required_state_over_limit_stops_without_dispatch(tmp_path, monkey
         "fresh_public_state_exceeds_segment_limit")
 
 
+def test_full_model_long_input_is_counted_but_never_dispatched(tmp_path, monkeypatch):
+    request, inputs, counted, _ = configured(monkeypatch, tmp_path)
+    request = DevRunRequest.model_validate({
+        **request.model_dump(), "model": "gpt-5.4-2026-03-05",
+    })
+    count = runner.OpenAIResponsesAdapter.count_input_tokens_v2
+
+    def long_input(self, payload, **kw):
+        count(self, payload, **kw)
+        return 272_001
+
+    monkeypatch.setattr(runner.OpenAIResponsesAdapter, "count_input_tokens_v2", long_input)
+    result = runner.run_dev(request)["runs"][0]
+    assert result["terminal"] == "LIMIT_REACHED", result
+    assert not inputs and len(counted) == 1
+    assert result["call_counts"]["model"] == 0
+    assert result["context_management"]["limit"]["reason"] == (
+        "fresh_public_state_exceeds_segment_limit")
+
+
 def test_no_reset_after_unknown_provider_dispatch(tmp_path, monkeypatch):
     request, inputs, counted, _ = configured(monkeypatch, tmp_path)
     _crash_journal_once(monkeypatch, event_type="provider_call_started", when="after")
