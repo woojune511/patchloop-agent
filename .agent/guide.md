@@ -818,19 +818,26 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: fresh edit-assumption planning comparison, not an old grant/cycle resume.
-User proceed/delegation: one new A4/B4 group; A=brief-evidence-v1/B=brief-assumption-v1.
-Order A1/B1/B2/A2/B3/A3/A4/B4; pyfakefs v2, mini 2026-03-17/medium, segmented-v1,
-probes enabled/probe-policy none, repair-recheck, root .env, repeat1, $1.20/run/$9.60.
-Only plan content differs. Current runtime/limits/output admission and tool schemas
-fixed; fresh bases, no old notes/reasoning/patch/cases. Existing run_dev plus one-group
-external wrapper, lifetime execution lock, full reservation, zero paid retries.
-Stop all on count/provider/billing/continuation/cleanup/integrity uncertainty;
-ordinary settled task failures proceed. No auto-resume/replacement/fallback/extension,
-Docker Desktop start, pull or build. No hidden details in public behavior analysis.
-Freeze exact packet and verify ready Docker/images before dispatch; same-day official
-mini standard prices checked. Operator9 PASS/3.62s, no runtime change/full-suite rerun.
-External record C:\pt\analyses\assumption-planning-compare-20260915. official=false.
+Current seam: edit-assumption comparison stopped and closed; effect unresolved.
+Fixed A=brief-evidence-v1/B=brief-assumption-v1, planned A4/B4, order
+A1/B1/B2/A2/B3/A3/A4/B4; pyfakefs v2, mini 2026-03-17/medium, segmented-v1,
+probes/probe-policy none, repair-recheck, root .env, repeat1, $1.20/run/$9.60.
+A1/B1/B2 public checks PASS/submitted but acceptance FAIL/safety PASS. A2 source
+preflight failed GitHub443 exact-SHA fetch after21,086ms; zero count/provider/tool,
+zero cost, acceptance/safety NOT_RUN. Four remaining slots never started. Later
+single TCP success is not Git-fetch recovery proof. No retry/resume or replacement.
+Known model-rate cost $1.067196150, uncached equivalent $1.642533750; all68 usage
+records settled. Actual68 request/task/diff/plan/note and mutation/check feedback
+deliveries verified, including bodies referenced in actual native results.
+Plans end2/20/9, findings0/0/2, probes0; B1 n1 did exist before source-change expiry.
+B1 repeated one53-line candidate5 times with the50-line failure visible. Plan activity
+is not efficacy. One A/two B agent observations do not complete a balanced comparison.
+No adoption/further wording change; separately rehearse source availability before
+freezing any continuation packet. Unused cap is not automatic extension authority.
+No runtime/task/default changes or hidden-detail diagnosis. Operator9 PASS/3.62s,
+read-only receipts8 PASS/1.06s, Ruff PASS; full suite/mock not repeated. Protected
+541 recent and9,658 historical files unchanged. Report:
+C:\pt\analyses\assumption-planning-compare-20260915\result.md. official=false.
 
 Prior seam: brief-assumption-v1 plan-content option implemented and locally verified.
 At the existing post-edit review, connect one newly assumed/reimplemented/bypassed

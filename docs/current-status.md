@@ -5,7 +5,7 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: fresh edit-assumption planning comparison prepared for execution
+## Current seam: edit-assumption comparison stopped; effect unresolved
 
 User proceed/delegation covers one new A4/B4 group: A=brief-evidence-v1,
 B=brief-assumption-v1, order A1/B1/B2/A2/B3/A3/A4/B4. Both use pyfakefs parent-traversal
@@ -23,10 +23,30 @@ task failure continues the fixed independent order. Acceptance and public behavi
 not plan revisions alone, are the outcome measures. No default adoption or extension
 is automatic; hidden evaluator details never inform agent input or causal diagnosis.
 
-Official mini standard prices were rechecked on 2026-09-15: input0.75/cached0.075/
-output4.50 USD per million. Operator9 no-call tests PASS/3.62s; no runtime change or
-repeated full suite. Record: `C:\pt\analyses\assumption-planning-compare-20260915`.
-Execution and results are pending preparation/preflight; official=false.
+Three agent runs completed: A1/B1/B2 all passed public checks and submitted, but
+acceptance FAIL/safety PASS. A2 stopped at source preflight: exact-SHA Git fetch
+could not connect to github.com:443 after 21,086ms. A2 had zero count/model/tool
+calls, zero cost and acceptance/safety NOT_RUN. B3/A3/A4/B4 never started. A later
+single TCP check succeeded; the earlier network cause and Git-fetch recovery are
+not established. No retry/resume/replacement; this packet is closed, not A4/B4-complete.
+
+A1/B1/B2 used16/27/25 model calls, cost $0.203784600/$0.442179600/$0.421231950.
+Total recorded model-rate cost $1.067196150 (uncached equivalent $1.642533750),
+all68 usage records known. All68 actual inputs retained task/diff/plan/notes and
+current mutation/check feedback; native delivery references resolve in the input.
+Last plan revisions2/20/9; findings0/0/2; zero probes. B1 stored/updated n1, delivered
+it in9 inputs, then expired it on source change. It also repeated the same53-line
+candidate five times against the50-line limit despite delivered typed feedback.
+More revisions did not establish better behavior or acceptance. One A/two B agent
+observations are unbalanced and insufficient for an efficacy conclusion.
+
+Keep brief-assumption-v1 opt-in; no default adoption or another prompt adjustment.
+Before any separately frozen continuation experiment, address/rehearse source
+availability. No extra samples based on unused cap. Official mini standard prices
+rechecked2026-09-15: input0.75/cached0.075/output4.50 USD/M. Operator9 PASS/3.62s;
+final read-only receipts8 PASS/1.06s, Ruff PASS, no runtime change/full-suite rerun.
+541 recent and9,658 historical protected files unchanged. Record/report:
+`C:\pt\analyses\assumption-planning-compare-20260915\result.md`. official=false.
 
 ## Prior seam: opt-in edit-assumption planning implemented and locally verified
 
