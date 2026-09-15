@@ -6,7 +6,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: public review reproduces fixture context loss and a false PASS gap
+## Current seam: AnyIO v3 rejects fixture-context loss and incomplete cleanup
+
+`tasks/dev-train/anyio-interrupt-runner-cleanup-v3` strengthens the public lifecycle
+check while preserving v1/v2 bytes. Seven cases verify ContextVar propagation/reset,
+task identity through ordinary outcomes and callback interruption, and completion
+after full task-group exit. Setup/teardown outcomes must pass independently of a
+call-phase xfail; the intentional xfail accepts only AssertionError. Native
+cancellation retains v2's plain fixture and existing outcome/cleanup requirements.
+
+Real offline validation on BASE and the exact v2 submitted diff confirms the new
+check rejects the public defects. BASE has 3/7 passing child cases: all ordinary
+controls pass; three interruption cases resume, and the existing cancellation
+teardown error remains. SUBMITTED has 2/7 passing cases: ordinary ContextVar and
+cancellation pass, while three interruption cases, skip/context and ordinary task
+group cleanup fail. These are public child-case observations, not acceptance scores.
+Both revisions still pass 32 upstream regression tests (3 deselected).
+
+Feedback retains all seven verdicts without truncation (1,077/2,186 bytes). Existing
+current-diff FAIL/finish blocking and edit/recheck recovery work for both context
+policies. Source, constraints, evaluator bytes, image, runtime and tool/planning/
+probe policies are unchanged; private metadata changes only task_version=3.
+
+Focused 43 PASS/29.12s; Ruff and CLI validation PASS. Full regression: 2,381 PASS,
+8 SKIP across four disjoint groups, 825.77s wall time with durations recorded.
+Mock smoke reaches isolated fixture evaluation PASS with four actual inputs checked.
+The initial checker/output corrections and operator assertion correction are retained
+in the evidence record; 8,311 prior files are unchanged. No paid model call, new
+AnyIO repair or private AnyIO evaluation was performed; all official=false.
+Next: a bounded fresh agent observation using v3, reported separately from v2.
+Report: `C:\pt\analyses\anyio-public-check-v3-20260916-v1\result.md`.
+
+## Prior seam: public review reproduces fixture context loss and a false PASS gap
 
 The final v2 submitted diff 5c86ad61... was reviewed against pinned public source,
 tests and documentation. AnyIO documents that async fixture setup/test/teardown

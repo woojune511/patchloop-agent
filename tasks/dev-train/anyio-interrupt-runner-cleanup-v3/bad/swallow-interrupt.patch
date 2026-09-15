@@ -1,0 +1,11 @@
+diff --git a/src/anyio/_backends/_asyncio.py b/src/anyio/_backends/_asyncio.py
+--- a/src/anyio/_backends/_asyncio.py
++++ b/src/anyio/_backends/_asyncio.py
+@@ -2322,5 +2322,7 @@ class TestRunner(abc.TestRunner):
+             )
+         except Exception as exc:
+             self._exceptions.append(exc)
++        except BaseException:
++            return
+ 
+         self._raise_async_exceptions()

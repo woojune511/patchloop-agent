@@ -1,0 +1,22 @@
+diff --git a/src/anyio/_backends/_asyncio.py b/src/anyio/_backends/_asyncio.py
+--- a/src/anyio/_backends/_asyncio.py
++++ b/src/anyio/_backends/_asyncio.py
+@@ -2322,5 +2322,18 @@ class TestRunner(abc.TestRunner):
+             )
+         except Exception as exc:
+             self._exceptions.append(exc)
++        except BaseException:
++            # Stop the interrupted test from resuming during fixture teardown.
++            if self._runner_task is not None and not self._runner_task.done():
++                self._runner_task.cancel()
++                self._send_stream.close()
++                try:
++                    self.get_loop().run_until_complete(self._runner_task)
++                except CancelledError:
++                    pass
++                finally:
++                    self._runner_task = None
++
++            raise
+ 
+         self._raise_async_exceptions()
