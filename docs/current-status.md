@@ -6,7 +6,29 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: model A4/B4 closed; GPT-5.4 follow-up signal
+## Current seam: GPT-5.4 baseline across three dev-train tasks
+
+The user authorized the proposed six-run baseline without further confirmation:
+tox-cross-section-empty-substitution, pdm-ignore-active-venv-resolution and
+anyio-interrupt-runner-cleanup, each twice. Fixed order T1/P1/N1/N2/P2/T2;
+gpt-5.4-2026-03-05/medium, segmented-v1, brief-v1, probes enabled, probe-policy none,
+repair-recheck and unchanged 40/100/4/1800s/25000 limits. Each repeat=1, root .env,
+$1.20/run and a new $7.20 aggregate cap. Fresh prepared-source clones for every run
+and isolated evaluation; no historical plans, patches, notes or cases injected.
+Root: `C:\pt\analyses\gpt54-multitask-baseline-20260916-v1`.
+
+All three exact sources are prepared; six offline run/evaluation clones verified.
+The required Docker images already exist. Operator tests:13 PASS/3.24s; Ruff PASS.
+One mock reaches mutation, public check, submission and isolated acceptance PASS;
+all four actual inputs preserve public task/diff/check state. Runtime hash remains
+the tested model-comparison hash; no runtime change or full-suite rerun is needed.
+Public trace/usage audits run before the next slot. Count/provider/billing/continuation/
+cleanup/integrity uncertainty stops the group; settled ordinary task failure continues.
+No retries, replacements, resume, extra samples, image start/pull/build or default adoption.
+Purpose: locate remaining coding-agent bottlenecks across tasks. All results official=false;
+no mini comparison, hidden-detail diagnosis or benchmark-wide claim is authorized here.
+
+## Prior seam: model A4/B4 closed; GPT-5.4 follow-up signal
 
 The user's follow-up proceed authorizes one fresh model-only A4/B4 group after the
 closed context comparison. A=`gpt-5.4-mini-2026-03-17`, B=`gpt-5.4-2026-03-05`;
