@@ -6,7 +6,7 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: model-only comparison preparation
+## Current seam: model A4/B4 closed; GPT-5.4 follow-up signal
 
 The user's follow-up proceed authorizes one fresh model-only A4/B4 group after the
 closed context comparison. A=`gpt-5.4-mini-2026-03-17`, B=`gpt-5.4-2026-03-05`;
@@ -26,10 +26,33 @@ operator/wire tests pass10/10 in2.80s; an initial test-only missing price-review
 fixture was corrected. Both mock runs reach one edit, public check, submission and
 isolated acceptance PASS; all8 inputs preserve public task/diff/check state.
 Two real-source clones rehearse without Git network/provider/Docker calls.
-No new live calls yet; runtime/task/source/prices freeze before execution.
-All results official=false; no automatic default adoption,
-extra samples or retries. This comparison measures performance under the same
-money cap; model price and budget exits must be reported separately.
+Implementation commit:1f7b366. Runtime/task/source/prices were frozen before execution.
+
+All8 runs completed once in the fixed order. Mini:1/4 acceptance PASS,1 submission,
+3 NOT_RUN. GPT-5.4:3/4 PASS,4 submissions,1 acceptance FAIL,0 NOT_RUN. No infrastructure
+or count/provider/billing/continuation/cleanup uncertainty stop. All submitted rows
+have safety PASS. All148 counted/generation calls have completed, known usage;
+185 tool actions. All actual request hashes/task/diff/check/plan/notes/error deliveries
+pass public audits. All15 applied candidates have a same-diff public check (23 checks).
+
+Recorded cost mini$2.043326250/GPT-5.4$1.261343000,total$3.304669250 under$9.60;
+GPT-5.4's group cost is38.3% lower. Uncached equivalent:$2.994158250/$2.142335000;
+these are token-use normalizations, not bills. No cost/input-limit terminal or lowered
+output ceiling. A1/A4 stop on accepted_mutations, A3 on model_calls completion horizon.
+First applied edit calls:mini16/11/none/18,full5/3/8/8; total model calls112/36.
+Mini has17 rejected proposals (2 path,14 anchor,1 scope); full has0. A3 repeats identical
+path/old_text/new_text proposals beyond the first3 times. Mini A2 recovers across
+public-check failures and passes after3 edits. Full rows each use1 edit and pass both
+public checks, so this group does not establish improved recovery after a failed check.
+B1 still fails final acceptance. No hidden evaluator details were used to explain it.
+
+Max input tokens49658/40225; segment counts5/8/12/9 versus4/3/3/3, all noninitial
+transitions major_result_reviewed. One probe per arm; counts do not establish benefit.
+9658 historical and4396 recent protected files unchanged. Nine owned test roots recycled;
+durable source/run/evaluation evidence remains in place. The acceptance gap2 meets the
+fixed follow-up signal rule. Prioritize confirmation on other dev-train tasks before
+default adoption; no extra samples, retries, automatic resume or default change here.
+All results official=false. Report: `C:\pt\analyses\model-only-compare-20260916-v1\result.md`.
 
 ## Prior seam: prepared sources verified; context A4/B4 closed, direction unresolved
 
