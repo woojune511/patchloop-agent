@@ -818,7 +818,21 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: brief-assumption-v1 plan-content option implemented and locally verified.
+Current seam: fresh edit-assumption planning comparison, not an old grant/cycle resume.
+User proceed/delegation: one new A4/B4 group; A=brief-evidence-v1/B=brief-assumption-v1.
+Order A1/B1/B2/A2/B3/A3/A4/B4; pyfakefs v2, mini 2026-03-17/medium, segmented-v1,
+probes enabled/probe-policy none, repair-recheck, root .env, repeat1, $1.20/run/$9.60.
+Only plan content differs. Current runtime/limits/output admission and tool schemas
+fixed; fresh bases, no old notes/reasoning/patch/cases. Existing run_dev plus one-group
+external wrapper, lifetime execution lock, full reservation, zero paid retries.
+Stop all on count/provider/billing/continuation/cleanup/integrity uncertainty;
+ordinary settled task failures proceed. No auto-resume/replacement/fallback/extension,
+Docker Desktop start, pull or build. No hidden details in public behavior analysis.
+Freeze exact packet and verify ready Docker/images before dispatch; same-day official
+mini standard prices checked. Operator9 PASS/3.62s, no runtime change/full-suite rerun.
+External record C:\pt\analyses\assumption-planning-compare-20260915. official=false.
+
+Prior seam: brief-assumption-v1 plan-content option implemented and locally verified.
 At the existing post-edit review, connect one newly assumed/reimplemented/bypassed
 behavior to a concrete public input/setup and distinguishing observable outcome.
 Carry unsupported assumptions as untested; distinguish a rejected proposal from its

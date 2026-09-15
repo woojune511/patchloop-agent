@@ -5,7 +5,30 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: opt-in edit-assumption planning implemented and locally verified
+## Current seam: fresh edit-assumption planning comparison prepared for execution
+
+User proceed/delegation covers one new A4/B4 group: A=brief-evidence-v1,
+B=brief-assumption-v1, order A1/B1/B2/A2/B3/A3/A4/B4. Both use pyfakefs parent-traversal
+v2, mini 2026-03-17/medium, segmented-v1, probes enabled with probe-policy none,
+repair-recheck, root .env, repeat1 and $1.20 per run/$9.60 aggregate. Global limits
+and output admission stay fixed. No historical notes/reasoning/patch/cases injected.
+Only the plan-content instruction differs; no review timing, tool, memory or gate change.
+This is not reopening the stopped $40 cycle or any other finished grant.
+
+The external operator delegates to run_dev, reserves all slot caps, rechecks frozen
+inputs and prepared Docker/image identity, and stops the group on count/provider/
+billing/continuation/cleanup or execution-integrity uncertainty. No retry, replacement,
+fallback, automatic resume, Docker start/pull/build or extra sample. Settled ordinary
+task failure continues the fixed independent order. Acceptance and public behavior,
+not plan revisions alone, are the outcome measures. No default adoption or extension
+is automatic; hidden evaluator details never inform agent input or causal diagnosis.
+
+Official mini standard prices were rechecked on 2026-09-15: input0.75/cached0.075/
+output4.50 USD per million. Operator9 no-call tests PASS/3.62s; no runtime change or
+repeated full suite. Record: `C:\pt\analyses\assumption-planning-compare-20260915`.
+Execution and results are pending preparation/preflight; official=false.
+
+## Prior seam: opt-in edit-assumption planning implemented and locally verified
 
 `--planning-policy brief-assumption-v1` extends unchanged brief-evidence-v1 guidance
 at the existing post-mutation review: tie one newly assumed/reimplemented/bypassed
