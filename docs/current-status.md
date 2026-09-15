@@ -6,7 +6,40 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: AnyIO v2 registers the interrupt reproduction as a public check
+## Current seam: AnyIO v2 repairs a public failure but still fails acceptance
+
+One authorized fresh run used AnyIO v2 with the same GPT-5.4-2026-03-05/medium,
+brief-v1/segmented-v1, enabled probes, probe-policy none, repair-recheck and $1.20
+cap. Runtime, source, tools, planning and limits were unchanged. All twelve actual
+inputs match public task/diff/check state; the first has empty diff, plan and notes.
+
+`run_dev_4fd5d3e1c0a648da`: two edits, three public checks and submission. Call 8
+adds runner cancellation/reset; call 9's contract check fails with an introduced
+NameError. Call 10 receives current FAIL with finish unavailable, changes
+tasks.gather to asyncio.gather, and the automatic repair recheck passes all four
+public cases. Call 11 passes 32 regression tests (3 deselected); call 12 submits.
+This observes correction of an introduced name error, not a semantic redesign
+after a lifecycle counterexample. Two earlier probes could not import required
+packages and did not test their hypotheses. No rejected mutation or repeated
+rejected proposal occurred.
+
+Isolated acceptance FAIL / safety PASS, PRIVATE_EVALUATION_FAILED. Only aggregate
+evaluation results were inspected; the exact private failure remains unknown.
+Acceptance PASS/planned = 0/1, started 1, submitted 1, NOT_RUN 0, infrastructure
+stops 0. All twelve count/generation calls settled with matched usage. Recorded
+cost $0.716300500; uncached equivalent $1.052972500; 234.313s. Maximum input 40676
+tokens/182020 bytes; six segments, all five transitions major_result_reviewed.
+Every output ceiling stayed 25000; no cost/input limit forced termination.
+
+Operator 13 PASS/3.050s, Ruff PASS, isolated mock PASS with four inputs verified.
+The unchanged implementation retains full 2354 PASS/8 SKIP validation. Previous
+records and task packages are preserved. No retry, resume, replacement, additional
+candidate execution or hidden-detail reading; all results official=false.
+Next question: review the final reset/recreation strategy against public fixture
+lifetime and task-context requirements before choosing another experiment.
+Report: `C:\pt\analyses\anyio-v2-fresh-run-20260916-v1\result.md`.
+
+## Prior seam: AnyIO v2 registers the interrupt reproduction as a public check
 
 `tasks/dev-train/anyio-interrupt-runner-cleanup-v2` adds the public
 interrupt-lifecycle-contract check before the existing pytest-plugin regression.
