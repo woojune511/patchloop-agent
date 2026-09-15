@@ -6,7 +6,35 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: anyio verification gap traced to an untested interrupt assumption
+## Current seam: public AnyIO reproduction confirms the submitted patch still resumes tests
+
+One frozen public diagnostic ran on independent prepared-source BASE/SUBMITTED
+clones in the existing pinned AnyIO image, Python 3.13.13/pytest 9.0.3. The exact
+submitted patch is 7ffaade0... from run_dev_ef3ac49eb1e74027. Each revision ran the
+same four cases once, with no candidate repair, model call or private evaluation.
+
+Both function- and module-fixture cases propagate callback KeyboardInterrupt,
+then execute the forbidden post-interrupt test marker before fixture cleanup.
+Cleanup completes exactly once in all four observations. The submitted patch
+therefore retains the public issue's core defect despite its historical 32-test
+regression PASS. An explicit-cancellation control loses the base's extra fixture
+ClosedResourceError with the patch; it still records the intended CancelledError.
+The ordinary shared-fixture control preserves 1 pass/1 intentional fail/1 skip/
+1 xfail and one cleanup on both versions. Exit status alone is not the verdict.
+
+This demonstrates the selected public callback-interrupt failure, not every OS
+signal path or the hidden evaluator's exact failure. No runtime/context-policy
+cause is isolated. Public feedback code/events are saved but not delivered to a
+model; repair after that feedback remains unobserved. Historical results stay
+unchanged; this operator diagnostic has task_acceptance NOT_RUN/official=false.
+
+Two containers/eight observations completed in 11.035s; design 9 PASS/0.24s, Ruff
+PASS, all receipt/code/journal hashes verified. All 1041 prior analysis/source/user
+files unchanged, no containers remain. Runtime unchanged; no repeated full suite
+or mock, new provider/count call, task-package modification, retry or resume.
+Report:`C:\pt\analyses\anyio-public-interrupt-20260916-v1\result.md`.
+
+## Prior seam: anyio verification gap traced to an untested interrupt assumption
 
 The public-only follow-up reconstructed all ten actual requests from the fresh
 anyio run. The initial plan retains all required behavior; the final input still

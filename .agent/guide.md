@@ -841,7 +841,16 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: anyio public verification-gap audit is complete; runtime unchanged.
+Current seam: the public AnyIO interrupt failure is reproduced on BASE/SUBMITTED.
+Both function/module async-generator fixture cases propagate KeyboardInterrupt
+but resume the interrupted test; cleanup still completes once. The exact submitted
+patch improves the explicit-cancel fixture error, not this callback-interrupt case.
+Ordinary shared-fixture controls preserve pass/fail/skip/xfail outcomes. Two pinned
+containers, eight observations, no new model or private evaluation; runtime unchanged.
+Public feedback is saved, not agent-delivered. No repair/resume/default adoption.
+See C:\pt\analyses\anyio-public-interrupt-20260916-v1\result.md. official=false.
+
+Prior seam: anyio public verification-gap audit is complete; runtime unchanged.
 All 10 actual public inputs were verified; the final plan and v1 remain present.
 The model resolves v1 using regression PASS; its 14 inspections never inspect
 test assertions. The public
