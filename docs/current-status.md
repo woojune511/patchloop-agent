@@ -6,7 +6,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: anyio last-candidate verification after collector repair
+## Current seam: fresh anyio run completed; public PASS, acceptance FAIL
+
+The user approved one fresh anyio run after collector repair:exact dev-train task,
+gpt-5.4-2026-03-05/medium,segmented-v1,brief-v1,probes enabled,probe-policy none,
+repair-recheck,repeat1 and a new $1.20 total cap. Existing40/100/4/1800s/25000 limits
+and the previous request/tool/plan/segment contracts were unchanged. The tested fixed
+runtime was frozen; the first actual input has empty diff,plan and notes. Prepared-source
+clones need no remote fetch. Root:`C:\pt\analyses\anyio-fresh-run-20260916-v1`.
+
+`run_dev_ef3ac49eb1e74027` completed normally:acceptance FAIL/safety PASS,
+PRIVATE_EVALUATION_FAILED. Ten model/count calls,17 tools,one edit at call8,
+public check at9 (32 passed,3 deselected),submission at10. No rejected proposals or
+probes. Recorded cost:$0.478880500;uncached equivalent:$0.796832500. All output
+ceilings remained25000;max input46454 tokens/209528 bytes,two segments. No cost/input
+limit or infrastructure stop. Every count/generation/action completed with known usage.
+
+The final public plan treats regression PASS as confirmation of the interrupt fix.
+The existing public KeyboardInterrupt test has no async-generator fixture or assertions
+for post-interrupt execution/cleanup count. Launch-thread feedback marks changed
+cancellation lines unobserved and is delivered in the final actual input; subprocesses
+are outside that measurement. Probe remains available at submission. This supports
+investigating requirement-specific verification, not an exact hidden failure cause.
+There was no public FAIL, so post-failure model recovery remains unobserved.
+
+Operator tests13 PASS/14.22s;active-code Ruff PASS;mock acceptance PASS with4 actual
+inputs verified;two offline source clones. Runtime matches the prior2341 PASS/8 SKIP
+regression,so the full suite was not repeated. All10 live inputs pass public audits;
+4778 prior evidence/user files unchanged,no containers remain. No extra sample,resume,
+candidate execution,private-detail reading or default change. All official=false.
+Report:`C:\pt\analyses\anyio-fresh-run-20260916-v1\result.md`.
+
+## Prior seam: anyio last-candidate verification after collector repair
 
 The user requested checking correctness after the collector fix. One provider-free
 operator diagnostic evaluated N1's exact last candidate, which the agent had not
