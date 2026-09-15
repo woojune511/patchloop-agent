@@ -171,7 +171,7 @@ class MockDevAdapter:
                     "Current stage: " + payload["workflow_gate"] + ". "
                     "Untested behavior remains an assumption until observed."
                 )
-                if planning["policy"] == "brief-evidence-v1":
+                if planning["policy"] in {"brief-evidence-v1", "brief-assumption-v1"}:
                     # Scripted public smoke data tests transport, not planning quality.
                     turn.tool_calls[0].turn_decision.plan_update = (
                         "Behavior: " + payload["public_task"]["issue"]["title"] + ".\n"

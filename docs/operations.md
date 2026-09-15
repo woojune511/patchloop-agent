@@ -76,11 +76,16 @@ uncertainty stops the whole group without retry or replacement samples.
 
 ## Brief planning improvement cycle
 
-`patchloop dev --planning-policy none|brief-v1|brief-evidence-v1` defaults to `none`;
-both brief variants support `--context-policy append-v1` or `segmented-v1`.
+`--planning-policy` accepts `none` (default), `brief-v1`, `brief-evidence-v1` or
+`brief-assumption-v1`. All brief variants support `--context-policy append-v1` or `segmented-v1`.
 `brief-evidence-v1` only adds evidence-linked headings inside the existing plan text;
 it does not enforce a plan, add a tool or require a probe. Resume repeats the option along
 with the existing exact task/model/environment/cap/limits. No old run migration.
+`brief-assumption-v1` adds only post-edit assumption-to-input/observation guidance;
+schema, review timing, budgets and submission eligibility do not change. The new
+policy has its own hash-bound identity and is not a default adoption. Existing
+closed comparison packets do not execute this option; prepare a new exact packet
+before paid comparison, without replaying old outputs as fresh controls.
 
 `diagnostics.planning_cycle` implements the user-authorized bounded cycle. The
 2026-09-14 cycle below is now stopped after eight attempts ($4.064418300 recorded
@@ -173,7 +178,7 @@ conditions and evidence limits are in the current status and internal agent guid
 ## Optional short reasoning segments
 
 `--context-policy segmented-v1` uses current public working state between short
-native reasoning segments. Planning `none`, `brief-v1` and `brief-evidence-v1` are
+native reasoning segments. Planning `none`, `brief-v1`, `brief-evidence-v1` and `brief-assumption-v1` are
 supported; defaults stay append/OFF. It never calls compact or a handoff model. Do not combine it with
 native-compaction options. Same-policy exact resume only; no old-run migration.
 

@@ -5,7 +5,34 @@ and always records `official=false`. The available commands are `patchloop dev`,
 `patchloop doctor`, and `patchloop task validate`; legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: verification narrowing traced; no transport loss found in two runs
+## Current seam: opt-in edit-assumption planning implemented and locally verified
+
+`--planning-policy brief-assumption-v1` extends unchanged brief-evidence-v1 guidance
+at the existing post-mutation review: tie one newly assumed/reimplemented/bypassed
+behavior to a concrete public input/setup and distinguishing observation, carry it
+as untested when existing evidence does not address it, and choose a useful next
+action. Rejected proposals remain distinct from the current rollback baseline.
+This is one content axis, not a new planning phase or a claim of semantic coverage.
+
+Default OFF, old planning prompts/identities, native tool schemas/order, memory,
+review timing, tool masks, budgets and finish gates are unchanged. No mandatory
+probe, semantic judge, extra call, injected historical case or task modification.
+The new policy is bound through the existing v39 wrapper/model/envelope/manifest;
+append and segmented context both work. No old run or closed paid packet migration.
+
+Next comparison is fresh A=brief-evidence-v1/B=brief-assumption-v1, changing no other
+factor. No new paid packet or live efficacy evidence exists yet. Local records:
+`C:\pt\validation\assumption-planning-20260915`. official=false.
+Focused55 PASS/101.86s; full2306 PASS/8 skips/921.915s across109 files, Ruff/diff PASS.
+Full runtime/test hashes stayed fixed. OFF/baseline/new mock runs each reach one edit,
+visible checks, finish and isolated smoke acceptance PASS/safety NOT_RUN, four model
+turns/five tools/two segments. Both ON plans reach revision2 in the final actual input.
+No count/provider/compact/Docker call; no live behavior improvement measured. The new
+instruction adds912 UTF-8 bytes, not measured API tokens. Existing three planning
+identities match; 199 recent and 9658 historical protected files remain unchanged.
+Full regression exceeded the two-minute target; do not describe it as a fast full cycle.
+
+## Prior seam: verification narrowing traced; no transport loss found in two runs
 
 Read-only A1/A3 public trace audit verified task/diff/plan/notes and count/dispatch
 identity across all 32 requests. A1's first edit at T14 already framed verification

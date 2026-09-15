@@ -47,6 +47,10 @@ The separate `brief-evidence-v1` content contrast requests three headings in tha
 same text: required behavior, evidence/open assumptions, and the next discriminating
 action. Format is guidance, not enforcement or proof of better planning. The old
 brief-v1 instructions and default OFF remain unchanged.
+The opt-in `brief-assumption-v1` adds an edit-specific instruction: connect a behavior
+newly assumed or bypassed by the change to a concrete public input and distinguishing
+observation. It uses the same plan field, result-review timing and optional actions;
+it does not force an experiment or judge whether a plan proves correctness.
 It supports append and the opt-in `segmented-v1` context policy. Segmented mode
 keeps native reasoning inside a short work interval, then hands off current public
 execution facts and latest unverified notes/plan without another model call. Historical

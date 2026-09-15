@@ -336,7 +336,9 @@ class DevRunRequest(StrictModel):
     enable_probes: bool = False
     probe_policy: Literal["none", "cases-v1"] = "none"
     repair_recheck: bool = False
-    planning_policy: Literal["none", "brief-v1", "brief-evidence-v1"] = "none"
+    planning_policy: Literal[
+        "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
+    ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
     compact_at_input_tokens: int | None = Field(default=None, gt=0, lt=272_000)
     accept_compaction_model_limit_reservation: bool = False
@@ -394,7 +396,9 @@ class DevRunEnvelope(StrictModel):
     model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     repair_recheck: bool = False
-    planning_policy: Literal["none", "brief-v1", "brief-evidence-v1"] = "none"
+    planning_policy: Literal[
+        "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
+    ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
     segment_contract: dict[str, Any] | None = None
     probe_policy: Literal["none", "cases-v1"] = "none"

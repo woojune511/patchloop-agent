@@ -281,7 +281,7 @@ complete candidate; no extra filesystem read or semantic check is added for thes
 ## Context boundary
 
 V39 additionally offers `--context-policy segmented-v1`, with planning none,
-brief-v1 or the opt-in brief-evidence-v1 content contrast.
+brief-v1 or the opt-in brief-evidence-v1 / brief-assumption-v1 content contrasts.
 Default append/OFF stays unchanged. Follow [segmented-context.md](plans/segmented-context.md)
 for its intentionally lossy between-segment protocol, current-public-state ownership,
 60k-token / 1-MiB-request / 256-KiB-encrypted-field management bounds and exact resume.
@@ -818,7 +818,26 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: read-only verification-narrowing analysis, no runtime change.
+Current seam: brief-assumption-v1 plan-content option implemented and locally verified.
+At the existing post-edit review, connect one newly assumed/reimplemented/bypassed
+behavior to a concrete public input/setup and distinguishing observable outcome.
+Carry unsupported assumptions as untested; distinguish a rejected proposal from its
+rollback baseline. New guidance only, appended to unchanged brief-evidence-v1 text.
+No mandatory probe/annotation, extra call, semantic judge, stronger mask or new gate.
+Old prompts/tool schemas/identities, notes, review timing and replay stay exact.
+New policy binds v39 planning/model/envelope/manifest; append and segmented supported.
+No task-specific cases or historical repair hints. Fresh A=brief-evidence-v1 versus
+B=brief-assumption-v1 is the next comparison; no new paid packet or default adoption.
+See planning-experiment.md; local receipts C:\pt\validation\assumption-planning-20260915.
+Focused55 PASS/101.86s, full2306 PASS/8 skips/921.915s across109 files; Ruff/diff PASS.
+Runtime/test hashes fixed through full validation. OFF/baseline/new mock each4 turns/
+5 tools/1 edit/2 segments through isolated smoke acceptance PASS, safety NOT_RUN.
+Both ON revision2 plans reach the final actual input. New guidance adds912 UTF-8 bytes,
+not a measured token/cost estimate or live quality gain. 199 recent and9658 historical
+protected files unchanged, including user changes/credentials and old run evidence.
+No provider/count/compact/Docker call. Full suite exceeds the two-minute target.
+
+Prior seam: read-only verification-narrowing analysis, no runtime change.
 A1/A3: all 32 request task/diff/plan/notes and dispatch/count identities verified.
 A1 T14 first-edit plan narrows to registered checks; A3 T13 says submit on first
 check PASS before its result. A1 v1 original survives; the model resolves it at T17

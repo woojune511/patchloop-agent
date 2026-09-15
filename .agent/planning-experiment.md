@@ -9,7 +9,7 @@ missing internal planning caused the behavior; this is a new intervention.
 
 ## Runtime contract
 
-`--planning-policy none|brief-v1|brief-evidence-v1` defaults OFF. Both brief variants
+`--planning-policy none|brief-v1|brief-evidence-v1|brief-assumption-v1` defaults OFF. All brief variants
 support append-v1 and segmented-v1, not native-window-v1.
 Only ON adds nullable `plan_update` to existing `turn_decision` schemas and adds
 brief instructions. There is no planning tool, separate response, API call or
@@ -49,6 +49,56 @@ from working notes and verification concerns. The harness validates formatting,
 not the truth of a model-authored interpretation. Planning never changes evidence,
 source admission, check PASS, tool masks, costs, counters or finish eligibility.
 Only public inputs are available; hidden/private/reference data never enters plans.
+
+## Edit-assumption content contrast (2026-09-15)
+
+`brief-assumption-v1` adds one short instruction block to the unchanged
+`brief-evidence-v1` text. At the existing post-mutation review, connect one behavior
+newly assumed, reimplemented or bypassed by the edit to a concrete public input/setup
+and distinguishing observable outcome. State what already observed evidence exercises
+that pair; otherwise retain it as untested. Connect it to the next useful allowed
+action and reconsider it after results. A rejected proposal is not the current
+rollback baseline. Do not invent a concern when none is material; null remains valid.
+
+This changes plan content guidance only: no new fields, review event, extra call,
+mandatory probe, concern quota, semantic judge, stronger mask or finish requirement.
+The conditional guidance is present from the first system prompt; no additional
+per-turn review message or timing intervention is introduced.
+All old prompts, ordered tool schemas and planning identities stay exact. The new
+instruction text binds through the existing v39 planning wrapper, model/envelope and
+manifest identity. Both append and segmented paths use the existing storage/replay.
+Old runs and closed experiment packets are never migrated or reused as new samples.
+
+Reason for this contrast: the A1/A3 public audit found verification narrowing at
+or shortly after the first edit despite preserved goals, plans, sources and available
+tools. Their plans already had broad evidence-aware guidance. The new hypothesis is
+that explicitly linking a change-specific assumption to a concrete observation is
+more actionable than repeating an overall goal or check list. No historical
+counterexample, task-specific input or repair is injected. This is not a diagnosed
+transport fix, model-ability verdict or established performance improvement.
+[Official guidance](https://developers.openai.com/api/docs/guides/optimizing-llm-accuracy#optimization)
+supports clear instructions and systematic testing, not the effectiveness of this
+particular intervention. Keep the prompt variant opt-in pending measured comparison.
+
+The next comparison should use fresh runs, A=`brief-evidence-v1` and
+B=`brief-assumption-v1`, otherwise identical task/model/context/probe options. Do not
+change probe reuse, context, submission guidance or tool masks in that comparison.
+Judge actual edits, useful distinguishing observations, repairs/rechecks and task
+acceptance, not simply plan revisions or mentions of an assumption. This implementation
+does not create a paid packet or reopen a closed budget. Freeze a new exact group and
+its cost boundary before any dispatch, using the existing runner and zero-retry rules.
+
+Provider-free validation records: `C:\pt\validation\assumption-planning-20260915`.
+Tests use authored fixture plans to verify delivery and failure boundaries; they
+cannot show that a real model chooses a useful assumption or tests it correctly.
+Focused55 PASS/101.86s; full2306 PASS/8 skips in921.915s across109 files, fixed
+runtime/test hashes, Ruff/diff PASS. OFF/baseline/new local smoke each reaches one
+accepted edit, visible checks, finish and isolated smoke acceptance PASS/safety NOT_RUN
+with4 turns/5 tools/2 segments; ON revision2 plans reach the final actual input.
+The new instruction adds912 UTF-8 bytes. No API count/token/cost or real-model behavior
+measurement; no provider/compact/Docker execution. Old planning identities and
+199 recent/9658 historical protected file hashes match. Full-suite two-minute target
+was not met. See result.md and verification.json in the receipt directory.
 
 ## Opt-in content contrast (2026-09-15)
 

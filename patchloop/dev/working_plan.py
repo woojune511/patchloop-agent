@@ -15,7 +15,8 @@ if TYPE_CHECKING:
 
 POLICY = "brief-v1"
 EVIDENCE_POLICY = "brief-evidence-v1"
-POLICIES = frozenset({POLICY, EVIDENCE_POLICY})
+ASSUMPTION_POLICY = "brief-assumption-v1"
+POLICIES = frozenset({POLICY, EVIDENCE_POLICY, ASSUMPTION_POLICY})
 MAX_PLAN_CHARS = 3_000
 EVENT = "working_plan_updated"
 INSTRUCTIONS = """Brief planning is enabled. In the first tool response, use plan_update
@@ -49,12 +50,28 @@ useful, say why the remaining action follows from the evidence; no probe is mand
 Keep these sections within the existing 3000-character limit. These are public
 working statements, not a reasoning transcript. This format is guidance only;
 missing headings do not invalidate an otherwise valid action or plan update."""
+EDIT_ASSUMPTION_GUIDANCE = """At an existing post-mutation review, use the current diff and
+observed source to focus Evidence / open assumptions on one behavior this edit newly assumes,
+reimplements, or bypasses. Tie it to a concrete public input/setup and an observable
+outcome that distinguishes correct from incorrect behavior. Name what observed public
+evidence exercises that input and outcome; if none does, keep it explicitly untested.
+Connect it to the Next discriminating action that could change the repair/submission
+decision. After check/probe results, carry it forward unless evidence addresses it
+or explain why further investigation is no longer useful. A rejected edit is only a
+proposal; distinguish its assumptions from the current rollback baseline.
+Do not invent a concern if none is material; null remains allowed. This is a short
+public work statement, not an extra review step, reasoning transcript or required probe."""
 
 
 def instructions(policy: str = POLICY) -> str:
     if policy not in POLICIES:
         raise ValueError("unknown planning policy")
-    return INSTRUCTIONS + "\n\n" + EVIDENCE_FORMAT if policy == EVIDENCE_POLICY else INSTRUCTIONS
+    if policy == POLICY:
+        return INSTRUCTIONS
+    text = INSTRUCTIONS + "\n\n" + EVIDENCE_FORMAT
+    if policy == ASSUMPTION_POLICY:
+        text += "\n\n" + EDIT_ASSUMPTION_GUIDANCE
+    return text
 
 
 def contract(policy: str = POLICY) -> dict[str, Any]:
