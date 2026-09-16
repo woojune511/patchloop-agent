@@ -6,7 +6,45 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v4 passes public path cases; isolated acceptance still fails
+## Current seam: HF v4 default-origin/configured-endpoint confusion reproduced
+
+The unchanged v4 submission uses `constants.ENDPOINT` to identify the default Hub
+origin, but that value follows the process's `HF_ENDPOINT` configuration. Pinned
+source distinguishes `_HF_DEFAULT_ENDPOINT` from this configured fallback, and
+explicit client/URL-builder endpoints take precedence. The current v4 public check
+pins HF_ENDPOINT to the canonical default, leaving this distinction untested.
+
+A frozen public diagnostic holds the explicit request endpoint at
+`https://mirror.example.test:8443/hub` and changes only HF_ENDPOINT across three
+fresh processes. Each slice has 48 existing-API cases across metadata and top-level/
+client downloads, header/link carriers, default/relative/already-custom/foreign
+routes. BASE passes 38/48 in each slice. SUBMITTED passes 48/48 with the default
+environment, but 28/48 when the environment equals the request endpoint and 28/48
+when it names a third-party endpoint.
+
+Both custom environments miss ten default-host rewrites. The matching environment
+also doubles `/hub` on ten already-correct routes; the third-party environment
+wrongly rebases ten foreign routes onto the request endpoint. Each group covers
+all five explicitly configured entry paths and both carriers. Only refresh routes
+differ: request URLs, file hashes, transfer counts and original URL-builder controls
+match. Direct no-endpoint and relative-route preservation controls pass throughout.
+This establishes a public defect and coverage gap, not the private FAIL's exact cause.
+
+Six public Docker checks complete in 14.392s with zero execution errors and confirmed
+cleanup. Focused tests 26 PASS/0.744s (final JUnit timing), Ruff PASS. All 7153 prior
+files, prepared source and exact submission are unchanged; no PatchLoop container
+remains. No new repair, provider/count call, private evaluation, source fetch or
+Docker start/pull/build; cost $0, all official=false. Runtime/task implementation
+is unchanged, so full regression and mock smoke are not repeated.
+
+Next: add compact environment-variation regressions to the public contract through
+existing APIs, retaining v4 cases and preservation controls, then verify actual
+feedback delivery. Keep default-origin identity separate from configured destination
+context; do not change the agent policy/model based on this diagnostic. Implicit
+client configuration, staging, redirects and live transfers remain outside its claims.
+Report: `C:\pt\analyses\hf-origin-public-diagnostic-20260917-v1\result.md`.
+
+## Prior seam: HF v4 passes public path cases; isolated acceptance still fails
 
 The single fresh GPT-5.4-2026-03-05/medium observation completes with acceptance
 FAIL and safety PASS: `run_dev_0bcd9154fcbd43e4`. Started/submitted=1/1, acceptance
