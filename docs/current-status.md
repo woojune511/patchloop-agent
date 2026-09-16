@@ -6,7 +6,7 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: probe import guidance implemented; fresh observation pending
+## Current seam: probe import guidance implemented; fresh AnyIO v3 acceptance PASS
 
 The probe description now distinguishes mounted source from importable packages:
 only /workspace is added to sys.path, src layouts may need an explicit observed
@@ -29,10 +29,28 @@ combining the initial run with 11 exact rechecks in 2.17s. Ten old description/
 contract hash assertions were updated; one unchanged check passed with a shorter
 pytest root after its 264-character temporary path failed on Windows. Original
 failures are retained; runtime is unchanged since the focused checks. 9,583 prior
-files are preserved. The approved next step is exactly one fresh
-GPT-5.4-2026-03-05/medium AnyIO v3 run under $1.20 after validation, with no old
-patch/plan/diagnosis injection and no retry/resume/extra sample. All official=false.
-Records: `C:\pt\analyses\probe-environment-anyio-v3-20260916-v1`.
+files are preserved and nine owned pytest roots recycled.
+
+The approved fresh GPT-5.4-2026-03-05/medium AnyIO v3 run completes with acceptance
+PASS/safety PASS: run_dev_cd40895e14784b3f, one edit at call 7, lifecycle 7/7 PASS
+at call 8, upstream 32 PASS/3 deselected at call 9, submission at call 10. The
+patch tracks the active call and distinguishes injected runner cancellation while
+preserving the shared runner. No rejected proposal or failed candidate check occurs.
+
+All ten actual inputs match public task/diff/check state; the first has empty diff,
+plan and notes. Ten count/generation calls settle with matched usage; 17 tools,
+228.685s, $0.675417000 recorded ($0.980985000 uncached equivalent) within $1.20.
+Maximum input 53,839 tokens/270,609 bytes; three segments, initial plus two
+major_result_reviewed; every output ceiling remains 25,000. No resource limit ends
+the run. Started/submitted/PASS=1/1/1, acceptance NOT_RUN=0, infrastructure stops=0.
+
+The model chooses zero probes despite availability in all ten inputs. Thus live
+import-error guidance, fallback experiments and counterexample-responsive repair
+remain unobserved. This is one successful task observation, not causal evidence
+that the guidance improved repair or a general model-quality claim. No previous
+patch/plan/diagnosis injection, retry/resume/extra sample or hidden-detail reading;
+all official=false. The bounded scope is complete, with no automatic extension.
+Report: `C:\pt\analyses\probe-environment-anyio-v3-20260916-v1\result.md`.
 
 ## Prior seam: public trace identifies the final AnyIO v3 cancellation regression
 
