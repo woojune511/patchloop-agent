@@ -6,7 +6,43 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: fresh PDM v2 repair passes public checks and isolated acceptance
+## Current seam: fixed configuration completes HF Hub and Loguru development runs
+
+The authorized H1 -> L1 group completes with acceptance PASS 1/planned 2:
+HF Hub Xet endpoint v1 FAIL, Loguru invalid-format feedback v3 PASS; both safety
+PASS. Started/submitted=2/2, acceptance NOT_RUN=0, infrastructure stops=0.
+The PDM-success runtime, GPT-5.4-2026-03-05/medium, segmented-v1/brief-v1, probes,
+probe-policy none, repair-recheck and $1.20 per-run caps remain fixed.
+
+HF (`run_dev_417d1bd656db4192`) edits at call 6, passes upstream 15/15 at call 7
+and submits at call 8. Its response-URL helper's core rebasing lines have no
+observed launch-thread entries in that check. The public issue's explicit endpoint
+propagation is therefore insufficiently verified; the private failure is unknown.
+Loguru (`run_dev_5c71f3b21a334508`) edits at call 4, passes all four registered
+checks at calls 5-8 (including upstream 20/20), then submits at call 9.
+Both have one edit, no rejected proposal, no failed public check and zero probes
+despite probe availability in every input. Failed-check recovery remains unobserved.
+
+All 17 actual inputs retain exact public task/diff/check state. Both runs begin with
+empty diff/plan/notes in independent prepared-source workspaces. All 17 count/generation
+calls settle with matched usage; 26 tools, 215.870s. Total recorded cost is
+$0.724241500 ($1.107857500 uncached equivalent), within the $2.40 group cap.
+Maximum inputs are 37,474/27,766 tokens; segments 2/5, initial plus
+major_result_reviewed. All output ceilings remain 25,000; no resource limit occurs.
+
+Operator validation 13 PASS/2.56s and correctness lint PASS; runtime/task unchanged,
+so the full suite/mock smoke was not repeated. Before packet publication, recursive
+operator lint created ignored source caches; the content hash check blocked launch
+with zero model calls. Cache bytes were preserved externally and both original
+source hashes restored without refetch or manifest changes before the fixed runs.
+
+The bounded group is complete with no retry/resume/extra sample. This is a pair of
+development observations, not a model/context comparison or a benchmark rate;
+all official=false. Next: reproduce HF endpoint requirements through public access
+paths to establish the verification gap before changing its task checks.
+Report: `C:\pt\analyses\fixed-config-two-task-20260916-v1\result.md`.
+
+## Prior seam: fresh PDM v2 repair passes public checks and isolated acceptance
 
 The authorized single GPT-5.4-2026-03-05/medium run completes with acceptance PASS
 and safety PASS: `run_dev_8add321a123e4989`. It starts from the prepared base with
