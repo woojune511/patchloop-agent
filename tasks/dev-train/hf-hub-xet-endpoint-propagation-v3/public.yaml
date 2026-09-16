@@ -1,0 +1,255 @@
+schema_version: task-public-v1
+task_id: hf-hub-xet-endpoint-propagation
+task_version: 3
+split: dev-train
+repository:
+  url: https://github.com/huggingface/huggingface_hub.git
+  base_commit: 6f9b87ecda5025259c69a1eb0ae6f8ee80d05d33
+  language: python
+issue:
+  title: Custom Hub endpoint is ignored by Xet refresh metadata
+  description: |
+    A client configured with a custom Hub endpoint can request file metadata
+    from that endpoint while receiving Xet refresh metadata that still points
+    at the default Hugging Face host.
+
+    Ensure request-specific endpoint context is preserved through every file
+    metadata access path. Rebase refresh routes owned by the default Hub origin
+    onto the configured endpoint, while preserving relative routes, routes
+    already owned by another origin, and callers that do not provide an
+    explicit endpoint.
+constraints:
+  allowed_paths:
+  - src/huggingface_hub/file_download.py
+  - src/huggingface_hub/hf_api.py
+  - src/huggingface_hub/utils/_xet.py
+  forbidden_paths:
+  - tests/**
+  - docs/**
+  - .patchloop-hidden/**
+  - pyproject.toml
+  - setup.py
+  - setup.cfg
+  - requirements*.txt
+  max_changed_files: 3
+  max_diff_lines: 80
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: xet-endpoint-contract
+  command:
+  - /usr/local/bin/python
+  - -B
+  - -c
+  - |
+    """Public endpoint ownership through existing metadata and download APIs."""
+
+    from collections import defaultdict
+    from pathlib import Path
+    from tempfile import TemporaryDirectory
+    from unittest.mock import patch
+
+    DEFAULT = "https://huggingface.co"
+    CUSTOM = "https://mirror.example.test:8443"
+    FILE_PATH = "/public-fixture/repo/resolve/main/config.json"
+    REFRESH_PATH = "/api/models/public-fixture/repo/xet-read-token/main?aud=read#refresh"
+    FILE_HASH = "public-fixture-xet-hash"
+
+
+    def cases():
+        # The public origin contract treats case and an explicit default port as equivalent.
+        routes = (
+            ("default", DEFAULT + REFRESH_PATH, True),
+            ("relative", REFRESH_PATH, False),
+            ("foreign", "https://storage.example.test" + REFRESH_PATH, False),
+            ("host-case", "https://HUGGINGFACE.CO" + REFRESH_PATH, True),
+            ("scheme-case", "HTTPS://huggingface.co" + REFRESH_PATH, True),
+            ("default-port", "https://huggingface.co:443" + REFRESH_PATH, True),
+            ("foreign-port", "https://huggingface.co:444" + REFRESH_PATH, False),
+            ("foreign-scheme", "http://huggingface.co" + REFRESH_PATH, False),
+            ("lookalike-host", "https://huggingface.co.example.test" + REFRESH_PATH, False),
+            ("network-relative", "//huggingface.co" + REFRESH_PATH, False),
+        )
+        rows = []
+        for entry, origin in (
+            ("direct-no-endpoint", CUSTOM),
+            ("client-custom-url", CUSTOM),
+            ("client-default-url", DEFAULT),
+            ("download-custom", CUSTOM),
+            ("download-local", CUSTOM),
+        ):
+            for carrier in ("header", "link"):
+                for kind, route, same_origin in routes:
+                    rows.append(
+                        dict(
+                            id=f"{entry}-{carrier}-{kind}",
+                            entry=entry,
+                            kind=kind,
+                            url=origin + FILE_PATH,
+                            carrier=carrier,
+                            route=route,
+                            expected=CUSTOM + REFRESH_PATH
+                            if entry != "direct-no-endpoint" and same_origin
+                            else route,
+                        )
+                    )
+        return rows
+
+
+    def observe():
+        import requests
+        from huggingface_hub import file_download, hf_api
+        from huggingface_hub.utils import _xet
+
+        for module, relative in (
+            (file_download, "file_download.py"),
+            (hf_api, "hf_api.py"),
+            (_xet, "utils/_xet.py"),
+        ):
+            assert Path(module.__file__).resolve() == Path("/workspace/src/huggingface_hub") / relative
+
+        def no_network(*args, **kwargs):
+            raise AssertionError("Unexpected HTTP request outside the controlled HEAD response")
+
+        def observe_case(case):
+            requested, transfers = [], []
+
+            def head_response(*args, **kwargs):
+                assert kwargs["method"] == "HEAD"
+                requested.append(kwargs["url"])
+                response = requests.Response()
+                response.status_code = 200
+                response.url = kwargs["url"]
+                response.request = requests.Request("HEAD", kwargs["url"]).prepare()
+                response.headers.update(
+                    {
+                        "X-Repo-Commit": "a" * 40,
+                        "ETag": '"fixture-etag"',
+                        "Content-Length": "0",
+                        "X-Xet-Hash": FILE_HASH,
+                    }
+                )
+                if case["carrier"] == "header":
+                    response.headers["X-Xet-Refresh-Route"] = case["route"]
+                else:
+                    response.headers["Link"] = f'<{case["route"]}>; rel="xet-auth"'
+                return response
+
+            def capture_transfer(**kwargs):
+                transfers.append(kwargs["xet_file_data"])
+                Path(kwargs["destination_path"]).write_bytes(b"")
+
+            row = dict(
+                id=case["id"],
+                route=None,
+                file_hash=None,
+                requests=requested,
+                transfer_count=0,
+                error=None,
+            )
+            try:
+                with (
+                    patch.object(requests.sessions.Session, "request", no_network),
+                    patch.object(file_download, "_request_wrapper", head_response),
+                    patch.object(file_download, "_download_to_tmp_and_move", capture_transfer),
+                    TemporaryDirectory(prefix="public-xet-") as temporary,
+                ):
+                    if case["entry"] == "direct-no-endpoint":
+                        data = file_download.get_hf_file_metadata(
+                            case["url"], token=False
+                        ).xet_file_data
+                    elif case["entry"].startswith("client-"):
+                        client = hf_api.HfApi(endpoint=CUSTOM, token=False)
+                        data = client.get_hf_file_metadata(url=case["url"]).xet_file_data
+                    else:
+                        destination = {"local_dir": Path(temporary) / "local"}
+                        result = file_download.hf_hub_download(
+                            "public-fixture/repo",
+                            "config.json",
+                            endpoint=CUSTOM,
+                            token=False,
+                            cache_dir=Path(temporary) / "cache",
+                            force_download=True,
+                            **(destination if case["entry"] == "download-local" else {}),
+                        )
+                        assert Path(result).is_file() and len(transfers) == 1
+                        data = transfers[0]
+                    row.update(route=data.refresh_route, file_hash=data.file_hash)
+            except Exception as error:
+                row["error"] = f"{type(error).__name__}: {str(error)[:180]}"
+            row["transfer_count"] = len(transfers)
+            return row
+
+        return [observe_case(case) for case in cases()]
+
+
+    def report(rows):
+        expected = cases()
+        if [row.get("id") for row in rows] != [case["id"] for case in expected]:
+            print("FAILED case-manifest - missing, duplicate or reordered public observations")
+            return 1
+        failures = defaultdict(list)
+        for case, row in zip(expected, rows, strict=True):
+            checks = (
+                ("route", case["expected"], row.get("route")),
+                ("file_hash", FILE_HASH, row.get("file_hash")),
+                ("requests", [case["url"]], row.get("requests")),
+                (
+                    "transfer_count",
+                    int(case["entry"].startswith("download-")),
+                    row.get("transfer_count"),
+                ),
+                ("error", None, row.get("error")),
+            )
+            mismatches = [
+                f"{name} expected={want!r} actual={got!r}" for name, want, got in checks if want != got
+            ]
+            if mismatches:
+                failures[case["kind"]].append((case["id"], "; ".join(mismatches)))
+        for kind, group in failures.items():
+            case_id, detail = group[0]
+            print(f"FAILED {kind} - {len(group)} cases; example={case_id}; {detail}")
+        failed = sum(len(group) for group in failures.values())
+        print(f"{len(expected) - failed} passed, {failed} failed")
+        return int(failed != 0)
+
+
+    if __name__ == "__main__":
+        raise SystemExit(report(observe()))
+  timeout_seconds: 60
+  working_directory: .
+  environment:
+    HF_ENDPOINT: https://huggingface.co
+    HF_HOME: /tmp/hf-home
+    HF_HUB_DISABLE_PROGRESS_BARS: '1'
+    HF_HUB_DISABLE_TELEMETRY: '1'
+    PYTHONPATH: /workspace/src
+    PYTHONPYCACHEPREFIX: /tmp/pycache
+    XDG_CACHE_HOME: /tmp/xdg-cache
+  expected_exit_codes:
+  - 0
+  output_limit_bytes: 200000
+- id: upstream-xet-regression
+  command:
+  - /usr/local/bin/python
+  - -m
+  - pytest
+  - --no-header
+  - -q
+  - -p
+  - no:cacheprovider
+  - -W
+  - ignore::DeprecationWarning
+  - tests/test_xet_utils.py
+  timeout_seconds: 60
+  environment:
+    PYTHONPATH: /workspace/src
+    PYTHONPYCACHEPREFIX: /tmp/pycache
+    XDG_CACHE_HOME: /tmp/xdg-cache
+    HF_HOME: /tmp/hf-home
+tags:
+- swe-rebench-v2
+- real-repository
+- xet-metadata
+- endpoint-propagation
+- memory-development

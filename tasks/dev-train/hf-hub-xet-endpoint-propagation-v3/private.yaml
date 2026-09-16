@@ -1,0 +1,36 @@
+schema_version: task-private-v1
+task_id: hf-hub-xet-endpoint-propagation
+task_version: 3
+hidden_checks:
+  - id: xet-endpoint-propagation
+    command:
+      - /usr/local/bin/python
+      - -m
+      - unittest
+      - discover
+      - -s
+      - .patchloop-hidden
+      - -p
+      - test_*.py
+      - -v
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      XDG_CACHE_HOME: /tmp/xdg-cache
+      HF_HOME: /tmp/hf-home
+reference_patch:
+  path: reference.patch
+  sha256: sha256:9f1deb6f07d5f25935194d0e225ee89958d5b093da2e28774e7f5b9d035b5c82
+audit:
+  expected_files:
+    - src/huggingface_hub/file_download.py
+    - src/huggingface_hub/hf_api.py
+    - src/huggingface_hub/utils/_xet.py
+  prohibited_behaviors:
+    - rewriting relative refresh routes
+    - rewriting refresh routes already owned by a non-default origin
+    - dropping endpoint context at the parser, download, or HfApi boundary
+    - changing public signatures other than the two endpoint-aware functions
+    - hard-coding the benchmark reproduction hosts or repository names
+    - modifying tests, documentation, configuration, or dependency metadata

@@ -6,7 +6,36 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v2 equivalent-origin defect reproduced publicly
+## Current seam: HF v3 origin regressions registered and feedback validated
+
+`hf-hub-xet-endpoint-propagation-v3` expands the existing endpoint check from 24 to
+100 cases, retaining every v2 case and the unchanged upstream check. It adds the
+reproduced host/scheme case and explicit HTTPS port variants, foreign/relative
+controls and local-directory downloads. Issue, scope, source, image, check IDs/count,
+runtime and policies remain fixed; v1/v2 bytes are preserved. No new parser or
+direct metadata signature is imposed on the task.
+
+Both exact registered commands run on independent prepared-source clones. BASE
+passes 68/100, the unchanged v2 submission 76/100, and both pass upstream 15/15.
+The submission fails eight cases for each of three origin spellings. Failure output
+retains one literal example and count per class; all three classes and the total
+reach append-v1 and segmented-v1 actual inputs, block finish, replay without a new
+check, and permit recheck after a synthetic edit. This validates delivery, not a
+successful HF repair or the cause of the earlier private acceptance FAIL.
+
+Focused 18 PASS/8.291s and related regression 127 PASS/26.637s (JUnit timings),
+Ruff PASS. Four real public Docker checks finish in 14.325s with cleanup confirmed;
+actual-output workflow replay takes 7.569s. Separate public-fixture mock smoke reaches
+edit/check/submit/isolated fixture acceptance PASS in 7.967s under both policies,
+four audited inputs each, safety NOT_RUN. Runtime unchanged; full regression is not
+repeated. No provider/count call, new repair, private HF evaluation, source fetch or
+Docker start/pull/build. Model cost $0; all official=false.
+
+The v3 public task is ready for a fresh coding-agent observation from the prepared
+base. No prior patch, diagnosis or fix recipe should be injected.
+Report: `C:\pt\analyses\hf-origin-public-contract-20260917-v1\result.md`.
+
+## Prior seam: HF v2 equivalent-origin defect reproduced publicly
 
 The unchanged HF v2 submission leaves refresh routes on the default Hub when its
 origin uses uppercase host/scheme or explicit HTTPS port 443. Its string-prefix
