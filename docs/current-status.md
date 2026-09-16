@@ -6,7 +6,35 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: real PDM failure reproduced; public exclusion check registered in v2
+## Current seam: fresh PDM v2 repair passes public checks and isolated acceptance
+
+The authorized single GPT-5.4-2026-03-05/medium run completes with acceptance PASS
+and safety PASS: `run_dev_8add321a123e4989`. It starts from the prepared base with
+empty diff, plan and notes. Runtime remains fixed; segmented-v1/brief-v1, probes on,
+probe-policy none, repair-recheck on, repeat=1 and the $1.20 cap are unchanged.
+
+After search/read, the first edit at call 3 excludes both the active environment
+and its descendants using resolved path containment, while preserving false-like
+reuse and sibling selection. The same candidate passes the new 24/24 public
+contract at call 4 and upstream 36/36 at call 5, then submits at call 6.
+There are no rejected proposals, failed candidate checks or probes. This observes
+successful repair and verification, but not recovery from failed-check feedback.
+
+All six actual inputs retain exact public task/diff/check state. Six count/generation
+calls settle with matched usage; six tools, one edit, 128.137s. Recorded cost is
+$0.246305500 ($0.294977500 without cache discounts); maximum input is 20,497 tokens /
+101,370 request bytes, with three segments (initial plus two major_result_reviewed).
+Every output ceiling remains 25,000; no resource limit or infrastructure stop occurs.
+Started/submitted/acceptance PASS=1/1/1; acceptance NOT_RUN=0.
+
+The bounded scope is complete, with no retry/resume/extra sample or private-detail
+reading. This is one successful development observation, not a causal public-check,
+model or context-policy improvement claim; all official=false. The preceding PDM
+v1 failure is historical and was not reused as a fresh sample. Operator validation
+13 PASS/2.31s, correctness lint PASS; no runtime changes or repeated full suite.
+Report: `C:\pt\analyses\pdm-v2-live-20260916-v1\result.md`.
+
+## Prior seam: real PDM failure reproduced; public exclusion check registered in v2
 
 The existing P1 submission passes 20/24 public cases in the pinned Docker image;
 the base passes 4/24. All four submitted failures select active/child instead of
