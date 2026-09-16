@@ -6,7 +6,43 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v5 passes public environment cases; isolated acceptance still fails
+## Current seam: HF v5 metadata-call review finds no file-existence behavior failure
+
+The unchanged v5 submission passes all 354 observation checks in a public metadata
+entry-point diagnostic. AST inventory of all 141 public Python modules identifies
+three direct metadata callers. The shared download helper forwards endpoint; HfApi
+metadata forwards self.endpoint. HfApi.file_exists still omits it, but discards the
+metadata and returns a boolean or exception.
+
+Six Docker checks compare fresh BASE/SUBMITTED prepared-source clones across
+default/same/third-party HF_ENDPOINT environments. Each has 118 observations across
+14 explicit/implicit entry configurations, header/link and four route classes, plus
+EntryNotFound/GatedRepo file-existence controls. BASE passes 108/118 in each environment;
+SUBMITTED passes 118/118. The 30 base failures concern exposed/consumed refresh routes.
+Only 144 cases per variant assert route values; other observations validate execution
+and return/exception behavior or characterize implicit context.
+
+All 90 file-existence observations match exactly across variants: 72 True, nine False
+and nine GatedRepoError. Their request URLs, exceptions and unused metadata match.
+Endpoint omission is confirmed internally, but no public file-existence error is
+reproduced. This does not explain the prior private FAIL or justify scoring discarded
+metadata as a new API failure. Implicit direct downloads preserve route values while
+HfApi metadata/downloads forward the environment-resolved endpoint; this is recorded
+as characterization, not a new requirement.
+
+The six checks finish in 14.220s with zero execution errors and confirmed cleanup.
+Focused tests 22 PASS/0.757s (final JUnit), Ruff PASS. All 7508 protected files, source
+and workspace diffs are unchanged, and no PatchLoop container remains. Runtime/task
+are unchanged, so full regression/mock are not repeated. No provider/count call,
+new repair, private evaluation, source fetch or Docker start/pull/build; cost $0,
+all official=false. No hidden evaluator details or reference patch is read.
+
+Next: review URL value preservation and exception compatibility in the submitted
+rebasing helper, using public contracts and observable behavior before another task
+revision or paid run. The file_exists observation alone does not establish the cause.
+Report: `C:\pt\analyses\hf-entrypoint-public-diagnostic-20260917-v1\result.md`.
+
+## Prior seam: HF v5 passes public environment cases; isolated acceptance still fails
 
 The single fresh GPT-5.4-2026-03-05/medium observation completes with acceptance
 FAIL and safety PASS: `run_dev_a7e87ddc96a446fe`. Started/submitted=1/1, acceptance
