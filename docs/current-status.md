@@ -6,7 +6,44 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v4 endpoint-path regressions registered and feedback validated
+## Current seam: HF v4 passes public path cases; isolated acceptance still fails
+
+The single fresh GPT-5.4-2026-03-05/medium observation completes with acceptance
+FAIL and safety PASS: `run_dev_0bcd9154fcbd43e4`. Started/submitted=1/1, acceptance
+PASS / planned=0/1, NOT_RUN=0, infrastructure stops=0. The exact submitted diff
+passes the v4 endpoint contract 196/196 and upstream regression 15/15, including
+the path-prefix cases added in the preceding seam. All official=false.
+
+After four inspection calls, calls 5-6 add path-preserving route rebasing and
+direct metadata endpoint context. Call 7 finds 52 failures; call 8 forwards the
+download endpoint and automatic recheck leaves 20 failures; call 9 forwards HfApi
+context and automatic recheck passes 196/196. Call 10 passes upstream; call 11
+submits. Both failures reach the next actual input with all six failure groups
+unchanged, block finish and lead to repairs. All 11 inputs preserve exact public
+task/diff/check state. No rejected proposal or probe occurs.
+
+Recorded model-rate cost is $0.570308500, uncached equivalent $0.844772500;
+11 count/model calls, 20 tools, 4/4 edits, 152.740s including evaluation. Maximum
+input is 39569 tokens / 175844 serialized bytes, with six segments (initial plus
+five major_result_reviewed). All usage matches and output ceilings remain 25000;
+no cost/input/time stop occurs. The edit limit's effect on correctness is unknown.
+The initial workspace has empty diff/plan/notes and no historical repair injection.
+
+Operator tests 13 PASS/2.356s (JUnit timing), scoped Ruff and frozen public audits
+PASS. Runtime/task are unchanged from the validated v4 registration, so its prior
+regression/mock evidence stands. Four public checks confirm cleanup, no PatchLoop
+container remains, and 7034 protected files plus the prepared source are unchanged.
+No source fetch, Docker start/pull/build, retry, resume or extra sample occurs.
+
+The finite path-prefix checks now pass; they do not explain the remaining private
+FAIL. Next, review public requirements against the unchanged final patch and
+establish a public reproduction before another task revision or paid run. Its use
+of `constants.ENDPOINT` for default-origin ownership is a concrete review target;
+the relationship to configured endpoint context remains unverified. No private
+result details are read and no model/context-policy quality claim is made.
+Report: `C:\pt\analyses\hf-v4-live-20260917-v1\result.md`.
+
+## Prior seam: HF v4 endpoint-path regressions registered and feedback validated
 
 `hf-hub-xet-endpoint-propagation-v4` retains all 100 v3 public cases exactly and adds
 96 cases for `/hub` and `/team%2Falpha/hub` endpoints. The new cases cover header/link
