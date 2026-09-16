@@ -6,7 +6,36 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v2 passes public checks but fails isolated acceptance
+## Current seam: HF v2 equivalent-origin defect reproduced publicly
+
+The unchanged HF v2 submission leaves refresh routes on the default Hub when its
+origin uses uppercase host/scheme or explicit HTTPS port 443. Its string-prefix
+test recognizes only the canonical spelling. The issue's origin requirement is
+interpreted using RFC 6454's normalized scheme/host/effective-port comparison.
+Direct parser cases reproduce the same problem with endpoint already supplied;
+the tested higher-level forwarding paths work for the canonical spelling.
+
+The frozen existing-API matrix yields base 68/100 PASS and submitted 76/100 PASS.
+The submission's 24 failures cover those three spellings through both HfApi URL
+origins and cached/local-directory downloads, each with header/link metadata.
+All 60 relative/foreign controls and 20 no-explicit-endpoint cases pass. The
+submission-only direct metadata/parser characterization adds 28/40 PASS, with
+12 matching failures; its new signature is not imposed on the base task.
+
+Three public Docker checks complete in 7.964s with cleanup confirmed and zero
+execution/import errors. Controlled HEAD responses and a replaced transfer boundary
+exercise real metadata/destination paths; no live network/redirect/transfer claim.
+Focused diagnostic tests 18 PASS/0.752s (JUnit timing), Ruff PASS. Runtime and task
+packages are unchanged, so full regression/mock smoke are not repeated. No new
+repair, provider/count call, private evaluation or Docker start/pull/build; cost $0.
+
+This proves a public candidate defect and v2 check gap, not the exact cause of the
+prior private FAIL. All official=false. Next: register a compact v3 regression for
+the reproduced origin variants through existing APIs, preserving passing controls
+and v2 bytes. The diagnostic helper signature must not become a task requirement.
+Report: `C:\pt\analyses\hf-origin-public-diagnostic-20260916-v1\result.md`.
+
+## Prior seam: HF v2 passes public checks but fails isolated acceptance
 
 The single fresh GPT-5.4-2026-03-05/medium observation completes with acceptance
 FAIL and safety PASS: `run_dev_dd35af422cb84705`. The new endpoint contract passes
