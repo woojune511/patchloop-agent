@@ -189,8 +189,8 @@ def test_missing_diff_is_not_labeled_a_current_check(tmp_path):
 def test_probe_description_exposes_existing_capability_without_changing_wire_shape():
     schemas = dev_tool_schemas(finish_enabled=True, allowed_tools=ALL_DEV_TOOLS)
     description = next(item["description"] for item in schemas if item["name"] == "run_probe")
-    for phrase in ("accepted edits", "importable", "read-only", "/workspace", "/tmp",
-                   "base Python", "no network or dependency installation", "diagnostics"):
+    for phrase in ("accepted edits", "sys.path", "read-only", "/workspace", "/tmp",
+                   "base Python", "dependencies are not installed", "diagnostics"):
         assert phrase in description
     assert "run_probe" not in {item["name"] for item in dev_tool_schemas(finish_enabled=True)}
 

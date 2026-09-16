@@ -335,9 +335,14 @@ def dev_tool_schemas(
             "name": "run_probe",
             "description": (
                 "Run a small public Python experiment in clean isolated scratch space. "
-                "Current tracked public project files, including accepted edits, are importable "
-                "read-only from /workspace; writable scratch is /tmp. Only base Python and "
-                "public project code are supplied, with no network or dependency installation. "
+                "Current tracked public project files, including accepted edits, are mounted "
+                "read-only at /workspace; writable scratch is /tmp. Only /workspace is added to "
+                "sys.path. For a src layout, add the observed source root explicitly, for example "
+                "sys.path.insert(0, '/workspace/src'). The environment supplies base Python and "
+                "its standard library; project dependencies are not installed, with no network "
+                "or dependency installation. If imports are unavailable, isolate the relevant "
+                "mechanism in a standard-library experiment and state its limits: that experiment "
+                "does not execute or verify the project implementation. "
                 "Choose a public input variation that could falsify an implementation assumption, "
                 "not just repeat a registered example. State the expected observation in the "
                 "question and print or assert it in the experiment. Execution completed means "

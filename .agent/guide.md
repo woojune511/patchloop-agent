@@ -141,9 +141,13 @@ least one model call and tool action beyond the protected completion budget. It 
 `verify` decision mode with `evidence_goal=null`. It accepts one public question (500
 characters) and Python source (8,000 characters / 32,000 UTF-8 bytes), not a command,
 image, mount, or environment supplied by the model. Its description must state that
-current tracked public files, including accepted edits, are importable read-only from
-`/workspace`, with writable `/tmp` scratch and only base Python/public project code:
-no network or dependency installation. This describes the existing snapshot capability,
+current tracked public files, including accepted edits, are mounted read-only at
+`/workspace`, the only added import path. A src layout may require an explicitly
+added source root after inspecting the public layout. Writable scratch is `/tmp`;
+base Python and its standard library are available, project dependencies are not
+installed, and network/dependency installation remain unavailable. When imports
+are unavailable, a stdlib reduction can test a mechanism but does not execute or
+verify the project implementation. This describes the existing snapshot capability,
 not a new mount or required experiment. A probe result is diagnostic:
 it never grants source-span coverage, visible-check PASS, or finish credit, and failure
 does not force mutation or consume a check-repair allowance. See
@@ -175,6 +179,12 @@ reference identical native observation details instead of repeating ranges. Hydr
 deterministic; already sent native history is never rewritten. Tool descriptions recommend
 one discriminating public input variation and an expected observation using the existing
 question/source fields, not a new schema, mandatory note or extra model call.
+Failed probes whose stderr contains an unindented ModuleNotFoundError/ImportError
+line receive bounded generic environment guidance in the model observation. This
+labels a reported error, not an authoritative environment diagnosis; inspect the
+traceback to distinguish source-path, dependency and API errors. It copies no
+module names or paths from stderr. Other statuses and durable receipts stay exact;
+the guidance neither schedules a retry nor grants a behavior verdict or check credit.
 
 Public checks and enabled probes return `public_execution`: advisory Python line-entry
 feedback for current tracked editable additions/replacements only. The host binds diff,

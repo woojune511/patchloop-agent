@@ -50,20 +50,20 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     (
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "b54e1dcadee97aaed746248d5d1f40e9d9f7616ac0bda8ad8a81a8bae935afa1",
+        "90e64afaac672ca504e5ab04c684a763262e90de89c207f1e7e3df7af98ca435",
     ),
     (
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "517d43b007a1931496e62dda97668e1422c0b1f3b21af1dc98f53af471f6fa84",
+        "737eee003bdd9d1c2f1ea127b46a117190be043d54e3ede296879517824e6be2",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "88abbd22dd7e82818bc2ba326bed38b3a5d9f27fbfc9b5155cb9a991a8904a94",
+        "60717ceaab31a3e223740e3baed51edf8ed8fc1d4bf66cb6840a2465de900e85",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "bd83c7b425ad40fa5d3edd904d39e0081c970f9d74608e1237794df3a735d394",
+        "58d5b839504effd9495d8696628dea21a4215259645839cc8282385004f52fe9",
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
@@ -118,10 +118,10 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
 
 
 def test_guidance_identity_changes_without_changing_run_schema_or_limits():
-    # v39 adds opt-in segment boundaries; the v33/v34 argument and description
-    # identities above remain independently pinned and unchanged.
+    # Probe environment guidance changes the overall surface identity; the v33/v34
+    # argument and description identities above remain independently pinned.
     assert dev_tool_surface_hash() == (
-        "sha256:a076ac52db8457c004fc689272bdd557e4911e19c98517e4530fbf32a3dc0745"
+        "sha256:f1298975da2c893a6274406adbf2e94e88acf50bf9a5aeb677e88bd8013eceb7"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

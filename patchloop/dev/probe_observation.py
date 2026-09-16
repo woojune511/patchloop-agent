@@ -32,7 +32,7 @@ def probe_observation(result: dict[str, Any]) -> dict[str, Any]:
                 max(0, len(ranges) - MAX_OBSERVATION_RANGES) if ranges is not None else None
             )
         files.append(row)
-    return {
+    observation = {
         "execution_status": "completed" if status == "passed" else status,
         "behavior_verdict": "not_assessed",
         "line_entry_observation": {
@@ -48,6 +48,24 @@ def probe_observation(result: dict[str, Any]) -> dict[str, Any]:
             "Compare the actual input, output and relevant ranges before drawing a conclusion."
         ),
     }
+    if status == "failed" and any(
+        line.startswith(("ModuleNotFoundError:", "ImportError:"))
+        for line in output.get("stderr", "").splitlines()
+    ):
+        observation["environment_guidance"] = {
+            "basis": "reported_import_error",
+            "message": (
+                "Stderr reports an import error. Only /workspace is added to sys.path; "
+                "a src layout may need its observed source root added explicitly. Project "
+                "dependencies are not installed and cannot be installed in this probe. "
+                "Use the traceback to distinguish path, dependency and API errors. If imports "
+                "remain unavailable, isolate the relevant mechanism with the standard library, "
+                "print or assert the expected observation, and state the reduction's limits. "
+                "An import error alone does not test the intended behavior; a reduced experiment "
+                "does not verify the project implementation."
+            ),
+        }
+    return observation
 
 
 def project_probe_result(result: dict[str, Any]) -> dict[str, Any]:

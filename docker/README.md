@@ -59,9 +59,16 @@ runs as PID 1, compiles stdin source, forks one untrusted child, and installs a
 seccomp filter in that child. The parent retains timeout and reaping authority.
 The child cannot fork/clone/exec, signal its parent, or trace another process through
 the restricted system calls. Reserved timeout exit code `124` is distinguished from
-an agent-chosen exit code. Source imports can use `/workspace`, but unavailable
-third-party dependencies fail as ordinary diagnostic experiments; there is no runtime
-dependency installation or evaluator-image fallback.
+an agent-chosen exit code. The wrapper adds only `/workspace` to `sys.path`; a src
+layout may require the probe to add its observed source root explicitly, such as
+`sys.path.insert(0, '/workspace/src')`. Project dependencies are not installed;
+unavailable imports fail as ordinary diagnostic experiments. There is no runtime
+dependency installation or evaluator-image fallback. The tool description explains
+these limits before execution. A failed probe reporting ModuleNotFoundError or
+ImportError in stderr receives generic model-facing guidance to inspect the traceback
+and, if useful, isolate a mechanism with the standard library. A reduction does not
+execute or verify the project implementation, and import failure alone does not test
+the intended behavior. Raw receipts, execution policy and sandbox identity are unchanged.
 
 Each container has an exact run/action-derived name and ownership label. Timeout,
 excess output, and interruption cleanup target only that owned container, and cleanup

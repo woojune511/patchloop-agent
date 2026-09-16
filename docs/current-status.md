@@ -6,7 +6,35 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: public trace identifies the final AnyIO v3 cancellation regression
+## Current seam: probe import guidance implemented; fresh observation pending
+
+The probe description now distinguishes mounted source from importable packages:
+only /workspace is added to sys.path, src layouts may need an explicit observed
+source root, and project dependencies are not installed. It recommends bounded
+stdlib mechanism experiments with an explicit limit: they do not execute or verify
+the project implementation. No task-specific failure or repair hint was added.
+
+Only failed probes with a reported ModuleNotFoundError/ImportError line in stderr
+receive generic environment guidance in the model observation. It distinguishes
+path/dependency/API investigation without inferring the error's cause. Other
+statuses and durable receipts remain exact. Tool parameters/order, system/planning
+instructions, sandbox/profile, task/source, budgets and context policies are fixed.
+
+Focused 46 PASS/24.12s; operator 13 PASS/3.83s; Ruff PASS. Both context policies
+receive the import hint and public task/diff/check state in actual inputs, and
+completed replay does not rerun the probe. Separate append/segmented mock smoke
+reaches edit/check/submit/isolated evaluation PASS, four inputs each, in 17.508s.
+Full coverage is 2,392 PASS/8 SKIP across 113 files (816.304s, durations recorded),
+combining the initial run with 11 exact rechecks in 2.17s. Ten old description/
+contract hash assertions were updated; one unchanged check passed with a shorter
+pytest root after its 264-character temporary path failed on Windows. Original
+failures are retained; runtime is unchanged since the focused checks. 9,583 prior
+files are preserved. The approved next step is exactly one fresh
+GPT-5.4-2026-03-05/medium AnyIO v3 run under $1.20 after validation, with no old
+patch/plan/diagnosis injection and no retry/resume/extra sample. All official=false.
+Records: `C:\pt\analyses\probe-environment-anyio-v3-20260916-v1`.
+
+## Prior seam: public trace identifies the final AnyIO v3 cancellation regression
 
 Provider-free review restored the exact third/fourth diffs from the recorded Git
 hunks in independent prepared-source workspaces. The same seven public cases,

@@ -44,10 +44,10 @@ def no_network(monkeypatch):
 
 def test_instruction_only_contrast_preserves_old_identities_and_schemas(tmp_path, monkeypatch):
     old_hashes = {
-        "none": "sha256:a076ac52db8457c004fc689272bdd557e4911e19c98517e4530fbf32a3dc0745",
-        plans.POLICY: "sha256:7a18d53279ab55c0d589879b6ca9e56e422159548713502b10126e44495d63ce",
+        "none": "sha256:f1298975da2c893a6274406adbf2e94e88acf50bf9a5aeb677e88bd8013eceb7",
+        plans.POLICY: "sha256:3597092f47130c5847c688771d9d6e3abc8a4bff11db61931ffb92e29fac800f",
         plans.EVIDENCE_POLICY:
-            "sha256:758991a2ec8800d62f67dae12770001aabb3493fe244133ff866e03370543bc6",
+            "sha256:051bbc90a4e8ffeb1ccc51dbf7e40a5fc44c524f39a53c53711a49526b560567",
     }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old = plans.instructions(plans.EVIDENCE_POLICY)

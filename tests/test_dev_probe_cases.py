@@ -109,10 +109,10 @@ def test_off_schema_prompt_and_identity_are_unchanged():
     ]}
     before = dev_tool_schemas(**options)
     assert sha256_json(before) == (
-        "sha256:83a9b5a089857a52c3edd8e20b36b4be8823030af0f89595d2d0c4e2472da0d7"
+        "sha256:1340e55a2260ec219d9f2ecc17423f6c8d138ac729e400cbab367b98fea4648a"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:a076ac52db8457c004fc689272bdd557e4911e19c98517e4530fbf32a3dc0745"
+        "sha256:f1298975da2c893a6274406adbf2e94e88acf50bf9a5aeb677e88bd8013eceb7"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
         "sha256:9d947f3fedcdddd15da57951dab6b34e0345f44e9a47d057df0bd2ae45bf058b"
