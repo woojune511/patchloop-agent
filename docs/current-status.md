@@ -6,7 +6,44 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: fresh AnyIO v3 repairs regress before the four-edit stop
+## Current seam: public trace identifies the final AnyIO v3 cancellation regression
+
+Provider-free review restored the exact third/fourth diffs from the recorded Git
+hunks in independent prepared-source workspaces. The same seven public cases,
+with observation hooks, reproduce every original outcome: THIRD 4/7, FINAL 1/7.
+No new repair or acceptance result was produced; private evaluation is NOT_RUN.
+
+In all three final-candidate interruption cases, the synchronous wrapper catches
+KeyboardInterrupt while the runner has no waiting Future. Its waiter-only cancel
+does nothing; the added loop drain executes post_interrupt before pytest receives
+the interrupt. On native CancelledError and pytest Skipped, the wrapper instead
+cancels the persistent runner's next-call receive waiter. Cancellation escapes
+the receive loop, closes its streams and moves later fixture cleanup to another
+task. The three previously passing controls regress. The later xfail test never
+enters its body: the earlier skip already killed the runner. Do not attribute
+that observed failure to a directly caught XFailed exception.
+
+One real probe in the existing fixed Python image confirms /workspace/src is
+absent from its initial import path and typing_extensions is unavailable. A
+stdlib-only mechanism probe succeeds: sleep(0) has no waiter and resumes after
+loop reentry; cancelling a pending Future prevents that resumption. This explains
+the two original import failures and tests the cancellation assumption without
+installing dependencies or using evaluator internals.
+
+Two public traces plus one fixed-image probe complete in 22.561s with confirmed
+container cleanup, zero model/count calls and $0 additional model cost. Runtime,
+task, policies and old evidence are unchanged; all official=false. An initial
+CRLF restoration error occurred before any target execution; its packet/journal
+are retained separately from the corrected Git-hunk restoration record.
+
+Next implementation candidate: make the generic probe source-path/dependency
+contract clear enough to support executable observations. A future AnyIO repair
+must separately handle external interruption and ordinary pytest/cancellation
+outcomes, stop interrupted code without assuming a waiter, and preserve the
+fixture task/context. No model/default/budget change follows from this diagnosis.
+Report: `C:\pt\analyses\anyio-v3-regression-review-20260916-v1\result.md`.
+
+## Prior seam: fresh AnyIO v3 repairs regress before the four-edit stop
 
 One fresh GPT-5.4-2026-03-05/medium run used v3 with the same runtime, prepared
 source, segmented-v1/brief-v1, enabled probes, probe-policy none, repair-recheck
