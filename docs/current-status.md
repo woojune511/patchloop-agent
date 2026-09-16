@@ -6,7 +6,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF endpoint context failures reproduced; v2 public check registered
+## Current seam: HF v2 passes public checks but fails isolated acceptance
+
+The single fresh GPT-5.4-2026-03-05/medium observation completes with acceptance
+FAIL and safety PASS: `run_dev_dd35af422cb84705`. The new endpoint contract passes
+24/24 and upstream regression passes 15/15 on the exact submitted diff. Started /
+submitted = 1/1, acceptance PASS / planned = 0/1, NOT_RUN = 0, infrastructure stops = 0.
+The remaining private acceptance failure has no public causal diagnosis yet.
+
+The first edit occurs at call 5. Four accepted edits across three source files
+thread explicit endpoint context through the parser, metadata function, download
+path and HfApi. Calls 10-11 check the final candidate; call 12 submits. There are
+no rejected proposals, failed public checks or probes, so failed-check recovery
+remains unobserved. The finite public cases pass; live transfers/redirects and
+additional direct-entry or URL-origin variants remain outside their coverage.
+
+All 12 actual inputs retain exact public task/diff/check state. The first input has
+empty diff/plan/notes. All 12 count/generation pairs settle with matched usage: 20 tools,
+166.389s, $0.606037500 recorded ($0.858037500 uncached equivalent), within $1.20.
+Maximum input is 36,138 tokens / 160,599 request bytes; six segments comprise
+initial plus five major_result_reviewed. Output ceilings stay 25,000; there is no
+cost/input/time-limit termination. The four-edit budget is fully used before checks;
+its effect on acceptance is unproven.
+
+Operator tests 13 PASS/2.209s (JUnit timing) and correctness lint PASS. Runtime/task
+unchanged, so full regression/mock smoke are not repeated. Existing prepared source
+and pinned images are reused; no Docker start/pull/build. The one-run scope is closed
+without retry/resume/extra samples or private-detail reading; all official=false.
+Next: derive uncovered direct-entry and URL-origin cases from public requirements
+and source, then reproduce a public failure before revising the task again.
+Report: `C:\pt\analyses\hf-v2-live-20260916-v1\result.md`.
+
+## Prior seam: HF endpoint context failures reproduced; v2 public check registered
 
 The unchanged H1 submission passes 20/24 public metadata cases; the base passes
 18/24. The response-URL inference introduces two regressions for callers without
