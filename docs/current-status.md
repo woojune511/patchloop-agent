@@ -6,7 +6,43 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: AnyIO v3 rejects fixture-context loss and incomplete cleanup
+## Current seam: fresh AnyIO v3 repairs regress before the four-edit stop
+
+One fresh GPT-5.4-2026-03-05/medium run used v3 with the same runtime, prepared
+source, segmented-v1/brief-v1, enabled probes, probe-policy none, repair-recheck
+and $1.20 cap. All 19 actual inputs match public task/diff/check state; the first
+has empty diff, plan and notes. No previous candidate or memory was injected.
+
+`run_dev_366e04be1d634d90`: first edit at call 9; edits at 9/13/16/19 each receive
+a public lifecycle check. Child-case PASS counts are 1/7 -> 1/7 -> 4/7 -> 1/7.
+The third edit restores ordinary/context/skip/cancellation controls but all three
+interruption cases still resume. The fourth adds synchronous waiter cancellation
+and loop draining, keeps the interruption failures and regresses three controls.
+Two probes fail on imports (anyio, then typing_extensions) before testing their
+hypothesis. No rejected mutation or identical rejected proposal repeat occurred.
+
+All seven verdicts from each of the first three failures reach the next actual
+input, and current FAIL blocks finish. The last mutation input still contains
+the four passing control verdicts and the worker's OutcomeException exemption.
+This observes a semantic repair attempt and regression; context loss or general
+model incapacity is not established. The final failed check has no following turn.
+
+LIMIT_REACHED: completion-horizon blocking_resources=[accepted_mutations], after
+four edits and the final automatic recheck. Submission 0, acceptance/safety NOT_RUN,
+PASS/planned 0/1, started 1, infrastructure stops 0. All 19 count/generation calls
+settled; 24 tools, 419.664s, $1.054671500 recorded ($1.603887500 without cache).
+Maximum input 34,903 tokens / 172,956 bytes; six segments, initial plus five
+major_result_reviewed. Cost admission reduced output ceilings on calls 17-19,
+but every response completed; termination was the edit limit, not cost/input size.
+
+Operator tests 13 PASS/3.48s; Ruff and mock isolated fixture evaluation PASS with
+four inputs checked. Prior 2,381 PASS/8 SKIP full regression covers unchanged code.
+All official=false; no retry/resume/replacement or private AnyIO evaluation.
+Next: provider-free review of the final repair's cancellation/pytest-outcome
+boundary and the fixed probe environment before selecting another paid experiment.
+Report: `C:\pt\analyses\anyio-v3-fresh-run-20260916-v1\result.md`.
+
+## Prior seam: AnyIO v3 rejects fixture-context loss and incomplete cleanup
 
 `tasks/dev-train/anyio-interrupt-runner-cleanup-v3` strengthens the public lifecycle
 check while preserving v1/v2 bytes. Seven cases verify ContextVar propagation/reset,
