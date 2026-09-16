@@ -6,7 +6,44 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v5 environment regressions registered and feedback validated
+## Current seam: HF v5 passes public environment cases; isolated acceptance still fails
+
+The single fresh GPT-5.4-2026-03-05/medium observation completes with acceptance
+FAIL and safety PASS: `run_dev_a7e87ddc96a446fe`. Started/submitted=1/1, acceptance
+PASS / planned=0/1, NOT_RUN=0, infrastructure stops=0. The exact submitted diff
+passes endpoint 292/292 and upstream 15/15. All official=false.
+
+Four inspection calls precede the first edit at call 5. Calls 5-6 add fixed-default-
+origin rebasing and metadata endpoint context; call 7 finds 72 failures. Call 8
+searches callers, call 9 repairs download forwarding and recheck leaves 24 failures.
+Call 10 repairs HfApi forwarding and recheck passes 292/292; call 11 passes upstream
+and call 12 submits. Both failure outputs, all eight groups each, reach the next
+actual inputs unchanged, block finish and lead to repairs. All 12 inputs preserve
+exact public task/diff/check state. No rejected proposal or probe occurs.
+
+Recorded model-rate cost is $0.752637500, uncached equivalent $1.004637500;
+12 count/model calls, 23 tools, 4/4 edits, 195.753s including evaluation. Maximum
+input is 37355 tokens / 169690 serialized bytes, with six segments (initial plus
+five major_result_reviewed). All usage matches, output ceilings remain 25000 and
+no cost/input/time stop occurs. The edit limit's effect on correctness is unknown.
+The fresh initial input has empty diff/plan/notes and no historical repair injection.
+
+Operator tests 13 PASS/2.290s (JUnit), scoped Ruff and frozen public audits PASS.
+Runtime/task are unchanged from validated v5 registration; prior regression/mock
+evidence stands. Four public checks confirm cleanup, no PatchLoop container remains,
+and 7383 protected files plus prepared source are unchanged. No source fetch, Docker
+start/pull/build, retry, resume, extra sample or post-run candidate execution occurs.
+
+The new environment cases now pass; the private FAIL's exact cause remains unknown.
+A public call-site review finds HfApi.file_exists still invokes metadata without
+endpoint after building its URL with self.endpoint (pinned hf_api.py:2995). It returns
+a boolean and discards metadata, so this alone establishes neither a public failure
+nor the private cause. Next, map all metadata access paths against public requirements
+and establish observable behavior before another task revision or paid observation.
+No private details are read and no model/context-policy quality claim is made.
+Report: `C:\pt\analyses\hf-v5-live-20260917-v1\result.md`.
+
+## Prior seam: HF v5 environment regressions registered and feedback validated
 
 hf-hub-xet-endpoint-propagation-v5 retains all 196 v4 public cases exactly and adds
 96 environment-variation cases. The explicit request endpoint is fixed while
