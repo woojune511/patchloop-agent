@@ -6,7 +6,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: fixed configuration completes HF Hub and Loguru development runs
+## Current seam: HF endpoint context failures reproduced; v2 public check registered
+
+The unchanged H1 submission passes 20/24 public metadata cases; the base passes
+18/24. The response-URL inference introduces two regressions for callers without
+an explicit endpoint and retains two failures when HfApi's configured endpoint
+differs from the file URL. Header and link carriers reproduce both errors. All
+relative/foreign-route controls pass; upstream remains 15/15 on both revisions.
+These are public wrong-route observations, not the private evaluator's exact cause.
+
+`hf-hub-xet-endpoint-propagation-v2` adds `xet-endpoint-contract` before the
+unchanged regression. Its exact registered command is the one executed on both
+revisions. Real project metadata functions and the download metadata/cache path
+run with controlled HEAD responses and a replaced file-transfer boundary; this
+does not test live servers, redirects or transfers. The original issue, scope,
+source and image remain fixed. V1 stays immutable; private bytes differ only in
+the task-version marker. Runtime, model, tools and policies are unchanged.
+
+Focused 12 PASS/8.154s and related regression 115 PASS/17.336s (JUnit timing),
+Ruff and task validation PASS. All four exact Docker failure lines reach both
+context policies' actual inputs, block finish and permit recheck after a synthetic
+edit; completed replay does not rerun a check. Separate public-fixture mock smoke
+reaches edit/check/submit/isolated fixture acceptance PASS under both policies,
+four audited inputs each, in 8.030s. No new HF repair/acceptance result is claimed;
+the unchanged runtime full suite was not repeated for this task-only change.
+
+Four public Docker checks complete in 13.399s with confirmed cleanup; prepared
+sources and prior submissions remain unchanged. No Docker start/pull/build,
+provider/count call or additional model cost. All official=false. The v2 task is
+ready for a fresh coding-agent observation; no new paid run started in this scope.
+Report: `C:\pt\analyses\hf-endpoint-public-contract-20260916-v1\result.md`.
+
+## Prior seam: fixed configuration completes HF Hub and Loguru development runs
 
 The authorized H1 -> L1 group completes with acceptance PASS 1/planned 2:
 HF Hub Xet endpoint v1 FAIL, Loguru invalid-format feedback v3 PASS; both safety
