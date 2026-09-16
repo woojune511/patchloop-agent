@@ -6,7 +6,40 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v3 origin regressions registered and feedback validated
+## Current seam: HF v3 repairs public failures; isolated acceptance still fails
+
+The single fresh GPT-5.4-2026-03-05/medium run completes with acceptance FAIL and
+safety PASS: `run_dev_7ba3a25a8b174814`. Started/submitted=1/1, acceptance PASS /
+planned=0/1, NOT_RUN=0, infrastructure stops=0. The exact submitted diff passes
+the endpoint contract 100/100 and upstream regression 15/15. All official=false.
+
+After six inspection calls, calls 7-8 add origin normalization and explicit endpoint
+context to the parser and metadata function. Call 9 finds 32 public failures.
+Call 10 forwards download context; automatic recheck leaves 16 failures. Call 11
+forwards HfApi context; automatic recheck passes 100/100. Call 12 passes upstream;
+call 13 submits. Both failed checks reach the next actual input with all four
+failure groups, block finish and are followed by repairs. No rejected proposals
+or probes occur. This observes the existing repair/recheck loop in a live run;
+it does not establish a context-policy effect or explain the private FAIL.
+
+All 13 count/generation pairs settle with matched usage, and all actual inputs
+retain exact public task/diff/check state. Fresh diff/plan/notes and prepared-source
+binding are verified. Recorded cost is $0.727340500 ($1.088492500 uncached equivalent),
+24 tools, 209.268s, maximum input 43,589 tokens / 192,360 request bytes. Six segments
+comprise initial plus five major_result_reviewed. All output ceilings remain 25,000;
+there is no cost/input/time-limit termination. Four of four edits are used.
+
+Operator tests 13 PASS/2.289s (JUnit timing), correctness lint PASS. Runtime/task
+unchanged from v3 registration; full regression/mock smoke are not repeated. Four
+public checks clean up successfully; no PatchLoop container remains. Prior records
+and prepared source are preserved. No retry/resume/extra sample or private-detail
+reading. Next: review uncovered public API/URL composition requirements and establish
+a public reproduction before another task revision or paid run. The submitted route
+builder replaces scheme/authority only; endpoint path prefixes are an untested
+review target, not an established cause of acceptance failure.
+Report: `C:\pt\analyses\hf-v3-live-20260917-v1\result.md`.
+
+## Prior seam: HF v3 origin regressions registered and feedback validated
 
 `hf-hub-xet-endpoint-propagation-v3` expands the existing endpoint check from 24 to
 100 cases, retaining every v2 case and the unchanged upstream check. It adds the
