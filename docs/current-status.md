@@ -6,7 +6,43 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v4 default-origin/configured-endpoint confusion reproduced
+## Current seam: HF v5 environment regressions registered and feedback validated
+
+hf-hub-xet-endpoint-propagation-v5 retains all 196 v4 public cases exactly and adds
+96 environment-variation cases. The explicit request endpoint is fixed while
+HF_ENDPOINT names the same custom server or a third-party server. Cases cover
+existing metadata and top-level/client download paths, header/link carriers and
+default/relative/already-custom/foreign routes, including no-endpoint controls.
+
+Each new 48-case slice imports the library in a fresh Python process. A short
+registered launcher passes the public program as one argument; workers run the same
+source with 20-second limits inside the original 60-second check. Actual imported
+configuration is verified. Issue, scope, source, image, check IDs/order/timeouts,
+upstream command and policies remain fixed; earlier task bytes are preserved and
+private files are copied opaquely with only the task version updated.
+
+Four exact public Docker checks on independent prepared-source clones complete in
+17.621s: BASE passes endpoint 220/292, the unchanged v4 submission 252/292, and both
+pass upstream 15/15. The submission's 40 failures cover four environment/route
+classes, ten each. Its entire 1335-character output reaches append-v1 and segmented-v1
+actual inputs with exact task/diff/check state, blocks finish, replays without a new
+check and permits recheck after a synthetic edit. This validates delivery, not an HF
+repair or the private FAIL's exact cause.
+
+Focused tests 30 PASS/8.775s and related regression 168 PASS/40.972s (JUnit timings),
+Ruff PASS. Actual-failure workflow replay takes 7.676s. Separate public-fixture mock
+smoke reaches edit/check/submit/isolated fixture acceptance PASS in 8.492s under both
+policies, four audited inputs each, safety NOT_RUN. Runtime is unchanged; full runtime
+regression is not repeated. No changed-line coverage claim follows for child processes.
+
+All 7190 protected files and prepared source are unchanged, cleanup is confirmed,
+and no PatchLoop container remains. No provider/count call, new HF repair, HF private
+evaluation, source fetch or Docker start/pull/build; cost $0, all official=false.
+The v5 task is ready for a fresh observation from the prepared base with empty
+diff/plan/notes, without historical patch, diagnosis or fix-recipe injection.
+Report: C:\pt\analyses\hf-env-public-contract-20260917-v1\result.md.
+
+## Prior seam: HF v4 default-origin/configured-endpoint confusion reproduced
 
 The unchanged v4 submission uses `constants.ENDPOINT` to identify the default Hub
 origin, but that value follows the process's `HF_ENDPOINT` configuration. Pinned
