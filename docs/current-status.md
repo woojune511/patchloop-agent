@@ -6,7 +6,35 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v3 endpoint path loss reproduced publicly
+## Current seam: HF v4 endpoint-path regressions registered and feedback validated
+
+`hf-hub-xet-endpoint-propagation-v4` retains all 100 v3 public cases exactly and adds
+96 cases for `/hub` and `/team%2Falpha/hub` endpoints. The new cases cover header/link
+metadata, no-explicit-endpoint calls, HfApi metadata and top-level/client downloads
+through cache/local-directory paths, with relative/foreign/already-custom controls.
+No new direct metadata or parser signature is required. Issue, scope, source, image,
+check IDs/count/order, runtime and policies remain fixed; v1-v3 bytes are preserved.
+
+Both exact registered commands run on independent prepared-source clones. BASE
+passes endpoint 144/196, the unchanged v3 submission 176/196, and both pass upstream
+15/15. The submission fails ten cases for each prefix class. Its complete 685-character
+failure output reaches append-v1 and segmented-v1 actual inputs, blocks finish,
+replays without a new check and allows recheck after a synthetic edit. This validates
+delivery, not a successful HF repair or the private acceptance failure's exact cause.
+
+Focused 23 PASS/8.322s and related regression 145 PASS/33.114s (JUnit timings), Ruff
+PASS. Four public Docker checks complete in 13.599s with cleanup confirmed; actual
+failure workflow replay takes 7.601s. Separate public-fixture mock smoke reaches
+edit/check/submit/isolated fixture acceptance PASS in 7.835s under both policies,
+four audited inputs each, safety NOT_RUN. Runtime unchanged; full regression is not
+repeated. No provider/count call, new HF repair, private evaluation, source fetch or
+Docker start/pull/build. Model cost $0; all official=false.
+
+The v4 task is ready for a fresh coding-agent observation from the prepared base.
+No historical patch, diagnosis or fix recipe should be injected.
+Report: `C:\pt\analyses\hf-path-public-contract-20260917-v1\result.md`.
+
+## Prior seam: HF v3 endpoint path loss reproduced publicly
 
 The unchanged v3 submission drops the configured endpoint path when rebasing Xet
 refresh URLs. With endpoint `https://mirror.example.test:8443/hub`, the metadata HEAD
