@@ -6,7 +6,40 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v3 repairs public failures; isolated acceptance still fails
+## Current seam: HF v3 endpoint path loss reproduced publicly
+
+The unchanged v3 submission drops the configured endpoint path when rebasing Xet
+refresh URLs. With endpoint `https://mirror.example.test:8443/hub`, the metadata HEAD
+request and existing token URL builder retain `/hub`; the returned refresh route
+loses it. The parser reproduces this with endpoint already supplied, isolating the
+shared route builder's scheme/authority-only replacement from caller forwarding.
+
+A frozen 252-case existing-API matrix yields BASE 144 PASS / 108 FAIL and SUBMITTED
+180 PASS / 72 FAIL. All submitted failures occur with `/hub` or `/team%2Falpha/hub`,
+across HfApi metadata and top-level/client downloads through cache/local-directory
+paths, header/link carriers and three equivalent default-origin spellings.
+Origin-only endpoints pass 84/84; relative/foreign/already-custom and no-explicit
+endpoint controls pass. Only refresh URL values differ; request targets, file hashes,
+destination handling and the two existing URL-builder controls match expectations.
+Submission-only metadata/parser characterization adds 48 PASS / 24 FAIL, with the
+same path loss. Its new helper signature is not imposed on the base API.
+
+The expectation follows the public issue and pinned full-endpoint URL construction.
+Controlled HEAD responses and a replaced transfer boundary exercise metadata paths;
+no live server, redirect or transfer correctness claim. The public defect and v3
+coverage gap are established; the exact cause of the earlier private FAIL is unknown.
+
+Three public Docker checks complete in 9.649s with zero execution errors and confirmed
+cleanup. Focused tests 22 PASS/0.786s (JUnit timing), Ruff PASS. Runtime/task packages
+are unchanged, so full regression/mock smoke are not repeated. Prior 6815 files,
+prepared source and exact submission remain unchanged. No provider/count call,
+new repair, private evaluation or Docker start/pull/build; cost $0, all official=false.
+Next: add compact path-prefix regressions through existing public APIs, retaining
+passing controls and v3 bytes; do not turn a diagnostic helper signature into a task
+requirement or change the agent policy based on this single observation.
+Report: `C:\pt\analyses\hf-url-public-diagnostic-20260917-v1\result.md`.
+
+## Prior seam: HF v3 repairs public failures; isolated acceptance still fails
 
 The single fresh GPT-5.4-2026-03-05/medium run completes with acceptance FAIL and
 safety PASS: `run_dev_7ba3a25a8b174814`. Started/submitted=1/1, acceptance PASS /
