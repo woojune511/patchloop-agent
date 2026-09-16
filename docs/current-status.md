@@ -6,7 +6,36 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: probe import guidance implemented; fresh AnyIO v3 acceptance PASS
+## Current seam: PDM descendant exclusion reproduced locally; Docker validation pending
+
+Provider-free review of the existing P1 submission identifies an exact-root filter
+that admits active/child before an outside candidate or creation fallback. The
+unmodified resolver AST, run with controlled discovery/version/creation collaborators,
+passes BASE 4/24 and SUBMITTED 20/24 public cases. All four submitted failures select
+the descendant, for both VIRTUAL_ENV and CONDA_PREFIX. False-like reuse, exact-root
+exclusion and similarly prefixed sibling controls pass on the submitted revision.
+This is Windows method-level evidence, not installed-PDM or full environment behavior.
+
+All five historical actual inputs retain the exact public task/diff/check state,
+including the descendant requirement. The public mutation explanation explicitly
+narrows exclusion to the exact active root. Only the upstream 36-test regression
+was executed; its selected file does not reference PDM_IGNORE_ACTIVE_VENV, and the
+model neither inspected that file nor used a probe before claiming verification.
+The public evidence supports a narrow repair plus a verification gap. The private
+evaluator's exact failing case remains unknown; no model/context-policy effect is
+established.
+
+Operator 9 PASS/0.78s, method observations 0.404s, Ruff PASS; runtime remains the
+validated probe-guidance runtime. Two independent offline source workspaces hold
+the original base and exact submitted diff. No new repair, provider/count call,
+Docker execution or private evaluation; additional model cost is zero, official=false.
+The real-PDM 24-case diagnostic and a semantic failing public-check proposal are
+prepared but unexecuted. Docker's Linux engine is unavailable; no startup/pull/build
+was attempted. Validate against the pinned image and unchanged regression before
+registering a version-2 task; existing task/package and prior evidence are unchanged.
+Report: `C:\pt\analyses\pdm-public-resolution-review-20260916-v1\result.md`.
+
+## Prior seam: probe import guidance implemented; fresh AnyIO v3 acceptance PASS
 
 The probe description now distinguishes mounted source from importable packages:
 only /workspace is added to sys.path, src layouts may need an explicit observed
