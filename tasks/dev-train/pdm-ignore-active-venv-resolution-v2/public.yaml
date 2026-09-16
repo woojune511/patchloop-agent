@@ -1,0 +1,184 @@
+schema_version: task-public-v1
+task_id: pdm-ignore-active-venv-resolution
+task_version: 2
+split: dev-train
+repository:
+  url: https://github.com/pdm-project/pdm.git
+  base_commit: 881cd4e38d31663ae67bdae227ec1ccdfd5e2c77
+  language: python
+issue:
+  title: Ignoring the active virtualenv disables interpreter resolution
+  description: |
+    A project configured to use virtual environments can report that no
+    compatible Python exists as soon as PDM_IGNORE_ACTIVE_VENV is enabled,
+    even when another associated environment is eligible or the normal
+    environment-creation fallback is available.
+
+    Treat the setting as an exclusion of the currently active environment,
+    not as a switch that disables virtualenv resolution. Preserve normal
+    active-environment reuse for unset and false-like values. The behavior
+    must work for both VIRTUAL_ENV and CONDA_PREFIX without confusing sibling
+    paths with descendants of the active environment.
+constraints:
+  allowed_paths:
+  - src/pdm/project/core.py
+  forbidden_paths:
+  - tests/**
+  - news/**
+  - docs/**
+  - .patchloop-hidden/**
+  - pyproject.toml
+  - pdm.lock
+  - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 60
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+- id: active-venv-exclusion-contract
+  command:
+  - /usr/local/bin/python
+  - -B
+  - -c
+  - |
+    """Public active-environment selection cases with controlled discovery ordering."""
+    from __future__ import annotations
+
+    import os
+    import sys
+    from pathlib import Path
+    from unittest.mock import patch
+
+
+    def cases():
+        rows = []
+        for key in ("VIRTUAL_ENV", "CONDA_PREFIX"):
+            for index, flag in enumerate((None, "", "0", "false", "FALSE", "no", "off")):
+                rows.append(dict(id=f"{key}-reuse-{index}", key=key, flag=flag,
+                                 candidates=["other"], expected="active"))
+            for name, candidates, expected in (
+                ("exact-active", ["active", "other"], "other"),
+                ("descendant", ["nested", "other"], "other"),
+                ("sibling-prefix", ["sibling", "other"], "sibling"),
+                ("create-after-exact", ["active"], "created"),
+                ("create-after-descendant", ["active", "nested"], "created"),
+            ):
+                rows.append(dict(id=f"{key}-{name}", key=key, flag="1",
+                                 candidates=candidates, expected=expected))
+        return rows
+
+
+    def run():
+        import venv
+
+        from pdm.core import Core
+        from pdm.exceptions import NoPythonVersion
+        from pdm.models.venv import VirtualEnv, get_venv_python
+        from pdm.project.core import Project
+
+        assert Path(sys.modules[Project.__module__].__file__).resolve() == Path(
+            "/workspace/src/pdm/project/core.py")
+        directory = Path("/tmp/public-active-venv-selection")
+        directory.mkdir(parents=True)
+        paths = {"active": directory / "active", "nested": directory / "active" / "child",
+                 "sibling": directory / "active-other", "other": directory / "elsewhere",
+                 "created": directory / "created"}
+        for path in paths.values():
+            venv.EnvBuilder(with_pip=False, symlinks=True).create(path)
+        factory = Core().create_project
+        rows = []
+        for case in cases():
+            env = {key: value for key, value in os.environ.items() if key not in {
+                "VIRTUAL_ENV", "CONDA_PREFIX", "PDM_IGNORE_ACTIVE_VENV", "CONDA_DEFAULT_ENV",
+                "PDM_PYTHON", "PDM_IGNORE_SAVED_PYTHON"}}
+            env[case["key"]] = str(paths["active"])
+            if case["flag"] is not None:
+                env["PDM_IGNORE_ACTIVE_VENV"] = case["flag"]
+            project_root = directory / ("project-" + case["id"])
+            project_root.mkdir()
+            (project_root / "pyproject.toml").write_text(
+                '[project]\nname="public-resolution"\nversion="0.0.0"\nrequires-python=">=3.8"\n',
+                encoding="utf-8")
+            with patch.dict(os.environ, env, clear=True):
+                project = factory(project_root, global_config=str(directory / "global.toml"))
+                project.project_config["python.use_venv"] = True
+                project._saved_python = None
+                venvs = [(name, VirtualEnv(paths[name], False, get_venv_python(paths[name])))
+                         for name in case["candidates"]]
+                selected = error = None
+                with (patch("pdm.cli.commands.venv.utils.iter_venvs", return_value=iter(venvs)),
+                      patch.object(project, "_create_virtualenv", return_value=paths["created"]) as create):
+                    try:
+                        chosen = project.resolve_interpreter().path
+                        selected = next((name for name, path in paths.items()
+                                         if chosen == get_venv_python(path)), "unrecognized")
+                    except NoPythonVersion:
+                        error = "NoPythonVersion"
+                rows.append({"id": case["id"], "selected": selected, "error": error,
+                             "create_calls": create.call_count})
+        return rows
+
+
+    def report(rows):
+        declared = cases()
+        if [row["id"] for row in rows] != [case["id"] for case in declared]:
+            print("FAILED case_coverage: incomplete or reordered observations")
+            return 1
+        passed = 0
+        for case, row in zip(declared, rows, strict=True):
+            expected_creates = int(case["expected"] == "created")
+            ok = (row["error"] is None and row["selected"] == case["expected"]
+                  and row["create_calls"] == expected_creates)
+            passed += ok
+            if ok:
+                print(f"PASS {case['id']}")
+            else:
+                print(f"FAILED {case['id']}: expected={case['expected']} selected={row['selected']} "
+                      f"error={row['error']} create_calls={row['create_calls']}/{expected_creates}")
+        print(f"{passed} passed, {len(declared) - passed} failed")
+        return int(passed != len(declared))
+
+
+    if __name__ == "__main__":
+        raise SystemExit(report(run()))
+  timeout_seconds: 90
+  output_limit_bytes: 12000
+  environment:
+    PYTHONPATH: /workspace/src
+    PYTHONPYCACHEPREFIX: /tmp/pycache
+    XDG_CACHE_HOME: /tmp/xdg-cache
+    XDG_CONFIG_HOME: /tmp/xdg-config
+    XDG_DATA_HOME: /tmp/xdg-data
+    PDM_HOME: /tmp/pdm-home
+    HOME: /tmp/home
+    CI: '1'
+    PDM_CHECK_UPDATE: '0'
+- id: upstream-project-regression
+  command:
+  - /usr/local/bin/python
+  - -m
+  - pytest
+  - --no-header
+  - -q
+  - -p
+  - no:cacheprovider
+  - -W
+  - ignore::DeprecationWarning
+  - tests/test_project.py
+  timeout_seconds: 90
+  environment:
+    PYTHONPATH: /workspace/src
+    PYTHONPYCACHEPREFIX: /tmp/pycache
+    XDG_CACHE_HOME: /tmp/xdg-cache
+    XDG_CONFIG_HOME: /tmp/xdg-config
+    XDG_DATA_HOME: /tmp/xdg-data
+    PDM_HOME: /tmp/pdm-home
+    HOME: /tmp/home
+    CI: '1'
+    PDM_CHECK_UPDATE: '0'
+tags:
+- swe-rebench-v2
+- real-repository
+- interpreter-resolution
+- virtualenv-selection
+- memory-development

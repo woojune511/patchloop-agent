@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: docker.io/swerebenchv2/pdm-project-pdm@sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0
+image_digest: sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0
+source_image_tag: docker.io/swerebenchv2/pdm-project-pdm:2781-881cd4e

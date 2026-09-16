@@ -6,34 +6,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: PDM descendant exclusion reproduced locally; Docker validation pending
+## Current seam: real PDM failure reproduced; public exclusion check registered in v2
 
-Provider-free review of the existing P1 submission identifies an exact-root filter
-that admits active/child before an outside candidate or creation fallback. The
-unmodified resolver AST, run with controlled discovery/version/creation collaborators,
-passes BASE 4/24 and SUBMITTED 20/24 public cases. All four submitted failures select
-the descendant, for both VIRTUAL_ENV and CONDA_PREFIX. False-like reuse, exact-root
-exclusion and similarly prefixed sibling controls pass on the submitted revision.
-This is Windows method-level evidence, not installed-PDM or full environment behavior.
+The existing P1 submission passes 20/24 public cases in the pinned Docker image;
+the base passes 4/24. All four submitted failures select active/child instead of
+an outside candidate or creation fallback, for both VIRTUAL_ENV and CONDA_PREFIX.
+The unchanged upstream regression passes 36/36 on both revisions. Actual Project,
+PythonInfo and temporary stdlib venvs confirm the earlier method-level finding;
+discovery ordering and the creation return remain controlled collaborators.
 
-All five historical actual inputs retain the exact public task/diff/check state,
-including the descendant requirement. The public mutation explanation explicitly
-narrows exclusion to the exact active root. Only the upstream 36-test regression
-was executed; its selected file does not reference PDM_IGNORE_ACTIVE_VENV, and the
-model neither inspected that file nor used a probe before claiming verification.
-The public evidence supports a narrow repair plus a verification gap. The private
-evaluator's exact failing case remains unknown; no model/context-policy effect is
-established.
+`pdm-ignore-active-venv-resolution-v2` adds `active-venv-exclusion-contract` before
+the unchanged regression. The registered command reproduces the same outcomes and
+returns exit 1 on both existing revisions. It covers false-like reuse, exact-root
+and descendant exclusion, similarly prefixed siblings and creation fallback.
+The task issue, constraints, source and image are unchanged; private bytes differ
+only in version metadata. Version 1 and previous evidence remain immutable.
 
-Operator 9 PASS/0.78s, method observations 0.404s, Ruff PASS; runtime remains the
-validated probe-guidance runtime. Two independent offline source workspaces hold
-the original base and exact submitted diff. No new repair, provider/count call,
-Docker execution or private evaluation; additional model cost is zero, official=false.
-The real-PDM 24-case diagnostic and a semantic failing public-check proposal are
-prepared but unexecuted. Docker's Linux engine is unavailable; no startup/pull/build
-was attempted. Validate against the pinned image and unchanged regression before
-registering a version-2 task; existing task/package and prior evidence are unchanged.
-Report: `C:\pt\analyses\pdm-public-resolution-review-20260916-v1\result.md`.
+Focused 13 PASS/8.77s and related regression 124 PASS/21.48s; Ruff PASS. Exact Docker
+failure output reaches actual inputs under both append-v1 and segmented-v1, blocks
+finish, and permits recheck after a synthetic edit; completed replay does not rerun
+the check. Separate mock smoke reaches edit/check/submit/isolated fixture evaluation
+PASS under both policies, four audited inputs each (8.444s). Runtime is unchanged;
+the prior full-suite result remains 2,392 PASS/8 SKIP and was not rerun for this
+task-only change. No new PDM repair or private acceptance result has been produced.
+
+Docker Desktop was started at the user's explicit request. Startup failed on
+inaccessible runtime socket files; reversible directory backups and restart restored
+the Linux engine (29.6.2). The pinned image was already present; no pull/build or
+factory reset occurred. All six public-check containers confirmed cleanup. No new
+provider/count calls; additional model cost is zero and all results official=false.
+The historical trace still supports a narrow repair plus a public-verification gap;
+the private evaluator's exact failure and any model/context effect remain unknown.
+Report: `C:\pt\analyses\pdm-public-resolution-review-20260916-v1\docker-followup\result.md`.
 
 ## Prior seam: probe import guidance implemented; fresh AnyIO v3 acceptance PASS
 
