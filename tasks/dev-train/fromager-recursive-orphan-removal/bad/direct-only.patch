@@ -1,0 +1,14 @@
+diff --git a/src/fromager/dependency_graph.py b/src/fromager/dependency_graph.py
+--- a/src/fromager/dependency_graph.py
++++ b/src/fromager/dependency_graph.py
+@@ -386,6 +386,10 @@
+             node.children.clear()
+             node.children.extend(filtered_children)
+ 
++        for edge in deleted_node.children:
++            if not edge.destination_node.parents:
++                self.nodes.pop(edge.key, None)
++
+     def get_dependency_edges(
+         self, match_dep_types: list[RequirementType] | None = None
+     ) -> typing.Iterable[DependencyEdge]:

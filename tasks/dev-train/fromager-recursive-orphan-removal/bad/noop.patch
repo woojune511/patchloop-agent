@@ -1,0 +1,12 @@
+diff --git a/src/fromager/dependency_graph.py b/src/fromager/dependency_graph.py
+--- a/src/fromager/dependency_graph.py
++++ b/src/fromager/dependency_graph.py
+@@ -375,7 +375,7 @@
+             child_node.parents.clear()
+             child_node.parents.extend(filtered_parents)
+ 
+-        # Remove the node itself
++        # Remove the selected node itself
+         del self.nodes[key]
+ 
+         # Remove forward edges from any node whose children pointed to the removed node

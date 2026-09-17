@@ -1,0 +1,108 @@
+schema_version: task-public-v1
+task_id: fromager-recursive-orphan-removal
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/python-wheel-build/fromager.git
+  base_commit: f82c1e64a027060c3e25090f6a4a4d7f4e3d985d
+  language: python
+issue:
+  title: Removing a dependency leaves newly orphaned descendants in the graph
+  description: 'DependencyGraph.remove_dependency(name, version) removes a dependency but leaves
+
+    children with no remaining parents in graph.nodes. Removing a parent -> child -> leaf
+
+    chain should also remove the newly parentless child and leaf, continuing through all
+
+    newly parentless descendants. Descendants still referenced by a surviving parent must
+
+    remain, including references from the graph''s ROOT node. Handle shared and converging
+
+    dependency branches and all existing requirement edge types.
+
+
+    Preserve reciprocal incoming/outgoing edges and metadata on retained nodes. Removal
+
+    targets the exact package name and version; a different version is not the same node.
+
+    Keep the existing missing-node no-op, repeated-removal behavior, ROOT and unrelated
+
+    graph components. This operation is not a global sweep of pre-existing orphan nodes.
+
+    The current base already cleans deleted-parent backreferences; retain that behavior.
+
+    No requirement is added to collect unreachable cycles, and recursion is not required.
+
+    '
+constraints:
+  allowed_paths:
+  - src/fromager/dependency_graph.py
+  forbidden_paths:
+  - tests/**
+  - docs/**
+  - .patchloop-hidden/**
+  - pyproject.toml
+  max_changed_files: 1
+  max_diff_lines: 100
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+- id: orphan-removal-contract
+  command:
+  - /opt/conda/envs/testbed/bin/python
+  - -c
+  - "\"\"\"Public examples for dependency removal; all expected behaviors are explicit.\"\"\"\n\nimport\
+    \ json\nimport sys\n\n\ndef main():\n    from packaging.requirements import Requirement\n    from\
+    \ packaging.utils import canonicalize_name\n    from packaging.version import Version\n\n    import\
+    \ fromager.dependency_graph as module\n    from fromager.requirements_file import RequirementType\n\
+    \n    assert module.__file__.startswith(\"/workspace/src/\")\n    cases = [\n        (\"orphan-chain\"\
+    , [(None, \"parent\"), (\"parent\", \"child\"), (\"child\", \"leaf\")],\n         \"parent\", set()),\n\
+    \        (\"shared-descendant\", [(None, \"left\"), (None, \"right\"), (\"left\", \"shared\"),\n \
+    \                              (\"right\", \"shared\"), (\"shared\", \"leaf\")],\n         \"left\"\
+    , {\"right\", \"shared\", \"leaf\"}),\n        (\"diamond\", [(None, \"top\"), (\"top\", \"left\"\
+    ), (\"top\", \"right\"),\n                      (\"left\", \"bottom\"), (\"right\", \"bottom\"), (\"\
+    bottom\", \"tail\")],\n         \"top\", set()),\n        (\"missing-node\", [(None, \"parent\"),\
+    \ (\"parent\", \"child\")],\n         \"missing\", {\"parent\", \"child\"}),\n        (\"leaf-removal\"\
+    , [(None, \"parent\"), (\"parent\", \"child\")],\n         \"child\", {\"parent\"}),\n    ]\n    failed\
+    \ = 0\n    for case_id, edges, removed, expected_names in cases:\n        graph = module.DependencyGraph()\n\
+    \        for parent, child in edges:\n            graph.add_dependency(\n                canonicalize_name(parent)\
+    \ if parent else None,\n                Version(\"1\") if parent else None, RequirementType.INSTALL,\n\
+    \                Requirement(child), Version(\"1\"),\n            )\n        graph.remove_dependency(canonicalize_name(removed),\
+    \ Version(\"1\"))\n        actual = set(graph.nodes)\n        expected = {\"\", *(name + \"==1\" for\
+    \ name in expected_names)}\n        expected_edges = {\n            (parent + \"==1\" if parent else\
+    \ \"\", child + \"==1\")\n            for parent, child in edges\n            if (parent + \"==1\"\
+    \ if parent else \"\") in expected and child + \"==1\" in expected\n        }\n        outgoing =\
+    \ {(key, edge.key) for key, node in graph.nodes.items() for edge in node.children}\n        incoming\
+    \ = {(edge.key, key) for key, node in graph.nodes.items() for edge in node.parents}\n        passed\
+    \ = actual == expected and outgoing == incoming == expected_edges\n        failed += not passed\n\
+    \        print(json.dumps({\"case\": case_id, \"passed\": passed,\n                          \"expected_nodes\"\
+    : sorted(expected), \"actual_nodes\": sorted(actual),\n                          \"expected_edges\"\
+    : sorted(expected_edges), \"outgoing\": sorted(outgoing),\n                          \"incoming\"\
+    : sorted(incoming)}, sort_keys=True))\n    print(f\"{len(cases) - failed} passed, {failed} failed\"\
+    )\n    return int(failed > 0)\n\n\nif __name__ == \"__main__\":\n    sys.exit(main())\n"
+  timeout_seconds: 30
+  environment:
+    PYTHONPATH: /workspace/src
+- command:
+  - /opt/conda/envs/testbed/bin/python
+  - -m
+  - pytest
+  - -q
+  - -p
+  - no:cacheprovider
+  - -o
+  - addopts=
+  - tests/test_dependency_graph.py
+  environment:
+    PYTHONPATH: /workspace/src
+  expected_exit_codes:
+  - 0
+  id: upstream-dependency-graph-regression
+  output_limit_bytes: 200000
+  timeout_seconds: 90
+  working_directory: .
+tags:
+- dev-head
+- real-repository
+- dependency-graph
+- development-only

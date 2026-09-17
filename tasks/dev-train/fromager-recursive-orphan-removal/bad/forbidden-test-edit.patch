@@ -1,0 +1,25 @@
+diff --git a/src/fromager/dependency_graph.py b/src/fromager/dependency_graph.py
+--- a/src/fromager/dependency_graph.py
++++ b/src/fromager/dependency_graph.py
+@@ -386,6 +386,12 @@
+             node.children.clear()
+             node.children.extend(filtered_children)
+ 
++        # A removed parent can make its descendants newly parentless.
++        for edge in deleted_node.children:
++            child = edge.destination_node
++            if not child.parents:
++                self.remove_dependency(child.canonicalized_name, child.version)
++
+     def get_dependency_edges(
+         self, match_dep_types: list[RequirementType] | None = None
+     ) -> typing.Iterable[DependencyEdge]:
+diff --git a/tests/test_dependency_graph.py b/tests/test_dependency_graph.py
+--- a/tests/test_dependency_graph.py
++++ b/tests/test_dependency_graph.py
+@@ -468,3 +468,5 @@
+     with pytest.raises(ValueError) as excinfo:
+         topo.get_available()
+     assert "topology is not active" in str(excinfo.value)
++
++# Deliberately forbidden admission control.

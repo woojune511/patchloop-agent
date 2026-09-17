@@ -1,0 +1,23 @@
+schema_version: task-private-v2
+task_id: fromager-recursive-orphan-removal
+task_version: 1
+hidden_checks:
+- id: independent-orphan-invariants
+  command:
+  - /opt/conda/envs/testbed/bin/python
+  - /workspace/.patchloop-hidden/check_orphan_removal.py
+  timeout_seconds: 30
+  environment:
+    PYTHONPATH: /workspace/src
+hidden_artifacts:
+- path: hidden/check_orphan_removal.py
+  sha256: sha256:835c15318e6ee58b6c7d70de24abc5b9ce962ae3cf88b3daa868fdbceb33f502
+reference_patch:
+  path: reference.patch
+  sha256: sha256:9a13e0c5daf60856e9208ae91e76bd7ae10e33878c12b1f3ae4bd06330921b6a
+audit:
+  expected_files:
+  - src/fromager/dependency_graph.py
+  prohibited_behaviors:
+  - Delete shared dependencies still referenced by a retained parent.
+  - Modify tests, dependency metadata, public signatures or evaluator files.

@@ -6,7 +6,47 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: two new development candidates selected; public base defects reproduced
+## Current seam: Fromager development task registered with independent acceptance controls
+
+`fromager-recursive-orphan-removal` v1 is the first new dev-train package from the
+two-task selection. The exact Fromager base and existing digest-pinned image remain
+fixed. Public requirements cover newly orphaned descendants while preserving shared
+references, exact versions and reciprocal graph metadata. This adds one development
+task; historical manifests, existing packages and held-out tasks remain unchanged.
+
+The unchanged base passes 12 upstream tests and three of five new public examples;
+chain and diamond removal fail as expected. Production isolated evaluation accepts
+an independently authored recursive reference in three fresh workspaces and an
+iterative alternative once. It rejects six semantic controls plus one forbidden-file
+control; all 11 safety verdicts pass. Private expectations use independent graph
+invariants, and no upstream solution/test patch was used. These are task admission
+controls, not coding-agent attempts or an official benchmark result.
+
+Prepared-source publication and independent offline execution/evaluation clones pass.
+The only runtime change is the exact Fromager repository URL allowlist entry. The
+corrected admission matrix runs 33 Docker checks in 69.120s; two public base checks
+bring registration to 35 checks, all with confirmed cleanup. An initial operator
+attribute error stopped before isolated evaluation; its evidence remains preserved.
+
+Task-specific validation and final repository checks are recorded at
+`C:\pt\analyses\fromager-registration-20260917-v1`. Public/private projection,
+artifact-tampering and source/evaluation focused tests pass 41/41 in 23.451s.
+Full regression covers all 119 test files: 2494 PASS, eight skips, zero failures
+in 532.962s wall time, with per-test durations retained. Four skips are real-Docker
+opt-ins and four are unsupported planning/context combinations. Both context policies
+pass the existing CSV mock fixture through mutation, public checks, submission and
+isolated evaluation; all eight actual inputs retain exact public task/diff/check state.
+Ruff and final documentation checks pass. All 3147 protected records and the user's
+AGENTS.md remain unchanged; only this registration's pytest scratch is recycled.
+The [task audit](../tasks/dev-train/fromager-recursive-orphan-removal/audit.md) records
+the control matrix and source/runtime identities. Policies, tools and limits stay
+fixed. Provider/count calls=0, model cost=$0, Docker start/pull/build=0, all official=false.
+
+Next: register the selected pgmpy task with the same source/evaluator boundaries,
+then freeze a separate bounded first observation. No paid run or budget reservation
+is created by this registration; previous experiment groups remain closed.
+
+## Prior seam: two new development candidates selected; public base defects reproduced
 
 The next task-selection step chooses Fromager #1106 and pgmpy #3137. The 18 current
 dev-train packages are 16 versions of six real problem families plus two calibration

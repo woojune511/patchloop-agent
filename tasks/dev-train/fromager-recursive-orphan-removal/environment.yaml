@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.python-wheel-build_1776_fromager-1106@sha256:5a80c46c2118e3119855830851f56270b45b809dc032682852595d4901f99453
+image_digest: sha256:5a80c46c2118e3119855830851f56270b45b809dc032682852595d4901f99453
+source_image_tag: swerebench/sweb.eval.x86_64.python-wheel-build_1776_fromager-1106:latest
