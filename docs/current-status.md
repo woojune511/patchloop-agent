@@ -6,7 +6,35 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Whitespace-only requirement references retain the original source
+## Current seam: P7 resolves the reference; scope verification remains unresolved
+
+One fresh `gpt-5.4-2026-03-05`/medium observation completes with acceptance FAIL,
+safety PASS and official=false. P7 uses the same P6 task, source, request settings
+and system prompt; only the requirement_ref description and derived identities differ.
+The model's whitespace-only quote now matches the original span [246,520), preserving
+three line breaks and the public task hash. It reaches all three post-edit actual inputs
+and both check reviews beside expected_behavior. All eight exact request hashes and
+public task/diff/check delivery pass audit. Source matching works in this live observation.
+
+The public interpretation gap remains: plan revision2, expected_behavior and the final
+nine-line serializer addition treat field mode/configured name as sufficient, without
+the requirement's provider-profile distinction. The first edit precedes any segment
+transition. Both public checks pass (8 synthetic observations, 18 upstream tests), then
+the model submits without post-edit inspection or probe. The matching ordinary field
+profile preservation case is not demonstrated. Hidden evaluation details were not read.
+
+Recorded cost $0.379337; uncached equivalent $0.615785, within a new $1.20 cap.
+Eight model/count calls,12 tools,one edit at call5,zero rejected repeats; max input38103,
+three segments,162.432s,no resource stop. The cap and unused funds are closed.
+Operator37 PASS/2.449s and Ruff; unchanged runtime reuses the full regression/mocks below.
+All4894 protected files and user AGENTS.md remain unchanged; cleanup confirmed.
+No retry/resume/replacement, extra candidate, source fetch or Docker start/pull/build.
+P6/P7 are descriptive observations, not a causal comparison or quality/default claim.
+Next focus: distinguish required changes from preserved behavior and compare each with
+specific public verification cases. No follow-up implementation or paid run is included.
+Evidence: `C:\pt\analyses\requirement-whitespace-observation-20260918-v1\result.md`.
+
+## Prior seam: Whitespace-only requirement references retain the original source
 
 Optional requirement_ref now permits whitespace-run differences while keeping all other
 characters exact. A quote must identify one unique source interval, including overlapping

@@ -928,7 +928,25 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: whitespace-only requirement matching binds unique original source spans.
+Current seam: P7 confirms live reference matching; provider-profile scope remains unresolved.
+One P6-equivalent gpt-5.4-2026-03-05/medium fresh run settles acceptance FAIL/safety PASS.
+Whitespace quote binds original [246,520), retaining three LF characters and public task hash.
+Matched reference/expectation reaches all three post-edit inputs and both check reviews;
+eight exact requests verify task/diff/check delivery. Source identity is not correctness.
+Plan revision2 and the final nine-line common serializer change still use field mode/name
+as sufficient, omitting the provider-profile preservation distinction. First edit at call5
+precedes segment transitions. Two public checks PASS (8 synthetic/18 upstream); no post-edit
+inspection or probe follows before finish with resources left. No hidden-detail diagnosis.
+Recorded$0.379337/uncached$0.615785; eight model/count,12 tools,one edit,no rejected repeats;
+max input38103,three segments,162.432s,no resource stop. Fresh$1.20 cap/unused funds closed.
+Operator37 PASS/2.449s,Ruff; unchanged runtime reuses full/mock evidence below.
+Protected4894/user AGENTS unchanged,cleanup confirmed; no retry/resume/extra candidate,
+source fetch or Docker start/pull/build. official=false; no causal/generalization/default claim.
+Next focus is changed/preserved scope and its concrete public-case verification; this closure
+adds no runtime behavior, mandatory probe, finish gate or paid follow-up.
+See C:\pt\analyses\requirement-whitespace-observation-20260918-v1\result.md.
+
+Prior seam: whitespace-only requirement matching binds unique original source spans.
 The optional resolver keeps exact non-whitespace characters, rejects ambiguous/overlapping
 matches and bounds both submitted/original text at600 characters. Admission stores original
 text, Python character offsets and match mode; task hash/version and legacy receipt behavior
