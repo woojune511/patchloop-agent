@@ -902,7 +902,21 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: P4 receives current scope guidance in all eight actual inputs but settles
+Current seam: P5 changes only medium to high reasoning against P4 and settles acceptance
+FAIL/safety PASS. Seven model/count calls, 12 tools, one edit at call4 and two passing
+checks cost $0.404276 ($0.562100 uncached equivalent). Exact request hashes confirm high
+and current guidance in all seven inputs; both expectation reviews/check links arrive.
+The first plan still misses the matching field-mode profile without the provider-specific
+requirement. Only the shared serializer changes. No post-edit inspection/probe occurs;
+tools and budget remain at submission. Maximum input39263; three segments; no limit stop.
+This is public scope evidence, not hidden-assertion attribution or causal P4/P5 efficacy.
+Operator31 PASS/2.48s, Ruff; unchanged runtime reuses 2534 PASS/eight skips and two isolated
+mock PASS receipts. Protected3909 files unchanged. P5 and unused cap closed; official=false.
+Next proposed work is a separate provider-free public profile-contrast reproduction on
+BASE/frozen submitted patches, before another harness change or paid sample. Not executed.
+See C:\pt\analyses\reasoning-high-pydantic-observation-20260917-v1\result.md.
+
+Prior seam: P4 receives current scope guidance in all eight actual inputs but settles
 acceptance FAIL/safety PASS. Eight model/count calls, 13 tools, one edit at call5 and
 two passing public checks cost $0.420928 ($0.604960 uncached equivalent). Both expectation
 reviews/check links are delivered. Before any segment boundary, the first public plan

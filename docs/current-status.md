@@ -6,7 +6,44 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: P4 receives scope guidance but still broadens the required condition
+## Current seam: P5 high reasoning preserves the same public scope mismatch
+
+The fresh P5 observation changes only reasoning_effort from medium to high against
+the frozen P4 runtime/task/source/model/settings. It settles acceptance FAIL/safety
+PASS: PASS/planned=0/1, one start/submission, NOT_RUN=0 and no infrastructure or
+uncertainty stop. Seven model/count calls and 12 tools cost $0.404276 ($0.562100
+uncached equivalent). One edit occurs at call4; both public checks pass with eight
+synthetic observations and 18 upstream tests. No rejection or probe occurs.
+
+Exact request reconstruction verifies high on all seven dispatched inputs, alongside
+the unchanged guidance and public task/diff/check state. Both expectation reviews and
+check links arrive. The first public plan preserves non-field or unconfigured profiles;
+the mutation still treats field mode and a nonempty field as sufficient scope. It omits
+the matching field-mode profile without the provider-specific requirement. Only the
+shared serializer changes, with no separate requirement predicate. This public mismatch
+matches P4's scope pattern; it does not attribute a particular hidden assertion.
+
+Five searches and three explicit reads precede the edit; all reads target the OpenAI
+model module. There is no post-edit inspection/probe or delivered test-source range.
+The model submits after both checks pass while tools and budget remain. Maximum input
+is 39,263 tokens, with three initial/major_result_reviewed segments and no limit ending
+the run. Output is 5,772 tokens, including 2,661 reasoning tokens. High is confirmed,
+but the targeted scope distinction is not demonstrated in this selected observation.
+P4/P5 are one selected run per setting, not a causal or general efficacy result.
+
+Operator31 PASS in 2.48s and Ruff pass; the initial import-order lint failure is retained
+with its correction. Unchanged runtime/task reuse the hash-bound 2534 PASS/eight-skip
+regression, recorded Windows path recheck and both isolated mock PASS receipts. All
+3909 protected prior files and user AGENTS.md remain unchanged. No retry, resume,
+replacement, extra candidate or hidden-detail inspection. P5 and unused cap are closed;
+official=false. Report: `C:\pt\analyses\reasoning-high-pydantic-observation-20260917-v1\result.md`.
+
+Next proposed diagnostic is provider-free: contrast a provider-supplied profile with an
+ordinary field-mode profile using the same field, then compare BASE and frozen submitted
+patches using public outputs in a separate local reproduction. This tests the static
+diagnosis before another harness change or paid sample; it is not executed in P5.
+
+## Prior seam: P4 receives scope guidance but still broadens the required condition
 
 The fresh P4 observation settles acceptance FAIL/safety PASS, with PASS/planned=0/1,
 one start/submission, NOT_RUN=0 and no infrastructure or uncertainty stop. It uses the
