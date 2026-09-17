@@ -6,7 +6,53 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Pydantic AI task registered; long Windows source paths supported
+## Current seam: Pydantic AI first observation fails acceptance after public PASS
+
+The authorized P1 observation completed at registration commit `62154c0`, using
+gpt-5.4-2026-03-05/medium, segmented-v1, brief-v1, probes enabled, probe-policy none
+and repair-recheck. Acceptance PASS/planned is 0/1: one start and submission,
+task acceptance FAIL, safety PASS, NOT_RUN=0, infrastructure/uncertainty stops=0.
+The group is closed, official=false; no retry, resume, replacement or extra sample.
+
+The first edit at model call 3 adds seven lines in the common OpenAI serializer.
+Calls 4/5 pass all eight public contract observations and 18 upstream tests on the
+same diff; call 6 submits it. No rejected proposal, failed candidate check or probe
+occurs. Failure-driven repair is therefore not observed in this row.
+
+Public static analysis finds that the new branch inserts empty reasoning metadata
+for every field-mode profile with a configured field, without distinguishing the
+provider-profile requirement. The public task requires other-provider behavior to
+remain unchanged unless that profile carries the requirement. An ordinary non-DeepSeek
+field-mode profile is therefore a discriminating public diagnostic candidate. This is
+an inference from the submitted patch, not a reproduced case or attribution of the
+exact hidden failure. Only aggregate evaluator verdicts were inspected.
+
+The initial public plan already takes field mode as the repair scope. Its final
+revision treats passing registered checks as preservation of all other-provider
+behavior. All six actual inputs preserve task/diff/check state, plan/note delivery
+and request hashes; the first input has empty diff/plan/notes and no source metadata.
+This evidence does not indicate context transport loss. Neither a different context
+policy nor another model is established as the remedy.
+
+All six count/generation calls settle with matched usage. Recorded cost is $0.349113000
+of the separate $1.20 cap; uncached equivalent $0.455385000. The run takes 131.220s,
+uses 10 tools, and reaches a maximum 41931-token input. Three segments have two
+major_result_reviewed transitions. Output ceilings stay 25000; no resource limit ends
+the run. Fresh run/evaluation workspaces use the prepared local source; public cleanup
+is confirmed, isolated safety passes and no PatchLoop container remains.
+
+Operator guards pass 13 tests in 2.38s and repository/scoped operator Ruff passes.
+The unchanged runtime's registration regression (2509 PASS/eight skips) and both
+mock receipts were verified without repetition. All 3419 protected records and the
+user's AGENTS.md remain unchanged; one owned pytest root is recycled. No source fetch,
+Docker start/pull/build, hidden-detail diagnosis or extra candidate execution occurred.
+
+Next: a separate provider-free public diagnostic of an ordinary non-DeepSeek field-mode
+profile against the frozen base and submitted patch. Keep this paid group closed and
+choose any subsequent change from that evidence; defaults remain unchanged.
+Report: `C:\pt\analyses\pydantic-ai-first-observation-20260917-v1\result.md`.
+
+## Prior seam: Pydantic AI task registered; long Windows source paths supported
 
 `pydantic-ai-synthetic-tool-reasoning` v1 is now a dev-train package with a public
 contract and an independently authored isolated evaluator. Its exact source and
