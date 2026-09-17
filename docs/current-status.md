@@ -6,7 +6,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: P5 high reasoning preserves the same public scope mismatch
+## Current seam: Public profile contrast reproduces the P4/P5 preservation regression
+
+A provider-free reproduction executes four public cases once each on fresh BASE, P4
+and P5 workspaces from the same prepared source. Both profiles explicitly use field
+mode and reasoning_content. BASE omits the provider-required empty field and preserves
+ordinary-profile omission. P4/P5 add the required field for the provider profile, but
+also add it to the ordinary profile where the public task requires existing behavior.
+Both existing-thinking/text/tool-call controls pass on all three revisions.
+
+The preregistered public scope hypothesis is confirmed. Field replay mode identifies
+how thinking is serialized; it does not establish that an empty field is required
+without thinking. The submitted predicates conflate these conditions. This reproduces
+an actual public preservation regression, without identifying any hidden assertion or
+claiming it is the only reason for the earlier acceptance failures.
+
+All three container runs complete in 18.260s with exact submitted diff hashes, verified
+imports from each workspace, source-file hashes and confirmed cleanup. Network is off,
+source/root are read-only, and the existing digest-pinned image is used with pull=never.
+No new patch, LLM/count call or private evaluation runs; model cost=$0 and current
+task_acceptance=NOT_RUN. Earlier P4/P5 outcomes remain their original settled records.
+Design21 PASS/0.83s and Ruff pass. Runtime/task/prompt are unchanged, so no new full
+regression or mock execution is claimed. All 3982 protected prior files and user
+AGENTS.md are preserved. The three-revision diagnostic is closed; official=false.
+Report: `C:\pt\analyses\field-mode-preservation-repro-20260917-v1\result.md`.
+
+Next proposed work is a separate minimal operator repair based only on public
+requirements: represent the empty-field requirement independently from field mode and
+retain it across provider-profile reuse/copy. Validate this control with the public
+contrast, existing public checks and aggregate isolated evaluation. This is not yet
+implemented and would establish a repair control, not an agent success or prompt change.
+
+## Prior seam: P5 high reasoning preserves the same public scope mismatch
 
 The fresh P5 observation changes only reasoning_effort from medium to high against
 the frozen P4 runtime/task/source/model/settings. It settles acceptance FAIL/safety

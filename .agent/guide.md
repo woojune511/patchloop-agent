@@ -902,7 +902,20 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: P5 changes only medium to high reasoning against P4 and settles acceptance
+Current seam: the public profile contrast confirms the P4/P5 preservation regression.
+BASE omits the required provider empty field but preserves ordinary-profile omission;
+P4/P5 fix the former and regress the latter with the same field mode/name. Both actual
+thinking/text/tool-call controls pass everywhere. Four cases per revision, one BASE/P4/P5
+execution each, 18.260s, imported source/diff hashes verified, cleanup confirmed.
+Design21 PASS/0.83s and Ruff. No runtime/task/prompt change, new patch, LLM/count call or
+private evaluation; cost=$0, current acceptance NOT_RUN, protected3982 unchanged.
+This is a public regression reproduction, not hidden-assertion or efficacy attribution.
+Next proposed control: a separate public-requirement operator repair that distinguishes
+empty-field necessity from field mode, then public checks and aggregate isolated
+evaluation. Not implemented; no model-context injection or agent-success claim.
+See C:\pt\analyses\field-mode-preservation-repro-20260917-v1\result.md. official=false.
+
+Prior seam: P5 changes only medium to high reasoning against P4 and settles acceptance
 FAIL/safety PASS. Seven model/count calls, 12 tools, one edit at call4 and two passing
 checks cost $0.404276 ($0.562100 uncached equivalent). Exact request hashes confirm high
 and current guidance in all seven inputs; both expectation reviews/check links arrive.
