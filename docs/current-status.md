@@ -6,7 +6,37 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: P4/P5 public audit locates the scope and verification gap
+## Current seam: Public requirement references reach the existing check review
+
+`replace_text.requirement_ref` optionally quotes up to 600 exact characters from
+`public_task.issue.description` with its task_id. The gateway binds the public task
+version and content hash at admission, retains the accepted reference beside the
+original expected_behavior, and delivers both in the existing matching-diff check
+review. Source identity is verified; interpretation remains model-authored/unverified.
+An irrelevant quotation or incorrect expectation can still match a real source.
+
+Missing, malformed, mismatched or stale references return bounded annotation diagnostics
+without changing edit or finish authority. No extra model/tool step, compulsory probe,
+plan policy or segment rule is added. Legacy missing-field action/intent hashes, old
+pending actions and completed receipt replay are preserved. Saved source references
+never silently bind to changed public task content or replace earlier receipts.
+
+Focused verification passes 73 tests in 72.04s; 19 contract checks and Ruff pass.
+The system prompt remains byte-identical; annotation usage lives in its tool schema.
+Both append and segmented
+mock runs reach isolated EVALUATOR_PASS with four mock turns/five tool calls each.
+Their actual inputs retain task, current diff, public-check PASS and the exact
+requirement/expectation pair. Eight planning/probe schema combinations differ from
+the prior runtime only in the optional annotation. Full regression passes 2567 tests,
+with eight existing skips, across all 124 files in 717.253s. Four skips cover unsupported
+planning/context combinations; four require explicit real-Docker opt-ins. Initial stale
+schema pins and redundant prompt growth were caught and corrected before final verification.
+Provider/count/Docker calls=0 and cost=$0. This verifies delivery and recovery,
+not improved live task acceptance, semantic coverage or a causal remedy for P4/P5.
+The 4106 protected files and user AGENTS.md remain unchanged.
+Evidence: `C:\pt\analyses\public-requirement-reference-20260917-v1\result.md`.
+
+## Prior seam: P4/P5 public audit locates the scope and verification gap
 
 The public task and current guidance are verified in all 15 reconstructed P4/P5
 requests. Both first plans broaden the provider-specific requirement to configured
@@ -25,8 +55,8 @@ setups from the omitted preservation case. Source review is not dynamic coverage
 The evidence supports a public interpretation/verification gap, not missing delivery,
 an internal-reasoning diagnosis or a causal model/context effect. A proposed next seam
 links a bounded exact public requirement excerpt to the existing mutation expectation
-and check review as optional, unverified evidence. It is not implemented, a semantic
-validator, a new finish gate or authority for another paid run.
+and check review as optional, unverified evidence. That proposal is implemented in
+the current seam above; it is not a semantic validator, finish gate or paid-run authority.
 
 This read-only audit makes zero provider/count, Docker, candidate/check/probe/evaluator
 calls; cost=$0. Runtime/task/prompts and all 4078 protected files remain unchanged.

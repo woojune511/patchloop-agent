@@ -48,6 +48,10 @@ def test_check_retains_bounded_accepted_intent_after_rejected_proposal_and_resta
         "expected_behavior": accepted.arguments["expected_behavior"],
         "interpretation_status": "model_authored_unverified",
         "scope": "at_check_completion",
+        "requirement_reference": {
+            "status": "omitted", "diagnostics": ["missing_reference"],
+            "validation_scope": "public_source_identity_only",
+        },
     }
     before = gateway.journal.path.read_bytes()
     restored = _restart(gateway)

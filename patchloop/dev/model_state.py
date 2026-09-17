@@ -237,7 +237,7 @@ def compact_model_state(
             view["last_successful_mutation"] = {
                 **_select(successful, (
                     "diff_hash", "changed_files", "hypothesis", "expected_behavior",
-                    "postimage_evidence_available",
+                    "postimage_evidence_available", "requirement_reference",
                 )),
                 "action_id": result["action_id"], "delivery": "preceding_function_call_output",
             }

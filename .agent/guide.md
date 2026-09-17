@@ -246,6 +246,19 @@ required extra field, new plan policy, review stage or action gate. The gateway 
 even incomplete/incorrect interpretations as unverified model data under existing limits.
 Check-time expectations and evidence_review keep their existing currency and delivery.
 
+`replace_text.requirement_ref` is an optional annotation: null or `{task_id, excerpt}`.
+Copy a nonblank exact substring of `public_task.issue.description` (at most 600 characters)
+and its task_id. The gateway binds the current public task version and canonical public-task
+hash at action admission; the model does not calculate hashes. The admission receipt is
+retained with the accepted mutation and the existing matching-diff `mutation_expectation`.
+Source identity is the only validation: a real quotation can accompany an incorrect
+interpretation or an irrelevant check. Missing, malformed, mismatched and stale references
+yield bounded annotation diagnostics; they never block an otherwise valid edit or finish.
+No reference is inherited from an earlier edit. Saved references are never silently rebound
+to changed public task content, and old receipts are never rewritten. Legacy calls may omit
+the field without changing their input/intent hashes; legacy pending actions and completed
+replays keep their original wire behavior. The public task input itself is unchanged.
+
 Prefer the smallest sufficient unique anchor; omit unchanged signatures/docstrings for
 an executable-line edit and preserve observed line breaks exactly. Do not replace exact
 admission with fuzzy matching. Anchor-failure feedback permits correcting from delivered
@@ -439,14 +452,15 @@ nearby preservation case when the edit can affect one, with distinguishing publi
 and observable outcomes. Its existing 1500-character bound and action schema remain.
 A successful public-check card retains `mutation_expectation` only when the last accepted
 mutation, result diff and checked workspace diff match. This bounded check-time snapshot
-contains that mutation's plan hash, diff hash and original expected_behavior; it remains
+contains that mutation's plan hash, diff hash and original expected_behavior, plus the
+optional requirement reference receipt when recorded; interpretation remains
 model-authored/unverified. Missing or mismatched mutation evidence adds no snapshot.
 Failed proposals do not replace accepted intent, later edits do not rewrite old cards,
 and a generic PASS never becomes semantic coverage. The next existing decision/plan
 review compares actual check setup/outcomes with both changed and preserved behavior.
 An unexercised case stays untested; resolving a concern should name the exercised setup
-and outcome. The gateway still validates identity only. No new annotation, policy,
-model step, mandatory probe or submission gate is introduced. Append context retains
+and outcome. The gateway still validates identity only. The optional requirement annotation
+adds no policy, model step, mandatory probe or submission gate. Append context retains
 only the latest matching current-diff expectation card alongside protocol corrections;
 segment context retains its existing bounded three-card history with diff identities.
 Both deliver the same latest review; efficacy needs a separate observation, not a mock assertion.
@@ -902,7 +916,25 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: P4/P5 public requirement/verification audit verifies all15 exact requests.
+Current seam: the optional public requirement reference is implemented on replace_text.
+It binds a <=600-character exact public issue excerpt and task identity/hash at admission,
+then retains it beside unverified expected_behavior in the existing same-diff check review.
+Only source identity is validated. Annotation omission/error/staleness never changes
+edit or finish authority; existing hashes and legacy recovery remain compatible.
+Focused73 PASS/72.04s, contract19 PASS, Ruff PASS; the system prompt stays byte-identical.
+Annotation usage lives in the tool schema. Append/segmented isolated mock EVALUATOR_PASS with
+four mock turns/five tools each. Exact actual inputs retain the requirement/expectation
+pair; malformed-reference mocks also submit successfully. Full regression covers all124 files:
+2567 PASS/8 SKIP in717.253s. Skips are four unsupported planning/context combinations and
+four explicit real-Docker opt-ins. Initial schema pins and redundant prompt growth were
+corrected; final tests/mock bind unchanged runtime bytes. Full regression exceeds two minutes.
+Eight planning/probe schema combinations change only the optional reference field.
+No new plan policy, segment rule, compulsory probe, live provider/count/Docker operation
+or task-specific hint. Protected4106 and user AGENTS are unchanged; official=false,
+cost$0. These are plumbing tests, not live efficacy or task correctness evidence.
+See C:\pt\analyses\public-requirement-reference-20260917-v1\result.md.
+
+Prior seam: P4/P5 public requirement/verification audit verifies all15 exact requests.
 Both first plans broaden requirement scope to field mode before source inspection and
 retain it through edit/check/finish. First plan/edit share the initial segment. P5
 inputs2-4 contain Moonshot's same field/mode snippet, including its first edit; no
@@ -912,9 +944,9 @@ Both registered checks pass, then finish with resources/tools remaining. Public 
 review shows the synthetic default-profile control and upstream existing-thinking field
 case differ from the omitted setup; do not call static review dynamic coverage.
 This is public behavioral evidence, not missing-input/internal-reasoning/causal attribution.
-Next proposed seam: an optional exact public-requirement excerpt bound to the existing
+That audit proposed an optional exact public-requirement excerpt bound to the existing
 mutation expectation and check review; identity validation only, no semantic certification,
-new finish gate, solution injection or extra call. Not implemented; no paid authority.
+new finish gate, solution injection or extra call. Implemented above; no paid authority.
 Audit provider/count/Docker/candidate/check/probe/evaluator0, cost$0, current acceptance
 NOT_RUN. Runtime/task/prompts/user AGENTS and protected4078 unchanged; official=false.
 See C:\pt\analyses\preedit-requirement-trace-audit-20260917-v1\result.md and next-step.md.

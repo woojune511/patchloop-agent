@@ -16,7 +16,7 @@ from pydantic import ValidationError
 
 from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import probe_cases
+from patchloop.dev import probe_cases, requirement_reference
 from patchloop.dev.check_feedback import check_failure_diagnostics, output_tail
 from patchloop.dev.context import (
     SourceProjection,
@@ -245,6 +245,7 @@ def dev_tool_schemas(
                     "occurrence": {"type": "integer", "minimum": 1, "maximum": 100},
                     "hypothesis": {"type": "string", "minLength": 1},
                     "expected_behavior": {"type": "string", "minLength": 1},
+                    "requirement_ref": requirement_reference.reference_schema(),
                     "causal_revision": {
                         "type": ["object", "null"],
                         "description": (
@@ -277,6 +278,7 @@ def dev_tool_schemas(
                     "occurrence",
                     "hypothesis",
                     "expected_behavior",
+                    "requirement_ref",
                     "causal_revision",
                 ],
                 "additionalProperties": False,
@@ -2077,6 +2079,10 @@ class DevToolGateway:
         if not isinstance(self.last_successful_mutation, dict):
             return None
         projected = copy.deepcopy(self.last_successful_mutation)
+        if "requirement_reference" in projected:
+            projected["requirement_reference"] = requirement_reference.project(
+                projected["requirement_reference"], self.public_task,
+            )
         projected.pop("evidence_span_ids", None)
         projected.pop("anchor_evidence_span_id", None)
         projected.pop("edit_anchor", None)
@@ -2293,6 +2299,14 @@ class DevToolGateway:
         mutation_anchor_evidence_span_id: str | None = None
         candidate_summary: DiffSummary | None = None
         prepared_probe: dict[str, Any] | None = None
+        mutation_requirement_reference = None
+        if call.name == "replace_text":
+            mutation_requirement_reference = (
+                pending.get("mutation_requirement_reference") if pending is not None
+                else requirement_reference.bind(
+                    call.arguments.get("requirement_ref"), self.public_task,
+                )
+            )
         if call.name == "run_probe" and self.probe_policy == probe_cases.POLICY:
             try:
                 prepared_probe = probe_cases.prepare(call.arguments, self.journal.events())
@@ -2349,6 +2363,8 @@ class DevToolGateway:
                         if call.name in {"run_check", "run_probe"} else None
                     ),
                     "mutation_admitted": mutation_admitted,
+                    **({"mutation_requirement_reference": mutation_requirement_reference}
+                       if call.name == "replace_text" else {}),
                     "mutation_anchor_evidence_span_id": (mutation_anchor_evidence_span_id),
                     "mutation_anchor_evidence_span_ids": (
                         list(validated.anchor_evidence_span_ids)
@@ -2446,6 +2462,10 @@ class DevToolGateway:
                 # Reconciliation uses the original admitted baseline, even if the
                 # candidate was already on disk when this process resumed.
                 output["baseline_diff_hash"] = baseline
+                if mutation_requirement_reference is not None:
+                    output["mutation"]["requirement_reference"] = requirement_reference.project(
+                        mutation_requirement_reference, self.public_task,
+                    )
             result = DevToolResult(
                 action_id=call.action_id,
                 input_hash=input_hash,

@@ -27,7 +27,7 @@ from patchloop.agent.usage_diagnostics import usage_failure_message
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import native_compaction, segments, working_plan
+from patchloop.dev import native_compaction, requirement_reference, segments, working_plan
 from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.context import SourceProjection, build_observed_source_index
@@ -2371,6 +2371,12 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                 "interpretation_status": "model_authored_unverified",
                 "scope": "at_check_completion",
             }
+            if "requirement_reference" in mutation:
+                card["mutation_expectation"]["requirement_reference"] = (
+                    requirement_reference.project(
+                        mutation["requirement_reference"], gateway.public_task,
+                    )
+                )
         if ready_for_submission:
             card["unresolved_verification_concern_ids"] = gateway.verification_concerns()[
                 "unresolved_ids"

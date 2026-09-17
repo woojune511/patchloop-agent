@@ -29,6 +29,16 @@ def _memory_block():
     return DEV_SYSTEM_PROMPT[:start], DEV_SYSTEM_PROMPT[start:end], DEV_SYSTEM_PROMPT[end:]
 
 
+def _legacy_compression_surface(tools):
+    # The optional mutation reference is tested separately. Keep every pre-existing
+    # field/order/description pinned at this older memory-compression boundary.
+    for tool in tools:
+        if tool["name"] == "replace_text":
+            del tool["parameters"]["properties"]["requirement_ref"]
+            tool["parameters"]["required"].remove("requirement_ref")
+    return tools
+
+
 def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     tools = dev_tool_schemas(
         finish_enabled=True, check_ids=("public-a", "public-b"),
@@ -36,7 +46,8 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
                        "run_probe", "finish_task", "stop_task"),
     )
     # Captured from v33 before editing: preserve object, tool, enum and required-field order,
-    # nullability, bounds and defaults. Only natural-language descriptions may differ.
+    # nullability, bounds and defaults, excluding the later optional requirement reference.
+    tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
         "0d9332cbd8b4545322565428146c877898deabcc2cfc35c3973ce3f5bcdcc3ed"
@@ -68,6 +79,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
     tools = dev_tool_schemas(finish_enabled="finish_task" in names, allowed_tools=names)
+    tools = _legacy_compression_surface(tools)
     for tool in tools:
         decision = tool["parameters"]["properties"]["turn_decision"]["properties"]
         decision["memory_update"] = _without_descriptions(decision["memory_update"])
@@ -119,10 +131,10 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
 
 
 def test_guidance_identity_changes_without_changing_run_schema_or_limits():
-    # Probe environment guidance changes the overall surface identity; the v33/v34
-    # argument and description identities above remain independently pinned.
+    # The optional requirement reference changes the overall surface identity; older
+    # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:a402b96e4c62ddd9ac7b8f7ebf4a91c25c1ebbcf3fb633f23c3f5c518af42a30"
+        "sha256:c61b663f14c0973e05991cb88d8eb073367e0a77a651b31bfb632f6aab4c3a8d"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()
