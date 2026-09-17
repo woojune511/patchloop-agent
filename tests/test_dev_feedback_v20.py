@@ -204,7 +204,7 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
     # Optional mutation references change the wire; probe properties/limits and order stay fixed.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "ea37e3b17560a50d39c5dee128e11af099a7f7c63e66a6d2f82c968c16b20473"
+        "f1ec5dfd0d2a4f1a3a7b77f530b30255582db1b393852e55184e50f601a5c8bb"
     )
     assert dev_tool_surface_hash() != (
         "sha256:d69d9d4f71a4ed6517e0ae077d2df1fe934f6498abcacf104eed0b9b0fc717a8"

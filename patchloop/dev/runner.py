@@ -27,7 +27,13 @@ from patchloop.agent.usage_diagnostics import usage_failure_message
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import native_compaction, requirement_reference, segments, working_plan
+from patchloop.dev import (
+    behavior_cases,
+    native_compaction,
+    requirement_reference,
+    segments,
+    working_plan,
+)
 from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.context import SourceProjection, build_observed_source_index
@@ -2377,6 +2383,17 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                         mutation["requirement_reference"], gateway.public_task,
                     )
                 )
+            if "behavior_cases" in mutation:
+                cases = behavior_cases.project(mutation["behavior_cases"], gateway.public_task)
+                card["mutation_expectation"]["behavior_cases"] = cases
+                if cases["status"] == "recorded":
+                    card["next_question"] = (
+                        "Compare behavior_cases.change and behavior_cases.preserve separately "
+                        "with the check's actual setup and observed outcome, using scope_basis "
+                        "to distinguish them. In the next decision/plan, name which case the "
+                        "evidence exercises; unexercised or unspecified cases remain untested. "
+                        + card["next_question"]
+                    )
         if ready_for_submission:
             card["unresolved_verification_concern_ids"] = gateway.verification_concerns()[
                 "unresolved_ids"

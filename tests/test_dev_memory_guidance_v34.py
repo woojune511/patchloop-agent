@@ -30,12 +30,13 @@ def _memory_block():
 
 
 def _legacy_compression_surface(tools):
-    # The optional mutation reference is tested separately. Keep every pre-existing
+    # Optional mutation annotations are tested separately. Keep every pre-existing
     # field/order/description pinned at this older memory-compression boundary.
     for tool in tools:
         if tool["name"] == "replace_text":
-            del tool["parameters"]["properties"]["requirement_ref"]
-            tool["parameters"]["required"].remove("requirement_ref")
+            for field in ("requirement_ref", "behavior_cases"):
+                del tool["parameters"]["properties"][field]
+                tool["parameters"]["required"].remove(field)
     return tools
 
 
@@ -46,7 +47,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
                        "run_probe", "finish_task", "stop_task"),
     )
     # Captured from v33 before editing: preserve object, tool, enum and required-field order,
-    # nullability, bounds and defaults, excluding the later optional requirement reference.
+    # nullability, bounds and defaults, excluding the later optional mutation annotations.
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
@@ -134,7 +135,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # The optional requirement reference changes the overall surface identity; older
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:535c7f682ca91eefa953b09cab289a94ca4988223ec058ee5679b800f7f75c3e"
+        "sha256:3737908a77663b6a1b9f30ba09bd2c7889f7e3b49234cec790135a197a72e909"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

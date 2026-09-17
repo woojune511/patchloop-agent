@@ -6,7 +6,37 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: P7 resolves the reference; scope verification remains unresolved
+## Current seam: Structured changed/preserved cases reach check review
+
+The optional `replace_text.behavior_cases` annotation separates change and preserve setups
+and expected outcomes, with `scope_basis` naming the public condition that distinguishes
+them from a proposed implementation trigger. Five strings of at most 300 characters;
+`preserve=null` leaves an unknown/inapplicable boundary explicit. The full public task hash
+binds the admission record. A valid shape is recorded/model_authored_unverified with
+coverage_status=not_assessed; neither source matching nor PASS certifies its interpretation.
+
+Accepted cases reach the existing same-diff successful-check review, which asks the next
+decision/plan to compare each case with actual check inputs and outcomes. Omission and
+malformation remain nonblocking. Task changes mark saved cases stale; recovery retains
+admission-time records and a single physical edit. Old hashes/receipts preserve their
+contract, failed edits cannot replace accepted cases, and later edits do not inherit them.
+
+Focused 45 PASS / 29.637s and Ruff PASS.
+Full regression: 2617 PASS / 8 existing SKIP, all 125 files,
+809.825s with durations. Append/segmented durable mocks each reach isolated
+EVALUATOR_PASS in 4 turns / 5 tools with both cases in actual post-edit/check inputs, including
+native-output references. Invalid-annotation mocks also submit. All 8 schema variants differ
+only in the optional mutation field and derived identity v42. System prompt, task, plan,
+probe/segment policies, budgets and gates stay unchanged.
+The full run initially found 11 old schema expectations; those expectations were updated
+and all 11 exact failures passed recheck on unchanged runtime bytes. Original logs remain.
+All 4,960 protected files and user AGENTS.md are unchanged. Provider/count/Docker calls: 0;
+credentials unread; model cost: $0.
+official=false; live acceptance NOT_RUN. This tests recording/delivery, not better model
+scope interpretation, actual contrast verification or quality. P7 remains FAIL and closed.
+Evidence: `C:\pt\analyses\public-behavior-cases-20260918-v1\result.md`.
+
+## Prior seam: P7 resolves the reference; scope verification remains unresolved
 
 One fresh `gpt-5.4-2026-03-05`/medium observation completes with acceptance FAIL,
 safety PASS and official=false. P7 uses the same P6 task, source, request settings

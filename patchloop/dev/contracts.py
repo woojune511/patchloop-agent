@@ -25,7 +25,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = "none") -> str:
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v41",
+            "schema_version": "dev-tool-surface-v42",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
@@ -73,6 +73,8 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "mutation_wire": "gateway-bound-exact-anchor-replacement-v2",
             "requirement_reference": "optional-public-whitespace-unique-source-span-review-v2",
             "requirement_excerpt_limit": 600,
+            "behavior_cases": "optional-change-preserve-public-task-check-review-v1",
+            "behavior_case_text_limits": [5, 300],
             "mutation_evidence_binding": "observed-current-source-union-v2",
             "mutation_source_rebinding": "exact-position-unchanged-complete-line-fragments-v1",
             "inspection_gain": "non-overlapping-public-coverage-v2",
@@ -182,12 +184,14 @@ class TextReplacementIntent(StrictModel):
     causal_revision: CausalRevision | None = None
     # Independently parsed: even a malformed annotation must leave the action valid.
     requirement_ref: Any = None
+    behavior_cases: Any = None
 
     @model_serializer(mode="wrap")
     def preserve_optional_reference_wire(self, handler: Any) -> dict[str, Any]:
         result = handler(self)
-        if "requirement_ref" not in self.model_fields_set:
-            result.pop("requirement_ref", None)
+        for field in ("requirement_ref", "behavior_cases"):
+            if field not in self.model_fields_set:
+                result.pop(field, None)
         return result
 
     @model_validator(mode="after")

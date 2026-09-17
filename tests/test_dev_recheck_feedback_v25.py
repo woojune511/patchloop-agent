@@ -200,7 +200,7 @@ def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # descriptions are independently pinned in test_dev_memory_guidance_v34.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:de7225a9207cde324681f1f52153ffe606e6f33adcf793daa106932bcc2a5dee"
+    )) == "sha256:9f1bdcb281e970ef270f98119a0993edf0d77453ed398e496b1a82a6831b8ad5"
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )

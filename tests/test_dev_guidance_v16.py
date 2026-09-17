@@ -63,7 +63,8 @@ def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
     assert old_text["maxLength"] == 20_000
     assert set(edit["parameters"]["required"]) == {
         "path", "old_text", "new_text", "occurrence", "hypothesis",
-        "expected_behavior", "causal_revision", "requirement_ref", "turn_decision",
+        "expected_behavior", "causal_revision", "requirement_ref", "behavior_cases",
+        "turn_decision",
     }
     notes = memory_update_schema()
     assert notes["type"] == ["object", "null"]

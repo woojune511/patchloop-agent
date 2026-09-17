@@ -246,6 +246,25 @@ required extra field, new plan policy, review stage or action gate. The gateway 
 even incomplete/incorrect interpretations as unverified model data under existing limits.
 Check-time expectations and evidence_review keep their existing currency and delivery.
 
+`replace_text.behavior_cases` optionally records a compact model-authored contrast.
+Its object has change={setup,expected}, preserve={setup,expected}|null, and scope_basis.
+Each of these five possible strings is bounded at 300 characters. A setup is a concrete
+public input/configuration; expected names an observable effect. scope_basis distinguishes
+the complete public requirement, including exceptions, from the proposed code trigger.
+Use preserve=null and explain unknown/not-applicable scope rather than inventing a boundary.
+The annotation itself may be null or omitted, independently of expected_behavior and
+requirement_ref. Shape errors produce bounded diagnostics without blocking edits/finish.
+Valid records bind the whole public-task hash and retain model_authored_unverified plus
+coverage_status=not_assessed. The gateway never validates semantic relevance or coverage.
+Task changes yield stale without reinterpreting saved prose. Missing legacy fields preserve
+raw action/intent hashes and pending/completed recovery; cases are bound once at admission.
+Accepted mutation results and same-diff successful-check mutation_expectation retain the
+record. The next_question asks the existing decision/plan to compare change and preserve
+setups separately with actual check inputs/outcomes; unexercised cases stay untested.
+Native output pointers preserve existing deduplication. Failed proposals do not replace
+accepted cases; a later mutation cannot inherit omitted cases or rewrite older review cards.
+No plan policy, semantic parser, mandatory case/probe, model step or finish gate is added.
+
 `replace_text.requirement_ref` is an optional annotation: null or `{task_id, excerpt}`.
 Copy a nonblank excerpt of `public_task.issue.description` (at most 600 characters)
 and its task_id. Whitespace runs may differ, including line breaks, tabs and Unicode
@@ -928,7 +947,28 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: P7 confirms live reference matching; provider-profile scope remains unresolved.
+Current seam: optional changed/preserved cases retain separate setups and expectations.
+The mutation annotation adds scope_basis from the complete public requirement, with
+preserve=null for unknown/inapplicable boundaries. Valid shape is recorded/unverified,
+not semantic or coverage approval. Accepted cases bind the public task hash and follow
+the existing current-diff check review into the next decision/plan; source matching and
+PASS never automatically settle either case. Omitted/invalid annotations stay nonblocking.
+Recovery preserves admission-time data and one physical edit. Old hashes/receipts stay
+compatible; failed proposals/later edits cannot overwrite or inherit accepted cases.
+Focused 45 PASS / 29.637s and Ruff PASS.
+Full regression: 2617 PASS / 8 existing SKIP across all 125 files,
+809.825s with durations. Two durable mocks reach isolated EVALUATOR_PASS
+in 4 turns / 5 tools each with cases in actual post-edit/check inputs.
+The 11 initial assertions using the old schema were refreshed and rechecked successfully on
+unchanged runtime; original full-run failures and the follow-up receipt remain recorded.
+All 8 schema combinations add only the optional field; v42 identity. System/task/plan,
+probe/segment rules, budgets and gates are unchanged. All 4,960 protected files and user
+AGENTS.md are preserved. Provider/count/Docker calls: 0; credentials unread; model cost: $0.
+official=false; live acceptance NOT_RUN.
+Model scope interpretation/contrast execution and efficacy remain untested; P7 stays closed.
+See C:\pt\analyses\public-behavior-cases-20260918-v1\result.md.
+
+Prior seam: P7 confirms live reference matching; provider-profile scope remains unresolved.
 One P6-equivalent gpt-5.4-2026-03-05/medium fresh run settles acceptance FAIL/safety PASS.
 Whitespace quote binds original [246,520), retaining three LF characters and public task hash.
 Matched reference/expectation reaches all three post-edit inputs and both check reviews;
