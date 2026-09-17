@@ -78,7 +78,7 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 def test_surrounding_action_guidance_identity():
     prefix, _, suffix = _memory_block()
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "df03ac7e46c9ad278f568fe5c35c0e99a3adbddfda03242c38e0da8869bd6cc6"
+        "78b8605175d950ef6d7479f81c623991e4725b63af54d38c9213eec7cf84375e"
     )
 
 
@@ -86,8 +86,8 @@ def test_guidance_is_bounded_in_characters_and_canonical_bytes_not_claimed_token
     _, memory, _ = _memory_block()
     # v33: 3,368 chars (including two trailing newlines), 7,965 total, 4,047 schema bytes.
     assert len(memory) <= 2400
-    # Candidate preservation review adds 347 characters; the memory block stays fixed.
-    assert len(DEV_SYSTEM_PROMPT) <= 7300
+    # Public check/source navigation adds 404 characters; the memory block stays fixed.
+    assert len(DEV_SYSTEM_PROMPT) <= 7700
     assert len(canonical_json(memory_update_schema()).encode()) <= 3200
     assert hashlib.sha256(canonical_json(_without_descriptions(memory_update_schema()))
                           .encode()).hexdigest() == (
@@ -122,7 +122,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Probe environment guidance changes the overall surface identity; the v33/v34
     # argument and description identities above remain independently pinned.
     assert dev_tool_surface_hash() == (
-        "sha256:6c7ae98518a888e3a13c6de51ae31a5be2da26c8446f99b64be4fc6379929bff"
+        "sha256:499ed4e934d88218b06d59a06a3c78b2c1e835bd807045bd4df439c964528171"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

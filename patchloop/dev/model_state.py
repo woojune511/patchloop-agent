@@ -10,6 +10,7 @@ import copy
 import json
 from typing import Any
 
+from patchloop.dev.check_review import link_check_evidence
 from patchloop.dev.native_sources import public_exchanges
 from patchloop.dev.path_policy import mutation_path_allowed
 
@@ -146,6 +147,8 @@ def compact_model_state(
     if "context_projection" in view:
         view["context_projection"].pop("delivered_source_hash", None)
         view["context_projection"].pop("mutation_readiness_basis", None)
+    # Keep current coordinates before source bodies become native delivery references.
+    link_check_evidence(view)
     _source_catalog(view)
     notes = view.get("working_notes")
     if isinstance(notes, dict):

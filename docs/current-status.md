@@ -6,7 +6,44 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Pydantic preservation observation fails despite delivered review
+## Current seam: Public checks link to definitions and delivered test source
+
+Retained public check results now carry evidence_review in both append and segmented
+model views. Each links to the exact registered public definition and command hash.
+Recognized literal pytest targets retain repository-relative paths, node selectors
+and argv positions, alongside already delivered current source ranges/file hashes.
+Inline Python points to its public command; unsupported selection remains unresolved.
+No source is read implicitly and no case, assertion execution or semantic coverage
+is inferred. Historical result currency and native output stay exact.
+
+The existing decision/plan guidance uses these links to inspect actual fixture inputs
+and assertions before treating PASS as evidence for a behavior claim. Reading a range
+does not prove a whole test was read or ran. Missing ranges mean absent from the current
+source view. Tool argument schemas, planning policies, mutation/check recovery, concerns,
+budgets and finish eligibility remain unchanged. The prompt adds 404 characters
+(7290 to 7694); each review is bounded to 2000 serialized characters with omissions.
+
+Focused validation passes 34 tests in 24.130s. Final regression coverage is 2534 PASS
+and eight skips across all 123 files. The four-process full run takes 678.375s with
+--durations=15; four prior runtime/prompt identity pins fail initially, then pass after
+test-only expectation updates. Runtime bytes remain frozen throughout, and the original
+failures are retained. Ruff and documentation checks pass.
+
+Both prepared-source CSV mock runs reach isolated EVALUATOR_PASS in 10.207s combined,
+with four model/five tool calls each. All eight actual inputs retain public task/diff/check
+state and the new review link, while source-preparation metadata remains absent.
+Mock acceptance is PASS and safety NOT_RUN. A read-only presentation replay of the old
+P2 public context produces exact upstream test navigation and empty test-source ranges,
+adding 1267 review characters; the historical agent did not receive these fields.
+
+This establishes implementation and local delivery, not improved live task acceptance.
+All 3614 protected prior records and the user's AGENTS.md remain unchanged. Provider,
+count and real-Docker calls=0, model cost=$0; P2 stays closed. Next: a separately bounded
+fresh observation can test whether the model inspects the actual assertion conditions
+and narrows its preservation claims. No paid observation or default-policy change here.
+Report: `C:\pt\analyses\check-evidence-linkage-20260917-v1\result.md`.
+
+## Prior seam: Pydantic preservation observation fails despite delivered review
 
 The fresh P2 observation uses the same task, prepared source and GPT-5.4/medium
 settings as P1, with the tested preservation-review runtime at commit 34999fd.

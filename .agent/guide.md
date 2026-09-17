@@ -399,6 +399,22 @@ Retained check summaries always include action/check/diff identity together, and
 check evidence names the actual cited `check_id`. Preserve existing check-summary
 selection/order and native body deduplication. Do not infer semantic relevance from
 free-form resolution prose or add a submission blocker.
+Each retained model-view check additionally has `evidence_review` when its registered
+public definition is available. Bind the exact command hash and public definition index.
+Recognize literal pytest executable / Python -m pytest targets, with working-directory
+relative paths, exact node selectors and original argv indices. Python -c links to the
+inline public definition. Unknown command forms/options keep that reference without
+guessing selection, resolving globs/modules or reading files. Keep at most four targets,
+three current source ranges per target, 256 characters per argument/resolved path and 2000 serialized
+characters per review, with explicit omissions. Current source ranges use already
+delivered current coordinates/file hashes; they do not assert that a fixture, assertion
+or case ran or that its body is complete. Missing ranges mean absent from the current
+source view, not never inspected. Retain historical result currency and exact native
+outputs. Both append and segmented views carry these links through output deduplication;
+old inputs and durable receipts remain unchanged. The existing decision/plan flow uses
+the links to inspect actual input/assertion conditions before attributing behavioral
+scope to PASS. `coverage_status=not_assessed` stays unchanged; no read/experiment quota,
+semantic coverage gate, tool argument, check policy or finish condition is introduced.
 Dismissal is only model judgment. Both decisions become historical after a diff change
 and the retained concern reopens. When full, new concerns may replace currently resolved
 or dismissed entries, never silently evict unresolved ones. Journaled verification_state
@@ -874,7 +890,16 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: P2 preservation observation settles acceptance FAIL/safety PASS at
+Current seam: public check evidence_review links registered definitions/literal pytest
+targets with current delivered source ranges in both model views. It is navigation,
+not assertion execution or coverage. Existing review guidance inspects actual input
+and assertion conditions; tool schemas, plan policies and finish gates stay fixed.
+Focused34 PASS/24.130s; final2534 PASS/eight skips across123 files, with four stale
+identity expectations corrected after the frozen-runtime full run. Both prepared-source
+mock runs reach isolated PASS, actual inputs8 checked; no live/provider/Docker calls.
+See C:\pt\analyses\check-evidence-linkage-20260917-v1\result.md. official=false.
+
+Prior seam: P2 preservation observation settles acceptance FAIL/safety PASS at
 $0.418622. Both check-time expectations reach actual inputs, but the selected
 preservation case does not distinguish the provider-profile requirement. The
 post-run operator audit compared intentionally omitted duplicate notes and stopped;

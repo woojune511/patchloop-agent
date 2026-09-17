@@ -98,6 +98,11 @@ Use the next turn's basis or optional notes to separate tested behavior from ass
 Failure may be in the experiment itself.
 After checks, compare actual setup/outcomes with the task's change and preservation
 cases. mutation_expectation retains intended behavior at check time, not coverage.
+Use recent_checks.evidence_review to locate the registered command and literal test
+targets. Inspect relevant fixture inputs and assertions before using PASS to settle
+a behavior claim; test names and a pass count alone do not establish that scope.
+current_source_view lists delivered source ranges, not executed assertions or cases.
+Inline or unresolved commands remain in the linked public definition.
 Keep unexercised cases untested in the existing plan, concern or next decision;
 resolution reasons should name the exercised setup and outcome. PASS or focus change
 does not settle unrelated concerns; a baseline-only probe is not candidate proof.

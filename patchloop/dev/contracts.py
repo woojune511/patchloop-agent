@@ -11,7 +11,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from patchloop.contracts import Artifact
-from patchloop.dev import probe_cases, segments
+from patchloop.dev import check_review, probe_cases, segments
 from patchloop.util import sha256_json
 
 DEV_RUN_SCHEMA = "dev-run-v1"
@@ -102,6 +102,11 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "working_note_guidance": "compact-reusable-facts-and-lifecycle-guidance-v2",
             "verification_concerns": "original-question-progress-note-exact-noop-v2",
             "check_evidence_identity": "retained-action-check-diff-explicit-completion-currency-v2",
+            "check_definition_review": "registered-literal-targets-current-source-navigation-v1",
+            "check_definition_review_bounds": [
+                check_review.MAX_TARGETS, check_review.MAX_RANGES,
+                check_review.MAX_TARGET_CHARS, check_review.MAX_REVIEW_CHARS,
+            ],
             "behavior_verification": "change-preservation-expectation-at-matching-check-v1",
             "verification_concern_limit": 3,
             "submission_guidance": "current-check-finish-versus-unsuccessful-voluntary-stop-v2",
