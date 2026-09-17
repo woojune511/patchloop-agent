@@ -890,7 +890,19 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: public check evidence_review links registered definitions/literal pytest
+Current seam: P3 receives exact check links and both expectation reviews but makes no
+post-edit inspection/probe and submits with acceptance FAIL/safety PASS. Seven model
+calls/13 tools cost $0.424138; both public checks pass. Tools/budget remain available.
+Its first plan treats field mode as sufficient empty-field scope; the shared serializer
+patch adds no separate provider-profile requirement. This is public static evidence,
+not hidden-assertion attribution or a causal comparison. All seven inputs audit cleanly;
+operator24 PASS/2.39s, prior runtime validation reused, no uncertainty stop or retry.
+Next: provider-free pre-edit interpretation of trigger versus task-scoped requirement,
+with an adjacent preservation case that distinguishes an overly broad repair. Use
+existing public decision data; no provider-specific answer, new policy or paid row.
+See C:\pt\analyses\check-evidence-pydantic-observation-20260917-v1\result.md. official=false.
+
+Prior seam: public check evidence_review links registered definitions/literal pytest
 targets with current delivered source ranges in both model views. It is navigation,
 not assertion execution or coverage. Existing review guidance inspects actual input
 and assertion conditions; tool schemas, plan policies and finish gates stay fixed.

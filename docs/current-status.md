@@ -6,7 +6,44 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Public checks link to definitions and delivered test source
+## Current seam: P3 receives check links but submits without testing the scope distinction
+
+The fresh P3 observation settles acceptance FAIL/safety PASS, with PASS/planned=0/1,
+one start/submission, NOT_RUN=0 and no infrastructure or uncertainty stop. It uses the
+same Pydantic AI task, prepared source and GPT-5.4/medium settings as P2, with the
+check-evidence runtime at d8696c9. Seven model/count calls and 13 tools cost $0.424138
+($0.632650 uncached equivalent). One edit occurs at call4; both public checks pass,
+with eight synthetic observations and 18 upstream tests. No rejection or probe occurs.
+Maximum input is 47,978 tokens; three segments use initial/major_result_reviewed reasons.
+
+All seven actual inputs preserve public task/diff/check state. Both mutation-expectation
+reviews and the new check links are delivered exactly. The final review shows four
+pytest targets/four omitted, 1267 characters and no delivered test-source ranges.
+The model reads implementation code before editing but performs no inspection after
+the edit or checks. It submits at call7 while read/search/edit/probe tools and substantial
+budgets remain available. No resource or context limit ends this run.
+
+The first public plan already treats field replay mode as sufficient scope for inserting
+an empty field. The patch changes only the shared serializer and introduces no separate
+provider-profile requirement. Final public reasoning treats upstream PASS as preserving
+the relevant modes/fields without examining those test source conditions. This public
+scope mismatch is a static observation, not attribution of a particular hidden failure.
+The inline public check was already visible; internal reading cannot be determined.
+
+Operator tests24 PASS/2.39s and Ruff pass. The unchanged runtime reuses its hash-bound
+2534 PASS/eight-skip regression and both isolated mock PASS receipts. Count, usage,
+continuation and cleanup are settled; the corrected P2 audit does not falsely stop P3.
+All 3669 protected prior records and user AGENTS.md remain unchanged. No retry, resume,
+replacement, extra candidate execution or hidden-detail inspection; official=false.
+
+One selected observation establishes delivery, not efficacy or an A/B conclusion.
+Next: provider-free work on the existing pre-edit interpretation, separating the behavior
+trigger from its task-scoped requirement and choosing a preservation case that would
+distinguish an overly broad repair. No provider-specific answer, new planning policy,
+mandatory review stage or additional paid run is included. P3 and its unused cap are closed.
+Report: `C:\pt\analyses\check-evidence-pydantic-observation-20260917-v1\result.md`.
+
+## Prior seam: Public checks link to definitions and delivered test source
 
 Retained public check results now carry evidence_review in both append and segmented
 model views. Each links to the exact registered public definition and command hash.
