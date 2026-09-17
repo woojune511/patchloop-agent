@@ -1,0 +1,26 @@
+diff --git a/pydantic_ai_slim/pydantic_ai/profiles/openai.py b/pydantic_ai_slim/pydantic_ai/profiles/openai.py
+index 08b77da..ee44d3c 100644
+--- a/pydantic_ai_slim/pydantic_ai/profiles/openai.py
++++ b/pydantic_ai_slim/pydantic_ai/profiles/openai.py
+@@ -88,6 +88,9 @@ class OpenAIModelProfile(ModelProfile):
+ 
+     Defaults to `'auto'` to ensure thinking is sent back in the format expected by the model/provider."""
+ 
++    openai_chat_require_tool_thinking_field: bool = False
++    """Include an empty configured thinking field on tool calls in field replay mode."""
++
+     openai_supports_strict_tool_definition: bool = True
+     """This can be set by a provider or user if the OpenAI-"compatible" API doesn't support strict tool definitions."""
+ 
+diff --git a/pydantic_ai_slim/pydantic_ai/providers/deepseek.py b/pydantic_ai_slim/pydantic_ai/providers/deepseek.py
+index 56850db..7f7323b 100644
+--- a/pydantic_ai_slim/pydantic_ai/providers/deepseek.py
++++ b/pydantic_ai_slim/pydantic_ai/providers/deepseek.py
+@@ -54,6 +54,7 @@ class DeepSeekProvider(Provider[AsyncOpenAI]):
+             openai_chat_thinking_field='reasoning_content',
+             # Starting from DeepSeek v3.2, DeepSeek requires sending thinking parts for optimal agentic performance.
+             openai_chat_send_back_thinking_parts='field',
++            openai_chat_require_tool_thinking_field=True,
+             # Reasoning-capable models do not support tool_choice=required; use startswith so
+             # future deepseek-v4-* SKUs are covered automatically without listing each one.
+             openai_supports_tool_choice_required=(

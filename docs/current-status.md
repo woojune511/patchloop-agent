@@ -6,7 +6,49 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Pydantic AI synthetic tool-turn defect selected and reproduced
+## Current seam: Pydantic AI task registered; long Windows source paths supported
+
+`pydantic-ai-synthetic-tool-reasoning` v1 is now a dev-train package with a public
+contract and an independently authored isolated evaluator. Its exact source and
+existing digest-pinned image remain fixed. The reference coordinates provider/profile
+configuration with message assembly; a second implementation applies the same public
+contract after assembly. File count and a particular profile field name are not graded.
+
+The unchanged base passes all 18 selected upstream tests and five public observations,
+but fails three missing-field observations. Production isolated evaluation accepts the
+reference three times and the alternative once. It rejects nine semantic controls and
+one forbidden-test edit; safety PASS 14/14. Global field injection, ignored copied-profile
+send modes and the wrong configured field pass public checks but fail the independent
+oracle. The oracle covers 84 wire combinations and two complete capability flows using
+eight local HTTP fixtures. These are admission controls, not model-performance results.
+
+Registration exposed a Windows source-copy failure at a 266-character staging path
+with host long-path policy disabled. Git created the file, but Python copying failed;
+read-only Git objects then blocked cleanup. Workspace copying and whole-tree hashing
+now use extended filesystem paths internally. Owned read-only Git files are cleaned,
+and cleanup errors preserve the original preparation exception. Stored paths, Docker
+mount paths and uncertain-Git staging retention keep their existing contracts.
+
+The same published source supplies independent offline run/evaluation workspaces after
+the fix. All 44 Docker checks have confirmed cleanup; the admission matrix takes 818.956s.
+Focused validation passes 38 tests in 24.144s. Full regression covers all 121 files:
+2509 PASS, eight skips, zero failures in 673.569s wall time, with durations retained.
+Four skips require explicit real-Docker opt-ins and four are unsupported planning/context
+combinations. Both CSV mock policies reach isolated evaluation and verify eight actual
+inputs, including public task/diff/check state and exclusion of prepared-source metadata.
+
+The [task audit](../tasks/dev-train/pydantic-ai-synthetic-tool-reasoning/audit.md) records
+source and contract boundaries. Historical task/experiment bytes and the user's AGENTS.md
+remain protected. The initial preparation failure and test-only LF/CRLF assertion failure
+are retained. Provider/count calls=0, model cost=$0, Docker start/pull/build=0, official=false.
+The task has historical review/admission metadata, so it is not an unseen-task sample.
+
+Next: one separately bounded first observation with gpt-5.4-2026-03-05/medium,
+segmented-v1, brief-v1, probes enabled, probe-policy none and repair-recheck; repeat=1,
+proposed cap $1.20. This registration creates no dispatch or reservation and reopens no
+closed group. Report: `C:\pt\analyses\pydantic-ai-registration-20260917-v1\result.md`.
+
+## Prior seam: Pydantic AI synthetic tool-turn defect selected and reproduced
 
 The next development candidate is `pydantic-ai-synthetic-tool-reasoning` v1,
 derived from the original Pydantic AI issue #5829. Its exact public base

@@ -660,6 +660,13 @@ stays off. No live grant, Docker start/pull/build or prior-run migration follows
 
 ## Local storage hygiene
 
+Workspace source copying and whole-tree hashing use Windows extended filesystem
+paths so long tracked names are preserved even when the host's long-path policy
+is disabled. Stored workspace paths and Docker mount paths keep their ordinary
+form. An unpublished checkout's cleanup clears read-only Git files without
+following symlinks; any cleanup failure is attached to the original preparation
+exception instead of replacing it. Uncertain Git execution still retains staging.
+
 New disposable pytest basetemps belong only under `C:\pt\tmp\<unique-name>`, not
 directly under `C:\`, beside durable experiment records, or inside the repository.
 Each parallel test process owns its own exact child directory. Keep JUnit reports

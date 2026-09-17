@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebenchv2/pydantic__pydantic-ai-5842@sha256:e119e619dbf690fb8ab8a6b5ba38b8e31fd554a8cbd603b3f2d381ce577f2dcb
+image_digest: sha256:e119e619dbf690fb8ab8a6b5ba38b8e31fd554a8cbd603b3f2d381ce577f2dcb
+source_image_tag: swerebenchv2/pydantic__pydantic-ai-5842:latest

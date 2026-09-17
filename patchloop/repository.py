@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import stat
 import subprocess
 import tempfile
 from dataclasses import dataclass
@@ -13,7 +14,7 @@ from pathlib import Path
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.git_execution import GitExecutionUncertain, run_git
-from patchloop.util import directory_hash, safe_relative_path, sha256_bytes
+from patchloop.util import directory_hash, filesystem_path, safe_relative_path, sha256_bytes
 
 ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/agronholm/anyio.git",
@@ -41,6 +42,7 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/pdm-project/pdm.git",
     "https://github.com/pdm-project/pdm",
     "https://github.com/pgmpy/pgmpy.git",
+    "https://github.com/pydantic/pydantic-ai.git",
     "https://github.com/pytest-dev/pyfakefs.git",
     "https://github.com/pytest-dev/pyfakefs",
     "https://github.com/python-wheel-build/fromager.git",
@@ -74,6 +76,19 @@ def _git(
     deadline: ExecutionDeadline | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return run_git(workspace, *args, check=check, deadline=deadline)
+
+
+def _remove_staging(path: Path) -> None:
+    """Remove an owned unpublished checkout, including Windows read-only Git packs."""
+
+    def remove_read_only(function, failed_path, error):
+        if (os.name != "nt" or not isinstance(error, PermissionError)
+                or os.path.islink(failed_path)):
+            raise error
+        os.chmod(failed_path, stat.S_IWRITE | stat.S_IREAD)
+        function(failed_path)
+
+    shutil.rmtree(filesystem_path(path), onexc=remove_read_only)
 
 
 class WorkspaceManager:
@@ -116,7 +131,7 @@ class WorkspaceManager:
         if staging.is_symlink():
             raise ContractError(f"workspace staging path is an unexpected symlink: {staging}")
         if staging.exists():
-            shutil.rmtree(staging)
+            _remove_staging(staging)
         try:
             if self.prepared_source is not None:
                 from patchloop.prepared_source import load_source, validate_checkout
@@ -135,7 +150,8 @@ class WorkspaceManager:
                      deadline=deadline)
                 # Git's checkout filters may change line endings relative to an audited
                 # snapshot. Preserve the prepared public bytes, never its Git metadata.
-                shutil.copytree(source_repo, staging, dirs_exist_ok=True, symlinks=True,
+                shutil.copytree(filesystem_path(source_repo), filesystem_path(staging),
+                                dirs_exist_ok=True, symlinks=True,
                                 ignore=shutil.ignore_patterns(".git"))
                 # Rebuild the index's stat/normalization cache for those exact bytes.
                 # validate_checkout rejects any staged change relative to the bound HEAD.
@@ -206,7 +222,7 @@ class WorkspaceManager:
                     )
                 if deadline is not None:
                     deadline.check()
-                shutil.copytree(source, staging)
+                shutil.copytree(filesystem_path(source), filesystem_path(staging))
                 _git(staging, "init", "-q", deadline=deadline)
                 _git(
                     staging,
@@ -233,7 +249,10 @@ class WorkspaceManager:
                 not isinstance(exc, GitExecutionUncertain)
                 and staging.exists() and not staging.is_symlink()
             ):
-                shutil.rmtree(staging)
+                try:
+                    _remove_staging(staging)
+                except OSError as cleanup_error:
+                    exc.add_note(f"Workspace staging cleanup failed: {cleanup_error}")
             raise
         return target
 

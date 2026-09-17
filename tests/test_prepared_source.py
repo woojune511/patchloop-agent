@@ -25,10 +25,11 @@ from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import repository_root
 from patchloop.task_loader import load_task_package
-from patchloop.util import canonical_json, directory_hash, sha256_bytes
+from patchloop.util import canonical_json, directory_hash, filesystem_path, sha256_bytes
 
 REMOTE = "https://github.com/pytest-dev/pyfakefs.git"
 TASK = repository_root() / "tasks/smoke/csv-quoted-newline/public.yaml"
+LONG_SOURCE_PATH = "nested/" + "long-source-" * 16 + ".py"
 
 
 @pytest.fixture(autouse=True)
@@ -48,11 +49,16 @@ def forbid_fetch(monkeypatch):
 
 
 @pytest.fixture
-def remote_source(tmp_path, monkeypatch):
+def remote_source(tmp_path, monkeypatch, request):
     origin = tmp_path / "origin"
     origin.mkdir()
     (origin / "example.py").write_bytes(b"value = 1\n")
+    if getattr(request, "param", None) == "long-path":
+        target = filesystem_path(origin / LONG_SOURCE_PATH)
+        target.parent.mkdir(parents=True)
+        target.write_bytes(b"long_value = 1\n")
     run_git(origin, "init", "-q")
+    run_git(origin, "config", "core.longpaths", "true")
     run_git(origin, "add", ".")
     run_git(origin, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
             "commit", "-qm", "base")
@@ -99,6 +105,54 @@ def test_remote_shallow_source_clones_offline_without_shared_objects(remote_sour
     assert directory_hash(source_repo) == directory_hash(second) == source_hash
     assert directory_hash(first) != source_hash
     selected.validate_pristine(second, REMOTE, commit)
+
+
+@pytest.mark.parametrize("remote_source", ["long-path"], indirect=True)
+def test_prepared_clone_and_hash_include_files_beyond_windows_path_limit(remote_source, tmp_path):
+    manifest, commit = remote_source
+    source = manifest.parent / prepared.REPO_PATH
+    selected = manager(tmp_path, manifest)
+    first = selected.create("long-run", REMOTE, commit)
+    second = selected.create("long-evaluation", REMOTE, commit)
+    assert len(str(first / LONG_SOURCE_PATH)) > 260
+    assert directory_hash(first) == directory_hash(second) == directory_hash(source)
+    assert (filesystem_path(first / LONG_SOURCE_PATH).read_bytes()
+            == filesystem_path(source / LONG_SOURCE_PATH).read_bytes())
+    filesystem_path(first / LONG_SOURCE_PATH).write_bytes(b"long_value = 2\n")
+    assert directory_hash(first) != directory_hash(second)
+    assert directory_hash(second) == directory_hash(source)
+    filesystem_path(source / LONG_SOURCE_PATH).write_bytes(b"long_value = 3\n")
+    with pytest.raises(ContractError, match="clean Git checkout|content differs"):
+        selected.create("tampered-long-source", REMOTE, commit)
+
+
+def test_failed_prepared_copy_cleans_git_objects_and_preserves_error(
+    remote_source, tmp_path, monkeypatch,
+):
+    manifest, commit = remote_source
+    def fail_copy(*args, **kwargs):
+        raise OSError("injected source-copy failure")
+    monkeypatch.setattr(repository.shutil, "copytree", fail_copy)
+    with pytest.raises(OSError, match="injected source-copy failure"):
+        manager(tmp_path, manifest).create("copy-failure", REMOTE, commit)
+    assert not (tmp_path / "workspaces/copy-failure/repo.initializing").exists()
+    assert not (tmp_path / "workspaces/copy-failure/repo").exists()
+    prepared.load_source(manifest, REMOTE, commit, expected_hash=prepared.admission_hash(manifest))
+
+
+def test_cleanup_failure_does_not_replace_preparation_error(remote_source, tmp_path, monkeypatch):
+    manifest, commit = remote_source
+    def fail_copy(*args, **kwargs):
+        raise OSError("original copy failure")
+    def fail_cleanup(*args, **kwargs):
+        raise PermissionError("injected cleanup failure")
+    monkeypatch.setattr(repository.shutil, "copytree", fail_copy)
+    monkeypatch.setattr(repository, "_remove_staging", fail_cleanup)
+    with pytest.raises(OSError, match="original copy failure") as failure:
+        manager(tmp_path, manifest).create("cleanup-failure", REMOTE, commit)
+    assert "cleanup failed" in " ".join(failure.value.__notes__)
+    assert (tmp_path / "workspaces/cleanup-failure/repo.initializing").is_dir()
+    assert not (tmp_path / "workspaces/cleanup-failure/repo").exists()
 
 
 @pytest.mark.parametrize("damage", ["content", "untracked", "ignored", "manifest", "missing",

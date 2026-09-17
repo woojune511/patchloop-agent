@@ -138,7 +138,21 @@ def sha256_json(value: Any) -> str:
     return sha256_bytes(canonical_json(value).encode("utf-8"))
 
 
+def filesystem_path(path: Path) -> Path:
+    """Use Windows extended paths for filesystem I/O, independent of host policy."""
+
+    if os.name != "nt":
+        return path
+    absolute = os.path.abspath(path)
+    if absolute.startswith("\\\\?\\"):
+        return Path(absolute)
+    if absolute.startswith("\\\\"):
+        return Path("\\\\?\\UNC\\" + absolute[2:])
+    return Path("\\\\?\\" + absolute)
+
+
 def directory_hash(root: Path) -> str:
+    root = filesystem_path(root)
     digest = hashlib.sha256()
     for path in sorted(item for item in root.rglob("*") if item.is_file()):
         if ".git" in path.relative_to(root).parts:

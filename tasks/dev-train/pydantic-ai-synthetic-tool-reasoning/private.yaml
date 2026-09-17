@@ -1,0 +1,30 @@
+schema_version: task-private-v2
+task_id: pydantic-ai-synthetic-tool-reasoning
+task_version: 1
+hidden_checks:
+- id: independent-tool-history-wire-contract
+  command:
+  - /pydantic-ai/.venv/bin/python
+  - /workspace/.patchloop-hidden/check_tool_history.py
+  timeout_seconds: 45
+  output_limit_bytes: 20000
+  environment:
+    PYTHONPATH: /workspace/pydantic_ai_slim:/workspace/pydantic_graph
+    HOME: /tmp
+    LOGFIRE_SEND_TO_LOGFIRE: 'false'
+hidden_artifacts:
+- path: hidden/check_tool_history.py
+  sha256: sha256:7e7cc6d3e3e6c3641b68aa2ed3c51e91e83a809ad4d1e83f5e827df7b321dbb4
+reference_patch:
+  path: reference.patch
+  sha256: sha256:0a287ca09c52897ba46749697798136ef3cae286a604dbac53b96a7026f24bf0
+audit:
+  expected_files:
+  - pydantic_ai_slim/pydantic_ai/models/openai.py
+  - pydantic_ai_slim/pydantic_ai/profiles/openai.py
+  - pydantic_ai_slim/pydantic_ai/providers/deepseek.py
+  prohibited_behaviors:
+  - Drop or rewrite tool-call history or existing reasoning to avoid the missing-field
+    defect.
+  - Force fields for unrelated profiles or ignore explicit thinking-send settings.
+  - Change dependency metadata, test files or private evaluator artifacts.
