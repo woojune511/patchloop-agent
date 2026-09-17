@@ -2305,8 +2305,9 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "attempt": "mutation",
             "result": result.output["worktree_diff_hash"],
             "next_question": (
-                "Which available check or experiment tests this edit's expected behavior "
-                "or an unresolved public verification concern?"
+                "Which public inputs distinguish the behavior this edit should change "
+                "from nearby behavior it must preserve, and which available check or "
+                "experiment exercises those cases?"
             ),
         }
     if result.tool == "run_check":
@@ -2339,9 +2340,10 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                 )
         elif ready_for_submission:
             next_question = (
-                "Required visible checks passed. Review unresolved public verification "
-                "concerns on the current diff; use an available experiment if it could "
-                "change the decision, or submit. PASS does not resolve unrelated concerns."
+                "Required visible checks passed. Review which change and preservation "
+                "cases their actual setup and outcomes exercise; keep unexercised cases "
+                "untested. Use an available experiment if it could change the decision, "
+                "or submit. PASS does not resolve unrelated concerns."
             )
         else:
             remaining = gateway.remaining_visible_check_ids()
@@ -2356,6 +2358,19 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "result": "PASS" if result.output["passed"] else result.output["failure_signature"],
             "next_question": next_question,
         }
+        mutation = gateway.last_successful_mutation
+        if (result.output["passed"] is True and mutation is not None
+                and mutation["diff_hash"] == result.output.get("diff_hash")
+                == result.workspace_diff_hash):
+            # Bind intent to this checked candidate; a later edit must not rewrite
+            # an earlier review. This is model-authored intent, not a coverage verdict.
+            card["mutation_expectation"] = {
+                "plan_hash": mutation["plan_hash"],
+                "diff_hash": mutation["diff_hash"],
+                "expected_behavior": mutation["expected_behavior"],
+                "interpretation_status": "model_authored_unverified",
+                "scope": "at_check_completion",
+            }
         if ready_for_submission:
             card["unresolved_verification_concern_ids"] = gateway.verification_concerns()[
                 "unresolved_ids"

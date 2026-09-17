@@ -238,7 +238,15 @@ def test_incomplete_reasoning_and_correction_are_not_reset_or_repeated(source_pl
                for i in read.requests[0]["input"]) == 1
     finish = CapturingAdapter([tool("finish_task", "finish")])
     episode.step(e, source_plan[0].package, finish, ledger())
-    assert state_of(finish.requests[0])["recent_attempt_result_next_question"] == []
+    final_state = state_of(finish.requests[0])
+    final_cards = final_state["recent_attempt_result_next_question"]
+    # The consumed protocol correction expires; the accepted candidate's review
+    # remains useful after the intervening read and must keep its original intent.
+    assert final_cards == [card for card in cards if "mutation_expectation" in card]
+    assert len(final_cards) == 1
+    assert final_cards[0]["mutation_expectation"]["diff_hash"] == (
+        final_state["current_diff"]["patch_hash"]
+    )
     archives = [snapshots.payload(i) for i in finish.requests[0]["input"]
                 if snapshots.payload(i) is not None
                 and snapshots.payload(i)["kind"] == snapshots.ARCHIVE]

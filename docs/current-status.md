@@ -6,7 +6,48 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Public diagnostic reproduces Pydantic AI provider-scope regression
+## Current seam: Candidate-bound change and preservation review
+
+An accepted mutation's existing expected_behavior now names a concrete changed case
+and a nearby case to preserve when relevant, with distinguishing public setup/outcomes.
+After a public check passes, its review card retains that expectation only when the
+accepted mutation, check result and checked workspace identify the same diff. The card
+is model-authored intent, not a coverage verdict. The next existing decision or plan
+review compares actual exercised cases with both kinds of expected behavior.
+
+Append context keeps the latest matching current-diff review alongside protocol
+corrections; segmented context keeps its existing bounded card history. Failed edits
+retain the accepted candidate's intent, later edits leave old cards unchanged, and
+unexercised behavior stays explicitly untested. Tool argument schemas, plan policies,
+concern resolution admission, budget gates and finish eligibility stay unchanged.
+The fixed prompt adds 347 characters; its final length is 7290 characters.
+
+Focused tests pass 24 cases in 19.214s, including actual append/segmented delivery,
+rejected edits, mismatched/baseline/failed checks, bounded intent and restart. Additional
+probe tests pass 17 cases in 4.149s. Final regression coverage is 2519 PASS/eight skips
+across all 122 files. The four-process full run takes 684.396s with --durations=15;
+four old test expectations/doubles fail initially, then 34 affected cases pass after
+test-only corrections. Runtime bytes stay frozen throughout; original failures remain
+in the record. The initial broad focused receipt also retains a test fixture off by
+one, pinned prompt guards and omission of the new review in append's duplicate-history
+filter. The corrected implementation explicitly retains one current review.
+
+Both durable prepared-source CSV mock runs reach EVALUATOR_PASS in 10.283s combined,
+using four model/five tool calls each. All eight actual inputs preserve public task,
+diff and check state, deliver the new review and exclude source-preparation metadata.
+The mock isolated evaluator reports acceptance PASS and safety NOT_RUN, not live safety
+evidence. Ruff and documentation checks pass. All 3495 protected prior records and the
+user's AGENTS.md are unchanged; 11 owned scratch roots are recycled with restoration
+receipts. Provider/count/real-Docker calls=0; model cost=$0.
+
+This is locally tested review guidance and evidence delivery, not a demonstrated
+model-quality improvement. P1 and prior comparisons remain closed; no provider-specific
+hint, new policy or paid observation is introduced. All work is official=false.
+Next: define one separately bounded development observation to see whether the model
+chooses a discriminating preservation case and limits claims to exercised conditions.
+Report: `C:\pt\analyses\preservation-verification-20260917-v1\result.md`.
+
+## Prior seam: Public diagnostic reproduces Pydantic AI provider-scope regression
 
 The frozen P1 patch changes ordinary OpenAI field-mode profiles that the public task
 requires preserving. Four public cases were run once on each fresh base/submitted

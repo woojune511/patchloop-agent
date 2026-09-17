@@ -211,7 +211,7 @@ def test_experiment_guidance_is_generic_optional_and_uses_existing_inputs():
     assert "expected observation" in schema["description"]
     assert "normal exit, not behavior verified" in schema["description"]
     assert set(schema["parameters"]["properties"]) == {"question", "python_source", "turn_decision"}
-    assert "No separate review call or annotation is required" in DEV_SYSTEM_PROMPT
+    assert "No extra review call, annotation or experiment is required" in DEV_SYSTEM_PROMPT
     assert len(DEV_SYSTEM_PROMPT) <= 8007
     for task_specific in ("pyfakefs", "makedirs", "0o700", "ENOTDIR"):
         assert task_specific not in schema["description"] + DEV_SYSTEM_PROMPT

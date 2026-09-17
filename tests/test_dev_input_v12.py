@@ -102,7 +102,7 @@ def test_repeated_failure_card_does_not_assume_the_hypothesis_is_falsified():
                     "relation": "same_public_failure_site",
                 }}},
     )
-    card = runner._attempt_card(result, SimpleNamespace())
+    card = runner._attempt_card(result, SimpleNamespace(last_successful_mutation=None))
     assert "partial repair" in card["next_question"]
     assert "different explanation" in card["next_question"]
     assert "falsified" not in card["next_question"]

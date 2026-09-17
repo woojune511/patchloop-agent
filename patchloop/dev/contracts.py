@@ -102,6 +102,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "working_note_guidance": "compact-reusable-facts-and-lifecycle-guidance-v2",
             "verification_concerns": "original-question-progress-note-exact-noop-v2",
             "check_evidence_identity": "retained-action-check-diff-explicit-completion-currency-v2",
+            "behavior_verification": "change-preservation-expectation-at-matching-check-v1",
             "verification_concern_limit": 3,
             "submission_guidance": "current-check-finish-versus-unsuccessful-voluntary-stop-v2",
             "working_note_source_body_chars": 24_000,

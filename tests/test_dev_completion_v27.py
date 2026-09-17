@@ -112,7 +112,10 @@ def test_recheck_guidance_reaches_native_input_and_survives_restart(tmp_path):
               if item.get("type") == "function_call_output"}
     assert native["old-contract"]["output"]["passed"] is True
     assert "evidence_currency" not in native["old-contract"]["output"]
-    assert view["recent_attempt_result_next_question"] == []
+    review = view["recent_attempt_result_next_question"]
+    assert len(review) == 1
+    assert review[0]["action_id"] == latest.action_id
+    assert review[0]["mutation_expectation"]["diff_hash"] == gateway.current_diff_hash
 
     journal_bytes = gateway.journal.path.read_bytes()
     source_bytes = (gateway.workspace / "src.py").read_bytes()
@@ -122,6 +125,7 @@ def test_recheck_guidance_reaches_native_input_and_survives_restart(tmp_path):
     restored = input_context(_input(restarted, [latest], tmp_path))
     assert restored["completion_guidance"] == guidance
     assert restored["recent_checks"] == view["recent_checks"]
+    assert restored["recent_attempt_result_next_question"] == review
     assert gateway.journal.path.read_bytes() == journal_bytes
     assert (gateway.workspace / "src.py").read_bytes() == source_bytes
     assert gateway.sandbox.calls == calls

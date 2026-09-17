@@ -112,10 +112,10 @@ def test_off_schema_prompt_and_identity_are_unchanged():
         "sha256:1340e55a2260ec219d9f2ecc17423f6c8d138ac729e400cbab367b98fea4648a"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:f1298975da2c893a6274406adbf2e94e88acf50bf9a5aeb677e88bd8013eceb7"
+        "sha256:6c7ae98518a888e3a13c6de51ae31a5be2da26c8446f99b64be4fc6379929bff"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:9d947f3fedcdddd15da57951dab6b34e0345f44e9a47d057df0bd2ae45bf058b"
+        "sha256:7b445a1aebd0c3fe0c4517c6656e32eac1058f0d21447208691d2c90e4163cf2"
     )
     after = dev_tool_schemas(**options, probe_policy=cases.POLICY)
     assert [t for t in before if t["name"] != "run_probe"] == [

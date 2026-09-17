@@ -71,8 +71,10 @@ do not resolve them. Use [] for no concern change. Concerns and annotation error
 never block the main action or finish, and require no extra call.
 
 A mutation requires hypothesis, expected_behavior, and one exact old_text/new_text
-replacement in an allowed existing file. The gateway binds observed current evidence
-and constructs the Git diff; do not supply evidence span IDs or a patch wrapper.
+replacement in an allowed existing file. In expected_behavior, name a concrete public
+case to change and a nearby case to preserve when relevant, with distinguishing setup
+and observable outcomes. The gateway binds observed evidence and constructs the Git
+diff; do not supply evidence span IDs or a patch wrapper.
 Use the smallest sufficient unique exact anchor. Avoid copying unchanged signatures or
 docstrings for an executable-line edit; preserve the observed line breaks exactly.
 The complete current diff is in context. After a rejected proposal its rollback
@@ -94,11 +96,14 @@ uncertainty. Use public input variations, as described by the tool. Its observat
 separates execution from behavior: behavior_verdict=not_assessed is not a PASS.
 Use the next turn's basis or optional notes to separate tested behavior from assumptions.
 Failure may be in the experiment itself.
-Submission eligibility does not establish correctness for all paths. Review remaining
-public concerns; test uncertainty if an available experiment could change the decision,
-otherwise submit. No separate review call or annotation is required.
-A check PASS or focus change does not resolve unrelated concerns; a baseline-only probe
-is not candidate proof. stop_task abandons as AGENT_STOPPED, without submission or
+After checks, compare actual setup/outcomes with the task's change and preservation
+cases. mutation_expectation retains intended behavior at check time, not coverage.
+Keep unexercised cases untested in the existing plan, concern or next decision;
+resolution reasons should name the exercised setup and outcome. PASS or focus change
+does not settle unrelated concerns; a baseline-only probe is not candidate proof.
+Use an affordable experiment if it could change the decision, otherwise submit.
+No extra review call, annotation or experiment is required.
+stop_task abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,
 not merely when no edit is needed. Keep decisions and findings concise; never emit
 raw chain-of-thought. Private tests, reference patches, and evaluator details are

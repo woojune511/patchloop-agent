@@ -118,12 +118,16 @@ def compact_model_state(
 ) -> dict[str, Any]:
     """Project an already public, source-validated state without changing authority."""
     view = copy.deepcopy(state)
-    # Omit redundant historical cards, not the separately derived current
-    # completion_guidance. Retain protocol cards for unsatisfied corrections.
+    # Most cards repeat native history. Keep the latest candidate-bound review:
+    # the tool result itself contains no comparison with mutation expectations.
     if "recent_attempt_result_next_question" in view:
+        cards = view["recent_attempt_result_next_question"]
+        diff_hash = view.get("current_diff", {}).get("patch_hash")
+        review = next((card for card in reversed(cards)
+                       if diff_hash and card.get("mutation_expectation", {}).get("diff_hash")
+                       == diff_hash), None)
         view["recent_attempt_result_next_question"] = [
-            card for card in view["recent_attempt_result_next_question"]
-            if card.get("attempt") == "protocol"
+            card for card in cards if card.get("attempt") == "protocol" or card is review
         ]
     if "evidence_ledger" in view:
         view["evidence_ledger"] = _select(view["evidence_ledger"], ("search_summary",))

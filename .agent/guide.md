@@ -406,6 +406,22 @@ retains items and the ID allocator independently of source lifecycle snapshots. 
 first-non-null batch owner receives one native verification receipt; no private evaluator
 result is admissible evidence. A final-PASS card invites affordable useful verification
 or submission, labels its concern IDs as a check-time snapshot, and adds no finish gate.
+The existing mutation `expected_behavior` string names a concrete changed case and a
+nearby preservation case when the edit can affect one, with distinguishing public setup
+and observable outcomes. Its existing 1500-character bound and action schema remain.
+A successful public-check card retains `mutation_expectation` only when the last accepted
+mutation, result diff and checked workspace diff match. This bounded check-time snapshot
+contains that mutation's plan hash, diff hash and original expected_behavior; it remains
+model-authored/unverified. Missing or mismatched mutation evidence adds no snapshot.
+Failed proposals do not replace accepted intent, later edits do not rewrite old cards,
+and a generic PASS never becomes semantic coverage. The next existing decision/plan
+review compares actual check setup/outcomes with both changed and preserved behavior.
+An unexercised case stays untested; resolving a concern should name the exercised setup
+and outcome. The gateway still validates identity only. No new annotation, policy,
+model step, mandatory probe or submission gate is introduced. Append context retains
+only the latest matching current-diff expectation card alongside protocol corrections;
+segment context retains its existing bounded three-card history with diff identities.
+Both deliver the same latest review; efficacy needs a separate observation, not a mock assertion.
 Each projected finding has `interpretation_status=model_authored_unverified`.
 Legacy `status=current` means only that its cited evidence is current; the harness does
 not revalidate the statement's meaning. Cite behavior-bearing source, retain the causal

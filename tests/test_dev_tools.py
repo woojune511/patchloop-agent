@@ -166,7 +166,7 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
             assert evidence_goal["type"] == "string"
         else:
             assert evidence_goal["type"] == "null"
-    assert "binds observed current evidence" in DEV_SYSTEM_PROMPT
+    assert "binds observed evidence" in DEV_SYSTEM_PROMPT
     assert "do not supply evidence span IDs or a patch wrapper" in DEV_SYSTEM_PROMPT
     assert "Every response must request either" in DEV_SYSTEM_PROMPT
     assert "Every call carries a bounded public turn_decision" in DEV_SYSTEM_PROMPT
