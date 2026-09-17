@@ -234,6 +234,18 @@ failure. The mutation also requires:
 - `expected_behavior`
 - exact `path`, `old_text`, `new_text`, and occurrence
 
+From the first interpretation, the existing basis/hypothesis/plan distinguishes the
+public condition requiring change from the implementation trigger proposed to apply it.
+Keep their equivalence explicitly uncertain when it is unsupported. When the public
+task limits scope, expected_behavior names observable outcomes for the changed case
+and a nearby preserved case sharing the trigger outside that scope. Prefer a contrast
+that could expose an overly broad condition. If no boundary follows from the public
+task, say so instead of inventing an exception. This is guidance in the existing
+free-text fields, not a semantic parser,
+required extra field, new plan policy, review stage or action gate. The gateway retains
+even incomplete/incorrect interpretations as unverified model data under existing limits.
+Check-time expectations and evidence_review keep their existing currency and delivery.
+
 Prefer the smallest sufficient unique anchor; omit unchanged signatures/docstrings for
 an executable-line edit and preserve observed line breaks exactly. Do not replace exact
 admission with fuzzy matching. Anchor-failure feedback permits correcting from delivered
@@ -890,7 +902,19 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: P3 receives exact check links and both expectation reviews but makes no
+Current seam: pre-edit guidance distinguishes the public task's required scope from
+the proposed implementation trigger. Existing basis/hypothesis/plan and expected_behavior
+carry a contrast that could reveal an overly broad edit; uncertain equivalence stays
+uncertain, and absent task boundaries are not invented. No schemas, planning policies,
+admission/recovery, notes, check links, finish gates or budgets change. Prompt7999 chars
+(+305) preserves the existing 8007-character bound. Focused44 PASS/26.745s and Ruff pass;
+both final prepared-source isolated mocks pass in 10.733s with eight actual inputs checked.
+Final regression: 2533 PASS/one Windows path failure/eight skips, 123 files/748.975s.
+The unchanged failed case passes under a shorter scratch root: combined2534 PASS/eight
+skips, with the raw failure and 2.595s recheck retained. No runtime retry was introduced.
+See C:\pt\analyses\preedit-scope-20260917-v1\result.md. No live model/Docker call; official=false.
+
+Prior seam: P3 receives exact check links and both expectation reviews but makes no
 post-edit inspection/probe and submits with acceptance FAIL/safety PASS. Seven model
 calls/13 tools cost $0.424138; both public checks pass. Tools/budget remain available.
 Its first plan treats field mode as sufficient empty-field scope; the shared serializer

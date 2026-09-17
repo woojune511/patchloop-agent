@@ -107,7 +107,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
                 check_review.MAX_TARGETS, check_review.MAX_RANGES,
                 check_review.MAX_TARGET_CHARS, check_review.MAX_REVIEW_CHARS,
             ],
-            "behavior_verification": "change-preservation-expectation-at-matching-check-v1",
+            "behavior_verification": "task-scope-contrast-and-check-bound-expectation-v2",
             "verification_concern_limit": 3,
             "submission_guidance": "current-check-finish-versus-unsuccessful-voluntary-stop-v2",
             "working_note_source_body_chars": 24_000,

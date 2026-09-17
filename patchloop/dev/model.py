@@ -71,9 +71,13 @@ do not resolve them. Use [] for no concern change. Concerns and annotation error
 never block the main action or finish, and require no extra call.
 
 A mutation requires hypothesis, expected_behavior, and one exact old_text/new_text
-replacement in an allowed existing file. In expected_behavior, name a concrete public
-case to change and a nearby case to preserve when relevant, with distinguishing setup
-and observable outcomes. The gateway binds observed evidence and constructs the Git
+replacement in an allowed existing file. From the start, separate the task's required
+scope from the code trigger. Use the basis, hypothesis or plan
+to justify their match or keep it uncertain. In expected_behavior, name observable
+outcomes for a changed input and, where scope is limited, a preserved input with
+the same trigger outside that scope. Choose a contrast that could expose an overly
+broad condition. If no boundary is supported, say so; do not invent one. These are
+untested expectations. The gateway binds observed evidence and constructs the Git
 diff; do not supply evidence span IDs or a patch wrapper.
 Use the smallest sufficient unique exact anchor. Avoid copying unchanged signatures or
 docstrings for an executable-line edit; preserve the observed line breaks exactly.

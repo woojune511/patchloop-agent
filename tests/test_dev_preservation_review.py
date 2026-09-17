@@ -14,7 +14,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.dev import runner
 from patchloop.dev.contracts import DevRunRequest
 from patchloop.dev.conversation import reconstruct_state
-from patchloop.dev.model import MockDevAdapter
+from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.model_state import compact_model_state
 from patchloop.dev.state import DevJournal
 from patchloop.runtime import repository_root
@@ -110,8 +110,10 @@ def test_actual_mock_inputs_deliver_check_time_intent_without_an_extra_step(
     tmp_path, monkeypatch, context_policy,
 ):
     expectation = (
+        "Trigger: a newline in the input. Scope: only a quoted newline belongs inside a field. "
         "Change: a quoted newline remains inside one CSV field. "
-        "Preserve: an unquoted newline still separates records."
+        "Preserve: the same newline outside quotes still separates records. "
+        "These outcomes are expected, not observed proof."
     )
 
     class PreservationMock(MockDevAdapter):
@@ -140,10 +142,17 @@ def test_actual_mock_inputs_deliver_check_time_intent_without_an_extra_step(
     journal = DevJournal(tmp_path, run["run_id"])
     store = ArtifactStore(tmp_path / "artifacts")
     turns = [e["payload"] for e in journal.events() if e["event_type"] == "turn_started"]
-    states = [reconstruct_state(
-        runner._load_active_model_input(turn, store, context_policy=context_policy),
-        context_policy=context_policy,
-    ) for turn in turns]
+    inputs = [
+        runner._load_active_model_input(turn, store, context_policy=context_policy)
+        for turn in turns
+    ]
+    # The interpretation guidance is present before the first inspection and after
+    # the existing segment transitions, without adding a tool or scripted step.
+    assert all(items[0]["content"].startswith(DEV_SYSTEM_PROMPT) for items in inputs)
+    assert "same trigger outside that scope" in inputs[0][0]["content"]
+    assert "justify their match or keep it uncertain" in inputs[0][0]["content"]
+    assert "If no boundary is supported, say so" in inputs[0][0]["content"]
+    states = [reconstruct_state(items, context_policy=context_policy) for items in inputs]
     assert states[0]["current_diff"]["patch"] == ""
     assert states[0]["last_successful_mutation"] is None
     final = states[-1]

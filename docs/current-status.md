@@ -6,7 +6,41 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: P3 receives check links but submits without testing the scope distinction
+## Current seam: Pre-edit guidance separates task scope from the proposed trigger
+
+The existing mutation guidance now starts with the public condition requiring a change
+and distinguishes it from the code condition that would trigger that change. The existing
+basis/hypothesis/plan connects them or retains uncertain equivalence. When the task limits
+scope, expected_behavior describes both the changed input and a nearby preserved input
+sharing the trigger outside that scope. The contrast should expose an overly broad
+condition; no exception is invented when the public task supplies no such boundary.
+
+This is generic guidance, with no Pydantic/provider-specific answer. Only the mutation
+paragraph and its semantic identity change. Tool schemas, planning contracts, note and
+check projection, action/check recovery, limits and finish eligibility remain exact.
+There is no semantic parser, extra field, review stage, quota or required model/tool call.
+The gateway still treats incomplete or incorrect expectations as unverified model data.
+Prompt length is 7999 characters (+305), within the existing 8007-character bound;
+other prompt text is exact. The initial longer draft failed five length guards and
+one legacy phrase check. All six tests remain unchanged for final validation.
+
+Focused44 PASS/26.745s and Ruff pass. Both final prepared-source CSV mock runs reach
+isolated EVALUATOR_PASS in 10.733s combined; each uses four mock model calls, five tools
+and one edit. All eight actual inputs receive the guidance from the first turn and
+preserve public task/diff/check and existing check review. Mock acceptance PASS/safety
+NOT_RUN is local delivery evidence, not observed compliance or improved live acceptance.
+Final regression covers 123 files in 748.975s: 2533 PASS, one Windows path failure and
+eight skips. The 262-character artifact path failure reproduces; the unchanged case
+passes in 2.595s with a shorter scratch root. Combined coverage is 2534 PASS/eight skips,
+with both the raw failure and separate environment recheck retained in the report.
+
+P3 and its unused cap stay closed. Provider/count/real-Docker calls=0, model cost=$0.
+Protected prior records and user AGENTS.md are preserved. A later separately bounded
+observation would need to show the model choosing a discriminating preservation case
+before editing; this implementation does not establish that behavior.
+Report: `C:\pt\analyses\preedit-scope-20260917-v1\result.md`.
+
+## Prior seam: P3 receives check links but submits without testing the scope distinction
 
 The fresh P3 observation settles acceptance FAIL/safety PASS, with PASS/planned=0/1,
 one start/submission, NOT_RUN=0 and no infrastructure or uncertainty stop. It uses the
