@@ -6,7 +6,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Public requirement references reach the existing check review
+## Current seam: P6 attempts the reference; task acceptance remains FAIL
+
+One fresh `gpt-5.4-2026-03-05`/medium observation uses the same P4 task, prepared
+source, request settings and system prompt. Only the optional requirement-reference
+schema and derived runtime identities differ. P6 submits once and settles acceptance
+FAIL/safety PASS: seven model/count calls, 14 tools, one edit at call4, two public
+checks PASS and zero probes. Recorded cost is $0.4376315 ($0.6254075 without cache
+discount), within a new $1.20 cap. Maximum input45982, three segments, no resource stop.
+
+The model supplies one requirement_ref but replaces source line breaks with spaces.
+The otherwise identical, unique public excerpt fails the current exact-substring rule:
+invalid/excerpt_mismatch. The diagnostic reaches all three post-edit actual inputs,
+including both check reviews beside expected_behavior. All seven request hashes and
+public task/diff/check delivery pass audit. Matching was not successful in this run.
+
+The first plan and final serializer patch still treat configured field mode as sufficient
+scope, omitting the task's provider-profile-specific preservation distinction. No post-edit
+inspection or probe follows; resources remain at finish. The selected quote omits that
+scope qualifier. This public interpretation gap is separate from the whitespace mismatch;
+neither a matched quote nor line entry/PASS would establish semantic coverage. Hidden
+evaluation details were not read. One observation does not establish a causal improvement.
+
+Operator33 PASS/2.42s and Ruff pass; unchanged runtime reuses the complete regression
+and isolated mock receipts below. All4576 protected files and user AGENTS.md are unchanged.
+No source fetch, Docker start/pull/build, retry, resume or extra candidate execution occurs.
+P6 and unused cap are closed; official=false. Next bounded candidate: provider-free tests
+of whitespace-only normalization with unique original-span/task-hash binding, preserving
+rejection of changed wording, ambiguity and stale identity. Not implemented or live-tested;
+scope interpretation and discriminating verification remain unresolved.
+Evidence: `C:\pt\analyses\requirement-reference-observation-20260918-v1\result.md`.
+
+## Prior seam: Public requirement references reach the existing check review
 
 `replace_text.requirement_ref` optionally quotes up to 600 exact characters from
 `public_task.issue.description` with its task_id. The gateway binds the public task

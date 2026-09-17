@@ -916,7 +916,27 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the optional public requirement reference is implemented on replace_text.
+Current seam: P6 tests the optional reference on one fresh P4-equivalent medium run.
+Acceptance FAIL/safety PASS; seven model/count calls,14 tools,one edit at call4,
+two public checks PASS,zero probes. Cost$0.4376315 ($0.6254075 uncached equivalent),
+max input45982,three segments,no limit stop; new$1.20 cap and unused funds closed.
+One supplied requirement_ref replaces original line breaks with spaces and receives
+invalid/excerpt_mismatch. Read-only analysis finds one otherwise identical public span.
+The diagnostic reaches three actual post-edit inputs (one native function output,
+two inline mutation states) and both check reviews. Seven exact requests verify task,
+diff and check delivery. This is attempted use, not a successfully matched reference.
+The first plan/patch still broadens provider-specific scope to configured field mode.
+No post-edit inspection/probe or matching ordinary-profile contrast follows; resources
+remain at finish. Whitespace matching and semantic scope are separate unresolved issues.
+No hidden-detail diagnosis, causal quality claim, default change or extra candidate run.
+Operator33 PASS/2.42s,Ruff; unchanged runtime reuses full/mock receipts below.
+Protected4576 and user AGENTS unchanged; Docker/images already available; official=false.
+Next candidate: provider-free whitespace-only matching with unique original-span/task-hash
+binding; preserve rejection of changed words, ambiguity and stale identity. Not implemented;
+no mandatory quote/probe, new finish gate or paid follow-up authorized by this record.
+See C:\pt\analyses\requirement-reference-observation-20260918-v1\result.md.
+
+Prior seam: the optional public requirement reference is implemented on replace_text.
 It binds a <=600-character exact public issue excerpt and task identity/hash at admission,
 then retains it beside unverified expected_behavior in the existing same-diff check review.
 Only source identity is validated. Annotation omission/error/staleness never changes
