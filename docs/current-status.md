@@ -6,7 +6,42 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Pydantic AI first observation fails acceptance after public PASS
+## Current seam: Public diagnostic reproduces Pydantic AI provider-scope regression
+
+The frozen P1 patch changes ordinary OpenAI field-mode profiles that the public task
+requires preserving. Four public cases were run once on each fresh base/submitted
+workspace, using the same prepared source and existing digest-pinned image. The base
+passes the ordinary default, explicit reasoning_content field and custom-field cases,
+but fails DeepSeek's required empty field. The submission fixes DeepSeek and preserves
+the ordinary default case, while failing both ordinary field-mode cases by adding an
+empty field. Both histories and other message fields remain unchanged.
+
+This reproduces the public-contract concern: field replay format and mandatory empty
+metadata are separate requirements. The new serializer branch conflates them. P1's
+first public plan already used field mode as the repair scope; later registered-check
+PASS was treated as evidence that every other-provider behavior was preserved. The
+existing ordinary-provider public example covers a default auto profile, which does
+not exercise this boundary. Actual task/diff/check delivery was previously verified.
+
+The two offline Docker checks complete in 5.851s/4.836s with confirmed cleanup; total
+diagnostic time is 16.599s. Eight observations are complete: base 3/4 PASS, submission
+2/4 PASS. These are local serializer outputs, not remote provider API acceptance or
+attribution of a particular historical hidden assertion. Private evaluation was not
+run; no hidden details, reference patch or new implementation was used.
+
+Focused integrity/offline tests pass 12 cases in 0.80s; repository/diagnostic Ruff passes.
+Runtime/task/defaults remain fixed; the previous full regression and mock receipts are
+not repeated. All 3468 protected records and the user's AGENTS.md remain unchanged.
+Provider/count/compact calls=0, model cost=$0, Docker start/pull/build=0, source fetch=0.
+The diagnostic is complete and official=false; P1 and its unused paid cap stay closed.
+
+Next: design a small generic improvement to the existing planning/verification flow
+that separates changed behavior from behavior that must be preserved and checks whether
+the evidence exercises both. This finding does not establish a context or model remedy,
+and no provider-specific prompt, new policy or paid comparison is introduced here.
+Report: `C:\pt\analyses\pydantic-profile-scope-public-20260917-v1\result.md`.
+
+## Prior seam: Pydantic AI first observation fails acceptance after public PASS
 
 The authorized P1 observation completed at registration commit `62154c0`, using
 gpt-5.4-2026-03-05/medium, segmented-v1, brief-v1, probes enabled, probe-policy none
