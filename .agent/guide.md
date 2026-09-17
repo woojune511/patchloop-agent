@@ -902,7 +902,24 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the separate public-requirement operator repair passes isolated acceptance.
+Current seam: P4/P5 public requirement/verification audit verifies all15 exact requests.
+Both first plans broaden requirement scope to field mode before source inspection and
+retain it through edit/check/finish. First plan/edit share the initial segment. P5
+inputs2-4 contain Moonshot's same field/mode snippet, including its first edit; no
+matching ordinary-profile tool-only preservation case is demonstrated. Searches6/5,
+explicit reads3/3; no delivered test-source range, post-edit inspection or probe.
+Both registered checks pass, then finish with resources/tools remaining. Public source
+review shows the synthetic default-profile control and upstream existing-thinking field
+case differ from the omitted setup; do not call static review dynamic coverage.
+This is public behavioral evidence, not missing-input/internal-reasoning/causal attribution.
+Next proposed seam: an optional exact public-requirement excerpt bound to the existing
+mutation expectation and check review; identity validation only, no semantic certification,
+new finish gate, solution injection or extra call. Not implemented; no paid authority.
+Audit provider/count/Docker/candidate/check/probe/evaluator0, cost$0, current acceptance
+NOT_RUN. Runtime/task/prompts/user AGENTS and protected4078 unchanged; official=false.
+See C:\pt\analyses\preedit-requirement-trace-audit-20260917-v1\result.md and next-step.md.
+
+Prior seam: the separate public-requirement operator repair passes isolated acceptance.
 Three allowed files/16 added lines add an optional empty-thinking-field requirement,
 default false and enabled in DeepSeek's supplied profile. Reuse/copy preserves necessity;
 the shared serializer also requires tool calls, no thinking, field mode and a configured

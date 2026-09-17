@@ -6,7 +6,35 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Public requirement operator repair passes isolated acceptance
+## Current seam: P4/P5 public audit locates the scope and verification gap
+
+The public task and current guidance are verified in all 15 reconstructed P4/P5
+requests. Both first plans broaden the provider-specific requirement to configured
+field-mode profiles before source inspection. The first edit remains in the initial
+segment. Later decisions and expected_behavior preserve that interpretation.
+
+P5 also receives Moonshot's identical field/mode settings in actual inputs2-4, including
+the first edit. Neither run constructs a preserved ordinary-profile tool-only case
+with the same trigger. P4/P5 perform six/five searches and three explicit reads each;
+no upstream test source, post-edit inspection or probe is delivered/executed. Both run
+the two registered checks and submit with calls/tools/mutations still available.
+The public synthetic other-provider case uses a default profile; the selected upstream
+field test replays existing reasoning/text without tool calls. These are different
+setups from the omitted preservation case. Source review is not dynamic coverage.
+
+The evidence supports a public interpretation/verification gap, not missing delivery,
+an internal-reasoning diagnosis or a causal model/context effect. A proposed next seam
+links a bounded exact public requirement excerpt to the existing mutation expectation
+and check review as optional, unverified evidence. It is not implemented, a semantic
+validator, a new finish gate or authority for another paid run.
+
+This read-only audit makes zero provider/count, Docker, candidate/check/probe/evaluator
+calls; cost=$0. Runtime/task/prompts and all 4078 protected files remain unchanged.
+User AGENTS.md is also preserved. Current acceptance is NOT_RUN; earlier outcomes remain intact.
+Report and bounded proposal:
+`C:\pt\analyses\preedit-requirement-trace-audit-20260917-v1\result.md`.
+
+## Prior seam: Public requirement operator repair passes isolated acceptance
 
 A separate operator repair adds an optional profile requirement for an empty thinking
 field, independent of field replay mode. DeepSeek's supplied profile enables it; reuse
