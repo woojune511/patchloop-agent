@@ -6,7 +6,42 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v5 metadata-call review finds no file-existence behavior failure
+## Current seam: HF v5 URL review passes public contracts; compatibility edges characterized
+
+The unchanged v5 submission passes 96/96 public-contract assertions in the bounded
+URL preservation/exception review; BASE passes 84/96. Each variant has 120 observations:
+96 assertions plus 24 explicitly separate characterization cases. Tested valid URL
+components, relative/foreign routes and missing metadata behave as required. All 60
+direct no-endpoint observations match exactly across variants, including edge inputs.
+
+Explicit malformed inputs produce 12 new ValueErrors: bad/default-origin ports,
+unmatched brackets and an NFKC host delimiter, through header/link carriers. Eight
+empty-delimiter observations normalize `?`/`#`; two embedded-tab observations remove
+the tab; two foreign invalid-port observations remain unchanged. These were declared
+characterization before execution. The current public task does not establish their
+required handling, and no token/network failure is demonstrated. They do not establish
+a new public-contract defect or explain the prior private acceptance FAIL.
+
+The corrected two-check group finishes in 3.734s on the existing image (Python 3.10.19,
+requests 2.32.5), with zero execution errors and confirmed cleanup. A first diagnostic
+group stopped after BASE because our observer passed a positional URL to the keyword-only
+HfApi API; SUBMITTED never ran there. Its evidence is preserved. The corrected group
+uses url=, identical cases and a public-signature binding regression. Three Docker checks
+occurred in total; the invalid first group is not a completed comparison.
+
+Focused tests 20 PASS/<1s, documentation 3 PASS, scoped Ruff PASS. All 7566 protected
+files, source and workspace diffs are unchanged; no PatchLoop container remains. Runtime
+and task are unchanged, so full regression/mock are not repeated. No new repair,
+model/count call, private evaluation, source fetch or Docker start/pull/build; cost $0,
+all official=false. No hidden details or reference patch is read.
+
+The planned public URL review is closed. HF remains public-contract PASS under the
+tested coverage with private acceptance unresolved. Further HF repair/check expansion
+needs a concrete public requirement and reproduced defect. Next: consolidate completed
+task evidence and remaining implementation gaps before choosing the next bounded experiment.
+Report: `C:\pt\analyses\hf-url-compat-public-diagnostic-20260917-v2\result.md`.
+
+## Prior seam: HF v5 metadata-call review finds no file-existence behavior failure
 
 The unchanged v5 submission passes all 354 observation checks in a public metadata
 entry-point diagnostic. AST inventory of all 141 public Python modules identifies
