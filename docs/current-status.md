@@ -6,7 +6,45 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: pgmpy task registered; both selected development problems have evaluators
+## Current seam: Fromager and pgmpy first observations both pass
+
+The authorized F1 -> G1 group completed with one fresh run per new development task,
+using gpt-5.4-2026-03-05/medium, segmented-v1, brief-v1, probes enabled, probe-policy
+none and repair-recheck. Runtime, tasks, tools and limits remained fixed at the tested
+registration commit `144d940149e283676802abd06e38a1c89d5ed151`. Prepared local sources
+supplied independent run/evaluation workspaces with no source fetch.
+
+Acceptance PASS / planned: Fromager 1/1, pgmpy 1/1; safety PASS 2/2. Both started and
+submitted, NOT_RUN=0, infrastructure/uncertainty stops=0. Each accepted its first edit
+at call 4, passed the contract and upstream checks at calls 5/6, and submitted at call 7.
+Fromager's iterative orphan worklist passes five public examples and 12 upstream tests.
+pgmpy's per-round graph copy passes 12 public order/depth observations and seven upstream
+tests. No rejected proposal, failed candidate check or probe occurs; failure-driven repair
+and probe usefulness are not newly observed here. Private evaluation supplies aggregates only.
+
+All 14 count/generation calls settle with matched usage. Recorded cost $0.508015500
+of the separate $2.40 cap; uncached equivalent $0.686287500. F1 costs $0.271966500
+and G1 $0.236049000, with 18 total tools and 153.846s summed run time. Maximum inputs
+are 24657/21272 tokens; three segments each, all four noninitial transitions
+major_result_reviewed. Output ceilings remain 25000; no resource-limit terminal occurs.
+
+All 14 actual inputs preserve public task/diff/check state, both initial inputs contain
+empty diff/plan/notes, and prepared-source metadata is absent. Operator guards pass
+13 tests in 2.77s; repository/scoped operator Ruff passes. Both mock policies reach
+isolated evaluation, checking eight actual inputs in 8.275s. The unchanged runtime's
+preceding full regression remains 2500 PASS/eight skips; it was not repeated. All 4147
+protected files and the user's AGENTS.md remain unchanged. Public cleanup is confirmed,
+isolated safety passes, and no PatchLoop container remains.
+
+The group is closed, official=false, with no retry/resume/replacement/extra sample,
+Docker start/pull/build or post-run candidate execution. Two selected first-edit successes
+do not establish generalization, model superiority or a context-policy effect. Keep the
+configuration fixed. Next: select one development task requiring coordinated changes
+across multiple files, establish its public baseline defect and independent evaluator,
+then define a separate bounded observation. No new dispatch or budget is created here.
+Report: `C:\pt\analyses\fresh-devtrain-observation-20260917-v1\result.md`.
+
+## Prior seam: pgmpy task registered; both selected development problems have evaluators
 
 `pgmpy-stable-skeleton-order` v1 is the second new dev-train package. It fixes the task
 boundary around stable PC conditioning rounds: same-round edge removals must not change
