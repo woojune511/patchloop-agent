@@ -6,7 +6,36 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Structured changed/preserved cases reach check review
+## Current seam: P8 delivers structured cases; scope verification remains incomplete
+
+One authorized same-P7 observation completes with acceptance FAIL / safety PASS,
+official=false. The model records change/preserve/scope_basis on its one accepted edit.
+The unverified case record reaches all 3 post-edit actual inputs (1 native-output pointer,
+2 inline states) and both same-diff check reviews. Source quotation also matches with
+whitespace normalization. All 9 request hashes and public task/diff/check delivery pass audit.
+
+The public gap persists: scope_basis mentions provider-profile preservation, but preserve
+bundles plain profiles and non-field modes without an explicit ordinary-profile case that
+keeps field mode/name fixed. The shared serializer's 5-line addition gates on field mode
+and a nonempty field name, with no separate provider-profile requirement. This broad
+condition appears in the first plan and edit, before any segment transition.
+Both checks pass (8 synthetic observations, 18 upstream tests), followed by submission.
+There is no post-edit read/search or probe, and no demonstrated same-field preservation
+contrast. Hidden failure details were not read; these are public observations only.
+
+9 model/count calls, 17 tools, first edit at call 6, zero rejected repeats. Cost $0.4430575
+($0.7094575 without cache discount); peak input 40443; 3 segments;
+177.659s. No resource-limit stop; inspection/probe and budget remained at finish.
+The new $1.20 cap and unused funds are closed. No retry/resume/replacement or extra candidate.
+Operator 46 PASS / 2.911s and Ruff; the corrected initial audit-test failure is preserved.
+Unchanged runtime reuses the implementation regression/mocks below. All 5,212 protected
+files and user AGENTS.md are unchanged; cleanup confirmed; existing Docker/images only.
+P7/P8 are descriptive single observations, with no causal/generalization/default claim.
+Next focus: choosing and verifying a preservation case with the same implementation
+trigger but a different public requirement scope. No follow-up implementation or paid run.
+Evidence: `C:\pt\analyses\behavior-cases-observation-20260918-v1\result.md`.
+
+## Prior seam: Structured changed/preserved cases reach check review
 
 The optional `replace_text.behavior_cases` annotation separates change and preserve setups
 and expected outcomes, with `scope_basis` naming the public condition that distinguishes

@@ -947,7 +947,28 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: optional changed/preserved cases retain separate setups and expectations.
+Current seam: P8 confirms live case delivery; scope and verification gaps persist.
+One same-P7 gpt-5.4-2026-03-05/medium run settles acceptance FAIL/safety PASS.
+The recorded/unverified change/preserve/scope_basis reaches all 3 post-edit inputs and
+both same-diff check reviews. All 9 request hashes and public task/diff/check delivery pass.
+The public preservation setup does not explicitly hold field mode/name fixed on an ordinary
+profile. Five added shared-serializer lines apply by field mode/name without a separate
+provider-profile requirement. That condition appears before any segment handoff.
+Both checks pass (8 synthetic observations, 18 upstream tests); the model then submits.
+No post-edit inspection or probe, and no demonstrated same-field preservation contrast.
+Hidden evaluator details remain unread. Recording/delivery does not establish semantics.
+9 model/count, 17 tools, first edit call 6, zero rejected repeats; 3 segments, peak input
+40443, 177.659s, cost $0.4430575 ($0.7094575 uncached). No resource stop;
+read/search/probe and budget remain at finish. The $1.20 invocation and unused funds close.
+Operator 46 PASS/2.911s and Ruff, including correction of one initial audit-test exception
+shape; prior runtime regression and mocks reused. Protected 5,212/user AGENTS unchanged.
+No retry/resume/replacement, extra candidate, source fetch or Docker start/pull/build.
+official=false; P7/P8 do not establish causal/generalization/default-adoption conclusions.
+Next focus is the public scope distinction under the same implementation trigger and
+whether a selected check actually exercises it. No further implementation/live run included.
+See C:\pt\analyses\behavior-cases-observation-20260918-v1\result.md.
+
+Prior seam: optional changed/preserved cases retain separate setups and expectations.
 The mutation annotation adds scope_basis from the complete public requirement, with
 preserve=null for unknown/inapplicable boundaries. Valid shape is recorded/unverified,
 not semantic or coverage approval. Accepted cases bind the public task hash and follow
