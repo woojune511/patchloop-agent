@@ -6,7 +6,39 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: P9 receives verification choices and still submits without further review
+## Current seam: A public contrast reproduces P9's overbroad profile condition
+
+A fixed operator diagnostic now executes the actual project implementation with installed
+dependencies, using two fresh prepared-source workspaces and the existing registered-check
+Docker path. The same OpenAI client/provider, synthetic model name, field mode, field name
+and tool-only message are used with ordinary versus DeepSeek-supplied profiles. Both the
+default field name and a copied profile with a different field name are tested.
+
+| Public behavior | Clean base | Exact P9 patch |
+| --- | --- | --- |
+| Preserve ordinary profiles | 2/2 PASS | 0/2 PASS |
+| Include metadata for supplied provider profiles | 0/2 PASS | 2/2 PASS |
+
+P9 inserts an unwanted empty field into both ordinary-profile messages. This confirms a
+public scope regression; it does not identify the private evaluator's failure or change
+P9's sealed result. No correction candidate, new agent/model run or private evaluation.
+Two fixed Docker checks completed with cleanup confirmed; model cost $0, official=false.
+
+New diagnostic/docs focused32 PASS/0.71s; source/sandbox compatibility57 PASS/34.43s; Ruff.
+Both fresh durable context mocks reach isolated EVALUATOR_PASS with public task/diff/check
+state delivered. Runtime/task bytes are unchanged, so the prior full regression2630 PASS/
+8 SKIP with durations is reused, not reported as a new full run. The initial three focused
+failures were CRLF in a synthetic patch fixture; corrected without changing runtime behavior.
+
+The reproducible operator path is documented in
+[the public profile diagnostic](../.agent/profile-scope-diagnostic.md). Agent stdlib probes,
+registered task checks and guidance remain unchanged. This does not yet give the model a
+dependency-equipped probe. Next focus: a public dependency environment that lets the coding
+agent author and execute contrasts against current project code, with a separately reviewed
+source/dependency boundary. Never expose the evaluator image to arbitrary model probe code.
+Evidence: `C:\pt\analyses\profile-scope-verification-20260918-v1\result.md`.
+
+## Prior seam: P9 receives verification choices and still submits without further review
 
 One authorized same-P8 live observation settles acceptance FAIL / safety PASS, official=false.
 The new verification_choice reaches the final actual input with next_action=null, matching

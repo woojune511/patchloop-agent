@@ -953,7 +953,28 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: P9 receives the new choice, then submits without further verification.
+Current seam: fixed public profile contrast reproduces P9's scope regression.
+See [the operator diagnostic](profile-scope-diagnostic.md) for the command and boundary.
+diagnostics/profile_scope_check.py runs a fixed public-only program in two fresh prepared
+workspaces using the existing dependency-equipped registered-check image. Same OpenAI
+client/provider, synthetic model name, field mode/name and tool-only message; vary ordinary
+versus DeepSeek-supplied profile, with default and copied custom field names. Public issue
+expectations only; no private task/evaluator/reference details loaded by the diagnostic.
+Base: ordinary preservation2/2 PASS, provider requirement0/2. Exact P9: preservation0/2,
+provider requirement2/2. Both ordinary messages gain an unwanted empty field under P9.
+This is a concrete public scope regression, not proof of the hidden evaluator's cause.
+No corrected candidate/model generation/private evaluation. Two Docker checks, existing
+image only, confirmed cleanup, no source fetch/start/pull/build/retry/resume, model cost$0.
+Focused32 PASS/0.71s, compatibility57 PASS/34.43s, Ruff and both fresh isolated mocks PASS.
+Initial3 fixture failures (CRLF synthetic patch headers) corrected; initial logs retained.
+Unchanged runtime/task reuses prior full2630 PASS/8 SKIP with durations. The diagnostic
+does not enter agent context or modify task checks, schemas, guidance or probe dependencies.
+Keep operator execution distinct from autonomous model verification. Next focus is a
+public-only dependency environment for model-authored contrast experiments; this fixed
+check is not authority to expose the evaluator image to arbitrary run_probe source.
+See C:\pt\analyses\profile-scope-verification-20260918-v1\result.md. official=false.
+
+Prior seam: P9 receives the new choice, then submits without further verification.
 Same-P8 fresh run, acceptance FAIL/safety PASS, official=false. Final actual input carries
 next_action=null, current case hash/not_assessed and offered read/search/probe/finish choices.
 The model chooses finish based on both public checks. No post-edit inspection or probe.
