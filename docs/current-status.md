@@ -6,7 +6,39 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: fixed success replication completes 6/6, including two AnyIO recoveries
+## Current seam: two new development candidates selected; public base defects reproduced
+
+The next task-selection step chooses Fromager #1106 and pgmpy #3137. The 18 current
+dev-train packages are 16 versions of six real problem families plus two calibration
+fixtures; all six real families already have development execution history. A bounded
+scan of 1858 tracked evidence/docs/data and external analysis metadata files finds no
+selected benchmark ID or exact base SHA. This does not prove global non-exposure or
+model-training novelty. Validation/held-out tasks are not repurposed.
+
+Exact clean public bases are fetched: Fromager f82c1e64a027060c3e25090f6a4a4d7f4e3d985d
+and pgmpy da98466c0a79cb416562e450d85699aedc10f422. Existing digest-pinned images run
+two network-disabled public observations in 3.687s, with workspace source binding,
+confirmed cleanup and unchanged source bytes. Fromager leaves child/grandchild orphans;
+shared descendants, removed-parent links and absent-node controls pass. pgmpy's stable
+variant yields two distinct skeletons across six column orders; zero-depth controls pass.
+Diagnostic completion is not task acceptance. No candidate patch or private evaluation.
+
+Public metadata is projected from the existing labeled 2026_03 benchmark cache; solution,
+test-patch, hints and result fields are excluded. A pinned remote dataset-tree request
+returns HTTP 429 without retry; current remote dataset identity is not newly verified.
+Both exact source commits and local image digests are verified. Selection is a convenience
+sample of two graph-related problems, not an unseen-task generalization result.
+
+Task contracts and registration design are recorded externally. Both repositories still
+need explicit allowlist entries and complete dev-train/evaluator packages; no prepared
+source descriptor or executable task is published. Next: implement Fromager registration,
+then pgmpy, validate public regressions and isolated acceptance before a fixed two-run
+observation. The proposed $2.40 design has no dispatch or reservation; closed groups stay
+closed. Runtime/model/policies unchanged, provider/count calls=0, model cost=$0,
+Docker start/pull/build=0, all official=false. Local validation is in the completion receipt.
+Report: `C:\pt\analyses\fresh-devtrain-selection-20260917-v1\result.md`.
+
+## Prior seam: fixed success replication completes 6/6, including two AnyIO recoveries
 
 The authorized N1/P1/L1/L2/P2/N2 group completes: AnyIO v3, PDM v2 and Loguru v3
 each acceptance PASS 2/planned 2; safety PASS 6/6. Started/submitted=6/6, NOT_RUN=0,
