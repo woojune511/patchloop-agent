@@ -6,7 +6,50 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: HF v5 URL review passes public contracts; compatibility edges characterized
+## Current seam: fixed success replication completes 6/6, including two AnyIO recoveries
+
+The authorized N1/P1/L1/L2/P2/N2 group completes: AnyIO v3, PDM v2 and Loguru v3
+each acceptance PASS 2/planned 2; safety PASS 6/6. Started/submitted=6/6, NOT_RUN=0,
+infrastructure/uncertainty stops=0. Historical successes are separate, not reused samples.
+GPT-5.4-2026-03-05/medium, segmented-v1/brief-v1, probes/probe-policy none,
+repair-recheck and all existing limits stay fixed. Each fresh invocation has a $1.20
+cap; the new group cap is $7.20. Runtime/task/source/operator identities remain frozen.
+
+PDM and Loguru pass both runs with one edit. Both AnyIO first edits fail fixture
+task/context checks: N1 lifecycle 4/7 -> 7/7 after two edits; N2 3/7 -> 4/7 -> 6/7 ->
+7/7 after four edits, followed by upstream and acceptance PASS. All four failure
+outputs reach the next actual inputs and block finish. N2 has one rejected source
+anchor, then corrects it; identical rejected-proposal repeats=0. First edits occur
+at calls 8/4/4/3/4/8. The shared candidate defect is repaired inside both runs;
+no new common runtime defect is established and no runtime/task/prompt change is made.
+
+N1's only probe fails on missing typing_extensions. The exact environment guidance
+reaches actual input 8 and cleanup is confirmed; no later probe occurs. This establishes
+live guidance delivery, not successful probe verification or efficacy. All 61 actual
+inputs retain exact public task/diff/check state; six initial inputs have empty
+diff/plan/notes and no source-preparation or historical repair injection.
+
+Recorded cost $2.880781500; uncached equivalent $4.325677500. All 61 count/generation
+calls settle with matched usage; 90 tools, 10 accepted edits, 20 public checks,
+1141.347s summed run time including evaluation. Maximum input 49387 tokens/230345
+request bytes; segments 5/3/5/5/3/7, all 22 noninitial transitions major_result_reviewed.
+No resource-limit terminal occurs. N2 uses all four edits; its later output ceilings
+fall to 23475/19670/14282/10451 under normal cost admission, while others remain 25000.
+
+Operator tests 13 PASS/3.00s (pytest), documentation 3 PASS, repository Ruff/scoped
+operator lint PASS. All 7936 protected files and sources are unchanged; check/probe
+cleanup is confirmed and no PatchLoop container remains. Runtime/task unchanged,
+so full regression/mock are not repeated. No retry/resume/extra sample, source fetch,
+Docker start/pull/build, post-run candidate execution or private-detail reading.
+All official=false; previous successes were deliberately selected, so 6/6 establishes
+only this set's observed repeatability, not generalization or model/context superiority.
+
+The six-run group is closed. Keep it as a regression baseline. Next: define fresh
+dev-train tasks without prior repair/diagnostic history before another bounded experiment.
+HF's unresolved private failure remains separate; no default is automatically changed.
+Report: `C:\pt\analyses\success-replication-20260917-v1\result.md`.
+
+## Prior seam: HF v5 URL review passes public contracts; compatibility edges characterized
 
 The unchanged v5 submission passes 96/96 public-contract assertions in the bounded
 URL preservation/exception review; BASE passes 84/96. Each variant has 120 observations:
