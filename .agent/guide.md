@@ -953,7 +953,28 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: submission eligibility offers case verification without selecting finish.
+Current seam: P9 receives the new choice, then submits without further verification.
+Same-P8 fresh run, acceptance FAIL/safety PASS, official=false. Final actual input carries
+next_action=null, current case hash/not_assessed and offered read/search/probe/finish choices.
+The model chooses finish based on both public checks. No post-edit inspection or probe.
+This verifies delivery but does not demonstrate a verification-action or quality improvement.
+First plan/7-line shared serializer patch still use field mode/name as sufficient condition;
+recorded preserve groups ordinary profiles with non-field modes. No explicit same-field
+ordinary-profile contrast. First edit before segment handoff; hidden failure details unread.
+Public synthetic8/upstream18 PASS; upstream launch-thread observation reaches only added
+condition line1349, not the fallback body. Line/PASS evidence is not semantic coverage.
+8 model/count,15 tools,one edit call5,zero rejected repeats;3 segments,max input41405,
+152.227s,cost$0.341146 ($0.63145 uncached). No limit stop; review/budget remains.
+All8 exact input hashes/task/diff/check delivery verified; cases reach3 post-edit inputs
+and2 same-diff reviews. Request/source/system/tool schemas match P8. Operator57 PASS/Ruff;
+reuse unchanged runtime 2630 PASS/8 SKIP and both isolated mocks. Protected5539/user AGENTS
+unchanged, cleanup confirmed, existing Docker/images only. New$1.20 cap closes without
+retry/resume/replacement/extra sample. P8/P9 are descriptive single observations.
+Next focus: same-trigger preservation input/assertion and available execution path;
+no follow-up implementation or paid run included.
+See C:\pt\analyses\verification-choice-observation-20260918-v1\result.md.
+
+Prior seam: submission eligibility offers case verification without selecting finish.
 Current-diff recorded behavior_cases plus offered review tools produce next_action=null
 and a bounded verification_choice (existing record/hash, not_assessed, offered actions only).
 Case/check setup comparison is advisory; keep the implementation trigger fixed when checking

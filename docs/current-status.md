@@ -6,7 +6,36 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Verification choices before submission advice
+## Current seam: P9 receives verification choices and still submits without further review
+
+One authorized same-P8 live observation settles acceptance FAIL / safety PASS, official=false.
+The new verification_choice reaches the final actual input with next_action=null, matching
+case hash, not_assessed status and offered read/search/probe/finish options. The model chooses
+finish_task, stating that the two passing public checks make further verification unlikely
+to change its decision. Post-edit read/search=0; probe=0. Delivery works; a verification-action
+change is not observed in this one run. No causal-null or quality/default claim follows.
+
+The first plan and seven added serializer lines again use field mode/nonempty name as the
+insertion condition. Recorded preservation groups plain profiles with non-field modes,
+without an explicit same-field ordinary-profile setup. The first edit precedes any segment
+handoff. Public synthetic 8/upstream 18 observations pass. Upstream line collection observes
+only the added condition start, not its fallback body, within launch-thread scope; this is
+not assertion/semantic coverage. Hidden evaluator failure details remain unread.
+
+8 model/count calls,15 tools,one edit at call5,zero rejected repeats; 3 segments
+(initial,major_result_reviewed,major_result_reviewed),max input41405,152.227s.
+Recorded cost $0.341146 ($0.63145 without cache discount). No resource-limit termination;
+review tools and budget remain at finish. This fresh $1.20 cap and unused funds are closed.
+All 8 request hashes and public task/diff/check delivery pass audit. Cases reach all 3
+post-edit inputs and both check reviews. Same P8 request/source/system/tool schemas; only
+tested completion guidance/derived identities differ. No old plans/patches/cases injected.
+Operator57 PASS and Ruff; unchanged runtime reuses 2630 PASS/8 SKIP and both isolated mocks.
+Protected5539/user AGENTS unchanged; cleanup confirmed; existing Docker/images only.
+Next focus: map a same-trigger preservation case to public inputs/assertions and a runnable
+verification path. No follow-up implementation or paid run is included.
+Evidence: `C:\pt\analyses\verification-choice-observation-20260918-v1\result.md`.
+
+## Prior seam: Verification choices before submission advice
 
 When the current accepted mutation has recorded behavior cases and review tools remain
 offered, eligible submission no longer preselects finish_task. A bounded verification_choice
