@@ -6,7 +6,41 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Fromager and pgmpy first observations both pass
+## Current seam: Pydantic AI synthetic tool-turn defect selected and reproduced
+
+The next development candidate is `pydantic-ai-synthetic-tool-reasoning` v1,
+derived from the original Pydantic AI issue #5829. Its exact public base
+`5965db82c4e10012a8598c14716ea8a88fb411a9` matches the already-present digest-pinned
+image. Provider configuration, reusable profiles and the shared message mapper
+form the likely implementation seam. Actual edited-file count is not yet observed
+and will not be an acceptance requirement. The task and evaluator are not registered.
+
+The network-disabled public baseline finds missing reasoning_content on tool-only
+history for three DeepSeek configurations; 12 normal controls pass. An actual Agent
+flow with fixed local HTTP replies exposes a synthetic search message lacking that
+field in requests 2 and 3 after deferred capability loading. Existing fixture reasoning
+is preserved, and nondeferred loading passes. This identifies missing metadata on
+synthesized history; it does not establish lost model reasoning or live API acceptance.
+
+Two isolated Docker diagnostics take 7.049s in total, with source imports bound to
+the clean unchanged checkout and cleanup confirmed. The existing project virtualenv
+is required because global image Python lacks the OpenAI SDK. Provider/count calls=0,
+model cost=$0, candidate repairs/private evaluations=0, Docker start/pull/build=0.
+All evidence is official=false. Runtime, policies, model settings and tasks stay fixed.
+
+All 39 current packages were excluded by exact base. A bounded scan of 1941 metadata
+files finds 11 historical matches, including frozen panel, image and sanitized admission
+records. This is a new current development package candidate, not an unseen problem;
+old task archives, reference patches and evaluators are not imported. Prior experiment
+groups remain closed. The public contract and independent evaluator design are recorded
+at `C:\pt\analyses\multi-file-task-selection-20260917-v1\task-design.md`.
+
+Next: register this one dev-train task, validate independent acceptance controls,
+offline prepared-source clones and required repository/mock checks, then define a
+separate bounded observation. No provider dispatch or new budget is created here.
+Report: `C:\pt\analyses\multi-file-task-selection-20260917-v1\result.md`.
+
+## Prior seam: Fromager and pgmpy first observations both pass
 
 The authorized F1 -> G1 group completed with one fresh run per new development task,
 using gpt-5.4-2026-03-05/medium, segmented-v1, brief-v1, probes enabled, probe-policy
