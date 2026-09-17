@@ -874,7 +874,18 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the public AnyIO interrupt failure is reproduced on BASE/SUBMITTED.
+Current seam: P2 preservation observation settles acceptance FAIL/safety PASS at
+$0.418622. Both check-time expectations reach actual inputs, but the selected
+preservation case does not distinguish the provider-profile requirement. The
+post-run operator audit compared intentionally omitted duplicate notes and stopped;
+preserve its frozen code and STOPPED record. A separate read-only audit confirms
+delivery, with no group resume or new candidate execution. When auditing review
+delivery, compare action/candidate identity, original expectation, verdict and next
+question; do not require duplicate journal-only annotation fields in the model view.
+Next evidence-reading seam is described in docs/current-status.md and
+C:\pt\analyses\preservation-pydantic-observation-20260917-v1\result.md. official=false.
+
+Prior seam: the public AnyIO interrupt failure is reproduced on BASE/SUBMITTED.
 Both function/module async-generator fixture cases propagate KeyboardInterrupt
 but resume the interrupted test; cleanup still completes once. The exact submitted
 patch improves the explicit-cancel fixture error, not this callback-interrupt case.

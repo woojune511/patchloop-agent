@@ -6,7 +6,43 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Candidate-bound change and preservation review
+## Current seam: Pydantic preservation observation fails despite delivered review
+
+The fresh P2 observation uses the same task, prepared source and GPT-5.4/medium
+settings as P1, with the tested preservation-review runtime at commit 34999fd.
+Acceptance PASS/planned is 0/1: one start and submission, acceptance FAIL, safety
+PASS, NOT_RUN=0. Recorded cost is $0.418622; uncached equivalent is $0.647870.
+The run uses eight model/count calls, 16 tool calls, one edit at call 5 and two
+passing public checks. Its maximum input is 42,556 tokens and it has three segments
+(initial plus two major_result_reviewed transitions). No resource limit ends the run.
+
+The model names actual ThinkingPart content as a concrete preservation case, then
+treats eight public contract observations and 18 upstream tests as enough to submit.
+It does not inspect upstream test assertions or run a probe. The submitted branch
+still inserts an empty field for any configured field-mode tool-call profile without
+distinguishing the provider-profile requirement. This is a public static finding;
+no extra candidate execution or hidden assertion attribution is made.
+
+All eight actual inputs retain public task/diff/check state. Both check-time review
+snapshots reach the following inputs unchanged. The initial operator audit incorrectly
+compares whole journal cards, including duplicate notes intentionally omitted from the
+model view; the controller therefore records STOPPED after the settled evaluation.
+That record and frozen code remain unchanged. A separate read-only correction confirms
+review identity/intent/result/question delivery. Runtime/provider/billing/cleanup
+uncertainty is absent; the one post-run operator audit stop is retained and explained.
+
+Operator tests pass 16 cases in 2.40s; amendment tests pass six in 0.83s. Prior
+2519 PASS/eight-skip regression and both isolated mock PASS receipts are hash-bound
+and reused because runtime/task bytes are unchanged. All 3546 protected prior records
+remain unchanged. No retry, resume, replacement, additional candidate or paid sample;
+official=false, with no efficacy or default-adoption claim from P1/P2.
+
+Next: improve how the existing verification flow reads actual public check inputs
+and assertions before using PASS to settle preservation assumptions. Validate the
+generic evidence-reading behavior provider-free before another bounded observation.
+Report: `C:\pt\analyses\preservation-pydantic-observation-20260917-v1\result.md`.
+
+## Prior seam: Candidate-bound change and preservation review
 
 An accepted mutation's existing expected_behavior now names a concrete changed case
 and a nearby case to preserve when relevant, with distinguishing public setup/outcomes.
