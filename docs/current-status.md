@@ -6,7 +6,41 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Public profile contrast reproduces the P4/P5 preservation regression
+## Current seam: Public requirement operator repair passes isolated acceptance
+
+A separate operator repair adds an optional profile requirement for an empty thinking
+field, independent of field replay mode. DeepSeek's supplied profile enables it; reuse
+and copies retain it while ordinary profiles preserve omission. The shared serializer
+applies it only to tool-call messages without thinking in configured field mode.
+The patch changes three allowed files with 16 added lines; task/runtime/prompts stay fixed.
+
+The unchanged public contrast passes 4/4; added mapping/replay controls pass 32/32 and
+existing constructor-rejection controls pass 2/2. Both registered public checks pass
+(eight synthetic observations and 18 upstream tests). One unchanged isolated evaluator
+invocation on a fresh prepared-source workspace completes in 35.378s: acceptance,
+public regression, scope and safety all PASS. Submitted/applied/checked hashes match.
+Provider/count calls=0 and model cost=$0. This is an operator repair control, not an
+agent success or evidence of model/context improvement; P4/P5 outcomes remain unchanged.
+
+Preparation incidents are retained: CRLF replacement failed, and an initial recursive
+lint fix touched an abandoned scratch clone. A clean clone contains only the final
+allowed changes. The first public group stops at a control-program constructor error;
+its record remains STOPPED. A separately frozen corrected public program verifies the
+existing None/empty-field rejection and completes the unrun checks, reusing the exact
+patch's contrast PASS. Five public container attempts and one evaluation invocation
+are recorded; no evaluation retry or hidden-detail diagnosis occurs.
+
+Operator18+7 PASS/0.87s each and Ruff pass. All eight owned containers are cleaned up,
+prepared source and 4016 protected prior files are unchanged, and user AGENTS.md is
+preserved. Runtime is unchanged; no new full regression or mock execution is claimed.
+The completed control remains official=false/claim_eligible=false.
+Report: `C:\pt\analyses\profile-requirement-repair-20260917-v1\result.md`.
+
+Next investigate the agent's public inspection/verification choices around replay format
+versus provider-specific necessity before its first edit. Do not supply the operator
+solution as memory, change defaults or start a paid comparison from this result.
+
+## Prior seam: Public profile contrast reproduces the P4/P5 preservation regression
 
 A provider-free reproduction executes four public cases once each on fresh BASE, P4
 and P5 workspaces from the same prepared source. Both profiles explicitly use field

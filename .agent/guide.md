@@ -902,7 +902,28 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: the public profile contrast confirms the P4/P5 preservation regression.
+Current seam: the separate public-requirement operator repair passes isolated acceptance.
+Three allowed files/16 added lines add an optional empty-thinking-field requirement,
+default false and enabled in DeepSeek's supplied profile. Reuse/copy preserves necessity;
+the shared serializer also requires tool calls, no thinking, field mode and a configured
+field. Ordinary profiles and other replay modes keep existing behavior.
+Unchanged contrast4, mapping/replay32, constructor-rejection2, synthetic8 and upstream18
+all PASS. One unchanged isolated evaluator/fresh prepared-source workspace takes35.378s:
+acceptance/public regression/scope/safety PASS, exact submitted/applied/checked hash
+2703bb363b3b8d173d217ae9bb48678254569bc817fe8870cbdbfdd8f074d698.
+Provider/count0/cost$0. This is an operator control, not an agent success; P4/P5 stay FAIL.
+Retain preparation incidents (CRLF replacement and recursive lint on an abandoned clone)
+and the first public group's STOPPED constructor-error record. The separately frozen
+corrected program expects existing None/empty-field UserError and completes unrun checks
+on unchanged repair bytes, reusing contrast PASS. Five public container attempts plus
+one evaluator invocation/eight cleaned containers; no evaluation retry or hidden-detail
+inspection/diagnosis. Operator18+7 PASS/0.87s each, Ruff, protected4016 unchanged.
+Task/runtime/prompts/user AGENTS unchanged; no new full-suite/mock claim. official=false.
+Next use public task/source/traces to study the agent's pre-edit distinction between
+format and necessity; no solution-memory injection, default change or new paid run.
+See C:\pt\analyses\profile-requirement-repair-20260917-v1\result.md.
+
+Prior seam: the public profile contrast confirms the P4/P5 preservation regression.
 BASE omits the required provider empty field but preserves ordinary-profile omission;
 P4/P5 fix the former and regress the latter with the same field mode/name. Both actual
 thinking/text/tool-call controls pass everywhere. Four cases per revision, one BASE/P4/P5
