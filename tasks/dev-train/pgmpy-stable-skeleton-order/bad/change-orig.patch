@@ -1,0 +1,63 @@
+diff --git a/pgmpy/causal_discovery/_base.py b/pgmpy/causal_discovery/_base.py
+--- a/pgmpy/causal_discovery/_base.py
++++ b/pgmpy/causal_discovery/_base.py
+@@ -335,25 +335,8 @@
+             # Step 2: Iterate over the edges and find a conditioning set of
+             # size `lim_neighbors` which makes u and v independent.
+             if variant == "orig":
+-                for u, v in graph.edges():
+-                    if (enforce_expert_knowledge is False) or ((u, v) not in expert_knowledge.required_edges):
+-                        for separating_set in self._get_potential_sepsets(
+-                            u, v, temporal_ordering, graph, lim_neighbors
+-                        ):
+-                            # If a conditioning set exists remove the edge, store the separating set
+-                            # and move on to finding conditioning set for next edge.
+-                            if ci_test(
+-                                u,
+-                                v,
+-                                separating_set,
+-                                significance_level=significance_level,
+-                            ):
+-                                separating_sets[frozenset((u, v))] = separating_set
+-                                graph.remove_edge(u, v)
+-                                break
+-
+-            elif variant == "stable":
+-                # In case of stable, precompute neighbors as this is the stable algorithm.
++                # Defer removals so all tests in this round see the same neighbors.
++                pending_removals = []
+                 for u, v in graph.edges():
+                     if (enforce_expert_knowledge is False) or ((u, v) not in expert_knowledge.required_edges):
+                         for separating_set in self._get_potential_sepsets(
+@@ -368,8 +351,30 @@
+                                 significance_level=significance_level,
+                             ):
+                                 separating_sets[frozenset((u, v))] = separating_set
+-                                graph.remove_edge(u, v)
++                                pending_removals.append((u, v))
+                                 break
++                graph.remove_edges_from(pending_removals)
++
++            elif variant == "stable":
++                # Defer removals so all tests in this round see the same neighbors.
++                pending_removals = []
++                for u, v in graph.edges():
++                    if (enforce_expert_knowledge is False) or ((u, v) not in expert_knowledge.required_edges):
++                        for separating_set in self._get_potential_sepsets(
++                            u, v, temporal_ordering, graph, lim_neighbors
++                        ):
++                            # If a conditioning set exists remove the edge, store the
++                            # separating set and move on to finding conditioning set for next edge.
++                            if ci_test(
++                                u,
++                                v,
++                                separating_set,
++                                significance_level=significance_level,
++                            ):
++                                separating_sets[frozenset((u, v))] = separating_set
++                                pending_removals.append((u, v))
++                                break
++                graph.remove_edges_from(pending_removals)
+ 
+             elif variant == "parallel":
+ 

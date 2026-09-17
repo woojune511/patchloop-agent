@@ -1,0 +1,12 @@
+diff --git a/pgmpy/causal_discovery/_base.py b/pgmpy/causal_discovery/_base.py
+--- a/pgmpy/causal_discovery/_base.py
++++ b/pgmpy/causal_discovery/_base.py
+@@ -303,7 +303,7 @@
+         [2] Koller & Friedman, Probabilistic Graphical Models - Principles and Techniques, 2009
+             Section 3.4.2.1 (page 85), Algorithm 3.3
+         """
+-        # Initialize initial values and structures.
++        # Initialize PC values and structures.
+         lim_neighbors = 0
+         separating_sets = dict()
+         if independencies is not None:

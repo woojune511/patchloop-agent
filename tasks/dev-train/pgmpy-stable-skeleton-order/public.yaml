@@ -1,0 +1,129 @@
+schema_version: task-public-v1
+task_id: pgmpy-stable-skeleton-order
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/pgmpy/pgmpy.git
+  base_commit: da98466c0a79cb416562e450d85699aedc10f422
+  language: python
+issue:
+  title: PC stable skeleton changes with column order
+  description: |
+    The stable variant of PC._build_skeleton currently depends on column/edge
+    iteration order. Removing one edge changes the available neighbors for other edges
+    tested at the same conditioning-set size. The stable algorithm must use the neighbors
+    available at the start of each conditioning round, then refresh them for the next round.
+
+    Given a deterministic symmetric conditional-independence (CI) callback, stable must
+    produce the correct skeleton for every column order. For the public three-node example,
+    B is independent of C unconditionally, A is independent of B given C, and A is independent
+    of C given B. All other callback decisions are dependent. At max_cond_vars=1 no edges
+    remain; at max_cond_vars=0 only B-C is removed. Sorting traversal order alone is not a fix.
+
+    Preserve the node set, original input data/columns, conditioning-depth limit, significance
+    level passed to the callback, and valid separating-set witnesses for each removed edge.
+    Refresh neighbors between conditioning rounds: nodes disconnected in an earlier round
+    must not remain available as later separators. Preserve existing required/forbidden edge
+    enforcement and temporal-order restrictions. Keep orig as the existing original algorithm
+    and preserve parallel behavior. Do not require one particular implementation strategy or
+    introduce public API, dependency or test-file changes. If several valid separators exist,
+    any valid witness is acceptable; their enumeration order need not be identical.
+constraints:
+  allowed_paths:
+  - pgmpy/causal_discovery/**
+  forbidden_paths:
+  - pgmpy/tests/**
+  - tests/**
+  - docs/**
+  - .patchloop-hidden/**
+  - pyproject.toml
+  max_changed_files: 2
+  max_diff_lines: 120
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+- id: stable-skeleton-contract
+  command:
+  - /opt/conda/envs/testbed/bin/python
+  - -c
+  - |
+    """Public deterministic PC examples; symmetric CI decisions avoid sampled-data noise."""
+
+    import itertools
+    import json
+
+    import pandas as pd
+    import pgmpy.causal_discovery._base as module
+    from pgmpy.causal_discovery import PC
+
+
+    def ci(left, right, conditioning, **kwargs):
+        pair, given = frozenset((left, right)), frozenset(conditioning)
+        return ((pair == frozenset("BC") and not given)
+                or (pair == frozenset("AB") and given == frozenset("C"))
+                or (pair == frozenset("AC") and given == frozenset("B")))
+
+
+    def main():
+        assert module.__file__.startswith("/workspace/pgmpy/")
+        failures = 0
+        cases = 0
+        for order in itertools.permutations("ABC"):
+            data = pd.DataFrame({name: [0, 1, 0, 1] for name in order})
+            for depth in (0, 1):
+                graph, sepsets = PC()._build_skeleton(
+                    data, ci_test=ci, variant="stable", max_cond_vars=depth, show_progress=False)
+                actual = sorted("".join(sorted(edge)) for edge in graph.edges())
+                expected = ["AB", "AC"] if depth == 0 else []
+                actual_sepsets = {"".join(sorted(pair)): sorted(given) for pair, given in sepsets.items()}
+                expected_sepsets = {"BC": []}
+                if depth == 1:
+                    expected_sepsets.update({"AB": ["C"], "AC": ["B"]})
+                passed = (actual == expected and actual_sepsets == expected_sepsets
+                          and set(graph) == set(order) and list(data.columns) == list(order))
+                cases += 1
+                failures += not passed
+                print(json.dumps({"order": "".join(order), "max_cond_vars": depth,
+                    "passed": passed, "expected_edges": expected, "actual_edges": actual,
+                    "expected_separating_sets": expected_sepsets,
+                    "actual_separating_sets": actual_sepsets}, sort_keys=True))
+        print(f"{cases - failures} passed, {failures} failed")
+        return int(failures > 0)
+
+
+    if __name__ == "__main__":
+        raise SystemExit(main())
+  timeout_seconds: 30
+  environment:
+    PYTHONPATH: /workspace
+    OMP_NUM_THREADS: '1'
+    OPENBLAS_NUM_THREADS: '1'
+- command:
+  - /opt/conda/envs/testbed/bin/python
+  - -m
+  - pytest
+  - -q
+  - -p
+  - no:cacheprovider
+  - -o
+  - addopts=
+  - pgmpy/tests/test_causal_discovery/test_PC.py::test_build_skeleton
+  - pgmpy/tests/test_causal_discovery/test_PC.py::test_build_skeleton_from_ind[orig]
+  - pgmpy/tests/test_causal_discovery/test_PC.py::test_build_skeleton_from_ind[stable]
+  - pgmpy/tests/test_causal_discovery/test_PC.py::test_skeleton_to_pdag
+  - pgmpy/tests/test_causal_discovery/test_PC.py::test_temporal_ordering_sepsets_and_skeleton
+  environment:
+    OMP_NUM_THREADS: '1'
+    OPENBLAS_NUM_THREADS: '1'
+    PYTHONPATH: /workspace
+  expected_exit_codes:
+  - 0
+  id: upstream-pc-regression
+  output_limit_bytes: 200000
+  timeout_seconds: 90
+  working_directory: .
+tags:
+- dev-head
+- real-repository
+- causal-discovery
+- development-only

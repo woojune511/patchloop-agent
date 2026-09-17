@@ -1,0 +1,24 @@
+diff --git a/pgmpy/causal_discovery/_base.py b/pgmpy/causal_discovery/_base.py
+--- a/pgmpy/causal_discovery/_base.py
++++ b/pgmpy/causal_discovery/_base.py
+@@ -331,6 +331,7 @@
+ 
+         # Exit condition: 1. If all the nodes in graph has less than `lim_neighbors` neighbors.
+         #             or  2. `lim_neighbors` is greater than `max_conditional_variables`.
++        round_graph = graph.copy()
+         while not all([len(list(graph.neighbors(var))) < lim_neighbors for var in variables]):
+             # Step 2: Iterate over the edges and find a conditioning set of
+             # size `lim_neighbors` which makes u and v independent.
+@@ -353,11 +354,10 @@
+                                 break
+ 
+             elif variant == "stable":
+-                # In case of stable, precompute neighbors as this is the stable algorithm.
+                 for u, v in graph.edges():
+                     if (enforce_expert_knowledge is False) or ((u, v) not in expert_knowledge.required_edges):
+                         for separating_set in self._get_potential_sepsets(
+-                            u, v, temporal_ordering, graph, lim_neighbors
++                            u, v, temporal_ordering, round_graph, lim_neighbors
+                         ):
+                             # If a conditioning set exists remove the edge, store the
+                             # separating set and move on to finding conditioning set for next edge.

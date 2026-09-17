@@ -1,0 +1,12 @@
+diff --git a/pgmpy/causal_discovery/_base.py b/pgmpy/causal_discovery/_base.py
+--- a/pgmpy/causal_discovery/_base.py
++++ b/pgmpy/causal_discovery/_base.py
+@@ -354,7 +354,7 @@
+ 
+             elif variant == "stable":
+                 # In case of stable, precompute neighbors as this is the stable algorithm.
+-                for u, v in graph.edges():
++                for u, v in sorted(graph.edges()):
+                     if (enforce_expert_knowledge is False) or ((u, v) not in expert_knowledge.required_edges):
+                         for separating_set in self._get_potential_sepsets(
+                             u, v, temporal_ordering, graph, lim_neighbors

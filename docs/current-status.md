@@ -6,7 +6,48 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Fromager development task registered with independent acceptance controls
+## Current seam: pgmpy task registered; both selected development problems have evaluators
+
+`pgmpy-stable-skeleton-order` v1 is the second new dev-train package. It fixes the task
+boundary around stable PC conditioning rounds: same-round edge removals must not change
+the available separators for later edges, while later rounds use updated neighbors.
+The exact source commit and existing image stay fixed. The only production runtime
+change is one exact pgmpy URL allowlist entry; model, policies, tools and limits stay fixed.
+
+The unchanged base passes all seven selected upstream tests and six public depth-zero
+observations, but fails all six depth-one column-order observations. Production isolated
+evaluation accepts a batch-removal reference three times and a graph-copy alternative
+once. It rejects seven semantic controls and one forbidden-file control; safety PASS
+12/12. The independent oracle covers 150 deterministic observations, including deeper
+conditioning, expert constraints and original/parallel preservation. No upstream gold
+or test patch was used. These are admission controls, not model-performance results.
+
+Prepared source and independent offline run/evaluation clones verify. All 38 real Docker
+checks have confirmed cleanup. The matrix invocation, including its public base check,
+takes 215.874s. Selection/prepared checkout byte differences are only CRLF/LF in 701 files;
+their exact commit/tree match and the selection checkout remains unchanged. Focused
+validation passes 47 tests in 25.095s; final repository evidence is recorded externally.
+
+Full regression covers all 120 files: 2500 PASS, eight skips, zero failures in
+633.354s wall time, with durations retained. Four skips are real-Docker opt-ins and
+four are unsupported context/planning combinations. Both policies pass the existing
+CSV mock through mutation, public checks, submission and isolated evaluation; all
+eight actual inputs preserve public task/diff/check state and exclude prepared-source
+metadata. Ruff and documentation checks pass; owned pytest scratch is recycled.
+
+The [task audit](../tasks/dev-train/pgmpy-stable-skeleton-order/audit.md) records the source,
+contracts and control matrix. All 3214 protected records and the user's AGENTS.md remain
+unchanged. Provider/count calls=0, model cost=$0, Docker start/pull/build=0, all official=false.
+Report: `C:\pt\analyses\pgmpy-registration-20260917-v1\result.md`.
+
+Next: freeze the first Fromager/pgmpy observation with the established exact configuration,
+one fresh run per task and the separate proposed $2.40 group cap. This registration
+does not dispatch or reserve it; previous experiment groups remain closed. Use public
+traces and aggregate acceptance for later analysis, without private case or reference
+injection. Neither task admission nor the earlier selected-success replication proves
+generalization or establishes a new model/context default.
+
+## Prior seam: Fromager development task registered with independent acceptance controls
 
 `fromager-recursive-orphan-removal` v1 is the first new dev-train package from the
 two-task selection. The exact Fromager base and existing digest-pinned image remain

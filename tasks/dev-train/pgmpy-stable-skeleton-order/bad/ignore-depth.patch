@@ -1,0 +1,33 @@
+diff --git a/pgmpy/causal_discovery/_base.py b/pgmpy/causal_discovery/_base.py
+--- a/pgmpy/causal_discovery/_base.py
++++ b/pgmpy/causal_discovery/_base.py
+@@ -353,7 +353,8 @@
+                                 break
+ 
+             elif variant == "stable":
+-                # In case of stable, precompute neighbors as this is the stable algorithm.
++                # Defer removals so all tests in this round see the same neighbors.
++                pending_removals = []
+                 for u, v in graph.edges():
+                     if (enforce_expert_knowledge is False) or ((u, v) not in expert_knowledge.required_edges):
+                         for separating_set in self._get_potential_sepsets(
+@@ -368,8 +369,9 @@
+                                 significance_level=significance_level,
+                             ):
+                                 separating_sets[frozenset((u, v))] = separating_set
+-                                graph.remove_edge(u, v)
++                                pending_removals.append((u, v))
+                                 break
++                graph.remove_edges_from(pending_removals)
+ 
+             elif variant == "parallel":
+ 
+@@ -399,7 +401,7 @@
+ 
+             # Step 3: After iterating over all the edges, expand the search space by increasing the size
+             #         of conditioning set by 1.
+-            if lim_neighbors >= max_cond_vars:
++            if lim_neighbors >= 5:
+                 logger.info("Reached maximum number of allowed conditional variables. Exiting")
+                 break
+             lim_neighbors += 1

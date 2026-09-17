@@ -40,6 +40,7 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/youssofal/MTPLX",
     "https://github.com/pdm-project/pdm.git",
     "https://github.com/pdm-project/pdm",
+    "https://github.com/pgmpy/pgmpy.git",
     "https://github.com/pytest-dev/pyfakefs.git",
     "https://github.com/pytest-dev/pyfakefs",
     "https://github.com/python-wheel-build/fromager.git",

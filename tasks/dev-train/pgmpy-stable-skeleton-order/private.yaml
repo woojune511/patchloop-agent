@@ -1,0 +1,25 @@
+schema_version: task-private-v2
+task_id: pgmpy-stable-skeleton-order
+task_version: 1
+hidden_checks:
+- id: independent-stable-rounds
+  command:
+  - /opt/conda/envs/testbed/bin/python
+  - /workspace/.patchloop-hidden/check_stable_skeleton.py
+  timeout_seconds: 30
+  environment:
+    PYTHONPATH: /workspace
+    OMP_NUM_THREADS: '1'
+    OPENBLAS_NUM_THREADS: '1'
+hidden_artifacts:
+- path: hidden/check_stable_skeleton.py
+  sha256: sha256:4b716d97227f49d111bf659bf8d326e282d7387510378990e33d553066f4e50d
+reference_patch:
+  path: reference.patch
+  sha256: sha256:685f5721fff72a697c86eb783cb338ed482d4ab07253719a72d66687d143db8d
+audit:
+  expected_files:
+  - pgmpy/causal_discovery/_base.py
+  prohibited_behaviors:
+  - Change original/parallel semantics or bypass expert constraints and depth limits.
+  - Modify tests, evaluator files, dependency metadata or public APIs.

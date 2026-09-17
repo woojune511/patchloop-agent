@@ -1,0 +1,26 @@
+diff --git a/pgmpy/causal_discovery/_base.py b/pgmpy/causal_discovery/_base.py
+--- a/pgmpy/causal_discovery/_base.py
++++ b/pgmpy/causal_discovery/_base.py
+@@ -353,7 +353,8 @@
+                                 break
+ 
+             elif variant == "stable":
+-                # In case of stable, precompute neighbors as this is the stable algorithm.
++                # Defer removals so all tests in this round see the same neighbors.
++                pending_removals = []
+                 for u, v in graph.edges():
+                     if (enforce_expert_knowledge is False) or ((u, v) not in expert_knowledge.required_edges):
+                         for separating_set in self._get_potential_sepsets(
+@@ -367,9 +368,10 @@
+                                 separating_set,
+                                 significance_level=significance_level,
+                             ):
+-                                separating_sets[frozenset((u, v))] = separating_set
+-                                graph.remove_edge(u, v)
++                                pass
++                                pending_removals.append((u, v))
+                                 break
++                graph.remove_edges_from(pending_removals)
+ 
+             elif variant == "parallel":
+ 
