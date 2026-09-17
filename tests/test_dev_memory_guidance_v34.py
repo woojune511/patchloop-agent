@@ -135,7 +135,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # The optional requirement reference changes the overall surface identity; older
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:3737908a77663b6a1b9f30ba09bd2c7889f7e3b49234cec790135a197a72e909"
+        "sha256:75ec35443ad69fc52a69d83c9045a5a0bbac852529bdbcb3cd1c8f75f3fd3ea8"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

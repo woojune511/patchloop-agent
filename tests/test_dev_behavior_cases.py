@@ -243,6 +243,18 @@ def test_actual_inputs_keep_both_cases_with_check_result_and_reach_isolated_eval
     assert review["mutation_expectation"]["diff_hash"] == final["current_diff"]["patch_hash"]
     assert final["visible_check_status"][0]["status"] == "PASS"
     assert "finish_task" in final["available_tool_names"]
+    guidance = final["completion_guidance"]
+    assert guidance["submission_ready"]
+    if invalid:
+        assert guidance["next_action"] == {"tool": "finish_task"}
+        assert "verification_choice" not in guidance
+    else:
+        assert guidance["next_action"] is None
+        choice = guidance["verification_choice"]
+        assert choice["case_record_hash"] == sha256_json(annotation)
+        assert {row["tool"] for row in choice["available_actions"]} == {
+            "read_file", "search_files", "finish_task",
+        }
 
 
 def test_only_mutation_schema_adds_bounded_optional_cases():

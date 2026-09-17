@@ -591,6 +591,7 @@ def _workflow_gate(summary: Any, *, ready_to_submit: bool) -> str:
 
 def _completion_guidance(
     snapshot: DevGatewayStateSnapshot, policy: _ToolPolicy,
+    *, mutation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Describe an offered next action, without executing it or changing admission."""
     allowed = policy.allowed_tools
@@ -633,12 +634,51 @@ def _completion_guidance(
             f"Run one remaining visible check for the current diff: {check_id}. "
             "Use run_check; PASS on a different diff does not count toward completion."
         )
-    return {
+    guidance = {
         "diff_hash": snapshot.diff.patch_hash,
         "submission_ready": snapshot.ready_to_submit,
         "next_action": next_action,
         "message": message,
     }
+    cases = mutation.get("behavior_cases", {}) if mutation else {}
+    review_tools = [tool for tool in ("read_file", "search_files", "run_probe") if tool in allowed]
+    if (snapshot.ready_to_submit and "finish_task" in allowed and review_tools
+            and mutation is not None and mutation.get("diff_hash") == snapshot.diff.patch_hash
+            and cases.get("status") == "recorded"):
+        # Case presence is not a coverage verdict. Let the model choose among
+        # affordable public verification and submission without preselecting finish.
+        guidance["next_action"] = None
+        guidance["message"] = (
+            "Required visible checks pass; submission is eligible. Compare the recorded "
+            "change and preservation setups with actual check inputs and outcomes before "
+            "choosing further verification or finish_task. Keep the implementation trigger "
+            "fixed when examining a preservation case outside the required scope. "
+            "An unexercised case remains untested; no extra action or annotation is required."
+        )
+        purposes = {
+            "read_file": (
+                "Inspect relevant public fixture setup and assertions located by "
+                "recent_checks.evidence_review."
+            ),
+            "search_files": "Locate public setup or assertions needed to assess a recorded case.",
+            "run_probe": (
+                "Test a discriminating public input with base Python and the standard library. "
+                "Project dependencies are unavailable; a reduction does not verify "
+                "the project implementation."
+            ),
+            "finish_task": (
+                "Submit the checked diff when further available verification "
+                "would not change the decision."
+            ),
+        }
+        guidance["verification_choice"] = {
+            "cases_ref": "last_successful_mutation.behavior_cases",
+            "case_record_hash": sha256_json(cases),
+            "coverage_status": "not_assessed",
+            "available_actions": [{"tool": tool, "purpose": purposes[tool]}
+                                  for tool in [*review_tools, "finish_task"]],
+        }
+    return guidance
 
 
 def _minimum_completion_calls(
@@ -1221,9 +1261,12 @@ def _build_context(
         ) if key in row}
         for row in recent_inspections
     ]
+    mutation = gateway.actionable_last_successful_mutation(diff_hash=summary.patch_hash)
     payload = {
         "workflow_gate": active_policy.workflow_gate,
-        "completion_guidance": _completion_guidance(active_snapshot, active_policy),
+        "completion_guidance": _completion_guidance(
+            active_snapshot, active_policy, mutation=mutation,
+        ),
         "visible_check_status": list(active_snapshot.visible_check_status),
         "remaining_visible_check_ids": list(active_snapshot.remaining_visible_check_ids),
         "remaining_budget": {
@@ -1317,9 +1360,7 @@ def _build_context(
         "commitment_signal": commitment_signal,
         "available_tool_names": sorted(active_policy.allowed_tools),
         "last_failed_mutation": gateway.last_failed_mutation,
-        "last_successful_mutation": gateway.actionable_last_successful_mutation(
-            diff_hash=summary.patch_hash
-        ),
+        "last_successful_mutation": mutation,
         "current_diff": {
             "patch": summary.patch,
             "patch_hash": summary.patch_hash,

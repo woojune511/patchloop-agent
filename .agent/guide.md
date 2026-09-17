@@ -122,10 +122,16 @@ Derive `completion_guidance` from the already prepared gateway snapshot and actu
 offered policy, without re-executing checks or modifying admission. Project workflow
 gate, this guidance, current check table and remaining IDs first. A current FAIL or
 empty diff points to an offered repair/evidence action; an unchecked candidate names
-an offered remaining check; a ready candidate names `finish_task`. This is advisory,
-not proof that a supported semantic repair exists or that all public behavior was tested.
-At submission eligibility, mention an optional discriminating public experiment only
-when `run_probe` is actually offered; otherwise name finish without inventing an action.
+an offered remaining check; a ready candidate normally names `finish_task`. When the
+current accepted mutation has recorded behavior cases and inspection/probe tools remain
+offered, set `next_action=null` and give `verification_choice`: reference the existing
+case record and hash, retain `coverage_status=not_assessed`, and list only offered
+read/search/probe actions plus finish. Ask the model to compare recorded setups with
+actual public check inputs/outcomes, holding the implementation trigger fixed when
+examining preserved behavior outside the required scope. Case presence is not coverage.
+Absent, invalid, stale or older-diff cases retain the existing completion guidance;
+closed tools stay closed. Mention the base-Python/stdlib probe limit only when offered:
+project dependencies are unavailable and a reduction does not verify project code.
 No review call, annotation, experiment quota or new gate is required. Keep guidance in the
 latest native
 view even when historical attempt cards are omitted. Label retained check summaries
@@ -947,7 +953,27 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: P8 confirms live case delivery; scope and verification gaps persist.
+Current seam: submission eligibility offers case verification without selecting finish.
+Current-diff recorded behavior_cases plus offered review tools produce next_action=null
+and a bounded verification_choice (existing record/hash, not_assessed, offered actions only).
+Case/check setup comparison is advisory; keep the implementation trigger fixed when checking
+preservation outside the required scope. No extra action, gate or annotation is required.
+Absent/invalid/stale/older cases retain prior guidance; tool closure and required checks hold.
+Probe choices state the existing stdlib-only limit, without changing dependencies or images.
+P8's actual last input selected finish while cases/review remained; influence is unproven.
+Read-only projection replay confirms the input change, without model/candidate execution.
+Focused 70 PASS/43.451s; Ruff. Full 2630 PASS/
+8 existing SKIP, 126 files, 815.169s with durations.
+Append/segmented durable mocks each reach isolated EVALUATOR_PASS in 4 turns/5 tools.
+Native-output case references, public task/diff/check delivery, restart and direct finish pass.
+Both initial test-fixture failures are retained and corrected. All 8 tool schemas unchanged;
+derived identity v43. System/task/plan/probe/segment/cost/admission behavior stays unchanged.
+Protected 5,285 files and user AGENTS unchanged. Provider/count/Docker=0, credentials unread,
+cost=$0; official=false; live acceptance NOT_RUN. P8's FAIL and closed cap remain unchanged.
+Next observation: concrete preservation verification and resulting action, no efficacy claim.
+See C:\pt\analyses\completion-verification-choice-20260918-v1\result.md.
+
+Prior seam: P8 confirms live case delivery; scope and verification gaps persist.
 One same-P7 gpt-5.4-2026-03-05/medium run settles acceptance FAIL/safety PASS.
 The recorded/unverified change/preserve/scope_basis reaches all 3 post-edit inputs and
 both same-diff check reviews. All 9 request hashes and public task/diff/check delivery pass.

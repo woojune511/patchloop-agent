@@ -6,7 +6,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: P8 delivers structured cases; scope verification remains incomplete
+## Current seam: Verification choices before submission advice
+
+When the current accepted mutation has recorded behavior cases and review tools remain
+offered, eligible submission no longer preselects finish_task. A bounded verification_choice
+references the existing record/hash and lists only available read/search/probe/finish actions.
+It asks the model to compare case setups with actual check inputs/outcomes, keeping the
+implementation trigger fixed while examining preserved behavior outside the required scope.
+Coverage remains not_assessed. Further action/annotation is optional and direct submission
+remains eligible. Missing, invalid, stale or older-diff cases and closed tools preserve the
+previous guidance. Required checks, budgets and tool admission remain unchanged.
+
+P8's last actual input selected finish_task despite recorded unverified cases and available
+review tools. Its effect on the model's immediate submission is a hypothesis. A read-only
+before/after projection of that public state confirms the new choices, without rerunning P8.
+Existing stdlib-only probe limits are stated only when probe is offered; dependency/image
+support is unchanged. P8 did not attempt a probe, so that limit is not established as its cause.
+
+Focused 70 PASS / 43.451s; Ruff PASS. Full regression:
+2630 PASS / 8 existing SKIP, all 126 files,
+815.169s with durations. Both durable context mocks reach isolated
+EVALUATOR_PASS in 4 turns / 5 tools, with guidance and public task/diff/check delivery verified.
+Native-output references, restart, closed-tool behavior and direct finish are tested.
+Two initial new-test fixture failures were corrected; original logs remain.
+All 8 tool schemas are unchanged; derived guidance identity is v43. System prompt,
+task, plan, probe/segment behavior, costs and gates remain unchanged.
+All 5,285 protected files and user AGENTS.md remain unchanged. Provider/count/Docker calls=0,
+credentials unread, cost=$0, official=false, live acceptance NOT_RUN. P8 stays FAIL and closed.
+Next observation should measure concrete preservation verification and the resulting action;
+this local validation does not demonstrate improved model behavior or acceptance.
+Evidence: `C:\pt\analyses\completion-verification-choice-20260918-v1\result.md`.
+
+## Prior seam: P8 delivers structured cases; scope verification remains incomplete
 
 One authorized same-P7 observation completes with acceptance FAIL / safety PASS,
 official=false. The model records change/preserve/scope_basis on its one accepted edit.

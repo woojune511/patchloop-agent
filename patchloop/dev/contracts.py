@@ -25,7 +25,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = "none") -> str:
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v42",
+            "schema_version": "dev-tool-surface-v43",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
@@ -87,7 +87,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "mutation_anchor_guidance": "smallest-sufficient-exact-observed-text-v1",
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_guidance": "diff-currency-and-actual-action-space-v1",
-            "completion_guidance": "eligible-submission-with-optional-public-uncertainty-v3",
+            "completion_guidance": "current-case-verification-choice-without-selected-finish-v4",
             "public_failure_recurrence": "semantic-site-with-raw-fallback-v1",
             "causal_revision_guidance": "advisory-hypothesis-review-v2",
             "failed_check_repair_action_space": "budget-only-public-inspection-v2",
