@@ -95,8 +95,107 @@ def test_exact_unicode_multiline_excerpt_and_public_only_hash():
         "task_id": task.task_id, "task_version": task.task_version,
         "public_task_hash": sha256_json(task.model_dump(mode="json")),
         "field": "issue.description", "excerpt": excerpt,
+        "source_span": {"start": task.issue.description.index(excerpt),
+                        "end": task.issue.description.index(excerpt) + len(excerpt)},
+        "match_mode": "exact",
     }
     assert receipt["validation_scope"] == "public_source_identity_only"
+
+
+@pytest.mark.parametrize("space", ["\n", "\r\n", "\t", "  ", "\u00a0"])
+def test_whitespace_only_match_retains_original_unicode_source_span(space):
+    task = public_task()
+    original = f"모든{space}입력을{space}유지한다."
+    task.issue.description = f"Before. {original} After."
+    receipt = references.bind(cited("  모든 입력을 유지한다. \n"), task)
+    assert receipt["status"] == "matched"
+    reference = receipt["reference"]
+    assert reference["excerpt"] == original
+    assert reference["match_mode"] == "whitespace"
+    assert reference["source_span"] == {"start": 8, "end": 8 + len(original)}
+    assert reference["public_task_hash"] == sha256_json(task.model_dump(mode="json"))
+    assert references.project(receipt, task) == receipt
+
+
+def test_exact_excerpt_keeps_its_edge_whitespace():
+    task = public_task()
+    task.issue.description = "Intro.\nKeep all inputs.\nOutro."
+    excerpt = "\nKeep all inputs.\n"
+    reference = references.bind(cited(excerpt), task)["reference"]
+    assert reference["excerpt"] == excerpt and reference["match_mode"] == "exact"
+    assert reference["source_span"] == {"start": 6, "end": 24}
+
+
+@pytest.mark.parametrize(("description", "excerpt"), [
+    ("Keep inputs. Keep inputs.", "Keep inputs."),
+    ("Keep\ninputs. Keep inputs.", "Keep inputs."),
+    ("one one one", "one one"),
+])
+def test_ambiguous_normalized_occurrences_including_overlaps_are_rejected(description, excerpt):
+    task = public_task()
+    task.issue.description = description
+    assert references.bind(cited(excerpt), task) == {
+        "status": "invalid", "diagnostics": ["ambiguous_excerpt"],
+        "validation_scope": "public_source_identity_only",
+    }
+
+
+@pytest.mark.parametrize("excerpt", [
+    "Keep every input.", "keep all inputs.", "Keep all inputs!", "Keepall inputs.",
+    "Keep a ll inputs.", "Keep .* inputs.",
+])
+def test_whitespace_matching_never_changes_words_case_punctuation_or_token_boundaries(excerpt):
+    task = public_task()
+    task.issue.description = "Keep\nall inputs."
+    assert references.bind(cited(excerpt), task)["diagnostics"] == ["excerpt_mismatch"]
+
+
+def test_original_source_expansion_respects_the_existing_excerpt_bound():
+    task = public_task()
+    task.issue.description = "Keep" + " " * 600 + "inputs."
+    assert references.bind(cited("Keep inputs."), task)["diagnostics"] == [
+        "source_excerpt_too_long"]
+
+
+@pytest.mark.parametrize("span", [None, {"start": -1, "end": 2}, {"start": 0, "end": 999},
+                                  {"start": False, "end": 2}, {"start": 1, "end": 4}])
+def test_saved_source_span_is_validated_without_silently_finding_a_new_one(span):
+    task = public_task()
+    receipt = references.bind(cited(), task)
+    receipt["reference"]["source_span"] = span
+    frozen = copy.deepcopy(receipt)
+    assert references.project(receipt, task)["status"] == "stale"
+    assert receipt == frozen
+
+
+def test_legacy_receipts_keep_admission_result_without_new_matching():
+    task = public_task()
+    receipt = references.bind(cited(), task)
+    del receipt["reference"]["source_span"]
+    del receipt["reference"]["match_mode"]
+    task.issue.description = f"{DESCRIPTION}\n{DESCRIPTION}"
+    receipt["reference"]["public_task_hash"] = sha256_json(task.model_dump(mode="json"))
+    assert references.bind(cited(), task)["diagnostics"] == ["ambiguous_excerpt"]
+    assert references.project(receipt, task) == receipt
+    old_invalid = {"status": "invalid", "diagnostics": ["excerpt_mismatch"],
+                   "validation_scope": "public_source_identity_only"}
+    task.issue.description = "Keep\ninputs."
+    assert references.bind(cited("Keep inputs."), task)["status"] == "matched"
+    assert references.project(old_invalid, task) == old_invalid
+
+
+def test_ambiguous_reference_remains_nonblocking_and_replays_its_original_result(tmp_path):
+    gateway = setup_gateway(tmp_path)
+    gateway.public_task.issue.description = f"{DESCRIPTION}\n{DESCRIPTION}"
+    call = _mutation("ambiguous-reference")
+    call.arguments["requirement_ref"] = cited()
+    result = gateway.execute(call)
+    assert result.status == "succeeded"
+    assert result.output["mutation"]["requirement_reference"]["diagnostics"] == [
+        "ambiguous_excerpt"]
+    _completed_check(gateway, "check")
+    assert gateway.ready_to_submit()
+    assert _restart(gateway).execute(call).output == result.output
 
 
 @pytest.mark.parametrize("change", ["task_id", "task_version", "description", "checks"])
@@ -239,6 +338,7 @@ def test_crash_recovery_preserves_admission_reference_and_single_mutation(
     tmp_path, monkeypatch, boundary, stale,
 ):
     gateway = setup_gateway(tmp_path)
+    gateway.public_task.issue.description = DESCRIPTION.replace(" ", "\n")
     call = _mutation("interrupted")
     call.arguments["requirement_ref"] = cited()
     append = DevJournal.append
@@ -272,6 +372,7 @@ def test_crash_recovery_preserves_admission_reference_and_single_mutation(
                      if event["event_type"] == "action_started"
                      and event["payload"]["action_id"] == call.action_id)
     original = copy.deepcopy(admission["mutation_requirement_reference"])
+    assert original["reference"]["match_mode"] == "whitespace"
     restored = _restart(gateway)
     if stale:
         restored.public_task.issue.description += " New public requirement."
@@ -303,9 +404,9 @@ def test_reference_schema_is_optional_annotation_on_mutations_only():
 
 
 @pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
-@pytest.mark.parametrize("valid", [False, True])
+@pytest.mark.parametrize("reference_kind", ["invalid", "exact", "whitespace"])
 def test_actual_inputs_deliver_requirement_expectation_pair_without_extra_actions(
-    tmp_path, monkeypatch, context_policy, valid,
+    tmp_path, monkeypatch, context_policy, reference_kind,
 ):
     supplied = []
 
@@ -316,7 +417,11 @@ def test_actual_inputs_deliver_requirement_expectation_pair_without_extra_action
             for call in turn.tool_calls:
                 if call.name == "replace_text":
                     value = {"task_id": task["task_id"], "excerpt": task["issue"]["description"]}
-                    call.arguments["requirement_ref"] = value if valid else {"excerpt": ["invalid"]}
+                    if reference_kind == "whitespace":
+                        value["excerpt"] = " ".join(value["excerpt"].split())
+                    call.arguments["requirement_ref"] = (
+                        value if reference_kind != "invalid" else {"excerpt": ["invalid"]}
+                    )
                     supplied.append((value, call.arguments["expected_behavior"]))
             return turn
 
@@ -349,9 +454,13 @@ def test_actual_inputs_deliver_requirement_expectation_pair_without_extra_action
     annotation = expectation["requirement_reference"]
     assert expectation["expected_behavior"] == supplied[0][1]
     assert expectation["interpretation_status"] == "model_authored_unverified"
-    if valid:
+    if reference_kind != "invalid":
         assert annotation["status"] == "matched"
-        assert annotation["reference"]["excerpt"] == supplied[0][0]["excerpt"]
+        reference = annotation["reference"]
+        span = reference["source_span"]
+        assert reference["excerpt"] == final["public_task"]["issue"]["description"][
+            span["start"]:span["end"]]
+        assert reference["match_mode"] == reference_kind
         assert annotation["reference"]["public_task_hash"] == sha256_json(final["public_task"])
     else:
         assert annotation["status"] == "invalid" and "reference" not in annotation

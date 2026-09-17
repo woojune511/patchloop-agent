@@ -247,15 +247,27 @@ even incomplete/incorrect interpretations as unverified model data under existin
 Check-time expectations and evidence_review keep their existing currency and delivery.
 
 `replace_text.requirement_ref` is an optional annotation: null or `{task_id, excerpt}`.
-Copy a nonblank exact substring of `public_task.issue.description` (at most 600 characters)
-and its task_id. The gateway binds the current public task version and canonical public-task
+Copy a nonblank excerpt of `public_task.issue.description` (at most 600 characters)
+and its task_id. Whitespace runs may differ, including line breaks, tabs and Unicode
+whitespace; every non-whitespace character remains exact, including case and punctuation.
+The excerpt must identify one unique span under that rule, including overlapping matches
+and an exact occurrence beside a whitespace variant. Ambiguous excerpts remain invalid.
+The gateway retains the original source text, not the normalized quotation, and binds
+`source_span` with zero-based, end-exclusive Python character offsets plus `match_mode`
+(`exact` or `whitespace`). Exact matches retain their original edge whitespace. Both the
+submitted excerpt and retained source text must fit the existing 600-character limit.
+The gateway binds the current public task version and canonical public-task
 hash at action admission; the model does not calculate hashes. The admission receipt is
 retained with the accepted mutation and the existing matching-diff `mutation_expectation`.
 Source identity is the only validation: a real quotation can accompany an incorrect
 interpretation or an irrelevant check. Missing, malformed, mismatched and stale references
 yield bounded annotation diagnostics; they never block an otherwise valid edit or finish.
 No reference is inherited from an earlier edit. Saved references are never silently rebound
-to changed public task content, and old receipts are never rewritten. Legacy calls may omit
+to changed public task content, and old receipts are never rewritten. New source spans are
+validated against the bound original text; legacy receipts without offsets retain their
+existing projection behavior. Previously invalid exact-match receipts remain invalid during
+pending or completed recovery. Raw request arguments retain their action/intent hashes;
+normalization is only reference resolution. Legacy calls may omit
 the field without changing their input/intent hashes; legacy pending actions and completed
 replays keep their original wire behavior. The public task input itself is unchanged.
 
@@ -916,7 +928,23 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: P6 tests the optional reference on one fresh P4-equivalent medium run.
+Current seam: whitespace-only requirement matching binds unique original source spans.
+The optional resolver keeps exact non-whitespace characters, rejects ambiguous/overlapping
+matches and bounds both submitted/original text at600 characters. Admission stores original
+text, Python character offsets and match mode; task hash/version and legacy receipt behavior
+remain intact. Matching never changes raw action/intent hashes or edit/finish authority.
+The frozen P6 quote resolves locally to [246,520); its historical invalid receipt/FAIL stay
+unchanged. Source resolution does not fix the observed scope-interpretation gap.
+Focused98 PASS/83.47s, Ruff; full2592 PASS/8 existing SKIP, all124 files/
+735.145s with durations. Append/segmented durable mocks reach isolated EVALUATOR_PASS,
+four mock turns/five tools each, with original reference/expectation delivery verified.
+Eight schema variants change only the reference description; system prompt/task/policies,
+segment rules, exact mutation anchors, budgets and gates stay unchanged. Tool identity v41.
+Protected4645 and user AGENTS unchanged; provider/count/Docker0, cost$0, official=false.
+No paid follow-up or semantic/quality claim; no mandatory annotation/check stage added.
+See C:\pt\analyses\public-requirement-whitespace-20260918-v1\result.md.
+
+Prior seam: P6 tests the optional reference on one fresh P4-equivalent medium run.
 Acceptance FAIL/safety PASS; seven model/count calls,14 tools,one edit at call4,
 two public checks PASS,zero probes. Cost$0.4376315 ($0.6254075 uncached equivalent),
 max input45982,three segments,no limit stop; new$1.20 cap and unused funds closed.

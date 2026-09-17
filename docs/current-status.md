@@ -6,7 +6,32 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: P6 attempts the reference; task acceptance remains FAIL
+## Current seam: Whitespace-only requirement references retain the original source
+
+Optional requirement_ref now permits whitespace-run differences while keeping all other
+characters exact. A quote must identify one unique source interval, including overlapping
+occurrences and an exact spelling beside another whitespace variant. The receipt retains
+the original text, character offsets and match mode under the existing public-task hash.
+Both submitted and retained text stay within 600 characters. Ambiguous or changed wording,
+invalid spans and stale task identity remain diagnostic failures; edits and finish stay
+nonblocking. Legacy receipts and raw action/intent hashes preserve their original contract.
+
+The frozen P6 quote now resolves locally to the original span [246,520), including its
+three line breaks. P6's original invalid receipt, FAIL result and closed cap are unchanged.
+This fixes reference matching only; provider-profile scope interpretation and discriminating
+verification remain unresolved. A valid quotation does not certify expected_behavior.
+
+Focused 98 PASS in 83.47s; Ruff passes. Full regression: 2592 PASS / 8
+existing skips across all 124 files in 735.145s, with durations recorded.
+Append and segmented durable mocks both reach isolated EVALUATOR_PASS in four mock turns
+and five tools, preserving original source/span and the requirement/expectation review.
+Eight policy combinations differ only in reference description; system prompt, task bytes,
+plan/probe/segment behavior, mutation anchors, budgets and gates remain unchanged.
+All 4645 protected files and user AGENTS.md are unchanged. Provider/count/Docker calls=0,
+credentials unread, cost=$0, official=false. No new live acceptance or quality claim.
+Evidence: `C:\pt\analyses\public-requirement-whitespace-20260918-v1\result.md`.
+
+## Prior seam: P6 attempts the reference; task acceptance remains FAIL
 
 One fresh `gpt-5.4-2026-03-05`/medium observation uses the same P4 task, prepared
 source, request settings and system prompt. Only the optional requirement-reference
