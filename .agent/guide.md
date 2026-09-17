@@ -902,7 +902,22 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: pre-edit guidance distinguishes the public task's required scope from
+Current seam: P4 receives current scope guidance in all eight actual inputs but settles
+acceptance FAIL/safety PASS. Eight model/count calls, 13 tools, one edit at call5 and
+two passing public checks cost $0.420928 ($0.604960 uncached equivalent). Both expectation
+reviews/check links are delivered. Before any segment boundary, the first public plan
+already treats field mode as sufficient scope; it omits an otherwise matching profile
+without the provider-specific requirement from its preservation cases. The shared
+serializer patch introduces no separate requirement predicate. Provider/serializer reads
+precede the edit; no post-edit inspection or probe occurs. No resource limit ends P4.
+This public mismatch is not hidden-assertion attribution or a causal P3/P4 comparison.
+Operator27 PASS/Ruff; unchanged runtime reuses 2534 PASS/eight skips and both isolated
+mock PASS receipts. Protected3839 files unchanged. P4 and unused cap closed; official=false.
+Next proposed diagnostic holds runtime/task/source/model fixed and changes medium to
+high reasoning for one separately bounded observation; configuration-only, not executed.
+See C:\pt\analyses\preedit-pydantic-observation-20260917-v1\result.md.
+
+Prior seam: pre-edit guidance distinguishes the public task's required scope from
 the proposed implementation trigger. Existing basis/hypothesis/plan and expected_behavior
 carry a contrast that could reveal an overly broad edit; uncertain equivalence stays
 uncertain, and absent task boundaries are not invented. No schemas, planning policies,

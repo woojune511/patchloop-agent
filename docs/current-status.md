@@ -6,7 +6,44 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Pre-edit guidance separates task scope from the proposed trigger
+## Current seam: P4 receives scope guidance but still broadens the required condition
+
+The fresh P4 observation settles acceptance FAIL/safety PASS, with PASS/planned=0/1,
+one start/submission, NOT_RUN=0 and no infrastructure or uncertainty stop. It uses the
+same Pydantic AI task, prepared source and GPT-5.4/medium settings as P3, on the
+pre-edit guidance runtime at ce88ce9. Eight model/count calls and 13 tools cost
+$0.420928 ($0.604960 uncached equivalent). One edit occurs at call5; both public
+checks pass, with eight synthetic observations and 18 upstream tests. No rejection
+or probe occurs. Maximum input is 43,527 tokens; three segments use initial and
+major_result_reviewed reasons. No resource or context limit ends the run.
+
+All eight actual inputs receive the current system guidance and exact public
+task/diff/check state. Both expectation reviews and existing check links are delivered.
+The first public plan already treats field mode and a nonempty field name as sufficient
+scope, before any segment transition. Expected behavior preserves existing thinking,
+non-field modes and messages without tool calls, but omits the otherwise matching
+field-mode profile without the provider-specific requirement. The shared serializer
+patch introduces no separate requirement predicate. This is a public scope mismatch,
+not attribution of a particular hidden assertion.
+
+The model reads the provider and serializer before editing. It performs no post-edit
+inspection or probe, then submits after both checks pass while tools and budget remain.
+The final check review contains 1267 characters and no delivered test-source ranges.
+P4 does not demonstrate the targeted scope distinction or discriminating preservation
+case. One selected observation and the P3/P4 history do not establish causal efficacy.
+
+Operator tests27 and Ruff pass. The unchanged runtime reuses its hash-bound regression
+coverage of 2534 PASS/eight skips, including the recorded Windows path recheck, and both
+isolated mock PASS receipts. All 3839 protected prior files and user AGENTS.md are
+preserved. No retry, resume, replacement, extra candidate or hidden-detail inspection;
+official=false. P4 and its unused cap are closed.
+
+Next candidate: hold runtime/task/source/model fixed and change reasoning_effort from
+medium to high for one separately bounded observation of the initial interpretation.
+Only configuration validity is checked; this proposal is not executed or an efficacy
+claim. Report: `C:\pt\analyses\preedit-pydantic-observation-20260917-v1\result.md`.
+
+## Prior seam: Pre-edit guidance separates task scope from the proposed trigger
 
 The existing mutation guidance now starts with the public condition requiring a change
 and distinguishes it from the code condition that would trigger that change. The existing
