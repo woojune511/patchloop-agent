@@ -292,6 +292,7 @@ class EvaluationEngine:
             PROBE_IMAGE_DIGEST,
             PROBE_TIMEOUT_SECONDS,
             probe_execution_policy,
+            probe_profile,
             probe_profile_hash,
         )
 
@@ -301,7 +302,7 @@ class EvaluationEngine:
         policy_hashes: list[str] = []
         if (
             manifest.probe_image_digest != PROBE_IMAGE_DIGEST
-            or manifest.probe_profile_hash != probe_profile_hash()
+            or manifest.probe_profile_hash != probe_profile_hash(manifest.probe_dependencies)
         ):
             integrity_errors.append("probe manifest profile or image differs from runtime")
         if len(manifest.probe_evidence) != manifest.probe_execution_count:
@@ -372,6 +373,7 @@ class EvaluationEngine:
                 effective_timeout_seconds=effective,
                 row_deadline_limited=limited,
                 cleanup_status="confirmed",
+                profile=probe_profile(manifest.probe_dependencies),
             )
             if actual != expected:
                 violations.append(f"{label}: requested probe policy was violated")
@@ -421,7 +423,8 @@ class EvaluationEngine:
             from patchloop.sandbox.probes import PROBE_IMAGE_DIGEST, probe_profile_hash
 
             identity.update(
-                probe_image_digest=PROBE_IMAGE_DIGEST, probe_profile_hash=probe_profile_hash(),
+                probe_image_digest=PROBE_IMAGE_DIGEST,
+                probe_profile_hash=probe_profile_hash(manifest.probe_dependencies),
             )
         return backend, digest, sha256_json(identity)
 

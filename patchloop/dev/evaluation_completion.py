@@ -152,6 +152,7 @@ def load_evaluation_completion(
         "sandbox_backend": envelope.sandbox_backend,
         "probe_image_digest": envelope.probe_image_digest,
         "probe_profile_hash": envelope.probe_profile_hash,
+        "probe_dependencies": envelope.probe_dependencies,
         "created_at": envelope.created_at,
         "submitted_patch_content_hash": completion.artifacts["submitted_patch"].content_hash,
         "visible_check_diff_hash": completion.artifacts["submitted_patch"].content_hash,

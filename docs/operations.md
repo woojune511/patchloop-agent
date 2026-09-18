@@ -69,6 +69,23 @@ revalidates the source, while terminal/completed-evaluation recovery remains met
 Without this option the existing workspace path is unchanged. Prepared source, run
 workspaces and descriptors are durable external evidence, not disposable pytest state.
 
+## Prepare public probe dependencies
+
+For probes that import project libraries, prepare a public wheel selection from the
+exact source lock, then run `patchloop task prepare-probe-dependencies <task-dir>
+--prepared-source <prepared-source.json> --wheel-lock <selection.json>
+--output <new-external-directory>`. This requires an existing `uv` installation.
+Add `--enable-probes --prepared-probe-dependencies <prepared-probe-dependencies.json>`
+to the fully specified dev request. Preparation can download exact public PyPI wheels;
+execution only uses verified local copies in the existing clean Python image.
+
+Source roots select the project trees copied into the probe and precede dependencies
+for imports. Dynamic project versions use explicit source-snapshot metadata; release
+version behavior is outside this environment's guarantee. Missing or changed bundles
+fail preflight without a fallback. See the [preparation contract](../.agent/prepared-probe-dependencies.md)
+for wheel selection, bounds, source omissions and recovery. These are durable external
+artifacts; task evaluator images are never used for arbitrary probe programs.
+
 ## Segmented comparison packet preparation
 
 `diagnostics.segmented_pilot` only prepares/inspects a fresh external packet; it

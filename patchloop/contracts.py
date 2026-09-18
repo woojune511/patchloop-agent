@@ -252,6 +252,27 @@ class ModelConfig(StrictModel):
     output_price_per_million_usd: float | None = Field(default=None, ge=0)
 
 
+class ProbeDependencyIdentity(StrictModel):
+    manifest_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    python: Literal["3.12"] = "3.12"
+    platform: Literal["linux/amd64"] = "linux/amd64"
+    source_roots: list[str] = Field(default_factory=list, max_length=8)
+
+    @field_validator("source_roots")
+    @classmethod
+    def public_import_roots(cls, values: list[str]) -> list[str]:
+        if len(values) != len(set(values)):
+            raise ValueError("probe source roots must be unique")
+        for value in values:
+            safe_relative_path(value, field_name="probe source root")
+            if any(part.casefold().startswith(".env")
+                   or part.casefold() in {".git", ".patchloop-hidden"}
+                   for part in value.split("/")):
+                raise ValueError("probe source root is not public")
+        return values
+
+
 class RunManifest(StrictModel):
     schema_version: Literal["dev-manifest-v1"] = "dev-manifest-v1"
     official: Literal[False] = False
@@ -289,6 +310,9 @@ class RunManifest(StrictModel):
     )
     probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
+    probe_dependencies: ProbeDependencyIdentity | None = Field(
+        default=None, exclude_if=lambda value: value is None,
+    )
     probe_execution_count: int = Field(default=0, ge=0, le=100)
     probe_evidence: list[Artifact] = Field(default_factory=list, max_length=100)
     created_at: datetime
@@ -311,6 +335,8 @@ class RunManifest(StrictModel):
             raise ValueError("local manifests cannot claim an evaluator image digest")
         if (self.probe_image_digest is None) != (self.probe_profile_hash is None):
             raise ValueError("probe manifests require both image and profile identities")
+        if self.probe_dependencies is not None and self.probe_profile_hash is None:
+            raise ValueError("probe dependencies require enabled probe identities")
         return self
 
 

@@ -106,6 +106,7 @@ from patchloop.errors import (
     ResumeContractMismatch,
 )
 from patchloop.git_execution import GitExecutionUncertain, run_git
+from patchloop.prepared_probe_dependencies import admit, load_dependencies
 from patchloop.prepared_source import admission_hash, load_source
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import (
@@ -414,6 +415,7 @@ def _manifest(
     created_at: Any,
     harness_git_commit: str,
     probe_evidence: list[Artifact] | None = None,
+    probe_dependencies=None,
 ) -> RunManifest:
     return RunManifest(
         run_id=run_id,
@@ -430,9 +432,11 @@ def _manifest(
         tool_surface_hash=dev_tool_surface_hash(
             planning_policy=request.planning_policy, probe_policy=request.probe_policy,
         ),
-        sandbox_identity_hash=_sandbox_identity_hash(request, package),
+        sandbox_identity_hash=_sandbox_identity_hash(request, package, probe_dependencies),
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
-        probe_profile_hash=probe_profile_hash() if request.enable_probes else None,
+        probe_profile_hash=(probe_profile_hash(probe_dependencies)
+                            if request.enable_probes else None),
+        probe_dependencies=probe_dependencies,
         probe_evidence=probe_evidence or [],
         probe_execution_count=len(probe_evidence or []),
         submitted_patch_content_hash=submitted_patch_hash,
@@ -591,7 +595,7 @@ def _workflow_gate(summary: Any, *, ready_to_submit: bool) -> str:
 
 def _completion_guidance(
     snapshot: DevGatewayStateSnapshot, policy: _ToolPolicy,
-    *, mutation: dict[str, Any] | None = None,
+    *, mutation: dict[str, Any] | None = None, probe_environment: dict | None = None,
 ) -> dict[str, Any]:
     """Describe an offered next action, without executing it or changing admission."""
     allowed = policy.allowed_tools
@@ -671,6 +675,12 @@ def _completion_guidance(
                 "would not change the decision."
             ),
         }
+        if probe_environment is not None:
+            purposes["run_probe"] = (
+                "Test a discriminating public input against current project code using the "
+                "prepared public dependencies and source import roots described by run_probe. "
+                "Compare the actual result; a reduction alone does not verify project code."
+            )
         guidance["verification_choice"] = {
             "cases_ref": "last_successful_mutation.behavior_cases",
             "case_record_hash": sha256_json(cases),
@@ -1266,6 +1276,7 @@ def _build_context(
         "workflow_gate": active_policy.workflow_gate,
         "completion_guidance": _completion_guidance(
             active_snapshot, active_policy, mutation=mutation,
+            probe_environment=getattr(gateway.probe_sandbox, "environment", None),
         ),
         "visible_check_status": list(active_snapshot.visible_check_status),
         "remaining_visible_check_ids": list(active_snapshot.remaining_visible_check_ids),
@@ -2749,7 +2760,7 @@ def _credential_file_path_hash(request: DevRunRequest) -> str | None:
     return sha256_bytes(str(request.env_file.resolve()).encode("utf-8"))
 
 
-def _sandbox_identity_hash(request: DevRunRequest, package: Any) -> str:
+def _sandbox_identity_hash(request: DevRunRequest, package: Any, probe_dependencies=None) -> str:
     environment = package.environment if request.provider == "openai" else None
     return sha256_json(
         {
@@ -2758,7 +2769,7 @@ def _sandbox_identity_hash(request: DevRunRequest, package: Any) -> str:
             "image_digest": environment.image_digest if environment else None,
             **({
                 "probe_image_digest": PROBE_IMAGE_DIGEST,
-                "probe_profile_hash": probe_profile_hash(),
+                "probe_profile_hash": probe_profile_hash(probe_dependencies),
             } if request.enable_probes else {}),
         }
     )
@@ -2776,6 +2787,7 @@ def _run_envelope(
     cost_start_nanos: int,
     created_at: Any | None = None,
     prepared_source_hash: str | None = None,
+    probe_dependencies=None,
 ) -> DevRunEnvelope:
     return DevRunEnvelope(
         run_id=run_id,
@@ -2788,12 +2800,15 @@ def _run_envelope(
         prepared_source_path=(str(request.prepared_source.resolve())
                               if request.prepared_source is not None else None),
         prepared_source_hash=prepared_source_hash,
+        prepared_probe_dependencies_path=(str(request.prepared_probe_dependencies.resolve())
+                                          if request.prepared_probe_dependencies else None),
+        probe_dependencies=probe_dependencies,
         public_spec_hash=package.public_spec_hash,
         private_spec_hash=package.private_spec_hash,
         task_content_hash=package.task_content_hash,
         runtime_hash=runtime_hash,
         model_hash=model_hash,
-        sandbox_identity_hash=_sandbox_identity_hash(request, package),
+        sandbox_identity_hash=_sandbox_identity_hash(request, package, probe_dependencies),
         repair_recheck=request.repair_recheck,
         planning_policy=request.planning_policy,
         probe_policy=request.probe_policy,
@@ -2802,7 +2817,8 @@ def _run_envelope(
                           if request.context_policy == segments.POLICY else None),
         compaction_contract=native_compaction.policy_contract(request),
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
-        probe_profile_hash=probe_profile_hash() if request.enable_probes else None,
+        probe_profile_hash=(probe_profile_hash(probe_dependencies)
+                            if request.enable_probes else None),
         model=request.model,
         reasoning_effort=request.reasoning_effort,
         credential_file_path_hash=_credential_file_path_hash(request),
@@ -3338,6 +3354,8 @@ def _run_one(
                 cost_start_nanos=envelope.cost_start_nanos,
                 created_at=envelope.created_at,
                 prepared_source_hash=envelope.prepared_source_hash,
+                probe_dependencies=(envelope.probe_dependencies
+                                    if request.prepared_probe_dependencies is not None else None),
             )
             _validate_resume_envelope(envelope, expected)
             if cost_ledger is not None:
@@ -3363,6 +3381,7 @@ def _run_one(
                 cost_ledger=cost_ledger,
                 cost_start_nanos=cost_start_nanos,
                 prepared_source_hash=admission_hash(request.prepared_source),
+                probe_dependencies=admit(request.prepared_probe_dependencies),
             )
             journal.write_envelope(envelope)
             journal.append(
@@ -3673,7 +3692,13 @@ def _run_one_active(
         else:
             sandbox = LocalSandbox()
         if request.enable_probes:
-            probe_sandbox = DockerProbeSandbox()
+            dependencies = (
+                load_dependencies(request.prepared_probe_dependencies, package.public,
+                                  envelope.probe_dependencies)
+                if request.prepared_probe_dependencies is not None else None
+            )
+            probe_sandbox = (DockerProbeSandbox(dependencies=dependencies)
+                             if dependencies is not None else DockerProbeSandbox())
             if remaining_active_seconds() > 0:
                 identity = probe_sandbox.preflight(deadline=deadline)
                 if identity != {
@@ -3683,6 +3708,14 @@ def _run_one_active(
                     raise ContractError(
                         "probe preflight identity differs from the admitted envelope"
                     )
+                if dependencies is not None and not any(
+                    event["event_type"] == "probe_dependencies_bound" for event in journal.events()
+                ):
+                    journal.append("probe_dependencies_bound", {
+                        "identity": envelope.probe_dependencies.model_dump(mode="json"),
+                        "repository_url": package.public.repository.url,
+                        "base_commit": package.public.repository.base_commit,
+                    })
     except (ExecutionDeadlineExceeded, GitExecutionUncertain):
         raise
     except PatchLoopError as exc:
@@ -4060,6 +4093,7 @@ def _run_one_active(
             read_paths=policy.targeted_read_paths,
             planning_policy=request.planning_policy,
             probe_policy=request.probe_policy,
+            probe_environment=getattr(gateway.probe_sandbox, "environment", None),
         )
         turn_payload = {
             "turn_id": turn_id,
@@ -4673,6 +4707,7 @@ def _run_one_active(
         created_at=envelope.created_at,
         harness_git_commit=harness_git_commit,
         probe_evidence=probe_evidence,
+        probe_dependencies=envelope.probe_dependencies,
     )
     manifest_text = canonical_json(manifest.model_dump(mode="json")) + "\n"
     manifest_artifact = artifact_store.put_text(manifest_text, "application/json")

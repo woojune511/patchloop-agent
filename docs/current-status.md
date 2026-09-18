@@ -2,11 +2,48 @@
 
 `dev-head` is the only active coding-agent runtime. It is mutable, development-only,
 and always records `official=false`. The available commands are `patchloop dev`,
-`patchloop doctor`, `patchloop task validate`, and `patchloop task prepare-source`;
+`patchloop doctor`, `patchloop task validate`, `patchloop task prepare-source`, and
+`patchloop task prepare-probe-dependencies`;
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: A public contrast reproduces P9's overbroad profile condition
+## Current seam: Public dependencies for current-project probes
+
+Opt-in `--prepared-probe-dependencies` connects public source-locked wheels to the
+existing clean Python probe sandbox. Preparation downloads exact hashed public PyPI
+wheels and installs them offline into a new external bundle; the descriptor publishes
+last. Run admission, active resume and each independent probe copy verify identity and
+contents. Missing/changed/wrong-source bundles fail before model calls with no fallback.
+Envelope, journal, probe profile and isolated evaluation provenance bind the same source.
+
+Configured source roots precede dependencies. With nonempty roots, the probe copies root
+files and those source trees, omitting other trees and tracked symlinks without following
+targets. This handles the real repository's document links and 229.8 MB of test data while
+retaining the 128 MiB source cap. The model receives the capability and source limits,
+not local preparation paths. Default stdlib mode and tool argument schemas stay unchanged.
+There is no evaluator-image reuse, runtime installation, image acquisition or Docker start.
+Existing process/network, check/finish, cost, plan and context-policy gates remain intact.
+
+Workspace imports receive minimal public name/version metadata without build-hook
+execution. Dynamic versions are explicitly marked source-snapshot identifiers; release
+version semantics and complete package metadata are not reproduced.
+
+Focused88 PASS/36.667s and Ruff PASS. Both durable dependency mocks reach isolated
+EVALUATOR_PASS in 5 turns/6 tools with public task/diff/check state, environment guidance
+and read-only terminal replay verified. Real clean-image probes reproduce the full public
+contrast: base ordinary2/2, provider0/2; exact P9 ordinary0/2, provider2/2. Both import the
+current source, enforce process/write isolation and confirm cleanup. P9's executable
+changed lines are observed; line entry itself is not semantic coverage. Full regression:
+all128 files, 2695 PASS/5 stale identity expectations/8 SKIP, 930.269s with durations.
+The five v44 identity expectations were updated and all5 passed in 1.641s on unchanged
+runtime bytes: resolved2700 PASS/8 SKIP. Original failure records remain; this is not a
+second full run. Final Ruff PASS.
+Provider/count calls=0, credentials unread, model cost=$0, official=false. This implements
+an execution capability; improved model choices and task acceptance remain untested.
+See [the preparation contract](../.agent/prepared-probe-dependencies.md).
+Evidence: `C:\pt\analyses\prepared-probe-dependencies-20260918-v1`.
+
+## Prior seam: A public contrast reproduces P9's overbroad profile condition
 
 A fixed operator diagnostic now executes the actual project implementation with installed
 dependencies, using two fresh prepared-source workspaces and the existing registered-check

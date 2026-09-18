@@ -298,7 +298,7 @@ An explicitly enabled `run_probe` lets the model test a concrete public uncertai
 with a small Python program. It runs against a separate read-only export of current
 tracked public source in a pinned clean Python image. The tool description makes explicit
 that accepted edits are importable from read-only `/workspace`, with writable `/tmp`
-scratch. Only base Python and public project code are supplied; dependencies cannot be
+scratch. By default, only base Python and public project code are supplied; dependencies cannot be
 installed and network access is absent. The host selects the image,
 mounts, command, execution limits, and trusted wrapper. The program and its output
 are diagnostic evidence: a successful probe grants no visible-check or submission
@@ -306,6 +306,13 @@ credit, and a failure may be a defect in the experiment itself. Experiments are 
 included in the submitted patch. Each costs one model turn and one tool action and
 is available only when the remaining protected completion budget still fits afterward.
 The capability is off by default and requires explicit `--enable-probes` configuration.
+
+Optional prepared public dependencies let probes import the current project and public
+libraries offline in the same clean sandbox. The operator selects source-locked wheels
+and source roots before the run; the model receives the resulting capability and limits.
+Snapshots, identity checks and isolated evaluation provenance bind those dependencies.
+This does not provide the evaluator environment or make a passing experiment a correctness
+verdict. See [public dependency preparation](operations.md#prepare-public-probe-dependencies).
 
 Experimental `--probe-policy cases-v1` additionally connects a completed public JSON
 observation to a model-written candidate program and saves that program for explicit

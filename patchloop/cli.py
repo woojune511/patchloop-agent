@@ -71,6 +71,10 @@ def dev(
     prepared_source: Annotated[
         Path | None, typer.Option("--prepared-source", help="Use an immutable prepared source.")
     ] = None,
+    prepared_probe_dependencies: Annotated[
+        Path | None, typer.Option("--prepared-probe-dependencies",
+                                  help="Use immutable public wheel dependencies for probes.")
+    ] = None,
     enable_probes: Annotated[
         bool, typer.Option("--enable-probes", help="Enable bounded clean-Python diagnostics.")
     ] = False,
@@ -120,6 +124,7 @@ def dev(
                 max_cost_usd=_parse_cost(max_cost_usd),
                 repeat=repeat,
                 prepared_source=prepared_source,
+                prepared_probe_dependencies=prepared_probe_dependencies,
                 enable_probes=enable_probes,
                 probe_policy=probe_policy,
                 repair_recheck=repair_recheck,
@@ -171,6 +176,27 @@ def prepare_task_source(
             deadline=ExecutionDeadline.from_remaining(120),
         )
         return {"ok": True, "prepared_source": str(path), "content_hash": admission_hash(path)}
+
+    _guarded(operation)
+
+
+@task_app.command("prepare-probe-dependencies")
+def prepare_task_probe_dependencies(
+    task_dir: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+    prepared_source: Annotated[Path, typer.Option("--prepared-source")],
+    wheel_lock: Annotated[Path, typer.Option("--wheel-lock")],
+    output: Annotated[Path, typer.Option("--output")],
+) -> None:
+    """Prepare source-locked public wheels for the existing clean probe image."""
+    from patchloop.prepared_probe_dependencies import prepare_dependencies
+    from patchloop.task_loader import load_public_task
+
+    def operation():
+        path = prepare_dependencies(
+            public=load_public_task(task_dir / "public.yaml"), prepared_source=prepared_source,
+            wheel_lock=wheel_lock, output=output,
+        )
+        return {"ok": True, "prepared_probe_dependencies": str(path)}
 
     _guarded(operation)
 

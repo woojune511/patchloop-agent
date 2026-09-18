@@ -7,6 +7,7 @@ source is deliberately not AST-filtered: Docker and the wrapper are the boundary
 
 from __future__ import annotations
 
+import json
 import os
 import stat
 import subprocess
@@ -16,8 +17,10 @@ import time
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO
 
+from patchloop.contracts import ProbeDependencyIdentity
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
+from patchloop.prepared_probe_dependencies import MOUNT, PreparedDependencies
 from patchloop.sandbox.execution_feedback import (
     MAX_REPORT_BYTES,
     TRACE_WRAPPER,
@@ -41,7 +44,7 @@ _CLEANUP_SECONDS = 5.0
 _WRAPPER = Path(__file__).resolve().parents[2] / "docker" / "probe_runner.py"
 
 
-def probe_profile() -> dict[str, object]:
+def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[str, object]:
     return {
         "version": "docker-python-probe-v1",
         "image": PROBE_IMAGE,
@@ -65,13 +68,16 @@ def probe_profile() -> dict[str, object]:
         "source_limit_bytes": PROBE_SOURCE_LIMIT_BYTES,
         "timeout_seconds": PROBE_TIMEOUT_SECONDS,
         "output_limit_bytes": PROBE_OUTPUT_LIMIT_BYTES,
-        "snapshot": "tracked-public-current-v1",
+        "snapshot": ("tracked-public-source-roots-current-v2" if dependencies is not None
+                     else "tracked-public-current-v1"),
         "snapshot_limit_bytes": _SNAPSHOT_LIMIT_BYTES,
+        **({"dependencies": dependencies.model_dump(mode="json"),
+            "dependency_mount": f"{MOUNT}:readonly"} if dependencies is not None else {}),
     }
 
 
-def probe_profile_hash() -> str:
-    return sha256_json(probe_profile())
+def probe_profile_hash(dependencies: ProbeDependencyIdentity | None = None) -> str:
+    return sha256_json(probe_profile(dependencies))
 
 
 def probe_execution_policy(
@@ -104,7 +110,8 @@ def _is_public_path(relative: str) -> bool:
     )
 
 
-def _snapshot(workspace: Path, target: Path, deadline: ExecutionDeadline | None) -> str:
+def _snapshot(workspace: Path, target: Path, deadline: ExecutionDeadline | None, *,
+              omit_symlinks: bool = False, source_roots: list[str] | None = None) -> str:
     """Export tracked current bytes without copying Git metadata or ignored state."""
     timeout = deadline.bounded_timeout(10, reserve_seconds=5) if deadline else 10
     listing = subprocess.run(
@@ -124,6 +131,13 @@ def _snapshot(workspace: Path, target: Path, deadline: ExecutionDeadline | None)
         mode, _object_id, stage = metadata.decode("ascii").split()
         relative = path_bytes.decode("utf-8")
         if not _is_public_path(relative):
+            continue
+        if source_roots and "/" in relative and not any(
+            relative.startswith(f"{source_root}/") for source_root in source_roots
+        ):
+            continue
+        if mode == "120000" and stage == "0" and omit_symlinks:
+            manifest.append({"path": relative, "omitted": "tracked_symlink"})
             continue
         if mode not in {"100644", "100755"} or stage != "0" or relative in seen:
             raise ContractError("probe source must contain only tracked regular files")
@@ -224,20 +238,31 @@ class DockerProbeSandbox:
 
     supports_public_execution = True
 
-    def __init__(self, image: str = PROBE_IMAGE) -> None:
+    def __init__(self, image: str = PROBE_IMAGE, *,
+                 dependencies: PreparedDependencies | None = None) -> None:
         if image != PROBE_IMAGE:
             raise ContractError("probe requires the reviewed public Python image")
         self.image = image
-        self._profile = probe_profile()
+        self.dependencies = dependencies
+        self._profile = self.current_profile()
         self._verified = False
+
+    def current_profile(self) -> dict:
+        return probe_profile(self.dependencies.identity if self.dependencies else None)
+
+    @property
+    def environment(self) -> dict | None:
+        return self.dependencies.environment if self.dependencies else None
 
     @property
     def identity(self) -> dict[str, str]:
         return {"image_digest": PROBE_IMAGE_DIGEST, "profile_hash": sha256_json(self._profile)}
 
     def preflight(self, *, deadline: ExecutionDeadline | None = None) -> dict[str, str]:
-        if probe_profile() != self._profile:
+        if self.current_profile() != self._profile:
             raise ContractError("probe trusted profile changed before preflight")
+        if self.dependencies is not None:
+            self.dependencies.verify(deadline=deadline)
         if DockerSandbox(self.image).image_identity(deadline=deadline) != PROBE_IMAGE_DIGEST:
             raise ContractError("probe public Python image is not available at its pinned digest")
         self._verified = True
@@ -300,7 +325,7 @@ class DockerProbeSandbox:
             deadline.check(reserve_seconds=_CLEANUP_SECONDS)
         if not self._verified:
             raise ContractError("probe must pass preflight before execution")
-        if probe_profile() != self._profile:
+        if self.current_profile() != self._profile:
             raise ContractError("probe trusted profile changed after preflight")
         docker = DockerSandbox.cli_path()
         if docker is None:
@@ -325,11 +350,28 @@ class DockerProbeSandbox:
                 trusted = temporary_path / "trusted"
                 snapshot.mkdir()
                 trusted.mkdir()
-                snapshot_hash = _snapshot(workspace, snapshot, deadline)
+                snapshot_hash = _snapshot(workspace, snapshot, deadline,
+                                          omit_symlinks=self.dependencies is not None,
+                                          source_roots=(self.dependencies.identity.source_roots
+                                                        if self.dependencies else None))
                 wrapper = _WRAPPER.read_bytes()
                 (trusted / "probe_runner.py").write_bytes(wrapper)
                 if sha256_bytes(wrapper) != self._profile["wrapper_hash"]:
                     raise ContractError("probe trusted wrapper changed before execution")
+                dependency_arguments = []
+                if self.dependencies is not None:
+                    dependencies = temporary_path / "dependencies"
+                    dependencies.mkdir()
+                    self.dependencies.verify(target=dependencies, deadline=deadline)
+                    (trusted / "dependencies.json").write_text(
+                        json.dumps({"import_paths": [
+                            *self.dependencies.environment["source_roots"], MOUNT,
+                        ]}), encoding="utf-8",
+                    )
+                    dependency_arguments = [
+                        "--platform", self.dependencies.identity.platform,
+                        "--mount", f"type=bind,source={dependencies},target={MOUNT},readonly",
+                    ]
                 trace_arguments = []
                 if execution_targets is not None and execution_targets["files"]:
                     prepare_trace(trusted, execution_targets)
@@ -355,6 +397,7 @@ class DockerProbeSandbox:
                     "--env", "PYTHONDONTWRITEBYTECODE=1", "--env", "PYTHONUNBUFFERED=1",
                     "--mount", f"type=bind,source={snapshot},target=/workspace,readonly",
                     "--mount", f"type=bind,source={trusted},target=/opt/patchloop,readonly",
+                    *dependency_arguments,
                     "--workdir", "/tmp", "--entrypoint", "/usr/local/bin/python",
                     self.image, "-I", "-u", "/opt/patchloop/probe_runner.py", "30",
                     *trace_arguments,

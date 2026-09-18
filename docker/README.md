@@ -59,7 +59,7 @@ runs as PID 1, compiles stdin source, forks one untrusted child, and installs a
 seccomp filter in that child. The parent retains timeout and reaping authority.
 The child cannot fork/clone/exec, signal its parent, or trace another process through
 the restricted system calls. Reserved timeout exit code `124` is distinguished from
-an agent-chosen exit code. The wrapper adds only `/workspace` to `sys.path`; a src
+an agent-chosen exit code. By default, only `/workspace` is added to `sys.path`; a src
 layout may require the probe to add its observed source root explicitly, such as
 `sys.path.insert(0, '/workspace/src')`. Project dependencies are not installed;
 unavailable imports fail as ordinary diagnostic experiments. There is no runtime
@@ -69,6 +69,16 @@ ImportError in stderr receives generic model-facing guidance to inspect the trac
 and, if useful, isolate a mechanism with the standard library. A reduction does not
 execute or verify the project implementation, and import failure alone does not test
 the intended behavior. Raw receipts, execution policy and sandbox identity are unchanged.
+
+Opt-in `--prepared-probe-dependencies` uses the same clean image and process boundary.
+The operator prepares exact public PyPI wheels from the public source's lock before the
+run. Each probe verifies an independent read-only dependency snapshot; source import
+roots precede dependencies and `.pth` hooks are not processed. Nonempty configured roots
+limit source copies to those trees and root files; tracked symlinks are omitted without
+following targets. Source size, process and output limits remain fixed. Descriptor/content
+identity and the source-selection policy enter the profile hash, envelope and evaluator
+receipt validation. No evaluator image extraction, runtime installation or network
+fallback. See [the preparation contract](../.agent/prepared-probe-dependencies.md).
 
 Each container has an exact run/action-derived name and ownership label. Timeout,
 excess output, and interruption cleanup target only that owned container, and cleanup

@@ -112,7 +112,7 @@ def test_off_schema_prompt_and_identity_are_unchanged():
         "sha256:7828bf04815955a0ec9e0b941c796d2846db4d3b54df152bafa63e6e0aee280d"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:75ec35443ad69fc52a69d83c9045a5a0bbac852529bdbcb3cd1c8f75f3fd3ea8"
+        "sha256:8663d25c9d04f584894958510fda6917f479b8036dcd18aadb292eae455985af"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
         "sha256:7bb36529bda608b9a92f663efd37a17f267655a045c26264d66d58ac27e8cca0"

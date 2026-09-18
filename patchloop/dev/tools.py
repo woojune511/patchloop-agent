@@ -145,6 +145,7 @@ def dev_tool_schemas(
     read_paths: Sequence[str] = (),
     planning_policy: str = "none",
     probe_policy: str = "none",
+    probe_environment: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     if probe_policy not in {"none", probe_cases.POLICY}:
         raise ContractError("unknown probe policy")
@@ -334,19 +335,42 @@ def dev_tool_schemas(
             }
         )
     if allowed_tools is not None and "run_probe" in allowed_tools:
+        environment_description = (
+            "Current tracked public project files, including accepted edits, are mounted "
+            "read-only at /workspace; writable scratch is /tmp. Only /workspace is added to "
+            "sys.path. For a src layout, add the observed source root explicitly, for example "
+            "sys.path.insert(0, '/workspace/src'). The environment supplies base Python and "
+            "its standard library; project dependencies are not installed, with no network "
+            "or dependency installation. If imports are unavailable, isolate the relevant "
+            "mechanism in a standard-library experiment and state its limits: that experiment "
+            "does not execute or verify the project implementation. "
+        )
+        if probe_environment is not None:
+            scope = (
+                "Repository-root files and files within the configured source trees below"
+                if probe_environment["snapshot_scope"] == "root_files_and_source_trees"
+                else "Current tracked public project files"
+            )
+            environment_description = (
+                scope + ", including accepted edits, are mounted as tracked regular files "
+                "read-only at /workspace; tracked symlinks are omitted, never followed. "
+                "Writable scratch is /tmp. Prepared public wheel "
+                "dependencies are available read-only at /opt/patchloop-dependencies with "
+                "Python 3.12. Source import roots precede dependencies: "
+                + ", ".join(probe_environment["source_roots"]) + ". "
+                "Other source trees are unavailable when configured roots are present. "
+                "Workspace distribution metadata is minimal; dynamic versions use an explicit "
+                "source-snapshot version, so release-version behavior is not verified here. "
+                "Import and exercise the current project implementation when relevant. "
+                "Network and dependency installation are unavailable. Missing imports remain "
+                "diagnostic failures; a standard-library reduction does not verify project code. "
+            )
         schemas.append({
             "type": "function",
             "name": "run_probe",
             "description": (
                 "Run a small public Python experiment in clean isolated scratch space. "
-                "Current tracked public project files, including accepted edits, are mounted "
-                "read-only at /workspace; writable scratch is /tmp. Only /workspace is added to "
-                "sys.path. For a src layout, add the observed source root explicitly, for example "
-                "sys.path.insert(0, '/workspace/src'). The environment supplies base Python and "
-                "its standard library; project dependencies are not installed, with no network "
-                "or dependency installation. If imports are unavailable, isolate the relevant "
-                "mechanism in a standard-library experiment and state its limits: that experiment "
-                "does not execute or verify the project implementation. "
+                + environment_description +
                 "Choose a public input variation that could falsify an implementation assumption, "
                 "not just repeat a registered example. State the expected observation in the "
                 "question and print or assert it in the experiment. Execution completed means "

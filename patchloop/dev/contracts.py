@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
-from patchloop.contracts import Artifact
+from patchloop.contracts import Artifact, ProbeDependencyIdentity
 from patchloop.dev import check_review, probe_cases, segments
 from patchloop.util import sha256_json
 
@@ -25,7 +25,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = "none") -> str:
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v43",
+            "schema_version": "dev-tool-surface-v44",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
@@ -116,6 +116,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "submission_guidance": "current-check-finish-versus-unsuccessful-voluntary-stop-v2",
             "working_note_source_body_chars": 24_000,
             "public_probe": "optional-clean-python-diagnostic-protected-budget-v1",
+            "public_probe_dependencies": "opt-in-public-locked-wheels-offline-snapshot-v1",
             "public_probe_discovery": "explicit-source-root-and-stdlib-reduction-limits-v2",
             "public_probe_import_guidance": "failed-stderr-import-report-model-view-v1",
             "public_probe_observation": "execution-not-behavior-model-view-v1",
@@ -356,6 +357,7 @@ class DevRunRequest(StrictModel):
     )
     state_root: Path | None = None
     prepared_source: Path | None = None
+    prepared_probe_dependencies: Path | None = None
     enable_probes: bool = False
     probe_policy: Literal["none", "cases-v1"] = "none"
     repair_recheck: bool = False
@@ -369,6 +371,8 @@ class DevRunRequest(StrictModel):
 
     @model_validator(mode="after")
     def provider_options_match(self) -> DevRunRequest:
+        if self.prepared_probe_dependencies is not None and not self.enable_probes:
+            raise ValueError("--prepared-probe-dependencies requires --enable-probes")
         if self.probe_policy != "none" and not self.enable_probes:
             raise ValueError("--probe-policy cases-v1 requires --enable-probes")
         if self.planning_policy != "none" and self.context_policy not in {
@@ -420,6 +424,12 @@ class DevRunEnvelope(StrictModel):
     base_commit: str
     prepared_source_path: str | None = None
     prepared_source_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
+    prepared_probe_dependencies_path: str | None = Field(
+        default=None, exclude_if=lambda value: value is None,
+    )
+    probe_dependencies: ProbeDependencyIdentity | None = Field(
+        default=None, exclude_if=lambda value: value is None,
+    )
     public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     task_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
@@ -466,6 +476,10 @@ class DevRunEnvelope(StrictModel):
             raise ValueError("segmented context forbids compaction")
         if (self.probe_image_digest is None) != (self.probe_profile_hash is None):
             raise ValueError("probe image and profile identities must be paired")
+        if self.prepared_probe_dependencies_path is not None and self.probe_profile_hash is None:
+            raise ValueError("prepared dependencies require enabled probes")
+        if self.probe_dependencies is not None and self.prepared_probe_dependencies_path is None:
+            raise ValueError("prepared dependency identity requires its source descriptor")
         if self.cost_start_nanos > self.max_cost_nanos:
             raise ValueError("run envelope cost start exceeds its invocation cap")
         if self.provider == "openai":

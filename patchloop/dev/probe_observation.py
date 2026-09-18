@@ -52,12 +52,20 @@ def probe_observation(result: dict[str, Any]) -> dict[str, Any]:
         line.startswith(("ModuleNotFoundError:", "ImportError:"))
         for line in output.get("stderr", "").splitlines()
     ):
+        environment_message = (
+            "Only /workspace is added to sys.path; "
+            "a src layout may need its observed source root added explicitly. Project "
+            "dependencies are not installed and cannot be installed in this probe. "
+        )
+        if output.get("execution_policy", {}).get("dependencies") is not None:
+            environment_message = (
+                "Prepared public dependencies and source import roots are available, but "
+                "additional packages cannot be installed in this probe. "
+            )
         observation["environment_guidance"] = {
             "basis": "reported_import_error",
             "message": (
-                "Stderr reports an import error. Only /workspace is added to sys.path; "
-                "a src layout may need its observed source root added explicitly. Project "
-                "dependencies are not installed and cannot be installed in this probe. "
+                "Stderr reports an import error. " + environment_message +
                 "Use the traceback to distinguish path, dependency and API errors. If imports "
                 "remain unavailable, isolate the relevant mechanism with the standard library, "
                 "print or assert the expected observation, and state the reduction's limits. "

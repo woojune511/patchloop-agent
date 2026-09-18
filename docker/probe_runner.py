@@ -186,7 +186,7 @@ def _flush_child_output(
                 flush()
 
 
-def _execute_child(code: object, collector=None) -> None:
+def _execute_child(code: object, collector=None, import_paths=None) -> None:
     stdout = sys.stdout
     stderr = sys.stderr
     try:
@@ -195,7 +195,8 @@ def _execute_child(code: object, collector=None) -> None:
         # Trusted imports above finish before public source becomes importable.
         # Work happens in ephemeral /tmp; the public snapshot is read-only.
         sys.dont_write_bytecode = True
-        sys.path.insert(0, "/workspace")
+        # Plain paths, never site.addsitedir: dependency .pth/startup hooks are not run.
+        sys.path[:0] = import_paths or ["/workspace"]
         namespace = {
             "__name__": "__main__",
             "__file__": "<patchloop-probe>",
@@ -270,12 +271,15 @@ def main() -> int:
         traceback.print_exc()
         return 1
 
+    import json
+    from pathlib import Path
+
+    configuration = Path(__file__).with_name("dependencies.json")
+    import_paths = json.loads(configuration.read_bytes())["import_paths"] if (
+        configuration.is_file()) else None
     collector = None
     if len(sys.argv) == 3:
         # Load only the host-copied stdlib collector before exposing project imports.
-        import json
-        from pathlib import Path
-
         module = runpy.run_path(str(Path(__file__).with_name("line_trace.py")))
         collector = module["LineTrace"](json.loads(Path(sys.argv[2]).read_bytes()), "/workspace")
 
@@ -285,7 +289,7 @@ def main() -> int:
         traceback.print_exc()
         return CHILD_RESERVED_EXIT_CODE
     if child_pid == 0:
-        _execute_child(code, collector)
+        _execute_child(code, collector, import_paths)
     return _wait_for_child(child_pid, timeout_seconds)
 
 

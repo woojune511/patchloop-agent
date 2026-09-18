@@ -19,6 +19,7 @@ patchloop/dev/evaluation_completion.py  durable evaluator receipt and read-only 
 patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
 patchloop/agent/model.py  journal-managed Responses adapter, zero retries
 patchloop/repository.py   audited checkout, workspace, full diff
+patchloop/prepared_probe_dependencies.py  public locked wheels and offline probe snapshots
 patchloop/git_execution.py  exact Git output, deadline and uncertain-execution boundary
 patchloop/sandbox/        registered checks and optional isolated public probes
 patchloop/sandbox/capture.py  bounded check-output drain and process/pipe teardown
@@ -130,8 +131,9 @@ read/search/probe actions plus finish. Ask the model to compare recorded setups 
 actual public check inputs/outcomes, holding the implementation trigger fixed when
 examining preserved behavior outside the required scope. Case presence is not coverage.
 Absent, invalid, stale or older-diff cases retain the existing completion guidance;
-closed tools stay closed. Mention the base-Python/stdlib probe limit only when offered:
-project dependencies are unavailable and a reduction does not verify project code.
+closed tools stay closed. Mention the actual probe environment only when offered:
+the default is base Python/stdlib; an admitted public dependency bundle permits current
+project imports. A reduction does not verify project code.
 No review call, annotation, experiment quota or new gate is required. Keep guidance in the
 latest native
 view even when historical attempt cards are omitted. Label retained check summaries
@@ -148,7 +150,7 @@ least one model call and tool action beyond the protected completion budget. It 
 characters) and Python source (8,000 characters / 32,000 UTF-8 bytes), not a command,
 image, mount, or environment supplied by the model. Its description must state that
 current tracked public files, including accepted edits, are mounted read-only at
-`/workspace`, the only added import path. A src layout may require an explicitly
+`/workspace`, by default the only added import path. A src layout may require an explicitly
 added source root after inspecting the public layout. Writable scratch is `/tmp`;
 base Python and its standard library are available, project dependencies are not
 installed, and network/dependency installation remain unavailable. When imports
@@ -158,6 +160,15 @@ not a new mount or required experiment. A probe result is diagnostic:
 it never grants source-span coverage, visible-check PASS, or finish credit, and failure
 does not force mutation or consume a check-repair allowance. See
 [the probe runtime contract](../docker/README.md) for image and isolation details.
+
+Opt-in `--prepared-probe-dependencies` requires enabled probes and a bundle prepared
+from the exact public source lock. It supplies verified per-probe read-only dependency
+copies and public source roots, with current project imports first. Nonempty roots select
+only those source trees and repository-root files. Tracked symlinks are omitted without
+following targets; other source guards remain. Bind identity in envelope, journal,
+profile, submission and evaluation provenance. Missing/changed/wrong-source bundles fail
+before model calls; no runtime downloads or evaluator-image reuse. See
+[prepared-probe-dependencies.md](prepared-probe-dependencies.md).
 
 `--probe-policy cases-v1` (requires --enable-probes, default none) extends only
 run_probe with nullable reference_action_id/case_id and nullable source/question
