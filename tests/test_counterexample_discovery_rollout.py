@@ -136,7 +136,7 @@ class Adapter:
 
 
 @pytest.fixture
-def frozen(inputs, tmp_path, monkeypatch):  # noqa: F811 - shared pytest fixture
+def frozen(inputs, tmp_path, monkeypatch, request):  # noqa: F811 - shared pytest fixture
     monkeypatch.setattr(design, "EXPECTED_HASHES", {
         name: sha256_bytes(path.read_bytes()) for name, path in inputs.paths().items()
     })
@@ -148,7 +148,7 @@ def frozen(inputs, tmp_path, monkeypatch):  # noqa: F811 - shared pytest fixture
     monkeypatch.setattr(rollout, "load_exact_openai_api_key", forbidden)
     monkeypatch.setattr(rollout, "DockerProbeSandbox", forbidden)
     parent = tmp_path / "design"
-    design.prepare(inputs, parent)
+    design.prepare(inputs, parent, review_guidance=getattr(request, "param", "original"))
     plan_root, result_root = tmp_path / "executable", tmp_path / "result"
     plan = rollout.prepare(parent, plan_root, result_root, utc_now().date().isoformat())
     return SimpleNamespace(inputs=inputs, design=parent, root=plan_root, plan=plan,
@@ -172,6 +172,7 @@ def run_mock(frozen, batches, *, fault=None, count=1000, probe_change=None,
     return result, adapter, probes
 
 
+@pytest.mark.parametrize("frozen", design.REVIEW_GUIDANCE, indirect=True)
 def test_real_request_and_public_native_feedback_reach_report_without_a_verdict(frozen):
     result, adapter, probes = run_mock(frozen, [[read_call()], [probe_call()], [report_call()]])
     assert result["terminal"] == "REPORT_RECORDED"
@@ -183,6 +184,9 @@ def test_real_request_and_public_native_feedback_reach_report_without_a_verdict(
     assert adapter.requests == adapter.counts
     initial = json.loads((frozen.design / "request.json").read_bytes())
     assert adapter.requests[0] == initial
+    guidance = rollout.read(frozen.design / "packet.json").get("review_guidance", "original")
+    assert frozen.plan.get("review_guidance", "original") == guidance
+    assert initial["input"][0]["content"] == design.review_prompt(guidance)
     for before, after in zip(adapter.requests[:-1], adapter.requests[1:], strict=True):
         assert after["input"][:len(before["input"])] == before["input"]
         assert {k: v for k, v in after.items() if k != "input"} == {
@@ -202,6 +206,7 @@ def test_real_request_and_public_native_feedback_reach_report_without_a_verdict(
 
 
 @pytest.mark.parametrize("outcome", ["no_counterexample_found", "blocked"])
+@pytest.mark.parametrize("frozen", design.REVIEW_GUIDANCE, indirect=True)
 def test_no_probe_or_positive_claim_required_for_reporting(frozen, outcome):
     result, adapter, probes = run_mock(frozen, [[report_call(
         outcome, probe_action_id=None, requirement_excerpt=None, expected=None, observed=None)]])
@@ -303,6 +308,7 @@ def test_fault_evidence_is_inspected_without_retry_or_resume(frozen, stage):
         assert result["terminal"] == "PROVIDER_TIMEOUT_OR_UNKNOWN" and len(adapter.requests) == 0
 
 
+@pytest.mark.parametrize("frozen", design.REVIEW_GUIDANCE, indirect=True)
 def test_frozen_request_tamper_rejected_before_result_creation(frozen):
     with (frozen.root / "request.json").open("ab") as stream:
         stream.write(b"changed")

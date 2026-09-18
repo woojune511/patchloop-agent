@@ -7,7 +7,31 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Discovery executes successfully but accepts a wrong expectation
+## Current seam: Optional discovery guidance connects expectations to public scope
+
+`diagnostics.counterexample_discovery prepare --review-guidance requirement-scope-v1`
+adds generic guidance for deriving a probe's expectation from the complete public
+requirement, its conditions/exceptions and the actual input's construction. It asks
+the model to check observed setup/output against that requirement before interpreting
+agreement as support. Existing question/turn-decision/report fields carry concise
+public explanations; there is no extra tool, schema, planning call or semantic gate.
+
+The default `original` request remains byte-identical to the closed observation below.
+The optional variant changes only the initial system instruction. Both design and
+executable packets bind the selection; changing or removing it invalidates the packet.
+Runtime, public task, fixed candidate, tool schemas and cost/stop rules are unchanged.
+The guidance supports interpretation; it does not validate the model's expectations.
+
+Provider-free focused verification: 70 PASS in 87.42s; shared regressions: 41 PASS in
+60.08s, including both context policies' mock isolated evaluations and actual public
+task/diff/check delivery. Fresh public preparation and independent source/dependency
+rehearsal pass; a scripted toy trace delivers guidance, read/probe feedback and report.
+This is implementation/delivery evidence, not live discovery or an efficacy claim.
+No paid sample, retry or reopening of prior records. Evidence:
+`C:\pt\analyses\counterexample-expectation-guidance-20260918-v1`.
+See [the discovery contract](../.agent/counterexample-discovery.md).
+
+## Prior seam: Discovery executes successfully but accepts a wrong expectation
 
 A fresh, separately authorized one-sample/$1.20 diagnostic is closed at runtime
 `4b2a58c8`, official=false. The original public task, exact P10 patch, model/medium,

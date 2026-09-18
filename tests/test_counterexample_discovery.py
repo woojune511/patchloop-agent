@@ -6,6 +6,7 @@ import json
 import shutil
 import socket
 import subprocess
+import sys
 from dataclasses import replace
 from pathlib import Path
 
@@ -223,3 +224,56 @@ def test_report_schema_is_strict_and_does_not_require_a_positive_claim():
         parameters["properties"]["outcome"]["enum"])
     for name in ("probe_action_id", "requirement_excerpt", "expected", "observed"):
         assert "null" in parameters["properties"][name]["type"]
+
+
+def test_guidance_changes_only_system_instruction_and_bound_metadata(offline, tmp_path):
+    original = tmp_path / "original"
+    guided = tmp_path / "guided"
+    control = design.prepare(offline, original)
+    treatment = design.prepare(offline, guided, review_guidance="requirement-scope-v1")
+    assert design.validate(original) == control
+    assert design.validate(guided) == treatment
+    assert "review_guidance" not in control
+    assert treatment["review_guidance"] == "requirement-scope-v1"
+    before = json.loads((original / "request.json").read_bytes())
+    after = json.loads((guided / "request.json").read_bytes())
+    assert before["input"][0] != after["input"][0]
+    assert before["input"][1:] == after["input"][1:]
+    after["input"][0] = before["input"][0]
+    assert design.wire(after) == design.wire(before)
+    assert {k for k in treatment if treatment[k] != control.get(k)} == {
+        "review_guidance", "request_hash", "file_hashes"}
+    assert {k for k in treatment["file_hashes"]
+            if treatment["file_hashes"][k] != control["file_hashes"][k]} == {
+        "request.json", "prompt.txt", "protocol.json"}
+
+
+@pytest.mark.parametrize("replacement", [None, "original", "unknown"])
+def test_guidance_cannot_be_removed_or_switched_in_a_frozen_packet(offline, tmp_path, replacement):
+    root = tmp_path / "packet"
+    packet = design.prepare(offline, root, review_guidance="requirement-scope-v1")
+    if replacement is None:
+        packet.pop("review_guidance")
+    else:
+        packet["review_guidance"] = replacement
+    (root / "packet.json").write_bytes(design.wire(packet))
+    with pytest.raises(ContractError, match="changed|unknown review guidance"):
+        design.validate(root)
+
+
+def test_unknown_guidance_fails_before_source_reads(tmp_path):
+    missing = design.Inputs(*(tmp_path / name for name in design.EXPECTED_HASHES))
+    with pytest.raises(ContractError, match="unknown review guidance"):
+        design.compile_packet(missing, review_guidance="unknown")
+
+
+def test_cli_prepares_selected_guidance_offline(offline, tmp_path, monkeypatch, capsys):
+    root = tmp_path / "packet"
+    args = ["prepare", "--output", str(root), "--review-guidance", "requirement-scope-v1"]
+    for name, path in offline.paths().items():
+        args.extend(["--" + name.replace("_", "-"), str(path)])
+    monkeypatch.setattr(sys, "argv", ["counterexample_discovery", *args])
+    design.main()
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "PREPARED_NOT_EXECUTABLE" and result["provider_calls"] == 0
+    assert design.validate(root)["review_guidance"] == "requirement-scope-v1"

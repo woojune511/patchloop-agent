@@ -77,7 +77,7 @@ def configuration() -> ModelConfig:
 
 def plan_for(design_root: Path, result_root: Path, pricing_verified_on: str) -> dict:
     packet = design.validate(design_root)
-    return {
+    plan = {
         "schema_version": SCHEMA, "status": "READY", **BOUNDARIES,
         "design_root": str(design_root.resolve()), "design_packet_hash": sha256_json(packet),
         "request_hash": packet["request_hash"],
@@ -95,6 +95,9 @@ def plan_for(design_root: Path, result_root: Path, pricing_verified_on: str) -> 
         "report_is_not_a_verdict": True, "no_retry_or_replacement": True,
         "fresh_request_unchanged": True,
     }
+    if "review_guidance" in packet:
+        plan["review_guidance"] = packet["review_guidance"]
+    return plan
 
 
 def prepare(design_root: Path, output: Path, result_root: Path, pricing_verified_on: str) -> dict:

@@ -5,6 +5,16 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current implementation: the fixed-candidate discovery preparer accepts optional
+`--review-guidance requirement-scope-v1`. Only the system instruction changes; it
+connects expectations to the complete public requirement and the program's actual
+setup. Default request bytes, task, tools, limits and runtime remain unchanged.
+Selection is frozen in design/executable metadata, with existing fields for public
+summaries and no new semantic gate. Focused 70 PASS/87.42s, related 41 PASS/60.08s
+(both isolated mocks), and a provider-free toy trace verify delivery; live effectiveness
+is untested. See the optional-guidance section in
+[the discovery contract](counterexample-discovery.md).
+
 Current observation: a separate fresh fixed-candidate discovery sample completes on
 the repaired probe profile (5 calls/1 probe/$0.1471595), with four offline SDK requests
 and complete cleanup. The model reports no counterexample. Its fresh ordinary field-mode
@@ -16,7 +26,7 @@ exit. New sample/budget closed, no retry or hidden evaluation. See the new obser
 section in [the discovery contract](counterexample-discovery.md). Next focus is expected
 behavior and setup provenance, with runtime and default policies unchanged.
 
-Current implementation: [bounded same-process probe threads](probe-threads.md).
+Probe implementation: [bounded same-process probe threads](probe-threads.md).
 Probe profile v2 admits checked pthread clone flags with pids=8 (supervisor, child,
 six workers); clone3 returns ENOSYS for libc fallback. Fork/exec, supervisor signals,
 network and filesystem restrictions remain. Provider-free real Docker tests reproduce

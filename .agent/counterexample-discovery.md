@@ -100,6 +100,42 @@ a fixed-candidate review change the task. Failure would leave requirement interp
 case design and execution obstacles to distinguish from the public trace. Neither result
 changes runtime defaults or establishes general model capability from one selected patch.
 
+## Optional expectation guidance
+
+Preparation accepts `--review-guidance original|requirement-scope-v1` (default original).
+The optional variant adds only a generic system-instruction paragraph. It asks the
+model to derive expectations from the complete public requirement, including scope,
+exceptions and preservation, then justify how the actual constructed input meets that
+scope. When applicability depends on origin or construction, matching attributes alone
+are insufficient. An unsupported expectation stays uncertain; the report must describe
+what the program actually exercised. No task-specific input, expected answer or prior
+diagnosis is supplied. This does not mechanically verify the model's interpretation.
+
+Existing question, turn-decision and report fields carry concise public summaries.
+There is no schema extension, compulsory extra action, new plan policy or semantic
+parser. Tools, user context, model settings, limits, native continuation and stopping
+rules are byte-identical between requests; only `input[0].content` differs. Default
+request bytes remain identical to the previous closed observation.
+
+The selected variant is bound in `packet.json`, `protocol.json` and the executable
+plan. `fresh_request_unchanged` means the collector copies its selected design's request
+without alteration; it does not mean a guided request equals the original prompt.
+Validation reconstructs the selected guidance and rejects a removed/changed selection
+or changed prompt before execution. The original form omits the optional metadata.
+Frozen implementation identities still apply; never rewrite old packets for new code.
+Read-only `inspect` continues to validate old closed journals without resuming them.
+
+The provider-free record at
+`C:\pt\analyses\counterexample-expectation-guidance-20260918-v1` contains fresh original
+and guided design packets and their exact request comparison. Neither is a new paid
+executable plan. The guided source/dependency rehearsal and scripted toy collector trace
+pass. Focused 70 PASS/87.42s covers both request variants, selection/byte tampering,
+unknown selection, CLI preparation, unchanged nullable reporting and native feedback.
+Shared regressions 41 PASS/60.08s include both context policies' isolated mock evaluations
+and actual task/diff/check delivery. Runtime-wide regression remains the unchanged
+thread-compatibility receipt; it was not repeated for an instruction-only diagnostic.
+Live model efficacy and independent discovery under this guidance remain NOT_RUN.
+
 ## Preparation and validation
 
 The external record is `C:\pt\analyses\counterexample-discovery-20260918-v1`.
