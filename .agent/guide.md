@@ -10,13 +10,21 @@ Current diagnostic: [fixed-candidate counterexample discovery](counterexample-di
 and rehearses exact candidate/dependency/read access offline. The separate
 `diagnostics.counterexample_discovery_rollout` collector reuses counted dispatch, the
 public gateway and native exchange builder; it adds an immutable executable packet and
-read-only interrupted inspection. Collector45 and shared56 tests pass; live NOT_RUN.
+read-only interrupted inspection. Collector45 and shared56 tests pass. The sole live
+sample is now closed: 7 calls/1 probe/$0.2577015, blocked report; public review
+INFRASTRUCTURE_STOP. The offline SDK attempted thread creation under the probe's process
+boundary and the resulting traceback exceeded the output cap. Cleanup and usage known.
 Only original public task and P10 patch enter the new task input, with generic
 tool/instruction support. No source-run history or P11 case/result/solution injection. Score
 an actually reproduced and publicly justified mismatch; reports need public evidence review.
 Do not infer correctness from no discovery or autonomous verification from prompted discovery.
-The executable binds one fresh result root, same-model/medium, exact `.env`, same-day
-pricing and $1.20. No retry/resume/replacement; reports await public-evidence review.
+The executable bound one fresh result root, same-model/medium, exact `.env`, same-day
+pricing and $1.20. Its slot and unused funds are closed; no retry/resume/replacement.
+The model also expected empty-field insertion on an ordinary custom field-mode profile,
+without the requiring provider profile. Preserve that expectation error separately from
+the incomplete probe; do not credit its partial output as a successful model discovery.
+Next seam: provider-free SDK initialization/probe-isolation compatibility characterization
+and fix. Do not loosen isolation or launch a replacement live sample as a side effect.
 
 ```text
 patchloop/dev/runner.py   loop composition, gates, context, terminal handling

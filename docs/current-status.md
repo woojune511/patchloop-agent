@@ -7,7 +7,43 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Independent counterexample-discovery collector connected
+## Current seam: Discovery observation closed after a probe environment failure
+
+The one approved fixed-candidate discovery sample is complete: planned1/started1,
+7 model/count calls, 11 inspections, 1 probe and 1 terminal report; official=false.
+The model reports `blocked`. Public review classifies **INFRASTRUCTURE_STOP**, with
+reproduction NOT_ESTABLISHED and task acceptance NOT_ASSESSED. No retry, replacement,
+resume or further candidate execution; the $1.20 invocation and unused funds are closed.
+
+The probe directly calls the current serializer, then attempts deferred-history replay
+through an offline OpenAI SDK client. The latter reaches SDK2.29.0's platform detection,
+which uses `asyncio.to_thread`, and fails with `RuntimeError: can't start new thread`.
+The probe profile denies clone/clone3 and has a PID limit of2. Its 12,000-byte output cap
+then truncates the traceback: `output_limit`, exit=null, cleanup confirmed. No complete
+deferred-history observation or changed-line report exists. This is an execution-capability
+boundary, not evidence of a model's inability to construct a counterexample.
+
+There is also public evidence of an expectation error: the model constructs a fresh
+ordinary `OpenAIModelProfile` in field mode with `alt_reasoning` and expects an empty
+field. It calls the observed insertion correct, despite the public task preserving
+ordinary profiles unless given the requiring provider profile. It did not derive or
+reuse that provider profile. The partial output is not credited as a reproduced finding:
+the model's expectation is unsupported and the whole probe receipt is incomplete.
+
+Recorded generation cost $0.2577015; cache-neutral $0.4425975; maximum input33355.
+No model cost/input/call/time ceiling exit. Active loop183.065s; wall289.636s including
+preflight. Fresh append-only native history; no segment transitions. All7 actual inputs
+retain the frozen task/patch, exact request settings, and preceding public tool results.
+Repeated read-only inspection passes; no probe containers remain. No hidden evaluation
+or evaluator-detail reading. Runtime, candidate and frozen preparation stay unchanged.
+
+Next: characterize and fix the SDK's local thread-initialization incompatibility with
+probe isolation using provider-free fixtures. Keep the expectation error as a separate
+finding. Any later live observation needs its own frozen input and budget; this run stays
+closed. Evidence: `C:\pt\analyses\counterexample-discovery-observation-20260918-v1` and
+the fixed raw run at `C:\pt\analyses\counterexample-discovery-live-20260918-v1`.
+
+## Prior seam: Independent counterexample-discovery collector connected
 
 A separate fresh review packet now binds the original public task and exact P10 patch,
 without P10 history/outcomes or P11's supplied contrast/solution. The initial model input

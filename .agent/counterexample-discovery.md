@@ -9,8 +9,8 @@ question from patch repair and from voluntary verification during a solve.
 
 `diagnostics.counterexample_discovery` implements `prepare`, `validate` and an offline
 `rehearse`. `diagnostics.counterexample_discovery_rollout` now implements the bounded
-collector, executable packet and read-only interrupted inspection. Paid execution is
-**NOT_RUN**; the original design packet remains unchanged.
+collector, executable packet and read-only interrupted inspection. The sole live sample
+is now **CLOSED / INFRASTRUCTURE_STOP**; the original design packet remains unchanged.
 Preparation never instantiates a provider client or reads credentials. All records are
 external, immutable files with a `dev-run-v1` preparation/rehearsal journal; `official=false`.
 The published packet is the final write. An incomplete directory cannot be reused.
@@ -120,8 +120,8 @@ Executable evidence is `C:\pt\analyses\counterexample-discovery-executable-20260
 `packet/plan.json` binds the untouched initial request and one fresh result directory.
 The module's `prepare`/`validate` commands prepare and inspect that packet; `run` requires
 both `--plan-root` and the exact `--plan-hash`. `inspect --root <result>` is read-only.
-The frozen price review must still match the UTC execution date. The live result
-directory has not been created and no credential/count/provider/Docker call has occurred.
+The frozen price review must match the UTC execution date. The live result directory was
+consumed by the 2026-09-18 observation below; it cannot be reused.
 
 Collector tests: 45 PASS/85.79s, covering native public feedback, terminal reporting,
 full output reservation, call/tool/time/input bounds, invalid tools, source/packet/CAS
@@ -129,6 +129,48 @@ identity, uncertainty, cleanup and interrupted inspection. Shared regressions: 5
 75.72s, including the real response parser and both mock isolated evaluations. A durable
 toy smoke records read -> simulated probe -> report with actual follow-up request bytes.
 It proves collector plumbing only; it is not live discovery or real probe evidence.
+
+## Closed live observation: 2026-09-18
+
+User continuation authorized the exact one-sample/$1.20 packet. The original input and
+all150 executable evidence files were verified before dispatch. Existing Docker/image
+only; no startup, pull or build. Execution at runtime/collector commit `1dfa42e7` ends
+with `REPORT_RECORDED` after 7 model/count calls, 11 reads/searches, 1 probe, 1 report.
+The model reports `blocked`; public review records `INFRASTRUCTURE_STOP`, not a successful
+discovery or a completed negative capability result. Task acceptance stays NOT_ASSESSED.
+
+The first probe follows five inspection responses. It prints current `/workspace` module
+paths and directly calls `_map_model_response`, then runs a deferred capability scenario
+using `httpx.MockTransport`. SDK2.29.0 calls `asyncify(get_platform)` before transport;
+the asyncio implementation uses `asyncio.to_thread`. Traceback reaches thread creation
+and reports `RuntimeError: can't start new thread`. Probe code denies clone/clone3 and
+uses pids_limit=2; the trace does not isolate which kernel restriction failed first.
+The traceback exceeds 12,000 captured bytes (13,008 observed), yielding output_limit,
+truncated=true and exit=null. Cleanup is confirmed; elapsed/container timeout flags are
+false. The changed-line report is unavailable. None of this establishes a task defect.
+
+Independently, the model's expected behavior is too broad. Its program creates a fresh
+ordinary `OpenAIModelProfile` in field mode with `alt_reasoning`, without a supplied
+DeepSeek profile, and expects an empty field. The original public task preserves ordinary
+profiles unless given the requiring provider profile. The supplied patch itself shows
+this unconditional field-mode insertion was newly added. The direct output matches the
+model's unsupported expectation; its final report calls that behavior correct. Public
+review records this expectation error without importing P11's check or rerunning a case.
+The partial direct output cannot satisfy the frozen complete-receipt discovery criteria.
+
+Recorded generation cost $0.2577015; cache-neutral $0.4425975; maximum input33355;
+active loop183.065s/wall289.636s. Count/billing known for all7 responses; invoice/count
+endpoint billing remains unverified. No global cost/input/call/time limit exit. Native
+history is fresh append-only with no segment transitions. All7 actual requests and prior
+public results pass the read-only delivery audit; exact candidate remains fixed, no
+untracked files, no owned probe containers. No hidden evaluator read or execution.
+
+Observation/public review: `C:\pt\analyses\counterexample-discovery-observation-20260918-v1`.
+Raw execution: `C:\pt\analyses\counterexample-discovery-live-20260918-v1`.
+The one sample and all unused funds are closed. Next work is provider-free
+characterization and correction of SDK local initialization versus probe isolation;
+retain the expectation error separately. This observation permits no automatic extra
+candidate, paid judge, retry, resume, new prompt policy or runtime default adoption.
 
 The report schema follows [OpenAI Docs strict function schemas](https://developers.openai.com/api/docs/guides/function-calling#strict-mode):
 object properties are required, optional values are nullable, and extra properties are
