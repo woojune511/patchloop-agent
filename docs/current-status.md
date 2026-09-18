@@ -7,7 +7,26 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: P11 solves the task with a supplied public profile contrast
+## Current seam: Independent counterexample-discovery input prepared
+
+A separate fresh review packet now binds the original public task and exact P10 patch,
+without P10 history/outcomes or P11's supplied contrast/solution. The initial model input
+contains the original check definitions, generic discovery instructions, current-project
+probe capability and read/search/probe/report tools. The candidate is fixed; success
+requires an executed, publicly justified mismatch, not a plan or a claimed counterexample.
+
+`diagnostics.counterexample_discovery` prepares/validates the input and rehearses local
+source/dependency/read access. The collector is not implemented; model/count/Docker calls
+and discovery remain NOT_RUN. One same-model/medium sample and $1.20 cap are proposed;
+this preparation does not reopen P10/P11 or consume unused budgets. No default change.
+Actual P10 clone/diff/read and dependency verification PASS. Focused18 PASS/5.87s,
+related76/27.77s including both mock isolated evaluations, docs3/0.12s and Ruff PASS.
+The input audit verifies exact public task/patch delivery and all175 sealed P10/P11
+evidence files unchanged. Same runtime hash; full regression reused, not rerun.
+See [the diagnostic contract](../.agent/counterexample-discovery.md) and
+`C:\pt\analyses\counterexample-discovery-20260918-v1` for frozen inputs and validation.
+
+## Prior seam: P11 solves the task with a supplied public profile contrast
 
 The separate `pydantic-ai-profile-scope-diagnostic` v1 observation reaches acceptance
 PASS/safety PASS, official=false: planned1/started1/submitted1, PASS1/1, NOT_RUN0.
