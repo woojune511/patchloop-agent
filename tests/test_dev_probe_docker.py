@@ -1,7 +1,8 @@
 """Explicit real-Docker diagnostics; never acquire images or start Docker Desktop.
 
 Run only with PATCHLOOP_TEST_REAL_PROBES=1 and an external pytest --basetemp.
-The three tests execute three probes; the first also replays its durable result.
+Each test executes a synthetic probe; the first also replays its durable result.
+The SDK test additionally requires an existing public dependency descriptor.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from patchloop.deadline import ExecutionDeadline
 from patchloop.dev.contracts import DevLimits, PublicTurnDecision, RequestedTool
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
+from patchloop.prepared_probe_dependencies import PreparedDependencies, read_descriptor
 from patchloop.runtime import repository_root
 from patchloop.sandbox.probes import PROBE_IMAGE_DIGEST, DockerProbeSandbox
 from patchloop.sandbox.runner import DockerSandbox
@@ -302,4 +304,176 @@ def test_real_probe_shortened_deadline_and_cleanup(real_probe_session, real_prob
     assert output["deadline_exhausted"] is True
     assert 0 < output["execution_policy"]["effective_timeout_seconds"] <= 7
     assert output["execution_policy"]["row_deadline_limited"] is True
+    assert elapsed <= 12.5
+
+
+def test_real_probe_async_thread_retains_process_file_and_network_isolation(
+    real_probe_session, real_probe_gateway,
+):
+    _, result, _ = _run(real_probe_session, real_probe_gateway, "async-thread", """
+        import asyncio
+        import errno
+        import os
+        import socket
+        from pathlib import Path
+
+        def worker():
+            try:
+                child = os.fork()
+            except OSError as exc:
+                assert exc.errno == errno.EPERM
+            else:
+                if child == 0:
+                    os._exit(0)
+                os.waitpid(child, 0)
+                raise AssertionError('worker escaped process boundary')
+            try:
+                os.kill(os.getppid(), 0)
+            except OSError as exc:
+                assert exc.errno == errno.EPERM
+            else:
+                raise AssertionError('worker can signal the supervisor')
+            try:
+                Path('/workspace/module.py').write_text('changed')
+            except OSError as exc:
+                assert exc.errno in (errno.EROFS, errno.EACCES, errno.EPERM)
+            else:
+                raise AssertionError('worker changed source')
+            with socket.socket() as sock:
+                sock.settimeout(0.2)
+                assert sock.connect_ex(('192.0.2.1', 80)) != 0
+            return os.getpid(), Path('/workspace/module.py').read_text()
+
+        async def main():
+            pid, text = await asyncio.to_thread(worker)
+            assert pid == os.getpid() and text == 'VALUE = 2\\n'
+
+        try:
+            asyncio.run(main())
+        except RuntimeError as exc:
+            print('THREAD_ERROR', str(exc), flush=True)
+            raise SystemExit(1)
+        print('ASYNC_THREAD_AND_SHUTDOWN_OK', flush=True)
+    """)
+    assert result.output["status"] == "passed", result.output["stdout"]
+    assert result.output["exit_code"] == 0
+    assert "ASYNC_THREAD_AND_SHUTDOWN_OK" in result.output["stdout"]
+
+
+@pytest.mark.skipif(not os.environ.get("PATCHLOOP_TEST_PROBE_DEPENDENCIES"),
+                    reason="SDK compatibility needs an existing public dependency descriptor")
+def test_real_probe_openai_sdk_offline_transport_and_shutdown(
+    real_probe_session, real_probe_gateway,
+):
+    path = Path(os.environ["PATCHLOOP_TEST_PROBE_DEPENDENCIES"])
+    descriptor, identity = read_descriptor(path)
+    dependencies = PreparedDependencies(path, identity, descriptor["repository_url"],
+                                        descriptor["base_commit"])
+    # Only public libraries are reused. The workspace is the independent toy fixture,
+    # never the closed discovery candidate or any private evaluation package.
+    backend = DockerProbeSandbox(dependencies=dependencies)
+    backend.preflight(deadline=ExecutionDeadline.from_remaining(180))
+    session = _RealSession(backend, real_probe_session.evidence_root)
+    real_probe_gateway.probe_sandbox = backend
+    _, result, _ = _run(session, real_probe_gateway, "sdk-thread", """
+        import asyncio
+        import json
+        import socket
+        import httpx
+        import openai
+        from openai import AsyncOpenAI
+
+        def forbidden(*args, **kwargs):
+            raise AssertionError('no network access in SDK compatibility fixture')
+
+        socket.socket.connect = forbidden
+        socket.create_connection = forbidden
+        seen = []
+
+        async def handler(request):
+            assert request.url.host == 'fixture.invalid'
+            seen.append(json.loads(request.content))
+            return httpx.Response(200, json={
+                'id': 'fixture-response', 'object': 'chat.completion', 'created': 1,
+                'model': 'fixture-model',
+                'choices': [{'index': 0, 'message': {'role': 'assistant', 'content': 'offline'},
+                             'finish_reason': 'stop'}],
+                'usage': {'prompt_tokens': 1, 'completion_tokens': 1, 'total_tokens': 2},
+            })
+
+        async def main():
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+                async with AsyncOpenAI(api_key='fixture-only', base_url='https://fixture.invalid',
+                                       max_retries=0, http_client=http) as client:
+                    reply = await client.chat.completions.create(
+                        model='fixture-model', messages=[{'role': 'user', 'content': 'fixture'}])
+                    assert reply.choices[0].message.content == 'offline'
+                    assert len(seen) == 1
+
+        try:
+            asyncio.run(main())
+        except RuntimeError as exc:
+            print('SDK_THREAD_ERROR', str(exc), flush=True)
+            raise SystemExit(1)
+        print('SDK_OFFLINE_AND_SHUTDOWN_OK', openai.__version__, flush=True)
+    """, seconds=180)
+    assert result.output["status"] == "passed", result.output["stdout"]
+    assert result.output["exit_code"] == 0 and not result.output["truncated"]
+    assert "SDK_OFFLINE_AND_SHUTDOWN_OK" in result.output["stdout"]
+
+
+def test_real_probe_threads_are_bounded_and_background_workers_end_with_child(
+    real_probe_session, real_probe_gateway,
+):
+    _, result, elapsed = _run(real_probe_session, real_probe_gateway, "thread-bound", """
+        import threading
+        import time
+
+        release = threading.Event()
+        threads = []
+        try:
+            for _ in range(64):
+                worker = threading.Thread(target=release.wait)
+                try:
+                    worker.start()
+                except RuntimeError:
+                    break
+                threads.append(worker)
+            assert len(threads) == 6, len(threads)
+            print('THREAD_LIMIT', len(threads), flush=True)
+        finally:
+            release.set()
+            for worker in threads:
+                worker.join(timeout=2)
+                assert not worker.is_alive()
+        # The trusted child exits the entire process even with an unjoined worker.
+        threading.Thread(target=time.sleep, args=(60,)).start()
+        print('BACKGROUND_WORKER_STARTED', flush=True)
+    """)
+    assert result.output["status"] == "passed" and result.output["exit_code"] == 0
+    assert "THREAD_LIMIT 6" in result.output["stdout"]
+    assert "BACKGROUND_WORKER_STARTED" in result.output["stdout"]
+    assert elapsed < 20
+
+
+def test_real_probe_timeout_cleans_up_running_worker_threads(
+    real_probe_session, real_probe_gateway,
+):
+    _, result, elapsed = _run(real_probe_session, real_probe_gateway, "thread-timeout", """
+        import asyncio
+        import time
+
+        def worker():
+            print('THREAD_TIMEOUT_STARTED', flush=True)
+            while True:
+                time.sleep(0.05)
+
+        async def main():
+            await asyncio.to_thread(worker)
+
+        asyncio.run(main())
+    """, seconds=12)
+    assert "THREAD_TIMEOUT_STARTED" in result.output["stdout"]
+    assert result.output["status"] == "timeout" and result.output["timed_out"]
+    assert result.output["deadline_exhausted"]
     assert elapsed <= 12.5

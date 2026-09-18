@@ -5,6 +5,14 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current implementation: [bounded same-process probe threads](probe-threads.md).
+Probe profile v2 admits checked pthread clone flags with pids=8 (supervisor, child,
+six workers); clone3 returns ENOSYS for libc fallback. Fork/exec, supervisor signals,
+network and filesystem restrictions remain. Provider-free real Docker tests reproduce
+the old SDK failure, then pass async initialization/shutdown, inherited restrictions,
+thread bounds and cleanup. Launch-thread line observation is unchanged. No new model
+sample or reopening of the closed discovery packet.
+
 Current diagnostic: [fixed-candidate counterexample discovery](counterexample-discovery.md).
 `diagnostics.counterexample_discovery` prepares/validates a fresh public-only initial request
 and rehearses exact candidate/dependency/read access offline. The separate
@@ -23,8 +31,8 @@ pricing and $1.20. Its slot and unused funds are closed; no retry/resume/replace
 The model also expected empty-field insertion on an ordinary custom field-mode profile,
 without the requiring provider profile. Preserve that expectation error separately from
 the incomplete probe; do not credit its partial output as a successful model discovery.
-Next seam: provider-free SDK initialization/probe-isolation compatibility characterization
-and fix. Do not loosen isolation or launch a replacement live sample as a side effect.
+The SDK compatibility fix above is separate provider-free evidence; the discovery
+sample remains closed. A future live observation needs its own frozen inputs and budget.
 
 ```text
 patchloop/dev/runner.py   loop composition, gates, context, terminal handling

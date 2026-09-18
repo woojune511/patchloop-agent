@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import errno
 import io
 import runpy
 import subprocess
@@ -140,9 +141,12 @@ def test_probe_runs_snapshot_with_fixed_policy_and_no_worktree_write(monkeypatch
     assert result["stdout"] == "ok\n"
     assert result["snapshot_hash"]
     assert result["execution_policy_hash"] == sha256_json(result["execution_policy"])
+    assert result["execution_policy"]["version"] == "docker-python-probe-v2"
+    assert result["execution_policy"]["thread_policy"] == "same-process-pthreads-only-v1"
+    assert result["execution_policy"]["pids_limit"] == 8
     command = commands[0]
     for flag, value in (("--network", "none"), ("--user", "10001:10001"),
-                        ("--pull", "never"), ("--pids-limit", "2"),
+                        ("--pull", "never"), ("--pids-limit", "8"),
                         ("--cap-drop", "ALL"), ("--entrypoint", "/usr/local/bin/python")):
         assert command[command.index(flag) + 1] == value
     assert "--read-only" in command
@@ -231,17 +235,22 @@ def test_trusted_wrapper_filter_rejects_process_and_alternate_abi(monkeypatch, m
     monkeypatch.setattr(wrapper["ctypes"], "CDLL", lambda *args, **kwargs: Libc())
     wrapper["_install_process_boundary"]()
 
-    def verdict(syscall, audit_arch):
+    def verdict(syscall, audit_arch, clone_flags=0):
         offset = 0
         accumulator = 0
         while True:
             code, jt, jf, value = instructions[offset]
             if code == 0x20:
-                accumulator = syscall if value == 0 else audit_arch
+                accumulator = {0: syscall, 4: audit_arch, 16: clone_flags & 0xFFFFFFFF,
+                               20: clone_flags >> 32}[value]
             elif code == 0x15:
                 offset += jt if accumulator == value else jf
             elif code == 0x35:
                 offset += jt if accumulator >= value else jf
+            elif code == 0x45:
+                offset += jt if accumulator & value else jf
+            elif code == 0x54:
+                accumulator &= value
             else:
                 assert code == 0x06
                 return value
@@ -253,6 +262,20 @@ def test_trusted_wrapper_filter_rejects_process_and_alternate_abi(monkeypatch, m
     assert verdict(0, arch) == allowed
     assert verdict(0, 0x40000003) != allowed
     assert verdict(0x40000000, arch) != allowed
+    clone_nr = 56 if machine == "x86_64" else 220
+    pthread_flags = 0x3D0F00
+    assert verdict(clone_nr, arch, pthread_flags) == allowed
+    assert verdict(clone_nr, arch, pthread_flags | 0x01000000) == allowed  # CHILD_SETTID
+    for required in (0x100, 0x200, 0x400, 0x800, 0x10000, 0x40000):
+        assert verdict(clone_nr, arch, pthread_flags & ~required) != allowed
+    # Signals, namespace creation, unknown flags and the upper word cannot bypass
+    # the thread-only path, even when all required pthread sharing bits are set.
+    permitted = pthread_flags | 0x01000000
+    for bit in range(64):
+        if not permitted & (1 << bit):
+            assert verdict(clone_nr, arch, pthread_flags | (1 << bit)) != allowed
+    assert verdict(clone_nr, arch, 17) != allowed  # fork-like SIGCHLD clone
+    assert verdict(435, arch, pthread_flags) == wrapper["_SECCOMP_RET_ERRNO"] | errno.ENOSYS
 
 
 def test_cleanup_checks_exact_owned_label_and_never_removes_other_container(monkeypatch):

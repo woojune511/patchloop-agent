@@ -99,8 +99,10 @@ the existing process filter before exposing these paths. Dependency `.pth` start
 hooks are not processed. The tool description states the capability and source omissions;
 local preparation paths never enter model input. Import failures remain diagnostics.
 
-Image, no-network policy, nonroot user, read-only root/mounts, process filter, pids=2,
-CPU/memory, scratch, output/timeout and cleanup limits remain in force. The profile hash
+Image, no-network policy, nonroot user, read-only root/mounts, process filter,
+CPU/memory, scratch, output/timeout and cleanup limits remain in force. The v2 profile
+supports [bounded same-process threads](probe-threads.md) with pids=8 (supervisor,
+child and at most six workers); new processes remain denied. The profile hash
 includes the bundle identity and snapshot policy. Probe receipts and submitted manifests
 carry the same identity; isolated evaluation validates provenance without mounting the
 bundle or exposing its own environment to arbitrary probe code. Execution success never
@@ -116,6 +118,6 @@ the clean image, with prepared public wheels and no evaluator-image reuse.
 
 Evidence root: `C:\pt\analyses\prepared-probe-dependencies-20260918-v1`.
 This feature is opt-in and does not establish improved model decisions or acceptance.
-Packages requiring process/thread creation, runtime installation or unsupported platform
-dependencies can still fail under the fixed sandbox. No relaxation or automatic retry
-is implied by dependency availability.
+Packages requiring new processes, more threads than the fixed limit, runtime installation
+or unsupported platform dependencies can still fail under the sandbox. Dependency
+availability does not imply broader permissions or an automatic retry.

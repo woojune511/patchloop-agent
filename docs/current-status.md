@@ -7,7 +7,37 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Discovery observation closed after a probe environment failure
+## Current seam: Bounded probe threads repair offline SDK initialization
+
+Probe profile v2 permits same-process pthread creation under a fixed eight-task limit:
+one trusted supervisor, one probe main thread and at most six workers. The seccomp
+filter checks clone flags and leaves clone3 disabled with ENOSYS for libc fallback.
+Fork/exec, supervisor signaling, network and read-only filesystem boundaries remain.
+Child exit and timeout cleanup include all threads. Launch-thread line coverage is
+unchanged; worker-thread execution is outside that observation scope.
+
+Provider-free synthetic fixtures reproduce the old failure in both `asyncio.to_thread`
+and OpenAI SDK2.29.0 with offline HTTP transport. All7 real Docker tests then pass in
+178.63s, including SDK initialization/shutdown, inherited isolation, thread bounds,
+unjoined-worker exit, timeout/output cleanup and replay. Focused64 PASS/30.38s includes
+both context policies' mock isolated evaluations and actual public task/diff/check
+input delivery. Actual container execution is Linux amd64; aarch64 has filter-unit
+coverage only. No provider/count calls or credential reads; model cost $0.
+
+Fresh full regression covers132 files: resolved2776 PASS/12 opt-in SKIP, wall1198.38s
+with durations retained. One Windows scratch-path failure passes at a shorter external
+path without code changes; both receipts remain. Source Ruff and documentation3 PASS.
+The focused check meets two minutes; real Docker and full regression exceed it.
+All9 synthetic probe containers are absent; prior393 evidence files remain unchanged.
+
+Runtime/profile identities change; tool schemas, plan instructions and segment rules
+do not. This repair establishes sandbox compatibility. The closed discovery sample
+below remains INFRASTRUCTURE_STOP/NOT_ESTABLISHED with no retry or candidate rerun.
+Any later model observation needs separate frozen inputs and a new bounded budget.
+See [the thread contract](../.agent/probe-threads.md) and
+`C:\pt\analyses\probe-thread-compatibility-20260918-v1` for evidence.
+
+## Prior seam: Discovery observation closed after a probe environment failure
 
 The one approved fixed-candidate discovery sample is complete: planned1/started1,
 7 model/count calls, 11 inspections, 1 probe and 1 terminal report; official=false.

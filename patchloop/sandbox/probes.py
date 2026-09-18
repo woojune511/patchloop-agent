@@ -36,6 +36,8 @@ PROBE_IMAGE_DIGEST = "sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd
 # repository@digest name for lookup and execution, not a tag+digest alias.
 PROBE_IMAGE = "python@" + PROBE_IMAGE_DIGEST
 PROBE_TIMEOUT_SECONDS = 30
+# One trusted supervisor, one probe main thread, at most six worker threads.
+PROBE_PIDS_LIMIT = 8
 PROBE_OUTPUT_LIMIT_BYTES = 12_000
 PROBE_SOURCE_LIMIT_CHARS = 8_000
 PROBE_SOURCE_LIMIT_BYTES = 32_000
@@ -46,7 +48,7 @@ _WRAPPER = Path(__file__).resolve().parents[2] / "docker" / "probe_runner.py"
 
 def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[str, object]:
     return {
-        "version": "docker-python-probe-v1",
+        "version": "docker-python-probe-v2",
         "image": PROBE_IMAGE,
         "image_digest": PROBE_IMAGE_DIGEST,
         "wrapper_hash": sha256_bytes(_WRAPPER.read_bytes()),
@@ -56,7 +58,8 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
         "user": "10001:10001",
         "cap_drop": "ALL",
         "no_new_privileges": True,
-        "pids_limit": 2,
+        "thread_policy": "same-process-pthreads-only-v1",
+        "pids_limit": PROBE_PIDS_LIMIT,
         "memory": "512m",
         "memory_swap": "512m",
         "cpus": "1",
@@ -391,7 +394,8 @@ class DockerProbeSandbox:
                     "--label", f"io.patchloop.probe.execution={name}",
                     "--pull", "never", "--network", "none", "--read-only",
                     "--user", "10001:10001", "--cap-drop", "ALL",
-                    "--security-opt", "no-new-privileges=true", "--pids-limit", "2",
+                    "--security-opt", "no-new-privileges=true",
+                    "--pids-limit", str(PROBE_PIDS_LIMIT),
                     "--cpus", "1", "--memory", "512m", "--memory-swap", "512m",
                     "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=64m",
                     "--env", "PYTHONDONTWRITEBYTECODE=1", "--env", "PYTHONUNBUFFERED=1",

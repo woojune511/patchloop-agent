@@ -226,7 +226,7 @@ def test_sandbox_adds_only_readonly_snapshot_and_ordered_imports(
         mounts = [item for item in command if item.startswith("type=bind")]
         assert len(mounts) == 3 and all(item.endswith(",readonly") for item in mounts)
         assert command[command.index("--network") + 1] == "none"
-        assert command[command.index("--pids-limit") + 1] == "2"
+        assert command[command.index("--pids-limit") + 1] == "8"
         assert command[command.index("--platform") + 1] == "linux/amd64"
         paths = {m.split(",target=")[1].split(",")[0]:
                  Path(m.split("source=")[1].split(",target=")[0]) for m in mounts}

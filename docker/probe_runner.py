@@ -24,7 +24,13 @@ _SECCOMP_RET_ALLOW = 0x7FFF0000
 _BPF_LD_W_ABS = 0x20
 _BPF_JMP_JEQ_K = 0x15
 _BPF_JMP_JGE_K = 0x35
+_BPF_JMP_JSET_K = 0x45
+_BPF_ALU_AND_K = 0x54
 _BPF_RET_K = 0x06
+# Require a single process sharing VM, filesystem state, file descriptors, signal
+# handlers and SysV semaphores. Only pthread TLS/TID bookkeeping is optional.
+_THREAD_REQUIRED_FLAGS = 0x00050F00
+_THREAD_ALLOWED_FLAGS = _THREAD_REQUIRED_FLAGS | 0x00080000 | 0x00100000 | 0x00200000 | 0x01000000
 
 
 class _InputTimeout(Exception):
@@ -73,7 +79,6 @@ def _denied_syscalls() -> tuple[int, ...]:
     machine = platform.machine().lower()
     if machine in {"x86_64", "amd64"}:
         return (
-            56,   # clone
             57,   # fork
             58,   # vfork
             59,   # execve
@@ -87,7 +92,6 @@ def _denied_syscalls() -> tuple[int, ...]:
             311,  # process_vm_writev
             322,  # execveat
             424,  # pidfd_send_signal
-            435,  # clone3
         )
     if machine in {"aarch64", "arm64"}:
         return (
@@ -96,14 +100,12 @@ def _denied_syscalls() -> tuple[int, ...]:
             130,  # tkill
             131,  # tgkill
             138,  # rt_sigqueueinfo
-            220,  # clone
             221,  # execve
             240,  # rt_tgsigqueueinfo
             270,  # process_vm_readv
             271,  # process_vm_writev
             281,  # execveat
             424,  # pidfd_send_signal
-            435,  # clone3
         )
     raise RuntimeError(f"unsupported probe architecture: {machine}")
 
@@ -112,8 +114,10 @@ def _install_process_boundary() -> None:
     machine = platform.machine().lower()
     if machine in {"x86_64", "amd64"}:
         audit_arch = 0xC000003E
+        clone_number = 56
     elif machine in {"aarch64", "arm64"}:
         audit_arch = 0xC00000B7
+        clone_number = 220
     else:
         raise RuntimeError(f"unsupported probe architecture: {machine}")
     # seccomp syscall numbers only have meaning within their declared ABI.
@@ -125,6 +129,24 @@ def _install_process_boundary() -> None:
         _SockFilter(_BPF_LD_W_ABS, 0, 0, 0),
         _SockFilter(_BPF_JMP_JGE_K, 0, 1, 0x40000000),
         _SockFilter(_BPF_RET_K, 0, 0, _SECCOMP_RET_ERRNO | errno.EPERM),
+        # Both supported ABIs put clone flags in args[0], little-endian. Check
+        # both words and reject exit signals, namespaces and all unknown flags.
+        # A non-clone syscall skips the ten-instruction flags branch unchanged.
+        _SockFilter(_BPF_JMP_JEQ_K, 0, 10, clone_number),
+        _SockFilter(_BPF_LD_W_ABS, 0, 0, 20),
+        _SockFilter(_BPF_JMP_JEQ_K, 1, 0, 0),
+        _SockFilter(_BPF_RET_K, 0, 0, _SECCOMP_RET_ERRNO | errno.EPERM),
+        _SockFilter(_BPF_LD_W_ABS, 0, 0, 16),
+        _SockFilter(_BPF_JMP_JSET_K, 0, 1, ~_THREAD_ALLOWED_FLAGS & 0xFFFFFFFF),
+        _SockFilter(_BPF_RET_K, 0, 0, _SECCOMP_RET_ERRNO | errno.EPERM),
+        _SockFilter(_BPF_ALU_AND_K, 0, 0, _THREAD_REQUIRED_FLAGS),
+        _SockFilter(_BPF_JMP_JEQ_K, 1, 0, _THREAD_REQUIRED_FLAGS),
+        _SockFilter(_BPF_RET_K, 0, 0, _SECCOMP_RET_ERRNO | errno.EPERM),
+        _SockFilter(_BPF_RET_K, 0, 0, _SECCOMP_RET_ALLOW),
+        # Classic seccomp cannot inspect clone3's pointed-to argument struct.
+        # ENOSYS keeps it disabled while allowing libc's checked clone fallback.
+        _SockFilter(_BPF_JMP_JEQ_K, 0, 1, 435),
+        _SockFilter(_BPF_RET_K, 0, 0, _SECCOMP_RET_ERRNO | errno.ENOSYS),
     ]
     for syscall_number in _denied_syscalls():
         instructions.extend(
