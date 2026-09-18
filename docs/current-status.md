@@ -7,6 +7,39 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest closed observation: The model checks actual setup; mismatch repair remains unobserved
+
+One separately authorized observation is closed at runtime commit `b3ea4b8b`.
+Same original dev-train task/P10/GPT-5.4 medium/applicability-contrast-v1, new $1.20
+cap, fresh prepared-source clone and native history; planned1/started1/report-completed1,
+official=false. The initial request differs from the preceding sample only by the generic
+check_setup tool description. All six actual input deliveries pass the public trace audit.
+
+The model uses dataclasses.replace to copy the DeepSeek profile with a renamed field,
+then checks four actual model-profile properties before serialization. All four match:
+field/custom_reasoning for the copied profile, auto/None for default plain OpenAI.
+Both serialized tool-only messages match their complete expected dictionaries. The model
+reports no counterexample, consistent with those narrow observations. Public review:
+**NO_REPRODUCTION, supported discoveries 0/1**. Task acceptance remains NOT_ASSESSED.
+
+No setup mismatch occurs, so correction after mismatch is **NOT_OBSERVED**; helper uptake
+does not establish prevention or causal improvement. The preservation input still disables
+the candidate's field-mode condition. Same-trigger applicability remains untested, despite
+the warning reaching the final input. The report acknowledges that gap, but its rationale
+equating applicability with field mode alone omits the task's provider-profile qualification.
+Its ellipsis-joined requirement excerpt also fails literal binding. Neither passing setup
+comparisons nor these two cases establish candidate correctness or discovery-policy efficacy.
+
+Six model/count calls, nine reads/searches, one probe and one report; no infrastructure or
+resource-limit stop. Recorded cost $0.1750365, cache-neutral $0.3268125, max input26,370,
+active153.755s/wall281.547s. Complete output and cleanup are confirmed; unused $1.0249635
+closes with the sample. No retry, resume, replacement, extra candidate execution or private
+evaluation. Existing runtime validation below is reused unchanged. Prior 1,407 evidence
+entries remain intact. The next unresolved issue is input selection that separates the
+public applicability rule from the candidate condition; no new prompt variant or paid run
+is implied. Evidence: `C:\pt\analyses\counterexample-discovery-setup-20260919-v1`;
+raw: `C:\pt\pl-discovery-setup-live-0919a`.
+
 ## Current implementation: Probe setup comparisons are separate from behavior assertions
 
 Public Python probes provide optional `check_setup(label, actual, expected)` to
@@ -37,7 +70,7 @@ the user's unrelated changes are preserved. Validation and limitations are recor
 This is provider-free implementation work; improved model discovery is not established.
 See [the setup-check contract](../.agent/probe-setup.md).
 
-## Latest closed observation: Applicability diagnostic reports a setup error as a candidate defect
+## Prior closed observation: Applicability diagnostic reports a setup error as a candidate defect
 
 The authorized applicability-contrast-v1 observation is closed at runtime/diagnostic
 commit `bd94da0e`. Same original dev-train task/P10/GPT-5.4 medium, new $1.20 cap,
@@ -67,9 +100,10 @@ No infrastructure or resource-limit stop. Recorded cost $0.1730905, cache-neutra
 $0.3772825, max input28,104, active142.649s/wall248.831s. Unused $1.0269095 closes with
 the sample; no retry/resume/replacement, extra candidate execution or hidden evaluation.
 Task acceptance remains NOT_ASSESSED. The new annotation/feedback does not establish
-better discovery; do not adopt it into repair defaults on this evidence. Next priority is
+better discovery; do not adopt it into repair defaults on this evidence. It motivated
 distinguishing actual probe setup from intended setup before attributing a failed assertion
-to candidate behavior, without automatically adding another prompt variant or paid sample.
+to candidate behavior. The implementation and separately authorized observation above
+address setup observation; correction after a setup failure remains unmeasured.
 Evidence: `C:\pt\analyses\counterexample-discovery-applicability-20260919-v1`;
 raw run: `C:\pt\pl-discovery-contrast-live-0919a`.
 

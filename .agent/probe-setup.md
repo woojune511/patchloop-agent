@@ -70,3 +70,33 @@ paragraph explains all six; the older memory boundary and current full-schema
 snapshots are updated and 11 targeted checks pass. Production code remains identical
 through that resolution. Both initial and targeted receipts remain available; this
 is not a claim of a second clean full run. Ruff and documentation checks pass.
+
+## Separate live observation, 2026-09-19 KST
+
+`C:\pt\analyses\counterexample-discovery-setup-20260919-v1` closes one new $1.20
+sample at runtime `b3ea4b8b`, with the original dev-train task, fixed P10, GPT-5.4
+medium and applicability-contrast-v1. Only the generic helper description changes
+the initial request relative to the preceding observation; no old cases/history enter.
+
+The model constructs a copied profile with dataclasses.replace, then compares four
+properties obtained from the actual changed/plain model profiles before mapping messages.
+All four comparisons and both complete serializer expectations match. Full setup rows,
+compact observation, stdout and applicability feedback reach the next actual input.
+The model reports no counterexample. Public review is NO_REPRODUCTION, discoveries0/1;
+this narrow no-mismatch statement is supported, with task acceptance NOT_ASSESSED.
+
+There is no mismatch opportunity, so repair-after-mismatch is NOT_OBSERVED. The
+preservation input switches off field mode; behavior under the same candidate condition
+but different public applicability is still untested. The report's rationale treating
+field mode as the complete applicability boundary is unsupported by that pair: the
+task separately qualifies the provider-supplied profile. Its joined/abridged excerpt
+does not pass literal binding. Helper uptake is observed, not a causal improvement.
+
+Six model/count calls, five searches, four reads, one probe and one report. Recorded
+cost $0.1750365, cache-neutral $0.3268125, max input26,370, active153.755s/wall281.547s.
+No infrastructure/resource stop; output and cleanup complete. Unused $1.0249635 is
+closed. No additional candidate execution, retry/resume/replacement or private review.
+The unchanged runtime reuses the implementation validation above; new documentation
+checks and preservation verification accompany the observation. All 1,407 prior evidence
+entries are preserved. Keep discovery guidance opt-in; the remaining selection gap
+does not automatically authorize another prompt variant or paid sample.

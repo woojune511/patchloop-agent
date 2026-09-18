@@ -12,8 +12,13 @@ Setup status is independent of process exit; caught mismatches remain failed and
 incomplete/invalid reports remain unknown. Native results and compact observations
 retain the distinction without semantic credit or a report/submission gate. Raw
 program/action identity and sandbox limits remain; helper bytes change runtime/profile
-identity. Old completed evidence remains readable. No new paid observation or policy
-variant accompanies this provider-free implementation.
+identity. Old completed evidence remains readable. Implementation was provider-free;
+the separate one-shot observation at runtime `b3ea4b8b` confirms four actual setup
+comparisons and two narrow serializer matches. No setup failure occurs, so correction
+after failure is unobserved. Public review is NO_REPRODUCTION (supported discoveries0/1),
+with same-trigger applicability still untested. Six model calls cost $0.1750365; sample
+and unused budget are closed. No causal benefit, candidate correctness or policy adoption
+is established. See the observation in [the setup-check contract](probe-setup.md).
 
 Prior implementation: optional `--review-guidance applicability-contrast-v1` adds
 `case_selection.trigger_contrast`: whole candidate trigger, nullable boolean for whether
