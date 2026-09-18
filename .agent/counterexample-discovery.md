@@ -9,8 +9,10 @@ question from patch repair and from voluntary verification during a solve.
 
 `diagnostics.counterexample_discovery` implements `prepare`, `validate` and an offline
 `rehearse`. `diagnostics.counterexample_discovery_rollout` now implements the bounded
-collector, executable packet and read-only interrupted inspection. The sole live sample
-is now **CLOSED / INFRASTRUCTURE_STOP**; the original design packet remains unchanged.
+collector, executable packet and read-only interrupted inspection. The first live sample
+is **CLOSED / INFRASTRUCTURE_STOP**; the original design packet remains unchanged.
+A separate authorized sample after the thread repair is now closed with a complete
+probe and no model-supported counterexample; see the latest observation below.
 Preparation never instantiates a provider client or reads credentials. All records are
 external, immutable files with a `dev-run-v1` preparation/rehearsal journal; `official=false`.
 The published packet is the final write. An incomplete directory cannot be reused.
@@ -130,7 +132,52 @@ identity, uncertainty, cleanup and interrupted inspection. Shared regressions: 5
 toy smoke records read -> simulated probe -> report with actual follow-up request bytes.
 It proves collector plumbing only; it is not live discovery or real probe evidence.
 
-## Closed live observation: 2026-09-18
+## Latest closed observation: bounded-thread profile, 2026-09-18
+
+User continuation authorized one new same-model/medium diagnostic with its own $1.20
+cap. `C:\pt\analyses\counterexample-discovery-thread-20260918-v1` holds the new design,
+executable packet, admission and public review; raw state is
+`C:\pt\pl-discovery-thread-live-0918a`. Plan hash:
+`sha256:916b79cbbf9f42159885587db2ba9d894222315efdd1d39ff4ac9d1eb8d7d167`.
+Initial request bytes remain identical to the prior diagnostic. Only the design's
+runtime hash and probe profile change. Fresh independent source/dependency rehearsal
+passes before dispatch, using existing Docker/image only. No prior findings are injected.
+
+Five counted model responses complete: search/search -> read/search -> read -> probe ->
+report. The single program calls current workspace code, performs four offline SDK
+requests, two deferred loads and final history replay, and exits0 with complete output
+and confirmed cleanup. All four added source lines receive launch-thread events. Exact
+probe feedback reaches the last actual input; all five requests pass the public audit.
+
+The model reports `no_counterexample_found`. It builds a fresh ordinary
+`OpenAIModelProfile(field, alt_reasoning)` and `OpenAIProvider`, with no supplied DeepSeek
+profile. It expects the direct tool-only response to contain `alt_reasoning=''`, observes
+that insertion and accepts it. The report describes a copied profile; the recorded program
+constructs a new one and does not exercise supplied-profile reuse or copying.
+
+Public review records `NO_REPRODUCTION` / independent model discovery NOT_ESTABLISHED.
+This does **not** mean no violating behavior was observed: the task preserves ordinary
+profiles and the supplied diff introduces the unconditional field-mode insertion.
+The recorded direct response therefore exposes that preservation violation. The operator
+derives the correct expectation (omit the empty field) from the public task/diff, without
+executing another baseline or candidate. The model's own expected/actual pair matches;
+it does not identify or justify the mismatch. Keep operator recognition separate from
+model-discovery credit. An executed case and complete line coverage do not validate its
+expected behavior.
+
+No resource-limit exit or infrastructure stop. Cost$0.1471595, cache-neutral$0.2266475,
+max input18756, active148.389s/wall263.851s; 5 inspections/1 probe/1 report. Known count
+and provider usage; invoice/count-endpoint billing remains unverified. Acceptance and
+hidden evaluation NOT_ASSESSED/NOT_RUN. The new slot and unused budget are closed, with
+no retry, replacement or resume. Prior closed records and the runtime remain unchanged.
+
+Next diagnosis should test how the agent derives expected behavior from the complete
+public requirement and verifies the probe setup's claimed origin. Do not change default
+planning/context policies or supply the known contrast automatically from this single
+observation. Runtime regression, both isolated mocks and real Docker thread coverage
+are reused from the unchanged `4b2a58c8` compatibility receipt; the live result is new.
+
+## Earlier closed live observation: 2026-09-18
 
 User continuation authorized the exact one-sample/$1.20 packet. The original input and
 all150 executable evidence files were verified before dispatch. Existing Docker/image

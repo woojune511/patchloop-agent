@@ -5,21 +5,32 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current observation: a separate fresh fixed-candidate discovery sample completes on
+the repaired probe profile (5 calls/1 probe/$0.1471595), with four offline SDK requests
+and complete cleanup. The model reports no counterexample. Its fresh ordinary field-mode
+profile receives an empty `alt_reasoning`, and the model wrongly expects that insertion.
+The public task/diff/output expose a preservation violation that the model accepts;
+its claim of a copied provider profile is unsupported by its own program. Operator
+recognition receives no model-discovery credit. All five input deliveries pass; no limit
+exit. New sample/budget closed, no retry or hidden evaluation. See the new observation
+section in [the discovery contract](counterexample-discovery.md). Next focus is expected
+behavior and setup provenance, with runtime and default policies unchanged.
+
 Current implementation: [bounded same-process probe threads](probe-threads.md).
 Probe profile v2 admits checked pthread clone flags with pids=8 (supervisor, child,
 six workers); clone3 returns ENOSYS for libc fallback. Fork/exec, supervisor signals,
 network and filesystem restrictions remain. Provider-free real Docker tests reproduce
 the old SDK failure, then pass async initialization/shutdown, inherited restrictions,
-thread bounds and cleanup. Launch-thread line observation is unchanged. No new model
-sample or reopening of the closed discovery packet.
+thread bounds and cleanup. Launch-thread line observation is unchanged. That repair
+was validated without a new model sample or reopening the closed discovery packet.
 
 Current diagnostic: [fixed-candidate counterexample discovery](counterexample-discovery.md).
 `diagnostics.counterexample_discovery` prepares/validates a fresh public-only initial request
 and rehearses exact candidate/dependency/read access offline. The separate
 `diagnostics.counterexample_discovery_rollout` collector reuses counted dispatch, the
 public gateway and native exchange builder; it adds an immutable executable packet and
-read-only interrupted inspection. Collector45 and shared56 tests pass. The sole live
-sample is now closed: 7 calls/1 probe/$0.2577015, blocked report; public review
+read-only interrupted inspection. Collector45 and shared56 tests pass. The earlier live
+sample is closed: 7 calls/1 probe/$0.2577015, blocked report; public review
 INFRASTRUCTURE_STOP. The offline SDK attempted thread creation under the probe's process
 boundary and the resulting traceback exceeded the output cap. Cleanup and usage known.
 Only original public task and P10 patch enter the new task input, with generic
@@ -31,8 +42,8 @@ pricing and $1.20. Its slot and unused funds are closed; no retry/resume/replace
 The model also expected empty-field insertion on an ordinary custom field-mode profile,
 without the requiring provider profile. Preserve that expectation error separately from
 the incomplete probe; do not credit its partial output as a successful model discovery.
-The SDK compatibility fix above is separate provider-free evidence; the discovery
-sample remains closed. A future live observation needs its own frozen inputs and budget.
+The SDK compatibility fix above is separate provider-free evidence; that earlier
+sample remains closed. The new observation above uses separately frozen inputs and budget.
 
 ```text
 patchloop/dev/runner.py   loop composition, gates, context, terminal handling

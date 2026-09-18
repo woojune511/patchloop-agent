@@ -7,7 +7,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Bounded probe threads repair offline SDK initialization
+## Current seam: Discovery executes successfully but accepts a wrong expectation
+
+A fresh, separately authorized one-sample/$1.20 diagnostic is closed at runtime
+`4b2a58c8`, official=false. The original public task, exact P10 patch, model/medium,
+tools and initial request bytes are unchanged; only runtime/probe profile differ.
+Five model calls and five input counts, five inspections, one probe and one report
+complete normally.
+The model reports `no_counterexample_found`; supported model discovery remains
+NOT_ESTABLISHED (`NO_REPRODUCTION`). No infrastructure stop; task acceptance NOT_ASSESSED.
+
+The probe creates a fresh ordinary OpenAI field-mode profile with `alt_reasoning`,
+without a supplied DeepSeek profile. It expects the candidate to insert an empty
+field and accepts the observed insertion. The original public task requires ordinary
+profiles to retain their behavior; the supplied diff introduces this insertion.
+Thus the model generated and executed an input exposing a preservation violation,
+but interpreted it as correct. This is the operator's public task/diff/output analysis,
+not a model-recognized counterexample or a new baseline/candidate execution.
+Its final report calls the profile copied, although the program constructs a new one.
+
+The complete probe exits with code 0, with four offline SDK requests, two deferred capability
+loads and replay. All four added lines are observed in the launch thread; that coverage
+does not validate the expectation. Cleanup and all five actual input deliveries pass.
+Cost $0.1471595, cache-neutral $0.2266475, max input 18,756; active 148.389s/wall 263.851s.
+No cost/input/call/time limit exit. The new sample and unused budget are closed;
+no retry/resume/replacement, hidden evaluator read or default change.
+
+Next focus: deriving expected behavior from the full public requirement, including
+provider scope and preservation clauses, and checking that probe setup matches the
+claimed profile origin. Evidence: `C:\pt\analyses\counterexample-discovery-thread-20260918-v1`;
+raw run: `C:\pt\pl-discovery-thread-live-0918a`.
+
+## Prior seam: Bounded probe threads repair offline SDK initialization
 
 Probe profile v2 permits same-process pthread creation under a fixed eight-task limit:
 one trusted supervisor, one probe main thread and at most six workers. The seccomp
