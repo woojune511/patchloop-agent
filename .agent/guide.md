@@ -11,11 +11,22 @@ connects expectations to the complete public requirement and the program's actua
 setup. Default request bytes, task, tools, limits and runtime remain unchanged.
 Selection is frozen in design/executable metadata, with existing fields for public
 summaries and no new semantic gate. Focused 70 PASS/87.42s, related 41 PASS/60.08s
-(both isolated mocks), and a provider-free toy trace verify delivery; live effectiveness
-is untested. See the optional-guidance section in
+(both isolated mocks), and a provider-free toy trace verify delivery. The first guided
+live observation below establishes no supported discovery. See the optional-guidance section in
 [the discovery contract](counterexample-discovery.md).
 
-Current observation: a separate fresh fixed-candidate discovery sample completes on
+Current observation: the guided sample closes with NO_REPRODUCTION, discoveries 0/1,
+9 calls/8 inspections/1 probe/$0.220049. Its actual DeepSeek default-profile setup and
+expectation are supported by the task; six offline SDK requests and later history replay
+complete normally. It tests the required change scope only, then reports no counterexample.
+Ordinary-profile preservation and copied/reused profiles remain untested. This is a
+different case from the earlier unsupported expectation, not proof that it was corrected.
+All nine input deliveries and cleanup pass; no limit exit. The report's paraphrased excerpt
+fails literal matching. Sample/unused budget closed; no retry or default adoption.
+Next focus: selecting a concrete input for a public preservation clause outside the
+change scope. See the latest guided observation in the discovery contract.
+
+Prior observation: a separate fresh fixed-candidate discovery sample completes on
 the repaired probe profile (5 calls/1 probe/$0.1471595), with four offline SDK requests
 and complete cleanup. The model reports no counterexample. Its fresh ordinary field-mode
 profile receives an empty `alt_reasoning`, and the model wrongly expects that insertion.

@@ -134,7 +134,8 @@ unknown selection, CLI preparation, unchanged nullable reporting and native feed
 Shared regressions 41 PASS/60.08s include both context policies' isolated mock evaluations
 and actual task/diff/check delivery. Runtime-wide regression remains the unchanged
 thread-compatibility receipt; it was not repeated for an instruction-only diagnostic.
-Live model efficacy and independent discovery under this guidance remain NOT_RUN.
+At preparation, live model efficacy and independent discovery were NOT_RUN. The
+separately authorized guided observation below is now closed without a supported discovery.
 
 ## Preparation and validation
 
@@ -168,7 +169,45 @@ identity, uncertainty, cleanup and interrupted inspection. Shared regressions: 5
 toy smoke records read -> simulated probe -> report with actual follow-up request bytes.
 It proves collector plumbing only; it is not live discovery or real probe evidence.
 
-## Latest closed observation: bounded-thread profile, 2026-09-18
+## Latest closed observation: requirement-scope guidance, 2026-09-18
+
+One new same-task/P10/GPT-5.4 medium sample with its own $1.20 cap is closed.
+`C:\pt\analyses\counterexample-discovery-guided-20260918-v1` binds the already sealed
+guided design to a new executable packet; raw state is
+`C:\pt\pl-discovery-guided-live-0918a`. Plan hash:
+`sha256:78ee481f0367c3bf5df1b99ff73f97e772edeeb15a6b037a9999c95efbbad0f4`.
+Only the system instruction differs from the original request. All 849 prior evidence
+files pass preservation verification; fresh source/dependency/read rehearsal passes.
+Runtime and collector validation are reused from unchanged committed code.
+
+Nine counted model responses finish normally: three reads/five searches, one probe
+at turn8, then the terminal report. Some inspection summaries discuss supplied-profile
+reuse and alternate field names; the executed program uses only DeepSeek's supplied
+default profile. Two deferred capabilities, two agent runs with explicit history reuse
+and six offline SDK requests complete. The later body contains six assistant tool-call
+messages, each with string reasoning_content; two synthesized search_tools messages
+have the empty string and the four fixture-origin values are retained. Source imports
+resolve to current workspace code. All four added lines receive launch-thread events.
+Full feedback reaches turn9 before no_counterexample_found; cleanup is confirmed.
+
+Public review: NO_REPRODUCTION / independent discovery NOT_ESTABLISHED, 0/1. The
+executed expectation and actual setup are supported, but this is an in-scope case.
+Ordinary-profile preservation, supplied-profile reuse/copy and other replay modes are
+not tested. The final report explicitly limits its coverage. Do not infer that the
+earlier wrong expectation was corrected on its ordinary-profile input: the program
+chooses a different case. Do not infer a causal improvement from one observation per
+instruction condition. The report paraphrases its requirement excerpt, so literal
+binding is false; the full task still supports this executed case's expectation.
+
+Recorded cost $0.220049; cache-neutral $0.448145; max input 29,665; active 183.705s,
+wall 306.243s. All usage is recorded; invoice/count-endpoint billing remains unverified.
+No infrastructure or resource-limit exit. Task acceptance/hidden evaluation remain
+NOT_ASSESSED/NOT_RUN. The one slot and unused $0.979951 close with this report.
+No retry, resume, replacement, extra candidate/baseline execution or default adoption.
+Next diagnosis: selection of a concrete input testing preservation outside the change
+scope. The current generic guidance has not established improved discovery.
+
+## Earlier closed observation: bounded-thread profile, 2026-09-18
 
 User continuation authorized one new same-model/medium diagnostic with its own $1.20
 cap. `C:\pt\analyses\counterexample-discovery-thread-20260918-v1` holds the new design,

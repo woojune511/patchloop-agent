@@ -7,7 +7,34 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Optional discovery guidance connects expectations to public scope
+## Current seam: Guided discovery checks an in-scope case but misses preservation scope
+
+The separately authorized `requirement-scope-v1` sample is closed at commit `c0071bb0`,
+official=false. Same original task/P10/model/medium; only initial system guidance differs.
+It completes 9 model/count calls, 8 inspections, 1 probe and 1 report. Public review:
+NO_REPRODUCTION, supported model discoveries 0/1; no infrastructure or resource-limit stop.
+
+The program constructs the supplied DeepSeek default profile and replays two deferred
+capability loads into a second agent run. Six offline SDK requests produce six assistant
+tool-call messages with the required field; two synthesized search_tools messages have
+the empty string and four fixture-origin values remain intact. The setup and scoped
+expectation agree with the public task. All four added lines are observed in the launch
+thread; complete feedback reaches the last model input and cleanup is confirmed.
+
+The model then reports no counterexample, explicitly limiting coverage. It never tests
+an ordinary profile outside the required provider scope, profile reuse/copy, or other
+modes. Thus this does not show correction of the earlier expectation on the same input:
+the new program chooses a different, in-scope case. Its requirement excerpt is paraphrased
+and fails literal matching; semantic applicability and quote binding remain separate.
+
+Cost $0.220049, cache-neutral $0.448145, max input 29,665; active 183.705s/wall 306.243s.
+Acceptance NOT_ASSESSED, hidden evaluation NOT_RUN. The one sample and unused $0.979951
+are closed, with no retry/resume/replacement or default adoption. Next focus is how the
+agent selects an input that tests a preservation clause outside the change scope.
+Evidence: `C:\pt\analyses\counterexample-discovery-guided-20260918-v1`;
+raw run: `C:\pt\pl-discovery-guided-live-0918a`.
+
+## Prior seam: Optional discovery guidance connects expectations to public scope
 
 `diagnostics.counterexample_discovery prepare --review-guidance requirement-scope-v1`
 adds generic guidance for deriving a probe's expectation from the complete public
