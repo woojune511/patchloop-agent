@@ -273,6 +273,36 @@ def test_real_probe_isolation_current_source_and_completed_replay(
     }, indent=2), encoding="utf-8")
 
 
+@pytest.mark.parametrize("case,source,execution,setup,reached", [
+    ("mismatch", "settings = dict(mode='chosen'); settings.update(dict(mode='inherited'))\n"
+     "check_setup('mode', settings['mode'], 'chosen')\nprint('BEHAVIOR_REACHED')",
+     "failed", "failed", False),
+    ("behavior", "check_setup('mode', 'chosen', 'chosen')\n"
+     "print('BEHAVIOR_REACHED')\nassert False, 'behavior assertion'",
+     "failed", "passed", True),
+    ("caught", "try:\n check_setup('mode', 'actual', 'expected')\n"
+     "except AssertionError:\n pass\nprint('BEHAVIOR_REACHED')",
+     "passed", "failed", True),
+    ("unused", "print('BEHAVIOR_REACHED')", "passed", "not_checked", True),
+])
+def test_real_probe_setup_checks(
+    real_probe_session, real_probe_gateway, case, source, execution, setup, reached,
+):
+    session, gateway = real_probe_session, real_probe_gateway
+    call, result, _ = _run(session, gateway, "setup-" + case, source)
+    assert result.output["status"] == execution
+    assert result.output["setup_checks"]["status"] == setup
+    assert ("BEHAVIOR_REACHED" in result.output["stdout"]) is reached
+    assert "PATCHLOOP-SETUP" not in result.output["stderr"]
+    if case == "mismatch":
+        assert "SetupMismatchError" in result.output["stderr"]
+    before = gateway.journal.path.read_bytes()
+    replay = gateway.execute(call)
+    assert replay.replayed
+    assert replay.model_dump(exclude={"replayed"}) == result.model_dump(exclude={"replayed"})
+    assert gateway.journal.path.read_bytes() == before
+
+
 def test_real_probe_two_stream_output_limit(real_probe_session, real_probe_gateway):
     _, result, _ = _run(real_probe_session, real_probe_gateway, "output-limit", """
         import os

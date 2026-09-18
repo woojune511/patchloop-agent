@@ -30,9 +30,14 @@ def _memory_block():
 
 
 def _legacy_compression_surface(tools):
-    # Optional mutation annotations are tested separately. Keep every pre-existing
-    # field/order/description pinned at this older memory-compression boundary.
+    # Later mutation annotations and setup-helper guidance are tested separately.
+    # Keep the earlier field/order/description bytes pinned at the memory boundary.
     for tool in tools:
+        if tool["name"] == "run_probe":
+            description = tool["description"]
+            start = description.index("Before exercising behavior, use the available ")
+            end = description.index("Compare actual input/output", start)
+            tool["description"] = description[:start] + description[end:]
         if tool["name"] == "replace_text":
             for field in ("requirement_ref", "behavior_cases"):
                 del tool["parameters"]["properties"][field]

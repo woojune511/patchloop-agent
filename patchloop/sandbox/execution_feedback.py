@@ -172,8 +172,10 @@ class ReportChannel:
     duplicate, oversized, malformed or missing frames yield unknown diagnostics.
     """
 
-    def __init__(self, request: dict, emit) -> None:
-        self.prefix = marker(request)
+    def __init__(self, request: dict, emit, *, prefix: bytes | None = None,
+                 limit_bytes: int = MAX_REPORT_BYTES) -> None:
+        self.prefix = marker(request) if prefix is None else prefix
+        self.limit_bytes = limit_bytes
         self.emit = emit
         self.pending = b""
         self.collecting = False
@@ -188,7 +190,7 @@ class ReportChannel:
             if self.collecting:
                 end = self.pending.find(b"\n")
                 if end < 0:
-                    if len(self.pending) > MAX_REPORT_BYTES:
+                    if len(self.pending) > self.limit_bytes:
                         self.invalid = True
                         self.framed_bytes += len(self.pending)
                         self.pending = b""
@@ -198,7 +200,7 @@ class ReportChannel:
                 self.count += 1
                 if self.count > 1:
                     self.invalid = True
-                if not self.invalid and len(body) <= MAX_REPORT_BYTES:
+                if not self.invalid and len(body) <= self.limit_bytes:
                     try:
                         self.report = json.loads(body)
                     except (ValueError, UnicodeDecodeError, RecursionError):

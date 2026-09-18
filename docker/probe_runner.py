@@ -208,7 +208,7 @@ def _flush_child_output(
                 flush()
 
 
-def _execute_child(code: object, collector=None, import_paths=None) -> None:
+def _execute_child(code: object, collector=None, import_paths=None, setup=None) -> None:
     stdout = sys.stdout
     stderr = sys.stderr
     try:
@@ -223,13 +223,19 @@ def _execute_child(code: object, collector=None, import_paths=None) -> None:
             "__name__": "__main__",
             "__file__": "<patchloop-probe>",
         }
+        if setup is not None:
+            namespace["check_setup"] = setup.check
         if collector is not None:
             collector.start()
         try:
             exec(code, namespace, namespace)
         finally:
-            if collector is not None:
-                collector.finish()
+            try:
+                if collector is not None:
+                    collector.finish()
+            finally:
+                if setup is not None:
+                    setup.finish()
     except SystemExit as exc:
         exit_code = _child_exit_code(exc.code)
         _flush_child_output(stdout, stderr)
@@ -299,6 +305,10 @@ def main() -> int:
     configuration = Path(__file__).with_name("dependencies.json")
     import_paths = json.loads(configuration.read_bytes())["import_paths"] if (
         configuration.is_file()) else None
+    setup_module = runpy.run_path(str(Path(__file__).with_name("probe_setup.py")))
+    setup = setup_module["SetupChecks"](
+        json.loads(Path(__file__).with_name("setup_request.json").read_bytes()),
+    )
     collector = None
     if len(sys.argv) == 3:
         # Load only the host-copied stdlib collector before exposing project imports.
@@ -311,7 +321,7 @@ def main() -> int:
         traceback.print_exc()
         return CHILD_RESERVED_EXIT_CODE
     if child_pid == 0:
-        _execute_child(code, collector, import_paths)
+        _execute_child(code, collector, import_paths, setup)
     return _wait_for_child(child_pid, timeout_seconds)
 
 

@@ -108,8 +108,9 @@ def test_off_schema_prompt_and_identity_are_unchanged():
         "finish_task", "stop_task",
     ]}
     before = dev_tool_schemas(**options)
+    # Refreshed for shared check_setup guidance; the cases-off arguments stay fixed.
     assert sha256_json(before) == (
-        "sha256:7828bf04815955a0ec9e0b941c796d2846db4d3b54df152bafa63e6e0aee280d"
+        "sha256:8ae9bec26e3ff096574e2dd16c0747a7d13d430b9f3c56f50bad2263e83b5fe2"
     )
     assert dev_tool_surface_hash() == (
         "sha256:8663d25c9d04f584894958510fda6917f479b8036dcd18aadb292eae455985af"

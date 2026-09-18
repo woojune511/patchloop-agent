@@ -5,7 +5,17 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Current implementation: optional `--review-guidance applicability-contrast-v1` adds
+Current implementation: [probe setup comparisons](probe-setup.md) expose optional
+`check_setup(label, actual, expected)` in the existing public Python probe. Bounded
+type-strict scalar comparisons record actual supplied values and raise on mismatch.
+Setup status is independent of process exit; caught mismatches remain failed and
+incomplete/invalid reports remain unknown. Native results and compact observations
+retain the distinction without semantic credit or a report/submission gate. Raw
+program/action identity and sandbox limits remain; helper bytes change runtime/profile
+identity. Old completed evidence remains readable. No new paid observation or policy
+variant accompanies this provider-free implementation.
+
+Prior implementation: optional `--review-guidance applicability-contrast-v1` adds
 `case_selection.trigger_contrast`: whole candidate trigger, nullable boolean for whether
 the preservation setup still satisfies it, and the public applicability difference.
 All are model-authored hypotheses. Feedback treats a claimed disabled trigger as leaving

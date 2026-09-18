@@ -21,8 +21,8 @@ from patchloop.contracts import ProbeDependencyIdentity
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
 from patchloop.prepared_probe_dependencies import MOUNT, PreparedDependencies
+from patchloop.sandbox import probe_setup
 from patchloop.sandbox.execution_feedback import (
-    MAX_REPORT_BYTES,
     TRACE_WRAPPER,
     ReportChannel,
     prepare_trace,
@@ -44,6 +44,7 @@ PROBE_SOURCE_LIMIT_BYTES = 32_000
 _SNAPSHOT_LIMIT_BYTES = 128 * 1024 * 1024
 _CLEANUP_SECONDS = 5.0
 _WRAPPER = Path(__file__).resolve().parents[2] / "docker" / "probe_runner.py"
+_SETUP_WRAPPER = Path(probe_setup.__file__)
 
 
 def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[str, object]:
@@ -53,6 +54,8 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
         "image_digest": PROBE_IMAGE_DIGEST,
         "wrapper_hash": sha256_bytes(_WRAPPER.read_bytes()),
         "line_trace_hash": sha256_bytes(TRACE_WRAPPER.read_bytes()),
+        "setup_helper_hash": sha256_bytes(_SETUP_WRAPPER.read_bytes()),
+        "setup_report_limit_bytes": probe_setup.MAX_REPORT_BYTES,
         "network": "none",
         "read_only": True,
         "user": "10001:10001",
@@ -186,7 +189,8 @@ def _snapshot(workspace: Path, target: Path, deadline: ExecutionDeadline | None,
 class _OutputCollector:
     """Bound retained memory while two pipe readers drain concurrently."""
 
-    def __init__(self, execution_targets: dict | None = None) -> None:
+    def __init__(self, execution_targets: dict | None = None,
+                 setup_request: dict | None = None) -> None:
         self.streams = {"stdout": bytearray(), "stderr": bytearray()}
         self.observed = 0
         self.limit_hit = threading.Event()
@@ -195,6 +199,14 @@ class _OutputCollector:
         self.channel = (
             ReportChannel(execution_targets, lambda block: self._retain(block, "stderr"))
             if execution_targets is not None else None
+        )
+        self.setup_report = None
+        self.setup_channel = (
+            ReportChannel(
+                setup_request,
+                self.channel.feed if self.channel else lambda block: self._retain(block, "stderr"),
+                prefix=probe_setup.marker(setup_request), limit_bytes=probe_setup.MAX_REPORT_BYTES,
+            ) if setup_request is not None else None
         )
 
     def _retain(self, block: bytes, name: str) -> None:
@@ -208,18 +220,24 @@ class _OutputCollector:
     def drain(self, stream: BinaryIO, name: str) -> None:
         try:
             while block := stream.read(4096):
-                if name == "stderr" and self.channel is not None:
-                    self.channel.feed(block)
-                    pending = len(self.channel.pending) if self.channel.collecting else 0
-                    if (self.channel.framed_bytes + pending
-                            > MAX_REPORT_BYTES + len(self.channel.prefix) + 1):
-                        self.limit_hit.set()
+                channel = self.setup_channel or self.channel
+                if name == "stderr" and channel is not None:
+                    channel.feed(block)
+                    for report_channel in (self.setup_channel, self.channel):
+                        if report_channel is not None:
+                            pending = (len(report_channel.pending)
+                                       if report_channel.collecting else 0)
+                            if (report_channel.framed_bytes + pending
+                                    > report_channel.limit_bytes + len(report_channel.prefix) + 1):
+                                self.limit_hit.set()
                 else:
                     self._retain(block, name)
                 # Drain even after the public cap so Docker teardown cannot stall.
         except (OSError, ValueError):
             return
         finally:
+            if name == "stderr" and self.setup_channel is not None:
+                self.setup_report = self.setup_channel.finish()
             if name == "stderr" and self.channel is not None:
                 self.report = self.channel.finish()
 
@@ -339,7 +357,10 @@ class DockerProbeSandbox:
             deadline.bounded_timeout(PROBE_TIMEOUT_SECONDS, reserve_seconds=_CLEANUP_SECONDS)
             if deadline else float(PROBE_TIMEOUT_SECONDS)
         )
-        collector = _OutputCollector(execution_targets)
+        setup_request = {"source_hash": sha256_bytes(source),
+                         "execution_identity_hash": sha256_json(execution_identity)}
+        setup_request["request_hash"] = sha256_json(setup_request)
+        collector = _OutputCollector(execution_targets, setup_request)
         timed_out = False
         exit_code = None
         snapshot_hash = None
@@ -361,6 +382,13 @@ class DockerProbeSandbox:
                 (trusted / "probe_runner.py").write_bytes(wrapper)
                 if sha256_bytes(wrapper) != self._profile["wrapper_hash"]:
                     raise ContractError("probe trusted wrapper changed before execution")
+                setup_wrapper = _SETUP_WRAPPER.read_bytes()
+                if sha256_bytes(setup_wrapper) != self._profile["setup_helper_hash"]:
+                    raise ContractError("probe setup helper changed before execution")
+                (trusted / "probe_setup.py").write_bytes(setup_wrapper)
+                (trusted / "setup_request.json").write_text(
+                    json.dumps(setup_request), encoding="utf-8",
+                )
                 dependency_arguments = []
                 if self.dependencies is not None:
                     dependencies = temporary_path / "dependencies"
@@ -493,6 +521,9 @@ class DockerProbeSandbox:
         )
         stdout_text, stderr_text = collector.public_text()
         return {
+            "setup_checks": probe_setup.public_feedback(
+                setup_request, collector.setup_report if status in {"passed", "failed"} else None,
+            ),
             **({"public_execution": public_feedback(
                 execution_targets, collector.report if status in {"passed", "failed"} else None,
             )} if execution_targets is not None else {}),

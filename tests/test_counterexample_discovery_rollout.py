@@ -218,6 +218,37 @@ def test_no_probe_or_positive_claim_required_for_reporting(frozen, outcome):
     assert probes[0].calls == 0 and len(adapter.requests) == 1
 
 
+@pytest.mark.parametrize("frozen", design.REVIEW_GUIDANCE, indirect=True)
+def test_setup_mismatch_reaches_discovery_input_and_keeps_report_advisory(frozen):
+    from test_probe_setup import execute
+
+    call = probe_call()
+    call.arguments["python_source"] = "check_setup('constructed', 'actual', 'expected')"
+    _, failure, feedback = execute(call.arguments["python_source"])
+    assert type(failure).__name__ == "SetupMismatchError"
+    result, adapter, probes = run_mock(
+        frozen, [[call], [report_call()]],
+        probe_change={"setup_checks": feedback, "status": "failed", "exit_code": 1},
+    )
+    delivered = [json.loads(item["output"]) for item in adapter.requests[1]["input"]
+                 if item.get("type") == "function_call_output" and item["call_id"] == "probe"]
+    assert len(delivered) == 1
+    assert delivered[0]["output"]["setup_checks"] == feedback
+    assert delivered[0]["observation"]["setup_check_observation"]["status"] == "failed"
+    assert delivered[0]["observation"]["behavior_verdict"] == "not_assessed"
+    evidence = result["report"]["evidence"]
+    assert evidence["probe_identity_bound"] and evidence["complete_probe_receipt"]
+    assert evidence["program"] == call.arguments["python_source"]
+    converted = rollout.loop._requested_tool_from_openai(call)
+    assert evidence["probe_result"]["input_hash"] == sha256_json({
+        "tool": converted.name, "arguments": converted.arguments,
+        "turn_decision": converted.turn_decision.model_dump(mode="json"),
+    })
+    assert result["terminal"] == "REPORT_RECORDED" and probes[0].calls == 1
+    assert evidence["semantic_verdict"] is None and result["discovery_outcome"] is None
+    assert rollout.inspect(frozen.result) == result
+
+
 @pytest.mark.parametrize("frozen", design.case_selection.POLICIES, indirect=True)
 def test_selected_cases_reach_actual_feedback_without_claiming_execution_or_inheriting(frozen):
     contrast = {

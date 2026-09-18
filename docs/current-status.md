@@ -7,7 +7,37 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Applicability diagnostic reports a setup error as a candidate defect
+## Current implementation: Probe setup comparisons are separate from behavior assertions
+
+Public Python probes provide optional `check_setup(label, actual, expected)` to
+compare actual constructed scalar settings. A mismatch records the supplied values
+and raises before the next statement unless caught. The receipt separates setup
+`failed`/`passed`/`not_checked`/`unknown` from the process exit and preserves both
+for the next model input. Passing setup comparisons do not establish applicability,
+complete setup, candidate correctness or a counterexample. Reports remain advisory.
+
+The raw program, recovery identity and existing tool arguments stay intact. A bounded
+report channel and hashed helper run in the existing read-only probe sandbox. Both
+context policies and all discovery modes receive the new observation; no task-specific
+case or new prompt-policy variant is supplied. Earlier receipts remain readable;
+new runtime/profile identities do not reopen consumed samples or their budgets.
+
+Focused validation passes 146 tests/23.75s, including both context policies' actual
+setup/task/diff/check delivery and mock mutation/check/submission/isolated evaluation.
+Eleven real Docker tests pass/181.30s on the existing pinned image: setup mismatch,
+later behavior assertion, caught mismatch, unused helper and the existing sandbox
+boundaries. Completed replay preserves the receipt; closed earlier observations remain
+readable. Full regression: 2,878 PASS/16 SKIP/6 schema-description snapshot failures in
+2,383.77s, with durations retained. Updating those snapshot boundaries yields 11 targeted
+PASS, resolving all six (2,884 distinct tests verified, 16 skipped); production code did
+not change for that resolution. The initial failures are retained, not described as a
+clean full rerun. Ruff and documentation checks pass. Prior 1,265 evidence entries and
+the user's unrelated changes are preserved. Validation and limitations are recorded in
+`C:\pt\analyses\probe-setup-checks-20260919-v1`.
+This is provider-free implementation work; improved model discovery is not established.
+See [the setup-check contract](../.agent/probe-setup.md).
+
+## Latest closed observation: Applicability diagnostic reports a setup error as a candidate defect
 
 The authorized applicability-contrast-v1 observation is closed at runtime/diagnostic
 commit `bd94da0e`. Same original dev-train task/P10/GPT-5.4 medium, new $1.20 cap,

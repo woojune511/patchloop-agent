@@ -48,6 +48,18 @@ def probe_observation(result: dict[str, Any]) -> dict[str, Any]:
             "Compare the actual input, output and relevant ranges before drawing a conclusion."
         ),
     }
+    setup = output.get("setup_checks")
+    if isinstance(setup, dict):
+        setup_status = setup.get("status", "unknown")
+        observation["setup_check_observation"] = {
+            "status": setup_status, "check_count": len(setup.get("checks", [])),
+            "interpretation": (
+                "Actual supplied setup values differ from expectations. Check construction "
+                "and the expectation before attributing this mismatch to candidate behavior. "
+                if setup_status == "failed" else
+                "Only the program's selected setup comparisons are observed. "
+            ) + "Setup checks do not assess behavior correctness or public applicability.",
+        }
     if status == "failed" and any(
         line.startswith(("ModuleNotFoundError:", "ImportError:"))
         for line in output.get("stderr", "").splitlines()
