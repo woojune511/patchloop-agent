@@ -5,7 +5,20 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest closed observation: one separately authorized task-first-v1 sample records four
+Latest offline characterization: unchanged profile_scope_check runs its fixed public
+matrix once on base and P10. Base ordinary2/2/supplied0/2; P10 ordinary0/2/supplied2/2.
+The same field-mode condition is retained while profile origin changes, reproducing two
+ordinary-profile preservation failures. This is supplied operator evidence; the preceding
+model sample remains discoveries0/1. Separately, an AST-bound characterization of its
+replay predicate accepts ten synthetic corruptions that fixed fixture expectations reject;
+the unchanged control and two detectable corruptions bring the check count to13. It
+checks field types but copies count/names from actual output and ignores full payloads.
+No actual history values are reconstructed and no ten-defect claim follows. Two existing
+Docker checks, no provider/count/credential, cost$0. Operator29/docs3/Ruff/audit pass;
+all1,634 earlier entries preserved. No runtime/task/prompt/default change or fresh paid
+sample. See [the operator contract](profile-scope-diagnostic.md) for evidence and limits.
+
+Latest closed live observation: one separately authorized task-first-v1 sample records four
 cases before candidate disclosure, then one inspection response and one probe. Four
 model/count calls cost $0.1824 (cache-neutral $0.2256); all input deliveries and cleanup
 pass. Five direct cases match and two deferred loads yield six string-field history

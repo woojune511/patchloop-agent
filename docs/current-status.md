@@ -7,7 +7,46 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed observation: Task-first planning does not resolve the applicability gap
+## Latest offline characterization: Concrete profile contrast fails P10; replay assertion misses corruption
+
+The authorized offline follow-up reuses the unchanged public profile-scope diagnostic
+on the exact base and fixed P10 in two independent prepared-source workspaces. Same
+OpenAI provider/client, synthetic model name, field mode/name and tool-only input;
+ordinary versus DeepSeek-supplied profile is varied for two field names. Expectations
+come from the original public requirement and are recomputed outside candidate code.
+
+| Public requirement | Base | P10 |
+|---|---|---|
+| Preserve ordinary profiles, same field-mode condition | 2/2 PASS | 0/2 PASS |
+| Insert the configured empty field for supplied profiles | 0/2 PASS | 2/2 PASS |
+
+P10 adds an unwanted empty reasoning_content or scope_reasoning field to both ordinary
+profiles. This reproduces the missing concrete applicability contrast. Both complete
+checks exit1 because of confirmed behavior mismatches; output and cleanup are verified.
+This is operator-supplied public evidence, not model discovery or hidden evaluation.
+The closed task-first sample remains discoveries0/1 and acceptance NOT_ASSESSED.
+
+A separate read-only characterization binds the last model probe's final replay
+projection/assertion by SHA and AST equality. With synthetic messages, it accepts ten
+corruptions: missing/reordered history, invented/overwritten thinking, changed tool
+name/arguments/ID and missing/changed returns. The printed expected count/names derive
+from the observed history, and only string-valued fields are asserted; an empty selected
+history also passes all([]). A fixed independent unit-fixture expectation rejects all ten.
+The unchanged control passes; missing/non-string reasoning fields are detected by both.
+These13 synthetic checks identify assertion blind spots, not ten observed P10 defects.
+They do not reconstruct unrecorded actual wire values or certify the full conversation.
+
+Two existing-image Docker checks/eight public comparisons; zero provider/count calls,
+credential reads and model cost. Focused operator29 and documentation3 tests pass; Ruff
+and evidence audit pass. All1,634 earlier evidence entries and user changes are preserved.
+Runtime/task/prompt/tool/default bytes are unchanged; prior full-suite and isolated-mock
+evidence is reused. No retry, resume, correction patch, task registration or paid sample.
+The remaining two seams are concrete scope selection and independent expected results;
+changing input order alone has not resolved either. See [the operator contract](../.agent/profile-scope-diagnostic.md).
+Evidence: `C:\pt\analyses\public-input-oracle-characterization-20260919-v1`;
+raw pair: `C:\pt\pl-oracle-base-p10-0919a`.
+
+## Latest closed live observation: Task-first planning does not resolve the applicability gap
 
 One separately authorized task-first-v1 observation is closed at commit `8c84874b`.
 Same original dev-train task/P10/GPT-5.4 medium/applicability-contrast-v1, fresh source
