@@ -182,8 +182,43 @@ task/diff/check delivery. Ruff, the real offline source rehearsal, and scripted 
 case-selection feedback pass. Old original/scope request bytes and closed-journal
 inspection are verified. The unchanged runtime retains the prior full-regression
 receipt; it was not rerun for this diagnostic-only change.
-This implementation does not establish that a live model will select or recognize a useful
-preservation case. No new paid sample or runtime-default adoption is part of this change.
+The provider-free implementation record does not establish live case selection or efficacy.
+The separately authorized live observation below assesses its use; no default is adopted.
+
+## Preservation-case live observation
+
+The separately authorized one-sample preservation-cases-v1 observation is closed at
+implementation commit `8e0fed11`. Original task/P10/GPT-5.4 medium, new $1.20 cap,
+fresh prepared workspace and native history; no prior case, result or solution input.
+Eight model/count calls, nine source inspections, two probes and one report finish normally.
+Public review is NO_REPRODUCTION, supported model discoveries 0/planned1.
+
+The model first chooses copied/reused DeepSeek field and auto profiles with an alternate
+field name, two deferred capability loads and later history replay. Its initial
+`base.update(OpenAIModelProfile(...))` does not apply the default-valued auto override,
+leaving field mode. The apparent preservation mismatch is a setup error, not a candidate
+counterexample. After two searches and a read of ModelProfile.update, it uses
+dataclasses.replace and prints the actual modes. The second probe observes the expected
+synthetic empty fields in field mode and their absence in auto mode, while preserving
+the existing fixture values. The final report accurately limits its no-counterexample result.
+
+Both probes use selected=both, and their annotation/actual-output feedback is delivered.
+Concrete case selection, execution and correction of setup are supported observations.
+Auto mode disables the candidate's field-mode guard. Ordinary profiles that retain the
+same field/nonempty-name/tool-call trigger without the requiring provider profile are
+not exercised. Selecting that applicability contrast remains open; one selected result
+does not establish an improvement or justify adoption. The combined/reordered requirement
+excerpt fails literal source binding. Some 300-character expectation text ends mid-phrase;
+programs and complete outputs are the review evidence, not those labels alone.
+
+Both receipts have complete output and confirmed cleanup; exact owned containers are absent.
+All eight actual inputs preserve the frozen request and preceding public results. All four
+added lines are observed in each probe's launch thread, not per-case branch/semantic coverage.
+Recorded cost $0.3083795, cache-neutral $0.6139475, max input37,139; active331.857s/wall460.933s.
+Sample and unused $0.8916205 are closed; no retry, resume, replacement or additional candidate
+execution. official=false, task acceptance NOT_ASSESSED, hidden evaluation NOT_RUN.
+Evidence: `C:\pt\analyses\counterexample-discovery-preservation-20260918-v1`;
+raw run: `C:\pt\pl-discovery-preserve-live-0918a`.
 
 ## Preparation and validation
 

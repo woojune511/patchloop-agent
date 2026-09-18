@@ -14,7 +14,7 @@ assessed. Missing/malformed annotations do not block probes or reports; shared r
 hashes and receipt replay are preserved. Original and requirement-scope-v1 input bytes,
 the core runtime, tools available, cost limits and default policies remain unchanged.
 No task-specific case is supplied. Provider-free delivery/validation is separate from
-live efficacy, which is NOT_RUN. See the preservation-case section in
+the closed live observation below; neither establishes efficacy. See the preservation-case section in
 [the discovery contract](counterexample-discovery.md).
 
 Prior implementation: the fixed-candidate discovery preparer accepts optional
@@ -27,7 +27,19 @@ summaries and no new semantic gate. Focused 70 PASS/87.42s, related 41 PASS/60.0
 live observation below establishes no supported discovery. See the optional-guidance section in
 [the discovery contract](counterexample-discovery.md).
 
-Current observation: the guided sample closes with NO_REPRODUCTION, discoveries 0/1,
+Current observation: preservation-cases-v1 completes 8 calls/2 probes/$0.3083795;
+NO_REPRODUCTION, discoveries 0/1. The model selects field/auto cases using a supplied
+DeepSeek profile reused with OpenAIProvider and a copied field name. Its first update-based
+auto override leaves field mode because default-valued overrides are excluded. After reading
+that source, it uses dataclasses.replace and prints actual modes: synthetic messages carry
+the field in field mode and omit it in auto mode. It reports a limited match.
+This demonstrates concrete preservation selection and setup correction; ordinary profiles
+in the same field mode remain untested. The auto case switches off the proposed code trigger.
+All inputs/receipts/cleanup pass; no infrastructure or limit stop, no literal excerpt match.
+Sample and unused $0.8916205 closed, no retry/default adoption. See the latest observation in
+[the discovery contract](counterexample-discovery.md).
+
+Prior observation: the guided sample closes with NO_REPRODUCTION, discoveries 0/1,
 9 calls/8 inspections/1 probe/$0.220049. Its actual DeepSeek default-profile setup and
 expectation are supported by the task; six offline SDK requests and later history replay
 complete normally. It tests the required change scope only, then reports no counterexample.

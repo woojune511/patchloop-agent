@@ -7,7 +7,41 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Optional preservation-case selection accompanies a diagnostic probe
+## Current seam: Preservation case executes after setup correction; discovery remains 0/1
+
+The authorized preservation-cases-v1 sample is closed at implementation commit `8e0fed11`.
+Same original dev-train task/P10/GPT-5.4 medium, fresh native history and independent
+prepared-source workspace; new cap $1.20. Planned1/started1/report-completed1, official=false.
+Eight model/count calls, nine reads/searches, two probes and one report complete without
+an infrastructure/resource stop. Public review: **NO_REPRODUCTION**, supported discoveries 0/1.
+
+The first probe selects both a copied/reused DeepSeek field profile with an alternate
+field name and an auto-mode preservation case. Its update-based auto override is not
+actually applied: ModelProfile.update skips values equal to dataclass defaults, leaving
+field mode. The assertion failure therefore does not reproduce an in-scope defect.
+The model checks that public source, replaces the setup with dataclasses.replace, and
+prints the actual modes in a second probe. After two deferred capability loads and later
+history replay, field mode supplies empty fields on synthetic search_tools messages;
+auto mode leaves those fields absent. Existing fixture thinking values remain present.
+The final report describes this scoped match and untested combinations.
+
+Concrete preservation selection, actual execution and setup correction are observed.
+The chosen auto case turns off the candidate's field-mode guard; it does not test ordinary
+profiles that share field mode/nonempty field/tool-call conditions but lack the requiring
+provider profile. That applicability contrast remains untested. This is one selected
+observation, not evidence of causal improvement, task correctness or default adoption.
+The report's combined/reordered requirement excerpt fails literal binding. Both complete
+probe receipts and all eight actual input deliveries are verified; both containers are gone.
+All four added lines are observed per probe in the launch thread, not per-case coverage.
+
+Recorded cost $0.3083795, cache-neutral $0.6139475, max input 37,139, active331.857s /
+wall460.933s. Unused $0.8916205 closes with the sample. No retry/resume/replacement,
+additional candidate execution or hidden evaluation; task acceptance NOT_ASSESSED.
+Next focus is selecting a case that retains the proposed code trigger while changing
+public applicability. Evidence: `C:\pt\analyses\counterexample-discovery-preservation-20260918-v1`;
+raw run: `C:\pt\pl-discovery-preserve-live-0918a`.
+
+## Prior seam: Optional preservation-case selection accompanies a diagnostic probe
 
 `--review-guidance preservation-cases-v1` adds concrete change/preserve inputs and a
 selection inside the existing fixed-candidate probe call. The generic instruction
