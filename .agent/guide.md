@@ -5,7 +5,19 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Current implementation: the fixed-candidate discovery preparer accepts optional
+Current implementation: optional `--review-guidance applicability-contrast-v1` adds
+`case_selection.trigger_contrast`: whole candidate trigger, nullable boolean for whether
+the preservation setup still satisfies it, and the public applicability difference.
+All are model-authored hypotheses. Feedback treats a claimed disabled trigger as leaving
+same-trigger preservation unresolved; a claimed retained trigger still needs actual setup,
+output and public-requirement review. Unknown/malformed/missing records remain advisory.
+No task-specific contrast, extra probe gate or semantic credit is supplied. Old three modes'
+request/prompt/protocol bytes and core runtime are preserved; new metadata binds the option.
+Feature-focused 24 PASS/13.36s; diagnostic regression 117 PASS/129.77s. No live efficacy
+observation or new paid packet. See the applicability-contrast section in
+[the discovery contract](counterexample-discovery.md).
+
+Prior implementation: the fixed-candidate discovery preparer accepts optional
 `--review-guidance preservation-cases-v1`. Its diagnostic-only probe annotation reuses
 the compact change/preserve case shape and adds which cases the program intends to
 exercise. Public feedback binds the task/program/candidate and asks for comparison with

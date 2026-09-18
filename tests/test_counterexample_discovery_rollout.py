@@ -201,7 +201,7 @@ def test_real_request_and_public_native_feedback_reach_report_without_a_verdict(
     assert evidence["semantic_verdict"] is None
     assert "import toy" in evidence["program"]
     assert ("case_selection" in evidence["probe_result"]["output"]) == (
-        guidance == "preservation-cases-v1")
+        guidance in design.case_selection.POLICIES)
     assert rollout.inspect(frozen.result) == result
     with pytest.raises(ContractError, match="fresh external"):
         run_mock(frozen, [[report_call()]])
@@ -218,7 +218,7 @@ def test_no_probe_or_positive_claim_required_for_reporting(frozen, outcome):
     assert probes[0].calls == 0 and len(adapter.requests) == 1
 
 
-@pytest.mark.parametrize("frozen", ["preservation-cases-v1"], indirect=True)
+@pytest.mark.parametrize("frozen", design.case_selection.POLICIES, indirect=True)
 def test_selected_cases_reach_actual_feedback_without_claiming_execution_or_inheriting(frozen):
     contrast = {
         "change": {"setup": "enabled=True, value=0", "expected": "1"},
@@ -229,6 +229,14 @@ def test_selected_cases_reach_actual_feedback_without_claiming_execution_or_inhe
     calls = [probe_call(f"probe-{i}") for i in range(5)]
     calls[0].arguments["case_selection"] = contrast
     calls[1].arguments["case_selection"] = {**contrast, "selected": "preserve"}
+    guidance = rollout.read(frozen.design / "packet.json")["review_guidance"]
+    if guidance == design.case_selection.CONTRAST_POLICY:
+        for call, relation in zip(calls[:2], (False, True), strict=True):
+            call.arguments["case_selection"]["trigger_contrast"] = {
+                "candidate_trigger": "enabled and value == 0",
+                "preserve_satisfies_trigger": relation,
+                "applicability_difference": "Model hypothesis; not established by this toy task.",
+            }
     calls[2].arguments["case_selection"] = None
     # calls[3] omits the annotation. Neither may inherit a prior selection.
     calls[4].arguments["case_selection"] = {**contrast, "unexpected": "invalid"}
@@ -258,6 +266,12 @@ def test_selected_cases_reach_actual_feedback_without_claiming_execution_or_inhe
     assert finished[1]["output"]["case_selection"]["cases"]["preserve"] == contrast["preserve"]
     assert finished[1]["output"]["case_selection"]["public_task_hash"] == sha256_json(
         design.load_public_task(frozen.design / "public.yaml").model_dump(mode="json"))
+    if guidance == design.case_selection.CONTRAST_POLICY:
+        first, second = [r["output"]["case_selection"] for r in finished[:2]]
+        assert "disables part" in first["next_question"]
+        assert "claims the whole trigger is retained" in second["next_question"]
+        assert second["trigger_contrast"] == (
+            calls[1].arguments["case_selection"]["trigger_contrast"])
     for index, status in ((2, "omitted"), (3, "omitted"), (4, "invalid")):
         assert finished[index]["output"]["case_selection"]["status"] == status
         assert "cases" not in finished[index]["output"]["case_selection"]
@@ -267,7 +281,10 @@ def test_selected_cases_reach_actual_feedback_without_claiming_execution_or_inhe
     assert evidence["probe_result"] == finished[1]
     assert rollout.inspect(frozen.result) == result
 
-    gateway = design.case_selection.CaseSelectionGateway(
+    gateway_type = (design.case_selection.ApplicabilityGateway
+                    if guidance == design.case_selection.CONTRAST_POLICY
+                    else design.case_selection.CaseSelectionGateway)
+    gateway = gateway_type(
         workspace=frozen.result / "workspaces/candidate/repo",
         public_task=design.load_public_task(frozen.design / "public.yaml"),
         sandbox=None, probe_sandbox=probes[0], journal=journal, limits=DevLimits())
@@ -279,6 +296,13 @@ def test_selected_cases_reach_actual_feedback_without_claiming_execution_or_inhe
     with pytest.raises(ActionConflict):
         gateway.execute(rollout.loop._requested_tool_from_openai(changed))
     assert probes[0].calls == 5
+    if guidance == design.case_selection.CONTRAST_POLICY:
+        changed = copy.deepcopy(calls[1])
+        changed_contrast = changed.arguments["case_selection"]["trigger_contrast"]
+        changed_contrast["preserve_satisfies_trigger"] = False
+        with pytest.raises(ActionConflict):
+            gateway.execute(rollout.loop._requested_tool_from_openai(changed))
+        assert probes[0].calls == 5
 
 
 @pytest.mark.parametrize("fault,expected,counts,calls", [
@@ -341,7 +365,7 @@ def test_probe_uncertainty_stops_before_next_model_turn(frozen, change, expected
     assert result["terminal"] == expected and len(adapter.requests) == probes[0].calls == 1
 
 
-@pytest.mark.parametrize("frozen", ["original", "preservation-cases-v1"], indirect=True)
+@pytest.mark.parametrize("frozen", ["original", *design.case_selection.POLICIES], indirect=True)
 @pytest.mark.parametrize("change", [
     {"status": "failed", "exit_code": 1, "stderr": "ImportError: mock fixture"},
     {"status": "output_limit", "truncated": True},

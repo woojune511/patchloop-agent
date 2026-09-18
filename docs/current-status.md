@@ -7,7 +7,36 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Preservation case executes after setup correction; discovery remains 0/1
+## Current seam: Diagnostic contrasts distinguish code triggers from public applicability
+
+`--review-guidance applicability-contrast-v1` adds a nullable `trigger_contrast` inside
+the existing diagnostic case selection. The model records the candidate's whole condition,
+whether its preservation input still satisfies that condition, and the public applicability
+difference between the inputs. Generic guidance prefers retaining the whole trigger when
+the task supports a preservation boundary. Feedback on a reported disabled trigger points
+out that preservation under the same trigger remains unresolved. A reported retained trigger
+is a claim to check against actual construction/output, never automatic coverage evidence.
+Unknown, missing and malformed annotations remain advisory; no extra probe/report gate.
+
+This addresses the selection gap in the last observation below. It supplies no known
+task-specific case or expected answer. Original, requirement-scope-v1 and preservation-cases-v1
+request/prompt/protocol bytes, core runtime and dev defaults are preserved. The option and
+diagnostic implementation are frozen in new preparation metadata. Raw action hashing and
+completed replay retain the annotation; later probes do not inherit omitted contrasts.
+
+Feature-focused validation: 24 PASS/13.36s. All three discovery test files: 117 PASS/129.77s
+with durations recorded; the combined suite exceeds the two-minute target. Shared paths
+pass 41/60.09s, including both policies' mutation/check/submit/isolated-evaluation mocks
+and actual public task/diff/check delivery. Ruff, offline source rehearsal, scripted
+contrast feedback and closed-journal inspection pass with zero live provider/count,
+credential or Docker operations. The unchanged core runtime reuses the prior resolved
+2,776 PASS/12 SKIP full-regression receipt; that suite was not rerun. This is a
+provider-free implementation change. Live case selection and discovery efficacy for this
+option remain **NOT_RUN**; earlier samples and unused budgets remain closed.
+Evidence: `C:\pt\analyses\counterexample-applicability-contrast-20260918-v1`.
+See [the discovery contract](../.agent/counterexample-discovery.md).
+
+## Latest live observation: Preservation case executes after setup correction; discovery remains 0/1
 
 The authorized preservation-cases-v1 sample is closed at implementation commit `8e0fed11`.
 Same original dev-train task/P10/GPT-5.4 medium, fresh native history and independent
@@ -37,8 +66,9 @@ All four added lines are observed per probe in the launch thread, not per-case c
 Recorded cost $0.3083795, cache-neutral $0.6139475, max input 37,139, active331.857s /
 wall460.933s. Unused $0.8916205 closes with the sample. No retry/resume/replacement,
 additional candidate execution or hidden evaluation; task acceptance NOT_ASSESSED.
-Next focus is selecting a case that retains the proposed code trigger while changing
-public applicability. Evidence: `C:\pt\analyses\counterexample-discovery-preservation-20260918-v1`;
+The new diagnostic option above supports selecting a case that retains the proposed code
+trigger while changing public applicability; its effect has not been observed live.
+Evidence: `C:\pt\analyses\counterexample-discovery-preservation-20260918-v1`;
 raw run: `C:\pt\pl-discovery-preserve-live-0918a`.
 
 ## Prior seam: Optional preservation-case selection accompanies a diagnostic probe

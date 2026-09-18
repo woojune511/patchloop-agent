@@ -396,9 +396,10 @@ def run(plan_root: Path, *, plan_hash: str, adapter_factory=None, probe_factory=
             design.require(validate(plan_root) == plan, "inputs changed during preflight")
             journal.append("discovery_source_bound", {"candidate_hash": diff.patch_hash,
                                                        "probe": expected_probe})
-            gateway_type = (case_selection.CaseSelectionGateway
-                            if packet.get("review_guidance") == case_selection.POLICY
-                            else DevToolGateway)
+            gateway_type = {
+                case_selection.POLICY: case_selection.CaseSelectionGateway,
+                case_selection.CONTRAST_POLICY: case_selection.ApplicabilityGateway,
+            }.get(packet.get("review_guidance"), DevToolGateway)
             gateway = gateway_type(workspace=workspace, public_task=public, sandbox=None,
                                    journal=journal, limits=DevLimits(), probe_sandbox=probe,
                                    deadline=ExecutionDeadline.from_remaining(1800, clock=clock))

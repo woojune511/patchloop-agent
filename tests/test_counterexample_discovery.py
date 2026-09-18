@@ -270,7 +270,32 @@ def test_case_selection_changes_only_guidance_and_probe_annotation(offline, tmp_
     assert set(packet) - set(before_packet) == {"case_selection_implementation_hash"}
 
 
-@pytest.mark.parametrize("guidance", ["requirement-scope-v1", "preservation-cases-v1"])
+def test_applicability_contrast_adds_only_generic_guidance_and_nullable_annotation(
+        offline, tmp_path):
+    before_root, after_root = tmp_path / "before", tmp_path / "after"
+    before_packet = design.prepare(offline, before_root, review_guidance="preservation-cases-v1")
+    packet = design.prepare(offline, after_root, review_guidance="applicability-contrast-v1")
+    assert design.validate(after_root) == packet
+    assert set(packet) == set(before_packet)
+    assert packet["case_selection_implementation_hash"] == sha256_bytes(
+        Path(design.case_selection.__file__).read_bytes())
+    before = json.loads((before_root / "request.json").read_bytes())
+    after = json.loads((after_root / "request.json").read_bytes())
+    assert after["input"][0] != before["input"][0]
+    after["input"][0] = before["input"][0]
+    probe = next(t for t in after["tools"] if t["name"] == "run_probe")["parameters"]
+    annotation = probe["properties"]["case_selection"]
+    contrast = annotation["properties"].pop("trigger_contrast")
+    assert contrast["type"] == ["object", "null"]
+    assert contrast["additionalProperties"] is False
+    assert set(contrast["required"]) == set(contrast["properties"]) == {
+        "candidate_trigger", "preserve_satisfies_trigger", "applicability_difference"}
+    assert contrast["properties"]["preserve_satisfies_trigger"]["type"] == ["boolean", "null"]
+    annotation["required"].remove("trigger_contrast")
+    assert design.wire(after) == design.wire(before)
+
+
+@pytest.mark.parametrize("guidance", design.REVIEW_GUIDANCE[1:])
 @pytest.mark.parametrize("replacement", [None, "original", "unknown"])
 def test_guidance_cannot_be_removed_or_switched_in_a_frozen_packet(
         offline, tmp_path, replacement, guidance):
@@ -291,7 +316,7 @@ def test_unknown_guidance_fails_before_source_reads(tmp_path):
         design.compile_packet(missing, review_guidance="unknown")
 
 
-@pytest.mark.parametrize("guidance", ["requirement-scope-v1", "preservation-cases-v1"])
+@pytest.mark.parametrize("guidance", design.REVIEW_GUIDANCE[1:])
 def test_cli_prepares_selected_guidance_offline(offline, tmp_path, monkeypatch, capsys, guidance):
     root = tmp_path / "packet"
     args = ["prepare", "--output", str(root), "--review-guidance", guidance]

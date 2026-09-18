@@ -137,6 +137,52 @@ thread-compatibility receipt; it was not repeated for an instruction-only diagno
 At preparation, live model efficacy and independent discovery were NOT_RUN. The
 separately authorized guided observation below is now closed without a supported discovery.
 
+## Optional applicability contrast
+
+`--review-guidance applicability-contrast-v1` extends preservation-case selection below.
+The last observation selected a valid preservation case by switching off a candidate
+condition, leaving behavior under the same condition but different public applicability
+untested. The new generic instruction makes these two distinctions explicit in the probe
+call. It does not supply a task-specific example, past counterexample or expected answer.
+
+`case_selection.trigger_contrast` is null or an object with:
+
+- `candidate_trigger`: the whole candidate condition, including each conjunct, derived
+  from the inspected patch/source (1-300 characters).
+- `preserve_satisfies_trigger`: true/false/null for the model's hypothesis about whether
+  the preservation input still satisfies that whole condition. Null means unknown.
+- `applicability_difference`: the public requirement separating the inputs' applicability
+  and how their construction differs (1-300 characters).
+
+The strict schema requires these object properties; optional values are nullable.
+Scripted calls may omit the annotation. Runtime binding checks only shape and bounds.
+The model is asked to print relevant constructed values and observations per selected case.
+A false relation yields public feedback that same-trigger preservation is unresolved,
+suggesting a supported contrast or a reported limitation. A true relation remains a claim
+to compare against actual construction and output. Unknown/missing/invalid records return
+an unresolved question. A relation without a preservation case cannot support that claim.
+No annotation gates a probe or report, and no relation is inferred from arbitrary programs.
+
+Every result remains `model_authored_unverified`, `coverage_status=not_assessed`.
+Raw annotations participate in shared action hashing; replay returns the saved feedback,
+and changing the relation under the same action ID conflicts. No contrast carries into a
+later omitted/null record. The gateway subclass applies only to this option. The default,
+requirement-scope-v1 and preservation-cases-v1 initial request/prompt/protocol bytes remain
+identical to sealed preparation records. Core runtime, available actions and limits remain
+unchanged. Design and executable metadata bind the option and implementation hash.
+
+Provider-free feature validation passes 24 tests in 13.36s; all three diagnostic files pass
+117 in 129.77s with durations (combined suite exceeds two minutes). Shared regressions
+pass 41/60.09s, including both context policies' isolated mock evaluation and public
+task/diff/check delivery. Ruff, offline prepared-source rehearsal, scripted contrast
+feedback and read-only inspection of the last closed run pass. Zero live provider/count,
+credential or Docker operations. The unchanged core runtime reuses the prior resolved
+2,776 PASS/12 SKIP full-regression receipt rather than rerunning it.
+This confirms delivery, advisory behavior, identity and recovery, not better model
+selection or discovery. No fresh
+paid sample or executable real-task packet is included, and all older budgets remain closed.
+Evidence: `C:\pt\analyses\counterexample-applicability-contrast-20260918-v1`.
+
 ## Optional preservation-case selection
 
 `--review-guidance preservation-cases-v1` extends the scope guidance with a concrete
