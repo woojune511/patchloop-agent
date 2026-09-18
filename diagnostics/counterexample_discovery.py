@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
 
+from diagnostics import discovery_case_plan as case_plan
 from diagnostics import discovery_case_selection as case_selection
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
@@ -163,7 +164,7 @@ def initial_request(public: PublicTask, patch: str, environment: dict, *,
     )
 
 
-def protocol(review_guidance: str = "original") -> dict:
+def protocol(review_guidance: str = "original", *, case_design: str | None = None) -> dict:
     review_prompt(review_guidance)
     result = {
         "status": "PREPARED_NOT_EXECUTABLE", "collector_implemented": False,
@@ -231,12 +232,27 @@ def protocol(review_guidance: str = "original") -> dict:
         result["guidance_scope"] += (
             " Nullable trigger_contrast separates the whole code trigger from public "
             "applicability; feedback reviews the model-authored relation without verifying it.")
+    if case_design is not None:
+        require(case_design == case_plan.MODE, "unknown case design")
+        result.update({
+            "case_design": case_design,
+            "candidate": "withheld from model input until one initial case proposal is frozen",
+            "initial_tools": [case_plan.TOOL],
+            "initial_proposal": "public task only; no candidate, source tools or prior cases; "
+                                "zero to four model-authored cases; semantic review required",
+            "shared_limits": "case design and candidate review share the same invocation limits; "
+                             "record_case_plan consumes one tool action and model response",
+            "history": "fresh task-only input; freeze the proposal, then append native candidate "
+                       "reveal and normal public review exchanges with opaque continuation",
+        })
     return result
 
 
 def compile_packet(inputs: Inputs, *,
-                   review_guidance: str = "original") -> tuple[dict, dict[str, bytes]]:
+                   review_guidance: str = "original",
+                   case_design: str | None = None) -> tuple[dict, dict[str, bytes]]:
     prompt = review_prompt(review_guidance)
+    require(case_design in (None, case_plan.MODE), "unknown case design")
     paths = inputs.paths()
     raw = {name: path.read_bytes() for name, path in paths.items()}
     require({name: sha256_bytes(body) for name, body in raw.items()} == EXPECTED_HASHES,
@@ -250,9 +266,16 @@ def compile_packet(inputs: Inputs, *,
     patch = raw["candidate_patch"].decode("utf-8")
     request = initial_request(public, patch, dependencies.environment,
                               review_guidance=review_guidance)
+    review_request = request
+    if case_design is not None:
+        request = case_plan.initial_request(review_request)
+        prompt = request["input"][0]["content"]
     files = {"public.yaml": raw["public_task"], "candidate.patch": raw["candidate_patch"],
-             "request.json": wire(request), "protocol.json": wire(protocol(review_guidance)),
+             "request.json": wire(request),
+             "protocol.json": wire(protocol(review_guidance, case_design=case_design)),
              "prompt.txt": prompt.encode()}
+    if case_design is not None:
+        files["review-request.json"] = wire(review_request)
     packet = {
         "schema_version": SCHEMA, "status": "PREPARED_NOT_EXECUTABLE", "official": False,
         "inputs": {name: str(path) for name, path in paths.items()},
@@ -274,6 +297,11 @@ def compile_packet(inputs: Inputs, *,
     if review_guidance in case_selection.POLICIES:
         packet["case_selection_implementation_hash"] = sha256_bytes(
             Path(case_selection.__file__).read_bytes())
+    if case_design is not None:
+        packet.update({"case_design": case_design,
+                       "case_plan_implementation_hash": sha256_bytes(
+                           Path(case_plan.__file__).read_bytes()),
+                       "candidate_disclosure": "after_case_plan_frozen"})
     return packet, files
 
 
@@ -288,9 +316,10 @@ def fresh_external_root(output: Path, protected: list[Path]) -> Path:
     return root
 
 
-def prepare(inputs: Inputs, output: Path, *, review_guidance: str = "original") -> dict:
+def prepare(inputs: Inputs, output: Path, *, review_guidance: str = "original",
+            case_design: str | None = None) -> dict:
     root = fresh_external_root(output, [p.parent for p in inputs.paths().values()])
-    packet, files = compile_packet(inputs, review_guidance=review_guidance)
+    packet, files = compile_packet(inputs, review_guidance=review_guidance, case_design=case_design)
     root.mkdir(exist_ok=False)
     store = ArtifactStore(root)
     journal = DevJournal(root, PREPARATION_ID)
@@ -308,7 +337,8 @@ def validate(root: Path) -> dict:
     packet = json.loads((root / "packet.json").read_bytes())
     expected, files = compile_packet(
         Inputs(**{k: Path(v) for k, v in packet["inputs"].items()}),
-        review_guidance=packet.get("review_guidance", "original"))
+        review_guidance=packet.get("review_guidance", "original"),
+        case_design=packet.get("case_design"))
     require(packet == expected, "packet/source/runtime/implementation changed")
     require(all((root / name).read_bytes() == body for name, body in files.items()),
             "frozen input or protocol changed")
@@ -390,6 +420,7 @@ def main() -> None:
         p.add_argument("--" + name.replace("_", "-"), type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--review-guidance", choices=REVIEW_GUIDANCE, default="original")
+    p.add_argument("--case-design", choices=[case_plan.MODE])
     v = commands.add_parser("validate")
     v.add_argument("--root", type=Path, required=True)
     r = commands.add_parser("rehearse")
@@ -400,7 +431,9 @@ def main() -> None:
     if command == "prepare":
         output = args.pop("output")
         review_guidance = args.pop("review_guidance")
-        result = prepare(Inputs(**args), output, review_guidance=review_guidance)
+        case_design = args.pop("case_design")
+        result = prepare(Inputs(**args), output, review_guidance=review_guidance,
+                         case_design=case_design)
     else:
         result = validate(**args) if command == "validate" else rehearse(**args)
     print(canonical_json({"status": result["status"], "official": False,

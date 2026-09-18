@@ -1,5 +1,15 @@
 # Fixed-candidate counterexample discovery
 
+## Optional staged case design
+
+`prepare --case-design task-first-v1` withholds the fixed candidate and source tools
+until one initial model-authored case proposal is frozen from the complete public task.
+It then reveals the candidate through a native function result and continues the selected
+review guidance with its existing tools. The stages share all invocation limits. Cases
+remain revisable hypotheses with an immutable initial record, not an oracle or mandatory
+probe list. Omission preserves the existing guidance requests. See the
+[task-first contract and provider-free validation](task-first-discovery.md).
+
 ## Question and boundary
 
 Can the same model construct and execute a requirement-refuting input when explicitly

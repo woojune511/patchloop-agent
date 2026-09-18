@@ -5,7 +5,17 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Current implementation: [probe setup comparisons](probe-setup.md) expose optional
+Current implementation: [task-first case design](task-first-discovery.md) adds optional
+`--case-design task-first-v1` to the fixed-candidate diagnostic. The model first receives
+only the original public task and record_case_plan. Its bounded initial proposal is
+stored before a native result reveals the candidate and existing review tools. It may
+correct that proposal later; no case selection is a semantic verdict or required probe.
+One ledger, call/action counter and deadline span both stages. Earlier guidance requests
+remain identical, core runtime/defaults stay unchanged, and old closed journals remain
+readable. Provider-free validation includes both policies' isolated mock evaluations;
+live discovery benefit is not established and older budgets remain closed.
+
+Prior implementation: [probe setup comparisons](probe-setup.md) expose optional
 `check_setup(label, actual, expected)` in the existing public Python probe. Bounded
 type-strict scalar comparisons record actual supplied values and raise on mismatch.
 Setup status is independent of process exit; caught mismatches remain failed and
@@ -54,7 +64,7 @@ summaries and no new semantic gate. Focused 70 PASS/87.42s, related 41 PASS/60.0
 live observation below establishes no supported discovery. See the optional-guidance section in
 [the discovery contract](counterexample-discovery.md).
 
-Current observation: applicability-contrast-v1 completes 7 calls/1 probe/$0.1730905.
+Prior observation: applicability-contrast-v1 completes 7 calls/1 probe/$0.1730905.
 The model reports a counterexample; public review records NO_REPRODUCTION, discoveries0/1.
 Its default plain-OpenAI preservation case is explicitly labeled trigger=false; no
 same-trigger case follows. The copied-profile program applies update(source_profile)
@@ -64,9 +74,9 @@ assertion as a candidate defect. The entire result and unresolved-trigger feedba
 the next/final input. No construction correction follows; the copy-method caveat does not
 support the claim. Operator-only public source corroborates the merge behavior, without
 another execution. No transport, cleanup or resource stop; sample/unused$1.0269095 closed.
-Do not adopt this diagnostic option into repair defaults. Next priority is separating
-probe setup validation from candidate-behavior claims. No automatic new prompt variant,
-paid retry or hidden evaluation. See the applicability observation in
+Do not adopt this diagnostic option into repair defaults. It motivated the separate
+setup observation above. No paid retry or hidden evaluation follows from it.
+See the applicability observation in
 [the discovery contract](counterexample-discovery.md).
 
 Prior observation: preservation-cases-v1 completes 8 calls/2 probes/$0.3083795;

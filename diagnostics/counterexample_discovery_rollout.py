@@ -18,6 +18,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from diagnostics import counterexample_discovery as design
+from diagnostics import discovery_case_plan as case_plan
 from diagnostics import discovery_case_selection as case_selection
 from diagnostics import episode_requests as requests
 from diagnostics import fresh_state_rollout as engine
@@ -65,7 +66,7 @@ def read(path: Path) -> dict:
 
 def implementation_hashes() -> dict:
     names = ("counterexample_discovery_rollout", "counterexample_discovery",
-             "discovery_case_selection", "episode_requests",
+             "discovery_case_selection", "discovery_case_plan", "episode_requests",
              "fresh_state_rollout", "fresh_state_design", "fresh_state_sampler", "decision_sampler")
     return {f"diagnostics/{name}.py": sha256_bytes(
         (repository_root() / "diagnostics" / f"{name}.py").read_bytes()) for name in names}
@@ -99,6 +100,8 @@ def plan_for(design_root: Path, result_root: Path, pricing_verified_on: str) -> 
     }
     if "review_guidance" in packet:
         plan["review_guidance"] = packet["review_guidance"]
+    if "case_design" in packet:
+        plan["case_design"] = packet["case_design"]
     return plan
 
 
@@ -180,7 +183,8 @@ def report_evidence(report: DiscoveryReport, gateway: DevToolGateway) -> dict:
 
 
 class Session:
-    def __init__(self, request, gateway, store, *, probe_identity, clock=monotonic):
+    def __init__(self, request, gateway, store, *, probe_identity, clock=monotonic,
+                 review_request=None):
         self.seed = copy.deepcopy(request)
         self.items = copy.deepcopy(request["input"])
         self.gateway, self.journal, self.store = gateway, gateway.journal, store
@@ -190,6 +194,8 @@ class Session:
         self.fixed_diff = gateway.current_diff_hash
         self.probe_identity = probe_identity
         self.report = None
+        self.review_request = copy.deepcopy(review_request)
+        self.designing_cases = review_request is not None
 
     def elapsed_ms(self):
         return int((self.clock() - self.started) * 1000)
@@ -210,8 +216,10 @@ class Session:
         ref = self.store.put_text(canonical_json(request["input"]), "application/json")
         self.journal.append("turn_started", {
             "turn_id": turn_id, "model_input_artifact": ref.model_dump(mode="json"),
-            "model_input_hash": ref.content_hash, "workflow_gate": "fixed_candidate_review",
-            "available_tool_names": sorted([*TOOL_NAMES, "report_discovery"]),
+            "model_input_hash": ref.content_hash,
+            "workflow_gate": ("design_cases_before_candidate" if self.designing_cases
+                              else "fixed_candidate_review"),
+            "available_tool_names": sorted(t["name"] for t in self.seed["tools"]),
             "active_elapsed_ms": self.elapsed_ms(),
         })
         return turn_id, request, None
@@ -235,8 +243,14 @@ class Session:
             raise engine.AbortExperiment("PROTOCOL_VIOLATION")
         if self.new_tools + len(calls) > self.gateway.limits.max_tool_actions:
             raise engine.AbortExperiment("TOOL_ACTION_LIMIT")
+        proposal = report = None
         try:
-            if len(calls) == 1 and calls[0].name == "report_discovery":
+            if self.designing_cases:
+                design.require(len(calls) == 1 and calls[0].name == case_plan.TOOL,
+                               "case proposal required before candidate review")
+                design.require(calls[0].turn_decision is None, "unexpected proposal annotation")
+                proposal = case_plan.CasePlan.model_validate(calls[0].arguments)
+            elif len(calls) == 1 and calls[0].name == "report_discovery":
                 report = DiscoveryReport.model_validate(calls[0].arguments)
                 design.require(calls[0].turn_decision is None, "unexpected report annotation")
             else:
@@ -251,6 +265,9 @@ class Session:
         })
         self.new_tools += len(calls)
         self.counters.tool_actions += len(calls)
+        if proposal is not None:
+            case_plan.freeze(self, turn_id, turn, proposal, checkpoint)
+            return
         if report is not None:
             self.report = {"turn_id": turn_id, "action_id": calls[0].action_id,
                            "report": report.model_dump(mode="json"),
@@ -321,7 +338,7 @@ def summary(journal: DevJournal, code: str, *, provider_free: bool) -> dict:
                                  output_tokens=p["output_tokens"])
                    for p in usage if p.get("billing_known"))
     reports = payloads("discovery_report_recorded")
-    return {**BOUNDARIES, "schema_version": SCHEMA, "run_id": journal.run_id,
+    result = {**BOUNDARIES, "schema_version": SCHEMA, "run_id": journal.run_id,
             "terminal": code, "provider_free": provider_free,
             "accounting_basis": "mock_simulation" if provider_free else "recorded_provider_usage",
             "live_provider_calls": 0 if provider_free else len(payloads("provider_call_started")),
@@ -338,6 +355,10 @@ def summary(journal: DevJournal, code: str, *, provider_free: bool) -> dict:
             "review_status": "PUBLIC_REVIEW_REQUIRED" if reports else "INCOMPLETE_OBSERVATION",
             "discovery_outcome": None,
             "automatic_retry_resume_or_extra_sample": False}
+    proposals = payloads(case_plan.EVENT)
+    if proposals:
+        result["case_plan"] = proposals[-1]
+    return result
 
 
 def run(plan_root: Path, *, plan_hash: str, adapter_factory=None, probe_factory=None,
@@ -404,7 +425,9 @@ def run(plan_root: Path, *, plan_hash: str, adapter_factory=None, probe_factory=
                                    journal=journal, limits=DevLimits(), probe_sandbox=probe,
                                    deadline=ExecutionDeadline.from_remaining(1800, clock=clock))
             session = Session(read(plan_root / "request.json"), gateway, store,
-                              probe_identity=expected_probe, clock=clock)
+                              probe_identity=expected_probe, clock=clock,
+                              review_request=(read(design_root / "review-request.json")
+                                              if packet.get("case_design") else None))
             if live:
                 key = load_exact_openai_api_key(Path(plan["credential_file"]))
                 client = requests.DiagnosticClient(api_key=key)

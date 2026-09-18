@@ -7,6 +7,34 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Current implementation: Propose public cases before revealing the candidate
+
+The fixed-candidate diagnostic accepts optional `--case-design task-first-v1`.
+The first model input contains the complete public task and only record_case_plan.
+Candidate bytes/hash and source/probe tools are withheld until the model's initial
+zero-to-four case proposal is stored. The next native result reveals the patch and
+the existing review tools. The original proposal remains visible and immutable;
+later public actions may correct its assumptions. It is never semantic coverage.
+
+This tests the hypothesis that early candidate exposure narrows input selection.
+The previous observation below proves the selection gap and feedback delivery, not
+that causal explanation. The new flow supplies no task-specific case or answer.
+All four existing review-guidance requests remain byte-identical when the option
+is omitted; core runtime and repair defaults are unchanged. Proposal and review
+share the same model/tool/cost/time limits, with no retry or extra sample.
+
+Focused validation passes 36 tests/42.77s, including stage isolation, frozen-case
+delivery, interruption/tampering, shared limits and both context policies' mock
+mutation/check/submission/isolated evaluation. Diagnostic regression passes 121/145.02s
+with durations; the focused set remains under two minutes. Ruff, documentation checks,
+real prepared-source offline rehearsal and read-only inspection of the last closed run
+pass. All 1,470 prior evidence entries are preserved. The unchanged core reuses its
+previous resolved full-regression receipt; no new full-suite rerun is claimed.
+Evidence is in `C:\pt\analyses\counterexample-task-first-20260919-v1`.
+Zero live provider/count calls, credential reads or Docker operations; no new real-task
+paid execution packet. Real-model selection benefit remains unassessed. See
+[the staged discovery contract](../.agent/task-first-discovery.md).
+
 ## Latest closed observation: The model checks actual setup; mismatch repair remains unobserved
 
 One separately authorized observation is closed at runtime commit `b3ea4b8b`.
@@ -40,7 +68,7 @@ public applicability rule from the candidate condition; no new prompt variant or
 is implied. Evidence: `C:\pt\analyses\counterexample-discovery-setup-20260919-v1`;
 raw: `C:\pt\pl-discovery-setup-live-0919a`.
 
-## Current implementation: Probe setup comparisons are separate from behavior assertions
+## Prior implementation: Probe setup comparisons are separate from behavior assertions
 
 Public Python probes provide optional `check_setup(label, actual, expected)` to
 compare actual constructed scalar settings. A mismatch records the supplied values
