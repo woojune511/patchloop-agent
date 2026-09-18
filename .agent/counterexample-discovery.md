@@ -8,7 +8,9 @@ that observation does not answer independent discovery. This diagnostic isolates
 question from patch repair and from voluntary verification during a solve.
 
 `diagnostics.counterexample_discovery` implements `prepare`, `validate` and an offline
-`rehearse`. The model collector is **not implemented** and paid execution is **NOT_RUN**.
+`rehearse`. `diagnostics.counterexample_discovery_rollout` now implements the bounded
+collector, executable packet and read-only interrupted inspection. Paid execution is
+**NOT_RUN**; the original design packet remains unchanged.
 Preparation never instantiates a provider client or reads credentials. All records are
 external, immutable files with a `dev-run-v1` preparation/rehearsal journal; `official=false`.
 The published packet is the final write. An incomplete directory cannot be reused.
@@ -31,15 +33,45 @@ The model sees the neutral candidate name and public source/task identity only.
 
 The same `gpt-5.4-2026-03-05` / `medium` model and 25,000 output ceiling are proposed.
 One fresh sample, up to 40 model calls, 100 tools, 1,800 seconds and 60,000 input tokens;
-proposed total cap $1.20. This proposal is not a consumed execution grant or frozen price
-review. A subsequent collector must bind the exact credential file, reviewed pricing,
-its implementation identity and invocation cap before any count/generation call.
+total cap $1.20. The executable packet binds the exact repository `.env`, pricing reviewed
+on its execution date, implementation/runtime identity and invocation cap. Preparation
+does not consume a sample. Execution exclusively creates its bound result directory;
+once created, that directory cannot be retried, resumed or replaced by this packet.
 
 History starts fresh. Subsequent calls append only this diagnostic's native results and
 opaque continuation; there is no inherited segmented handoff. This is a separately
 elicited discovery task, not an unchanged-policy A/B arm. The candidate remains fixed;
 only read/search/probe and the report terminal are offered. No mutation, registered-check
-execution, patch submission or hidden evaluation occurs in the proposed discovery loop.
+execution, patch submission or hidden evaluation occurs in the discovery loop.
+
+## Collector and recovery
+
+The collector reuses `fresh_state_rollout.dispatch`, `episode_requests.DiagnosticClient`,
+`DevToolGateway`, `DevCostLedger`, and the active native exchange builder. It does not
+restore a source solve. The exact frozen two-message request starts a new history;
+only this run's tool calls, public results and encrypted continuation are appended.
+Provider reasoning summaries are excluded. Each counted request is stored in CAS.
+
+Count immediately before dispatch; zero SDK retries. Admission reserves the full
+25,000 output ceiling and rejects input above 60,000 tokens. Count/response/client
+cleanup waits are bounded by the existing 30/300/5-second transport contract and the
+remaining run deadline. Preflight has a separate 180-second bound. Source and dependency
+identities, fixed patch, tool grammar and probe image/profile are checked before use.
+The candidate is cloned locally and each probe uses the prepared public source/dependency
+snapshot. The collector does not start Docker or pull/build an image.
+
+Usage, cleanup, continuation and action uncertainty stop the sole sample. Known usage
+survives a late response, and no late tool action is admitted. `inspect` verifies the
+journal chain, execution identity, CAS artifacts and any published result without a
+client, credential, workspace creation or another action. Interrupted results remain
+interrupted; inspection never resumes or repairs them. Action receipts retain the
+existing `action_id + input_hash` replay contract.
+
+`report_discovery` binds its cited probe to the recorded program, candidate and receipt,
+and records whether the requirement excerpt occurs in the public issue. A complete
+receipt or zero exit does not prove a behavioral mismatch. `discovery_outcome` remains
+null and `PUBLIC_REVIEW_REQUIRED` until the separate public-evidence review below.
+Mock accounting is explicitly labeled simulated and reports zero live provider calls.
 
 ## Judgment
 
@@ -83,6 +115,20 @@ dependency corruption and read recovery. Existing probe/dependency tests exercis
 execution, action identity, current-source delivery and isolated evaluation separately.
 Runtime/default/task bytes stay unchanged; full-suite evidence belongs to that unchanged
 runtime and is not a newly executed full regression.
+
+Executable evidence is `C:\pt\analyses\counterexample-discovery-executable-20260918-v1`.
+`packet/plan.json` binds the untouched initial request and one fresh result directory.
+The module's `prepare`/`validate` commands prepare and inspect that packet; `run` requires
+both `--plan-root` and the exact `--plan-hash`. `inspect --root <result>` is read-only.
+The frozen price review must still match the UTC execution date. The live result
+directory has not been created and no credential/count/provider/Docker call has occurred.
+
+Collector tests: 45 PASS/85.79s, covering native public feedback, terminal reporting,
+full output reservation, call/tool/time/input bounds, invalid tools, source/packet/CAS
+identity, uncertainty, cleanup and interrupted inspection. Shared regressions: 56 PASS/
+75.72s, including the real response parser and both mock isolated evaluations. A durable
+toy smoke records read -> simulated probe -> report with actual follow-up request bytes.
+It proves collector plumbing only; it is not live discovery or real probe evidence.
 
 The report schema follows [OpenAI Docs strict function schemas](https://developers.openai.com/api/docs/guides/function-calling#strict-mode):
 object properties are required, optional values are nullable, and extra properties are

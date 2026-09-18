@@ -7,11 +7,16 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 Current diagnostic: [fixed-candidate counterexample discovery](counterexample-discovery.md).
 `diagnostics.counterexample_discovery` prepares/validates a fresh public-only initial request
-and rehearses exact candidate/dependency/read access offline. Collector not implemented;
-live NOT_RUN. Only original public task and P10 patch enter the new task input, with generic
+and rehearses exact candidate/dependency/read access offline. The separate
+`diagnostics.counterexample_discovery_rollout` collector reuses counted dispatch, the
+public gateway and native exchange builder; it adds an immutable executable packet and
+read-only interrupted inspection. Collector45 and shared56 tests pass; live NOT_RUN.
+Only original public task and P10 patch enter the new task input, with generic
 tool/instruction support. No source-run history or P11 case/result/solution injection. Score
 an actually reproduced and publicly justified mismatch; reports need public evidence review.
 Do not infer correctness from no discovery or autonomous verification from prompted discovery.
+The executable binds one fresh result root, same-model/medium, exact `.env`, same-day
+pricing and $1.20. No retry/resume/replacement; reports await public-evidence review.
 
 ```text
 patchloop/dev/runner.py   loop composition, gates, context, terminal handling
