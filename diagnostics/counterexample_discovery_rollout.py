@@ -18,6 +18,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from diagnostics import counterexample_discovery as design
+from diagnostics import discovery_case_selection as case_selection
 from diagnostics import episode_requests as requests
 from diagnostics import fresh_state_rollout as engine
 from patchloop.agent.model import OpenAIResponsesAdapter
@@ -63,7 +64,8 @@ def read(path: Path) -> dict:
 
 
 def implementation_hashes() -> dict:
-    names = ("counterexample_discovery_rollout", "counterexample_discovery", "episode_requests",
+    names = ("counterexample_discovery_rollout", "counterexample_discovery",
+             "discovery_case_selection", "episode_requests",
              "fresh_state_rollout", "fresh_state_design", "fresh_state_sampler", "decision_sampler")
     return {f"diagnostics/{name}.py": sha256_bytes(
         (repository_root() / "diagnostics" / f"{name}.py").read_bytes()) for name in names}
@@ -394,9 +396,12 @@ def run(plan_root: Path, *, plan_hash: str, adapter_factory=None, probe_factory=
             design.require(validate(plan_root) == plan, "inputs changed during preflight")
             journal.append("discovery_source_bound", {"candidate_hash": diff.patch_hash,
                                                        "probe": expected_probe})
-            gateway = DevToolGateway(workspace=workspace, public_task=public, sandbox=None,
-                                     journal=journal, limits=DevLimits(), probe_sandbox=probe,
-                                     deadline=ExecutionDeadline.from_remaining(1800, clock=clock))
+            gateway_type = (case_selection.CaseSelectionGateway
+                            if packet.get("review_guidance") == case_selection.POLICY
+                            else DevToolGateway)
+            gateway = gateway_type(workspace=workspace, public_task=public, sandbox=None,
+                                   journal=journal, limits=DevLimits(), probe_sandbox=probe,
+                                   deadline=ExecutionDeadline.from_remaining(1800, clock=clock))
             session = Session(read(plan_root / "request.json"), gateway, store,
                               probe_identity=expected_probe, clock=clock)
             if live:

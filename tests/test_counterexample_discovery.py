@@ -248,10 +248,34 @@ def test_guidance_changes_only_system_instruction_and_bound_metadata(offline, tm
         "request.json", "prompt.txt", "protocol.json"}
 
 
+def test_case_selection_changes_only_guidance_and_probe_annotation(offline, tmp_path):
+    original, selected = tmp_path / "original", tmp_path / "selected"
+    before_packet = design.prepare(offline, original, review_guidance="requirement-scope-v1")
+    packet = design.prepare(offline, selected, review_guidance="preservation-cases-v1")
+    assert design.validate(selected) == packet
+    assert packet["case_selection_implementation_hash"] == sha256_bytes(
+        Path(design.case_selection.__file__).read_bytes())
+    before = json.loads((original / "request.json").read_bytes())
+    after = json.loads((selected / "request.json").read_bytes())
+    assert after["input"][0] != before["input"][0]
+    after["input"][0] = before["input"][0]
+    probe = next(t for t in after["tools"] if t["name"] == "run_probe")["parameters"]
+    annotation = probe["properties"].pop("case_selection")
+    assert "null" in annotation["type"]
+    assert set(annotation["properties"]) == set(annotation["required"]) == {
+        "change", "preserve", "scope_basis", "selected"}
+    assert "null" in annotation["properties"]["preserve"]["type"]
+    probe["required"].remove("case_selection")
+    assert design.wire(after) == design.wire(before)
+    assert set(packet) - set(before_packet) == {"case_selection_implementation_hash"}
+
+
+@pytest.mark.parametrize("guidance", ["requirement-scope-v1", "preservation-cases-v1"])
 @pytest.mark.parametrize("replacement", [None, "original", "unknown"])
-def test_guidance_cannot_be_removed_or_switched_in_a_frozen_packet(offline, tmp_path, replacement):
+def test_guidance_cannot_be_removed_or_switched_in_a_frozen_packet(
+        offline, tmp_path, replacement, guidance):
     root = tmp_path / "packet"
-    packet = design.prepare(offline, root, review_guidance="requirement-scope-v1")
+    packet = design.prepare(offline, root, review_guidance=guidance)
     if replacement is None:
         packet.pop("review_guidance")
     else:
@@ -267,13 +291,14 @@ def test_unknown_guidance_fails_before_source_reads(tmp_path):
         design.compile_packet(missing, review_guidance="unknown")
 
 
-def test_cli_prepares_selected_guidance_offline(offline, tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("guidance", ["requirement-scope-v1", "preservation-cases-v1"])
+def test_cli_prepares_selected_guidance_offline(offline, tmp_path, monkeypatch, capsys, guidance):
     root = tmp_path / "packet"
-    args = ["prepare", "--output", str(root), "--review-guidance", "requirement-scope-v1"]
+    args = ["prepare", "--output", str(root), "--review-guidance", guidance]
     for name, path in offline.paths().items():
         args.extend(["--" + name.replace("_", "-"), str(path)])
     monkeypatch.setattr(sys, "argv", ["counterexample_discovery", *args])
     design.main()
     result = json.loads(capsys.readouterr().out)
     assert result["status"] == "PREPARED_NOT_EXECUTABLE" and result["provider_calls"] == 0
-    assert design.validate(root)["review_guidance"] == "requirement-scope-v1"
+    assert design.validate(root)["review_guidance"] == guidance

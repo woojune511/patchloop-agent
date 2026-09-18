@@ -137,6 +137,54 @@ thread-compatibility receipt; it was not repeated for an instruction-only diagno
 At preparation, live model efficacy and independent discovery were NOT_RUN. The
 separately authorized guided observation below is now closed without a supported discovery.
 
+## Optional preservation-case selection
+
+`--review-guidance preservation-cases-v1` extends the scope guidance with a concrete
+case-selection step inside the existing probe call. Where the public task supports a
+preservation boundary, the model selects a nearby input sharing the proposed code trigger
+outside the change scope and preferably exercises it in the first probe. The model derives
+the input from public requirements/source; the harness supplies no task-specific case.
+
+The diagnostic's `run_probe.case_selection` is null or an object with
+`change={setup,expected}`, `preserve={setup,expected}|null`, `scope_basis`, and
+`selected=change|preserve|both`. It reuses the existing behavior-case shape and 300-character
+string limits. `selected` describes what the program intends to exercise. Unsupported
+preservation scope stays null with an explanation. The strict schema requires the nullable
+field; the collector also accepts omission for existing scripted calls. Null, omission and
+malformed annotations produce advisory diagnostics without blocking the probe/report.
+Selecting a missing preservation case produces a diagnostic, not a fabricated case.
+
+A diagnostic-only gateway wrapper binds the annotation to the public-task hash and returns
+it beside the probe's source/diff hashes and actual output. Native feedback asks the model
+to compare the selected setup with actual construction and observations, then investigate
+remaining useful cases or report the limits. Every receipt retains
+`model_authored_unverified` and `coverage_status=not_assessed`, including wrong expectations,
+normal exits, failed assertions and missing cases. The gateway never interprets the program
+or upgrades selection to execution/coverage proof. Reports retain the same public-review
+requirement. No extra tool, compulsory probe, planning policy or report gate is added.
+
+Raw arguments, including the annotation, remain in shared `action_id + input_hash` admission
+and journal records. Completed replay returns the original receipt without another probe;
+changing a selection under the same action ID conflicts. Later null/omitted annotations
+cannot inherit earlier cases. The wrapper applies only to this diagnostic option; runtime
+and dev-loop defaults are unchanged. The original and requirement-scope-v1 request, prompt
+and protocol bytes remain unchanged. For the new mode, only generic system guidance and the
+nullable probe schema differ initially; the new feedback is linked to the selected request.
+Design/executable metadata bind the mode and implementation. Older closed journals remain
+read-only inspectable; their samples and budgets are closed.
+
+Provider-free evidence is recorded at
+`C:\pt\analyses\counterexample-preservation-cases-20260918-v1`.
+The feature-focused tests pass 11/8.02s; all three discovery files pass 93/147.28s,
+exceeding the two-minute target for the combined diagnostic suite. Shared paths pass
+41/67.42s, including both context policies' isolated mock evaluation and actual public
+task/diff/check delivery. Ruff, the real offline source rehearsal, and scripted toy
+case-selection feedback pass. Old original/scope request bytes and closed-journal
+inspection are verified. The unchanged runtime retains the prior full-regression
+receipt; it was not rerun for this diagnostic-only change.
+This implementation does not establish that a live model will select or recognize a useful
+preservation case. No new paid sample or runtime-default adoption is part of this change.
+
 ## Preparation and validation
 
 The external record is `C:\pt\analyses\counterexample-discovery-20260918-v1`.

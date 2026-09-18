@@ -26,7 +26,7 @@ from patchloop.deadline import ExecutionDeadline
 from patchloop.dev.contracts import DevLimits
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
-from patchloop.errors import ContractError, RecoveryError
+from patchloop.errors import ActionConflict, ContractError, RecoveryError
 from patchloop.repository import WorkspaceManager
 from patchloop.sandbox.probes import probe_execution_policy, probe_profile
 from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
@@ -200,6 +200,8 @@ def test_real_request_and_public_native_feedback_reach_report_without_a_verdict(
     assert evidence["probe_identity_bound"] and evidence["complete_probe_receipt"]
     assert evidence["semantic_verdict"] is None
     assert "import toy" in evidence["program"]
+    assert ("case_selection" in evidence["probe_result"]["output"]) == (
+        guidance == "preservation-cases-v1")
     assert rollout.inspect(frozen.result) == result
     with pytest.raises(ContractError, match="fresh external"):
         run_mock(frozen, [[report_call()]])
@@ -214,6 +216,69 @@ def test_no_probe_or_positive_claim_required_for_reporting(frozen, outcome):
     assert not result["report"]["evidence"]["probe_identity_bound"]
     assert result["report"]["evidence"]["semantic_verdict"] is None
     assert probes[0].calls == 0 and len(adapter.requests) == 1
+
+
+@pytest.mark.parametrize("frozen", ["preservation-cases-v1"], indirect=True)
+def test_selected_cases_reach_actual_feedback_without_claiming_execution_or_inheriting(frozen):
+    contrast = {
+        "change": {"setup": "enabled=True, value=0", "expected": "1"},
+        "preserve": {"setup": "enabled=False, value=0", "expected": "0"},
+        "scope_basis": "Only enabled inputs change; the condition is a model hypothesis.",
+        "selected": "change",
+    }
+    calls = [probe_call(f"probe-{i}") for i in range(5)]
+    calls[0].arguments["case_selection"] = contrast
+    calls[1].arguments["case_selection"] = {**contrast, "selected": "preserve"}
+    calls[2].arguments["case_selection"] = None
+    # calls[3] omits the annotation. Neither may inherit a prior selection.
+    calls[4].arguments["case_selection"] = {**contrast, "unexpected": "invalid"}
+    result, adapter, probes = run_mock(
+        frozen, [[call] for call in calls] + [[report_call(probe_action_id="probe-1")]])
+    assert result["terminal"] == "REPORT_RECORDED" and probes[0].calls == 5
+    journal = DevJournal(frozen.result, rollout.RUN_ID)
+    finished = [e["payload"]["result"] for e in journal.events()
+                if e["event_type"] == "action_finished"]
+    for index, receipt in enumerate(finished):
+        selection = receipt["output"]["case_selection"]
+        assert selection["coverage_status"] == "not_assessed"
+        assert selection["interpretation_status"] == "model_authored_unverified"
+        assert selection["diff_hash"] == receipt["output"]["diff_hash"]
+        assert selection["source_hash"] == receipt["output"]["source_hash"]
+        outputs = [json.loads(item["output"]) for item in adapter.requests[index + 1]["input"]
+                   if item.get("type") == "function_call_output"
+                   and item["call_id"] == calls[index].action_id]
+        assert len(outputs) == 1
+        assert outputs[0]["output"]["case_selection"] == selection
+        converted = rollout.loop._requested_tool_from_openai(calls[index])
+        assert receipt["input_hash"] == sha256_json({
+            "tool": converted.name, "arguments": converted.arguments,
+            "turn_decision": converted.turn_decision.model_dump(mode="json")})
+    assert finished[0]["output"]["case_selection"]["selected"] == "change"
+    assert finished[1]["output"]["case_selection"]["selected"] == "preserve"
+    assert finished[1]["output"]["case_selection"]["cases"]["preserve"] == contrast["preserve"]
+    assert finished[1]["output"]["case_selection"]["public_task_hash"] == sha256_json(
+        design.load_public_task(frozen.design / "public.yaml").model_dump(mode="json"))
+    for index, status in ((2, "omitted"), (3, "omitted"), (4, "invalid")):
+        assert finished[index]["output"]["case_selection"]["status"] == status
+        assert "cases" not in finished[index]["output"]["case_selection"]
+    # The toy program has no enabled input; the harness must not credit these intentions.
+    evidence = result["report"]["evidence"]
+    assert evidence["semantic_verdict"] is None and result["discovery_outcome"] is None
+    assert evidence["probe_result"] == finished[1]
+    assert rollout.inspect(frozen.result) == result
+
+    gateway = design.case_selection.CaseSelectionGateway(
+        workspace=frozen.result / "workspaces/candidate/repo",
+        public_task=design.load_public_task(frozen.design / "public.yaml"),
+        sandbox=None, probe_sandbox=probes[0], journal=journal, limits=DevLimits())
+    replay = gateway.execute(rollout.loop._requested_tool_from_openai(calls[1]))
+    assert replay.replayed and probes[0].calls == 5
+    assert replay.output == finished[1]["output"]
+    changed = copy.deepcopy(calls[1])
+    changed.arguments["case_selection"]["selected"] = "both"
+    with pytest.raises(ActionConflict):
+        gateway.execute(rollout.loop._requested_tool_from_openai(changed))
+    assert probes[0].calls == 5
 
 
 @pytest.mark.parametrize("fault,expected,counts,calls", [
@@ -276,6 +341,7 @@ def test_probe_uncertainty_stops_before_next_model_turn(frozen, change, expected
     assert result["terminal"] == expected and len(adapter.requests) == probes[0].calls == 1
 
 
+@pytest.mark.parametrize("frozen", ["original", "preservation-cases-v1"], indirect=True)
 @pytest.mark.parametrize("change", [
     {"status": "failed", "exit_code": 1, "stderr": "ImportError: mock fixture"},
     {"status": "output_limit", "truncated": True},
@@ -286,6 +352,9 @@ def test_probe_failure_or_unbound_output_cannot_create_a_semantic_success(frozen
     assert result["terminal"] == "REPORT_RECORDED" and len(adapter.requests) == 2
     evidence = result["report"]["evidence"]
     assert evidence["semantic_verdict"] is None and result["discovery_outcome"] is None
+    selection = evidence["probe_result"]["output"].get("case_selection")
+    if selection is not None:
+        assert selection["coverage_status"] == "not_assessed"
     if "stderr" not in change:
         assert not evidence["complete_probe_receipt"]
 

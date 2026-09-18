@@ -7,7 +7,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Guided discovery checks an in-scope case but misses preservation scope
+## Current seam: Optional preservation-case selection accompanies a diagnostic probe
+
+`--review-guidance preservation-cases-v1` adds concrete change/preserve inputs and a
+selection inside the existing fixed-candidate probe call. The generic instruction
+prefers an available preservation case in the first probe. The model derives each
+setup and expectation from public requirements/source; no task-specific input is supplied.
+The diagnostic-only gateway returns those intentions with task/program/candidate identities
+and a request to compare them with actual setup/output. Selection remains unverified and
+coverage is not assessed, even on a normal exit. Null, missing or malformed annotations
+do not block a probe/report; later probes cannot inherit omitted cases. Shared raw action
+hashes and completed replay remain intact.
+
+Original and requirement-scope-v1 request, prompt and protocol bytes stay unchanged.
+Core runtime and dev defaults stay unchanged. The new mode changes generic initial
+guidance, the nullable probe annotation and its public feedback; it is not an unchanged-tool
+context-policy A/B arm. Design/executable metadata freeze the option and implementation.
+No fresh paid sample, retry, automatic continuation or adoption is included. Live model
+selection and discovery efficacy are **NOT_RUN**.
+
+Validation: new-feature focused 11 PASS/8.02s; all three discovery test files
+93 PASS/147.28s (the combined diagnostic suite exceeds two minutes); shared regressions
+41 PASS/67.42s, including both context policies' mutation/check/submit/isolated-evaluation
+mocks and actual public task/diff/check delivery. Ruff passes. Real prepared-source
+rehearsal and a scripted toy discovery verify the selected-case feedback with zero live
+model/count/credential/Docker operations. Both old closed observations remain inspectable.
+Runtime-wide regression was not repeated: the runtime hash is unchanged from the recorded
+thread-compatibility regression (resolved 2,776 PASS/12 SKIP).
+
+Evidence: `C:\pt\analyses\counterexample-preservation-cases-20260918-v1`.
+See [the discovery contract](../.agent/counterexample-discovery.md).
+
+## Prior seam: Guided discovery checks an in-scope case but misses preservation scope
 
 The separately authorized `requirement-scope-v1` sample is closed at commit `c0071bb0`,
 official=false. Same original task/P10/model/medium; only initial system guidance differs.

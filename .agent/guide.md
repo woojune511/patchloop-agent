@@ -6,6 +6,18 @@ active contracts for navigation; checked-in source remains the behavioral author
 ## Source map
 
 Current implementation: the fixed-candidate discovery preparer accepts optional
+`--review-guidance preservation-cases-v1`. Its diagnostic-only probe annotation reuses
+the compact change/preserve case shape and adds which cases the program intends to
+exercise. Public feedback binds the task/program/candidate and asks for comparison with
+actual setup/output. Selection and a normal exit remain unverified, with coverage not
+assessed. Missing/malformed annotations do not block probes or reports; shared raw action
+hashes and receipt replay are preserved. Original and requirement-scope-v1 input bytes,
+the core runtime, tools available, cost limits and default policies remain unchanged.
+No task-specific case is supplied. Provider-free delivery/validation is separate from
+live efficacy, which is NOT_RUN. See the preservation-case section in
+[the discovery contract](counterexample-discovery.md).
+
+Prior implementation: the fixed-candidate discovery preparer accepts optional
 `--review-guidance requirement-scope-v1`. Only the system instruction changes; it
 connects expectations to the complete public requirement and the program's actual
 setup. Default request bytes, task, tools, limits and runtime remain unchanged.
@@ -23,8 +35,9 @@ Ordinary-profile preservation and copied/reused profiles remain untested. This i
 different case from the earlier unsupported expectation, not proof that it was corrected.
 All nine input deliveries and cleanup pass; no limit exit. The report's paraphrased excerpt
 fails literal matching. Sample/unused budget closed; no retry or default adoption.
-Next focus: selecting a concrete input for a public preservation clause outside the
-change scope. See the latest guided observation in the discovery contract.
+The optional implementation above supports selecting a concrete preservation input;
+whether the model uses it to discover a mismatch remains untested. See the latest guided
+observation in the discovery contract.
 
 Prior observation: a separate fresh fixed-candidate discovery sample completes on
 the repaired probe profile (5 calls/1 probe/$0.1471595), with four offline SDK requests
