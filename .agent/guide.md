@@ -13,8 +13,8 @@ same-trigger preservation unresolved; a claimed retained trigger still needs act
 output and public-requirement review. Unknown/malformed/missing records remain advisory.
 No task-specific contrast, extra probe gate or semantic credit is supplied. Old three modes'
 request/prompt/protocol bytes and core runtime are preserved; new metadata binds the option.
-Feature-focused 24 PASS/13.36s; diagnostic regression 117 PASS/129.77s. No live efficacy
-observation or new paid packet. See the applicability-contrast section in
+Feature-focused 24 PASS/13.36s; diagnostic regression 117 PASS/129.77s. The first separately
+authorized live observation below establishes no supported discovery. See the applicability-contrast section in
 [the discovery contract](counterexample-discovery.md).
 
 Prior implementation: the fixed-candidate discovery preparer accepts optional
@@ -39,7 +39,22 @@ summaries and no new semantic gate. Focused 70 PASS/87.42s, related 41 PASS/60.0
 live observation below establishes no supported discovery. See the optional-guidance section in
 [the discovery contract](counterexample-discovery.md).
 
-Current observation: preservation-cases-v1 completes 8 calls/2 probes/$0.3083795;
+Current observation: applicability-contrast-v1 completes 7 calls/1 probe/$0.1730905.
+The model reports a counterexample; public review records NO_REPRODUCTION, discoveries0/1.
+Its default plain-OpenAI preservation case is explicitly labeled trigger=false; no
+same-trigger case follows. The copied-profile program applies update(source_profile)
+over a custom-field instance. Printed construction still has reasoning_content, and the
+candidate emits that field; the model instead expects custom_reasoning and reports the
+assertion as a candidate defect. The entire result and unresolved-trigger feedback reach
+the next/final input. No construction correction follows; the copy-method caveat does not
+support the claim. Operator-only public source corroborates the merge behavior, without
+another execution. No transport, cleanup or resource stop; sample/unused$1.0269095 closed.
+Do not adopt this diagnostic option into repair defaults. Next priority is separating
+probe setup validation from candidate-behavior claims. No automatic new prompt variant,
+paid retry or hidden evaluation. See the applicability observation in
+[the discovery contract](counterexample-discovery.md).
+
+Prior observation: preservation-cases-v1 completes 8 calls/2 probes/$0.3083795;
 NO_REPRODUCTION, discoveries 0/1. The model selects field/auto cases using a supplied
 DeepSeek profile reused with OpenAIProvider and a copied field name. Its first update-based
 auto override leaves field mode because default-valued overrides are excluded. After reading

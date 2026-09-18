@@ -182,6 +182,57 @@ This confirms delivery, advisory behavior, identity and recovery, not better mod
 selection or discovery. No fresh
 paid sample or executable real-task packet is included, and all older budgets remain closed.
 Evidence: `C:\pt\analyses\counterexample-applicability-contrast-20260918-v1`.
+The separate live observation below evaluates use of this option; it does not modify that
+provider-free implementation record or reopen any earlier budget.
+
+## Applicability-contrast live observation: 2026-09-19 KST
+
+User continuation authorizes one new same-task/P10/GPT-5.4 medium observation under a
+new $1.20 cap. Runtime/diagnostic commit `bd94da0e`; original public task, fresh independent
+source clone/native history, existing dependency/image. No prior counterexample or finding
+is injected. Plan hash:
+`sha256:d211c7531c944be11388e605df1b5921d4988c530cf1e014eb6696250438844e`.
+One planned/started/reported sample closes after seven counted model calls, six searches,
+four reads, one probe and one report. No infrastructure or resource-limit stop.
+
+The model first considers effective-profile lookup, reads the nested mapping context,
+then chooses direct tool-only serialization with a reused DeepSeek profile and an intended
+custom field. Its preservation input uses the default plain OpenAI profile. The annotation
+sets preserve_satisfies_trigger=false. That same-trigger applicability boundary remains
+untested; no follow-up probe occurs after the advisory feedback.
+
+The recorded construction is a custom-field OpenAIModelProfile followed by
+update(source_profile). Both printed source_profile and custom_profile contain
+reasoning_content, and serialization outputs reasoning_content=''. The assertion expects
+custom_reasoning='' and exits1. Default plain OpenAI serialization matches its expectation.
+The public trace therefore shows an input setup mismatch, not a demonstrated failure to
+honor the actual configured field. A read-only operator view of public ModelProfile.update
+and the thinking-field default corroborates why the incoming source field overwrites the
+custom value. Those supporting source excerpts were not model-delivered in this run;
+the decisive actual-profile and output values were delivered. No new program was executed.
+
+The next/final actual request contains the full receipt and the explicit same-trigger
+warning. The model reports counterexample_reported, treating the assertion as a copied-field
+requirement violation. Its limitation acknowledges the copy method might differ, but does
+not verify the required renamed setup. Public review: **NO_REPRODUCTION**, supported
+discoveries0/1; the reported counterexample is unsupported. This says nothing about overall
+candidate correctness. The paraphrased/ellipsis excerpt fails literal binding as a separate
+issue. All four added lines are observed in the launch thread; not per-case semantic coverage.
+
+All seven requests/public-result deliveries, complete output and cleanup pass. Cost
+$0.1730905; cache-neutral$0.3772825; max input28,104; active142.649s/wall248.831s.
+Generation usage is recorded; invoice/count-endpoint billing remains unverified. The one
+slot and unused$1.0269095 are closed. No retry/resume/replacement, extra candidate/baseline
+execution, paid judge or hidden evaluation. Task acceptance NOT_ASSESSED; official=false.
+
+Do not connect the diagnostic option to repair defaults based on this observation.
+Next priority is checking actual probe construction before classifying a failed assertion
+as candidate behavior. This record authorizes no further prompt variant or paid sample.
+Current implementation tests are reused unchanged (117 diagnostic,41 shared,3 docs,Ruff,
+both isolated mocks; unchanged runtime full regression). Only the new documentation is
+checked again after this observation. Evidence:
+`C:\pt\analyses\counterexample-discovery-applicability-20260919-v1`;
+raw state: `C:\pt\pl-discovery-contrast-live-0919a`.
 
 ## Optional preservation-case selection
 

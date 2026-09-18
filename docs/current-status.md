@@ -7,7 +7,43 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Diagnostic contrasts distinguish code triggers from public applicability
+## Current seam: Applicability diagnostic reports a setup error as a candidate defect
+
+The authorized applicability-contrast-v1 observation is closed at runtime/diagnostic
+commit `bd94da0e`. Same original dev-train task/P10/GPT-5.4 medium, new $1.20 cap,
+fresh source clone and native history; planned1/started1/report-completed1, official=false.
+Seven model/count calls, ten reads/searches, one probe and one report complete. The model
+claims `counterexample_reported`; public review rejects that claim:
+**NO_REPRODUCTION, supported discoveries 0/1**.
+
+It selects a reused provider profile with an intended renamed field and a default plain
+OpenAI preservation case. Its annotation correctly says the latter disables the candidate
+trigger. The program builds the renamed profile by applying update(source_profile) to a
+custom-field instance. The printed constructed profile still contains reasoning_content;
+serialization emits that same field. The assertion instead expects custom_reasoning.
+The full program/output already exposes that setup mismatch. A read-only operator check
+of public update semantics corroborates that the incoming profile's non-default field
+overwrites the custom value; that source was not delivered to the model in this run.
+
+The next actual input contains the complete result and the warning that same-trigger
+preservation remains unresolved. The model immediately reports a renamed-field defect,
+without checking/correcting construction. It mentions copy-method uncertainty, but the
+claim does not establish that the candidate ignored a configured field. The default plain
+case matches its expectation; the requested same-trigger applicability contrast is untested.
+The report also fails literal excerpt binding. All seven input deliveries and cleanup pass;
+all four added lines are observed in the launch thread, not per-case semantic coverage.
+
+No infrastructure or resource-limit stop. Recorded cost $0.1730905, cache-neutral
+$0.3772825, max input28,104, active142.649s/wall248.831s. Unused $1.0269095 closes with
+the sample; no retry/resume/replacement, extra candidate execution or hidden evaluation.
+Task acceptance remains NOT_ASSESSED. The new annotation/feedback does not establish
+better discovery; do not adopt it into repair defaults on this evidence. Next priority is
+distinguishing actual probe setup from intended setup before attributing a failed assertion
+to candidate behavior, without automatically adding another prompt variant or paid sample.
+Evidence: `C:\pt\analyses\counterexample-discovery-applicability-20260919-v1`;
+raw run: `C:\pt\pl-discovery-contrast-live-0919a`.
+
+## Prior implementation: Diagnostic contrasts distinguish code triggers from public applicability
 
 `--review-guidance applicability-contrast-v1` adds a nullable `trigger_contrast` inside
 the existing diagnostic case selection. The model records the candidate's whole condition,
@@ -31,12 +67,13 @@ and actual public task/diff/check delivery. Ruff, offline source rehearsal, scri
 contrast feedback and closed-journal inspection pass with zero live provider/count,
 credential or Docker operations. The unchanged core runtime reuses the prior resolved
 2,776 PASS/12 SKIP full-regression receipt; that suite was not rerun. This is a
-provider-free implementation change. Live case selection and discovery efficacy for this
-option remain **NOT_RUN**; earlier samples and unused budgets remain closed.
+provider-free implementation change. Its first separately authorized live observation is
+reported above; no improved discovery is established. Earlier samples and unused budgets
+remain closed.
 Evidence: `C:\pt\analyses\counterexample-applicability-contrast-20260918-v1`.
 See [the discovery contract](../.agent/counterexample-discovery.md).
 
-## Latest live observation: Preservation case executes after setup correction; discovery remains 0/1
+## Prior live observation: Preservation case executes after setup correction; discovery remains 0/1
 
 The authorized preservation-cases-v1 sample is closed at implementation commit `8e0fed11`.
 Same original dev-train task/P10/GPT-5.4 medium, fresh native history and independent
@@ -67,7 +104,7 @@ Recorded cost $0.3083795, cache-neutral $0.6139475, max input 37,139, active331.
 wall460.933s. Unused $0.8916205 closes with the sample. No retry/resume/replacement,
 additional candidate execution or hidden evaluation; task acceptance NOT_ASSESSED.
 The new diagnostic option above supports selecting a case that retains the proposed code
-trigger while changing public applicability; its effect has not been observed live.
+trigger while changing public applicability; the later observation is recorded above.
 Evidence: `C:\pt\analyses\counterexample-discovery-preservation-20260918-v1`;
 raw run: `C:\pt\pl-discovery-preserve-live-0918a`.
 
