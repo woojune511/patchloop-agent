@@ -1,0 +1,310 @@
+schema_version: task-public-v1
+task_id: pydantic-ai-profile-scope-diagnostic
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/pydantic/pydantic-ai.git
+  base_commit: 5965db82c4e10012a8598c14716ea8a88fb411a9
+  language: python
+issue:
+  title: DeepSeek tool-call history must include configured reasoning metadata
+  description: |
+    Deferred capability loading can synthesize assistant tool-search messages without a
+    ThinkingPart. With DeepSeekProvider's default field-based thinking replay, these tool-call
+    messages omit reasoning_content and violate the conversation contract. Supply the configured
+    thinking field as an empty string when an emitted assistant tool-call message has no thinking
+    content. Apply this to ordinary tool calls and synthesized tool-search history, including
+    multiple deferred capability loads and replay across later requests.
+
+    Preserve existing thinking content, text, tool-call names/arguments/IDs/order, and tool returns.
+    Do not invent reasoning or copy another message's thinking. Empty responses must remain omitted.
+    The provider's supplied profile carries this requirement; retain it when that profile is reused
+    with an OpenAI-compatible client or copied with a different thinking field name. Honor that
+    chosen field name. Preserve the existing tags, auto and disabled thinking-send modes: empty-field
+    insertion applies only in field mode with a nonempty configured field name. Plain OpenAI profiles
+    and other providers must keep their existing behavior unless given such a provider profile.
+
+    Preserve current provider/model interfaces and profile overrides. A backwards-compatible optional
+    profile setting is permitted; its name or implementation is not prescribed. Do not change
+    dependencies, tests or unrelated features. Keep deferred loading and search exchanges intact.
+    Checks use deterministic local response fixtures; no real provider request is needed.
+constraints:
+  allowed_paths:
+  - pydantic_ai_slim/pydantic_ai/models/openai.py
+  - pydantic_ai_slim/pydantic_ai/profiles/openai.py
+  - pydantic_ai_slim/pydantic_ai/providers/deepseek.py
+  - pydantic_ai_slim/pydantic_ai/capabilities/_tool_search.py
+  forbidden_paths:
+  - tests/**
+  - docs/**
+  - .patchloop-hidden/**
+  - pyproject.toml
+  - uv.lock
+  max_changed_files: 4
+  max_diff_lines: 180
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: synthetic-tool-history-contract
+  command:
+  - /pydantic-ai/.venv/bin/python
+  - -c
+  - |
+    """Public synthetic tool-turn examples, with fixed offline replies only."""
+
+    import asyncio
+    import json
+    import socket
+
+    import httpx
+    from openai import AsyncOpenAI
+
+    import pydantic_ai
+    from pydantic_ai import Agent, ModelResponse, TextPart, ThinkingPart, ToolCallPart
+    from pydantic_ai.capabilities import Capability
+    from pydantic_ai.models.openai import OpenAIChatModel
+    from pydantic_ai.profiles.openai import OpenAIModelProfile
+    from pydantic_ai.providers.deepseek import DeepSeekProvider
+    from pydantic_ai.providers.openai import OpenAIProvider
+
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Public check must not use network connections")
+
+
+    socket.socket.connect = forbidden
+    socket.create_connection = forbidden
+
+
+    async def main():
+        assert pydantic_ai.__file__.startswith("/workspace/pydantic_ai_slim/")
+        observations = []
+
+        def observe(name, actual, expected):
+            observations.append(actual == expected)
+            print(json.dumps({"case": name, "passed": actual == expected,
+                              "actual": actual, "expected": expected}, sort_keys=True))
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(forbidden)) as http:
+            client = AsyncOpenAI(api_key="fixture-only", base_url="https://fixture.invalid",
+                                 max_retries=0, http_client=http)
+            deepseek = DeepSeekProvider(openai_client=client)
+            call = ToolCallPart("roll_dice", {}, tool_call_id="public-call")
+            expected = {"role": "assistant", "content": None, "reasoning_content": "",
+                        "tool_calls": [{"id": "public-call", "type": "function",
+                                        "function": {"name": "roll_dice", "arguments": "{}"}}]}
+            for name in ("deepseek-v4-flash", "deepseek-reasoner"):
+                model = OpenAIChatModel(name, provider=deepseek)
+                observe(name + " tool-only", model._map_model_response(ModelResponse(parts=[call])), expected)
+            original = model._map_model_response(ModelResponse(parts=[
+                ThinkingPart("public-fixture", id="reasoning_content", provider_name="deepseek"),
+                TextPart("checking"), call]))
+            observe("existing reasoning and text", original,
+                    {**expected, "reasoning_content": "public-fixture", "content": "checking"})
+            plain = OpenAIChatModel("fixture-other", provider=OpenAIProvider(openai_client=client))
+            without_field = {key: value for key, value in expected.items() if key != "reasoning_content"}
+            observe("other provider", plain._map_model_response(ModelResponse(parts=[call])), without_field)
+            disabled = OpenAIChatModel("deepseek-v4-flash", provider=deepseek,
+                profile=OpenAIModelProfile(openai_chat_send_back_thinking_parts=False))
+            observe("explicit disable", disabled._map_model_response(ModelResponse(parts=[call])), without_field)
+            observe("empty response", model._map_model_response(ModelResponse(parts=[])), None)
+
+        for deferred in (False, True):
+            bodies = []
+
+            def roll_dice() -> str:
+                """Return the fixed public example die roll."""
+                return "4"
+
+            async def handler(request):
+                assert request.url.host == "fixture.invalid"
+                bodies.append(json.loads(request.content))
+                index = len(bodies)
+                assert index <= 3
+                message = {"role": "assistant", "content": None,
+                           "reasoning_content": f"public-fixture-{index}"}
+                if deferred and index == 1:
+                    name, arguments = "load_capability", {"id": "DICE"}
+                elif index == (2 if deferred else 1):
+                    name, arguments = "roll_dice", {}
+                else:
+                    name, arguments = None, None
+                if name:
+                    message["tool_calls"] = [{"id": f"public-{index}", "type": "function",
+                        "function": {"name": name, "arguments": json.dumps(arguments)}}]
+                else:
+                    message["content"] = "done"
+                return httpx.Response(200, json={"id": f"public-{index}", "object": "chat.completion",
+                    "created": 1, "model": "deepseek-v4-flash",
+                    "choices": [{"index": 0, "message": message, "finish_reason": "tool_calls" if name else "stop"}],
+                    "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}})
+
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+                client = AsyncOpenAI(api_key="fixture-only", base_url="https://fixture.invalid",
+                                     max_retries=0, http_client=http)
+                model = OpenAIChatModel("deepseek-v4-flash", provider=DeepSeekProvider(openai_client=client))
+                agent = Agent(model, capabilities=[Capability(id="DICE", tools=[roll_dice], defer_loading=deferred)])
+                result = await agent.run("Roll the example die.")
+                assert result.output == "done"
+            tool_messages = [m for m in bodies[-1]["messages"] if m["role"] == "assistant" and m.get("tool_calls")]
+            fields_present = all(isinstance(m.get("reasoning_content"), str) for m in tool_messages)
+            names = [call["function"]["name"] for m in tool_messages for call in m["tool_calls"]]
+            observe(f"deferred={deferred} complete history",
+                    {"fields_present": fields_present, "tool_names": names},
+                    {"fields_present": True,
+                     "tool_names": ["load_capability", "search_tools", "roll_dice"] if deferred else ["roll_dice"]})
+        failures = len(observations) - sum(observations)
+        print(f"{sum(observations)} passed, {failures} failed")
+        return int(failures > 0)
+
+
+    if __name__ == "__main__":
+        raise SystemExit(asyncio.run(main()))
+  timeout_seconds: 40
+  output_limit_bytes: 20000
+  environment:
+    PYTHONPATH: /workspace/pydantic_ai_slim:/workspace/pydantic_graph
+    HOME: /tmp
+    LOGFIRE_SEND_TO_LOGFIRE: 'false'
+- command:
+  - /pydantic-ai/.venv/bin/python
+  - -m
+  - pytest
+  - -q
+  - -p
+  - no:cacheprovider
+  - -o
+  - addopts=
+  - tests/providers/test_deepseek.py
+  - tests/models/test_openai.py::test_openai_custom_reasoning_field_sending_back_in_thinking_tags
+  - tests/models/test_openai.py::test_openai_custom_reasoning_field_sending_back_in_custom_field
+  - tests/models/test_openai.py::test_openai_custom_reasoning_field_not_sending
+  - tests/models/test_openai.py::test_openai_reasoning_in_thinking_tags
+  - tests/models/test_openai.py::test_openai_auto_mode_reasoning_field_sends_back_in_field
+  - tests/models/test_openai.py::test_openai_auto_mode_reasoning_field_different_provider_uses_tags
+  - tests/models/test_openai.py::test_openai_auto_mode_multiple_thinking_parts_same_field
+  environment:
+    HOME: /tmp
+    LOGFIRE_SEND_TO_LOGFIRE: 'false'
+    PYTHONPATH: /workspace/pydantic_ai_slim:/workspace/pydantic_graph
+  expected_exit_codes:
+  - 0
+  id: upstream-reasoning-regression
+  output_limit_bytes: 200000
+  timeout_seconds: 90
+  working_directory: .
+- id: profile-scope-contrast
+  command:
+  - /pydantic-ai/.venv/bin/python
+  - -c
+  - |
+    """Fixed public-issue contrast, executed inside the registered project environment.
+
+    Hold the serializer trigger fixed while varying the supplied profile's origin.
+    No private evaluator, reference patch, provider request, or implementation marker.
+    """
+
+    from __future__ import annotations
+
+    import asyncio
+    import json
+    import socket
+    from dataclasses import replace
+    from pathlib import Path
+
+    FIELDS = ("reasoning_content", "scope_reasoning")
+    ORIGINS = ("ordinary", "provider_supplied")
+    MODEL_NAME = "profile-scope-fixture"
+
+
+    def expected_message(field: str, origin: str) -> dict:
+        result = {
+            "role": "assistant", "content": None,
+            "tool_calls": [{"id": "public-scope-call", "type": "function",
+                            "function": {"name": "roll_dice", "arguments": "{}"}}],
+        }
+        if origin == "provider_supplied":
+            result[field] = ""
+        return result
+
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("The public profile contrast cannot use network connections")
+
+
+    async def main() -> int:
+        # Imports stay inside main so operator-side receipt validation is stdlib-only.
+        import httpx
+        import pydantic_ai
+        from openai import AsyncOpenAI
+        from pydantic_ai import ModelResponse, ToolCallPart
+        from pydantic_ai.models import openai as model_module
+        from pydantic_ai.profiles import openai as profile_module
+        from pydantic_ai.providers import deepseek as provider_module
+        from pydantic_ai.providers.openai import OpenAIProvider
+
+        modules = (pydantic_ai, model_module, profile_module, provider_module)
+        paths = {module.__name__: str(Path(module.__file__).resolve()) for module in modules}
+        if not all(Path(path).is_relative_to("/workspace/pydantic_ai_slim")
+                   for path in paths.values()):
+            raise RuntimeError("The contrast must import the current workspace implementation")
+        socket.socket.connect = forbidden
+        socket.create_connection = forbidden
+        rows = []
+        async with httpx.AsyncClient(transport=httpx.MockTransport(forbidden)) as http:
+            client = AsyncOpenAI(api_key="fixture-only", base_url="https://fixture.invalid",
+                                 max_retries=0, http_client=http)
+            provider = OpenAIProvider(openai_client=client)
+            supplied = provider_module.DeepSeekProvider.model_profile("deepseek-v4-flash")
+            if supplied is None:
+                raise RuntimeError("The public DeepSeek provider did not supply a profile")
+            for field in FIELDS:
+                profiles = {
+                    "ordinary": profile_module.OpenAIModelProfile(
+                        openai_chat_send_back_thinking_parts="field", openai_chat_thinking_field=field,
+                    ),
+                    "provider_supplied": replace(supplied, openai_chat_thinking_field=field),
+                }
+                for origin in ORIGINS:
+                    model = model_module.OpenAIChatModel(
+                        MODEL_NAME, provider=provider, profile=profiles[origin],
+                    )
+                    profile = profile_module.OpenAIModelProfile.from_profile(model.profile)
+                    if (profile.openai_chat_send_back_thinking_parts != "field"
+                            or profile.openai_chat_thinking_field != field):
+                        raise RuntimeError("The contrast failed to hold the field trigger fixed")
+                    response = ModelResponse(parts=[
+                        ToolCallPart("roll_dice", {}, tool_call_id="public-scope-call"),
+                    ])
+                    actual = model._map_model_response(response)
+                    expected = expected_message(field, origin)
+                    row = {
+                        "case": f"{origin}:{field}", "profile_origin": origin,
+                        "mode": "field", "field": field, "provider": "openai",
+                        "model": MODEL_NAME, "message_kind": "tool_only_without_thinking",
+                        "actual": actual, "expected": expected, "passed": actual == expected,
+                    }
+                    rows.append(row)
+                    print(json.dumps(row, sort_keys=True), flush=True)
+        passed = sum(row["passed"] for row in rows)
+        print(json.dumps({"summary": {"passed": passed, "failed": len(rows) - passed},
+                          "project_modules": paths}, sort_keys=True), flush=True)
+        return int(passed != len(rows))
+
+
+    if __name__ == "__main__":
+        raise SystemExit(asyncio.run(main()))
+  timeout_seconds: 40
+  working_directory: .
+  environment:
+    PYTHONPATH: /workspace/pydantic_ai_slim:/workspace/pydantic_graph
+    HOME: /tmp
+    LOGFIRE_SEND_TO_LOGFIRE: 'false'
+  expected_exit_codes:
+  - 0
+  output_limit_bytes: 20000
+tags:
+- dev-head
+- real-repository
+- message-serialization
+- development-only

@@ -1,0 +1,10 @@
+diff --git a/pydantic_ai_slim/pydantic_ai/models/openai.py b/pydantic_ai_slim/pydantic_ai/models/openai.py
+index 880cfae..a04a86a 100644
+--- a/pydantic_ai_slim/pydantic_ai/models/openai.py
++++ b/pydantic_ai_slim/pydantic_ai/models/openai.py
+@@ -4699,3 +4699,5 @@ def _map_mcp_call(
+             provider_name=provider_name,
+         ),
+     )
++
++# Admission no-op control.

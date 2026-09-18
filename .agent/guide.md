@@ -964,7 +964,24 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: P10 receives prepared public dependencies but performs no probe.
+Current seam: separate public profile-contrast diagnostic task prepared.
+`tasks/dev-train/pydantic-ai-profile-scope-diagnostic` v1 adds the exact existing
+public contrast program as a third registered check; original issue/source/limits/
+checks/environment stay fixed. Only public identity and one check change model input.
+Private support is an opaque copy with task_id relabeled. Parent/P10/runtime unchanged.
+Fresh fixed public checks: base ordinary2/2,supplied0/2; exact P10 ordinary0/2,supplied2/2.
+Both cleanup confirmed. Focused80/16.098s,operator58,Ruff and both fresh isolated mocks
+PASS with actual public state delivery and unchanged closed replay. Initial missing
+pytest parent report kept.
+Unchanged runtime reuses resolved2700 PASS/8 SKIP full regression with durations.
+One fresh same-P10 single observation with new$1.20 cap is authorized but not yet run;
+freeze and smoke first. Supplied-case solving is assisted evidence, not autonomous
+counterexample discovery. A failed-check-to-repair sequence must be observed before
+claiming repair. No retry/resume/extra sample or default adoption.
+See tasks/dev-train/pydantic-ai-profile-scope-diagnostic/audit.md and
+C:\pt\analyses\profile-contrast-diagnostic-20260918-v1.
+
+Prior seam: P10 receives prepared public dependencies but performs no probe.
 One fresh same-P9 model/task/settings observation, prepared dependencies enabled, settles
 acceptance FAIL/safety PASS;0/1 acceptance,official=false. All8 exact request hashes and
 task/diff/check delivery pass; final actual input offers current-project verification with

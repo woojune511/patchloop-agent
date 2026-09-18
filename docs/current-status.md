@@ -7,7 +7,31 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: P10 receives prepared dependencies and submits without a probe
+## Current seam: Separate public profile-contrast task prepared
+
+`pydantic-ai-profile-scope-diagnostic` v1 is a separate assisted dev-train task.
+It retains P10's public issue/source/constraints/two checks/environment and adds the
+existing fixed `profile-scope-contrast` check. Only the task identity and that public
+check change model input. Private support is copied opaquely; only its task identity
+is relabeled. Original task, P10 evidence, runtime and policies remain unchanged.
+
+Fresh fixed public executions now reproduce P10's scope regression: base ordinary2/2
+PASS, supplied0/2; P10 ordinary0/2, supplied2/2. Both complete with cleanup confirmed.
+Focused80 PASS/16.098s, operator58 PASS, Ruff and two fresh isolated mocks PASS with
+actual public task/diff/check delivery and closed replay verified.
+An initial pytest setup failed because its temporary parent
+was absent; the corrected run passes and the initial report remains preserved.
+The unchanged runtime reuses resolved2700 PASS/8 SKIP full-regression evidence with
+durations. This is new task validation, not another full runtime suite.
+
+One fresh same-P10 model/settings observation is authorized under a new $1.20 cap;
+it is not yet executed. Freeze and verify local smoke/input isolation first. A pass
+would demonstrate solving with supplied public cases. Report repair only if a failed
+check actually precedes a corrective edit; no autonomous-verification or A/B claim.
+Evidence: `C:\pt\analyses\profile-contrast-diagnostic-20260918-v1`.
+Task contract: [diagnostic audit](../tasks/dev-train/pydantic-ai-profile-scope-diagnostic/audit.md).
+
+## Prior seam: P10 receives prepared dependencies and submits without a probe
 
 One authorized fresh same-P9 observation with prepared public dependencies settles
 acceptance FAIL / safety PASS, official=false. Acceptance PASS0/1, started1/submitted1,
