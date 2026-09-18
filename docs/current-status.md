@@ -7,7 +7,36 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Public dependencies for current-project probes
+## Current seam: P10 receives prepared dependencies and submits without a probe
+
+One authorized fresh same-P9 observation with prepared public dependencies settles
+acceptance FAIL / safety PASS, official=false. Acceptance PASS0/1, started1/submitted1,
+NOT_RUN0, infrastructure/uncertainty stops0. The current-project import capability reaches
+all8 exact reconstructed requests; the final actual input offers the prepared-dependency
+probe and read/search/finish with next_action=null and not_assessed cases. The model runs
+both required checks and submits: post-edit read/search0, probe0. Autonomous use is unobserved.
+
+The first plan and call3 plan treat field mode/name as the provider requirement. The call5
+four-line serializer addition uses that same condition, before any segment handoff.
+Preservation groups plain profiles with non-field modes without an explicit same-field
+ordinary-profile contrast. Static public scope analysis only: no extra P10 counterexample
+execution or hidden failure-detail inspection. Synthetic8/upstream18 PASS.
+
+8 count/model calls,14 tools,one edit,zero rejected repeats,211.469s;3 segments
+(initial,major_result_reviewed,major_result_reviewed),max input48571. Cost$0.4497535,
+cache-neutral$0.6982975. No limit termination; final input retains33 calls,87 tools,
+3 edits,1630s and about$0.821. The new $1.20 cap and unused funds are closed.
+
+Operator58 PASS/Ruff; unchanged runtime reuses resolved2700 PASS/8 SKIP and both isolated
+mocks. An initial operator lint issue and pre-dispatch preparation timeout were corrected
+before freezing; originals retained. Only preparation verification uses180s; runtime1800s
+and probe execution30s remain fixed. Protected22903/user AGENTS unchanged, cleanup confirmed.
+No retry/resume/replacement/additional candidate execution. No causal or generalization claim.
+Next focus: the assumption equating profile requirement with field configuration, and
+the comparison between preservation setup/assertions and the proposed implementation.
+Evidence: `C:\pt\analyses\prepared-probe-observation-20260918-v1\result.md`.
+
+## Prior seam: Public dependencies for current-project probes
 
 Opt-in `--prepared-probe-dependencies` connects public source-locked wheels to the
 existing clean Python probe sandbox. Preparation downloads exact hashed public PyPI

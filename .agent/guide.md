@@ -964,7 +964,25 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: fixed public profile contrast reproduces P9's scope regression.
+Current seam: P10 receives prepared public dependencies but performs no probe.
+One fresh same-P9 model/task/settings observation, prepared dependencies enabled, settles
+acceptance FAIL/safety PASS;0/1 acceptance,official=false. All8 exact request hashes and
+task/diff/check delivery pass; final actual input offers current-project verification with
+prepared dependencies,next_action=null and not_assessed cases. Post-edit read/search0,probe0.
+The call3 public plan equates the provider requirement with field mode/name; the call5
+four-line edit uses that condition before segment handoff. Both public checks PASS,
+then finish. P10 scope finding is static analysis; no extra candidate run or hidden details.
+8 model/count,14 tools,one edit,zero rejected repeats,3 segments,max input48571,211.469s,
+cost$0.4497535 (cache-neutral$0.6982975). No limit stop; review tools and budget remain.
+Operator58/Ruff PASS; reuse unchanged runtime resolved2700/8 SKIP and both isolated mocks.
+Pre-freeze lint/preparation-timeout corrections retain their initial records. Preparation
+preflight180s changes no runtime1800s/probe30s bound. Protected22903/user AGENTS preserved,
+cleanup confirmed. New$1.20 cap closed; no retry/resume/replacement/extra candidate or sample.
+Feature availability did not yield autonomous verification in this observation; no causal
+effect or default claim. Next investigation: profile-requirement assumption versus actual
+preservation inputs/assertions. See C:\pt\analyses\prepared-probe-observation-20260918-v1\result.md.
+
+Prior seam: fixed public profile contrast reproduces P9's scope regression.
 See [the operator diagnostic](profile-scope-diagnostic.md) for the command and boundary.
 diagnostics/profile_scope_check.py runs a fixed public-only program in two fresh prepared
 workspaces using the existing dependency-equipped registered-check image. Same OpenAI
