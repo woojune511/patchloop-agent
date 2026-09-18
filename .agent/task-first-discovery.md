@@ -93,3 +93,57 @@ the proposal, what changes after disclosure, and whether any executed mismatch i
 publicly justified. Count proposal overhead and untested cases as well as discoveries.
 Keep the previous samples/budgets closed and review public traces only. Better case
 selection, candidate correctness and causal improvement remain unassessed here.
+
+## Closed live observation: 2026-09-19 KST
+
+User continuation authorized one new original-task/P10/GPT-5.4 medium observation,
+applicability-contrast-v1 plus task-first-v1, repeat=1 and a new $1.20 cap. Committed
+runtime/diagnostic source is `8c84874b`; the core content hash is unchanged. Current-day
+official pricing, prepared source/dependencies and existing Docker/image passed admission.
+No prior cases or findings were injected. Executable plan hash:
+`sha256:4c95f0860d22286bdaea7b2201308218fa5da129e5d19be98d35a8bc2ad34e1f`.
+
+The live provider accepts the new case schema. Turn1 records four cases before seeing
+the candidate: tool-only empty field, existing thinking/text, deferred tool-search
+history, and a broad non-applicable boundary group. It names supplied-profile origin
+and ordinary-provider preservation, but does not construct an ordinary field-mode
+case independent of the supplied profile. Reuse/copy with a renamed field is omitted.
+Thus candidate exposure is not necessary for this sample's missing concrete contrast;
+the observation does not establish the causal effect of information order.
+
+Turn2 performs one read and two searches. Turn3 executes a single program against current
+workspace code. Setup checks match the package path, actual DeepSeek mode and field.
+Five direct complete comparisons match: tool-only, thinking/text preservation, default
+plain provider, disabled sending and empty response. Two deferred capabilities load in
+one offline conversation; the final request has six assistant tool-call messages with
+string-valued fields. The replay expected count/tool names are copied from actual data,
+and only the field types are independently asserted. Exact synthetic empty values,
+full payload/return preservation and a second Agent.run with saved history are unverified.
+
+The selected preservation case adds ThinkingPart and disables the candidate's no-thinking
+condition. Default plain/disabled cases also do not exercise same-trigger preservation.
+The complete output, three setup rows and same-trigger warning reach turn4. The model
+reports no counterexample, explicitly acknowledging same-trigger and renamed/reused-profile
+gaps. Public review records **NO_REPRODUCTION, supported discoveries0/1**. This narrow
+no-mismatch conclusion is supported; candidate correctness remains NOT_ASSESSED. There
+is no setup mismatch to measure correction. Only one proposed excerpt matches literally;
+the others and the final excerpt join clauses. Manual review uses the full public task.
+
+All four request deliveries, frozen-plan identity, native continuation and fixed candidate
+pass audit. Four model/count calls, six actions, first probe turn3; cost $0.1824,
+cache-neutral $0.2256, max input20,465, active161.774s/wall266.227s. Proposal overhead
+is one response/action and $0.025995 within the shared cap. No infrastructure/resource
+stop; complete output and cleanup confirmed. All four added lines have launch-thread
+events, not per-case semantic coverage. Invoice/count-endpoint billing is unverified.
+
+One planned/started/reported sample and unused $1.0176 are closed. All 1,583 earlier
+evidence entries are preserved. The sealed 160-test diagnostic validation and unchanged
+core regression evidence are reused; only documentation checks are newly run. No retry,
+resume, replacement, paid judge, extra candidate/baseline program or hidden evaluation.
+Fewer calls and broader examples than the preceding sample are observations, not causal
+improvement. Do not adopt into repair defaults on this evidence. Further diagnosis should
+separate concrete input construction and independent expectation quality from planning
+activity; another paid prompt variant is not implied.
+
+Evidence: `C:\pt\analyses\counterexample-discovery-task-first-20260919-v1`.
+Raw: `C:\pt\pl-discovery-case-live-0919a`.

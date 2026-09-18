@@ -7,6 +7,47 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest closed observation: Task-first planning does not resolve the applicability gap
+
+One separately authorized task-first-v1 observation is closed at commit `8c84874b`.
+Same original dev-train task/P10/GPT-5.4 medium/applicability-contrast-v1, fresh source
+and history, new $1.20 cap; planned1/started1/report-completed1, official=false.
+The first input contains only the public task and case-recording tool. Four proposed
+cases are frozen before candidate disclosure; all four actual input deliveries pass
+the public audit. The proposal already omits a concrete ordinary field-mode profile
+contrast, so early candidate exposure is not necessary for this sample's selection gap.
+This does not isolate the causal effect of input order or extra planning.
+
+After one inspection response, the model executes one program. Three setup comparisons
+match. Five direct cases match their complete expectations: DeepSeek tool-only, existing
+thinking/text, default plain provider, disabled sending and omitted empty response.
+Two deferred loads produce six assistant tool-call messages with string-valued reasoning
+fields. The replay check copies observed count/names into its expected data and only
+independently asserts field types; it does not establish exact empty values or full
+payload/return preservation. Supplied-profile reuse/custom fields and preservation under
+the whole candidate condition remain untested. The report acknowledges those central
+gaps after receiving complete output and the same-trigger warning.
+
+Public review: **NO_REPRODUCTION, supported discoveries 0/1**. Task acceptance remains
+NOT_ASSESSED. One of four proposed excerpts binds literally; the final excerpt joins
+noncontiguous clauses. Semantic review uses the complete original public task. There
+is no setup failure, infrastructure stop or resource-limit exit. All four added lines
+are observed in the launch thread, which does not establish semantic coverage.
+
+Four model/count calls, six tool actions; first probe at turn3 (proposal plus one
+inspection response precede it). Recorded cost $0.1824, cache-neutral $0.2256, maximum
+input20,465; proposal overhead $0.025995. Active161.774s/wall266.227s. Fewer calls than
+the preceding sample do not establish efficacy; its recorded cost was slightly lower.
+Cleanup and all 1,583 prior evidence entries are confirmed. The unused $1.0176 closes
+with this sample; no retry, resume, replacement, extra candidate execution or hidden
+evaluation. Existing implementation validation is reused unchanged.
+
+Do not adopt this diagnostic into repair defaults on this evidence. The remaining
+issue is turning public applicability into concrete inputs and independent expectations;
+another paid prompt variant is not implied. Evidence:
+`C:\pt\analyses\counterexample-discovery-task-first-20260919-v1`;
+raw: `C:\pt\pl-discovery-case-live-0919a`.
+
 ## Current implementation: Propose public cases before revealing the candidate
 
 The fixed-candidate diagnostic accepts optional `--case-design task-first-v1`.
@@ -35,7 +76,7 @@ Zero live provider/count calls, credential reads or Docker operations; no new re
 paid execution packet. Real-model selection benefit remains unassessed. See
 [the staged discovery contract](../.agent/task-first-discovery.md).
 
-## Latest closed observation: The model checks actual setup; mismatch repair remains unobserved
+## Prior closed observation: The model checks actual setup; mismatch repair remains unobserved
 
 One separately authorized observation is closed at runtime commit `b3ea4b8b`.
 Same original dev-train task/P10/GPT-5.4 medium/applicability-contrast-v1, new $1.20

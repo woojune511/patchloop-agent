@@ -5,6 +5,19 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest closed observation: one separately authorized task-first-v1 sample records four
+cases before candidate disclosure, then one inspection response and one probe. Four
+model/count calls cost $0.1824 (cache-neutral $0.2256); all input deliveries and cleanup
+pass. Five direct cases match and two deferred loads yield six string-field history
+messages, but the replay oracle does not independently check exact empty values or
+payloads. Same-trigger ordinary-profile preservation and renamed/reused profiles remain
+untested. The report acknowledges those limits; public review is NO_REPRODUCTION,
+discoveries0/1, acceptance NOT_ASSESSED. The initial proposal already lacks that concrete
+contrast, so candidate-first exposure is not necessary for this observed selection gap;
+no causal benefit is established. Do not adopt into repair defaults or run another paid
+variant automatically. The sample and unused $1.0176 are closed. See the live observation
+in [the staged discovery contract](task-first-discovery.md).
+
 Current implementation: [task-first case design](task-first-discovery.md) adds optional
 `--case-design task-first-v1` to the fixed-candidate diagnostic. The model first receives
 only the original public task and record_case_plan. Its bounded initial proposal is
