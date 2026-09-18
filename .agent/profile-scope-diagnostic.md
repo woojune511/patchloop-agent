@@ -1,5 +1,12 @@
 # Public profile-scope diagnostic
 
+The fixed operator command below retains its original behavior. A separate assisted
+task now registers its exact public program as a third visible check:
+`tasks/dev-train/pydantic-ai-profile-scope-diagnostic`. Its P11 outcome and the
+post-run operator audit correction are recorded in that task's `audit.md` and
+`C:\pt\analyses\profile-contrast-diagnostic-20260918-v1\result.md`. Parent task bytes
+and earlier diagnostic records remain unchanged.
+
 `diagnostics/profile_scope_check.py` runs one fixed public Python program on a clean
 base and one supplied patch in two independent prepared-source workspaces. It is
 an operator diagnostic, not a coding-agent tool, new task version or evaluation.

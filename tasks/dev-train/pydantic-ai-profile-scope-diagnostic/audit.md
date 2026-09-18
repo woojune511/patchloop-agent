@@ -40,3 +40,16 @@ dependencies with a new $1.20 total cap. The added check is available from the
 first input. A correct first patch demonstrates solving with supplied cases;
 repair after a failed check is claimed only if that sequence is actually observed.
 Stop after one settled result or uncertainty; no retry/resume/replacement.
+
+## P11 outcome
+
+One same-model observation reaches acceptance/safety PASS. Its first checked candidate
+passes synthetic8/upstream18/contrast4; no failing-check repair sequence was observed.
+Three edits separate a default-false profile requirement from the field configuration.
+Recorded cost $0.6660755, cache-neutral $0.9062675,10 model/count calls,17 tools.
+
+The original group remains STOPPED because its post-run auditor initially ignored
+visible quoted public exchanges at segment boundaries. A diagnostic-only resolver
+and supplemental read-only audit verify all10 actual inputs, including exact mutation
+delivery in calls6/7. Original evidence and stop status are preserved; no model retry,
+candidate rerun or runtime/policy change. See the external result.md for claim limits.

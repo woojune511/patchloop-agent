@@ -964,22 +964,32 @@ axes and `claim_eligible=false`; every result remains `official=false`. Never us
 
 ## Development decisions and next seam
 
-Current seam: separate public profile-contrast diagnostic task prepared.
-`tasks/dev-train/pydantic-ai-profile-scope-diagnostic` v1 adds the exact existing
-public contrast program as a third registered check; original issue/source/limits/
-checks/environment stay fixed. Only public identity and one check change model input.
-Private support is an opaque copy with task_id relabeled. Parent/P10/runtime unchanged.
-Fresh fixed public checks: base ordinary2/2,supplied0/2; exact P10 ordinary0/2,supplied2/2.
-Both cleanup confirmed. Focused80/16.098s,operator58,Ruff and both fresh isolated mocks
-PASS with actual public state delivery and unchanged closed replay. Initial missing
-pytest parent report kept.
-Unchanged runtime reuses resolved2700 PASS/8 SKIP full regression with durations.
-One fresh same-P10 single observation with new$1.20 cap is authorized but not yet run;
-freeze and smoke first. Supplied-case solving is assisted evidence, not autonomous
-counterexample discovery. A failed-check-to-repair sequence must be observed before
-claiming repair. No retry/resume/extra sample or default adoption.
-See tasks/dev-train/pydantic-ai-profile-scope-diagnostic/audit.md and
-C:\pt\analyses\profile-contrast-diagnostic-20260918-v1.
+Current seam: P11 supplied public contrast yields a correct first checked candidate.
+Separate tasks/dev-train/pydantic-ai-profile-scope-diagnostic v1; only public identity
+and third check differ from P10. Opaque private support relabels identity only. Same
+issue/source/constraints/prior checks/model/settings/prepared dependencies/runtime.
+First plan separates ordinary field-mode profiles from provider-supplied profiles;
+3 edits add an opt-in profile setting, enable it for DeepSeek and condition serialization.
+Synthetic8/upstream18/contrast4 PASS, acceptance/safety PASS,official=false. Planned1,
+started1,submitted1,PASS1/1,NOT_RUN0. No failed check/repair sequence or autonomous case
+discovery observed. Fixed pre-run public checks: base ordinary2/2,supplied0/2; exact P10
+ordinary0/2,supplied2/2. Never pool this assisted observation with the parent task.
+10 model/count,17 tools,3 edits,first edit call4,rejections0,probe0,post-edit inspections0.
+261.813s,cost$0.6660755,cache-neutral$0.9062675,max input45941,6 segments,no limit exit.
+New$1.20 cap closed; no retry/resume/replacement/additional P11 candidate or sample.
+The original group remains STOPPED after one operator audit error. Its top-level-only
+mutation lookup missed exact public archive exchanges in calls6/7. The diagnostic-only
+`diagnostics.public_mutation_delivery.delivered_mutation` now uses public_exchanges on
+already validated actual input, with unique action/tool/status/diff identity checks.
+It never substitutes canonical journal evidence for missing model-visible delivery.
+Supplemental case/choice/dependency audits verify all10 actual inputs without changing
+runtime, frozen operator files, inputs, original journal or stop record. Stop count stays1;
+do not rewrite the group as COMPLETE or call the initial audit a PASS.
+Focused80/16.098s,operator58/3.190s,audit-fix45/1.305s,Ruff,both fresh isolated mocks PASS.
+Reuse unchanged runtime resolved2700 PASS/8 SKIP full regression with durations.
+Protected27226/user AGENTS unchanged,cleanup confirmed. Initial pytest-parent and audit
+failure records retained. See C:\pt\analyses\profile-contrast-diagnostic-20260918-v1\result.md.
+Next investigation: independent construction of same-settings/different-target contrasts.
 
 Prior seam: P10 receives prepared public dependencies but performs no probe.
 One fresh same-P9 model/task/settings observation, prepared dependencies enabled, settles
@@ -988,7 +998,8 @@ task/diff/check delivery pass; final actual input offers current-project verific
 prepared dependencies,next_action=null and not_assessed cases. Post-edit read/search0,probe0.
 The call3 public plan equates the provider requirement with field mode/name; the call5
 four-line edit uses that condition before segment handoff. Both public checks PASS,
-then finish. P10 scope finding is static analysis; no extra candidate run or hidden details.
+then finish. P10 closed with a static scope finding; its later fixed public contrast is
+recorded separately in P11 above, with no hidden details inspected.
 8 model/count,14 tools,one edit,zero rejected repeats,3 segments,max input48571,211.469s,
 cost$0.4497535 (cache-neutral$0.6982975). No limit stop; review tools and budget remain.
 Operator58/Ruff PASS; reuse unchanged runtime resolved2700/8 SKIP and both isolated mocks.

@@ -7,29 +7,42 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current seam: Separate public profile-contrast task prepared
+## Current seam: P11 solves the task with a supplied public profile contrast
 
-`pydantic-ai-profile-scope-diagnostic` v1 is a separate assisted dev-train task.
-It retains P10's public issue/source/constraints/two checks/environment and adds the
-existing fixed `profile-scope-contrast` check. Only the task identity and that public
-check change model input. Private support is copied opaquely; only its task identity
-is relabeled. Original task, P10 evidence, runtime and policies remain unchanged.
+The separate `pydantic-ai-profile-scope-diagnostic` v1 observation reaches acceptance
+PASS/safety PASS, official=false: planned1/started1/submitted1, PASS1/1, NOT_RUN0.
+Its first public plan distinguishes ordinary field-mode profiles from supplied provider
+profiles. Three edits add a default-false profile setting, enable it for DeepSeek, and
+condition serialization on it. The first checked candidate passes synthetic8/upstream18/
+contrast4, then submits. No failed-check-to-repair sequence; autonomous case discovery
+remains unassessed because the contrast was supplied in the initial public task.
 
-Fresh fixed public executions now reproduce P10's scope regression: base ordinary2/2
-PASS, supplied0/2; P10 ordinary0/2, supplied2/2. Both complete with cleanup confirmed.
-Focused80 PASS/16.098s, operator58 PASS, Ruff and two fresh isolated mocks PASS with
-actual public task/diff/check delivery and closed replay verified.
-An initial pytest setup failed because its temporary parent
-was absent; the corrected run passes and the initial report remains preserved.
-The unchanged runtime reuses resolved2700 PASS/8 SKIP full-regression evidence with
-durations. This is new task validation, not another full runtime suite.
+Only public task identity and one added registered check differ from P10. Issue, source,
+constraints, old checks, model/settings, prepared dependencies and runtime stay fixed.
+Private support is an opaque copy with only its task identity relabeled. Fresh local
+fixed checks confirm base ordinary2/2,supplied0/2 and exact P10 ordinary0/2,supplied2/2.
+Original package and P10 records are unchanged; no pooled A/B or default adoption claim.
 
-One fresh same-P10 model/settings observation is authorized under a new $1.20 cap;
-it is not yet executed. Freeze and verify local smoke/input isolation first. A pass
-would demonstrate solving with supplied public cases. Report repair only if a failed
-check actually precedes a corrective edit; no autonomous-verification or A/B claim.
-Evidence: `C:\pt\analyses\profile-contrast-diagnostic-20260918-v1`.
-Task contract: [diagnostic audit](../tasks/dev-train/pydantic-ai-profile-scope-diagnostic/audit.md).
+10 count/model calls,17 tools,3 edits,first edit call4,zero rejections/probes/post-edit
+inspections;261.813s. Cost$0.6660755,cache-neutral$0.9062675,max input45941,6 segments
+(initial + major_result_reviewed5). No resource-limit exit. New$1.20 cap and unused funds
+closed; no retry/resume/replacement or additional P11 candidate execution.
+
+The original group remains STOPPED after one post-run operator audit error. That auditor
+searched only top-level tool outputs; calls6/7 instead contain exact quoted public
+exchanges after segment handoff. The new diagnostic-only mutation resolver verifies both
+forms and rejects missing/ambiguous/wrong identities. Supplemental audits PASS on all10
+actual inputs, with frozen scripts, inputs, runtime and stopped journal preserved.
+This resolves the audit uncertainty without reopening or relabeling the original group.
+
+Focused80 PASS/16.098s,operator58/3.190s,both fresh isolated mocks and Ruff; audit-fix45/
+1.305s and Ruff. Actual public state delivery and closed replay verified. Unchanged runtime
+reuses resolved2700 PASS/8 SKIP full regression with durations, not a new full-suite claim.
+Protected27226/user AGENTS unchanged; public cleanup confirmed; no remaining containers.
+Initial missing pytest parent and failed audit records retained. See
+[the task contract](../tasks/dev-train/pydantic-ai-profile-scope-diagnostic/audit.md) and
+`C:\pt\analyses\profile-contrast-diagnostic-20260918-v1\result.md`.
+Next focus: constructing a same-settings/different-target verification case independently.
 
 ## Prior seam: P10 receives prepared dependencies and submits without a probe
 
@@ -43,8 +56,9 @@ both required checks and submits: post-edit read/search0, probe0. Autonomous use
 The first plan and call3 plan treat field mode/name as the provider requirement. The call5
 four-line serializer addition uses that same condition, before any segment handoff.
 Preservation groups plain profiles with non-field modes without an explicit same-field
-ordinary-profile contrast. Static public scope analysis only: no extra P10 counterexample
-execution or hidden failure-detail inspection. Synthetic8/upstream18 PASS.
+ordinary-profile contrast. At P10 closure, this was static public scope analysis only;
+the later fixed public execution is recorded separately in P11 above. No hidden
+failure-detail inspection. Synthetic8/upstream18 PASS.
 
 8 count/model calls,14 tools,one edit,zero rejected repeats,211.469s;3 segments
 (initial,major_result_reviewed,major_result_reviewed),max input48571. Cost$0.4497535,
