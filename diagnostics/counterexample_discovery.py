@@ -16,6 +16,7 @@ from types import SimpleNamespace
 
 from diagnostics import discovery_case_plan as case_plan
 from diagnostics import discovery_case_selection as case_selection
+from diagnostics import discovery_construction_links as construction_links
 from diagnostics import discovery_probe_expectation as probe_expectation
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
@@ -139,9 +140,12 @@ def report_schema() -> dict:
 
 def initial_request(public: PublicTask, patch: str, environment: dict, *,
                     review_guidance: str = "original",
-                    probe_expectation_mode: str | None = None) -> dict:
+                    probe_expectation_mode: str | None = None,
+                    construction_evidence_mode: str | None = None) -> dict:
     """Explicit allowlist: no source-run envelope, journal, notes or verdict input."""
     require(probe_expectation_mode in (None, probe_expectation.MODE), "unknown probe expectation")
+    require(construction_evidence_mode in (None, construction_links.MODE),
+            "unknown construction evidence")
     context = {
         "public_task": public.model_dump(mode="json"),
         "candidate": {"patch": patch, "patch_hash": sha256_bytes(patch.encode())},
@@ -158,6 +162,9 @@ def initial_request(public: PublicTask, patch: str, environment: dict, *,
             with_contrast=review_guidance == case_selection.CONTRAST_POLICY)
     if probe_expectation_mode is not None:
         probe_expectation.extend_schema(next(tool for tool in tools if tool["name"] == "run_probe"))
+    if construction_evidence_mode is not None:
+        construction_links.extend_schema(
+            next(tool for tool in tools if tool["name"] == "run_probe"))
     tools.append(report_schema())
     config = ModelConfig(provider="openai", model_id=MODEL, reasoning_effort="medium",
                          reasoning_continuation="encrypted-v1", transport_max_retries=0,
@@ -170,9 +177,12 @@ def initial_request(public: PublicTask, patch: str, environment: dict, *,
 
 
 def protocol(review_guidance: str = "original", *, case_design: str | None = None,
-             probe_expectation_mode: str | None = None) -> dict:
+             probe_expectation_mode: str | None = None,
+             construction_evidence_mode: str | None = None) -> dict:
     review_prompt(review_guidance)
     require(probe_expectation_mode in (None, probe_expectation.MODE), "unknown probe expectation")
+    require(construction_evidence_mode in (None, construction_links.MODE),
+            "unknown construction evidence")
     result = {
         "status": "PREPARED_NOT_EXECUTABLE", "collector_implemented": False,
         "official": False, "claim_eligible": False,
@@ -261,13 +271,20 @@ def protocol(review_guidance: str = "original", *, case_design: str | None = Non
             "interpretation": "model-authored, unverified expectation; equality is not a verdict",
             "optional": True, "changes_probe_or_report_availability": False,
         }
+    if construction_evidence_mode is not None:
+        result["construction_evidence"] = construction_evidence_mode
+        result["construction_evidence_scope"] = (
+            "Optional model-selected direct assignment references from probe source, parsed "
+            "without host execution. Syntax evidence only; no origin, execution, applicability "
+            "or semantic verdict. Advisory receipt; no additional action or report gate.")
     return result
 
 
 def compile_packet(inputs: Inputs, *,
                    review_guidance: str = "original",
                    case_design: str | None = None,
-                   probe_expectation_mode: str | None = None) -> tuple[dict, dict[str, bytes]]:
+                   probe_expectation_mode: str | None = None,
+                   construction_evidence_mode: str | None = None) -> tuple[dict, dict[str, bytes]]:
     prompt = review_prompt(review_guidance)
     require(case_design in (None, case_plan.MODE), "unknown case design")
     paths = inputs.paths()
@@ -283,7 +300,8 @@ def compile_packet(inputs: Inputs, *,
     patch = raw["candidate_patch"].decode("utf-8")
     request = initial_request(public, patch, dependencies.environment,
                               review_guidance=review_guidance,
-                              probe_expectation_mode=probe_expectation_mode)
+                              probe_expectation_mode=probe_expectation_mode,
+                              construction_evidence_mode=construction_evidence_mode)
     review_request = request
     if case_design is not None:
         request = case_plan.initial_request(review_request)
@@ -291,7 +309,8 @@ def compile_packet(inputs: Inputs, *,
     files = {"public.yaml": raw["public_task"], "candidate.patch": raw["candidate_patch"],
              "request.json": wire(request),
              "protocol.json": wire(protocol(review_guidance, case_design=case_design,
-                                            probe_expectation_mode=probe_expectation_mode)),
+                                            probe_expectation_mode=probe_expectation_mode,
+                                            construction_evidence_mode=construction_evidence_mode)),
              "prompt.txt": prompt.encode()}
     if case_design is not None:
         files["review-request.json"] = wire(review_request)
@@ -325,6 +344,10 @@ def compile_packet(inputs: Inputs, *,
         packet.update({"probe_expectation": probe_expectation_mode,
                        "probe_expectation_implementation_hash": sha256_bytes(
                            Path(probe_expectation.__file__).read_bytes())})
+    if construction_evidence_mode is not None:
+        packet.update({"construction_evidence": construction_evidence_mode,
+                       "construction_evidence_implementation_hash": sha256_bytes(
+                           Path(construction_links.__file__).read_bytes())})
     return packet, files
 
 
@@ -340,10 +363,12 @@ def fresh_external_root(output: Path, protected: list[Path]) -> Path:
 
 
 def prepare(inputs: Inputs, output: Path, *, review_guidance: str = "original",
-            case_design: str | None = None, probe_expectation_mode: str | None = None) -> dict:
+            case_design: str | None = None, probe_expectation_mode: str | None = None,
+            construction_evidence_mode: str | None = None) -> dict:
     root = fresh_external_root(output, [p.parent for p in inputs.paths().values()])
     packet, files = compile_packet(inputs, review_guidance=review_guidance, case_design=case_design,
-                                  probe_expectation_mode=probe_expectation_mode)
+                                  probe_expectation_mode=probe_expectation_mode,
+                                  construction_evidence_mode=construction_evidence_mode)
     root.mkdir(exist_ok=False)
     store = ArtifactStore(root)
     journal = DevJournal(root, PREPARATION_ID)
@@ -363,7 +388,8 @@ def validate(root: Path) -> dict:
         Inputs(**{k: Path(v) for k, v in packet["inputs"].items()}),
         review_guidance=packet.get("review_guidance", "original"),
         case_design=packet.get("case_design"),
-        probe_expectation_mode=packet.get("probe_expectation"))
+        probe_expectation_mode=packet.get("probe_expectation"),
+        construction_evidence_mode=packet.get("construction_evidence"))
     require(packet == expected, "packet/source/runtime/implementation changed")
     require(all((root / name).read_bytes() == body for name, body in files.items()),
             "frozen input or protocol changed")
@@ -447,6 +473,7 @@ def main() -> None:
     p.add_argument("--review-guidance", choices=REVIEW_GUIDANCE, default="original")
     p.add_argument("--case-design", choices=[case_plan.MODE])
     p.add_argument("--probe-expectation", choices=[probe_expectation.MODE])
+    p.add_argument("--construction-evidence", choices=[construction_links.MODE])
     v = commands.add_parser("validate")
     v.add_argument("--root", type=Path, required=True)
     r = commands.add_parser("rehearse")
@@ -459,8 +486,10 @@ def main() -> None:
         review_guidance = args.pop("review_guidance")
         case_design = args.pop("case_design")
         expectation = args.pop("probe_expectation")
+        construction = args.pop("construction_evidence")
         result = prepare(Inputs(**args), output, review_guidance=review_guidance,
-                         case_design=case_design, probe_expectation_mode=expectation)
+                         case_design=case_design, probe_expectation_mode=expectation,
+                         construction_evidence_mode=construction)
     else:
         result = validate(**args) if command == "validate" else rehearse(**args)
     print(canonical_json({"status": result["status"], "official": False,

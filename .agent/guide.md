@@ -15,7 +15,16 @@ is wrong. All7 input deliveries and cleanup pass; calls7/probes2/$0.2858285, no 
 stop. Sample and unused $0.9141715 closed; all1,687 previous entries preserved. No
 extra execution or default change. See [the observation](frozen-probe-expectation.md#closed-live-observation).
 
-Latest implementation: optional diagnostic `--probe-expectation frozen-json-v1`
+Latest implementation: optional diagnostic `--construction-evidence direct-links-v1`
+binds model-selected direct-reference claims to exact assignments in probe source.
+AST inspection returns selected code and loaded RHS names with the normal probe receipt;
+the next native input retains this evidence and existing setup/expectation feedback.
+Syntax is not origin, runtime execution or public applicability proof. Invalid, ambiguous
+or unsupported links stay advisory; replay/conflict and report availability are retained.
+Core defaults and all16 previous request/protocol combinations are unchanged. No paid
+sample or demonstrated model improvement. See [the construction contract](construction-links.md).
+
+Prior implementation: optional diagnostic `--probe-expectation frozen-json-v1`
 freezes model-authored JSON in the existing action identity before probe execution.
 The host compares healthy complete stdout and delivers matched/mismatched/not_compared
 with existing public receipts. Equality does not verify expected semantics, source

@@ -39,7 +39,30 @@ applicability. See [the observation](../.agent/frozen-probe-expectation.md#close
 Evidence: `C:\pt\analyses\counterexample-discovery-frozen-json-20260919-v1`;
 raw: `C:\pt\pl-discovery-exp-live-0919a`.
 
-## Latest implementation: Freeze expected probe output before execution
+## Latest implementation: Show selected construction code beside probe results
+
+Fixed-candidate discovery supports optional `--construction-evidence direct-links-v1`.
+The model can name an assigned variable, its claimed direct source and the relevant
+public requirement. The host parses the submitted program and returns the exact
+assignment and its referenced names with the ordinary result. This makes a construction
+claim inspectable; it does not establish copying, runtime origin or correct applicability.
+Ambiguous, unsupported or malformed annotations remain advisory. Existing expectations,
+setup feedback, action recovery and report availability are retained.
+
+All16 prior request/protocol combinations and task-first's initial input are unchanged;
+core runtime/defaults are unchanged. A retrospective syntax check on the prior program
+uses operator-selected links and adds no model-discovery credit or candidate execution.
+Provider-free validation: focused48 PASS/24.91s including both isolated mock contexts,
+diagnostic/setup regression239 PASS/211.35s with durations, documentation3 PASS and
+Ruff PASS; 290 distinct tests. Offline source rehearsal and closed historical inspection
+pass. All1,750 prior evidence entries are preserved; provider/count/credential/Docker
+operations and model cost are zero. Broader core regression reuses the unchanged-runtime
+receipt described below; it was not rerun. Model interpretation improvement remains
+unverified. Evidence is recorded at
+`C:\pt\analyses\construction-links-20260919-v1`.
+See [the implementation contract](../.agent/construction-links.md).
+
+## Prior implementation: Freeze expected probe output before execution
 
 Fixed-candidate discovery now supports optional `--probe-expectation frozen-json-v1`.
 The model supplies a bounded JSON expectation in its normal probe call. That value is

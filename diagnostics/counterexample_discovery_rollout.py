@@ -20,6 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from diagnostics import counterexample_discovery as design
 from diagnostics import discovery_case_plan as case_plan
 from diagnostics import discovery_case_selection as case_selection
+from diagnostics import discovery_construction_links as construction_links
 from diagnostics import discovery_probe_expectation as probe_expectation
 from diagnostics import episode_requests as requests
 from diagnostics import fresh_state_rollout as engine
@@ -68,6 +69,7 @@ def read(path: Path) -> dict:
 def implementation_hashes() -> dict:
     names = ("counterexample_discovery_rollout", "counterexample_discovery",
              "discovery_case_selection", "discovery_case_plan", "discovery_probe_expectation",
+             "discovery_construction_links",
              "episode_requests",
              "fresh_state_rollout", "fresh_state_design", "fresh_state_sampler", "decision_sampler")
     return {f"diagnostics/{name}.py": sha256_bytes(
@@ -106,6 +108,8 @@ def plan_for(design_root: Path, result_root: Path, pricing_verified_on: str) -> 
         plan["case_design"] = packet["case_design"]
     if "probe_expectation" in packet:
         plan["probe_expectation"] = packet["probe_expectation"]
+    if "construction_evidence" in packet:
+        plan["construction_evidence"] = packet["construction_evidence"]
     return plan
 
 
@@ -427,6 +431,8 @@ def run(plan_root: Path, *, plan_hash: str, adapter_factory=None, probe_factory=
             }.get(packet.get("review_guidance"), DevToolGateway)
             if packet.get("probe_expectation") == probe_expectation.MODE:
                 gateway_type = probe_expectation.gateway_type(gateway_type)
+            if packet.get("construction_evidence") == construction_links.MODE:
+                gateway_type = construction_links.gateway_type(gateway_type)
             gateway = gateway_type(workspace=workspace, public_task=public, sandbox=None,
                                    journal=journal, limits=DevLimits(), probe_sandbox=probe,
                                    deadline=ExecutionDeadline.from_remaining(1800, clock=clock))
