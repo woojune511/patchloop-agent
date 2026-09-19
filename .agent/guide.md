@@ -5,6 +5,16 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest closed observation: frozen-json-v1 is used in one authorized fresh sample.
+First probe imports a nonexistent helper; the second removes only that import and
+matches the same frozen JSON. Model discoveries0/1. Operator review finds one public
+preservation mismatch in the model's existing output: a freshly constructed ordinary
+OpenAI field-mode profile is incorrectly treated as a copied DeepSeek profile, so the
+model expects its unwanted empty field. Host comparison is correct; expectation scope
+is wrong. All7 input deliveries and cleanup pass; calls7/probes2/$0.2858285, no resource
+stop. Sample and unused $0.9141715 closed; all1,687 previous entries preserved. No
+extra execution or default change. See [the observation](frozen-probe-expectation.md#closed-live-observation).
+
 Latest implementation: optional diagnostic `--probe-expectation frozen-json-v1`
 freezes model-authored JSON in the existing action identity before probe execution.
 The host compares healthy complete stdout and delivers matched/mismatched/not_compared
@@ -26,7 +36,7 @@ Docker checks, no provider/count/credential, cost$0. Operator29/docs3/Ruff/audit
 all1,634 earlier entries preserved. No runtime/task/prompt/default change or fresh paid
 sample. See [the operator contract](profile-scope-diagnostic.md) for evidence and limits.
 
-Latest closed live observation: one separately authorized task-first-v1 sample records four
+Prior closed live observation: one separately authorized task-first-v1 sample records four
 cases before candidate disclosure, then one inspection response and one probe. Four
 model/count calls cost $0.1824 (cache-neutral $0.2256); all input deliveries and cleanup
 pass. Five direct cases match and two deferred loads yield six string-field history

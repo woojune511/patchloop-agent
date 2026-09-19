@@ -76,3 +76,53 @@ This implements comparison mechanics only. No new paid sample, acceptance result
 discovery improvement, default adoption or completed A/B comparison follows. Earlier
 sample budgets stay closed; concrete scope selection and semantic expectation quality
 remain open research questions.
+
+## Closed live observation
+
+One separately authorized sample at implementation commit `dc962a56` keeps the exact
+task/P10/GPT-5.4 medium/task-first/applicability-contrast settings and adds only this
+option. The task-only first request is byte-identical to the preceding sample. New
+cap$1.20/repeat1, fresh source workspace and history; no earlier findings are supplied.
+
+The model proposes four cases, searches/reads source, then supplies a literal JSON
+expectation on turn5. Its program imports `check_setup` from a nonexistent project
+module and exits1 before behavior checks. Host status is not_compared. Turn6 removes
+only that import and uses the sandbox-provided helper; its unchanged expected JSON
+exactly matches healthy stdout. Five setup rows pass (four paths and final `done`).
+Both expectations were recorded before execution and their full receipts reach the
+following requests. The final report says no_counterexample_found.
+
+Manual public review separates this report from the actual construction. Program
+lines35-37 instantiate OpenAIModelProfile with field mode and field name `reasoning`,
+then pass it to OpenAIProvider under `fixture-other`. No DeepSeek profile is obtained
+or copied. The public preservation clause and supplied P10 diff entail no new empty
+field for this ordinary profile, yet the model's expected object and actual result both
+contain `reasoning: ""`. Its report incorrectly calls the profile copied. Thus the
+model executed the known applicability defect and expected its wrong result.
+
+Supported autonomous discoveries remain **0/1**. The external review's REPRODUCED
+classification is explicitly attributed to operator analysis of existing model trace
+(one observed public mismatch), not to a model finding or another candidate execution.
+Original host matched and model no-counterexample records stay unchanged. No hidden
+evaluation or acceptance result is inferred. This failure is wrong applicability/expected
+semantics despite a predeclared literal, not observed-value copying within these probes.
+
+Three direct mappings have appropriate matching expectations; the fourth is the wrong
+ordinary-profile expectation above. Deferred history has a fixed expected three-name
+order and a string-field boolean, so expected names are no longer taken from actual
+output. Exact empty/original thinking values, full arguments/IDs/returns and multiple
+loads or separate-run replay remain unverified. The explicit preserve annotation still
+disables the candidate trigger, and setup checks never establish profile origin.
+
+Seven model/count calls, eleven actions, two probes, first probe turn5. Recorded cost
+$0.2858285, cache-neutral $0.5113325, maximum input39,280; active254.228s/wall381.356s.
+All7 request deliveries, source/diff identities and both containers' cleanup pass; no
+infrastructure/resource stop. All1,687 prior evidence entries are preserved. Existing
+249-test implementation validation is reused unchanged; documentation3 checks are new.
+Sample and unused $0.9141715 close without retry/resume/replacement/extra program.
+
+This confirms live use and setup-error correction, not autonomous discovery benefit.
+Do not adopt into repair defaults or automatically run another paid variant. Grounding
+expectations in actual object construction and the complete public scope remains open.
+Evidence: `C:\pt\analyses\counterexample-discovery-frozen-json-20260919-v1`;
+raw: `C:\pt\pl-discovery-exp-live-0919a`.

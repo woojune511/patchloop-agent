@@ -7,6 +7,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest closed live observation: A frozen expectation matches the wrong profile behavior
+
+One authorized frozen-json-v1 observation on the same task/P10/GPT-5.4 medium is
+closed. The model uses literal expectations, fixes one nonexistent helper import,
+then receives an exact host match and reports no counterexample. Supported autonomous
+discoveries are **0/1**. Operator review identifies one public preservation mismatch
+already present in that model-authored execution; this is separate from model discovery.
+
+The program's renamed case constructs a fresh OpenAIModelProfile(field, "reasoning")
+and passes it to OpenAIProvider. It never copies or receives a DeepSeek-supplied profile,
+but both frozen expectation and final report treat it as copied and require an empty
+reasoning field. The candidate emits that field, so the host correctly reports matched.
+The public task requires ordinary profiles to retain their existing behavior. The input
+therefore reaches the known applicability defect while the model expects its wrong output.
+The two probes use identical expectations; this failure predates successful observation.
+
+The explicit preserve case still disables field mode. Deferred history now has an
+independent literal three-tool-name sequence, but exact thinking values and full payloads
+remain unchecked. Five setup checks cover module paths and final response, not profile
+origin. Complete comparison/setup/scope feedback reaches the next input; all seven
+request deliveries and cleanup pass. No infrastructure or resource-limit exit occurred.
+
+Model/count calls7/7, probes2, actions11, first probe turn5; recorded cost $0.2858285,
+cache-neutral $0.5113325, maximum input39,280, active254.228s/wall381.356s. The sample
+and unused $0.9141715 are closed. All1,687 prior evidence entries are preserved;
+runtime/implementation validation is reused, with only documentation checks newly run.
+No extra candidate execution, hidden evaluation, default adoption or causal efficacy
+claim. The remaining seam is grounding expectations in actual construction and public
+applicability. See [the observation](../.agent/frozen-probe-expectation.md#closed-live-observation).
+Evidence: `C:\pt\analyses\counterexample-discovery-frozen-json-20260919-v1`;
+raw: `C:\pt\pl-discovery-exp-live-0919a`.
+
 ## Latest implementation: Freeze expected probe output before execution
 
 Fixed-candidate discovery now supports optional `--probe-expectation frozen-json-v1`.
@@ -68,7 +100,7 @@ changing input order alone has not resolved either. See [the operator contract](
 Evidence: `C:\pt\analyses\public-input-oracle-characterization-20260919-v1`;
 raw pair: `C:\pt\pl-oracle-base-p10-0919a`.
 
-## Latest closed live observation: Task-first planning does not resolve the applicability gap
+## Prior closed live observation: Task-first planning does not resolve the applicability gap
 
 One separately authorized task-first-v1 observation is closed at commit `8c84874b`.
 Same original dev-train task/P10/GPT-5.4 medium/applicability-contrast-v1, fresh source
