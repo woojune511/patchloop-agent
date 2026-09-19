@@ -5,7 +5,20 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest closed observation: frozen-json-v1 is used in one authorized fresh sample.
+Latest closed observation: direct-links-v1 is exposed in one authorized fresh sample,
+but both probes set construction_links and expected_json to null. Schema/omitted-state
+feedback reaches actual inputs; concrete construction feedback is not exercised.
+Discoveries0/1, calls7/probes2/$0.2706935. An incorrect profile.update call is repaired
+with dataclasses.replace after a source read; the successful program really copies a
+provider-supplied profile. Default plain-profile preservation passes, but same-field-mode
+ordinary-profile preservation is not tested. Inline deferred history expects three tool
+names and observes four; the report notes this without establishing a public defect.
+No infrastructure/resource stop. Sample and unused $0.9293065 closed, all1,775 prior
+entries preserved. No new source change or extra execution. Concrete-feedback efficacy
+is untested; case selection and optional evidence use remain open. See
+[the observation](construction-links.md#closed-live-observation).
+
+Prior closed observation: frozen-json-v1 is used in one authorized fresh sample.
 First probe imports a nonexistent helper; the second removes only that import and
 matches the same frozen JSON. Model discoveries0/1. Operator review finds one public
 preservation mismatch in the model's existing output: a freshly constructed ordinary
@@ -21,8 +34,9 @@ AST inspection returns selected code and loaded RHS names with the normal probe 
 the next native input retains this evidence and existing setup/expectation feedback.
 Syntax is not origin, runtime execution or public applicability proof. Invalid, ambiguous
 or unsupported links stay advisory; replay/conflict and report availability are retained.
-Core defaults and all16 previous request/protocol combinations are unchanged. No paid
-sample or demonstrated model improvement. See [the construction contract](construction-links.md).
+Core defaults and all16 previous request/protocol combinations are unchanged. The
+implementation validation is provider-free; the live observation above does not establish
+model improvement. See [the construction contract](construction-links.md).
 
 Prior implementation: optional diagnostic `--probe-expectation frozen-json-v1`
 freezes model-authored JSON in the existing action identity before probe execution.

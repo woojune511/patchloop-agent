@@ -99,3 +99,59 @@ mechanical checks. Prior samples and unused budgets remain closed. A fresh obser
 if later authorized with exact live parameters, must let the model choose its own links
 and assess whether it actually corrects a mistaken applicability claim; existing traces
 cannot answer that question.
+
+## Closed live observation
+
+One separately authorized observation at implementation commit09abf40e retains the
+original public dev-train task, P10, GPT-5.4 medium, task-first-v1,
+applicability-contrast-v1 and frozen-json-v1; only direct-links-v1 is added. New
+cap$1.20/repeat1, fresh source/history, same task-only initial request. The review
+schema differs only in its new nullable property, required key and description suffix.
+Existing Docker/image are reused. No prior cases, outcomes or answers are supplied.
+
+Four initial cases are proposed. The preservation boundary is described as outside
+field mode. Turn4's program obtains a DeepSeek provider profile but tries to override
+its thinking field using update(keyword=...), which raises before setup/behavior
+checks. The model reads the profile dataclass on turn5, then uses dataclasses.replace
+on turn6. That program finishes with four passing setup comparisons. Its copied
+provider profile, reused on OpenAIProvider with custom_reasoning, receives an empty
+field; the default plain-profile control receives none. Both direct message objects
+match the inline literal expectations.
+
+Both calls send **construction_links=null and expected_json=null**. All six review
+requests contain the new schema. Both omitted construction receipts, not_compared
+expectation receipts and complete setup/scope/stdout/stderr reach subsequent native
+inputs. No exact selected statement/reference receipt is produced. The program's
+actual supplied-profile origin is already present before any such feedback, so it
+does not demonstrate correction caused by the new mechanism.
+
+Deferred history prints four reasoning values [fixture-1, empty, fixture-2, fixture-3]
+and tool names [load_capability, search_tools, search_tools, roll_dice]. The program's
+inline expected list has three tool names and no exact expected reasoning sequence.
+The final report acknowledges the additional search_tools and treats the history
+shape as implementation-specific. The expected three-name list is not established
+by the public requirement, so that difference is not credited as a counterexample.
+Exact argument/ID/return/grouping preservation, multiple deferred capabilities and
+a separate subsequent Agent.run remain unverified.
+
+The preservation annotation explicitly says its case does not retain the full
+candidate trigger. No ordinary profile with the same field-mode settings is created.
+Complete same-trigger feedback is delivered, but the model ends with
+no_counterexample_found. Public review is **NO_REPRODUCTION, supported discoveries0/1**;
+task acceptance is NOT_ASSESSED. Two of four initial excerpts bind literally; the
+final excerpt combines clauses with ellipses and does not bind as one literal excerpt.
+
+Metrics: seven model/count calls,13 actions, two probes, first probe turn4; recorded
+model-rate cost$0.2706935, cache-neutral$0.4731575, maximum input34,863, active239.603s,
+wall345.128s. Both cleanups are confirmed, owned containers absent and all seven input
+deliveries verified. No infrastructure/resource-limit stop. Current runtime/source
+hashes are unchanged; the prior290-test/Ruff/mock receipt is reused and three document
+checks newly pass. All1,775 previous evidence entries are preserved.
+
+The sole sample and remaining$0.9293065 are closed. No retry, resume, replacement,
+extra candidate/baseline execution, hidden evaluation or default change. The observation
+shows optional-feature non-use and the unresolved case-selection gap; it neither
+establishes nor refutes a benefit from selected construction feedback. Future decisions
+should distinguish whether evidence is selected from whether it is interpreted well.
+Evidence: `C:\pt\analyses\counterexample-discovery-links-20260919-v1`;
+raw: `C:\pt\pl-discovery-links-live-0919a`.

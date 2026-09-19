@@ -7,7 +7,42 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed live observation: A frozen expectation matches the wrong profile behavior
+## Latest closed live observation: Construction evidence is exposed but unused
+
+One authorized fresh direct-links-v1 diagnostic on the same task/P10/GPT-5.4 medium
+is closed: planned1/started1/report-completed1, **supported public discoveries0/1**.
+Both probes explicitly supply null construction_links and null expected_json. The new
+schema reaches all six review requests, and complete omitted-state/setup/scope/output
+receipts reach subsequent inputs, but no selected construction evidence is generated.
+Its ability to correct an origin claim is therefore untested in this observation.
+
+The first program obtains a DeepSeek-supplied profile but fails before behavior checks
+because ModelProfile.update does not accept keyword overrides. After reading the profile
+dataclass, the model uses dataclasses.replace. The second probe succeeds with four setup
+checks, actual supplied-profile reuse with custom_reasoning, a default plain OpenAI
+control and deferred history. The two direct mappings match their inline expectations.
+Deferred history prints [fixture-1, empty, fixture-2, fixture-3] with four tool names;
+its inline expected list has three names. The report notices the extra search_tools,
+but this is not by itself a supported violation of the public requirement.
+
+The preservation case disables field mode; an ordinary profile retaining the full
+candidate trigger is still untested. The model reports no_counterexample_found.
+Compared with the preceding observation, actual supplied-profile copying is present,
+already in the first attempt before any new receipt. Neither that difference nor cost
+can be attributed to the added option from these single, non-randomized samples.
+
+Model/count calls7/7, actions13, probes2, first probe turn4; recorded model-rate cost
+$0.2706935, cache-neutral $0.4731575, max input34,863, active239.603s/wall345.128s.
+All seven input deliveries and both cleanups pass; no infrastructure/resource stop.
+Sample and unused $0.9293065 are closed. All1,775 prior evidence entries remain intact;
+runtime/implementation validation is reused, documentation3 tests newly pass.
+No extra candidate execution, hidden evaluation, default change or efficacy claim.
+The remaining issues are case selection and actual use of optional evidence. See
+[the observation](../.agent/construction-links.md#closed-live-observation).
+Evidence: `C:\pt\analyses\counterexample-discovery-links-20260919-v1`;
+raw: `C:\pt\pl-discovery-links-live-0919a`.
+
+## Prior closed live observation: A frozen expectation matches the wrong profile behavior
 
 One authorized frozen-json-v1 observation on the same task/P10/GPT-5.4 medium is
 closed. The model uses literal expectations, fixes one nonexistent helper import,
