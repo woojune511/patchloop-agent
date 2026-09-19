@@ -5,6 +5,14 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest implementation: optional diagnostic `--probe-expectation frozen-json-v1`
+freezes model-authored JSON in the existing action identity before probe execution.
+The host compares healthy complete stdout and delivers matched/mismatched/not_compared
+with existing public receipts. Equality does not verify expected semantics, source
+execution or coverage. Core/default bytes and the eight legacy request/protocol modes
+are preserved; task-first's initial request is unchanged. No extra model/probe gate or
+paid observation. See [the comparison contract](frozen-probe-expectation.md).
+
 Latest offline characterization: unchanged profile_scope_check runs its fixed public
 matrix once on base and P10. Base ordinary2/2/supplied0/2; P10 ordinary0/2/supplied2/2.
 The same field-mode condition is retained while profile origin changes, reproducing two
@@ -31,7 +39,7 @@ no causal benefit is established. Do not adopt into repair defaults or run anoth
 variant automatically. The sample and unused $1.0176 are closed. See the live observation
 in [the staged discovery contract](task-first-discovery.md).
 
-Current implementation: [task-first case design](task-first-discovery.md) adds optional
+Prior implementation: [task-first case design](task-first-discovery.md) adds optional
 `--case-design task-first-v1` to the fixed-candidate diagnostic. The model first receives
 only the original public task and record_case_plan. Its bounded initial proposal is
 stored before a native result reveals the candidate and existing review tools. It may

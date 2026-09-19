@@ -7,6 +7,28 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest implementation: Freeze expected probe output before execution
+
+Fixed-candidate discovery now supports optional `--probe-expectation frozen-json-v1`.
+The model supplies a bounded JSON expectation in its normal probe call. That value is
+recorded before execution, and the host compares it with the complete actual JSON
+output. A program cannot replace the recorded expectation with its observed result.
+Mismatch feedback reaches the next model input; invalid or incomplete output remains
+uncompared. Existing setup checks, action recovery and report availability are retained.
+
+This addresses the comparison mechanism exposed by the replay characterization below.
+It does not establish that the model chose correct requirements, meaningful fields or
+the missing scope boundary. The option is diagnostic-only; core repair defaults and
+the eight existing request/protocol variants retain their bytes. With task-first enabled,
+the first task-only request is also unchanged. No new paid model sample was run.
+Provider-free verification: focused56 PASS/40.41s (including both context modes through
+isolated evaluation), diagnostic/setup regression190 PASS/179.49s with durations, docs3
+PASS and Ruff PASS. All249 distinct tests pass; the broader core suite is reused from
+the unchanged-runtime receipt, not rerun. Offline source rehearsal and closed historical
+inspection pass. All1,661 prior evidence entries are preserved; model cost is $0.
+See [the implementation contract](../.agent/frozen-probe-expectation.md).
+Evidence: `C:\pt\analyses\frozen-probe-expectation-20260919-v1`.
+
 ## Latest offline characterization: Concrete profile contrast fails P10; replay assertion misses corruption
 
 The authorized offline follow-up reuses the unchanged public profile-scope diagnostic
