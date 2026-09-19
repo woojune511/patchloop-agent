@@ -28,7 +28,17 @@ is wrong. All7 input deliveries and cleanup pass; calls7/probes2/$0.2858285, no 
 stop. Sample and unused $0.9141715 closed; all1,687 previous entries preserved. No
 extra execution or default change. See [the observation](frozen-probe-expectation.md#closed-live-observation).
 
-Latest implementation: optional diagnostic `--construction-evidence direct-links-v1`
+Latest implementation: optional diagnostic `--case-design task-first-factors-v1`
+adds an initial instruction separating public scope from activation and varying one
+supported factor at a time. It reuses the task-first proposal schema and lifecycle;
+no extra field, response, probe gate or supplied case. The prefix remains in later
+native history, while the review-request template and shared limits remain unchanged.
+All32 prior request/protocol combinations and core runtime bytes are preserved;
+all16 new combinations differ only by the initial prefix. Provider-free validation
+does not establish better model selection. Previous samples/budgets stay closed.
+See [the case-selection contract](task-first-discovery.md#factorized-case-selection).
+
+Prior implementation: optional diagnostic `--construction-evidence direct-links-v1`
 binds model-selected direct-reference claims to exact assignments in probe source.
 AST inspection returns selected code and loaded RHS names with the normal probe receipt;
 the next native input retains this evidence and existing setup/expectation feedback.

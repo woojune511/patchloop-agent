@@ -250,7 +250,7 @@ def protocol(review_guidance: str = "original", *, case_design: str | None = Non
             " Nullable trigger_contrast separates the whole code trigger from public "
             "applicability; feedback reviews the model-authored relation without verifying it.")
     if case_design is not None:
-        require(case_design == case_plan.MODE, "unknown case design")
+        require(case_design in case_plan.MODES, "unknown case design")
         result.update({
             "case_design": case_design,
             "candidate": "withheld from model input until one initial case proposal is frozen",
@@ -262,6 +262,11 @@ def protocol(review_guidance: str = "original", *, case_design: str | None = Non
             "history": "fresh task-only input; freeze the proposal, then append native candidate "
                        "reveal and normal public review exchanges with opaque continuation",
         })
+        if case_design == case_plan.FACTOR_MODE:
+            result["case_selection_strategy"] = (
+                "Initial task-only instruction separates public scope and activation, varying "
+                "one supported factor while holding others fixed. Same case schema, phase "
+                "transitions and limits; no supplied case or semantic coverage verdict.")
     if probe_expectation_mode is not None:
         result["probe_expectation"] = probe_expectation_mode
         result["expectation_comparison"] = {
@@ -286,7 +291,7 @@ def compile_packet(inputs: Inputs, *,
                    probe_expectation_mode: str | None = None,
                    construction_evidence_mode: str | None = None) -> tuple[dict, dict[str, bytes]]:
     prompt = review_prompt(review_guidance)
-    require(case_design in (None, case_plan.MODE), "unknown case design")
+    require(case_design in (None, *case_plan.MODES), "unknown case design")
     paths = inputs.paths()
     raw = {name: path.read_bytes() for name, path in paths.items()}
     require({name: sha256_bytes(body) for name, body in raw.items()} == EXPECTED_HASHES,
@@ -304,7 +309,7 @@ def compile_packet(inputs: Inputs, *,
                               construction_evidence_mode=construction_evidence_mode)
     review_request = request
     if case_design is not None:
-        request = case_plan.initial_request(review_request)
+        request = case_plan.initial_request(review_request, mode=case_design)
         prompt = request["input"][0]["content"]
     files = {"public.yaml": raw["public_task"], "candidate.patch": raw["candidate_patch"],
              "request.json": wire(request),
@@ -471,7 +476,7 @@ def main() -> None:
         p.add_argument("--" + name.replace("_", "-"), type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--review-guidance", choices=REVIEW_GUIDANCE, default="original")
-    p.add_argument("--case-design", choices=[case_plan.MODE])
+    p.add_argument("--case-design", choices=case_plan.MODES)
     p.add_argument("--probe-expectation", choices=[probe_expectation.MODE])
     p.add_argument("--construction-evidence", choices=[construction_links.MODE])
     v = commands.add_parser("validate")

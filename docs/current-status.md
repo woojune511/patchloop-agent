@@ -74,7 +74,31 @@ applicability. See [the observation](../.agent/frozen-probe-expectation.md#close
 Evidence: `C:\pt\analyses\counterexample-discovery-frozen-json-20260919-v1`;
 raw: `C:\pt\pl-discovery-exp-live-0919a`.
 
-## Latest implementation: Show selected construction code beside probe results
+## Latest implementation: Separate scope from activation in initial case selection
+
+Fixed-candidate discovery supports optional `--case-design task-first-factors-v1`.
+The latest public trace combines different reasons for preserving behavior into one
+initial case. The new instruction asks the model to distinguish which inputs the
+requirement covers from when its behavior activates, then vary one supported factor
+at a time. It uses the existing case fields and four-case limit; unsupported combinations
+remain unknown. No task-specific case, extra response or mandatory probe is added.
+
+The initial system prefix changes and persists after candidate disclosure. Review
+template, schemas, phase transitions and shared limits are unchanged. All32 previous
+request/protocol combinations remain identical; all16 new combinations differ only
+by that prefix. Focused59 PASS/88.58s includes both isolated mock contexts. Offline
+source rehearsal and closed historical inspection pass. Related regression251
+PASS/206.52s with durations, docs3 and Ruff pass; 313 distinct tests in total.
+Core runtime is unchanged, and the broader regression receipt below is reused
+rather than rerun.
+
+All1,838 earlier evidence entries are preserved. Provider/count/credential/Docker
+operations and new candidate executions are zero; model cost is $0. This establishes
+input isolation and lifecycle behavior, not improved model case selection. No new live
+sample or default change. See [the contract](../.agent/task-first-discovery.md#factorized-case-selection).
+Evidence: `C:\pt\analyses\task-first-factors-20260919-v1`.
+
+## Prior implementation: Show selected construction code beside probe results
 
 Fixed-candidate discovery supports optional `--construction-evidence direct-links-v1`.
 The model can name an assigned variable, its claimed direct source and the relevant

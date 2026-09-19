@@ -47,8 +47,8 @@ def plan_call(action_id="plan", **changes):
     return action(cases.TOOL, action_id, **proposal(**changes))
 
 
-@pytest.fixture
-def frozen(inputs, tmp_path, monkeypatch):  # noqa: F811 - shared fixture
+@pytest.fixture(params=cases.MODES)
+def frozen(inputs, tmp_path, monkeypatch, request):  # noqa: F811 - shared fixture
     monkeypatch.setattr(design, "EXPECTED_HASHES", {
         name: sha256_bytes(path.read_bytes()) for name, path in inputs.paths().items()
     })
@@ -61,9 +61,10 @@ def frozen(inputs, tmp_path, monkeypatch):  # noqa: F811 - shared fixture
     monkeypatch.setattr(rollout, "DockerProbeSandbox", forbidden)
     parent, root, result = (tmp_path / p for p in ("design", "executable", "result"))
     design.prepare(inputs, parent, review_guidance="applicability-contrast-v1",
-                   case_design=cases.MODE)
+                   case_design=request.param)
     plan = rollout.prepare(parent, root, result, utc_now().date().isoformat())
     return SimpleNamespace(inputs=inputs, design=parent, root=root, plan=plan, result=result,
+                           mode=request.param,
                            plan_hash=sha256_bytes((root / "plan.json").read_bytes()))
 
 
@@ -78,8 +79,12 @@ def test_initial_input_has_only_public_task_and_case_tool(frozen):
     assert "return 1" not in body and later["candidate"]["patch_hash"] not in body
     assert "FORBIDDEN_SIBLING_SENTINEL" not in body
     assert all(str(path) not in body for path in frozen.inputs.paths().values())
-    assert request["input"][0]["content"] == cases.GUIDANCE + review["input"][0]["content"]
-    assert frozen.plan["case_design"] == cases.MODE
+    original = cases.initial_request(review)
+    if frozen.mode == cases.FACTOR_MODE:
+        original["input"][0]["content"] = (
+            cases.FACTOR_GUIDANCE + original["input"][0]["content"])
+    assert request == original
+    assert frozen.plan["case_design"] == frozen.mode
     assert frozen.plan["cap_usd"] == "1.20" and frozen.plan["max_model_calls"] == 40
     assert {k:v for k,v in request.items() if k not in {"input", "tools"}} == {
         k:v for k,v in review.items() if k not in {"input", "tools"}}
@@ -309,10 +314,10 @@ def test_schema_requires_every_property_and_rejects_extra_keys():
 
 def test_cli_prepares_staged_design_without_live_access(frozen, tmp_path, monkeypatch, capsys):
     root = tmp_path / "cli"
-    args = ["prepare", "--output", str(root), "--case-design", cases.MODE]
+    args = ["prepare", "--output", str(root), "--case-design", frozen.mode]
     for name, path in frozen.inputs.paths().items():
         args.extend(["--" + name.replace("_", "-"), str(path)])
     monkeypatch.setattr(sys, "argv", ["counterexample_discovery", *args])
     design.main()
     assert json.loads(capsys.readouterr().out)["provider_calls"] == 0
-    assert design.validate(root)["case_design"] == cases.MODE
+    assert design.validate(root)["case_design"] == frozen.mode

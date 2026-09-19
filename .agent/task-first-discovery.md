@@ -4,10 +4,12 @@
 opt-in information-order experiment to the fixed-candidate diagnostic. It composes
 with the existing `--review-guidance` choices; omission preserves their requests.
 It changes neither dev repair defaults nor the existing planning/probe policies.
+`--case-design task-first-factors-v1` uses the same flow with an additional initial
+case-selection instruction; see [factorized case selection](#factorized-case-selection).
 
 ## Motivation and claim boundary
 
-The latest closed observation checked actual setup and reported two serializer
+The motivating closed observation checked actual setup and reported two serializer
 matches, but chose a preservation input that disabled the candidate condition.
 Generic guidance and the same-trigger warning were delivered. The model's report
 treated the implementation condition as the complete public applicability boundary.
@@ -147,3 +149,42 @@ activity; another paid prompt variant is not implied.
 
 Evidence: `C:\pt\analyses\counterexample-discovery-task-first-20260919-v1`.
 Raw: `C:\pt\pl-discovery-case-live-0919a`.
+
+## Factorized case selection
+
+The later direct-links observation groups ordinary profiles, disabled mode and empty
+field names into one initial boundary case before seeing the candidate. Both executed
+probe annotations then declare that their preservation input disables the trigger.
+This is a selection gap already present in the proposal; its cause is not established.
+The read-only diagnosis is recorded in
+`C:\pt\analyses\task-first-factors-20260919-v1\selection-diagnosis.json`.
+
+The optional `task-first-factors-v1` mode asks the model to distinguish public scope
+(which inputs or objects a requirement covers) from activation (when the behavior
+occurs within that scope). Using the existing applicability/setup/expected fields,
+it prioritizes concrete cases that vary one supported factor while holding the others
+fixed: in scope with activation present, out of scope with the same activation, and
+in scope with activation absent. Expectations must follow literal public clauses.
+Unsupported or dependent combinations belong in limitations; the four-case bound,
+empty proposals and later corrections remain available. No case or probe is mandatory.
+
+Only a 1,209-character initial system prefix changes. It remains in the append-only
+review history after disclosure. The review-request template, record_case_plan schema,
+tools, phase transitions, public task, model settings and shared limits are unchanged.
+There is no new response, metadata field, check gate, supplied case, source hint or
+semantic verdict. The selected mode and module hash use the existing packet identity.
+The CLI, freeze/reveal path, native continuation, interruptions and action recovery
+are exercised for both task-first modes.
+
+Provider-free verification preserves all32 legacy request/protocol combinations;
+all16 new combinations differ only by that prefix. Focused59 PASS/88.58s includes
+both context policies through mutation, public checks, submission and isolated mock
+evaluation, with actual task/diff/check/setup delivery. Offline prepared-source
+rehearsal and closed historical inspection pass. Related regression, Ruff and docs
+pass: regression251/206.52s with durations, docs3 and Ruff, for313 distinct tests.
+Core runtime is unchanged; its broader regression receipt is reused, not rerun.
+All1,838 earlier evidence entries
+and user edits are preserved. Provider/count/credential/Docker operations and new
+candidate executions are zero, with model cost $0. Previous paid samples remain closed.
+Whether this instruction improves model selection or discovery is NOT_ESTABLISHED;
+no new live observation, hidden evaluation or repair-default change is included.

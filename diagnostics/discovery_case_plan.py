@@ -9,9 +9,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from patchloop.dev import runner as loop
 from patchloop.dev.contracts import EncryptedReasoningContinuationItem
+from patchloop.errors import ContractError
 from patchloop.util import canonical_json, sha256_json
 
 MODE = "task-first-v1"
+FACTOR_MODE = "task-first-factors-v1"
+MODES = (MODE, FACTOR_MODE)
 TOOL = "record_case_plan"
 EVENT = "discovery_case_plan_frozen"
 GUIDANCE = """This review has two stages within one shared call, time and cost budget.
@@ -29,6 +32,24 @@ incomplete: correct them when evidence warrants it and explain changes in the ex
 probe question or final limitations. The frozen proposal stays as provenance, not an
 authority, a coverage claim, or a requirement to run every case. End with report_discovery.
 The instructions below apply to that second stage.
+
+"""
+FACTOR_GUIDANCE = """During the initial task-only case proposal, separate two kinds of public
+condition: scope identifies which inputs or objects the requirement applies to;
+activation identifies when the requested behavior should occur within that scope.
+Do not merge every reason for preserving behavior into one 'outside the condition' case.
+
+Using the existing applicability, setup and expected fields, vary one supported factor
+at a time while keeping the other relevant conditions fixed. When the public task permits
+these combinations, prioritize a small set of concrete cases: within scope with activation
+present; outside scope with the same activation conditions; and within scope with activation
+absent. The last two answer different preservation questions. Derive their expectations
+from literal public clauses, not from an assumed implementation. Stay within four cases.
+
+The factors or combinations may be unsupported or dependent. Explain that in limitations
+instead of inventing a boundary or treating a category label as a constructed input.
+These are test proposals, not verified coverage; source inspection is still needed to
+construct the cases. Use the existing tool and fields, with no extra planning step.
 
 """
 
@@ -59,11 +80,14 @@ def schema() -> dict:
             "parameters": CasePlan.model_json_schema()}
 
 
-def initial_request(review_request: dict) -> dict:
+def initial_request(review_request: dict, *, mode: str = MODE) -> dict:
+    if mode not in MODES:
+        raise ContractError("unknown case design")
     request = copy.deepcopy(review_request)
     context = json.loads(review_request["input"][1]["content"])
+    guidance = (FACTOR_GUIDANCE if mode == FACTOR_MODE else "") + GUIDANCE
     request["input"] = [
-        {"role": "system", "content": GUIDANCE + review_request["input"][0]["content"]},
+        {"role": "system", "content": guidance + review_request["input"][0]["content"]},
         {"role": "user", "content": canonical_json({
             "public_task": context["public_task"], "review_limits": context["review_limits"],
             "phase": "design_cases_before_candidate",
