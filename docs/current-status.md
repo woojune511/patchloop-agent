@@ -7,7 +7,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed live observation: Construction evidence is exposed but unused
+## Latest closed live observation: Factorized guidance still misses the concrete contrast
+
+One fresh same-task/P10/GPT-5.4 medium observation with task-first-factors-v1 is
+closed: planned 1 / started 1 / reported 1, **supported public discoveries 0/1**.
+The initial proposal separates ordinary-profile preservation from existing-thinking
+preservation, but keeps only the message shape fixed in the former. It does not pin
+field mode and the field name while changing profile applicability.
+
+After four inspection responses, the sole probe checks direct DeepSeek behavior,
+default plain OpenAI behavior and one deferred capability exchange. Two setup checks
+pass and the frozen JSON matches. The ordinary profile has no field-mode override;
+the annotation explicitly says it disables the candidate trigger. Deferred assertions
+cover string type and a fixed tool-name list, not exact thinking values or full payloads.
+The model supplies two construction links, but their repository-looking line numbers
+and variable names do not exist in the submitted probe; both return assignment_not_found.
+
+Complete results and the unresolved same-trigger warning reach the final input. The
+model reports no counterexample and acknowledges untested same-trigger preservation,
+copied/custom-field profiles and multiple deferred loads. No further probe follows.
+All seven input deliveries and cleanup pass; there is no infrastructure or resource
+limit stop. This is a supported narrow no-discovery report, not candidate correctness.
+
+Model/count calls 7/7, actions 15, probes 1, first probe turn 6; recorded model-rate
+cost $0.230371, cache-neutral $0.465955, max input 37,308, active 139.291s / wall 245.112s.
+Sample and unused $0.969629 are closed. All 1,862 previous evidence entries are preserved;
+the 313-test implementation receipt is reused and documentation checks newly pass.
+No causal selection benefit or default adoption is established. See
+[the observation](../.agent/task-first-discovery.md#closed-factorized-observation).
+Evidence: `C:\pt\analyses\counterexample-discovery-factors-20260919-v1`;
+raw: `C:\pt\pl-discovery-factors-live-0919a`.
+
+## Prior closed live observation: Construction evidence is exposed but unused
 
 One authorized fresh direct-links-v1 diagnostic on the same task/P10/GPT-5.4 medium
 is closed: planned1/started1/report-completed1, **supported public discoveries0/1**.

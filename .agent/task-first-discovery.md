@@ -188,3 +188,52 @@ and user edits are preserved. Provider/count/credential/Docker operations and ne
 candidate executions are zero, with model cost $0. Previous paid samples remain closed.
 Whether this instruction improves model selection or discovery is NOT_ESTABLISHED;
 no new live observation, hidden evaluation or repair-default change is included.
+
+## Closed factorized observation
+
+User continuation authorized one fresh original-task/P10/GPT-5.4 medium observation
+using task-first-factors-v1, repeat=1 and a new $1.20 cap. Runtime/implementation
+commit is `7782f9e6`; core hash and review template are unchanged. The initial prefix
+is the only request change from the preceding direct-links sample and persists in
+native review history. No prior cases, findings or answers are injected. Exact plan:
+`sha256:8facc0ea2599c7bb3b816609c01cb857491c696c8dcc061c4862ecc1a63a80ae`.
+
+The initial four cases separate ordinary-profile and existing-thinking preservation.
+However, the ordinary-profile proposal fixes only the tool-only message shape, not
+field mode/name. After four inspection responses (four reads and eight searches),
+turn 6 runs one probe: direct DeepSeek, default plain OpenAI, and one deferred load.
+Its two setup checks confirm only the DeepSeek field/name. The ordinary constructor
+has no override; public source defaults are auto/None, not printed setup measurements.
+The model's annotation explicitly marks preserve_satisfies_trigger=false.
+
+The frozen expectation matches four observed fields: direct empty field, deferred
+string-valued fields, a literal three-tool-name sequence, and no plain-provider field.
+Exact replay thinking strings, full payload/return preservation, copied/custom-field
+profiles and multiple loads are not verified. Direct links are used twice, but select
+field_name/message_param at lines 1349/1350 outside the submitted probe. Both receipts
+correctly return unknown/assignment_not_found. Their use supplies no construction proof.
+
+All complete feedback reaches turn 7, including the unresolved same-trigger warning.
+The model reports no_counterexample_found and acknowledges missing same-trigger,
+copied-profile and multiple-load cases, with no further probe. Public review records
+NO_REPRODUCTION, supported discoveries 0/1 and no supported mismatch in the existing
+output. The narrow report is supported; candidate correctness remains NOT_ASSESSED.
+Two initial excerpts and the final excerpt combine clauses; manual review uses the
+complete public task. All four added lines have launch-thread events, not semantic coverage.
+
+Calls/counts 7/7, actions 15, first probe turn 6; cost $0.230371, cache-neutral $0.465955,
+max input 37,308, active 139.291s / wall 245.112s. Proposal overhead: one response/action,
+$0.029385. All seven input deliveries and owned-container cleanup pass. No infrastructure,
+budget, input, output or time-limit stop occurs. Invoice/count-endpoint billing remains
+unverified. Input delivery is established; why the model stops at these examples is not.
+
+Sample and unused $0.969629 are closed. All 1,862 earlier evidence entries are preserved.
+The sealed 313-test/Ruff/mock implementation validation and unchanged core regression
+receipt are reused; three documentation tests newly pass. No extra candidate/baseline
+execution, retry, repair run or hidden evaluation. Lower cost accompanies fewer probes
+and narrower construction, so no efficiency or causal guidance benefit follows. Keep
+repair defaults unchanged; the open issue is concrete factor control and following
+through on unresolved verification, not another input-delivery or infrastructure fix.
+
+Evidence: `C:\pt\analyses\counterexample-discovery-factors-20260919-v1`.
+Raw: `C:\pt\pl-discovery-factors-live-0919a`.

@@ -5,7 +5,18 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest closed observation: direct-links-v1 is exposed in one authorized fresh sample,
+Latest closed observation: task-first-factors-v1 produces four task-only cases, but
+the ordinary-profile proposal fixes only message shape, not field mode/name. One probe
+after four inspection responses exercises default DeepSeek/plain profiles and one deferred
+exchange; frozen JSON matches, two setup checks pass, same-trigger preservation is omitted.
+Two construction links use locations/names outside the submitted probe and return unknown.
+Complete feedback reaches the final report, which acknowledges limits and stops. Public
+discoveries 0/1, calls 7 / probes 1 / $0.230371, no infrastructure or resource stop. Sample
+and unused $0.969629 closed; all 1,862 earlier evidence entries preserved. No prompt
+benefit or default adoption is established. See
+[the factorized observation](task-first-discovery.md#closed-factorized-observation).
+
+Prior closed observation: direct-links-v1 is exposed in one authorized fresh sample,
 but both probes set construction_links and expected_json to null. Schema/omitted-state
 feedback reaches actual inputs; concrete construction feedback is not exercised.
 Discoveries0/1, calls7/probes2/$0.2706935. An incorrect profile.update call is repaired
