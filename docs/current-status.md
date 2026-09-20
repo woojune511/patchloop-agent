@@ -7,7 +7,44 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed live observation: Mini xhigh passes both tasks at lower recorded cost
+## Latest closed live observation: Mini xhigh fails to solve three broader tasks
+
+The approved AnyIO v3 -> tox v1 -> original Pydantic-AI v1 group is closed complete:
+acceptance PASS 0/3 planned, started 3, submitted 2, acceptance FAIL 2 and NOT_RUN 1.
+AnyIO ends COST_CAP_REACHED before submission; both submitted rows have safety PASS.
+No infrastructure or uncertainty stop. All results are official=false.
+
+Same mini/xhigh common setup as below: runtime, prompt, normalized tools and limits
+unchanged, with only task/source and task-derived image/check/input identities different.
+No task-specific prompt or historical solution injection. Each repeat=1/$1.20, total
+$3.60. Recorded cost $1.48889040; cache-neutral $1.87242000; summed run time 1290.297s.
+Free-token application/account invoice remain unverified. Unused $2.11110960 is closed.
+
+AnyIO uses 23 calls, first edit at call 9, three accepted edits and one anchor-invalid proposal.
+Public lifecycle results 0/7 -> 3/7 -> 3/7, upstream 32 PASS. One probe fails at scalar
+setup checking after supplying dictionaries. Calls 12/22 each exhaust 25000 reasoning
+tokens; call 23's output ceiling falls to 21884. Failure feedback reaches actual inputs,
+but repair remains incomplete. Code decisions and resource limits both contribute.
+tox uses 9 calls, first edit at call 7, one edit, upstream 29 PASS, then acceptance FAIL. Public diff
+also catches missing-key KeyError and bypasses the explicit-default/fallback path.
+Pydantic-AI uses 8 calls, first edit at call 5, one edit, public 8/upstream 18 PASS, then acceptance FAIL.
+Its public condition applies empty fields to any field-mode profile without separating
+the provider requirement. These are public static findings, not hidden failure details.
+Neither submitted run reaches a resource limit or runs an additional probe.
+
+All 40 actual inputs and generation usages audit correctly; 43 input counts settle.
+AnyIO's two incomplete responses have known usage, not billing uncertainty. The reused
+behavior flag additionally requires completed responses; public-metrics.json separates
+usage matching from completion. Input peaks 54691/36060/54529; segments 9/2/3. No identical
+rejected edit repeats. Cleanup passes; 1852 protected files match; no labeled containers.
+Operator 14 PASS/3.53s, Ruff PASS; unchanged-runtime mock/full receipts below explicitly
+reused. No retry/resume/replacement, extra candidate execution or Docker start/pull/build.
+Do not adopt mini xhigh as default from these familiar-task single samples or generalize
+the earlier 2/2. Next investigate a fixed common model/effort comparison without task-specific
+guidance; no additional live run is part of this closed group. Report:
+`C:\pt\analyses\mini-xhigh-three-task-20260920-v1\result.md`.
+
+## Prior closed live observation: Mini xhigh passes both tasks at lower recorded cost
 
 The requested gpt-5.4-mini-2026-03-17/xhigh observation completed on Fromager v1
 then pgmpy v1: acceptance/safety 2/2 PASS, started/submitted 2/2, NOT_RUN 0 and

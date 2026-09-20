@@ -15,7 +15,24 @@ do not produce missing-annotation feedback. The tool identity changes without a 
 run schema, policy option, gate or budget. Active cross-runtime resume still rejects.
 Fixed-candidate diagnostic variants remain available for historical investigation,
 but are not the current development path. Preserve their code and closed evidence.
-Latest follow-up: the requested mini xhigh setting also passes Fromager v1 and pgmpy v1,
+Latest follow-up: fixed mini xhigh on AnyIO v3 -> tox v1 -> original Pydantic-AI v1
+closes with acceptance 0/3, submitted 2, NOT_RUN 1, no infrastructure/uncertainty stop.
+AnyIO reaches the cost cap: 23 calls, 3 edits plus one anchor-invalid proposal,
+lifecycle 0/7 -> 3/7 -> 3/7, regression 32 PASS; two reasoning-only 25000-token responses.
+Its sole probe supplies dictionaries to scalar check_setup and stops before behavior.
+tox/Pydantic-AI pass public checks but fail acceptance with resources remaining.
+Public diffs show broad missing-key exception handling / broad field-profile scope;
+these findings do not identify private evaluator failures. Actual failure feedback,
+all 40 input/request/usage audits and 43 counts settle; incomplete is distinct from
+unknown billing. Recorded $1.48889040, cache-neutral $1.87242000, time 1290.297s.
+Common runtime/prompt/tools/limits remain fixed, no task-specific guidance. Operator 14
+PASS, Ruff PASS, prior identical-runtime mock/full receipts reused, 1852 files unchanged,
+cleanup PASS. Group and unused $2.11110960 closed. No default adoption or benchmark claim.
+Keep the common setup and investigate model/effort differences. These results do not
+justify task-specific prompt changes. Further paid work is outside this group. Evidence:
+C:\pt\analyses\mini-xhigh-three-task-20260920-v1; see docs/current-status.md.
+
+Earlier mini follow-up: the requested mini xhigh setting passes Fromager v1 and pgmpy v1,
 acceptance/safety 2/2, one edit each, calls 6/8. Relative to the preceding GPT-5.4 medium
 group, only model and reasoning_effort change; runtime, task, source, prompt, schema
 and limits match. Recorded cost $0.28425105 is 41.3% lower, while summed execution
