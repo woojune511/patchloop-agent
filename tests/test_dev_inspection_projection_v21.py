@@ -249,7 +249,7 @@ def test_projection_preserves_current_ordered_tool_inputs_and_limits():
 
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "f1ec5dfd0d2a4f1a3a7b77f530b30255582db1b393852e55184e50f601a5c8bb"
+        "918f1c2a1aa600f1c2eef71dde64b3542d35ea9a34a08a70c494130776891710"
     )
     assert dev_tool_surface_hash() != (
         "sha256:90dc9a92b61cfd61f61572af504a66424f3e703ab8e29f114de29c22cf97a684"

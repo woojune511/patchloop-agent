@@ -5,6 +5,20 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current implementation: simplify the common repair loop. New provider schemas omit
+requirement_ref and behavior_cases; expected_behavior still states the edit's intended
+effect. Remove the trigger/scope case template and repeated case-review instructions,
+including verification_choice. Keep complete public task/diff/check state, check-time
+intent, observed-source links, notes and existing optional plan policies. Legacy raw
+actions and receipts retain their hashes and recovery behavior; fresh omitted fields
+do not produce missing-annotation feedback. The tool identity changes without a new
+run schema, policy option, gate or budget. Active cross-runtime resume still rejects.
+Fixed-candidate diagnostic variants remain available for historical investigation,
+but are not the current development path. Preserve their code and closed evidence.
+Next: keep one common configuration fixed across distinct development tasks, using
+full repair/check/submission observations. No new live run or efficacy claim is included.
+Local validation and evidence are recorded in docs/current-status.md.
+
 Latest closed observation: task-first-factors-v1 produces four task-only cases, but
 the ordinary-profile proposal fixes only message shape, not field mode/name. One probe
 after four inspection responses exercises default DeepSeek/plain profiles and one deferred
@@ -349,19 +363,11 @@ Derive `completion_guidance` from the already prepared gateway snapshot and actu
 offered policy, without re-executing checks or modifying admission. Project workflow
 gate, this guidance, current check table and remaining IDs first. A current FAIL or
 empty diff points to an offered repair/evidence action; an unchecked candidate names
-an offered remaining check; a ready candidate normally names `finish_task`. When the
-current accepted mutation has recorded behavior cases and inspection/probe tools remain
-offered, set `next_action=null` and give `verification_choice`: reference the existing
-case record and hash, retain `coverage_status=not_assessed`, and list only offered
-read/search/probe actions plus finish. Ask the model to compare recorded setups with
-actual public check inputs/outcomes, holding the implementation trigger fixed when
-examining preserved behavior outside the required scope. Case presence is not coverage.
-Absent, invalid, stale or older-diff cases retain the existing completion guidance;
-closed tools stay closed. Mention the actual probe environment only when offered:
-the default is base Python/stdlib; an admitted public dependency bundle permits current
-project imports. A reduction does not verify project code.
-No review call, annotation, experiment quota or new gate is required. Keep guidance in the
-latest native
+an offered remaining check; a ready candidate names `finish_task` and leaves useful,
+affordable verification available. Completion guidance uses only the snapshot and
+offered actions. Legacy case annotations do not add a second menu or change tool
+availability. Probe environment details remain in the existing tool description.
+No extra review call, annotation, experiment quota or gate is required. Keep the latest
 view even when historical attempt cards are omitted. Label retained check summaries
 with `evidence_currency` and `counts_toward_completion`; preserve original verdicts
 and action/check/diff identity. Missing currency is unknown, never current credit.
@@ -477,61 +483,20 @@ failure. The mutation also requires:
 - `expected_behavior`
 - exact `path`, `old_text`, `new_text`, and occurrence
 
-From the first interpretation, the existing basis/hypothesis/plan distinguishes the
-public condition requiring change from the implementation trigger proposed to apply it.
-Keep their equivalence explicitly uncertain when it is unsupported. When the public
-task limits scope, expected_behavior names observable outcomes for the changed case
-and a nearby preserved case sharing the trigger outside that scope. Prefer a contrast
-that could expose an overly broad condition. If no boundary follows from the public
-task, say so instead of inventing an exception. This is guidance in the existing
-free-text fields, not a semantic parser,
-required extra field, new plan policy, review stage or action gate. The gateway retains
-even incomplete/incorrect interpretations as unverified model data under existing limits.
-Check-time expectations and evidence_review keep their existing currency and delivery.
+The common prompt asks for the edit's observable effect and preservation of behavior
+outside the requested change. It does not prescribe a change/preserve case template.
+Expected behavior remains model-authored intent, not verified correctness.
 
-`replace_text.behavior_cases` optionally records a compact model-authored contrast.
-Its object has change={setup,expected}, preserve={setup,expected}|null, and scope_basis.
-Each of these five possible strings is bounded at 300 characters. A setup is a concrete
-public input/configuration; expected names an observable effect. scope_basis distinguishes
-the complete public requirement, including exceptions, from the proposed code trigger.
-Use preserve=null and explain unknown/not-applicable scope rather than inventing a boundary.
-The annotation itself may be null or omitted, independently of expected_behavior and
-requirement_ref. Shape errors produce bounded diagnostics without blocking edits/finish.
-Valid records bind the whole public-task hash and retain model_authored_unverified plus
-coverage_status=not_assessed. The gateway never validates semantic relevance or coverage.
-Task changes yield stale without reinterpreting saved prose. Missing legacy fields preserve
-raw action/intent hashes and pending/completed recovery; cases are bound once at admission.
-Accepted mutation results and same-diff successful-check mutation_expectation retain the
-record. The next_question asks the existing decision/plan to compare change and preserve
-setups separately with actual check inputs/outcomes; unexercised cases stay untested.
-Native output pointers preserve existing deduplication. Failed proposals do not replace
-accepted cases; a later mutation cannot inherit omitted cases or rewrite older review cards.
-No plan policy, semantic parser, mandatory case/probe, model step or finish gate is added.
-
-`replace_text.requirement_ref` is an optional annotation: null or `{task_id, excerpt}`.
-Copy a nonblank excerpt of `public_task.issue.description` (at most 600 characters)
-and its task_id. Whitespace runs may differ, including line breaks, tabs and Unicode
-whitespace; every non-whitespace character remains exact, including case and punctuation.
-The excerpt must identify one unique span under that rule, including overlapping matches
-and an exact occurrence beside a whitespace variant. Ambiguous excerpts remain invalid.
-The gateway retains the original source text, not the normalized quotation, and binds
-`source_span` with zero-based, end-exclusive Python character offsets plus `match_mode`
-(`exact` or `whitespace`). Exact matches retain their original edge whitespace. Both the
-submitted excerpt and retained source text must fit the existing 600-character limit.
-The gateway binds the current public task version and canonical public-task
-hash at action admission; the model does not calculate hashes. The admission receipt is
-retained with the accepted mutation and the existing matching-diff `mutation_expectation`.
-Source identity is the only validation: a real quotation can accompany an incorrect
-interpretation or an irrelevant check. Missing, malformed, mismatched and stale references
-yield bounded annotation diagnostics; they never block an otherwise valid edit or finish.
-No reference is inherited from an earlier edit. Saved references are never silently rebound
-to changed public task content, and old receipts are never rewritten. New source spans are
-validated against the bound original text; legacy receipts without offsets retain their
-existing projection behavior. Previously invalid exact-match receipts remain invalid during
-pending or completed recovery. Raw request arguments retain their action/intent hashes;
-normalization is only reference resolution. Legacy calls may omit
-the field without changing their input/intent hashes; legacy pending actions and completed
-replays keep their original wire behavior. The public task input itself is unchanged.
+The former requirement_ref and behavior_cases inputs are retired from every current
+provider schema, including optional planning/probe variants. Do not add them to fresh
+model requests or emit missing-annotation receipts for their absence. The internal
+TextReplacementIntent fields and binding helpers remain for legacy parsing, admitted
+actions and exact replay. Preserve original raw action/intent hashes, admission-time
+bindings and completed output bytes; do not rebind old receipts or migrate active runs.
+Existing malformed/stale receipts keep their prior nonblocking interpretation. Raw
+historical results remain readable, while newly built check-review cards retain only
+the original expected_behavior and candidate identity, without repeating annotations.
+No new policy flag or extra model step is introduced.
 
 Prefer the smallest sufficient unique anchor; omit unchanged signatures/docstrings for
 an executable-line edit and preserve observed line breaks exactly. Do not replace exact
@@ -721,23 +686,16 @@ retains items and the ID allocator independently of source lifecycle snapshots. 
 first-non-null batch owner receives one native verification receipt; no private evaluator
 result is admissible evidence. A final-PASS card invites affordable useful verification
 or submission, labels its concern IDs as a check-time snapshot, and adds no finish gate.
-The existing mutation `expected_behavior` string names a concrete changed case and a
-nearby preservation case when the edit can affect one, with distinguishing public setup
-and observable outcomes. Its existing 1500-character bound and action schema remain.
-A successful public-check card retains `mutation_expectation` only when the last accepted
-mutation, result diff and checked workspace diff match. This bounded check-time snapshot
-contains that mutation's plan hash, diff hash and original expected_behavior, plus the
-optional requirement reference receipt when recorded; interpretation remains
-model-authored/unverified. Missing or mismatched mutation evidence adds no snapshot.
-Failed proposals do not replace accepted intent, later edits do not rewrite old cards,
-and a generic PASS never becomes semantic coverage. The next existing decision/plan
-review compares actual check setup/outcomes with both changed and preserved behavior.
-An unexercised case stays untested; resolving a concern should name the exercised setup
-and outcome. The gateway still validates identity only. The optional requirement annotation
-adds no policy, model step, mandatory probe or submission gate. Append context retains
-only the latest matching current-diff expectation card alongside protocol corrections;
-segment context retains its existing bounded three-card history with diff identities.
-Both deliver the same latest review; efficacy needs a separate observation, not a mock assertion.
+The existing mutation `expected_behavior` string states the intended observable effect.
+Its 1500-character bound remains. A successful public-check card retains
+`mutation_expectation` only when the accepted mutation, result diff and checked workspace
+diff match: plan hash, diff hash and original expected_behavior, labeled unverified.
+Missing or mismatched evidence adds no snapshot. Failed proposals do not replace accepted
+intent, and later edits do not rewrite old cards. New cards do not copy retired quotation
+or case annotations or require another case-review narrative. A public PASS remains
+limited to the observed check; the gateway validates identity, not semantic coverage.
+Append retains the latest current-diff expectation card alongside protocol corrections;
+segments retain their existing bounded history. The plan and segment rules are unchanged.
 Each projected finding has `interpretation_status=model_authored_unverified`.
 Legacy `status=current` means only that its cited evidence is current; the harness does
 not revalidate the statement's meaning. Cite behavior-bearing source, retain the causal

@@ -246,8 +246,6 @@ def dev_tool_schemas(
                     "occurrence": {"type": "integer", "minimum": 1, "maximum": 100},
                     "hypothesis": {"type": "string", "minLength": 1},
                     "expected_behavior": {"type": "string", "minLength": 1},
-                    "requirement_ref": requirement_reference.reference_schema(),
-                    "behavior_cases": behavior_cases.cases_schema(),
                     "causal_revision": {
                         "type": ["object", "null"],
                         "description": (
@@ -280,8 +278,6 @@ def dev_tool_schemas(
                     "occurrence",
                     "hypothesis",
                     "expected_behavior",
-                    "requirement_ref",
-                    "behavior_cases",
                     "causal_revision",
                 ],
                 "additionalProperties": False,
@@ -2347,7 +2343,7 @@ class DevToolGateway:
                 pending.get("mutation_requirement_reference") if pending is not None
                 else requirement_reference.bind(
                     call.arguments.get("requirement_ref"), self.public_task,
-                )
+                ) if "requirement_ref" in call.arguments else None
             )
         if call.name == "run_probe" and self.probe_policy == probe_cases.POLICY:
             try:

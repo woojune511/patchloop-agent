@@ -30,7 +30,7 @@ def _memory_block():
 
 
 def _legacy_compression_surface(tools):
-    # Later mutation annotations and setup-helper guidance are tested separately.
+    # Setup-helper guidance is tested separately; retired mutation fields are absent.
     # Keep the earlier field/order/description bytes pinned at the memory boundary.
     for tool in tools:
         if tool["name"] == "run_probe":
@@ -38,10 +38,6 @@ def _legacy_compression_surface(tools):
             start = description.index("Before exercising behavior, use the available ")
             end = description.index("Compare actual input/output", start)
             tool["description"] = description[:start] + description[end:]
-        if tool["name"] == "replace_text":
-            for field in ("requirement_ref", "behavior_cases"):
-                del tool["parameters"]["properties"][field]
-                tool["parameters"]["required"].remove(field)
     return tools
 
 
@@ -52,7 +48,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
                        "run_probe", "finish_task", "stop_task"),
     )
     # Captured from v33 before editing: preserve object, tool, enum and required-field order,
-    # nullability, bounds and defaults, excluding the later optional mutation annotations.
+    # nullability, bounds and defaults after retiring the optional mutation annotations.
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
@@ -96,7 +92,7 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 def test_surrounding_action_guidance_identity():
     prefix, _, suffix = _memory_block()
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "852d2b0921e46eff7dcfc00b6b75e7a0f8b004a2d900ced1a16e0384d1e9ce59"
+        "cc491b3201a7cba74d4844ac54654fa1fc4cad69cb815beaf5998a4f724dbaf8"
     )
 
 
@@ -104,7 +100,7 @@ def test_guidance_is_bounded_in_characters_and_canonical_bytes_not_claimed_token
     _, memory, _ = _memory_block()
     # v33: 3,368 chars (including two trailing newlines), 7,965 total, 4,047 schema bytes.
     assert len(memory) <= 2400
-    # Pre-edit scope guidance adds 305 characters within the existing prompt bound.
+    # Simplification stays within the original bounded prompt contract.
     assert len(DEV_SYSTEM_PROMPT) <= 8007
     assert len(canonical_json(memory_update_schema()).encode()) <= 3200
     assert hashlib.sha256(canonical_json(_without_descriptions(memory_update_schema()))
@@ -140,7 +136,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Public dependency support changes the overall surface identity; older
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:8663d25c9d04f584894958510fda6917f479b8036dcd18aadb292eae455985af"
+        "sha256:ef2c93541fbb626d2a646d855b334ed1d8eb1dac854cfcb24b19f6b2ca40272e"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

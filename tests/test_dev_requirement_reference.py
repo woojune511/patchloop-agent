@@ -234,7 +234,7 @@ def test_unconditional_requirement_keeps_unverified_interpretation_and_allows_fi
     checked = _completed_check(gateway, "check")
     card = runner._attempt_card(checked, gateway)
     expectation = card["mutation_expectation"]
-    assert expectation["requirement_reference"] == receipt
+    assert "requirement_reference" not in expectation
     assert expectation["expected_behavior"] == call.arguments["expected_behavior"]
     assert expectation["interpretation_status"] == "model_authored_unverified"
     assert expectation["diff_hash"] == checked.workspace_diff_hash
@@ -250,9 +250,8 @@ def test_unconditional_requirement_keeps_unverified_interpretation_and_allows_fi
     restored.public_task.issue.description += " New public requirement."
     current = restored.actionable_last_successful_mutation()
     assert current["requirement_reference"]["status"] == "stale"
-    assert runner._attempt_card(checked, restored)["mutation_expectation"][
-        "requirement_reference"]["status"] == "stale"
-    assert card["mutation_expectation"]["requirement_reference"] == receipt
+    assert runner._attempt_card(checked, restored) == card
+    assert result.output["mutation"]["requirement_reference"] == receipt
     assert restored.journal.path.read_bytes() == saved_bytes
 
 
@@ -269,7 +268,7 @@ def test_legacy_absence_keeps_intent_and_action_hashes_and_completed_replay(tmp_
     assert result.status == "succeeded"
     assert result.input_hash == expected_input
     assert result.output["mutation"]["plan_hash"] == expected_plan
-    assert result.output["mutation"]["requirement_reference"]["status"] == "omitted"
+    assert "requirement_reference" not in result.output["mutation"]
     frozen = gateway.journal.path.read_bytes()
     replay = _restart(gateway).execute(call)
     assert replay.replayed and replay.output == result.output
@@ -325,10 +324,10 @@ def test_next_accepted_edit_does_not_inherit_an_earlier_reference(tmp_path):
     second = _mutation("second", "editable = 1", "editable = 2")
     result = gateway.execute(second)
     assert result.status == "succeeded"
-    assert result.output["mutation"]["requirement_reference"]["status"] == "omitted"
+    assert "requirement_reference" not in result.output["mutation"]
     assert "mutation_expectation" not in runner._attempt_card(old_check, gateway)
     new_review = runner._attempt_card(_completed_check(gateway, "second-check"), gateway)
-    assert new_review["mutation_expectation"]["requirement_reference"]["status"] == "omitted"
+    assert "requirement_reference" not in new_review["mutation_expectation"]
     assert old_review == frozen
 
 
@@ -392,20 +391,16 @@ def test_crash_recovery_preserves_admission_reference_and_single_mutation(
     assert restored.journal.path.read_bytes() == frozen
 
 
-def test_reference_schema_is_optional_annotation_on_mutations_only():
+def test_retired_reference_is_absent_from_current_provider_schema():
     for schema in dev_tool_schemas(finish_enabled=True, planning_policy="brief-v1"):
         params = schema["parameters"]
-        if schema["name"] == "replace_text":
-            assert params["properties"]["requirement_ref"]["type"] == ["object", "null"]
-            assert params["properties"]["requirement_ref"]["properties"]["excerpt"][
-                "maxLength"] == 600
-        else:
-            assert "requirement_ref" not in params["properties"]
+        assert "requirement_ref" not in params["properties"]
+        assert "requirement_ref" not in params["required"]
 
 
 @pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
 @pytest.mark.parametrize("reference_kind", ["invalid", "exact", "whitespace"])
-def test_actual_inputs_deliver_requirement_expectation_pair_without_extra_actions(
+def test_legacy_reference_receipt_survives_without_repeating_it_in_check_review(
     tmp_path, monkeypatch, context_policy, reference_kind,
 ):
     supplied = []
@@ -451,7 +446,13 @@ def test_actual_inputs_deliver_requirement_expectation_pair_without_extra_action
     expectation = next(card["mutation_expectation"]
                        for card in final["recent_attempt_result_next_question"]
                        if "mutation_expectation" in card)
-    annotation = expectation["requirement_reference"]
+    mutation_result = next(
+        e["payload"]["result"] for e in journal.events()
+        if e["event_type"] == "action_finished"
+        and e["payload"]["result"]["tool"] == "replace_text"
+    )
+    annotation = mutation_result["output"]["mutation"]["requirement_reference"]
+    assert "requirement_reference" not in expectation
     assert expectation["expected_behavior"] == supplied[0][1]
     assert expectation["interpretation_status"] == "model_authored_unverified"
     if reference_kind != "invalid":

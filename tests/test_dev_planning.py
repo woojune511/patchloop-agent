@@ -52,10 +52,10 @@ def view(journal, diff="d1", gate="needs_mutation"):
 
 def test_off_wire_and_prompt_are_unchanged():
     assert dev_tool_surface_hash() == (
-        "sha256:8663d25c9d04f584894958510fda6917f479b8036dcd18aadb292eae455985af"
+        "sha256:ef2c93541fbb626d2a646d855b334ed1d8eb1dac854cfcb24b19f6b2ca40272e"
     )
     assert sha256_json(dev_tool_schemas(finish_enabled=True, check_ids=["check"])) == (
-        "sha256:707ee977e700079ddf2166a3d68b10819c44b22899ced2e317a8d0087d25aa68"
+        "sha256:51235786aca769125bf35abcc04af115290258ac4200804b09aebeff442c69c1"
     )
     decision = PublicTurnDecision(mode="verify", basis="baseline")
     assert "plan_update" not in decision.model_dump(mode="json")

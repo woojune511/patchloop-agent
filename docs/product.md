@@ -17,6 +17,14 @@ Use short `official=false` loops to improve completion and submission reliabilit
 Optimize for an answerable next question and a durable terminal. Historical
 runtime comparability and claim-producing evaluation are separate concerns.
 
+The same core prompt and tools apply across tasks. Task-specific issue text, source,
+dependencies and public checks are inputs; the agent selects its own repair and tests.
+The mutation tool asks for an exact edit, hypothesis and expected observable behavior.
+Retired requirement quotations and change/preserve case forms are retained only for
+legacy action recovery, not requested from new model calls. Submission remains based
+on the current diff and its registered check results. Fixed-candidate prompt variants
+in diagnostics are not the current repair-development path or proven improvements.
+
 ## Runtime shape
 
 ```text

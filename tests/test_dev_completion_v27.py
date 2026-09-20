@@ -208,7 +208,7 @@ def test_completion_descriptions_preserve_tool_order_and_current_input_shapes():
         return value
 
     assert sha256_json(without_descriptions(schemas)) == (
-        "sha256:334fd57cd4efa23c6fbe80797703b3d0879eea3d209d874f06feb27dbe0ec997"
+        "sha256:b9a718dbdbcd9aabd230b2ee90b8ae680decdb0d4069986e9209c3e1fd03adbe"
     )
     assert [schema["name"] for schema in schemas] == [
         "search_files", "read_file", "run_check", "replace_text", "stop_task", "finish_task",

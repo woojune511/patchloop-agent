@@ -48,10 +48,6 @@ def test_check_retains_bounded_accepted_intent_after_rejected_proposal_and_resta
         "expected_behavior": accepted.arguments["expected_behavior"],
         "interpretation_status": "model_authored_unverified",
         "scope": "at_check_completion",
-        "requirement_reference": {
-            "status": "omitted", "diagnostics": ["missing_reference"],
-            "validation_scope": "public_source_identity_only",
-        },
     }
     before = gateway.journal.path.read_bytes()
     restored = _restart(gateway)
@@ -122,6 +118,9 @@ def test_actual_mock_inputs_deliver_check_time_intent_without_an_extra_step(
 
     class PreservationMock(MockDevAdapter):
         def next_turn(self, context, tools):
+            for tool in tools:
+                fields = tool["parameters"]["properties"]
+                assert "requirement_ref" not in fields and "behavior_cases" not in fields
             turn = super().next_turn(context, tools)
             for call in turn.tool_calls:
                 if call.name == "replace_text":
@@ -150,12 +149,10 @@ def test_actual_mock_inputs_deliver_check_time_intent_without_an_extra_step(
         runner._load_active_model_input(turn, store, context_policy=context_policy)
         for turn in turns
     ]
-    # The interpretation guidance is present before the first inspection and after
-    # the existing segment transitions, without adding a tool or scripted step.
+    # The concise common prompt survives normal segment transitions.
     assert all(items[0]["content"].startswith(DEV_SYSTEM_PROMPT) for items in inputs)
-    assert "same trigger outside that scope" in inputs[0][0]["content"]
-    assert "justify their match or keep it uncertain" in inputs[0][0]["content"]
-    assert "If no boundary is supported, say so" in inputs[0][0]["content"]
+    assert "preserve behavior outside the requested change" in inputs[0][0]["content"]
+    assert "same trigger outside that scope" not in inputs[0][0]["content"]
     states = [reconstruct_state(items, context_policy=context_policy) for items in inputs]
     assert states[0]["current_diff"]["patch"] == ""
     assert states[0]["last_successful_mutation"] is None
@@ -168,6 +165,12 @@ def test_actual_mock_inputs_deliver_check_time_intent_without_an_extra_step(
     assert final["public_task"] == states[0]["public_task"]
     assert final["visible_check_status"][0]["status"] == "PASS"
     assert "finish_task" in final["available_tool_names"]
-    assert "review" in review["next_question"].lower()
+    assert "submit" in review["next_question"]
+    assert "verification_choice" not in final["completion_guidance"]
+    results = [e["payload"]["result"] for e in journal.events()
+               if e["event_type"] == "action_finished"]
+    mutation = next(r["output"]["mutation"] for r in results if r["tool"] == "replace_text")
+    assert "requirement_reference" not in mutation and "behavior_cases" not in mutation
+    assert mutation["expected_behavior"] == expectation
     if context_policy == "segmented-v1":
         assert any(e["event_type"] == "context_segment_started" for e in journal.events())

@@ -201,7 +201,7 @@ def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # The full current snapshot includes the later shared check_setup description.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:652881c44a4db340883bdb281d7673fd3e4a21c22b2b5c57fe741b2971cf28de"
+    )) == "sha256:2940549b72531111fb466b53e7f99dd5695739ab9c026ba92d29bb22e59f1d2e"
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )

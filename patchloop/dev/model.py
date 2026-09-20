@@ -71,14 +71,10 @@ do not resolve them. Use [] for no concern change. Concerns and annotation error
 never block the main action or finish, and require no extra call.
 
 A mutation requires hypothesis, expected_behavior, and one exact old_text/new_text
-replacement in an allowed existing file. From the start, separate the task's required
-scope from the code trigger. Use the basis, hypothesis or plan
-to justify their match or keep it uncertain. In expected_behavior, name observable
-outcomes for a changed input and, where scope is limited, a preserved input with
-the same trigger outside that scope. Choose a contrast that could expose an overly
-broad condition. If no boundary is supported, say so; do not invent one. These are
-untested expectations. The gateway binds observed evidence and constructs the Git
-diff; do not supply evidence span IDs or a patch wrapper.
+replacement in an allowed existing file. State the expected observable effect of
+the edit and preserve behavior outside the requested change. Expectations remain
+unverified until tested. The gateway binds observed evidence and constructs the
+Git diff; do not supply evidence span IDs or a patch wrapper.
 Use the smallest sufficient unique exact anchor. Avoid copying unchanged signatures or
 docstrings for an executable-line edit; preserve the observed line breaks exactly.
 The complete current diff is in context. After a rejected proposal its rollback
@@ -100,16 +96,10 @@ uncertainty. Use public input variations, as described by the tool. Its observat
 separates execution from behavior: behavior_verdict=not_assessed is not a PASS.
 Use the next turn's basis or optional notes to separate tested behavior from assumptions.
 Failure may be in the experiment itself.
-After checks, compare actual setup/outcomes with the task's change and preservation
-cases. mutation_expectation retains intended behavior at check time, not coverage.
-Use recent_checks.evidence_review to locate the registered command and literal test
-targets. Inspect relevant fixture inputs and assertions before using PASS to settle
-a behavior claim; test names and a pass count alone do not establish that scope.
-current_source_view lists delivered source ranges, not executed assertions or cases.
-Inline or unresolved commands remain in the linked public definition.
-Keep unexercised cases untested in the existing plan, concern or next decision;
-resolution reasons should name the exercised setup and outcome. PASS or focus change
-does not settle unrelated concerns; a baseline-only probe is not candidate proof.
+Base conclusions on actual check inputs and results. mutation_expectation records
+the intended effect of the checked edit, not coverage. recent_checks.evidence_review
+locates public check definitions and observed source; it does not certify execution
+of every case. Keep conclusions limited to what the evidence supports.
 Use an affordable experiment if it could change the decision, otherwise submit.
 No extra review call, annotation or experiment is required.
 stop_task abandons as AGENT_STOPPED, without submission or

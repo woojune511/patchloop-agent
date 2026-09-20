@@ -249,8 +249,8 @@ def test_all_checks_pass_advises_review_but_still_allows_finish_with_concern(tmp
     assert "finish_task" in policy.allowed_tools
     card = runner._attempt_card(result, gateway)
     assert card["next_question"] != "Submit the projected diff."
-    assert "v1" in json.dumps(card)
-    assert "review" in card["next_question"].lower()
+    assert card["unresolved_verification_concern_ids"] == ["v1"]
+    assert card["verification_review_diff_hash"] == result.workspace_diff_hash
     assert "submit" in card["next_question"].lower()
     finish = gateway.execute(RequestedTool(
         name="finish_task", action_id="finish", arguments={},

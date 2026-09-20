@@ -1,4 +1,4 @@
-"""Eligible submission stays available while current case evidence guides the choice."""
+"""Completion depends on current checks and offered tools, not legacy case annotations."""
 from __future__ import annotations
 
 import copy
@@ -16,7 +16,7 @@ from test_dev_requirement_reference import public_task
 from patchloop.contracts import RegisteredCheck
 from patchloop.dev import runner
 from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
-from patchloop.util import canonical_json, sha256_json
+from patchloop.util import canonical_json
 
 
 def _guidance(mutation, offered, *, ready=True):
@@ -29,7 +29,7 @@ def _guidance(mutation, offered, *, ready=True):
         allowed_tools=frozenset(offered), check_ids=("public",),
     )
     before = copy.deepcopy((snapshot, policy, mutation))
-    result = runner._completion_guidance(snapshot, policy, mutation=mutation)
+    result = runner._completion_guidance(snapshot, policy)
     assert before == (snapshot, policy, mutation)
     assert len(canonical_json(result)) < 1_700
     return result
@@ -45,20 +45,13 @@ def _record(status="recorded", diff="current"):
 @pytest.mark.parametrize("review_tools", [
     {"read_file"}, {"search_files"}, {"run_probe"}, {"read_file", "search_files", "run_probe"},
 ])
-def test_current_cases_offer_only_affordable_review_and_submission(review_tools):
+def test_legacy_cases_do_not_add_a_second_completion_menu(review_tools):
     mutation = _record()
     result = _guidance(mutation, review_tools | {"finish_task", "stop_task"})
-    assert result["submission_ready"] and result["next_action"] is None
-    choice = result["verification_choice"]
-    assert choice["coverage_status"] == "not_assessed"
-    assert choice["case_record_hash"] == sha256_json(mutation["behavior_cases"])
-    assert {row["tool"] for row in choice["available_actions"]} == review_tools | {"finish_task"}
-    assert "no extra action or annotation is required" in result["message"]
-    assert "implementation trigger fixed" in result["message"]
-    assert ("Project dependencies are unavailable" in canonical_json(choice)) is (
-        "run_probe" in review_tools
-    )
-    assert CONTRAST["scope_basis"] not in canonical_json(result)  # Existing record is referenced.
+    assert result["submission_ready"] and result["next_action"] == {"tool": "finish_task"}
+    assert "verification_choice" not in result
+    assert ("run_probe" in result["message"]) is ("run_probe" in review_tools)
+    assert CONTRAST["scope_basis"] not in canonical_json(result)
 
 
 @pytest.mark.parametrize("mutation", [
@@ -82,7 +75,7 @@ def test_case_presence_neither_reopens_closed_tools_nor_skips_required_checks():
     assert "verification_choice" not in unavailable
 
 
-def test_case_choice_survives_restart_and_does_not_block_direct_submission(tmp_path):
+def test_legacy_case_receipt_survives_restart_without_changing_completion(tmp_path):
     gateway = _gateway(tmp_path)
     gateway.public_task = public_task()
     gateway.sandbox = CheckSandbox()
@@ -97,16 +90,15 @@ def test_case_choice_survives_restart_and_does_not_block_direct_submission(tmp_p
     original = _input(gateway, [check], tmp_path)
     view = input_context(original)
     guidance = view["completion_guidance"]
-    assert view["workflow_gate"] == "ready_to_submit" and guidance["next_action"] is None
+    assert view["workflow_gate"] == "ready_to_submit"
+    assert guidance["next_action"] == {"tool": "finish_task"}
     record = view["last_successful_mutation"]
     assert record["delivery"] == "preceding_function_call_output"
     output = next(item for item in original if item.get("type") == "function_call_output"
                   and item.get("call_id") == record["action_id"])
     cases = json.loads(output["output"])["output"]["mutation"]["behavior_cases"]
     assert cases == edited.output["mutation"]["behavior_cases"]
-    assert guidance["verification_choice"]["case_record_hash"] == sha256_json(
-        cases,
-    )
+    assert "verification_choice" not in guidance
     before = gateway.journal.path.read_bytes(), (gateway.workspace / "src.py").read_bytes()
     restored = _restart(gateway)
     assert input_context(_input(restored, [check], tmp_path))["completion_guidance"] == guidance

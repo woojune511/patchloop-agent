@@ -110,13 +110,13 @@ def test_off_schema_prompt_and_identity_are_unchanged():
     before = dev_tool_schemas(**options)
     # Refreshed for shared check_setup guidance; the cases-off arguments stay fixed.
     assert sha256_json(before) == (
-        "sha256:8ae9bec26e3ff096574e2dd16c0747a7d13d430b9f3c56f50bad2263e83b5fe2"
+        "sha256:de014b15647dfd2a46298b3dd3b7b0692648fcf64f98e1519dd776f36d886ea3"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:8663d25c9d04f584894958510fda6917f479b8036dcd18aadb292eae455985af"
+        "sha256:ef2c93541fbb626d2a646d855b334ed1d8eb1dac854cfcb24b19f6b2ca40272e"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:7bb36529bda608b9a92f663efd37a17f267655a045c26264d66d58ac27e8cca0"
+        "sha256:0cd531d4037a4dd2f6d280e74b49b5b52618ca6506757351c2b4927088bd1745"
     )
     after = dev_tool_schemas(**options, probe_policy=cases.POLICY)
     assert [t for t in before if t["name"] != "run_probe"] == [

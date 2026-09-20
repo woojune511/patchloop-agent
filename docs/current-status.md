@@ -7,6 +7,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest implementation: Simplify the common repair loop
+
+New model requests no longer ask for requirement_ref or behavior_cases. The prompt
+retains a scoped edit and expected effect without a prescribed trigger/scope contrast.
+Successful-check cards keep the checked mutation's original expected_behavior and
+identity, while duplicate annotation review and verification_choice are removed.
+Fresh omitted annotations generate no missing-reference receipt. Existing raw actions,
+admission bindings and completed results retain their recovery and reading contracts;
+active runs still require an exact runtime envelope. Tool identity changes, run schema,
+limits, planning policies, segment rules, public/private and submission gates do not.
+
+Prepared sources/dependencies, bytecode/thread fixes, probes, cost control and execution
+records are retained. Fixed-candidate diagnostic options and their historical evidence
+are preserved; further same-task prompt tuning is no longer the current development path.
+Next work uses a fixed common configuration on distinct dev-train repair tasks. No paid
+sample, hidden-detail inspection, Docker operation or quality claim is part of this change.
+
+Focused validation: 49 PASS / 32.06s, including append/segmented mock runs through
+edit, public check, submission and isolated evaluation, plus legacy recovery and
+runtime-mismatch rejection. System prompt shrinks from 7,999 to 7,188 characters;
+full default tool schemas differ only by the two retired inputs (34,255 to 31,965
+canonical UTF-8 bytes). Notes, other tool definitions and their order are unchanged.
+Full regression: all 138 files, 3,032 PASS / 16 SKIP / one old wording assertion,
+1,175.113s wall across four independent roots with --durations. That assertion required
+the removed word "review"; it now checks retained concern IDs and the checked diff.
+All eight verification-flow tests then PASS / 24.88s on unchanged production code.
+Original failure receipts remain; this is not a second clean full-suite run.
+Ruff and documentation checks PASS; all 1,450 protected files, including user AGENTS.md,
+task packages, diagnostics and tracked historical stores, are unchanged. Model cost $0;
+no live efficacy or generalization result. Evidence:
+`C:\pt\analyses\common-loop-simplification-20260920-v1`.
+
 ## Latest closed live observation: Factorized guidance still misses the concrete contrast
 
 One fresh same-task/P10/GPT-5.4 medium observation with task-first-factors-v1 is

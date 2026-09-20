@@ -27,13 +27,7 @@ from patchloop.agent.usage_diagnostics import usage_failure_message
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import (
-    behavior_cases,
-    native_compaction,
-    requirement_reference,
-    segments,
-    working_plan,
-)
+from patchloop.dev import native_compaction, segments, working_plan
 from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.context import SourceProjection, build_observed_source_index
@@ -595,7 +589,6 @@ def _workflow_gate(summary: Any, *, ready_to_submit: bool) -> str:
 
 def _completion_guidance(
     snapshot: DevGatewayStateSnapshot, policy: _ToolPolicy,
-    *, mutation: dict[str, Any] | None = None, probe_environment: dict | None = None,
 ) -> dict[str, Any]:
     """Describe an offered next action, without executing it or changing admission."""
     allowed = policy.allowed_tools
@@ -638,57 +631,12 @@ def _completion_guidance(
             f"Run one remaining visible check for the current diff: {check_id}. "
             "Use run_check; PASS on a different diff does not count toward completion."
         )
-    guidance = {
+    return {
         "diff_hash": snapshot.diff.patch_hash,
         "submission_ready": snapshot.ready_to_submit,
         "next_action": next_action,
         "message": message,
     }
-    cases = mutation.get("behavior_cases", {}) if mutation else {}
-    review_tools = [tool for tool in ("read_file", "search_files", "run_probe") if tool in allowed]
-    if (snapshot.ready_to_submit and "finish_task" in allowed and review_tools
-            and mutation is not None and mutation.get("diff_hash") == snapshot.diff.patch_hash
-            and cases.get("status") == "recorded"):
-        # Case presence is not a coverage verdict. Let the model choose among
-        # affordable public verification and submission without preselecting finish.
-        guidance["next_action"] = None
-        guidance["message"] = (
-            "Required visible checks pass; submission is eligible. Compare the recorded "
-            "change and preservation setups with actual check inputs and outcomes before "
-            "choosing further verification or finish_task. Keep the implementation trigger "
-            "fixed when examining a preservation case outside the required scope. "
-            "An unexercised case remains untested; no extra action or annotation is required."
-        )
-        purposes = {
-            "read_file": (
-                "Inspect relevant public fixture setup and assertions located by "
-                "recent_checks.evidence_review."
-            ),
-            "search_files": "Locate public setup or assertions needed to assess a recorded case.",
-            "run_probe": (
-                "Test a discriminating public input with base Python and the standard library. "
-                "Project dependencies are unavailable; a reduction does not verify "
-                "the project implementation."
-            ),
-            "finish_task": (
-                "Submit the checked diff when further available verification "
-                "would not change the decision."
-            ),
-        }
-        if probe_environment is not None:
-            purposes["run_probe"] = (
-                "Test a discriminating public input against current project code using the "
-                "prepared public dependencies and source import roots described by run_probe. "
-                "Compare the actual result; a reduction alone does not verify project code."
-            )
-        guidance["verification_choice"] = {
-            "cases_ref": "last_successful_mutation.behavior_cases",
-            "case_record_hash": sha256_json(cases),
-            "coverage_status": "not_assessed",
-            "available_actions": [{"tool": tool, "purpose": purposes[tool]}
-                                  for tool in [*review_tools, "finish_task"]],
-        }
-    return guidance
 
 
 def _minimum_completion_calls(
@@ -1274,10 +1222,7 @@ def _build_context(
     mutation = gateway.actionable_last_successful_mutation(diff_hash=summary.patch_hash)
     payload = {
         "workflow_gate": active_policy.workflow_gate,
-        "completion_guidance": _completion_guidance(
-            active_snapshot, active_policy, mutation=mutation,
-            probe_environment=getattr(gateway.probe_sandbox, "environment", None),
-        ),
+        "completion_guidance": _completion_guidance(active_snapshot, active_policy),
         "visible_check_status": list(active_snapshot.visible_check_status),
         "remaining_visible_check_ids": list(active_snapshot.remaining_visible_check_ids),
         "remaining_budget": {
@@ -2398,10 +2343,9 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                 )
         elif ready_for_submission:
             next_question = (
-                "Required visible checks passed. Review which change and preservation "
-                "cases their actual setup and outcomes exercise; keep unexercised cases "
-                "untested. Use an available experiment if it could change the decision, "
-                "or submit. PASS does not resolve unrelated concerns."
+                "Required visible checks passed on this diff. Use an available experiment "
+                "if it could change the decision, or submit. PASS does not resolve "
+                "unrelated concerns."
             )
         else:
             remaining = gateway.remaining_visible_check_ids()
@@ -2429,23 +2373,6 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                 "interpretation_status": "model_authored_unverified",
                 "scope": "at_check_completion",
             }
-            if "requirement_reference" in mutation:
-                card["mutation_expectation"]["requirement_reference"] = (
-                    requirement_reference.project(
-                        mutation["requirement_reference"], gateway.public_task,
-                    )
-                )
-            if "behavior_cases" in mutation:
-                cases = behavior_cases.project(mutation["behavior_cases"], gateway.public_task)
-                card["mutation_expectation"]["behavior_cases"] = cases
-                if cases["status"] == "recorded":
-                    card["next_question"] = (
-                        "Compare behavior_cases.change and behavior_cases.preserve separately "
-                        "with the check's actual setup and observed outcome, using scope_basis "
-                        "to distinguish them. In the next decision/plan, name which case the "
-                        "evidence exercises; unexercised or unspecified cases remain untested. "
-                        + card["next_question"]
-                    )
         if ready_for_submission:
             card["unresolved_verification_concern_ids"] = gateway.verification_concerns()[
                 "unresolved_ids"

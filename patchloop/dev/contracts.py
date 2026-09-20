@@ -25,7 +25,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = "none") -> str:
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v44",
+            "schema_version": "dev-tool-surface-v45",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
@@ -71,9 +71,9 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "parallel_read_decisions": "shared_inspect_mode_with_call_specific_rationale",
             "dynamic_workflow_tools": True,
             "mutation_wire": "gateway-bound-exact-anchor-replacement-v2",
-            "requirement_reference": "optional-public-whitespace-unique-source-span-review-v2",
+            "requirement_reference": "legacy-admission-and-replay-only-v3",
             "requirement_excerpt_limit": 600,
-            "behavior_cases": "optional-change-preserve-public-task-check-review-v1",
+            "behavior_cases": "legacy-admission-and-replay-only-v2",
             "behavior_case_text_limits": [5, 300],
             "mutation_evidence_binding": "observed-current-source-union-v2",
             "mutation_source_rebinding": "exact-position-unchanged-complete-line-fragments-v1",
@@ -87,7 +87,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "mutation_anchor_guidance": "smallest-sufficient-exact-observed-text-v1",
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_guidance": "diff-currency-and-actual-action-space-v1",
-            "completion_guidance": "current-case-verification-choice-without-selected-finish-v4",
+            "completion_guidance": "current-diff-completion-without-case-review-v5",
             "public_failure_recurrence": "semantic-site-with-raw-fallback-v1",
             "causal_revision_guidance": "advisory-hypothesis-review-v2",
             "failed_check_repair_action_space": "budget-only-public-inspection-v2",
@@ -111,7 +111,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
                 check_review.MAX_TARGETS, check_review.MAX_RANGES,
                 check_review.MAX_TARGET_CHARS, check_review.MAX_REVIEW_CHARS,
             ],
-            "behavior_verification": "task-scope-contrast-and-check-bound-expectation-v2",
+            "behavior_verification": "current-diff-intent-and-public-results-v3",
             "verification_concern_limit": 3,
             "submission_guidance": "current-check-finish-versus-unsuccessful-voluntary-stop-v2",
             "working_note_source_body_chars": 24_000,
@@ -183,7 +183,8 @@ class TextReplacementIntent(StrictModel):
     hypothesis: str = Field(min_length=1, max_length=1_500)
     expected_behavior: str = Field(min_length=1, max_length=1_500)
     causal_revision: CausalRevision | None = None
-    # Independently parsed: even a malformed annotation must leave the action valid.
+    # Retained for old action/intent hashes and journal recovery. These annotations
+    # are not advertised by the current provider schema; legacy parsing is nonblocking.
     requirement_ref: Any = None
     behavior_cases: Any = None
 

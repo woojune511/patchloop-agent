@@ -1,4 +1,4 @@
-"""Separate changed/preserved expectations without certifying semantic coverage."""
+"""Legacy case receipts remain replayable after retiring the public annotation."""
 
 from __future__ import annotations
 
@@ -84,7 +84,7 @@ def test_annotation_and_check_review_are_nonblocking_and_replay_exactly(tmp_path
     assert result.output["mutation"]["plan_hash"] == sha256_json(call.arguments)
     checked = _completed_check(gateway, "check")
     card = runner._attempt_card(checked, gateway)
-    assert card["mutation_expectation"]["behavior_cases"] == receipt
+    assert "behavior_cases" not in card["mutation_expectation"]
     assert gateway.ready_to_submit()
     before = gateway.journal.path.read_bytes()
     restored = _restart(gateway)
@@ -199,7 +199,7 @@ def test_legacy_missing_field_pending_and_completed_recovery(tmp_path, monkeypat
 
 @pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
 @pytest.mark.parametrize("invalid", [False, True])
-def test_actual_inputs_keep_both_cases_with_check_result_and_reach_isolated_evaluation(
+def test_legacy_case_receipts_remain_readable_without_repeated_review_instructions(
     tmp_path, monkeypatch, context_policy, invalid,
 ):
     value = {"change": "bad shape"} if invalid else CONTRAST
@@ -234,37 +234,36 @@ def test_actual_inputs_keep_both_cases_with_check_result_and_reach_isolated_eval
     final = states[-1]
     review = next(card for card in final["recent_attempt_result_next_question"]
                   if "mutation_expectation" in card)
-    annotation = review["mutation_expectation"]["behavior_cases"]
+    mutation_result = next(
+        e["payload"]["result"] for e in journal.events()
+        if e["event_type"] == "action_finished"
+        and e["payload"]["result"]["tool"] == "replace_text"
+    )
+    annotation = mutation_result["output"]["mutation"]["behavior_cases"]
     assert annotation["status"] == ("invalid" if invalid else "recorded")
     if not invalid:
         assert annotation["cases"] == CONTRAST and annotation["coverage_status"] == "not_assessed"
-        assert "unexercised or unspecified cases remain untested" in review["next_question"]
+    assert "behavior_cases" not in review["mutation_expectation"]
+    assert "preservation" not in review["next_question"]
     assert final["public_task"] == states[0]["public_task"]
     assert review["mutation_expectation"]["diff_hash"] == final["current_diff"]["patch_hash"]
     assert final["visible_check_status"][0]["status"] == "PASS"
     assert "finish_task" in final["available_tool_names"]
     guidance = final["completion_guidance"]
     assert guidance["submission_ready"]
-    if invalid:
-        assert guidance["next_action"] == {"tool": "finish_task"}
-        assert "verification_choice" not in guidance
-    else:
-        assert guidance["next_action"] is None
-        choice = guidance["verification_choice"]
-        assert choice["case_record_hash"] == sha256_json(annotation)
-        assert {row["tool"] for row in choice["available_actions"]} == {
-            "read_file", "search_files", "finish_task",
-        }
+    assert guidance["next_action"] == {"tool": "finish_task"}
+    assert "verification_choice" not in guidance
 
 
-def test_only_mutation_schema_adds_bounded_optional_cases():
-    for schema in dev_tool_schemas(finish_enabled=True, planning_policy="brief-v1"):
+@pytest.mark.parametrize("planning", [
+    "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
+])
+@pytest.mark.parametrize("probe_policy", ["none", "cases-v1"])
+def test_retired_cases_are_absent_from_current_provider_schema(planning, probe_policy):
+    for schema in dev_tool_schemas(
+        finish_enabled=True, planning_policy=planning, probe_policy=probe_policy,
+    ):
         params = schema["parameters"]
-        if schema["name"] == "replace_text":
-            field = params["properties"]["behavior_cases"]
-            assert field["type"] == ["object", "null"]
-            for key in ("change", "preserve"):
-                assert all(item["maxLength"] == 300
-                           for item in field["properties"][key]["properties"].values())
-        else:
-            assert "behavior_cases" not in params["properties"]
+        for field in ("behavior_cases", "requirement_ref"):
+            assert field not in params["properties"]
+            assert field not in params["required"]
