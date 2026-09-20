@@ -7,6 +7,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest closed live observation: Simplified common loop passes two existing tasks
+
+The fixed Fromager v1 -> pgmpy v1 observation completed after the common-loop
+simplification: acceptance 2/2 planned PASS, safety 2/2 PASS, started/submitted 2/2,
+NOT_RUN 0 and infrastructure/uncertainty stops 0. Every result is official=false.
+Both use gpt-5.4-2026-03-05/medium, segmented-v1/brief-v1, probes enabled,
+probe-policy none, repair-recheck enabled and unchanged limits, each repeat=1/$1.20.
+Runtime is 6856faa3; task/source/check bindings are unchanged. No task-specific
+prompt, past patch, plan, notes or counterexample is supplied.
+
+Fromager edits at call 3, passes public contract 5/5 and upstream 12/12, then submits
+at call 6. pgmpy edits at call 4, passes public order/depth 12/12 and upstream 7/7,
+then submits at call 7. Each uses one accepted edit; rejected proposals, failed
+checks and probes are zero. Failure-driven repair and probe efficacy are unmeasured.
+All 13 actual inputs preserve task/diff/check delivery and match request hashes;
+all input counts/generations settle. Clean first inputs and source isolation pass.
+
+Recorded cost $0.4844300 / $2.40; cache-neutral $0.6341900. Maximum input 24047/20999,
+three segments per row, each with two major_result_reviewed transitions. No resource
+exit or reduced output ceiling. All checks confirm cleanup and no labeled container
+remains. The group and unused $1.9155700 are closed; no retry/resume/extra sample.
+
+Operator13 PASS/2.94s, Ruff PASS and both-policy mock smoke PASS/10.677s through
+isolated evaluation with eight actual inputs verified. Reuse the unchanged runtime's
+full regression receipt below, including the stale assertion and module recheck.
+1910 protected files are unchanged. No Docker start/pull/build or hidden-detail read.
+These two tasks had already succeeded; this is a familiar-task development observation,
+not causal simplification evidence, unseen-task generalization or a benchmark rate.
+Continue with one fixed common setup and broader repair observations; no extra live
+invocation is included in this closed group. Result and official GPT-5.4 benchmark
+reference: `C:\pt\analyses\common-loop-observation-20260920-v1`.
+
 ## Latest implementation: Simplify the common repair loop
 
 New model requests no longer ask for requirement_ref or behavior_cases. The prompt

@@ -15,11 +15,17 @@ do not produce missing-annotation feedback. The tool identity changes without a 
 run schema, policy option, gate or budget. Active cross-runtime resume still rejects.
 Fixed-candidate diagnostic variants remain available for historical investigation,
 but are not the current development path. Preserve their code and closed evidence.
-Next: keep one common configuration fixed across distinct development tasks, using
-full repair/check/submission observations. No new live run or efficacy claim is included.
-Local validation and evidence are recorded in docs/current-status.md.
+The follow-up uses one common configuration across Fromager v1 and pgmpy v1:
+both first edits pass public checks and isolated acceptance/safety, 2/2 planned.
+Calls 6/7, first edit 3/4, recorded $0.4844300 / $2.40. All 13 input/count/usage
+audits and cleanup pass. No rejected edit, failed check or probe occurs; failure-driven
+repair remains unmeasured. These previously successful tasks are development observations,
+not a causal simplification comparison or unseen-task generalization. The group and
+unused budget are closed, with no extra run authorized. Keep the common setup fixed
+for broader repair observations. Evidence and benchmark references:
+C:\pt\analyses\common-loop-observation-20260920-v1; see docs/current-status.md.
 
-Latest closed observation: task-first-factors-v1 produces four task-only cases, but
+Prior closed observation: task-first-factors-v1 produces four task-only cases, but
 the ordinary-profile proposal fixes only message shape, not field mode/name. One probe
 after four inspection responses exercises default DeepSeek/plain profiles and one deferred
 exchange; frozen JSON matches, two setup checks pass, same-trigger preservation is omitted.
