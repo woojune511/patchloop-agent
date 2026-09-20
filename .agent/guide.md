@@ -15,7 +15,24 @@ do not produce missing-annotation feedback. The tool identity changes without a 
 run schema, policy option, gate or budget. Active cross-runtime resume still rejects.
 Fixed-candidate diagnostic variants remain available for historical investigation,
 but are not the current development path. Preserve their code and closed evidence.
-Latest follow-up: fixed mini xhigh on AnyIO v3 -> tox v1 -> original Pydantic-AI v1
+Latest comparison: the same AnyIO v3 -> tox v1 -> original Pydantic-AI v1 panel with
+GPT-5.4 medium closes at acceptance 2/3 vs mini xhigh 0/3. Only model and effort vary;
+runtime/task/source/image/prompt/tools/limits match, no task-specific guidance or past
+solution injection. AnyIO/tox first edits pass, Pydantic-AI still fails after public PASS.
+The tox diff preserves missing-key fallback by loading raw outside the empty-filter catch;
+Pydantic-AI still applies empty-field insertion across field-mode profiles too broadly.
+Public static findings do not disclose private failure details. AnyIO's one probe fails
+on missing typing_extensions; successful probe use and failed-check repair are unmeasured.
+Recorded $1.06391750 vs $1.48889040, cache-neutral $1.63271750 vs $1.87242000,
+time 366.874s vs 1290.297s. Savings concentrate in AnyIO; other rows cost more.
+All 26 input/count/usage audits and cleanup pass; no resource exit or incomplete response.
+Operator 14 PASS, Ruff PASS, unchanged-runtime mock/full receipts reused; 2059 files
+preserved. Group and unused $2.53608250 closed, no extra execution or default adoption.
+Use GPT-5.4 medium as a candidate for broader common-harness observations on other
+dev-train tasks. One familiar-task sample per setting and nonrandom order do not establish
+general superiority. Evidence: C:\pt\analyses\gpt54-medium-three-task-20260920-v1.
+
+Prior follow-up: fixed mini xhigh on AnyIO v3 -> tox v1 -> original Pydantic-AI v1
 closes with acceptance 0/3, submitted 2, NOT_RUN 1, no infrastructure/uncertainty stop.
 AnyIO reaches the cost cap: 23 calls, 3 edits plus one anchor-invalid proposal,
 lifecycle 0/7 -> 3/7 -> 3/7, regression 32 PASS; two reasoning-only 25000-token responses.

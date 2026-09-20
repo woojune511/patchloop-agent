@@ -7,7 +7,46 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed live observation: Mini xhigh fails to solve three broader tasks
+## Latest closed comparison: GPT-5.4 medium solves two of the same three tasks
+
+The approved AnyIO v3 -> tox v1 -> original Pydantic-AI v1 comparison closes with
+acceptance 2/3 PASS, submitted 3, NOT_RUN 0, safety 3/3 PASS and no infrastructure or
+uncertainty stops. The preceding mini xhigh group has acceptance 0/3 and submitted 2.
+All results remain official=false. Each new slot repeats once at $1.20, group $3.60.
+Frozen requests differ only in model and reasoning_effort; runtime/task/source/image,
+prompt/tools/public input, policies and limits match. No task-specific guidance or
+historical patch/notes/case injection. Model and effort jointly vary, not model alone.
+
+AnyIO succeeds on its first edit at call 8: lifecycle 7/7 and regression 32 PASS,
+11 calls, $0.55731850, 177.500s. One earlier probe fails importing typing_extensions
+in the unchanged base Python environment; it establishes no candidate behavior.
+tox succeeds on its first edit at call 3: regression 29 PASS, 5 calls, $0.18153400,
+55.112s. Its public diff moves raw key lookup outside the empty-filter KeyError catch,
+preserving the missing-key default/fallback path that the mini candidate bypasses.
+Pydantic-AI fails acceptance after public 8/regression 18 PASS: one edit at call 7,
+10 calls, $0.32506500, 134.261s. Both public candidates apply empty fields across field
+mode without identifying the provider requirement. This public scope finding is not
+an inspection of private failure details; neither Pydantic-AI run exhausts resources.
+
+Total recorded $1.06391750 vs $1.48889040 (28.5% lower); cache-neutral $1.63271750 vs
+$1.87242000 (12.8% lower); execution 366.874s vs 1290.297s (71.6% lower). Savings come
+from AnyIO; tox/Pydantic-AI individually cost more. Calls 26 vs 40, output 18926 vs
+205088, reasoning 9194 vs 188378. Invoice/free-token application is unverified.
+All 26 actual requests/counts/usages match, clean first inputs/source isolation pass,
+all output ceilings remain 25000, no incomplete response or resource exit. Input peaks
+33231/24060/27511; segments 4/2/3, all transitions major_result_reviewed. No rejected edit
+or failed public check occurs; repair after failure and successful probe use are unmeasured.
+
+Operator 14 PASS/3.70s, Ruff PASS; unchanged-runtime mock/full receipts below explicitly
+reused. Cleanup passes, no labeled containers, 2059 protected files unchanged. No retry,
+resume, replacement, extra candidate execution, hidden-detail read or Docker start/pull/build.
+Group and unused $2.53608250 closed. These are single samples of familiar tasks with
+all mini runs preceding all GPT-5.4 runs; no benchmark/generalization/default-adoption
+claim. Keep GPT-5.4 medium as a candidate for broader fixed-harness observations on
+other dev-train tasks, without more Pydantic-AI-specific guidance. Report:
+`C:\pt\analyses\gpt54-medium-three-task-20260920-v1\result.md`.
+
+## Prior closed live observation: Mini xhigh fails to solve three broader tasks
 
 The approved AnyIO v3 -> tox v1 -> original Pydantic-AI v1 group is closed complete:
 acceptance PASS 0/3 planned, started 3, submitted 2, acceptance FAIL 2 and NOT_RUN 1.
