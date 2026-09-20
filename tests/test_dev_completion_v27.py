@@ -162,7 +162,7 @@ def test_guidance_tracks_recheck_then_submission_without_rewriting_history(tmp_p
     ("ready_to_submit", ["PASS"], {"finish_task", "stop_task"}, {"tool": "finish_task"}),
     ("needs_visible_checks", ["NOT_RUN"], {"stop_task"}, None),
 ])
-def test_guidance_is_advisory_and_names_only_an_offered_action(
+def test_guidance_is_advisory_and_recommends_only_an_offered_action(
     gate, statuses, allowed, next_action,
 ):
     snapshot = SimpleNamespace(
@@ -179,9 +179,15 @@ def test_guidance_is_advisory_and_names_only_an_offered_action(
     assert len(json.dumps(result)) < 650
     if next_action:
         assert next_action["tool"] in allowed
-    assert not any(tool in result["message"] for tool in {
+    described_unavailable = {
+        tool for tool in {
         "read_file", "search_files", "replace_text", "run_check", "finish_task",
-    } - allowed)
+        } - allowed if tool in result["message"]
+    }
+    if described_unavailable:
+        assert described_unavailable == {"replace_text"}
+        assert result["stage"] == "needs_source_evidence"
+        assert "temporarily unavailable" in result["message"]
 
 
 def test_success_prose_does_not_create_a_new_stop_rejection_or_a_submission():

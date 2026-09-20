@@ -7,6 +7,46 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Current implementation: explain temporary tool prerequisites
+
+completion_guidance now identifies the current stage: needs_source_evidence,
+needs_mutation, needs_visible_checks, ready_to_submit or blocked. The first stage
+explains that replace_text waits for current editable source evidence, offers a
+read/search, and reevaluates edit availability after the observation with remaining
+budgets. Mutation/check guidance explains the prerequisites for submission.
+The common prompt distinguishes tools callable this turn from tools that may become
+available later, and current edit eligibility from overall completion feasibility.
+
+This is a public guidance change. Tool admission, exact source/anchor checks, budgets,
+dispatch, recovery and evaluation logic are unchanged. Voluntary stop still ends
+without submission or evaluation, including at the first turn; there is no new
+stop rejection or compulsory probe. No task-specific instruction or new policy.
+The completion-guidance identity changes; dev-run-v1 and its legacy readers remain.
+Active cross-runtime resume still rejects without modifying the journal.
+
+New local tests exercise both context policies through read/edit/check/submit/isolated
+evaluation, verifying eight actual model inputs. Source prerequisites, action/capacity
+barriers, mutation idempotency and explicit stops are retained. Sixteen saved actual
+inputs from the closed PDM/Loguru/pyfakefs group still load without migration; projecting
+the new guidance preserves their next action, submission_ready and diff identity.
+That read-only projection makes no model-response or efficacy prediction.
+
+Focused coverage: 57 cases in 51.66s. The initial run passed 55; two new stop tests
+incorrectly expected an evaluation object for an unsubmitted run. Correcting those
+expectations to the established null contract passed both, without a production change.
+Full regression covered all 139 test files in 1570.257s with --durations=15 per group:
+3036 PASS, six old identity-snapshot failures, 16 SKIP. Refreshing only expected
+prompt/tool hash strings in five test files passed all six rechecks in 1.16s, for
+3042 verified passing cases and no unresolved failure. Original failed receipts remain;
+the full suite was not rerun after these expected-value updates. Python source hashes
+stayed fixed throughout the full run. Ruff passes. The final report records documentation
+checks and 1960 unchanged protected files, including user edits and closed evidence.
+
+Runtime: sha256:d5114965c56819909f72f3afa36239ec48abd3ee533c35bf0cef38130aaf4fdd.
+Evidence: C:\pt\analyses\tool-availability-guidance-20260920-v1.
+No paid provider/count call, real Docker operation or additional development-task
+candidate execution is part of this change. Improved live continuation is unverified.
+
 ## Latest closed observation: two successes and one premature stop on other tasks
 
 The approved fixed GPT-5.4 medium/common-harness panel PDM v2 -> Loguru v3 ->
@@ -43,9 +83,9 @@ reused. Cleanup PASS, no labeled containers, 2012 protected files unchanged.
 Group and unused $2.97365950 closed. No retry/resume/replacement, extra candidate
 execution, hidden-detail read, task registration or Docker start/pull/build.
 These are familiar-task single observations, not a paired model comparison or benchmark.
-Keep defaults fixed; next review the common initial-tool/voluntary-stop contract using
-stored public inputs before more paid work. Preserve evidence prerequisites and legitimate
-stops; no pyfakefs-specific prompt or blanket stop suppression. Report:
+This motivates the common initial-tool/voluntary-stop guidance change above.
+Evidence prerequisites and legitimate stops remain; no pyfakefs-specific prompt or
+blanket stop suppression. The closed group has no paid continuation. Report:
 C:\pt\analyses\gpt54-medium-broader-panel-20260920-v1\result.md.
 
 ## Prior closed comparison: GPT-5.4 medium solves two of the same three tasks

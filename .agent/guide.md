@@ -5,7 +5,30 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Current implementation: simplify the common repair loop. New provider schemas omit
+Current implementation: explain temporary tool prerequisites in completion_guidance.
+Its stage is needs_source_evidence, needs_mutation, needs_visible_checks,
+ready_to_submit or blocked. A source-waiting stage names the missing current editable
+evidence, an offered read/search and reevaluation after that observation under remaining
+budgets. Later stages link edits/current checks to submission. The common prompt
+distinguishes current callable tools and edit eligibility from later availability and
+overall completion feasibility. Existing next_action/submission_ready fields remain.
+Tool policy, source/anchor admission, budget arithmetic, dispatch/recovery/evaluation and
+the stop gateway are unchanged. This adds no task-specific advice, policy, compulsory
+inspection beyond the existing evidence gate, probe requirement or stop rejection.
+The guidance identity changes; preserve dev-run-v1 and old stored inputs, while rejecting
+active cross-runtime resume. New both-policy mock runs reach isolated evaluation with
+eight actual input stages checked. Sixteen old public inputs load unchanged and retain
+the same projected next action/submission eligibility. Focused coverage is 57 cases
+in 51.66s, including correction of two new null-evaluator test expectations. Full
+139-file regression takes 1570.257s: 3036 PASS, six stale hash assertions, 16 SKIP.
+Only expected identity strings in five test files are refreshed; all six rechecks
+pass in 1.16s, giving 3042 verified passing cases. The original receipts remain,
+source hashes stay fixed during the full run, and Ruff passes. Preserve 1960 other
+protected files. No live efficacy claim or paid execution follows. Runtime hash:
+sha256:d5114965c56819909f72f3afa36239ec48abd3ee533c35bf0cef38130aaf4fdd.
+Evidence: C:\pt\analyses\tool-availability-guidance-20260920-v1.
+
+The prior common-loop simplification remains in place. New provider schemas omit
 requirement_ref and behavior_cases; expected_behavior still states the edit's intended
 effect. Remove the trigger/scope case template and repeated case-review instructions,
 including verification_choice. Keep complete public task/diff/check state, check-time
@@ -33,9 +56,9 @@ Operator14 PASS/3.41s, Ruff PASS, exact-runtime mock/full receipts reused; 2012 
 files unchanged. Group and unused $2.97365950 closed, no retry/resume/extra execution.
 Task/source and task-derived checks/images/public input change, common setup stays fixed.
 These familiar-task samples are not a paired model comparison or benchmark.
-Next review the common initial-tool/voluntary-stop contract from stored public inputs;
-preserve evidence gates and legitimate stops, avoid task-specific advice or blanket
-stop suppression. Defaults and production are unchanged. Evidence:
+This motivates the common guidance change above; preserve evidence gates and legitimate
+stops, avoid task-specific advice or blanket stop suppression. Production was unchanged
+during that closed observation; no paid continuation is included. Evidence:
 C:\pt\analyses\gpt54-medium-broader-panel-20260920-v1; see docs/current-status.md.
 
 Prior comparison: the same AnyIO v3 -> tox v1 -> original Pydantic-AI v1 panel with

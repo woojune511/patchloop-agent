@@ -52,7 +52,7 @@ def view(journal, diff="d1", gate="needs_mutation"):
 
 def test_off_wire_and_prompt_are_unchanged():
     assert dev_tool_surface_hash() == (
-        "sha256:ef2c93541fbb626d2a646d855b334ed1d8eb1dac854cfcb24b19f6b2ca40272e"
+        "sha256:c2645f99dc9495949ad2a615222f2d712d9c546bcce4c268ac57f3919ddd27df"
     )
     assert sha256_json(dev_tool_schemas(finish_enabled=True, check_ids=["check"])) == (
         "sha256:51235786aca769125bf35abcc04af115290258ac4200804b09aebeff442c69c1"

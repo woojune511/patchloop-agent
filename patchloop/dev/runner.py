@@ -592,12 +592,17 @@ def _completion_guidance(
 ) -> dict[str, Any]:
     """Describe an offered next action, without executing it or changing admission."""
     allowed = policy.allowed_tools
+    stage = "blocked"
     next_action: dict[str, str] | None = None
-    message = "No completion action is currently offered; this is not a successful submission."
+    message = (
+        "No completion action is currently offered under the current state and budgets. "
+        "stop_task abandons without submission or evaluation."
+    )
     needs_mutation = policy.workflow_gate == "needs_mutation" or any(
         row["status"] == "FAIL" for row in snapshot.visible_check_status
     )
     if snapshot.ready_to_submit and "finish_task" in allowed:
+        stage = "ready_to_submit"
         next_action = {"tool": "finish_task"}
         message = (
             "All required visible checks pass on the current diff; submission is eligible, "
@@ -612,27 +617,38 @@ def _completion_guidance(
             message += "Use finish_task to submit; keep any remaining uncertainty explicit."
     elif needs_mutation:
         if "replace_text" in allowed:
+            stage = "needs_mutation"
             next_action = {"tool": "replace_text"}
             message = (
                 "The current candidate needs a repair. Use replace_text for a supported edit; "
-                "available anchor evidence does not establish a correct solution."
+                "available anchor evidence does not establish a correct solution. "
+                "Submission waits for a scoped patch and its required visible checks."
             )
         else:
             inspection = next(
                 (tool for tool in ("read_file", "search_files") if tool in allowed), None,
             )
             if inspection:
+                stage = "needs_source_evidence"
                 next_action = {"tool": inspection}
-                message = f"Use {inspection} to obtain public evidence for a scoped repair."
+                message = (
+                    "replace_text is temporarily unavailable: current editable source evidence "
+                    f"is missing. Use {inspection} on an allowed source file. After evidence is "
+                    "delivered, edit availability is reevaluated with remaining budgets. "
+                    "Submission waits for a scoped patch and its required visible checks."
+                )
     elif "run_check" in allowed and policy.check_ids:
+        stage = "needs_visible_checks"
         check_id = policy.check_ids[0]
         next_action = {"tool": "run_check", "check_id": check_id}
         message = (
             f"Run one remaining visible check for the current diff: {check_id}. "
-            "Use run_check; PASS on a different diff does not count toward completion."
+            "Use run_check; PASS on a different diff does not count toward completion. "
+            "Submission becomes available when all required checks pass on this scoped patch."
         )
     return {
         "diff_hash": snapshot.diff.patch_hash,
+        "stage": stage,
         "submission_ready": snapshot.ready_to_submit,
         "next_action": next_action,
         "message": message,
@@ -942,7 +958,7 @@ def _tool_policy(
 
 
 def _mutation_completion_horizon(policy: _ToolPolicy) -> dict[str, Any]:
-    """Conditional edit costs do not imply semantic success or protected recovery."""
+    """Describe starting an edit now, before any further source evidence is acquired."""
 
     return {
         "minimum_calls": policy.optional_mutation_completion_calls,

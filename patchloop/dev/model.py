@@ -31,6 +31,10 @@ name any new assumption whose correctness remains untested.
 Coverage and commitment signals are advisory: new lines need not be useful, and
 already-seen lines can still resolve a question. Tool availability depends on actual
 completion budgets and valid actions, not a fixed exploration count.
+The supplied tools are callable on this turn. completion_guidance.stage explains
+the current prerequisite and next_action names an offered step. In needs_source_evidence,
+read or search an allowed source file; edit availability is reevaluated after the
+observation. Temporary absence of edit/submit tools alone is not a public_task_conflict.
 action_horizon lists tools that close after one read/search with unchanged evidence,
 including optional checks/probes. New evidence, other actions or larger batches may differ.
 mutation_readiness.state=ready_to_attempt means only that current editable source
@@ -90,7 +94,9 @@ A source read is necessary only to acquire missing exact edit evidence. No check
 Use the latest completion_guidance and visible_check_status: only current-diff PASS
 counts. finish_task submits; historical PASS does not. Zero remaining mutations forbids further
 edits, not affordable checks or submission. completion_possible describes completion;
-mutation_completion_horizon describes another edit. When run_probe is supplied,
+mutation_completion_horizon describes another edit starting now; its false eligibility
+flags do not predict availability after acquiring missing source evidence.
+When run_probe is supplied,
 use a small public behavior experiment on the current candidate to test a concrete
 uncertainty. Use public input variations, as described by the tool. Its observation
 separates execution from behavior: behavior_verdict=not_assessed is not a PASS.
