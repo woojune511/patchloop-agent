@@ -7,7 +7,48 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed comparison: GPT-5.4 medium solves two of the same three tasks
+## Latest closed observation: two successes and one premature stop on other tasks
+
+The approved fixed GPT-5.4 medium/common-harness panel PDM v2 -> Loguru v3 ->
+pyfakefs v2 closes at acceptance 2/3 planned PASS, started 3, submitted 2, NOT_RUN 1,
+safety PASS 2/NOT_RUN 1, no infrastructure/uncertainty stop. All official=false.
+Repeat=1 and $1.20 each/$3.60 total. Same model/effort, runtime, prompts, normalized
+tools, policies and limits as the preceding three-task GPT-5.4 group; only task/source
+and task-derived public input/check/image identities differ. No task-specific guidance.
+
+PDM first edits at call 4, public contract 24/upstream 36 PASS, acceptance/safety PASS
+at call 7: $0.26572450, 134.726s. Loguru first edits at call 3, all four public checks
+PASS (including upstream 20), acceptance/safety PASS at call 8: $0.32712850, 74.923s.
+pyfakefs invokes stop_task/public_task_conflict in its first response, asserting that
+missing mutation/submission tools prevent completion. No source inspection, edit,
+check or submission: AGENT_STOPPED/NOT_RUN, $0.03348750, 11.777s.
+
+Actual first inputs have the same system prompt/tool mask: needs_anchor_evidence,
+completion_possible=true, explicit read_file next action and full edit/call budgets.
+PDM/Loguru search source, then receive replace_text/ready_to_attempt in their second
+input. pyfakefs treats temporary edit ineligibility as permanent incapability.
+This is a public early-stop decision, not demonstrated repair inability or resource
+exhaustion. Existing read guidance was delivered. The current mutation horizon reports
+ineligible while the overall completion path is feasible; causal influence is unproven.
+
+Total recorded $0.62634050, cache-neutral $0.78157250, execution 221.426s. All 16 actual
+requests/counts/usages audit correctly; 18 tools, two edits, no rejected proposal,
+failed check, probe, incomplete response or reduced output ceiling. Failure-driven
+repair/probe efficacy remain unmeasured. Input peaks 22438/22516/8301, segments 3/5/1,
+all six transitions major_result_reviewed. Clean first inputs/source isolation pass.
+Free-token eligibility/invoice are unverified; a cheap early stop is not an efficiency gain.
+
+Operator14 PASS/3.41s, Ruff PASS; unchanged-runtime mock/full receipts below explicitly
+reused. Cleanup PASS, no labeled containers, 2012 protected files unchanged.
+Group and unused $2.97365950 closed. No retry/resume/replacement, extra candidate
+execution, hidden-detail read, task registration or Docker start/pull/build.
+These are familiar-task single observations, not a paired model comparison or benchmark.
+Keep defaults fixed; next review the common initial-tool/voluntary-stop contract using
+stored public inputs before more paid work. Preserve evidence prerequisites and legitimate
+stops; no pyfakefs-specific prompt or blanket stop suppression. Report:
+C:\pt\analyses\gpt54-medium-broader-panel-20260920-v1\result.md.
+
+## Prior closed comparison: GPT-5.4 medium solves two of the same three tasks
 
 The approved AnyIO v3 -> tox v1 -> original Pydantic-AI v1 comparison closes with
 acceptance 2/3 PASS, submitted 3, NOT_RUN 0, safety 3/3 PASS and no infrastructure or

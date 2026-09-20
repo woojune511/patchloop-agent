@@ -15,7 +15,30 @@ do not produce missing-annotation feedback. The tool identity changes without a 
 run schema, policy option, gate or budget. Active cross-runtime resume still rejects.
 Fixed-candidate diagnostic variants remain available for historical investigation,
 but are not the current development path. Preserve their code and closed evidence.
-Latest comparison: the same AnyIO v3 -> tox v1 -> original Pydantic-AI v1 panel with
+Latest observation: unchanged GPT-5.4 medium/common setup on PDM v2 -> Loguru v3 ->
+pyfakefs v2 closes 2/3 planned PASS, submitted 2, NOT_RUN 1, no uncertainty stop.
+PDM/Loguru first edits pass all public checks and isolated acceptance/safety.
+pyfakefs calls stop_task/public_task_conflict at the first response because mutation
+and submission tools are absent. Its actual input says needs_anchor_evidence,
+completion_possible=true and read_file next, with full budgets. PDM/Loguru have the
+same initial system prompt and tool mask, search public source, then receive
+replace_text/ready_to_attempt on turn 2. No pyfakefs candidate exists; this is a
+premature abandonment decision, not evidence of repair inability or resource exhaustion.
+The existing read guidance is delivered; wording efficacy/causality remain unproven.
+Current edit eligibility and overall completion feasibility are distinct in the state.
+Recorded $0.62634050, cache-neutral $0.78157250, 221.426s, 16 model/count and 18 tool calls.
+All actual-input/usage/cleanup audits pass; no rejected edit, failed check, probe,
+incomplete response or output limit reduction. Failure-driven repair remains unmeasured.
+Operator14 PASS/3.41s, Ruff PASS, exact-runtime mock/full receipts reused; 2012 protected
+files unchanged. Group and unused $2.97365950 closed, no retry/resume/extra execution.
+Task/source and task-derived checks/images/public input change, common setup stays fixed.
+These familiar-task samples are not a paired model comparison or benchmark.
+Next review the common initial-tool/voluntary-stop contract from stored public inputs;
+preserve evidence gates and legitimate stops, avoid task-specific advice or blanket
+stop suppression. Defaults and production are unchanged. Evidence:
+C:\pt\analyses\gpt54-medium-broader-panel-20260920-v1; see docs/current-status.md.
+
+Prior comparison: the same AnyIO v3 -> tox v1 -> original Pydantic-AI v1 panel with
 GPT-5.4 medium closes at acceptance 2/3 vs mini xhigh 0/3. Only model and effort vary;
 runtime/task/source/image/prompt/tools/limits match, no task-specific guidance or past
 solution injection. AnyIO/tox first edits pass, Pydantic-AI still fails after public PASS.
