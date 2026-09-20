@@ -15,7 +15,21 @@ do not produce missing-annotation feedback. The tool identity changes without a 
 run schema, policy option, gate or budget. Active cross-runtime resume still rejects.
 Fixed-candidate diagnostic variants remain available for historical investigation,
 but are not the current development path. Preserve their code and closed evidence.
-The follow-up uses one common configuration across Fromager v1 and pgmpy v1:
+Latest follow-up: the requested mini xhigh setting also passes Fromager v1 and pgmpy v1,
+acceptance/safety 2/2, one edit each, calls 6/8. Relative to the preceding GPT-5.4 medium
+group, only model and reasoning_effort change; runtime, task, source, prompt, schema
+and limits match. Recorded cost $0.28425105 is 41.3% lower, while summed execution
+time rises from 135.959s to 249.609s and reasoning tokens from 2316 to 27733.
+All 14 input/count/usage audits and cleanup pass; operator14 PASS. The unchanged
+runtime's mock/full receipts are reused. No failed check, rejected edit or probe;
+failure-driven repair is unmeasured. Standard paid rates exclude unverified free-token
+benefits; no invoice claim or account setting change. Two familiar tasks do not establish
+isolated model/effort effects or generalization. Group and unused budget are closed.
+Keep mini xhigh as a candidate for broader common-setup observations, without changing
+defaults or adding task-specific prompts. Evidence:
+C:\pt\analyses\mini-xhigh-observation-20260920-v1.
+
+The preceding follow-up uses one common configuration across Fromager v1 and pgmpy v1:
 both first edits pass public checks and isolated acceptance/safety, 2/2 planned.
 Calls 6/7, first edit 3/4, recorded $0.4844300 / $2.40. All 13 input/count/usage
 audits and cleanup pass. No rejected edit, failed check or probe occurs; failure-driven

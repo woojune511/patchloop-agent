@@ -7,7 +7,40 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed live observation: Simplified common loop passes two existing tasks
+## Latest closed live observation: Mini xhigh passes both tasks at lower recorded cost
+
+The requested gpt-5.4-mini-2026-03-17/xhigh observation completed on Fromager v1
+then pgmpy v1: acceptance/safety 2/2 PASS, started/submitted 2/2, NOT_RUN 0 and
+infrastructure/uncertainty stops 0. Both first edits pass; calls 6/8, first edit 3/5,
+public checks 4 PASS. Rejected edits, failed checks and probes are zero, so repair
+after failure and probe efficacy remain unmeasured. All results are official=false.
+
+Against the immediately preceding GPT-5.4 medium group, only model and effort change
+in the request; prompt/tools/public input, runtime/task/source/image, policies and
+limits match before dispatch. New output paths and derived identities are separate.
+Each repeat=1/$1.20, total $2.40. Runtime remains the tested simplification code;
+no task-specific prompt, historical fix/notes/case injection or production edit.
+
+Recorded cost $0.28425105 vs $0.48443000 (41.3% lower); cache-neutral $0.35579025 vs
+$0.63419000 (43.9% lower). Summed execution time 249.609s vs 135.959s, calls 14 vs 13,
+output tokens 31436 vs 6604, including reasoning 27733 vs 2316. Free-token eligibility
+and account charges are unverified; budgeting/accounting use standard paid rates,
+without changing account/data-sharing settings. Model and effort both differ, and
+these are two familiar tasks with one sample per setting, not isolated causal or
+generalization evidence. Mini xhigh remains a candidate for broader fixed-setup
+development observations; code defaults are unchanged.
+
+All 14 actual requests/counts/usages audit correctly; clean first inputs and source
+isolation pass. Peak input 37646/32380, three segments per run with two
+major_result_reviewed transitions, all output ceilings 25000, no resource exit.
+Operator14 PASS/3.48s and Ruff PASS. Unchanged-runtime mock/full regression receipts
+below are reused, including the old assertion and its module recheck. All checks
+confirm cleanup; no labeled container remains; 1905 protected files match.
+No retry/resume/replacement, hidden-detail read or Docker start/pull/build occurred.
+Group and unused $2.11574895 closed. Report:
+`C:\pt\analyses\mini-xhigh-observation-20260920-v1\result.md`.
+
+## Prior closed live observation: Simplified common loop passes two existing tasks
 
 The fixed Fromager v1 -> pgmpy v1 observation completed after the common-loop
 simplification: acceptance 2/2 planned PASS, safety 2/2 PASS, started/submitted 2/2,
