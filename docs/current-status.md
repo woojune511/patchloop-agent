@@ -7,6 +7,37 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest diagnosis: post-failure evidence survives; repair iteration stalls
+
+Read-only audit of the stopped AnyIO run's calls27-32 verifies all6 exact dispatched
+requests. All3441 characters of the public failed-check output reach inputs28-32,
+including all6 failing cases. The structured location summary is empty, but the raw
+output survives as a quoted receipt at28 and inline recent-check evidence at29-32.
+The current runner methods at2190-2379 remain fully visible in every audited input.
+Searches at28 add12/0/50 lines; read29 repeats55 already visible lines; search30 adds6.
+These are visibility counts, not proof of usefulness or semantic repair sufficiency.
+
+The existing policy correctly closes inspection at31: minimum completion4 calls plus
+rejection reserve2 and future-check recovery4 protects10. After the first failed check,
+input28 has13 calls left and3 inspection calls;31 has10 and none. Public guidance and
+the delivered incomplete-response correction name only offered actions. The plan's
+inspection wording was authored with the already completed search30; it does not prove
+that the harness instructed an unavailable read. Review is absent at31 but requested
+at32 for the new segment; both responses exhaust25000 reasoning tokens without tools.
+Input31 retains2 reasoning items;32 starts with0 after input-token rollover, while all
+673 visible current-source lines, current diff, public failure and plan remain equal.
+
+Historical context: an earlier AnyIO run with the same task/model/effort/policies/limits
+first edited at18 and completed3 edits by26. Its first failure left11 inspection calls;
+the stopped run's first edit26 leaves3 after failure. Runtime identities and trajectories
+differ, so this is neither a controlled comparison nor proof that earlier edits succeed.
+Prioritize the exploration-to-repair decision and its remaining iteration time. No
+delivery fix, compulsory edit quota, task-specific hint, larger output limit or policy
+adoption follows. Focused67 PASS/1.58s and Ruff; runtime172a439f and264 runtime/test files
+unchanged. Prior full regression and both-context mocks are reused, not rerun. No new
+provider/count/Docker/candidate execution or hidden-detail inspection. Evidence:
+C:\pt\analyses\anyio-post-failure-decision-audit-20260922-v1\result.md.
+
 ## Current implementation: public probe receipt audit
 
 The checked-in `diagnostics.public_probe_delivery` audit now distinguishes public

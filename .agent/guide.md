@@ -5,6 +5,23 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest public-only diagnosis verifies exact requests27-32 of the stopped AnyIO row.
+Failed-check stdout3441 chars/all6 cases and current runner source2190-2379 survive.
+Do not infer loss from an empty structured failure-location summary or a trimmed source
+catalog: resolve quoted exchanges and native source references in the actual input.
+Read29 repeats55 visible lines; searches28/30 add12/0/50/6. Source novelty is not usefulness.
+Closure31 follows minimum4 + rejection2 + future-check recovery4 = protected10; pure
+policy replay matches all6 masks. Current guidance/correction use the allowed tools.
+Plan10 describes search30, already executed; no unavailable-read instruction is proven.
+Call31 has2 prior reasoning items,32 has0 after rollover; both incomplete25000, while
+673 public source lines/diff/failure/plan persist. Plan review32 is already requested.
+An older successful same-settings AnyIO row edited at18 and had11 inspection calls after
+failure versus first edit26/3 now; runtime differs, no causal comparison or early-edit quota.
+Target exploration-to-repair decisions and iteration time; no runtime/prompt/policy change.
+Focused67/1.58s/Ruff PASS;264 implementation/test files and runtime172a439f unchanged.
+No provider/count/Docker/candidate/private-detail read. Closed groups stay closed.
+Evidence: C:\pt\analyses\anyio-post-failure-decision-audit-20260922-v1\result.md.
+
 Current diagnostics seam: `diagnostics.public_probe_delivery` audits actual native and
 quoted public probe receipts against preceding durable results and admitted dependency/
 profile identities. Public dependency hashes are allowed only in verified execution-policy
