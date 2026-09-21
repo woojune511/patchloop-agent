@@ -7,7 +7,51 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed observation: AnyIO mini xhigh submits and passes
+## Latest closed observation: original Pydantic AI mini xhigh submits but fails
+
+One newly authorized original pydantic-ai-synthetic-tool-reasoning v1 episode closes
+EVALUATOR_FAIL: acceptance FAIL, safety PASS, official=false. Planned/started/submitted
+are1/1/1; acceptance PASS0/1, NOT_RUN0, infrastructure/uncertainty stops0. Exact
+gpt-5.4-mini-2026-03-17/xhigh, repeat1/$1.20, runtime7608ec9c at e6d8377, policies,
+prompts, tools and limits match the preceding AnyIO observation. Only task, prepared
+source/dependencies and their public check/import/image bindings differ. Existing v1
+task and fresh empty state are used; no diagnostic-task hints or old patches enter.
+
+The existing30-wheel/2035-file bundle passes a separate real Linux current-source,
+SDK-import, mocked async transport and synthetic changed-line diagnostic,233.227s.
+An initial external30s inventory deadline expired before workspace/container/model work;
+that failure is retained. Increasing only the external preparation allowance resolves
+it; live limits/runtime stay fixed. No downloads, resolver, install or image build.
+
+First and only edit is call4. Public contract8/8 at5 and upstream18 tests at6 pass;
+their results and the same diff reach submission input7. The model runs zero probes,
+although run_probe is available in all7 inputs. Static public diff review shows the
+empty-field insertion tests field mode/name only; it does not distinguish a supplied
+provider requirement from a plain field-mode profile. This conflicts with the public
+preservation boundary; it is not an inspected private evaluator failure explanation.
+All5 added lines execute in the contract check, which does not establish semantic
+coverage. No failed-check repair, rejected edit or repeated rejected proposal occurs.
+
+Seven settled generations/counts,16 tools and one edit cost $0.15613410;
+cache-neutral equivalent $0.20071650. Elapsed250.528s; maximum input45587 tokens /
+228464 request bytes; three segments(initial1,major_result_reviewed2). Every output
+ceiling is25000, no incomplete response or completion-horizon/resource stop occurs.
+All7 actual-input/request/usage audits pass. Protected4503 files, frozen1776 runtime
+files,16 operator files and protocol remain unchanged; no labeled containers remain.
+Operator24 PASS/5.065s and Ruff pass. Unchanged-runtime full3079 PASS/16 SKIP and
+both-policy mock evidence(10 inputs) are reused, not rerun. No retry/resume/replacement,
+extra candidate execution or hidden-detail inspection; unused $1.04386590 is closed.
+
+Prepared dependencies alone do not establish stronger verification behavior: the agent
+did not use a probe. AnyIO PASS and Pydantic FAIL are separate familiar-task single
+observations, not a repeated benchmark or causal comparison. The next investigation
+is the common submission/verification decision: how existing guidance translates public
+preservation requirements into concrete checks. Start with public traces and existing
+guidance before proposing a generic change; no task-specific examples, default change
+or further paid execution is included in this closed observation.
+Evidence: C:\pt\analyses\mini-xhigh-pydantic-dependencies-20260921-v1.
+
+## Previous closed observation: AnyIO mini xhigh submits and passes
 
 The prepared runtime dependency bundle passes a real Linux probe validation:
 AnyIO/backend import from the fresh current source, dependency imports from the
@@ -33,8 +77,8 @@ major_result_reviewed4. All output ceilings remain25000; no resource limit ends 
 The agent calls run_probe zero times. The successful source/dependency diagnostic
 and the acceptance PASS are separate observations; this single familiar-task result
 does not establish the option's causal effect, a model ranking or generalization.
-No task-specific prompt/harness change or default adoption follows. A separate run
-on another unsolved dev-train task is the next candidate; no extra sample is included.
+No task-specific prompt/harness change or default adoption follows. The separately
+authorized original Pydantic AI observation above follows this closed run.
 
 New no-call operator24 PASS/96.18s, Ruff and all28 actual-input/request/usage audits
 pass. The unchanged runtime reuses its prior full3079 PASS/16 SKIP regression and

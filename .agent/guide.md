@@ -5,7 +5,32 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest observation: prepared AnyIO runtime wheels pass a real Linux current-source/
+Latest observation: original Pydantic AI v1 mini xhigh closes EVALUATOR_FAIL,
+acceptance FAIL/safety PASS, official=false; planned/started/submitted1/1/1,
+acceptance PASS0/1, NOT_RUN/infrastructure/uncertainty stops0. Runtime7608ec9c at
+e6d8377 and common model/prompts/tools/policies/limits stay fixed against AnyIO;
+only task/source/dependencies and derived public bindings differ. Existing30-wheel
+bundle passes real Linux current-source/SDK/async/changed-line diagnostic233.227s.
+Retain the first external inventory timeout; only external preparation allowance
+changed before freeze, not runtime/live limits. No resolve/download/install.
+Edit4 -> public8/8 at5 -> upstream18 PASS at6 -> submit7. All7 actual inputs carry
+the public task/diff/check state; run_probe is available but unused. Public static
+patch tests field mode/name without distinguishing the supplied provider requirement;
+this misses the stated plain-profile preservation boundary. Do not label it an
+inspected private failure cause. Executed added lines do not establish semantic coverage.
+Seven settled model/count calls,16 tools,one edit cost$0.15613410/cache-neutral$0.20071650,
+250.528s; maxinput45587,3segments(initial1/major_result_reviewed2),ceilings25000.
+No response exception or resource stop. Operator24/5.065s,Ruff,all7 audits PASS;
+prior unchanged-runtime full3079/16 SKIP and both-policy10-input mocks reused.
+Protected4503/frozen1776 runtime/16 operator files unchanged; zero labeled containers.
+Unused$1.04386590 closed; no retry/resume/extra run/hidden-detail inspection/default change.
+Next: inspect the common submission/verification decision against existing guidance
+and public preservation requirements before a generic change. No task-specific hints
+or new paid execution are included. Different familiar-task single runs are not a
+causal dependency comparison or generalization claim.
+Evidence: C:\pt\analyses\mini-xhigh-pydantic-dependencies-20260921-v1.
+
+Previous observation: prepared AnyIO runtime wheels pass a real Linux current-source/
 async/changed-line diagnostic in a separate workspace, with confirmed cleanup.
 One new mini xhigh AnyIO v3 run then closes EVALUATOR_PASS, acceptance/safety PASS,
 official=false, runtime7608ec9c. Only prepared_probe_dependencies differs in the
