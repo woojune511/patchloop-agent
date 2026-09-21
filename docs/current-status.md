@@ -7,7 +7,49 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed observation: public repair works, acceptance remains mixed
+## Latest closed observation: mini xhigh comparison stops on provider timeout
+
+The same-task/common-harness mini xhigh group closes incomplete. Planned order was
+AnyIO v3 -> HF Hub v5 -> original Pydantic-AI v1, each repeat=1/$1.20, group cap
+$3.60, official=false. Against the preceding GPT-5.4 medium packet, only the exact
+model, reasoning effort and derived identities differ: gpt-5.4-mini-2026-03-17/xhigh.
+Runtime, tasks/sources/images, common prompt/tools/policies/limits remain frozen.
+
+AnyIO ends PROVIDER_TIMEOUT_OR_UNKNOWN at 1800.144s with APITimeoutError. Request 18
+has no response after 1500.774s; earlier 17 responses have median 6.680s/max 69.903s.
+Started 1/3, submitted 0, acceptance/safety NOT_RUN for all three; HF Hub and
+Pydantic-AI never start. PASS/planned is 0/3 with no completed evaluation, not three
+evaluated failures. The group stops once, with no retry/resume/replacement/extra run.
+
+First edit is call 15 versus medium's call 6. Public lifecycle check at call 16
+passes 3/7; failure/current diff reach actual input 17, followed by source inspection.
+No further repair is observed before request 18 times out. Probe call 10 fails at
+subprocess._fork_exec with PermissionError before verifying project behavior;
+setup comparisons are absent. The registered clean-Python probe description omits
+the child-process restriction recorded by its same-process-pthreads-only-v1 policy.
+This common description gap does not establish the later provider timeout's cause.
+
+All 18 actual inputs audit correctly; all 19 input counts finish, but only 17
+generation usages settle. Known-usage subtotal $0.39529605, cache-neutral subtotal
+$0.61803525; final cost and unused budget remain unknown. Legacy audit fallback
+MODEL_RATE_RECORDED omits the unreturned dispatch, so the closure explicitly records
+effective_billing_state UNKNOWN. No free-credit/invoice claim. Input peak 53231,
+five segments (three major_result_reviewed and one input_tokens transition), all
+output ceilings 25000, no completed-response incomplete or context-limit exit.
+
+Operator21 PASS/4.639s, Ruff PASS, public input/binding/feedback audits PASS.
+Exact-runtime full/mock receipts below are reused. Docker already runs; no
+start/pull/build. Cleanup confirms zero labeled containers; 2613 protected files,
+15 frozen operator files and protocol unchanged. Budget authorization is closed.
+No runtime/default change or hidden-detail inspection. Report:
+C:\pt\analyses\mini-xhigh-repair-compare-20260921-v1\result.md.
+
+Mini xhigh quality remains undetermined. Next provider-free candidates are explicit
+unknown billing for an unreturned dispatch and accurate common probe execution
+constraints. These add no task-specific repair hints. A paid rerun is outside this
+closed group; no model superiority, benchmark or generalization claim follows.
+
+## Prior closed observation: public repair works, acceptance remains mixed
 
 The fixed common-harness panel AnyIO v3 -> HF Hub v5 -> original Pydantic-AI v1
 closes at acceptance 1/3 PASS, safety 3/3 PASS, started/submitted 3, NOT_RUN 0,
@@ -46,9 +88,9 @@ unchanged. Group and unused $1.97931900 closed; no retry/resume/replacement/extr
 No hidden-detail inspection. Report:
 C:\pt\analyses\common-harness-broader-panel-20260921-v1\result.md.
 
-Focus next on task-independent verification of behavior that must be preserved
-outside registered public checks. Keep common runtime fixed while designing a
-bounded general verification experiment; add no task-specific fix instructions.
+This completed panel suggested task-independent verification of behavior that must
+be preserved outside registered public checks. The subsequent mini group above
+keeps that common runtime fixed and adds no task-specific fix instructions.
 These familiar-task single samples and different task mix do not establish a
 regression from the previous 3/3, causal guidance effects or generalization.
 

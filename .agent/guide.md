@@ -5,7 +5,31 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest closed observation: unchanged common harness on AnyIO v3 -> HF Hub v5 ->
+Latest closed observation: same-task/common-harness mini xhigh group is CLOSED_INCOMPLETE.
+Exact gpt-5.4-mini-2026-03-17/xhigh replaces GPT-5.4 medium; only model/effort and
+derived identities differ from the preceding packet. Runtime, task/source/image,
+prompt/tools/policies/limits stay fixed. AnyIO v3 -> HF Hub v5 -> original Pydantic-AI v1,
+each repeat=1/$1.20, group $3.60, official=false. AnyIO request 18 receives no response
+for 1500.774s and ends APITimeoutError/PROVIDER_TIMEOUT_OR_UNKNOWN at 1800.144s.
+Started 1/3, submitted 0, acceptance/safety NOT_RUN 3; subsequent slots never start.
+No retry/resume/replacement/extra execution. First edit 15, public lifecycle 3/7 at 16,
+failure/current diff delivered to input 17, then inspection; no further repair observed.
+Probe 10 fails at subprocess._fork_exec before behavior verification, no setup checks.
+Registered tool description omits the child-process restriction; result policy is
+same-process-pthreads-only-v1. Do not infer a provider-timeout cause from that gap.
+All 18 actual inputs and 19 input counts verify; 17 generation usages settle.
+Known subtotal $0.39529605/cache-neutral $0.61803525, one missing usage; final cost
+and unused budget unknown. Legacy MODEL_RATE_RECORDED fallback misses the unreturned
+dispatch; closure overrides effective billing to UNKNOWN. Group budget is closed.
+Input peak 53231, segments 5 (major_result_reviewed x3/input_tokens x1), ceiling25000.
+Operator21 PASS/4.639s, Ruff/public audits PASS; exact-runtime full/mock reused.
+No Docker start/pull/build, zero labeled containers, 2613 protected and 15 frozen
+operator files/protocol unchanged. No runtime/default change or hidden-detail read.
+Next provider-free candidates: unreturned-dispatch billing metadata and common probe
+execution-constraint disclosure. Mini quality remains undetermined; no automatic paid run.
+Evidence: C:\pt\analyses\mini-xhigh-repair-compare-20260921-v1; see docs/current-status.md.
+
+Prior closed observation: unchanged common harness on AnyIO v3 -> HF Hub v5 ->
 original Pydantic-AI v1 closes acceptance 1/3, safety 3/3, all started/submitted,
 NOT_RUN 0, no infrastructure/uncertainty stop. GPT-5.4 medium, prompts, normalized
 tools, policies, limits and runtime match the prior group; task/source-derived
@@ -27,8 +51,8 @@ No incomplete response, output-ceiling reduction, cost/input/output exit, reject
 or probe. Operator17 PASS/5.21s, Ruff PASS, exact-runtime full/mock receipts reused.
 No Docker start/pull/build; cleanup PASS, 2265 protected files unchanged. Group and
 unused $1.97931900 closed, no retry/resume/extra execution or hidden-detail inspection.
-Next focus is general verification of preserved behavior beyond registered checks,
-without task-specific guidance; keep runtime fixed pending a bounded experiment.
+This panel suggested general verification of preserved behavior beyond registered
+checks, without task-specific guidance; the later mini comparison keeps runtime fixed.
 Different familiar-task samples do not establish regression, causality or generalization.
 Evidence: C:\pt\analyses\common-harness-broader-panel-20260921-v1.
 
