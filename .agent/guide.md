@@ -5,6 +5,28 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest stopped observation: AnyIO v3 -> HF Hub v5, mini snapshot/xhigh, runtime172a439f
+at cbe2d19b, fixed brief-v1/segmented/tools/limits,repeat1/$1.20 each,new cap$2.40.
+Only N1 starts: edit26, public lifecycle1/7 at27, then inspection28-30;31/32 each
+reasoning-only25000/max_output_tokens, terminal INCOMPLETE_RESPONSE, no submission.
+Probes17/18 correct a helper-import mistake and test stdlib cancellation before edit,
+not candidate preservation. Failure delivery verified; plan recognizes task-identity
+regression but no second edit. Edit available from3; completion_horizon closes inspection
+after30,31/32 offer edit/stop only. No causal mask/segment or larger-output benefit claim.
+Frozen audit stops H1 on dependency digest presence in inputs18/19. Existing
+project_probe_result retains the public execution_policy; the auditor's universal
+absence assumption conflicts with that contract. Post-stop32 request hashes, public
+state, envelope/source/dependency bindings and billing verify; host preparation paths
+and prepared-source manifest absent. Keep original failed audit/stop, no resume.
+Closed incomplete: planned2/started1/submitted0,acceptance0/2 planned,NOT_RUN2,stop1.
+Cost$1.14579090/cache-neutral$1.56042450,32model/48tool/36count,1230.171s,9segments,
+peak59602; two incomplete responses$0.26428290. No cost/call/wall cap terminal.
+Operator26/8.20s,Ruff,fresh mock4 inputs PASS; exact-runtime full3103/16 SKIP reused.
+Protected1581/runtime1778/operator18 unchanged,containers0,unused$1.25420910 closed.
+Next provider-free seam is public-probe audit contract coverage, including failed and
+successful receipts/handoff; behavior diagnosis targets delayed edits and completion.
+Evidence: C:\pt\analyses\mini-xhigh-anyio-hf-observation-20260922-v1\result.md.
+
 Latest fixed-harness observation: T1 Tox v1 -> F1 Fromager v1, mini snapshot/xhigh,
 brief-v1/segmented-v1, runtime7608ec9c at805a9b9. Existing common model/prompt/tools/
 policies/limits fixed; only task/source/dependencies and task-derived bindings differ.

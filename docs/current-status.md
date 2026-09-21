@@ -7,6 +7,49 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest stopped observation: AnyIO incomplete, HF Hub not started
+
+The mini xhigh N1 AnyIO v3 -> H1 HF Hub v5 panel closes `CLOSED_INCOMPLETE`.
+Planned2/started1/submitted0, acceptance PASS0/2 planned and NOT_RUN2; this is not
+two assessed failures or a completed comparison. Each repeat1/$1.20, group$2.40,
+official=false. Runtime172a439f at cbe2d19b and common brief-v1/segmented-v1/tools/
+limits stay fixed. AnyIO uses its prepared runtime dependencies; HF's setup.py-only
+metadata has no supported bundle, so its frozen request retains stdlib probes.
+
+AnyIO probes asyncio before editing: call17 imports check_setup incorrectly;18
+corrects it and observes cancellation semantics. Neither tests the project candidate.
+Edit26 creates separate coroutine Tasks; public lifecycle check27 passes1/fails6,
+including fixture task/context/cleanup preservation. Failure reaches input28; plans
+recognize the task-identity problem, but calls28-30 inspect without another edit.
+Calls31/32 each emit reasoning-only25000 and end max_output_tokens; the existing
+one correction exhausts, terminal INCOMPLETE_RESPONSE, no submission/evaluation.
+Edit was available from3. Call30 announces completion-horizon closure;31/32 offer
+replace_text/stop_task only. Record this boundary without assigning causal effect
+to the mask, segmentation or output ceiling. Cost/call/wall caps did not terminate it.
+
+After N1, frozen audit_binding rejects a dependency manifest digest in actual inputs
+18/19, stopping H1. Read-only diagnosis locates it in the existing public probe receipt
+and segment archive: project_probe_result retains execution_policy. The operator's
+universal digest-absence assertion conflicts with that projection. All32 request
+hashes, public task/diff/check/plan delivery, envelope/source/dependency bindings and
+usage/count match; preparation host paths and prepared-source manifest stay absent.
+Preserve the failed audit and stop; no gate relaxation, resume or replacement occurs.
+
+Recorded$1.14579090/cache-neutral$1.56042450,32 model/48 tool/36 count,1230.171s.
+Incomplete responses cost$0.26428290 (23.1%). First edit after25 calls costs$0.60661365
+before dispatch/$0.73568490 through edit. Input peak59602 (count62407 rolls),9 segments
+(initial1,input_tokens4,major_result_reviewed4),all ceilings25000. Rejected edits0;
+plan revision10, memory updates48 all null, no concerns/upstream test-source reads.
+
+Operator26 PASS/8.20s,Ruff,fresh mock4 inputs through isolated EVALUATOR_PASS/safety
+NOT_RUN,public environment diagnostics2. Same-runtime full3103 PASS/16 SKIP reused.
+Protected1581/runtime1778/frozen operator18/protocol unchanged; labeled containers0.
+Unused$1.25420910 closed; invoice/free credits unverified. Next provider-free seam:
+align the public-probe receipt/auditor contract and cover successful/failed probes
+through segment handoff; diagnose delayed edit and post-failure completion separately.
+No task-specific guidance, policy adoption or further paid execution belongs here.
+Evidence: C:\pt\analyses\mini-xhigh-anyio-hf-observation-20260922-v1\result.md.
+
 ## Current implementation: declared version files in prepared probes
 
 Prepared probe dependencies can now include default Python version modules explicitly
