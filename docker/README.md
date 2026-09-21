@@ -75,7 +75,10 @@ The operator prepares exact public PyPI wheels from the public source's lock bef
 run. Each probe verifies an independent read-only dependency snapshot; source import
 roots precede dependencies and `.pth` hooks are not processed. Nonempty configured roots
 limit source copies to those trees and root files; tracked symlinks are omitted without
-following targets. Source size, process and output limits remain fixed. Descriptor/content
+following targets. Declared default hatch-vcs Python version artifacts are copied into
+the same source snapshot with current tracked files taking precedence. Their public
+build metadata must match; no project build hooks run. Source size, process and output
+limits remain fixed. Descriptor/content
 identity and the source-selection policy enter the profile hash, envelope and evaluator
 receipt validation. No evaluator image extraction, runtime installation or network
 fallback. See [the preparation contract](../.agent/prepared-probe-dependencies.md).

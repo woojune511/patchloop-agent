@@ -89,7 +89,11 @@ execution only uses verified local copies in the existing clean Python image.
 
 Source roots select the project trees copied into the probe and precede dependencies
 for imports. Dynamic project versions use explicit source-snapshot metadata; release
-version behavior is outside this environment's guarantee. Missing or changed bundles
+version behavior is outside this environment's guarantee. Default Python version files
+declared by public hatch-vcs configuration use that same snapshot version; arbitrary
+build hooks and other generated outputs remain unsupported. Current tracked source
+takes precedence, and changed build metadata requires a new preparation.
+Missing or changed bundles
 fail preflight without a fallback. See the [preparation contract](../.agent/prepared-probe-dependencies.md)
 for wheel selection, bounds, source omissions and recovery. These are durable external
 artifacts; task evaluator images are never used for arbitrary probe programs.

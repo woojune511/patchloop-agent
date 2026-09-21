@@ -23,6 +23,7 @@ from urllib.parse import urlsplit
 import httpx
 from pydantic import Field, ValidationError, field_validator
 
+from patchloop import probe_project_files
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import ProbeDependencyIdentity, PublicTask, StrictModel
 from patchloop.deadline import ExecutionDeadline
@@ -137,12 +138,18 @@ def _inventory(root: Path, *, target: Path | None = None,
     return hashes
 
 
+def _content_hash(files: dict[str, str], generated: list[dict]) -> str:
+    return sha256_json({"files": files, "generated_project_files": generated}
+                       if generated else files)
+
+
 @dataclass(frozen=True)
 class PreparedDependencies:
     path: Path
     identity: ProbeDependencyIdentity
     repository_url: str
     base_commit: str
+    generated_project_files: tuple[probe_project_files.GeneratedProjectFile, ...] = ()
 
     @property
     def environment(self) -> dict:
@@ -151,7 +158,8 @@ class PreparedDependencies:
                                    else "all_tracked_regular_files"),
                 "source_roots": ["/workspace", *[f"/workspace/{root}"
                                  for root in self.identity.source_roots]],
-                "dependency_path": MOUNT, "network": "none", "installation": "unavailable"}
+                "dependency_path": MOUNT, "network": "none", "installation": "unavailable",
+                **({"generated_version_files": True} if self.generated_project_files else {})}
 
     def verify(self, *, target: Path | None = None,
                deadline: ExecutionDeadline | None = None) -> None:
@@ -161,10 +169,26 @@ class PreparedDependencies:
         try:
             hashes = _inventory(self.path.parent / "site-packages", target=target,
                                 deadline=deadline)
+            generated = probe_project_files.records(descriptor)
+            if tuple(generated) != self.generated_project_files:
+                raise ContractError("prepared generated project file identity changed")
+            if generated and _inventory(self.path.parent / probe_project_files.DIRECTORY,
+                                        deadline=deadline) != {
+                    item.path: item.content_hash for item in generated}:
+                raise ContractError("prepared generated project files are missing or changed")
         except OSError as exc:
             raise ContractError("prepared dependencies cannot be read or copied") from exc
-        if hashes != descriptor["files"] or sha256_json(hashes) != identity.content_hash:
+        if hashes != descriptor["files"] or _content_hash(
+            hashes, [item.model_dump(mode="json") for item in generated],
+        ) != identity.content_hash:
             raise ContractError("prepared dependency contents are missing or changed")
+
+    def copy_project_files(self, target: Path, *, tracked_paths: set[str],
+                           remaining_bytes: int) -> list[dict]:
+        return probe_project_files.copy_to_snapshot(
+            list(self.generated_project_files), self.path.parent / probe_project_files.DIRECTORY,
+            target, tracked_paths=tracked_paths, remaining_bytes=remaining_bytes,
+        )
 
 
 def read_descriptor(path: Path) -> tuple[dict, ProbeDependencyIdentity]:
@@ -184,6 +208,7 @@ def read_descriptor(path: Path) -> tuple[dict, ProbeDependencyIdentity]:
         )
         if not isinstance(descriptor["files"], dict):
             raise ValueError("missing dependency file inventory")
+        probe_project_files.records(descriptor)
         if not all(isinstance(descriptor[key], str) and descriptor[key]
                    for key in ("repository_url", "base_commit")):
             raise ValueError("missing dependency source identity")
@@ -211,7 +236,8 @@ def load_dependencies(path: Path, public: PublicTask,
     ):
         raise ContractError("prepared probe dependencies do not match the task source")
     return PreparedDependencies(path.resolve(), identity, public.repository.url,
-                                public.repository.base_commit)
+                                public.repository.base_commit,
+                                tuple(probe_project_files.records(descriptor)))
 
 
 def _download(wheel: PublicWheel, destination: Path) -> None:
@@ -372,7 +398,12 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
                 "hash": wheel.hash.replace(":", "=", 1)}}), encoding="utf-8")
         workspace_metadata = _workspace_metadata(repo, packages, roots,
                                                  source.git_commit, target)
+        generated = probe_project_files.prepare(repo, workspace_metadata, roots, output)
+        if generated and _inventory(output / probe_project_files.DIRECTORY) != {
+                item["path"]: item["content_hash"] for item in generated}:
+            raise ContractError("generated project files changed before publication")
         files = _inventory(target)
+        content_hash = _content_hash(files, generated)
         descriptor = {
             "schema_version": "prepared-probe-dependencies-v1", "python": "3.12",
             "platform": "linux/amd64", "image": PROBE_IMAGE,
@@ -380,13 +411,15 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
             "prepared_source_content_hash": source.content_hash,
             "source_roots": roots, "wheel_lock": lock_record,
             "workspace_metadata": workspace_metadata,
-            "content_hash": sha256_json(files), "files": files,
+            **({"generated_project_files": generated} if generated else {}),
+            "content_hash": content_hash, "files": files,
         }
         manifest = output / MANIFEST
         body = canonical_json(descriptor) + "\n"
         journal.append("probe_dependencies_prepared", {
-            "manifest_hash": sha256_bytes(body.encode()), "content_hash": sha256_json(files),
+            "manifest_hash": sha256_bytes(body.encode()), "content_hash": content_hash,
             "wheel_count": len(selected), "file_count": len(files), "official": False,
+            **({"generated_project_file_count": len(generated)} if generated else {}),
         })
         ArtifactStore(output).write_text_immutable(manifest, body)
         return manifest

@@ -7,6 +7,34 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Current implementation: declared version files in prepared probes
+
+Prepared probe dependencies can now include default Python version modules explicitly
+declared by public hatch-vcs build configuration. The generic adapter uses the existing
+source-snapshot version, never runs project hooks and does not calculate release versions.
+Every probe combines the verified artifact with current tracked source; tracked edits
+take precedence. Changed build metadata and missing/changed artifacts fail reuse.
+Source preparation, registered checks, planning/context rules and evaluation isolation
+retain their existing contracts. Older bundles without generated records remain readable.
+See [the preparation contract](../.agent/prepared-probe-dependencies.md#declared-generated-version-modules).
+
+Runtime172a439f passes focused90/84.69s and full3103 PASS/16 SKIP across141 files
+in1600.156s with --durations=15; runtime/tests stay frozen during that full run.
+Ruff and lock consistency pass. Both-context generated-bundle mocks preserve10 actual
+inputs through isolated evaluation; fresh omitted-option mocks preserve8 inputs and
+reach EVALUATOR_PASS/safety NOT_RUN. Three final clean-Linux probes import exact Tox
+source, execute a synthetic current-source edit, and confirm an independent workspace
+retains the original result. Source/legacy dependencies stay unchanged; cleanup confirms
+all diagnostic containers absent. Preparation uses11 public wheels/388 installed files
+and one declared version module. These are environment checks, not repair candidates.
+
+The first full regression was deliberately interrupted after review found Windows
+drive/alias paths could bypass POSIX-only validation. Canonical path/containment and
+prepublication inventory checks precede the complete passing run above. Initial receipts
+remain preserved. No new paid sample or policy adoption belongs to this change; the
+closed panel below remains unchanged. Evidence:
+C:\pt\analyses\generated-probe-project-files-20260921-v1\result.md.
+
 ## Latest closed observation: fixed mini xhigh passes Tox and Fromager
 
 The next fixed-harness panel closes T1 Tox v1 -> F1 Fromager v1 at acceptance/safety

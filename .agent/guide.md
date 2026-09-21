@@ -758,8 +758,11 @@ It supplies verified per-probe read-only dependency
 copies and public source roots, with current project imports first. Nonempty roots select
 only those source trees and repository-root files. Tracked symlinks are omitted without
 following targets; other source guards remain. Bind identity in envelope, journal,
-profile, submission and evaluation provenance. Missing/changed/wrong-source bundles fail
-before model calls; no runtime downloads or evaluator-image reuse. See
+profile, submission and evaluation provenance. Default hatch-vcs Python version-file
+declarations can supply separately hashed snapshot-version artifacts without running
+build hooks. Current tracked files win, and changed public build metadata rejects stale
+generated output. Missing/changed/wrong-source bundles fail before model calls;
+no runtime downloads or evaluator-image reuse. See
 [prepared-probe-dependencies.md](prepared-probe-dependencies.md).
 
 `--probe-policy cases-v1` (requires --enable-probes, default none) extends only

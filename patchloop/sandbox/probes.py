@@ -74,7 +74,7 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
         "source_limit_bytes": PROBE_SOURCE_LIMIT_BYTES,
         "timeout_seconds": PROBE_TIMEOUT_SECONDS,
         "output_limit_bytes": PROBE_OUTPUT_LIMIT_BYTES,
-        "snapshot": ("tracked-public-source-roots-current-v2" if dependencies is not None
+        "snapshot": ("tracked-public-source-roots-generated-v3" if dependencies is not None
                      else "tracked-public-current-v1"),
         "snapshot_limit_bytes": _SNAPSHOT_LIMIT_BYTES,
         **({"dependencies": dependencies.model_dump(mode="json"),
@@ -117,7 +117,8 @@ def _is_public_path(relative: str) -> bool:
 
 
 def _snapshot(workspace: Path, target: Path, deadline: ExecutionDeadline | None, *,
-              omit_symlinks: bool = False, source_roots: list[str] | None = None) -> str:
+              omit_symlinks: bool = False, source_roots: list[str] | None = None,
+              dependencies: PreparedDependencies | None = None) -> str:
     """Export tracked current bytes without copying Git metadata or ignored state."""
     timeout = deadline.bounded_timeout(10, reserve_seconds=5) if deadline else 10
     listing = subprocess.run(
@@ -143,6 +144,7 @@ def _snapshot(workspace: Path, target: Path, deadline: ExecutionDeadline | None,
         ):
             continue
         if mode == "120000" and stage == "0" and omit_symlinks:
+            seen.add(relative)
             manifest.append({"path": relative, "omitted": "tracked_symlink"})
             continue
         if mode not in {"100644", "100755"} or stage != "0" or relative in seen:
@@ -183,6 +185,10 @@ def _snapshot(workspace: Path, target: Path, deadline: ExecutionDeadline | None,
         destination.write_bytes(content)
         destination.chmod(0o444)
         manifest.append({"path": relative, "content_hash": sha256_bytes(content)})
+    if dependencies is not None:
+        manifest.extend(dependencies.copy_project_files(
+            target, tracked_paths=seen, remaining_bytes=_SNAPSHOT_LIMIT_BYTES - total_bytes,
+        ))
     return sha256_json(sorted(manifest, key=lambda item: item["path"]))
 
 
@@ -374,21 +380,6 @@ class DockerProbeSandbox:
                 trusted = temporary_path / "trusted"
                 snapshot.mkdir()
                 trusted.mkdir()
-                snapshot_hash = _snapshot(workspace, snapshot, deadline,
-                                          omit_symlinks=self.dependencies is not None,
-                                          source_roots=(self.dependencies.identity.source_roots
-                                                        if self.dependencies else None))
-                wrapper = _WRAPPER.read_bytes()
-                (trusted / "probe_runner.py").write_bytes(wrapper)
-                if sha256_bytes(wrapper) != self._profile["wrapper_hash"]:
-                    raise ContractError("probe trusted wrapper changed before execution")
-                setup_wrapper = _SETUP_WRAPPER.read_bytes()
-                if sha256_bytes(setup_wrapper) != self._profile["setup_helper_hash"]:
-                    raise ContractError("probe setup helper changed before execution")
-                (trusted / "probe_setup.py").write_bytes(setup_wrapper)
-                (trusted / "setup_request.json").write_text(
-                    json.dumps(setup_request), encoding="utf-8",
-                )
                 dependency_arguments = []
                 if self.dependencies is not None:
                     dependencies = temporary_path / "dependencies"
@@ -403,6 +394,22 @@ class DockerProbeSandbox:
                         "--platform", self.dependencies.identity.platform,
                         "--mount", f"type=bind,source={dependencies},target={MOUNT},readonly",
                     ]
+                snapshot_hash = _snapshot(workspace, snapshot, deadline,
+                                          omit_symlinks=self.dependencies is not None,
+                                          source_roots=(self.dependencies.identity.source_roots
+                                                        if self.dependencies else None),
+                                          dependencies=self.dependencies)
+                wrapper = _WRAPPER.read_bytes()
+                (trusted / "probe_runner.py").write_bytes(wrapper)
+                if sha256_bytes(wrapper) != self._profile["wrapper_hash"]:
+                    raise ContractError("probe trusted wrapper changed before execution")
+                setup_wrapper = _SETUP_WRAPPER.read_bytes()
+                if sha256_bytes(setup_wrapper) != self._profile["setup_helper_hash"]:
+                    raise ContractError("probe setup helper changed before execution")
+                (trusted / "probe_setup.py").write_bytes(setup_wrapper)
+                (trusted / "setup_request.json").write_text(
+                    json.dumps(setup_request), encoding="utf-8",
+                )
                 trace_arguments = []
                 if execution_targets is not None and execution_targets["files"]:
                     prepare_trace(trusted, execution_targets)

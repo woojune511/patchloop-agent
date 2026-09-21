@@ -307,6 +307,10 @@ def test_actual_inputs_evaluation_and_closed_replay_bind_dependencies(
             if not json.loads(context).get("recent_probes"):
                 description = next(t["description"] for t in tools if t["name"] == "run_probe")
                 assert "Prepared public wheel" in description
+                if prepared.load_dependencies(bundle, smoke_package.public, prepared.admit(
+                    bundle,
+                )).generated_project_files:
+                    assert "Declared default hatch-vcs Python version files" in description
                 assert str(bundle) not in description
                 return DevModelTurn(tool_calls=[probe_call()])
             return super().next_turn(context, tools)

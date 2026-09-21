@@ -357,6 +357,10 @@ def dev_tool_schemas(
                 "Other source trees are unavailable when configured roots are present. "
                 "Workspace distribution metadata is minimal; dynamic versions use an explicit "
                 "source-snapshot version, so release-version behavior is not verified here. "
+                + ("Declared default hatch-vcs Python version files use that same snapshot "
+                   "identity; current tracked files take precedence. Other generated build "
+                   "outputs are unavailable. " if probe_environment.get("generated_version_files")
+                   else "") +
                 "Import and exercise the current project implementation when relevant. "
                 "Network and dependency installation are unavailable. Missing imports remain "
                 "diagnostic failures; a standard-library reduction does not verify project code. "
