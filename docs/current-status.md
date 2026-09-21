@@ -7,6 +7,43 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest closed observation: AnyIO mini xhigh submits and passes
+
+The prepared runtime dependency bundle passes a real Linux probe validation:
+AnyIO/backend import from the fresh current source, dependency imports from the
+prepared snapshot, async TaskGroup completion and execution of a synthetic changed
+function at lines118-119. Original source/dependencies remain unchanged; cleanup is
+confirmed. This separate diagnostic is not a repair candidate or acceptance check.
+
+After that gate, one newly authorized gpt-5.4-mini-2026-03-17/xhigh AnyIO v3 episode
+closes EVALUATOR_PASS with acceptance/safety PASS, official=false. Started/submitted/
+acceptance PASS/planned are1/1/1/1; NOT_RUN and infrastructure/uncertainty stops are0.
+Runtime7608ec9c at commit3d7b2ae9 stays fixed. The only request change from the previous
+episode is prepared_probe_dependencies, with its existing generic environment
+description and derived sandbox identity. Task/source/model/prompt/policies/limits
+stay fixed; the fresh workspace starts without historical plans, notes or patches.
+
+First edit is call18; edits at18/23/26 produce lifecycle2/7,3/7,7/7. Failures reach
+actual inputs20/24 before the next edits. The final diff also passes32 upstream
+pytest-plugin tests (3 deselected), then submits at28. Three edits,42 tools,28 settled
+generations and31 counts cost $0.95162490; cache-neutral equivalent $1.27942650.
+Elapsed731.269s. Maximum input54315; eight segments: initial1,input_tokens3,
+major_result_reviewed4. All output ceilings remain25000; no resource limit ends the run.
+
+The agent calls run_probe zero times. The successful source/dependency diagnostic
+and the acceptance PASS are separate observations; this single familiar-task result
+does not establish the option's causal effect, a model ranking or generalization.
+No task-specific prompt/harness change or default adoption follows. A separate run
+on another unsolved dev-train task is the next candidate; no extra sample is included.
+
+New no-call operator24 PASS/96.18s, Ruff and all28 actual-input/request/usage audits
+pass. The unchanged runtime reuses its prior full3079 PASS/16 SKIP regression and
+both-policy mock evidence (10 inputs); those were not rerun in this observation.
+Protected1918 files and frozen runtime/operator bytes are unchanged. No Docker
+start/pull/build, retry, resume, replacement or hidden-detail inspection. Labeled
+containers are absent at closure; unused $0.24837510 is closed, not reusable.
+Evidence: C:\pt\analyses\mini-xhigh-anyio-dependencies-20260921-v1.
+
 ## Latest implementation: resolve public dependencies without an upstream lock
 
 `task prepare-probe-dependencies --resolve` now reads static dependencies from the

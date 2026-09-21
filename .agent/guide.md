@@ -5,6 +5,20 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest observation: prepared AnyIO runtime wheels pass a real Linux current-source/
+async/changed-line diagnostic in a separate workspace, with confirmed cleanup.
+One new mini xhigh AnyIO v3 run then closes EVALUATOR_PASS, acceptance/safety PASS,
+official=false, runtime7608ec9c. Only prepared_probe_dependencies differs in the
+request; policies/prompts/limits/task/source stay fixed. Three edits at18/23/26 yield
+lifecycle2/7,3/7,7/7, then32 upstream tests PASS and submission at28. Cost$0.95162490,
+cache-neutral$1.27942650,731.269s. Model28/count31/tools42; all28 input/wire/usage audits
+pass. The model makes zero probes: do not attribute this one success to dependency
+availability. No default/task-specific hint change or extra sample follows.
+New operator24 PASS/96.18s and Ruff; reuse unchanged runtime's prior full regression
+and both-policy mocks, not a fresh full-suite claim. Protected1918 files unchanged.
+Unused$0.24837510 closed; no retry/resume/pull/build/start or hidden-detail inspection.
+Evidence: C:\pt\analyses\mini-xhigh-anyio-dependencies-20260921-v1.
+
 Latest implementation: prepare-probe-dependencies --resolve freezes a public wheel lock
 from the exact source's static root pyproject.toml. Explicit --group/--extra/--source-root
 select declared dependencies/import trees. Existing source-lock input and final v1 bundle

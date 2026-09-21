@@ -180,7 +180,21 @@ The exact AnyIO public source prepares its two runtime dependencies successfully
 An explicit test-group/trio-extra preparation stops because forbiddenfruit has no
 usable wheel; it publishes no descriptor. No dependency was dropped or built to
 bypass this failure. This evidence covers preparation and provider-free mock execution,
-not an actual Linux probe import or another model experiment.
+not an actual Linux probe import or another model experiment within that preparation run.
+
+A subsequent real Linux diagnostic verifies AnyIO/backend imports from current source,
+the prepared dependency imports, async TaskGroup completion and execution of a synthetic
+modified function, with original source/dependencies unchanged and cleanup confirmed.
+That diagnostic uses a separate checkout and supplies no repair candidate to the model.
+One fresh mini xhigh AnyIO v3 episode then submits after three edits and passes isolated
+acceptance/safety: 28 model calls, $0.95162490, official=false. It makes zero run_probe
+calls, so acceptance does not demonstrate use or a causal benefit of the dependency bundle.
+Evidence: `C:\pt\analyses\mini-xhigh-anyio-dependencies-20260921-v1`.
+All model/policy/task/source/limit settings are fixed apart from the prepared dependency
+option and its derived generic environment/profile identity. New operator24 PASS/96.18s,
+Ruff and all28 actual-input/wire/usage audits pass; prior unchanged-runtime regression
+and mock receipts are reused. No additional samples or default changes are made.
+
 This feature is opt-in and does not establish improved model decisions or acceptance.
 Packages requiring new processes, more threads than the fixed limit, runtime installation
 or unsupported platform dependencies can still fail under the sandbox. Dependency
