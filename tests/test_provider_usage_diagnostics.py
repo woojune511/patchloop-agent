@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
-from openai import OpenAI
+from openai import APITimeoutError, OpenAI
 from test_dev_conversation_v22 import _provider_smoke
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 
@@ -260,3 +260,71 @@ def test_usage_uncertainty_keeps_preceding_recorded_cost_on_resume(tmp_path, mon
     assert run["billing_state"] == "UNKNOWN"  # Partial known sum is not a final bill.
     assert len(inputs) == len(counted) == 2
     assert run["call_counts"]["tool"] == 1 and run["accepted_mutations"] == 0
+
+
+@pytest.mark.parametrize("policy", ["append-v1", "segmented-v1"])
+@pytest.mark.parametrize("first_valid", [False, True])
+@pytest.mark.parametrize("boundary", [None, "terminal", "provider_call_finished"])
+def test_unreturned_dispatch_is_unknown_without_losing_known_cost_or_reexecuting(
+    tmp_path, monkeypatch, policy, first_valid, boundary,
+):
+    request, inputs, counted = _provider_smoke(monkeypatch, tmp_path)
+    request = request.model_copy(update={"context_policy": policy, "repeat": 3})
+    execute = runner.OpenAIResponsesAdapter.execute_request
+
+    def timeout(self, request, **kwargs):
+        turn = execute(self, request, **kwargs)
+        if (first_valid and len(inputs) == 1) or boundary == "provider_call_finished":
+            return turn
+        raise APITimeoutError(request=httpx.Request("POST", "https://example.invalid"))
+
+    monkeypatch.setattr(runner.OpenAIResponsesAdapter, "execute_request", timeout)
+    if boundary:
+        _crash_journal_once(
+            monkeypatch, event_type=boundary, when="before",
+            predicate=lambda payload: len(inputs) > int(first_valid),
+        )
+        with pytest.raises(_SimulatedCrash):
+            runner.run_dev(request)
+        run_id = _enveloped_run_id(request.state_root)
+        request = request.model_copy(update={"resume_run_id": run_id, "repeat": 1})
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("uncertain dispatch recovery must not perform external work")
+
+    def forbid_execution():
+        monkeypatch.setattr(runner, "load_exact_openai_api_key", forbidden)
+        monkeypatch.setattr(runner, "_live_sandbox_preflight", forbidden)
+        monkeypatch.setattr(runner, "WorkspaceManager", forbidden)
+        monkeypatch.setattr(runner.OpenAIResponsesAdapter, "execute_request", forbidden)
+        monkeypatch.setattr(runner.OpenAIResponsesAdapter, "count_input_tokens_v2", forbidden)
+
+    if boundary:
+        forbid_execution()
+    result = runner.run_dev(request)
+    assert len(result["runs"]) == 1
+    run = result["runs"][0]
+    journal = DevJournal(request.state_root, run["run_id"])
+    pending = journal.unresolved_provider_call()
+    assert pending is not None
+    assert run["terminal"] == "PROVIDER_TIMEOUT_OR_UNKNOWN"
+    assert run["billing_state"] == "UNKNOWN"
+    assert run["provider_usage_failure"] == {
+        "failure_kind": "response_not_recorded", "call_id": pending["call_id"],
+        "turn_id": pending["turn_id"], "request_hash": pending["request_hash"],
+    }
+    usage = journal.provider_usage()
+    assert len(usage) == int(first_valid)
+    assert run["cost_nanos"] == sum(item["cost_nanos"] for item in usage)
+    assert (run["cost_nanos"] > 0) is first_valid
+    assert len(inputs) == len(counted) == 1 + int(first_valid)
+    assert run["call_counts"] == {
+        "model": len(inputs), "input_count": len(counted), "tool": int(first_valid),
+    }
+    assert run["accepted_mutations"] == 0
+    assert all("provider_usage_failure" not in canonical_json(items) for items in inputs)
+    before = journal.path.read_bytes()
+    forbid_execution()
+    resumed = request.model_copy(update={"resume_run_id": run["run_id"], "repeat": 1})
+    assert runner.run_dev(resumed)["runs"][0] == run
+    assert journal.path.read_bytes() == before

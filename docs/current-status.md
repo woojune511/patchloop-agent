@@ -7,6 +7,29 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Current implementation: missing-response billing and probe process guidance
+
+An unreturned provider dispatch now reports `billing_state=UNKNOWN` and
+`provider_usage_failure.failure_kind=response_not_recorded`, retaining its call,
+turn and request identities. Existing `cost_nanos` remains the confirmed subtotal.
+The same result is produced after a crash before usage persistence, without another
+credential/workspace/provider action. Closed historical results remain immutable.
+
+The common probe description states that Python calls run in the same process and
+ordinary threads share the resource limits; child processes, fork/exec and shell
+commands are unavailable. This applies with or without prepared dependencies.
+Sandbox enforcement, task instructions, context/plan policy, timeout and retries
+are unchanged. These fixes do not establish the cause of the preceding API delay.
+
+Focused60 PASS/34.54s, Ruff PASS and fresh both-policy mocks reach isolated evaluation
+with eight actual task/diff/check inputs verified. Full regression covers all 139 files
+in 995.117s with --durations: initially 3048 PASS/16 SKIP and six old schema-fingerprint
+failures. The six expected fingerprints are refreshed for the common description;
+their recheck passes all six (nine including documentation), with original receipts
+retained. This resolves 3054 unique PASS/16 SKIP. Production bytes stay fixed
+through full regression and recheck. Evidence:
+C:\pt\analyses\provider-billing-probe-guidance-20260921-v1.
+
 ## Latest closed observation: mini xhigh comparison stops on provider timeout
 
 The same-task/common-harness mini xhigh group closes incomplete. Planned order was

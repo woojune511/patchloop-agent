@@ -118,6 +118,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "public_probe": "optional-clean-python-diagnostic-protected-budget-v1",
             "public_probe_dependencies": "opt-in-public-locked-wheels-offline-snapshot-v1",
             "public_probe_discovery": "explicit-source-root-and-stdlib-reduction-limits-v2",
+            "public_probe_process_guidance": "same-process-threads-no-child-process-v1",
             "public_probe_import_guidance": "failed-stderr-import-report-model-view-v1",
             "public_probe_observation": "execution-not-behavior-model-view-v1",
             "public_probe_observation_bounds": [4, 3],

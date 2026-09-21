@@ -2581,6 +2581,12 @@ def _milestones(journal: DevJournal) -> dict[str, Any]:
 
 def _provider_usage_failure(journal: DevJournal) -> dict[str, Any] | None:
     """Operator evidence only; never inject provider billing metadata into context."""
+    pending = journal.unresolved_provider_call()
+    if pending is not None:
+        return {
+            "failure_kind": "response_not_recorded",
+            **{key: pending.get(key) for key in ("call_id", "turn_id", "request_hash")},
+        }
     for event in reversed(journal.events()):
         if event["event_type"] != "provider_call_finished":
             continue

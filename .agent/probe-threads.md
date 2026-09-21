@@ -29,7 +29,11 @@ Suppressing that SDK initializer would leave other normal threaded libraries bro
 `probe_profile()` binds v2, `same-process-pthreads-only-v1`, PID limit and wrapper
 bytes. Runtime/profile changes reject active recovery against an old identity;
 closed records remain immutable and readable. No tool schema, plan instruction,
-segment rule, acceptance credit or automatic retry changes.
+segment rule, acceptance credit or automatic retry changes were part of that sandbox
+update. The common probe description now explicitly states same-process Python calls,
+ordinary threads within shared limits, and the child-process/fork/exec prohibition.
+This guidance covers clean and prepared-dependency environments and changes the tool
+identity; sandbox enforcement and process limits remain unchanged.
 
 Changed-line collection still covers the launch thread only. Worker-thread source
 execution must not be reported as covered by that collector.

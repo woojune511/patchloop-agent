@@ -88,6 +88,9 @@ def test_real_model_inputs_receive_guidance_and_keep_public_state_and_replay(
             if backend.calls == 0:
                 description = next(t["description"] for t in tools if t["name"] == "run_probe")
                 assert "sys.path.insert(0, '/workspace/src')" in description
+                assert "same Python process; ordinary threads are allowed" in description
+                assert "Starting child processes is blocked" in description
+                assert "subprocess, multiprocessing process workers, fork, exec" in description
                 return DevModelTurn(tool_calls=[probe_call()])
             return super().next_turn(context, tools)
 

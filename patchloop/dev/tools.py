@@ -367,6 +367,11 @@ def dev_tool_schemas(
             "description": (
                 "Run a small public Python experiment in clean isolated scratch space. "
                 + environment_description +
+                "Run Python calls in the same Python process; ordinary threads are allowed "
+                "within shared resource limits. Starting child processes is blocked: "
+                "subprocess, multiprocessing process workers, fork, exec and shell commands "
+                "are unavailable. Import and call a Python entry point in this process when "
+                "its dependencies are available. "
                 "Choose a public input variation that could falsify an implementation assumption, "
                 "not just repeat a registered example. State the expected observation in the "
                 "question and print or assert it in the experiment. Execution completed means "

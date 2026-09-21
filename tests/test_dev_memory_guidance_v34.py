@@ -63,20 +63,20 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     (
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "90e64afaac672ca504e5ab04c684a763262e90de89c207f1e7e3df7af98ca435",
+        "3b4a5ff0825dec145cb350ad1edc23e7fed4c20f7177cdbc9312b772a8387703",
     ),
     (
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "737eee003bdd9d1c2f1ea127b46a117190be043d54e3ede296879517824e6be2",
+        "e63cc2dcce518f415d77387765ef89657d6d0078087e2dab5e5852735b668213",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "60717ceaab31a3e223740e3baed51edf8ed8fc1d4bf66cb6840a2465de900e85",
+        "6c804f6a7ae4e31bbc14c5a2ddab87cf91517eb9d2a55d0654124e7d1420e675",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "58d5b839504effd9495d8696628dea21a4215259645839cc8282385004f52fe9",
+        "818db123d5539bf679fa64c2a71399bdaf0c6d458d0519042e28e8f2a378039c",
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
@@ -136,7 +136,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Public dependency support changes the overall surface identity; older
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:c2645f99dc9495949ad2a615222f2d712d9c546bcce4c268ac57f3919ddd27df"
+        "sha256:391175f5c53df0f2bf809567956fcc625117f21bb3d5e522105de2ad53932c4b"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

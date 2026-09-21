@@ -5,6 +5,21 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current implementation: a provider dispatch without a matching durable completion
+produces provider_usage_failure.failure_kind=response_not_recorded and billing_state
+UNKNOWN, with call/turn/request identities only. Recorded cost remains the known subtotal.
+Existing unresolved-dispatch recovery stops before credentials/workspace/provider work;
+closed results stay immutable. The common run_probe description now states same-process
+Python/ordinary threads and no child processes, fork/exec or shell commands, for both
+clean and prepared-dependency environments. Only guidance and its tool identity change;
+sandbox enforcement, task instructions, segment rules, timeout and retry policy remain.
+Focused60 PASS/34.54s; fresh append/segmented mocks reach isolated evaluation and verify
+eight actual inputs. Full139 files/995.117s initially 3048 PASS/16 SKIP/six stale schema
+fingerprints; all six rechecks pass (nine including docs), resolving 3054 PASS/16 SKIP.
+Preserve full receipts and the separate expected-value recheck. Runtime
+stays fixed; existing cases remain unchanged except their identity expectations.
+Evidence: C:\pt\analyses\provider-billing-probe-guidance-20260921-v1.
+
 Latest closed observation: same-task/common-harness mini xhigh group is CLOSED_INCOMPLETE.
 Exact gpt-5.4-mini-2026-03-17/xhigh replaces GPT-5.4 medium; only model/effort and
 derived identities differ from the preceding packet. Runtime, task/source/image,
@@ -1272,6 +1287,14 @@ credentials, workspace, count, provider or tool execution. These diagnostics do 
 alter model input, schemas, planning, context policy or the v39 tool-surface hash;
 the runtime content hash changes, with no old-envelope migration. SDK decoding is
 not raw-wire capture: no response body, unknown fields, text or reasoning is logged.
+
+When a dispatch has no matching durable provider completion, report
+`provider_usage_failure.failure_kind=response_not_recorded` with call/turn/request
+identities and `billing_state=UNKNOWN`. This also covers a crash after SDK return
+but before its durable usage record; it does not assert whether the server executed
+the request. Preserve the preceding known cost subtotal. Do not synthesize usage or
+rewrite already-closed terminals. Existing unresolved-call recovery and repetition
+stops remain unchanged; these fields never enter coding-agent context.
 
 After finish, the canonical submitted diff is content-addressed and an immutable
 manifest is recorded before evaluator execution. It binds task bytes, full runtime
