@@ -7,7 +7,51 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest analysis: verification scope narrows before submission
+## Latest closed comparison: existing planning policies both fail the original task
+
+Four fresh mini xhigh episodes close in A1/B1/B2/A2 order: A=brief-v1, B=existing
+brief-assumption-v1, two per arm. Acceptance PASS/planned is A0/2 and B0/2; both
+arms start/submit2, NOT_RUN0, infrastructure/uncertainty stops0, safety PASS2/2.
+All official=false. Original Pydantic AI v1, exact mini snapshot/xhigh, runtime7608ec9c
+at7773432, prepared source/dependencies, segmented context, schemas/tools and limits
+remain fixed. Each repeat1/$1.20, new group cap$4.80. Only existing planning text and
+its derived identities change. B bundles evidence format with edit-assumption guidance;
+this is not an isolated sentence-effect test. No historical inputs enter fresh workspaces.
+
+All four make one edit, pass public contract8/upstream18 and submit without probes or
+upstream test-source reads. First edits are A4/8, B4/7. Public diffs use field mode/name
+without distinguishing profiles carrying the provider requirement from plain field-mode
+profiles. The public other-provider example uses a default profile, so its PASS does not
+establish that distinct preservation condition. This is public static evidence, not an
+inspected private failure explanation. B1 leaves its post-edit plan unchanged and later
+declares no remaining public assumptions; B2 carries broad compatibility uncertainty but
+still treats upstream PASS as sufficient. No rejected edit/repeated rejection or failed
+public check occurs. All56 memory updates are null; no verification concern is created.
+
+Recorded cost$0.70809225, cache-neutral$1.05974025; A$0.33240015/$0.52584975,
+B$0.37569210/$0.53389050. Model35/tool56/count36, summed run time976.313s.
+Actual generation input peaks48761/43972/49983/51368. Segments3/3/4/3: initial4,
+major_result_reviewed8,input_tokens1. B2 counts60298 then rolls before generation;
+all output ceilings25000, no incomplete or resource-limit exit. All35 actual requests,
+task/diff/check/plan deliveries, count/usage and source bindings audit correctly.
+
+Operator31 PASS/6.564s, Ruff and fresh both-planning mock EVALUATOR_PASS/safety NOT_RUN,
+with all8 actual mock inputs verified. Initial operator/mock audit assumptions about
+context suffix/plan projection were corrected before dispatch; failure evidence remains.
+Runtime is unchanged; prior full3079 PASS/16 SKIP and same-bundle real Linux diagnostic
+are explicitly reused. Protected4579/runtime1776/frozen operator16 files and protocol
+remain unchanged; no labeled containers remain. No retry/resume/replacement, extra
+candidate execution, hidden-detail read or Docker start/pull/build. Unused$4.09190775
+is closed. Invoice/free-token application remains unverified.
+
+Keep brief-assumption-v1 opt-in and current defaults unchanged: this small familiar-task
+contrast shows no acceptance improvement, not universal policy ineffectiveness. Do not
+continue tailoring planning guidance to this problem. The next candidate is broader
+fixed-harness dev-train observation of the same verification-scope pattern; no additional
+paid run is part of this closed group. Evidence:
+C:\pt\analyses\mini-xhigh-planning-compare-20260921-v1\result.md.
+
+## Previous analysis: verification scope narrows before submission
 
 A provider-free audit reconstructs all7 actual requests of the closed original
 Pydantic AI mini xhigh run and matches their dispatch hashes. Full public task,
@@ -34,10 +78,11 @@ forced by the action mask or a measured resource limit.
 
 Keep runtime7608ec9c, current prompts/policies/defaults and task bytes unchanged.
 Redundant guidance or a mandatory probe would not address a demonstrated delivery
-bug. The next experiment candidate is the existing opt-in brief-assumption-v1 content
+bug. That audit nominated the existing opt-in brief-assumption-v1 content
 contrast, which asks an existing post-edit review to connect an edit assumption to
 a concrete public setup/outcome. Compare actual verification and patch correctness;
-more plan text or probes alone are not improvement. No new paid run is included.
+more plan text or probes alone are not improvement. The separately authorized comparison
+above now closes that candidate; no paid run was part of the audit itself.
 
 Fresh focused50 PASS/100.456s validates plan/null/review/recovery, concern persistence
 and guidance. Both append/segmented mocks reach isolated EVALUATOR_PASS, safety NOT_RUN;
@@ -47,7 +92,7 @@ claim. All results remain official=false. No provider/count call, real Docker ac
 historical-candidate rerun, private-detail inspection or model-quality claim.
 Evidence: C:\pt\analyses\submission-verification-audit-20260921-v1.
 
-## Latest closed observation: original Pydantic AI mini xhigh submits but fails
+## Previous closed observation: original Pydantic AI mini xhigh submits but fails
 
 One newly authorized original pydantic-ai-synthetic-tool-reasoning v1 episode closes
 EVALUATOR_FAIL: acceptance FAIL, safety PASS, official=false. Planned/started/submitted

@@ -5,7 +5,33 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest analysis: all7 actual requests of the closed original Pydantic mini xhigh row
+Latest closed comparison: A=brief-v1/B=brief-assumption-v1, mini xhigh, original
+Pydantic AI v1, A1/B1/B2/A2 two per arm. Acceptance A0/2/B0/2; all4 submitted,
+safety PASS, no NOT_RUN/infrastructure/uncertainty stop, official=false. Runtime7608ec9c
+at7773432, task/source/dependencies/model/effort/context/tools/limits fixed; only existing
+planning text and derived model/tool identities change. B combines evidence format and
+edit-assumption guidance. Four fresh repeat1/$1.20 invocations, new total cap$4.80.
+All4 edit once, public8/upstream18 PASS, submit, no probe/test-source read. First edits
+A4/8,B4/7. All public diffs insert empty fields based on field mode/name without the
+provider-requirement distinction. B plans still treat registered PASS as submission
+evidence; no concrete plain-field preservation check. Public scope finding only,
+not private evaluator failure diagnosis. Rejected/repeated edits0, failed checks0;
+all56 memory updates null, concerns never created. No delivery bug is demonstrated.
+Cost$0.70809225/cache-neutral$1.05974025, calls35/tools56/counts36;976.313s summed runs.
+Input peaks48761/43972/49983/51368; segments3/3/4/3. B2 count60298 triggers the existing
+input-bound rollover, not a limit exit. All output ceilings25000, no incomplete.
+All35 request/input/plan/check/source/usage audits PASS. Operator31/6.564s,Ruff,fresh
+both-planning mocks through isolated evaluation and8 actual inputs PASS; safety NOT_RUN.
+Initial audit suffix/projection assumptions corrected pre-dispatch with evidence retained.
+Prior unchanged-runtime full3079/16 SKIP and same-bundle Linux diagnostic reused.
+Protected4579/runtime1776/operator16 and protocol preserved; no labeled containers.
+No retry/resume/replacement/extra candidate/private detail or Docker start/pull/build.
+Unused$4.09190775 closed; invoice/free credit unverified. Keep defaults and opt-in policy;
+no efficacy/generalization claim. Broaden fixed-harness dev-train observations before
+more guidance tuning on this familiar task; no further paid execution in this group.
+Evidence: C:\pt\analyses\mini-xhigh-planning-compare-20260921-v1\result.md.
+
+Previous analysis: all7 actual requests of the closed original Pydantic mini xhigh row
 match dispatch hashes; full task, common instructions, current diff/check and durable
 plans verify. Mutation change/preserve question remains in inputs5-7 across handoffs.
 Initial plan mentions other providers but assumes a field-mode-only repair. Edit4
@@ -16,17 +42,18 @@ All16 memory updates are null; no concern is created or automatically resolved.
 Final input has review signal, eligibility warning, six offered tools and3 edits /
 34 model calls /85 actions /1592s /$1.05848535 left. No measured resource/tool-mask stop.
 No public-state transport defect is found; reasoning-segment causality is unmeasured.
-Keep runtime7608ec9c/task/prompts/defaults unchanged. Next experiment candidate uses
+Keep runtime7608ec9c/task/prompts/defaults unchanged. That audit's experiment candidate uses
 existing brief-assumption-v1 to connect an edit assumption to concrete public evidence;
 do not add task-specific examples, annotation/probe quotas or a new policy. Measure
-actual verification and acceptance separately. No new live execution is included.
+actual verification and acceptance separately. The comparison above now closes that
+candidate; no live execution was part of the audit itself.
 Fresh focused50/100.456s PASS, including plan/recovery/concern/guidance paths and both
 context mocks through isolated EVALUATOR_PASS/safety NOT_RUN; all8 actual inputs verify.
 Ruff PASS; prior unchanged-runtime full3079/16 SKIP evidence reused. No provider/count,
 real Docker, historical-candidate execution, private-detail read or efficacy claim.
 Evidence: C:\pt\analyses\submission-verification-audit-20260921-v1.
 
-Latest closed observation: original Pydantic AI v1 mini xhigh closes EVALUATOR_FAIL,
+Previous closed observation: original Pydantic AI v1 mini xhigh closes EVALUATOR_FAIL,
 acceptance FAIL/safety PASS, official=false; planned/started/submitted1/1/1,
 acceptance PASS0/1, NOT_RUN/infrastructure/uncertainty stops0. Runtime7608ec9c at
 e6d8377 and common model/prompts/tools/policies/limits stay fixed against AnyIO;
