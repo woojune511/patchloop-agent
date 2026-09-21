@@ -5,6 +5,27 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest fixed repair-inspection comparison closes all 4 slots A1/B1/B2/A2 on the
+same AnyIO v3 / mini snapshot xhigh / brief-v1 / segmented-v1 / runtime caaed136.
+Default `protected-v1` has acceptance PASS in 1/2 planned runs;
+opt-in `current-failure-v1` has 0/2. Started 4 / submitted 1 / NOT_RUN 3,
+infrastructure stops 0, `official=false`. A1 repairs and passes; B1/A2 end at cost
+admission, B2 after 4 failed mutations. B's reserve release is delivered in 22/6
+inputs but enables 0 inspections unavailable under the default
+floor in the same states. Do not infer a replayed model trajectory, continuity-only
+effect, or policy benefit. Keep default; one acceptance difference is inconclusive.
+Six known billed responses exhaust output; B1's last ceiling is 6,980 under the cap.
+B2's first project probe fails without pytest; its second hangs before fixture setup
+and does not establish candidate verification. Public failure stdout delivery survives.
+Costs $4.137140250 recorded model-rate / $5.323412250 cache-neutral; unused $0.662859750
+closed. No retry/resume/extension, hidden-detail read or extra candidate execution.
+All 99 actual inputs, 109 counts, 124 tool actions, usage and public receipt bindings audit;
+fresh operator 31 PASS / 12.71s, Ruff and both-arm mock 8 inputs / isolated PASS.
+Prior focused 62 PASS and full 3,171 PASS / 16 SKIP are reused with 262 tested files
+unchanged; all 2,766 protected files are unchanged.
+Only policy and derived identity/horizon state differ. No runtime/default change.
+Evidence: C:\pt\analyses\mini-xhigh-repair-inspection-compare-20260922-v1\result.md.
+
 Current opt-in seam: `--repair-inspection-policy current-failure-v1` releases only
 future-check recovery reserves for read/search on a current publicly failed diff.
 Default `protected-v1` retains existing admission. Minimum repair/check/finish and

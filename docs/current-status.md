@@ -7,6 +7,45 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest controlled observation: repair inspection A2/B2
+
+The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes
+`CLOSED_COMPLETE`: A1 -> B1 -> B2 -> A2, each repeat=1 / $1.20, group cap $4.80.
+A (`protected-v1`) has acceptance PASS in 1/2 planned runs; B
+(`current-failure-v1`) has 0/2. All four started, one submitted, three ended with
+acceptance NOT_RUN, and none stopped for infrastructure uncertainty. All runs are
+`official=false`. NOT_RUN means no acceptance assessment. Keep `protected-v1` as default.
+
+A1 edits at calls 17/23, repairs public lifecycle checks from 4/7 to 7/7, passes
+32 upstream tests (3 deselected), and submits at call 25 to isolated acceptance/safety
+PASS. B1's proposal at call 24 exceeds the 50-line limit by 2; edit 27 reaches 6/7
+but explicit cancellation still fails, then cost admission ends the run.
+B2 edits at calls 9/12/16/19 with lifecycle results 4/7, 0/7, 0/7, 4/7; four mutations exhaust repair
+capacity. The first failure is resumed test execution; the last breaks fixture
+Task/context preservation. A2 edits at calls 11/17/19, remains at 4/7 and ends at the cost cap.
+Early edits, plan revisions and probe counts alone do not demonstrate improvement.
+
+B's reserve release reaches 22 inputs in B1 and 6 in B2, but no read/search action would have been
+blocked by the default floor in the same recorded state. This verifies policy
+delivery, not benefit at the closed-inspection boundary or a counterfactual model
+trajectory. Six responses hit output limits; B1's final ceiling falls to 6,980 under
+cost admission. Cost and mutation limits contribute to outcomes; no continuity-only
+or general model-quality explanation follows. B2's first project probe lacks pytest;
+its second hangs before fixture setup, so it is not confirmed candidate validation.
+
+Recorded model-rate cost is $4.137140250, or $5.323412250 without cache discounts;
+the unused $0.662859750 closes without retry/resume/replacement/extension.
+All 99 actual generation inputs and their exact request hashes, 109 counts,
+124 tool actions, settled usage and public probe receipts verify.
+Runtime caaed136, task/source/dependencies/prompts/tools/planning/context/caps are fixed;
+only repair policy and derived identity/horizon state vary. Fresh validation:
+31 operator tests PASS in 12.71s, Ruff PASS, and both-arm mock isolated PASS with
+8 inputs verified. Prior focused (62 PASS) and full (3,171 PASS / 16 SKIP) results
+are reused after verifying 262 implementation/test/diagnostic files unchanged;
+this is not a fresh full regression. All 2,766 protected files stay unchanged. No
+private-detail inspection, extra candidate execution or Docker start/pull/build.
+Evidence: C:\pt\analyses\mini-xhigh-repair-inspection-compare-20260922-v1\result.md.
+
 ## Current implementation: opt-in repair inspection reservations
 
 `--repair-inspection-policy current-failure-v1` changes only read/search admission on
@@ -35,7 +74,8 @@ EVALUATOR_PASS/safety NOT_RUN. All32 actual inputs preserve public task/diff/che
 state and reservation delivery; interrupted inspection replays once, and changing
 the policy rejects resume. Default648 policy states, common prompt/tool schemas and
 default model identity match the pre-change capture. Existing2111 protected files
-stay unchanged. Real provider/count/Docker calls0; no live mini xhigh comparison.
+stay unchanged. This implementation validation used 0 real provider/count/Docker
+calls; the subsequent live comparison is reported above.
 Runtime: caaed136. Evidence:
 C:\pt\analyses\repair-inspection-reserve-20260922-v1\result.md.
 
