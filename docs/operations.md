@@ -75,6 +75,14 @@ For probes that import project libraries, prepare a public wheel selection from 
 exact source lock, then run `patchloop task prepare-probe-dependencies <task-dir>
 --prepared-source <prepared-source.json> --wheel-lock <selection.json>
 --output <new-external-directory>`. This requires an existing `uv` installation.
+If the checkout has no source lock, replace `--wheel-lock` with `--resolve` to read
+its public root `pyproject.toml` and produce a new external lock for Python 3.12/Linux.
+Only runtime dependencies are selected by default; `--group test`, `--extra <name>`
+and `--source-root src` are explicit choices. The command records exact source metadata,
+target, resolver and wheel identities before offline installation. It supports static
+public PyPI wheel dependencies; dynamic metadata, URL/path dependencies and packages
+requiring builds fail without a usable descriptor. See the preparation contract below
+for marker-target limits and supported declaration formats.
 Add `--enable-probes --prepared-probe-dependencies <prepared-probe-dependencies.json>`
 to the fully specified dev request. Preparation can download exact public PyPI wheels;
 execution only uses verified local copies in the existing clean Python image.

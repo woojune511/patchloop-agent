@@ -5,7 +5,22 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest provider-free analysis: closed AnyIO mini probes15/18/26 and actual following
+Latest implementation: prepare-probe-dependencies --resolve freezes a public wheel lock
+from the exact source's static root pyproject.toml. Explicit --group/--extra/--source-root
+select declared dependencies/import trees. Existing source-lock input and final v1 bundle
+stay compatible. Bind source/metadata/selection/target/resolver/wheels; use existing offline
+installation and independent copies. Never build source packages, install the project,
+read private evaluation material or change model prompts, policies or limits for a task.
+AnyIO runtime preparation succeeds with two wheels. Its test-group/trio preparation fails
+on forbiddenfruit's unavailable wheel and publishes no descriptor. Focused69/24.90s passes,
+including both-policy mock submission/isolated evaluation and all10 actual inputs.
+Full140 files:3079 PASS/16 SKIP/0 failures in1040.145s with durations and frozen sources;
+Ruff/lock/diff/docs pass. Protected1739/user AGENTS preserved. Runtime7608ec9c.
+Evidence: C:\pt\analyses\resolved-probe-dependencies-20260921-v1.
+No live provider or Docker execution; prior mini authorization remains closed.
+See [prepared-probe-dependencies.md](prepared-probe-dependencies.md) for target limits.
+
+Previous provider-free analysis: closed AnyIO mini probes15/18/26 and actual following
 inputs16/19/27 verify. Probe15 fails before behavior at missing typing_extensions.
 Probe18's stdlib close prevents worker:after but yields RuntimeError. Probe26 uses
 stdlib TaskGroup; both variants finish with KeyboardInterrupt/worker:finally, and
@@ -17,11 +32,10 @@ and zero changed-line entries. The gap is unverified transfer of reduced observa
 to the repair hypothesis; neither a missing warning nor the dynamic hang cause is proved.
 No prepared dependencies were selected. Exact AnyIO public tree has113 files and
 only pyproject.toml among TOML/lock files; zero compatible source-locked wheel records.
-The current dependency preparation contract cannot be enabled by a flag alone.
-Next candidate is generic external public dependency locking from exact source
-metadata/groups/target platform into existing offline snapshots. It is not implemented;
-retain child-process limits and registered checks. No task hints, prompt/limit change,
-provider/Docker/candidate/download/install execution. Runtime9861aa26 stays unchanged.
+The then-current source-lock path could not be enabled by a flag alone.
+That finding motivated the generic external public dependency locking above. Retain
+child-process limits and registered checks. The analysis itself made no task hints,
+prompt/limit change or provider/Docker/candidate/download/install execution.
 Evidence: C:\pt\analyses\mini-xhigh-probe-fidelity-20260921-v1; see docs/current-status.md.
 
 Current implementation: a provider dispatch without a matching durable completion
@@ -494,6 +508,7 @@ patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
 patchloop/agent/model.py  journal-managed Responses adapter, zero retries
 patchloop/repository.py   audited checkout, workspace, full diff
 patchloop/prepared_probe_dependencies.py  public locked wheels and offline probe snapshots
+patchloop/probe_dependency_resolution.py  static public metadata to a target-specific wheel lock
 patchloop/git_execution.py  exact Git output, deadline and uncertain-execution boundary
 patchloop/sandbox/        registered checks and optional isolated public probes
 patchloop/sandbox/capture.py  bounded check-output drain and process/pipe teardown
@@ -628,7 +643,8 @@ does not force mutation or consume a check-repair allowance. See
 [the probe runtime contract](../docker/README.md) for image and isolation details.
 
 Opt-in `--prepared-probe-dependencies` requires enabled probes and a bundle prepared
-from the exact public source lock. It supplies verified per-probe read-only dependency
+from an exact public source lock or explicit static public metadata resolution.
+It supplies verified per-probe read-only dependency
 copies and public source roots, with current project imports first. Nonempty roots select
 only those source trees and repository-root files. Tracked symlinks are omitted without
 following targets; other source guards remain. Bind identity in envelope, journal,

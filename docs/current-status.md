@@ -7,7 +7,37 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest analysis: probe reductions do not establish the final repair mechanism
+## Latest implementation: resolve public dependencies without an upstream lock
+
+`task prepare-probe-dependencies --resolve` now reads static dependencies from the
+exact prepared source's root pyproject.toml and freezes an external public wheel lock.
+Explicit --group/--extra select additional declared dependencies; --source-root selects
+public import trees. The existing --wheel-lock path and final descriptor schema remain
+compatible. Source commit/tree/content, metadata, selection, target Python/platform,
+resolver and exact wheel identities are recorded. Existing offline independent copies,
+model-input boundaries, probe process limits, required checks and recovery remain.
+No task-specific prompt, model/tool schema, policy, budget or default is changed.
+
+Real public preparation succeeds for AnyIO's idna/typing_extensions runtime dependencies.
+An explicit test-group/trio-extra preparation fails because forbiddenfruit has no usable
+wheel; no descriptor is published and no dependency is omitted or source-built.
+This is a supported-scope limit, not a model or acceptance result. Resolution targets
+Python 3.12.0 marker semantics/Linux amd64/manylinux2.28, not the host or the task's
+registered-check environment. It does not reproduce arbitrary kernel/patch attributes.
+
+Focused69 PASS/24.90s includes old/new preparation, target selection, failure boundaries,
+offline independent copies, existing recovery and both append/segmented mock runs through
+submission/isolated evaluation with all10 actual task/diff/check inputs verified.
+Full140 files/3095 cases: 3079 PASS/16 SKIP/zero failures in1040.145s, --durations=15,
+source/test bytes frozen throughout. Active-source Ruff, lock consistency, diff check and
+documentation links pass. Protected1739 files, including user AGENTS and closed records,
+stay unchanged. Runtime7608ec9c. Receipts:
+C:\pt\analyses\resolved-probe-dependencies-20260921-v1.
+No paid model call, Docker start/pull/build or actual probe container is part of this work.
+Prior mini run and its unused budget remain closed. This improves dependency preparation
+availability; improved agent behavior or acceptance remains untested.
+
+## Previous analysis: probe reductions do not establish the final repair mechanism
 
 Provider-free analysis of the closed AnyIO mini xhigh episode verifies three probes,
 their following actual inputs16/19/27, and public source/failure delivery at21/23.
@@ -25,14 +55,14 @@ gap between reduced observations and the repair hypothesis, not the dynamic hang
 cause. The actual probe outputs already say behavior_verdict=not_assessed and show
 zero changed-line entries; no missing result-label warning was found.
 
-The request has no prepared probe dependencies. Existing preparation requires exact
+The request has no prepared probe dependencies. At that analysis, preparation required exact
 wheel URL/hash/size records in a public TOML source lock. At AnyIO's exact commit,
 the 113-file tree has only pyproject.toml among TOML/lock files, no compatible wheel
 records and no requirements file. Dependencies and a test group are declared, but
-the current path cannot be enabled with a flag alone. Next implementation candidate:
+that path could not be enabled with a flag alone. The implementation above adds
 a generic externally resolved public lock bound to exact source metadata, selected
 dependency groups and target Python/platform, feeding the existing offline snapshots.
-This is not implemented or efficacy-tested; child-process restrictions and registered
+It remains untested for efficacy; child-process restrictions and registered
 end-to-end checks remain necessary. No task-specific prompt or limit change is selected.
 
 Analysis makes zero provider/Docker/candidate/download/install calls, leaves runtime

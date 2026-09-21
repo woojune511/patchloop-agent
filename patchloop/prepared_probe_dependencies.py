@@ -266,12 +266,18 @@ def _workspace_metadata(repo: Path, packages: list[dict], roots: list[str],
     return records
 
 
-def prepare_dependencies(*, public: PublicTask, prepared_source: Path,
-                         wheel_lock: Path, output: Path) -> Path:
+def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: Path,
+                         wheel_lock: Path | None = None, resolve: bool = False,
+                         groups: list[str] | None = None, extras: list[str] | None = None,
+                         source_roots: list[str] | None = None) -> Path:
     from patchloop.dev.state import DevJournal
     from patchloop.runtime import repository_root
     from patchloop.sandbox.probes import PROBE_IMAGE
 
+    if resolve == (wheel_lock is not None):
+        raise ContractError("choose exactly one of --wheel-lock or --resolve")
+    if not resolve and (groups or extras or source_roots):
+        raise ContractError("--group, --extra and --source-root require --resolve")
     output = output.resolve()
     if output.is_relative_to(repository_root().resolve()):
         raise ContractError("prepared dependencies must be outside the repository")
@@ -282,39 +288,55 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path,
     journal = DevJournal(output, "run_dev_preparedependencies")
     journal.append("probe_dependency_preparation_started", {"official": False})
     try:
+        source_hash = admission_hash(prepared_source)
         source, repo = load_source(prepared_source, public.repository.url,
                                   public.repository.base_commit,
-                                  expected_hash=admission_hash(prepared_source))
-        lock = WheelLock.model_validate(_read_json(wheel_lock))
-        if lock.schema_version != "public-probe-wheel-lock-v1":
-            raise ContractError("unsupported public wheel lock")
-        lock_path = repo / lock.source_lock
-        if not lock_path.resolve().is_relative_to(repo) or lock_path.is_symlink():
-            raise ContractError("public dependency lock leaves the prepared source")
-        raw_lock = lock_path.read_bytes()
-        if sha256_bytes(raw_lock) != lock.source_lock_hash:
-            raise ContractError("public dependency lock hash differs from the prepared source")
-        packages = tomllib.loads(raw_lock.decode("utf-8")).get("package", [])
-        locked = {
-            (wheel["url"], wheel["hash"], wheel["size"])
-            for package in packages
-            if package.get("source") == {"registry": "https://pypi.org/simple"}
-            for wheel in package.get("wheels", [])
-        }
-        if any((wheel.url, wheel.hash, wheel.size) not in locked for wheel in lock.wheels):
-            raise ContractError("probe wheel is not pinned in the prepared public PyPI lock")
-        if sum(wheel.size for wheel in lock.wheels) > MAX_BYTES:
-            raise ContractError("public wheel downloads exceed the size bound")
-        for root in lock.source_roots:
+                                  expected_hash=source_hash)
+        roots = list(source_roots or [])
+        if resolve:
+            ProbeDependencyIdentity.public_import_roots(roots)
+            if len(roots) > 8:
+                raise ContractError("probe import roots exceed the root bound")
+        else:
+            lock = WheelLock.model_validate(_read_json(wheel_lock))
+            if lock.schema_version != "public-probe-wheel-lock-v1":
+                raise ContractError("unsupported public wheel lock")
+            lock_path = repo / lock.source_lock
+            if not lock_path.resolve().is_relative_to(repo) or lock_path.is_symlink():
+                raise ContractError("public dependency lock leaves the prepared source")
+            raw_lock = lock_path.read_bytes()
+            if sha256_bytes(raw_lock) != lock.source_lock_hash:
+                raise ContractError("public dependency lock hash differs from the prepared source")
+            packages = tomllib.loads(raw_lock.decode("utf-8")).get("package", [])
+            locked = {
+                (wheel["url"], wheel["hash"], wheel["size"])
+                for package in packages
+                if package.get("source") == {"registry": "https://pypi.org/simple"}
+                for wheel in package.get("wheels", [])
+            }
+            if any((wheel.url, wheel.hash, wheel.size) not in locked for wheel in lock.wheels):
+                raise ContractError("probe wheel is not pinned in the prepared public PyPI lock")
+            lock_record = lock.model_dump(mode="json")
+            selected, roots = lock.wheels, lock.source_roots
+        for root in roots:
             if not (repo / root).is_dir() or not (repo / root).resolve().is_relative_to(repo):
                 raise ContractError("probe import root is absent from the prepared source")
         uv = shutil.which("uv")
         if uv is None:
             raise ContractError("uv must already be installed to prepare public dependencies")
+        if resolve:
+            from patchloop.probe_dependency_resolution import resolve_dependencies
+
+            lock_record, selected, packages = resolve_dependencies(
+                repo=repo, source=source, source_hash=source_hash, output=output, uv=uv,
+                groups=groups or [], extras=extras or [], source_roots=roots,
+            )
+        if sum(wheel.size for wheel in selected) > MAX_BYTES:
+            raise ContractError("public wheel downloads exceed the size bound")
         wheels = output / "wheels"
         wheels.mkdir()
         paths = []
-        for wheel in lock.wheels:
+        for wheel in selected:
             destination = wheels / wheel.url.rsplit("/", 1)[-1]
             _download(wheel, destination)
             paths.append(str(destination))
@@ -324,11 +346,16 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path,
                    "--python-version", "3.12", "--python-platform", "x86_64-manylinux_2_28",
                    "--link-mode", "copy", "--target", str(target), "--find-links", str(wheels),
                    *paths]
-        result = subprocess.run(command, capture_output=True, timeout=120, check=False,
-                                env={key: os.environ[key] for key in
-                                     ("PATH", "SystemRoot", "TEMP", "TMP") if key in os.environ})
+        if paths:
+            result = subprocess.run(command, capture_output=True, timeout=120, check=False,
+                                    env={key: os.environ[key] for key in
+                                         ("PATH", "SystemRoot", "TEMP", "TMP")
+                                         if key in os.environ})
+        else:
+            target.mkdir()
+            result = subprocess.CompletedProcess([], 0, b"", b"No third-party wheels selected")
         ArtifactStore(output).write_text_immutable(output / "install.json", canonical_json({
-            "argv": command, "exit_code": result.returncode,
+            "argv": command if paths else [], "exit_code": result.returncode,
             "stdout": result.stdout.decode("utf-8", errors="replace")[-12_000:],
             "stderr": result.stderr.decode("utf-8", errors="replace")[-12_000:],
             "installer_hash": sha256_bytes(Path(uv).read_bytes()),
@@ -336,14 +363,14 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path,
         if result.returncode:
             raise ContractError("offline public wheel installation failed; no descriptor published")
         # Replace install-local URL records with their already verified public wheel origins.
-        origins = {wheel.url.rsplit("/", 1)[-1]: wheel for wheel in lock.wheels}
+        origins = {wheel.url.rsplit("/", 1)[-1]: wheel for wheel in selected}
         for path in target.glob("*.dist-info/direct_url.json"):
             metadata = json.loads(path.read_bytes())
             filename = urlsplit(metadata["url"]).path.rsplit("/", 1)[-1]
             wheel = origins[filename]
             path.write_text(canonical_json({"url": wheel.url, "archive_info": {
                 "hash": wheel.hash.replace(":", "=", 1)}}), encoding="utf-8")
-        workspace_metadata = _workspace_metadata(repo, packages, lock.source_roots,
+        workspace_metadata = _workspace_metadata(repo, packages, roots,
                                                  source.git_commit, target)
         files = _inventory(target)
         descriptor = {
@@ -351,7 +378,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path,
             "platform": "linux/amd64", "image": PROBE_IMAGE,
             "repository_url": public.repository.url, "base_commit": public.repository.base_commit,
             "prepared_source_content_hash": source.content_hash,
-            "source_roots": lock.source_roots, "wheel_lock": lock.model_dump(mode="json"),
+            "source_roots": roots, "wheel_lock": lock_record,
             "workspace_metadata": workspace_metadata,
             "content_hash": sha256_json(files), "files": files,
         }
@@ -359,7 +386,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path,
         body = canonical_json(descriptor) + "\n"
         journal.append("probe_dependencies_prepared", {
             "manifest_hash": sha256_bytes(body.encode()), "content_hash": sha256_json(files),
-            "wheel_count": len(lock.wheels), "file_count": len(files), "official": False,
+            "wheel_count": len(selected), "file_count": len(files), "official": False,
         })
         ArtifactStore(output).write_text_immutable(manifest, body)
         return manifest

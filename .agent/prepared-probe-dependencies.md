@@ -7,7 +7,12 @@ checks, finish eligibility, planning/context policies and cost controls are unch
 
 ## Preparation
 
-First prepare the exact public task source with `task prepare-source`. Select
+First prepare the exact public task source with `task prepare-source`. Choose either
+the existing source-lock selection below or explicit public metadata resolution.
+
+### Select from an existing source lock
+
+Select
 compatible wheels from that checkout's public `uv.lock` into a JSON document:
 
 ```json
@@ -61,6 +66,57 @@ preparation. Static versions are preserved. Dynamic versions use
 version. This permits `importlib.metadata.version()` during imports but does not reproduce
 release-version decisions, entry points or complete distribution metadata. Those limits
 also appear in the model's probe description. Current source imports remain authoritative.
+
+### Resolve a repository without a source lock
+
+```powershell
+patchloop task prepare-probe-dependencies <task-dir> `
+  --prepared-source <prepared-source.json> --resolve `
+  --source-root src --output <new-external-directory>
+```
+
+`--resolve` reads only the exact checkout's root `pyproject.toml`. By default it selects
+static `[project].dependencies`. Repeat `--extra <name>` to include declared optional
+dependencies or `--group <name>` to include PEP 735 dependency groups. Group includes
+are expanded with missing/cyclic entries rejected. No test/development group is selected
+implicitly. Repeat `--source-root` to choose public import trees; omitted roots retain
+the existing all-tracked-public-files snapshot. These three options require `--resolve`,
+which is mutually exclusive with `--wheel-lock`.
+
+Resolution uses installed `uv pip compile --format pylock.toml`, public PyPI and
+`--only-binary :all:`. The command receives flattened validated PEP 508 requirements,
+not project build hooks, source overrides, host configuration or operator credentials.
+URL/path/self dependencies, dynamic dependency metadata, unsupported project Python,
+missing extras/groups and packages without compatible wheels fail preparation. This
+version supports static PEP 621/735 metadata, not setup.py or arbitrary requirements files.
+The project itself is never downloaded or built; it receives the same minimal public
+name/version metadata described above. Empty third-party dependency sets are supported.
+
+Markers and wheel tags target CPython 3.12/Linux amd64, manylinux 2.28, independently
+of the host. The marker baseline is Python 3.12.0; kernel release/version markers have
+empty values. This is a recorded resolution target, not a reproduction of every image
+patch/kernel attribute or of a task's check environment. One compatible wheel per
+resolved package is selected, including transitive dependencies. Existing byte/file
+bounds and offline hash-verified installation apply without changes.
+
+The new external `resolved-wheel-lock.json` has schema
+`resolved-public-probe-wheel-lock-v1`. It binds the prepared source descriptor/hash,
+exact commit/tree/content, public metadata hash, selected groups/extras/requirements,
+source roots, target marker environment/image, resolver executable hash, raw `pylock.toml`
+hash and exact wheel URLs/hashes/sizes. `resolution-input.json` and `resolve.json` retain
+the public inputs and resolver receipt. Resolution has a 120-second timeout and zero
+HTTP retries; no failed preparation is automatically resumed or changed.
+
+The final descriptor retains `prepared-probe-dependencies-v1` and embeds this provenance
+in `wheel_lock`. Existing bundles, runtime admission, per-probe independent copies and
+closed-run reading contracts remain compatible. Reuse the completed descriptor for
+offline execution; `--wheel-lock` continues to accept the original source-lock selection
+schema, not this new audit record. A later `--resolve` is a fresh preparation whose
+package versions may differ. Never silently re-resolve an admitted run.
+
+See [uv locking](https://docs.astral.sh/uv/pip/compile/), the
+[pylock specification](https://packaging.python.org/en/latest/specifications/pylock-toml/)
+and [target wheel tags](https://packaging.pypa.io/en/stable/tags.html).
 
 See [uv's CLI reference](https://docs.astral.sh/uv/reference/cli/) for offline,
 target, platform and no-build semantics, and the
@@ -117,6 +173,14 @@ The Pydantic AI public profile contrast exercises actual source imports through
 the clean image, with prepared public wheels and no evaluator-image reuse.
 
 Evidence root: `C:\pt\analyses\prepared-probe-dependencies-20260918-v1`.
+External resolution evidence: `C:\pt\analyses\resolved-probe-dependencies-20260921-v1`.
+Focused69 PASS/24.90s; full3079 PASS/16 SKIP/0 failures across140 files in1040.145s.
+Ruff, lock consistency and both-policy isolated mocks with10 actual inputs pass.
+The exact AnyIO public source prepares its two runtime dependencies successfully.
+An explicit test-group/trio-extra preparation stops because forbiddenfruit has no
+usable wheel; it publishes no descriptor. No dependency was dropped or built to
+bypass this failure. This evidence covers preparation and provider-free mock execution,
+not an actual Linux probe import or another model experiment.
 This feature is opt-in and does not establish improved model decisions or acceptance.
 Packages requiring new processes, more threads than the fixed limit, runtime installation
 or unsupported platform dependencies can still fail under the sandbox. Dependency

@@ -184,17 +184,22 @@ def prepare_task_source(
 def prepare_task_probe_dependencies(
     task_dir: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
     prepared_source: Annotated[Path, typer.Option("--prepared-source")],
-    wheel_lock: Annotated[Path, typer.Option("--wheel-lock")],
     output: Annotated[Path, typer.Option("--output")],
+    wheel_lock: Annotated[Path | None, typer.Option("--wheel-lock")] = None,
+    resolve: Annotated[bool, typer.Option("--resolve")] = False,
+    group: Annotated[list[str] | None, typer.Option("--group")] = None,
+    extra: Annotated[list[str] | None, typer.Option("--extra")] = None,
+    source_root: Annotated[list[str] | None, typer.Option("--source-root")] = None,
 ) -> None:
-    """Prepare source-locked public wheels for the existing clean probe image."""
+    """Prepare locked public wheels, optionally resolving static public project dependencies."""
     from patchloop.prepared_probe_dependencies import prepare_dependencies
     from patchloop.task_loader import load_public_task
 
     def operation():
         path = prepare_dependencies(
             public=load_public_task(task_dir / "public.yaml"), prepared_source=prepared_source,
-            wheel_lock=wheel_lock, output=output,
+            wheel_lock=wheel_lock, output=output, resolve=resolve, groups=group,
+            extras=extra, source_roots=source_root,
         )
         return {"ok": True, "prepared_probe_dependencies": str(path)}
 
