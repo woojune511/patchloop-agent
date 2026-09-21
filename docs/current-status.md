@@ -7,6 +7,47 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest closed observation: new tool guidance completes all three tasks
+
+The approved fixed GPT-5.4 medium observation F1 pyfakefs v2 -> P1 PDM v2 ->
+L1 Loguru v3 closes with acceptance/safety 3/3 PASS, started/submitted 3, NOT_RUN 0,
+no infrastructure or uncertainty stop. All official=false. Each repeat=1/$1.20,
+group cap $3.60. The runtime is the tool-prerequisite implementation below.
+The exact model, task/source/image, request configuration, tool schemas, planning,
+segment/probe contracts and limits match the prior group. Common system guidance,
+derived runtime/model/tool identities, new state paths and execution order differ.
+
+pyfakefs starts with two source searches instead of the prior first-response stop.
+Editing is offered from input 2; the first edit at call 5 passes both public checks
+(upstream 517 PASS/570 SKIP), then submission at call 8 passes isolated evaluation.
+PDM edits at call 3, passes public contract 24/upstream 36, and submits at call 6.
+Loguru's call-4 edit is rejected for incomplete source evidence: the requested
+139-192 anchor extends before its delivered 145-210 range. Call 5 reads 139-145;
+call 6 applies the edit, all four public checks pass, and call 11 submits successfully.
+No identical rejected proposal is repeated. This is evidence-acquisition recovery;
+failed-public-check repair remains unmeasured. No probe is used.
+
+Recorded cost $1.02369500, cache-neutral $1.34769500, summed run time 335.515s.
+All 25 model requests/input counts/usages and 31 tool actions audit correctly.
+Actual task/diff/check and completion_guidance delivery is verified for all 25 inputs.
+Input peaks 25834/25929/22091; segments 3/3/6, all nine transitions major_result_reviewed.
+Every output ceiling remains 25000; no incomplete response or resource exit.
+Free-credit eligibility/invoice remain unverified. Prior pyfakefs's cheaper early stop
+is not an efficiency success, and the additional completed task affects cost totals.
+
+Operator17 PASS/4.10s and Ruff PASS; the initial operator comparison omitted appended
+context instructions and failed 16 assertions before any provider call. The comparison
+now uses the existing assembler; original and corrected receipts remain. Exact-runtime
+implementation full/mock validation below is explicitly reused. Docker Desktop was
+started under the user's earlier explicit instruction; no image pull/build. Cleanup
+passes, no labeled containers, 2007 protected files unchanged. Group and unused
+$2.57630500 are closed with no retry, resume, replacement or extra execution.
+No hidden-detail inspection. These familiar-task single samples with sequential groups
+and changed order show the intended workflow, not causal improvement or generalization.
+Keep the common harness fixed for broader dev-train observations; no task-specific
+prompt change or further paid execution belongs to this group. Report:
+C:\pt\analyses\tool-availability-live-20260921-v1\result.md.
+
 ## Current implementation: explain temporary tool prerequisites
 
 completion_guidance now identifies the current stage: needs_source_evidence,
@@ -44,10 +85,11 @@ checks and 1960 unchanged protected files, including user edits and closed evide
 
 Runtime: sha256:d5114965c56819909f72f3afa36239ec48abd3ee533c35bf0cef38130aaf4fdd.
 Evidence: C:\pt\analyses\tool-availability-guidance-20260920-v1.
-No paid provider/count call, real Docker operation or additional development-task
-candidate execution is part of this change. Improved live continuation is unverified.
+The implementation validation involved no paid provider/count call, real Docker
+operation or additional development-task candidate execution. The separate observation
+above verifies the live workflow; causal improvement remains unverified.
 
-## Latest closed observation: two successes and one premature stop on other tasks
+## Prior closed observation: two successes and one premature stop on other tasks
 
 The approved fixed GPT-5.4 medium/common-harness panel PDM v2 -> Loguru v3 ->
 pyfakefs v2 closes at acceptance 2/3 planned PASS, started 3, submitted 2, NOT_RUN 1,

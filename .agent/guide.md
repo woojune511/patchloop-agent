@@ -5,6 +5,28 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest closed observation: the new common tool-prerequisite guidance completes
+F1 pyfakefs v2 -> P1 PDM v2 -> L1 Loguru v3 with acceptance/safety 3/3 PASS,
+started/submitted 3, NOT_RUN 0, no infrastructure/uncertainty stop, all official=false.
+Exact GPT-5.4 medium and the previous task/source/image/request/tool-schema/policy/limit
+configuration remain; system guidance, its identities, state paths and order change.
+pyfakefs chooses source searches at call 1, has edit tools from input 2, edits at call 5
+and submits at call 8. PDM edits at 3 and submits at 6. Loguru's call-4 proposal lacks
+complete source evidence; it reads the missing leading range at 5, applies at 6,
+passes all four checks and submits at 11. No identical rejected repeat or probe.
+This is anchor-evidence recovery; failed-public-check repair remains unmeasured.
+Recorded $1.02369500, cache-neutral $1.34769500, summed run time 335.515s. All 25 actual
+inputs/counts/usages verify, including completion_guidance and task/diff/check delivery.
+Input peaks 25834/25929/22091, segments 3/3/6 with nine major_result_reviewed transitions.
+No output ceiling reduction, incomplete response or resource stop. Operator17 PASS,
+Ruff PASS; initial comparison failures and assembler correction are retained. Exact-runtime
+full/mock receipts below are reused. Docker Desktop starts under prior explicit user
+authorization; no pull/build. Cleanup passes, 2007 protected files unchanged. Group and
+unused $2.57630500 closed; no retry/resume/extra execution/hidden-detail inspection.
+Single familiar-task observations and changed order do not establish causal improvement
+or generalization. Keep the common harness fixed for broader development observations.
+Evidence: C:\pt\analyses\tool-availability-live-20260921-v1; see docs/current-status.md.
+
 Current implementation: explain temporary tool prerequisites in completion_guidance.
 Its stage is needs_source_evidence, needs_mutation, needs_visible_checks,
 ready_to_submit or blocked. A source-waiting stage names the missing current editable
@@ -24,7 +46,8 @@ in 51.66s, including correction of two new null-evaluator test expectations. Ful
 Only expected identity strings in five test files are refreshed; all six rechecks
 pass in 1.16s, giving 3042 verified passing cases. The original receipts remain,
 source hashes stay fixed during the full run, and Ruff passes. Preserve 1960 other
-protected files. No live efficacy claim or paid execution follows. Runtime hash:
+protected files. That implementation validation used no paid calls; the separate live
+observation above supports no causal efficacy claim. Runtime hash:
 sha256:d5114965c56819909f72f3afa36239ec48abd3ee533c35bf0cef38130aaf4fdd.
 Evidence: C:\pt\analyses\tool-availability-guidance-20260920-v1.
 
@@ -38,7 +61,7 @@ do not produce missing-annotation feedback. The tool identity changes without a 
 run schema, policy option, gate or budget. Active cross-runtime resume still rejects.
 Fixed-candidate diagnostic variants remain available for historical investigation,
 but are not the current development path. Preserve their code and closed evidence.
-Latest observation: unchanged GPT-5.4 medium/common setup on PDM v2 -> Loguru v3 ->
+Prior observation: unchanged GPT-5.4 medium/common setup on PDM v2 -> Loguru v3 ->
 pyfakefs v2 closes 2/3 planned PASS, submitted 2, NOT_RUN 1, no uncertainty stop.
 PDM/Loguru first edits pass all public checks and isolated acceptance/safety.
 pyfakefs calls stop_task/public_task_conflict at the first response because mutation
