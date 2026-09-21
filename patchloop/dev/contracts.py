@@ -363,6 +363,7 @@ class DevRunRequest(StrictModel):
     enable_probes: bool = False
     probe_policy: Literal["none", "cases-v1"] = "none"
     repair_recheck: bool = False
+    repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = "protected-v1"
     planning_policy: Literal[
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
     ] = "none"
@@ -439,6 +440,9 @@ class DevRunEnvelope(StrictModel):
     model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     repair_recheck: bool = False
+    repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = Field(
+        default="protected-v1", exclude_if=lambda value: value == "protected-v1",
+    )
     planning_policy: Literal[
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
     ] = "none"

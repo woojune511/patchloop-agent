@@ -181,6 +181,9 @@ class _ToolPolicy:
     mutation_completion_possible: bool = False
     mutation_protected_completion_possible: bool = False
     inspection_uses_repair_credit: bool = False
+    repair_inspection_policy: str = "protected-v1"
+    inspection_reserve_calls: int = 0
+    inspection_released_check_recovery_calls: int = 0
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -295,6 +298,8 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
+            **({"repair_inspection_policy": request.repair_inspection_policy}
+               if request.repair_inspection_policy != "protected-v1" else {}),
             **({"segment_contract": segments.contract()}
                if request.context_policy == segments.POLICY else {}),
             "compaction_contract": native_compaction.policy_contract(request),
@@ -696,6 +701,7 @@ def _tool_policy(
     limits: Any,
     *,
     snapshot: DevGatewayStateSnapshot | None = None,
+    repair_inspection_policy: str = "protected-v1",
     _preview_inspection: bool = True,
 ) -> _ToolPolicy:
     if snapshot is None and isinstance(gateway, DevToolGateway):
@@ -784,6 +790,18 @@ def _tool_policy(
         if required_inspection and not protected_completion_possible
         else inspection_budget.protected
     )
+    # On an observed current failure, the opt-in policy can spend speculative
+    # future-check recovery on inspection. Keep the full forecast for all other
+    # actions; a later failed check is no longer guaranteed a recovery path.
+    # The existing minimum-only required-anchor exception remains unchanged.
+    released_check_recovery = 0
+    if (
+        repair_inspection_policy == "current-failure-v1"
+        and current_check_failed
+        and not (required_inspection and not protected_completion_possible)
+    ):
+        released_check_recovery = inspection_budget.check_recovery_reserve
+        inspection_floor -= released_check_recovery
     inspection_tool_slack = remaining_tool_actions - inspection_floor
     inspection_model_slack = remaining_model_calls - inspection_floor
     inspection_allowed = (
@@ -928,6 +946,9 @@ def _tool_policy(
         mutation_completion_possible=mutation_allowed,
         mutation_protected_completion_possible=mutation_protected_completion_possible,
         inspection_uses_repair_credit=inspection_uses_credit and inspection_allowed,
+        repair_inspection_policy=repair_inspection_policy,
+        inspection_reserve_calls=inspection_floor,
+        inspection_released_check_recovery_calls=released_check_recovery,
     )
     if inspection_allowed and _preview_inspection:
         # Advisory single-inspection forecast, not another admission rule. Reuse
@@ -946,6 +967,7 @@ def _tool_policy(
             ),
             limits,
             snapshot=snapshot,
+            repair_inspection_policy=repair_inspection_policy,
             _preview_inspection=False,
         )
         policy = replace(
@@ -955,6 +977,16 @@ def _tool_policy(
             ),
         )
     return policy
+
+
+def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
+    if policy.repair_inspection_policy == "protected-v1":
+        return {}
+    return {"repair_inspection": {
+        "policy": policy.repair_inspection_policy,
+        "reserve_calls_after_inspection": policy.inspection_reserve_calls,
+        "released_future_check_recovery_calls": policy.inspection_released_check_recovery_calls,
+    }}
 
 
 def _mutation_completion_horizon(policy: _ToolPolicy) -> dict[str, Any]:
@@ -1202,6 +1234,7 @@ def _build_context(
     tool_policy_transition: dict[str, Any] | None = None,
     projection: SourceProjection | None = None,
     repair_recheck: bool = False,
+    repair_inspection_policy: str = "protected-v1",
     planning_policy: str = "none",
 ) -> str:
     projection = projection or gateway.prepare_context_projection(
@@ -1217,6 +1250,7 @@ def _build_context(
         counters,
         limits,
         snapshot=active_snapshot,
+        repair_inspection_policy=repair_inspection_policy,
     )
     commitment_signal = _commitment_signal(
         gateway,
@@ -1258,6 +1292,7 @@ def _build_context(
             ),
         },
         "action_horizon": {
+            **_repair_inspection_payload(active_policy),
             "minimum_completion_calls": active_policy.minimum_completion_calls,
             "completion_budget_calls": active_policy.completion_budget_calls,
             "feedback_recovery_reserve_calls": (active_policy.feedback_recovery_reserve_calls),
@@ -2759,6 +2794,7 @@ def _run_envelope(
         model_hash=model_hash,
         sandbox_identity_hash=_sandbox_identity_hash(request, package, probe_dependencies),
         repair_recheck=request.repair_recheck,
+        repair_inspection_policy=request.repair_inspection_policy,
         planning_policy=request.planning_policy,
         probe_policy=request.probe_policy,
         context_policy=request.context_policy,
@@ -3345,6 +3381,8 @@ def _run_one(
                     "task_hash": package.task_content_hash,
                     "model_hash": model_hash,
                     "repair_recheck": request.repair_recheck,
+                    **({"repair_inspection_policy": request.repair_inspection_policy}
+                       if request.repair_inspection_policy != "protected-v1" else {}),
                     "context_policy": request.context_policy,
                 },
             )
@@ -3812,7 +3850,10 @@ def _run_one_active(
                     )
                 else:
                     counters.protocol_recoveries += 1
-                    next_policy = _tool_policy(gateway, counters, request.limits)
+                    next_policy = _tool_policy(
+                        gateway, counters, request.limits,
+                        repair_inspection_policy=request.repair_inspection_policy,
+                    )
                     correction = _protocol_correction(
                         turn_id=pending_turn_id,
                         code=pending_error,
@@ -3840,7 +3881,10 @@ def _run_one_active(
                         terminal_message = str(exc)
                     else:
                         counters.protocol_recoveries += 1
-                        next_policy = _tool_policy(gateway, counters, request.limits)
+                        next_policy = _tool_policy(
+                            gateway, counters, request.limits,
+                            repair_inspection_policy=request.repair_inspection_policy,
+                        )
                         correction = _protocol_correction(
                             turn_id=pending_turn_id,
                             code=(
@@ -3952,6 +3996,7 @@ def _run_one_active(
             counters,
             request.limits,
             snapshot=snapshot,
+            repair_inspection_policy=request.repair_inspection_policy,
         )
         if not policy.completion_possible:
             terminal_code = DevTerminal.LIMIT_REACHED
@@ -3990,6 +4035,7 @@ def _run_one_active(
                 tool_policy_transition=policy_transition,
                 projection=projection,
                 repair_recheck=request.repair_recheck,
+                repair_inspection_policy=request.repair_inspection_policy,
                 planning_policy=request.planning_policy,
             )
             context_payload = json.loads(context)
@@ -4068,6 +4114,7 @@ def _run_one_active(
             "max_parallel_reads": policy.max_parallel_reads,
             "targeted_read_paths": list(policy.targeted_read_paths),
             "minimum_completion_calls": policy.minimum_completion_calls,
+            **_repair_inspection_payload(policy),
             "completion_budget_calls": policy.completion_budget_calls,
             "feedback_recovery_reserve_calls": (policy.feedback_recovery_reserve_calls),
             "mutation_recovery_reserve_calls": (policy.mutation_recovery_reserve_calls),
@@ -4495,7 +4542,10 @@ def _run_one_active(
                 )
                 break
             counters.protocol_recoveries += 1
-            next_policy = _tool_policy(gateway, counters, request.limits)
+            next_policy = _tool_policy(
+                gateway, counters, request.limits,
+                repair_inspection_policy=request.repair_inspection_policy,
+            )
             correction = _protocol_correction(
                 turn_id=turn_id,
                 code=turn.error_code,
@@ -4523,7 +4573,10 @@ def _run_one_active(
                 terminal_message = str(exc)
                 break
             counters.protocol_recoveries += 1
-            next_policy = _tool_policy(gateway, counters, request.limits)
+            next_policy = _tool_policy(
+                gateway, counters, request.limits,
+                repair_inspection_policy=request.repair_inspection_policy,
+            )
             correction = _protocol_correction(
                 turn_id=turn_id,
                 code="MISSING_REQUIRED_TOOL" if not turn.tool_calls else "INVALID_TOOL_BATCH",

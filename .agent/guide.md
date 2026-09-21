@@ -5,6 +5,22 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current opt-in seam: `--repair-inspection-policy current-failure-v1` releases only
+future-check recovery reserves for read/search on a current publicly failed diff.
+Default `protected-v1` retains existing admission. Minimum repair/check/finish and
+unused initial-rejection reserves remain; the existing minimum-only required-anchor
+exception is unchanged. Future failed-check recovery is a forecast, not a guarantee
+after these reads. The policy is bound in model identity, envelope and run journal;
+its actual inspection floor/release reach native input and turn receipts. Prompt,
+tool schemas, planning, checks/probes and submission rules stay unchanged. This is
+a behavioral experiment option, not evidence of better model decisions or acceptance.
+Focused62/84.99s, Ruff and fresh full3171 PASS/16 SKIP across143 files/2149.915s
+with --durations=15 pass on runtimecaaed136. Four both-context/default-option mocks
+reach isolated EVALUATOR_PASS/safety NOT_RUN and verify32 actual public inputs.
+Crash/replay and policy mismatch are covered. Default648 states and prompt/schemas
+retain their pre-change behavior; protected2111 files unchanged. Real provider/count/
+Docker calls0. Evidence: C:\pt\analyses\repair-inspection-reserve-20260922-v1\result.md.
+
 Latest public-only diagnosis verifies exact requests27-32 of the stopped AnyIO row.
 Failed-check stdout3441 chars/all6 cases and current runner source2190-2379 survive.
 Do not infer loss from an empty structured failure-location summary or a trimmed source
@@ -17,7 +33,8 @@ Call31 has2 prior reasoning items,32 has0 after rollover; both incomplete25000, 
 673 public source lines/diff/failure/plan persist. Plan review32 is already requested.
 An older successful same-settings AnyIO row edited at18 and had11 inspection calls after
 failure versus first edit26/3 now; runtime differs, no causal comparison or early-edit quota.
-Target exploration-to-repair decisions and iteration time; no runtime/prompt/policy change.
+That audit targets exploration-to-repair decisions and iteration time; it made no
+runtime/prompt/policy change.
 Focused67/1.58s/Ruff PASS;264 implementation/test files and runtime172a439f unchanged.
 No provider/count/Docker/candidate/private-detail read. Closed groups stay closed.
 Evidence: C:\pt\analyses\anyio-post-failure-decision-audit-20260922-v1\result.md.
@@ -714,7 +731,7 @@ more directories. Default `**/*` includes root files. Queries are literal string
 `searched_file_count` counts eligible decoded files actually searched before truncation;
 zero files is distinct from searching files but finding no text. Keep search matching
 separate from frozen task-scope matching and retain all public/tracked admission gates.
-Optional inspection remains available only while both model-call and tool-action
+By default, optional inspection remains available only while both model-call and tool-action
 budgets exceed the minimum path through mutation, all required checks, and finish plus
 bounded failure-recovery allowances limited by remaining accepted mutations. A single
 transition model accounts for every check invalidated by repair and any permitted check
@@ -738,7 +755,21 @@ two-call reserve even on the last mutation or when no check recovery allowance r
 Do not double reserve that allowance or include an optional read before the selected edit.
 The minimum path and actual offered tools remain unchanged by this forecast correction.
 Probe failures do not become check failures or force repair; public evidence can motivate
-an optional edit without granting special repair credit. Inspection/probe P floors remain.
+an optional edit without granting special repair credit. Probe P floors remain.
+`--repair-inspection-policy current-failure-v1` changes only read/search admission when
+the current diff has a visible FAIL. Subtract the successor's future-check recovery
+reserve from its inspection floor, leaving its minimum completion and unused initial
+mutation-rejection allowance. Consume an existing current repair-read credit once as
+usual; retain the existing minimum-only required-anchor exception. Do not grant credit
+from stale failures, probe failures, reasoning about likely failures or previous candidates.
+No new counter, quota, task hint, check/probe availability or spending cap is introduced.
+Recalculate after every action; successful repair removes the current FAIL trigger.
+Full protected forecasts stay intact and can become unaffordable after optional reads.
+A later failed check can therefore exhaust completion; never submit without current PASS.
+The opt-in `action_horizon.repair_inspection` and matching turn receipt state the actual
+post-inspection reserve and released future-check calls. Closure preview and protocol
+corrections use the selected policy, including recovery. Default `protected-v1` omits
+the new public payload and preserves old envelope serialization/model identity.
 With one optional turn left, expose reads with `last_opportunity`; with none, remove
 them and record/project `tool_policy_transition`. `tools_closing_after_this_turn` uses
 the actual policy's one-read/search successor with unchanged evidence and one model/tool
@@ -761,7 +792,8 @@ advisory signal after successful mutation or check/completion transition.
 An unexecuted `run_check` may be available on the first turn while the action horizon
 has slack; on a changed diff it is direct completion work. A check that already failed
 is not offered again on the same diff. A failed check with current exact mutation evidence
-offers `replace_text` immediately and, if protected slack remains, public read/search.
+offers `replace_text` immediately and public read/search while the selected inspection
+floor leaves slack.
 The minimum path includes a source read only when current exact evidence must first be
 acquired. `finish_task` is exposed only for a non-empty
 diff with no untracked files after all visible checks pass on that exact diff.
@@ -1413,7 +1445,8 @@ without durable usage is uncertain and must not be retried automatically.
 
 New runs also own one immutable `dev-run-envelope-v1`. `--resume-run-id` requires
 `repeat=1` and an exact match for provider, task, runtime, model, reasoning,
-credential path hash, cost cap, limits, repair_recheck/context_policy options, and sandbox identity,
+credential path hash, cost cap, limits, repair_recheck/context_policy/repair_inspection_policy
+options, and sandbox identity,
 including the opt-in probe
 image/profile identities. Repeat `--enable-probes` only if it was enabled originally.
 Pre-envelope runs

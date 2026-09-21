@@ -7,6 +7,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Current implementation: opt-in repair inspection reservations
+
+`--repair-inspection-policy current-failure-v1` changes only read/search admission on
+a current publicly failed diff. It releases speculative future-check recovery calls
+while preserving the current repair/check/finish path and unused mutation-rejection
+allowance. The existing required-anchor exception remains unchanged. Default
+`protected-v1`, checks/probes, mutation and submission admission, hard caps, prompts,
+tool schemas and planning/context rules retain their existing behavior.
+
+The option binds model identity, immutable envelope and run journal. The actual
+inspection floor and released allowance reach native model input and turn receipts;
+closure previews, corrections and recovery use the same policy. Historical failures
+and failed probes grant no allowance. At the audited ten-call boundary, read/search
+slack changes from0 to4 while the full protected forecast stays10. These reads can
+consume protection against a later failed check; that tradeoff is explicit.
+
+This is an implementation candidate for controlled comparison, not an acceptance or
+model-quality result. No closed live group is resumed or its remaining cap reused.
+
+Focused62 PASS/84.99s and Ruff PASS. Fresh full regression3171 PASS/16 SKIP across143
+files completes in2149.915s with four independent processes and --durations=15;
+one existing JUnit record_property format warning. Runtime/test bytes stay fixed.
+Four fresh scripted mocks (both context policies, default/opt-in) exercise failed
+public check, extra inspection, repair, automatic recheck, submission and isolated
+EVALUATOR_PASS/safety NOT_RUN. All32 actual inputs preserve public task/diff/check
+state and reservation delivery; interrupted inspection replays once, and changing
+the policy rejects resume. Default648 policy states, common prompt/tool schemas and
+default model identity match the pre-change capture. Existing2111 protected files
+stay unchanged. Real provider/count/Docker calls0; no live mini xhigh comparison.
+Runtime: caaed136. Evidence:
+C:\pt\analyses\repair-inspection-reserve-20260922-v1\result.md.
+
 ## Latest diagnosis: post-failure evidence survives; repair iteration stalls
 
 Read-only audit of the stopped AnyIO run's calls27-32 verifies all6 exact dispatched

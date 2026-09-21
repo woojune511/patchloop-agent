@@ -53,6 +53,20 @@ parallel public inspection, one admitted mutation, a visible check, automatic
 full-diff projection, finish, and a separate private evaluation. Its result is
 still unofficial.
 
+## Compare repair inspection reservations
+
+`--repair-inspection-policy protected-v1` is the default. The opt-in
+`--repair-inspection-policy current-failure-v1` lets reads/searches spend the allowance
+for future failed checks while the current candidate has a public check failure.
+It keeps the current repair/check/finish path and unused mutation-rejection allowance;
+the existing required first-source-read exception is unchanged. A later failed check
+may have less recovery time. Other tool admission, hard limits and submission requirements
+stay the same. This option has not established an acceptance improvement.
+
+Repeat the same policy on resume. The run envelope and model identity bind it;
+turn records and public action-horizon state report the actual reserve. For a controlled
+comparison, keep the model, task, planning/context policy, tools and caps fixed.
+
 ## Prepare an audited source once
 
 `patchloop task prepare-source <task-dir> --output <new-external-directory>` fetches

@@ -87,6 +87,11 @@ def dev(
             "--repair-recheck", help="After a repair, rerun its prior failed public check."
         )
     ] = False,
+    repair_inspection_policy: Annotated[
+        Literal["protected-v1", "current-failure-v1"],
+        typer.Option("--repair-inspection-policy",
+                     help="Opt-in use of future check-recovery reserves for failed-diff reads."),
+    ] = "protected-v1",
     context_policy: Annotated[
         Literal["append-v1", "native-window-v1", "segmented-v1"],
         typer.Option("--context-policy", help="Opt-in snapshot window or bounded public handoffs."),
@@ -128,6 +133,7 @@ def dev(
                 enable_probes=enable_probes,
                 probe_policy=probe_policy,
                 repair_recheck=repair_recheck,
+                repair_inspection_policy=repair_inspection_policy,
                 context_policy=context_policy,
                 planning_policy=planning_policy,
                 compact_at_input_tokens=compact_at_input_tokens,

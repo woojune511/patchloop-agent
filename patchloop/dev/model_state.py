@@ -136,6 +136,7 @@ def compact_model_state(
         view["action_horizon"] = _select(view["action_horizon"], (
             "minimum_completion_calls", "completion_budget_calls", "completion_possible",
             "protected_completion_possible", "mutation_completion_horizon", "exploration_state",
+            "repair_inspection",
             "model_turns_available_for_exploration", "tool_actions_available_for_exploration",
             "closure_reason", "tools_closing_after_this_turn", "tool_closure_prediction_basis",
             "tool_policy_transition", "max_parallel_reads_this_turn",
