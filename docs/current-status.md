@@ -30,7 +30,55 @@ retained. This resolves 3054 unique PASS/16 SKIP. Production bytes stay fixed
 through full regression and recheck. Evidence:
 C:\pt\analyses\provider-billing-probe-guidance-20260921-v1.
 
-## Latest closed observation: mini xhigh comparison stops on provider timeout
+## Latest closed observation: mini xhigh repairs public behavior, exhausts edits
+
+One fresh AnyIO v3 episode after the two common fixes closes with LIMIT_REACHED,
+official=false. Exact gpt-5.4-mini-2026-03-17/xhigh, repeat=1/$1.20, segmented-v1,
+brief-v1, probes enabled/probe-policy none and repair-recheck remain fixed. Compared
+with the previous mini packet, the request is identical; only the runtime, common
+probe description and derived tool/wire identities change. Runtime commit 7e78cee.
+
+Started 1/1, submitted 0; acceptance PASS/planned 0/1, acceptance/safety NOT_RUN 1.
+This is a settled resource-limit observation, not an evaluated incorrect answer.
+All 27 generations return completed with matched usage; 28 input counts finish.
+No provider/billing uncertainty, infrastructure stop or context/output-limit exit.
+Recorded $1.06993740, cache-neutral $1.29837900, elapsed 847.928s. Terminal explicitly
+names accepted_mutations as the blocking resource: all four edits are used and the
+latest public regression still fails. Cost, time, model and tool caps do not trigger
+this termination. The unused $0.13006260 and authorization are closed.
+
+First edit is call 11; edits occur at 11/16/19/27. Public lifecycle checks progress
+2/7 -> 3/7 -> 7/7. The latter two are existing automatic repair-rechecks. At call 20,
+upstream regression reports 31 PASS/1 FAIL: its child pytest process exceeds a
+3-second timeout. Failure/current diff reach input 21, followed by source inspection,
+a stdlib probe and the fourth edit. Automatic upstream recheck again reports
+31 PASS/1 FAIL; no next input is dispatched after the edit limit. The earlier lifecycle
+PASS belongs to edit 3 and is stale for edit 4. No repeated rejected proposal.
+
+Probe 15 imports AnyIO in-process but fails before behavior verification because
+typing_extensions is absent. Probes 18/26 run two stdlib asyncio reductions and print
+contrasting event sequences; neither runs the full AnyIO/pytest failure path. The
+child-process prohibition is present in hash-verified actual tool requests, and no
+probe tries to spawn a child. This does not isolate the effect of the description
+change or explain the old provider timeout. UNKNOWN billing remains locally tested;
+this live run has complete usage and does not exercise the missing-response path.
+
+Peak input 54000, nine segments (one input_tokens, seven major_result_reviewed
+transitions); every generation keeps output ceiling 25000. Total output 151506,
+including 139877 reasoning tokens. All 27 actual task/diff/check inputs and request
+hashes verify. Fresh implementation focused60/34.54s, resolved regression3054/16 SKIP,
+both-policy isolated mocks and operator21/5.50s support this exact runtime. Frozen
+14 operator files/protocol and 2866 protected files are unchanged; zero labeled
+containers remain. No Docker start/pull/build, retry/resume/replacement/extra sample,
+hidden-detail read or default change. Report:
+C:\pt\analyses\mini-xhigh-anyio-followup-20260921-v1\result.md.
+
+The next provider-free question is whether the reduced experiments establish the
+same preconditions and failure mechanism as the public regression. Do not infer
+model superiority, generalization, or a need for task-specific hints/looser limits
+from this single familiar task. Further paid execution is outside this closed run.
+
+## Prior closed observation: mini xhigh comparison stops on provider timeout
 
 The same-task/common-harness mini xhigh group closes incomplete. Planned order was
 AnyIO v3 -> HF Hub v5 -> original Pydantic-AI v1, each repeat=1/$1.20, group cap
@@ -67,10 +115,9 @@ start/pull/build. Cleanup confirms zero labeled containers; 2613 protected files
 No runtime/default change or hidden-detail inspection. Report:
 C:\pt\analyses\mini-xhigh-repair-compare-20260921-v1\result.md.
 
-Mini xhigh quality remains undetermined. Next provider-free candidates are explicit
-unknown billing for an unreturned dispatch and accurate common probe execution
-constraints. These add no task-specific repair hints. A paid rerun is outside this
-closed group; no model superiority, benchmark or generalization claim follows.
+That observation motivated the implemented billing and probe-description fixes
+above. This earlier group remains closed; the subsequent authorized single episode
+is recorded separately. No model superiority, benchmark or generalization claim follows.
 
 ## Prior closed observation: public repair works, acceptance remains mixed
 

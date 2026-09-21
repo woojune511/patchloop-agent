@@ -20,7 +20,33 @@ Preserve full receipts and the separate expected-value recheck. Runtime
 stays fixed; existing cases remain unchanged except their identity expectations.
 Evidence: C:\pt\analyses\provider-billing-probe-guidance-20260921-v1.
 
-Latest closed observation: same-task/common-harness mini xhigh group is CLOSED_INCOMPLETE.
+Latest closed observation: new AnyIO v3 mini xhigh episode is CLOSED_COMPLETE as one
+settled LIMIT_REACHED execution, not task completion. Runtime 7e78cee; same exact
+gpt-5.4-mini-2026-03-17/xhigh request and limits as the old mini packet; only common
+billing/probe-description runtime and derived identities differ. Repeat=1/$1.20,
+official=false, no historical input injection. Started1/submitted0; acceptance PASS
+0/1 planned, acceptance/safety NOT_RUN. All27 responses complete/matched, input counts28.
+Cost $1.06993740/cache-neutral $1.29837900, 847.928s. Completion horizon explicitly
+blocks on accepted_mutations after edit4; cost/time/input/output do not cause the stop.
+Edits at calls11/16/19/27; lifecycle2/7 ->3/7 ->7/7 (last two automatic rechecks).
+Upstream call20 reports31 PASS/1 FAIL, child pytest timeout3s. Failure/current diff
+reach input21; inspection, stdlib probe and edit4 follow, then the same public test
+fails again. No next input follows the final recheck because all edits are exhausted.
+Lifecycle PASS is stale for edit4. No rejected proposal/repeated rejection.
+Probe15 fails at missing typing_extensions; probes18/26 execute stdlib reductions,
+not the full AnyIO/pytest path. New no-child-process guidance is in actual hashed
+requests; no subprocess probe attempt. Missing-response UNKNOWN is locally tested
+but not triggered live. Do not claim the old provider timeout was fixed.
+Peak input54000, segments9 (input_tokens x1/major_result_reviewed x7), allceilings25000;
+output151506/reasoning139877. All27 actual inputs verify. Fresh focused60/34.54s,
+resolved full3054/16 SKIP, both-policy isolated mocks and operator21/5.50s. Protected
+2866/frozen operator14/protocol unchanged, zero labeled containers, no Docker
+start/pull/build/retry/resume/extra execution/hidden-detail read/default change.
+Unused $0.13006260 and authorization closed. Next provider-free question: reduced
+experiment fidelity to the observed public failure, without task-specific hints.
+Evidence: C:\pt\analyses\mini-xhigh-anyio-followup-20260921-v1; see docs/current-status.md.
+
+Prior closed observation: same-task/common-harness mini xhigh group is CLOSED_INCOMPLETE.
 Exact gpt-5.4-mini-2026-03-17/xhigh replaces GPT-5.4 medium; only model/effort and
 derived identities differ from the preceding packet. Runtime, task/source/image,
 prompt/tools/policies/limits stay fixed. AnyIO v3 -> HF Hub v5 -> original Pydantic-AI v1,
@@ -40,8 +66,8 @@ Input peak 53231, segments 5 (major_result_reviewed x3/input_tokens x1), ceiling
 Operator21 PASS/4.639s, Ruff/public audits PASS; exact-runtime full/mock reused.
 No Docker start/pull/build, zero labeled containers, 2613 protected and 15 frozen
 operator files/protocol unchanged. No runtime/default change or hidden-detail read.
-Next provider-free candidates: unreturned-dispatch billing metadata and common probe
-execution-constraint disclosure. Mini quality remains undetermined; no automatic paid run.
+This observation motivated the implemented common billing and probe-description
+fixes above. Its group stays closed; the newer authorized single run is separate.
 Evidence: C:\pt\analyses\mini-xhigh-repair-compare-20260921-v1; see docs/current-status.md.
 
 Prior closed observation: unchanged common harness on AnyIO v3 -> HF Hub v5 ->
