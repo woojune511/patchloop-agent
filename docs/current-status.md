@@ -7,7 +7,52 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed observation: new tool guidance completes all three tasks
+## Latest closed observation: public repair works, acceptance remains mixed
+
+The fixed common-harness panel AnyIO v3 -> HF Hub v5 -> original Pydantic-AI v1
+closes at acceptance 1/3 PASS, safety 3/3 PASS, started/submitted 3, NOT_RUN 0,
+no infrastructure or uncertainty stop. All official=false. Same exact GPT-5.4
+medium, runtime, common prompt, normalized tools, policies and limits as the prior
+three-task group; only task/source and their derived public/check/image bindings
+change. Each repeat=1/$1.20, group cap $3.60. No task-specific instructions.
+
+AnyIO first edits at call 6; public lifecycle 4/7 at call 7 reaches actual input 8.
+After inspection, call 9 separates pytest outcomes/cancellation from hard interrupts.
+Existing automatic repair-recheck passes 7/7, upstream 32 PASS, then submission at
+call 11 passes isolated acceptance/safety. HF Hub's first three edits produce public
+284/292 at call 7. Input 8 receives the explicit-default-port failure; call 8 repairs
+port normalization, automatic recheck passes 292/292, upstream 15 PASS. Submission
+at call 10 is acceptance FAIL/safety PASS. Pydantic-AI edits at call 5, passes public
+8/upstream 18 and submits at call 8, but acceptance FAIL/safety PASS.
+
+Both failed public checks reach the next actual input and lead to applied repairs
+and passing automatic rechecks. Only AnyIO also passes acceptance. Rechecks are
+existing harness actions, not separately chosen model actions. Public diff review
+finds HF Hub's port-or-default expression also treats numeric zero as missing;
+Pydantic-AI inserts empty fields for field-mode profiles without distinguishing
+profiles carrying the provider requirement. These are static public preservation
+findings, not reproduced extra candidates or established private failure causes.
+HF Hub uses all four accepted mutations; their contribution to failure is unknown.
+
+Recorded $1.62068100, cache-neutral $2.34154500, summed run time 509.222s. All 29
+requests/counts/usages and 51 tool actions audit correctly, including actual task,
+diff, check, completion guidance and failure feedback delivery. Input peaks
+45598/32447/43296; segments 4/6/3, all ten transitions major_result_reviewed.
+No incomplete response, reduced output ceiling or cost/input/output-limit exit.
+No rejected edit, repeated rejection or probe. Operator17 PASS/5.21s, Ruff PASS;
+exact-runtime full/mock validation below is reused. Docker was already running;
+no start/pull/build. Cleanup passes, no labeled containers, 2265 protected files
+unchanged. Group and unused $1.97931900 closed; no retry/resume/replacement/extra run.
+No hidden-detail inspection. Report:
+C:\pt\analyses\common-harness-broader-panel-20260921-v1\result.md.
+
+Focus next on task-independent verification of behavior that must be preserved
+outside registered public checks. Keep common runtime fixed while designing a
+bounded general verification experiment; add no task-specific fix instructions.
+These familiar-task single samples and different task mix do not establish a
+regression from the previous 3/3, causal guidance effects or generalization.
+
+## Prior closed observation: new tool guidance completes all three tasks
 
 The approved fixed GPT-5.4 medium observation F1 pyfakefs v2 -> P1 PDM v2 ->
 L1 Loguru v3 closes with acceptance/safety 3/3 PASS, started/submitted 3, NOT_RUN 0,

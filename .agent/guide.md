@@ -5,7 +5,34 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest closed observation: the new common tool-prerequisite guidance completes
+Latest closed observation: unchanged common harness on AnyIO v3 -> HF Hub v5 ->
+original Pydantic-AI v1 closes acceptance 1/3, safety 3/3, all started/submitted,
+NOT_RUN 0, no infrastructure/uncertainty stop. GPT-5.4 medium, prompts, normalized
+tools, policies, limits and runtime match the prior group; task/source-derived
+bindings vary. Each repeat=1/$1.20, total $3.60, official=false.
+AnyIO repairs public lifecycle 4/7 to 7/7 after delivered failure, upstream 32 PASS,
+and passes isolated acceptance. HF Hub repairs explicit default-port failures
+284/292 to 292/292 after delivered feedback, upstream 15 PASS, but acceptance FAIL.
+Pydantic-AI passes public 8/upstream 18 after one edit but acceptance FAIL. Safety
+passes all three. Failed-check rechecks are the existing automatic repair-recheck,
+not separately chosen model actions. Public repair is observed twice; final correctness
+after repair is observed once. Static public diffs show port-or-default conflating
+numeric zero with missing and field-mode insertion lacking provider-requirement
+discrimination. No extra candidate reproductions or private failure-cause claims.
+HF Hub uses all four accepted mutations; limit contribution is not established.
+Recorded $1.62068100, cache-neutral $2.34154500, summed time 509.222s; 29 model/count
+and 51 tool actions with verified task/diff/check/guidance/failure-feedback delivery.
+Input peaks 45598/32447/43296; segments 4/6/3, ten major_result_reviewed transitions.
+No incomplete response, output-ceiling reduction, cost/input/output exit, rejected edit
+or probe. Operator17 PASS/5.21s, Ruff PASS, exact-runtime full/mock receipts reused.
+No Docker start/pull/build; cleanup PASS, 2265 protected files unchanged. Group and
+unused $1.97931900 closed, no retry/resume/extra execution or hidden-detail inspection.
+Next focus is general verification of preserved behavior beyond registered checks,
+without task-specific guidance; keep runtime fixed pending a bounded experiment.
+Different familiar-task samples do not establish regression, causality or generalization.
+Evidence: C:\pt\analyses\common-harness-broader-panel-20260921-v1.
+
+Prior closed observation: the new common tool-prerequisite guidance completes
 F1 pyfakefs v2 -> P1 PDM v2 -> L1 Loguru v3 with acceptance/safety 3/3 PASS,
 started/submitted 3, NOT_RUN 0, no infrastructure/uncertainty stop, all official=false.
 Exact GPT-5.4 medium and the previous task/source/image/request/tool-schema/policy/limit
