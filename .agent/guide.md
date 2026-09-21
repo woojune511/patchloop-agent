@@ -5,6 +5,25 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest provider-free analysis: closed AnyIO mini probes15/18/26 and actual following
+inputs16/19/27 verify. Probe15 fails before behavior at missing typing_extensions.
+Probe18's stdlib close prevents worker:after but yields RuntimeError. Probe26 uses
+stdlib TaskGroup; both variants finish with KeyboardInterrupt/worker:finally, and
+close yields RuntimeError. No successful reduction imports AnyIO, exercises the final
+_run_tests_and_fixtures repair location, or reproduces the public child-pytest timeout.
+Actual failure/test source and AnyIO CancelScope/BaseExceptionGroup source were
+delivered before the final probe. Actual probe outputs already report not_assessed
+and zero changed-line entries. The gap is unverified transfer of reduced observations
+to the repair hypothesis; neither a missing warning nor the dynamic hang cause is proved.
+No prepared dependencies were selected. Exact AnyIO public tree has113 files and
+only pyproject.toml among TOML/lock files; zero compatible source-locked wheel records.
+The current dependency preparation contract cannot be enabled by a flag alone.
+Next candidate is generic external public dependency locking from exact source
+metadata/groups/target platform into existing offline snapshots. It is not implemented;
+retain child-process limits and registered checks. No task hints, prompt/limit change,
+provider/Docker/candidate/download/install execution. Runtime9861aa26 stays unchanged.
+Evidence: C:\pt\analyses\mini-xhigh-probe-fidelity-20260921-v1; see docs/current-status.md.
+
 Current implementation: a provider dispatch without a matching durable completion
 produces provider_usage_failure.failure_kind=response_not_recorded and billing_state
 UNKNOWN, with call/turn/request identities only. Recorded cost remains the known subtotal.
@@ -42,8 +61,8 @@ output151506/reasoning139877. All27 actual inputs verify. Fresh focused60/34.54s
 resolved full3054/16 SKIP, both-policy isolated mocks and operator21/5.50s. Protected
 2866/frozen operator14/protocol unchanged, zero labeled containers, no Docker
 start/pull/build/retry/resume/extra execution/hidden-detail read/default change.
-Unused $0.13006260 and authorization closed. Next provider-free question: reduced
-experiment fidelity to the observed public failure, without task-specific hints.
+Unused $0.13006260 and authorization closed. The later analysis above checks reduced
+experiment fidelity and the existing dependency-preparation compatibility gap.
 Evidence: C:\pt\analyses\mini-xhigh-anyio-followup-20260921-v1; see docs/current-status.md.
 
 Prior closed observation: same-task/common-harness mini xhigh group is CLOSED_INCOMPLETE.

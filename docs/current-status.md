@@ -7,6 +7,39 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest analysis: probe reductions do not establish the final repair mechanism
+
+Provider-free analysis of the closed AnyIO mini xhigh episode verifies three probes,
+their following actual inputs16/19/27, and public source/failure delivery at21/23.
+Probe15 fails at missing typing_extensions before its intended comparison. Probe18
+uses plain asyncio: close suppresses worker:after but produces task_result:RuntimeError.
+Probe26 uses stdlib asyncio.TaskGroup: both variants terminate with KeyboardInterrupt
+and worker:finally, while closing records RuntimeError. Neither successful reduction
+imports the modified AnyIO implementation or reproduces the child-pytest timeout.
+
+The actual test uses anyio.create_task_group through the pytest plugin/TestRunner.
+Its source and the AnyIO CancelScope/BaseExceptionGroup implementation were delivered
+before the final probe. Probe26 has no _current_coro or _run_tests_and_fixtures and
+does not compare the two repair locations claimed by mutation4. This identifies a
+gap between reduced observations and the repair hypothesis, not the dynamic hang
+cause. The actual probe outputs already say behavior_verdict=not_assessed and show
+zero changed-line entries; no missing result-label warning was found.
+
+The request has no prepared probe dependencies. Existing preparation requires exact
+wheel URL/hash/size records in a public TOML source lock. At AnyIO's exact commit,
+the 113-file tree has only pyproject.toml among TOML/lock files, no compatible wheel
+records and no requirements file. Dependencies and a test group are declared, but
+the current path cannot be enabled with a flag alone. Next implementation candidate:
+a generic externally resolved public lock bound to exact source metadata, selected
+dependency groups and target Python/platform, feeding the existing offline snapshots.
+This is not implemented or efficacy-tested; child-process restrictions and registered
+end-to-end checks remain necessary. No task-specific prompt or limit change is selected.
+
+Analysis makes zero provider/Docker/candidate/download/install calls, leaves runtime
+9861aa26 unchanged and preserves closed evidence. Detailed facts, limits and candidate
+scope: C:\pt\analyses\mini-xhigh-probe-fidelity-20260921-v1\result.md.
+Documentation validation and delivery are recorded separately there.
+
 ## Current implementation: missing-response billing and probe process guidance
 
 An unreturned provider dispatch now reports `billing_state=UNKNOWN` and
@@ -73,10 +106,9 @@ containers remain. No Docker start/pull/build, retry/resume/replacement/extra sa
 hidden-detail read or default change. Report:
 C:\pt\analyses\mini-xhigh-anyio-followup-20260921-v1\result.md.
 
-The next provider-free question is whether the reduced experiments establish the
-same preconditions and failure mechanism as the public regression. Do not infer
-model superiority, generalization, or a need for task-specific hints/looser limits
-from this single familiar task. Further paid execution is outside this closed run.
+The subsequent provider-free analysis above finds missing transfer evidence and
+no compatible source lock. This single familiar task establishes no model
+superiority or generalization. Further paid execution is outside this closed run.
 
 ## Prior closed observation: mini xhigh comparison stops on provider timeout
 
