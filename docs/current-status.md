@@ -7,7 +7,49 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Latest closed comparison: existing planning policies both fail the original task
+## Latest closed observation: fixed mini xhigh passes Tox and Fromager
+
+The next fixed-harness panel closes T1 Tox v1 -> F1 Fromager v1 at acceptance/safety
+2/2 PASS: planned/started/submitted2, NOT_RUN0, infrastructure/uncertainty stops0.
+All official=false. Exact mini snapshot/xhigh, runtime7608ec9c at805a9b9, brief-v1,
+segmented context, common instructions/tools and limits remain fixed. Each repeat1/
+$1.20; new group cap$2.40. Only task/source/prepared dependencies and their public
+check/import/image bindings change from the prior original Pydantic baseline.
+
+Tox edits once at call7, passes29 upstream tests at8 and submits at9. Fromager's
+call3 emits reasoning-only25000 tokens and ends max_output_tokens, with settled
+matched usage. The existing one in-episode protocol correction leads to an applied
+worklist edit at4, public contract5/upstream12 PASS at5/6 and submission7 PASS.
+Calls3/4 are both in the first segment with replace_text available; call3 input19216.
+This locates the output boundary, not its reasoning cause or a continuation effect.
+No manual retry, resume, replacement, rejected edit or failed public check occurs.
+Agent probes/test-file read_file calls0; all21 memory updates null, concerns absent;
+final plan revisions2/3. The prior public-PASS/acceptance-FAIL combination does not
+recur here, but stronger verification behavior or policy causality is not established.
+
+Recorded cost$0.35968890, cache-neutral$0.49352250; Tox$0.12997335, Fromager$0.22971555.
+The incomplete response costs$0.11835840 (51.5% of Fromager's recorded cost).
+Model16/tool21/count16, summed execution438.248s, input peaks39994/51898, segments2/3
+(initial2, major_result_reviewed3). All output ceilings25000; no cost/input-limit exit.
+All16 actual requests, public task/diff/check/plan deliveries, bindings and usage audit.
+
+Existing public metadata resolution prepares Tox11 wheels/388 files and Fromager39/
+1580. Separate Linux diagnostics confirm dependency imports and Fromager current-source
+import. Tox lacks generated tox.version; no file is fabricated or task hint injected.
+Its registered check uses its existing environment successfully. No agent probe exercises
+this limitation. Docker already runs; no Desktop start, image pull/build or project build.
+
+Operator26 PASS/9.38s, Ruff and fresh mock EVALUATOR_PASS/safety NOT_RUN with4 actual
+inputs verified. Prior exact-runtime full3079 PASS/16 SKIP is reused, not rerun.
+Protected21480/runtime1776/frozen operator18 files and protocol remain unchanged;
+no labeled containers remain. Unused$2.04031110 is closed. Invoice/free credit unverified.
+Keep common settings; two familiar single samples establish neither generalization nor
+a model ranking. A separate technical candidate is generic support for generated project
+modules in prepared environments; do not add a Tox-specific stub or raise output limits
+from this one recovered episode. No additional paid run belongs to this closed group.
+Evidence: C:\pt\analyses\mini-xhigh-fixed-harness-panel-20260921-v1\result.md.
+
+## Previous closed comparison: existing planning policies both fail the original task
 
 Four fresh mini xhigh episodes close in A1/B1/B2/A2 order: A=brief-v1, B=existing
 brief-assumption-v1, two per arm. Acceptance PASS/planned is A0/2 and B0/2; both

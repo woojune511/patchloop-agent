@@ -5,7 +5,30 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest closed comparison: A=brief-v1/B=brief-assumption-v1, mini xhigh, original
+Latest fixed-harness observation: T1 Tox v1 -> F1 Fromager v1, mini snapshot/xhigh,
+brief-v1/segmented-v1, runtime7608ec9c at805a9b9. Existing common model/prompt/tools/
+policies/limits fixed; only task/source/dependencies and task-derived bindings differ.
+Each repeat1/$1.20, new cap$2.40. Acceptance/safety2/2 PASS, started/submitted2,
+NOT_RUN/infra/uncertainty stops0. Tox edit7 -> upstream29 PASS8 -> submit9. Fromager
+call3 reasoning-only25000 ends max_output_tokens with matched usage; existing one
+in-episode correction -> edit4 -> public5/upstream12 PASS -> submit7 PASS. Calls3/4
+are in the initial segment, edit available; call3 input19216. No segment/action-mask
+cause established, no manual retry or new episode. Agent probes/test-file read_file0,
+memory updates21 all null, concerns absent, plan revisions2/3. Public-check failure,
+rejected/repeated edit0. No improved verification behavior or causal/default claim.
+Cost$0.35968890/cache-neutral$0.49352250; incomplete$0.11835840. Model16/tool21/count16,
+438.248s summed runs; input39994/51898, segments2/3, ceilings25000, no cost/input exit.
+All16 public inputs/request hashes/bindings/usage audit. Public runtime wheels Tox11/
+388 files, Fromager39/1580. Linux dependency imports PASS; Fromager source import PASS;
+Tox generated tox.version absent. No stub/hint/project build; registered check works.
+Operator26/9.38s,Ruff,fresh mock EVALUATOR_PASS/safety NOT_RUN,4 inputs PASS. Prior
+exact-runtime full3079/16 SKIP reused. Protected21480/runtime1776/operator18/protocol
+unchanged, labeled containers0. Unused$2.04031110 closed; no Docker start/pull/build,
+resume/replacement/hidden-detail read. Keep defaults; generic generated-module support
+is a separate environment candidate. No additional paid run or output-limit increase.
+Evidence: C:\pt\analyses\mini-xhigh-fixed-harness-panel-20260921-v1\result.md.
+
+Previous closed comparison: A=brief-v1/B=brief-assumption-v1, mini xhigh, original
 Pydantic AI v1, A1/B1/B2/A2 two per arm. Acceptance A0/2/B0/2; all4 submitted,
 safety PASS, no NOT_RUN/infrastructure/uncertainty stop, official=false. Runtime7608ec9c
 at7773432, task/source/dependencies/model/effort/context/tools/limits fixed; only existing
