@@ -5,6 +5,19 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current diagnostics seam: `diagnostics.public_probe_delivery` audits actual native and
+quoted public probe receipts against preceding durable results and admitted dependency/
+profile identities. Public dependency hashes are allowed only in verified execution-policy
+fields; preparation host paths, prepared-source metadata and misplaced digests still fail.
+Use it in future operators instead of universal dependency-digest absence assertions.
+Details/API/CLI: [public receipt audit](prepared-probe-dependencies.md#public-receipt-audit-boundary).
+All32 stopped AnyIO inputs verify;18 failed native receipt/19 completed quoted receipt.
+Original failure/group closure remain immutable. Focused80/76.76s and Ruff pass; four
+both-context/dependency-option mocks verify28 actual inputs through isolated evaluation.
+Prior full3103/16 SKIP reused after261 baseline files match; runtime172a439f unchanged.
+No provider/count/real Docker, policy change or paid resume. Behavioral delay/completion
+remain separate. Evidence: C:\pt\analyses\probe-receipt-audit-contract-20260922-v1.
+
 Latest stopped observation: AnyIO v3 -> HF Hub v5, mini snapshot/xhigh, runtime172a439f
 at cbe2d19b, fixed brief-v1/segmented/tools/limits,repeat1/$1.20 each,new cap$2.40.
 Only N1 starts: edit26, public lifecycle1/7 at27, then inspection28-30;31/32 each
@@ -23,8 +36,8 @@ Cost$1.14579090/cache-neutral$1.56042450,32model/48tool/36count,1230.171s,9segme
 peak59602; two incomplete responses$0.26428290. No cost/call/wall cap terminal.
 Operator26/8.20s,Ruff,fresh mock4 inputs PASS; exact-runtime full3103/16 SKIP reused.
 Protected1581/runtime1778/operator18 unchanged,containers0,unused$1.25420910 closed.
-Next provider-free seam is public-probe audit contract coverage, including failed and
-successful receipts/handoff; behavior diagnosis targets delayed edits and completion.
+The current seam above supplies public-probe audit coverage, including failed and
+successful receipts/handoff; behavior diagnosis still targets delayed edits and completion.
 Evidence: C:\pt\analyses\mini-xhigh-anyio-hf-observation-20260922-v1\result.md.
 
 Latest fixed-harness observation: T1 Tox v1 -> F1 Fromager v1, mini snapshot/xhigh,

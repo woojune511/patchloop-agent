@@ -7,6 +7,30 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Current implementation: public probe receipt audit
+
+The checked-in `diagnostics.public_probe_delivery` audit now distinguishes public
+dependency provenance from preparation metadata. Actual native outputs and segment
+archives must match preceding durable probe receipts and admitted policy identities.
+Dependency manifest/content hashes are permitted only in those verified execution
+policies. Preparation host paths, prepared-source identities, altered receipts and
+digests in unrelated fields fail. See [the audit contract](../.agent/prepared-probe-dependencies.md#public-receipt-audit-boundary).
+
+Read-only re-audit of all32 inputs in the stopped AnyIO run verifies the failed probe
+at input18 and successful probe quoted at19. Its original audit failure, closed group,
+NOT_RUN outcomes and unspent budget remain unchanged. This fixes the operator audit
+assumption, not delayed editing or reasoning-only exhaustion; no task-specific guidance
+or runtime/prompt/tool/context-policy change is made.
+
+Focused80 PASS/76.76s with --durations=15 and Ruff PASS. Four fresh mock runs cover both
+context policies with and without prepared dependencies: failed/successful probe delivery,
+segment handoff, edit/public check/submission and isolated EVALUATOR_PASS/safety NOT_RUN.
+All28 actual mock inputs preserve public task/diff/check state. The prior complete3103
+PASS/16 SKIP regression is reused after verifying all261 baseline source/test/diagnostic/
+lock files unchanged; it is not a new full-suite run. Runtime172a439f remains fixed.
+Provider/count/real-Docker calls0. Evidence:
+C:\pt\analyses\probe-receipt-audit-contract-20260922-v1\result.md.
+
 ## Latest stopped observation: AnyIO incomplete, HF Hub not started
 
 The mini xhigh N1 AnyIO v3 -> H1 HF Hub v5 panel closes `CLOSED_INCOMPLETE`.
@@ -44,9 +68,9 @@ plan revision10, memory updates48 all null, no concerns/upstream test-source rea
 Operator26 PASS/8.20s,Ruff,fresh mock4 inputs through isolated EVALUATOR_PASS/safety
 NOT_RUN,public environment diagnostics2. Same-runtime full3103 PASS/16 SKIP reused.
 Protected1581/runtime1778/frozen operator18/protocol unchanged; labeled containers0.
-Unused$1.25420910 closed; invoice/free credits unverified. Next provider-free seam:
-align the public-probe receipt/auditor contract and cover successful/failed probes
-through segment handoff; diagnose delayed edit and post-failure completion separately.
+Unused$1.25420910 closed; invoice/free credits unverified. The implementation above
+addresses the public-probe receipt/auditor contract and successful/failed handoff coverage.
+Delayed editing and post-failure completion remain separate behavioral questions.
 No task-specific guidance, policy adoption or further paid execution belongs here.
 Evidence: C:\pt\analyses\mini-xhigh-anyio-hf-observation-20260922-v1\result.md.
 

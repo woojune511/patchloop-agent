@@ -198,6 +198,36 @@ carry the same identity; isolated evaluation validates provenance without mounti
 bundle or exposing its own environment to arbitrary probe code. Execution success never
 grants required-check credit or certifies the model's behavioral question.
 
+### Public receipt audit boundary
+
+`project_probe_result` retains `output.execution_policy`, including the admitted
+dependency manifest/content hashes, and its policy/profile hashes. This is public
+execution provenance on both successful and failed probes. The same exact projection
+can appear in a segment's quoted public exchange. These hashes are not prepared-source
+metadata or host preparation paths. A blanket dependency-digest absence check is invalid.
+
+Use the read-only checked-in audit for future operators:
+
+```powershell
+.\.venv\Scripts\python.exe -B -m diagnostics.public_probe_delivery <state-root> <run-id>
+```
+
+It loads a settled journal and hash-verified actual inputs, matches probe outputs to
+preceding durable receipts, and checks the policy hash and admitted dependency/profile
+identity. Only manifest/content fields inside those verified execution policies are
+allowed. Identical digests in free text, stdout, annotations or unrelated JSON fail.
+Preparation host paths (including JSON-escaped paths) and prepared-source metadata
+remain absent throughout the input. It requires no source bundle, credentials, provider,
+Docker or evaluator-detail reads; optional/omitted dependency settings are supported.
+
+The pure `audit_preparation_delivery` helper accepts an already verified input and only
+its preceding probe receipts. It is also usable inside an operator's per-turn audit.
+This check supplements the existing request/tool-schema, public task/diff/check,
+source/envelope binding, annotation and billing audits; it does not replace them.
+Receipt equality says nothing about whether a probe verifies the intended behavior.
+Record any new audit in a fresh evidence location. Never rewrite an earlier failed
+audit, relax its frozen gates, resume its group or turn it into a completed comparison.
+
 ## Evidence and limits
 
 Declared version-file implementation evidence:
