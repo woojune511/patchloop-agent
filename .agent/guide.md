@@ -5,7 +5,28 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest observation: original Pydantic AI v1 mini xhigh closes EVALUATOR_FAIL,
+Latest analysis: all7 actual requests of the closed original Pydantic mini xhigh row
+match dispatch hashes; full task, common instructions, current diff/check and durable
+plans verify. Mutation change/preserve question remains in inputs5-7 across handoffs.
+Initial plan mentions other providers but assumes a field-mode-only repair. Edit4
+uses that condition; no plan update at post-edit5. After contract PASS, plan6 says
+upstream PASS completes the fix; finish7 follows without upstream test-source reads
+or probes. This is a public verification-scope gap, not an inspected private failure.
+All16 memory updates are null; no concern is created or automatically resolved.
+Final input has review signal, eligibility warning, six offered tools and3 edits /
+34 model calls /85 actions /1592s /$1.05848535 left. No measured resource/tool-mask stop.
+No public-state transport defect is found; reasoning-segment causality is unmeasured.
+Keep runtime7608ec9c/task/prompts/defaults unchanged. Next experiment candidate uses
+existing brief-assumption-v1 to connect an edit assumption to concrete public evidence;
+do not add task-specific examples, annotation/probe quotas or a new policy. Measure
+actual verification and acceptance separately. No new live execution is included.
+Fresh focused50/100.456s PASS, including plan/recovery/concern/guidance paths and both
+context mocks through isolated EVALUATOR_PASS/safety NOT_RUN; all8 actual inputs verify.
+Ruff PASS; prior unchanged-runtime full3079/16 SKIP evidence reused. No provider/count,
+real Docker, historical-candidate execution, private-detail read or efficacy claim.
+Evidence: C:\pt\analyses\submission-verification-audit-20260921-v1.
+
+Latest closed observation: original Pydantic AI v1 mini xhigh closes EVALUATOR_FAIL,
 acceptance FAIL/safety PASS, official=false; planned/started/submitted1/1/1,
 acceptance PASS0/1, NOT_RUN/infrastructure/uncertainty stops0. Runtime7608ec9c at
 e6d8377 and common model/prompts/tools/policies/limits stay fixed against AnyIO;
@@ -24,9 +45,9 @@ No response exception or resource stop. Operator24/5.065s,Ruff,all7 audits PASS;
 prior unchanged-runtime full3079/16 SKIP and both-policy10-input mocks reused.
 Protected4503/frozen1776 runtime/16 operator files unchanged; zero labeled containers.
 Unused$1.04386590 closed; no retry/resume/extra run/hidden-detail inspection/default change.
-Next: inspect the common submission/verification decision against existing guidance
-and public preservation requirements before a generic change. No task-specific hints
-or new paid execution are included. Different familiar-task single runs are not a
+The follow-up audit above inspects common submission/verification against existing
+guidance and public preservation requirements. No task-specific hints or new paid
+execution are included. Different familiar-task single runs are not a
 causal dependency comparison or generalization claim.
 Evidence: C:\pt\analyses\mini-xhigh-pydantic-dependencies-20260921-v1.
 

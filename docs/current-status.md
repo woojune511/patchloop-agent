@@ -7,6 +7,46 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest analysis: verification scope narrows before submission
+
+A provider-free audit reconstructs all7 actual requests of the closed original
+Pydantic AI mini xhigh run and matches their dispatch hashes. Full public task,
+common system/brief-plan instructions, current diff/check state and durable plans
+reach the model unchanged. The mutation card's change/preserve question remains in
+inputs5-7, including after segment handoffs. No public-state delivery defect is found;
+this does not measure the causal effect of segmenting reasoning.
+
+The initial public plan mentions preserving other providers but already proposes a
+field-mode-only repair. The call4 mutation uses that condition without a separate
+provider requirement. At5 the model leaves the post-mutation plan unchanged and runs
+the inline contract. At6, after its PASS, the model replaces the plan with remaining
+upstream checks and states that their PASS completes the fix. At7 it submits after
+those checks pass. It inspects no upstream test source and performs no probe. These
+public decisions do not establish coverage of the distinct plain-profile preservation
+condition; no private evaluator details or new candidate execution are used.
+
+All16 memory_update values are null and no verification concern is ever created:
+empty concern state is non-use, not lost storage or automatic resolution by PASS.
+The final input requests first-ready/check/handoff review, warns that eligibility is
+not proof, and offers read/search/edit/probe/finish/stop. It retains3 edits,34 model
+calls,85 tool actions,1592s and $1.05848535 before the last call. Submission was not
+forced by the action mask or a measured resource limit.
+
+Keep runtime7608ec9c, current prompts/policies/defaults and task bytes unchanged.
+Redundant guidance or a mandatory probe would not address a demonstrated delivery
+bug. The next experiment candidate is the existing opt-in brief-assumption-v1 content
+contrast, which asks an existing post-edit review to connect an edit assumption to
+a concrete public setup/outcome. Compare actual verification and patch correctness;
+more plan text or probes alone are not improvement. No new paid run is included.
+
+Fresh focused50 PASS/100.456s validates plan/null/review/recovery, concern persistence
+and guidance. Both append/segmented mocks reach isolated EVALUATOR_PASS, safety NOT_RUN;
+all8 actual mock inputs verify task/diff/check/stage delivery. Ruff passes. The unchanged
+runtime retains its previous full3079 PASS/16 SKIP evidence; no fresh full regression
+claim. All results remain official=false. No provider/count call, real Docker action,
+historical-candidate rerun, private-detail inspection or model-quality claim.
+Evidence: C:\pt\analyses\submission-verification-audit-20260921-v1.
+
 ## Latest closed observation: original Pydantic AI mini xhigh submits but fails
 
 One newly authorized original pydantic-ai-synthetic-tool-reasoning v1 episode closes
@@ -44,11 +84,10 @@ extra candidate execution or hidden-detail inspection; unused $1.04386590 is clo
 
 Prepared dependencies alone do not establish stronger verification behavior: the agent
 did not use a probe. AnyIO PASS and Pydantic FAIL are separate familiar-task single
-observations, not a repeated benchmark or causal comparison. The next investigation
-is the common submission/verification decision: how existing guidance translates public
-preservation requirements into concrete checks. Start with public traces and existing
-guidance before proposing a generic change; no task-specific examples, default change
-or further paid execution is included in this closed observation.
+observations, not a repeated benchmark or causal comparison. The subsequent public
+submission/verification audit above checks how existing guidance translates public
+preservation requirements into concrete checks. No task-specific examples, default
+change or further paid execution is included in this closed observation.
 Evidence: C:\pt\analyses\mini-xhigh-pydantic-dependencies-20260921-v1.
 
 ## Previous closed observation: AnyIO mini xhigh submits and passes
