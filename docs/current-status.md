@@ -30,10 +30,46 @@ in 2,323.987 seconds (38m44s), using four groups and `--durations=15`; implement
 test and diagnostic bytes stay fixed throughout. All 3,305 protected files verify.
 The fresh operator passes 31 tests in 14.41s; both existing Docker import/cleanup
 gates pass without start/pull/build. The authorized fixed mini xhigh A1/B1/B2/A2
-comparison, $1.20/run and $4.80 total, is prepared but has not started.
+comparison, $1.20/run and $4.80 total, has completed as reported below.
 Evidence: C:\pt\analyses\segment-boundary-policy-20260922-v1.
 
-## Latest controlled observation: repair inspection A2/B2
+## Latest controlled observation: segment boundary A2/B2
+
+The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes
+`CLOSED_COMPLETE`: A1 -> B1 -> B2 -> A2, repeat=1 / $1.20 each, group cap $4.80.
+A (`result-or-size-v1`) has acceptance PASS in 1/2 planned runs; B (`size-only-v1`)
+has 0/2. Started 4 / submitted 1 / acceptance NOT_RUN 3 / infrastructure stops 0;
+all `official=false`. NOT_RUN is not an evaluated failure. Keep the default.
+
+A1 edits at calls 14/18/22. After failed candidates, its probes distinguish a pending
+waiter from a cancelled Task; the final repair passes public lifecycle 7/7, upstream
+regression and isolated acceptance/safety. B1 edits at 9/11/15 and reaches 4/7,
+then spends 8 calls/$0.461493900 without another edit before cost admission ends it.
+B2's edit 17 reaches 2/7 with interrupt failures and fixture regressions; its next
+probes fail import or time out, followed by 8 calls/$0.604921200 without a repair.
+B1/B2 retain offered edits and unused mutations in every audited post-failure input.
+A2 performs 21 inspections but no edit/check/probe; result-triggered handoffs never
+occur in that run. All four have zero repeated identical rejected proposals.
+
+B retains exact native prefixes across 9/6 actual inputs satisfying the default
+result predicate on their observed prefixes. This confirms the intervention, not
+15 counterfactual rollovers or an alternative model trajectory. Segment counts
+are A1/B1/B2/A2 = 9/6/5/3; B has size rollovers only. Seven known billed responses
+exhaust 25,000 reasoning-only output tokens ($0.935209500). B2/A2 terminate after
+consecutive incompletes; B1 ends at the cost cap. No internal-reasoning or policy
+superiority claim follows. Result-boundary removal alone did not resolve the stall;
+size transitions and resource limits remain separate possible contributors.
+
+Recorded model-rate cost $4.005740700 / cache-neutral $4.981801500; unused
+$0.794259300 closes without retry/resume/replacement/extension. All 89 actual
+inputs, 102 counts, 125 tool actions, request hashes, settled usage and public
+receipt/source/dependency bindings verify. Runtime d752929c at 1bbffa3c, task,
+source, prompts, tools, planning and caps are fixed; only boundary policy and
+derived identity differ. Fresh validation is reported above. All 3,305 protected
+files remain unchanged. No private-detail inspection or extra candidate execution.
+Evidence: C:\pt\analyses\mini-xhigh-segment-boundary-compare-20260922-v1\result.md.
+
+## Previous controlled observation: repair inspection A2/B2
 
 The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes
 `CLOSED_COMPLETE`: A1 -> B1 -> B2 -> A2, each repeat=1 / $1.20, group cap $4.80.

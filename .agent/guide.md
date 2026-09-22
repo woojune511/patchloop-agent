@@ -5,7 +5,27 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest fixed repair-inspection comparison closes all 4 slots A1/B1/B2/A2 on the
+Latest boundary comparison closes A1/B1/B2/A2 on AnyIO v3, mini snapshot/xhigh,
+brief-v1/segmented-v1/protected-v1, runtime d752929c at 1bbffa3c. A uses default
+result-or-size-v1, B opt-in size-only-v1; other request fields and prompt/tools fixed.
+Acceptance PASS/planned: A 1/2, B 0/2. Started 4 / submitted 1 / NOT_RUN 3 / infra 0,
+official=false. A1's discriminating probes lead to repairs at 18/22, public 7/7,
+upstream PASS and isolated PASS. B1/B2 retain edit availability but spend 8 further
+calls after the last failure without a repair; B2's probes fail import/time out.
+A2 never edits or exercises a result boundary. B retains exact native history in
+9/6 inputs satisfying the default result predicate on the same observed prefix;
+these are not counterfactual rollover counts. Segment counts 9/6/5/3, with size
+rollovers retained. Seven reasoning-only 25,000-token incompletes cost $0.935209500;
+B1 ends at cost admission, B2/A2 at consecutive incomplete responses. Keep defaults;
+no policy superiority, continuity-only cause or general model-quality claim.
+Costs $4.005740700 recorded / $4.981801500 cache-neutral; unused $0.794259300 closed.
+89 actual inputs, 102 counts, 125 actions and 3,305 protected files verify. Fresh
+focused 20 PASS/97.108s, full 3,191 PASS/16 SKIP/2,323.987s with durations, operator
+31 PASS/14.41s, Ruff and both-arm isolated mock PASS (8 inputs). No retry/resume,
+extra candidate execution, hidden-detail read or Docker start/pull/build.
+Evidence: C:\pt\analyses\mini-xhigh-segment-boundary-compare-20260922-v1\result.md.
+
+Previous fixed repair-inspection comparison closes all 4 slots A1/B1/B2/A2 on the
 same AnyIO v3 / mini snapshot xhigh / brief-v1 / segmented-v1 / runtime caaed136.
 Default `protected-v1` has acceptance PASS in 1/2 planned runs;
 opt-in `current-failure-v1` has 0/2. Started 4 / submitted 1 / NOT_RUN 3,
