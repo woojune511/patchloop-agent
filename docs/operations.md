@@ -67,6 +67,36 @@ Repeat the same policy on resume. The run envelope and model identity bind it;
 turn records and public action-horizon state report the actual reserve. For a controlled
 comparison, keep the model, task, planning/context policy, tools and caps fixed.
 
+## Reserve completion costs
+
+`--completion-cost-policy per-call-v1` keeps the default admission of one request
+at a time. To try reserving money for the existing check/repair/finish path, add
+`--context-policy segmented-v1 --completion-cost-policy completion-reserve-v1`
+to a fully specified dev request. Other context policies reject this option.
+
+The opt-in forecast prices each future call as 60,000 uncached input tokens plus
+128 output tokens, then uses the existing completion and recovery rules to decide
+which actions remain affordable. It reduces the current output ceiling after exact
+input counting to leave the largest offered action's successor reserve. At the
+checked-in mini rate, one future call reserves $0.045576. Actual usage alone is
+charged; cache savings and unused reservations remain available. A ready candidate
+with only finish/stop offered releases future reserve and uses its exact input count.
+The agent still chooses whether to submit.
+
+This preserves minimum request admission, not a useful reasoning allowance or a
+successful solution. Conservative future input estimates may end exploration earlier;
+failed checks, incomplete responses and other limits can still prevent submission.
+No paid acceptance improvement has been measured for this option. The hard cost cap,
+zero transport retries and uncertainty stops remain in force.
+
+Keep the same policy on resume; envelope/model identity binds it, and settled costs
+are restored before recalculation. Inspect `remaining_budget.cost.completion_cost`
+and the matching turn/provider journal fields for the reserve. The one-inspection
+closure preview assumes one funded slot; actual output can spend more than that.
+Ordinary mock runs validate the policy identity and isolated evaluation path but
+have no cost ledger. Deterministic provider fixtures separately test cost admission.
+Older comparison budgets remain closed; this option does not resume those runs.
+
 ## Prepare an audited source once
 
 `patchloop task prepare-source <task-dir> --output <new-external-directory>` fetches

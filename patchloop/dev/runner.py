@@ -58,11 +58,14 @@ from patchloop.dev.conversation import (
     validate_model_input,
 )
 from patchloop.dev.cost import (
+    COMPLETION_RESERVE_POLICY,
+    DEFAULT_COMPLETION_COST_POLICY,
     DEFAULT_OUTPUT_CEILING,
     PRICING_SOURCE,
     PRICING_VERIFIED_ON,
     DevCostLedger,
     ModelPricing,
+    completion_cost_contract,
     pricing_for_model,
 )
 from patchloop.dev.evaluation_completion import (
@@ -184,6 +187,7 @@ class _ToolPolicy:
     repair_inspection_policy: str = "protected-v1"
     inspection_reserve_calls: int = 0
     inspection_released_check_recovery_calls: int = 0
+    completion_cost: dict[str, Any] | None = None
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -298,6 +302,8 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
+            **({"completion_cost_contract": completion_cost_contract()}
+               if request.completion_cost_policy == COMPLETION_RESERVE_POLICY else {}),
             **({"repair_inspection_policy": request.repair_inspection_policy}
                if request.repair_inspection_policy != "protected-v1" else {}),
             **({"segment_contract": segments.contract(request.segment_boundary_policy)}
@@ -702,7 +708,10 @@ def _tool_policy(
     *,
     snapshot: DevGatewayStateSnapshot | None = None,
     repair_inspection_policy: str = "protected-v1",
+    cost_ledger: DevCostLedger | None = None,
+    completion_cost_policy: str = DEFAULT_COMPLETION_COST_POLICY,
     _preview_inspection: bool = True,
+    _cost_call_limit: int | None = None,
 ) -> _ToolPolicy:
     if snapshot is None and isinstance(gateway, DevToolGateway):
         snapshot = gateway.state_snapshot()
@@ -741,6 +750,17 @@ def _tool_policy(
     if counters.check_recovery_used and not counters.check_recovery_used_ids:
         unused_check_ids = ()
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
+    cost_unit = 0
+    funded_calls = None
+    if completion_cost_policy == COMPLETION_RESERVE_POLICY and cost_ledger is not None:
+        cost_unit = cost_ledger.future_call_reservation_nanos()
+        funded_calls = (
+            cost_ledger.remaining_nanos // cost_unit
+            if _cost_call_limit is None else _cost_call_limit
+        )
+        # No future input must be funded once only the final decision remains.
+        # Let exact counting admit a cheaper ready request below the input bound.
+        remaining_model_calls = min(remaining_model_calls, max(int(ready_to_submit), funded_calls))
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
     remaining_mutations = max(
         0, limits.max_accepted_mutations - gateway.accepted_mutations
@@ -845,6 +865,9 @@ def _tool_policy(
     )
     allowed = {"stop_task"}
     available_check_ids = unrun_checks
+    check_successor_reserve = max(0, (
+        budget.protected if protected_completion_possible else budget.minimum
+    ) - 1)
     if completion_possible:
         if ready_to_submit:
             allowed.add("finish_task")
@@ -855,23 +878,26 @@ def _tool_policy(
         # On a baseline that already requires repair, a diagnostic check is
         # optional work and must leave the whole protected repair path intact.
         if requires_mutation:
+            check_successor_floors = {
+                check_id: max(
+                    budget.protected,
+                    _completion_budget(replace(
+                        completion_state,
+                        unused_check_count=(completion_state.unused_check_count
+                                            - int(check_id in unused_check_ids)),
+                        repair_read_credit=True,
+                    )).protected,
+                )
+                for check_id in unrun_checks
+            }
             available_check_ids = tuple(
                 check_id
                 for check_id in unrun_checks
                 if min(remaining_model_calls, remaining_tool_actions) - 1
-                >= max(
-                    budget.protected,
-                    _completion_budget(
-                        replace(
-                            completion_state,
-                            unused_check_count=(
-                                completion_state.unused_check_count
-                                - int(check_id in unused_check_ids)
-                            ),
-                            repair_read_credit=True,
-                        )
-                    ).protected,
-                )
+                >= check_successor_floors[check_id]
+            )
+            check_successor_reserve = max(
+                (check_successor_floors[c] for c in available_check_ids), default=0,
             )
         if available_check_ids:
             allowed.add("run_check")
@@ -950,6 +976,32 @@ def _tool_policy(
         inspection_reserve_calls=inspection_floor,
         inspection_released_check_recovery_calls=released_check_recovery,
     )
+    if funded_calls is not None:
+        successors = [0]  # finish/stop have no subsequent provider call.
+        if inspection_allowed:
+            successors.append(inspection_floor)
+        if mutation_allowed:
+            successors.append((
+                optional_mutation_protected_calls
+                if mutation_protected_completion_possible else optional_mutation_completion_calls
+            ) - 1)
+        if "run_probe" in allowed:
+            successors.append(budget.protected)
+        if "run_check" in allowed:
+            successors.append(check_successor_reserve)
+        future_calls = max(successors)
+        policy = replace(policy, completion_cost={
+            "policy": completion_cost_policy,
+            "future_input_tokens": segments.MAX_INPUT_TOKENS,
+            "future_output_tokens": completion_cost_contract()["future_output_tokens"],
+            "per_call_reservation_nanos": cost_unit,
+            "funded_calls": funded_calls,
+            "admitted_call_slots": max(int(ready_to_submit), funded_calls),
+            "future_calls_reserved": future_calls,
+            "future_cost_reserve_nanos": future_calls * cost_unit,
+            "basis": "largest_offered_action_successor",
+            "limit": "Minimum output admission, not a guarantee of useful output or task success.",
+        })
     if inspection_allowed and _preview_inspection:
         # Advisory single-inspection forecast, not another admission rule. Reuse
         # the actual policy so optional probes/checks cannot disappear unannounced.
@@ -968,7 +1020,10 @@ def _tool_policy(
             limits,
             snapshot=snapshot,
             repair_inspection_policy=repair_inspection_policy,
+            cost_ledger=cost_ledger,
+            completion_cost_policy=completion_cost_policy,
             _preview_inspection=False,
+            _cost_call_limit=(max(0, funded_calls - 1) if funded_calls is not None else None),
         )
         policy = replace(
             policy,
@@ -987,6 +1042,10 @@ def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
         "reserve_calls_after_inspection": policy.inspection_reserve_calls,
         "released_future_check_recovery_calls": policy.inspection_released_check_recovery_calls,
     }}
+
+
+def _completion_cost_payload(policy: _ToolPolicy) -> dict[str, Any]:
+    return {"completion_cost": policy.completion_cost} if policy.completion_cost is not None else {}
 
 
 def _mutation_completion_horizon(policy: _ToolPolicy) -> dict[str, Any]:
@@ -1059,6 +1118,9 @@ def _completion_horizon_payload(
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
     blocking_resources: list[str] = []
+    if (policy.completion_cost is not None
+            and policy.completion_cost["admitted_call_slots"] < policy.minimum_completion_calls):
+        blocking_resources.append("cost")
     if remaining_model_calls < policy.minimum_completion_calls:
         blocking_resources.append("model_calls")
     if remaining_tool_actions < policy.minimum_completion_calls:
@@ -1083,6 +1145,7 @@ def _completion_horizon_payload(
         "remaining_tool_actions": remaining_tool_actions,
         "minimum_completion_calls": policy.minimum_completion_calls,
         "blocking_resources": blocking_resources,
+        **_completion_cost_payload(policy),
     }
 
 
@@ -2804,6 +2867,10 @@ def _run_envelope(
         planning_policy=request.planning_policy,
         probe_policy=request.probe_policy,
         context_policy=request.context_policy,
+        completion_cost_policy=request.completion_cost_policy,
+        completion_cost_contract=(completion_cost_contract()
+                                  if request.completion_cost_policy == COMPLETION_RESERVE_POLICY
+                                  else None),
         segment_boundary_policy=request.segment_boundary_policy,
         segment_contract=(segments.contract(request.segment_boundary_policy)
                           if request.context_policy == segments.POLICY else None),
@@ -3864,6 +3931,8 @@ def _run_one_active(
                     next_policy = _tool_policy(
                         gateway, counters, request.limits,
                         repair_inspection_policy=request.repair_inspection_policy,
+                        cost_ledger=cost_ledger,
+                        completion_cost_policy=request.completion_cost_policy,
                     )
                     correction = _protocol_correction(
                         turn_id=pending_turn_id,
@@ -3895,6 +3964,8 @@ def _run_one_active(
                         next_policy = _tool_policy(
                             gateway, counters, request.limits,
                             repair_inspection_policy=request.repair_inspection_policy,
+                            cost_ledger=cost_ledger,
+                            completion_cost_policy=request.completion_cost_policy,
                         )
                         correction = _protocol_correction(
                             turn_id=pending_turn_id,
@@ -4008,10 +4079,10 @@ def _run_one_active(
             request.limits,
             snapshot=snapshot,
             repair_inspection_policy=request.repair_inspection_policy,
+            cost_ledger=cost_ledger,
+            completion_cost_policy=request.completion_cost_policy,
         )
         if not policy.completion_possible:
-            terminal_code = DevTerminal.LIMIT_REACHED
-            terminal_message = "completion horizon exhausted before provider dispatch"
             terminal_completion_horizon = _completion_horizon_payload(
                 gateway,
                 counters,
@@ -4019,6 +4090,13 @@ def _run_one_active(
                 policy,
                 snapshot=snapshot,
             )
+            if "cost" in terminal_completion_horizon["blocking_resources"]:
+                terminal_code = DevTerminal.COST_CAP_REACHED
+                terminal_message = "completion cost reservation cannot fit the remaining cap"
+                stop_remaining = True
+            else:
+                terminal_code = DevTerminal.LIMIT_REACHED
+                terminal_message = "completion horizon exhausted before provider dispatch"
             break
         turn_id = f"turn_{uuid.uuid4().hex}"
         try:
@@ -4057,6 +4135,7 @@ def _run_one_active(
                     "settled_usage": cost_ledger.spent_nanos if cost_ledger else 0,
                     "remaining": cost_ledger.remaining_nanos if cost_ledger else None,
                     "provider": request.provider,
+                    **_completion_cost_payload(policy),
                 }
                 context = canonical_json(context_payload)
             projected_spans = list(context_payload["source_spans"])
@@ -4126,6 +4205,7 @@ def _run_one_active(
             "max_parallel_reads": policy.max_parallel_reads,
             "targeted_read_paths": list(policy.targeted_read_paths),
             "minimum_completion_calls": policy.minimum_completion_calls,
+            **_completion_cost_payload(policy),
             **_repair_inspection_payload(policy),
             "completion_budget_calls": policy.completion_budget_calls,
             "feedback_recovery_reserve_calls": (policy.feedback_recovery_reserve_calls),
@@ -4384,10 +4464,20 @@ def _run_one_active(
                         "active_elapsed_ms": active_elapsed_ms(),
                     },
                 )
-            admission = cost_ledger.admit(input_tokens)
+            admission = cost_ledger.admit(
+                input_tokens,
+                future_cost_reserve_nanos=(
+                    policy.completion_cost["future_cost_reserve_nanos"]
+                    if policy.completion_cost is not None else 0
+                ),
+            )
             if admission is None:
                 terminal_code = DevTerminal.COST_CAP_REACHED
-                terminal_message = "minimum provider request cannot fit the remaining cap"
+                terminal_message = (
+                    "provider request plus future completion reserve cannot fit the remaining cap"
+                    if policy.completion_cost is not None
+                    else "minimum provider request cannot fit the remaining cap"
+                )
                 stop_remaining = True
                 break
             request_payload["max_output_tokens"] = admission.output_ceiling
@@ -4416,6 +4506,7 @@ def _run_one_active(
                     "input_tokens": input_tokens,
                     "output_ceiling": admission.output_ceiling,
                     "reserved_cost_nanos": admission.reserved_cost_nanos,
+                    **_completion_cost_payload(policy),
                     "active_elapsed_ms": active_elapsed_ms(),
                 },
             )
@@ -4559,6 +4650,8 @@ def _run_one_active(
             next_policy = _tool_policy(
                 gateway, counters, request.limits,
                 repair_inspection_policy=request.repair_inspection_policy,
+                cost_ledger=cost_ledger,
+                completion_cost_policy=request.completion_cost_policy,
             )
             correction = _protocol_correction(
                 turn_id=turn_id,
@@ -4590,6 +4683,8 @@ def _run_one_active(
             next_policy = _tool_policy(
                 gateway, counters, request.limits,
                 repair_inspection_policy=request.repair_inspection_policy,
+                cost_ledger=cost_ledger,
+                completion_cost_policy=request.completion_cost_policy,
             )
             correction = _protocol_correction(
                 turn_id=turn_id,

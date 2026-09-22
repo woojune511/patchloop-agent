@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
+from typing import Literal
 
+from patchloop.dev import segments
 from patchloop.errors import ContractError
 
 NANOS_PER_USD = Decimal("1000000000")
@@ -15,8 +17,24 @@ TOKENS_PER_MILLION = Decimal("1000000")
 # The invocation-wide cost ledger still lowers this value before every dispatch.
 DEFAULT_OUTPUT_CEILING = 25_000
 MINIMUM_OUTPUT_CEILING = 128
+CompletionCostPolicy = Literal["per-call-v1", "completion-reserve-v1"]
+DEFAULT_COMPLETION_COST_POLICY = "per-call-v1"
+COMPLETION_RESERVE_POLICY = "completion-reserve-v1"
 PRICING_SOURCE = "https://developers.openai.com/api/docs/pricing"
 PRICING_VERIFIED_ON = "2026-09-15"
+
+
+def completion_cost_contract() -> dict[str, object]:
+    return {
+        "policy": COMPLETION_RESERVE_POLICY,
+        "future_input_tokens": segments.MAX_INPUT_TOKENS,
+        "future_output_tokens": MINIMUM_OUTPUT_CEILING,
+        "pricing": "uncached-input-and-minimum-output",
+        "horizon": "intersect-funded-calls-with-existing-completion-paths-v1",
+        "reservation": "largest-offered-action-successor-protected-or-minimum-v1",
+        "release": "exact-count-for-ready-finish-with-no-successor",
+        "limit": "Minimum admission only; useful output and task success are not guaranteed.",
+    }
 
 
 @dataclass(frozen=True)
@@ -79,13 +97,24 @@ class DevCostLedger:
     def remaining_nanos(self) -> int:
         return max(0, self.cap_nanos - self.spent_nanos)
 
+    def future_call_reservation_nanos(self) -> int:
+        """A segmented request's input bound plus the existing output admission floor."""
+        return _token_cost_nanos(
+            segments.MAX_INPUT_TOKENS, self.pricing.input_per_million_usd, round_up=True,
+        ) + _token_cost_nanos(
+            MINIMUM_OUTPUT_CEILING, self.pricing.output_per_million_usd, round_up=True,
+        )
+
     def admit(
         self,
         input_tokens: int,
         *,
         desired_output_ceiling: int = DEFAULT_OUTPUT_CEILING,
         minimum_output_ceiling: int = MINIMUM_OUTPUT_CEILING,
+        future_cost_reserve_nanos: int = 0,
     ) -> CostAdmission | None:
+        if future_cost_reserve_nanos < 0:
+            raise ValueError("future cost reserve cannot be negative")
         input_cost = _token_cost_nanos(
             input_tokens,
             self.pricing.input_per_million_usd,
@@ -94,7 +123,7 @@ class DevCostLedger:
         output_nanos_per_token = (
             self.pricing.output_per_million_usd * NANOS_PER_USD / TOKENS_PER_MILLION
         )
-        available_for_output = self.remaining_nanos - input_cost
+        available_for_output = self.remaining_nanos - input_cost - future_cost_reserve_nanos
         if available_for_output <= 0 or output_nanos_per_token <= 0:
             return None
         affordable = int(
@@ -110,7 +139,7 @@ class DevCostLedger:
             self.pricing.output_per_million_usd,
             round_up=True,
         )
-        if reservation > self.remaining_nanos:
+        if reservation + future_cost_reserve_nanos > self.remaining_nanos:
             return None
         return CostAdmission(input_tokens, ceiling, reservation)
 

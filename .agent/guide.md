@@ -5,6 +5,26 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current implementation: opt-in `completion-reserve-v1` for segmented requests;
+`per-call-v1` stays default. Intersect remaining model calls with funded call slots
+at uncached 60K input + 128 output, then leave the largest offered successor reserve
+when admitting this exact-counted request. Reuse existing completion/recovery floors;
+ready finish/stop-only requests release future money without automatic submission.
+Bind the contract in model/envelope identity and current cost/journal receipts.
+Old default identities/serialization remain exact; policy changes on resume reject.
+Focused20 PASS/51.34s, both-policy isolated mock acceptance PASS/safety NOT_RUN.
+A deterministic full-output-spend fixture reaches submission within $0.30 only with
+the reserve, but its synthetic evaluation mismatch is not acceptance evidence.
+Historical A2/B2 cost rejections and four old envelope roundtrips verify offline.
+Full145 files/2,528.871s: 3,210 PASS, 16 SKIP, one 265-character Windows artifact-temp
+path failure; the unchanged test passes under a shorter root (3,211 unique PASS
+outcomes after recheck). Keep original failure/recheck receipts separate. Runtime,
+test and diagnostic bytes stay fixed; Ruff/docs3 PASS. All8 ordinary mock and7
+simulated cost inputs retain exact public task/diff/check state. 1,570 protected
+files unchanged. No live/provider/Docker operation or default adoption.
+Minimum output admission is not useful-output assurance.
+Evidence: C:\pt\analyses\completion-cost-reserve-20260922-v1.
+
 Latest evidence-plan comparison closes A1/B1/B2/A2 on AnyIO v3, mini snapshot/xhigh,
 runtime d752929c at preparation commit 42138334. A brief-v1 / B brief-evidence-v1;
 segmented-v1/result-or-size-v1/protected-v1 and registered schemas otherwise fixed.
@@ -27,7 +47,8 @@ Fresh operator32 PASS/9.76s, Ruff, both-policy isolated mock PASS/8 inputs, exis
 Docker import/cleanup PASS. Full3,191 PASS/16 SKIP reused after file/artifact hashes
 match, not rerun. All2,051 protected files unchanged. No retries/resume/extra samples,
 hidden-detail reading, extra candidate execution or Docker start/pull/build.
-Completion-cost preservation is a follow-up investigation candidate, not implemented.
+The separate completion-cost implementation above follows this closed observation;
+the old group and unused budget remain closed.
 Evidence: C:\pt\analyses\mini-xhigh-evidence-plan-compare-20260922-v1\result.md.
 
 Previous boundary comparison closes A1/B1/B2/A2 on AnyIO v3, mini snapshot/xhigh,
@@ -785,7 +806,7 @@ patchloop/dev/check_feedback.py  complete-line public output and terminal diagno
 patchloop/dev/probe_cases.py  opt-in public JSON reference/candidate comparison and exact rerun
 patchloop/dev/state.py    append-only JSONL, action/provider recovery
 patchloop/dev/evaluation_completion.py  durable evaluator receipt and read-only recovery validation
-patchloop/dev/cost.py     reviewed prices and pre-dispatch admission
+patchloop/dev/cost.py     reviewed prices, pre-dispatch admission and opt-in completion reserve
 patchloop/agent/model.py  journal-managed Responses adapter, zero retries
 patchloop/repository.py   audited checkout, workspace, full diff
 patchloop/prepared_probe_dependencies.py  public locked wheels and offline probe snapshots
@@ -878,6 +899,8 @@ the actual policy's one-read/search successor with unchanged evidence and one mo
 call consumed, including consumed repair-read credit. Warn about every affected tool,
 including optional probes/checks, not just reads. The explicit prediction basis is
 conditional: new evidence, other actions, and larger parallel batches can differ.
+With completion cost reservation, this preview consumes one funded call slot;
+actual output spending may consume more than one such minimum-cost slot.
 This preview must neither mutate live counters nor change admission or budgets.
 Reopen them through the same transition when a changed gate restores slack. A first
 source read required to establish a mutation anchor belongs to the minimum path. The
@@ -1625,6 +1648,26 @@ no network, read-only root/source, bounded tmpfs and resource limits are host-co
 Actual request input is counted immediately before generation. The ledger reserves
 uncached input plus a conservative output ceiling, lowers that ceiling when needed,
 and emits `COST_CAP_REACHED` without generation when the minimum request cannot fit.
+Default `per-call-v1` reserves only that current request. The opt-in
+`--completion-cost-policy completion-reserve-v1` requires `segmented-v1`: one future
+call costs the enforced 60,000-input bound at the uncached rate plus the existing
+128-output minimum. At the reviewed mini rate this is $0.045576. Funded slots cap
+the existing model-call completion horizon. Reads/probes retain their current
+successor floors; edits/checks retain the protected successor when affordable,
+otherwise the already-supported minimum path. Before dispatch, reserve the largest
+successor among actually offered tools and limit only this request's output ceiling
+with the remaining money. `remaining_budget.cost.completion_cost`, `turn_started`
+and `provider_call_started` expose the same forecast and nanodollar reserve.
+When only finish/stop remain for a ready candidate, release future reserve and let
+exact counting admit even an input cheaper than one worst-case future call. Do not
+submit automatically. Unfunded minimum completion stops repetitions before count
+or generation; all existing uncertainty stops still apply. Reservations are never
+charges: settlement uses actual usage, and resume restores it before recomputing.
+The option/contract are envelope/model-bound; old defaults omit the new fields.
+Mock runs have no dollar ledger, so use injected provider fixtures for financial
+admission tests and separate mock smoke for isolated evaluation. This conservative
+forecast does not guarantee useful output, correct checks, or enough time; output
+incompletes and failed repairs can still end the run. No default adoption follows.
 The exact `gpt-5.4-2026-03-05` snapshot is supported only with `segmented-v1` and
 its counted 60,000-token input bound. Its reviewed standard rates are $2.50 input,
 $0.25 cached input and $15 output per million tokens (2026-09-15 UTC). Request

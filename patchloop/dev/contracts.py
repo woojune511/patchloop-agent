@@ -11,7 +11,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from patchloop.contracts import Artifact, ProbeDependencyIdentity
-from patchloop.dev import check_review, probe_cases, segments
+from patchloop.dev import check_review, cost, probe_cases, segments
 from patchloop.util import sha256_json
 
 DEV_RUN_SCHEMA = "dev-run-v1"
@@ -369,12 +369,16 @@ class DevRunRequest(StrictModel):
     ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
     segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY
+    completion_cost_policy: cost.CompletionCostPolicy = cost.DEFAULT_COMPLETION_COST_POLICY
     compact_at_input_tokens: int | None = Field(default=None, gt=0, lt=272_000)
     accept_compaction_model_limit_reservation: bool = False
     limits: DevLimits = Field(default_factory=DevLimits)
 
     @model_validator(mode="after")
     def provider_options_match(self) -> DevRunRequest:
+        if (self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY
+                and self.context_policy != segments.POLICY):
+            raise ValueError("--completion-cost-policy completion-reserve-v1 requires segmented-v1")
         if (self.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
                 and self.context_policy != segments.POLICY):
             raise ValueError("--segment-boundary-policy size-only-v1 requires segmented-v1")
@@ -456,6 +460,13 @@ class DevRunEnvelope(StrictModel):
         exclude_if=lambda value: value == segments.DEFAULT_BOUNDARY_POLICY,
     )
     segment_contract: dict[str, Any] | None = None
+    completion_cost_policy: cost.CompletionCostPolicy = Field(
+        default=cost.DEFAULT_COMPLETION_COST_POLICY,
+        exclude_if=lambda value: value == cost.DEFAULT_COMPLETION_COST_POLICY,
+    )
+    completion_cost_contract: dict[str, Any] | None = Field(
+        default=None, exclude_if=lambda value: value is None,
+    )
     probe_policy: Literal["none", "cases-v1"] = "none"
     compaction_contract: dict[str, Any] | None = None
     probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
@@ -478,6 +489,12 @@ class DevRunEnvelope(StrictModel):
 
     @model_validator(mode="after")
     def provider_boundary_is_exact(self) -> DevRunEnvelope:
+        if self.completion_cost_policy == cost.COMPLETION_RESERVE_POLICY:
+            if (self.context_policy != segments.POLICY
+                    or self.completion_cost_contract != cost.completion_cost_contract()):
+                raise ValueError("completion reserve requires segmented-v1 and its exact contract")
+        elif self.completion_cost_contract is not None:
+            raise ValueError("per-call cost policy has no completion reserve contract")
         if (self.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
                 and self.context_policy != segments.POLICY):
             raise ValueError("size-only-v1 boundary requires segmented-v1")

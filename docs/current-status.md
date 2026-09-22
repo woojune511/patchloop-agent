@@ -7,7 +7,43 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current implementation: opt-in segment boundary comparison
+## Current implementation: opt-in completion cost reservation
+
+`--completion-cost-policy completion-reserve-v1` is available with `segmented-v1`.
+It combines the existing completion-call forecast with the remaining dollar cap.
+Each future call reserves uncached input at the enforced 60,000-token bound plus
+the existing 128-output admission floor. The current exact-counted request lowers
+its output ceiling to leave the largest successor reserve among its offered actions.
+Ready finish/stop-only states release that reserve and use their actual input count.
+There is no automatic submission. `per-call-v1` remains the default, with unchanged
+default model/tool identities and historical envelope serialization. The opt-in
+contract is bound to the model identity, envelope, public cost state and journal;
+resume cannot change it or reset settled costs.
+
+This is a minimum financial admission guarantee, not sufficient reasoning output,
+successful repair or acceptance. Conservative input forecasting can close exploration
+earlier, and failed checks or incomplete responses can still exhaust completion.
+Existing tool schemas, planning, source rules, uncertainty stops and private evaluation
+boundaries remain. Ordinary mock runs bind the option but have no dollar ledger.
+
+Focused validation passes 20 tests in 51.34s. A fixed simulated provider spending its
+entire output allowance stops before checking under the default, while the opt-in
+reaches edit/check/submission within the same $0.30 cap. Its deliberately synthetic
+evaluation identity is not acceptance evidence. Separate both-policy mock runs reach
+isolated acceptance PASS / safety NOT_RUN. Read-only replay reproduces both previous
+A2/B2 cost rejections, roundtrips four old envelopes, and verifies 1,570 protected
+files. It does not infer a rescued historical trajectory. Full regression covers
+145 files in 2,528.871s (42m09s): 3,210 PASS, 16 SKIP and one existing artifact test
+failure from a 265-character Windows temporary path. That failure reproduces at the
+same path length and passes unchanged under a shorter root, giving 3,211 unique
+PASS outcomes after the path recheck. Runtime/test/diagnostic bytes remain fixed
+throughout; retain the initial failure and recheck separately. Ruff and three
+documentation checks pass. All eight ordinary mock inputs and seven simulated
+cost-fixture inputs verify public task/diff/check delivery. No new live comparison,
+provider request or Docker operation has been executed.
+Evidence: C:\pt\analyses\completion-cost-reserve-20260922-v1.
+
+## Previous implementation: opt-in segment boundary comparison
 
 `--segment-boundary-policy size-only-v1` is available only with `segmented-v1`.
 It disables the automatic `major_result_reviewed` handoff while retaining initial
@@ -75,8 +111,8 @@ both-policy isolated mock PASS with 8 actual inputs, and existing Docker import/
 cleanup gates pass. Prior full3,191 PASS/16 SKIP is reused after exact file/artifact
 hash verification, not rerun. All 2,051 protected files remain unchanged. No extra
 candidate execution, hidden-detail reading, Docker start/pull/build or default change.
-Next investigation candidate: preserving completion cost within the same hard cap;
-no implementation or new live group is included in this comparison.
+That comparison proposed preserving completion cost within the same hard cap.
+The separate opt-in implementation is described above; no new live group is included.
 Evidence: C:\pt\analyses\mini-xhigh-evidence-plan-compare-20260922-v1\result.md.
 
 ## Previous controlled observation: segment boundary A2/B2
