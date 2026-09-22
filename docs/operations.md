@@ -247,6 +247,13 @@ exchanges leave the next input; required results are explicitly quoted public re
 Task/diff/current failures and checks/budgets/last mutations remain. Notes and plans
 are latest, source-qualified model assertions, not execution facts or new finish gates.
 
+`--segment-boundary-policy result-or-size-v1` is the default. With segmented-v1,
+the opt-in `--segment-boundary-policy size-only-v1` keeps native continuation across
+these results until a size ceiling requires a new segment. It retains result-based
+plan review and the same prompts, tools and global budgets. Selection is bound to
+the run; changing it on resume is rejected. This option is an experiment, not a
+default recommendation or established improvement.
+
 Management ceilings are 60,000 counted input tokens, 1 MiB serialized UTF-8 JSON
 and 256 KiB per encrypted field. Bytes are checked before count; token-triggered
 reconstruction is counted again. Fresh state still too large ends `LIMIT_REACHED`.

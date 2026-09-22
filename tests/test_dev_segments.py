@@ -43,12 +43,13 @@ def no_network(monkeypatch):
 
 
 def configured(monkeypatch, tmp_path, *, planning="none", incomplete_at=(), oversized_at=(),
-               with_notes=False):
+               with_notes=False, boundary_policy=segments.DEFAULT_BOUNDARY_POLICY, script=None):
     request, inputs, counted = _provider_smoke(monkeypatch, tmp_path)
     request = request.model_copy(update={"context_policy": segments.POLICY,
-                                         "planning_policy": planning})
+                                         "planning_policy": planning,
+                                         "segment_boundary_policy": boundary_policy})
     implementation = runner.OpenAIResponsesAdapter
-    script = MockDevAdapter("csv-quoted-newline")
+    script = script or MockDevAdapter("csv-quoted-newline")
     delivered = []
 
     def execute(self, payload, *, requested_input_tokens, timeout_seconds):

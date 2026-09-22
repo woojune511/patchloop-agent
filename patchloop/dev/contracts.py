@@ -368,12 +368,16 @@ class DevRunRequest(StrictModel):
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
     ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
+    segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY
     compact_at_input_tokens: int | None = Field(default=None, gt=0, lt=272_000)
     accept_compaction_model_limit_reservation: bool = False
     limits: DevLimits = Field(default_factory=DevLimits)
 
     @model_validator(mode="after")
     def provider_options_match(self) -> DevRunRequest:
+        if (self.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
+                and self.context_policy != segments.POLICY):
+            raise ValueError("--segment-boundary-policy size-only-v1 requires segmented-v1")
         if self.prepared_probe_dependencies is not None and not self.enable_probes:
             raise ValueError("--prepared-probe-dependencies requires --enable-probes")
         if self.probe_policy != "none" and not self.enable_probes:
@@ -447,6 +451,10 @@ class DevRunEnvelope(StrictModel):
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
     ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
+    segment_boundary_policy: segments.BoundaryPolicy = Field(
+        default=segments.DEFAULT_BOUNDARY_POLICY,
+        exclude_if=lambda value: value == segments.DEFAULT_BOUNDARY_POLICY,
+    )
     segment_contract: dict[str, Any] | None = None
     probe_policy: Literal["none", "cases-v1"] = "none"
     compaction_contract: dict[str, Any] | None = None
@@ -470,6 +478,9 @@ class DevRunEnvelope(StrictModel):
 
     @model_validator(mode="after")
     def provider_boundary_is_exact(self) -> DevRunEnvelope:
+        if (self.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
+                and self.context_policy != segments.POLICY):
+            raise ValueError("size-only-v1 boundary requires segmented-v1")
         if self.probe_policy != "none" and self.probe_image_digest is None:
             raise ValueError("probe cases require enabled probe identities")
         if self.planning_policy != "none" and self.context_policy not in {
@@ -478,6 +489,9 @@ class DevRunEnvelope(StrictModel):
             raise ValueError(f"{self.planning_policy} planning requires append-v1 or segmented-v1")
         if (self.context_policy == segments.POLICY) != (self.segment_contract is not None):
             raise ValueError("segmented context requires its exact contract")
+        if (self.segment_contract is not None and self.segment_contract.get("boundary")
+                != segments.contract(self.segment_boundary_policy)["boundary"]):
+            raise ValueError("segment boundary policy and contract differ")
         if self.context_policy == segments.POLICY and self.compaction_contract is not None:
             raise ValueError("segmented context forbids compaction")
         if (self.probe_image_digest is None) != (self.probe_profile_hash is None):

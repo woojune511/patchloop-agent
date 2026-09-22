@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from typing import Literal
 
 import httpx
 
@@ -10,6 +11,9 @@ from patchloop.errors import RecoveryError
 from patchloop.util import canonical_json, sha256_json
 
 POLICY = "segmented-v1"
+BoundaryPolicy = Literal["result-or-size-v1", "size-only-v1"]
+DEFAULT_BOUNDARY_POLICY = "result-or-size-v1"
+SIZE_ONLY_BOUNDARY_POLICY = "size-only-v1"
 SCHEMA = "public-state-native-segments-v1"
 EVENT = "context_segment_started"
 MAX_INPUT_TOKENS = 60_000
@@ -33,13 +37,19 @@ INSTRUCTIONS = (
 )
 
 
-def contract():
+def contract(boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY):
+    boundaries = {
+        DEFAULT_BOUNDARY_POLICY: "major-result-next-valid-decision-completed-batch-or-size-v1",
+        SIZE_ONLY_BOUNDARY_POLICY: "size-only-v1",
+    }
+    if boundary_policy not in boundaries:
+        raise ValueError("unknown segment boundary policy")
     return {
         "policy": POLICY, "schema": SCHEMA,
         "max_input_tokens": MAX_INPUT_TOKENS,
         "max_request_bytes": MAX_REQUEST_BYTES,
         "max_encrypted_item_bytes": MAX_ENCRYPTED_ITEM_BYTES,
-        "boundary": "major-result-next-valid-decision-completed-batch-or-size-v1",
+        "boundary": boundaries[boundary_policy],
         "handoff": "canonical-public-latest-batch-and-current-state-no-model-summary-v1",
         "native": "exact-within-segment-no-replay-across-segments-v1",
         "budgets": "run-global-no-reset-single-fresh-seed-at-boundary-v1",
@@ -83,7 +93,8 @@ def cursor(events):
 
 def load_binding(binding, store):
     handoff = _read(store, binding["handoff_artifact"])
-    if (binding["contract_hash"] != sha256_json(contract())
+    boundary_policy = binding.get("boundary_policy", DEFAULT_BOUNDARY_POLICY)
+    if (binding["contract_hash"] != sha256_json(contract(boundary_policy))
             or binding["seed_hash"] != sha256_json(handoff["base"])
             or binding["state_hash"] != sha256_json(handoff["state"])
             or binding["segment_id"] != "segment_" + sha256_json({
@@ -101,13 +112,17 @@ def load_binding(binding, store):
     return handoff
 
 
-def active(journal, store):
+def active(journal, store, *, boundary_policy: BoundaryPolicy | None = None):
     previous = None
     current = None
     for event in journal.events():
         if event["event_type"] != EVENT:
             continue
         binding = event["payload"]
+        selected = binding.get("boundary_policy", DEFAULT_BOUNDARY_POLICY)
+        if boundary_policy is not None and selected != boundary_policy:
+            raise RecoveryError("segment boundary policy changed")
+        boundary_policy = selected
         if binding["previous_segment_id"] != (previous["segment_id"] if previous else None):
             raise RecoveryError("segment chain changed")
         current = load_binding(binding, store)
@@ -118,6 +133,8 @@ def active(journal, store):
 def boundary_reason(journal, binding):
     if binding is None:
         return "initial"
+    if binding.get("boundary_policy", DEFAULT_BOUNDARY_POLICY) == SIZE_ONLY_BOUNDARY_POLICY:
+        return None
     events = journal.events()
     decision = _latest(events, "turn_decision_recorded")
     batch = _latest(events, "tool_batch_finished")
@@ -139,9 +156,10 @@ def is_fresh(journal, binding):
     return binding is not None and binding["cursor"] == cursor(journal.events())
 
 
-def start(journal, store, *, base, state, reason, parent_input_artifact):
+def start(journal, store, *, base, state, reason, parent_input_artifact,
+          boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY):
     journal.require_execution_lock()
-    previous, _ = active(journal, store)
+    previous, _ = active(journal, store, boundary_policy=boundary_policy)
     if is_fresh(journal, previous):
         return previous
     events = journal.events()
@@ -156,7 +174,10 @@ def start(journal, store, *, base, state, reason, parent_input_artifact):
     artifact = store.put_text(canonical_json({"base": base, "state": state}), "application/json")
     binding = {
         "previous_segment_id": previous["segment_id"] if previous else None,
-        "reason": reason, "cursor": cursor(events), "contract_hash": sha256_json(contract()),
+        "reason": reason, "cursor": cursor(events),
+        "contract_hash": sha256_json(contract(boundary_policy)),
+        **({"boundary_policy": boundary_policy}
+           if boundary_policy != DEFAULT_BOUNDARY_POLICY else {}),
         "handoff_artifact": artifact.model_dump(mode="json"),
         "seed_hash": sha256_json(base), "state_hash": sha256_json(state),
         "parent_input_artifact": parent_input_artifact,

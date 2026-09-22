@@ -1049,6 +1049,15 @@ complete candidate; no extra filesystem read or semantic check is added for thes
 
 ## Context boundary
 
+`--segment-boundary-policy size-only-v1` is an opt-in for segmented-v1 that disables
+only major-result handoffs. Default result-or-size-v1 retains the existing behavior.
+Exact native continuation persists within the larger interval, with fresh public
+task/diff/failure/notes/plan/budget state on each request. All size ceilings and
+global budgets remain. Result-based plan review is independent and unchanged.
+Bind selection in model/envelope/run/segment identity; reject a policy change or
+mixed-policy chain on resume. Default serialized envelope/binding identity omits
+the new option; absent means result-or-size-v1. No prompt or tool-schema change.
+
 V39 additionally offers `--context-policy segmented-v1`, with planning none,
 brief-v1 or the opt-in brief-evidence-v1 / brief-assumption-v1 content contrasts.
 Default append/OFF stays unchanged. Follow [segmented-context.md](plans/segmented-context.md)

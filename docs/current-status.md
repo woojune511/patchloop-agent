@@ -7,6 +7,32 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Current implementation: opt-in segment boundary comparison
+
+`--segment-boundary-policy size-only-v1` is available only with `segmented-v1`.
+It disables the automatic `major_result_reviewed` handoff while retaining initial
+segments and the existing input-token, request-byte and encrypted-item limits.
+`result-or-size-v1` remains the default and preserves its contract/model identities
+and historical envelope representation. The selected policy is bound in the model
+identity, envelope and segment chain; changing it on resume is rejected.
+Prompts, tool schemas, planning, notes, inspection reservations, correction limits,
+cost accounting and public/private evaluation boundaries are unchanged.
+
+Fresh focused validation passes 20 tests in 97.11s, including failed-check/read/repair,
+size rollover, recovery and uncertain-dispatch stops; contract/documentation checks
+pass 23 tests. Ruff passes for active code. Both-arm mock edit/check/submit reaches
+isolated acceptance PASS, with eight actual public task/diff/check inputs verified.
+The mock boundary auditor confirms A starts two segments and B retains one across
+the result-review condition. Reading 99 historical actual inputs succeeds; offline
+predicate replay finds 19 result-boundary differences without constructing an
+alternative model trajectory. Fresh full regression passes 3,191 tests with 16 skips
+in 2,323.987 seconds (38m44s), using four groups and `--durations=15`; implementation,
+test and diagnostic bytes stay fixed throughout. All 3,305 protected files verify.
+The fresh operator passes 31 tests in 14.41s; both existing Docker import/cleanup
+gates pass without start/pull/build. The authorized fixed mini xhigh A1/B1/B2/A2
+comparison, $1.20/run and $4.80 total, is prepared but has not started.
+Evidence: C:\pt\analyses\segment-boundary-policy-20260922-v1.
+
 ## Latest controlled observation: repair inspection A2/B2
 
 The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes

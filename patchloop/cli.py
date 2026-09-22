@@ -96,6 +96,10 @@ def dev(
         Literal["append-v1", "native-window-v1", "segmented-v1"],
         typer.Option("--context-policy", help="Opt-in snapshot window or bounded public handoffs."),
     ] = "append-v1",
+    segment_boundary_policy: Annotated[
+        Literal["result-or-size-v1", "size-only-v1"],
+        typer.Option("--segment-boundary-policy", help="Segmented-v1 transition condition."),
+    ] = "result-or-size-v1",
     planning_policy: Annotated[
         Literal["none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1"],
         typer.Option("--planning-policy", help="Public planning; append-v1 or segmented-v1."),
@@ -135,6 +139,7 @@ def dev(
                 repair_recheck=repair_recheck,
                 repair_inspection_policy=repair_inspection_policy,
                 context_policy=context_policy,
+                segment_boundary_policy=segment_boundary_policy,
                 planning_policy=planning_policy,
                 compact_at_input_tokens=compact_at_input_tokens,
                 accept_compaction_model_limit_reservation=accept_compaction_model_limit_reservation,

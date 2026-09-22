@@ -300,7 +300,7 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "context_policy": request.context_policy,
             **({"repair_inspection_policy": request.repair_inspection_policy}
                if request.repair_inspection_policy != "protected-v1" else {}),
-            **({"segment_contract": segments.contract()}
+            **({"segment_contract": segments.contract(request.segment_boundary_policy)}
                if request.context_policy == segments.POLICY else {}),
             "compaction_contract": native_compaction.policy_contract(request),
             **({"planning_contract": working_plan.contract(request.planning_policy)}
@@ -1795,6 +1795,7 @@ def _build_model_input(
     context_policy: str = APPEND_POLICY,
     planning_policy: str = "none",
     force_segment_reason: str | None = None,
+    segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
 ) -> list[dict[str, Any]]:
     """Append the latest exchange to the exact saved active-episode history."""
     events = journal.events()
@@ -1805,6 +1806,7 @@ def _build_model_input(
                 journal=journal, store=artifact_store, context=context,
                 latest_results=latest_tool_results, planning_policy=planning_policy,
                 force_reason=force_segment_reason,
+                boundary_policy=segment_boundary_policy,
             )
         except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError) as exc:
             raise _ProviderContinuationError("segmented public handoff is invalid") from exc
@@ -1915,10 +1917,11 @@ def _segment_current_view(state, history, latest_results):
 
 def _build_segmented_model_input(
     *, journal, store, context, latest_results, planning_policy, force_reason=None,
+    boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
 ):
     """A public, explicitly lossy handoff; never splice or fabricate native history."""
     events = journal.events()
-    binding, handoff = segments.active(journal, store)
+    binding, handoff = segments.active(journal, store, boundary_policy=boundary_policy)
     decision = next((e["payload"] for e in reversed(events)
                      if e["event_type"] == "turn_decision_recorded"), None)
     parent = next((e["payload"] for e in reversed(events)
@@ -1947,6 +1950,7 @@ def _build_segmented_model_input(
         binding = segments.start(
             journal, store, base=base, state=state, reason=reason,
             parent_input_artifact=parent["model_input_artifact"] if parent else None,
+            boundary_policy=boundary_policy,
         )
         handoff = segments.load_binding(binding, store)
     if binding is None or handoff is None:
@@ -2689,6 +2693,8 @@ def _terminal(
         if segment_events:
             payload["context_management"] = {
                 "policy": segments.POLICY, "segment_count": len(segment_events),
+                **({"boundary_policy": segment_events[0]["payload"]["boundary_policy"]}
+                   if "boundary_policy" in segment_events[0]["payload"] else {}),
                 "transition_reasons": [e["payload"]["reason"] for e in segment_events],
                 "limit": next((e["payload"] for e in reversed(journal.events())
                                if e["event_type"] == "context_limit_reached"), None),
@@ -2798,7 +2804,8 @@ def _run_envelope(
         planning_policy=request.planning_policy,
         probe_policy=request.probe_policy,
         context_policy=request.context_policy,
-        segment_contract=(segments.contract()
+        segment_boundary_policy=request.segment_boundary_policy,
+        segment_contract=(segments.contract(request.segment_boundary_policy)
                           if request.context_policy == segments.POLICY else None),
         compaction_contract=native_compaction.policy_contract(request),
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
@@ -3384,6 +3391,9 @@ def _run_one(
                     **({"repair_inspection_policy": request.repair_inspection_policy}
                        if request.repair_inspection_policy != "protected-v1" else {}),
                     "context_policy": request.context_policy,
+                    **({"segment_boundary_policy": request.segment_boundary_policy}
+                       if request.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
+                       else {}),
                 },
             )
 
@@ -3466,7 +3476,8 @@ def _run_one(
         if request.context_policy == segments.POLICY:
             try:
                 segment_store = ArtifactStore(state_root / "artifacts")
-                segments.active(journal, segment_store)
+                segments.active(journal, segment_store,
+                                boundary_policy=request.segment_boundary_policy)
                 _validate_recorded_continuations(journal.events(), segment_store)
                 for event in journal.events():
                     if event["event_type"] == "turn_started":
@@ -4063,6 +4074,7 @@ def _run_one_active(
                 latest_tool_results=latest_tool_results,
                 context_policy=request.context_policy,
                 planning_policy=request.planning_policy,
+                segment_boundary_policy=request.segment_boundary_policy,
             )
             model_input_text = canonical_json(model_input)
             model_input_artifact = artifact_store.put_text(
@@ -4171,6 +4183,7 @@ def _run_one_active(
                         journal=journal, artifact_store=artifact_store, context=context,
                         latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
                         planning_policy=request.planning_policy,
+                        segment_boundary_policy=request.segment_boundary_policy,
                         force_segment_reason="+".join(reasons),
                     )
                     continue
@@ -4217,6 +4230,7 @@ def _run_one_active(
                         journal=journal, artifact_store=artifact_store, context=context,
                         latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
                         planning_policy=request.planning_policy,
+                        segment_boundary_policy=request.segment_boundary_policy,
                         force_segment_reason="input_tokens",
                     )
                     continue

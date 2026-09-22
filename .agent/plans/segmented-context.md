@@ -48,6 +48,12 @@ own major result remains pending until a later decision; the watermark is the
 reviewing turn's start, not its batch finish. This proves delivery and subsequent
 action, not understanding, a causal pivot, or a substantive plan update.
 
+`--segment-boundary-policy result-or-size-v1` preserves that default. The opt-in
+`size-only-v1` disables only this result-triggered handoff; the same segment retains
+native continuation until a size ceiling requires a fresh public seed. Plan review
+after results still applies. No prompt/schema, note, tool, repair or cost-policy
+change accompanies the option. It requires `--context-policy segmented-v1`.
+
 Size can override the wait at a completed execution boundary:
 
 | Resource | Experimental ceiling | Measurement |
@@ -75,6 +81,10 @@ are unchanged; planning OFF adds no plan fields. Segmented planning supports `no
 `brief-v1` and opt-in `brief-evidence-v1` / `brief-assumption-v1`; these change only plan
 content instructions, not segment timing or handoff semantics. The selected planning
 contract is bound separately. Existing native-window restrictions remain unchanged.
+The selected boundary policy binds the model identity, envelope and run/segment
+events; a different policy rejects resume. Default envelope and segment bindings
+omit the new field to preserve their existing serialization. Legacy bindings without
+the field mean result-or-size-v1. Segment chains cannot mix boundary policies.
 
 Under the run execution lock, write the handoff CAS before `context_segment_started`.
 The event binds previous/current segment ID, reason, seed/state/contract hashes,
