@@ -33,7 +33,53 @@ gates pass without start/pull/build. The authorized fixed mini xhigh A1/B1/B2/A2
 comparison, $1.20/run and $4.80 total, has completed as reported below.
 Evidence: C:\pt\analyses\segment-boundary-policy-20260922-v1.
 
-## Latest controlled observation: segment boundary A2/B2
+## Latest controlled observation: existing evidence-plan format A2/B2
+
+The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes
+`CLOSED_COMPLETE`: A1 -> B1 -> B2 -> A2, repeat=1 / $1.20 each, new group cap $4.80.
+A (`brief-v1`) has acceptance PASS in 0/2 planned runs; B (`brief-evidence-v1`)
+has 1/2. Started 4 / submitted 1 / acceptance NOT_RUN 3 / infrastructure stops 0;
+all `official=false`. Every non-submission ends at cost admission. NOT_RUN is not
+an evaluated failure. Keep `brief-v1`; this small familiar-task result is inconclusive.
+Both arms retain segmented-v1/result-or-size-v1/protected-v1 and identical tools,
+source, dependencies, model and limits. Only planning guidance and derived identities vary.
+
+A1 edits at 11/23/24, remains at lifecycle 4/7 and never submits. Its cancellation
+probe answers the small Task question, but edit24 depends on an unmeasured outer
+future state. B1 repairs at21 after source inspection, reaches lifecycle7/7 and
+upstream32 PASS, and submits at23 to isolated acceptance/safety PASS. B2's probe27
+informs edit28 directly; A2 repairs at27 after current-source rereads. Both reach
+lifecycle7/7 and upstream32 PASS. Thus evidence-to-repair links also occur under
+the default plan. Plan headings, revisions and probes alone do not establish benefit.
+
+B2/A2 then prepare submission-ready states with finish_task offered, but no next
+generation is dispatched: remaining $0.015964650/$0.012652950 cannot cover the
+minimum counted requests $0.019511250/$0.020310750. Public PASS is not hidden
+acceptance, and neither run is evaluated afterward. This measured completion-cost
+boundary affects both policies; do not call it a model refusal to submit or infer
+the result of extra budget/automatic submission. Completion call reservations and
+per-request dollar admission remain separate concerns.
+
+All 133 read/search/probe questions are linked to public inputs: 132 outputs reach
+the next generation exactly; A1's final read has no next dispatch. All 9 applied
+candidates receive public checks; repeated identical rejected proposals are zero.
+109 actual inputs, 125 counts, 155 actions and settled usage verify. Five known
+25,000-output incompletes cost $0.660055200; four are reasoning-only, while B1's
+includes an unapplied function_call item. Segment counts 9/6/9/8 retain the default
+result and size transitions. No internal-reasoning or continuity-only claim follows.
+
+Recorded model-rate cost $4.512012300 / cache-neutral $5.849743500; unused
+$0.287987700 closes without retry/resume/replacement/extension. Runtime d752929c
+at preparation commit 42138334 stays fixed. Fresh operator32 PASS/9.76s, Ruff,
+both-policy isolated mock PASS with 8 actual inputs, and existing Docker import/
+cleanup gates pass. Prior full3,191 PASS/16 SKIP is reused after exact file/artifact
+hash verification, not rerun. All 2,051 protected files remain unchanged. No extra
+candidate execution, hidden-detail reading, Docker start/pull/build or default change.
+Next investigation candidate: preserving completion cost within the same hard cap;
+no implementation or new live group is included in this comparison.
+Evidence: C:\pt\analyses\mini-xhigh-evidence-plan-compare-20260922-v1\result.md.
+
+## Previous controlled observation: segment boundary A2/B2
 
 The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes
 `CLOSED_COMPLETE`: A1 -> B1 -> B2 -> A2, repeat=1 / $1.20 each, group cap $4.80.
@@ -91,10 +137,10 @@ the timeout location remains unknown. A2's anchor read is followed by incomplete
 responses before any edit. Do not equate these distinct cases with forgetting.
 
 The ledger separates within-scope/partial answers, failed observations and censored
-next decisions; label counts are not efficacy. Existing brief-evidence-v1 is a
-possible one-variable follow-up for evidence/assumption/action formatting, not an
-adopted policy or authorized new live group. Keep defaults; task-specific hints,
-extra annotation fields and broader read admission are not justified by this audit.
+next decisions; label counts are not efficacy. That audit proposed existing
+brief-evidence-v1 as a one-variable evidence/assumption/action formatting comparison;
+the separately authorized group is now closed above. Keep defaults; task-specific
+hints, extra annotation fields and broader read admission are not justified by the audit.
 Evidence: C:\pt\analyses\question-evidence-action-audit-20260922-v1\result.md.
 
 ## Previous controlled observation: repair inspection A2/B2

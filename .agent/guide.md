@@ -5,7 +5,32 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
-Latest boundary comparison closes A1/B1/B2/A2 on AnyIO v3, mini snapshot/xhigh,
+Latest evidence-plan comparison closes A1/B1/B2/A2 on AnyIO v3, mini snapshot/xhigh,
+runtime d752929c at preparation commit 42138334. A brief-v1 / B brief-evidence-v1;
+segmented-v1/result-or-size-v1/protected-v1 and registered schemas otherwise fixed.
+Acceptance PASS/planned A0/2, B1/2; started4/submitted1/NOT_RUN3/infra0, official=false.
+B1 repairs, passes both public checks and submits to isolated acceptance/safety PASS.
+A1 remains lifecycle4/7; its toy cancellation answer does not measure the outer
+future condition used by the final edit. B2 probe27 leads directly to repair28;
+A2 repairs at27 after source rereads. Both finish public lifecycle7/7/upstream32 PASS,
+but cost admission blocks the prepared submission-ready generation. Their remaining
+$0.015964650/$0.012652950 is below minimum reservations $0.019511250/$0.020310750.
+Those final prepared inputs are counted, never dispatched. NOT_RUN is not failure
+or inferred hidden PASS. The completion-cost boundary affects both policies.
+133 inspection/probe questions, 132 exact next-input receipts; A1 final read has no
+next generation. 109 actual inputs/125 counts/155 actions verify. All9 candidates
+receive public checks; identical rejected repeats0. Five billed output incompletes
+cost $0.660055200; B1 includes function_call plus reasoning, the other4 reasoning-only.
+Segment counts9/6/9/8. Keep defaults; no causal reasoning/policy superiority claim.
+Recorded cost $4.512012300 / cache-neutral $5.849743500; unused $0.287987700 closed.
+Fresh operator32 PASS/9.76s, Ruff, both-policy isolated mock PASS/8 inputs, existing
+Docker import/cleanup PASS. Full3,191 PASS/16 SKIP reused after file/artifact hashes
+match, not rerun. All2,051 protected files unchanged. No retries/resume/extra samples,
+hidden-detail reading, extra candidate execution or Docker start/pull/build.
+Completion-cost preservation is a follow-up investigation candidate, not implemented.
+Evidence: C:\pt\analyses\mini-xhigh-evidence-plan-compare-20260922-v1\result.md.
+
+Previous boundary comparison closes A1/B1/B2/A2 on AnyIO v3, mini snapshot/xhigh,
 brief-v1/segmented-v1/protected-v1, runtime d752929c at 1bbffa3c. A uses default
 result-or-size-v1, B opt-in size-only-v1; other request fields and prompt/tools fixed.
 Acceptance PASS/planned: A 1/2, B 0/2. Started 4 / submitted 1 / NOT_RUN 3 / infra 0,
@@ -35,8 +60,8 @@ loss or stalled-run cause from that successful run's false claim. B1 has no visi
 toy-result-to-repair link before output/cost stop; B2 obtains no answer from import
 failure/report-less timeout; A2's anchor is followed by incompletes and no edit.
 All 2,029 protected source/runtime/user files unchanged. No new provider/candidate/
-Docker work or private-detail read; existing brief-evidence-v1 is only a possible
-future comparison seam. No new fields, task hints or default change.
+Docker work or private-detail read. Its proposed brief-evidence-v1 comparison was
+separately authorized and is now closed above. No new fields, task hints or default change.
 Evidence: C:\pt\analyses\question-evidence-action-audit-20260922-v1\result.md.
 
 Previous fixed repair-inspection comparison closes all 4 slots A1/B1/B2/A2 on the
