@@ -26,6 +26,16 @@ unchanged; all 2,766 protected files are unchanged.
 Only policy and derived identity/horizon state differ. No runtime/default change.
 Evidence: C:\pt\analyses\mini-xhigh-repair-inspection-compare-20260922-v1\result.md.
 
+Public reading-chain audit: 10 failure windows (one baseline), 41 inspections and
+7 probes; 99 inputs/request hashes verify and all 41 source receipts reach the next
+input exactly. A1 connects observation to repair; A2 identifies Task preservation
+and uncancel but rereads and reaches no next applied edit. B2's narrowing guess
+leaves identical timeout stdout; B1 closes awaitables but leaves explicit_cancel.
+Do not score rereads as waste or claim knowledge of private reasoning. Focus on
+closing answered questions and keeping behavioral expectations within observed
+evidence. No runtime/provider/candidate execution change; 1,795 protected files match.
+Evidence: C:\pt\analyses\post-failure-reading-audit-20260922-v1\result.md.
+
 Current opt-in seam: `--repair-inspection-policy current-failure-v1` releases only
 future-check recovery reserves for read/search on a current publicly failed diff.
 Default `protected-v1` retains existing admission. Minimum repair/check/finish and

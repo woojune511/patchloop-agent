@@ -46,6 +46,20 @@ this is not a fresh full regression. All 2,766 protected files stay unchanged. N
 private-detail inspection, extra candidate execution or Docker start/pull/build.
 Evidence: C:\pt\analyses\mini-xhigh-repair-inspection-compare-20260922-v1\result.md.
 
+The follow-up public decision audit links 10 failed-check windows (one baseline,
+nine edited candidates), 41 read/search actions and 7 probes. All 99 inputs and
+generation/count request hashes verify; all 41 reading outputs reach the next input
+with exact source spans. A1 connects an existing cancellation pattern to a repair
+and PASS. A2 already names preserving the original Task and finds uncancel, but
+rereads identical source and ends without another applied edit. B2 changes a
+wrapper's scope on an unverified hang hypothesis and receives identical timeout
+stdout. B1's close experiments inform a partial repair while baseline explicit_cancel
+remains failed. These are public decision/outcome links, not proof of internal
+reasoning or causal model/policy effects. Zero new source lines is not a waste score.
+No runtime/default change or new provider/candidate execution; 1,795 source evidence
+files stay unchanged. Evidence:
+C:\pt\analyses\post-failure-reading-audit-20260922-v1\result.md.
+
 ## Current implementation: opt-in repair inspection reservations
 
 `--repair-inspection-policy current-failure-v1` changes only read/search admission on
