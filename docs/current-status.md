@@ -60,6 +60,19 @@ No runtime/default change or new provider/candidate execution; 1,795 source evid
 files stay unchanged. Evidence:
 C:\pt\analyses\post-failure-reading-audit-20260922-v1\result.md.
 
+The cause audit verifies that A2 inputs 20-27 retain the same current runner source,
+offered read/edit tools, one remaining mutation and visible dollar budget; inputs 22-27
+also retain the same Task-preservation finding/question. Calls 20-27 spend $0.605020650
+without another applied edit, including $0.269953200 on incomplete responses 22/27. Calls 23/26
+start fresh after input counts of 76,485/61,091; 27 starts fresh after read 26 satisfies
+the structural major-result review rule. Public-state loss is not established, and
+these transitions do not prove a causal continuity effect. B2's narrowing assumption
+outpaces its probe evidence; B1's coroutine/asend summary exceeds the observed scope.
+Existing question/plan instructions do not semantically validate interpretations,
+and the completion horizon protects call counts, not the dollar cost of future repair.
+No default/runtime change or new execution. All 99 inputs and 2,070 protected files
+verify. Evidence: C:\pt\analyses\repair-stall-cause-audit-20260922-v1\result.md.
+
 ## Current implementation: opt-in repair inspection reservations
 
 `--repair-inspection-policy current-failure-v1` changes only read/search admission on

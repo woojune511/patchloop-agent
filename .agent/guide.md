@@ -36,6 +36,18 @@ closing answered questions and keeping behavioral expectations within observed
 evidence. No runtime/provider/candidate execution change; 1,795 protected files match.
 Evidence: C:\pt\analyses\post-failure-reading-audit-20260922-v1\result.md.
 
+Cause audit: A2 calls 20-27 keep current runner source, read/edit availability,
+one mutation and visible cost; 22-27 keep the same current finding/question. The
+late window spends $0.605020650 with no next applied edit. Input counts 76,485/61,091 cause
+fresh calls 23/26; a completed read after a major result causes fresh call 27. The boundary
+checks batch completion, not semantic hypothesis review; public facts survive.
+Neither this sequence nor A1's successful within-segment repair proves continuity
+causality. Call-count protection is not a dollar reservation for future repair.
+B2's unsupported narrowing and B1's broader-than-observed probe summary identify
+interpretation gaps, not a missing question prompt. No runtime/default/new execution;
+99 inputs and 2,070 protected files verify. Evidence:
+C:\pt\analyses\repair-stall-cause-audit-20260922-v1\result.md.
+
 Current opt-in seam: `--repair-inspection-policy current-failure-v1` releases only
 future-check recovery reserves for read/search on a current publicly failed diff.
 Default `protected-v1` retains existing admission. Minimum repair/check/finish and
