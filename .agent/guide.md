@@ -25,6 +25,20 @@ focused 20 PASS/97.108s, full 3,191 PASS/16 SKIP/2,323.987s with durations, oper
 extra candidate execution, hidden-detail read or Docker start/pull/build.
 Evidence: C:\pt\analyses\mini-xhigh-segment-boundary-compare-20260922-v1\result.md.
 
+The follow-up question/evidence audit covers all 102 inspections + 6 probes (108
+rows/70 batches). 89 actual requests and 105 next-input receipts verify; B1's final
+3 searches have no next dispatch. A1 probe17 does not establish the waiter remedy
+stated next; probe20 later discriminates cancellation targets and supports edit22.
+A1 plan21 contradicts current check18's PASS explicit_cancel despite exact stdout,
+current/historical labels and diff binding in its input. Do not infer a transport
+loss or stalled-run cause from that successful run's false claim. B1 has no visible
+toy-result-to-repair link before output/cost stop; B2 obtains no answer from import
+failure/report-less timeout; A2's anchor is followed by incompletes and no edit.
+All 2,029 protected source/runtime/user files unchanged. No new provider/candidate/
+Docker work or private-detail read; existing brief-evidence-v1 is only a possible
+future comparison seam. No new fields, task hints or default change.
+Evidence: C:\pt\analyses\question-evidence-action-audit-20260922-v1\result.md.
+
 Previous fixed repair-inspection comparison closes all 4 slots A1/B1/B2/A2 on the
 same AnyIO v3 / mini snapshot xhigh / brief-v1 / segmented-v1 / runtime caaed136.
 Default `protected-v1` has acceptance PASS in 1/2 planned runs;

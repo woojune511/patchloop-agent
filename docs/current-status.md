@@ -69,6 +69,34 @@ derived identity differ. Fresh validation is reported above. All 3,305 protected
 files remain unchanged. No private-detail inspection or extra candidate execution.
 Evidence: C:\pt\analyses\mini-xhigh-segment-boundary-compare-20260922-v1\result.md.
 
+### Follow-up: question, observation and next-action audit
+
+Read-only review covers all 102 inspections and 6 probes in those four runs,
+108 question rows across 70 batches. All 89 actual count/generation requests verify;
+105 results reach the next input exactly, while B1's final three searches have no
+following generation because cost admission stops it. All 2,029 source-evidence,
+runtime/test/diagnostic and user-owned files remain unchanged; no new provider,
+Docker, candidate or private-detail execution/inspection. Runtime stays d752929c.
+
+A1's probe17 observes no automatic cancellation but its next plan/note promotes
+waiter cancellation to a necessary remedy without comparing cancellation targets.
+The later probe20 does compare targets and leads to edit22/public PASS. Separately,
+plan21 says current explicit cancellation is broken although the exact current
+check18 stdout says PASS explicit_cancel; the current/historical labels and diff
+binding are already present in its actual input. This is an explicit evidence/claim
+mismatch in a successful run, not proof of why other runs stall.
+B1's toy answer is not visibly connected to the next repair before output/cost
+limits. B2's import failure then report-less timeout never answers its questions;
+the timeout location remains unknown. A2's anchor read is followed by incomplete
+responses before any edit. Do not equate these distinct cases with forgetting.
+
+The ledger separates within-scope/partial answers, failed observations and censored
+next decisions; label counts are not efficacy. Existing brief-evidence-v1 is a
+possible one-variable follow-up for evidence/assumption/action formatting, not an
+adopted policy or authorized new live group. Keep defaults; task-specific hints,
+extra annotation fields and broader read admission are not justified by this audit.
+Evidence: C:\pt\analyses\question-evidence-action-audit-20260922-v1\result.md.
+
 ## Previous controlled observation: repair inspection A2/B2
 
 The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes
