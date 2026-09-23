@@ -45,10 +45,20 @@ cleanup PASS. Exact-runtime402 focused/related outcomes reused after267 file has
 and evidence match; no full regression rerun. Protected2,443 unchanged, owned temp2
 recycled. No hidden details, extra candidate/provider work, retry/resume, Docker start/
 pull/build or automatic default adoption. One result difference is inconclusive.
-Next candidate, unimplemented: clarify the existing injected check_setup global and
-small flushed observation examples in the common run_probe contract; offline helper/
-timeout observation tests first. No task hint, forced probe or reservation tuning.
-Source: docker/probe_runner.py injects the helper; dev/tools.py only says available.
+Follow-up implemented: common run_probe guidance explicitly describes the injected
+check_setup global, direct calls without import/redefinition, and short progressive
+flush=True observations before blocking work. Only dev/tools.py's description and
+the derived tool-surface identity change; argument schemas/system prompt, helper,
+collector, plans, costs and execution rules remain unchanged. Python was already
+unbuffered. No task hint, forced probe or reservation tuning. Direct helper use and
+partial-output delivery are tested with real Python pipes and mocked Docker/Linux
+isolation, including both context policies and closed replay. Details: [probe setup](probe-setup.md).
+Focused69/64.95s and related118 (48/283.45s +70/183.56s) PASS; Ruff PASS. Both
+isolated mock evaluations PASS/safety NOT_RUN;10 actual task/diff/check inputs
+verify. Retain initial fixture-only newline/empty-diff expectation failures. Four
+planning schemas change only the probe description; protected830 unchanged.
+No provider/count/real-Docker call or full long regression; efficacy unmeasured.
+Evidence: C:\pt\analyses\probe-usage-guidance-20260924-v1.
 Keep output exhaustion separate; no fresh live work is covered by the closed packet.
 Evidence: C:\pt\analyses\mini-xhigh-read-repair-guidance-compare-20260924-v1\result.md.
 

@@ -9,6 +9,27 @@ claim commands are absent.
 
 ## Current work: reliable public observations for repair
 
+Common `run_probe` guidance now states that `check_setup` is injected into globals:
+call it directly without import/redefinition. It shows a short `flush=True` example
+and asks for useful observations before blocking work and as steps complete. Only
+the common tool description and derived surface identity change. Python already
+runs unbuffered; the collector/helper, argument schemas, system prompt, planning,
+costs and execution limits remain unchanged. This fixes an ambiguous usage contract;
+whether models choose better experiments or repair more tasks is unmeasured.
+Focused69 PASS/64.95s and related118 PASS (48/283.45s, 70/183.56s); Ruff passes.
+Both context policies' fresh mock runs preserve partial stdout and timeout status
+through actual inputs, then mutate/check/submit/reach isolated acceptance PASS
+(safety NOT_RUN). All10 actual inputs retain public task/diff/check state; closed
+replay does not launch another probe. Real Python pipes exercise the copied helper
+and child wrapper, with Docker launch/Linux isolation mocked. Initial test failures
+were fixture expectations for Windows newlines and no changed-line targets; all
+receipts are retained. Four planning schemas differ only in the probe description;
+830 protected files verify unchanged. No provider/count call, real Docker execution,
+new paid sample or full long regression was run for this description-only change.
+Implementation and local evidence: `C:\pt\analyses\probe-usage-guidance-20260924-v1`.
+
+### Existing observation-to-action guidance
+
 Keep `per-call-v1` for performance work and defer further completion-cost reservation
 tuning. The common agent prompt now asks the next useful call's existing `basis` to
 connect an observed answer (or missing answer) to the next action. Another inspection
@@ -71,11 +92,10 @@ no new full regression. All2,443 protected files unchanged. No extra candidates,
 retry/resume, Docker start/pull/build, automatic default change or successor run.
 Evidence: C:\pt\analyses\mini-xhigh-read-repair-guidance-compare-20260924-v1\result.md.
 
-Next candidate, not yet implemented: clarify that `check_setup` is already injected
-into probe globals, and show short progressive/flushed observations before blocking
-work. Test helper access and partial observations on timeout offline. Keep it general:
-no task hints, forced probe, new plan policy or cost-reservation expansion. Output
-exhaustion remains a separate performance issue; another live run needs a fresh
+The common probe-usage follow-up is implemented above, with offline helper and
+timeout-observation verification. It adds no task hints, forced probe, new plan
+policy or cost-reservation expansion. Output exhaustion remains a separate
+performance issue; another live run needs a fresh
 bounded packet and cannot reuse this closed budget.
 
 ## Previous controlled observation: completion-cost reservation A2/B2

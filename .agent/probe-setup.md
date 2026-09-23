@@ -6,6 +6,29 @@ Use it on the actual object/settings, not a restatement of the intended input.
 This addresses a failure where a merge changed a setting, but the model treated an
 assertion against its intended setting as a candidate defect despite printed evidence.
 
+## Direct use and progressive observations
+
+The runner injects `check_setup` into the executed program's globals. Call it
+directly; do not import it from `patchloop`, the project, or `__main__`, and do not
+redefine it. For an experiment's already constructed `settings`, chosen
+`expected_mode`, and operation `run_case`, the common pattern is:
+
+```python
+check_setup("mode", settings.mode, expected_mode)
+print({"stage": "before_call", "mode": settings.mode}, flush=True)
+result = run_case(settings)
+print({"stage": "after_call", "result": result}, flush=True)
+```
+
+Select short actual values relevant to the experiment's question. Print as useful
+steps complete and before potentially blocking work; a final `print(events)` is
+never reached if earlier work hangs. Production Python already runs unbuffered:
+the improvement is earlier emission, with explicit `flush=True` in the example.
+The existing bounded collector retains emitted output on timeout. Returned partial
+observations do not establish what unobserved later steps did or why they stalled.
+Setup/line reports keep their existing incomplete-result semantics, independently
+of stdout. This adds no observation quota, mandatory probe or acceptance credit.
+
 ## Contract
 
 - It records type-strict equality of plain `None`, bool, int, finite float and str
@@ -57,6 +80,17 @@ All discovery guidance modes share the helper; no new prompt-policy variant exis
 Reports remain model claims requiring public review even after a setup check.
 
 ## Validation evidence
+
+Usage clarification, 2026-09-24: `C:\pt\analyses\probe-usage-guidance-20260924-v1`.
+Focused69 PASS/64.95s; related118 PASS; Ruff PASS. Actual copied helper/child code
+runs in fresh local Python processes with mocked Docker/Linux isolation. Matching
+and mismatching public-source values verify direct helper access and early failure.
+A real two-second deadline preserves flushed stdout in both context policies' native
+inputs while keeping timeout/setup-unknown/behavior-not-assessed distinctions.
+Both smokes reach isolated acceptance PASS/safety NOT_RUN; ten task/diff/check input
+views and closed replay verify. This tests local wiring, not real Docker isolation
+or model efficacy. No provider/count call or full long regression was run. Initial
+fixture failures and final green results remain available.
 
 `C:\pt\analyses\probe-setup-checks-20260919-v1` records focused/regression checks,
 Ruff, both context policies' mock mutation/check/submission/isolated evaluation,

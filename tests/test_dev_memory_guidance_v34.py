@@ -133,10 +133,10 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
 
 
 def test_guidance_identity_changes_without_changing_run_schema_or_limits():
-    # Observation-to-action guidance changes the overall surface identity;
+    # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:8eb1ddf7f87628b712501f7c2f37ee6f1d1a92e7719ebb32c21e7dbec9467ad0"
+        "sha256:25f1db63f18b3f138ee8bdc8686ad320d7c9a3965d4e10acd1055fdd590555b7"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

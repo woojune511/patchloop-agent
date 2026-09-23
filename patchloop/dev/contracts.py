@@ -124,6 +124,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "public_probe_observation": "execution-not-behavior-model-view-v1",
             "public_probe_observation_bounds": [4, 3],
             "public_probe_design_guidance": "public-input-variation-expected-observation-v1",
+            "public_probe_usage_guidance": "injected-helper-direct-call-progressive-output-v1",
             "mutation_recovery": "atomic-complete-candidate-diff-v2",
             "correction_recovery": "journal-derived-unconsumed-v2",
             "execution_deadline": "shared-active-deadline-owned-cleanup-v1",
