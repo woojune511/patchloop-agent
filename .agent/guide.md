@@ -22,6 +22,36 @@ four planning tool schemas unchanged, protected1399 unchanged, provider/count/co
 Full long regression not rerun for this prompt-only behavior change.
 Evidence: C:\pt\analyses\read-to-repair-guidance-20260924-v1.
 
+Latest common-guidance comparison is CLOSED_COMPLETE: A previous / B revised prompt,
+same runtime cd7118b9 at commit5c030964, AnyIO v3 / mini snapshot xhigh, A1/B1/B2/A2,
+repeat1/$1.20 each, fresh$4.80. Only the system prompt and prompt-derived model
+identity/input vary via a sequential operator overlay; normal run_dev is reused.
+Requests, brief-v1, per-call-v1, segmented/result-or-size/protected, tools/source/
+dependencies/limits are identical. Actual system inputs and empty initial state verify.
+Acceptance PASS/planned A0/2, B1/2; started4/submitted1/NOT_RUN3/infra0, official=false.
+B1 fails public3/7, searches uncancel usage, repairs13->18, passes public7/7+upstream32,
+submits20 and gets aggregate acceptance/safety PASS. Its failed helper-import probe
+provides no runtime evidence; the repair cites source and the public failure.
+B2 edits13/16/23, public1/7->3/7->4/7; A2 edits14/23, final public4/7. Both stop on
+cost without submission. A1 never edits and ends on consecutive output incompletes.
+Ten reasoning-only incompletes cost$1.192449750; five in each arm. Last B2/A2 outputs
+are capped12,911/12,856. Probe7 outcomes: completed1/helper-import-error3/timeout3;
+failed probes have no stdout, cleanup confirmed. All7 candidates publicly checked,
+identical rejected repeats0. Inputs89/counts101/actions118 verify. Max input56,527;
+segments4/7/9/9. Recorded$4.145888850, cache-neutral$5.229863250, unused$0.654111150 closed.
+Fresh operator37 PASS/13.66s after fixing a missing public-task rehearsal-state key;
+initial failure retained. Ruff, both-arm isolated mock PASS/8 inputs and Docker import/
+cleanup PASS. Exact-runtime402 focused/related outcomes reused after267 file hashes
+and evidence match; no full regression rerun. Protected2,443 unchanged, owned temp2
+recycled. No hidden details, extra candidate/provider work, retry/resume, Docker start/
+pull/build or automatic default adoption. One result difference is inconclusive.
+Next candidate, unimplemented: clarify the existing injected check_setup global and
+small flushed observation examples in the common run_probe contract; offline helper/
+timeout observation tests first. No task hint, forced probe or reservation tuning.
+Source: docker/probe_runner.py injects the helper; dev/tools.py only says available.
+Keep output exhaustion separate; no fresh live work is covered by the closed packet.
+Evidence: C:\pt\analyses\mini-xhigh-read-repair-guidance-compare-20260924-v1\result.md.
+
 Current implementation: opt-in `completion-reserve-v1` for segmented requests;
 `per-call-v1` stays default. Intersect remaining model calls with funded call slots
 at uncached 60K input + 128 output, then leave the largest offered successor reserve

@@ -7,7 +7,7 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: connect observations to the next repair
+## Current work: reliable public observations for repair
 
 Keep `per-call-v1` for performance work and defer further completion-cost reservation
 tuning. The common agent prompt now asks the next useful call's existing `basis` to
@@ -21,19 +21,64 @@ explicitly distinguished.
 This is a general guidance change, with a new tool-surface identity. It adds no field,
 plan policy, mandatory annotation/review, extra call, experiment quota or submission
 gate. Existing plans, tool schemas, cost policies and action admission are unchanged.
-It addresses the observed gap between delivered evidence and a subsequent repair;
-prompt compliance and acceptance improvement remain unproven until a live comparison.
+It addresses the observed gap between delivered evidence and a subsequent repair.
+The fixed live comparison below observes one successful failure-to-repair chain but
+leaves the performance direction unresolved; it does not establish general improvement.
 Focused54 PASS/80.32s and related348 unique PASS validate the change. The latter
 retains an initial174 PASS/1 stale prompt-hash assertion FAIL, its corrected one-test
 PASS, and the separate173 PASS group. Ruff passes. Both append/segmented scripted
 failure-read-repair-check-submit smokes reach isolated acceptance PASS/safety NOT_RUN;
 12 actual inputs retain public task/diff/check state and the new guidance. Four
 planning settings keep byte-identical tool schemas; 1,399 protected files verify.
-No provider/count/Docker call or spending occurred. The full long regression was
+That implementation-only validation made no provider/count/Docker call or spending.
+The full long regression was
 not rerun for this prompt-only behavior change. Implementation and validation are at
 `C:\pt\analyses\read-to-repair-guidance-20260924-v1`.
 
-## Latest controlled observation: completion-cost reservation A2/B2
+## Latest controlled observation: common guidance A2/B2
+
+The AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes `CLOSED_COMPLETE`:
+A1 -> B1 -> B2 -> A2, repeat=1 / $1.20 each, fresh cap $4.80. Previous common prompt
+A has acceptance PASS in 0/2 planned runs; revised guidance B has 1/2. Started4 /
+submitted1 / acceptance NOT_RUN3 / infrastructure stops0; all official=false.
+One acceptance difference on a familiar task leaves direction unresolved. The
+operator varies only the common system prompt and its derived model identity/input,
+on the same runtime; all requests, brief-v1 planning, schemas, per-call-v1 cost,
+segmented context, source, dependencies and limits are fixed. Each actual prompt
+and initially empty diff/plan/notes verifies. A is a prompt control, not an old runtime.
+
+B1 edits at13, gets lifecycle3/7 at14, searches for task cancellation suppression
+after failure, and repairs at18 using source and the public counterexample. It then
+passes lifecycle7/7 and upstream32, submits at20, and reaches isolated acceptance/
+safety PASS. Its probe fails at a helper import and supplies no runtime answer.
+B2 edits13/16/23, improves public1/7 -> 3/7 -> 4/7, but leaves interrupt resumption
+unresolved. A2 edits14/23 and reaches public4/7. Both end at cost admission without
+submission. A1 never edits and ends after two consecutive output incompletes.
+
+Recorded $4.145888850 / cache-neutral $5.229863250; unused $0.654111150 closed.
+Ten reasoning-only incompletes cost $1.192449750; each arm has five. B2/A2's final
+ceilings are12,911/12,856. These limits affect outcomes. Seven probes yield one
+completed observation, three helper import errors and three timeouts without stdout;
+cleanup is confirmed throughout. All7 applied candidates receive current-diff checks;
+identical rejected repeats0. All89 actual inputs/101 counts/118 actions reconcile.
+Maximum input56,527; segments A1/B1/B2/A2=4/7/9/9. No hidden evaluation details read.
+
+Fresh operator37 PASS/13.66s, Ruff, both-arm isolated mock PASS/8 actual inputs and
+existing Docker import/cleanup gates PASS. Retain the initial operator fixture
+failure (missing public-task rehearsal state) and corrected run. Reuse the exact
+runtime's402 focused/related outcomes above after267 file/evidence hashes match;
+no new full regression. All2,443 protected files unchanged. No extra candidates,
+retry/resume, Docker start/pull/build, automatic default change or successor run.
+Evidence: C:\pt\analyses\mini-xhigh-read-repair-guidance-compare-20260924-v1\result.md.
+
+Next candidate, not yet implemented: clarify that `check_setup` is already injected
+into probe globals, and show short progressive/flushed observations before blocking
+work. Test helper access and partial observations on timeout offline. Keep it general:
+no task hints, forced probe, new plan policy or cost-reservation expansion. Output
+exhaustion remains a separate performance issue; another live run needs a fresh
+bounded packet and cannot reuse this closed budget.
+
+## Previous controlled observation: completion-cost reservation A2/B2
 
 The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes
 `CLOSED_COMPLETE`: A1 -> B1 -> B2 -> A2, repeat=1 / $1.20 each, fresh cap $4.80.
