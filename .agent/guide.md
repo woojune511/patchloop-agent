@@ -21,11 +21,36 @@ path failure; the unchanged test passes under a shorter root (3,211 unique PASS
 outcomes after recheck). Keep original failure/recheck receipts separate. Runtime,
 test and diagnostic bytes stay fixed; Ruff/docs3 PASS. All8 ordinary mock and7
 simulated cost inputs retain exact public task/diff/check state. 1,570 protected
-files unchanged. No live/provider/Docker operation or default adoption.
+files unchanged. That local validation made no live/provider/Docker operation
+or default adoption; the subsequent controlled comparison follows below.
 Minimum output admission is not useful-output assurance.
 Evidence: C:\pt\analyses\completion-cost-reserve-20260922-v1.
 
-Latest evidence-plan comparison closes A1/B1/B2/A2 on AnyIO v3, mini snapshot/xhigh,
+Latest completion-cost comparison closes A1/B1/B2/A2 on AnyIO v3, mini snapshot/xhigh,
+runtime d25f24ae at preparation commit 215f2cb3. A per-call-v1 / B completion-reserve-v1;
+brief-v1/segmented-v1/result-or-size-v1/protected-v1, instructions and tools fixed.
+Acceptance PASS/planned A1/2, B0/2; started4/submitted1/NOT_RUN3/infra0, official=false.
+B1's last ceiling is 4,770 while reserving $0.455760. B2 ceilings20,277/6,013/7,026
+include two reasoning-only incompletes; final reads close with14 model calls left
+but10 funded slots. Both stop on consecutive incompletes with $0.465351450 /
+$0.410186100 unused. Same-prefix per-call arithmetic allows25,000, without proving
+an alternate trajectory. A1 has3 incompletes and cost stop. A2 rereads after failure,
+changes the hypothesis to preserve the shared runner task and clear its cancellation
+internally, repairs at30, passes public7/7 + upstream32, submits32 and gets aggregate
+isolated acceptance/safety PASS. Public traces only; no private evaluator details.
+Recorded $3.802618800 / cache-neutral $5.052222000; unused $0.997381200 closed.
+105 actual inputs/113 counts/137 actions verify. Incompletes7 cost $0.621396750.
+All5 applied candidates publicly checked; identical rejected repeats0. Fresh
+operator33 PASS/11.70s, Ruff, both-arm isolated mock PASS/8 inputs, retained synthetic
+cost audit7 inputs and existing Docker import/cleanup PASS. Reused the exact runtime
+validation above after264 file/artifact hashes match; 3,134 protected files unchanged.
+Keep defaults; one acceptance difference on this familiar task is inconclusive.
+Next candidate is offline validation of future reserve/current output/incomplete
+stopping interaction. No automatic live extension, retry/resume, Docker start/pull/
+build, extra candidate execution or default adoption.
+Evidence: C:\pt\analyses\mini-xhigh-completion-cost-compare-20260923-v1\result.md.
+
+Previous evidence-plan comparison closes A1/B1/B2/A2 on AnyIO v3, mini snapshot/xhigh,
 runtime d752929c at preparation commit 42138334. A brief-v1 / B brief-evidence-v1;
 segmented-v1/result-or-size-v1/protected-v1 and registered schemas otherwise fixed.
 Acceptance PASS/planned A0/2, B1/2; started4/submitted1/NOT_RUN3/infra0, official=false.

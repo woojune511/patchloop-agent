@@ -7,6 +7,42 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Latest controlled observation: completion-cost reservation A2/B2
+
+The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes
+`CLOSED_COMPLETE`: A1 -> B1 -> B2 -> A2, repeat=1 / $1.20 each, fresh cap $4.80.
+A (`per-call-v1`) has acceptance PASS in 1/2 planned runs; B
+(`completion-reserve-v1`) has 0/2. Started 4 / submitted 1 / acceptance NOT_RUN 3 /
+infrastructure stops 0; all `official=false`. NOT_RUN is not an evaluated failure.
+Keep the default. A one-result difference on a familiar task is inconclusive.
+Both arms use brief-v1/segmented-v1/result-or-size-v1/protected-v1, identical
+instructions, tools, prepared source and dependencies; only cost policy and its
+derived identity, cost state, action masks and output ceilings differ.
+
+B1 reserves $0.455760 and reduces its last output ceiling to 4,770 tokens. B2
+reduces outputs to 20,277, 6,013 and 7,026; the last two are reasoning-only
+incompletes. B2's final input also closes reads at the completion horizon, with
+14 model calls remaining but 10 funded slots. Both B runs stop on consecutive
+incompletes, leaving $0.465351450 / $0.410186100. Same-prefix arithmetic would
+allow 25,000 without the reserve; it does not establish an alternative outcome.
+A1 also has three reasoning-only incompletes and ends at cost admission. A2
+rereads after a failed first patch, changes its hypothesis to preserve the same
+runner task while clearing cancellation inside it, repairs at call 30, passes
+public lifecycle 7/7 and upstream 32 tests, and submits at 32 to isolated
+acceptance/safety PASS. No hidden evaluator details were read.
+
+Recorded cost $3.802618800 / cache-neutral $5.052222000; unused $0.997381200 closed.
+All 105 actual inputs, 113 counts, 137 actions and 3,134 protected files verify.
+Seven incomplete responses cost $0.621396750. Applied candidates 5, all publicly
+checked; identical rejected repeats 0. Fresh operator33 PASS/11.70s, Ruff, both-arm
+isolated mock PASS/8 inputs, retained synthetic cost audit/7 inputs and existing
+Docker import/cleanup gates PASS. Reuse the unchanged runtime validation below
+after 264 file hashes and retained artifacts match; no new full regression.
+No retry/resume, extra sample/candidate execution, Docker start/pull/build or
+default adoption. Next candidate: offline validation of future reservation versus
+current useful output and consecutive-incomplete stopping, before another live run.
+Evidence: C:\pt\analyses\mini-xhigh-completion-cost-compare-20260923-v1\result.md.
+
 ## Current implementation: opt-in completion cost reservation
 
 `--completion-cost-policy completion-reserve-v1` is available with `segmented-v1`.
@@ -39,8 +75,9 @@ same path length and passes unchanged under a shorter root, giving 3,211 unique
 PASS outcomes after the path recheck. Runtime/test/diagnostic bytes remain fixed
 throughout; retain the initial failure and recheck separately. Ruff and three
 documentation checks pass. All eight ordinary mock inputs and seven simulated
-cost-fixture inputs verify public task/diff/check delivery. No new live comparison,
-provider request or Docker operation has been executed.
+cost-fixture inputs verify public task/diff/check delivery. That implementation-only
+validation made no live provider request or Docker operation. The subsequent
+controlled live comparison is reported above.
 Evidence: C:\pt\analyses\completion-cost-reserve-20260922-v1.
 
 ## Previous implementation: opt-in segment boundary comparison
@@ -69,7 +106,7 @@ gates pass without start/pull/build. The authorized fixed mini xhigh A1/B1/B2/A2
 comparison, $1.20/run and $4.80 total, has completed as reported below.
 Evidence: C:\pt\analyses\segment-boundary-policy-20260922-v1.
 
-## Latest controlled observation: existing evidence-plan format A2/B2
+## Previous controlled observation: existing evidence-plan format A2/B2
 
 The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes
 `CLOSED_COMPLETE`: A1 -> B1 -> B2 -> A2, repeat=1 / $1.20 each, new group cap $4.80.
