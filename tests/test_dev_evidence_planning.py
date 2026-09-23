@@ -52,7 +52,7 @@ def record(journal, text, *, turn="t1", calls=None, diff="d1", gate="needs_mutat
 def test_old_contract_and_schema_unchanged_new_guidance_is_task_independent(tmp_path, monkeypatch):
     assert plans.instructions() == plans.INSTRUCTIONS
     assert dev_tool_surface_hash(planning_policy=plans.POLICY) == (
-        "sha256:7569bdf3ed73010cb4250000637e0346d5502ef29bce0f15d8769120ce734d56"
+        "sha256:4bdffcbf05b401dd6076a5ddc75d5e747f33257ce9b039d51ac820eac1f291fa"
     )
     old, new = plans.contract(), plans.contract(POLICY)
     assert {k: v for k, v in old.items() if k not in {"policy", "instructions_hash"}} == {

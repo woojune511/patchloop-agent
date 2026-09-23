@@ -79,6 +79,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "mutation_source_rebinding": "exact-position-unchanged-complete-line-fragments-v1",
             "inspection_gain": "non-overlapping-public-coverage-v2",
             "inspection_intent_projection": "single-native-intent-with-observation-refs-v1",
+            "observation_to_action_guidance": "answer-implication-next-action-advisory-v1",
             "source_search": "rooted-component-glob-double-star-zero-depth-v1",
             "search_feedback": "eligible-decoded-file-count-v1",
             "mutation_failure": "typed-scope-preview-explicit-path-allowance-v3",

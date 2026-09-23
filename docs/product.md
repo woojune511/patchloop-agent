@@ -25,6 +25,12 @@ legacy action recovery, not requested from new model calls. Submission remains b
 on the current diff and its registered check results. Fixed-candidate prompt variants
 in diagnostics are not the current repair-development path or proven improvements.
 
+The common action guidance links a read/search/probe's answer to the next action in
+the existing short decision basis. Further inspection should resolve a fact that can
+change the repair or check. When only a supported repair's outcome is uncertain, the
+agent can test a small scoped edit with a current-diff check. This remains advisory;
+it adds no fields, review call or gate, and has not demonstrated a live quality gain.
+
 ## Runtime shape
 
 ```text

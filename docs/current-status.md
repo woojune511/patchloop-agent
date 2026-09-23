@@ -7,6 +7,32 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
+## Current work: connect observations to the next repair
+
+Keep `per-call-v1` for performance work and defer further completion-cost reservation
+tuning. The common agent prompt now asks the next useful call's existing `basis` to
+connect an observed answer (or missing answer) to the next action. Another inspection
+should identify an unresolved fact that could change the repair/check. When only a
+supported repair's outcome is uncertain, try a small scoped edit and a current-diff
+check, subject to the offered tools. Small experiments support only their actual
+inputs and observations. Exact-source admission and semantic investigation are
+explicitly distinguished.
+
+This is a general guidance change, with a new tool-surface identity. It adds no field,
+plan policy, mandatory annotation/review, extra call, experiment quota or submission
+gate. Existing plans, tool schemas, cost policies and action admission are unchanged.
+It addresses the observed gap between delivered evidence and a subsequent repair;
+prompt compliance and acceptance improvement remain unproven until a live comparison.
+Focused54 PASS/80.32s and related348 unique PASS validate the change. The latter
+retains an initial174 PASS/1 stale prompt-hash assertion FAIL, its corrected one-test
+PASS, and the separate173 PASS group. Ruff passes. Both append/segmented scripted
+failure-read-repair-check-submit smokes reach isolated acceptance PASS/safety NOT_RUN;
+12 actual inputs retain public task/diff/check state and the new guidance. Four
+planning settings keep byte-identical tool schemas; 1,399 protected files verify.
+No provider/count/Docker call or spending occurred. The full long regression was
+not rerun for this prompt-only behavior change. Implementation and validation are at
+`C:\pt\analyses\read-to-repair-guidance-20260924-v1`.
+
 ## Latest controlled observation: completion-cost reservation A2/B2
 
 The fixed AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes
@@ -39,8 +65,8 @@ isolated mock PASS/8 inputs, retained synthetic cost audit/7 inputs and existing
 Docker import/cleanup gates PASS. Reuse the unchanged runtime validation below
 after 264 file hashes and retained artifacts match; no new full regression.
 No retry/resume, extra sample/candidate execution, Docker start/pull/build or
-default adoption. Next candidate: offline validation of future reservation versus
-current useful output and consecutive-incomplete stopping, before another live run.
+default adoption. Its proposed next cost-allocation investigation is deferred under
+the current performance priority above.
 Evidence: C:\pt\analyses\mini-xhigh-completion-cost-compare-20260923-v1\result.md.
 
 ## Current implementation: opt-in completion cost reservation

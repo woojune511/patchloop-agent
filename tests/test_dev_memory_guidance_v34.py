@@ -92,7 +92,7 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 def test_surrounding_action_guidance_identity():
     prefix, _, suffix = _memory_block()
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "c10c976ad92a175ffe89fcea6d94b3ed85d867fcfee123710cf2537705bc56f6"
+        "c6fc270c54696bfb4ed25d60c5a306b8f8a829487fea2ab11615217efcb9cb97"
     )
 
 
@@ -133,10 +133,10 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
 
 
 def test_guidance_identity_changes_without_changing_run_schema_or_limits():
-    # Public dependency support changes the overall surface identity; older
+    # Observation-to-action guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:391175f5c53df0f2bf809567956fcc625117f21bb3d5e522105de2ad53932c4b"
+        "sha256:8eb1ddf7f87628b712501f7c2f37ee6f1d1a92e7719ebb32c21e7dbec9467ad0"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

@@ -5,6 +5,23 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current focus: keep per-call-v1 and defer more cost-reservation tuning. Common
+action guidance connects each observed answer or missing answer to the next useful
+call's existing basis; it asks what unresolved fact would change another repair/check
+decision, and permits a small supported repair plus current-diff check when only the
+candidate outcome is uncertain. Small-experiment claims stay within observed inputs.
+Source reads required for edit admission are distinct from useful semantic inspection.
+The tool-surface identity records this guidance change; tool schemas, plan policies,
+action masks, reservations, checks and all recovery rules remain unchanged. No new
+field, task-specific hint, required review call or mandatory probe. Local wiring
+validation does not establish model compliance or improved acceptance.
+Focused54 PASS/80.32s; related348 unique PASS after correcting one old prompt-hash
+expectation (retain initial174 PASS/1 FAIL, recheck1 PASS, separate173 PASS). Ruff and
+both scripted repair smokes PASS;12 actual public task/diff/check inputs verify,
+four planning tool schemas unchanged, protected1399 unchanged, provider/count/cost0.
+Full long regression not rerun for this prompt-only behavior change.
+Evidence: C:\pt\analyses\read-to-repair-guidance-20260924-v1.
+
 Current implementation: opt-in `completion-reserve-v1` for segmented requests;
 `per-call-v1` stays default. Intersect remaining model calls with funded call slots
 at uncached 60K input + 128 output, then leave the largest offered successor reserve
@@ -45,7 +62,7 @@ operator33 PASS/11.70s, Ruff, both-arm isolated mock PASS/8 inputs, retained syn
 cost audit7 inputs and existing Docker import/cleanup PASS. Reused the exact runtime
 validation above after264 file/artifact hashes match; 3,134 protected files unchanged.
 Keep defaults; one acceptance difference on this familiar task is inconclusive.
-Next candidate is offline validation of future reserve/current output/incomplete
+Deferred candidate is offline validation of future reserve/current output/incomplete
 stopping interaction. No automatic live extension, retry/resume, Docker start/pull/
 build, extra candidate execution or default adoption.
 Evidence: C:\pt\analyses\mini-xhigh-completion-cost-compare-20260923-v1\result.md.

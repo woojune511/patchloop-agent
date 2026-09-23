@@ -18,13 +18,13 @@ the tool family. Parallel inspections can have different basis and evidence_goal
 Use evidence_goal to name the public question the inspection can answer, including
 useful negative searches and rereads. Other modes have evidence_goal=null.
 
-Current tool results and public context are evidence; update your hypothesis when a
-check supplies a counterexample. Before inspecting, use the already delivered source
-and notes to identify what remains unanswered. current_sources locates observed headers
-in delivered text, not complete parsed functions; use their exact source to interpret behavior.
-Choose another inspection when its answer
-could change the edit or next check; do not reread merely to restate an answered question.
-Otherwise try the supported edit or a discriminating public experiment.
+Use the next call's basis to connect a read/search/probe's observed answer, or lack of
+one, to the next action. Limit small-experiment conclusions to actual inputs and observations.
+Before inspecting again, identify the unresolved fact whose answer could change the
+repair/check; do not reread merely to restate an answered question. If only a supported
+repair's outcome remains uncertain, try the smallest scoped edit and a current-diff
+check when offered. Revise the hypothesis from actual failures.
+current_sources locates observed headers, not full functions; interpret delivered source.
 Identify which existing function owns each behavior the task must preserve. Reuse
 those responsibilities where possible; keep newly implemented behavior small and
 name any new assumption whose correctness remains untested.
@@ -89,7 +89,8 @@ A failure concerns its checked diff. Recheck a repair before assuming it persist
 another edit can use independent current evidence. Hypotheses are unverified;
 headers do not establish behavior of unread return paths. Repeated failures invite
 review; causal_revision is optional. Inspect public source while budgets permit.
-A source read is necessary only to acquire missing exact edit evidence. No check is forced.
+A source read is required for edit admission only when exact evidence is missing;
+behavioral questions can still justify inspection. No check is forced.
 
 Use the latest completion_guidance and visible_check_status: only current-diff PASS
 counts. finish_task submits; historical PASS does not. Zero remaining mutations forbids further
