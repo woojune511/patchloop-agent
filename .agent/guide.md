@@ -22,7 +22,7 @@ four planning tool schemas unchanged, protected1399 unchanged, provider/count/co
 Full long regression not rerun for this prompt-only behavior change.
 Evidence: C:\pt\analyses\read-to-repair-guidance-20260924-v1.
 
-Latest common-guidance comparison is CLOSED_COMPLETE: A previous / B revised prompt,
+Previous common-guidance comparison is CLOSED_COMPLETE: A previous / B revised prompt,
 same runtime cd7118b9 at commit5c030964, AnyIO v3 / mini snapshot xhigh, A1/B1/B2/A2,
 repeat1/$1.20 each, fresh$4.80. Only the system prompt and prompt-derived model
 identity/input vary via a sequential operator overlay; normal run_dev is reused.
@@ -57,10 +57,45 @@ Focused69/64.95s and related118 (48/283.45s +70/183.56s) PASS; Ruff PASS. Both
 isolated mock evaluations PASS/safety NOT_RUN;10 actual task/diff/check inputs
 verify. Retain initial fixture-only newline/empty-diff expectation failures. Four
 planning schemas change only the probe description; protected830 unchanged.
-No provider/count/real-Docker call or full long regression; efficacy unmeasured.
+That implementation-only validation made no provider/count/real-Docker call or full
+long regression; the separate fixed live comparison follows below.
 Evidence: C:\pt\analyses\probe-usage-guidance-20260924-v1.
 Keep output exhaustion separate; no fresh live work is covered by the closed packet.
 Evidence: C:\pt\analyses\mini-xhigh-read-repair-guidance-compare-20260924-v1\result.md.
+
+Latest probe-usage comparison closes CLOSED_COMPLETE on runtime9268b812 at9d42c6ac:
+AnyIO v3 / mini snapshot xhigh, A1/B1/B2/A2, repeat1/$1.20 each, fresh$4.80. A old
+probe description and B direct-helper/progressive-output description both achieve
+acceptance PASS/planned1/2. Started4/submitted2/NOT_RUN2/infra0, official=false.
+Only run_probe description and derived model identity/input vary. Base surface is
+common; actual request/schema reconstruction binds the selected description. System
+prompt, brief-v1, per-call-v1, segmented/result-or-size/protected and tool arguments,
+source/dependencies/limits remain fixed; all initial diff/plan/notes are empty.
+Helper direct calls6/6, helper import errors0. B writes flush=True in3/3 programs,
+returns staged stdout2/3; one fails before helper use because _pytest is unavailable.
+A returns one stdlib observation and two empty timeouts. No B timeout: live partial
+timeout-output preservation is unobserved. All6 receipts and stdout reach next inputs.
+B2 edits8/20, public3/7->7/7 plus upstream32, submits22 to acceptance/safety PASS.
+Its probe19 observes coroutine-finally completion, pending waiter and shutdown error;
+edit20's basis overstates clean closure. The chosen cancellation repair is validated
+independently, not by that overstatement. A2 edits10/17/22, public2/7->3/7->7/7,
+upstream32 and submission24 also PASS. Probe21's observed task resumption explicitly
+informs edit22 alongside the public failure. All7 applied candidates checked/repeats0.
+A1 first edits25 after$1.113295200 and ends at cost admission after public6/7.
+B1 first edits14/public2/7, then ends after reasoning-only25K incompletes25/26 despite
+probe24's delivered answer and available replace_text. Six incompletes cost$0.699537750;
+four reasoning-only, two partial-call responses. A1's final ceiling is5,257.
+Recorded$3.527517150/cache-neutral$4.627302750; unused$1.272482850 closed. All100 actual
+inputs/109 counts/119 tools reconcile; max input59,897, segments9/5/6/8. Protected2567
+unchanged. Fresh operator39 PASS/16.48s, Ruff, both-arm isolated mock PASS/8 actual
+inputs and Docker import/cleanup gates PASS. Reuse exact-runtime190 passing outcomes
+after269 file/evidence hashes verify; no full regression rerun. No hidden details,
+extra candidate/provider work, retry/resume, Docker start/pull/build, automatic default
+change or extension. Zero acceptance difference leaves direction unresolved. Retain
+clear common API guidance without an efficacy claim. Next candidate isolates mini
+high versus xhigh at fixed common harness/cap to investigate usable action production;
+not run in this closed packet. Keep cost reservation simple and avoid task-specific hints.
+Evidence: C:\pt\analyses\mini-xhigh-probe-usage-compare-20260924-v1\result.md.
 
 Current implementation: opt-in `completion-reserve-v1` for segmented requests;
 `per-call-v1` stays default. Intersect remaining model calls with funded call slots

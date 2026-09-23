@@ -14,8 +14,9 @@ call it directly without import/redefinition. It shows a short `flush=True` exam
 and asks for useful observations before blocking work and as steps complete. Only
 the common tool description and derived surface identity change. Python already
 runs unbuffered; the collector/helper, argument schemas, system prompt, planning,
-costs and execution limits remain unchanged. This fixes an ambiguous usage contract;
-whether models choose better experiments or repair more tasks is unmeasured.
+costs and execution limits remain unchanged. This clarifies the usage contract.
+The fixed live comparison below observes progressive output in B, with equal
+acceptance counts and no established performance advantage.
 Focused69 PASS/64.95s and related118 PASS (48/283.45s, 70/183.56s); Ruff passes.
 Both context policies' fresh mock runs preserve partial stdout and timeout status
 through actual inputs, then mutate/check/submit/reach isolated acceptance PASS
@@ -56,7 +57,54 @@ The full long regression was
 not rerun for this prompt-only behavior change. Implementation and validation are at
 `C:\pt\analyses\read-to-repair-guidance-20260924-v1`.
 
-## Latest controlled observation: common guidance A2/B2
+## Latest controlled observation: probe usage A2/B2
+
+The AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes `CLOSED_COMPLETE`:
+A1 -> B1 -> B2 -> A2, repeat=1 / $1.20 each, fresh cap $4.80. Previous probe
+description A and direct-helper/progressive-output description B both reach acceptance
+PASS in 1/2 planned runs. Started4 / submitted2 / NOT_RUN2 / infrastructure stops0;
+all official=false. Direction is unresolved. Only run_probe's common description and
+its derived model identity/input differ. System prompt, brief-v1, per-call-v1,
+segmented/result-or-size/protected, tool arguments, source, dependencies and limits
+are fixed. Actual descriptions, public state and empty initial diff/plan/notes verify.
+
+All6 probe programs call check_setup directly; helper import errors are0 in both
+arms. B writes flush=True progress in3/3 programs and returns staged stdout in2;
+its other probe fails before the helper at an unavailable _pytest import. A returns
+one completed stdlib observation and has two empty timeouts. B has no timeout, so
+live timeout-output preservation is unobserved. All returned observations reach the
+next actual input. Process PASS is not candidate correctness.
+
+B2 edits8, fails public3/7 at9, then probes coroutine close at19. It observes finally
+execution, a pending waiter and a shutdown RuntimeError. Its basis overstates clean
+closure, but its different repair at20 preserves the shared runner task; public7/7,
+upstream32 and submission22 reach acceptance/safety PASS. A2 edits10/17/22, advances
+public2/7 -> 3/7 -> 7/7 and submits24 to acceptance/safety PASS. Its stdlib probe21
+shows a task resumes after callback KeyboardInterrupt; edit22 explicitly joins that
+answer with the current public failure. Both successful candidates have independent
+current-diff checks. All7 applied candidates were checked; rejected identical repeats0.
+
+A1 first edits25 after $1.113295200, gets public6/7, then stops at cost admission.
+B1 edits14, gets public2/7 and never repairs again despite a completed stdlib probe24.
+Its inputs25/26 retain the observation, current failure and replace_text; both spend
+25,000 output tokens on reasoning-only incompletes. Six incompletes total cost
+$0.699537750; four are reasoning-only, while two A1 responses contain partial calls.
+A1's final output ceiling is5,257. These endings affect the result independently of
+probe usage. Keep per-call-v1; defer further cost-reservation tuning. The next proposed
+performance comparison isolates mini high versus xhigh under the same common harness
+and cap, targeting useful actions before output exhaustion. It is not run here.
+
+Recorded $3.527517150 / cache-neutral $4.627302750; unused $1.272482850 closed.
+Inputs100 / counts109 / tools119 reconcile. Maximum input59,897; segments A1/B1/B2/A2
+=9/5/6/8, with initial4 / input_tokens8 / major_result_reviewed16 across the group.
+Fresh operator39 PASS/16.48s, Ruff, both-arm isolated mock PASS/8 actual inputs and
+existing Docker import/cleanup gates PASS. Exact-runtime190 passing outcomes are
+reused after269 file/evidence hashes verify; no fresh full regression. Protected2,567
+unchanged. No hidden details, extra candidate/provider work, retry/resume, Docker
+start/pull/build, automatic default change or live extension.
+Evidence: C:\pt\analyses\mini-xhigh-probe-usage-compare-20260924-v1\result.md.
+
+## Previous controlled observation: common guidance A2/B2
 
 The AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes `CLOSED_COMPLETE`:
 A1 -> B1 -> B2 -> A2, repeat=1 / $1.20 each, fresh cap $4.80. Previous common prompt
