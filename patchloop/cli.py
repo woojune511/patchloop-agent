@@ -13,6 +13,11 @@ from typing import Annotated, Literal
 import typer
 from pydantic import ValidationError
 
+from patchloop.dev.cost import (
+    DEFAULT_OUTPUT_CEILING,
+    MAX_OUTPUT_CEILING,
+    MINIMUM_OUTPUT_CEILING,
+)
 from patchloop.errors import ContractError, PatchLoopError
 from patchloop.task_loader import load_task_package
 
@@ -59,6 +64,12 @@ def dev(
         Literal["none", "low", "medium", "high", "xhigh"],
         typer.Option("--reasoning-effort"),
     ] = "medium",
+    max_output_tokens: Annotated[
+        int, typer.Option(
+            "--max-output-tokens", min=MINIMUM_OUTPUT_CEILING, max=MAX_OUTPUT_CEILING,
+            help="Desired output cap per call, including reasoning; cost admission may lower it.",
+        ),
+    ] = DEFAULT_OUTPUT_CEILING,
     env_file: Annotated[
         Path | None,
         typer.Option("--env-file", exists=True, dir_okay=False),
@@ -134,6 +145,7 @@ def dev(
                 task=task,
                 model=model,
                 reasoning_effort=reasoning_effort,
+                max_output_tokens=max_output_tokens,
                 env_file=env_file,
                 max_cost_usd=_parse_cost(max_cost_usd),
                 repeat=repeat,

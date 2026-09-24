@@ -7,7 +7,42 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: reliable public observations for repair
+## Current work: isolate the mini xhigh output ceiling
+
+`patchloop dev --max-output-tokens` selects a desired per-call output ceiling,
+including reasoning. The default remains 25,000; the accepted integer range is
+128 through 128,000, within both registered snapshots' documented output maximum.
+The selected value binds the model identity, evaluation manifest, run envelope and
+nondefault run-start receipt, and reaches exact-counted cost admission. Remaining
+money may lower the dispatched ceiling. Default serialization and model identity
+remain unchanged; changing the ceiling on resume rejects before another model call.
+System/tool/planning guidance, context transitions and cost-policy rules do not change.
+
+The approved next comparison keeps mini snapshot xhigh and the current common harness:
+A25,000 versus B50,000, AnyIO v3, A1/B1/B2/A2, repeat1, $1.20 per run and a fresh $4.80
+group cap. Both use brief-v1, segmented/result-or-size/protected, per-call-v1,
+probes/probe-policy none/repair-recheck and the same prepared source/dependencies.
+Keep the 40 model/100 tool/4 edit/1,800 second/60K input bounds. No retry, replacement,
+resume or extra sample; uncertainty stops the group. Acceptance is PASS/planned2;
+non-submission is NOT_RUN. Check whether B actually exceeds25K and completes a useful
+action/repair/check/submission; merely longer output is not improvement. If no response
+crosses25K, the intended mechanism is unobserved. Defaults are not automatically changed.
+Implementation validation is complete; the separately approved live comparison is next.
+Focused15 PASS/65.28s on the final runtime; concurrent recheck15 PASS/162.19s also retained.
+Full147-file/3,246-case regression with durations: initial3,225 PASS/5 FAIL/16 SKIP;
+all5 exact failures recheck PASS/56.66s, leaving3,230 unique PASS/16 SKIP. One assertion
+now uses the request field, two pre-existing prompt/schema expectations were stale,
+and two identity/preflight failures overlapped CLI formatting during early regression.
+Keep those original receipts. Parallel shard times:3,176.041/5,026.740/5,016.755/4,902.513s.
+Ruff and fresh operator46 PASS/30.15s; both-arm isolated mock acceptance PASS/safety
+NOT_RUN with8 actual public task/diff/check inputs and identical tools. Four old envelopes
+roundtrip, default model/request identities and tool surface stay unchanged, and4,515
+protected files verify. Existing Docker source/dependency import and cleanup gates pass.
+These validation gates made no paid provider/count calls. All results remain official=false.
+Implementation evidence: `C:\pt\analyses\output-ceiling-support-20260924-v1`.
+Comparison evidence: `C:\pt\analyses\mini-xhigh-output-ceiling-compare-20260924-v1`.
+
+## Reliable public observations for repair
 
 Common `run_probe` guidance now states that `check_setup` is injected into globals:
 call it directly without import/redefinition. It shows a short `flush=True` example
@@ -90,9 +125,9 @@ Its inputs25/26 retain the observation, current failure and replace_text; both s
 25,000 output tokens on reasoning-only incompletes. Six incompletes total cost
 $0.699537750; four are reasoning-only, while two A1 responses contain partial calls.
 A1's final output ceiling is5,257. These endings affect the result independently of
-probe usage. Keep per-call-v1; defer further cost-reservation tuning. The next proposed
-performance comparison isolates mini high versus xhigh under the same common harness
-and cap, targeting useful actions before output exhaustion. It is not run here.
+probe usage. Keep per-call-v1; defer further cost-reservation tuning. The proposed
+high-versus-xhigh follow-up is deferred: first hold xhigh fixed and isolate its output
+ceiling as described above. Neither successor was run in this closed packet.
 
 Recorded $3.527517150 / cache-neutral $4.627302750; unused $1.272482850 closed.
 Inputs100 / counts109 / tools119 reconcile. Maximum input59,897; segments A1/B1/B2/A2

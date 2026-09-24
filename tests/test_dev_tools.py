@@ -174,8 +174,10 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
     assert "Coverage and commitment signals are advisory" in DEV_SYSTEM_PROMPT
     assert "causal_revision is optional" in DEV_SYSTEM_PROMPT
     assert (
-        "source read is necessary only to acquire missing exact edit evidence" in DEV_SYSTEM_PROMPT
+        "source read is required for edit admission only when exact evidence is missing"
+        in DEV_SYSTEM_PROMPT
     )
+    assert "behavioral questions can still justify inspection" in DEV_SYSTEM_PROMPT
     gate_schemas = dev_tool_schemas(
         finish_enabled=False,
         check_ids=(),

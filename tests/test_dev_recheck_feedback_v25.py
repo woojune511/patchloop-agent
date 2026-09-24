@@ -198,10 +198,10 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
 def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # V34 compresses memory descriptions only; ordered input shapes and non-memory
     # descriptions are independently pinned in test_dev_memory_guidance_v34.
-    # The full current snapshot includes the later shared check_setup description.
+    # Include the current direct check_setup and progressive-output guidance.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:c4f602fdf9c7298fa863bd074831117dab4bd3f8754e042e0e59614b2358ac0e"
+    )) == "sha256:22b4b42605373d3d37beed09ae1140dc8b3a6d8ae7531eb9bab5d061543e813d"
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )

@@ -17,6 +17,8 @@ TOKENS_PER_MILLION = Decimal("1000000")
 # The invocation-wide cost ledger still lowers this value before every dispatch.
 DEFAULT_OUTPUT_CEILING = 25_000
 MINIMUM_OUTPUT_CEILING = 128
+# Both registered GPT-5.4 snapshots support this maximum (reviewed 2026-09-24).
+MAX_OUTPUT_CEILING = 128_000
 CompletionCostPolicy = Literal["per-call-v1", "completion-reserve-v1"]
 DEFAULT_COMPLETION_COST_POLICY = "per-call-v1"
 COMPLETION_RESERVE_POLICY = "completion-reserve-v1"

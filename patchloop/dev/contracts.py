@@ -352,6 +352,11 @@ class DevRunRequest(StrictModel):
     task: Path
     model: str
     reasoning_effort: Literal["none", "low", "medium", "high", "xhigh"] = "medium"
+    max_output_tokens: int = Field(
+        default=cost.DEFAULT_OUTPUT_CEILING,
+        ge=cost.MINIMUM_OUTPUT_CEILING, le=cost.MAX_OUTPUT_CEILING, strict=True,
+        exclude_if=lambda value: value == cost.DEFAULT_OUTPUT_CEILING,
+    )
     env_file: Path | None = None
     max_cost_usd: Decimal | None = None
     repeat: int = Field(default=1, ge=1, le=6)
@@ -475,6 +480,11 @@ class DevRunEnvelope(StrictModel):
     probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     model: str
     reasoning_effort: Literal["none", "low", "medium", "high", "xhigh"]
+    max_output_tokens: int = Field(
+        default=cost.DEFAULT_OUTPUT_CEILING,
+        ge=cost.MINIMUM_OUTPUT_CEILING, le=cost.MAX_OUTPUT_CEILING, strict=True,
+        exclude_if=lambda value: value == cost.DEFAULT_OUTPUT_CEILING,
+    )
     credential_file_path_hash: str | None = Field(
         default=None,
         pattern=r"^sha256:[0-9a-f]{64}$",

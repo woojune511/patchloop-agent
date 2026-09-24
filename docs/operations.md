@@ -711,7 +711,10 @@ or committed.
 The required evaluator image must already exist locally at the declared digest.
 PatchLoop never starts Docker Desktop or pulls/builds an image. Unknown model
 pricing fails before dispatch. The adapter counts the actual request immediately
-before generation. The desired response ceiling is 25,000 tokens. The Responses API
+before generation. The desired response ceiling defaults to 25,000 tokens; select
+another value with `--max-output-tokens` (integer128..128,000). The requested ceiling
+is bound to run identity and cannot change during resume. Omitting the option retains
+the existing default envelope and model identity. The Responses API
 counts both reasoning and visible output against it; pre-dispatch admission lowers that
 ceiling when necessary to stay inside the invocation-wide cap. Every admitted ceiling
 is journaled. The adapter uses zero SDK transport retries and stops all remaining

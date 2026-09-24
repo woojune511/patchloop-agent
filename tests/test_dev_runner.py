@@ -2959,12 +2959,12 @@ def _patch_live_boundaries(monkeypatch) -> None:
     monkeypatch.setattr(runner, "WorkspaceManager", _SnapshotWorkspaceManager)
 
 
-def test_model_hash_binds_the_configured_output_ceiling(tmp_path, monkeypatch) -> None:
+def test_model_hash_binds_the_configured_output_ceiling(tmp_path) -> None:
     request = _live_request(tmp_path, repeat=1, cap="1.20")
     pricing = pricing_for_model(request.model)
     initial = runner._model_hash(request, pricing)  # noqa: SLF001 - model identity test
 
-    monkeypatch.setattr(runner, "DEFAULT_OUTPUT_CEILING", DEFAULT_OUTPUT_CEILING + 1)
+    request = request.model_copy(update={"max_output_tokens": DEFAULT_OUTPUT_CEILING + 1})
 
     assert runner._model_hash(request, pricing) != initial  # noqa: SLF001
 

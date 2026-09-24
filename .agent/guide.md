@@ -5,6 +5,23 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current output-ceiling seam: DevRunRequest/CLI `max_output_tokens` defaults25K,
+strict integer128..128K. Bind selected value in model identity, manifest, envelope,
+nondefault run_started and adapter/mock payload; pass it to DevCostLedger.admit.
+Default field omission preserves old envelope/request serialization and model hashes.
+Resume with a different ceiling fails before dispatch. Cost admission may lower the
+actual ceiling; its existing receipt is authoritative. No tool/prompt/plan/boundary
+policy change. Approved fresh comparison holds mini xhigh fixed at A25K/B50K,
+AnyIO v3, A1/B1/B2/A2, repeat1/$1.20 each/fresh$4.80; ordinary run_dev in both arms.
+Record >25K completed responses and downstream useful actions, not just longer output.
+Validation: focused15 PASS/65.28s; full3,246 collected,3,230 unique PASS/16 SKIP after
+exact5 initial failures recheck PASS/56.66s. Initial failures retain one constant-based
+test update, two pre-existing prompt/schema expectations and two identity/preflight
+checks overlapping early CLI formatting. Shards took3,176/5,027/5,017/4,903s. Ruff,
+operator46/30.15s, both-arm isolated mock PASS/8 public inputs, old4 envelope roundtrips,
+default identities/tool surface, protected4,515 and existing Docker import/cleanup pass.
+No paid provider/count calls in validation. Live comparison is next; no default adoption.
+
 Current focus: keep per-call-v1 and defer more cost-reservation tuning. Common
 action guidance connects each observed answer or missing answer to the next useful
 call's existing basis; it asks what unresolved fact would change another repair/check
@@ -92,9 +109,9 @@ inputs and Docker import/cleanup gates PASS. Reuse exact-runtime190 passing outc
 after269 file/evidence hashes verify; no full regression rerun. No hidden details,
 extra candidate/provider work, retry/resume, Docker start/pull/build, automatic default
 change or extension. Zero acceptance difference leaves direction unresolved. Retain
-clear common API guidance without an efficacy claim. Next candidate isolates mini
-high versus xhigh at fixed common harness/cap to investigate usable action production;
-not run in this closed packet. Keep cost reservation simple and avoid task-specific hints.
+clear common API guidance without an efficacy claim. The high-versus-xhigh candidate
+is deferred in favor of the fixed-xhigh output-ceiling comparison above; neither ran
+in this closed packet. Keep cost reservation simple and avoid task-specific hints.
 Evidence: C:\pt\analyses\mini-xhigh-probe-usage-compare-20260924-v1\result.md.
 
 Current implementation: opt-in `completion-reserve-v1` for segmented requests;

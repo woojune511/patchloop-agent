@@ -316,7 +316,7 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
-            "max_output_tokens": DEFAULT_OUTPUT_CEILING,
+            "max_output_tokens": request.max_output_tokens,
             "reasoning_continuation": ("encrypted-v1" if request.provider == "openai" else "none"),
             "response_include": (
                 ["reasoning.encrypted_content"] if request.provider == "openai" else []
@@ -454,7 +454,7 @@ def _manifest(
             reasoning_effort=request.reasoning_effort,
             reasoning_continuation=("encrypted-v1" if request.provider == "openai" else "none"),
             transport_max_retries=0 if request.provider == "openai" else None,
-            max_output_tokens=DEFAULT_OUTPUT_CEILING,
+            max_output_tokens=request.max_output_tokens,
             input_price_per_million_usd=(float(pricing.input_per_million_usd) if pricing else None),
             cached_input_price_per_million_usd=(
                 float(pricing.cached_input_per_million_usd) if pricing else None
@@ -2880,6 +2880,7 @@ def _run_envelope(
                             if request.enable_probes else None),
         model=request.model,
         reasoning_effort=request.reasoning_effort,
+        max_output_tokens=request.max_output_tokens,
         credential_file_path_hash=_credential_file_path_hash(request),
         max_cost_nanos=cost_ledger.cap_nanos if cost_ledger else 0,
         cost_start_nanos=cost_start_nanos,
@@ -3461,6 +3462,8 @@ def _run_one(
                     **({"segment_boundary_policy": request.segment_boundary_policy}
                        if request.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
                        else {}),
+                    **({"max_output_tokens": request.max_output_tokens}
+                       if request.max_output_tokens != DEFAULT_OUTPUT_CEILING else {}),
                 },
             )
 
@@ -3820,7 +3823,7 @@ def _run_one_active(
             reasoning_effort=request.reasoning_effort,
             reasoning_continuation="encrypted-v1",
             transport_max_retries=0,
-            max_output_tokens=DEFAULT_OUTPUT_CEILING,
+            max_output_tokens=request.max_output_tokens,
             input_price_per_million_usd=float(pricing.input_per_million_usd),
             cached_input_price_per_million_usd=float(pricing.cached_input_per_million_usd),
             output_price_per_million_usd=float(pricing.output_per_million_usd),
@@ -4246,7 +4249,7 @@ def _run_one_active(
                     model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
                 ) if openai_adapter is not None else {
                     "model": request.model, "input": model_input, "tools": schemas,
-                    "max_output_tokens": DEFAULT_OUTPUT_CEILING,
+                    "max_output_tokens": request.max_output_tokens,
                 })
                 request_payload.update(parallel_tool_calls=True, tool_choice="required")
                 sizes = segments.request_sizes(request_payload)
@@ -4466,6 +4469,7 @@ def _run_one_active(
                 )
             admission = cost_ledger.admit(
                 input_tokens,
+                desired_output_ceiling=request.max_output_tokens,
                 future_cost_reserve_nanos=(
                     policy.completion_cost["future_cost_reserve_nanos"]
                     if policy.completion_cost is not None else 0
