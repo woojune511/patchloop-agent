@@ -7,7 +7,36 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: base-observation review closed; no paired-probe adoption
+## Current work: probe-claim removal review closed; no common change
+
+The selected public Pydantic-AI claim-removal comparison is CLOSED_COMPLETE,
+official=false. Four fresh mini snapshot/xhigh/25K reports ran A1/B1/B2/A2,
+repeat1 per slot, with a new $0.64 cap. A exactly matches the previous paired
+request; B removes only the model-authored probe question and expected JSON.
+Public task, P10 patch, program, base/candidate observations, observed differences,
+system instructions and report schema remain identical. Supported preservation
+violation identification/planned2 is **A0/2, B0/2**. Started4/reported4/incomplete0/
+unstarted0/infra0; actual repair and task acceptance are NOT_RUN.
+
+A1/A2 call the freshly constructed ordinary profile copied. B1/B2 still accept
+its new empty field without those claims. B2 also conflates the renamed output
+key and describes unprovided check results. Thus removing these claims alone
+does not correct this selected case; their presence is not necessary for the
+observed scope error. This small joint ablation does not establish no narrative
+effect generally or separate the question's effect from the expectation's.
+
+All4 actual inputs, usage, continuations and cleanups verify; no summarization or
+output-limit stop occurs. Recorded model-rate cost $0.231549000, cache-neutral
+$0.237597000; unused $0.408451 closed. Runtime4d2fc8ba/v45, common tools/prompts
+and defaults stay unchanged. Focused18 PASS/1.82s, transport15 PASS/37.305s,
+Ruff PASS;128 protected files unchanged. No new Docker, task tool, private
+evaluation, full core regression or isolated-evaluation smoke ran. No further
+sample or budget is authorized by this packet. The unresolved observable gap
+is mapping profile-construction code to the public requirement's applicability;
+another generic verification paragraph is not a new mechanism.
+Evidence: `C:\pt\analyses\mini-xhigh-probe-claims-ablation-20260925-v1\result.md`.
+
+## Previous work: base-observation review closed; no paired-probe adoption
 
 The selected public Pydantic-AI review comparison is CLOSED_COMPLETE, official=false.
 Four fresh independent `gpt-5.4-mini-2026-03-17`/xhigh/25K reports ran in A1/B1/B2/A2
