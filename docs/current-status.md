@@ -7,7 +7,36 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: guidance comparison closed; previous common prompt restored
+## Current work: base-observation review closed; no paired-probe adoption
+
+The selected public Pydantic-AI review comparison is CLOSED_COMPLETE, official=false.
+Four fresh independent `gpt-5.4-mini-2026-03-17`/xhigh/25K reports ran in A1/B1/B2/A2
+order, repeat1 per slot, with a new $0.64 invocation cap. A sees the saved candidate
+observation; B adds only the same-program base observation and observed differences.
+Public task, existing P10 patch, probe/question/unverified expectation, instructions,
+and report schema are otherwise identical. Corrected interpretation/planned2 is
+**A0/2, B0/2**. Started4/reported4/incomplete0/unstarted0/infra0; task acceptance and
+actual repair are NOT_RUN. This is one selected-case review, not a solve-rate estimate.
+
+B1 uses before/after evidence but accepts the ordinary-profile insertion; B2 repeats
+the incorrect copied-profile explanation. A2 denies having execution observations,
+although its exact dispatched input includes them. All4 input hashes, usage records,
+continuations and client cleanups verify. No summary or output-limit stop occurs.
+Recorded model-rate cost is $0.125289000, cache-neutral $0.131337000; unused $0.514711
+is closed. Account promotions and invoice/count-endpoint charges are unverified.
+
+Do not add paired probes to the common loop on this evidence. The narrower unrun
+hypothesis is whether removing the model-authored wrong description/expectation
+changes interpretation of the same public task, program and observations. This is
+not established as the cause and is not a funded follow-up. Runtime/defaults remain
+4d2fc8ba/v45. Collector focused11 and transport15 pass, Ruff passes,96 protected
+files remain unchanged. No task tools, Docker or private evaluator ran. No new full
+core regression or agent evaluation smoke is claimed for this external collector.
+Evidence: `C:\pt\analyses\mini-xhigh-base-observation-compare-20260925-v1\result.md`.
+Preceding same-program base/candidate replay,2 real probes/zero model calls:
+`C:\pt\analyses\same-probe-base-candidate-20260925-v1\result.md`.
+
+## Previous work: guidance comparison closed; previous common prompt restored
 
 Keep mini xhigh fixed for subsequent performance work and defer further high/xhigh
 comparisons. This is a choice of experimental baseline, not a CLI default change or
