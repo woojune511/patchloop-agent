@@ -7,12 +7,32 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: evidence-to-repair behavior; retain observation limits
+## Current work: evidence-to-repair behavior; next guidance candidate
 
 Keep mini xhigh fixed for subsequent performance work and defer further high/xhigh
 comparisons. This is a choice of experimental baseline, not a CLI default change or
 evidence that xhigh is better. Focus on choosing a discriminating observation and
 using its answer to revise the repair. The closed comparison below remains closed.
+
+The subsequent read-only audit covers all92 actual inputs,5 probes,9 mutations and
+6 failed-check-to-repair transitions in that closed group. Two probes answer a narrow
+factual question; three fail to isolate or reach the intended observation (managed
+shutdown instead of reusable-loop state, unadvanced fixture setup, missing pytest).
+These are analyst classifications, not acceptance or generalization estimates. B2
+uses its narrow inheritance observation in an edit, then needs another lifecycle
+repair. A1 repairs successfully without a probe, so do not impose a probe quota.
+
+A2's later questions continue to assume external cancellation while looking for a
+finalization location; the delivered observations do not establish activation of
+that path. Its last basis converts this unresolved premise into a branch-level
+causal claim. This locates an observable selection/interpretation gap; it does not
+prove the internal cause or the effect of the summary omission. The next candidate
+is a short replacement for existing general guidance: reconsider path activation
+after an unchanged failure, and align a probe's setup/trigger/observation point with
+its question. No new field, mandatory probe or extra review call. The candidate is
+recorded but NOT INSTALLED; efficacy remains untested. Current runtime stays4d2fc8ba.
+Audit and candidate: `C:\pt\analyses\evidence-to-repair-audit-20260924-v1\result.md`.
+No new provider/count/Docker call, candidate execution, or paid budget in this audit.
 
 A2's11 post-failure actual inputs retain the exact public check outputs, current
 failure and available read/search/probe/mutation tools. No probe follows its first

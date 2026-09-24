@@ -5,6 +5,19 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest public-chain audit reuses the entire closed mini effort group:92 actual inputs,
+5 probes,9 mutations,6 failed-check-to-repair transitions. Existing probe delivery
+auditor and exact check receipts verify the chains. Distinguish two narrow answered
+questions from three scope/setup/environment failures; B2's correct MRO-to-edit link
+does not establish its whole repair, and A1 needs no probe. A2's finalization-focused
+reads leave cancellation-path activation unresolved before a later causal assertion.
+This is an observed behavior gap, not proof of the summary omission's effect or the
+model's internal cause. A short common guidance candidate addresses path activation
+and question/setup/trigger/observation alignment; it is external and NOT INSTALLED.
+No extra fields, probe quota, review call, runtime change or paid execution. Keep
+runtime4d2fc8ba and mini xhigh as the future fixed baseline. Evidence/candidate:
+C:\pt\analyses\evidence-to-repair-audit-20260924-v1\result.md.
+
 Current performance direction: fix mini xhigh as the experimental baseline and defer
 further effort comparisons. No CLI default adoption or new live sample is implied.
 A2 capability audit verifies11 post-failure actual inputs and exact check-output
