@@ -5,6 +5,37 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest fixed mini high/xhigh comparison is CLOSED_COMPLETE, official=false, on
+unchanged runtime81b1da35 at implementation74eca692. A high/B xhigh, same AnyIO v3,
+fixed25K, A1/B1/B2/A2, repeat1/$1.20 each/fresh$4.80. Only effort and derived identities
+differ; ordinary run_dev and identical common guidance/tools/settings are reused.
+Acceptance PASS/planned A1/2/B1/2, started4/submitted2/NOT_RUN2/infra0. Recorded
+A$1.028416350/B$1.553071800; cache-neutral$1.564182750/$2.179299000. High costs33.8%
+less recorded/28.2% less cache-neutral and takes32.2% less aggregate time in this group;
+quality direction remains unresolved. Total$2.581488150, unused$2.218511850 closed.
+Preserve defaults/common harness. A successor on other dev-train tasks is a candidate
+only; this packet funds no successor and permits no automatic extension or adoption.
+A1 edits14/20/21, checks3/7->4/7->7/7+upstream32, submits23 and passes. B1 edits0,
+ends on full25K reasoning-only incompletes19/20 with replace_text offered, NOT_RUN.
+B2 edits19/23, checks3/7->7/7+upstream32, submits25 and passes. A2 edits12/18/20/24;
+first three lifecycle checks1/7->4/7->4/7, last two upstream checks31 PASS/1 FAIL.
+Its fourth candidate has no lifecycle result; do not project earlier4/7 onto it.
+Accepted-mutation exhaustion stops its completion horizon, LIMIT_REACHED/NOT_RUN.
+No dollar-limit termination or cost-reduced output ceiling. A2's fourth public basis
+asserts a missed close branch without branch-execution evidence; delivered failures
+show post-interrupt execution and a subprocess timeout. Do not infer private reasoning.
+Probe5 outcomes: three process successes, one timeout with unadvanced fixture generator,
+one pytest import failure. B1's asyncio.run probe includes shutdown, so it does not
+isolate the reusable run_until_complete question. B2 uses a narrow hierarchy observation
+in its first edit; successful candidate verification follows later public checks.
+Inputs92/counts96/tools136 reconcile, all9 applied candidates publicly checked,
+identical rejected repeats0, segments6/4/8/7, max input55,549. Runtime270/protected5299
+unchanged, locks reacquire unchanged, Docker0. Fresh operator52/17.89s, Ruff,
+both-arm isolated mock PASS/8 actual inputs (safety NOT_RUN), Docker import/cleanup PASS.
+Reused exact-runtime focused15/full3230 unique PASS+16 SKIP after hash checks;
+no fresh runtime/full-regression tests, additional provider/candidate work or hidden read.
+Evidence: C:\pt\analyses\mini-reasoning-effort-compare-20260924-v1\result.md.
+
 Current output-ceiling seam: DevRunRequest/CLI `max_output_tokens` defaults25K,
 strict integer128..128K. Bind selected value in model identity, manifest, envelope,
 nondefault run_started and adapter/mock payload; pass it to DevCostLedger.admit.
@@ -31,9 +62,9 @@ successes with a live inner thread and no observed intended interrupt path.
 Inputs103/counts116/tools137 reconcile; max input58,220; segments9/5/10/10.
 Frozen270 files/protected4515 unchanged, locks reacquire without journal changes,
 Docker containers0. No retries/resume/extra sample/hidden details/default adoption.
-Next comparison candidate: fixed25K mini high/xhigh with the same common harness and
-cost bound, measuring repair/verification opportunity. This packet funds no successor;
-do not infer that high fixes the observation mismatch or add task-specific hints.
+The separately authorized fixed25K mini high/xhigh successor has now closed as recorded
+above. This output-ceiling packet funded no successor; do not infer that high fixes
+observation errors or add task-specific hints.
 Evidence: C:\pt\analyses\mini-xhigh-output-ceiling-compare-20260924-v1\result.md.
 Validation: focused15 PASS/65.28s; full3,246 collected,3,230 unique PASS/16 SKIP after
 exact5 initial failures recheck PASS/56.66s. Initial failures retain one constant-based

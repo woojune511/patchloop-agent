@@ -7,7 +7,57 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: output ceiling comparison closed; preserve the default
+## Current work: mini high/xhigh comparison closed; quality direction unresolved
+
+The fixed25K reasoning-effort comparison is CLOSED_COMPLETE, official=false:
+A high / B xhigh, exact gpt-5.4-mini-2026-03-17, AnyIO v3, A1/B1/B2/A2,
+repeat1/$1.20 each/fresh$4.80 cap. Both arms reach acceptance PASS in1/2 planned
+runs; started4/submitted2/NOT_RUN2/infra0. Only reasoning_effort and derived
+identities/wire effort differ. Ordinary run_dev, common system/tool/planning guidance,
+prepared source/dependencies and all other settings remain unchanged. No runtime edit.
+
+High records$1.028416350 versus xhigh$1.553071800; cache-neutral equivalents are
+$1.564182750/$2.179299000. High uses33.8% less recorded cost,28.2% less cache-neutral
+cost and32.2% less aggregate execution time in these four samples. Acceptance is tied;
+this familiar-task observation does not establish quality superiority or generalization.
+Total$2.581488150, unused$2.218511850 closed. Preserve defaults and the common harness.
+Next comparison candidate: the same high/xhigh contrast on other dev-train tasks,
+with fixed settings and attention to evidence-to-repair behavior. No successor is funded
+by this packet; no automatic extension, default change or task-specific guidance.
+
+A1 edits14/20/21, public3/7->4/7->7/7, upstream32 PASS, submits23 and passes
+acceptance/safety at$0.462760950. B1 makes no edit: two full25K reasoning-only
+incompletes at19/20 end it NOT_RUN at$0.820914600. Both actual inputs offer replace_text.
+B2 edits19/23, public3/7->7/7, upstream32 PASS, submits25 and passes at$0.732157200.
+A2 edits12/18/20/24. Its first three lifecycle checks are1/7->4/7->4/7;
+the third and fourth candidates fail upstream31 PASS/1 FAIL on an interrupt subprocess
+timeout. After the fourth edit, accepted_mutations blocks the completion horizon;
+LIMIT_REACHED/NOT_RUN at$0.565655400. Its final lifecycle check was not run, so do not
+carry the third candidate's4/7 onto the final diff. None ends at a dollar limit.
+
+High first edits cost$0.231775200/$0.227934750; B2's costs$0.479097300 and B1 has none.
+Faster first edits did not make every repair correct. A2's fourth public basis localizes
+a missed close branch without branch-execution evidence; the delivered output shows
+post-interrupt execution and a timeout. Treat that causal localization as unsupported,
+not as access to private reasoning. B1's successful asyncio.run probe does not isolate
+the reusable run_until_complete behavior it asks about. B2's first probe never advances
+the fixture generator and times out without an observed intended test/interrupt path;
+its second probe establishes the cancellation exception hierarchy used in edit19.
+A2's pytest import probe fails before reproduction. Probe5 outcomes: success3,
+timeout1/import failure1. Successful probe processes are not candidate correctness.
+
+All92 actual inputs/96 count calls/136 tools reconcile; all9 applied candidates receive
+current-diff public checks, rejected identical repeats0. Every dispatched ceiling stays25K;
+the two incompletes cost$0.261327450. Maximum input55,549; segments6/4/8/7 with
+initial4/input_tokens4/major_result_reviewed17. Runtime270 and protected5,299 files
+verify unchanged, locks reacquire without journal changes, Docker containers0.
+Fresh operator52 PASS/17.89s, Ruff, both-arm isolated mock PASS/8 actual public inputs
+(safety NOT_RUN), and existing Docker import/cleanup gates pass. Reuse the exact runtime's
+focused15 and full3,230 unique PASS/16 SKIP evidence after file/evidence hash checks;
+no fresh runtime/full-regression rerun. No retry/resume/extra sample or hidden-detail read.
+Evidence: C:\pt\analyses\mini-reasoning-effort-compare-20260924-v1\result.md.
+
+## Previous implementation: configurable output ceiling
 
 `patchloop dev --max-output-tokens` selects a desired per-call output ceiling,
 including reasoning. The default remains 25,000; the accepted integer range is
@@ -25,9 +75,9 @@ above25K is a reasoning-only incomplete at a budget-reduced28,164 ceiling. All
 completed responses fit25K; B1 passes with maximum15,258. All4 incompletes occur
 under budget-reduced ceilings. No completed-action benefit from extra tokens is
 observed; one acceptance difference on a familiar task does not establish superiority.
-Keep default25K, per-call-v1 and the current common harness. The next comparison
-candidate is fixed25K mini high/xhigh, to examine repair/verification opportunity
-within the same cost bound. It is not executed or funded by this closed packet.
+Keep default25K, per-call-v1 and the current common harness. The separately authorized
+fixed25K mini high/xhigh comparison has since closed as recorded above; it was not
+funded by this output-ceiling packet.
 Do not add task-specific repair hints or infer that high resolves observation errors.
 Implementation validation and the separate live comparison are complete.
 Focused15 PASS/65.28s on the final runtime; concurrent recheck15 PASS/162.19s also retained.
@@ -94,7 +144,7 @@ The full long regression was
 not rerun for this prompt-only behavior change. Implementation and validation are at
 `C:\pt\analyses\read-to-repair-guidance-20260924-v1`.
 
-## Latest controlled observation: output ceiling A2/B2
+## Previous controlled observation: output ceiling A2/B2
 
 At implementation commit74eca692 / runtime81b1da35, ordinary run_dev serves both
 arms with the same current prompt/tool/planning guidance and prepared source/dependencies.
