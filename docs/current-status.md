@@ -7,7 +7,7 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: isolate the mini xhigh output ceiling
+## Current work: output ceiling comparison closed; preserve the default
 
 `patchloop dev --max-output-tokens` selects a desired per-call output ceiling,
 including reasoning. The default remains 25,000; the accepted integer range is
@@ -18,16 +18,18 @@ money may lower the dispatched ceiling. Default serialization and model identity
 remain unchanged; changing the ceiling on resume rejects before another model call.
 System/tool/planning guidance, context transitions and cost-policy rules do not change.
 
-The approved next comparison keeps mini snapshot xhigh and the current common harness:
-A25,000 versus B50,000, AnyIO v3, A1/B1/B2/A2, repeat1, $1.20 per run and a fresh $4.80
-group cap. Both use brief-v1, segmented/result-or-size/protected, per-call-v1,
-probes/probe-policy none/repair-recheck and the same prepared source/dependencies.
-Keep the 40 model/100 tool/4 edit/1,800 second/60K input bounds. No retry, replacement,
-resume or extra sample; uncertainty stops the group. Acceptance is PASS/planned2;
-non-submission is NOT_RUN. Check whether B actually exceeds25K and completes a useful
-action/repair/check/submission; merely longer output is not improvement. If no response
-crosses25K, the intended mechanism is unobserved. Defaults are not automatically changed.
-Implementation validation is complete; the separately approved live comparison is next.
+The fixed mini snapshot xhigh comparison has closed: A25,000 versus B50,000,
+AnyIO v3, A1/B1/B2/A2, repeat1, $1.20 each and a fresh $4.80 cap. Acceptance
+PASS/planned is A0/2, B1/2; started4/submitted1/NOT_RUN3/infra0. The only response
+above25K is a reasoning-only incomplete at a budget-reduced28,164 ceiling. All
+completed responses fit25K; B1 passes with maximum15,258. All4 incompletes occur
+under budget-reduced ceilings. No completed-action benefit from extra tokens is
+observed; one acceptance difference on a familiar task does not establish superiority.
+Keep default25K, per-call-v1 and the current common harness. The next comparison
+candidate is fixed25K mini high/xhigh, to examine repair/verification opportunity
+within the same cost bound. It is not executed or funded by this closed packet.
+Do not add task-specific repair hints or infer that high resolves observation errors.
+Implementation validation and the separate live comparison are complete.
 Focused15 PASS/65.28s on the final runtime; concurrent recheck15 PASS/162.19s also retained.
 Full147-file/3,246-case regression with durations: initial3,225 PASS/5 FAIL/16 SKIP;
 all5 exact failures recheck PASS/56.66s, leaving3,230 unique PASS/16 SKIP. One assertion
@@ -92,7 +94,55 @@ The full long regression was
 not rerun for this prompt-only behavior change. Implementation and validation are at
 `C:\pt\analyses\read-to-repair-guidance-20260924-v1`.
 
-## Latest controlled observation: probe usage A2/B2
+## Latest controlled observation: output ceiling A2/B2
+
+At implementation commit74eca692 / runtime81b1da35, ordinary run_dev serves both
+arms with the same current prompt/tool/planning guidance and prepared source/dependencies.
+Only max_output_tokens and derived identities differ. Both retain brief-v1,
+segmented/result-or-size/protected, per-call-v1, probes/probe-policy none,
+repair-recheck and40/100/4/1800/60K bounds. Initial public state is empty and binds
+to the same task/source. The fixed group is CLOSED_COMPLETE, official=false.
+
+A1 edits14/18, public2/7->4/7, then calls19..29 are11 read/search calls without
+another edit. It ends on two reasoning-only incompletes with actual ceilings20,047
+and442, NOT_RUN, $1.199996250. B1 edits9/15, public3/7->7/7, upstream32 PASS,
+submits17 and reaches aggregate acceptance/safety PASS for$0.444791250. Its public
+failure leads to inspection of cancellation/uncancel handling and a different repair;
+the longest response is15,258 tokens. It uses no probe; this is not evidence that
+probes are generally unnecessary.
+
+B2 edits18/22/25, public4/7->0/7->4/7, then ends at cost admission, NOT_RUN,
+$1.181768700. Its only >25K response uses28,164 reasoning tokens and completes no
+action. A2 edits18/28, public0/7->4/7, then a2,598-token reasoning-only incomplete
+and cost admission end it, NOT_RUN, $1.192827300. The0/7 summaries mean the first
+interrupt case did not complete before its case timeout and the remaining cases
+were not completed; they are not seven independently observed failures.
+
+A2's last probe defines a tuple as(name, done, cancelled). It reports the inner
+helper done=True/cancelled=False, outer caller done=False, and no test-body/callback
+records. That output is verified in actual input28, but the edit basis says both
+tasks remain pending. This is a public observation-to-basis mismatch. The helper's
+exception was not printed, so why it finished remains unknown. Do not infer private
+reasoning or blame infrastructure from that gap. Across8 probes,5 time out and3
+processes exit successfully while their inner thread remains alive. The intended
+test/interrupt path is unobserved in those3; process success is not candidate validation.
+All9 applied candidates receive current-diff public checks; identical rejected repeats0.
+
+Mechanism is EXTRA_TOKENS_ONLY: one >25K response, zero completed >25K actions/edits.
+All completed outputs fit25K. Four incompletes cost$0.305593350 and all have
+budget-reduced ceilings; B2 also clips call25 to49,974. Recorded$4.019383500,
+cache-neutral$5.170231500, unused$0.780616500 closed. This result does not test a full
+50K response on the final budget-constrained B2 turn and does not justify a larger cap.
+
+All103 actual inputs/116 count calls/137 tools reconcile; max input58,220,
+segments9/5/10/10, reasons initial4/input_tokens11/major_result_reviewed19.
+Frozen270 runtime/test/diagnostic files and4,515 protected files verify unchanged.
+Group/run locks reacquire without journal changes; remaining Docker containers0.
+No retry/resume, added provider/candidate work, hidden-detail read, Docker start/pull/build,
+automatic default change or extension. Local implementation validation is listed above.
+Evidence: C:\pt\analyses\mini-xhigh-output-ceiling-compare-20260924-v1\result.md.
+
+## Previous controlled observation: probe usage A2/B2
 
 The AnyIO v3 / gpt-5.4-mini-2026-03-17 xhigh comparison closes `CLOSED_COMPLETE`:
 A1 -> B1 -> B2 -> A2, repeat=1 / $1.20 each, fresh cap $4.80. Previous probe

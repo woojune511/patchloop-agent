@@ -11,16 +11,38 @@ nondefault run_started and adapter/mock payload; pass it to DevCostLedger.admit.
 Default field omission preserves old envelope/request serialization and model hashes.
 Resume with a different ceiling fails before dispatch. Cost admission may lower the
 actual ceiling; its existing receipt is authoritative. No tool/prompt/plan/boundary
-policy change. Approved fresh comparison holds mini xhigh fixed at A25K/B50K,
+policy change. The fixed mini xhigh A25K/B50K comparison is CLOSED_COMPLETE:
 AnyIO v3, A1/B1/B2/A2, repeat1/$1.20 each/fresh$4.80; ordinary run_dev in both arms.
-Record >25K completed responses and downstream useful actions, not just longer output.
+Acceptance PASS/planned A0/2/B1/2, started4/submitted1/NOT_RUN3/infra0, official=false.
+B1 edits9/15, public3/7->7/7+upstream32, submits17 and passes at$0.444791250;
+its maximum response is15,258. A1 edits14/18 then11 read/search calls; B2 edits18/22/25;
+A2 edits18/28. Their final public result is4/7 and they do not submit. The0/7 intermediate
+checks stop in the first case; remaining cases are not individually completed failures.
+All9 applied candidates are publicly checked, rejected identical repeats0.
+Only B2 crosses25K:28,164 reasoning-only incomplete under a budget-reduced ceiling.
+All4 incompletes use reduced ceilings and cost$0.305593350. Mechanism EXTRA_TOKENS_ONLY,
+no completed >25K action/repair; every completed response fits25K. Recorded$4.019383500,
+cache-neutral$5.170231500, unused$0.780616500 closed. Preserve default25K/per-call-v1.
+A2 probe27 reports helper done=True and caller done=False, with no test-body/callback
+records. Actual input28 preserves it; edit28's basis incorrectly says both are pending.
+The helper exception is absent, so its cause is unknown. Treat process PASS and tuple
+interpretation separately from task correctness. Probe8 outcomes:5 timeouts,3 process
+successes with a live inner thread and no observed intended interrupt path.
+Inputs103/counts116/tools137 reconcile; max input58,220; segments9/5/10/10.
+Frozen270 files/protected4515 unchanged, locks reacquire without journal changes,
+Docker containers0. No retries/resume/extra sample/hidden details/default adoption.
+Next comparison candidate: fixed25K mini high/xhigh with the same common harness and
+cost bound, measuring repair/verification opportunity. This packet funds no successor;
+do not infer that high fixes the observation mismatch or add task-specific hints.
+Evidence: C:\pt\analyses\mini-xhigh-output-ceiling-compare-20260924-v1\result.md.
 Validation: focused15 PASS/65.28s; full3,246 collected,3,230 unique PASS/16 SKIP after
 exact5 initial failures recheck PASS/56.66s. Initial failures retain one constant-based
 test update, two pre-existing prompt/schema expectations and two identity/preflight
 checks overlapping early CLI formatting. Shards took3,176/5,027/5,017/4,903s. Ruff,
 operator46/30.15s, both-arm isolated mock PASS/8 public inputs, old4 envelope roundtrips,
 default identities/tool surface, protected4,515 and existing Docker import/cleanup pass.
-No paid provider/count calls in validation. Live comparison is next; no default adoption.
+No paid provider/count calls in implementation validation. The separately authorized
+live comparison above is complete; no default adoption.
 
 Current focus: keep per-call-v1 and defer more cost-reservation tuning. Common
 action guidance connects each observed answer or missing answer to the next useful
