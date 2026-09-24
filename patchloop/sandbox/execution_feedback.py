@@ -100,6 +100,7 @@ def summarize_execution(records: list[dict], diff_hash: str, current_hashes: dic
                 row["executable"].update(row["executed"])
     return {
         "diff_hash": diff_hash, "diagnostic_only": True, "scope": "python_launch_thread",
+        "interpretation": INTERPRETATION,
         "observation_count": len(action_ids), "recent_action_ids": action_ids[-8:],
         "files": [{
             "path": row["path"], "file_hash": row["file_hash"],

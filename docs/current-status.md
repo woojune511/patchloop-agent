@@ -7,7 +7,45 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: mini high/xhigh comparison closed; quality direction unresolved
+## Current work: evidence-to-repair behavior; retain observation limits
+
+Keep mini xhigh fixed for subsequent performance work and defer further high/xhigh
+comparisons. This is a choice of experimental baseline, not a CLI default change or
+evidence that xhigh is better. Focus on choosing a discriminating observation and
+using its answer to revise the repair. The closed comparison below remains closed.
+
+A2's11 post-failure actual inputs retain the exact public check outputs, current
+failure and available read/search/probe/mutation tools. No probe follows its first
+failure. Its fourth edit claims a branch-level cause that the delivered lifecycle
+output and subprocess timeout do not establish. Existing changed-line feedback
+measures only the launch thread; the failed child is unmeasured. The lifecycle
+check's unsupported `python -B -c` launcher also yields unknown feedback; accepting
+that flag alone would not measure the nested child.
+
+Four synthetic collector cases pass in2.14s. Two stdlib-only probes through the
+existing Python3.12 Docker backend distinguish a reused loop from managed shutdown:
+the callback interrupt does not enter the cancellation handler before cleanup in
+the former, while managed shutdown does. Current probes can question that premise;
+they do not establish A2's actual branch or reproduce the whole Python3.13 task.
+Tool capability, model experiment design and interpretation remain separate.
+
+The audit also found a common delivery gap: original line feedback's interpretation
+was absent from A2's final summary, although the symbolic launch-thread scope stayed.
+`public_execution_summary` now retains the same existing interpretation, including
+the unmeasured thread/subprocess and non-branch-coverage limits. No new instruction,
+collector scope, tool schema, action gate, plan field or segment rule is introduced.
+This preserves the meaning of evidence; improved model behavior or acceptance is
+not established. Focused3 PASS/64.65s and related88 PASS/54.41s, Ruff, and both
+context policies' mock isolated acceptance PASS verify the change. All8 actual
+mock inputs retain public task/diff/check state and the interpretation; safety is
+NOT_RUN. Four old envelopes and24 old A2 inputs remain readable without rewriting.
+Protected5,940 files and the closed diagnostic hashes verify. The full long regression
+was not rerun for this summary-only change; no paid provider/count call or new sample.
+
+Diagnosis: `C:\pt\analyses\a2-observation-capability-audit-20260924-v1\result.md`.
+Implementation: `C:\pt\analyses\execution-scope-summary-20260924-v1`.
+
+## Previous comparison: mini high/xhigh closed; quality direction unresolved
 
 The fixed25K reasoning-effort comparison is CLOSED_COMPLETE, official=false:
 A high / B xhigh, exact gpt-5.4-mini-2026-03-17, AnyIO v3, A1/B1/B2/A2,
@@ -21,9 +59,9 @@ $1.564182750/$2.179299000. High uses33.8% less recorded cost,28.2% less cache-ne
 cost and32.2% less aggregate execution time in these four samples. Acceptance is tied;
 this familiar-task observation does not establish quality superiority or generalization.
 Total$2.581488150, unused$2.218511850 closed. Preserve defaults and the common harness.
-Next comparison candidate: the same high/xhigh contrast on other dev-train tasks,
-with fixed settings and attention to evidence-to-repair behavior. No successor is funded
-by this packet; no automatic extension, default change or task-specific guidance.
+The earlier suggestion to repeat high/xhigh on other tasks is deferred in favor of
+the evidence-to-repair work above. No successor is funded by this packet; no automatic
+extension, default change or task-specific guidance.
 
 A1 edits14/20/21, public3/7->4/7->7/7, upstream32 PASS, submits23 and passes
 acceptance/safety at$0.462760950. B1 makes no edit: two full25K reasoning-only

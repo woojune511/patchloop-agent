@@ -5,6 +5,26 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Current performance direction: fix mini xhigh as the experimental baseline and defer
+further effort comparisons. No CLI default adoption or new live sample is implied.
+A2 capability audit verifies11 post-failure actual inputs and exact check-output
+delivery; read/search/probe/mutation remain offered. The failed child is outside the
+launch-thread collector's scope. Four synthetic scope cases and two real stdlib-only
+Docker probes distinguish that limit from a testable interruption/cancellation premise.
+Neither establishes the branch taken by the historical candidate or model uptake.
+Audit: C:\pt\analyses\a2-observation-capability-audit-20260924-v1\result.md.
+
+The common fix preserves existing line-feedback INTERPRETATION in
+public_execution_summary. A2's last input kept the symbolic scope but lost this
+explanation after original feedback left the active input. Keep it through summary,
+segment transition and hydration without changing collection, instructions, schemas,
+action masks, plans or limits. Treat this as evidence-delivery correctness, not a
+performance result. Focused3 PASS/64.65s, related88 PASS/54.41s, Ruff and both-context
+mock isolated acceptance PASS/safety NOT_RUN;8 actual public inputs retain the field.
+Old4 envelopes/24 A2 inputs remain readable, protected5,940 and diagnostic hashes
+verify. No paid call/new sample/full long regression. Evidence:
+C:\pt\analyses\execution-scope-summary-20260924-v1.
+
 Latest fixed mini high/xhigh comparison is CLOSED_COMPLETE, official=false, on
 unchanged runtime81b1da35 at implementation74eca692. A high/B xhigh, same AnyIO v3,
 fixed25K, A1/B1/B2/A2, repeat1/$1.20 each/fresh$4.80. Only effort and derived identities
@@ -13,8 +33,8 @@ Acceptance PASS/planned A1/2/B1/2, started4/submitted2/NOT_RUN2/infra0. Recorded
 A$1.028416350/B$1.553071800; cache-neutral$1.564182750/$2.179299000. High costs33.8%
 less recorded/28.2% less cache-neutral and takes32.2% less aggregate time in this group;
 quality direction remains unresolved. Total$2.581488150, unused$2.218511850 closed.
-Preserve defaults/common harness. A successor on other dev-train tasks is a candidate
-only; this packet funds no successor and permits no automatic extension or adoption.
+Preserve defaults/common harness. Further effort comparisons are now deferred to
+prioritize evidence-to-repair behavior; this packet funds no successor or extension.
 A1 edits14/20/21, checks3/7->4/7->7/7+upstream32, submits23 and passes. B1 edits0,
 ends on full25K reasoning-only incompletes19/20 with replace_text offered, NOT_RUN.
 B2 edits19/23, checks3/7->7/7+upstream32, submits25 and passes. A2 edits12/18/20/24;
@@ -1630,6 +1650,10 @@ recent action references, not another copy of the report body or an inferred sem
 summary. Mutation invalidates old-diff observations; hydration derives the identical view
 from durable action results without rerunning checks. Keep per-action feedback in the
 native result, following the existing [tool-output linkage](https://developers.openai.com/api/docs/guides/function-calling).
+Retain the same `interpretation` in this summary even when the original native result
+is absent: launch-thread line entries do not measure other threads/subprocesses,
+branch/assertion coverage or semantic correctness. A context handoff must not drop
+the meaning of the retained ranges. This does not expand the collector's scope.
 Unknown/unobserved positions can inform existing optional model-authored questions/concerns;
 never auto-create a semantic finding, grant source-read coverage or mutation evidence,
 resolve a concern, withhold finish, or require a probe on that basis.

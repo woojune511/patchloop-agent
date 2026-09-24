@@ -123,6 +123,9 @@ def test_failure_read_repair_preserves_native_history_and_current_public_state(
     assert after == before + 1
     assert views[before]["current_diff"] == views[after]["current_diff"]
     assert views[before]["current_public_failure"] == views[after]["current_public_failure"]
+    execution = views[before]["public_execution_summary"]
+    assert "Other threads/subprocesses are unmeasured." in execution["interpretation"]
+    assert views[after]["public_execution_summary"] == execution
     assert "replace_text" in views[after]["available_tool_names"]
     assert views[after]["remaining_budget"]["model_calls"] == (
         views[before]["remaining_budget"]["model_calls"] - 1

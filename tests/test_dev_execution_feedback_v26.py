@@ -320,6 +320,7 @@ def test_feedback_is_durable_native_and_advisory_without_source_admission(tmp_pa
     assert _outputs(items)["check"]["output"]["public_execution"] == output
     summary = input_context(items)["public_execution_summary"]
     assert summary == json.loads(_context(gateway, results))["public_execution_summary"]
+    assert summary["interpretation"] == output["interpretation"]
     assert summary["files"][0]["not_observed_changed_ranges"] == [[53, 53]]
     before = gateway.journal.path.read_bytes()
     monkeypatch.setattr(gateway.sandbox, "run_check", lambda *a, **k: pytest.fail("reexecuted"))
