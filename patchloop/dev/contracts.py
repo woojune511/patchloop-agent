@@ -25,7 +25,7 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = "none") -> str:
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v46",
+            "schema_version": "dev-tool-surface-v45",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
@@ -79,7 +79,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "mutation_source_rebinding": "exact-position-unchanged-complete-line-fragments-v1",
             "inspection_gain": "non-overlapping-public-coverage-v2",
             "inspection_intent_projection": "single-native-intent-with-observation-refs-v1",
-            "observation_to_action_guidance": "answer-path-observation-alignment-advisory-v2",
+            "observation_to_action_guidance": "answer-implication-next-action-advisory-v1",
             "source_search": "rooted-component-glob-double-star-zero-depth-v1",
             "search_feedback": "eligible-decoded-file-count-v1",
             "mutation_failure": "typed-scope-preview-explicit-path-allowance-v3",

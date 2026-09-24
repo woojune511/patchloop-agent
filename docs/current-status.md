@@ -7,14 +7,64 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: question/observation guidance; fixed mini xhigh comparison
+## Current work: guidance comparison closed; previous common prompt restored
 
 Keep mini xhigh fixed for subsequent performance work and defer further high/xhigh
 comparisons. This is a choice of experimental baseline, not a CLI default change or
 evidence that xhigh is better. Focus on choosing a discriminating observation and
 using its answer to revise the repair. The closed comparison below remains closed.
 
-The subsequent read-only audit covers all92 actual inputs,5 probes,9 mutations and
+The common question/observation paragraph comparison is CLOSED_COMPLETE, official=false:
+A previous/B candidate, exact mini snapshot/xhigh/25K, AnyIO v3, A1/B1/B2/A2,
+repeat1/$1.20 each/fresh$4.80 cap. A acceptance PASS/planned2 is2/2; B is0/2.
+Started4/submitted2/NOT_RUN2/infra0. Both B runs end COST_CAP_REACHED without submission;
+they are not evaluated wrong answers. A records$1.488444450, B$2.379434400;
+cache-neutral equivalents$2.031641250/$3.051108000. Total$3.867878850;
+unused$0.932121150 closed. This small familiar-task observation provides no improvement
+evidence for the added paragraph and does not establish universal superiority or harm.
+
+Do not adopt the candidate paragraph. The common prompt, surface identity and matching
+golden assertions are restored to the exact pre-candidate runtime4d2fc8ba (surface v45).
+The scope-summary interpretation fix remains present. Candidate commit9d906b2/runtime
+8b52515b and both frozen prompt variants remain available as evidence. Model/planning/
+context/cost defaults stay unchanged; no further paid execution is funded here.
+Restoration focused9 PASS/13.54s and both-context scripted repair/replay smokes reach
+isolated acceptance PASS/safety NOT_RUN;12 actual inputs verify. No fresh full long
+regression was run for the paragraph change or restoration.
+
+A1 edits20, public7/7 and upstream32 PASS, submits23/PASS. A2 edits12/15/20,
+public4/7->2/7->7/7 and upstream32 PASS, submits22/PASS. Its two cancellation probes
+answer narrow continuation questions and feed the final repair. B1 edits12/22,
+public3/7->4/7; B2 has two anchor_invalid rejections then edits15/22, public2/7->4/7.
+Both recover fixture/task preservation but leave interrupted-test resumption unresolved.
+Identical rejected candidate repeats0; B2's two anchor errors are retained separately.
+
+All8 public probes are reviewed: A's two observe continued awaits/normal TaskGroup
+execution after caught cancellation. B gets two narrow semantic answers, but its other
+observations include managed-shutdown scope, a separate/unprinted inner event list,
+and a missing _pytest import. Successful process exit or a narrow answer does not
+establish the actual reused-loop repair. B's final failed candidates receive no further
+edit. Public questions, programs, outputs and next actions support these observations;
+no hidden evaluator detail or raw reasoning was read.
+
+All103 dispatched inputs/112 count calls/134 tools reconcile; all8 applied candidates
+receive current-diff public checks. Two prepared-but-undispatched inputs are kept
+separate. Eight reasoning-only incompletes cost$0.820878300; B's final ceilings are
+budget-reduced4054/2606. Maximum input59,687; segments5/9/11/8, reasons initial4,
+input_tokens7/major_result_reviewed22. Cost/output limits contribute to the result;
+do not attribute it only to continuity, or use this prompt comparison to estimate the
+summary fix's causal effect (both arms have that fix). Fresh operator56 PASS/28.43s,
+Ruff, both-arm mock8 inputs/isolated PASS and existing Docker environment gates pass.
+Pre-restoration runtime270/protected6,229 hashes verify, all locks reacquire without
+journal changes and owned containers0. Restoration preserves all1,959 sealed comparison
+files and6,229 protected files. Initial operator hash-encoding errors and the review
+exporter's prepared/dispatched-input assertion failure remain recorded with corrected
+checks; neither caused a paid retry or a runtime uncertainty. Four slots, no extension.
+Comparison/result: `C:\pt\analyses\mini-xhigh-question-observation-compare-20260924-v1\result.md`.
+Public chains: `C:\pt\analyses\question-observation-public-review-20260924-v1`.
+Restoration: `C:\pt\analyses\question-observation-baseline-restore-20260924-v1`.
+
+The preceding read-only audit covers all92 actual inputs,5 probes,9 mutations and
 6 failed-check-to-repair transitions in that closed group. Two probes answer a narrow
 factual question; three fail to isolate or reach the intended observation (managed
 shutdown instead of reusable-loop state, unadvanced fixture setup, missing pytest).
@@ -26,13 +76,13 @@ A2's later questions continue to assume external cancellation while looking for 
 finalization location; the delivered observations do not establish activation of
 that path. Its last basis converts this unresolved premise into a branch-level
 causal claim. This locates an observable selection/interpretation gap; it does not
-prove the internal cause or the effect of the summary omission. The common prompt
-now replaces one general sentence: reconsider path activation after an unchanged
+prove the internal cause or the effect of the summary omission. The candidate prompt
+replaced one general sentence: reconsider path activation after an unchanged
 failure, align a probe's setup/trigger/observation point with its question, and leave
 unobserved events unresolved. No new field, mandatory probe or extra review call.
-The prompt stays within its8007-character bound at7981. Tool surface v46 records the
+The candidate stayed within its8007-character bound at7981. Tool surface v46 recorded the
 guidance change; schemas/descriptions, plans, action masks, budgets and segment rules
-stay unchanged. Runtime8b52515b. Focused9 PASS/10.03s, related78 PASS/245.77s and
+stayed unchanged. Experimental runtime8b52515b. Focused9 PASS/10.03s, related78 PASS/245.77s and
 both-context scripted failure-read-repair-check-submit smokes reach isolated acceptance
 PASS/safety NOT_RUN. All12 actual inputs retain the selected guidance and public
 task/diff/check state; closed replay leaves journals unchanged. Four planning settings
@@ -41,12 +91,9 @@ recovery checks, not evidence of better model decisions. The full long regressio
 not rerun for this prompt-only change. Implementation evidence:
 `C:\pt\analyses\question-observation-guidance-20260924-v1`.
 
-A fresh bounded comparison is being prepared: A previous/B revised common paragraph,
-both exact mini snapshot/xhigh/25K on AnyIO v3; A1/B1/B2/A2, repeat1/$1.20 each and
-fresh$4.80 cap. Both include the same scope-summary fix. Prior packets remain closed;
-no retry/resume/replacement or extension. This paragraph records preparation, not a
-live result or efficacy claim. Comparison evidence:
-`C:\pt\analyses\mini-xhigh-question-observation-compare-20260924-v1`.
+The subsequent fixed live comparison and the decision to restore the previous prompt
+are recorded above. The implementation packet remains immutable and is not relabeled
+as performance improvement evidence.
 
 Audit and candidate: `C:\pt\analyses\evidence-to-repair-audit-20260924-v1\result.md`.
 No new provider/count/Docker call, candidate execution, or paid budget in this audit.

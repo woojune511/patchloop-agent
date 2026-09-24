@@ -5,6 +5,39 @@ active contracts for navigation; checked-in source remains the behavioral author
 
 ## Source map
 
+Latest common-guidance comparison is CLOSED_COMPLETE, official=false: A previous/B
+question-observation paragraph, fixed mini snapshot/xhigh/25K, AnyIO v3, A1/B1/B2/A2,
+repeat1/$1.20 each/fresh$4.80. Acceptance A2/2, B0/2; started4/submitted2/NOT_RUN2/infra0.
+Both B runs exhaust cost before submission. A$1.488444450/B$2.379434400; cache-neutral
+$2.031641250/$3.051108000. Total$3.867878850, unused$0.932121150 closed.
+Do not adopt the candidate paragraph: exact pre-candidate runtime4d2fc8ba/surface v45
+is restored, retaining the scope-summary interpretation fix. No other default change.
+Candidate implementation9d906b2/runtime8b52515b remains historical evidence. Restoration
+focused9/13.54s and both-context12-input repair/replay mocks PASS, isolated acceptance
+PASS/safety NOT_RUN. Full long regression not rerun for this paragraph-only work.
+
+A1 edits20 and passes; A2 edits12/15/20, public4/7->2/7->7/7 and passes. B1 edits12/22,
+public3/7->4/7; B2 has two anchor_invalid attempts before edits15/22, public2/7->4/7.
+Both B final diffs still allow interrupted tests to resume; no later edit. Eight probes:
+A two narrow continuation observations inform its final repair; B six include narrow
+answers, managed-shutdown scope, lost inner event output and missing _pytest. Keep
+question/observation validity separate from applicability and subsequent repair.
+No quota or task-specific repair hint follows. This familiar four-run result is no
+general quality claim; both arms share the summary fix, so its causal effect is untested.
+
+103 dispatched inputs/112 counts/134 tools reconcile; all8 accepted candidates publicly
+checked. Two prepared-but-undispatched inputs are excluded from model-delivery claims.
+Eight reasoning-only incompletes cost$0.820878300, including reduced4054/2606 ceilings
+at B cost stops. Max input59,687; segments5/9/11/8 (initial4/input7/major-result22).
+Fresh operator56/28.43s PASS, Ruff, both-arm8-input mock PASS and Docker environment
+gates pass. Runtime270/protected6,229 verified before restoration; locks clear and owned
+containers0. Restore preserves1,959 sealed comparison files and6,229 protected files.
+Initial operator hash-kind and review prepared/dispatched assertion failures retained;
+corrected checks pass without paid retry/resume/replacement/extension or hidden-detail read.
+Comparison: C:\pt\analyses\mini-xhigh-question-observation-compare-20260924-v1\result.md.
+Review: C:\pt\analyses\question-observation-public-review-20260924-v1.
+Restoration: C:\pt\analyses\question-observation-baseline-restore-20260924-v1.
+
 Latest public-chain audit reuses the entire closed mini effort group:92 actual inputs,
 5 probes,9 mutations,6 failed-check-to-repair transitions. Existing probe delivery
 auditor and exact check receipts verify the chains. Distinguish two narrow answered
@@ -12,7 +45,7 @@ questions from three scope/setup/environment failures; B2's correct MRO-to-edit 
 does not establish its whole repair, and A1 needs no probe. A2's finalization-focused
 reads leave cancellation-path activation unresolved before a later causal assertion.
 This is an observed behavior gap, not proof of the summary omission's effect or the
-model's internal cause. The common prompt now replaces one sentence with guidance on
+model's internal cause. The experimental prompt replaced one sentence with guidance on
 path activation after unchanged failure and question/setup/trigger/observation alignment;
 unobserved events stay unresolved. Runtime8b52515b/tool surface v46;7981 chars under
 the unchanged8007 bound. Schemas/descriptions, plans, action masks and limits unchanged.
@@ -20,9 +53,8 @@ Focused9/10.03s and related78/245.77s PASS; both-context scripted repair smokes 
 isolated acceptance PASS/safety NOT_RUN,12 actual public inputs and closed replay
 verify. Protected5,990 files unchanged; no fresh full long regression or efficacy claim.
 Implementation: C:\pt\analyses\question-observation-guidance-20260924-v1.
-Prepare a fresh mini xhigh/25K A previous/B revised common paragraph comparison,
-AnyIO v3, A1/B1/B2/A2, repeat1/$1.20 each/fresh$4.80, same latest scope summary.
-No retry/resume/extra sample; old groups closed. Preparation is not a live result.
+The fresh mini xhigh/25K A previous/B revised comparison has closed as described above;
+the candidate paragraph is not adopted. Old groups stay closed with no extra sample.
 Comparison: C:\pt\analyses\mini-xhigh-question-observation-compare-20260924-v1.
 Evidence/candidate:
 C:\pt\analyses\evidence-to-repair-audit-20260924-v1\result.md.
