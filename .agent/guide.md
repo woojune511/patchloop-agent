@@ -12,10 +12,19 @@ questions from three scope/setup/environment failures; B2's correct MRO-to-edit 
 does not establish its whole repair, and A1 needs no probe. A2's finalization-focused
 reads leave cancellation-path activation unresolved before a later causal assertion.
 This is an observed behavior gap, not proof of the summary omission's effect or the
-model's internal cause. A short common guidance candidate addresses path activation
-and question/setup/trigger/observation alignment; it is external and NOT INSTALLED.
-No extra fields, probe quota, review call, runtime change or paid execution. Keep
-runtime4d2fc8ba and mini xhigh as the future fixed baseline. Evidence/candidate:
+model's internal cause. The common prompt now replaces one sentence with guidance on
+path activation after unchanged failure and question/setup/trigger/observation alignment;
+unobserved events stay unresolved. Runtime8b52515b/tool surface v46;7981 chars under
+the unchanged8007 bound. Schemas/descriptions, plans, action masks and limits unchanged.
+Focused9/10.03s and related78/245.77s PASS; both-context scripted repair smokes reach
+isolated acceptance PASS/safety NOT_RUN,12 actual public inputs and closed replay
+verify. Protected5,990 files unchanged; no fresh full long regression or efficacy claim.
+Implementation: C:\pt\analyses\question-observation-guidance-20260924-v1.
+Prepare a fresh mini xhigh/25K A previous/B revised common paragraph comparison,
+AnyIO v3, A1/B1/B2/A2, repeat1/$1.20 each/fresh$4.80, same latest scope summary.
+No retry/resume/extra sample; old groups closed. Preparation is not a live result.
+Comparison: C:\pt\analyses\mini-xhigh-question-observation-compare-20260924-v1.
+Evidence/candidate:
 C:\pt\analyses\evidence-to-repair-audit-20260924-v1\result.md.
 
 Current performance direction: fix mini xhigh as the experimental baseline and defer

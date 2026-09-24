@@ -7,7 +7,7 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: evidence-to-repair behavior; next guidance candidate
+## Current work: question/observation guidance; fixed mini xhigh comparison
 
 Keep mini xhigh fixed for subsequent performance work and defer further high/xhigh
 comparisons. This is a choice of experimental baseline, not a CLI default change or
@@ -26,11 +26,28 @@ A2's later questions continue to assume external cancellation while looking for 
 finalization location; the delivered observations do not establish activation of
 that path. Its last basis converts this unresolved premise into a branch-level
 causal claim. This locates an observable selection/interpretation gap; it does not
-prove the internal cause or the effect of the summary omission. The next candidate
-is a short replacement for existing general guidance: reconsider path activation
-after an unchanged failure, and align a probe's setup/trigger/observation point with
-its question. No new field, mandatory probe or extra review call. The candidate is
-recorded but NOT INSTALLED; efficacy remains untested. Current runtime stays4d2fc8ba.
+prove the internal cause or the effect of the summary omission. The common prompt
+now replaces one general sentence: reconsider path activation after an unchanged
+failure, align a probe's setup/trigger/observation point with its question, and leave
+unobserved events unresolved. No new field, mandatory probe or extra review call.
+The prompt stays within its8007-character bound at7981. Tool surface v46 records the
+guidance change; schemas/descriptions, plans, action masks, budgets and segment rules
+stay unchanged. Runtime8b52515b. Focused9 PASS/10.03s, related78 PASS/245.77s and
+both-context scripted failure-read-repair-check-submit smokes reach isolated acceptance
+PASS/safety NOT_RUN. All12 actual inputs retain the selected guidance and public
+task/diff/check state; closed replay leaves journals unchanged. Four planning settings
+keep identical tool schemas; protected5,990 files verify. These are local delivery and
+recovery checks, not evidence of better model decisions. The full long regression was
+not rerun for this prompt-only change. Implementation evidence:
+`C:\pt\analyses\question-observation-guidance-20260924-v1`.
+
+A fresh bounded comparison is being prepared: A previous/B revised common paragraph,
+both exact mini snapshot/xhigh/25K on AnyIO v3; A1/B1/B2/A2, repeat1/$1.20 each and
+fresh$4.80 cap. Both include the same scope-summary fix. Prior packets remain closed;
+no retry/resume/replacement or extension. This paragraph records preparation, not a
+live result or efficacy claim. Comparison evidence:
+`C:\pt\analyses\mini-xhigh-question-observation-compare-20260924-v1`.
+
 Audit and candidate: `C:\pt\analyses\evidence-to-repair-audit-20260924-v1\result.md`.
 No new provider/count/Docker call, candidate execution, or paid budget in this audit.
 

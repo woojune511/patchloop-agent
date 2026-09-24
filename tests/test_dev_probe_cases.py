@@ -108,15 +108,15 @@ def test_off_schema_prompt_and_identity_are_unchanged():
         "finish_task", "stop_task",
     ]}
     before = dev_tool_schemas(**options)
-    # Refreshed for shared probe usage guidance; the cases-off arguments stay fixed.
+    # Common guidance changes identity; the cases-off arguments stay fixed.
     assert sha256_json(before) == (
         "sha256:25e2caf7793e4117fdef8770cff3eee4bcb131a5df4effa20378baa1c5b14a12"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:25f1db63f18b3f138ee8bdc8686ad320d7c9a3965d4e10acd1055fdd590555b7"
+        "sha256:f3a9d76c2e406ea09400a0846c5a60d19f38a46708036cca9f09791c1d0268ae"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:b7124aef4c5fc63cd2a5c8b83346a6d1e36a2fc1cb09ab289150e438f2f22781"
+        "sha256:1107b5bd2a3f3f323951396e4ca75b2427dd6f2564fbe503953441759584a354"
     )
     after = dev_tool_schemas(**options, probe_policy=cases.POLICY)
     assert [t for t in before if t["name"] != "run_probe"] == [

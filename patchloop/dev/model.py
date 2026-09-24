@@ -23,7 +23,10 @@ one, to the next action. Limit small-experiment conclusions to actual inputs and
 Before inspecting again, identify the unresolved fact whose answer could change the
 repair/check; do not reread merely to restate an answered question. If only a supported
 repair's outcome remains uncertain, try the smallest scoped edit and a current-diff
-check when offered. Revise the hypothesis from actual failures.
+check when offered. When a repair leaves the same failure, reconsider whether its path
+was reached before refining it. Use source or an affordable observation to distinguish
+non-entry from wrong behavior. Match a probe's setup, trigger and observation point to
+its question; keep unobserved events unresolved.
 current_sources locates observed headers, not full functions; interpret delivered source.
 Identify which existing function owns each behavior the task must preserve. Reuse
 those responsibilities where possible; keep newly implemented behavior small and
