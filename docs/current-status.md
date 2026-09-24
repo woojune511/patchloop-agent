@@ -7,7 +7,33 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: two-stage facts review closed; no common adoption
+## Current work: missing-observation audit closed; source contrast prepared
+
+Read-only selected-case audit is closed, official=false: seven non-AnyIO submitted
+failures, one tox PASS comparison and three AnyIO non-submissions. The older AnyIO
+A2 used mini/high; the other ten used mini/xhigh. Different historical runtimes are
+not a current-runtime efficacy comparison. All 150 actual inputs, 2,292 journal events,
+current-source references and 7 public probe receipts verify; 2 undispatched inputs
+stay separate. No new provider/count, Docker, probe, candidate or evaluator execution.
+
+All six Pydantic-AI failures never read five profile-selection/conversion code blocks.
+The public source supplement contains 106 lines (4,470 characters) from the exact base
+commit. It is prepared and has not been run.
+Five already received the field-format documentation: missing implementation is an
+information-contrast candidate, not a proven failure cause. Existing read/search tools
+can obtain it. Tox received lookup/processing/outer-handler/default code before both
+the failing and passing edits. Its missing-source hypothesis has weaker support.
+
+AnyIO probe observations separate environment failure, narrow questions answered,
+managed-cleanup timing and an unprinted inner event list. Public receipts were delivered.
+Actual failing subprocess branches remain outside launch-thread collection; the earlier
+scope-summary fix did not add that capability. All three AnyIO outcomes stay NOT_RUN.
+No common debugger, prompt or context-policy change follows from this audit. Runtime
+4d2fc8ba/v45 and defaults remain unchanged. Next candidate: add only the unseen public
+implementation to the selected review input, then test judgment before tool expansion.
+Evidence: `C:\pt\analyses\missing-observation-audit-20260925-v1\result.md`.
+
+## Previous work: two-stage facts review closed; no common adoption
 
 The selected Pydantic-AI/tox review comparison is CLOSED_COMPLETE, official=false.
 Fixed mini snapshot/xhigh/25K, two trials per case/arm, eight trials with two calls
