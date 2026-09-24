@@ -7,7 +7,32 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: missing-observation audit closed; source contrast prepared
+## Current work: source-relation comparison closed; no adoption
+
+The selected Pydantic-AI information comparison is CLOSED_COMPLETE, official=false.
+Four fresh mini snapshot/xhigh/25K reports ran A1/B1/B2/A2, repeat1, with a new $0.64
+cap. A exactly matches the preceding claim-free request; B adds only five exact-base
+profile-selection/conversion excerpts at /source_code (106 lines, 4,470 characters).
+Task, P10 patch, probe, observations, system and report schema remain identical.
+
+Supported preservation-violation identification/planned2 is A0/2, B0/2. All four
+reports complete; no incomplete, unstarted slot or infrastructure stop. They accept
+the fresh ordinary field-mode profile's new empty field. B's final reports do not
+demonstrate using the added construction/resolution code to distinguish applicability;
+this does not establish that the code was unread or unused in private reasoning.
+Actual repair and task acceptance remain NOT_RUN. Do not adopt the source supplement,
+new reading guidance or a common debugger from this selected-case result.
+
+All four actual requests, usage records, continuations and client cleanups verify;
+42 journal events and 172 protected files match. Inputs A4,734/B5,956 tokens, with
+25K output limits unchanged; no summarization, output-limit or cost stop occurred.
+Recorded model-rate cost $0.2256882; cache-neutral $0.2349330; unused $0.4143118 closed.
+Runtime4d2fc8ba/v45, tools/prompts/defaults stay fixed. Focused22 PASS/1.68s and Ruff
+PASS; initial default-temp permission errors are preserved. No new Docker, task tool,
+probe, evaluation, full core regression or isolated-evaluation smoke. No extra sample.
+Evidence: `C:\pt\analyses\mini-xhigh-source-relation-compare-20260925-v1\result.md`.
+
+## Previous work: missing-observation audit closed; source contrast prepared
 
 Read-only selected-case audit is closed, official=false: seven non-AnyIO submitted
 failures, one tox PASS comparison and three AnyIO non-submissions. The older AnyIO
