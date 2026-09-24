@@ -7,7 +7,41 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: probe-claim removal review closed; no common change
+## Current work: two-stage facts review closed; no common adoption
+
+The selected Pydantic-AI/tox review comparison is CLOSED_COMPLETE, official=false.
+Fixed mini snapshot/xhigh/25K, two trials per case/arm, eight trials with two calls
+each planned, fresh $2.56 cap. A preliminary review sees task/code/observations;
+B extracts facts from code/diff only. Both finals receive identical original
+materials and their own unverified first notes, with common final instructions.
+First-stage instruction and information timing form one bundled treatment; this
+does not isolate either component or compare two calls against one-call review.
+
+Supported violation identification/planned2: Pydantic A0/2, B0/2; tox A2/2, B2/2.
+Both Pydantic A notes hit 25K reasoning-only incomplete, so their final judgments
+are NOT_RUN, not wrong answers. Pydantic B completes both finals but misses the
+preservation violation. B1 omits the relevant construction; B2 quotes the fresh
+constructor but does not establish the ordinary/supplied-profile distinction.
+Tox A and B both identify swallowed missing-key lookup and propose narrowing the
+processing handler. No completed semantic A/B comparison exists for Pydantic.
+
+All eight trials start:14 actual count/generation calls,6 notes and6 final reports,
+2 incomplete notes,2 prerequisite-skipped finals,0 infrastructure stops or retries.
+Recorded cost $0.857232450; cache-neutral $0.860861250; unused $1.702767550 closed.
+14 exact inputs/own-note handoffs/continuations and all client cleanups verify,
+144 journal events valid,173 protected files unchanged. Literal quote matches28/41
+are separate from semantic correctness; errors include diff-prefix removal, missing
+source spans, wrong source id and mixed comments. No raw reasoning was inspected.
+
+Do not adopt this stage in the common loop. Tox has no observed gain; Pydantic B
+does not correct the error and A is output-censored. Actual repair and acceptance
+remain NOT_RUN. Runtime4d2fc8ba/v45, tools/prompts/defaults remain unchanged.
+Focused16 PASS/3.34s and Ruff PASS; existing transport15 evidence reused. No new
+Docker, task tool, private evaluation, full core regression or evaluation smoke.
+No extra sample or follow-up budget is included in this closed diagnostic.
+Evidence: `C:\pt\analyses\mini-xhigh-facts-first-compare-20260925-v1\result.md`.
+
+## Previous work: probe-claim removal review closed; no common change
 
 The selected public Pydantic-AI claim-removal comparison is CLOSED_COMPLETE,
 official=false. Four fresh mini snapshot/xhigh/25K reports ran A1/B1/B2/A2,
