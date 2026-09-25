@@ -7,7 +7,32 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: own-candidate review and repair comparison closed; no improvement
+## Current work: fresh mini/GPT-5.4 xhigh solving comparison
+
+The user authorized four fresh solves on the original dev-train Pydantic-AI and tox
+v1 tasks: PM/PF/TF/TM, mini/full then full/mini, repeat1 each. Exact models are
+gpt-5.4-mini-2026-03-17 and gpt-5.4-2026-03-05, both xhigh. Each receives a new
+independent prepared-source workspace, no prior patch, review, selected source,
+plan, notes or check evidence. Runtime4d2fc8ba/v45, segmented-v1, brief-v1,
+probes/none and repair-recheck stay fixed. Only model and derived identity/rates
+change within each task pair, apart from run paths and measured elapsed time.
+
+New cap$4.80, separate$1.20/run, no budget transfer/retry/resume/replacement/extension.
+Existing Docker/images only. Count/provider/billing/continuation/cleanup/integrity
+uncertainty stops the group; settled task failure continues. Report acceptance over
+planned2 per model with submissions, NOT_RUN and infrastructure stops. Equal dollar
+budgets can constrain the models differently; record resource endings separately.
+One trial per task/model cannot establish general superiority or default adoption.
+
+The external collector calls unchanged run_dev and reuses the public usage auditor.
+It captures actual count/generation inputs, compares fresh first state/system/tools,
+and audits native input and continuation delivery. Validation reuses the immediately
+preceding full regression after runtime/fixture hash verification, plus new focused
+collector/transport checks, Ruff and a normal fresh mock smoke. No hidden evaluator
+details or further candidate executions enter analysis; all results are official=false.
+Packet: `C:\pt\analyses\mini-vs-gpt54-xhigh-solve-20260925-v1\protocol.md`.
+
+## Previous work: own-candidate review and repair comparison closed; no improvement
 
 The bounded successor is CLOSED_COMPLETE, official=false. R1 is one GPT-5.4
 snapshot/xhigh review of the saved mini-authored Pydantic-AI candidate from
