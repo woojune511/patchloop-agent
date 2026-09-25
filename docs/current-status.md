@@ -7,7 +7,39 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: source-relation comparison closed; no adoption
+## Current work: candidate-selection diagnostic closed; no adoption
+
+The selected existing-candidate diagnostic is CLOSED_COMPLETE, official=false.
+Four fresh mini snapshot/xhigh/25K reports ran P1/T1/T2/P2, repeat1, with a new $0.64
+cap. Original dev-train Pydantic-AI/tox tasks, exact-base source and two anonymous
+saved diffs are supplied; within each task only their X/Y assignment is reversed.
+One generic instruction/schema applies. No prior grade, run name, operator contrast
+check, probe observation or old report enters the requests. P11's public model-authored
+patch came from an operator-contrast-assisted task; its comments remain in the diff.
+
+Supported selection/condition distinction/concrete check, each per planned2:
+Pydantic1/2, tox2/2. All four report; incomplete0/unstarted0/infrastructure0.
+P1 picks failed P10 and conflates field format with the provider-carried requirement;
+its proposed supplied-profile check does not distinguish the patches. P2 picks P11
+and proposes an ordinary field-profile counterexample with the correct outcomes.
+Both Pydantic reports choose first candidate X. One observation per ordering cannot
+separate position effects from response variability. Tox preserves lookup failure
+versus processing failure and explicit-default behavior in both orders.
+
+Four actual requests/counts/generations,42 journal events,4 opaque continuations and
+4 client cleanups verify;226 protected files unchanged. Recorded/cache-neutral cost
+$0.2849595, unused$0.3550405 closed. Max input12,956; all outputs below25K, with no
+compaction, output reduction or cost stop. Runtime4d2fc8ba/v45 and defaults unchanged.
+Collector/transport35 PASS/39.52s and Ruff PASS; no new full core regression or isolated
+evaluation smoke. No task execution, candidate generation, Docker or hidden evaluation;
+actual repair/acceptance NOT_RUN. Proposed checks were assessed statically, not executed.
+
+Do not adopt automatic candidate selection or start an automatic successor. Selected
+existing alternatives and operator-selected source do not establish autonomous candidate
+availability or end-to-end gains; there is no fresh single-candidate control. Evidence:
+`C:\pt\analyses\mini-xhigh-candidate-selection-20260925-v1\result.md`.
+
+## Previous work: source-relation comparison closed; no adoption
 
 The selected Pydantic-AI information comparison is CLOSED_COMPLETE, official=false.
 Four fresh mini snapshot/xhigh/25K reports ran A1/B1/B2/A2, repeat1, with a new $0.64
