@@ -7,7 +7,38 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: candidate-selection diagnostic closed; no adoption
+## Current work: model-only selection comparison closed; limited follow-up signal
+
+The authorized GPT-5.4 xhigh successor is CLOSED_COMPLETE, official=false. Four fresh
+gpt-5.4-2026-03-05/xhigh/25K reports ran P1/T1/T2/P2, repeat1, under a new$2.12 cap.
+Each request differs from the prior mini request only at /model; exact public tasks,
+source, candidate order/diffs, instructions/schema/flags and rubric stay identical.
+No old report/grade, extra contrast check or new mini call enters this experiment.
+
+Supported selection/condition distinction/concrete check per planned2 is Pydantic2/2,
+tox2/2; prior mini1/2 and2/2. All four complete, incomplete0/unstarted0/infra0. The one
+changed outcome is P1: GPT-5.4 recognizes ordinary field format versus the provider-carried
+requirement and proposes the correct ordinary-profile counterexample in both orders.
+Tox retains the raw-lookup versus filtered-value exception distinction in both orders.
+Proposed checks were judged statically; no task execution or acceptance was measured.
+
+Actual requests/counts/generations4,42 journal events,4 opaque continuations and4 client
+cleanups verify;264 protected files unchanged. Recorded/cache-neutral cost$0.782285,
+unused$1.337715 closed, versus prior mini$0.2849595 for its four reports. Max input12,956;
+no output reduction, compaction, cost stop or response above25K. Collector/transport40
+PASS/40.63s and Ruff PASS. A post-collection CP949 display error was corrected only in
+console rendering, with no artifact mutation or provider retry. Runtime4d2fc8ba/v45,
+tools/prompts/defaults stay unchanged; no new full core regression/isolated-evaluation smoke.
+
+Four supported reports supply a limited signal for a separately bounded own-candidate
+repair/review experiment. Supply only mini's candidate in that future test, without the
+known successful alternative, and measure actual repair/check/submission outcomes.
+No automatic successor or common adoption: two selected cases, one response per ordering,
+historical mini baseline and assisted P11 provenance do not establish reliable superiority
+or end-to-end gains. Actual repair/acceptance remain NOT_RUN. Evidence:
+`C:\pt\analyses\gpt54-xhigh-candidate-selection-20260925-v1\result.md`.
+
+## Previous work: candidate-selection diagnostic closed; no adoption
 
 The selected existing-candidate diagnostic is CLOSED_COMPLETE, official=false.
 Four fresh mini snapshot/xhigh/25K reports ran P1/T1/T2/P2, repeat1, with a new $0.64
