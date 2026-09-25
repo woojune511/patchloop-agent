@@ -22,6 +22,44 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
+## Latest implementation: optional paired observation inside seeded repair
+
+The seeded diagnostic accepts `comparison_policy="paired-observation-v1"`, default
+none. It gives the first candidate a bounded observation phase inside the same
+run_dev call/action/time/cost limits. At most four initial calls offer ordinary
+read/search/check/probe/stop actions; one observation attempt returns control to
+normal repair and submission. Resource protection can end the phase without an
+observation. Neither edits nor segment changes repeat it automatically.
+
+The model declares two concrete inputs, a literal public requirement, expected JSON
+values, justification, a refuting observation and limitations before execution.
+The existing public probe runs only its Python program; the host compares returned
+`a`/`b` values with the frozen expectations. Missing output, failed execution and
+unequal observations remain distinct. Existing checks can be reused with two case
+excerpts linked to their public command or previously read current source. Literal
+linkage and a passing check do not certify that those cases ran or satisfy the task.
+If scope is unclear, comparison=null on a required check records a limitation.
+
+The single result stays in actual public context with its action/input/diff identity;
+after a repair it becomes historical. A matching expectation remains model-authored
+and semantically unverified. This adds no acceptance criterion, automatic retry or
+permanent finish gate. It requires ordinary probes and is isolated from supplemental
+review/operator feedback. Production runtime4d2fc8ba/v45 and default inputs stay fixed.
+
+Focused31 PASS/92.509s; compatibility31 PASS/163.957s includes six existing-option
+isolated mocks. The two new append/segmented mocks execute the trusted CSV comparison
+program, deliver its mismatch, repair, check and reach isolated acceptance PASS.
+Ten actual inputs retain public task/diff/check state and comparison currency.
+Final reducer/restoration and documentation rechecks pass;64 distinct tests and Ruff
+PASS. Only the focused group meets two minutes. No fresh full runtime regression;
+unchanged core retains prior validation. These deterministic fixtures verify plumbing,
+not model discovery or performance. Provider/count/Docker calls0, cost$0.
+Local validation and retained mock evidence:
+`C:\pt\validation\paired-observation-20260926-v1\result.md`.
+No new paid comparison or default adoption. The next live comparison must freeze
+task/model/source/total budget and this diagnostic implementation separately; case
+selection, actual observations and subsequent repairs matter beyond probe counts.
+
 ## Latest experiment: value-origin review complete; no acceptance improvement
 
 A1 -> B1 -> B2 -> A2 completed on the same saved HF Hub v5 R1 port-repair candidate.

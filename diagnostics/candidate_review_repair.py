@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from diagnostics import change_review
+from diagnostics import change_review, paired_observation
 from patchloop.artifacts import ArtifactStore
 from patchloop.dev import runner
 from patchloop.dev.contracts import DevRunRequest
@@ -98,8 +98,9 @@ def overlay(state, *, seed_hash, base_commit, source_code, review):
 def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                base_commit: str, source_code: list, review: dict | None,
                experiment_hash: str, source_run_id: str, branch: str,
-               public_feedback: dict | None = None, change_review_policy: str = "none"):
-    """One fresh run; only supplemental review differs between comparison branches.
+               public_feedback: dict | None = None, change_review_policy: str = "none",
+               comparison_policy: str = "none"):
+    """One fresh run with explicitly selected diagnostic interventions.
 
     The imported candidate consumes one of the usual four mutation slots. The normal
     result's accepted_mutations counts *new* accepted tool edits only; the seed is a
@@ -108,6 +109,13 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
     validate_feedback(public_feedback, seed_hash)
     require(change_review_policy in ("none", *change_review.INSTRUCTIONS),
             "unknown change review policy")
+    require(comparison_policy in ("none", paired_observation.POLICY),
+            "unknown comparison policy")
+    if comparison_policy != "none":
+        require(request.enable_probes and request.probe_policy == "none",
+                "paired observation requires enabled ordinary probes")
+        require(change_review_policy == "none" and review is None and public_feedback is None,
+                "paired observation must be isolated from supplemental review or feedback")
     require(request.repeat == 1 and request.resume_run_id is None,
             "diagnostic branches forbid repetition and resume")
     require(request.state_root is not None and not request.state_root.exists(),
@@ -147,6 +155,10 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                 "resume_allowed": False,
             })
             initialized.append(journal.run_id)
+            if comparison_policy != "none":
+                journal.append(paired_observation.EVENT, {
+                    **paired_observation.identity(), "experiment_hash": experiment_hash,
+                })
             if change_review_policy != "none":
                 journal.append("diagnostic_change_review_policy", {
                     "official": False, "policy": change_review_policy,
@@ -176,6 +188,9 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                 state[change_review.FIELD] = review_request
         return canonical_json(state)
 
-    with patch.object(runner, "DevToolGateway", SeededGateway), \
-            patch.object(runner, "_build_context", context):
+    gateway_type = (paired_observation.gateway_type(SeededGateway)
+                    if comparison_policy != "none" else SeededGateway)
+    with patch.object(runner, "DevToolGateway", gateway_type), \
+            patch.object(runner, "_build_context", context), \
+            paired_observation.install(runner, enabled=comparison_policy != "none"):
         return runner.run_dev(request)

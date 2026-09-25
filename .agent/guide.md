@@ -6450,6 +6450,42 @@ one-response consumption and successful-change re-arming use the same reducer.
 This option is diagnostic-only; source-origin discovery and performance benefit
 need a separately frozen live comparison. Local mocks test integration, not ability.
 
+The seeded seam also accepts `comparison_policy="paired-observation-v1"`, default none.
+This is a bounded fixed-candidate observation phase inside the normal run_dev invocation,
+not another provider dispatch loop. Enable ordinary probes (`probe-policy none`); do not
+combine it with supplemental reviews, operator feedback or change-review instructions.
+The external frozen experiment binds the diagnostic source and its journaled policy,
+instruction/schema/system-suffix hashes; production runtime/defaults stay unchanged.
+
+At most the first four existing model calls offer the intersection of ordinary allowed
+tools with read/search/check/probe/stop. This phase adds no allowance and releases normal
+repair/finish choices after one comparison action finishes, after four calls, or when
+ordinary completion protection leaves no observation action. It never re-arms after an
+edit or segment boundary. Existing count, cost, deadline, continuation and failure stops
+still apply. The brief diagnostic system suffix explains this temporary tool selection.
+
+The check/probe action records a two-case comparison before execution: literal public
+issue excerpt, concrete inputs, JSON expectations, their justification, a refuting
+observation and limitations. It reuses public case binding and frozen-JSON comparison.
+Both `a` and `b` observations are required for a probe comparison; incomplete JSON,
+setup/execution failure and mismatched values are distinct. Only the Python program
+enters the existing probe sandbox. The full model declaration stays in action_id /
+input_hash identity, normal hash-chained admission/results and idempotent replay.
+
+An existing check can be selected with two literal case excerpts from its registered
+command or previously read current source. This validates citation availability, not
+that the check executed those cases or that expectations follow from the requirement.
+`comparison=null` on a required check records a model-stated limitation in its basis,
+not a completed comparison. No synthetic program is required to escape uncertain scope.
+Invalid declarations fail before sandbox execution and return control to normal repair.
+
+The single observation remains in public context with its action/input/diff identity.
+After an edit it is historical and cannot certify the new candidate. Successful script
+execution, expected/observed equality, case construction, semantic coverage and acceptance
+remain separate. No automatic recheck, new finish condition, task hint or hidden input
+is introduced. A deterministic mock tests the path, not the model's ability to discover
+useful cases; live benefit requires a separately bounded comparison on public tasks.
+
 The opt-in `diagnostics/candidate_review_repair.py` seam is experiment-only. A fresh
 run_dev branch installs one saved public candidate before gateway creation, consumes
 one mutation slot and records diagnostic provenance, without importing old actions,
