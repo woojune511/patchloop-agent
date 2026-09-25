@@ -6418,6 +6418,15 @@ default adoption; the external frozen packet owns reviewer dispatch, positive to
 cap, non-transferable arm limits, uncertainty stops and client cleanup. New tests
 must check actual input delivery, seed identity failures, repair and isolated finish.
 
+The same diagnostic seam accepts optional `public_feedback`: a frozen, operator-executed
+public program, stdout, requirement interpretation, receipt hash and observed diff hash.
+The external experiment must verify the execution and public-only provenance before
+dispatch. The seam rejects a different seed subject or extra fields before run_dev,
+records the feedback hash in the journal and exposes it as `operator_public_feedback`.
+After a mutation its currency becomes historical_candidate; it cannot replace current
+registered-check verdicts or establish acceptance. Omission preserves existing inputs.
+This is an assisted diagnostic, not an automatic review or default repair policy.
+
 Latest adapter-only v37 receipt: `C:\pt\validation\native-compact-adapter-20260913`.
 Runtime `sha256:15b7fb6ce5168931cd82865deb1bc8adce519c441963408522754437abd3ad9b`;
 surface remains `sha256:cb6763e5b863adbd7517dc3da2e44ada6b918feea38de3676578d359092a760c`.

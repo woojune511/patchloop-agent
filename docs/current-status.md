@@ -22,6 +22,37 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
+## Current work: bounded assumption discovery, check design and assisted repair
+
+One selected HF Hub v5 candidate from run_dev_094cf1bf71f94407 is used in three
+fresh GPT-5.4 snapshot/xhigh stages, D1 -> C1 -> R1. D1 is one unhinted public
+candidate review; C1 is one independent review with only the unverified port-fallback
+question added. R1 is one fresh seeded run_dev repair with operator-executed public
+counterexample output. D1/C1 reports, old plans/notes/check verdicts and acceptance
+details are not supplied to R1. The last two stages are assisted diagnostics.
+
+New invocation cap $2.26: D1/C1 $0.53 each, R1 $1.20, repeat1; no budget transfer,
+retry, replacement, automatic resume or additional samples. Report calls have a
+25K ceiling; R1 keeps the baseline controls and 40/100/4/1,800s limits, including
+one seed mutation slot. Prepared source, existing images and the exact credential
+file are reused. Runtime 4d2fc8ba/v45, common prompts/tools/defaults stay fixed.
+
+A frozen operator program exercises the actual parser for absent/443/0/444 ports
+through headers and links in the existing public-check image with no network.
+Before execution, explicit zero is the only mismatch (2 of 8 cases). Only R1 gets
+this output. Execute the identical program once on R1's submitted final candidate
+afterward; operator verification receives no agent discovery/checking credit.
+Hidden failing assertions remain unread. This is a selected-case decomposition,
+not a policy A/B, general capability estimate or default adoption.
+
+The opt-in diagnostic seam now binds public execution feedback to its seed hash
+and marks it historical after edits. Focused 22 PASS/92.779s, collector/transport
+29 distinct PASS, fresh seeded mock repair/check/submit/isolated evaluation and
+actual segmented input delivery PASS. Full core evidence is reused by unchanged
+runtime hash; a new full core regression is not claimed. Final freeze/dispatch and
+results are recorded in
+`C:\pt\analyses\gpt54-xhigh-assumption-stages-20260925-v1`.
+
 ## Latest baseline panel: complete; AnyIO PASS, HF Hub FAIL, Fromager PASS
 
 N1 AnyIO v3 -> H1 HF Hub v5 -> F1 Fromager v1 completed, one fresh solve each,

@@ -35,11 +35,19 @@ def request(root):
     )
 
 
-@pytest.mark.parametrize("review", [None, REPORT])
+@pytest.mark.parametrize("review,with_feedback", [(None, False), (REPORT, False), (None, True)])
 def test_seed_repair_check_submit_isolated_evaluation(
-    tmp_path, monkeypatch, gateway_factory, smoke_package, review,
+    tmp_path, monkeypatch, gateway_factory, smoke_package, review, with_feedback,
 ):
     patch = seed(gateway_factory)
+    feedback = ({
+        "observed_on_diff_hash": sha256_text(patch),
+        "requirement": "Preserve quoted newlines.",
+        "python_source": "print('public fixture')",
+        "stdout": "public fixture\n",
+        "execution_receipt_hash": "sha256:" + "c" * 64,
+        "limitations": "Synthetic delivery fixture, not a real counterexample execution.",
+    } if with_feedback else None)
     inputs = []
     original_gateway, original_context = runner.DevToolGateway, runner._build_context
 
@@ -76,6 +84,7 @@ def test_seed_repair_check_submit_isolated_evaluation(
         base_commit=smoke_package.public.repository.base_commit,
         source_code=[], review=review, experiment_hash="sha256:" + "a" * 64,
         source_run_id="run_dev_saved", branch="A" if review is None else "B",
+        public_feedback=feedback,
     )["runs"][0]
     assert result["terminal"] == "EVALUATOR_PASS", result
     assert result["accepted_mutations"] == 1  # Seed is not a new tool action.
@@ -104,9 +113,20 @@ def test_seed_repair_check_submit_isolated_evaluation(
         assert wires[-1][experiment.FIELD]["review"]["currency"] == "older_candidate"
     else:
         assert all(v[experiment.FIELD]["review"] is None for v in wires)
+    if with_feedback:
+        assert wires[0][experiment.FEEDBACK_FIELD]["currency"] == "current_candidate"
+        assert wires[-1][experiment.FEEDBACK_FIELD]["currency"] == "historical_candidate"
+        assert all(v[experiment.FEEDBACK_FIELD]["stdout"] == feedback["stdout"] for v in wires)
+        assert all(v[experiment.FEEDBACK_FIELD]["observed_on_diff_hash"] == sha256_text(patch)
+                   for v in wires)
+        assert len([e for e in events
+                    if e["event_type"] == "diagnostic_public_feedback_attached"]) == 1
+    else:
+        assert all(experiment.FEEDBACK_FIELD not in v for v in wires)
 
 
-@pytest.mark.parametrize("change", ["hash", "repeat", "resume", "root", "private_field"])
+@pytest.mark.parametrize("change", ["hash", "repeat", "resume", "root", "private_field",
+                                    "feedback_subject", "feedback_private_field"])
 def test_invalid_seed_request_fails_before_runner(tmp_path, monkeypatch, change):
     req = request(tmp_path / "run")
     kwargs = {"seed_patch": "public patch", "seed_hash": sha256_text("public patch"),
@@ -121,8 +141,16 @@ def test_invalid_seed_request_fails_before_runner(tmp_path, monkeypatch, change)
         req = req.model_copy(update={"resume_run_id": "run_dev_saved"})
     elif change == "root":
         Path(req.state_root).mkdir()
-    else:
+    elif change == "private_field":
         kwargs["review"] = {**REPORT, "hidden_verdict": "PASS"}
+    else:
+        feedback = {name: "public" for name in experiment.FEEDBACK_FIELDS}
+        feedback["observed_on_diff_hash"] = kwargs["seed_hash"]
+        if change == "feedback_subject":
+            feedback["observed_on_diff_hash"] = "sha256:" + "0" * 64
+        else:
+            feedback["hidden_verdict"] = "FAIL"
+        kwargs["public_feedback"] = feedback
     monkeypatch.setattr(runner, "run_dev", lambda _: pytest.fail("runner must not start"))
     with pytest.raises(ContractError):
         experiment.run_seeded(req, **kwargs)
