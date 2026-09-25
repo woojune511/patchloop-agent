@@ -176,6 +176,10 @@ def test_evaluator_git_uncertainty_keeps_compatible_completion_and_provenance(
 def test_expired_pending_mutation_reconciles_without_reapplying(
     gateway_factory, monkeypatch, scope_failure,
 ):
+    # Keep the active row expired below; this tests reconciliation/rollback, not
+    # whether concurrent Windows Git metadata reads finish within five seconds.
+    monkeypatch.setattr(DevToolGateway, "_recovery_read_deadline", staticmethod(
+        lambda: ExecutionDeadline.from_remaining(60)))
     gateway, journal, workspace = gateway_factory()
     if scope_failure:
         gateway.public_task = gateway.public_task.model_copy(update={
