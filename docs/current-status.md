@@ -22,6 +22,55 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
+## Latest baseline panel: pgmpy, PDM and Loguru all pass from fresh sources
+
+G1 pgmpy v1 -> P1 PDM v2 -> L1 Loguru v3 completed once each with the current
+GPT-5.4 snapshot/xhigh/25K baseline above. Acceptance/safety 3/3 PASS, started3,
+submitted3, NOT_RUN0, infrastructure/uncertainty0; all official=false. New $3.60
+group cap, $1.20 per slot, repeat1; no retry/resume/replacement/extension.
+
+Existing-envelope inspection found 14 selected-task OpenAI runs among 9,075 saved
+envelopes, all full medium or mini xhigh; no current full-xhigh sample was reused.
+Each new run starts from independent prepared source without prior patches/plans/
+notes/reviews. Production runtime4d2fc8ba/v45, common guidance, policies and limits
+stay fixed. The diagnostic change-review request is absent from all actual inputs.
+
+G snapshots the graph at each stable conditioning round while applying removals to
+the real graph, then passes public12/upstream7. P moves the ignore-active flag from
+the whole virtualenv-resolution branch to active-candidate exclusion, handles
+false-like flags and exact/descendant/sibling paths, then passes public24/upstream36.
+L reads formatter initialization after identifying a possible broad-KeyError risk,
+then wraps three static format_map calls while preserving outer catch handling and
+dynamic/raw branches. All four checks pass, including upstream20 and patcher fields.
+That read-to-edit link is visible; the helper still rewrites static-call KeyErrors
+generally, and the raised nested-indexing concern was not separately tested.
+
+First edits at calls3/3/4 are the sole edits and precede every segment handoff.
+All eight public checks bind the submitted diff. Calls6/6/9, probes0, rejected edits0,
+failed public checks0. Failure-driven repair and independent contrast selection
+remain unmeasured. P's public contract source-scope status is unknown despite24 PASS;
+do not treat that output as verified source-line execution coverage.
+
+Recorded costs $0.3122115/$0.3450105/$0.5030545, total$1.1602765; cache-neutral
+$1.4056525. Unused$2.4397235 closed; group568.107s. Peak inputs24438/27441/31595,
+segments3/3/5 (initial3, major_result_reviewed8). All21 counts/generations, public
+inputs and continuations verify; completed responses/25K ceilings throughout,
+no resource/incomplete ending. Three clients closed, running Docker containers0.
+
+Focused36 PASS/69.989s, docs3 PASS/Ruff PASS; fresh mock reaches isolated evaluation
+and verifies four actual inputs. Unchanged core reuses the prior full3240 PASS/
+16 SKIP plus fixture rechecks; no fresh full regression. All existing source/image
+preflights pass. Stdlib-only probes retain missing numpy/platformdirs for G/P;
+Loguru imports. A src-layout assumption in the import-only operator was corrected
+before dispatch and its original failure retained. No dependencies added or Docker
+startup/pull/build. Protected1,315 files and user AGENTS unchanged; hidden details unread.
+
+These familiar tasks previously passed under other settings. This supports the
+current baseline's operation on these tasks, not xhigh superiority, a new harness
+benefit or a general success rate. Keep defaults fixed; choose further common
+improvements from actual fresh-solve failures or broader development evidence.
+Evidence: `C:\pt\analyses\gpt54-xhigh-other-tasks-20260926-v1\result.md`.
+
 ## Latest experiment: change review complete; same acceptance, no default adoption
 
 HA -> HB -> PB -> PA -> TA -> TB is CLOSED_COMPLETE, official=false. A uses existing
