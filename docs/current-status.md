@@ -7,30 +7,47 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: fresh mini/GPT-5.4 xhigh solving comparison
+## Current work: fresh xhigh comparison closed incomplete; operator audit corrected
 
-The user authorized four fresh solves on the original dev-train Pydantic-AI and tox
-v1 tasks: PM/PF/TF/TM, mini/full then full/mini, repeat1 each. Exact models are
-gpt-5.4-mini-2026-03-17 and gpt-5.4-2026-03-05, both xhigh. Each receives a new
-independent prepared-source workspace, no prior patch, review, selected source,
-plan, notes or check evidence. Runtime4d2fc8ba/v45, segmented-v1, brief-v1,
-probes/none and repair-recheck stay fixed. Only model and derived identity/rates
-change within each task pair, apart from run paths and measured elapsed time.
+The four-slot mini/GPT-5.4 xhigh comparison is CLOSED_INCOMPLETE, official=false.
+Authorized order PM/PF/TF/TM used original dev-train Pydantic-AI/tox v1, fresh sources,
+repeat1/$1.20 each/new$4.80 cap. Only PM ran: submitted, acceptance FAIL, safety PASS.
+Mini PASS/planned2 is0/2, started1/submitted1/NOT_RUN1; full is0/2, started0/submitted0/
+NOT_RUN2. These are incomplete denominators, not an observed model comparison.
 
-New cap$4.80, separate$1.20/run, no budget transfer/retry/resume/replacement/extension.
-Existing Docker/images only. Count/provider/billing/continuation/cleanup/integrity
-uncertainty stops the group; settled task failure continues. Report acceptance over
-planned2 per model with submissions, NOT_RUN and infrastructure stops. Equal dollar
-budgets can constrain the models differently; record resource endings separately.
-One trial per task/model cannot establish general superiority or default adoption.
+After PM settled, the new collector falsely rejected working_plan delivery by
+comparing projected native state with the earlier canonical gateway object. Segment
+handoff adds context_handoff to review reasons; native delivery replaces repeated
+plan/note receipts with references to actual preceding tool outputs. The operator
+assertion ignored those existing transformations. The group stopped before PF,
+with no retry/resume/replacement/extension. This is one operator audit stop, no
+observed provider/billing/runtime-infrastructure uncertainty. The original frozen
+collector and stopped result remain unchanged.
 
-The external collector calls unchanged run_dev and reuses the public usage auditor.
-It captures actual count/generation inputs, compares fresh first state/system/tools,
-and audits native input and continuation delivery. Validation reuses the immediately
-preceding full regression after runtime/fixture hash verification, plus new focused
-collector/transport checks, Ruff and a normal fresh mock smoke. No hidden evaluator
-details or further candidate executions enter analysis; all results are official=false.
-Packet: `C:\pt\analyses\mini-vs-gpt54-xhigh-solve-20260925-v1\protocol.md`.
+New read-only diagnostics/segmented_input_audit.py reconstructs expected projection
+from the event prefix and verifies it against saved/actual input. Nine regression
+cases use real mock inputs, reject altered task/diff/check/plan/notes/handoff or wire,
+and normalize only model/elapsed time/derived segment ID for fresh pair comparison.
+The old pair signature also retained the time-derived segment ID; that latent
+cross-run comparison defect is corrected in the helper, but no live pair exercised it.
+A separately recorded offline audit verifies all8 PM count/generation pairs, actual
+inputs, continuations and settled cost; no context omission was found in this run.
+The new helper must be integrated and exercised by a fresh successor collector;
+the stopped packet is not executable again.
+
+PM reads6/searches5, edits at call5, runs public8+18 checks PASS, then submits without
+probe or further edit. Its condition uses field mode/name alone, conflating format
+with the provider-profile requirement in the public task. This public-code limitation
+does not reveal which private assertion failed. Recorded$0.1504893/cache-neutral
+$0.2393085; unused$4.6495107 closed. Eight calls, max input54,669, three segments
+(initial/major-result/major-result), all25K ceilings; no resource/incomplete stop.
+
+Runtime4d2fc8ba/v45 and all common prompts/tools/defaults remain unchanged. Initial
+collector/transport27 PASS/49.38s, normal fresh mock repair/check/submit/isolated
+evaluation PASS, audit correction9 PASS/about19s and Ruff PASS. Prior full coverage
+3,240 PASS/16 SKIP plus targeted fixture rechecks is reused by verified hashes;
+no new full core regression. Hidden evaluator details and extra candidate executions
+remain excluded. Evidence: `C:\pt\analyses\mini-vs-gpt54-xhigh-solve-20260925-v1\result.md`.
 
 ## Previous work: own-candidate review and repair comparison closed; no improvement
 
