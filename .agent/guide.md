@@ -6486,6 +6486,16 @@ remain separate. No automatic recheck, new finish condition, task hint or hidden
 is introduced. A deterministic mock tests the path, not the model's ability to discover
 useful cases; live benefit requires a separately bounded comparison on public tasks.
 
+The first paired-observation group is closed at
+`C:\pt\analyses\paired-observation-compare-20260926-v1\result.md`: ordinary seeded A 0/2,
+paired B 0/2 on HF Hub/Pydantic AI, all four submitted their unchanged seeds. Both B
+declarations failed literal-evidence admission before check execution, ending the phase;
+ordinary checks then passed. Comparison execution NOT_RUN 2 is separate from acceptance
+FAIL 4. All 14 actual inputs/counts/usage settled; cost $1.0318265 of $4.80. No resource-ending,
+infra stop, hidden detail access, retry, extra sample or default change. Case selection
+also reused registered examples. Next candidate is an easier evidence-reference interface
+and bounded declaration correction; neither is implemented or authorized by unused funds.
+
 The opt-in `diagnostics/candidate_review_repair.py` seam is experiment-only. A fresh
 run_dev branch installs one saved public candidate before gateway creation, consumes
 one mutation slot and records diagnostic provenance, without importing old actions,

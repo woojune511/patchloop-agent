@@ -22,6 +22,39 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
+## Latest experiment: paired observation 0/2 vs 0/2; no valid comparison executed
+
+Completed the fixed HA/HB/PB/PA group on two familiar dev-train tasks: HF Hub Xet
+endpoint propagation v5 and Pydantic AI synthetic tool reasoning. A used ordinary
+seeded repair; B used paired-observation-v1, with no change review or operator feedback.
+Both arms used GPT-5.4/xhigh/25K and identical prepared source/candidate within each task.
+Acceptance A 0/2, B 0/2; four started/submitted, NOT_RUN 0, infrastructure stops 0, safety 4 PASS.
+Every submission was byte-identical to its saved seed. No reads/searches/probes/new edits.
+
+Both B declarations failed before executing their selected public check. HB quoted
+check fragments joined by ellipses; PB paraphrased the public requirement. The errors
+remained in actual inputs and both next action bases acknowledged that no check had run.
+The phase ended after each rejected declaration as implemented, then ordinary required
+checks passed and the model submitted. Comparison execution is NOT_RUN 2; acceptance
+evaluation did run 4 times. These statuses must remain separate.
+
+Recorded cost A $0.3192925/B $0.7125340, total $1.0318265 of $4.80; cache-neutral $1.1216825.
+All 14 count/provider inputs and public task/diff/check projections passed auditing.
+Calls 3/4/4/3; peak input 28,047; segments 2/3/3/2 with major_result_reviewed transitions.
+All output ceilings 25K; no resource-limited endings. Clients/locks settled, unused
+$3.7681735 closed; no retry/resume/extra sample/default adoption. Existing Docker/images
+only; no hidden evaluator detail or post-submission operator probe was inspected/run.
+
+This option produced no acceptance gain, but a successfully executed comparison's
+benefit remains unmeasured. Both declarations reused registered examples; even a valid
+quote would not establish discriminating coverage. Next small candidate: select
+code-owned public evidence references instead of copying literal fragments, and allow
+declaration correction within the existing phase budget. Validate that interface before
+another separately bounded experiment; no task-specific hints or general quality claim.
+External collector 16 PASS/1.11s and Ruff PASS; unchanged implementation retains its
+sealed 64-test/eight-mock evidence. Core runtime 4d2fc8ba/v45 and defaults stay unchanged.
+Evidence: `C:\pt\analyses\paired-observation-compare-20260926-v1\result.md`.
+
 ## Latest implementation: optional paired observation inside seeded repair
 
 The seeded diagnostic accepts `comparison_policy="paired-observation-v1"`, default
@@ -56,9 +89,9 @@ unchanged core retains prior validation. These deterministic fixtures verify plu
 not model discovery or performance. Provider/count/Docker calls0, cost$0.
 Local validation and retained mock evidence:
 `C:\pt\validation\paired-observation-20260926-v1\result.md`.
-No new paid comparison or default adoption. The next live comparison must freeze
-task/model/source/total budget and this diagnostic implementation separately; case
-selection, actual observations and subsequent repairs matter beyond probe counts.
+The first bounded live comparison is recorded above; no default adoption. Any successor
+must freeze task/model/source/total budget and this diagnostic implementation separately;
+case selection, actual observations and subsequent repairs matter beyond probe counts.
 
 ## Latest experiment: value-origin review complete; no acceptance improvement
 
