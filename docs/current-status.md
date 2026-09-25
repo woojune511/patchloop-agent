@@ -7,28 +7,51 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: corrected fresh xhigh comparison v2
+## Current work: fresh xhigh comparison v2 closed; full2/2, mini0/2
 
-The user authorized a new four-slot group after v1 closed incomplete. Fixed order
-PM/PF/TF/TM, original Pydantic-AI/tox v1 dev-train tasks, exact mini/full GPT-5.4
-snapshots, both xhigh, repeat1/$1.20 each/new$4.80 total. All four start fresh;
-v1's sample is historical and contributes no patch, memory or extra model input.
-Common runtime4d2fc8ba/v45, segmented-v1/brief-v1/probes-none/repair-recheck,
-40 model/100 tool/4 mutation/1800s/25K desired output remain unchanged.
+The fresh four-slot model comparison is CLOSED_COMPLETE, official=false. Fixed
+PM/PF/TF/TM order, original Pydantic-AI/tox v1 dev-train tasks, exact mini/full
+GPT-5.4 snapshots, both xhigh, repeat1/$1.20 each/new$4.80 total. Both models start
+and submit2/2; full acceptance2/2, mini0/2, NOT_RUN0, infrastructure0, safety4 PASS.
+All four start from independent prepared sources without old patches/reviews/notes.
+The closed v1 sample is not pooled or injected into this group.
 
-The successor collector integrates diagnostics/segmented_input_audit.py into live
-delivery audit and fresh mock smoke. A read-only rehearsal exercises its complete
-audit_slot against v1's eight saved actual requests, without changing the closed
-source. The new initial comparator excludes measured time and its derived segment
-ID; task/state/instructions/tools/flags stay equal within each task pair. Freeze
-the collector/helper, controls, sources/dependencies, same-date pricing and verified
-prior validation before dispatch. Reuse full core regression by unchanged hashes.
+Public trace shows concrete applicability differences. Pydantic mini inserts an
+empty thinking field for field-mode profiles generally; full adds a default-false
+profile option, enables it in DeepSeek's supplied profile and checks it in the
+shared serializer. Tox mini catches KeyError around both src[key] and process_raw,
+also swallowing missing-key lookup; full reads raw_value before the inner try and
+catches only process_raw's empty-after-filter exception. These are public static
+observations, not private-test explanations. Pairs pass identical public checks
+(P8+18, T29), then submit. Probes0, rejected/repeated edits0; no failed-check repair
+ability or better contrast-check selection was measured.
 
-Existing Docker/images only. Settled task failure continues; count/provider/billing/
-continuation/cleanup/integrity uncertainty stops the group. No retry, resume,
-replacement, extension or transfer of unused funds. All results official=false;
-acceptance over planned2/model, unstarted/NOT_RUN and resource effects stay separate.
-Packet: `C:\pt\analyses\mini-vs-gpt54-xhigh-solve-20260925-v2\protocol.md`.
+First edits occur at calls PM7/PF6/TF3/TM5, all in the initial segment. Calls10/11/5/7;
+max inputs55,108/52,555/30,055/30,917; segments3/5/2/2, only initial/major-result
+transitions. All33 responses complete with25K ceilings; no output reduction,
+protocol correction, size transition or resource ending. Segment-boundary loss
+does not explain these incorrect first edits. Model-internal causes remain unproven.
+
+Recorded costs PM$0.2011398/PF$0.7847985/TF$0.2949350/TM$0.1043505;
+mini$0.3054903/full$1.0797335, total$1.3852238. Cache-neutral mini$0.4776855/
+full$1.5255575, total$2.0032430. Unused$3.4147762 closed. Full's recorded total is
+about3.53 times mini's; same-token cache-neutral conversion is not a rerun or bill.
+
+Both actual initial pair signatures match after model/time/derived-ID normalization.
+All33 count/generation pairs, projected actual inputs, continuations and4 client
+cleanups verify;486 protected files preserved, no owned containers remain. The fixed
+auditor was exercised by fresh normal mock mutation/check/submit/isolated evaluation
+and eight historical public requests before dispatch. Focused36 PASS/81.741s, Ruff
+and docs PASS. Prior full core3,240 PASS/16 SKIP plus exact fixture rechecks is reused
+by hash; no fresh full core regression. Runtime4d2fc8ba/v45, tools/prompts/defaults,
+segmented-v1/brief-v1/probes-none/repair-recheck and limits remain fixed.
+
+This supplies a successful full-model reference for both tasks and a limited
+follow-up signal for translating preservation requirements into exact code conditions.
+One run per model on two familiar dev-train tasks does not establish general success
+rates or justify default adoption. No retry/resume/extension, extra candidate
+execution or hidden evaluator detail read. Evidence:
+`C:\pt\analyses\mini-vs-gpt54-xhigh-solve-20260925-v2\result.md`.
 
 ## Previous work: fresh xhigh comparison closed incomplete; operator audit corrected
 
