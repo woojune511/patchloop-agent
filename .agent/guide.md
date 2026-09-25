@@ -6400,6 +6400,18 @@ or generalization benefit.
 
 ## Validation checklist
 
+The opt-in `diagnostics/candidate_review_repair.py` seam is experiment-only. A fresh
+run_dev branch installs one saved public candidate before gateway creation, consumes
+one mutation slot and records diagnostic provenance, without importing old actions,
+check verdicts, notes or reasoning. The experiment overlay distinguishes exact-base
+reference snippets from current editable evidence and marks external review prose
+unverified; its currency becomes older_candidate after a diff change. Both arms keep
+the same normal tool/check/planning/context contracts. The normal isolated evaluator
+gets a separate clean workspace and exact submitted artifact. No resume, repeat or
+default adoption; the external frozen packet owns reviewer dispatch, positive total
+cap, non-transferable arm limits, uncertainty stops and client cleanup. New tests
+must check actual input delivery, seed identity failures, repair and isolated finish.
+
 Latest adapter-only v37 receipt: `C:\pt\validation\native-compact-adapter-20260913`.
 Runtime `sha256:15b7fb6ce5168931cd82865deb1bc8adce519c441963408522754437abd3ad9b`;
 surface remains `sha256:cb6763e5b863adbd7517dc3da2e44ada6b918feea38de3676578d359092a760c`.

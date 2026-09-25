@@ -7,7 +7,26 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: model-only selection comparison closed; limited follow-up signal
+## Current work: own-candidate review and actual repair diagnostic
+
+The approved successor uses one saved mini-authored Pydantic-AI candidate from
+run_dev_4eebfe3e190249af, original dev-train task/base. One GPT-5.4 snapshot/xhigh
+review ($0.53), then mini snapshot/xhigh reconsideration without/with that review
+(A1/B1, repeat1, $1.20 each); new total cap $2.93, no transfers/retries/resume.
+Only that candidate, original public task and the same800 exact-base source lines
+are supplied. Successful alternatives and old reports/grades/checks/plans stay out.
+
+`diagnostics/candidate_review_repair.py` is an opt-in experiment seam around run_dev;
+the common runtime, prompts and defaults stay unchanged. Each fresh prepared workspace
+installs the same candidate, records its provenance separately, and consumes one
+mutation slot. The overlay contains unverified advice; after edits it explicitly
+refers to an older candidate. Normal tools, current checks and isolated evaluation
+remain active. Source/reference snippets do not confer edit evidence. First mock
+validation reaches repair/check/submission/isolated evaluation for both conditions.
+Full validation and frozen collection are in progress. No new live outcome yet.
+Evidence: `C:\pt\analyses\own-candidate-review-repair-20260925-v1\protocol.md`.
+
+## Previous work: model-only selection comparison closed; limited follow-up signal
 
 The authorized GPT-5.4 xhigh successor is CLOSED_COMPLETE, official=false. Four fresh
 gpt-5.4-2026-03-05/xhigh/25K reports ran P1/T1/T2/P2, repeat1, under a new$2.12 cap.
