@@ -22,6 +22,47 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
+## Latest experiment: value-origin review complete; no acceptance improvement
+
+A1 -> B1 -> B2 -> A2 completed on the same saved HF Hub v5 R1 port-repair candidate.
+A uses change-review-v1; B uses value-origin-review-v1. Exact GPT-5.4/xhigh/25K and
+common harness above; fresh independent prepared clones, repeat1/$1.20 per run and
+new $4.80 group cap. Both arms acceptance PASS0/planned2, started2/submitted2/NOT_RUN0;
+all four safety PASS, with no infrastructure or billing uncertainty. All official=false.
+
+Every submission is byte-identical to the seed: no new edit, probe or rejected edit.
+A1/B1/A2 only run the two existing public checks then finish. B2 first reads the
+HfApi constructor and searches parser callers. Its public basis recognizes that
+endpoint=None becomes constants.ENDPOINT, but narrows the distinction to client
+paths versus direct calls. It does not compare omitted and explicit client arguments;
+passing contract292/upstream15 checks leads to submission without a repair.
+
+The constructor assignment is present in all14 actual inputs. B2's read and narrowing
+precede its first segment handoff; read/search/probe remain available through finish.
+All responses complete with25K ceilings, with no resource/incomplete ending. This
+supports a missed verification distinction, not a demonstrated source/context loss.
+It does not reveal private reasoning or establish the cause of hidden acceptance FAIL.
+
+One predeclared public42-case program per submitted diff gives the same36/42 each:
+explicit-client default routes6/6, omitted-client default routes0/6, client relative/
+foreign routes24/24 and omitted functional callers6/6. Expected preservation follows
+the frozen public interpretation of an omitted constructor argument; these cases
+are not independent tasks or complete acceptance coverage. All168 setups/module
+identities verify, using existing no-network sandboxes; no observation enters a model.
+
+Recorded A/B costs$0.3882780/$0.5026035, total$0.8908815; cache-neutral$1.1290575.
+Unused$3.9091185 closed. Calls3/3/5/3, peak inputs25534/22952/33653/23893, segments2
+each (initial, major_result_reviewed). All14 counts/dispatches/inputs/continuations
+verify, four clients close, owned containers0. No retries/resume/replacement/extension.
+
+Collector10 PASS/1.26s, docs3 and Ruff PASS; unchanged implementation validation31
+and isolated mocks below reused after hash checks, no fresh full regression. Protected
+1,527 files verify. One selected saved failure and two repeats per arm establish no
+general quality claim. Keep default none; a longer review question has not improved
+acceptance here. Next investigation should target how source facts become a specific
+public behavioral contrast, before another paid comparison.
+Evidence: `C:\pt\analyses\value-origin-review-compare-20260926-v1\result.md`.
+
 ## Latest implementation: optional value-origin review, locally verified
 
 The seeded diagnostic now accepts `change_review_policy="value-origin-review-v1"`.
@@ -44,10 +85,10 @@ public-feedback/change-review paths pass4 more isolated mocks/90.762s. Docs3 and
 PASS;31 distinct fresh tests. No new full regression; unchanged core retains prior
 validation, while the affected diagnostic paths were freshly exercised.
 
-No provider/count/Docker call or live quality comparison; cost$0, official=false.
+This implementation validation made no provider/count/Docker call; cost$0, official=false.
 These mocks verify delivery and execution compatibility, not discovery or performance.
-Next efficacy comparison should vary this review question against the existing review
-with the same saved candidate, source, model and limits; no default adoption yet.
+The separate live comparison above keeps the saved candidate, source, model and limits
+fixed and finds no acceptance improvement; no default adoption.
 Evidence: `C:\pt\validation\value-origin-review-20260926-v1\result.md`.
 
 ## Latest public diagnostic: omitted client endpoint becomes explicit after defaulting
