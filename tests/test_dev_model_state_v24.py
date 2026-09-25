@@ -7,6 +7,7 @@ import pytest
 from test_dev_conversation_v23 import _output, _span
 from test_dev_tools import mutation_call, read_calls
 
+from patchloop.deadline import ExecutionDeadline
 from patchloop.dev.conversation import assemble_model_input, history_metadata, reconstruct_state
 from patchloop.dev.model_state import compact_model_state
 from patchloop.dev.native_sources import reference_native_sources
@@ -171,6 +172,10 @@ def test_older_check_body_reference_requires_exact_native_identity(mismatch):
 def test_path_feedback_is_explicit_preapply_and_durable_without_new_restrictions(
     gateway_factory, monkeypatch, crash_after_admission, allowance,
 ):
+    # This case tests durable path feedback, not recovery latency. Parallel Git
+    # startup on Windows can consume the production five-second read allowance.
+    monkeypatch.setattr(DevToolGateway, "_recovery_read_deadline", staticmethod(
+        lambda: ExecutionDeadline.from_remaining(60)))
     gateway, journal, workspace = gateway_factory()
     gateway.public_task.constraints.allowed_paths = [allowance]
     gateway.execute_batch(read_calls())
