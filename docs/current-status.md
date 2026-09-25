@@ -7,7 +7,30 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: fresh xhigh comparison closed incomplete; operator audit corrected
+## Current work: corrected fresh xhigh comparison v2
+
+The user authorized a new four-slot group after v1 closed incomplete. Fixed order
+PM/PF/TF/TM, original Pydantic-AI/tox v1 dev-train tasks, exact mini/full GPT-5.4
+snapshots, both xhigh, repeat1/$1.20 each/new$4.80 total. All four start fresh;
+v1's sample is historical and contributes no patch, memory or extra model input.
+Common runtime4d2fc8ba/v45, segmented-v1/brief-v1/probes-none/repair-recheck,
+40 model/100 tool/4 mutation/1800s/25K desired output remain unchanged.
+
+The successor collector integrates diagnostics/segmented_input_audit.py into live
+delivery audit and fresh mock smoke. A read-only rehearsal exercises its complete
+audit_slot against v1's eight saved actual requests, without changing the closed
+source. The new initial comparator excludes measured time and its derived segment
+ID; task/state/instructions/tools/flags stay equal within each task pair. Freeze
+the collector/helper, controls, sources/dependencies, same-date pricing and verified
+prior validation before dispatch. Reuse full core regression by unchanged hashes.
+
+Existing Docker/images only. Settled task failure continues; count/provider/billing/
+continuation/cleanup/integrity uncertainty stops the group. No retry, resume,
+replacement, extension or transfer of unused funds. All results official=false;
+acceptance over planned2/model, unstarted/NOT_RUN and resource effects stay separate.
+Packet: `C:\pt\analyses\mini-vs-gpt54-xhigh-solve-20260925-v2\protocol.md`.
+
+## Previous work: fresh xhigh comparison closed incomplete; operator audit corrected
 
 The four-slot mini/GPT-5.4 xhigh comparison is CLOSED_INCOMPLETE, official=false.
 Authorized order PM/PF/TF/TM used original dev-train Pydantic-AI/tox v1, fresh sources,
