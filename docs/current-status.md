@@ -18,14 +18,24 @@ Keep the common harness fixed: runtime 4d2fc8ba/v45, segmented-v1 with
 result-or-size-v1 boundaries, brief-v1, probes enabled with probe-policy none,
 repair-recheck, protected-v1 inspection and per-call-v1 completion cost admission.
 Existing limits remain 40 model calls/100 tool actions/4 accepted mutations/1,800s.
-Next, examine remaining failures on other existing dev-train tasks with this baseline
+Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
-This records the experimental direction; CLI defaults and runtime behavior are
-unchanged. Each new live group needs exact tasks, repeats and its own positive cap
-before dispatch. The completed comparison and its unused budget remain closed;
-this direction update launches no new sample. All runs remain official=false.
+The next bounded panel is N1 AnyIO v3 -> H1 HF Hub v5 -> F1 Fromager v1,
+one fresh solve each, repeat=1, $1.20 per slot and a new $3.60 invocation-wide cap.
+It reuses the existing exact-SHA sources and public probe dependencies for AnyIO
+and Fromager; HF Hub retains stdlib-only probes and its registered check environment.
+Credential file: C:\Users\geonj\Documents\PatchLoop\.env. The user selected the
+model baseline and requested proceeding with other existing tasks. No historical
+candidate, plan, note, review or hidden evaluator detail enters these solves.
+The existing collector and projected-input/usage/continuation audits are reused.
+Freeze task/runtime/collector/source/pricing after focused, mock and environment gates;
+use only existing Docker/images. Settled task/resource failures advance; infrastructure
+or count/provider/billing/continuation/cleanup/integrity uncertainty stops the group.
+No retry/resume/replacement/extension or transfer of old unused funds. CLI defaults
+and runtime behavior stay fixed; all runs are official=false. Packet:
+`C:\pt\analyses\gpt54-xhigh-baseline-panel-20260925-v1`.
 
 ## Latest completed comparison: fresh xhigh v2; full2/2, mini0/2
 
