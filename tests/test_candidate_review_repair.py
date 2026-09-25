@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from diagnostics import candidate_review_repair as experiment
+from diagnostics import change_review
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
 from patchloop.dev import runner
@@ -35,9 +36,12 @@ def request(root):
     )
 
 
-@pytest.mark.parametrize("review,with_feedback", [(None, False), (REPORT, False), (None, True)])
+@pytest.mark.parametrize("review,with_feedback,review_policy", [
+    (None, False, "none"), (REPORT, False, "none"), (None, True, "none"),
+    (None, False, change_review.POLICY),
+])
 def test_seed_repair_check_submit_isolated_evaluation(
-    tmp_path, monkeypatch, gateway_factory, smoke_package, review, with_feedback,
+    tmp_path, monkeypatch, gateway_factory, smoke_package, review, with_feedback, review_policy,
 ):
     patch = seed(gateway_factory)
     feedback = ({
@@ -85,6 +89,7 @@ def test_seed_repair_check_submit_isolated_evaluation(
         source_code=[], review=review, experiment_hash="sha256:" + "a" * 64,
         source_run_id="run_dev_saved", branch="A" if review is None else "B",
         public_feedback=feedback,
+        change_review_policy=review_policy,
     )["runs"][0]
     assert result["terminal"] == "EVALUATOR_PASS", result
     assert result["accepted_mutations"] == 1  # Seed is not a new tool action.
@@ -108,6 +113,16 @@ def test_seed_repair_check_submit_isolated_evaluation(
         assert "visible_check_status" in state and experiment.FIELD in state
         assert "source_run_id" not in state[experiment.FIELD]
     assert wires[-1]["visible_check_status"][0]["status"] == "PASS"
+    if review_policy != "none":
+        assert [change_review.FIELD in v for v in wires] == [True, False, True, False]
+        assert wires[0][change_review.FIELD]["subject"]["origin"] == "imported_model_candidate"
+        assert wires[2][change_review.FIELD]["subject"]["action_id"] == "repair-current"
+        assert wires[2][change_review.FIELD]["subject"]["diff_hash"] == (
+            wires[2]["current_diff"]["patch_hash"])
+        assert len([e for e in events
+                    if e["event_type"] == "diagnostic_change_review_policy"]) == 1
+    else:
+        assert all(change_review.FIELD not in v for v in wires)
     if review is not None:
         assert wires[0][experiment.FIELD]["review"]["currency"] == "matches_current_diff"
         assert wires[-1][experiment.FIELD]["review"]["currency"] == "older_candidate"
@@ -126,7 +141,7 @@ def test_seed_repair_check_submit_isolated_evaluation(
 
 
 @pytest.mark.parametrize("change", ["hash", "repeat", "resume", "root", "private_field",
-                                    "feedback_subject", "feedback_private_field"])
+                                    "feedback_subject", "feedback_private_field", "review_policy"])
 def test_invalid_seed_request_fails_before_runner(tmp_path, monkeypatch, change):
     req = request(tmp_path / "run")
     kwargs = {"seed_patch": "public patch", "seed_hash": sha256_text("public patch"),
@@ -143,6 +158,8 @@ def test_invalid_seed_request_fails_before_runner(tmp_path, monkeypatch, change)
         Path(req.state_root).mkdir()
     elif change == "private_field":
         kwargs["review"] = {**REPORT, "hidden_verdict": "PASS"}
+    elif change == "review_policy":
+        kwargs["change_review_policy"] = "unknown"
     else:
         feedback = {name: "public" for name in experiment.FEEDBACK_FIELDS}
         feedback["observed_on_diff_hash"] = kwargs["seed_hash"]

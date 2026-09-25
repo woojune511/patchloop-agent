@@ -22,6 +22,26 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
+## Active experiment: task-neutral review after a candidate change
+
+The user requested the proposed experiment. Prepare a fresh six-slot diagnostic:
+HA -> HB -> PB -> PA -> TA -> TB, A=existing seeded reconsideration,
+B=change-review-v1, exact GPT-5.4 snapshot/xhigh/25K, repeat1, $1.20 each and a new
+$7.20 group cap. Use the saved HF Hub v5, Pydantic and tox dev-train candidates in
+fresh prepared-source workspaces with the same source excerpts and normal tools.
+No reviewer findings, operator counterexamples, old checks/notes or hidden verdicts
+enter either arm. The seed consumes one mutation slot. Existing public checks and
+isolated acceptance remain in force. No retries, resumption, sample replacement,
+extra runs, Docker startup or image acquisition. Uncertainty stops the group.
+
+Only the diagnostic context overlay changes: a brief task-neutral question at the
+seed and after each successful content-changing mutation, removed after a response.
+Existing decision/memory fields carry model-selected questions and follow-up actions.
+No default runtime adoption, tool-schema change or new submission gate. This tests
+selected saved-candidate reconsideration, not independent fresh-solve generalization.
+Results and validation are pending; official=false.
+Packet: `C:\pt\analyses\change-review-compare-20260925-v1`.
+
 ## Latest diagnostic: stages complete; known defect repaired, acceptance still FAIL
 
 The selected HF Hub v5 candidate diagnostic is CLOSED_COMPLETE, official=false.

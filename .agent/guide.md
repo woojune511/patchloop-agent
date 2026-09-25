@@ -6406,6 +6406,20 @@ or generalization benefit.
 
 ## Validation checklist
 
+The optional `change_review_policy="change-review-v1"` on the seeded diagnostic
+adds one task-neutral review request after the imported seed and each subsequent
+content-changing successful mutation. A pure journal reducer binds the subject to
+the candidate hash/action, distinguishes imported candidates from agent actions,
+and consumes the request after the next recorded model response. Failed/no-op edits
+and segment transitions do not re-arm it; replaying the same prefix gives the same
+request. Delivery does not mean review completion. The request references the
+already available current diff/mutation and uses existing turn_decision.basis and
+verification_updates. No new tool schema, mandatory annotation, probe count, finish
+gate, standalone model call, source hint or default runtime policy is introduced.
+The policy/hash is journaled and the external frozen packet binds configuration;
+fresh diagnostics forbid resume. Test actual native delivery/removal/re-arming and
+the unchanged repair/check/submit/isolated-evaluation path before live execution.
+
 The opt-in `diagnostics/candidate_review_repair.py` seam is experiment-only. A fresh
 run_dev branch installs one saved public candidate before gateway creation, consumes
 one mutation slot and records diagnostic provenance, without importing old actions,

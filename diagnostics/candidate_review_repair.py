@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+from diagnostics import change_review
 from patchloop.artifacts import ArtifactStore
 from patchloop.dev import runner
 from patchloop.dev.contracts import DevRunRequest
@@ -97,7 +98,7 @@ def overlay(state, *, seed_hash, base_commit, source_code, review):
 def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                base_commit: str, source_code: list, review: dict | None,
                experiment_hash: str, source_run_id: str, branch: str,
-               public_feedback: dict | None = None):
+               public_feedback: dict | None = None, change_review_policy: str = "none"):
     """One fresh run; only supplemental review differs between comparison branches.
 
     The imported candidate consumes one of the usual four mutation slots. The normal
@@ -105,6 +106,8 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
     separate diagnostic receipt. The evaluator still creates its own clean workspace.
     """
     validate_feedback(public_feedback, seed_hash)
+    require(change_review_policy in ("none", change_review.POLICY),
+            "unknown change review policy")
     require(request.repeat == 1 and request.resume_run_id is None,
             "diagnostic branches forbid repetition and resume")
     require(request.state_root is not None and not request.state_root.exists(),
@@ -144,6 +147,13 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                 "resume_allowed": False,
             })
             initialized.append(journal.run_id)
+            if change_review_policy != "none":
+                journal.append("diagnostic_change_review_policy", {
+                    "official": False, "policy": change_review_policy,
+                    "instruction_hash": sha256_text(change_review.INSTRUCTION),
+                    "experiment_hash": experiment_hash,
+                    "delivery_is_completed_review": False,
+                })
             if public_feedback is not None:
                 journal.append("diagnostic_public_feedback_attached", {
                     "official": False, "feedback_hash": sha256_json(public_feedback),
@@ -157,6 +167,10 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                                source_code=source_code, review=review)
         if public_feedback is not None:
             state[FEEDBACK_FIELD] = feedback_overlay(state, public_feedback)
+        if change_review_policy != "none":
+            review_request = change_review.review_request(state, kwargs["journal"].events())
+            if review_request is not None:
+                state[change_review.FIELD] = review_request
         return canonical_json(state)
 
     with patch.object(runner, "DevToolGateway", SeededGateway), \
