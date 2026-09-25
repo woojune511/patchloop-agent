@@ -7,24 +7,54 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: own-candidate review and actual repair diagnostic
+## Current work: own-candidate review and repair comparison closed; no improvement
 
-The approved successor uses one saved mini-authored Pydantic-AI candidate from
-run_dev_4eebfe3e190249af, original dev-train task/base. One GPT-5.4 snapshot/xhigh
-review ($0.53), then mini snapshot/xhigh reconsideration without/with that review
-(A1/B1, repeat1, $1.20 each); new total cap $2.93, no transfers/retries/resume.
-Only that candidate, original public task and the same800 exact-base source lines
-are supplied. Successful alternatives and old reports/grades/checks/plans stay out.
+The bounded successor is CLOSED_COMPLETE, official=false. R1 is one GPT-5.4
+snapshot/xhigh review of the saved mini-authored Pydantic-AI candidate from
+run_dev_4eebfe3e190249af. A1/B1 are fresh mini snapshot/xhigh reconsiderations without/
+with that exact review, repeat1, under separate $1.20 caps; R1 cap$0.53, total$2.93.
+Both get the original dev-train task and same800 exact-base source lines. Successful
+alternatives and old reports/grades/checks/plans/continuations stay outside input.
 
-`diagnostics/candidate_review_repair.py` is an opt-in experiment seam around run_dev;
-the common runtime, prompts and defaults stay unchanged. Each fresh prepared workspace
-installs the same candidate, records its provenance separately, and consumes one
-mutation slot. The overlay contains unverified advice; after edits it explicitly
-refers to an older candidate. Normal tools, current checks and isolated evaluation
-remain active. Source/reference snippets do not confer edit evidence. First mock
-validation reaches repair/check/submission/isolated evaluation for both conditions.
-Full validation and frozen collection are in progress. No new live outcome yet.
-Evidence: `C:\pt\analyses\own-candidate-review-repair-20260925-v1\protocol.md`.
+Acceptance PASS/planned1 is A0/1, B0/1. Both start and submit, both FAIL acceptance,
+both safety PASS; NOT_RUN0/infrastructure0. R1 approves the candidate without finding
+its profile-scope problem. Both mini branches perform only two registered checks
+(8+18 public cases PASS) and finish, with no new edit, registered read or probe.
+Submitted patch hash59b0617d matches the seed in both arms. No first edit exists;
+zero repeated rejected edits is not an improvement signal when no edit was attempted.
+
+Public evidence shows field format was treated as sufficient applicability: ordinary
+OpenAI field-mode profiles also receive the new empty field, although the public
+requirement belongs to the provider-supplied profile. R1's proposed default-OpenAI/
+disabled-mode checks do not distinguish that case. Both mini branches treat public
+check PASS as sufficient to submit; a correct-review-to-repair mechanism was not
+exercised. The previous two-candidate selection success does not establish reliable
+single-candidate review. Its failed candidate and task format also differ, so the
+missing successful comparator is a hypothesis, not an isolated causal explanation.
+
+Recorded cost$0.3276493, cache-neutral$0.3512365, unused$2.6023507 closed. R1$0.2294425;
+A$0.0600030; B$0.0382038 ($0.0617910 cache-neutral). All7 count/generation pairs,
+6 actual mini inputs, continuations and3 client cleanups verify;327 protected files
+match. Both arms have3 model calls,2 segments (initial/major_result_reviewed); max
+inputs23,459/24,563. All output ceilings25K, no incomplete/protocol correction,
+compaction, output reduction or resource stop. R1 fails in a fresh single request;
+summary omission is not required for this observed review error.
+
+`diagnostics/candidate_review_repair.py` remains an opt-in seam around run_dev.
+Independent prepared workspaces, seed provenance/one consumed mutation slot,
+unverified review currency, normal tools and isolated evaluation are locally tested.
+The runtime remains4d2fc8ba/surface v45, with no default/prompt/tool change. Focused35
+distinct cases PASS (primary33/101.632s), both repair/check/submit/evaluation mocks
+PASS, Ruff PASS. Full148 files cover3,256 cases:3,240 PASS/16 SKIP after seven exact
+fixture rechecks resolve four initial timing failures; initial red evidence remains.
+Longest group1h47m22s. This is full coverage plus targeted rechecks, not a second
+clean full run. Only test timing fixtures changed; production timeouts stay fixed.
+
+Do not adopt automatic review or start another paid sample from unused funds.
+One selected candidate and one run per arm do not establish general reviewer value
+or mini's repair ability given correct advice. No private evaluator details or new
+operator contrast execution were used. Existing Docker/images only, no retry/resume.
+Evidence: `C:\pt\analyses\own-candidate-review-repair-20260925-v1\result.md`.
 
 ## Previous work: model-only selection comparison closed; limited follow-up signal
 
