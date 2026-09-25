@@ -22,6 +22,43 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
+## Latest public diagnostic: omitted client endpoint becomes explicit after defaulting
+
+BASE -> H1 original HF Hub v5 submission -> R1 saved port repair completed one fixed
+42-case public program each, official=false, zero model/count calls and cost. No new
+repair or private evaluation; acceptance NOT_RUN. The source/task/runtime stay fixed.
+
+Under the public no-explicit-endpoint preservation clause, BASE fails explicit-client
+default-origin rebasing0/6 and preserves omitted-client routes6/6. H1/R1 reverse this:
+explicit-client6/6, omitted-client0/6. All three preserve relative/foreign client
+routes24/24 and omitted functional callers6/6. Each totals36/42, but the failing
+condition changes. These are selected fixture cases, not independent task successes.
+
+The unchanged HfApi constructor replaces omitted endpoint with constants.ENDPOINT.
+H1/R1 forward self.endpoint, then use endpoint-is-not-None to allow rebasing; they
+cannot distinguish an explicit argument from the same string supplied by default.
+The original public contract constructs clients explicitly, so its no-endpoint
+direct-function controls and292 PASS do not cover this constructor contrast.
+
+Exact constructor source is absent from all10 saved H1 request inputs, but present
+in all5 R1 inputs and frozen D1/C1 review requests. R1's public action basis still treats
+the call-site endpoints as explicit and repairs only the supplied port counterexample.
+This supports an untested value-origin assumption; it does not establish summary
+loss, actual use of the delivered source, or the sole cause of private acceptance FAIL.
+The expectation follows the written public clause; redefining ambient client
+configuration as explicit would require a separate task-semantics decision.
+
+Next generic investigation: trace a value used by a changed condition back through
+its assignments/defaulting, then test equal effective values with different origins
+when the requirement distinguishes those origins. More source delivery or the
+previous broad change-review request alone has not established a benefit. No new
+prompt/policy/default is implemented or adopted from this single selected failure.
+
+All126 setups and executed module hashes verify; three no-network containers have
+confirmed cleanup, elapsed38.885s. Protected1,471 files verify. Ruff and docs3 PASS;
+no new full regression/mock because the runtime and harness are unchanged.
+Evidence: `C:\pt\analyses\hf-endpoint-provenance-audit-20260926-v1\result.md`.
+
 ## Latest baseline panel: pgmpy, PDM and Loguru all pass from fresh sources
 
 G1 pgmpy v1 -> P1 PDM v2 -> L1 Loguru v3 completed once each with the current
