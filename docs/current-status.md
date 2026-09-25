@@ -7,7 +7,27 @@ and always records `official=false`. The available commands are `patchloop dev`,
 legacy Rapid and provider-backed
 claim commands are absent.
 
-## Current work: fresh xhigh comparison v2 closed; full2/2, mini0/2
+## Current direction: GPT-5.4 xhigh performance baseline
+
+The user-selected baseline for the next performance experiments is
+`gpt-5.4-2026-03-05` with `reasoning_effort=xhigh` and a 25,000-token output target.
+The completed model-only comparison below supports this working choice: full 2/2,
+mini 0/2 on two familiar dev-train tasks. It does not establish a general success rate.
+
+Keep the common harness fixed: runtime 4d2fc8ba/v45, segmented-v1 with
+result-or-size-v1 boundaries, brief-v1, probes enabled with probe-policy none,
+repair-recheck, protected-v1 inspection and per-call-v1 completion cost admission.
+Existing limits remain 40 model calls/100 tool actions/4 accepted mutations/1,800s.
+Next, examine remaining failures on other existing dev-train tasks with this baseline
+and use public source/action/check evidence to select a common harness improvement.
+Task-specific prompt or repair hints remain outside this direction.
+
+This records the experimental direction; CLI defaults and runtime behavior are
+unchanged. Each new live group needs exact tasks, repeats and its own positive cap
+before dispatch. The completed comparison and its unused budget remain closed;
+this direction update launches no new sample. All runs remain official=false.
+
+## Latest completed comparison: fresh xhigh v2; full2/2, mini0/2
 
 The fresh four-slot model comparison is CLOSED_COMPLETE, official=false. Fixed
 PM/PF/TF/TM order, original Pydantic-AI/tox v1 dev-train tasks, exact mini/full

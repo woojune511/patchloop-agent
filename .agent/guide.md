@@ -59,8 +59,14 @@ Comparison: C:\pt\analyses\mini-xhigh-question-observation-compare-20260924-v1.
 Evidence/candidate:
 C:\pt\analyses\evidence-to-repair-audit-20260924-v1\result.md.
 
-Current performance direction: fix mini xhigh as the experimental baseline and defer
-further effort comparisons. No CLI default adoption or new live sample is implied.
+Current performance direction: use the user-selected gpt-5.4-2026-03-05/xhigh/25K
+experimental baseline. Keep the common harness fixed as recorded in
+docs/current-status.md; examine remaining failures on other existing dev-train tasks
+before selecting a common harness improvement. The completed model-only comparison
+is full 2/2 versus mini 0/2 on two familiar tasks, not a general success-rate estimate.
+Further effort comparisons remain deferred. CLI defaults and closed groups remain
+unchanged; a new live group requires its own exact task/repeat/cap boundaries.
+
 A2 capability audit verifies11 post-failure actual inputs and exact check-output
 delivery; read/search/probe/mutation remain offered. The failed child is outside the
 launch-thread collector's scope. Four synthetic scope cases and two real stdlib-only
