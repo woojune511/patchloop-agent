@@ -246,12 +246,14 @@ def test_pending_mutation_before_horizon_never_reapplied(branch, fault):
 def test_late_response_preserved_without_tools_and_terminal_needs_no_git(branch):
     now = [0.0]
     branch.clock.clock = lambda: now[0]
-    branch.gateway.deadline = ExecutionDeadline(1, clock=lambda: now[0])
+    # Preparation still performs real Git I/O. Keep that timeout separate from
+    # the simulated late response so parallel suite load cannot preempt dispatch.
+    branch.gateway.deadline = ExecutionDeadline(60, clock=lambda: now[0])
 
     class Late(Adapter):
         def execute_request(self, *args, **kwargs):
             raw = super().execute_request(*args, **kwargs)
-            now[0] = 2
+            now[0] = 61
             return raw
 
     with pytest.raises(rollout.engine.AbortExperiment) as error:
