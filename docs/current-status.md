@@ -22,20 +22,47 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
-The next bounded panel is N1 AnyIO v3 -> H1 HF Hub v5 -> F1 Fromager v1,
-one fresh solve each, repeat=1, $1.20 per slot and a new $3.60 invocation-wide cap.
-It reuses the existing exact-SHA sources and public probe dependencies for AnyIO
-and Fromager; HF Hub retains stdlib-only probes and its registered check environment.
-Credential file: C:\Users\geonj\Documents\PatchLoop\.env. The user selected the
-model baseline and requested proceeding with other existing tasks. No historical
-candidate, plan, note, review or hidden evaluator detail enters these solves.
-The existing collector and projected-input/usage/continuation audits are reused.
-Freeze task/runtime/collector/source/pricing after focused, mock and environment gates;
-use only existing Docker/images. Settled task/resource failures advance; infrastructure
-or count/provider/billing/continuation/cleanup/integrity uncertainty stops the group.
-No retry/resume/replacement/extension or transfer of old unused funds. CLI defaults
-and runtime behavior stay fixed; all runs are official=false. Packet:
-`C:\pt\analyses\gpt54-xhigh-baseline-panel-20260925-v1`.
+## Latest baseline panel: complete; AnyIO PASS, HF Hub FAIL, Fromager PASS
+
+N1 AnyIO v3 -> H1 HF Hub v5 -> F1 Fromager v1 completed, one fresh solve each,
+repeat=1, $1.20 per slot/new $3.60 cap. Acceptance 2/3 PASS, started/submitted 3/3,
+NOT_RUN 0, infrastructure 0, safety 3 PASS. Exact GPT-5.4 snapshot/xhigh and all common
+settings above stay fixed. Sources, dependencies and local images are reused;
+old candidates/plans/notes/reviews and hidden evaluator details never enter input.
+HF Hub retains stdlib-only probes; no solve used a probe. No start/pull/build.
+
+Recorded N$0.8398935/H$0.8976320/F$0.3058185, total $2.0433440; cache-neutral
+$1.1892375/$1.1571200/$0.3729225, total $2.7192800. Unused $1.556656 is closed.
+Calls 10/10/6, first edits 7/5/3, mutations 1/3/1, peak inputs 58,724/48,911/25,772,
+segments 3/5/3. All first edits were in initial segments; later reasons are only
+major_result_reviewed. All 26 responses completed, no resource/incomplete ending.
+Last submission ceilings were cost-reduced to 24,524/22,686 for N/H; both completed.
+
+N reuses same-task runner ownership while containing cancellation and draining an
+interrupted call, then passes public lifecycle 7 and upstream 32. F extends existing
+reciprocal-edge deletion with a queue of newly parentless descendants, passing 5+12.
+H wires endpoint context across parser/direct/download/client helpers and passes
+292+15 public cases, then fails acceptance. All six checks bind the final submitted
+diff. There are no rejected edits, probes or failed-public-check repair sequences.
+
+Public static review finds H's new port normalization uses `port or default_port`,
+collapsing explicit zero into the absent-port case. Thus a default-host HTTPS route
+with explicit port 0 is treated as default origin and rebased despite the public
+foreign-origin preservation requirement. The delivered public table tests 443/444,
+not zero. No additional candidate/counterexample execution or private assertion read
+was performed; whether this defect caused the hidden FAIL remains unconfirmed.
+It was already in the first, pre-handoff edit. Next investigate task-neutral selection
+of checks that distinguish value categories in newly written conditions; keep the
+baseline fixed and avoid immediately adding task hints or mandatory probe quotas.
+
+Focused 36 PASS/75.989s, Ruff/docs PASS; fresh mock mutation/check/submit/isolated
+evaluation and all three source/import/cleanup gates PASS. Prior full core 3,240 PASS/
+16 SKIP plus fixture rechecks reused by hash; no new full core regression. All 26
+count/generation wires, actual projected public inputs, continuations and three client
+cleanups verify; 720 protected files unchanged, owned containers 0. Familiar dev-train
+observations only, official=false; no general rate or failed-check repair claim.
+No retry/resume/replacement/extension. Evidence:
+`C:\pt\analyses\gpt54-xhigh-baseline-panel-20260925-v1\result.md`.
 
 ## Latest completed comparison: fresh xhigh v2; full2/2, mini0/2
 
