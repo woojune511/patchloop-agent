@@ -22,36 +22,55 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
-## Current work: bounded assumption discovery, check design and assisted repair
+## Latest diagnostic: stages complete; known defect repaired, acceptance still FAIL
 
-One selected HF Hub v5 candidate from run_dev_094cf1bf71f94407 is used in three
-fresh GPT-5.4 snapshot/xhigh stages, D1 -> C1 -> R1. D1 is one unhinted public
-candidate review; C1 is one independent review with only the unverified port-fallback
-question added. R1 is one fresh seeded run_dev repair with operator-executed public
-counterexample output. D1/C1 reports, old plans/notes/check verdicts and acceptance
-details are not supplied to R1. The last two stages are assisted diagnostics.
+The selected HF Hub v5 candidate diagnostic is CLOSED_COMPLETE, official=false.
+Fresh GPT-5.4 snapshot/xhigh D1 -> C1 -> R1 ran once each under a new $2.26 cap
+($0.53/$0.53/$1.20). D1/C1 each made one report call; R1 made five ordinary run_dev
+calls from a fresh seeded workspace. The seed consumes one of four mutation slots.
+Common runtime 4d2fc8ba/v45, prompts/tools/defaults and baseline limits stay fixed.
 
-New invocation cap $2.26: D1/C1 $0.53 each, R1 $1.20, repeat1; no budget transfer,
-retry, replacement, automatic resume or additional samples. Report calls have a
-25K ceiling; R1 keeps the baseline controls and 40/100/4/1,800s limits, including
-one seed mutation slot. Prepared source, existing images and the exact credential
-file are reused. Runtime 4d2fc8ba/v45, common prompts/tools/defaults stay fixed.
+D1 received the original public task, 606 exact-base source lines and one candidate.
+It missed the absent-port versus explicit-zero defect and proposed rebasing an
+ambient-only download despite the public preservation clause for no-explicit-endpoint
+callers. That expectation is unsupported. Its fresh single response completed with
+11,118 input/17,525 output tokens; no summary or resource ending explains the miss.
 
-A frozen operator program exercises the actual parser for absent/443/0/444 ports
-through headers and links in the existing public-check image with no network.
-Before execution, explicit zero is the only mismatch (2 of 8 cases). Only R1 gets
-this output. Execute the identical program once on R1's submitted final candidate
-afterward; operator verification receives no agent discovery/checking credit.
-Hidden failing assertions remain unread. This is a selected-case decomposition,
-not a policy A/B, general capability estimate or default adoption.
+C1 differed only by an unverified question about the new port fallback; no zero input,
+observed output, replacement code or D1 report was given. It identified :0 versus :443
+and proposed concrete HfApi inputs/expected routes and an is-None repair. Check design
+is supported, but its proposed HfApi program was not executed in this report-only stage.
 
-The opt-in diagnostic seam now binds public execution feedback to its seed hash
-and marks it historical after edits. Focused 22 PASS/92.779s, collector/transport
-29 distinct PASS, fresh seeded mock repair/check/submit/isolated evaluation and
-actual segmented input delivery PASS. Full core evidence is reused by unchanged
-runtime hash; a new full core regression is not claimed. Final freeze/dispatch and
-results are recorded in
-`C:\pt\analyses\gpt54-xhigh-assumption-stages-20260925-v1`.
+R1 received the frozen operator public program/output, not D1/C1 reports or old
+plans/notes/check verdicts/acceptance details. It read three current code spans,
+changed both port normalizations at call2, passed public292+15, and submitted at call5.
+New mutations1, probes0, rejected/duplicate edits0. It did not itself re-execute the
+specific zero-port case. The identical operator parser program on the submitted diff
+passes8/8, versus6/8 before; actual module path/hash and no-network execution verify.
+Known defect repair PASS is separate from whole-task acceptance FAIL/safety PASS.
+Acceptance PASS/planned repair1 is0/1; started1/submitted1/NOT_RUN0/infrastructure0.
+The remaining acceptance failure is unexplained; no private assertion was inspected.
+
+Recorded D$0.290670/C$0.118990/R$0.317224, total$0.726884; cache-neutral$0.855620.
+Unused$1.533116 closed. All7 exact-model responses completed with25K ceilings and
+matching counts/wires/usage/continuations; three clients cleaned up. R1 peak input36,210,
+segments3(initial/major_result_reviewed/major_result_reviewed), no resource/protocol
+ending or input-size transition. No retry/resume/replacement/extension or image startup.
+
+The opt-in diagnostic seam binds public execution feedback to the seed hash and marks
+it historical after edits; omission preserves old inputs. Focused22 PASS/92.779s,
+collector/transport29 distinct PASS, docs3 PASS/Ruff PASS:54 distinct cases. Three fresh
+seeded mocks reach repair/check/submit/isolated evaluation with actual input checks.
+Prior full core3,240 PASS/16 SKIP plus exact fixture rechecks is reused by core hash;
+no new full core regression. Preliminary duplicate test summaries are retained;
+validation-reconciled.json is authoritative. Implementation commit bd645d88.
+
+This supports further task-neutral investigation of assumption discovery and how
+known counterexamples remain unverified after an edit. It does not show that failing
+to re-run the zero case caused acceptance FAIL: that defect was actually fixed.
+C1/R1 are assisted, D1 is a fresh review, and all are one selected case. No general
+quality gain, causal memory-loss claim, mandatory probe policy or default adoption.
+Evidence: `C:\pt\analyses\gpt54-xhigh-assumption-stages-20260925-v1\result.md`.
 
 ## Latest baseline panel: complete; AnyIO PASS, HF Hub FAIL, Fromager PASS
 
