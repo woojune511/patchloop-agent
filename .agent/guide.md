@@ -6406,6 +6406,20 @@ or generalization benefit.
 
 ## Validation checklist
 
+Latest change-review comparison is CLOSED_COMPLETE, official=false, no adoption:
+HA/HB/PB/PA/TA/TB, full GPT-5.4 xhigh, $1.20 each/new $7.20 cap. Acceptance A1/3,
+B1/3; all started/submitted, no NOT_RUN or group stop. H/P checks-only FAIL in both;
+T repairs to the same diff and PASS in both. B finds the T question at call1 versus
+A call2, edits at3 versus5, finishes in5 versus7; B uses code/search, A demonstrates
+a public default-swallowing counterexample after repairing an import-only probe.
+Neither executes that contrast after its edit. Do not equate the broad H/P concern
+records with successful scope discovery or infer causal improvement from these seeds.
+Recorded$1.5621585/cache-neutral$1.9187025; unused$5.6378415 closed. All24 actual
+requests/counts/usage/continuations verify,6 clients close, Docker0. Fresh tests57
+PASS, focused89.599s,4 seeded isolated mocks/16 saved inputs, Ruff/diff PASS.
+Core4d2fc8ba/v45 unchanged; prior full3240/16 SKIP plus fixture rechecks reused.
+Evidence: `C:\pt\analyses\change-review-compare-20260925-v1\result.md`.
+
 The optional `change_review_policy="change-review-v1"` on the seeded diagnostic
 adds one task-neutral review request after the imported seed and each subsequent
 content-changing successful mutation. A pure journal reducer binds the subject to

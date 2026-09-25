@@ -22,25 +22,38 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
-## Active experiment: task-neutral review after a candidate change
+## Latest experiment: change review complete; same acceptance, no default adoption
 
-The user requested the proposed experiment. Prepare a fresh six-slot diagnostic:
-HA -> HB -> PB -> PA -> TA -> TB, A=existing seeded reconsideration,
-B=change-review-v1, exact GPT-5.4 snapshot/xhigh/25K, repeat1, $1.20 each and a new
-$7.20 group cap. Use the saved HF Hub v5, Pydantic and tox dev-train candidates in
-fresh prepared-source workspaces with the same source excerpts and normal tools.
-No reviewer findings, operator counterexamples, old checks/notes or hidden verdicts
-enter either arm. The seed consumes one mutation slot. Existing public checks and
-isolated acceptance remain in force. No retries, resumption, sample replacement,
-extra runs, Docker startup or image acquisition. Uncertainty stops the group.
+HA -> HB -> PB -> PA -> TA -> TB is CLOSED_COMPLETE, official=false. A uses existing
+seeded reconsideration; B adds a task-neutral change-review-v1 request. Exact GPT-5.4
+snapshot/xhigh/25K and common harness above, repeat1/$1.20 each/new $7.20 group cap.
+Each arm has acceptance PASS1/planned3, started3/submitted3/NOT_RUN0; no group stop.
+HF Hub and Pydantic both FAIL without a new edit; tox both PASS with one new edit
+and the identical submitted diff ecffc47d. All six safety results PASS.
 
-Only the diagnostic context overlay changes: a brief task-neutral question at the
-seed and after each successful content-changing mutation, removed after a response.
-Existing decision/memory fields carry model-selected questions and follow-up actions.
-No default runtime adoption, tool-schema change or new submission gate. This tests
-selected saved-candidate reconsideration, not independent fresh-solve generalization.
-Results and validation are pending; official=false.
-Packet: `C:\pt\analyses\change-review-compare-20260925-v1`.
+H/P B records broad verification concerns but still checks then submits; it does
+not select the known public absent/zero-port or same-field/provider-scope contrast.
+T A asks about broad KeyError handling at call2, reads current source, distinguishes
+an import-only probe failure from an actual counterexample, observes swallowed
+explicit defaults on its second probe, repairs at call5 and passes public29.
+T B asks the same code-specific question at call1, reads/searches the documented
+fallback, repairs at call3 and passes public29. Calls7/5, probes2/0. Neither reruns
+the specific contrast after its edit; A explicitly acknowledges that limitation.
+This is selected saved-candidate reconsideration, not a fresh-solve success rate.
+
+Recorded cost A$0.9613315/B$0.6008270, total$1.5621585; cache-neutral$1.9187025.
+Unused$5.6378415 closed. All24 counts/dispatches/public-input deliveries and
+continuations verify; all responses use25K ceilings, no resource/incomplete ending.
+B requests reach H/P call1 and T calls1/4. Six clients close; Docker containers0.
+No retry/resume/replacement/extension or startup/pull/build. Hidden details unread.
+
+Diagnostic-only implementation b906517d preserves core4d2fc8ba/v45 and tool schemas.
+Fresh focused20 PASS/89.599s, related27 PASS/69.602s, operator10 PASS/1.444s:57 PASS.
+Four seeded mocks reach isolated evaluation;16 actual inputs retained. Ruff/diff PASS.
+Unchanged core reuses prior full3240 PASS/16 SKIP plus fixture rechecks; no fresh full.
+No default adoption or causal/generalization claim. T's earlier investigation is a
+single-sample observation; H/P still fail to choose the discriminating condition.
+Evidence: `C:\pt\analyses\change-review-compare-20260925-v1\result.md`.
 
 ## Latest diagnostic: stages complete; known defect repaired, acceptance still FAIL
 
