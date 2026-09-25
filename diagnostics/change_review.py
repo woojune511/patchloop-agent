@@ -20,9 +20,30 @@ INSTRUCTION = (
     "action. A successful check does not by itself answer that particular question. "
     "Keep this concise; all existing actions and submission rules remain available."
 )
+VALUE_ORIGIN_POLICY = "value-origin-review-v1"
+VALUE_ORIGIN_INSTRUCTION = (
+    "Before choosing your next action, examine the changed code in current_diff and, "
+    "when present, last_successful_mutation. Select one changed condition or newly "
+    "forwarded value whose origin could affect the public task's required behavior. "
+    "Trace that value through its assignments, default substitution and normalization "
+    "using current registered source evidence. Distinguish its effective value from "
+    "how it was produced: which input or state distinctions survive, and which are "
+    "lost before the changed code uses it? If that path is unknown, state the specific "
+    "missing relation and choose an available read or search to resolve it. If the "
+    "public requirement distinguishes cases that this path merges, choose the smallest "
+    "available observation comparing those cases even when their effective values match. "
+    "Derive expected behavior from the public requirement. Do not assume a defect or "
+    "require different behavior merely "
+    "because the origins differ. State the question and supporting evidence concisely "
+    "in your existing turn_decision.basis; use existing verification_updates for a "
+    "concern that remains open. After an observation, explain how its answer changes "
+    "the next action. If no relevant origin distinction remains unresolved, continue "
+    "normally. All existing actions and submission rules remain available."
+)
+INSTRUCTIONS = {POLICY: INSTRUCTION, VALUE_ORIGIN_POLICY: VALUE_ORIGIN_INSTRUCTION}
 
 
-def review_request(state, events):
+def review_request(state, events, *, policy=POLICY):
     """Reconstruct eligibility without new receipts, mutable counters or source reads.
 
     A response after the subject consumes this request, irrespective of whether the
@@ -51,4 +72,4 @@ def review_request(state, events):
             fresh = False
     if not fresh or subject is None or subject["diff_hash"] != state["current_diff"]["patch_hash"]:
         return None
-    return {"policy": POLICY, "subject": subject, "instruction": INSTRUCTION}
+    return {"policy": policy, "subject": subject, "instruction": INSTRUCTIONS[policy]}

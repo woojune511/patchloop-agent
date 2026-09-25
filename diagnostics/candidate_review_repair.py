@@ -106,7 +106,7 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
     separate diagnostic receipt. The evaluator still creates its own clean workspace.
     """
     validate_feedback(public_feedback, seed_hash)
-    require(change_review_policy in ("none", change_review.POLICY),
+    require(change_review_policy in ("none", *change_review.INSTRUCTIONS),
             "unknown change review policy")
     require(request.repeat == 1 and request.resume_run_id is None,
             "diagnostic branches forbid repetition and resume")
@@ -150,7 +150,8 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
             if change_review_policy != "none":
                 journal.append("diagnostic_change_review_policy", {
                     "official": False, "policy": change_review_policy,
-                    "instruction_hash": sha256_text(change_review.INSTRUCTION),
+                    "instruction_hash": sha256_text(
+                        change_review.INSTRUCTIONS[change_review_policy]),
                     "experiment_hash": experiment_hash,
                     "delivery_is_completed_review": False,
                 })
@@ -168,7 +169,9 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
         if public_feedback is not None:
             state[FEEDBACK_FIELD] = feedback_overlay(state, public_feedback)
         if change_review_policy != "none":
-            review_request = change_review.review_request(state, kwargs["journal"].events())
+            review_request = change_review.review_request(
+                state, kwargs["journal"].events(), policy=change_review_policy,
+            )
             if review_request is not None:
                 state[change_review.FIELD] = review_request
         return canonical_json(state)

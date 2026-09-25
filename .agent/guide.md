@@ -6434,6 +6434,22 @@ The policy/hash is journaled and the external frozen packet binds configuration;
 fresh diagnostics forbid resume. Test actual native delivery/removal/re-arming and
 the unchanged repair/check/submit/isolated-evaluation path before live execution.
 
+The same seam also accepts `change_review_policy="value-origin-review-v1"`.
+Only the task-neutral instruction and its policy/hash differ from change-review-v1;
+the old instruction bytes and the default `none` are preserved. The request asks the
+model to trace one changed condition or newly forwarded value through assignments,
+default substitution and normalization using current registered source evidence.
+When the public requirement distinguishes origins that the code merges, compare
+those cases even if their effective values match. Different origins alone do not
+justify different behavior or prove a defect. Missing relations guide the next
+read/search; observations inform the next action through existing basis/notes.
+This does not inject source snippets, task identifiers, known counterexamples or
+repair advice, select tools on the model's behalf, add a mandatory review gate, or
+claim that delivery completed an investigation. Timing, candidate/action binding,
+one-response consumption and successful-change re-arming use the same reducer.
+This option is diagnostic-only; source-origin discovery and performance benefit
+need a separately frozen live comparison. Local mocks test integration, not ability.
+
 The opt-in `diagnostics/candidate_review_repair.py` seam is experiment-only. A fresh
 run_dev branch installs one saved public candidate before gateway creation, consumes
 one mutation slot and records diagnostic provenance, without importing old actions,

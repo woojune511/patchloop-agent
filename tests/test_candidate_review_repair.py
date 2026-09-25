@@ -28,20 +28,26 @@ def seed(gateway_factory):
     return gateway.current_diff.patch
 
 
-def request(root):
+def request(root, context_policy="segmented-v1"):
     return DevRunRequest(
         provider="mock", model="mock", state_root=root,
         task=repository_root() / "tasks/smoke/csv-quoted-newline/public.yaml",
-        context_policy="segmented-v1", planning_policy="brief-v1", repair_recheck=True,
+        context_policy=context_policy, planning_policy="brief-v1", repair_recheck=True,
     )
 
 
-@pytest.mark.parametrize("review,with_feedback,review_policy", [
-    (None, False, "none"), (REPORT, False, "none"), (None, True, "none"),
-    (None, False, change_review.POLICY),
+@pytest.mark.parametrize("review,with_feedback,review_policy,context_policy", [
+    pytest.param(None, False, "none", "segmented-v1", id="default"),
+    pytest.param(REPORT, False, "none", "segmented-v1", id="report"),
+    pytest.param(None, True, "none", "segmented-v1", id="feedback"),
+    pytest.param(None, False, change_review.POLICY, "segmented-v1", id="change-review"),
+    pytest.param(None, False, change_review.VALUE_ORIGIN_POLICY, "append-v1", id="origin-append"),
+    pytest.param(None, False, change_review.VALUE_ORIGIN_POLICY, "segmented-v1",
+                 id="origin-segmented"),
 ])
 def test_seed_repair_check_submit_isolated_evaluation(
     tmp_path, monkeypatch, gateway_factory, smoke_package, review, with_feedback, review_policy,
+    context_policy,
 ):
     patch = seed(gateway_factory)
     feedback = ({
@@ -84,7 +90,7 @@ def test_seed_repair_check_submit_isolated_evaluation(
     monkeypatch.setattr(runner, "MockDevAdapter", RepairMock)
     root = tmp_path / "branch"
     result = experiment.run_seeded(
-        request(root), seed_patch=patch, seed_hash=sha256_text(patch),
+        request(root, context_policy), seed_patch=patch, seed_hash=sha256_text(patch),
         base_commit=smoke_package.public.repository.base_commit,
         source_code=[], review=review, experiment_hash="sha256:" + "a" * 64,
         source_run_id="run_dev_saved", branch="A" if review is None else "B",
@@ -106,7 +112,7 @@ def test_seed_repair_check_submit_isolated_evaluation(
         if event["event_type"] == "turn_started":
             items = json.loads(store.read_bytes(Artifact.model_validate(
                 event["payload"]["model_input_artifact"])))
-            wires.append(reconstruct_state(items, context_policy="segmented-v1"))
+            wires.append(reconstruct_state(items, context_policy=context_policy))
     assert len(wires) == len(inputs) == 4
     for state in wires:
         assert state["public_task"] and state["current_diff"]["patch"]
@@ -119,8 +125,15 @@ def test_seed_repair_check_submit_isolated_evaluation(
         assert wires[2][change_review.FIELD]["subject"]["action_id"] == "repair-current"
         assert wires[2][change_review.FIELD]["subject"]["diff_hash"] == (
             wires[2]["current_diff"]["patch_hash"])
-        assert len([e for e in events
-                    if e["event_type"] == "diagnostic_change_review_policy"]) == 1
+        instruction = change_review.INSTRUCTIONS[review_policy]
+        assert all(wires[i][change_review.FIELD]["policy"] == review_policy for i in (0, 2))
+        assert all(wires[i][change_review.FIELD]["instruction"] == instruction for i in (0, 2))
+        receipts = [e["payload"] for e in events
+                    if e["event_type"] == "diagnostic_change_review_policy"]
+        assert len(receipts) == 1
+        assert receipts[0]["policy"] == review_policy
+        assert receipts[0]["instruction_hash"] == sha256_text(instruction)
+        assert receipts[0]["delivery_is_completed_review"] is False
     else:
         assert all(change_review.FIELD not in v for v in wires)
     if review is not None:

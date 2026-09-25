@@ -22,6 +22,34 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
+## Latest implementation: optional value-origin review, locally verified
+
+The seeded diagnostic now accepts `change_review_policy="value-origin-review-v1"`.
+It asks the model to trace one changed condition or forwarded value through its
+assignments, default substitution and normalization, then compare origins that
+the public requirement distinguishes even when the effective values match.
+The model selects current source reads and observations with existing public tools;
+this is a review instruction, not an automatic data-flow analyzer or completed review.
+
+The original change-review-v1 instruction is byte-identical. The option uses its
+same subject/action binding, one-response consumption and successful-change re-arming.
+Only policy/instruction and the journaled instruction hash vary. No task-specific
+source, known counterexample, repair hint, new tool, or mandatory finish gate is added.
+Default none, production runtime4d2fc8ba/v45 and ordinary dev inputs remain unchanged.
+
+Focused24 PASS/50.409s covers both reducers, invalid-seed admission and append/segmented
+mock repair/check/submit/isolated evaluation. Eight actual native inputs are retained;
+review delivery is true/false/true/false in each four-call mock. Existing none/report/
+public-feedback/change-review paths pass4 more isolated mocks/90.762s. Docs3 and Ruff
+PASS;31 distinct fresh tests. No new full regression; unchanged core retains prior
+validation, while the affected diagnostic paths were freshly exercised.
+
+No provider/count/Docker call or live quality comparison; cost$0, official=false.
+These mocks verify delivery and execution compatibility, not discovery or performance.
+Next efficacy comparison should vary this review question against the existing review
+with the same saved candidate, source, model and limits; no default adoption yet.
+Evidence: `C:\pt\validation\value-origin-review-20260926-v1\result.md`.
+
 ## Latest public diagnostic: omitted client endpoint becomes explicit after defaulting
 
 BASE -> H1 original HF Hub v5 submission -> R1 saved port repair completed one fixed
