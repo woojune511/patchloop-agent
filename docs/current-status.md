@@ -69,10 +69,14 @@ An offline replay of PG's four initial searches matches the historical source ou
 Only the profile declaration query changes: it gains 12 source lines, including the
 format documentation, without removing previous lines. This is source delivery evidence;
 it does not show a better question, edit or acceptance result. The saved-search preview
-is not a hydrated historical checkpoint. A collector for the exact post-search decision
-still needs to bind the original plan/continuation and changed evidence/derived state.
-No paid comparison or new live allocation exists. This belongs to the earlier information
-supplement family; do not adopt broader search output from local/mock validation alone.
+is not a hydrated historical checkpoint. A separate checkpoint sampler now reconstructs
+the saved post-search request and retains its first plan, native continuation and budgets.
+A must match the original; B recomputes only source-derived context after the generic
+expansion. It reuses the bounded one-response collector for A1/B1/B2/A2. Selected tools
+are not executed, so a later edit and task acceptance remain outside this diagnostic.
+No paid comparison or new live allocation exists. The next decision is whether immediate
+public questions change under this fixed input intervention. This belongs to the earlier
+information supplement family; local/mock validation does not justify default adoption.
 
 H's missing-import capability gap is resolved for this prepared environment: an
 opt-in adapter statically reads literal setup.py runtime requirements and reuses the
@@ -87,6 +91,10 @@ The declaration diagnostic's focused validation includes A/B mocks in both appen
 and segmented-v1, reaching edit/check/submit/isolated evaluation and checking actual input
 delivery. The scope, replay/cache and mutation-evidence contracts are covered. The old
 runtime hash remains unchanged because the adapter is optional diagnostic code.
+
+The frozen checkpoint collector has separate local evidence for exact input restoration,
+unchanged first plan/continuation, source-dependent projection and shared collection stops.
+Its scripted responses test the collector, not autonomous question selection or acceptance.
 
 The optional `alternative` argument on the seeded diagnostic admits only exact public
 patch/hash/base data from a separately verified producer. It supplies generic comparison
@@ -109,6 +117,9 @@ Unused funds are closed; no retry, replacement, resume, extension or default ado
 Evidence locations for targeted lookup:
 
 - Current implementation: [declaration context](../.agent/declaration-context.md).
+- Frozen decision contract: [checkpoint sampler](../.agent/declaration-checkpoint.md).
+- Checkpoint implementation: [frozen declaration decision](history/2026-09-26-declaration-checkpoint-sampler.md).
+- Prepared comparison: `C:\pt\analyses\declaration-checkpoint-20260926-v1\result.md`.
 - Implementation record: [declaration-context diagnostic](history/2026-09-26-declaration-context-diagnostic.md).
 - Source preview: `C:\pt\analyses\declaration-context-preview-20260926-v1\result.md`.
 - Local validation: `C:\pt\validation\declaration-context-20260926-v1\result.md`.

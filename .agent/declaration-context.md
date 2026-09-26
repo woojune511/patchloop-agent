@@ -46,7 +46,8 @@ The wrapper requires a fresh external state root, repeat=1 and no resume. Run it
 a dedicated sequential process because the scoped gateway hook is process-local.
 The normal runner owns workspace isolation, cost admission, transport uncertainty,
 idempotency, completion and isolated evaluation. This diagnostic does not provide a
-live collector, new paid allocation or normal-CLI recovery of diagnostic runs.
+new paid allocation or normal-CLI recovery of diagnostic runs. The separate
+[checkpoint sampler](declaration-checkpoint.md) compares frozen next decisions.
 
 ## Validation and interpretation
 
@@ -59,6 +60,6 @@ test plumbing and delivery, not autonomous condition reasoning.
 The external saved-search preview replays only the first public search batch from
 a closed run and compares code ranges. It is not a hydrated historical checkpoint,
 does not preserve or dispatch that run's entire native request, and measures no model
-effect. A future comparison at that exact decision must additionally bind the prior
-plan, native continuation, changed search evidence and derived state. A fresh run
-through this wrapper alone is not that fixed-checkpoint comparison.
+effect. The separate checkpoint sampler binds the prior plan, native continuation,
+changed search evidence and derived state. A fresh run through this wrapper alone
+is not that fixed-checkpoint comparison; use the sampler's frozen request contract.

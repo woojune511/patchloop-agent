@@ -145,7 +145,8 @@ experimental context and historical plans; current source/status take precedence
 - Candidate comparison: [independent candidate](independent-candidate.md), an
   opt-in public alternative in the ordinary seeded repair loop.
 - Search context: [declaration context](declaration-context.md), opt-in bounded
-  declaration/documentation expansion in the first tool batch of a fresh diagnostic.
+  declaration/documentation expansion in the first tool batch; the separate
+  [checkpoint sampler](declaration-checkpoint.md) retains a saved first decision prefix.
 
 ## Validation checklist
 

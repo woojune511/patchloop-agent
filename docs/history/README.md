@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-26: frozen declaration decision](2026-09-26-declaration-checkpoint-sampler.md):
+  exact post-search input restoration and optional bounded next-response collection.
 - [2026-09-26: declaration-context diagnostic](2026-09-26-declaration-context-diagnostic.md):
   bounded first-batch source expansion, offline search replay, and isolated mock validation.
 - [2026-09-26: first interpretation and source questions](2026-09-26-first-interpretation-audit.md):
