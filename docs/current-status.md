@@ -20,7 +20,7 @@ Simplifying an ineffective mechanism is a valid next step.
 
 - `dev-head` is the sole active mutable runtime; every run is `official=false`.
 - The chosen performance baseline is `gpt-5.4-2026-03-05`, xhigh, 25,000 output tokens.
-  The last live comparison used runtime checkpoint `93ec0af`.
+  The last live comparison used execution checkpoint `5d74710`.
   These selected settings are not a statement of CLI defaults.
 - Baseline options: segmented-v1, result-or-size-v1 boundaries, brief-v1, probes
   enabled / probe-policy none, repair-recheck, protected-v1 inspection, and
@@ -38,60 +38,43 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The planning ON/OFF regression comparison is closed. On AnyIO v3, Fromager v1 and
-pgmpy v1, `brief-v1` achieved acceptance 2/3 planned plus one NOT_RUN; `none` achieved
-3/3. All six started, five submitted and passed acceptance and safety, and no uncertainty
-stopped the group. These tasks were selected from prior successes; each arm/task has
-only one new run. Older outcomes were not controls or pooled into this group.
+The AnyIO observation/repair comparison is closed: A received the historical probe
+program/question with a timeout receipt; B received the same program/question with
+the completed lifecycle observation. Both started from the same saved incorrect
+candidate with fresh budgets and the corrected environment for any new probes.
+Acceptance was A 2/2 and B 2/2 planned; all four submitted and passed safety. There
+were no NOT_RUN results, infrastructure stops or incomplete responses.
 
-AnyIO ON made ten source calls before editing, failed the public explicit-cancellation
-preservation case, and used a probe that timed out without observations. Its last
-response hit a cost-reduced output ceiling, then COST_CAP_REACHED prevented submission.
-OFF grouped eleven source actions into four calls and edited on call six after its own
-probe timed out. Its pending-future/runner-loop condition passed the public checks and
-acceptance. Code, batching and available recovery budget differed; this does not isolate
-planning's effect on judgment. Both Fromager arms succeeded with the same call count.
-Both pgmpy arms succeeded, but OFF inspected more source and had higher cache-neutral cost.
+All four first reran the public lifecycle check, read the owning source, made one
+new edit, passed the automatic lifecycle recheck and upstream regression, then
+submitted. No new probe was requested. A recovered from the fresh check and source
+without the completed operator observation. This small selected comparison shows
+no acceptance advantage from supplying that observation and supports no new prompt
+or planning rule. It does not establish general equivalence or spontaneous case
+selection; completion guidance and repair-recheck were fixed controls.
 
-OFF preserved all three selected prior successes and lost no A success. This supports
-none as a simpler option for subsequent development. Defaults and the selected working
-baseline were not automatically changed. Close this planning comparison branch here;
-the evidence does not call for another planning template or establish general efficacy.
-The earlier Pydantic/HF ON/OFF and first-plan timing comparisons remain separate evidence.
+The original cost-limited ON run remains NOT_RUN. It had asked a relevant probe
+question after its failed check, but obtained no observation. These new seeded
+runs reset both context and budget, so they cannot isolate the original failure's
+cause or show that recovery would fit its remaining budget. The remaining question
+is whether a fresh full solve, including initial investigation and candidate
+generation, recovers within its original cap using the corrected probe environment.
+That full-solve comparison has not been run here.
 
-The probe readiness correction now also has an exact replay on the ON failure candidate.
-Its original question/program and candidate reproduced the old bundle's empty timeout.
-With the corrected pytest bundle, the same program observed ordinary cancellation ending
-the shared runner task, then `ClosedResourceError` during fixture teardown. Both new
-executions kept the full 30-second probe limit, identical source and sandbox controls;
-only dependencies and derived profile identity differed. The earlier base-source replay
-remains separate evidence. These observations were not delivered to the original models,
-and neither closed solve result changes.
-
-Preparation supports `--select-dependency` within public declared groups/extras. Use the
-new AnyIO bundle for subsequent diagnostics; top-level import success alone is not
-entry-point readiness. No new prompt, planning policy or default change is indicated.
-
-The next comparison is prepared: identical saved ON candidate, fresh independent runs,
-with timeout evidence in A and completed lifecycle evidence in B. Both arms use the
-corrected dependencies for any new probes and retain the chosen baseline. This tests
-use of supplied observations, not spontaneous case selection or native continuation.
-The fixed proposal is A1/B1/B2/A2, two per arm, $1.20 each / $4.80 total. It has input
-delivery checks and existing seeded-run mock validation; collection is NOT_RUN and
-requires this new group's cap to be authorized. Old plans/check verdicts are not imported.
-
-The group spent $3.183588 of $7.20; unused funds are closed. All 47 actual inputs, 49
-count requests, seven journal chains and frozen files verified. One response was
-incomplete; the other 46 completed. Probe timeout, resource exhaustion, acceptance and
-safety remain separate. No paid allocation or continuation is active.
+Use the selected pytest dependency bundle for subsequent AnyIO diagnostics;
+top-level import success alone is not entry-point readiness. The earlier planning
+OFF comparisons remain closed and separate: none is a simpler development option,
+with no automatic adoption or change to this comparison's chosen baseline.
+The current group spent $1.888192 of $4.80. Unused funds are closed; no paid
+allocation, additional sample or continuation is active.
 
 ## Implemented and measured
 
-The latest investigation changed no product runtime files. Two provider-free Docker
-replays exposed the selected candidate's ordinary-cancellation failure. Paired input
-previews verified observation delivery with equal remaining controls. Existing seeded
-repair mocks reached isolated evaluation. These establish execution and delivery,
-not improved model repair or acceptance. No new paid model run occurred.
+The latest investigation used existing runtime and seeded-repair code for four live
+model runs. All 26 actual inputs/count requests, continuation records, five journal
+chains and frozen source/dependency identities verified; owned containers are absent.
+Recovery is observed for this supplied candidate. End-to-end task-solving improvement
+and default adoption remain unestablished.
 
 The opt-in first-plan timing, declaration expansion and independent-candidate diagnostics
 remain implemented, with no default adoption established by their closed comparisons.
@@ -100,12 +83,15 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
-- Latest diagnostic: [AnyIO failure observation](history/2026-09-27-anyio-failure-observation.md).
-- Reproduction and prepared comparison: `C:\pt\analyses\anyio-observation-repair-20260927-v1`.
+- Latest result: [AnyIO observation repair comparison](history/2026-09-27-anyio-observation-repair-comparison.md).
+- Results, public decision review and closure:
+  `C:\pt\analyses\anyio-observation-repair-results-20260927-v1`; live state: `C:\pt\obsrepair0927a`.
+- Prior preparation: [AnyIO failure observation](history/2026-09-27-anyio-failure-observation.md).
+- Frozen reproduction/comparison: `C:\pt\analyses\anyio-observation-repair-20260927-v1`.
 - Preparation correction: [AnyIO probe readiness](history/2026-09-27-anyio-probe-readiness.md).
 - New bundle and public reproduction: `C:\pt\analyses\anyio-probe-readiness-20260927-v1`;
   descriptor: `selected-pytest\prepared-probe-dependencies.json` within that packet.
-- Latest model result: [planning OFF regression](history/2026-09-27-planning-off-regression.md).
+- Separate prior model result: [planning OFF regression](history/2026-09-27-planning-off-regression.md).
 - Protocol, metrics, public review, environment inventory and closure:
   `C:\pt\analyses\planning-off-regression-20260927-v1`.
 - Separate prior result: [planning ON/OFF comparison](history/2026-09-26-planning-off-comparison.md).

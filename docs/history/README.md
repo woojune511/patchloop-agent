@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-27: AnyIO observation repair comparison](2026-09-27-anyio-observation-repair-comparison.md):
+  A/B 2/2 acceptance each on a supplied candidate.
 - [2026-09-27: AnyIO failure observation](2026-09-27-anyio-failure-observation.md):
   exact failed-candidate probe replay and a prepared comparison of supplied observations.
 - [2026-09-27: AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md):
