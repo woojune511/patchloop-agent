@@ -38,28 +38,27 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The public-reference comparison completed four seeded repair runs: acceptance was
-A 0/2 and B 0/2. Both B declarations were admitted and their selected registered
-checks executed, resolving the earlier declaration rejection in these samples.
-Every run passed both required public checks and submitted its seed unchanged;
-there were no new reads, searches, probes, or edits. Admission did not improve repair.
+The first-input completion-advice comparison completed four seeded runs with
+GPT-5.4 xhigh: acceptance A 0/2, B 0/2. A kept ordinary guidance; B removed its
+check/submit recommendations from the first input. Every run passed both required
+public checks and submitted its seed unchanged. No resource or infrastructure
+stop contributed to the result. This intervention did not improve acceptance.
 
-The public trace/source audit locates narrowing in the first verification plan and
-after the first PASS. H recognized no-explicit-endpoint preservation but checked
-direct calls without distinguishing client default substitution. P's first plan
-blurred provider-profile scope into field-mode settings, then expected existing
-thinking regressions to validate the new empty tool-call branch. The selected seven
-message tests contain no tool calls. Prior plans survived exactly in all eight
-follow-up inputs; this is not observed plan loss.
+P-B added two source reads before checking. It accurately described the candidate's
+field-mode predicate and DeepSeek's settings, then treated that as sufficient scope
+for the change. The public task separately preserves ordinary profiles unless they
+carry the provider-supplied requirement. No contrasting profile probe or new repair
+followed. The finding remained present through submission; this is not observed
+loss of the read result or note. H showed the same check/check/submit sequence in
+both arms, without new inspection of the endpoint-preservation distinction.
 
-All 12 choices matched completion guidance, but its causal role remains unresolved.
-The older final-guidance-only ablation also selected finish in A 4/4 and B 4/4;
-it did not test initial guidance or this model/loop. The next diagnostic removes
-check/submit recommendations from the first input onward while preserving stage
-facts, actual tools and gates. This tests an earlier influence on verification
-selection, not whether removing the final recommendation alone fixes the problem.
-Judge requirement scope, actual check inputs, resulting edits and acceptance.
-Keep the baseline fixed; no new live group or default change is implied.
+The remaining target is evidence selection: distinguish the public requirement's
+applicability from the existing candidate's predicate, then choose a check that can
+separate them and use its result to revise the repair. Extra reading, reminders or
+note retention alone are not the target. Keep the baseline fixed; the two advice
+fields were insufficient in these samples, but other completion cues, seeded
+framing and sampling variation remain unresolved. No new mechanism or paid group
+is selected by this result.
 
 ## Implemented and measured
 
@@ -69,23 +68,25 @@ stages. Failure/repair guidance, prompt, tool admission, check gates and budgets
 remain intact. Other supplemental review/feedback interventions cannot be combined
 with it. Omission preserves the existing path; common runtime remains `4d2fc8ba`.
 
-Local focused validation passed, including append/segmented mock runs through a
-failed check, read, repair, automatic recheck and isolated evaluation. Actual native
-inputs retain the task, diff, check status and plan content. This establishes delivery
-and compatibility; live behavioral effect and acceptance improvement are `NOT_RUN`.
-See the linked record for exact tests, timings, initial fixture corrections and limits.
+Local mock/regression validation established delivery and compatibility. The live
+comparison now verified all 13 actual inputs; B's projection reached all seven B
+inputs. Source reads/searches/probes remained available throughout. The extra P-B
+reading is an observed behavior difference, not a demonstrated accuracy gain or a
+reliable causal effect from one sample per task/arm.
 
-The earlier public-reference interface remains available. Its live group completed
-at $0.8982235 of $4.80 with A 0/2 and B 0/2 acceptance; unused allocation is closed.
-Admitted evidence IDs did not establish coverage or improve the unchanged seeds.
+Recorded cost was $0.599650 of $4.80; cache-neutral equivalent was $0.881890.
+Unused allocation is closed. There were no retries, extra samples, post-submission
+candidate executions or hidden-detail audits. The optional diagnostic remains
+available; it is not adopted as the performance baseline or a CLI default.
 
 Evidence locations for targeted lookup:
 
-- Current diagnostic: [completion advice record](history/2026-09-26-completion-status-diagnostic.md)
-  and [implementation contract](../.agent/completion-status-diagnostic.md).
+- Current result: [completion advice comparison](history/2026-09-26-completion-status-comparison.md).
+- Detailed packet: `C:\pt\analyses\completion-status-compare-20260926-v1\result.md`.
+- Implementation: [completion advice record](history/2026-09-26-completion-status-diagnostic.md)
+  and [contract](../.agent/completion-status-diagnostic.md).
 - Local validation: `C:\pt\validation\completion-status-20260926-v1\result.md`.
 - Earlier comparison: [paired-reference record](history/2026-09-26-paired-reference-comparison.md).
-- Detailed run packet: `C:\pt\analyses\paired-reference-compare-20260926-v1\result.md`.
 - Follow-up analysis: [verification scope audit](history/2026-09-26-verification-scope-audit.md).
 - Full prior narrative and earlier decisions: [documentation history](history/README.md).
 
