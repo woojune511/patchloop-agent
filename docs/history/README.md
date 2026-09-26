@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-27: AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md):
+  missing lazy import reproduced, selected public dependency roots, and a completed lifecycle probe.
 - [2026-09-27: planning OFF regression](2026-09-27-planning-off-regression.md):
   six fresh solves on three prior successes, one cost-limited ON result, and probe dependency evidence.
 - [2026-09-27: first-plan timing comparison](2026-09-27-after-source-planning-comparison.md):

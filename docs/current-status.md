@@ -59,13 +59,22 @@ baseline were not automatically changed. Close this planning comparison branch h
 the evidence does not call for another planning template or establish general efficacy.
 The earlier Pydantic/HF ON/OFF and first-plan timing comparisons remain separate evidence.
 
-The concrete next diagnostic concerns probe execution readiness. Both AnyIO probes used
-TestRunner, whose publicly delivered source lazily imports `_pytest.outcomes`, and both
-timed out before their first stdout observation. After collection, a module-discovery
-check with the same existing image/dependencies and no candidate source confirmed pytest
-and _pytest absent. A background import failure leaving a waiting future unsettled is
-a static hypothesis; the exact timeout path has not been replayed. Investigate public
-entry-point prerequisites and failure visibility before another paid group or prompt rule.
+The probe readiness diagnostic is now resolved for the unmodified AnyIO OFF probe.
+Its exact public program and base source reproduced the empty-output timeout. A separate
+instrumented program observed the background task ending with `ModuleNotFoundError:
+_pytest` while fixture setup still waited. The old bundle included runtime dependencies
+only. With a new bundle including the publicly declared pytest dependency, the exact
+original program completed and showed the interrupted test resuming during fixture
+teardown. The question could expose the bug; the original model never received that
+observation. The ON candidate's probe was not replayed, and old solve results stay closed.
+
+Preparation now supports `--select-dependency` with declared groups/extras while retaining
+runtime requirements and resolving transitive dependencies. This avoids building unrelated
+test tools that lack wheels. Existing preparation without a selection is unchanged.
+Use the new AnyIO bundle for subsequent diagnostics; top-level imports alone are not
+entry-point readiness evidence. Prompts, plans, probe execution rules and defaults did
+not change. The next performance question is whether a fresh agent run obtains and uses
+the now-available lifecycle observation to distinguish changed and preserved behavior.
 
 The group spent $3.183588 of $7.20; unused funds are closed. All 47 actual inputs, 49
 count requests, seven journal chains and frozen files verified. One response was
@@ -74,11 +83,11 @@ safety remain separate. No paid allocation or continuation is active.
 
 ## Implemented and measured
 
-The latest comparison changed no production code. It reused the existing planning
-policies, run_dev, request recorder and public/usage auditors. Both mock arms reached
-isolated evaluation, focused checks stayed under two minutes, and related audits and
-Ruff passed. The identical-runtime broad sweep was reused, including its original
-timing/Git failures and passing unchanged-code rechecks; it was not rerun for this packet.
+The latest change affects public dependency preparation only. A provider-free Docker
+reproduction confirmed the missing-import mechanism and the corrected entry point.
+Focused selection tests and both mock context paths passed in under two minutes; the
+mock paths reached isolated evaluation. These results establish preparation/execution
+behavior, not improved agent acceptance. No new model run or hidden evaluation occurred.
 
 The opt-in first-plan timing, declaration expansion and independent-candidate diagnostics
 remain implemented, with no default adoption established by their closed comparisons.
@@ -87,7 +96,10 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
-- Latest result: [planning OFF regression](history/2026-09-27-planning-off-regression.md).
+- Latest diagnostic: [AnyIO probe readiness](history/2026-09-27-anyio-probe-readiness.md).
+- New bundle and public reproduction: `C:\pt\analyses\anyio-probe-readiness-20260927-v1`;
+  descriptor: `selected-pytest\prepared-probe-dependencies.json` within that packet.
+- Latest model result: [planning OFF regression](history/2026-09-27-planning-off-regression.md).
 - Protocol, metrics, public review, environment inventory and closure:
   `C:\pt\analyses\planning-off-regression-20260927-v1`.
 - Separate prior result: [planning ON/OFF comparison](history/2026-09-26-planning-off-comparison.md).

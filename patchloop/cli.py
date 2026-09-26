@@ -220,6 +220,10 @@ def prepare_task_probe_dependencies(
     group: Annotated[list[str] | None, typer.Option("--group")] = None,
     extra: Annotated[list[str] | None, typer.Option("--extra")] = None,
     source_root: Annotated[list[str] | None, typer.Option("--source-root")] = None,
+    select_dependency: Annotated[list[str] | None, typer.Option(
+        "--select-dependency",
+        help="Limit selected group/extra roots by package name; retain runtime dependencies.",
+    )] = None,
 ) -> None:
     """Prepare locked public wheels, optionally resolving static public project dependencies."""
     from patchloop.prepared_probe_dependencies import prepare_dependencies
@@ -229,7 +233,7 @@ def prepare_task_probe_dependencies(
         path = prepare_dependencies(
             public=load_public_task(task_dir / "public.yaml"), prepared_source=prepared_source,
             wheel_lock=wheel_lock, output=output, resolve=resolve, groups=group,
-            extras=extra, source_roots=source_root,
+            extras=extra, source_roots=source_root, selected_dependencies=select_dependency,
         )
         return {"ok": True, "prepared_probe_dependencies": str(path)}
 

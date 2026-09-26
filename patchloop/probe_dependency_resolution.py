@@ -152,14 +152,28 @@ def select_wheels(raw: bytes, *, project_name: str) -> list[PublicWheel]:
     return selected
 
 
-def resolve_dependencies(*, repo: Path, source: PreparedSource, source_hash: str,
-                         output: Path, uv: str, groups: list[str], extras: list[str],
-                         source_roots: list[str]) -> tuple[dict, list[PublicWheel], list[dict]]:
+def resolve_dependencies(
+    *, repo: Path, source: PreparedSource, source_hash: str, output: Path, uv: str,
+    groups: list[str], extras: list[str], source_roots: list[str],
+    selected_dependencies: list[str] | None = None,
+) -> tuple[dict, list[PublicWheel], list[dict]]:
     from patchloop.sandbox.probes import PROBE_IMAGE
 
     groups = sorted({canonicalize_name(name, validate=True) for name in groups})
     extras = sorted({canonicalize_name(name, validate=True) for name in extras})
     metadata = project_requirements(repo, groups=groups, extras=extras)
+    if selected_dependencies:
+        if not (groups or extras):
+            raise ContractError("--select-dependency requires a public --group or --extra")
+        names = sorted({canonicalize_name(name, validate=True) for name in selected_dependencies})
+        requirements = metadata["requirements"]
+        declared = {canonicalize_name(Requirement(item).name) for item in requirements}
+        if set(names) - declared:
+            raise ContractError("selected dependency is absent from target public declarations")
+        runtime = project_requirements(repo, groups=[], extras=[])["requirements"]
+        metadata["requirements"] = [item for item in requirements if item in runtime
+                                    or canonicalize_name(Requirement(item).name) in names]
+        metadata["selected_dependencies"] = names
     target = {"python": PYTHON, "platform": "linux/amd64", "image": PROBE_IMAGE,
               "wheel_platform": PLATFORM, "marker_environment": MARKERS}
     provenance = {"schema_version": "resolved-public-probe-wheel-lock-v1",

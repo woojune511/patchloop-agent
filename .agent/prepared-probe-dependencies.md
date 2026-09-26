@@ -117,6 +117,23 @@ implicitly. Repeat `--source-root` to choose public import trees; omitted roots 
 the existing all-tracked-public-files snapshot. These three options require `--resolve`,
 which is mutually exclusive with `--wheel-lock`.
 
+If an entry point needs only part of a declared test/development group, repeat
+`--select-dependency <package-name>` with `--group`/`--extra` to select those roots.
+Runtime requirements are always retained; the resolver includes transitive dependencies
+of the retained roots. Names must occur in the selected public declarations for the
+fixed target. This accepts package names, not arbitrary requirements or URLs, and records
+the normalized selection in resolution provenance. Without this option, all selected
+group/extra requirements remain included. A group containing packages without usable
+wheels can therefore be narrowed explicitly without permitting source builds.
+
+For example, `--resolve --group test --select-dependency pytest --source-root src`
+can prepare a project's declared test runner dependency while leaving unrelated test
+tools out. This is an operator preparation choice from public metadata, not an automatic
+task-specific dependency rule. Reuse the new descriptor only after exercising the
+needed public entry point in the normal offline sandbox: a successful top-level import
+does not cover lazy imports, fixture setup or background-task failures. Print before
+potentially blocking calls. The registered-check environment is separate from probes.
+
 Resolution uses installed `uv pip compile --format pylock.toml`, public PyPI and
 `--only-binary :all:`. The command receives flattened validated PEP 508 requirements,
 not project build hooks, source overrides, host configuration or operator credentials.

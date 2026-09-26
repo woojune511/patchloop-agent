@@ -295,15 +295,18 @@ def _workspace_metadata(repo: Path, packages: list[dict], roots: list[str],
 def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: Path,
                          wheel_lock: Path | None = None, resolve: bool = False,
                          groups: list[str] | None = None, extras: list[str] | None = None,
-                         source_roots: list[str] | None = None) -> Path:
+                         source_roots: list[str] | None = None,
+                         selected_dependencies: list[str] | None = None) -> Path:
     from patchloop.dev.state import DevJournal
     from patchloop.runtime import repository_root
     from patchloop.sandbox.probes import PROBE_IMAGE
 
     if resolve == (wheel_lock is not None):
         raise ContractError("choose exactly one of --wheel-lock or --resolve")
-    if not resolve and (groups or extras or source_roots):
-        raise ContractError("--group, --extra and --source-root require --resolve")
+    if not resolve and (groups or extras or source_roots or selected_dependencies):
+        raise ContractError("dependency selections and --source-root require --resolve")
+    if selected_dependencies and not (groups or extras):
+        raise ContractError("--select-dependency requires a public --group or --extra")
     output = output.resolve()
     if output.is_relative_to(repository_root().resolve()):
         raise ContractError("prepared dependencies must be outside the repository")
@@ -356,6 +359,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
             lock_record, selected, packages = resolve_dependencies(
                 repo=repo, source=source, source_hash=source_hash, output=output, uv=uv,
                 groups=groups or [], extras=extras or [], source_roots=roots,
+                selected_dependencies=selected_dependencies,
             )
         if sum(wheel.size for wheel in selected) > MAX_BYTES:
             raise ContractError("public wheel downloads exceed the size bound")

@@ -117,6 +117,7 @@ def test_resolved_preparation_binds_public_inputs_and_reuses_offline(resolved_fi
     assert lock["source_metadata"]["hash"] == sha256_bytes(original)
     assert lock["source_metadata"]["requirements"] == [
         "base>=3", "fixture>=1", "optional[extra]>=2", "test-lib>=4"]
+    assert "selected_dependencies" not in lock["source_metadata"]
     assert lock["pylock_hash"] == sha256_bytes((path.parent / "pylock.toml").read_bytes())
     assert lock["resolver_hash"] == sha256_bytes(Path(sys.executable).read_bytes())
     assert descriptor["workspace_metadata"][0]["version"] == "0+patchloop." + "a" * 40
@@ -202,6 +203,36 @@ def test_runtime_dependencies_are_default_and_no_wheels_is_supported(resolved_fi
     assert resolution.select_wheels(lock_bytes([]), project_name="workspace") == []
 
 
+@pytest.mark.parametrize(("names", "expected", "recorded"), [
+    (["TEST_lib", "test-lib"], ["fixture>=1", "test-lib>=4"], ["test-lib"]),
+    (["optional"], ["fixture>=1", "optional[extra]>=2"], ["optional"]),
+])
+def test_selected_roots_keep_runtime_requirements_and_bind_selection(
+    resolved_fixture, names, expected, recorded,
+):
+    request, repo, _ = resolved_fixture
+    original = (repo / "pyproject.toml").read_bytes()
+    descriptor = prepared.prepare_dependencies(**request, selected_dependencies=names)
+    metadata = json.loads(descriptor.read_bytes())["wheel_lock"]["source_metadata"]
+    assert metadata["requirements"] == expected
+    assert metadata["selected_dependencies"] == recorded
+    assert metadata["groups"] == ["test"] and metadata["extras"] == ["feature"]
+    assert (request["output"] / "requirements.in").read_text().splitlines() == expected
+    assert (repo / "pyproject.toml").read_bytes() == original
+
+
+@pytest.mark.parametrize("names", [["absent"], ["win-only"], ["test-lib>=4"],
+                                  ["https://example.com/lib.whl"]])
+def test_unknown_inapplicable_or_non_name_selection_fails_before_resolution(
+    resolved_fixture, names,
+):
+    request, _, calls = resolved_fixture
+    with pytest.raises(ContractError):
+        prepared.prepare_dependencies(**request, selected_dependencies=names)
+    assert calls == []
+    assert not (request["output"] / prepared.MANIFEST).exists()
+
+
 def test_project_without_dependencies_still_publishes_source_metadata(
     resolved_fixture, monkeypatch,
 ):
@@ -229,7 +260,7 @@ def test_resolved_bundle_reaches_probe_submit_and_isolated_evaluation(
     from patchloop.artifacts import ArtifactStore
 
     request, _, _ = resolved_fixture
-    path = prepared.prepare_dependencies(**request)
+    path = prepared.prepare_dependencies(**request, selected_dependencies=["test-lib"])
     monkeypatch.setattr(prepared.subprocess, "run", REAL_SUBPROCESS_RUN)
     monkeypatch.setattr(prepared, "_download", lambda *a: pytest.fail("network"))
     monkeypatch.setattr(runner, "DockerProbeSandbox", DependencyProbe)
@@ -265,7 +296,9 @@ def test_resolved_bundle_reaches_probe_submit_and_isolated_evaluation(
 
 
 @pytest.mark.parametrize("choices", [[], ["--resolve", "--wheel-lock", "lock.json"],
-                                     ["--wheel-lock", "lock.json", "--group", "test"]])
+    ["--wheel-lock", "lock.json", "--group", "test"],
+    ["--wheel-lock", "lock.json", "--select-dependency", "test-lib"],
+    ["--resolve", "--select-dependency", "test-lib"]])
 def test_cli_rejects_ambiguous_modes_without_creating_output(tmp_path, choices):
     output = tmp_path / "out"
     result = CliRunner().invoke(app, ["task", "prepare-probe-dependencies",
@@ -284,7 +317,8 @@ def test_cli_passes_explicit_groups_extras_and_roots(tmp_path, monkeypatch):
         str(repository_root() / "tasks/smoke/csv-quoted-newline"),
         "--prepared-source", "source.json", "--output", str(tmp_path / "out"),
         "--resolve", "--group", "test", "--group", "base", "--extra", "feature",
-        "--source-root", "src"])
+        "--source-root", "src", "--select-dependency", "test-lib"])
     assert result.exit_code == 0, result.stdout
     assert seen[0]["groups"] == ["test", "base"] and seen[0]["extras"] == ["feature"]
     assert seen[0]["source_roots"] == ["src"] and seen[0]["resolve"] is True
+    assert seen[0]["selected_dependencies"] == ["test-lib"]
