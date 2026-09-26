@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-26: diagnostic claims verification](2026-09-26-diagnostic-claims-verification.md):
+  actual input audits, four public probes, profile-scope regression, and causal claim limits.
 - [2026-09-26: completion advice comparison](2026-09-26-completion-status-comparison.md):
   four completed runs, additional P-B reading, and unchanged acceptance after recommendation removal.
 - [2026-09-26: first-input completion advice diagnostic](2026-09-26-completion-status-diagnostic.md):

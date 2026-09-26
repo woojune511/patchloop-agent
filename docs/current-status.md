@@ -38,27 +38,32 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The first-input completion-advice comparison completed four seeded runs with
-GPT-5.4 xhigh: acceptance A 0/2, B 0/2. A kept ordinary guidance; B removed its
-check/submit recommendations from the first input. Every run passed both required
-public checks and submitted its seed unchanged. No resource or infrastructure
-stop contributed to the result. This intervention did not improve acceptance.
+Public evidence now isolates a concrete Pydantic scope error. With the field-mode
+trigger fixed, the failed seed inserts an empty field for ordinary profiles as well
+as profiles carrying the provider requirement. A new four-case public contrast on
+three independent workspaces found: base preserves ordinary profiles but misses
+required insertion (2/4); seed supplies insertion but breaks preservation (2/4);
+the earlier fresh-solve GPT-5.4 patch satisfies both (4/4). These are operator-chosen
+public probes, not new acceptance results or a model-improvement experiment.
 
-P-B added two source reads before checking. It accurately described the candidate's
-field-mode predicate and DeepSeek's settings, then treated that as sufficient scope
-for the change. The public task separately preserves ordinary profiles unless they
-carry the provider-supplied requirement. No contrasting profile probe or new repair
-followed. The finding remained present through submission; this is not observed
-loss of the read result or note. H showed the same check/check/submit sequence in
-both arms, without new inspection of the endpoint-preservation distinction.
+P-B's two source reads and source-linked note reached its actual inputs through
+submission. Its checks passed on the unchanged seed, but their inputs did not cover
+ordinary field-mode tool-only messages. Edit/probe tools and substantial budget
+remained. Missing note delivery, missing probe dependencies and exhausted tool
+budgets were not observed in P-B. Delivery still does not establish effective use.
 
-The remaining target is evidence selection: distinguish the public requirement's
-applicability from the existing candidate's predicate, then choose a check that can
-separate them and use its result to revise the repair. Extra reading, reminders or
-note retention alone are not the target. Keep the baseline fixed; the two advice
-fields were insufficient in these samples, but other completion cues, seeded
-framing and sampling variation remain unresolved. No new mechanism or paid group
-is selected by this result.
+H has a separate capability gap: its recorded probe environment lacks prepared
+dependencies. A new exact-base import attempt fails on missing requests. Neither H
+run in the completion-advice comparison attempted a probe, so this is not a proven
+cause of those choices. Standard-library probes remain available; P's prepared
+dependencies verify and its public serializer executes successfully.
+
+Prioritize deriving applicability and expected preserved behavior from the public
+requirement independently of the candidate's predicate, then selecting a check that
+distinguishes them. Keep the baseline fixed. The same full model produced a correct
+fresh repair and accepted an incorrect seeded repair, but seed state, framing,
+guidance and sampling differ; anchoring is a hypothesis, not an established cause.
+No new method, default or paid comparison is selected by this audit.
 
 ## Implemented and measured
 
@@ -68,20 +73,25 @@ stages. Failure/repair guidance, prompt, tool admission, check gates and budgets
 remain intact. Other supplemental review/feedback interventions cannot be combined
 with it. Omission preserves the existing path; common runtime remains `4d2fc8ba`.
 
-Local mock/regression validation established delivery and compatibility. The live
-comparison now verified all 13 actual inputs; B's projection reached all seven B
-inputs. Source reads/searches/probes remained available throughout. The extra P-B
-reading is an observed behavior difference, not a demonstrated accuracy gain or a
-reliable causal effect from one sample per task/arm.
+The closed completion-advice comparison remains A 0/2, B 0/2: all seeds submitted
+unchanged after required checks passed. Its 13 actual inputs, tool schemas and
+environment identities were reverified. This intervention did not improve acceptance;
+the optional diagnostic is not a baseline or CLI default.
 
-Recorded cost was $0.599650 of $4.80; cache-neutral equivalent was $0.881890.
-Unused allocation is closed. There were no retries, extra samples, post-submission
-candidate executions or hidden-detail audits. The optional diagnostic remains
-available; it is not adopted as the performance baseline or a CLI default.
+The separate follow-up used four new public probes and zero provider/count calls or
+private evaluations. Fresh-solve historical evidence favors the full model over mini
+on two tasks (2/2 versus 0/2), but conditional rescue examples and the seeded failures
+do not support either "only model upgrades help" or a general method efficacy claim.
+
+Current guidance is bounded and old snapshots remain byte-exact. Reduced document
+size is measured; actual input-token, latency, contamination and quality effects are
+not measured. Historical reports and unused paid allocations remain closed.
 
 Evidence locations for targeted lookup:
 
-- Current result: [completion advice comparison](history/2026-09-26-completion-status-comparison.md).
+- Current verification: [diagnostic claims](history/2026-09-26-diagnostic-claims-verification.md).
+- Verification packet: `C:\pt\analyses\claims-verification-20260926-v1\result.md`.
+- Prior result: [completion advice comparison](history/2026-09-26-completion-status-comparison.md).
 - Detailed packet: `C:\pt\analyses\completion-status-compare-20260926-v1\result.md`.
 - Implementation: [completion advice record](history/2026-09-26-completion-status-diagnostic.md)
   and [contract](../.agent/completion-status-diagnostic.md).
