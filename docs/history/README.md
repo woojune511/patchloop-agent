@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-26: independent candidate comparison](2026-09-26-independent-candidate-comparison.md):
+  offline HF imports, cost-matched generation/comparison, and repeated first-plan scope reduction.
 - [2026-09-26: diagnostic claims verification](2026-09-26-diagnostic-claims-verification.md):
   actual input audits, four public probes, profile-scope regression, and causal claim limits.
 - [2026-09-26: completion advice comparison](2026-09-26-completion-status-comparison.md):

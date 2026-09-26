@@ -38,85 +38,65 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-Public evidence now isolates a concrete Pydantic scope error. With the field-mode
-trigger fixed, the failed seed inserts an empty field for ordinary profiles as well
-as profiles carrying the provider requirement. A new four-case public contrast on
-three independent workspaces found: base preserves ordinary profiles but misses
-required insertion (2/4); seed supplies insertion but breaks preservation (2/4);
-the earlier fresh-solve GPT-5.4 patch satisfies both (4/4). These are operator-chosen
-public probes, not new acceptance results or a model-improvement experiment.
+The cost-matched independent-candidate comparison is complete: direct reconsideration
+A 0/2, independent generation plus comparison B 0/2. All four final runs submitted
+their saved seeds unchanged after the required checks; no read/search tool call,
+probe or new edit occurred in those final runs. Both intermediate fresh generations
+also submitted and failed acceptance. All 32 actual inputs and count/dispatch records
+were audited; the exact alternatives reached every B request.
 
-P-B's two source reads and source-linked note reached its actual inputs through
-submission. Its checks passed on the unchanged seed, but their inputs did not cover
-ordinary field-mode tool-only messages. Edit/probe tools and substantial budget
-remained. Missing note delivery, missing probe dependencies and exhausted tool
-budgets were not observed in P-B. Delivery still does not establish effective use.
+Pydantic's fresh generation already reduced the provider-specific applicability
+requirement to field-mode configuration in its first plan. Subsequent source work
+correctly found the shared serializer/replay owner, but its edit omitted a separate
+provider-requirement discriminator. Checks passed, and their ordinary default-mode
+provider example was treated as confirming preservation more broadly. The same scope
+error therefore appears without an imported candidate and before any context summary.
+This weakens an explanation based only on seed anchoring or lost memory; it does not
+prove the cause of every acceptance failure.
 
-H's separate import capability gap now has a prepared dependency bundle. An opt-in
-operator adapter reads literal setup.py runtime requirements without executing
-project code and reuses the existing wheel resolver/installer. A new offline
-exact-base Docker canary imports requests and the actual Xet module successfully.
-Neither earlier H run attempted a probe, so missing dependencies remain an unproven
-cause of their choices. P's prepared dependencies remain unchanged.
+Keep the independent-candidate diagnostic optional. No improvement was observed in
+this sample, and neither generated alternative passed, so the receiver's ability to
+use a correct alternative remains unresolved. Prioritize the first translation of
+public applicability requirements into executable conditions, separately from format
+settings. Use this public sequence and earlier condition/case-design evidence before
+adding another generic planning instruction, comparison gate or paid experiment.
 
-Prioritize deriving applicability and expected preserved behavior from the public
-requirement independently of the candidate's predicate, then selecting a check that
-distinguishes them. Keep the baseline fixed. The same full model produced a correct
-fresh repair and accepted an incorrect seeded repair, but seed state, framing,
-guidance and sampling differ; anchoring is a hypothesis, not an established cause.
-The selected next diagnostic gives the ordinary seeded repair loop an alternative
-patch generated in a separate clean context by the same model. It transfers only
-the exact public submitted patch/base/hash, never plans, traces or evaluation results.
-An optional generic instruction asks for a substantive behavior difference, a public
-expected outcome and an observation connected to an edit or submission decision.
-
-The authorized comparison uses H/P, one final A/B each, with the baseline model and
-settings fixed. A has $2.40 for direct reconsideration; B has $1.20 for fresh generation
-and $1.20 for comparison/repair, total $9.60. Order is HA, HG, HB, PG, PB, PA. A missing
-generation submission makes that B NOT_RUN. No unused-budget transfer, replacement,
-retry or resume is allowed; uncertainty stops the group. B has two phases, so this is
-a cost-matched workflow comparison, not equal aggregate call/time opportunities.
-Implementation and collector validation precede live execution; no efficacy result
-or default-policy change is established yet.
+H's missing-import capability gap is resolved for this prepared environment: an
+opt-in adapter statically reads literal setup.py runtime requirements and reuses the
+existing public wheel resolver/offline installer. An exact-base, network-free Docker
+canary imports requests and the actual Xet module. The original source and existing
+image remain intact. No model probe occurred in this comparison, so improved import
+availability is not itself an observed task-solving improvement.
 
 ## Implemented and measured
 
-The seeded diagnostic now accepts optional `completion_guidance_policy="status-only-v1"`.
-It changes only the recommendation and message for check-needed/submission-ready
-stages. Failure/repair guidance, prompt, tool admission, check gates and budgets
-remain intact. Other supplemental review/feedback interventions cannot be combined
-with it. Omission preserves the existing path; common runtime remains `4d2fc8ba`.
+The optional `alternative` argument on the seeded diagnostic admits only exact public
+patch/hash/base data from a separately verified producer. It supplies generic comparison
+guidance, not an applied patch, editable-source evidence, previous notes/actions or
+evaluator results. The imported seed still consumes one mutation slot. Omission keeps
+the previous path; system/planning prompts, registered tools, finish/check gates,
+continuation and isolated evaluation remain unchanged. Core runtime stays `4d2fc8ba`.
 
-The closed completion-advice comparison remains A 0/2, B 0/2: all seeds submitted
-unchanged after required checks passed. Its 13 actual inputs, tool schemas and
-environment identities were reverified. This intervention did not improve acceptance;
-the optional diagnostic is not a baseline or CLI default.
+Focused checks, related regression, Ruff and two isolated evaluation mocks passed.
+Both context policies delivered public task/diff/check state and the alternative.
+The full core suite was not rerun because core files did not change; local mock and
+real Docker import results remain distinct from live task acceptance.
 
-The separate follow-up used four new public probes and zero provider/count calls or
-private evaluations. Fresh-solve historical evidence favors the full model over mini
-on two tasks (2/2 versus 0/2), but conditional rescue examples and the seeded failures
-do not support either "only model upgrades help" or a general method efficacy claim.
-
-Current guidance is bounded and old snapshots remain byte-exact. Reduced document
-size is measured; actual input-token, latency, contamination and quality effects are
-not measured. Historical reports and unused paid allocations remain closed.
+The live group used $1.9097295 of its $9.60 cap; billing was settled and there was no
+infrastructure stop or limit-based terminal. HG used all four mutation slots and had
+two late output ceilings reduced by remaining cost. B had separate generation and
+comparison phases, so equal total caps did not equal aggregate call/time opportunities.
+Unused funds are closed; no retry, replacement, resume, extension or default adoption.
 
 Evidence locations for targeted lookup:
 
-- Current diagnostic: [independent candidate contract](../.agent/independent-candidate.md).
-- Current validation: `C:\pt\validation\independent-candidate-20260926-v1`.
-- New comparison packet: `C:\pt\analyses\independent-candidate-compare-20260926-v1`.
-
-- Current verification: [diagnostic claims](history/2026-09-26-diagnostic-claims-verification.md).
-- Verification packet: `C:\pt\analyses\claims-verification-20260926-v1\result.md`.
-- Prior result: [completion advice comparison](history/2026-09-26-completion-status-comparison.md).
-- Detailed packet: `C:\pt\analyses\completion-status-compare-20260926-v1\result.md`.
-- Implementation: [completion advice record](history/2026-09-26-completion-status-diagnostic.md)
-  and [contract](../.agent/completion-status-diagnostic.md).
-- Local validation: `C:\pt\validation\completion-status-20260926-v1\result.md`.
-- Earlier comparison: [paired-reference record](history/2026-09-26-paired-reference-comparison.md).
-- Follow-up analysis: [verification scope audit](history/2026-09-26-verification-scope-audit.md).
-- Full prior narrative and earlier decisions: [documentation history](history/README.md).
+- Current result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
+- Detailed packet: `C:\pt\analyses\independent-candidate-compare-20260926-v1\result.md`.
+- Contract: [independent candidate](../.agent/independent-candidate.md).
+- Local validation: `C:\pt\validation\independent-candidate-20260926-v1\result.md`.
+- Preceding public contrast: [diagnostic claims verification](history/2026-09-26-diagnostic-claims-verification.md).
+- Earlier recommendation removal: [completion advice comparison](history/2026-09-26-completion-status-comparison.md).
+- Earlier decisions and closed evidence: [documentation history](history/README.md).
 
 ## Reading and updating this page
 
