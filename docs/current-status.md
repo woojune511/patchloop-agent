@@ -22,6 +22,35 @@ Examine remaining failures on other existing dev-train tasks with this baseline
 and use public source/action/check evidence to select a common harness improvement.
 Task-specific prompt or repair hints remain outside this direction.
 
+## Latest implementation: public evidence IDs and bounded declaration correction
+
+The optional paired-observation diagnostic now selects public requirement IDs and check/read
+references from a code-owned evidence_catalog. The active tool schema lists these IDs.
+The catalog uses the already supplied issue title/paragraphs, registered checks and up to
+sixteen successful reads of the current diff; it adds no task-specific cases or source reads.
+The host binds requirement text to the public task hash, and check/read references to their
+recorded identities. Model-authored inputs/expectations still need semantic interpretation;
+valid IDs and passing checks do not establish case execution or requirement coverage.
+
+A rejected declaration now leaves the comparison phase available within its original first
+four model calls and resource limits. Its public error remains in context; a correction needs
+a new action ID. Replaying the same action never repeats execution, and changed arguments
+under that ID still conflict. Only rejection before execution permits correction. Admitted
+execution failures, a limitation check, or the existing phase/resource bound end the phase;
+there is no automatic retry, extra allowance or rearming after an edit/segment transition.
+
+Both append/segmented mocks traverse invalid expected JSON -> corrected declaration -> one
+real local CSV observation -> repair -> required check -> submission -> isolated acceptance
+PASS. Twelve actual native inputs retain the catalog, rejection/result identity and current
+versus historical evidence. Converting the two saved live declarations to public IDs also
+passes offline admission, with operator-selected IDs and no candidate execution; this does
+not test autonomous case selection. Existing runtime/defaults remain 4d2fc8ba/v45.
+Final focused 40 PASS/87.803s; related regression 138 PASS/651.897s; docs 3 PASS and Ruff
+PASS. Nine isolated evaluation mocks pass (two updated flows and seven existing flows).
+Only the focused group meets two minutes; no fresh full core-runtime suite was needed.
+Validation: `C:\pt\validation\paired-reference-20260926-v1\result.md`.
+New live provider/count/Docker calls 0; cost $0. Performance with the new interface NOT_RUN.
+
 ## Latest experiment: paired observation 0/2 vs 0/2; no valid comparison executed
 
 Completed the fixed HA/HB/PB/PA group on two familiar dev-train tasks: HF Hub Xet
@@ -47,17 +76,17 @@ only; no hidden evaluator detail or post-submission operator probe was inspected
 
 This option produced no acceptance gain, but a successfully executed comparison's
 benefit remains unmeasured. Both declarations reused registered examples; even a valid
-quote would not establish discriminating coverage. Next small candidate: select
-code-owned public evidence references instead of copying literal fragments, and allow
-declaration correction within the existing phase budget. Validate that interface before
-another separately bounded experiment; no task-specific hints or general quality claim.
+quote would not establish discriminating coverage. This motivated the public reference
+interface and bounded declaration correction above. A new separately bounded experiment
+would need to measure actual case selection and execution; no task-specific hints or
+general quality claim.
 External collector 16 PASS/1.11s and Ruff PASS; unchanged implementation retains its
 sealed 64-test/eight-mock evidence. Core runtime 4d2fc8ba/v45 and defaults stay unchanged.
 Evidence: `C:\pt\analyses\paired-observation-compare-20260926-v1\result.md`.
 
-## Latest implementation: optional paired observation inside seeded repair
+## Earlier implementation: initial paired observation inside seeded repair
 
-The seeded diagnostic accepts `comparison_policy="paired-observation-v1"`, default
+The initial seeded diagnostic accepted `comparison_policy="paired-observation-v1"`, default
 none. It gives the first candidate a bounded observation phase inside the same
 run_dev call/action/time/cost limits. At most four initial calls offer ordinary
 read/search/check/probe/stop actions; one observation attempt returns control to

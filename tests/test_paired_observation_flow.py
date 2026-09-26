@@ -68,13 +68,30 @@ def test_compare_repair_check_submit_and_actual_input_delivery(
                         evidence_goal="Construct public CSV inputs."),
                 )
             elif self.step == 2:
+                invalid = design()
+                invalid["cases"][0]["expected_json"] = "NaN"
+                call = RequestedTool(
+                    name="run_probe", action_id="invalid-comparison",
+                    arguments={"question": "Compare multiline and ordinary CSV records.",
+                               "python_source": PROGRAM, "comparison": invalid},
+                    turn_decision=PublicTurnDecision(mode="verify", basis="Declare expectations."),
+                )
+            elif self.step == 3:
+                phase = state[paired.FIELD]
+                assert phase["phase"] == "observe" and phase["result"] is None
+                assert phase["rejected_declarations"] == 1 and backend.calls == 0
+                assert phase["last_declaration_error"]["action_id"] == "invalid-comparison"
+                assert "read:read-current" in {r["id"] for r in phase["evidence_catalog"]["reads"]}
+                corrected = design()
+                corrected["requirement_ids"] = [phase["evidence_catalog"]["requirements"][1]["id"]]
                 call = RequestedTool(
                     name="run_probe", action_id="compare-current",
                     arguments={"question": "Compare multiline and ordinary CSV records.",
-                               "python_source": PROGRAM, "comparison": design()},
-                    turn_decision=PublicTurnDecision(mode="verify", basis="Test the two cases."),
+                               "python_source": PROGRAM, "comparison": corrected},
+                    turn_decision=PublicTurnDecision(mode="verify", basis=(
+                        "The declaration rejected NaN before execution; use literal JSON values.")),
                 )
-            elif self.step == 3:
+            elif self.step == 4:
                 observation = state[paired.FIELD]["result"]["comparison"]["observation"]
                 assert observation["status"] == "mismatched"
                 assert json.loads(observation["observed_json"])["b"] == [["x"]]
@@ -108,16 +125,26 @@ def test_compare_repair_check_submit_and_actual_input_delivery(
     assert result["accepted_mutations"] == 1 and backend.calls == 1
     assert all(getattr(runner, name) is original for name, original in hooks.items())
     assert [s[paired.FIELD]["phase"] for s in inputs] == [
-        "observe", "observe", "returned_to_repair", "returned_to_repair", "returned_to_repair",
+        "observe", "observe", "observe",
+        "returned_to_repair", "returned_to_repair", "returned_to_repair",
     ]
     for index, tools in enumerate(schemas):
         names = {t["name"] for t in tools}
         assert names == set(inputs[index]["available_tool_names"])
-        if index < 2:
+        if index < 3:
             assert not names & {"replace_text", "finish_task"}
         for tool in tools:
             if tool["name"] in {"run_check", "run_probe"}:
-                assert ("comparison" in tool["parameters"]["required"]) is (index < 2)
+                assert ("comparison" in tool["parameters"]["required"]) is (index < 3)
+                if index < 3:
+                    schema = tool["parameters"]["properties"]["comparison"]
+                    assert schema["properties"]["requirement_ids"]["items"]["enum"] == [
+                        "issue-title", "issue-1"]
+                    refs = schema["properties"]["cases"]["items"]["properties"]["evidence_ref"]
+                    catalog = inputs[index][paired.FIELD]["evidence_catalog"]
+                    assert refs["enum"] == (
+                        [r["id"] for r in catalog["checks"] + catalog["reads"]]
+                        if tool["name"] == "run_check" else [None])
     journal = DevJournal(root, result["run_id"])
     events = journal.events()
     assert len([e for e in events if e["event_type"] == paired.EVENT]) == 1
@@ -126,16 +153,17 @@ def test_compare_repair_check_submit_and_actual_input_delivery(
     wires = [reconstruct_state(json.loads(store.read_bytes(Artifact.model_validate(
         e["payload"]["model_input_artifact"]))), context_policy=context_policy)
         for e in events if e["event_type"] == "turn_started"]
-    assert len(wires) == 5
+    assert len(wires) == 6
     for state, original in zip(wires, inputs, strict=True):
         assert state["public_task"] and state["current_diff"]["patch"]
         assert "visible_check_status" in state
         assert state[paired.FIELD] == original[paired.FIELD]
-    assert wires[2][paired.FIELD]["result"]["currency"] == "current"
+    assert wires[3][paired.FIELD]["result"]["currency"] == "current"
     assert wires[-1][paired.FIELD]["result"]["currency"] == "historical"
     assert wires[-1]["visible_check_status"][0]["status"] == "PASS"
     last = wires[-1][paired.FIELD]["result"]["comparison"]["observation"]
     assert last["semantic_verdict"] is None
+    assert wires[-1][paired.FIELD]["last_declaration_error"]["currency"] == "historical"
 
 
 @pytest.mark.parametrize("change", ["unknown", "disabled", "case_policy", "review", "feedback"])

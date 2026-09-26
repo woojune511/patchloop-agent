@@ -6459,25 +6459,37 @@ instruction/schema/system-suffix hashes; production runtime/defaults stay unchan
 
 At most the first four existing model calls offer the intersection of ordinary allowed
 tools with read/search/check/probe/stop. This phase adds no allowance and releases normal
-repair/finish choices after one comparison action finishes, after four calls, or when
+repair/finish choices after one admitted comparison action finishes, after four calls, or when
 ordinary completion protection leaves no observation action. It never re-arms after an
 edit or segment boundary. Existing count, cost, deadline, continuation and failure stops
 still apply. The brief diagnostic system suffix explains this temporary tool selection.
 
-The check/probe action records a two-case comparison before execution: literal public
-issue excerpt, concrete inputs, JSON expectations, their justification, a refuting
-observation and limitations. It reuses public case binding and frozen-JSON comparison.
+The check/probe action records a two-case comparison before execution: public requirement
+IDs, concrete inputs, JSON expectations, their justification, a refuting observation and
+limitations. The active evidence_catalog names the public issue title/paragraphs, registered
+checks and up to sixteen current successful read results. It adds no repository reads or
+task-specific cases. Requirement IDs and evidence references are schema choices, so the
+model does not need to copy source quotations. The host binds selected requirement text
+to the public task hash and reuses frozen-JSON comparison.
 Both `a` and `b` observations are required for a probe comparison; incomplete JSON,
 setup/execution failure and mismatched values are distinct. Only the Python program
 enters the existing probe sandbox. The full model declaration stays in action_id /
 input_hash identity, normal hash-chained admission/results and idempotent replay.
 
-An existing check can be selected with two literal case excerpts from its registered
-command or previously read current source. This validates citation availability, not
-that the check executed those cases or that expectations follow from the requirement.
+Each case reused through run_check selects an evidence_ref for that registered check or
+an already read current source. Check command hashes and read result identities bind the
+references; a different check or stale/failed read is rejected before execution. For
+run_probe, evidence_ref is null. Source identity does not establish that a check executed
+the proposed cases or that expectations follow from the requirement.
 `comparison=null` on a required check records a model-stated limitation in its basis,
 not a completed comparison. No synthetic program is required to escape uncertain scope.
-Invalid declarations fail before sandbox execution and return control to normal repair.
+Invalid declarations fail before sandbox execution and carry a declaration_rejected marker.
+The most recent error stays in public context. The model can correct it with a new action
+ID while the original four-call/resource allowance remains; the host schedules no retry.
+Same-ID replay preserves the original result, and changed arguments conflict as usual.
+Execution errors and old unmarked errors do not reopen the phase. Null comparison on an
+executed check, an admitted observation attempt, or exhaustion of the existing allowance
+returns normal repair/finish choices. Edits and segment changes cannot reset this allowance.
 
 The single observation remains in public context with its action/input/diff identity.
 After an edit it is historical and cannot certify the new candidate. Successful script
@@ -6486,15 +6498,16 @@ remain separate. No automatic recheck, new finish condition, task hint or hidden
 is introduced. A deterministic mock tests the path, not the model's ability to discover
 useful cases; live benefit requires a separately bounded comparison on public tasks.
 
-The first paired-observation group is closed at
+The first paired-observation group, before the reference-ID interface, is closed at
 `C:\pt\analyses\paired-observation-compare-20260926-v1\result.md`: ordinary seeded A 0/2,
 paired B 0/2 on HF Hub/Pydantic AI, all four submitted their unchanged seeds. Both B
 declarations failed literal-evidence admission before check execution, ending the phase;
 ordinary checks then passed. Comparison execution NOT_RUN 2 is separate from acceptance
 FAIL 4. All 14 actual inputs/counts/usage settled; cost $1.0318265 of $4.80. No resource-ending,
 infra stop, hidden detail access, retry, extra sample or default change. Case selection
-also reused registered examples. Next candidate is an easier evidence-reference interface
-and bounded declaration correction; neither is implemented or authorized by unused funds.
+also reused registered examples. The ID interface and declaration correction now have local
+validation; their live benefit and better case selection remain unmeasured. The closed
+group's unused funds do not authorize another run.
 
 The opt-in `diagnostics/candidate_review_repair.py` seam is experiment-only. A fresh
 run_dev branch installs one saved public candidate before gateway creation, consumes

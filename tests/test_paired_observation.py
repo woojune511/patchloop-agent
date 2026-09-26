@@ -16,13 +16,12 @@ from patchloop.errors import ActionConflict, ContractError
 
 def design():
     return {
-        "requirement_excerpt": (
-            "Preserve the public parse_rows(text) interface and existing behavior."),
+        "requirement_ids": ["issue-1"],
         "cases": [
             {"input": "A quoted field with an embedded newline", "expected_json": '[["x\\ny"]]',
-             "check_excerpt": None, "evidence_action_id": None},
+             "evidence_ref": None},
             {"input": "An ordinary single field", "expected_json": '[["x"]]',
-             "check_excerpt": None, "evidence_action_id": None},
+             "evidence_ref": None},
         ],
         "justification": "The public issue requires quoted newlines and ordinary CSV behavior.",
         "refutation": "Separate records for a quoted field or changed ordinary CSV output.",
@@ -60,12 +59,16 @@ def gateway(gateway_factory):
     return gateway, backend
 
 
-@pytest.mark.parametrize("change", ["quote", "count", "extra", "nan", "duplicate", "oversize"])
+@pytest.mark.parametrize("change", [
+    "reference", "probe_reference", "count", "extra", "nan", "duplicate", "oversize",
+])
 def test_invalid_design_fails_before_execution(gateway, change):
     selected, backend = gateway
     value = design()
-    if change == "quote":
-        value["requirement_excerpt"] = "Not a public requirement."
+    if change == "reference":
+        value["requirement_ids"] = ["not-public"]
+    elif change == "probe_reference":
+        value["cases"][0]["evidence_ref"] = "check:existing-unit-tests"
     elif change == "count":
         value["cases"].pop()
     elif change == "extra":
@@ -76,6 +79,8 @@ def test_invalid_design_fails_before_execution(gateway, change):
         }[change]
     result = selected.execute(call(value=value))
     assert result.status == "failed" and backend.calls == 0
+    assert result.output[paired.FIELD]["status"] == "declaration_rejected"
+    assert result.output[paired.FIELD]["execution_started"] is False
     assert selected.checks_by_diff == {}
 
 
@@ -98,7 +103,9 @@ def test_action_freezes_design_before_probe_and_replay_checks_it(gateway):
     assert receipt["observation"]["status"] == "mismatched"
     assert receipt["observation"]["semantic_verdict"] is None
     assert receipt["observation"]["diff_hash"] == result.workspace_diff_hash
-    assert all(row["excerpt_matches_issue"] for row in receipt["requirement_bindings"])
+    reference = receipt["requirement_references"][0]
+    assert reference["id"] == "issue-1"
+    assert reference["text"] == selected.public_task.issue.description.strip()
     assert selected.checks_by_diff == {}  # A probe never becomes a required check PASS.
     assert selected.execute(requested).replayed and backend.calls == 1
     changed = copy.deepcopy(requested)
@@ -130,37 +137,39 @@ def test_observation_is_not_execution_or_semantic_correctness(
     assert result["semantic_verdict"] is None and result["coverage_status"] == "not_assessed"
 
 
-def test_check_reuse_requires_two_current_literal_links(smoke_package):
+def test_check_reuse_selects_current_public_reference_ids(smoke_package):
     prepared = paired.prepare(design(), smoke_package.public)
     for case in prepared["design"]["cases"]:
-        case.update(check_excerpt="parse_rows('x')", evidence_action_id="read-check")
+        case["evidence_ref"] = "read:read-check"
     result = {"action_id": "read-check", "tool": "read_file", "status": "succeeded",
               "workspace_diff_hash": "diff", "output": {
-                  "spans": [{"content": "assert parse_rows('x') == [['x']]"}],
+                  "spans": [{"content": "assert parse_rows('x') == [['x']]",
+                             "path": "tests/test_csv.py", "start_line": 1, "end_line": 1}],
               }}
     events = [{"event_type": "action_finished", "payload": {"result": result}}]
     args = dict(check_id="existing-unit-tests", public_task=smoke_package.public,
                 events=events, diff_hash="diff")
     assert len(paired.bind_check(prepared, **args)) == 2
     result["workspace_diff_hash"] = "older"
-    with pytest.raises(ContractError, match="current completed read"):
+    with pytest.raises(ContractError, match="current read"):
         paired.bind_check(prepared, **args)
     result["workspace_diff_hash"] = "diff"
-    prepared["design"]["cases"][1]["check_excerpt"] = "unobserved case"
-    with pytest.raises(ContractError, match="absent"):
+    prepared["design"]["cases"][1]["evidence_ref"] = "check:not-selected"
+    with pytest.raises(ContractError, match="select this check"):
         paired.bind_check(prepared, **args)
     for case in prepared["design"]["cases"]:
-        case.update(check_excerpt="unittest", evidence_action_id=None)
+        case["evidence_ref"] = "check:existing-unit-tests"
     assert len(paired.bind_check(prepared, **args)) == 2  # Linkage only, not coverage.
 
 
-@pytest.mark.parametrize("mode", ["reuse", "limitation", "missing_excerpt", "unknown_check"])
+@pytest.mark.parametrize("mode", ["reuse", "limitation", "missing_reference", "unknown_check"])
 def test_selected_check_uses_normal_execution_and_replay(gateway, mode):
     selected, backend = gateway
     value = design() if mode != "limitation" else None
     if value is not None:
         for case in value["cases"]:
-            case["check_excerpt"] = "unittest" if mode != "missing_excerpt" else "missing case"
+            case["evidence_ref"] = (
+                "check:existing-unit-tests" if mode != "missing_reference" else "missing case")
     requested = RequestedTool(
         name="run_check", action_id="compare-check",
         arguments={"check_id": "unknown" if mode == "unknown_check" else "existing-unit-tests",
@@ -169,7 +178,7 @@ def test_selected_check_uses_normal_execution_and_replay(gateway, mode):
     )
     result = selected.execute(requested)
     assert backend.calls == 0
-    if mode in {"missing_excerpt", "unknown_check"}:
+    if mode in {"missing_reference", "unknown_check"}:
         assert result.status == "failed" and selected.checks_by_diff == {}
         return
     assert result.status == "succeeded" and result.output["passed"] is True
@@ -244,3 +253,123 @@ def test_schema_is_strict_and_rejects_unbounded_or_missing_case_fields(smoke_pac
     del value["cases"][0]["expected_json"]
     with pytest.raises(ValidationError):
         paired.prepare(value, smoke_package.public)
+
+
+def test_catalog_uses_public_paragraphs_and_bounded_current_successful_reads(smoke_package):
+    public = smoke_package.public.model_dump(mode="json")
+    public["issue"]["description"] = "First condition.\n\nPreserve another condition."
+    events = [event("action_finished", result={
+        "action_id": str(i), "tool": "read_file", "status": "succeeded",
+        "workspace_diff_hash": "current", "output": {"spans": [{
+            "path": "public.py", "start_line": i + 1, "end_line": i + 1, "content": "public",
+        }]},
+    }) for i in range(20)]
+    for change in ({"workspace_diff_hash": "old"}, {"status": "failed"}, {"tool": "search_files"}):
+        row = copy.deepcopy(events[-1])
+        row["payload"]["result"].update(change)
+        row["payload"]["result"]["action_id"] = "excluded"
+        events.append(row)
+    original = copy.deepcopy(events)
+    catalog = paired.evidence_catalog(public, events, "current")
+    assert catalog == paired.evidence_catalog(public, events, "current") and events == original
+    assert catalog["requirements"][1]["text"] == "First condition."
+    assert catalog["requirements"][2]["text"] == "Preserve another condition."
+    assert [r["id"] for r in catalog["reads"]] == [f"read:{i}" for i in range(4, 20)]
+    assert "content" not in catalog["reads"][0]["spans"][0]
+    schema = paired.design_schema(nullable=True, catalog=catalog)
+    assert schema["properties"]["requirement_ids"]["items"]["enum"] == [
+        "issue-title", "issue-1", "issue-2"]
+    assert schema["properties"]["cases"]["items"]["properties"]["evidence_ref"]["enum"] == [
+        "check:existing-unit-tests", *[f"read:{i}" for i in range(4, 20)]]
+    assert schema["type"] == ["object", "null"]
+    probe_schema = paired.design_schema(nullable=False, catalog=catalog)
+    probe_ref = probe_schema["properties"]["cases"]["items"]["properties"]["evidence_ref"]
+    assert probe_ref["enum"] == [None]
+    changed = copy.deepcopy(public)
+    changed["issue"]["description"] = "Changed requirement."
+    assert paired.evidence_catalog(changed)["public_task_hash"] != catalog["public_task_hash"]
+
+
+def _comparison_result(action_id, *, rejected=False, legacy=False):
+    return {"action_id": action_id, "input_hash": "hash-" + action_id,
+            "tool": "run_probe", "status": "failed", "error_code": "CONTRACT_ERROR",
+            "message": "Invalid declaration" if rejected else "Execution failed",
+            "workspace_diff_hash": "seed", "output": {
+                paired.FIELD: {"status": "declaration_rejected", "execution_started": False},
+            } if rejected and not legacy else {}}
+
+
+def test_declaration_corrections_use_original_four_calls_without_handoff_reset():
+    events = [event("diagnostic_candidate_seeded", seed_hash="seed")]
+    for index in range(paired.MAX_TURNS):
+        action = str(index)
+        events.extend([event("turn_started"), event("action_started", action_id=action,
+            arguments={"comparison": {}}, turn_decision={"basis": "Correct declaration."}),
+            event("action_finished", result=_comparison_result(action, rejected=True)),
+            event("context_segment_started")])
+        view = paired.project(events, "seed")
+        assert view["rejected_declarations"] == index + 1 and view["result"] is None
+        assert view["last_declaration_error"]["action_id"] == action
+        assert view["phase"] == ("observe" if index < 3 else "unobserved_limit")
+    final = paired.project(events + [event("context_segment_started")])
+    assert final["phase"] == "unobserved_limit"
+
+
+@pytest.mark.parametrize("legacy", [False, True])
+def test_execution_and_legacy_errors_do_not_reopen_comparison(legacy):
+    events = [event("diagnostic_candidate_seeded", seed_hash="seed"), event("turn_started"),
+        event("action_started", action_id="first", arguments={"comparison": {}}),
+        event("action_finished", result=_comparison_result(
+            "first", rejected=legacy, legacy=legacy))]
+    view = paired.project(events)
+    assert view["phase"] == "returned_to_repair" and view["rejected_declarations"] == 0
+    assert view["last_declaration_error"] is None and view["result"]["status"] == "failed"
+
+
+def test_rejected_check_correction_preserves_replay_identity(gateway, monkeypatch):
+    selected, _ = gateway
+    selected.journal.append("diagnostic_candidate_seeded", {
+        "seed_hash": selected.current_diff.patch_hash})
+    executions = []
+    original = selected.sandbox.run_check
+
+    def counted(*args, **kwargs):
+        executions.append(True)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(selected.sandbox, "run_check", counted)
+    invalid = RequestedTool(name="run_check", action_id="bad-check", arguments={
+        "check_id": "existing-unit-tests", "comparison": design(),
+    }, turn_decision=PublicTurnDecision(mode="verify", basis="Select check evidence."))
+    selected.journal.append("turn_started", {"turn_id": "declaration-1"})
+    rejected = selected.execute(invalid)
+    assert rejected.status == "failed" and not executions
+    assert selected.execute(invalid).replayed and not executions
+    assert paired.project(selected.journal.events())["rejected_declarations"] == 1
+    corrected = copy.deepcopy(invalid)
+    for case in corrected.arguments["comparison"]["cases"]:
+        case["evidence_ref"] = "check:existing-unit-tests"
+    with pytest.raises(ActionConflict):
+        selected.execute(corrected)
+    corrected.action_id = "corrected-check"
+    selected.journal.append("turn_started", {"turn_id": "declaration-2"})
+    result = selected.execute(corrected)
+    assert result.status == "succeeded" and len(executions) == 1
+    assert selected.execute(corrected).replayed and len(executions) == 1
+    view = paired.project(selected.journal.events())
+    assert view["phase"] == "returned_to_repair" and view["phase_calls_started"] == 2
+    assert view["result"]["action_id"] == "corrected-check"
+    assert view["last_declaration_error"]["action_id"] == "bad-check"
+
+
+def test_gateway_execution_error_has_no_declaration_correction_marker(gateway, monkeypatch):
+    selected, backend = gateway
+
+    def failure(*args, **kwargs):
+        backend.calls += 1
+        raise ContractError("execution fixture failure")
+
+    monkeypatch.setattr(backend, "run_probe", failure)
+    result = selected.execute(call())
+    assert result.status == "failed" and backend.calls == 1
+    assert paired.FIELD not in result.output
