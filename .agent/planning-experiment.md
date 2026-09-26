@@ -9,8 +9,9 @@ missing internal planning caused the behavior; this is a new intervention.
 
 ## Runtime contract
 
-`--planning-policy none|brief-v1|brief-evidence-v1|brief-assumption-v1` defaults OFF. All brief variants
-support append-v1 and segmented-v1, not native-window-v1.
+`--planning-policy` accepts `none`, `brief-v1`, `brief-evidence-v1`,
+`brief-assumption-v1`, and `brief-after-source-v1`; it defaults OFF. All brief
+variants support append-v1 and segmented-v1, not native-window-v1.
 Only ON adds nullable `plan_update` to existing `turn_decision` schemas and adds
 brief instructions. There is no planning tool, separate response, API call or
 planner model. OFF keeps the old system prompt, tool schema/order and absent
@@ -49,6 +50,38 @@ from working notes and verification concerns. The harness validates formatting,
 not the truth of a model-authored interpretation. Planning never changes evidence,
 source admission, check PASS, tool masks, costs, counters or finish eligibility.
 Only public inputs are available; hidden/private/reference data never enters plans.
+
+## First-plan timing option
+
+`brief-after-source-v1` changes the initial timing instruction from `brief-v1`
+and defers `working_plan.review_request` while no plan or source observation exists.
+A successful `read_file` or `search_files` result containing a nonempty source span
+starts the initial request in the next response. Failed reads, empty searches,
+EOF/output-limit results without source, and an initial segment handoff do not.
+This is a deterministic timing condition, not a judgment that enough relevant code
+has been understood. Search snippets count; no extra read or separate planning turn
+is required.
+
+Until that observation, instructions ask for `plan_update: null`. The gateway still
+accepts a voluntary early plan and valid tool actions; it adds no enforcement gate.
+Afterward the initial request persists until a plan exists. Existing mutation,
+check, probe, first-ready and segment review behavior, including null/invalid/replay
+handling, stays the same. Source availability is derived from durable public results
+across resume and segment boundaries, without reading more files or storing new state.
+
+Only the timing sentence and review contract differ from `brief-v1`. The remaining
+instructions, ordered tool schemas, notes, segment rules and submission/cost gates
+are unchanged. The new policy is bound through request, envelope, model/tool identity
+and evaluator manifest. Existing policy contracts remain exact; old runs are not migrated.
+The selected working baseline and CLI defaults remain unchanged. Local transport and
+recovery tests cannot establish better repairs or useful planning; see the separate
+[implementation record](../docs/history/2026-09-26-after-source-planning.md).
+
+The quick contract loop selects `tests/test_dev_after_source_planning.py` with
+`-k "not actual_input_timing and not first_source_and_plan"`. Run the same file
+without that filter for actual-input/smoke and recovery integration checks. Use a
+unique external basetemp as described in the implementation guide; the integration
+group has a longer runtime than the quick contract loop.
 
 ## Edit-assumption content contrast (2026-09-15)
 

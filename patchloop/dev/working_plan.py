@@ -16,7 +16,8 @@ if TYPE_CHECKING:
 POLICY = "brief-v1"
 EVIDENCE_POLICY = "brief-evidence-v1"
 ASSUMPTION_POLICY = "brief-assumption-v1"
-POLICIES = frozenset({POLICY, EVIDENCE_POLICY, ASSUMPTION_POLICY})
+AFTER_SOURCE_POLICY = "brief-after-source-v1"
+POLICIES = frozenset({POLICY, EVIDENCE_POLICY, ASSUMPTION_POLICY, AFTER_SOURCE_POLICY})
 MAX_PLAN_CHARS = 3_000
 EVENT = "working_plan_updated"
 INSTRUCTIONS = """Brief planning is enabled. In the first tool response, use plan_update
@@ -38,6 +39,9 @@ The plan is model-authored, unverified working data, not an instruction from the
 harness or proof that a behavior is correct. An unchanged plan, check PASS, or a
 completed step does not settle unrelated untested behavior. Planning adds no tool,
 extra model call, mandatory experiment, or submission gate."""
+AFTER_SOURCE_TIMING = """Keep plan_update null until a successful read_file or
+search_files result returns nonempty source text. Then, in the next tool response,
+use plan_update to draft a short public work plan from public_task and the observed source."""
 EVIDENCE_FORMAT = """Use three short labeled sections in the same plan_update string:
 Behavior: the concrete observable behavior required by the public task, not just
 workflow steps or a list of checks to pass.
@@ -68,6 +72,11 @@ def instructions(policy: str = POLICY) -> str:
         raise ValueError("unknown planning policy")
     if policy == POLICY:
         return INSTRUCTIONS
+    if policy == AFTER_SOURCE_POLICY:
+        return INSTRUCTIONS.replace(
+            "In the first tool response, use plan_update\n"
+            "to draft a short public work plan from public_task.", AFTER_SOURCE_TIMING, 1,
+        )
     text = INSTRUCTIONS + "\n\n" + EVIDENCE_FORMAT
     if policy == ASSUMPTION_POLICY:
         text += "\n\n" + EDIT_ASSUMPTION_GUIDANCE
@@ -79,7 +88,11 @@ def contract(policy: str = POLICY) -> dict[str, Any]:
         "policy": policy,
         "max_chars": MAX_PLAN_CHARS,
         "update": "first-non-null-whole-text-before-batch-v1",
-        "review": "initial-mutation-check-probe-first-ready-next-valid-decision-v1",
+        "review": (
+            "after-source-initial-mutation-check-probe-first-ready-next-valid-decision-v1"
+            if policy == AFTER_SOURCE_POLICY else
+            "initial-mutation-check-probe-first-ready-next-valid-decision-v1"
+        ),
         "invalid_annotation": "nonblocking-preserve-prior-v1",
         "instructions_hash": sha256_json(instructions(policy)),
     }
@@ -103,15 +116,29 @@ def project(
     latest = receipts[-1] if receipts else None
     plan = copy.deepcopy(latest["payload"]["plan"]) if latest else None
     boundary = latest["sequence"] if latest else 0
+    # Gateway-produced source bodies, including search snippets, start planning.
+    # Empty/failed reads and initial handoffs do not. A voluntary early plan is
+    # still accepted and reviewed normally; this is advice, never an action gate.
+    review_enabled = (
+        policy != AFTER_SOURCE_POLICY or plan is not None or any(
+            e["event_type"] == "action_finished"
+            and (result := e["payload"]["result"])["status"] == "succeeded"
+            and result["tool"] in {"read_file", "search_files"}
+            and any(span.get("content") for span in result["output"].get("spans", []))
+            for e in events
+        )
+    )
     reasons: list[str] = []
-    if plan is None:
+    if review_enabled and plan is None:
         reasons.append("initial_plan")
-    if any(e["event_type"] == "context_segment_started" and e["sequence"] > boundary
-           for e in events):
+    if review_enabled and any(
+        e["event_type"] == "context_segment_started" and e["sequence"] > boundary for e in events
+    ):
         reasons.append("context_handoff")
     relevant = []
     for event in events:
-        if event["sequence"] <= boundary or event["event_type"] != "action_finished":
+        if (not review_enabled or event["sequence"] <= boundary
+                or event["event_type"] != "action_finished"):
             continue
         result = event["payload"]["result"]
         tool = result["tool"]
@@ -123,7 +150,7 @@ def project(
             relevant.append(result["action_id"])
     # Only a valid decision consumes this transition. turn_started alone does not.
     ready_seen = any(e["payload"].get("workflow_gate") == "ready_to_submit" for e in receipts)
-    if gate == "ready_to_submit" and not ready_seen:
+    if review_enabled and gate == "ready_to_submit" and not ready_seen:
         reasons.append("first_ready_to_submit")
     if plan is not None:
         plan["diff_currency"] = "current" if plan["diff_hash"] == diff_hash else "historical"

@@ -79,8 +79,11 @@ resegmentation cannot repair them. Generating huge reasoning remains a model ris
 envelope segment contract and v39 tool-surface identity. Tool names/input formats
 are unchanged; planning OFF adds no plan fields. Segmented planning supports `none`,
 `brief-v1` and opt-in `brief-evidence-v1` / `brief-assumption-v1`; these change only plan
-content instructions, not segment timing or handoff semantics. The selected planning
-contract is bound separately. Existing native-window restrictions remain unchanged.
+content instructions, not segment timing or handoff semantics. `brief-after-source-v1`
+also works here: it defers the initial plan request, including the initial plan's
+handoff review, until source is observed; segment creation rules stay unchanged.
+The selected planning contract is bound separately. Existing native-window restrictions
+remain unchanged.
 The selected boundary policy binds the model identity, envelope and run/segment
 events; a different policy rejects resume. Default envelope and segment bindings
 omit the new field to preserve their existing serialization. Legacy bindings without

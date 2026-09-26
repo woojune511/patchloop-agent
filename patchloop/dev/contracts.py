@@ -373,6 +373,7 @@ class DevRunRequest(StrictModel):
     repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = "protected-v1"
     planning_policy: Literal[
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
+        "brief-after-source-v1",
     ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
     segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY
@@ -460,6 +461,7 @@ class DevRunEnvelope(StrictModel):
     )
     planning_policy: Literal[
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
+        "brief-after-source-v1",
     ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
     segment_boundary_policy: segments.BoundaryPolicy = Field(

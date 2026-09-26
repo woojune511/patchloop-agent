@@ -117,7 +117,8 @@ def dev(
                      help="Opt-in future-call cost reservation; requires segmented-v1."),
     ] = "per-call-v1",
     planning_policy: Annotated[
-        Literal["none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1"],
+        Literal["none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
+                "brief-after-source-v1"],
         typer.Option("--planning-policy", help="Public planning; append-v1 or segmented-v1."),
     ] = "none",
     compact_at_input_tokens: Annotated[

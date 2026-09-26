@@ -19,9 +19,9 @@ Simplifying an ineffective mechanism is a valid next step.
 ## Active runtime and working baseline
 
 - `dev-head` is the sole active mutable runtime; every run is `official=false`.
-- The chosen performance baseline is `gpt-5.4-2026-03-05`, xhigh, 25,000 output tokens,
-  common runtime checkpoint `4d2fc8ba` / tool surface v45. This is a selected
-  configuration, not a statement of CLI defaults.
+- The chosen performance baseline is `gpt-5.4-2026-03-05`, xhigh, 25,000 output tokens.
+  The last live comparison used runtime checkpoint `4d2fc8ba` / tool surface v45.
+  These selected settings are not a statement of CLI defaults.
 - Baseline options: segmented-v1, result-or-size-v1 boundaries, brief-v1, probes
   enabled / probe-policy none, repair-recheck, protected-v1 inspection, and
   per-call-v1 completion-cost admission.
@@ -58,11 +58,15 @@ the caller explicitly supplied them; hidden failure causes were not inspected or
 
 Keep planning OFF as a comparison candidate, with CLI defaults and the chosen working
 baseline unchanged. The comparison toggled instructions, annotation schema, plan state
-and review signals together. It does not isolate first-plan anchoring. The smallest next
-mechanism to examine is requiring a plan before the first source observation: delaying
-that requirement while retaining later planning could separate premature interpretation
-from subsequent coordination. This next intervention is not implemented or funded yet.
-Do not add another planning template, mandatory reviewer or task-specific repair hint.
+and review signals together. It does not isolate first-plan anchoring. The new opt-in
+`brief-after-source-v1` delays the first plan request until source text is observed,
+retaining later planning. It addresses both the instruction and actual review signal;
+empty/failed reads and initial handoffs do not trigger planning. A voluntary early plan
+remains valid. This timing condition does not establish sufficient understanding.
+
+The next performance question is `brief-v1` versus `brief-after-source-v1` with the
+same model, tasks and runtime. This timing option has no live efficacy result or new
+paid allocation. Do not add another planning template, mandatory reviewer or task hint.
 
 The group spent $5.988843 of $9.60; unused funds are closed. All actual inputs, usage,
 journal chains and frozen files verified. OFF cost more and used more calls. Some HF
@@ -72,10 +76,12 @@ claims about planning or continuity. No retry, replacement, resume or extension 
 
 ## Implemented and measured
 
-Core runtime remains `4d2fc8ba` / tool surface v45. The external planning comparison
-reused ordinary run_dev and the existing bounded collector/public audits. Its local
-checks and ON/OFF mock smoke cover actual public task/diff/check delivery, isolated
-evaluation and group stops. The live comparison adds task results, not a new runtime.
+The runtime now includes the opt-in first-plan timing change. Existing planning
+identities and tool schemas remain unchanged; the new policy has a distinct timing
+contract in model/tool identity, envelope and evaluator manifest. Source observations
+come from public journal results; no new tool, planning phase or submission gate is added.
+The broad local sweep recorded timing/Git execution failures; unchanged-code rechecks
+passed. Exact validation results and local/live limits are in the implementation record.
 
 Declaration expansion and independent-candidate diagnostics remain optional; their
 closed comparisons did not establish better acceptance or justify default adoption.
@@ -84,6 +90,7 @@ in this planning comparison. Working notes and xhigh reasoning stayed enabled in
 
 Evidence for targeted lookup:
 
+- Current implementation: [first plan after source](history/2026-09-26-after-source-planning.md).
 - Latest result: [planning ON/OFF comparison](history/2026-09-26-planning-off-comparison.md).
 - Detailed protocol, metrics and closure: `C:\pt\analyses\planning-off-compare-20260926-v1`.
 - Existing contract: [brief planning](../.agent/planning-experiment.md).
