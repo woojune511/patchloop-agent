@@ -44,13 +44,20 @@ checks executed, resolving the earlier declaration rejection in these samples.
 Every run passed both required public checks and submitted its seed unchanged;
 there were no new reads, searches, probes, or edits. Admission did not improve repair.
 
-All 12 actual decisions matched completion_guidance's offered next action, and PB
-explicitly cited that guidance. Read/search/probe remained available in every input;
-the submission guidance also warned that checks do not prove untested behavior.
-This is an association, not an isolated cause. Next inspect whether completion
-requirements are being mistaken for a sufficient investigation plan, alongside
-case selection and coverage assumptions. Review simplifying directive guidance
-before adding another prompt or gate. No new run or default change is implied.
+The public trace/source audit locates narrowing in the first verification plan and
+after the first PASS. H recognized no-explicit-endpoint preservation but checked
+direct calls without distinguishing client default substitution. P's first plan
+blurred provider-profile scope into field-mode settings, then expected existing
+thinking regressions to validate the new empty tool-call branch. The selected seven
+message tests contain no tool calls. Prior plans survived exactly in all eight
+follow-up inputs; this is not observed plan loss.
+
+All 12 choices matched completion guidance, but its causal role remains unresolved.
+The older final-guidance-only ablation also selected finish in A 4/4 and B 4/4;
+it did not test initial guidance or this model/loop. Prioritize requirement scope
+and actual check-input coverage when selecting the next improvement. Do not assume
+another declaration format, more probes, or removing the final recommendation will
+solve it. Keep the baseline fixed; no new live group or default change is implied.
 
 ## Implemented and measured
 
@@ -72,6 +79,7 @@ Evidence locations for targeted lookup:
 - Public-reference implementation: `C:\pt\validation\paired-reference-20260926-v1\result.md`.
 - New comparison and public diagnosis: [paired-reference record](history/2026-09-26-paired-reference-comparison.md).
 - Detailed run packet: `C:\pt\analyses\paired-reference-compare-20260926-v1\result.md`.
+- Follow-up analysis: [verification scope audit](history/2026-09-26-verification-scope-audit.md).
 - Full prior narrative and earlier decisions: [documentation history](history/README.md).
 
 ## Reading and updating this page

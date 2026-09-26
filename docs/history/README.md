@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-26: verification scope audit](2026-09-26-verification-scope-audit.md):
+  first-plan narrowing, actual public check inputs, and limits of the guidance hypothesis.
 - [2026-09-26: paired-reference comparison](2026-09-26-paired-reference-comparison.md):
   admitted declarations, unchanged seeded candidates, and the completion-guidance question.
 
