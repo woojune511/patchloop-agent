@@ -38,62 +38,61 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The fresh first-plan timing comparison is closed: `brief-v1` acceptance 0/4 versus
-`brief-after-source-v1` 1/4. Pydantic was 0/2 versus 1/2; HF Hub was 0/2 in both arms.
-All eight submitted, passed safety and completed evaluation, with no NOT_RUN or
-infrastructure stop. The one-result difference leaves direction uncertain under the
-frozen decision rule. These selected development tasks do not establish general quality.
+The planning ON/OFF regression comparison is closed. On AnyIO v3, Fromager v1 and
+pgmpy v1, `brief-v1` achieved acceptance 2/3 planned plus one NOT_RUN; `none` achieved
+3/3. All six started, five submitted and passed acceptance and safety, and no uncertainty
+stopped the group. These tasks were selected from prior successes; each arm/task has
+only one new run. Older outcomes were not controls or pooled into this group.
 
-The timing intervention happened in every run: A planned before its first source
-result, while B first planned in the next model response after source delivery.
-Later planning, tool schemas and other settings matched. Delaying that first request
-did not reliably correct applicability: successful Pydantic PB1 explicitly asked whether
-a generic field-mode change would be too broad, then added a provider-carried opt-in.
-PB2 read the full profile and provider before planning but still used field mode alone,
-as both A runs did. All four passed the same registered checks; none independently
-tested the ordinary-profile preservation case.
+AnyIO ON made ten source calls before editing, failed the public explicit-cancellation
+preservation case, and used a probe that timed out without observations. Its last
+response hit a cost-reduced output ceiling, then COST_CAP_REACHED prevented submission.
+OFF grouped eleven source actions into four calls and edited on call six after its own
+probe timed out. Its pending-future/runner-loop condition passed the public checks and
+acceptance. Code, batching and available recovery budget differed; this does not isolate
+planning's effect on judgment. Both Fromager arms succeeded with the same call count.
+Both pgmpy arms succeeded, but OFF inspected more source and had higher cache-neutral cost.
 
-All four HF runs ultimately forwarded `self.endpoint` and passed the public contract
-and regression checks but failed acceptance. Both arms contain a public-failure repair
-trajectory and a first-check-pass trajectory. The unresolved public question is whether
-the value being forwarded distinguishes an explicit argument from a resolved default;
-this group supplied no independent probe of that distinction. Hidden failure causes
-remain unknown.
+OFF preserved all three selected prior successes and lost no A success. This supports
+none as a simpler option for subsequent development. Defaults and the selected working
+baseline were not automatically changed. Close this planning comparison branch here;
+the evidence does not call for another planning template or establish general efficacy.
+The earlier Pydantic/HF ON/OFF and first-plan timing comparisons remain separate evidence.
 
-Keep defaults and the selected working baseline unchanged. First-plan timing alone is
-not established as an improvement. The next design question is how an agent checks
-repair applicability and preserved behavior before choosing an implementation condition.
-PB1's pre-edit question is a useful observed
-example; it is not a task hint or a new mandatory planning/probe template.
-Planning OFF remains a simplification candidate from the separate prior comparison;
-its results must not be treated as a third arm of this group.
+The concrete next diagnostic concerns probe execution readiness. Both AnyIO probes used
+TestRunner, whose publicly delivered source lazily imports `_pytest.outcomes`, and both
+timed out before their first stdout observation. After collection, a module-discovery
+check with the same existing image/dependencies and no candidate source confirmed pytest
+and _pytest absent. A background import failure leaving a waiting future unsettled is
+a static hypothesis; the exact timeout path has not been replayed. Investigate public
+entry-point prerequisites and failure visibility before another paid group or prompt rule.
 
-The group spent $5.299640 of $9.60; unused funds are closed. All 76 actual inputs and
-settled responses, nine journal chains and frozen files verified. Both arms used 38
-model calls and 18 segments; B cost more. Some HF output ceilings shrank, but every
-response completed and every run submitted. These resource differences remain separate
-from claims about planning or continuity. No paid allocation or continuation is active.
+The group spent $3.183588 of $7.20; unused funds are closed. All 47 actual inputs, 49
+count requests, seven journal chains and frozen files verified. One response was
+incomplete; the other 46 completed. Probe timeout, resource exhaustion, acceptance and
+safety remain separate. No paid allocation or continuation is active.
 
 ## Implemented and measured
 
-The runtime now includes the opt-in first-plan timing change. Existing planning
-identities and tool schemas remain unchanged; the new policy has a distinct timing
-contract in model/tool identity, envelope and evaluator manifest. Source observations
-come from public journal results; no new tool, planning phase or submission gate is added.
-The broad local sweep recorded timing/Git execution failures; unchanged-code rechecks
-passed. Exact validation results and local/live limits are in the implementation record.
+The latest comparison changed no production code. It reused the existing planning
+policies, run_dev, request recorder and public/usage auditors. Both mock arms reached
+isolated evaluation, focused checks stayed under two minutes, and related audits and
+Ruff passed. The identical-runtime broad sweep was reused, including its original
+timing/Git failures and passing unchanged-code rechecks; it was not rerun for this packet.
 
-Declaration expansion and independent-candidate diagnostics remain optional; their
-closed comparisons did not establish better acceptance or justify default adoption.
-H's prepared probe dependencies support offline imports, but no model probe occurred
-in this timing comparison. The agent runtime was frozen throughout collection.
+The opt-in first-plan timing, declaration expansion and independent-candidate diagnostics
+remain implemented, with no default adoption established by their closed comparisons.
+The planning OFF comparison removes the explicit planning feature as a whole; bounded
+working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
-- Current implementation: [first plan after source](history/2026-09-26-after-source-planning.md).
-- Latest result: [first-plan timing comparison](history/2026-09-27-after-source-planning-comparison.md).
-- Detailed protocol, metrics and closure: `C:\pt\analyses\planning-after-source-compare-20260927-v1`.
+- Latest result: [planning OFF regression](history/2026-09-27-planning-off-regression.md).
+- Protocol, metrics, public review, environment inventory and closure:
+  `C:\pt\analyses\planning-off-regression-20260927-v1`.
 - Separate prior result: [planning ON/OFF comparison](history/2026-09-26-planning-off-comparison.md).
+- Separate timing result: [first-plan timing comparison](history/2026-09-27-after-source-planning-comparison.md).
+- Current implementation: [first plan after source](history/2026-09-26-after-source-planning.md).
 - Existing contract: [brief planning](../.agent/planning-experiment.md).
 - Prior next-question result: [declaration checkpoint comparison](history/2026-09-26-declaration-checkpoint-comparison.md).
 - Prior interpretation audit: [first interpretation and source questions](history/2026-09-26-first-interpretation-audit.md).
