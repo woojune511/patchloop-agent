@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-26: planning ON/OFF full-run comparison](2026-09-26-planning-off-comparison.md):
+  eight fresh solves, Pydantic-only OFF acceptance advantage, and unchanged HF failures.
 - [2026-09-26: post-search declaration comparison](2026-09-26-declaration-checkpoint-comparison.md):
   four live next responses, anonymous question review, and no immediate applicability signal.
 - [2026-09-26: frozen declaration decision](2026-09-26-declaration-checkpoint-sampler.md):

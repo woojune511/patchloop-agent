@@ -38,112 +38,59 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The retrospective Pydantic comparison now contrasts a successful fresh GPT-5.4 xhigh
-run with the recent failed fresh generation. Twenty actual inputs were reverified.
-Model and selected controls match; the initial inputs match after removing measured
-preparation time and its derived segment identity. This is a selected historical
-pair, not a controlled causal comparison or a new success-rate sample.
+The eight fresh planning ON/OFF solves are closed. Explicit planning (`brief-v1`)
+produced acceptance 0/4; `none` produced 2/4. The difference is confined to Pydantic
+(ON 0/2, OFF 2/2); HF Hub remained 0/2 in each arm. All eight submitted, passed safety
+and completed evaluation, with no NOT_RUN or infrastructure stop. These are two selected
+development tasks, not a general success-rate claim.
 
-The successful first plan was also incomplete. At call 2, before receiving fuller
-profile source, its public read question explicitly considered reusing existing
-configuration versus adding an optional profile setting. It then read the declaration,
-format documentation and provider construction, and implemented a separate applicability
-condition. The failed run retained provider-preservation words but sought only format
-settings and the shared serializer; its edit used field mode alone. Both passed the
-same checks without a discriminating probe. Success therefore demonstrates the observed
-implementation distinction, not better verification selection or a benefit from more reading.
+Both Pydantic ON runs used field format as the repair's applicability condition, even
+while their plans mentioned preserving existing profile/provider behavior. Both OFF runs introduced an
+optional profile requirement, enabled it in the provider-supplied profile, and used it
+in serialization. All passed the same registered checks; none independently tested the
+ordinary-profile preservation case. The observed improvement is repair scope, not proven
+improvement in verification selection.
 
-Prior factorized case design, frozen expectations and source supplementation did not
-establish improvement. Earlier failures sometimes already had the field-format docs.
-Do not add a planning template, mandatory review or broader search output on this evidence.
-Keep the independent-candidate diagnostic optional: its closed A 0/2 versus B 0/2
-comparison also did not improve acceptance, and neither generated alternative passed.
+HF Hub public failures prompted caller-forwarding repairs in both arms. All four then
+passed the public contract and regression checks but failed acceptance. A public-source
+follow-up identifies an unexecuted concern about stored endpoint values losing whether
+the caller explicitly supplied them; hidden failure causes were not inspected or inferred.
 
-The optional declaration-context diagnostic is implemented for fresh dev runs. In the
-first tool batch, it expands an already matched Python module/class data declaration
-through its adjacent literal documentation, subject to existing search output limits
-and a 40-line span bound. The original search hits, public boundary, evidence accounting,
-prompt, schemas and finish gates remain intact. Omission uses the existing runner.
+Keep planning OFF as a comparison candidate, with CLI defaults and the chosen working
+baseline unchanged. The comparison toggled instructions, annotation schema, plan state
+and review signals together. It does not isolate first-plan anchoring. The smallest next
+mechanism to examine is requiring a plan before the first source observation: delaying
+that requirement while retaining later planning could separate premature interpretation
+from subsequent coordination. This next intervention is not implemented or funded yet.
+Do not add another planning template, mandatory reviewer or task-specific repair hint.
 
-An offline replay of PG's four initial searches matches the historical source outputs.
-Only the profile declaration query changes: it gains 12 source lines, including the
-format documentation, without removing previous lines. This is source delivery evidence;
-it does not show a better question, edit or acceptance result. The saved-search preview
-is not a hydrated historical checkpoint. A separate checkpoint sampler now reconstructs
-the saved post-search request and retains its first plan, native continuation and budgets.
-A must match the original; B recomputes only source-derived context after the generic
-expansion. It reuses the bounded one-response collector for A1/B1/B2/A2. Selected tools
-are not executed, so a later edit and task acceptance remain outside this diagnostic.
-The authorized four-response comparison is now closed. All responses completed with
-settled usage and no infrastructure or resource-limit stop. Anonymous review found no
-explicit question separating field format from the profile's empty-field requirement
-in either arm (A 0/2, B 0/2). All selected serializer reads/searches; several distinguished
-shared ownership or sending from receiving code, but none explicitly tested applicability.
-This measures the next public question only: the selected actions, resulting edits and
-task acceptance were NOT_RUN. It does not establish eventual failure or a general null effect.
-
-Keep declaration expansion optional. More source text did not produce the target distinction
-at this checkpoint, so it does not justify default adoption or a longer comparison now.
-The unresolved question is how the agent tests its proposed repair's applicability against
-preservation requirements. Any next intervention needs an explicit mechanism beyond source
-supplementation. First-plan anchoring remains untested because plan and continuation were fixed.
-
-H's missing-import capability gap is resolved for this prepared environment: an
-opt-in adapter statically reads literal setup.py runtime requirements and reuses the
-existing public wheel resolver/offline installer. An exact-base, network-free Docker
-canary imports requests and the actual Xet module. The original source and existing
-image remain intact. No model probe occurred in this comparison, so improved import
-availability is not itself an observed task-solving improvement.
+The group spent $5.988843 of $9.60; unused funds are closed. All actual inputs, usage,
+journal chains and frozen files verified. OFF cost more and used more calls. Some HF
+output ceilings shrank and one oversized candidate caused a segment transition; every
+response completed and every run submitted. Resource differences remain separate from
+claims about planning or continuity. No retry, replacement, resume or extension is active.
 
 ## Implemented and measured
 
-The declaration diagnostic's focused validation includes A/B mocks in both append-v1
-and segmented-v1, reaching edit/check/submit/isolated evaluation and checking actual input
-delivery. The scope, replay/cache and mutation-evidence contracts are covered. The old
-runtime hash remains unchanged because the adapter is optional diagnostic code.
+Core runtime remains `4d2fc8ba` / tool surface v45. The external planning comparison
+reused ordinary run_dev and the existing bounded collector/public audits. Its local
+checks and ON/OFF mock smoke cover actual public task/diff/check delivery, isolated
+evaluation and group stops. The live comparison adds task results, not a new runtime.
 
-The frozen checkpoint collector has separate local evidence for exact input restoration,
-unchanged first plan/continuation, source-dependent projection and shared collection stops.
-Its scripted responses test the collector, not autonomous question selection or acceptance.
+Declaration expansion and independent-candidate diagnostics remain optional; their
+closed comparisons did not establish better acceptance or justify default adoption.
+H's prepared probe dependencies support offline imports, but no model probe occurred
+in this planning comparison. Working notes and xhigh reasoning stayed enabled in OFF.
 
-The optional `alternative` argument on the seeded diagnostic admits only exact public
-patch/hash/base data from a separately verified producer. It supplies generic comparison
-guidance, not an applied patch, editable-source evidence, previous notes/actions or
-evaluator results. The imported seed still consumes one mutation slot. Omission keeps
-the previous path; system/planning prompts, registered tools, finish/check gates,
-continuation and isolated evaluation remain unchanged. Core runtime stays `4d2fc8ba`.
+Evidence for targeted lookup:
 
-Focused checks, related regression, Ruff and two isolated evaluation mocks passed.
-Both context policies delivered public task/diff/check state and the alternative.
-The full core suite was not rerun because core files did not change; local mock and
-real Docker import results remain distinct from live task acceptance.
-
-The closed independent-candidate group used $1.9097295 of its $9.60 cap; billing was settled and there was no
-infrastructure stop or limit-based terminal. HG used all four mutation slots and had
-two late output ceilings reduced by remaining cost. B had separate generation and
-comparison phases, so equal total caps did not equal aggregate call/time opportunities.
-Unused funds are closed; no retry, replacement, resume, extension or default adoption.
-
-Evidence locations for targeted lookup:
-
-- Current implementation: [declaration context](../.agent/declaration-context.md).
-- Frozen decision contract: [checkpoint sampler](../.agent/declaration-checkpoint.md).
-- Latest live decision result: [post-search declaration comparison](history/2026-09-26-declaration-checkpoint-comparison.md).
-- Detailed live result: `C:\pt\analyses\declaration-checkpoint-live-20260926-v1\result.md`.
-- Checkpoint implementation: [frozen declaration decision](history/2026-09-26-declaration-checkpoint-sampler.md).
-- Prepared comparison: `C:\pt\analyses\declaration-checkpoint-20260926-v1\result.md`.
-- Implementation record: [declaration-context diagnostic](history/2026-09-26-declaration-context-diagnostic.md).
-- Source preview: `C:\pt\analyses\declaration-context-preview-20260926-v1\result.md`.
-- Local validation: `C:\pt\validation\declaration-context-20260926-v1\result.md`.
-- Current audit: [first interpretation and source questions](history/2026-09-26-first-interpretation-audit.md).
-- Detailed audit: `C:\pt\analyses\pydantic-first-interpretation-audit-20260926-v1\result.md`.
-- Preceding full-run result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
-- Detailed packet: `C:\pt\analyses\independent-candidate-compare-20260926-v1\result.md`.
-- Contract: [independent candidate](../.agent/independent-candidate.md).
-- Local validation: `C:\pt\validation\independent-candidate-20260926-v1\result.md`.
-- Preceding public contrast: [diagnostic claims verification](history/2026-09-26-diagnostic-claims-verification.md).
-- Earlier recommendation removal: [completion advice comparison](history/2026-09-26-completion-status-comparison.md).
-- Earlier decisions and closed evidence: [documentation history](history/README.md).
+- Latest result: [planning ON/OFF comparison](history/2026-09-26-planning-off-comparison.md).
+- Detailed protocol, metrics and closure: `C:\pt\analyses\planning-off-compare-20260926-v1`.
+- Existing contract: [brief planning](../.agent/planning-experiment.md).
+- Prior next-question result: [declaration checkpoint comparison](history/2026-09-26-declaration-checkpoint-comparison.md).
+- Prior interpretation audit: [first interpretation and source questions](history/2026-09-26-first-interpretation-audit.md).
+- Prior candidate result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
+- Earlier decisions and immutable records: [documentation history](history/README.md).
 
 ## Reading and updating this page
 
