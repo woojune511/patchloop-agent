@@ -144,6 +144,8 @@ experimental context and historical plans; current source/status take precedence
   opt-in seeded-loop projection that keeps completion gates and tool admission intact.
 - Candidate comparison: [independent candidate](independent-candidate.md), an
   opt-in public alternative in the ordinary seeded repair loop.
+- Search context: [declaration context](declaration-context.md), opt-in bounded
+  declaration/documentation expansion in the first tool batch of a fresh diagnostic.
 
 ## Validation checklist
 

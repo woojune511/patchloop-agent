@@ -59,14 +59,20 @@ Do not add a planning template, mandatory review or broader search output on thi
 Keep the independent-candidate diagnostic optional: its closed A 0/2 versus B 0/2
 comparison also did not improve acceptance, and neither generated alternative passed.
 
-The next candidate for consideration is a narrow information comparison at the failed
-run's first post-search decision: expand only a matched Python declaration and its
-adjacent documentation with a generic source rule, retaining the original prompt and
-first plan. Test whether the model's question and first edit change. This is unimplemented
-and unrun, with no new live allocation. It tests recovery from an existing interpretation,
-not the cause of its initial formation. It belongs to the earlier source-supplement family;
-the different model and pre-edit timing do not establish efficacy. Preserve task-neutral
-selection and exclude successful patches, known contrasts and desired-condition hints.
+The optional declaration-context diagnostic is implemented for fresh dev runs. In the
+first tool batch, it expands an already matched Python module/class data declaration
+through its adjacent literal documentation, subject to existing search output limits
+and a 40-line span bound. The original search hits, public boundary, evidence accounting,
+prompt, schemas and finish gates remain intact. Omission uses the existing runner.
+
+An offline replay of PG's four initial searches matches the historical source outputs.
+Only the profile declaration query changes: it gains 12 source lines, including the
+format documentation, without removing previous lines. This is source delivery evidence;
+it does not show a better question, edit or acceptance result. The saved-search preview
+is not a hydrated historical checkpoint. A collector for the exact post-search decision
+still needs to bind the original plan/continuation and changed evidence/derived state.
+No paid comparison or new live allocation exists. This belongs to the earlier information
+supplement family; do not adopt broader search output from local/mock validation alone.
 
 H's missing-import capability gap is resolved for this prepared environment: an
 opt-in adapter statically reads literal setup.py runtime requirements and reuses the
@@ -76,6 +82,11 @@ image remain intact. No model probe occurred in this comparison, so improved imp
 availability is not itself an observed task-solving improvement.
 
 ## Implemented and measured
+
+The declaration diagnostic's focused validation includes A/B mocks in both append-v1
+and segmented-v1, reaching edit/check/submit/isolated evaluation and checking actual input
+delivery. The scope, replay/cache and mutation-evidence contracts are covered. The old
+runtime hash remains unchanged because the adapter is optional diagnostic code.
 
 The optional `alternative` argument on the seeded diagnostic admits only exact public
 patch/hash/base data from a separately verified producer. It supplies generic comparison
@@ -97,6 +108,10 @@ Unused funds are closed; no retry, replacement, resume, extension or default ado
 
 Evidence locations for targeted lookup:
 
+- Current implementation: [declaration context](../.agent/declaration-context.md).
+- Implementation record: [declaration-context diagnostic](history/2026-09-26-declaration-context-diagnostic.md).
+- Source preview: `C:\pt\analyses\declaration-context-preview-20260926-v1\result.md`.
+- Local validation: `C:\pt\validation\declaration-context-20260926-v1\result.md`.
 - Current audit: [first interpretation and source questions](history/2026-09-26-first-interpretation-audit.md).
 - Detailed audit: `C:\pt\analyses\pydantic-first-interpretation-audit-20260926-v1\result.md`.
 - Latest live result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
