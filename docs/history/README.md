@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-27: AnyIO failure observation](2026-09-27-anyio-failure-observation.md):
+  exact failed-candidate probe replay and a prepared comparison of supplied observations.
 - [2026-09-27: AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md):
   missing lazy import reproduced, selected public dependency roots, and a completed lifecycle probe.
 - [2026-09-27: planning OFF regression](2026-09-27-planning-off-regression.md):
