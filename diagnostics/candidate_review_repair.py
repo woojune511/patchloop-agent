@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from diagnostics import change_review, completion_status, paired_observation
+from diagnostics import change_review, completion_status, independent_candidate, paired_observation
 from patchloop.artifacts import ArtifactStore
 from patchloop.dev import runner
 from patchloop.dev.contracts import DevRunRequest
@@ -99,7 +99,8 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                base_commit: str, source_code: list, review: dict | None,
                experiment_hash: str, source_run_id: str, branch: str,
                public_feedback: dict | None = None, change_review_policy: str = "none",
-               comparison_policy: str = "none", completion_guidance_policy: str = "none"):
+               comparison_policy: str = "none", completion_guidance_policy: str = "none",
+               alternative: dict | None = None):
     """One fresh run with explicitly selected diagnostic interventions.
 
     The imported candidate consumes one of the usual four mutation slots. The normal
@@ -107,6 +108,13 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
     separate diagnostic receipt. The evaluator still creates its own clean workspace.
     """
     validate_feedback(public_feedback, seed_hash)
+    other = independent_candidate.Candidate.model_validate(alternative) if alternative else None
+    if alternative is not None:
+        require(other is not None and other.base_commit == base_commit,
+                "independent candidate must match the public base")
+        require(change_review_policy == comparison_policy == completion_guidance_policy == "none"
+                and review is None and public_feedback is None,
+                "independent candidate must be isolated from other diagnostic interventions")
     require(change_review_policy in ("none", *change_review.INSTRUCTIONS),
             "unknown change review policy")
     require(comparison_policy in ("none", paired_observation.POLICY),
@@ -162,6 +170,15 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                 "resume_allowed": False,
             })
             initialized.append(journal.run_id)
+            if other is not None:
+                alternative_artifact = store.put_text(other.patch, "text/x-diff")
+                journal.append(independent_candidate.EVENT, {
+                    "official": False, "experiment_hash": experiment_hash,
+                    "base_commit": other.base_commit, "patch_hash": other.patch_hash,
+                    "patch_artifact": alternative_artifact.model_dump(mode="json"),
+                    "instruction_hash": sha256_text(independent_candidate.INSTRUCTION),
+                    "evaluation_or_prior_actions_supplied": False,
+                })
             if completion_guidance_policy != "none":
                 journal.append(completion_status.EVENT, {
                     **completion_status.identity(), "experiment_hash": experiment_hash,
@@ -191,6 +208,8 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                                source_code=source_code, review=review)
         if public_feedback is not None:
             state[FEEDBACK_FIELD] = feedback_overlay(state, public_feedback)
+        if other is not None:
+            state[independent_candidate.FIELD] = independent_candidate.overlay(state, other)
         if change_review_policy != "none":
             review_request = change_review.review_request(
                 state, kwargs["journal"].events(), policy=change_review_policy,

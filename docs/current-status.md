@@ -52,18 +52,32 @@ ordinary field-mode tool-only messages. Edit/probe tools and substantial budget
 remained. Missing note delivery, missing probe dependencies and exhausted tool
 budgets were not observed in P-B. Delivery still does not establish effective use.
 
-H has a separate capability gap: its recorded probe environment lacks prepared
-dependencies. A new exact-base import attempt fails on missing requests. Neither H
-run in the completion-advice comparison attempted a probe, so this is not a proven
-cause of those choices. Standard-library probes remain available; P's prepared
-dependencies verify and its public serializer executes successfully.
+H's separate import capability gap now has a prepared dependency bundle. An opt-in
+operator adapter reads literal setup.py runtime requirements without executing
+project code and reuses the existing wheel resolver/installer. A new offline
+exact-base Docker canary imports requests and the actual Xet module successfully.
+Neither earlier H run attempted a probe, so missing dependencies remain an unproven
+cause of their choices. P's prepared dependencies remain unchanged.
 
 Prioritize deriving applicability and expected preserved behavior from the public
 requirement independently of the candidate's predicate, then selecting a check that
 distinguishes them. Keep the baseline fixed. The same full model produced a correct
 fresh repair and accepted an incorrect seeded repair, but seed state, framing,
 guidance and sampling differ; anchoring is a hypothesis, not an established cause.
-No new method, default or paid comparison is selected by this audit.
+The selected next diagnostic gives the ordinary seeded repair loop an alternative
+patch generated in a separate clean context by the same model. It transfers only
+the exact public submitted patch/base/hash, never plans, traces or evaluation results.
+An optional generic instruction asks for a substantive behavior difference, a public
+expected outcome and an observation connected to an edit or submission decision.
+
+The authorized comparison uses H/P, one final A/B each, with the baseline model and
+settings fixed. A has $2.40 for direct reconsideration; B has $1.20 for fresh generation
+and $1.20 for comparison/repair, total $9.60. Order is HA, HG, HB, PG, PB, PA. A missing
+generation submission makes that B NOT_RUN. No unused-budget transfer, replacement,
+retry or resume is allowed; uncertainty stops the group. B has two phases, so this is
+a cost-matched workflow comparison, not equal aggregate call/time opportunities.
+Implementation and collector validation precede live execution; no efficacy result
+or default-policy change is established yet.
 
 ## Implemented and measured
 
@@ -88,6 +102,10 @@ size is measured; actual input-token, latency, contamination and quality effects
 not measured. Historical reports and unused paid allocations remain closed.
 
 Evidence locations for targeted lookup:
+
+- Current diagnostic: [independent candidate contract](../.agent/independent-candidate.md).
+- Current validation: `C:\pt\validation\independent-candidate-20260926-v1`.
+- New comparison packet: `C:\pt\analyses\independent-candidate-compare-20260926-v1`.
 
 - Current verification: [diagnostic claims](history/2026-09-26-diagnostic-claims-verification.md).
 - Verification packet: `C:\pt\analyses\claims-verification-20260926-v1\result.md`.

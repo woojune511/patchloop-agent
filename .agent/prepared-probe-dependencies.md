@@ -126,6 +126,23 @@ version supports static PEP 621/735 metadata, not setup.py or arbitrary requirem
 The project itself is never downloaded or built; it receives the same minimal public
 name/version metadata described above. Empty third-party dependency sets are supported.
 
+For a checkout with tool-only `pyproject.toml` and literal `setup.py` runtime
+requirements, the separate opt-in operator adapter
+`python -B -m diagnostics.setup_probe_dependencies <task-dir> --prepared-source
+<descriptor> --source-root <root> --output <new-directory>` reuses this resolver and
+installer. It statically reads one direct imported `setuptools.setup` call and
+literal `name`, `python_requires` and `install_requires` values (or a single literal
+assignment). It never executes setup code. Dynamic/ambiguous/reused metadata,
+extras/groups, URL/self dependencies and PEP 621 projects are rejected. It supports
+only this public metadata shape; it is not a general setup.py interpreter.
+
+Its resolution provenance binds `setup.py`; minimal project metadata also binds
+the actual pyproject bytes and uses the explicit source-snapshot version. Existing
+wheel origins/hashes, platform limits, offline installation, publication-last
+descriptor, source isolation and sandbox controls apply unchanged. The ordinary
+CLI resolver's accepted metadata remains unchanged. A real import canary is needed
+to establish that a prepared environment can execute the project module of interest.
+
 Markers and wheel tags target CPython 3.12/Linux amd64, manylinux 2.28, independently
 of the host. The marker baseline is Python 3.12.0; kernel release/version markers have
 empty values. This is a recorded resolution target, not a reproduction of every image

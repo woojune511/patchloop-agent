@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from diagnostics import candidate_review_repair as experiment
-from diagnostics import change_review
+from diagnostics import change_review, independent_candidate
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
 from patchloop.dev import runner
@@ -36,20 +36,34 @@ def request(root, context_policy="segmented-v1"):
     )
 
 
-@pytest.mark.parametrize("review,with_feedback,review_policy,context_policy", [
-    pytest.param(None, False, "none", "segmented-v1", id="default"),
-    pytest.param(REPORT, False, "none", "segmented-v1", id="report"),
-    pytest.param(None, True, "none", "segmented-v1", id="feedback"),
-    pytest.param(None, False, change_review.POLICY, "segmented-v1", id="change-review"),
-    pytest.param(None, False, change_review.VALUE_ORIGIN_POLICY, "append-v1", id="origin-append"),
-    pytest.param(None, False, change_review.VALUE_ORIGIN_POLICY, "segmented-v1",
+@pytest.mark.parametrize("review,with_feedback,review_policy,context_policy,with_alternative", [
+    pytest.param(None, False, "none", "segmented-v1", False, id="default"),
+    pytest.param(REPORT, False, "none", "segmented-v1", False, id="report"),
+    pytest.param(None, True, "none", "segmented-v1", False, id="feedback"),
+    pytest.param(None, False, change_review.POLICY, "segmented-v1", False, id="change-review"),
+    pytest.param(None, False, change_review.VALUE_ORIGIN_POLICY, "append-v1", False,
+                 id="origin-append"),
+    pytest.param(None, False, change_review.VALUE_ORIGIN_POLICY, "segmented-v1", False,
                  id="origin-segmented"),
+    pytest.param(None, False, "none", "append-v1", True, id="alternative-append"),
+    pytest.param(None, False, "none", "segmented-v1", True, id="alternative-segmented"),
 ])
 def test_seed_repair_check_submit_isolated_evaluation(
     tmp_path, monkeypatch, gateway_factory, smoke_package, review, with_feedback, review_policy,
-    context_policy,
+    context_policy, with_alternative,
 ):
     patch = seed(gateway_factory)
+    alternative = None
+    if with_alternative:
+        other, _, workspace = gateway_factory()
+        monkeypatch.setattr("socket.socket.connect", lambda *_: pytest.fail("network forbidden"))
+        mutation = MockDevAdapter(smoke_package.public.task_id).mutation
+        path = workspace / mutation.path
+        path.write_text(path.read_text().replace(mutation.old_text, mutation.new_text),
+                        encoding="utf-8", newline="")
+        alternative = {"patch": other.current_diff.patch,
+                       "patch_hash": other.current_diff.patch_hash,
+                       "base_commit": smoke_package.public.repository.base_commit}
     feedback = ({
         "observed_on_diff_hash": sha256_text(patch),
         "requirement": "Preserve quoted newlines.",
@@ -96,6 +110,7 @@ def test_seed_repair_check_submit_isolated_evaluation(
         source_run_id="run_dev_saved", branch="A" if review is None else "B",
         public_feedback=feedback,
         change_review_policy=review_policy,
+        alternative=alternative,
     )["runs"][0]
     assert result["terminal"] == "EVALUATOR_PASS", result
     assert result["accepted_mutations"] == 1  # Seed is not a new tool action.
@@ -119,6 +134,20 @@ def test_seed_repair_check_submit_isolated_evaluation(
         assert "visible_check_status" in state and experiment.FIELD in state
         assert "source_run_id" not in state[experiment.FIELD]
     assert wires[-1]["visible_check_status"][0]["status"] == "PASS"
+    if with_alternative:
+        receipt = [e for e in events if e["event_type"] == independent_candidate.EVENT]
+        assert len(receipt) == 1
+        assert receipt[0]["payload"]["patch_hash"] == alternative["patch_hash"]
+        assert events.index(receipt[0]) < next(i for i, e in enumerate(events)
+                                             if e["event_type"] == "turn_started")
+        for state in wires:
+            value = state[independent_candidate.FIELD]
+            assert value["patch"] == alternative["patch"]
+            assert value["base_commit"] == alternative["base_commit"]
+            assert not value["evaluation_or_prior_actions_supplied"]
+        assert not wires[0][independent_candidate.FIELD]["matches_current_diff"]
+    else:
+        assert all(independent_candidate.FIELD not in state for state in wires)
     if review_policy != "none":
         assert [change_review.FIELD in v for v in wires] == [True, False, True, False]
         assert wires[0][change_review.FIELD]["subject"]["origin"] == "imported_model_candidate"

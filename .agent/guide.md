@@ -142,6 +142,8 @@ experimental context and historical plans; current source/status take precedence
   [frozen expectations](frozen-probe-expectation.md), [profile scope](profile-scope-diagnostic.md).
 - Completion advice: [status-only diagnostic](completion-status-diagnostic.md), an
   opt-in seeded-loop projection that keeps completion gates and tool admission intact.
+- Candidate comparison: [independent candidate](independent-candidate.md), an
+  opt-in public alternative in the ordinary seeded repair loop.
 
 ## Validation checklist
 
