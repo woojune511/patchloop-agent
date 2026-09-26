@@ -38,28 +38,35 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The cost-matched independent-candidate comparison is complete: direct reconsideration
-A 0/2, independent generation plus comparison B 0/2. All four final runs submitted
-their saved seeds unchanged after the required checks; no read/search tool call,
-probe or new edit occurred in those final runs. Both intermediate fresh generations
-also submitted and failed acceptance. All 32 actual inputs and count/dispatch records
-were audited; the exact alternatives reached every B request.
+The retrospective Pydantic comparison now contrasts a successful fresh GPT-5.4 xhigh
+run with the recent failed fresh generation. Twenty actual inputs were reverified.
+Model and selected controls match; the initial inputs match after removing measured
+preparation time and its derived segment identity. This is a selected historical
+pair, not a controlled causal comparison or a new success-rate sample.
 
-Pydantic's fresh generation already reduced the provider-specific applicability
-requirement to field-mode configuration in its first plan. Subsequent source work
-correctly found the shared serializer/replay owner, but its edit omitted a separate
-provider-requirement discriminator. Checks passed, and their ordinary default-mode
-provider example was treated as confirming preservation more broadly. The same scope
-error therefore appears without an imported candidate and before any context summary.
-This weakens an explanation based only on seed anchoring or lost memory; it does not
-prove the cause of every acceptance failure.
+The successful first plan was also incomplete. At call 2, before receiving fuller
+profile source, its public read question explicitly considered reusing existing
+configuration versus adding an optional profile setting. It then read the declaration,
+format documentation and provider construction, and implemented a separate applicability
+condition. The failed run retained provider-preservation words but sought only format
+settings and the shared serializer; its edit used field mode alone. Both passed the
+same checks without a discriminating probe. Success therefore demonstrates the observed
+implementation distinction, not better verification selection or a benefit from more reading.
 
-Keep the independent-candidate diagnostic optional. No improvement was observed in
-this sample, and neither generated alternative passed, so the receiver's ability to
-use a correct alternative remains unresolved. Prioritize the first translation of
-public applicability requirements into executable conditions, separately from format
-settings. Use this public sequence and earlier condition/case-design evidence before
-adding another generic planning instruction, comparison gate or paid experiment.
+Prior factorized case design, frozen expectations and source supplementation did not
+establish improvement. Earlier failures sometimes already had the field-format docs.
+Do not add a planning template, mandatory review or broader search output on this evidence.
+Keep the independent-candidate diagnostic optional: its closed A 0/2 versus B 0/2
+comparison also did not improve acceptance, and neither generated alternative passed.
+
+The next candidate for consideration is a narrow information comparison at the failed
+run's first post-search decision: expand only a matched Python declaration and its
+adjacent documentation with a generic source rule, retaining the original prompt and
+first plan. Test whether the model's question and first edit change. This is unimplemented
+and unrun, with no new live allocation. It tests recovery from an existing interpretation,
+not the cause of its initial formation. It belongs to the earlier source-supplement family;
+the different model and pre-edit timing do not establish efficacy. Preserve task-neutral
+selection and exclude successful patches, known contrasts and desired-condition hints.
 
 H's missing-import capability gap is resolved for this prepared environment: an
 opt-in adapter statically reads literal setup.py runtime requirements and reuses the
@@ -90,7 +97,9 @@ Unused funds are closed; no retry, replacement, resume, extension or default ado
 
 Evidence locations for targeted lookup:
 
-- Current result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
+- Current audit: [first interpretation and source questions](history/2026-09-26-first-interpretation-audit.md).
+- Detailed audit: `C:\pt\analyses\pydantic-first-interpretation-audit-20260926-v1\result.md`.
+- Latest live result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
 - Detailed packet: `C:\pt\analyses\independent-candidate-compare-20260926-v1\result.md`.
 - Contract: [independent candidate](../.agent/independent-candidate.md).
 - Local validation: `C:\pt\validation\independent-candidate-20260926-v1\result.md`.

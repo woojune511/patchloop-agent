@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-26: first interpretation and source questions](2026-09-26-first-interpretation-audit.md):
+  equal fresh inputs, different pre-edit questions, and limits of source-context explanations.
 - [2026-09-26: independent candidate comparison](2026-09-26-independent-candidate-comparison.md):
   offline HF imports, cost-matched generation/comparison, and repeated first-plan scope reduction.
 - [2026-09-26: diagnostic claims verification](2026-09-26-diagnostic-claims-verification.md):
