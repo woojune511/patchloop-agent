@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-26: first-input completion advice diagnostic](2026-09-26-completion-status-diagnostic.md):
+  opt-in recommendation removal, unchanged runtime gates, and local delivery validation.
 - [2026-09-26: verification scope audit](2026-09-26-verification-scope-audit.md):
   first-plan narrowing, actual public check inputs, and limits of the guidance hypothesis.
 - [2026-09-26: paired-reference comparison](2026-09-26-paired-reference-comparison.md):

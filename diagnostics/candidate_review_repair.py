@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from diagnostics import change_review, paired_observation
+from diagnostics import change_review, completion_status, paired_observation
 from patchloop.artifacts import ArtifactStore
 from patchloop.dev import runner
 from patchloop.dev.contracts import DevRunRequest
@@ -99,7 +99,7 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                base_commit: str, source_code: list, review: dict | None,
                experiment_hash: str, source_run_id: str, branch: str,
                public_feedback: dict | None = None, change_review_policy: str = "none",
-               comparison_policy: str = "none"):
+               comparison_policy: str = "none", completion_guidance_policy: str = "none"):
     """One fresh run with explicitly selected diagnostic interventions.
 
     The imported candidate consumes one of the usual four mutation slots. The normal
@@ -111,6 +111,13 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
             "unknown change review policy")
     require(comparison_policy in ("none", paired_observation.POLICY),
             "unknown comparison policy")
+    require(completion_guidance_policy in ("none", completion_status.POLICY),
+            "unknown completion guidance policy")
+    if completion_guidance_policy != "none":
+        require(change_review_policy == comparison_policy == "none"
+                and review is None and public_feedback is None,
+                "completion guidance diagnostic must be isolated from "
+                "review, comparison or feedback")
     if comparison_policy != "none":
         require(request.enable_probes and request.probe_policy == "none",
                 "paired observation requires enabled ordinary probes")
@@ -155,6 +162,10 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
                 "resume_allowed": False,
             })
             initialized.append(journal.run_id)
+            if completion_guidance_policy != "none":
+                journal.append(completion_status.EVENT, {
+                    **completion_status.identity(), "experiment_hash": experiment_hash,
+                })
             if comparison_policy != "none":
                 journal.append(paired_observation.EVENT, {
                     **paired_observation.identity(), "experiment_hash": experiment_hash,
@@ -186,6 +197,8 @@ def run_seeded(request: DevRunRequest, *, seed_patch: str, seed_hash: str,
             )
             if review_request is not None:
                 state[change_review.FIELD] = review_request
+        if completion_guidance_policy != "none":
+            state["completion_guidance"] = completion_status.project(state["completion_guidance"])
         return canonical_json(state)
 
     gateway_type = (paired_observation.gateway_type(SeededGateway)

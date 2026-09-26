@@ -54,30 +54,37 @@ follow-up inputs; this is not observed plan loss.
 
 All 12 choices matched completion guidance, but its causal role remains unresolved.
 The older final-guidance-only ablation also selected finish in A 4/4 and B 4/4;
-it did not test initial guidance or this model/loop. Prioritize requirement scope
-and actual check-input coverage when selecting the next improvement. Do not assume
-another declaration format, more probes, or removing the final recommendation will
-solve it. Keep the baseline fixed; no new live group or default change is implied.
+it did not test initial guidance or this model/loop. The next diagnostic removes
+check/submit recommendations from the first input onward while preserving stage
+facts, actual tools and gates. This tests an earlier influence on verification
+selection, not whether removing the final recommendation alone fixes the problem.
+Judge requirement scope, actual check inputs, resulting edits and acceptance.
+Keep the baseline fixed; no new live group or default change is implied.
 
 ## Implemented and measured
 
-The optional paired-observation diagnostic now uses code-owned public evidence IDs
-and allows correction of a rejected declaration within its original phase/resource
-limits. This is an opt-in diagnostic; common runtime defaults remain unchanged.
-Valid IDs do not certify case execution, expectation validity, or requirement coverage.
+The seeded diagnostic now accepts optional `completion_guidance_policy="status-only-v1"`.
+It changes only the recommendation and message for check-needed/submission-ready
+stages. Failure/repair guidance, prompt, tool admission, check gates and budgets
+remain intact. Other supplemental review/feedback interventions cannot be combined
+with it. Omission preserves the existing path; common runtime remains `4d2fc8ba`.
 
-Its recorded local validation is 40 focused tests, 138 related regression tests,
-and nine isolated evaluation mocks passing. The focused group took 87.803 seconds;
-the related regression took 651.897 seconds. These are retained checkpoint results,
-not fresh tests of all current repository behavior. The updated interface has now
-been live-executed on two selected tasks, one sample per arm/task, with no acceptance
-gain. The four-run group closed at $0.8982235 of $4.80, with no infrastructure stop
-or NOT_RUN slot. Its unused allocation is closed; these are not fresh-solve results.
+Local focused validation passed, including append/segmented mock runs through a
+failed check, read, repair, automatic recheck and isolated evaluation. Actual native
+inputs retain the task, diff, check status and plan content. This establishes delivery
+and compatibility; live behavioral effect and acceptance improvement are `NOT_RUN`.
+See the linked record for exact tests, timings, initial fixture corrections and limits.
+
+The earlier public-reference interface remains available. Its live group completed
+at $0.8982235 of $4.80 with A 0/2 and B 0/2 acceptance; unused allocation is closed.
+Admitted evidence IDs did not establish coverage or improve the unchanged seeds.
 
 Evidence locations for targeted lookup:
 
-- Public-reference implementation: `C:\pt\validation\paired-reference-20260926-v1\result.md`.
-- New comparison and public diagnosis: [paired-reference record](history/2026-09-26-paired-reference-comparison.md).
+- Current diagnostic: [completion advice record](history/2026-09-26-completion-status-diagnostic.md)
+  and [implementation contract](../.agent/completion-status-diagnostic.md).
+- Local validation: `C:\pt\validation\completion-status-20260926-v1\result.md`.
+- Earlier comparison: [paired-reference record](history/2026-09-26-paired-reference-comparison.md).
 - Detailed run packet: `C:\pt\analyses\paired-reference-compare-20260926-v1\result.md`.
 - Follow-up analysis: [verification scope audit](history/2026-09-26-verification-scope-audit.md).
 - Full prior narrative and earlier decisions: [documentation history](history/README.md).

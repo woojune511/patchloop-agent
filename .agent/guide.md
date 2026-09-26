@@ -140,6 +140,8 @@ experimental context and historical plans; current source/status take precedence
 - Discovery diagnostics: [counterexamples](counterexample-discovery.md),
   [task-first discovery](task-first-discovery.md), [construction links](construction-links.md),
   [frozen expectations](frozen-probe-expectation.md), [profile scope](profile-scope-diagnostic.md).
+- Completion advice: [status-only diagnostic](completion-status-diagnostic.md), an
+  opt-in seeded-loop projection that keeps completion gates and tool admission intact.
 
 ## Validation checklist
 
