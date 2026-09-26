@@ -74,9 +74,19 @@ the saved post-search request and retains its first plan, native continuation an
 A must match the original; B recomputes only source-derived context after the generic
 expansion. It reuses the bounded one-response collector for A1/B1/B2/A2. Selected tools
 are not executed, so a later edit and task acceptance remain outside this diagnostic.
-No paid comparison or new live allocation exists. The next decision is whether immediate
-public questions change under this fixed input intervention. This belongs to the earlier
-information supplement family; local/mock validation does not justify default adoption.
+The authorized four-response comparison is now closed. All responses completed with
+settled usage and no infrastructure or resource-limit stop. Anonymous review found no
+explicit question separating field format from the profile's empty-field requirement
+in either arm (A 0/2, B 0/2). All selected serializer reads/searches; several distinguished
+shared ownership or sending from receiving code, but none explicitly tested applicability.
+This measures the next public question only: the selected actions, resulting edits and
+task acceptance were NOT_RUN. It does not establish eventual failure or a general null effect.
+
+Keep declaration expansion optional. More source text did not produce the target distinction
+at this checkpoint, so it does not justify default adoption or a longer comparison now.
+The unresolved question is how the agent tests its proposed repair's applicability against
+preservation requirements. Any next intervention needs an explicit mechanism beyond source
+supplementation. First-plan anchoring remains untested because plan and continuation were fixed.
 
 H's missing-import capability gap is resolved for this prepared environment: an
 opt-in adapter statically reads literal setup.py runtime requirements and reuses the
@@ -108,7 +118,7 @@ Both context policies delivered public task/diff/check state and the alternative
 The full core suite was not rerun because core files did not change; local mock and
 real Docker import results remain distinct from live task acceptance.
 
-The live group used $1.9097295 of its $9.60 cap; billing was settled and there was no
+The closed independent-candidate group used $1.9097295 of its $9.60 cap; billing was settled and there was no
 infrastructure stop or limit-based terminal. HG used all four mutation slots and had
 two late output ceilings reduced by remaining cost. B had separate generation and
 comparison phases, so equal total caps did not equal aggregate call/time opportunities.
@@ -118,6 +128,8 @@ Evidence locations for targeted lookup:
 
 - Current implementation: [declaration context](../.agent/declaration-context.md).
 - Frozen decision contract: [checkpoint sampler](../.agent/declaration-checkpoint.md).
+- Latest live decision result: [post-search declaration comparison](history/2026-09-26-declaration-checkpoint-comparison.md).
+- Detailed live result: `C:\pt\analyses\declaration-checkpoint-live-20260926-v1\result.md`.
 - Checkpoint implementation: [frozen declaration decision](history/2026-09-26-declaration-checkpoint-sampler.md).
 - Prepared comparison: `C:\pt\analyses\declaration-checkpoint-20260926-v1\result.md`.
 - Implementation record: [declaration-context diagnostic](history/2026-09-26-declaration-context-diagnostic.md).
@@ -125,7 +137,7 @@ Evidence locations for targeted lookup:
 - Local validation: `C:\pt\validation\declaration-context-20260926-v1\result.md`.
 - Current audit: [first interpretation and source questions](history/2026-09-26-first-interpretation-audit.md).
 - Detailed audit: `C:\pt\analyses\pydantic-first-interpretation-audit-20260926-v1\result.md`.
-- Latest live result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
+- Preceding full-run result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
 - Detailed packet: `C:\pt\analyses\independent-candidate-compare-20260926-v1\result.md`.
 - Contract: [independent candidate](../.agent/independent-candidate.md).
 - Local validation: `C:\pt\validation\independent-candidate-20260926-v1\result.md`.
