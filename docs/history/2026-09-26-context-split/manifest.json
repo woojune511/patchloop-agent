@@ -1,0 +1,41 @@
+{
+  "purpose": "Byte-exact pre-split documentation snapshots; historical context only",
+  "date": "2026-09-26",
+  "entries": [
+    {
+      "original_path": "docs/current-status.md",
+      "snapshot_path": "current-status.md",
+      "sha256": "1a6f36947bb29c62174b8d40f28c00be7d34744d804dccc38b5bfa17d1ffd289",
+      "bytes": 885996,
+      "lines": 12382
+    },
+    {
+      "original_path": ".agent/guide.md",
+      "snapshot_path": "agent-guide.md",
+      "sha256": "a895cfdc8d03fb908870bacc4c0bcba6145539ae88626a056fc7dc3a6045d0f0",
+      "bytes": 539319,
+      "lines": 6978
+    },
+    {
+      "original_path": "docs/evidence.md",
+      "snapshot_path": "evidence.md",
+      "sha256": "26e502bb335903cc2efde320489cb0da07166615a8d8f7111b0143b20f448cf5",
+      "bytes": 81972,
+      "lines": 1236
+    },
+    {
+      "original_path": "docs/operations.md",
+      "snapshot_path": "operations.md",
+      "sha256": "df90bf7ae5164b82211c16c40e7659d04b3fcd5785d7a3c36c8dfe7c186da605",
+      "bytes": 137656,
+      "lines": 1938
+    },
+    {
+      "original_path": "docs/product.md",
+      "snapshot_path": "product.md",
+      "sha256": "13cf093115422f3315bd7cf4d0c721bb88b73a80683ed70de1be0abb9855a652",
+      "bytes": 30566,
+      "lines": 425
+    }
+  ]
+}

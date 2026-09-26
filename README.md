@@ -2,8 +2,13 @@
 
 PatchLoop is a single coding agent with a deliberately short development loop.
 Its mutable runtime, `dev-head`, inspects a public task, edits through constrained
-tools, runs registered checks, submits a patch, and receives an isolated private
-evaluator summary. Every current run is development-only and `official=false`.
+tools, runs registered checks, and submits a patch for separate isolated evaluation.
+Every current run is development-only and `official=false`.
+
+The goal is correct, verified repairs within bounded resources. Development starts
+with observed agent failures, investigates their causes, and tests the smallest
+useful improvements. Reusable methods should emerge from that work; proving the
+effect of memory or another preselected technique is not the starting objective.
 
 ## Start here
 
@@ -12,6 +17,10 @@ evaluator summary. Every current run is development-only and `official=false`.
 - [Run and validate](docs/operations.md) — local, mock, and explicitly approved live commands
 - [Evidence and limitations](docs/evidence.md) — measured facts, non-results, and claim boundaries
 - [Documentation index](docs/README.md) — the complete human-facing set
+
+Current documents are short, replaceable guidance. Past investigations live in
+[documentation history](docs/history/README.md); search and read them only when
+a specific evidence question needs them.
 
 ## Try the local loop
 
@@ -41,6 +50,7 @@ patchloop/verifier/  separate private evaluator
 tasks/               audited task packages
 fixtures/            local smoke repositories and task fixtures
 docs/                current human documentation
+docs/history/        past investigations and preserved documentation snapshots
 reports/             immutable historical evidence
 experiments/         immutable historical plans and results
 ```

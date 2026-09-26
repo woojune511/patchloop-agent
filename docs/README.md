@@ -1,23 +1,32 @@
 # PatchLoop documentation
 
-This directory is intentionally human-facing. There are four current documents:
+Current guidance and historical evidence have different reading paths.
 
-1. [Current status](current-status.md) — the shortest authoritative snapshot
-2. [Product and architecture](product.md) — product boundary and runtime composition
-3. [Run and validate](operations.md) — commands and execution boundaries
-4. [Evidence and limitations](evidence.md) — observations, gaps, and prohibited claims
+| Need | Read |
+| --- | --- |
+| Current priority, baseline, unresolved problem | [Current status](current-status.md) |
+| Product goals and architecture | [Product](product.md) |
+| Run, validate, prepare, or resume | [Operations](operations.md) |
+| Interpret results and claim limits | [Evidence](evidence.md) |
+| Change an implementation contract | [Internal guide](../.agent/guide.md), then relevant source/tests |
+| Explain a particular past decision or failure | [History index](history/README.md), then a matching passage |
 
-If you read only one document, read [Current status](current-status.md). Source
-code owns runtime behavior; that status page owns the current operational summary.
+Start with current status. Read other material only for the task at hand; do not
+concatenate this directory, the internal guide, and history into every task.
+Source code owns behavior. Current status owns current priorities. History records
+what was observed or decided at a prior checkpoint, including superseded proposals.
 
-## Historical material
+## Maintenance
 
-`docs/archive/` is preserved audit history. It is not current guidance. Exact
-historical IDs and hashes live with artifacts under `reports/` and
-`experiments/`. Task- and fixture-specific `audit.md` or `README.md` files stay
-beside the data they describe. Archived links may refer to the historical tree;
-use their recorded commit when an old active path no longer exists.
+Current documents are edited in place. Replace stale statements and keep only
+decision-relevant facts with evidence links. Significant completed investigations
+go once into a dated entry under `docs/history/`; old run narratives do not grow
+inside the current status, product, operations, or internal guide.
 
-Contributor automation instructions remain in the required root `AGENTS.md`.
-Agent-only implementation detail is intentionally kept outside this visible docs
-set.
+The documentation tests bound current document sizes and verify active links and
+the preserved migration snapshots. Move detail to the right existing location
+instead of routinely raising a limit or creating mandatory process paperwork.
+
+Existing `docs/archive/`, `reports/`, and `experiments/` remain immutable. Task-local
+audit files stay beside their data. Generated run state remains outside the repository.
+The root [AGENTS.md](../AGENTS.md) contains contributor instructions.
