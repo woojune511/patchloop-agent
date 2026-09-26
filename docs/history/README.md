@@ -37,6 +37,9 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-26: paired-reference comparison](2026-09-26-paired-reference-comparison.md):
+  admitted declarations, unchanged seeded candidates, and the completion-guidance question.
+
 Add one short dated Markdown entry for a significant completed investigation, with
 problem, evidence, hypothesis, change, result/limits, and the unresolved question.
 Link detailed external run artifacts rather than copying them. Routine edits need

@@ -38,17 +38,19 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-Recent seeded repair runs submitted unchanged candidates that passed registered
-public checks while isolated acceptance failed. In the last paired-observation
-group, acceptance was A 0/2 and B 0/2; both B declarations were rejected before
-their comparison executed. Comparison execution was NOT_RUN 2, separate from the
-four executed acceptance failures. This does not establish a memory bottleneck.
+The public-reference comparison completed four seeded repair runs: acceptance was
+A 0/2 and B 0/2. Both B declarations were admitted and their selected registered
+checks executed, resolving the earlier declaration rejection in these samples.
+Every run passed both required public checks and submitted its seed unchanged;
+there were no new reads, searches, probes, or edits. Admission did not improve repair.
 
-Use saved public task/source/action/check evidence to locate the failure, including
-possible gaps in requirement interpretation, case selection, or repair decisions.
-Distinguish an interface rejection from the semantic usefulness of a proposed case.
-Choose the next diagnostic, correction, or simplification for the uncertainty it
-resolves. Do not automatically continue paired-observation experiments.
+All 12 actual decisions matched completion_guidance's offered next action, and PB
+explicitly cited that guidance. Read/search/probe remained available in every input;
+the submission guidance also warned that checks do not prove untested behavior.
+This is an association, not an isolated cause. Next inspect whether completion
+requirements are being mistaken for a sufficient investigation plan, alongside
+case selection and coverage assumptions. Review simplifying directive guidance
+before adding another prompt or gate. No new run or default change is implied.
 
 ## Implemented and measured
 
@@ -60,13 +62,16 @@ Valid IDs do not certify case execution, expectation validity, or requirement co
 Its recorded local validation is 40 focused tests, 138 related regression tests,
 and nine isolated evaluation mocks passing. The focused group took 87.803 seconds;
 the related regression took 651.897 seconds. These are retained checkpoint results,
-not fresh tests of all current repository behavior. Live performance of the updated
-interface is NOT_RUN. No unused budget or local PASS authorizes another run.
+not fresh tests of all current repository behavior. The updated interface has now
+been live-executed on two selected tasks, one sample per arm/task, with no acceptance
+gain. The four-run group closed at $0.8982235 of $4.80, with no infrastructure stop
+or NOT_RUN slot. Its unused allocation is closed; these are not fresh-solve results.
 
 Evidence locations for targeted lookup:
 
 - Public-reference implementation: `C:\pt\validation\paired-reference-20260926-v1\result.md`.
-- Closed comparison: `C:\pt\analyses\paired-observation-compare-20260926-v1\result.md`.
+- New comparison and public diagnosis: [paired-reference record](history/2026-09-26-paired-reference-comparison.md).
+- Detailed run packet: `C:\pt\analyses\paired-reference-compare-20260926-v1\result.md`.
 - Full prior narrative and earlier decisions: [documentation history](history/README.md).
 
 ## Reading and updating this page
