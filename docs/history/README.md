@@ -37,6 +37,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-27: first-plan timing comparison](2026-09-27-after-source-planning-comparison.md):
+  eight fresh solves, timing delivered in both arms, and one acceptance difference.
 - [2026-09-26: first plan after source](2026-09-26-after-source-planning.md):
   opt-in timing change preserving later planning, with local input/recovery verification.
 - [2026-09-26: planning ON/OFF full-run comparison](2026-09-26-planning-off-comparison.md):

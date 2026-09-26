@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-09-26. This is a replaceable snapshot of current decisions, not an
+Updated: 2026-09-27. This is a replaceable snapshot of current decisions, not an
 append-only log. Source code owns runtime behavior; this page owns current priorities.
 Read [history](history/README.md) only for a specific evidence question.
 
@@ -20,7 +20,7 @@ Simplifying an ineffective mechanism is a valid next step.
 
 - `dev-head` is the sole active mutable runtime; every run is `official=false`.
 - The chosen performance baseline is `gpt-5.4-2026-03-05`, xhigh, 25,000 output tokens.
-  The last live comparison used runtime checkpoint `4d2fc8ba` / tool surface v45.
+  The last live comparison used runtime checkpoint `93ec0af`.
   These selected settings are not a statement of CLI defaults.
 - Baseline options: segmented-v1, result-or-size-v1 boundaries, brief-v1, probes
   enabled / probe-policy none, repair-recheck, protected-v1 inspection, and
@@ -38,41 +38,41 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The eight fresh planning ON/OFF solves are closed. Explicit planning (`brief-v1`)
-produced acceptance 0/4; `none` produced 2/4. The difference is confined to Pydantic
-(ON 0/2, OFF 2/2); HF Hub remained 0/2 in each arm. All eight submitted, passed safety
-and completed evaluation, with no NOT_RUN or infrastructure stop. These are two selected
-development tasks, not a general success-rate claim.
+The fresh first-plan timing comparison is closed: `brief-v1` acceptance 0/4 versus
+`brief-after-source-v1` 1/4. Pydantic was 0/2 versus 1/2; HF Hub was 0/2 in both arms.
+All eight submitted, passed safety and completed evaluation, with no NOT_RUN or
+infrastructure stop. The one-result difference leaves direction uncertain under the
+frozen decision rule. These selected development tasks do not establish general quality.
 
-Both Pydantic ON runs used field format as the repair's applicability condition, even
-while their plans mentioned preserving existing profile/provider behavior. Both OFF runs introduced an
-optional profile requirement, enabled it in the provider-supplied profile, and used it
-in serialization. All passed the same registered checks; none independently tested the
-ordinary-profile preservation case. The observed improvement is repair scope, not proven
-improvement in verification selection.
+The timing intervention happened in every run: A planned before its first source
+result, while B first planned in the next model response after source delivery.
+Later planning, tool schemas and other settings matched. Delaying that first request
+did not reliably correct applicability: successful Pydantic PB1 explicitly asked whether
+a generic field-mode change would be too broad, then added a provider-carried opt-in.
+PB2 read the full profile and provider before planning but still used field mode alone,
+as both A runs did. All four passed the same registered checks; none independently
+tested the ordinary-profile preservation case.
 
-HF Hub public failures prompted caller-forwarding repairs in both arms. All four then
-passed the public contract and regression checks but failed acceptance. A public-source
-follow-up identifies an unexecuted concern about stored endpoint values losing whether
-the caller explicitly supplied them; hidden failure causes were not inspected or inferred.
+All four HF runs ultimately forwarded `self.endpoint` and passed the public contract
+and regression checks but failed acceptance. Both arms contain a public-failure repair
+trajectory and a first-check-pass trajectory. The unresolved public question is whether
+the value being forwarded distinguishes an explicit argument from a resolved default;
+this group supplied no independent probe of that distinction. Hidden failure causes
+remain unknown.
 
-Keep planning OFF as a comparison candidate, with CLI defaults and the chosen working
-baseline unchanged. The comparison toggled instructions, annotation schema, plan state
-and review signals together. It does not isolate first-plan anchoring. The new opt-in
-`brief-after-source-v1` delays the first plan request until source text is observed,
-retaining later planning. It addresses both the instruction and actual review signal;
-empty/failed reads and initial handoffs do not trigger planning. A voluntary early plan
-remains valid. This timing condition does not establish sufficient understanding.
+Keep defaults and the selected working baseline unchanged. First-plan timing alone is
+not established as an improvement. The next design question is how an agent checks
+repair applicability and preserved behavior before choosing an implementation condition.
+PB1's pre-edit question is a useful observed
+example; it is not a task hint or a new mandatory planning/probe template.
+Planning OFF remains a simplification candidate from the separate prior comparison;
+its results must not be treated as a third arm of this group.
 
-The next performance question is `brief-v1` versus `brief-after-source-v1` with the
-same model, tasks and runtime. This timing option has no live efficacy result or new
-paid allocation. Do not add another planning template, mandatory reviewer or task hint.
-
-The group spent $5.988843 of $9.60; unused funds are closed. All actual inputs, usage,
-journal chains and frozen files verified. OFF cost more and used more calls. Some HF
-output ceilings shrank and one oversized candidate caused a segment transition; every
-response completed and every run submitted. Resource differences remain separate from
-claims about planning or continuity. No retry, replacement, resume or extension is active.
+The group spent $5.299640 of $9.60; unused funds are closed. All 76 actual inputs and
+settled responses, nine journal chains and frozen files verified. Both arms used 38
+model calls and 18 segments; B cost more. Some HF output ceilings shrank, but every
+response completed and every run submitted. These resource differences remain separate
+from claims about planning or continuity. No paid allocation or continuation is active.
 
 ## Implemented and measured
 
@@ -86,13 +86,14 @@ passed. Exact validation results and local/live limits are in the implementation
 Declaration expansion and independent-candidate diagnostics remain optional; their
 closed comparisons did not establish better acceptance or justify default adoption.
 H's prepared probe dependencies support offline imports, but no model probe occurred
-in this planning comparison. Working notes and xhigh reasoning stayed enabled in OFF.
+in this timing comparison. The agent runtime was frozen throughout collection.
 
 Evidence for targeted lookup:
 
 - Current implementation: [first plan after source](history/2026-09-26-after-source-planning.md).
-- Latest result: [planning ON/OFF comparison](history/2026-09-26-planning-off-comparison.md).
-- Detailed protocol, metrics and closure: `C:\pt\analyses\planning-off-compare-20260926-v1`.
+- Latest result: [first-plan timing comparison](history/2026-09-27-after-source-planning-comparison.md).
+- Detailed protocol, metrics and closure: `C:\pt\analyses\planning-after-source-compare-20260927-v1`.
+- Separate prior result: [planning ON/OFF comparison](history/2026-09-26-planning-off-comparison.md).
 - Existing contract: [brief planning](../.agent/planning-experiment.md).
 - Prior next-question result: [declaration checkpoint comparison](history/2026-09-26-declaration-checkpoint-comparison.md).
 - Prior interpretation audit: [first interpretation and source questions](history/2026-09-26-first-interpretation-audit.md).
