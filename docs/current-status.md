@@ -71,8 +71,11 @@ are missing. Selected upstream parser/grading functions ran, not the full upstre
 The [original-input pilot](../.agent/original-input-pilot.md) fixes three fresh attempts:
 toqito-1538, MontePy-933_interface and darts-3065. Deterministic selection excludes
 current task/ledger repositories; this is a development pilot, not proven held-out.
-All three evaluator images are absent. Next: authorize image acquisition, then bind
-digests, prepare original-input packages and calibrate each oracle before paid solves.
+All three images were acquired with explicit approval and their digests fixed.
+Six controls verified BASE F2P failures with preserved P2P, and REFERENCE full passes;
+all reference commands exit 0, with no missing required cases or timeouts.
+Next: prepare original-input task packages and bind visible commands/runtime before
+paid solves. See [pilot calibration](history/2026-09-27-original-pilot-calibration.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
 AnyIO remains development/calibration data, not untouched held-out evidence.
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).

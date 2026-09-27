@@ -81,19 +81,24 @@ it must not be represented as an untouched final evaluation.
 
 All three original issue hashes and metadata are journal-bound at
 `C:/pt/analyses/original-input-pilot-selection-20260927-v1`.
-Their named evaluator images are absent locally (Docker returned `No such image`).
-The exact acquisition targets are:
+After explicit user authorization, all three images were acquired and calibrated.
+The fixed execution digests are:
 
-- `swerebench/sweb.eval.x86_64.vprusso_1776_toqito-1538:latest`
-- `swerebench/sweb.eval.x86_64.idaholab_1776_montepy-933_interface:latest`
-- `swerebench/sweb.eval.x86_64.unit8co_1776_darts-3065:latest`
+- `swerebench/sweb.eval.x86_64.vprusso_1776_toqito-1538@sha256:4a79ab796ad10cb18c3d805895977fbf119b16db4a9bd4b815678459846a6b86`
+- `swerebench/sweb.eval.x86_64.idaholab_1776_montepy-933_interface@sha256:d79f83f33b0f25749596dd0038adecb80e9b443300200890dca0f6d23488567c`
+- `swerebench/sweb.eval.x86_64.unit8co_1776_darts-3065@sha256:ce882b8e668e4a6d5452c6612cd5dc9227839f21efc3bde67437603e4d14b7d0`
 
-These mutable tags are acquisition targets only; resolved digests must replace
-them in the execution manifest. Download sizes have not been measured.
-No images were pulled/built; no new task package, environment calibration, provider
-call or performance result exists. All runs remain `official=false`.
+All three use Python 3.13.13 and verified clean base commits. Six isolated controls
+confirmed original BASE failures and REFERENCE successes, with no missing required
+cases or timeouts. Reference full-command exits are all zero. See
+[calibration](../docs/history/2026-09-27-original-pilot-calibration.md).
 
-Next acquire these three images only with explicit authorization under AGENTS.md,
-record resolved digests, then prepare public packages and calibrate environments.
-Image download permission and paid-model permission are separate. A missing image
-does not authorize a pull, build, task replacement or paid call.
+`diagnostics/original_pilot_calibrate.py` is an operator-only acquisition/calibration
+driver requiring `--authorized-image-acquisition`; that flag is not user permission.
+It binds the saved selection, original oracle and prior pinned parser. It never
+mounts evaluator material into an agent workspace or calls a model.
+
+Next prepare original-input public/private task packages and bind visible commands,
+source allowlists and runtime identities. No paid run is authorized; image approval
+does not authorize model use, another sample or unbounded retries. All evidence is
+`official=false`; calibration is not agent performance.
