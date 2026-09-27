@@ -41,11 +41,10 @@ The [cleanup comparison](history/2026-09-27-cleanup-information-results.md) is c
 without benefit/equivalence evidence. The baseline caller stall does not invalidate
 acceptance: [scope](history/2026-09-27-caller-support-scope.md).
 
-AnyIO is development/calibration data; its adapted-task acceptance is separate from
-original scores. See the linked benchmark audit.
-The [original-input pilot](../.agent/original-input-pilot.md) fixes three fresh attempts:
-toqito-1538, MontePy-933_interface and darts-3065. Deterministic selection excludes
-current task/ledger repositories; this is a development pilot, not proven held-out.
+AnyIO is calibration data, separate from original scores. The
+[pilot](../.agent/original-input-pilot.md) fixed fresh attempts on toqito-1538,
+MontePy-933_interface and darts-3065, excluding current task/ledger repositories.
+This is development data, not proven held-out.
 Approved image digests, isolated package/environment controls, temporary public
 checks and fixed four-file/1,000-line limits are in
 [readiness](history/2026-09-27-original-pilot-readiness.md); pinned probe bundles in
@@ -80,8 +79,9 @@ found question narrowing and unsupported dismissal despite delivered warnings.
 [Advice removal](history/2026-09-28-completion-advice-results.md) produced 2 probes
 and an extra edit ($0.9856585), but benchmark FAIL and public counterexamples remain.
 Its probes pass while a same-input invariant fails. The [expectation audit](history/2026-09-28-expected-value-provenance.md)
-traces self-confirming formula evidence and checks on different inputs. Next prepare
-a generic expectation-review comparison offline. Allocation closed; defaults unchanged.
+traces self-confirming formula evidence and checks on different inputs. The
+[review pair](history/2026-09-28-expectation-review-preparation.md) is frozen offline;
+next rehearse later-checkpoint continuation. Allocations closed; defaults unchanged.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
