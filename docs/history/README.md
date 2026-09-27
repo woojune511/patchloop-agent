@@ -21,6 +21,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
+- [Caller information results](2026-09-27-caller-information-results.md): first repairs and bounded outcomes.
 - [Caller information](2026-09-27-caller-information.md): first-input comparison preparation.
 - [Caller state](2026-09-27-anyio-caller-state.md): interrupt versus explicit cancellation.
 - [Checkpoint results](2026-09-27-checkpoint-live-results.md): live A/B and public-trace audit.
@@ -72,9 +73,5 @@ Search first; resolve snapshot links through the manifest or original revision.
 - [2026-09-26: paired-reference comparison](2026-09-26-paired-reference-comparison.md):
   admitted declarations, unchanged seeded candidates, and the completion-guidance question.
 
-Add one dated record per significant investigation: problem, evidence, hypothesis,
-change, result/limits and next question. Link external artifacts; routine fixes need
-no record. Preserve closed records; add follow-ups for corrections.
-
-Keep current status bounded. Legacy `docs/archive/`, `reports/`, and `experiments/`
-remain unchanged and historical.
+Record significant investigations once with evidence, result/limits and next question.
+Preserve closed records and legacy archives; correct interpretations in follow-ups.

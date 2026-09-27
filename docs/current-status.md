@@ -20,7 +20,7 @@ Simplifying an ineffective mechanism is a valid next step.
 
 - `dev-head` is the sole active mutable runtime; every run is `official=false`.
 - The chosen performance baseline is `gpt-5.4-2026-03-05`, xhigh, 25,000 output tokens.
-  The latest checkpoint comparison used collector checkpoint `8da9e09`.
+  The latest information comparison used collector checkpoint `dcacb0d`.
   These selected settings are not a statement of CLI defaults.
 - Baseline options: segmented-v1, result-or-size-v1 boundaries, brief-v1, probes
   enabled / probe-policy none, repair-recheck, protected-v1 inspection, and
@@ -38,57 +38,48 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The fresh AnyIO v3 N1/N2 solves remain closed: N1 made two unsuccessful repairs
-and stopped without submission; N2 submitted and passed isolated acceptance/safety.
-Their $1.854949 of $2.40 allocation is closed. N1's first post-probe repair depended
-on caller cancellation that the public probe had not measured.
-
-The separately authorized checkpoint diagnostic is now closed. A preserves N1's
-saved first post-probe/pre-edit request; B changes only two current guidance fields
-to remove its mutation recommendation. Observations, tools, budgets and encrypted
-history are retained; earlier exposure and other mutation cues remain. Four actual
-continuations ran A1/B1/B2/A2. A1 and B1 submitted and passed acceptance/safety.
-B2 and A2 reached their cost limits without submission: acceptance/safety NOT_RUN.
-New spend was $3.039521 of $3.869852, excluding inherited usage. Unused $0.830331
+The caller-information comparison is closed. Four actual continuations of N1's
+first post-probe/pre-edit checkpoint ran A1/B1/B2/A2. A retained the original input;
+B received the later operator probe code and raw caller-state measurements once.
+Original mutation advice, tools, native history and remaining budgets were fixed.
+New spend was $3.025955 of $3.869852, excluding inherited usage. Unused $0.843897
 is closed. No paid allocation, retry or continuation is active.
 
-All four first actions were replace_text, with no new inspection/probe beforehand.
-B1, B2 and A2 conditioned the first repair on the unmeasured caller-cancellation
-assumption and failed the same three public interrupt cases. B1 recovered and passed.
-B2 and A2 passed lifecycle on their second repairs but then hit the upstream
-KeyboardInterrupt subprocess timeout. A2's third repair still failed upstream;
-its earlier lifecycle PASS does not validate that final diff. B2's late probe observed
-an exit path not returning. Its result, and A2's last failed check, reached a counted
-next input but no subsequent generation because minimum dispatch no longer fit.
+All four first actions were replace_text. A1/A2 relied on caller cancellation and
+failed the same three interrupt cases. B1/B2 added synchronous interrupted-run_test
+handling that does not depend solely on caller cancellation. B2's public plan
+explicitly distinguished callback interruption from caller cancellation. B2 passed
+both public checks and isolated acceptance/safety with its first patch. B1's first
+patch instead timed out during fixture cleanup; its second reintroduced resumed
+test execution, and its third passed lifecycle but never ran the upstream check.
 
-All 25 dispatched requests and 27 counted inputs verified against public projections,
-with exact first A/B delivery and intact native continuation. Billing is known; all
-13 new owned check/probe containers are absent. Docker admission passed after the
-user started it. There was no count/transport/cleanup uncertainty or automatic retry.
-These establish execution integrity, not model uptake or general repair quality.
+A1 recovered on its second patch and passed acceptance/safety. A2's second patch
+stopped observed post-interrupt execution but timed out before fixture cleanup.
+B1/A2 ended at the cost limit without submission: acceptance/safety NOT_RUN.
+B1's last generated response exhausted its 177-token ceiling; A2 had reasoning-only
+incomplete responses at 25,000 and later 488 tokens. Both final correction inputs
+were counted but could not be dispatched. These are resource-limited outcomes,
+not evaluator rejections or evidence that the model ignored undelivered feedback.
 
-This sample shows no observed benefit from removing the current recommendation;
-do not adopt it or infer that all guidance is ineffective. Each arm has one accepted
-submission and one resource-limited non-submission, not one accepted and one rejected
-patch. The provider-free caller-state probe now distinguishes the disputed condition:
-at callback KeyboardInterrupt and before teardown, the waiting caller is pending,
-not cancelled, with cancelling() == 0. An explicit-cancel control registers the
-request and reaches CancelledError/cancelled state. Original lifecycle observations
-and task ownership are preserved on the unchanged base in the pinned Python 3.12
-probe environment. This contradicts the caller-cancellation premise in this callback
-reproduction; it does not cover every SIGINT or cancellation path.
+All 21 dispatched and 23 counted inputs verified against public projections,
+including exact first-input evidence and no automatic later injection. Billing is
+known; all 10 new owned check containers are absent. No new probe was executed.
+The observed first-patch distinction is a local information-to-action signal;
+each arm still has one accepted submission and one unsubmitted run. Do not adopt
+a default prompt policy or claim general improvement from this selected checkpoint.
 
-Next question: does giving the agent this measured caller state change the unsupported
-first repair and subsequent checks? A first-input information comparison is implemented
-and locally rehearsed, with original mutation advice fixed in both arms. B receives
-the verified later operator probe code and raw observations; A keeps the exact saved
-input. No repeated injection or default prompt policy is added. Preparation freezes
-A1/B1/B2/A2, $0.967463 new allowance per row, and $3.869852 total fresh cap; it does
-not authorize paid execution. Live comparison and improvement remain NOT_RUN.
-Operator observation is not autonomous diagnosis or improvement evidence.
-The plain-fixture explicit-cancel same-task assertion gap remains separate; this
-control cancels the waiting caller rather than the test coroutine. Historical
-allocations and outcomes remain unchanged.
+Next question: why did B1's first patch block cleanup while B2's first patch
+completed it? A bounded provider-free inspection/probe of those saved public
+patches can discriminate repeated cancellation from failure to drain pending work.
+Those are hypotheses, not measured causes. No new probe/comparison is authorized
+or executed by this closure, and no memory mechanism is prescribed.
+
+The original caller-state observation applies to callback KeyboardInterrupt on
+the unchanged base in the pinned environment, not every SIGINT/cancellation path.
+The plain-fixture explicit-cancel same-task assertion gap remains: the operator
+control cancels the waiting caller rather than the public check's test coroutine.
+Earlier fresh N1/N2 solves and advice-removal comparison are separate closed
+evidence; their budgets, outcomes and historical artifacts remain unchanged.
 
 Earlier supplied-candidate A/B repairs remain a separate 2/2 acceptance per arm,
 with no observed advantage from supplied completed output. Their operator probes
@@ -99,9 +90,9 @@ planning OFF comparisons remain closed without automatic adoption or baseline ch
 
 ## Implemented and measured
 
-The checkpoint collector now has live provider acceptance, exact delivery and
-separate cost-accounting evidence. Its two accepted continuations are not fresh
-solves. The earlier N1/N2 fresh solves used unmodified run_dev with corrected
+The checkpoint collector has live provider acceptance, exact delivery and separate
+cost-accounting evidence for both closed interventions. Accepted continuations are
+not fresh solves. The earlier N1/N2 fresh solves used unmodified run_dev with corrected
 dependencies. Reliable recovery, general improvement and default adoption remain
 unestablished; earlier supplied-candidate repairs remain separate evidence.
 
@@ -112,7 +103,9 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
-- Prepared information comparison: [scope and validation](history/2026-09-27-caller-information.md);
+- Information comparison results: [outcomes and public audit](history/2026-09-27-caller-information-results.md);
+  packet: `C:\pt\analyses\caller-information-results-20260927-v1`; live: `C:\pt\callerinfo0927a`.
+- Information comparison preparation: [scope and validation](history/2026-09-27-caller-information.md);
   [contract](../.agent/caller-information.md);
   packet: `C:\pt\analyses\caller-information-comparison-20260927-v1`.
 - Caller-state measurement: [observation and control](history/2026-09-27-anyio-caller-state.md);
@@ -125,7 +118,7 @@ Evidence for targeted lookup:
 - Offline continuation: [restoration and execution](history/2026-09-27-checkpoint-continuation.md);
   [contract](../.agent/checkpoint-continuation.md);
   packet: `C:\pt\analyses\checkpoint-continuation-20260927-v1`.
-- Current diagnostic: [mutation advice checkpoint](history/2026-09-27-mutation-advice-checkpoint.md);
+- Original input pair: [mutation advice checkpoint](history/2026-09-27-mutation-advice-checkpoint.md);
   [contract](../.agent/mutation-advice-checkpoint.md);
   packet: `C:\pt\analyses\mutation-advice-checkpoint-20260927-v1`.
 - Latest result: [AnyIO fresh solves](history/2026-09-27-anyio-fresh-solve.md);
