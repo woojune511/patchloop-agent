@@ -50,13 +50,11 @@ original scores. See the linked benchmark audit.
 The [original-input pilot](../.agent/original-input-pilot.md) fixes three fresh attempts:
 toqito-1538, MontePy-933_interface and darts-3065. Deterministic selection excludes
 current task/ledger repositories; this is a development pilot, not proven held-out.
-All three images were acquired with explicit approval and their digests fixed.
-Packages passed isolated reference evaluation and environment controls. Public tests
-run in temporary copies; toqito excludes one obsolete test contradicting the issue.
-Pre-run limits were fixed at four files/1,000 lines with API changes allowed.
-Pinned probe bundles and public canaries are documented in
+Approved image digests, isolated package/environment controls, temporary public
+checks and fixed four-file/1,000-line limits are in
+[readiness](history/2026-09-27-original-pilot-readiness.md); pinned probe bundles in
 [capacity results](history/2026-09-27-installed-probe-capacity.md).
-See [readiness](history/2026-09-27-original-pilot-readiness.md) for earlier preparation evidence.
+Toqito excludes one obsolete public test contradicting the issue.
 [Package validation](history/2026-09-27-original-pilot-packages.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
@@ -83,8 +81,10 @@ improved stated test scope but produced the same check/finish actions and unchan
 failing patch ($0.234737). It was absent at the final decision as designed.
 [Deferred delivery](history/2026-09-28-deferred-scope-results.md) reached the ready
 decision but again produced check/finish and the same failing patch ($0.113142).
-All allocations are closed. Cue variants are not adopted; next examine why
-unverified changed behavior is dismissed at completion. Defaults remain unchanged.
+All allocations are closed. The [closure audit](history/2026-09-28-completion-closure-audit.md)
+found question narrowing and unsupported dismissal despite delivered warnings.
+Next isolate completion advice by removing its action recommendation offline;
+eligibility stays fixed. Cue variants are not adopted; defaults remain unchanged.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
