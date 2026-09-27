@@ -36,10 +36,6 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The [cleanup comparison](history/2026-09-27-cleanup-information-results.md) is closed
-without benefit/equivalence evidence. The baseline caller stall does not invalidate
-acceptance: [scope](history/2026-09-27-caller-support-scope.md).
-
 AnyIO is calibration data, separate from original scores. The
 [pilot](../.agent/original-input-pilot.md) fixed fresh attempts on toqito-1538,
 MontePy-933_interface and darts-3065, excluding current task/ledger repositories.
@@ -78,8 +74,12 @@ $6 authorization is closed. A separately approved [time extension](history/2026-
 added 60 minutes and a fresh $3 cap. One call ($0.094595) submitted the unchanged
 patch: benchmark FAIL, safety PASS. No extra probe/edit; unused fresh funds closed.
 The earlier unknown charge and B NOT_RUN remain. More time enabled submission but
-not benchmark success. Next audit uncovered public requirements against this patch;
-no private failure inference, automatic retry or default adoption.
+not benchmark success. The [public requirements audit](history/2026-09-28-remaining-public-requirements.md)
+reproduced pure-state underflow masked by the downarrow clamp and mixed-state
+complex-to-float exceptions in both existing environments. A selected 15-case matrix
+has 8 pass / 7 fail, not a benchmark score or hidden-failure attribution. Final
+changed-path/input-range coverage was missing. Next inspect existing coverage/notes
+before a generic intervention; no paid retry, task-specific hint or default adoption.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
