@@ -38,71 +38,52 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The AnyIO observation/repair comparison is closed: A received the historical probe
-program/question with a timeout receipt; B received the same program/question with
-the completed lifecycle observation. Both started from the same saved incorrect
-candidate with fresh budgets and the corrected environment for any new probes.
-Acceptance was A 2/2 and B 2/2 planned; all four submitted and passed safety. There
-were no NOT_RUN results, infrastructure stops or incomplete responses.
+Two fresh AnyIO v3 full solves with the corrected probe environment are closed.
+Both used the fixed baseline, no historical hints/candidates and $1.20 per run.
+N1 made two unsuccessful repairs and ended COST_CAP_REACHED without submission:
+acceptance and safety are NOT_RUN. N2's first repair passed both public checks,
+submitted and passed isolated acceptance/safety. Total cost was $1.854949 of $2.40;
+unused funds are closed. No paid allocation, extra sample or continuation is active.
 
-All four first reran the public lifecycle check, read the owning source, made one
-new edit, passed the automatic lifecycle recheck and upstream regression, then
-submitted. No new probe was requested. A recovered from the fresh check and source
-without the completed operator observation. This small selected comparison shows
-no acceptance advantage from supplying that observation and supports no new prompt
-or planning rule. It does not establish general equivalence or spontaneous case
-selection; completion guidance and repair-recheck were fixed controls.
+Both independently selected probes and reproduced interrupted-test resumption.
+N1's first repair nevertheless claimed a caller-cancellation condition that its
+probe had not measured. Its attempted discriminator then stopped on a model-authored
+function-name setup assertion. A second repair still resumed the test and broke
+cleanup; a final useful probe preceded a reasoning-only incomplete response at a
+reduced 4,081-token ceiling. Failed repair, diagnostic error and resource exhaustion
+are distinct observations, not a proven single-cause account of the terminal result.
 
-A source/action audit links all 26 inputs, 34 public actions and 31 delivered source
-spans. Reads informed the four repairs, but B1's helper explanation overreached:
-the seed entered that helper and returned before its additional cancellation.
-Its runner-loop repair addressed the observed failure. Completed B observations,
-probe access and a warning about untested behavior were present. These records do
-not support missing delivery, probe access or warnings as explanations. Advice/action
-alignment does not prove causation.
+N2 directly handled an incomplete call on the interrupt path and retained the
+shared runner for cleanup. It passed lifecycle 7/7 and upstream 32 tests (three
+deselected), then submitted. It did not rerun its original probe after editing.
+The visible plain-fixture explicit-cancel same-task assertion gap remains a public
+coverage limit; prior operator replays of other candidates do not close it here.
 
-The public explicit-cancel case uses a plain fixture and bypasses its same-task
-assertion. A separate operator replay now closes that observation gap: the exact
-existing probe reproduced the old seed's failed teardown, while all four saved
-final candidates kept the runner alive and completed cleanup once in the original
-task. All five executions used the same corrected dependency/profile identities,
-completed without timeout and confirmed owned-container cleanup; model calls were
-zero. This is one single-cancellation plain-fixture observation, not autonomous
-verification, all-state equivalence or proof that extra patch branches are needed.
+All 19 actual inputs/count bindings and continuation records verified. No probe
+timed out, no infrastructure uncertainty stopped the group, and all eight owned
+check/probe containers are absent. The corrected environment enabled observations,
+but one accepted result and one resource-limited non-submission do not establish
+general reliability, an environment-effect estimate or a new harness mechanism.
 
-A two-line deletion comparison now closes the B1 extra-branch question within this
-public scope: original B1 and branch-removed B1 both pass the same cleanup probe,
-seven lifecycle cases and 32 upstream tests (three deselected). Without the branch,
-the helper is called but returns before issuing another cancel. The branch is not
-needed for these measured behaviors; all-state equivalence and private acceptance
-of the deletion remain untested. This was patch necessity, not harness ablation.
-No prompt or runtime change follows. A recommendation-removal comparison still
-needs matched feedback conditions because the status-only diagnostic rejects
-supplemental feedback. No new model experiment is active.
+The next causal question is how unsupported premises enter a repair decision and
+how cancellation ordering defeats recovery. Use N1's public trace to isolate a
+concrete distinction before selecting a harness ablation. More generic warnings,
+mandatory probes and larger budgets are not established fixes. Step 3 is unrun.
 
-The original cost-limited ON run remains NOT_RUN. It had asked a relevant probe
-question after its failed check, but obtained no observation. These new seeded
-runs reset both context and budget, so they cannot isolate the original failure's
-cause or show that recovery would fit its remaining budget. A separate question
-remains whether a fresh full solve, including initial investigation and candidate
-generation, recovers within its original cap using the corrected probe environment.
-That full-solve comparison has not been run here.
-
-Use the selected pytest dependency bundle for subsequent AnyIO diagnostics;
-top-level import success alone is not entry-point readiness. The earlier planning
-OFF comparisons remain closed and separate: none is a simpler development option,
-with no automatic adoption or change to this comparison's chosen baseline.
-The current group spent $1.888192 of $4.80. Unused funds are closed; no paid
-allocation, additional sample or continuation is active.
+Earlier supplied-candidate A/B repairs remain a separate 2/2 acceptance per arm,
+with no observed advantage from supplied completed output. Their operator probes
+and B1 branch deletion establish only those saved candidates' measured behaviors.
+They are not fresh-solve controls; earlier NOT_RUN outcomes remain unchanged.
+Use the selected pytest dependency bundle for further AnyIO diagnostics. The
+planning OFF comparisons remain closed without automatic adoption or baseline change.
 
 ## Implemented and measured
 
-The closed comparison used existing runtime and seeded-repair code for four live
-model runs. All 26 actual inputs/count requests, continuation records, five journal
-chains and frozen source/dependency identities verified; owned containers are absent.
-Recovery is observed for this supplied candidate, with same-task ordinary-cancellation
-cleanup separately observed on all four saved final patches. End-to-end task-solving
-improvement and default adoption remain unestablished.
+The latest two fresh solves used unmodified run_dev and the existing bounded
+collector with corrected dependencies. One complete solve within the original cap
+is observed; reliable recovery, general task-solving improvement and default adoption
+remain unestablished. The earlier four seeded repairs and their operator observations
+remain separate evidence.
 
 The opt-in first-plan timing, declaration expansion and independent-candidate diagnostics
 remain implemented, with no default adoption established by their closed comparisons.
@@ -111,7 +92,9 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
-- Latest result: [AnyIO B1 branch deletion](history/2026-09-27-anyio-b1-branch-deletion.md);
+- Latest result: [AnyIO fresh solves](history/2026-09-27-anyio-fresh-solve.md);
+  packet: `C:\pt\analyses\anyio-fresh-solve-20260927-v1`; live: `C:\pt\anyiofresh0927a`.
+- Patch diagnostic: [AnyIO B1 branch deletion](history/2026-09-27-anyio-b1-branch-deletion.md);
   packet: `C:\pt\analyses\anyio-b1-branch-deletion-20260927-v1`.
 - Audit: [AnyIO evidence/action links](history/2026-09-27-anyio-evidence-action-link.md);
   packet: `C:\pt\analyses\anyio-evidence-action-link-20260927-v2`.

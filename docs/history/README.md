@@ -23,11 +23,12 @@ and SHA-256 digests. Historical claims are not current guidance.
 
 Search first, then read a bounded range around a matching heading.
 
-Snapshot links retain their original base directory; use the manifest or original
-Git revision when resolving historical paths.
+Resolve snapshot links using the manifest or original Git revision.
 
 ## New records
 
+- [2026-09-27: AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md):
+  corrected environment, one acceptance PASS and one cost-limited NOT_RUN.
 - [2026-09-27: AnyIO B1 branch deletion](2026-09-27-anyio-b1-branch-deletion.md):
   two-line removal preserves the public probe and both registered checks.
 - [2026-09-27: AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md):
@@ -77,6 +78,5 @@ Link detailed external run artifacts rather than copying them. Routine edits nee
 no new record. Never rewrite a closed record to reflect a later interpretation;
 add a separate correction or follow-up and update the current implication instead.
 
-Keep current status replaceable and bounded. This index is for locating records,
-not for copying every result into another growing narrative. Existing legacy
-`docs/archive/`, `reports/`, and `experiments/` remain unchanged and are also historical.
+Keep current status bounded. Legacy `docs/archive/`, `reports/`, and `experiments/`
+remain unchanged and historical.
