@@ -21,14 +21,16 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
+- [Caller cancellation](2026-09-27-caller-cancel-preservation.md): base and four final patches.
+
 - [Cleanup information results](2026-09-27-cleanup-information-results.md): 2/2 per arm.
 
 - [Cleanup information preparation](2026-09-27-cleanup-information-preparation.md).
 
 - [Cleanup cancellation](2026-09-27-anyio-cleanup-cancellation.md).
-- [Caller information results](2026-09-27-caller-information-results.md): first repairs and bounded outcomes.
-- [Caller information](2026-09-27-caller-information.md): first-input comparison preparation.
-- [Caller state](2026-09-27-anyio-caller-state.md): interrupt versus explicit cancellation.
+- [Caller information results](2026-09-27-caller-information-results.md).
+- [Caller information](2026-09-27-caller-information.md).
+- [Caller state](2026-09-27-anyio-caller-state.md).
 - [Checkpoint results](2026-09-27-checkpoint-live-results.md): live A/B and public-trace audit.
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
 - [Offline continuation](2026-09-27-checkpoint-continuation.md): restored N1 inputs and scripted loop.

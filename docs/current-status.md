@@ -62,12 +62,21 @@ stall mechanism: a cancelled future woke an uncancelled caller, which cancelled 
 runner again after it had returned to waiting for work outside the per-coroutine
 handler. That finding motivated this comparison; it was not supplied as a verdict.
 
-The remaining concrete coverage question is actual waiting caller.cancel()
-preservation on the newly accepted candidates. This comparison did not execute
-that operator control. Passing registered checks and isolated acceptance does not
-answer that unmeasured path. Do not adopt a default information/prompt policy or
-spend the closed remainder; prefer a bounded provider-free preservation diagnostic
-if pursuing this question. Runtime/task/default policies remain unchanged.
+The provider-free waiting-caller follow-up is also complete. Ten probes compared
+base and all four accepted candidates with normal Event release versus direct
+cancellation of the existing waiting caller. All five normal cases completed with
+exactly one same-task fixture cleanup; all five cancellation cases stalled. The
+caller was cancelled, but the runner retained cancelling() == 0 and the active
+test's finally and teardown had not begun at the two-second watchdog. All ten
+containers were removed; source snapshots and old journals remained unchanged.
+
+Because base also stalls, this is not evidence of a newly introduced regression.
+It is a distinct internal-task cancellation path, not the task's KeyboardInterrupt
+case or public check's test-coroutine cancellation. Next decision: establish whether
+this internal caller cancellation is a supported entry point before adding a new
+required contract. Do not invalidate prior acceptance, change default prompts, or
+run more information A/B comparisons on this finding. See
+[caller preservation](history/2026-09-27-caller-cancel-preservation.md).
 
 The original caller-state observation applies to callback KeyboardInterrupt on
 the unchanged base in the pinned environment, not every SIGINT/cancellation path.

@@ -155,6 +155,9 @@ experimental context and historical plans; current source/status take precedence
   declaration/documentation expansion in the first tool batch; the separate
   [checkpoint sampler](declaration-checkpoint.md) retains a saved first decision prefix.
 
+For a provider-free saved-candidate caller-cancellation follow-up, see
+[caller preservation](caller-preservation.md).
+
 ## Validation checklist
 
 For the first-failed-check information comparison, see
