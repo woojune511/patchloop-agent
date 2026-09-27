@@ -39,11 +39,8 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 ## Current problem and next decision
 
 The [cleanup comparison](history/2026-09-27-cleanup-information-results.md) is closed
-without benefit or equivalence evidence.
-
-The waiting-caller stall occurs at base without a public support requirement;
-acceptance stands. See
-[caller support scope](history/2026-09-27-caller-support-scope.md).
+without benefit/equivalence evidence. The baseline caller stall does not invalidate
+acceptance: [scope](history/2026-09-27-caller-support-scope.md).
 
 AnyIO is development/calibration data; its adapted-task acceptance is separate from
 original scores. See the linked benchmark audit.
@@ -83,8 +80,9 @@ All allocations are closed. The [closure audit](history/2026-09-28-completion-cl
 found question narrowing and unsupported dismissal despite delivered warnings.
 [Advice removal](history/2026-09-28-completion-advice-results.md) produced 2 probes
 and an extra edit ($0.9856585), but benchmark FAIL and public counterexamples remain.
-Its own probes pass after repair while a same-input invariant fails. Allocation closed;
-next audit expected-value selection and independent properties. Defaults unchanged.
+Its probes pass while a same-input invariant fails. The [expectation audit](history/2026-09-28-expected-value-provenance.md)
+traces self-confirming formula evidence and checks on different inputs. Next prepare
+a generic expectation-review comparison offline. Allocation closed; defaults unchanged.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
