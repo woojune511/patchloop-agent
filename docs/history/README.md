@@ -21,6 +21,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
+- [Benchmark differences](2026-09-27-anyio-benchmark-differences.md).
 - [Caller support scope](2026-09-27-caller-support-scope.md).
 - [Caller cancellation](2026-09-27-caller-cancel-preservation.md).
 
@@ -32,7 +33,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 - [Caller information results](2026-09-27-caller-information-results.md).
 - [Caller information](2026-09-27-caller-information.md).
 - [Caller state](2026-09-27-anyio-caller-state.md).
-- [Checkpoint results](2026-09-27-checkpoint-live-results.md): live A/B and public-trace audit.
+- [Checkpoint results](2026-09-27-checkpoint-live-results.md).
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
 - [Offline continuation](2026-09-27-checkpoint-continuation.md): restored N1 inputs and scripted loop.
 - [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md): offline N1 input pair.

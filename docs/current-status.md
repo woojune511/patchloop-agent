@@ -73,19 +73,18 @@ the required checks or invalidating prior acceptance. This is absence of support
 evidence in the inspected version, not proof that no external integration can do it.
 See [caller support scope](history/2026-09-27-caller-support-scope.md).
 
-Next priority: prepare an original-benchmark evaluation specification with fixed
-dataset revision, issue input, base commit, original F2P/P2P oracle and environment.
-Recent acceptance is for PatchLoop-adapted development tasks, not an original
-SWE-rebench score. Keep developer-authored checks and checkpoint continuations
-separate from fresh benchmark solves. Separate development feedback from held-out
-evaluation; no new paid run is authorized by this decision.
+The pinned benchmark comparison confirms the same base, but rewritten issue input,
+added public checks and a different final oracle. Recent acceptance is for adapted
+development tasks, not original SWE-rebench scores. Original configuration specifies
+Python 3.13; recent probes use a separate 3.12 bundle. Runtime equivalence is unverified.
+Next: specify the original-oracle adapter and verify its environment before new
+solves. AnyIO remains development/calibration data, not untouched held-out evidence.
+See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
+No new paid run is authorized.
 
-The original caller-state observation applies to callback KeyboardInterrupt on
-the unchanged base in the pinned environment, not every SIGINT/cancellation path.
-The plain-fixture explicit-cancel same-task assertion gap remains: the operator
-control cancels the waiting caller rather than the public check's test coroutine.
-Earlier fresh N1/N2 solves and advice-removal comparison are separate closed
-evidence; their budgets, outcomes and historical artifacts remain unchanged.
+Caller-state observations concern the pinned callback-interrupt path, not every
+SIGINT/cancellation path. Earlier fresh N1/N2 solves and advice-removal comparison
+remain separate closed evidence with unchanged budgets and outcomes.
 
 Earlier supplied-candidate A/B repairs remain separate 2/2 acceptance per arm,
 with no observed information advantage. They are not fresh-solve controls;
