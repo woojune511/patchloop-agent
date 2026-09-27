@@ -85,8 +85,9 @@ Cost $0.446253; funds closed. No tools ran; quality improvement is unproven.
 The [selected probe](history/2026-09-28-selected-closure-probe.md) has a valid
 classical expectation and exposes the objective TypeError on the frozen patch.
 The [prepared boundary](history/2026-09-28-selected-probe-boundary.md) delivers the
-failure through the normal gateway; no next count or paid call ran. Next bind a
-funded fork without resetting work counters. Agent repair remains NOT_RUN.
+failure through the normal gateway. The [funded executor](history/2026-09-28-probe-funded-continuation.md)
+preserves work/time counters and passed synthetic restoration/uncertainty checks.
+Next obtain exact new paid approval; agent repair remains NOT_RUN.
 
 Earlier supplied-candidate repairs are not fresh-solve controls; NOT_RUN is unchanged.
 Planning OFF comparisons remain closed without adoption.
@@ -149,7 +150,6 @@ Evidence for targeted lookup:
 - Separate timing result: [first-plan timing comparison](history/2026-09-27-after-source-planning-comparison.md).
 - Current implementation: [first plan after source](history/2026-09-26-after-source-planning.md).
 - Existing contract: [brief planning](../.agent/planning-experiment.md).
-- Prior next-question result: [declaration checkpoint comparison](history/2026-09-26-declaration-checkpoint-comparison.md).
 - Prior interpretation audit: [first interpretation and source questions](history/2026-09-26-first-interpretation-audit.md).
 - Prior candidate result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
 - Earlier decisions and immutable records: [documentation history](history/README.md).

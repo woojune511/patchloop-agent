@@ -27,7 +27,27 @@ validated, not replaced with synthetic reasoning. Ordinary segment rotation may
 drop encrypted reasoning from the next input while retaining public results/notes.
 
 The captured boundary must have no unresolved count/provider call and no terminal.
-Its displayed old cost allowance is bookkeeping, not paid authority. A separate
-live continuation collector must bind a fresh cap, exact credentials, model/task,
-remaining counters/deadline and the new first request before any paid approval.
+Its displayed old cost allowance is bookkeeping, not paid authority.
 Neither replay nor boundary preparation establishes an agent repair or acceptance.
+
+`diagnostics/probe_boundary_collector.py` supplies a separate funded fork through
+Python `prepare(source_root, env_file, result_root, output, new_cap_usd)` and
+`collect(manifest_path, approved_hash, approved_cap_usd)`. Preparation binds the
+source journal/envelope/receipt, runtime, implementation, dev-train task, model,
+credentials path, one repetition and exact first funded request. It performs
+read-only environment checks. Execution requires a fresh explicit paid approval.
+
+The fork copies runtime CAS recursively and preserves journal bytes, then replays
+only accepted mutation anchors in a fresh prepared-source workspace. Historical
+sampler provenance links remain external references; probes/checks are not replayed.
+Settled usage stays historical; the fresh group ledger counts only new calls.
+Only cost changes in the first input. Work counters and the already extended active
+deadline remain unchanged; old unused funds never reopen. The existing ledger and
+adapter enforce count-before-dispatch, zero SDK retries and uncertainty stops.
+The result root is single-use even after preflight failure; no automatic resume.
+
+The ordinary runner revisits B2's parent input before constructing the next input.
+A scoped exact-input verifier therefore retains the original two-sentence overlay
+normalization for that inherited input alone. New inputs use normal seed validation.
+Local completion-advice removal continues as in the source run. Runtime defaults
+are unchanged. Scripted rehearsal checks restoration and failures, not agent quality.
