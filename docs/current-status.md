@@ -65,10 +65,14 @@ check/probe containers are absent. The corrected environment enabled observation
 but one accepted result and one resource-limited non-submission do not establish
 general reliability, an environment-effect estimate or a new harness mechanism.
 
-The next causal question is how unsupported premises enter a repair decision and
-how cancellation ordering defeats recovery. Use N1's public trace to isolate a
-concrete distinction before selecting a harness ablation. More generic warnings,
-mandatory probes and larger budgets are not established fixes. Step 3 is unrun.
+The selected diagnostic removes only the current message's mutation recommendation
+at N1's first post-probe/pre-edit boundary. A preserves the saved request; B changes
+two guidance fields, retaining observations, tools, budget and native continuation.
+The offline input pair is prepared and verified. Earlier exposure and other mutation
+cues remain; no causal effect has been measured. The next implementation seam is a
+provider-free continuation runner that restores the checkpoint's state and remaining
+allowances and executes selected registered actions. Its contract is documented;
+full continuations, paid comparison and default adoption remain unrun/unapproved.
 
 Earlier supplied-candidate A/B repairs remain a separate 2/2 acceptance per arm,
 with no observed advantage from supplied completed output. Their operator probes
@@ -92,6 +96,9 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
+- Current diagnostic: [mutation advice checkpoint](history/2026-09-27-mutation-advice-checkpoint.md);
+  [contract](../.agent/mutation-advice-checkpoint.md);
+  packet: `C:\pt\analyses\mutation-advice-checkpoint-20260927-v1`.
 - Latest result: [AnyIO fresh solves](history/2026-09-27-anyio-fresh-solve.md);
   packet: `C:\pt\analyses\anyio-fresh-solve-20260927-v1`; live: `C:\pt\anyiofresh0927a`.
 - Patch diagnostic: [AnyIO B1 branch deletion](history/2026-09-27-anyio-b1-branch-deletion.md);

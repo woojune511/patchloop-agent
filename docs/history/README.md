@@ -27,6 +27,7 @@ Resolve snapshot links using the manifest or original Git revision.
 
 ## New records
 
+- [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md): offline N1 input pair.
 - [2026-09-27: AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md):
   corrected environment, one acceptance PASS and one cost-limited NOT_RUN.
 - [2026-09-27: AnyIO B1 branch deletion](2026-09-27-anyio-b1-branch-deletion.md):
