@@ -12,9 +12,8 @@ with observed failures, diagnose causes, and select the smallest useful improvem
 Research questions can arise during diagnosis; reusable method claims follow evidence.
 There is no commitment to demonstrate a memory effect or another preselected method.
 
-Comparisons answer concrete causal questions when needed. Successful plumbing,
-note/probe use, or submission alone does not establish better task solving.
-Simplifying an ineffective mechanism is a valid next step.
+Comparisons answer causal questions. Plumbing, note/probe use or submission alone
+does not establish better task solving. Remove ineffective mechanisms when useful.
 
 ## Active runtime and working baseline
 
