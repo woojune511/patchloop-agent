@@ -64,8 +64,12 @@ def load_pair(path, expected_hash):
     shared.require(pair["schema"] == "closure-policy-next-decision-design-v1"
                    and pair["paid_execution_authorized"] is False, "pair schema")
     source = Path(pair["source_root"])
-    group = DevJournal(source, "run_dev_timeextension")
-    branch = DevJournal(source / "A1", "run_dev_33068b6e257f423a")
+    lane = pair.get("source_lane", "time-extension")
+    shared.require(lane in {"time-extension", "post-invalid-probe"}, "unknown source lane")
+    group_id, branch_name = (("run_dev_timeextension", "A1") if lane == "time-extension"
+                             else ("run_dev_probefollowup", "B2"))
+    group = DevJournal(source, group_id)
+    branch = DevJournal(source / branch_name, "run_dev_33068b6e257f423a")
     shared.require(sha256_bytes(group.path.read_bytes()) == pair["source_group_hash"]
                    and sha256_bytes(branch.path.read_bytes()) == pair["source_branch_hash"],
                    "source journal changed")
@@ -81,8 +85,17 @@ def load_pair(path, expected_hash):
     turn = next(e for e in events if e["sequence"] == pair["source_turn_sequence"])
     shared.require(turn["event_type"] == "turn_started", "not a turn boundary")
     dispatches = [e for e in group.events() if e["event_type"] == "actual_dispatch_started"]
-    shared.require(len(dispatches) == 1, "ambiguous source dispatch")
-    original = json.loads(shared.read_source_artifact(source, dispatches[0]["payload"]["artifact"]))
+    shared.require(len(dispatches) == (1 if lane == "time-extension" else 5),
+                   "ambiguous source dispatch")
+    original = json.loads(shared.read_source_artifact(
+        source, dispatches[-1]["payload"]["artifact"]))
+    if lane == "post-invalid-probe":
+        state = json.loads(original["input"][-1]["content"])["state"]
+        shared.require(state["completion_guidance"]["submission_ready"]
+                       and state["remaining_budget"]["accepted_mutations"] == 0
+                       and "SyntaxError" in canonical_json(original["input"])
+                       and {"run_probe", "finish_task"} <= {t["name"] for t in original["tools"]},
+                       "not the post-invalid-probe submission boundary")
     requests = {arm: json.loads(shared.read_source_artifact(path.parent, pair["requests"][arm]))
                 for arm in ("A", "B")}
     shared.require(requests["A"] == original, "baseline differs from dispatch")
@@ -97,7 +110,7 @@ def load_pair(path, expected_hash):
     shared.require(original["model"] == MODEL and original["reasoning"]["effort"] == "xhigh"
                    and original["max_output_tokens"] == shared.OUTPUT_CEILING,
                    "request settings changed")
-    segmented_input_audit.verify_turn(turn, events, ForkStore(source / "A1", events),
+    segmented_input_audit.verify_turn(turn, events, ForkStore(source / branch_name, events),
                                       actual_input=original["input"])
     return pair, envelope, turn, requests
 

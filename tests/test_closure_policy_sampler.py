@@ -143,3 +143,39 @@ def test_source_change_rejected_before_dispatch(prepared):
 def test_full_reservation_fits_each_response():
     profile = shared.cell_profile(sampler.protocol(), "A")
     assert shared.full_reservation(60_000, profile.pricing()) <= 1_000_000_000
+
+
+def test_post_invalid_probe_lane_binds_last_dispatch_and_boundary(prepared):
+    pair = copy.deepcopy(prepared.pair)
+    original = json.loads(shared.read_source_artifact(prepared.pair_path.parent,
+                                                     pair["requests"]["A"]))
+    original["input"].append({"role": "user", "content": canonical_json({
+        "state": {"completion_guidance": {"submission_ready": True},
+                  "remaining_budget": {"accepted_mutations": 0}}, "error": "SyntaxError"})})
+    original["tools"] = dev_tool_schemas(finish_enabled=True, check_ids=[],
+                                         allowed_tools=["run_probe", "finish_task"])
+    group = DevJournal(prepared.source, "run_dev_probefollowup")
+    branch = DevJournal(prepared.source / "B2", "run_dev_33068b6e257f423a")
+    turn = branch.append("turn_started", {"turn_id": "last", "max_parallel_reads": 4,
+                                         "targeted_read_paths": []})
+    store = ArtifactStore(prepared.source / "artifacts")
+    for index in range(5):
+        group.append("actual_dispatch_started", {"artifact": store.put_json(
+            original if index == 4 else {"not": "selected"}).model_dump(mode="json")})
+    treatment = copy.deepcopy(original)
+    treatment["input"][0]["content"] = treatment["input"][0]["content"].replace(sampler.REMOVED, "")
+    pair.update(source_lane="post-invalid-probe", source_turn_sequence=turn["sequence"],
+                source_group_hash=sha256_bytes(group.path.read_bytes()),
+                source_branch_hash=sha256_bytes(branch.path.read_bytes()),
+                requests={a: ArtifactStore(prepared.pair_path.parent / "artifacts").put_json(r)
+                          .model_dump(mode="json") for a, r in [("A", original), ("B", treatment)]},
+                request_hashes={"A": sha256_json(original), "B": sha256_json(treatment)})
+    prepared.pair_path.write_text(canonical_json(pair), encoding="utf-8")
+    loaded = sampler.load_pair(prepared.pair_path, sha256_bytes(prepared.pair_path.read_bytes()))
+    assert loaded[3]["A"] == original
+    group.append("actual_dispatch_started", {"artifact": store.put_json(original)
+                                              .model_dump(mode="json")})
+    pair["source_group_hash"] = sha256_bytes(group.path.read_bytes())
+    prepared.pair_path.write_text(canonical_json(pair), encoding="utf-8")
+    with pytest.raises(ContractError, match="ambiguous"):
+        sampler.load_pair(prepared.pair_path, sha256_bytes(prepared.pair_path.read_bytes()))

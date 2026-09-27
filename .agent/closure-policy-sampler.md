@@ -38,3 +38,15 @@ is only a plan, not an executed check or improvement. Private evaluator material
 operator-discovered cases, review rubric and prior returned finish decision never
 enter these requests. Prior policy exposure is shared; this is a local current-input
 ablation, not a fresh-solve or general quality comparison.
+
+The optional pair field `source_lane=post-invalid-probe` selects the final of five
+dispatches in `run_dev_probefollowup/B2`. It requires the delivered SyntaxError,
+zero remaining mutations, submission eligibility and both probe/finish tools.
+Native delivery must still bind the exact selected turn. Missing `source_lane`
+retains the original time-extension source contract. New preparation freezes the
+current implementation; old frozen packets retain their historical hashes.
+
+This sampler never executes returned tools. Any later operator execution of selected
+probe programs is separate evidence, uses the identical frozen patch/environment,
+and returns no observations to these independent model responses. Pre-register its
+selection rule and distinguish syntax validity, diagnostic scope and numeric success.

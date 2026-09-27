@@ -92,7 +92,8 @@ the fixed public matrix improved 8/15 to 14/15, with pure-state underflow remain
 The [closure audit](history/2026-09-28-invalid-probe-closure.md) verified all five inputs:
 the model acknowledged the invalid probe, replaced its question with check eligibility,
 then cleared it. System optional-experiment advice returned after the one-input ablation.
-Next isolate that advice at submission; no default or general improvement is established.
+The [A/B design](history/2026-09-28-invalid-probe-experiment-design.md) fixes this input
+and compares only that advice; four responses await new paid approval.
 
 Earlier supplied-candidate repairs are not fresh-solve controls; NOT_RUN is unchanged.
 Planning OFF comparisons remain closed without adoption.
@@ -152,7 +153,6 @@ Evidence for targeted lookup:
 - Protocol, metrics, public review, environment inventory and closure:
   `C:\pt\analyses\planning-off-regression-20260927-v1`.
 - Separate prior result: [planning ON/OFF comparison](history/2026-09-26-planning-off-comparison.md).
-- Current implementation: [first plan after source](history/2026-09-26-after-source-planning.md).
 - Existing contract: [brief planning](../.agent/planning-experiment.md).
 - Earlier decisions and immutable records: [documentation history](history/README.md).
 
