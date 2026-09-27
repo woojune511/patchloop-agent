@@ -78,17 +78,15 @@ remain unproven. The [unhinted continuation](history/2026-09-28-post-edit-budget
 used $0.2168265 in two new calls: old regression PASS, then unchanged submission and
 benchmark FAIL (safety PASS). With ample resources, the agent treated downarrow-only
 regression results as validation of new uparrow behavior. It did not revisit the
-comparator or correct the patch. A [generic scope cue](history/2026-09-28-verification-scope-preparation.md)
-is prepared at the same checkpoint; only one input field changes. A proposed $3,
-one-run continuation awaits exact authorization. Prior allocations remain closed;
-no default policy change is authorized.
+comparator or correct the patch. The [scope cue](history/2026-09-28-verification-scope-results.md)
+improved stated test scope but produced the same check/finish actions and unchanged
+failing patch ($0.234737). It was absent at the final decision as designed; timing
+and completion guidance remain unisolated. Both allocations are closed. No default
+change is justified; next isolate closure of an acknowledged verification gap.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
-Earlier supplied-candidate A/B repairs remain separate 2/2 acceptance per arm,
-with no observed information advantage. They are not fresh-solve controls;
-earlier NOT_RUN outcomes remain unchanged.
-Use the selected pytest dependency bundle for further AnyIO diagnostics. The
-planning OFF comparisons remain closed without automatic adoption or baseline change.
+Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
+outcomes are unchanged. Planning OFF comparisons remain closed without adoption.
 
 ## Implemented and measured
 
