@@ -71,18 +71,17 @@ See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
 The fixed pilot is complete: MontePy and darts passed original evaluation; toqito
 made one edit but exhausted its $1.20 allowance before checks/submission (NOT_RUN).
 Resolved/submitted is 2/2; resolved/planned is 2/3. Total cost was $2.0892005 / $3.60;
-remaining funds are closed. All three passed environment preparation. The saved-state
-[budget audit](history/2026-09-28-completion-budget-audit.md) rejects immediate adoption
-of completion-reserve-v1: it blocks second-call investigation in all three observed
-states yet reserves only 128 output tokens per future call. The
-[minimum-funding diagnostic](history/2026-09-28-minimum-completion-funding.md) preserves
-investigation and fits the two successful traces arithmetically, but cannot fund the
-recorded large toqito edit plus completion at its late state. Next audit the cost guidance
-delivered before that edit; no new policy, output floor or paid run is authorized.
+remaining funds are closed. All three passed environment preparation. The user accepts
+more budget when necessary; $1.20 is not a product constraint. Cost-policy work is
+deferred (no runtime policy changed). The
+[public patch audit](history/2026-09-28-toqito-public-validation.md) found a semantic
+error despite 14 passing base tests: the agent reversed conditioning in a probe's
+expected value, blamed its optimizer, and generalized a CQ closed form incorrectly.
+A feasible-state witness contradicts the patch by 0.18659 bits. Original NOT_RUN is
+unchanged; this is separate public operator evidence. Next assess self-verification
+with adequate resources, keeping no-hint solving separate from supplied feedback.
+No new paid allocation is active.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
-
-Caller observations cover the pinned callback-interrupt path. N1/N2 solves and
-advice-removal results remain separate closed evidence.
 
 Earlier supplied-candidate A/B repairs remain separate 2/2 acceptance per arm,
 with no observed information advantage. They are not fresh-solve controls;

@@ -1,7 +1,7 @@
 # Documentation history
 
 [Current status](../current-status.md).
-Past approvals are closed.
+Approvals are closed.
 
 ## Pre-split snapshots: 2026-09-26
 
@@ -20,6 +20,7 @@ Past approvals are closed.
 
 ## New records
 
+- [Toqito public audit](2026-09-28-toqito-public-validation.md).
 - [Minimum funding](2026-09-28-minimum-completion-funding.md).
 - [Pilot](2026-09-28-original-pilot-results.md); [budget audit](2026-09-28-completion-budget-audit.md).
 - [Probe capacity](2026-09-27-installed-probe-capacity.md).
