@@ -15,6 +15,11 @@ authorize it. Ordinary collection without these arguments retains advice removal
 
 ## Preparation and admission
 
+The [cleanup-information packet](cleanup-information.md) uses the same collector
+with its evidence and first-input hashes already frozen in the packet. Do not
+pass `--caller-evidence` for that schema. It restores the first failed-check
+candidate instead of the original pre-edit workspace.
+
 `prepare` binds the exact public dev-train task, model/settings, credential path,
 source packet, first request identities, runtime, collector files and Git HEAD.
 It freezes A1/B1/B2/A2 and a fresh external result root. Each row retains its

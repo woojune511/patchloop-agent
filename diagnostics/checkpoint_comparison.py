@@ -37,11 +37,15 @@ IMPLEMENTATION = (
     "diagnostics/anyio_caller_probe.py",
     "diagnostics/probes/anyio_caller_state.py",
     ".agent/caller-information.md",
+    "diagnostics/cleanup_information_checkpoint.py",
+    "diagnostics/anyio_cleanup_probe.py",
+    "diagnostics/probes/anyio_cleanup_trace.py",
+    ".agent/cleanup-information.md",
 )
 
 
 def source_state(packet_path, packet_hash):
-    checkpoint.validate(packet_path, packet_hash)
+    continuation.checkpoint_backend(packet_path).validate(packet_path, packet_hash)
     packet = json.loads(packet_path.read_bytes())
     source = Source.from_record(packet["source"])
     envelope = DevJournal(source.root, source.run_id).load_envelope()
@@ -83,6 +87,10 @@ def controls(packet_path: Path, packet_hash: str, env_file: Path, result_root: P
         "pricing_source": "https://developers.openai.com/api/docs/pricing",
         "sdk_retries": 0, "automatic_resume": False, "paid_execution_authorized": False,
     }
+    if packet["schema"] == "cleanup-information-checkpoint-v1":
+        require(caller_evidence is None, "cleanup packet already binds its observation")
+        plan["intervention"] = "cleanup-information-first-input-only"
+        plan["supplement_hash"] = packet["supplement_hash"]
     if caller_evidence is not None:
         supplement, binding = caller_information.load(
             caller_evidence, packet_hash, source, envelope)

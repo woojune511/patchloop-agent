@@ -46,6 +46,12 @@ original guidance; only B adds the observation to its first current-state record
 and matching canonical context. The fork binds the supplement hash and intervention.
 Later turns use the same ordinary construction, without reinjecting the observation.
 
+The [failed-check packet](cleanup-information.md) restores one completed mutation
+and retains an already prepared native segment before the target count boundary.
+The old target count/dispatch remains excluded. Copied reference keys bind full
+artifact metadata: identical CAS bytes may have distinct artifact IDs/timestamps.
+This avoids conflating legitimate references while still rejecting metadata drift.
+
 ## Rehearsal and evidence limits
 
 `rehearse(branch, ScriptedClient(steps))` is a single-use offline entry point. Each

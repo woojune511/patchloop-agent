@@ -45,25 +45,11 @@ Original mutation advice, tools, native history and remaining budgets were fixed
 New spend was $3.025955 of $3.869852, excluding inherited usage. Unused $0.843897
 is closed. No paid allocation, retry or continuation is active.
 
-All four first actions were replace_text. A1/A2 relied on caller cancellation and
-failed the same three interrupt cases. B1/B2 added synchronous interrupted-run_test
-handling that does not depend solely on caller cancellation. B2's public plan
-explicitly distinguished callback interruption from caller cancellation. B2 passed
-both public checks and isolated acceptance/safety with its first patch. B1's first
-patch instead timed out during fixture cleanup; its second reintroduced resumed
-test execution, and its third passed lifecycle but never ran the upstream check.
-
-A1 recovered on its second patch and passed acceptance/safety. B1/A2 exhausted
-their budgets without submission: acceptance/safety NOT_RUN. Their incomplete
-responses and undelivered final correction inputs are detailed in the results record;
-resource-limited non-submissions are not evaluator rejections.
-
-All 21 dispatched and 23 counted inputs verified against public projections,
-including exact first-input evidence and no automatic later injection. Billing is
-known; all 10 new owned check containers are absent. That comparison executed no new probe.
-The observed first-patch distinction is a local information-to-action signal;
-each arm still has one accepted submission and one unsubmitted run. Do not adopt
-a default prompt policy or claim general improvement from this selected checkpoint.
+The closed comparison produced one accepted submission and one resource-limited
+non-submission per arm. B2 passed both checks with its first patch; B1's first patch
+stalled during cleanup. Exact delivery and known billing were audited. These are
+local information-to-action observations, not a general quality improvement.
+See the results record for first repairs, intermediate failures and budget outcomes.
 
 The subsequent provider-free diagnostic identified B1's cleanup stall in the
 callback/ContextVar-fixture reproduction. run_test cancels the future and runner;
@@ -78,8 +64,15 @@ Six isolated probes completed with known cleanup and zero provider calls/cost.
 This is a measured local mechanism and one-line rescue, not a validated task repair.
 The rescued runner still had cancelling() == 1 after teardown, so a nonzero counter
 alone does not explain the stall. Cancellation origin and delivery point matter.
-Next question: can the redundant cancellation be avoided while preserving an actual
-caller.cancel() request? That preservation path and new acceptance are NOT_RUN.
+The active question is whether giving the agent these raw measurements helps it
+repair B1 after its first failed check. A retains that saved input; B adds only
+traced/untraced program and raw observations of the exact first candidate. B2,
+one-line rescue and interpreted causal verdict are excluded. Actual caller.cancel()
+preservation remains a validation question; new acceptance is NOT_RUN.
+The new four-row comparison retains the original remaining resources;
+no fresh paid allocation has been authorized. See the
+[contract](../.agent/cleanup-information.md) and
+[preparation evidence](history/2026-09-27-cleanup-information-preparation.md).
 No default harness/prompt/memory policy or historical candidate has been changed.
 
 The original caller-state observation applies to callback KeyboardInterrupt on

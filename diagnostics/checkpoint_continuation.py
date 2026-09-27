@@ -34,6 +34,13 @@ from patchloop.sandbox import LocalSandbox
 from patchloop.util import canonical_json, sha256_json
 
 
+def checkpoint_backend(path):
+    if json.loads(path.read_bytes())["schema"] == "cleanup-information-checkpoint-v1":
+        from diagnostics import cleanup_information_checkpoint
+        return cleanup_information_checkpoint
+    return checkpoint
+
+
 def _artifacts(value):
     if isinstance(value, dict):
         if {"artifact_id", "content_hash", "size_bytes", "media_type", "path"} <= value.keys():
@@ -52,7 +59,7 @@ def inherited_reads(branch):
     original = ArtifactStore.read_bytes
 
     def read(store, artifact):
-        replacement = branch.references.get(artifact.path)
+        replacement = branch.references.get(sha256_json(artifact.model_dump(mode="json")))
         if replacement is not None and store.root.resolve() == branch.store.root.resolve():
             require(
                 artifact.model_dump(mode="json") == replacement[0],
@@ -72,14 +79,18 @@ def restore(
     """Materialize a fresh baseline workspace and completed prefix; never replay probes."""
     require(arm in {"A", "B"}, "unknown checkpoint arm")
     require(mode in {"offline-scripted", "live-checkpoint"}, "unknown restoration mode")
-    checkpoint.validate(packet_path, packet_hash)
+    backend = checkpoint_backend(packet_path)
+    backend.validate(packet_path, packet_hash)
     packet = json.loads(packet_path.read_bytes())
+    if backend is not checkpoint:
+        require(supplemental_observation is None, "packet already binds its observation")
+        supplemental_observation = backend.observation(packet)
     source = Source.from_record(packet["source"])
     output = output.resolve()
     disjoint(
         output, (repository_root(), source.root, packet_path.parent, source.public_path.parent)
     )
-    loaded = checkpoint.load(source)
+    loaded = backend.load(source)
     historical = DevJournal(source.root, source.run_id)
     events, envelope = historical.events(), historical.load_envelope()
     start = next(
@@ -93,6 +104,12 @@ def restore(
         for e in events
         if e["event_type"] == "tool_batch_finished" and e["sequence"] < start["sequence"]
     )
+    if backend is not checkpoint:
+        # Retain the already prepared native segment identity, but never the old
+        # count/dispatch. Recreating it generates a different artifact-bound ID.
+        cutoff = max([cutoff] + [e["sequence"] for e in events
+                     if e["event_type"] == "context_segment_started"
+                     and cutoff < e["sequence"] < start["sequence"]])
     prefix = [e for e in events if e["sequence"] <= cutoff]
     bundle = json.loads(
         loaded.store.read_bytes(
@@ -105,15 +122,12 @@ def restore(
     pending = list(_artifacts([prefix, bundle]))
     while pending:
         ref = pending.pop()
-        if ref.path in references:
-            require(
-                references[ref.path][0] == ref.model_dump(mode="json"),
-                "ambiguous inherited artifact",
-            )
+        key = sha256_json(ref.model_dump(mode="json"))
+        if key in references:
             continue
         raw = loaded.store.read_bytes(ref)
         copied = store.put_bytes(raw, ref.media_type)
-        references[ref.path] = (ref.model_dump(mode="json"), copied.model_dump(mode="json"))
+        references[key] = (ref.model_dump(mode="json"), copied.model_dump(mode="json"))
         if ref.media_type.startswith("application/json"):
             pending.extend(_artifacts(json.loads(raw)))
     journal = DevJournal(output, source.run_id)
@@ -131,7 +145,8 @@ def restore(
         "historical_execution_is_not_new_execution": True,
         "active_elapsed_ms": start["payload"]["active_elapsed_ms"],
         "artifact_references": references,
-        "intervention": "caller-information" if supplemental_observation else "mutation-advice",
+        "intervention": ("cleanup-information" if backend is not checkpoint else
+                         "caller-information" if supplemental_observation else "mutation-advice"),
         "supplement_hash": sha256_json(supplemental_observation)
         if supplemental_observation is not None else None,
     }
@@ -161,6 +176,8 @@ def restore(
         package.public.repository.base_commit,
         deadline=ExecutionDeadline.from_remaining(120),
     )
+    if backend is not checkpoint:
+        backend.restore_candidate(workspace, loaded.mutation)
     runner._validate_resumed_workspace(workspace, journal)
     request = DevRunRequest(
         provider="openai",
@@ -207,10 +224,12 @@ def restore(
         and request.limits.max_tool_actions - counters.tool_actions == remaining["tool_actions"],
         "restored allowances differ from checkpoint",
     )
-    selected = copy.deepcopy(loaded.request if arm == "A" else checkpoint.project(loaded.request))
     if supplemental_observation is not None:
         selected = (copy.deepcopy(loaded.request) if arm == "A" else
                     caller_information.project(loaded.request, supplemental_observation))
+    else:
+        selected = copy.deepcopy(
+            loaded.request if arm == "A" else checkpoint.project(loaded.request))
     bundle["request"] = selected
     turn = bundle["turn"]
     turn["model_input_artifact"] = native_compaction.put_json(store, selected["input"])
@@ -364,7 +383,8 @@ def rehearse(branch, client: ScriptedClient):
     """Run one offline branch with local checks and the ordinary isolated evaluator."""
     require(type(client) is ScriptedClient, "finite offline client required")
     require(
-        not any(e["event_type"] == "diagnostic_rehearsal_started" for e in branch.journal.events()),
+        not any(e["event_type"] == "diagnostic_rehearsal_started"
+                for e in branch.journal.events()[branch.inherited_events:]),
         "rehearsal cannot be retried",
     )
     branch.journal.append("diagnostic_rehearsal_started", {"mode": "offline-scripted"})

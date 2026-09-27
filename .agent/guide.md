@@ -157,6 +157,10 @@ experimental context and historical plans; current source/status take precedence
 
 ## Validation checklist
 
+For the first-failed-check information comparison, see
+[cleanup-information](cleanup-information.md). Its raw operator observations,
+candidate restoration and new allocation remain separate from prior closed runs.
+
 Run focused tests appropriate to the changed contract, Ruff, the fast suite, and mock
 smoke as relevant. Documentation-only changes need the documentation layout/link tests.
 Keep focused validation under two minutes; report longer or unrun groups honestly.
