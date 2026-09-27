@@ -76,16 +76,18 @@ Original-input packages now pass the actual isolated evaluator on all three prod
 references. Public tests use temporary copies; toqito excludes an obsolete test that
 contradicts its feature request. Before any model run, the pilot limits were amended
 to four files/1,000 lines with API changes allowed. Setup failures remain distinct
-from wrong answers. Next: final live manifest, probe readiness and exact paid allocation.
-See [package validation](history/2026-09-27-original-pilot-packages.md).
+from wrong answers. Probe readiness now blocks paid execution: toqito requires a
+source-only dependency; darts exceeds the installed-dependency limit; MontePy
+hits the numerical-library thread limit.
+See [readiness](history/2026-09-27-original-pilot-readiness.md) for the bound draft and next step.
+[Package validation](history/2026-09-27-original-pilot-packages.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
-AnyIO remains development/calibration data, not untouched held-out evidence.
+AnyIO remains development/calibration data, not held-out evidence.
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
-No new paid run is authorized.
+No paid run is authorized.
 
-Caller-state observations concern the pinned callback-interrupt path, not every
-SIGINT/cancellation path. Earlier fresh N1/N2 solves and advice-removal comparison
-remain separate closed evidence with unchanged budgets and outcomes.
+Caller observations cover the pinned callback-interrupt path. N1/N2 solves and
+advice-removal results remain separate closed evidence.
 
 Earlier supplied-candidate A/B repairs remain separate 2/2 acceptance per arm,
 with no observed information advantage. They are not fresh-solve controls;

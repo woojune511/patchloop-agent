@@ -110,7 +110,9 @@ are recorded in [package validation](../docs/history/2026-09-27-original-pilot-p
 Original test-patch application runs on an evaluator-only temporary copy. Explicit
 infrastructure exit code 2 becomes evaluator ERROR, not a wrong-answer verdict.
 
-Next bind the live invocation manifest, credential and approved allocation. Enabled
+The no-dispatch manifest draft and probe blockers are recorded in
+[readiness](../docs/history/2026-09-27-original-pilot-readiness.md). Resolve the public
+probe preparation blockers before requesting a paid allocation. Enabled
 optional probes retain their separate environment requirements; package validation
 does not establish dependency completeness for arbitrary probes. No paid run is authorized; image approval
 does not authorize model use, another sample or unbounded retries. All evidence is

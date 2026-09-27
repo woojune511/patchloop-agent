@@ -21,6 +21,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
+- [Pilot readiness](2026-09-27-original-pilot-readiness.md).
 - [Pilot packages](2026-09-27-original-pilot-packages.md).
 - [Pilot calibration](2026-09-27-original-pilot-calibration.md).
 - [Pilot selection](2026-09-27-original-input-pilot-selection.md).
