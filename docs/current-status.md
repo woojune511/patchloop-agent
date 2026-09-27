@@ -79,9 +79,10 @@ has 8 pass / 7 fail, not a benchmark score or hidden-failure attribution. Final
 changed-path/input-range coverage was missing. The [closure audit](history/2026-09-28-verification-closure-process.md)
 shows the CQ question survived: the model weakened its probe plan and closed it at
 submission. All 17 verification lists were empty; later boundary cases were never
-constructed. A [policy pair](history/2026-09-28-closure-policy-pair-design.md) now
-freezes deletion of two conditional-submit sentences only. Its [response collector](../.agent/closure-policy-sampler.md)
-is [locally tested](history/2026-09-28-closure-policy-collector.md); live NOT_RUN.
+constructed. The [policy comparison](history/2026-09-28-closure-policy-results.md)
+collected four responses: A finished twice; B finished once and proposed one probe.
+Cost $0.446253; funds closed. No tools ran; quality improvement is unproven.
+Next review the proposed probe's expectation and discriminating value offline.
 
 Earlier supplied-candidate repairs are not fresh-solve controls; NOT_RUN is unchanged.
 Planning OFF comparisons remain closed without adoption.
@@ -121,9 +122,6 @@ Evidence for targeted lookup:
 - Offline continuation: [restoration and execution](history/2026-09-27-checkpoint-continuation.md);
   [contract](../.agent/checkpoint-continuation.md);
   packet: `C:\pt\analyses\checkpoint-continuation-20260927-v1`.
-- Original input pair: [mutation advice checkpoint](history/2026-09-27-mutation-advice-checkpoint.md);
-  [contract](../.agent/mutation-advice-checkpoint.md);
-  packet: `C:\pt\analyses\mutation-advice-checkpoint-20260927-v1`.
 - Latest result: [AnyIO fresh solves](history/2026-09-27-anyio-fresh-solve.md);
   packet: `C:\pt\analyses\anyio-fresh-solve-20260927-v1`; live: `C:\pt\anyiofresh0927a`.
 - Patch diagnostic: [AnyIO B1 branch deletion](history/2026-09-27-anyio-b1-branch-deletion.md);
