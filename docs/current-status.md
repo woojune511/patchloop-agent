@@ -82,7 +82,10 @@ submission. All 17 verification lists were empty; later boundary cases were neve
 constructed. The [policy comparison](history/2026-09-28-closure-policy-results.md)
 collected four responses: A finished twice; B finished once and proposed one probe.
 Cost $0.446253; funds closed. No tools ran; quality improvement is unproven.
-Next review the proposed probe's expectation and discriminating value offline.
+The [selected probe](history/2026-09-28-selected-closure-probe.md) has a valid
+classical expectation and exposes the objective TypeError on the frozen patch.
+This operator replay proves detection, not agent repair. Next prepare a bounded
+probe-result continuation; no new paid approval or default adoption.
 
 Earlier supplied-candidate repairs are not fresh-solve controls; NOT_RUN is unchanged.
 Planning OFF comparisons remain closed without adoption.
@@ -135,8 +138,6 @@ Evidence for targeted lookup:
 - Closed result: [AnyIO observation repair comparison](history/2026-09-27-anyio-observation-repair-comparison.md).
 - Results, public decision review and closure:
   `C:\pt\analyses\anyio-observation-repair-results-20260927-v1`; live state: `C:\pt\obsrepair0927a`.
-- Prior preparation: [AnyIO failure observation](history/2026-09-27-anyio-failure-observation.md).
-- Frozen reproduction/comparison: `C:\pt\analyses\anyio-observation-repair-20260927-v1`.
 - Preparation correction: [AnyIO probe readiness](history/2026-09-27-anyio-probe-readiness.md).
 - New bundle and public reproduction: `C:\pt\analyses\anyio-probe-readiness-20260927-v1`;
   descriptor: `selected-pytest\prepared-probe-dependencies.json` within that packet.
