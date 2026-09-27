@@ -3,9 +3,9 @@
 [Current status](../current-status.md).
 Approvals are closed.
 
-## Pre-split snapshots: 2026-09-26
+## 2026-09-26 snapshots
 
-[Documentation split](2026-09-26-documentation-separation.md).
+[Split](2026-09-26-documentation-separation.md).
 
 [Snapshot manifest](2026-09-26-context-split/manifest.json).
 
@@ -19,8 +19,9 @@ Approvals are closed.
 
 ## New records
 
+- [Continuation](2026-09-28-post-edit-budget-preparation.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
-- [Minimum funding](2026-09-28-minimum-completion-funding.md).
+- [Funding](2026-09-28-minimum-completion-funding.md).
 - [Pilot](2026-09-28-original-pilot-results.md); [budget audit](2026-09-28-completion-budget-audit.md).
 - [Probe capacity](2026-09-27-installed-probe-capacity.md).
 - [Wheel admission](2026-09-27-generated-wheel-admission.md).

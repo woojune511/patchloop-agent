@@ -35,6 +35,9 @@ from patchloop.util import canonical_json, sha256_json
 
 
 def checkpoint_backend(path):
+    if json.loads(path.read_bytes())["schema"] == "post-edit-budget-checkpoint-v1":
+        from diagnostics import post_edit_budget_checkpoint
+        return post_edit_budget_checkpoint
     if json.loads(path.read_bytes())["schema"] == "cleanup-information-checkpoint-v1":
         from diagnostics import cleanup_information_checkpoint
         return cleanup_information_checkpoint
@@ -82,6 +85,9 @@ def restore(
     backend = checkpoint_backend(packet_path)
     backend.validate(packet_path, packet_hash)
     packet = json.loads(packet_path.read_bytes())
+    budget_fork = packet["schema"] == "post-edit-budget-checkpoint-v1"
+    if budget_fork:
+        require(arm == "A", "budget continuation has one unhinted arm")
     if backend is not checkpoint:
         require(supplemental_observation is None, "packet already binds its observation")
         supplemental_observation = backend.observation(packet)
@@ -145,7 +151,8 @@ def restore(
         "historical_execution_is_not_new_execution": True,
         "active_elapsed_ms": start["payload"]["active_elapsed_ms"],
         "artifact_references": references,
-        "intervention": ("cleanup-information" if backend is not checkpoint else
+        "intervention": ("post-edit-budget" if budget_fork else
+                         "cleanup-information" if backend is not checkpoint else
                          "caller-information" if supplemental_observation else "mutation-advice"),
         "supplement_hash": sha256_json(supplemental_observation)
         if supplemental_observation is not None else None,
@@ -224,12 +231,25 @@ def restore(
         and request.limits.max_tool_actions - counters.tool_actions == remaining["tool_actions"],
         "restored allowances differ from checkpoint",
     )
+    if budget_fork:
+        cap = ledger.spent_nanos + packet["new_cap_nanos"]
+        request = request.model_copy(update={"max_cost_usd": Decimal(cap) / 10**9})
+        ledger.cap_nanos = cap
+        journal.append("diagnostic_budget_allocated", {
+            "original_cap_nanos": envelope.max_cost_nanos,
+            "historical_spent_nanos": ledger.spent_nanos,
+            "new_cap_nanos": packet["new_cap_nanos"],
+            "effective_cap_nanos": cap,
+            "original_unused_allocation_reopened": False,
+        })
     if supplemental_observation is not None:
         selected = (copy.deepcopy(loaded.request) if arm == "A" else
                     caller_information.project(loaded.request, supplemental_observation))
     else:
         selected = copy.deepcopy(
             loaded.request if arm == "A" else checkpoint.project(loaded.request))
+    if budget_fork:
+        selected = backend.project(selected, packet["new_cap_nanos"])
     bundle["request"] = selected
     turn = bundle["turn"]
     turn["model_input_artifact"] = native_compaction.put_json(store, selected["input"])
@@ -238,6 +258,9 @@ def restore(
     canonical = json.loads(
         loaded.store.read_bytes(Artifact.model_validate(turn["context_artifact"]))
     )
+    if budget_fork:
+        canonical["remaining_budget"]["cost"] = json.loads(
+            selected["input"][-1]["content"])["state"]["remaining_budget"]["cost"]
     if arm == "B" and supplemental_observation is not None:
         canonical[caller_information.FIELD] = copy.deepcopy(supplemental_observation)
     elif arm == "B":
@@ -266,7 +289,8 @@ def restore(
         pricing=pricing,
         packet=packet,
         selected=selected,
-        original=loaded.request,
+        original=selected if budget_fork else loaded.request,
+        source_request=loaded.request,
         inherited_events=len(prefix),
         initial_spent_nanos=ledger.spent_nanos,
     )

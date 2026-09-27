@@ -170,6 +170,9 @@ For a provider-free saved-candidate caller-cancellation follow-up, see
 For the first-failed-check information comparison, see
 [cleanup-information](cleanup-information.md). Its raw operator observations,
 candidate restoration and new allocation remain separate from prior closed runs.
+For an unhinted continuation after the first accepted edit, see
+[post-edit budget continuation](post-edit-budget-continuation.md). Only the fresh
+cost allowance changes; prior solving state and resource counters remain intact.
 
 Run focused tests appropriate to the changed contract, Ruff, the fast suite, and mock
 smoke as relevant. Documentation-only changes need the documentation layout/link tests.

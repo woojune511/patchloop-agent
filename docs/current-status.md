@@ -38,15 +38,12 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The cleanup-information comparison is closed: both selected checkpoint arms passed
-2/2 with seven new calls each; this established neither benefit nor equivalence.
-Its $1.9146735 spend and closed allocation remain in
-[results](history/2026-09-27-cleanup-information-results.md).
+The cleanup-information comparison is closed; it established neither benefit nor
+equivalence. See [results](history/2026-09-27-cleanup-information-results.md).
 
-The waiting-caller diagnostic is closed: the synthetic internal cancellation stall
-also occurs at base and lacks a public support requirement. Do not expand checks
-or invalidate acceptance from this observation.
-See [caller support scope](history/2026-09-27-caller-support-scope.md).
+The waiting-caller stall also occurs at base and lacks a public support requirement;
+it does not invalidate acceptance. See
+[caller support scope](history/2026-09-27-caller-support-scope.md).
 
 AnyIO is development/calibration data; its adapted-task acceptance is separate from
 original scores. See the linked benchmark audit.
@@ -80,9 +77,11 @@ unchanged; this is separate public operator evidence. The
 [mechanism audit](history/2026-09-28-general-failure-mechanism.md) confirms that full
 outputs, expectation code and generic cautions were delivered before the wrong
 attribution. A self-authored expectation became assumed truth; frequency and a fix
-remain unproven. Next assess comparator self-checking with adequate resources,
-keeping autonomous discovery separate from supplied task-specific feedback.
-No new paid allocation is active.
+remain unproven. The [unhinted continuation](../.agent/post-edit-budget-continuation.md)
+restores the first accepted edit and changes only its cost allowance. Actual-task
+offline restoration passed; autonomous discovery remains NOT_RUN. One continuation
+with a proposed fresh $3 cap awaits exact authorization; no paid allocation is active.
+See [preparation](history/2026-09-28-post-edit-budget-preparation.md).
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate A/B repairs remain separate 2/2 acceptance per arm,
