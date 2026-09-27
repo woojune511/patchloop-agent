@@ -64,24 +64,18 @@ unchanged; this is separate public operator evidence. The
 [mechanism audit](history/2026-09-28-general-failure-mechanism.md) confirms that full
 outputs, expectation code and generic cautions were delivered before the wrong
 attribution. A self-authored expectation became assumed truth; frequency and a fix
-remain unproven. The [unhinted continuation](history/2026-09-28-post-edit-budget-results.md)
-used $0.2168265 in two new calls: old regression PASS, then unchanged submission and
-benchmark FAIL (safety PASS). With ample resources, the agent treated downarrow-only
-regression results as validation of new uparrow behavior. It did not revisit the
-comparator or correct the patch. The [scope cue](history/2026-09-28-verification-scope-results.md)
-improved stated test scope but produced the same check/finish actions and unchanged
-failing patch ($0.234737). It was absent at the final decision as designed.
-[Deferred delivery](history/2026-09-28-deferred-scope-results.md) reached the ready
-decision but again produced check/finish and the same failing patch ($0.113142).
-All allocations are closed. The [closure audit](history/2026-09-28-completion-closure-audit.md)
-found question narrowing and unsupported dismissal despite delivered warnings.
-[Advice removal](history/2026-09-28-completion-advice-results.md) produced 2 probes
-and an extra edit ($0.9856585), but benchmark FAIL and public counterexamples remain.
-Its probes pass while a same-input invariant fails. The [expectation audit](history/2026-09-28-expected-value-provenance.md)
-traces self-confirming formula evidence and checks on different inputs. The
-[review rehearsal](history/2026-09-28-expectation-review-rehearsal.md) restores both
-arms offline. The [collector](../.agent/expectation-review-collector.md) binds
-equal fresh caps and uncertainty stops; live execution pending.
+remain unproven. The [unhinted continuation](history/2026-09-28-post-edit-budget-results.md),
+[scope cue](history/2026-09-28-verification-scope-results.md), and
+[deferred cue](history/2026-09-28-deferred-scope-results.md) did not fix it.
+[Advice removal](history/2026-09-28-completion-advice-results.md) prompted probes
+and an edit but still failed. The [expectation review pair](history/2026-09-28-expectation-review-results.md)
+changed B's first action to independent testing and eventually removed the wrong
+CQ shortcut. Both final patches passed 14 public regressions; A failed the benchmark
+and two operator public checks, while B passed those two checks but did not submit.
+B's last model call began with 4.499 seconds remaining and timed out with unknown
+billing: acceptance/safety NOT_RUN. Recorded fresh cost $2.9267315, final total unknown;
+$6 authorization is closed. No automatic retry or adoption. Next audit the public
+counterexample-to-repair path and near-deadline dispatch without provider calls.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
