@@ -103,6 +103,27 @@ Only the generic availability and snapshot-version limitation enter the tool des
 
 ### Resolve a repository without a source lock
 
+An explicitly reviewed public pure-Python wheel built offline can be admitted with
+`--resolve --generated-wheel-receipt <receipt.json> --generated-wheel-receipt-hash
+sha256:<reviewed-hash>`. Both options are required together. This operator-only
+preparation path runs no build hook and grants the coding agent no installation tool.
+
+The `public-built-probe-wheel-v1` receipt binds a public PyPI sdist, saved release
+metadata, public build-tool wheels, build script, successful result, the existing
+clean Python image with network none, and the resulting `py3-none-any` wheel.
+Each file entry has a relative `path`, SHA-256 `hash` and byte `size`; source and
+build tools also have public PyPI `url` fields. Artifact bytes are verified and
+archived before resolution. The receipt is reviewed operator provenance, not an
+independent attestation that a build occurred in the claimed environment.
+
+The resolver receives only the staged verified wheel directory. It must select the
+reviewed wheel under the project's public requirements; arbitrary local wheels,
+changed bytes, mismatched source/package identities and wheel URL dependencies are
+rejected. Normal public wheels still use the existing download verification. The
+published descriptor binds the receipt and complete installed inventory; execution
+does not rebuild or need the original receipt folder. Existing size limits apply.
+See [PICOS admission](../docs/history/2026-09-27-generated-wheel-admission.md).
+
 ```powershell
 patchloop task prepare-probe-dependencies <task-dir> `
   --prepared-source <prepared-source.json> --resolve `

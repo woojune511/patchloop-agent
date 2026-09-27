@@ -114,7 +114,8 @@ The no-dispatch manifest draft and probe blockers are recorded in
 [readiness](../docs/history/2026-09-27-original-pilot-readiness.md). Resolve the public
 probe preparation blockers before requesting a paid allocation. The
 [OpenBLAS fix](../docs/history/2026-09-27-probe-openblas-default.md) records MontePy
-canary success and a successor draft; toqito/darts remain blocked. Enabled
+canary success and a successor draft. [Wheel admission](../docs/history/2026-09-27-generated-wheel-admission.md)
+now works; toqito/darts both exceed installed-size bounds. Prior drafts need rebinding. Enabled
 optional probes retain their separate environment requirements; package validation
 does not establish dependency completeness for arbitrary probes. No paid run is authorized; image approval
 does not authorize model use, another sample or unbounded retries. All evidence is

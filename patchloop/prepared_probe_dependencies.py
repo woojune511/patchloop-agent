@@ -28,6 +28,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import ProbeDependencyIdentity, PublicTask, StrictModel
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
+from patchloop.generated_probe_wheel import GeneratedWheel
 from patchloop.prepared_source import admission_hash, load_source
 from patchloop.util import canonical_json, safe_relative_path, sha256_bytes, sha256_json
 
@@ -296,11 +297,17 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
                          wheel_lock: Path | None = None, resolve: bool = False,
                          groups: list[str] | None = None, extras: list[str] | None = None,
                          source_roots: list[str] | None = None,
-                         selected_dependencies: list[str] | None = None) -> Path:
+                         selected_dependencies: list[str] | None = None,
+                         generated_wheel_receipt: Path | None = None,
+                         generated_wheel_receipt_hash: str | None = None) -> Path:
     from patchloop.dev.state import DevJournal
     from patchloop.runtime import repository_root
     from patchloop.sandbox.probes import PROBE_IMAGE
 
+    if bool(generated_wheel_receipt) != bool(generated_wheel_receipt_hash):
+        raise ContractError("generated wheel requires a receipt and reviewed receipt hash")
+    if generated_wheel_receipt is not None and not resolve:
+        raise ContractError("generated wheel admission requires --resolve")
     if resolve == (wheel_lock is not None):
         raise ContractError("choose exactly one of --wheel-lock or --resolve")
     if not resolve and (groups or extras or source_roots or selected_dependencies):
@@ -356,10 +363,19 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
         if resolve:
             from patchloop.probe_dependency_resolution import resolve_dependencies
 
+            generated, provenance = None, None
+            if generated_wheel_receipt is not None:
+                from patchloop.generated_probe_wheel import stage_receipt
+
+                generated, provenance = stage_receipt(
+                    generated_wheel_receipt.resolve(), generated_wheel_receipt_hash, output,
+                )
             lock_record, selected, packages = resolve_dependencies(
                 repo=repo, source=source, source_hash=source_hash, output=output, uv=uv,
                 groups=groups or [], extras=extras or [], source_roots=roots,
                 selected_dependencies=selected_dependencies,
+                **({"generated": generated, "generated_provenance": provenance}
+                   if generated is not None else {}),
             )
         if sum(wheel.size for wheel in selected) > MAX_BYTES:
             raise ContractError("public wheel downloads exceed the size bound")
@@ -368,7 +384,13 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
         paths = []
         for wheel in selected:
             destination = wheels / wheel.url.rsplit("/", 1)[-1]
-            _download(wheel, destination)
+            if isinstance(wheel, GeneratedWheel):
+                raw = _read_bytes(output / "generated-wheels" / destination.name, wheel.size)
+                if len(raw) != wheel.size or sha256_bytes(raw) != wheel.hash:
+                    raise ContractError("generated wheel changed after resolution")
+                ArtifactStore(output).write_bytes_atomic(destination, raw)
+            else:
+                _download(wheel, destination)
             paths.append(str(destination))
         target = output / "site-packages"
         command = [uv, "pip", "install", "--offline", "--no-index", "--no-build", "--no-config",
@@ -392,7 +414,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
         }))
         if result.returncode:
             raise ContractError("offline public wheel installation failed; no descriptor published")
-        # Replace install-local URL records with their already verified public wheel origins.
+        # Bind install URL records to verified public origins or the staged generated wheel.
         origins = {wheel.url.rsplit("/", 1)[-1]: wheel for wheel in selected}
         for path in target.glob("*.dist-info/direct_url.json"):
             metadata = json.loads(path.read_bytes())

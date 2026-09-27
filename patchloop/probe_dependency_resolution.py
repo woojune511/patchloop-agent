@@ -17,6 +17,7 @@ from packaging.version import Version
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.errors import ContractError
+from patchloop.generated_probe_wheel import GeneratedWheel
 from patchloop.prepared_probe_dependencies import PublicWheel, _read_bytes
 from patchloop.prepared_source import PreparedSource
 from patchloop.util import canonical_json, sha256_bytes
@@ -109,7 +110,8 @@ def project_requirements(repo: Path, *, groups: list[str], extras: list[str]) ->
             "requirements": sorted(selected)}
 
 
-def select_wheels(raw: bytes, *, project_name: str) -> list[PublicWheel]:
+def select_wheels(raw: bytes, *, project_name: str,
+                  generated: GeneratedWheel | None = None) -> list[PublicWheel | GeneratedWheel]:
     """Choose one compatible wheel per resolved package, without host platform tags."""
     lock = tomllib.loads(raw.decode("utf-8"))
     if lock.get("lock-version") != "1.0" or lock.get("created-by") != "uv":
@@ -136,8 +138,15 @@ def select_wheels(raw: bytes, *, project_name: str) -> list[PublicWheel]:
         names.add(name)
         candidates = []
         for item in package.get("wheels", []):
-            wheel = PublicWheel(url=item["url"], hash="sha256:" + item["hashes"]["sha256"],
-                                size=item["size"])
+            if generated is not None and item.get("url") == generated.url:
+                wheel = generated
+                if item.get("hashes", {}).get("sha256", generated.hash[7:]) != generated.hash[7:]:
+                    raise ContractError("resolver changed the generated wheel hash")
+            else:
+                if item.get("url", "").startswith("file:"):
+                    raise ContractError("resolver selected an unreviewed local wheel")
+                wheel = PublicWheel(url=item["url"], hash="sha256:" + item["hashes"]["sha256"],
+                                    size=item["size"])
             wheel_name, version, _, wheel_tags = parse_wheel_filename(wheel.url.rsplit("/", 1)[-1])
             if wheel_name != name or version != Version(package["version"]):
                 raise ContractError("resolver wheel does not match its package name/version")
@@ -156,7 +165,9 @@ def resolve_dependencies(
     *, repo: Path, source: PreparedSource, source_hash: str, output: Path, uv: str,
     groups: list[str], extras: list[str], source_roots: list[str],
     selected_dependencies: list[str] | None = None,
-) -> tuple[dict, list[PublicWheel], list[dict]]:
+    generated: GeneratedWheel | None = None,
+    generated_provenance: dict | None = None,
+) -> tuple[dict, list[PublicWheel | GeneratedWheel], list[dict]]:
     from patchloop.sandbox.probes import PROBE_IMAGE
 
     groups = sorted({canonicalize_name(name, validate=True) for name in groups})
@@ -181,6 +192,8 @@ def resolve_dependencies(
                   "prepared_source_hash": source_hash, "source_metadata": metadata,
                   "source_roots": source_roots, "target": target,
                   "index": "https://pypi.org/simple"}
+    if generated_provenance is not None:
+        provenance["generated_wheel"] = generated_provenance
     store = ArtifactStore(output)
     store.write_text_immutable(output / "resolution-input.json", canonical_json(provenance))
     requirements = output / "requirements.in"
@@ -196,6 +209,8 @@ def resolve_dependencies(
                "--only-binary", ":all:", "--no-config", "--no-cache", "--no-sources",
                "--no-python-downloads", "--default-index", "https://pypi.org/simple",
                "--keyring-provider", "disabled", "--no-header"]
+    if generated is not None:
+        command.extend(["--find-links", str(output / "generated-wheels")])
     resolver_hash = sha256_bytes(Path(uv).read_bytes())
     result = subprocess.run(command, capture_output=True, check=False, timeout=120, cwd=output,
                             env={**{key: os.environ[key] for key in
@@ -209,7 +224,9 @@ def resolve_dependencies(
     if result.returncode:
         raise ContractError("public dependency resolution failed; no descriptor published")
     raw_lock = _read_bytes(lock_path)
-    wheels = select_wheels(raw_lock, project_name=metadata["project_name"])
+    wheels = select_wheels(raw_lock, project_name=metadata["project_name"], generated=generated)
+    if generated is not None and generated not in wheels:
+        raise ContractError("reviewed generated wheel was not selected by public requirements")
     provenance.update({"resolver_hash": resolver_hash, "pylock_hash": sha256_bytes(raw_lock),
                        "resolve_receipt_hash": sha256_bytes((output / "resolve.json").read_bytes()),
                        "wheels": [wheel.model_dump(mode="json") for wheel in wheels]})
