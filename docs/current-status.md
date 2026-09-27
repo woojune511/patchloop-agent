@@ -81,9 +81,10 @@ regression results as validation of new uparrow behavior. It did not revisit the
 comparator or correct the patch. The [scope cue](history/2026-09-28-verification-scope-results.md)
 improved stated test scope but produced the same check/finish actions and unchanged
 failing patch ($0.234737). It was absent at the final decision as designed.
-[Deferred delivery](history/2026-09-28-deferred-scope-preparation.md) is prepared:
-same checkpoint/text, cue first appears at submission readiness. One new $3 run
-awaits exact authorization. Previous allocations are closed; defaults unchanged.
+[Deferred delivery](history/2026-09-28-deferred-scope-results.md) reached the ready
+decision but again produced check/finish and the same failing patch ($0.113142).
+All allocations are closed. Cue variants are not adopted; next examine why
+unverified changed behavior is dismissed at completion. Defaults remain unchanged.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
