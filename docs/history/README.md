@@ -19,7 +19,7 @@ Approvals are closed.
 
 ## New records
 
-- [Closure policy pair](2026-09-28-closure-policy-pair-design.md).
+- [Closure collector](2026-09-28-closure-policy-collector.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
 - [Funding](2026-09-28-minimum-completion-funding.md).
 - [Pilot](2026-09-28-original-pilot-results.md); [budget audit](2026-09-28-completion-budget-audit.md).

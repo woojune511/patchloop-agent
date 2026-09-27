@@ -156,6 +156,7 @@ experimental context and historical plans; current source/status take precedence
   The [caller-state probe](caller-state-probe.md) is a separate provider-free observation.
   [Caller information](caller-information.md) tests its first-input delivery with advice fixed.
   [Cleanup probe](cleanup-probe.md) diagnoses saved first-patch cancellation and teardown.
+  [Closure-policy sampler](closure-policy-sampler.md) collects independent decisions only.
 - Candidate comparison: [independent candidate](independent-candidate.md), an
   opt-in public alternative in the ordinary seeded repair loop.
 - Search context: [declaration context](declaration-context.md), opt-in bounded

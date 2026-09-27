@@ -80,11 +80,11 @@ changed-path/input-range coverage was missing. The [closure audit](history/2026-
 shows the CQ question survived: the model weakened its probe plan and closed it at
 submission. All 17 verification lists were empty; later boundary cases were never
 constructed. A [policy pair](history/2026-09-28-closure-policy-pair-design.md) now
-freezes deletion of two conditional-submit sentences only. Next implement its
-response-only collector; live NOT_RUN, no paid approval or default adoption.
+freezes deletion of two conditional-submit sentences only. Its [response collector](../.agent/closure-policy-sampler.md)
+is [locally tested](history/2026-09-28-closure-policy-collector.md); live NOT_RUN.
 
-Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
-outcomes are unchanged. Planning OFF comparisons remain closed without adoption.
+Earlier supplied-candidate repairs are not fresh-solve controls; NOT_RUN is unchanged.
+Planning OFF comparisons remain closed without adoption.
 
 ## Implemented and measured
 
