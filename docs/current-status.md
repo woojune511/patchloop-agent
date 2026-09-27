@@ -83,9 +83,9 @@ failing patch ($0.234737). It was absent at the final decision as designed.
 decision but again produced check/finish and the same failing patch ($0.113142).
 All allocations are closed. The [closure audit](history/2026-09-28-completion-closure-audit.md)
 found question narrowing and unsupported dismissal despite delivered warnings.
-The [advice hook](history/2026-09-28-completion-advice-rehearsal.md) has offline
-continuation coverage; unsupported stages stop before count. Next define repair-state
-scope before live integration. Efficacy is NOT_RUN; defaults remain unchanged.
+The [advice collector](history/2026-09-28-completion-advice-live-preparation.md)
+supports repair states and passed scripted controls. A one-run $3 manifest is READY,
+awaiting authorization. Live efficacy is NOT_RUN; defaults remain unchanged.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
