@@ -48,9 +48,8 @@ Toqito excludes one obsolete public test contradicting the issue.
 [Package validation](history/2026-09-27-original-pilot-packages.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
-The pilot is complete: MontePy and darts passed; toqito exhausted $1.20 after one
-edit, before checks/submission (NOT_RUN). Resolved/submitted is 2/2; resolved/planned
-2/3. Cost was $2.0892005 / $3.60; funds closed. All environments passed preparation.
+The pilot is complete: MontePy and darts passed; toqito exhausted $1.20 before
+checks/submission (NOT_RUN). Cost $2.0892005; funds closed. Preparation passed.
 The user accepts more budget when needed; cost-policy work remains deferred. The
 [public patch audit](history/2026-09-28-toqito-public-validation.md) found a semantic
 error despite 14 passing base tests: the agent reversed conditioning in a probe's
@@ -68,8 +67,8 @@ and an edit but still failed. The [expectation review pair](history/2026-09-28-e
 changed B's first action to independent testing and eventually removed the wrong
 CQ shortcut. Both final patches passed 14 public regressions; A failed the benchmark
 and two operator public checks, while B passed those two checks but did not submit.
-B's last model call began with 4.499 seconds remaining and timed out with unknown
-billing: acceptance/safety NOT_RUN. Recorded fresh cost $2.9267315, final total unknown;
+B's final call timed out with 4.499 seconds remaining: billing unknown,
+acceptance/safety NOT_RUN. Recorded cost $2.9267315, final total unknown;
 $6 authorization is closed. A separately approved [time extension](history/2026-09-28-time-extension-results.md)
 added 60 minutes and a fresh $3 cap. One call ($0.094595) submitted the unchanged
 patch: benchmark FAIL, safety PASS. No extra probe/edit; unused fresh funds closed.
@@ -78,9 +77,11 @@ not benchmark success. The [public requirements audit](history/2026-09-28-remain
 reproduced pure-state underflow masked by the downarrow clamp and mixed-state
 complex-to-float exceptions in both existing environments. A selected 15-case matrix
 has 8 pass / 7 fail, not a benchmark score or hidden-failure attribution. Final
-changed-path/input-range coverage was missing. Next inspect existing coverage/notes
-before a generic intervention; no paid retry, task-specific hint or default adoption.
-See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
+changed-path/input-range coverage was missing. The [closure audit](history/2026-09-28-verification-closure-process.md)
+shows the CQ question survived: the model weakened its probe plan and closed it at
+submission. All 17 verification lists were empty; later boundary cases were never
+constructed. Next isolate verification scope or closure judgment; policy causality
+is untested. No paid retry, task-specific hint or default adoption.
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
 outcomes are unchanged. Planning OFF comparisons remain closed without adoption.
