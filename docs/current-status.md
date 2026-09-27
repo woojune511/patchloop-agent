@@ -74,10 +74,12 @@ CQ shortcut. Both final patches passed 14 public regressions; A failed the bench
 and two operator public checks, while B passed those two checks but did not submit.
 B's last model call began with 4.499 seconds remaining and timed out with unknown
 billing: acceptance/safety NOT_RUN. Recorded fresh cost $2.9267315, final total unknown;
-$6 authorization is closed. The user requested a separate continuation with more
-time. [Preparation](history/2026-09-28-time-extension-preparation.md) restores the
-last passed-check prefix with 60 additional minutes; a fresh paid cap is pending.
-Original unknown billing and NOT_RUN remain; no automatic retry or adoption.
+$6 authorization is closed. A separately approved [time extension](history/2026-09-28-time-extension-results.md)
+added 60 minutes and a fresh $3 cap. One call ($0.094595) submitted the unchanged
+patch: benchmark FAIL, safety PASS. No extra probe/edit; unused fresh funds closed.
+The earlier unknown charge and B NOT_RUN remain. More time enabled submission but
+not benchmark success. Next audit uncovered public requirements against this patch;
+no private failure inference, automatic retry or default adoption.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
