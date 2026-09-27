@@ -80,8 +80,8 @@ found question narrowing and unsupported dismissal despite delivered warnings.
 and an extra edit ($0.9856585), but benchmark FAIL and public counterexamples remain.
 Its probes pass while a same-input invariant fails. The [expectation audit](history/2026-09-28-expected-value-provenance.md)
 traces self-confirming formula evidence and checks on different inputs. The
-[review pair](history/2026-09-28-expectation-review-preparation.md) is frozen offline;
-next rehearse later-checkpoint continuation. Allocations closed; defaults unchanged.
+[review rehearsal](history/2026-09-28-expectation-review-rehearsal.md) restores both
+arms offline. Next bind a matched live collector and fresh cap; allocations closed.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN

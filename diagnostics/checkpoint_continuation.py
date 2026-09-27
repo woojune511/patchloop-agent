@@ -35,6 +35,9 @@ from patchloop.util import canonical_json, sha256_json
 
 
 def checkpoint_backend(path):
+    if json.loads(path.read_bytes())["schema"] == "expectation-review-offline-v1":
+        from diagnostics import expectation_review_checkpoint
+        return expectation_review_checkpoint
     if json.loads(path.read_bytes())["schema"] == "post-edit-budget-checkpoint-v1":
         from diagnostics import post_edit_budget_checkpoint
         return post_edit_budget_checkpoint
@@ -86,9 +89,12 @@ def restore(
     backend.validate(packet_path, packet_hash)
     packet = json.loads(packet_path.read_bytes())
     budget_fork = packet["schema"] == "post-edit-budget-checkpoint-v1"
+    review_fork = packet["schema"] == "expectation-review-offline-v1"
+    if review_fork:
+        require(mode == "offline-scripted", "expectation review is offline only")
     if budget_fork:
         require(arm == "A", "budget continuation has one unhinted arm")
-    if backend is not checkpoint:
+    if backend is not checkpoint and not review_fork:
         require(supplemental_observation is None, "packet already binds its observation")
         supplemental_observation = backend.observation(packet)
     source = Source.from_record(packet["source"])
@@ -96,14 +102,26 @@ def restore(
     disjoint(
         output, (repository_root(), source.root, packet_path.parent, source.public_path.parent)
     )
-    loaded = backend.load(source)
+    if review_fork:
+        from diagnostics.cleanup_information_checkpoint import ForkStore
+        selected_request, receipt = backend.load(source, packet["checkpoint"]["turn_id"])
+        source_events = DevJournal(source.root, source.run_id).events()
+        inherited = source_events[:receipt["cutoff_sequence"]]
+        mutations = [e["payload"] for e in inherited if e["event_type"] == "action_started"
+                     and e["payload"]["tool"] == "replace_text"]
+        require(len(mutations) == 1, "review restoration supports one historical mutation")
+        loaded = SimpleNamespace(request=selected_request, store=ForkStore(source.root, inherited),
+                                 mutation=mutations[0])
+    else:
+        loaded = backend.load(source)
     historical = DevJournal(source.root, source.run_id)
     events, envelope = historical.events(), historical.load_envelope()
     start = next(
         e
         for e in events
         if e["event_type"] == "turn_started"
-        and e["payload"]["turn_id"] == packet["checkpoint"]["source_turn_id"]
+        and e["payload"]["turn_id"] == packet["checkpoint"].get(
+            "source_turn_id", packet["checkpoint"].get("turn_id"))
     )
     cutoff = max(
         e["sequence"]
@@ -117,6 +135,8 @@ def restore(
                      if e["event_type"] == "context_segment_started"
                      and cutoff < e["sequence"] < start["sequence"]])
     prefix = [e for e in events if e["sequence"] <= cutoff]
+    if review_fork:
+        prefix = events[:packet["checkpoint"]["cutoff_sequence"]]
     bundle = json.loads(
         loaded.store.read_bytes(
             Artifact.model_validate(start["payload"]["prepared_input"]["artifact"])
@@ -151,7 +171,8 @@ def restore(
         "historical_execution_is_not_new_execution": True,
         "active_elapsed_ms": start["payload"]["active_elapsed_ms"],
         "artifact_references": references,
-        "intervention": ("post-edit-budget" if budget_fork else
+        "intervention": ("expectation-review" if review_fork else
+                         "post-edit-budget" if budget_fork else
                          "cleanup-information" if backend is not checkpoint else
                          "caller-information" if supplemental_observation else "mutation-advice"),
         "supplement_hash": sha256_json(supplemental_observation)
@@ -187,7 +208,11 @@ def restore(
         deadline=ExecutionDeadline.from_remaining(120),
     )
     if backend is not checkpoint:
-        backend.restore_candidate(workspace, loaded.mutation)
+        if review_fork:
+            from diagnostics.cleanup_information_checkpoint import restore_candidate
+            restore_candidate(workspace, loaded.mutation)
+        else:
+            backend.restore_candidate(workspace, loaded.mutation)
     runner._validate_resumed_workspace(workspace, journal)
     request = DevRunRequest(
         provider="openai",
@@ -221,12 +246,17 @@ def restore(
         },
     )
     pricing = pricing_for_model(envelope.model)
+    if review_fork:
+        frozen_budget = json.loads(loaded.request["input"][-1]["content"])["state"][
+            "remaining_budget"]
+        request = request.model_copy(update={
+            "max_cost_usd": Decimal(frozen_budget["cost"]["invocation_cap"]) / 10**9})
     ledger = DevCostLedger(request.max_cost_usd, pricing)
     ledger.restore_settled_usage(
         journal.provider_usage(), base_spent_nanos=envelope.cost_start_nanos
     )
     counters = runner._restore_counters(journal)
-    remaining = packet["checkpoint"]["remaining_budget"]
+    remaining = frozen_budget if review_fork else packet["checkpoint"]["remaining_budget"]
     require(
         ledger.remaining_nanos == remaining["cost"]["remaining"]
         and ledger.spent_nanos == remaining["cost"]["settled_usage"]
@@ -250,7 +280,8 @@ def restore(
                     caller_information.project(loaded.request, supplemental_observation))
     else:
         selected = copy.deepcopy(
-            loaded.request if arm == "A" else checkpoint.project(loaded.request))
+            loaded.request if arm == "A" else
+            backend.project(loaded.request) if review_fork else checkpoint.project(loaded.request))
     if budget_fork:
         budget_baseline = backend.project(selected, packet["new_cap_nanos"])
         selected = backend.project(selected, packet["new_cap_nanos"],
@@ -273,6 +304,8 @@ def restore(
             canonical[backend.SCOPE_FIELD] = packet[backend.SCOPE_FIELD]
     if arm == "B" and supplemental_observation is not None:
         canonical[caller_information.FIELD] = copy.deepcopy(supplemental_observation)
+    elif arm == "B" and review_fork:
+        canonical[backend.FIELD] = backend.CUE
     elif arm == "B":
         canonical["completion_guidance"].update(next_action=None, message=checkpoint.FACTUAL)
     turn["context_artifact"] = native_compaction.put_json(store, canonical)
