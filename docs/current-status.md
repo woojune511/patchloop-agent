@@ -38,11 +38,11 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The cleanup-information comparison is closed; it established neither benefit nor
-equivalence. See [results](history/2026-09-27-cleanup-information-results.md).
+The [cleanup comparison](history/2026-09-27-cleanup-information-results.md) is closed
+without benefit or equivalence evidence.
 
-The waiting-caller stall also occurs at base and lacks a public support requirement;
-it does not invalidate acceptance. See
+The waiting-caller stall occurs at base without a public support requirement;
+acceptance stands. See
 [caller support scope](history/2026-09-27-caller-support-scope.md).
 
 AnyIO is development/calibration data; its adapted-task acceptance is separate from
@@ -83,8 +83,9 @@ failing patch ($0.234737). It was absent at the final decision as designed.
 decision but again produced check/finish and the same failing patch ($0.113142).
 All allocations are closed. The [closure audit](history/2026-09-28-completion-closure-audit.md)
 found question narrowing and unsupported dismissal despite delivered warnings.
-Next isolate completion advice by removing its action recommendation offline;
-eligibility stays fixed. Cue variants are not adopted; defaults remain unchanged.
+An [offline advice pair](history/2026-09-28-completion-advice-preparation.md) preserves
+eligibility and removes the local recommendation. Model execution is NOT_RUN;
+next rehearse a continuation hook. Cue variants are not adopted; defaults unchanged.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
