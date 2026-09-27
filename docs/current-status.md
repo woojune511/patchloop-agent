@@ -19,7 +19,6 @@ does not establish better task solving. Remove ineffective mechanisms when usefu
 
 - `dev-head` is the sole active mutable runtime; every run is `official=false`.
 - The chosen performance baseline is `gpt-5.4-2026-03-05`, xhigh, 25,000 output tokens.
-  The latest information comparison used collector checkpoint `0cf07b81`.
   These selected settings are not a statement of CLI defaults.
 - Baseline options: segmented-v1, result-or-size-v1 boundaries, brief-v1, probes
   enabled / probe-policy none, repair-recheck, protected-v1 inspection, and
@@ -81,7 +80,8 @@ and an extra edit ($0.9856585), but benchmark FAIL and public counterexamples re
 Its probes pass while a same-input invariant fails. The [expectation audit](history/2026-09-28-expected-value-provenance.md)
 traces self-confirming formula evidence and checks on different inputs. The
 [review rehearsal](history/2026-09-28-expectation-review-rehearsal.md) restores both
-arms offline. Next bind a matched live collector and fresh cap; allocations closed.
+arms offline. The [collector](../.agent/expectation-review-collector.md) binds
+equal fresh caps and uncertainty stops; live execution pending.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN

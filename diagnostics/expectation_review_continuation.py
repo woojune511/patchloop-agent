@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import json
+from contextlib import contextmanager
 from unittest.mock import patch
 
 from diagnostics import checkpoint_continuation as continuation
@@ -15,8 +16,8 @@ from patchloop.dev.conversation import history_metadata
 from patchloop.util import sha256_json
 
 
-def rehearse(branch, client):
-    require(type(client) is continuation.ScriptedClient, "finite offline client required")
+@contextmanager
+def inputs(branch):
     require(branch.packet["schema"] == review.SCHEMA, "review checkpoint required")
     guidance_original = runner._completion_guidance
     prepare_original = native_compaction.prepared_input
@@ -57,4 +58,10 @@ def rehearse(branch, client):
     with patch.object(runner, "_completion_guidance", guidance), patch.object(
         native_compaction, "prepared_input", prepare
     ):
+        yield
+
+
+def rehearse(branch, client):
+    require(type(client) is continuation.ScriptedClient, "finite offline client required")
+    with inputs(branch):
         return continuation.rehearse(branch, client)

@@ -80,7 +80,7 @@ def inherited_reads(branch):
 
 def restore(
     packet_path: Path, packet_hash: str, output: Path, arm: str, *, mode="offline-scripted",
-    supplemental_observation=None,
+    supplemental_observation=None, review_new_cap_nanos=None,
 ):
     """Materialize a fresh baseline workspace and completed prefix; never replay probes."""
     require(arm in {"A", "B"}, "unknown checkpoint arm")
@@ -90,8 +90,12 @@ def restore(
     packet = json.loads(packet_path.read_bytes())
     budget_fork = packet["schema"] == "post-edit-budget-checkpoint-v1"
     review_fork = packet["schema"] == "expectation-review-offline-v1"
-    if review_fork:
-        require(mode == "offline-scripted", "expectation review is offline only")
+    require(review_new_cap_nanos is None or (review_fork
+            and type(review_new_cap_nanos) is int and review_new_cap_nanos > 0),
+            "positive review allocation required")
+    if review_fork and mode == "live-checkpoint":
+        require(review_new_cap_nanos is not None, "live review requires fresh funds")
+    funded_review = review_fork and review_new_cap_nanos is not None
     if budget_fork:
         require(arm == "A", "budget continuation has one unhinted arm")
     if backend is not checkpoint and not review_fork:
@@ -264,14 +268,15 @@ def restore(
         and request.limits.max_tool_actions - counters.tool_actions == remaining["tool_actions"],
         "restored allowances differ from checkpoint",
     )
-    if budget_fork:
-        cap = ledger.spent_nanos + packet["new_cap_nanos"]
+    if budget_fork or funded_review:
+        allocation = review_new_cap_nanos if funded_review else packet["new_cap_nanos"]
+        cap = ledger.spent_nanos + allocation
         request = request.model_copy(update={"max_cost_usd": Decimal(cap) / 10**9})
         ledger.cap_nanos = cap
         journal.append("diagnostic_budget_allocated", {
             "original_cap_nanos": envelope.max_cost_nanos,
             "historical_spent_nanos": ledger.spent_nanos,
-            "new_cap_nanos": packet["new_cap_nanos"],
+            "new_cap_nanos": allocation,
             "effective_cap_nanos": cap,
             "original_unused_allocation_reopened": False,
         })
@@ -288,6 +293,10 @@ def restore(
                                    scope_cue=(packet.get(backend.SCOPE_FIELD)
                                               if packet.get("scope_cue_timing", "first-input")
                                               == "first-input" else None))
+    if funded_review:
+        from diagnostics.post_edit_budget_checkpoint import project as fund
+        budget_baseline = fund(loaded.request, review_new_cap_nanos)
+        selected = fund(selected, review_new_cap_nanos)
     bundle["request"] = selected
     turn = bundle["turn"]
     turn["model_input_artifact"] = native_compaction.put_json(store, selected["input"])
@@ -296,10 +305,10 @@ def restore(
     canonical = json.loads(
         loaded.store.read_bytes(Artifact.model_validate(turn["context_artifact"]))
     )
-    if budget_fork:
+    if budget_fork or funded_review:
         canonical["remaining_budget"]["cost"] = json.loads(
             selected["input"][-1]["content"])["state"]["remaining_budget"]["cost"]
-        if (packet.get(backend.SCOPE_FIELD) is not None
+        if (budget_fork and packet.get(backend.SCOPE_FIELD) is not None
                 and packet.get("scope_cue_timing", "first-input") == "first-input"):
             canonical[backend.SCOPE_FIELD] = packet[backend.SCOPE_FIELD]
     if arm == "B" and supplemental_observation is not None:
@@ -332,7 +341,7 @@ def restore(
         pricing=pricing,
         packet=packet,
         selected=selected,
-        original=budget_baseline if budget_fork else loaded.request,
+        original=budget_baseline if budget_fork or funded_review else loaded.request,
         source_request=loaded.request,
         inherited_events=len(prefix),
         initial_spent_nanos=ledger.spent_nanos,
