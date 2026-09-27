@@ -21,6 +21,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
+- [Benchmark preparation](2026-09-27-original-benchmark-preparation.md).
 - [Benchmark differences](2026-09-27-anyio-benchmark-differences.md).
 - [Caller support scope](2026-09-27-caller-support-scope.md).
 - [Caller cancellation](2026-09-27-caller-cancel-preservation.md).
@@ -37,8 +38,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
 - [Offline continuation](2026-09-27-checkpoint-continuation.md): restored N1 inputs and scripted loop.
 - [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md): offline N1 input pair.
-- [AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md):
-  corrected environment, one acceptance PASS and one cost-limited NOT_RUN.
+- [AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md).
 - [AnyIO B1 branch deletion](2026-09-27-anyio-b1-branch-deletion.md):
   two-line removal preserves the public probe and both registered checks.
 - [AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md):

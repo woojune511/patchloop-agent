@@ -44,12 +44,9 @@ B added later raw operator cancellation-order/state observations of that exact
 candidate once. Other candidates, rescue patches and interpreted causal verdicts
 were excluded. Both arms retained previous caller-information exposure.
 
-All four passed both public checks and isolated acceptance/safety after one new
-repair. A1/B1 edited first; B2 read source first and A2 searched an uncancel idiom.
 Both arms achieved 2/2 acceptance with seven new model calls per arm. A cost
-$0.956988 and B $0.9576855. B1 explicitly connected caller re-cancellation to stranded
-teardown, but A also repaired the failure without the new supplement. This selected
-checkpoint does not demonstrate an information benefit or general equivalence.
+$0.956988 and B $0.9576855. Both repaired the failure; this selected checkpoint
+does not demonstrate an information benefit or general equivalence.
 
 Delivery and billing audits passed; owned containers are absent. New spend was
 $1.9146735 of $2.786950; unused funds are closed. No paid allocation, retry or
@@ -76,9 +73,13 @@ See [caller support scope](history/2026-09-27-caller-support-scope.md).
 The pinned benchmark comparison confirms the same base, but rewritten issue input,
 added public checks and a different final oracle. Recent acceptance is for adapted
 development tasks, not original SWE-rebench scores. Original configuration specifies
-Python 3.13; recent probes use a separate 3.12 bundle. Runtime equivalence is unverified.
-Next: specify the original-oracle adapter and verify its environment before new
-solves. AnyIO remains development/calibration data, not untouched held-out evidence.
+Python 3.13; a fresh inspection confirms the local evaluator is 3.13.13 with the
+correct clean base. Recent probes use a separate 3.12 bundle. Original inputs and
+upstream scoring sources are now pinned evaluator-side; scoring remains NOT_RUN.
+Next: isolated base/reference calibration and parser execution, including the effect
+of absent Hypothesis on the original command. See
+[preparation](history/2026-09-27-original-benchmark-preparation.md).
+AnyIO remains development/calibration data, not untouched held-out evidence.
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
 No new paid run is authorized.
 
