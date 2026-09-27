@@ -1,10 +1,12 @@
 """The ablation must preserve eligibility, public evidence and available actions."""
 import copy
 import json
+from types import SimpleNamespace
 
 import pytest
 
 from diagnostics import completion_advice_checkpoint as advice
+from patchloop.dev.runner import _completion_guidance
 from patchloop.errors import ContractError
 from patchloop.util import canonical_json
 
@@ -46,6 +48,28 @@ def test_only_recommendation_changes(ready):
 
 def test_unsupported_stage_rejected():
     request = {"input": [{"content": canonical_json({"state": {
-        "completion_guidance": {"stage": "needs_mutation"}}})}]}
-    with pytest.raises(ContractError, match="only check and ready"):
+        "completion_guidance": {"stage": "unknown"}}})}]}
+    with pytest.raises(ContractError, match="unsupported completion stage"):
         advice.project(request)
+
+
+@pytest.mark.parametrize("tools,gate,ready,status", [
+    (["replace_text"], "needs_mutation", False, "FAIL"),
+    (["read_file"], "needs_mutation", False, "FAIL"),
+    (["search_files"], "needs_mutation", False, "FAIL"),
+    (["finish_task"], "ready_to_submit", True, "PASS"),
+    ([], "needs_visible_checks", False, "NOT_RUN"),
+])
+def test_all_runtime_guidance_shapes(tools, gate, ready, status):
+    snapshot = SimpleNamespace(ready_to_submit=ready,
+        visible_check_status=[{"status": status}], diff=SimpleNamespace(patch_hash="same"))
+    policy = SimpleNamespace(allowed_tools=tools, workflow_gate=gate, check_ids=[])
+    guidance = _completion_guidance(snapshot, policy)
+    request = {"tools": [{"name": t} for t in tools], "input": [
+        {"content": canonical_json({"state": {"completion_guidance": guidance}})}]}
+    selected = advice.project(request)
+    after = json.loads(selected["input"][-1]["content"])["state"]["completion_guidance"]
+    assert after["next_action"] is None
+    for key in ("stage", "submission_ready", "diff_hash"):
+        assert after[key] == guidance[key]
+    assert selected["tools"] == request["tools"]

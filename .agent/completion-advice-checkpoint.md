@@ -1,9 +1,10 @@
 # Offline completion-advice ablation
 
 `diagnostics.completion_advice_checkpoint` prepares and validates an offline input
-pair from the first post-edit checkpoint. It has no live provider collector.
-A packet is not runnable authorization and must not be passed to the normal
-resume or existing post-edit collector.
+pair from the first post-edit checkpoint. That offline packet is not runnable
+authorization and must not be passed to normal resume. The opt-in
+`completion_advice_collector` prepares a separately bound live manifest from an
+unhinted post-edit budget packet and requires its approved hash and exact new cap.
 
 Control and treatment receive identical proposed fresh budgets. Treatment changes
 only the latest state's `completion_guidance.next_action` to null and replaces its
@@ -11,8 +12,8 @@ message with factual check/eligibility information. It retains the warning that
 eligibility does not prove untested behavior. Check identifiers, patch, tool schemas,
 system instructions, history, notes, plans and resource counters stay fixed.
 
-Only the observed needs-visible-checks and ready-to-submit wording is supported;
-unknown stages or changed wording fail rather than silently broaden the ablation.
+Check, ready (with or without probes), repair, source-needed and blocked wording
+are supported; unknown stages or changed wording stop before counting.
 This is removal of local completion advice, not all completion language: system
 instructions, stage names and historical state remain. Scope cues cannot be combined.
 
@@ -29,11 +30,18 @@ records and baseline/selected receipts. Already transformed boundaries are reuse
 count-driven segments receive the same intervention. Old records remain unchanged.
 
 Accepted edits that return to needs-visible-checks retain advice removal and normal
-check invalidation. Unsupported stages (including needs-mutation after failed checks)
-or changed wording stop before counting, without baseline fallback. This is a bounded
-diagnostic limitation, not a solver failure or a new submission gate. Live integration
-and an exact independently authorized invocation are still absent. A saved ready
-fixture is not a treatment trajectory; scripted actions establish plumbing only.
+check invalidation. Failed checks retain factual repair and source prerequisites;
+blocked state is already factual and remains unchanged. Unknown wording stops without
+baseline fallback. A saved ready fixture is not a treatment trajectory; scripted
+actions establish plumbing only.
+
+The live collector wraps the existing single-use post-edit collector, preserving
+immediate counting, zero SDK retries, separate new-cost accounting and stop-on-
+uncertainty controls. Its manifest binds the ablation implementation, first treatment
+request hash, exact dev-train task/model/credential path, repeat=1 and positive cap.
+Preparation reads environment identities without provider calls or credential contents.
+Collection needs separate explicit authorization; closed allocations never reopen.
+The hook remains diagnostic-only, with no ordinary runtime/default change.
 
 Judge behavior by evidence for changed requirements, whether assumptions are tested,
 patch correctness/regressions and reliable submission. Probe counts alone are not

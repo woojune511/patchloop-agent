@@ -1,4 +1,4 @@
-"""Scoped, offline-only rehearsal of advice removal before every input count."""
+"""Scoped advice removal before every input count, plus offline rehearsal."""
 from __future__ import annotations
 
 import copy

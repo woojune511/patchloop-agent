@@ -51,9 +51,43 @@ def project(request):
     elif guidance["stage"] == "ready_to_submit":
         require(guidance["submission_ready"] and guidance["next_action"] == {"tool": "finish_task"},
                 "ready guidance is inconsistent")
-        expected, factual = READY_FACT + READY_ADVICE, READY_FACT
+        expected = READY_FACT + (READY_ADVICE if "run_probe" in
+            [t["name"] for t in request["tools"]] else
+            " Use finish_task to submit; keep any remaining uncertainty explicit.")
+        factual = READY_FACT
+    elif guidance["stage"] == "needs_mutation":
+        require(not guidance["submission_ready"]
+                and guidance["next_action"] == {"tool": "replace_text"},
+                "mutation guidance is inconsistent")
+        expected = (
+            "The current candidate needs a repair. Use replace_text for a supported edit; "
+            "available anchor evidence does not establish a correct solution. "
+            "Submission waits for a scoped patch and its required visible checks.")
+        factual = (
+            "The current candidate needs a repair. "
+            "Available anchor evidence does not establish a correct solution. "
+            "Submission waits for a scoped patch and its required visible checks.")
+    elif guidance["stage"] == "needs_source_evidence":
+        tool = guidance["next_action"]["tool"]
+        require(tool in {"read_file", "search_files"} and not guidance["submission_ready"],
+                "source guidance is inconsistent")
+        expected = (
+            "replace_text is temporarily unavailable: current editable source evidence "
+            f"is missing. Use {tool} on an allowed source file. After evidence is "
+            "delivered, edit availability is reevaluated with remaining budgets. "
+            "Submission waits for a scoped patch and its required visible checks.")
+        factual = (
+            "replace_text is temporarily unavailable: current editable source evidence "
+            "is missing. After evidence is delivered, edit availability is reevaluated "
+            "with remaining budgets. Submission waits for a scoped patch and its "
+            "required visible checks.")
+    elif guidance["stage"] == "blocked":
+        require(guidance["next_action"] is None, "blocked guidance has recommendation")
+        expected = factual = (
+            "No completion action is currently offered under the current state and budgets. "
+            "stop_task abandons without submission or evaluation.")
     else:
-        raise ContractError("offline pair supports only check and ready boundaries")
+        raise ContractError("unsupported completion stage")
     require(guidance["message"] == expected, "completion wording changed")
     guidance["next_action"] = None
     guidance["message"] = factual
