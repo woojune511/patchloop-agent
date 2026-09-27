@@ -51,10 +51,8 @@ The [original-input pilot](../.agent/original-input-pilot.md) fixes three fresh 
 toqito-1538, MontePy-933_interface and darts-3065. Deterministic selection excludes
 current task/ledger repositories; this is a development pilot, not proven held-out.
 All three images were acquired with explicit approval and their digests fixed.
-Six controls verified BASE F2P failures with preserved P2P, and REFERENCE full passes;
-all reference commands exit 0, with no missing required cases or timeouts.
-Original-input packages passed isolated reference evaluation. Existing public tests run
-in temporary copies; toqito excludes one obsolete test contradicting the issue.
+Packages passed isolated reference evaluation and environment controls. Public tests
+run in temporary copies; toqito excludes one obsolete test contradicting the issue.
 Pre-run limits were fixed at four files/1,000 lines with API changes allowed.
 Toqito/darts probe bundles use 512/768 MiB installed capacity and correct import roots.
 Public canaries pass for the selected entry points; toqito had one unexplained
@@ -77,11 +75,13 @@ unchanged; this is separate public operator evidence. The
 [mechanism audit](history/2026-09-28-general-failure-mechanism.md) confirms that full
 outputs, expectation code and generic cautions were delivered before the wrong
 attribution. A self-authored expectation became assumed truth; frequency and a fix
-remain unproven. The [unhinted continuation](../.agent/post-edit-budget-continuation.md)
-restores the first accepted edit and changes only its cost allowance. Actual-task
-offline restoration passed; autonomous discovery remains NOT_RUN. One continuation
-with a proposed fresh $3 cap awaits exact authorization; no paid allocation is active.
-See [preparation](history/2026-09-28-post-edit-budget-preparation.md).
+remain unproven. The [unhinted continuation](history/2026-09-28-post-edit-budget-results.md)
+used $0.2168265 in two new calls: old regression PASS, then unchanged submission and
+benchmark FAIL (safety PASS). With ample resources, the agent treated downarrow-only
+regression results as validation of new uparrow behavior. It did not revisit the
+comparator or correct the patch. Next isolate verification-scope reasoning with one
+generic cue, without task-specific hints. The $3 allocation is closed; no new paid
+work or default policy change is authorized.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate A/B repairs remain separate 2/2 acceptance per arm,
