@@ -84,10 +84,13 @@ collected four responses: A finished twice; B finished once and proposed one pro
 Cost $0.446253; funds closed. No tools ran; quality improvement is unproven.
 The [selected probe](history/2026-09-28-selected-closure-probe.md) has a valid
 classical expectation and exposes the objective TypeError on the frozen patch.
-The [prepared boundary](history/2026-09-28-selected-probe-boundary.md) delivers the
-failure through the normal gateway. The [funded executor](history/2026-09-28-probe-funded-continuation.md)
-preserves work/time counters and passed synthetic restoration/uncertainty checks.
-Next obtain exact new paid approval; agent repair remains NOT_RUN.
+The [funded continuation](history/2026-09-28-probe-followup-results.md) repaired that
+failure and passed benchmark/safety checks: 5 calls, $0.685091; funds closed.
+Its post-fix probe had a SyntaxError, which it left unresolved before submission
+despite available probe/time/cost. Operator replay of the valid probe passed;
+the fixed public matrix improved 8/15 to 14/15, with pure-state underflow remaining.
+Next diagnose invalid-probe closure. This selected trajectory establishes neither
+general policy improvement nor full public-requirement correctness.
 
 Earlier supplied-candidate repairs are not fresh-solve controls; NOT_RUN is unchanged.
 Planning OFF comparisons remain closed without adoption.
@@ -150,7 +153,6 @@ Evidence for targeted lookup:
 - Separate timing result: [first-plan timing comparison](history/2026-09-27-after-source-planning-comparison.md).
 - Current implementation: [first plan after source](history/2026-09-26-after-source-planning.md).
 - Existing contract: [brief planning](../.agent/planning-experiment.md).
-- Prior interpretation audit: [first interpretation and source questions](history/2026-09-26-first-interpretation-audit.md).
 - Prior candidate result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
 - Earlier decisions and immutable records: [documentation history](history/README.md).
 
