@@ -44,8 +44,9 @@ to 87 without changing the selected three. This was not an outcome-based reselec
   segmented-v1, result-or-size-v1, brief-v1, probes enabled / policy none,
   repair-recheck, protected-v1, per-call-v1. These are pilot choices, not CLI defaults.
 - Each task: repeat 1, 40 model calls, 100 tool actions, four accepted mutations,
-  1,800 active seconds. Proposed paid allocation: $1.20 per task, $3.60 aggregate;
-  no transfer between tasks or automatic replenishment. This is not authorization.
+  1,800 active seconds. Executed paid allocation: $1.20 per task, $3.60 aggregate;
+  no transfer between tasks or automatic replenishment. This completed allocation
+  cannot be reused.
 - Keep registered tools; no unrestricted agent shell. Use existing base-repository
   tests for visible feedback, without reference-added tests or operator-authored
   semantic cases. Freeze exact public commands/source paths before any model run.
@@ -110,14 +111,17 @@ are recorded in [package validation](../docs/history/2026-09-27-original-pilot-p
 Original test-patch application runs on an evaluator-only temporary copy. Explicit
 infrastructure exit code 2 becomes evaluator ERROR, not a wrong-answer verdict.
 
-The no-dispatch manifest draft and probe blockers are recorded in
-[readiness](../docs/history/2026-09-27-original-pilot-readiness.md). Resolve the public
-probe preparation blockers before requesting a paid allocation. The
+The earlier draft and resolved preparation blockers are recorded in
+[readiness](../docs/history/2026-09-27-original-pilot-readiness.md). The
 [OpenBLAS fix](../docs/history/2026-09-27-probe-openblas-default.md) records MontePy
 canary success and a successor draft. [Wheel admission](../docs/history/2026-09-27-generated-wheel-admission.md)
 now works. [Capacity results](../docs/history/2026-09-27-installed-probe-capacity.md)
-record bounded larger bundles and corrected import roots. Prior drafts need rebinding. Enabled
+record bounded larger bundles and corrected import roots. The final draft was bound
+to commit 616a60f and executed with user authorization on 2026-09-28. Enabled
 optional probes retain their separate environment requirements; package validation
-does not establish dependency completeness for arbitrary probes. No paid run is authorized; image approval
-does not authorize model use, another sample or unbounded retries. All evidence is
-`official=false`; calibration is not agent performance.
+does not establish dependency completeness for arbitrary probes. The three-attempt pilot
+is now closed: MontePy and darts passed original evaluation; toqito was not submitted
+after its cost cap (correctness NOT_RUN). Total $2.0892005, resolved/submitted 2/2 and
+resolved/planned 2/3. See [results](../docs/history/2026-09-28-original-pilot-results.md).
+No further paid run, retry or transfer of unused funds is authorized. All evidence is
+`official=false`; calibration is separate from these agent results.

@@ -1,7 +1,7 @@
 # Documentation history
 
 [Current status](../current-status.md).
-Past approvals are checkpoint-specific.
+Past approvals are closed.
 
 ## Pre-split snapshots: 2026-09-26
 
@@ -11,15 +11,16 @@ Past approvals are checkpoint-specific.
 
 | Snapshot | Useful lookup topics |
 | --- | --- |
-| [Current status](2026-09-26-context-split/current-status.md) | Paired observation, public evidence IDs, value-origin review, model baseline, prior run decisions |
+| [Current status](2026-09-26-context-split/current-status.md) | Prior baseline and observations |
 | [Internal guide](2026-09-26-context-split/agent-guide.md) | Earlier implementation decisions, contract evolution, per-version validation |
-| [Evidence](2026-09-26-context-split/evidence.md) | Early development observations, failures, local checks, original claim boundaries |
+| [Evidence](2026-09-26-context-split/evidence.md) | Early observations and claim boundaries |
 | [Operations](2026-09-26-context-split/operations.md) | Closed pilots, old invocation examples, prior preparation procedures |
 | [Product](2026-09-26-context-split/product.md) | Earlier feature descriptions and architecture narrative |
 
 
 ## New records
 
+- [Pilot results](2026-09-28-original-pilot-results.md).
 - [Probe capacity](2026-09-27-installed-probe-capacity.md).
 - [Wheel admission](2026-09-27-generated-wheel-admission.md).
 - [OpenBLAS](2026-09-27-probe-openblas-default.md); [PICOS](2026-09-27-picos-wheel-build.md).

@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-09-27. This is a replaceable snapshot of current decisions, not an
+Updated: 2026-09-28. This is a replaceable snapshot of current decisions, not an
 append-only log. Source code owns runtime behavior; this page owns current priorities.
 Read [history](history/README.md) only for a specific evidence question.
 
@@ -55,36 +55,33 @@ introduced regression; pinned public paths provided no support requirement for t
 synthetic intervention. Do not expand required checks or invalidate acceptance.
 See [caller support scope](history/2026-09-27-caller-support-scope.md).
 
-The pinned benchmark comparison confirms the same base, but rewritten issue input,
-added public checks and a different final oracle. Recent acceptance is for adapted
-development tasks, not original SWE-rebench scores. Original configuration specifies
-Python 3.13; a fresh inspection confirms the local evaluator is 3.13.13 with the
-correct clean base. Recent probes use a separate 3.12 bundle. Original inputs and
-upstream scoring sources are pinned evaluator-side. Original-oracle calibration now
-distinguishes BASE (F2P 0/1, P2P 32/32) from REFERENCE (1/1, 32/32). Both full commands
-exit 1 due to three extra Hypothesis-dependent tests; none of the required cases
-are missing. Selected upstream parser/grading functions ran, not the full upstream CLI.
+The AnyIO benchmark audit distinguishes adapted-task acceptance from original scores.
+Original source/image/oracle calibration is recorded in the linked history; AnyIO
+remains development/calibration data, not held-out evidence.
 The [original-input pilot](../.agent/original-input-pilot.md) fixes three fresh attempts:
 toqito-1538, MontePy-933_interface and darts-3065. Deterministic selection excludes
 current task/ledger repositories; this is a development pilot, not proven held-out.
 All three images were acquired with explicit approval and their digests fixed.
 Six controls verified BASE F2P failures with preserved P2P, and REFERENCE full passes;
 all reference commands exit 0, with no missing required cases or timeouts.
-Original-input packages now pass the actual isolated evaluator on all three production
-references. Public tests use temporary copies; toqito excludes an obsolete test that
-contradicts its feature request. Before any model run, the pilot limits were amended
-to four files/1,000 lines with API changes allowed. Setup failures remain distinct
-from wrong answers. Installed dependency capacity is now explicit (default 256 MiB,
-maximum 1 GiB), separate from download and execution limits. Toqito uses 512 MiB;
-darts uses 768 MiB. Package snapshots now preserve correct Python import roots.
+Original-input packages passed isolated reference evaluation. Existing public tests run
+in temporary copies; toqito excludes one obsolete test contradicting the issue.
+Pre-run limits were fixed at four files/1,000 lines with API changes allowed.
+Toqito/darts probe bundles use 512/768 MiB installed capacity and correct import roots.
 Public canaries pass for the selected entry points; toqito had one unexplained
 initial timeout. See [capacity results](history/2026-09-27-installed-probe-capacity.md).
-See [readiness](history/2026-09-27-original-pilot-readiness.md) for the bound draft and next step.
+See [readiness](history/2026-09-27-original-pilot-readiness.md) for earlier preparation evidence.
 [Package validation](history/2026-09-27-original-pilot-packages.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
 AnyIO remains development/calibration data, not held-out evidence.
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
-No paid run is authorized.
+The fixed pilot is complete: MontePy and darts passed original evaluation; toqito
+made one edit but exhausted its $1.20 allowance before checks/submission (NOT_RUN).
+Resolved/submitted is 2/2; resolved/planned is 2/3. Total cost was $2.0892005 / $3.60;
+remaining funds are closed. All three passed environment preparation. Next investigate
+completion-cost allocation using the saved toqito trace: the post-edit output allowance
+fell to 244 tokens. No policy adoption or further paid run is authorized.
+See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Caller observations cover the pinned callback-interrupt path. N1/N2 solves and
 advice-removal results remain separate closed evidence.
