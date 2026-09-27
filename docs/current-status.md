@@ -75,10 +75,12 @@ added public checks and a different final oracle. Recent acceptance is for adapt
 development tasks, not original SWE-rebench scores. Original configuration specifies
 Python 3.13; a fresh inspection confirms the local evaluator is 3.13.13 with the
 correct clean base. Recent probes use a separate 3.12 bundle. Original inputs and
-upstream scoring sources are now pinned evaluator-side; scoring remains NOT_RUN.
-Next: isolated base/reference calibration and parser execution, including the effect
-of absent Hypothesis on the original command. See
-[preparation](history/2026-09-27-original-benchmark-preparation.md).
+upstream scoring sources are pinned evaluator-side. Original-oracle calibration now
+distinguishes BASE (F2P 0/1, P2P 32/32) from REFERENCE (1/1, 32/32). Both full commands
+exit 1 due to three extra Hypothesis-dependent tests; none of the required cases
+are missing. Selected upstream parser/grading functions ran, not the full upstream CLI.
+Next: freeze original-input baseline protocol and sample before fresh solves.
+See [calibration](history/2026-09-27-original-benchmark-calibration.md).
 AnyIO remains development/calibration data, not untouched held-out evidence.
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
 No new paid run is authorized.
