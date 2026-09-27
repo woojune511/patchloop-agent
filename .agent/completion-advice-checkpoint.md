@@ -1,8 +1,8 @@
 # Offline completion-advice ablation
 
 `diagnostics.completion_advice_checkpoint` prepares and validates an offline input
-pair from the first post-edit checkpoint. It has no provider collector or runtime
-hook. A packet is not runnable authorization and must not be passed to the normal
+pair from the first post-edit checkpoint. It has no live provider collector.
+A packet is not runnable authorization and must not be passed to the normal
 resume or existing post-edit collector.
 
 Control and treatment receive identical proposed fresh budgets. Treatment changes
@@ -21,12 +21,19 @@ identities externally with a hash-chained preparation receipt. `validate(path, h
 reconstructs the pair and checks stored bytes. The source loader verifies public task,
 candidate and delivered state; neither source history nor closed artifacts are edited.
 
-A future live experiment would need a scoped hook from this first boundary through
-subsequent decisions, canonical context/input rebinding before counts, count-driven
-segmentation tests and an exact independently authorized invocation. None is supplied
-by this offline packet. A saved historical ready request tests projection only; it
-is not the treatment's future trajectory. New mutations/unsupported stages need an
-explicit continuation design before dispatch, not an improvised mid-run policy.
+`completion_advice_continuation.rehearse` wraps an unhinted budget fork with a finite
+scripted SDK and no network. Its scoped preparation hook transforms the authoritative
+frozen first request and each later prepared request before counting. It rebinds
+canonical context, native input, sizes and hashes, appending replacement preparation
+records and baseline/selected receipts. Already transformed boundaries are reused;
+count-driven segments receive the same intervention. Old records remain unchanged.
+
+Accepted edits that return to needs-visible-checks retain advice removal and normal
+check invalidation. Unsupported stages (including needs-mutation after failed checks)
+or changed wording stop before counting, without baseline fallback. This is a bounded
+diagnostic limitation, not a solver failure or a new submission gate. Live integration
+and an exact independently authorized invocation are still absent. A saved ready
+fixture is not a treatment trajectory; scripted actions establish plumbing only.
 
 Judge behavior by evidence for changed requirements, whether assumptions are tested,
 patch correctness/regressions and reliable submission. Probe counts alone are not

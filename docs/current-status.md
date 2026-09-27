@@ -83,9 +83,9 @@ failing patch ($0.234737). It was absent at the final decision as designed.
 decision but again produced check/finish and the same failing patch ($0.113142).
 All allocations are closed. The [closure audit](history/2026-09-28-completion-closure-audit.md)
 found question narrowing and unsupported dismissal despite delivered warnings.
-An [offline advice pair](history/2026-09-28-completion-advice-preparation.md) preserves
-eligibility and removes the local recommendation. Model execution is NOT_RUN;
-next rehearse a continuation hook. Cue variants are not adopted; defaults unchanged.
+The [advice hook](history/2026-09-28-completion-advice-rehearsal.md) has offline
+continuation coverage; unsupported stages stop before count. Next define repair-state
+scope before live integration. Efficacy is NOT_RUN; defaults remain unchanged.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
