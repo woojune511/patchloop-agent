@@ -84,8 +84,9 @@ collected four responses: A finished twice; B finished once and proposed one pro
 Cost $0.446253; funds closed. No tools ran; quality improvement is unproven.
 The [selected probe](history/2026-09-28-selected-closure-probe.md) has a valid
 classical expectation and exposes the objective TypeError on the frozen patch.
-This operator replay proves detection, not agent repair. Next prepare a bounded
-probe-result continuation; no new paid approval or default adoption.
+The [prepared boundary](history/2026-09-28-selected-probe-boundary.md) delivers the
+failure through the normal gateway; no next count or paid call ran. Next bind a
+funded fork without resetting work counters. Agent repair remains NOT_RUN.
 
 Earlier supplied-candidate repairs are not fresh-solve controls; NOT_RUN is unchanged.
 Planning OFF comparisons remain closed without adoption.
