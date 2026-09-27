@@ -53,21 +53,10 @@ $1.9146735 of $2.786950; unused funds are closed. No paid allocation, retry or
 continuation is active. Detailed traces and receipts remain in
 [results](history/2026-09-27-cleanup-information-results.md).
 
-The provider-free waiting-caller follow-up is also complete. Ten probes compared
-base and all four accepted candidates with normal Event release versus direct
-cancellation of the existing waiting caller. All five normal cases completed with
-exactly one same-task fixture cleanup; all five cancellation cases stalled. The
-caller was cancelled, but the runner retained cancelling() == 0 and the active
-test's finally and teardown had not begun at the two-second watchdog. All ten
-containers were removed; source snapshots and old journals remained unchanged.
-
-Because base also stalls, this is not evidence of a newly introduced regression.
-It is a distinct internal-task cancellation path, not the task's KeyboardInterrupt
-case or public check's test-coroutine cancellation. A bounded review of the pinned
-public docs, plugin, runner API and source found no supported entry point for
-directly cancelling that waiting caller. Close this diagnostic without expanding
-the required checks or invalidating prior acceptance. This is absence of support
-evidence in the inspected version, not proof that no external integration can do it.
+The waiting-caller diagnostic is closed. Base and all four candidates stalled on
+direct internal-caller cancellation, while normal controls passed. This was not an
+introduced regression; pinned public paths provided no support requirement for the
+synthetic intervention. Do not expand required checks or invalidate acceptance.
 See [caller support scope](history/2026-09-27-caller-support-scope.md).
 
 The pinned benchmark comparison confirms the same base, but rewritten issue input,
@@ -79,7 +68,11 @@ upstream scoring sources are pinned evaluator-side. Original-oracle calibration 
 distinguishes BASE (F2P 0/1, P2P 32/32) from REFERENCE (1/1, 32/32). Both full commands
 exit 1 due to three extra Hypothesis-dependent tests; none of the required cases
 are missing. Selected upstream parser/grading functions ran, not the full upstream CLI.
-Next: freeze original-input baseline protocol and sample before fresh solves.
+The [original-input pilot](../.agent/original-input-pilot.md) fixes three fresh attempts:
+toqito-1538, MontePy-933_interface and darts-3065. Deterministic selection excludes
+current task/ledger repositories; this is a development pilot, not proven held-out.
+All three evaluator images are absent. Next: authorize image acquisition, then bind
+digests, prepare original-input packages and calibrate each oracle before paid solves.
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
 AnyIO remains development/calibration data, not untouched held-out evidence.
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).

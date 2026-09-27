@@ -21,6 +21,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
+- [Pilot selection](2026-09-27-original-input-pilot-selection.md).
 - [Oracle calibration](2026-09-27-original-benchmark-calibration.md).
 - [Benchmark preparation](2026-09-27-original-benchmark-preparation.md).
 - [Benchmark differences](2026-09-27-anyio-benchmark-differences.md).
@@ -41,8 +42,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 - [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md): offline N1 input pair.
 - [AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md).
 - [AnyIO B1 branch deletion](2026-09-27-anyio-b1-branch-deletion.md).
-- [AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md):
-  delivered source, repairs, helper-path correction and verification claims.
+- [AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md).
 - [AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md):
   failed-seed control and same-task cleanup observed on four saved final patches.
 - [AnyIO process audit](2026-09-27-anyio-observation-process-audit.md):

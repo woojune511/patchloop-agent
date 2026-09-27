@@ -1,0 +1,99 @@
+# Original-input pilot v1
+
+## Purpose and fixed sample
+
+Measure fresh single-attempt development performance with original issue text and
+original benchmark scoring. This is a three-task pilot, not a general performance
+estimate or a held-out claim. AnyIO is calibration-only and excluded from scoring.
+
+Dataset: `nebius/SWE-rebench-leaderboard`, revision
+`ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b`, split `2026_03`.
+File hash: `18e198ac18b3c25b307c0aa5d9b6e20d338886e186bf7c12addb759ad4165a61`.
+
+Execution order, one fresh solve each:
+
+| Instance | Base commit |
+| --- | --- |
+| `vprusso__toqito-1538` | `396ba18ba1fa3e2b8d4eed682562a454d85f5c91` |
+| `idaholab__montepy-933_interface` | `fbc03d10eb552cf82acc788ef70d120adec8130c` |
+| `unit8co__darts-3065` | `6bfda77e4afc9c123740ab6cc52ca39a7ab92d84` |
+
+Selection is implemented in `diagnostics/original_baseline_select.py`: exclude every
+repository in the candidate ledger and checked-in public task packages, case-insensitively;
+require a nonempty issue/image and `parse_log_pytest`; sort by SHA-256 of
+`patchloop-original-input-pilot-v1` + newline + instance ID; take the first three
+distinct repositories. This selected 3 from 87 eligible rows of 110. No patch,
+test-patch, hint, F2P/P2P identity or agent outcome was decoded to select tasks.
+Local image availability does not affect selection. A failed environment stays in
+the denominator as NOT_RUN; do not silently substitute a more convenient task.
+
+The exclusion audit covers current ledger/task inventory, not all historical
+conversations or model training data. Therefore call these previously unlisted
+repositories, not proven uncontaminated held-out tasks. The first screening before
+the finalized union exclusion had 90 eligible rows; union exclusion reduced that
+to 87 without changing the selected three. This was not an outcome-based reselection.
+
+## Input and execution protocol
+
+- Use `problem_statement` verbatim, preserving code blocks and whitespace. Deliver
+  repository/base identity alongside it. No rewritten task-specific requirements,
+  hints_text, previous patches, AnyIO observations or evaluator output in agent context.
+- Start each solve at clean base with empty conversation and no cross-run memory.
+  No checkpoint continuation, operator rescue, retry or best-of selection.
+- Fixed model: `gpt-5.4-2026-03-05`, xhigh, desired output 25,000 tokens;
+  segmented-v1, result-or-size-v1, brief-v1, probes enabled / policy none,
+  repair-recheck, protected-v1, per-call-v1. These are pilot choices, not CLI defaults.
+- Each task: repeat 1, 40 model calls, 100 tool actions, four accepted mutations,
+  1,800 active seconds. Proposed paid allocation: $1.20 per task, $3.60 aggregate;
+  no transfer between tasks or automatic replenishment. This is not authorization.
+- Keep registered tools; no unrestricted agent shell. Use existing base-repository
+  tests for visible feedback, without reference-added tests or operator-authored
+  semantic cases. Freeze exact public commands/source paths before any model run.
+  Those per-task bindings require source/environment preparation and remain pending.
+- Pilot edit limits: at most four changed production files and 120 diff lines,
+  no dependency/public-API changes; no test/evaluator edits. Bind concrete production
+  path allowlists during package preparation. Report these harness restrictions;
+  this is not an unrestricted benchmark agent or a comparison to historical scores.
+- Fix collector/runtime hash, original issue hash, exact task package hash, public
+  check commands, image digest, credential path and approved cap in the execution
+  manifest. Original-input task packages do not yet exist; never substitute current
+  adapted packages. No paid dispatch until these bindings and calibration are complete.
+
+## Evaluation and reporting
+
+Use original test patches and F2P/P2P sets in an isolated evaluator after submission.
+Pin parser/grading implementation to `e4907b7a90eafaa1f0a6428fd04fe31cdd8b4284`.
+Calibrate each base/reference before paid solves. Do not assume AnyIO's successful
+calibration establishes another repository's collection, dependencies or scoring.
+Record required-case coverage, full command exit, extra failures and parser result
+separately. Explicitly distinguish selected-function execution from full upstream CLI.
+
+Report all three fixed rows: preparation status, submitted/not submitted, original
+resolution, cost, time and limit/transport errors. Missing required tests, timeout or
+collection/setup failure cannot be labelled an incorrect repair. Non-submission from
+resource limits is NOT_RUN for correctness, but stays in completion statistics.
+Show resolved/submitted and resolved/three planned separately; do not hide missing
+attempts. No evaluator feedback is returned to a solver during this fixed pilot.
+Later developer use of results is development feedback, not forbidden in principle;
+it must not be represented as an untouched final evaluation.
+
+## Current readiness
+
+All three original issue hashes and metadata are journal-bound at
+`C:/pt/analyses/original-input-pilot-selection-20260927-v1`.
+Their named evaluator images are absent locally (Docker returned `No such image`).
+The exact acquisition targets are:
+
+- `swerebench/sweb.eval.x86_64.vprusso_1776_toqito-1538:latest`
+- `swerebench/sweb.eval.x86_64.idaholab_1776_montepy-933_interface:latest`
+- `swerebench/sweb.eval.x86_64.unit8co_1776_darts-3065:latest`
+
+These mutable tags are acquisition targets only; resolved digests must replace
+them in the execution manifest. Download sizes have not been measured.
+No images were pulled/built; no new task package, environment calibration, provider
+call or performance result exists. All runs remain `official=false`.
+
+Next acquire these three images only with explicit authorization under AGENTS.md,
+record resolved digests, then prepare public packages and calibrate environments.
+Image download permission and paid-model permission are separate. A missing image
+does not authorize a pull, build, task replacement or paid call.
