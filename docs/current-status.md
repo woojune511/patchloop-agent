@@ -45,9 +45,8 @@ information exposure; exact interventions remain in the linked historical record
 Both arms achieved 2/2 acceptance with seven new calls each. This selected
 checkpoint demonstrates neither an information benefit nor general equivalence.
 
-Delivery and billing audits passed; owned containers are absent. New spend was
-$1.9146735 of $2.786950; unused funds are closed. No paid allocation, retry or
-continuation is active. Detailed traces and receipts remain in
+The comparison spent $1.9146735 of $2.786950; remaining funds are closed. No paid
+allocation, retry or continuation is active. Traces and receipts remain in
 [results](history/2026-09-27-cleanup-information-results.md).
 
 The waiting-caller diagnostic is closed. Base and all four candidates stalled on
@@ -76,7 +75,8 @@ references. Public tests use temporary copies; toqito excludes an obsolete test 
 contradicts its feature request. Before any model run, the pilot limits were amended
 to four files/1,000 lines with API changes allowed. Setup failures remain distinct
 from wrong answers. Probe readiness now blocks paid execution: toqito requires a
-source-only dependency; darts exceeds the installed-dependency limit. MontePy
+generated-wheel admission; its [PICOS build](history/2026-09-27-picos-wheel-build.md)
+and package canary passed. Darts exceeds the dependency size limit. MontePy
 import/Cell construction now passes with the profile-bound OpenBLAS default of one
 thread. See [fix](history/2026-09-27-probe-openblas-default.md).
 See [readiness](history/2026-09-27-original-pilot-readiness.md) for the bound draft and next step.

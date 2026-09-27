@@ -1,7 +1,7 @@
 # Documentation history
 
-Historical records are evidence. Start at [current status](../current-status.md).
-Old instructions and approvals apply only to their original checkpoint.
+Evidence index. Start at [current status](../current-status.md).
+Past approvals apply only to their checkpoint.
 
 ## Pre-split snapshots: 2026-09-26
 
@@ -21,7 +21,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
-- [OpenBLAS default](2026-09-27-probe-openblas-default.md).
+- [OpenBLAS](2026-09-27-probe-openblas-default.md); [PICOS](2026-09-27-picos-wheel-build.md).
 - [Pilot readiness](2026-09-27-original-pilot-readiness.md).
 - [Pilot packages](2026-09-27-original-pilot-packages.md).
 - [Pilot calibration](2026-09-27-original-pilot-calibration.md).
