@@ -53,11 +53,26 @@ no acceptance advantage from supplying that observation and supports no new prom
 or planning rule. It does not establish general equivalence or spontaneous case
 selection; completion guidance and repair-recheck were fixed controls.
 
+A process audit narrows the interpretation: both arms already received the prior
+failure question/program, the first check was explicitly recommended, and edits
+were unavailable until source evidence arrived. The later reads did inform edits,
+but B1 attributed the failure partly to a helper that the observed path bypassed.
+It also fixed the actual runner-loop condition; passing the combined patch does
+not establish that its extra exception branch was necessary. The B observations
+remained in actual inputs; there is no demonstrated context-loss explanation here.
+
+The public explicit-cancel case uses a plain fixture and bypasses its same-task
+assertion. Its PASS proves other lifecycle assertions, not that specific internal
+preservation claim. No final candidate reran the original state-observing probe.
+The immediate unresolved question is whether ordinary-cancellation teardown on
+the saved final candidates stays in the original task. A separately bounded replay
+of that existing public probe could check this without new model calls; it is NOT_RUN.
+
 The original cost-limited ON run remains NOT_RUN. It had asked a relevant probe
 question after its failed check, but obtained no observation. These new seeded
 runs reset both context and budget, so they cannot isolate the original failure's
-cause or show that recovery would fit its remaining budget. The remaining question
-is whether a fresh full solve, including initial investigation and candidate
+cause or show that recovery would fit its remaining budget. A separate question
+remains whether a fresh full solve, including initial investigation and candidate
 generation, recovers within its original cap using the corrected probe environment.
 That full-solve comparison has not been run here.
 
@@ -83,7 +98,9 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
-- Latest result: [AnyIO observation repair comparison](history/2026-09-27-anyio-observation-repair-comparison.md).
+- Latest analysis: [AnyIO process audit](history/2026-09-27-anyio-observation-process-audit.md);
+  packet: `C:\pt\analyses\anyio-observation-process-audit-20260927-v1`.
+- Closed result: [AnyIO observation repair comparison](history/2026-09-27-anyio-observation-repair-comparison.md).
 - Results, public decision review and closure:
   `C:\pt\analyses\anyio-observation-repair-results-20260927-v1`; live state: `C:\pt\obsrepair0927a`.
 - Prior preparation: [AnyIO failure observation](history/2026-09-27-anyio-failure-observation.md).

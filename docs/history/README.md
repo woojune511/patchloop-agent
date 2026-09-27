@@ -1,9 +1,8 @@
 # Documentation history
 
-History is retained evidence, not current instructions or a queue of next actions.
-Start at [current status](../current-status.md). Consult history for a named problem,
-decision, or evidence gap, and read only the matching passage. Old "current",
-"latest", "next", example commands, and approvals apply to their original checkpoint.
+Historical records are evidence. Start at [current status](../current-status.md).
+Read matching passages for a named question; old instructions and approvals apply
+only to their original checkpoint.
 
 ## Pre-split snapshots: 2026-09-26
 
@@ -37,6 +36,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-27: AnyIO process audit](2026-09-27-anyio-observation-process-audit.md):
+  guided actions, causal overreach and public-check scope.
 - [2026-09-27: AnyIO observation repair comparison](2026-09-27-anyio-observation-repair-comparison.md):
   A/B 2/2 acceptance each on a supplied candidate.
 - [2026-09-27: AnyIO failure observation](2026-09-27-anyio-failure-observation.md):
