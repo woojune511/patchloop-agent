@@ -24,6 +24,7 @@ Resolve snapshot links using the manifest or original Git revision.
 
 ## New records
 
+- [Checkpoint results](2026-09-27-checkpoint-live-results.md): live A/B and public-trace audit.
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
 - [Offline continuation](2026-09-27-checkpoint-continuation.md): restored N1 inputs and scripted loop.
 - [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md): offline N1 input pair.
@@ -72,11 +73,9 @@ Resolve snapshot links using the manifest or original Git revision.
 - [2026-09-26: paired-reference comparison](2026-09-26-paired-reference-comparison.md):
   admitted declarations, unchanged seeded candidates, and the completion-guidance question.
 
-Add one short dated Markdown entry for a significant completed investigation, with
-problem, evidence, hypothesis, change, result/limits, and the unresolved question.
-Link detailed external run artifacts rather than copying them. Routine edits need
-no new record. Never rewrite a closed record to reflect a later interpretation;
-add a separate correction or follow-up and update the current implication instead.
+Add one dated record per significant investigation: problem, evidence, hypothesis,
+change, result/limits and next question. Link external artifacts; routine fixes need
+no record. Preserve closed records; add follow-ups for corrections.
 
 Keep current status bounded. Legacy `docs/archive/`, `reports/`, and `experiments/`
 remain unchanged and historical.

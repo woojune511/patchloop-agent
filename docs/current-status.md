@@ -20,7 +20,7 @@ Simplifying an ineffective mechanism is a valid next step.
 
 - `dev-head` is the sole active mutable runtime; every run is `official=false`.
 - The chosen performance baseline is `gpt-5.4-2026-03-05`, xhigh, 25,000 output tokens.
-  The last live comparison used execution checkpoint `5d74710`.
+  The latest checkpoint comparison used collector checkpoint `8da9e09`.
   These selected settings are not a statement of CLI defaults.
 - Baseline options: segmented-v1, result-or-size-v1 boundaries, brief-v1, probes
   enabled / probe-policy none, repair-recheck, protected-v1 inspection, and
@@ -38,49 +38,42 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-Two fresh AnyIO v3 full solves with the corrected probe environment are closed.
-Both used the fixed baseline, no historical hints/candidates and $1.20 per run.
-N1 made two unsuccessful repairs and ended COST_CAP_REACHED without submission:
-acceptance and safety are NOT_RUN. N2's first repair passed both public checks,
-submitted and passed isolated acceptance/safety. Total cost was $1.854949 of $2.40;
-unused funds are closed. No paid allocation, extra sample or continuation is active.
+The fresh AnyIO v3 N1/N2 solves remain closed: N1 made two unsuccessful repairs
+and stopped without submission; N2 submitted and passed isolated acceptance/safety.
+Their $1.854949 of $2.40 allocation is closed. N1's first post-probe repair depended
+on caller cancellation that the public probe had not measured.
 
-Both independently selected probes and reproduced interrupted-test resumption.
-N1's first repair nevertheless claimed a caller-cancellation condition that its
-probe had not measured. Its attempted discriminator then stopped on a model-authored
-function-name setup assertion. A second repair still resumed the test and broke
-cleanup; a final useful probe preceded a reasoning-only incomplete response at a
-reduced 4,081-token ceiling. Failed repair, diagnostic error and resource exhaustion
-are distinct observations, not a proven single-cause account of the terminal result.
+The separately authorized checkpoint diagnostic is now closed. A preserves N1's
+saved first post-probe/pre-edit request; B changes only two current guidance fields
+to remove its mutation recommendation. Observations, tools, budgets and encrypted
+history are retained; earlier exposure and other mutation cues remain. Four actual
+continuations ran A1/B1/B2/A2. A1 and B1 submitted and passed acceptance/safety.
+B2 and A2 reached their cost limits without submission: acceptance/safety NOT_RUN.
+New spend was $3.039521 of $3.869852, excluding inherited usage. Unused $0.830331
+is closed. No paid allocation, retry or continuation is active.
 
-N2 directly handled an incomplete call on the interrupt path and retained the
-shared runner for cleanup. It passed lifecycle 7/7 and upstream 32 tests (three
-deselected), then submitted. It did not rerun its original probe after editing.
-The visible plain-fixture explicit-cancel same-task assertion gap remains a public
-coverage limit; prior operator replays of other candidates do not close it here.
+All four first actions were replace_text, with no new inspection/probe beforehand.
+B1, B2 and A2 conditioned the first repair on the unmeasured caller-cancellation
+assumption and failed the same three public interrupt cases. B1 recovered and passed.
+B2 and A2 passed lifecycle on their second repairs but then hit the upstream
+KeyboardInterrupt subprocess timeout. A2's third repair still failed upstream;
+its earlier lifecycle PASS does not validate that final diff. B2's late probe observed
+an exit path not returning. Its result, and A2's last failed check, reached a counted
+next input but no subsequent generation because minimum dispatch no longer fit.
 
-All 19 actual inputs/count bindings and continuation records verified. No probe
-timed out, no infrastructure uncertainty stopped the group, and all eight owned
-check/probe containers are absent. The corrected environment enabled observations,
-but one accepted result and one resource-limited non-submission do not establish
-general reliability, an environment-effect estimate or a new harness mechanism.
+All 25 dispatched requests and 27 counted inputs verified against public projections,
+with exact first A/B delivery and intact native continuation. Billing is known; all
+13 new owned check/probe containers are absent. Docker admission passed after the
+user started it. There was no count/transport/cleanup uncertainty or automatic retry.
+These establish execution integrity, not model uptake or general repair quality.
 
-The selected diagnostic removes only the current message's mutation recommendation
-at N1's first post-probe/pre-edit boundary. A preserves the saved request; B changes
-two guidance fields, retaining observations, tools, budget and native continuation.
-The input pair and offline continuation are implemented. Actual N1 A/B restoration
-preserves the first request and remaining allowances without replaying the probe;
-scripted fixture branches exercise repair, checks, submission and isolated evaluation.
-These are restoration/execution tests, not fresh model solves or a causal result.
-Earlier exposure and other mutation cues remain. The separate live collector is
-implemented with fresh invocation accounting, exact first-input checks and group
-uncertainty stops. Its scripted tests cover repair through isolated evaluation.
-Read-only admission passes task/runtime, prepared source and dependency integrity,
-but Docker is unavailable: live environment status is PREFLIGHT_FAILED. The next
-step is restoring Docker availability and repeating admission. A1/B1/B2/A2 would
-require a new $3.869852 allocation ($0.967463 per row); none is active. Provider
-acceptance, paid comparison and default adoption remain unverified or unapproved.
-Historical allocations remain closed.
+This sample shows no observed benefit from removing the current recommendation;
+do not adopt it or infer that all guidance is ineffective. Each arm has one accepted
+submission and one resource-limited non-submission, not one accepted and one rejected
+patch. Next question: can a provider-free public observation directly distinguish
+caller cancellation from callback interruption before another repair or paid policy
+comparison? The plain-fixture explicit-cancel same-task assertion gap remains a
+separate public coverage limit. Historical allocations and outcomes remain unchanged.
 
 Earlier supplied-candidate A/B repairs remain a separate 2/2 acceptance per arm,
 with no observed advantage from supplied completed output. Their operator probes
@@ -91,11 +84,11 @@ planning OFF comparisons remain closed without automatic adoption or baseline ch
 
 ## Implemented and measured
 
-The latest two fresh solves used unmodified run_dev and the existing bounded
-collector with corrected dependencies. One complete solve within the original cap
-is observed; reliable recovery, general task-solving improvement and default adoption
-remain unestablished. The earlier four seeded repairs and their operator observations
-remain separate evidence.
+The checkpoint collector now has live provider acceptance, exact delivery and
+separate cost-accounting evidence. Its two accepted continuations are not fresh
+solves. The earlier N1/N2 fresh solves used unmodified run_dev with corrected
+dependencies. Reliable recovery, general improvement and default adoption remain
+unestablished; earlier supplied-candidate repairs remain separate evidence.
 
 The opt-in first-plan timing, declaration expansion and independent-candidate diagnostics
 remain implemented, with no default adoption established by their closed comparisons.
@@ -104,6 +97,8 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
+- Closed comparison: [checkpoint results](history/2026-09-27-checkpoint-live-results.md);
+  packet: `C:\pt\analyses\checkpoint-live-results-20260927-v1`; live: `C:\pt\mutationlive0927a`.
 - Live collector: [preparation and environment block](history/2026-09-27-checkpoint-live-preparation.md);
   [contract](../.agent/checkpoint-comparison.md);
   packet: `C:\pt\analyses\checkpoint-live-comparison-20260927-v1`.
