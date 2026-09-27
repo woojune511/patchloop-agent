@@ -22,6 +22,14 @@ from patchloop.runtime import repository_root, runtime_content_hash
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 SCHEMA = "post-edit-budget-checkpoint-v1"
+SCOPE_FIELD = "verification_scope_cue"
+SCOPE_CUE = (
+    "Before treating a passing check as evidence that a changed behavior is correct, "
+    "inspect what its selected assertions actually exercise. Distinguish preserved "
+    "behavior from new or changed behavior. If a material part of the change is "
+    "unverified, use a targeted public check or probe before deciding to submit; "
+    "do not infer coverage from a passing summary alone."
+)
 IMPLEMENTATION = (
     "diagnostics/post_edit_budget_checkpoint.py",
     "diagnostics/post_edit_budget_continuation.py",
@@ -108,13 +116,16 @@ def load(source: Source):
     })
 
 
-def project(request, new_cap_nanos):
+def project(request, new_cap_nanos, *, scope_cue=None):
     require(type(new_cap_nanos) is int and new_cap_nanos > 0, "positive new cap required")
+    require(scope_cue in (None, SCOPE_CUE), "unknown verification scope cue")
     selected = copy.deepcopy(request)
     view = json.loads(selected["input"][-1]["content"])
     cost = view["state"]["remaining_budget"]["cost"]
     cost["invocation_cap"] = cost["settled_usage"] + new_cap_nanos
     cost["remaining"] = new_cap_nanos
+    if scope_cue is not None:
+        view["state"][SCOPE_FIELD] = scope_cue
     selected["input"][-1]["content"] = canonical_json(view)
     return selected
 
@@ -127,17 +138,20 @@ def implementation_hashes():
     return {p: sha256_bytes((repository_root() / p).read_bytes()) for p in IMPLEMENTATION}
 
 
-def prepare(source, output: Path, new_cap_usd: Decimal):
+def prepare(source, output: Path, new_cap_usd: Decimal, *, verification_scope=False):
     disjoint(output.resolve(), (repository_root(), source.root, source.public_path.parent))
     loaded = load(source)
     cap = usd_to_nanos(new_cap_usd)
-    selected = project(loaded.request, cap)
+    cue = SCOPE_CUE if verification_scope else None
+    selected = project(loaded.request, cap, scope_cue=cue)
     packet = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
               "source": source.record(), "checkpoint": loaded.receipt, "new_cap_nanos": cap,
               "runtime_hash": runtime_content_hash(),
               "implementation_hashes": implementation_hashes(),
               "original_request_hash": sha256_json(loaded.request),
               "selected_request_hash": sha256_json(selected)}
+    if cue is not None:
+        packet[SCOPE_FIELD] = cue
     output.mkdir()
     store = ArtifactStore(output / "artifacts")
     packet["request"] = store.put_json(selected).model_dump(mode="json")
@@ -157,7 +171,8 @@ def validate(path, digest):
             and packet["implementation_hashes"] == implementation_hashes(),
             "checkpoint implementation changed")
     loaded = load(Source.from_record(packet["source"]))
-    selected = project(loaded.request, packet["new_cap_nanos"])
+    selected = project(loaded.request, packet["new_cap_nanos"],
+                       scope_cue=packet.get(SCOPE_FIELD))
     require(loaded.receipt == packet["checkpoint"]
             and sha256_json(loaded.request) == packet["original_request_hash"]
             and sha256_json(selected) == packet["selected_request_hash"], "checkpoint changed")

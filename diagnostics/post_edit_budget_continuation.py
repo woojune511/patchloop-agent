@@ -38,6 +38,7 @@ def controls(packet_path, packet_hash, env_file, result_root):
             "new_cap_nanos": packet["new_cap_nanos"],
             "result_root": str(result_root.resolve()),
             "selected_request_hash": packet["selected_request_hash"],
+            "verification_scope_cue": packet.get(checkpoint.SCOPE_FIELD),
             "remaining_budget": packet["checkpoint"]["remaining_budget"],
             "sdk_retries": 0, "automatic_resume": False,
             "runtime_hash": packet["runtime_hash"],

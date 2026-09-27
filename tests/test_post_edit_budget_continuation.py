@@ -31,6 +31,45 @@ def restore(packet, tmp_path):
     return continuation.restore(Path(packet["packet"]), packet["packet_hash"], tmp_path / "A", "A")
 
 
+def test_scope_cue_is_the_only_input_difference_and_not_reinjected(
+    failed_source, source, tmp_path, monkeypatch,
+):
+    def forbidden(*args, **kwargs):
+        pytest.fail("network forbidden")
+
+    monkeypatch.setattr("socket.socket.connect", forbidden)
+    packet = checkpoint.prepare(failed_source, tmp_path / "packet", Decimal("3"),
+                                verification_scope=True)
+    loaded = checkpoint.load(failed_source)
+    baseline = checkpoint.project(loaded.request, 3_000_000_000)
+    selected = checkpoint.project(loaded.request, 3_000_000_000,
+                                  scope_cue=checkpoint.SCOPE_CUE)
+    normalized = copy.deepcopy(selected)
+    state = json.loads(normalized["input"][-1]["content"])
+    assert state["state"].pop(checkpoint.SCOPE_FIELD) == checkpoint.SCOPE_CUE
+    normalized["input"][-1]["content"] = canonical_json(state)
+    assert normalized == baseline
+    monkeypatch.setattr(collector.runner, "_require_tracked_clean_paths", lambda *args: None)
+    monkeypatch.setattr(live, "check_environment", lambda *args: {"status": "READY"})
+    prepared = collector.prepare(
+        Path(packet["packet"]), packet["packet_hash"], source.root.parent / "absent.env",
+        tmp_path / "result", tmp_path / "plan")
+    plan = json.loads(Path(prepared["manifest"]).read_bytes())
+    assert plan[checkpoint.SCOPE_FIELD] == checkpoint.SCOPE_CUE
+    client = continuation.ScriptedClient([
+        [call("run_check", {"check_id": "existing-unit-tests"}, "verify")], *stop_steps()])
+    install_sdk(monkeypatch, failed_source, [client])
+    result = collector.collect(Path(prepared["manifest"]), prepared["manifest_hash"], Decimal("3"))
+    assert result["row"]["first_state_restored"], result
+    assert result["row"]["result"]["terminal"] == "AGENT_STOPPED", result
+    assert {k: v for k, v in client.created[0].items() if k != "timeout"} == selected
+    later = json.loads(client.created[1]["input"][-1]["content"])["state"]
+    assert checkpoint.SCOPE_FIELD not in later
+    assert result["new_cost_nanos"] == 1_100_000
+    with pytest.raises(ContractError, match="unknown verification scope cue"):
+        checkpoint.project(loaded.request, 3_000_000_000, scope_cue="task-specific repair hint")
+
+
 def test_cost_only_and_persistent_budget(packet, failed_source, tmp_path):
     before = (failed_source.root / "runs" / f"{failed_source.run_id}.jsonl").read_bytes()
     branch = restore(packet, tmp_path)

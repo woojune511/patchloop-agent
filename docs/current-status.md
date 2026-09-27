@@ -54,9 +54,8 @@ All three images were acquired with explicit approval and their digests fixed.
 Packages passed isolated reference evaluation and environment controls. Public tests
 run in temporary copies; toqito excludes one obsolete test contradicting the issue.
 Pre-run limits were fixed at four files/1,000 lines with API changes allowed.
-Toqito/darts probe bundles use 512/768 MiB installed capacity and correct import roots.
-Public canaries pass for the selected entry points; toqito had one unexplained
-initial timeout. See [capacity results](history/2026-09-27-installed-probe-capacity.md).
+Pinned probe bundles and public canaries are documented in
+[capacity results](history/2026-09-27-installed-probe-capacity.md).
 See [readiness](history/2026-09-27-original-pilot-readiness.md) for earlier preparation evidence.
 [Package validation](history/2026-09-27-original-pilot-packages.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
@@ -79,9 +78,10 @@ remain unproven. The [unhinted continuation](history/2026-09-28-post-edit-budget
 used $0.2168265 in two new calls: old regression PASS, then unchanged submission and
 benchmark FAIL (safety PASS). With ample resources, the agent treated downarrow-only
 regression results as validation of new uparrow behavior. It did not revisit the
-comparator or correct the patch. Next isolate verification-scope reasoning with one
-generic cue, without task-specific hints. The $3 allocation is closed; no new paid
-work or default policy change is authorized.
+comparator or correct the patch. A [generic scope cue](history/2026-09-28-verification-scope-preparation.md)
+is prepared at the same checkpoint; only one input field changes. A proposed $3,
+one-run continuation awaits exact authorization. Prior allocations remain closed;
+no default policy change is authorized.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate A/B repairs remain separate 2/2 acceptance per arm,

@@ -41,3 +41,22 @@ and allocation; it is not part of this single unhinted branch.
 Validate exact restoration, cost-only input changes, unchanged source bytes,
 subsequent budget persistence, new-cost accounting, and uncertainty stops without
 provider calls. Scripted rehearsal tests plumbing, not autonomous discovery.
+
+## Optional verification-scope cue
+
+`prepare(..., verification_scope=True)` freezes the exact generic `SCOPE_CUE` from
+the checkpoint module. The first current-state record and canonical context gain
+only `verification_scope_cue`, asking the agent to inspect what selected assertions
+exercise before interpreting PASS as verification of changed behavior. The source
+checkpoint, budget, native history, tools and ordinary completion guidance stay
+the same. No task names, formulas, counterexamples or evaluator feedback enter the
+cue. Arbitrary operator text is rejected. The naturally rebuilt state is checked
+against the unhinted budget baseline; the first counted/dispatched request must
+equal the frozen cued input. Later context uses ordinary construction with no
+reinjection (earlier conversation or agent notes may naturally retain its influence).
+
+A cued run needs a fresh manifest and separately authorized allocation. Comparing
+it with a previously observed unhinted run is a sequential development comparison,
+not randomized or replicated causal evidence. Assess assertion-scope inspection,
+targeted new-behavior checks, error discovery, patch correctness and submission;
+extra tools or a longer response alone do not establish improvement.

@@ -157,6 +157,8 @@ def restore(
         "supplement_hash": sha256_json(supplemental_observation)
         if supplemental_observation is not None else None,
     }
+    if budget_fork and packet.get(backend.SCOPE_FIELD) is not None:
+        fork[backend.SCOPE_FIELD] = packet[backend.SCOPE_FIELD]
     journal.append("diagnostic_checkpoint_fork", fork)
     task_dir, package = runner._resolve_task_file(source.public_path)
     require(
@@ -249,7 +251,9 @@ def restore(
         selected = copy.deepcopy(
             loaded.request if arm == "A" else checkpoint.project(loaded.request))
     if budget_fork:
-        selected = backend.project(selected, packet["new_cap_nanos"])
+        budget_baseline = backend.project(selected, packet["new_cap_nanos"])
+        selected = backend.project(selected, packet["new_cap_nanos"],
+                                   scope_cue=packet.get(backend.SCOPE_FIELD))
     bundle["request"] = selected
     turn = bundle["turn"]
     turn["model_input_artifact"] = native_compaction.put_json(store, selected["input"])
@@ -261,6 +265,8 @@ def restore(
     if budget_fork:
         canonical["remaining_budget"]["cost"] = json.loads(
             selected["input"][-1]["content"])["state"]["remaining_budget"]["cost"]
+        if packet.get(backend.SCOPE_FIELD) is not None:
+            canonical[backend.SCOPE_FIELD] = packet[backend.SCOPE_FIELD]
     if arm == "B" and supplemental_observation is not None:
         canonical[caller_information.FIELD] = copy.deepcopy(supplemental_observation)
     elif arm == "B":
@@ -289,7 +295,7 @@ def restore(
         pricing=pricing,
         packet=packet,
         selected=selected,
-        original=selected if budget_fork else loaded.request,
+        original=budget_baseline if budget_fork else loaded.request,
         source_request=loaded.request,
         inherited_events=len(prefix),
         initial_spent_nanos=ledger.spent_nanos,
