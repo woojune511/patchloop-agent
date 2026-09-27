@@ -53,26 +53,34 @@ both public checks and isolated acceptance/safety with its first patch. B1's fir
 patch instead timed out during fixture cleanup; its second reintroduced resumed
 test execution, and its third passed lifecycle but never ran the upstream check.
 
-A1 recovered on its second patch and passed acceptance/safety. A2's second patch
-stopped observed post-interrupt execution but timed out before fixture cleanup.
-B1/A2 ended at the cost limit without submission: acceptance/safety NOT_RUN.
-B1's last generated response exhausted its 177-token ceiling; A2 had reasoning-only
-incomplete responses at 25,000 and later 488 tokens. Both final correction inputs
-were counted but could not be dispatched. These are resource-limited outcomes,
-not evaluator rejections or evidence that the model ignored undelivered feedback.
+A1 recovered on its second patch and passed acceptance/safety. B1/A2 exhausted
+their budgets without submission: acceptance/safety NOT_RUN. Their incomplete
+responses and undelivered final correction inputs are detailed in the results record;
+resource-limited non-submissions are not evaluator rejections.
 
 All 21 dispatched and 23 counted inputs verified against public projections,
 including exact first-input evidence and no automatic later injection. Billing is
-known; all 10 new owned check containers are absent. No new probe was executed.
+known; all 10 new owned check containers are absent. That comparison executed no new probe.
 The observed first-patch distinction is a local information-to-action signal;
 each arm still has one accepted submission and one unsubmitted run. Do not adopt
 a default prompt policy or claim general improvement from this selected checkpoint.
 
-Next question: why did B1's first patch block cleanup while B2's first patch
-completed it? A bounded provider-free inspection/probe of those saved public
-patches can discriminate repeated cancellation from failure to drain pending work.
-Those are hypotheses, not measured causes. No new probe/comparison is authorized
-or executed by this closure, and no memory mechanism is prescribed.
+The subsequent provider-free diagnostic identified B1's cleanup stall in the
+callback/ContextVar-fixture reproduction. run_test cancels the future and runner;
+the waiting caller receives CancelledError from that future with cancelling() == 0,
+then unconditionally cancels the runner again. The runner had returned to receiving
+work outside its per-coroutine exception handler; it terminates, stranding teardown.
+Both traced and untraced B1 executions stalled. Both B2 executions completed.
+Removing only B1's caller-side runner.cancel line rescued both traced and untraced
+executions: no post_interrupt, exactly one same-task fixture cleanup, normal exit.
+Six isolated probes completed with known cleanup and zero provider calls/cost.
+
+This is a measured local mechanism and one-line rescue, not a validated task repair.
+The rescued runner still had cancelling() == 1 after teardown, so a nonzero counter
+alone does not explain the stall. Cancellation origin and delivery point matter.
+Next question: can the redundant cancellation be avoided while preserving an actual
+caller.cancel() request? That preservation path and new acceptance are NOT_RUN.
+No default harness/prompt/memory policy or historical candidate has been changed.
 
 The original caller-state observation applies to callback KeyboardInterrupt on
 the unchanged base in the pinned environment, not every SIGINT/cancellation path.
@@ -103,6 +111,8 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
+- Cleanup mechanism: [trace and one-line removal](history/2026-09-27-anyio-cleanup-cancellation.md);
+  packet: `C:\pt\analyses\anyio-cleanup-analysis-20260927-v1`.
 - Information comparison results: [outcomes and public audit](history/2026-09-27-caller-information-results.md);
   packet: `C:\pt\analyses\caller-information-results-20260927-v1`; live: `C:\pt\callerinfo0927a`.
 - Information comparison preparation: [scope and validation](history/2026-09-27-caller-information.md);
