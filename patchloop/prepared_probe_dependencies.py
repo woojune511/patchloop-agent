@@ -33,7 +33,8 @@ from patchloop.prepared_source import admission_hash, load_source
 from patchloop.util import canonical_json, safe_relative_path, sha256_bytes, sha256_json
 
 MANIFEST = "prepared-probe-dependencies.json"
-MAX_BYTES = 256 * 1024 * 1024
+MAX_BYTES = 256 * 1024 * 1024  # Public wheel download bound.
+MAX_INSTALLED_BYTES = 1024 * 1024 * 1024
 MAX_FILES = 15_000
 MOUNT = "/opt/patchloop-dependencies"
 
@@ -118,15 +119,22 @@ def _files(root: Path) -> dict[str, Path]:
 
 
 def _inventory(root: Path, *, target: Path | None = None,
-               deadline: ExecutionDeadline | None = None) -> dict[str, str]:
+               deadline: ExecutionDeadline | None = None,
+               byte_limit: int = MAX_BYTES) -> dict[str, str]:
     files, hashes, total = _files(root), {}, 0
     for relative, path in sorted(files.items()):
         if deadline:
             deadline.check(reserve_seconds=5)
         with path.open("rb") as stream:
-            content = stream.read(MAX_BYTES - total + 1)
+            size = os.fstat(stream.fileno()).st_size
+            # Avoid reserving the entire remaining bundle budget for each tiny file.
+            content = stream.read(min(size, byte_limit - total) + 1)
+            if len(content) <= byte_limit - total and (
+                len(content) != size or os.fstat(stream.fileno()).st_size != size
+            ):
+                raise ContractError("prepared dependency file size changed during inventory")
         total += len(content)
-        if total > MAX_BYTES:
+        if total > byte_limit:
             raise ContractError("prepared dependencies exceed the byte bound")
         hashes[relative] = sha256_bytes(content)
         if target is not None:
@@ -151,14 +159,16 @@ class PreparedDependencies:
     repository_url: str
     base_commit: str
     generated_project_files: tuple[probe_project_files.GeneratedProjectFile, ...] = ()
+    import_roots: tuple[str, ...] | None = None
 
     @property
     def environment(self) -> dict:
+        imports = self.identity.source_roots if self.import_roots is None else self.import_roots
         return {"kind": "prepared_public_wheels", "python": self.identity.python,
                 "snapshot_scope": ("root_files_and_source_trees" if self.identity.source_roots
                                    else "all_tracked_regular_files"),
                 "source_roots": ["/workspace", *[f"/workspace/{root}"
-                                 for root in self.identity.source_roots]],
+                                 for root in imports]],
                 "dependency_path": MOUNT, "network": "none", "installation": "unavailable",
                 **({"generated_version_files": True} if self.generated_project_files else {})}
 
@@ -169,7 +179,7 @@ class PreparedDependencies:
             raise ContractError("prepared dependency identity changed")
         try:
             hashes = _inventory(self.path.parent / "site-packages", target=target,
-                                deadline=deadline)
+                                deadline=deadline, byte_limit=_installed_limit(descriptor))
             generated = probe_project_files.records(descriptor)
             if tuple(generated) != self.generated_project_files:
                 raise ContractError("prepared generated project file identity changed")
@@ -192,6 +202,14 @@ class PreparedDependencies:
         )
 
 
+def _installed_limit(descriptor: dict) -> int:
+    value = descriptor.get("installed_byte_limit", MAX_BYTES)
+    if (type(value) is not int or not MAX_BYTES <= value <= MAX_INSTALLED_BYTES
+            or value % (1024 * 1024)):
+        raise ContractError("installed dependency limit must be 256 to 1024 whole MiB")
+    return value
+
+
 def read_descriptor(path: Path) -> tuple[dict, ProbeDependencyIdentity]:
     try:
         raw = _read_bytes(path)
@@ -210,6 +228,11 @@ def read_descriptor(path: Path) -> tuple[dict, ProbeDependencyIdentity]:
         if not isinstance(descriptor["files"], dict):
             raise ValueError("missing dependency file inventory")
         probe_project_files.records(descriptor)
+        _installed_limit(descriptor)
+        imports = descriptor.get("import_roots", descriptor["source_roots"])
+        if (not isinstance(imports, list)
+                or any(root not in descriptor["source_roots"] for root in imports)):
+            raise ValueError("import roots must be selected public source roots")
         if not all(isinstance(descriptor[key], str) and descriptor[key]
                    for key in ("repository_url", "base_commit")):
             raise ValueError("missing dependency source identity")
@@ -238,7 +261,8 @@ def load_dependencies(path: Path, public: PublicTask,
         raise ContractError("prepared probe dependencies do not match the task source")
     return PreparedDependencies(path.resolve(), identity, public.repository.url,
                                 public.repository.base_commit,
-                                tuple(probe_project_files.records(descriptor)))
+                                tuple(probe_project_files.records(descriptor)),
+                                tuple(descriptor.get("import_roots", descriptor["source_roots"])))
 
 
 def _download(wheel: PublicWheel, destination: Path) -> None:
@@ -299,11 +323,17 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
                          source_roots: list[str] | None = None,
                          selected_dependencies: list[str] | None = None,
                          generated_wheel_receipt: Path | None = None,
-                         generated_wheel_receipt_hash: str | None = None) -> Path:
+                         generated_wheel_receipt_hash: str | None = None,
+                         installed_limit_mib: int = 256) -> Path:
     from patchloop.dev.state import DevJournal
     from patchloop.runtime import repository_root
     from patchloop.sandbox.probes import PROBE_IMAGE
 
+    if type(installed_limit_mib) is not int:
+        raise ContractError("installed dependency limit must be an integer MiB value")
+    installed_byte_limit = _installed_limit({
+        "installed_byte_limit": installed_limit_mib * 1024 * 1024,
+    })
     if bool(generated_wheel_receipt) != bool(generated_wheel_receipt_hash):
         raise ContractError("generated wheel requires a receipt and reviewed receipt hash")
     if generated_wheel_receipt is not None and not resolve:
@@ -428,17 +458,22 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
         if generated and _inventory(output / probe_project_files.DIRECTORY) != {
                 item["path"]: item["content_hash"] for item in generated}:
             raise ContractError("generated project files changed before publication")
-        files = _inventory(target)
+        files = _inventory(target, byte_limit=installed_byte_limit)
         content_hash = _content_hash(files, generated)
+        # A package directory belongs on the snapshot, not directly on sys.path.
+        imports = [root for root in roots if not (repo / root / "__init__.py").is_file()]
         descriptor = {
             "schema_version": "prepared-probe-dependencies-v1", "python": "3.12",
             "platform": "linux/amd64", "image": PROBE_IMAGE,
             "repository_url": public.repository.url, "base_commit": public.repository.base_commit,
             "prepared_source_content_hash": source.content_hash,
             "source_roots": roots, "wheel_lock": lock_record,
+            **({"import_roots": imports} if imports != roots else {}),
             "workspace_metadata": workspace_metadata,
             **({"generated_project_files": generated} if generated else {}),
             "content_hash": content_hash, "files": files,
+            **({"installed_byte_limit": installed_byte_limit}
+               if installed_byte_limit != MAX_BYTES else {}),
         }
         manifest = output / MANIFEST
         body = canonical_json(descriptor) + "\n"

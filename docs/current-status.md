@@ -74,12 +74,11 @@ Original-input packages now pass the actual isolated evaluator on all three prod
 references. Public tests use temporary copies; toqito excludes an obsolete test that
 contradicts its feature request. Before any model run, the pilot limits were amended
 to four files/1,000 lines with API changes allowed. Setup failures remain distinct
-from wrong answers. Probe readiness blocks paid execution: generated PICOS wheel
-admission and toqito installation passed, but installed dependencies exceed 256 MiB
-(toqito ~368 MiB; darts ~548 MiB). See [admission](history/2026-09-27-generated-wheel-admission.md).
-MontePy
-import/Cell construction now passes with the profile-bound OpenBLAS default of one
-thread. See [fix](history/2026-09-27-probe-openblas-default.md).
+from wrong answers. Installed dependency capacity is now explicit (default 256 MiB,
+maximum 1 GiB), separate from download and execution limits. Toqito uses 512 MiB;
+darts uses 768 MiB. Package snapshots now preserve correct Python import roots.
+Public canaries pass for the selected entry points; toqito had one unexplained
+initial timeout. See [capacity results](history/2026-09-27-installed-probe-capacity.md).
 See [readiness](history/2026-09-27-original-pilot-readiness.md) for the bound draft and next step.
 [Package validation](history/2026-09-27-original-pilot-packages.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).

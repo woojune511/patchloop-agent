@@ -55,8 +55,13 @@ The descriptor `prepared-probe-dependencies.json` is published last. It binds th
 repository/base, source/lock provenance, exact wheels, source roots, Python/platform
 and every installed file. Failed or interrupted preparation has no usable descriptor.
 Existing output directories are never overwritten; a corrected preparation uses a
-fresh directory. Downloads and installed contents are capped at 256 MiB each,
-with at most 128 wheels and 15,000 installed files. Local wheel URL metadata is
+fresh directory. Downloads are capped at 256 MiB. Installed contents default to
+256 MiB; explicit `--installed-limit-mib` accepts 256 through 1024 MiB, with at most
+128 wheels and 15,000 installed files. A nondefault `installed_byte_limit` is bound
+in the descriptor hash and enforced again during verification and snapshot copying.
+Old descriptors retain the 256 MiB default. This is a storage bound, independent of
+the probe's unchanged 512 MiB execution memory and 128 MiB source snapshot bounds.
+Local wheel URL metadata is
 rewritten to its already verified public origin before publishing.
 
 Workspace projects listed as editable in the public lock receive minimal name/version
@@ -146,6 +151,13 @@ fixed target. This accepts package names, not arbitrary requirements or URLs, an
 the normalized selection in resolution provenance. Without this option, all selected
 group/extra requirements remain included. A group containing packages without usable
 wheels can therefore be narrowed explicitly without permitting source builds.
+
+Snapshot selection and Python import search paths differ for package directories.
+When a selected root contains `__init__.py`, new preparations copy that package tree
+but do not add the package directory itself to `sys.path`; `/workspace` remains an
+import root. This prevents a package's `logging.py` from shadowing standard-library
+`logging`. A nondefault `import_roots` list is descriptor-bound; old descriptors keep
+their recorded behavior. Import roots must be a subset of selected source roots.
 
 For example, `--resolve --group test --select-dependency pytest --source-root src`
 can prepare a project's declared test runner dependency while leaving unrelated test

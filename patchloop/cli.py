@@ -220,6 +220,10 @@ def prepare_task_probe_dependencies(
     group: Annotated[list[str] | None, typer.Option("--group")] = None,
     extra: Annotated[list[str] | None, typer.Option("--extra")] = None,
     source_root: Annotated[list[str] | None, typer.Option("--source-root")] = None,
+    installed_limit_mib: Annotated[int, typer.Option(
+        "--installed-limit-mib", min=256, max=1024,
+        help="Installed dependency storage cap; download and execution limits stay fixed.",
+    )] = 256,
     generated_wheel_receipt: Annotated[Path | None, typer.Option(
         "--generated-wheel-receipt",
     )] = None,
@@ -242,6 +246,7 @@ def prepare_task_probe_dependencies(
             extras=extra, source_roots=source_root, selected_dependencies=select_dependency,
             generated_wheel_receipt=generated_wheel_receipt,
             generated_wheel_receipt_hash=generated_wheel_receipt_hash,
+            installed_limit_mib=installed_limit_mib,
         )
         return {"ok": True, "prepared_probe_dependencies": str(path)}
 

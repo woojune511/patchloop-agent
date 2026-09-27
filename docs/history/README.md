@@ -1,7 +1,7 @@
 # Documentation history
 
-Evidence index. Start at [current status](../current-status.md).
-Past approvals apply only to their checkpoint.
+[Current status](../current-status.md).
+Past approvals are checkpoint-specific.
 
 ## Pre-split snapshots: 2026-09-26
 
@@ -17,10 +17,10 @@ Past approvals apply only to their checkpoint.
 | [Operations](2026-09-26-context-split/operations.md) | Closed pilots, old invocation examples, prior preparation procedures |
 | [Product](2026-09-26-context-split/product.md) | Earlier feature descriptions and architecture narrative |
 
-Resolve snapshot links through the manifest.
 
 ## New records
 
+- [Probe capacity](2026-09-27-installed-probe-capacity.md).
 - [Wheel admission](2026-09-27-generated-wheel-admission.md).
 - [OpenBLAS](2026-09-27-probe-openblas-default.md); [PICOS](2026-09-27-picos-wheel-build.md).
 - [Pilot readiness](2026-09-27-original-pilot-readiness.md).
