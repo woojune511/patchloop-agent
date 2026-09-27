@@ -72,10 +72,15 @@ The input pair and offline continuation are implemented. Actual N1 A/B restorati
 preserves the first request and remaining allowances without replaying the probe;
 scripted fixture branches exercise repair, checks, submission and isolated evaluation.
 These are restoration/execution tests, not fresh model solves or a causal result.
-Earlier exposure and other mutation cues remain. The next seam is a separately
-bounded live collector with fresh invocation accounting and environment admission;
-provider acceptance, Docker readiness, paid comparison and default adoption remain
-unverified or unapproved. Historical allocations remain closed.
+Earlier exposure and other mutation cues remain. The separate live collector is
+implemented with fresh invocation accounting, exact first-input checks and group
+uncertainty stops. Its scripted tests cover repair through isolated evaluation.
+Read-only admission passes task/runtime, prepared source and dependency integrity,
+but Docker is unavailable: live environment status is PREFLIGHT_FAILED. The next
+step is restoring Docker availability and repeating admission. A1/B1/B2/A2 would
+require a new $3.869852 allocation ($0.967463 per row); none is active. Provider
+acceptance, paid comparison and default adoption remain unverified or unapproved.
+Historical allocations remain closed.
 
 Earlier supplied-candidate A/B repairs remain a separate 2/2 acceptance per arm,
 with no observed advantage from supplied completed output. Their operator probes
@@ -99,6 +104,9 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
+- Live collector: [preparation and environment block](history/2026-09-27-checkpoint-live-preparation.md);
+  [contract](../.agent/checkpoint-comparison.md);
+  packet: `C:\pt\analyses\checkpoint-live-comparison-20260927-v1`.
 - Offline continuation: [restoration and execution](history/2026-09-27-checkpoint-continuation.md);
   [contract](../.agent/checkpoint-continuation.md);
   packet: `C:\pt\analyses\checkpoint-continuation-20260927-v1`.

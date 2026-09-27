@@ -144,7 +144,8 @@ experimental context and historical plans; current source/status take precedence
   opt-in seeded-loop projection that keeps completion gates and tool admission intact.
   [Mutation advice checkpoint](mutation-advice-checkpoint.md) prepares an offline
   post-probe input pair; [offline continuation](checkpoint-continuation.md) restores
-  that state for scripted registered-action and evaluation tests.
+  that state for scripted registered-action and evaluation tests. The separate
+  [live collector](checkpoint-comparison.md) binds fresh accounting and admission.
 - Candidate comparison: [independent candidate](independent-candidate.md), an
   opt-in public alternative in the ordinary seeded repair loop.
 - Search context: [declaration context](declaration-context.md), opt-in bounded

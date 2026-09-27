@@ -1,8 +1,7 @@
 # Documentation history
 
 Historical records are evidence. Start at [current status](../current-status.md).
-Read matching passages for a named question; old instructions and approvals apply
-only to their original checkpoint.
+Old instructions and approvals apply only to their original checkpoint.
 
 ## Pre-split snapshots: 2026-09-26
 
@@ -25,6 +24,7 @@ Resolve snapshot links using the manifest or original Git revision.
 
 ## New records
 
+- [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
 - [Offline continuation](2026-09-27-checkpoint-continuation.md): restored N1 inputs and scripted loop.
 - [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md): offline N1 input pair.
 - [2026-09-27: AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md):

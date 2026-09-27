@@ -4,7 +4,9 @@
 [input-pair preparation](mutation-advice-checkpoint.md) without changing that
 module, contract or packet. It restores a branch and runs finite scripted SDK
 responses through the existing adapter, action gateway, loop and evaluator.
-There is no live collector, credential argument or automatic paid dispatch.
+This module has no credential argument or automatic paid dispatch. The separate
+[live collector](checkpoint-comparison.md) shares restoration and first-input
+verification, with its own admission and new-cost accounting.
 
 ## Restoration boundary
 
@@ -51,8 +53,8 @@ SDK counts, usage and encrypted continuation placeholders are synthetic. Credent
 loading and Docker preflight are replaced with explicit offline stubs; Python socket
 connections are forbidden. The shared loop is entered after restoration rather
 than through live admission. This does not test live admission, provider acceptance,
-real token counts, prices, network availability or Docker isolation. Future live
-execution still needs its own implementation, manifest and authorization.
+real token counts, prices, network availability or Docker isolation. Live execution
+uses the separate collector and still needs a frozen manifest and authorization.
 
 Registered visible checks and isolated evaluation use `LocalSandbox`. The submitted
 manifest records a local sandbox and diagnostic identity. The inherited OpenAI

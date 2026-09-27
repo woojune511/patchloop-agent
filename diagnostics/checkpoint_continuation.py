@@ -64,9 +64,12 @@ def inherited_reads(branch):
         yield
 
 
-def restore(packet_path: Path, packet_hash: str, output: Path, arm: str):
+def restore(
+    packet_path: Path, packet_hash: str, output: Path, arm: str, *, mode="offline-scripted"
+):
     """Materialize a fresh baseline workspace and completed prefix; never replay probes."""
     require(arm in {"A", "B"}, "unknown checkpoint arm")
+    require(mode in {"offline-scripted", "live-checkpoint"}, "unknown restoration mode")
     checkpoint.validate(packet_path, packet_hash)
     packet = json.loads(packet_path.read_bytes())
     source = Source.from_record(packet["source"])
@@ -117,7 +120,7 @@ def restore(packet_path: Path, packet_hash: str, output: Path, arm: str):
     journal.write_envelope(envelope)
     fork = {
         "official": False,
-        "mode": "offline-scripted",
+        "mode": mode,
         "arm": arm,
         "packet_hash": packet_hash,
         "source_journal_hash": source.journal_hash,
@@ -322,16 +325,10 @@ class UnexecutedProbe:
         raise ContractError("offline continuation does not execute probes")
 
 
-def rehearse(branch, client: ScriptedClient):
-    """Run one offline branch with local checks and the ordinary isolated evaluator."""
-    require(type(client) is ScriptedClient, "finite offline client required")
-    require(
-        not any(e["event_type"] == "diagnostic_rehearsal_started" for e in branch.journal.events()),
-        "rehearsal cannot be retried",
-    )
-    branch.journal.append("diagnostic_rehearsal_started", {"mode": "offline-scripted"})
+@contextmanager
+def first_input(branch):
+    """Verify naturally restored state, then use the frozen first request once."""
     original_prepare = native_compaction.prepared_input
-    original_manifest = runner._manifest
     first = []
 
     def prepare(journal, store, turn, request, transition):
@@ -348,6 +345,20 @@ def rehearse(branch, client: ScriptedClient):
             )
             first.append(True)
         return original_prepare(journal, store, turn, request, transition)
+
+    with patch.object(native_compaction, "prepared_input", prepare):
+        yield first
+
+
+def rehearse(branch, client: ScriptedClient):
+    """Run one offline branch with local checks and the ordinary isolated evaluator."""
+    require(type(client) is ScriptedClient, "finite offline client required")
+    require(
+        not any(e["event_type"] == "diagnostic_rehearsal_started" for e in branch.journal.events()),
+        "rehearsal cannot be retried",
+    )
+    branch.journal.append("diagnostic_rehearsal_started", {"mode": "offline-scripted"})
+    original_manifest = runner._manifest
 
     def offline_adapter(config, **kwargs):
         return OpenAIResponsesAdapter(config, api_key="offline-no-credential", client=client)
@@ -377,7 +388,7 @@ def rehearse(branch, client: ScriptedClient):
         ),
         patch.object(runner, "OpenAIResponsesAdapter", offline_adapter),
         patch.object(runner, "_manifest", offline_manifest),
-        patch.object(native_compaction, "prepared_input", prepare),
+        first_input(branch) as first,
         branch.journal.execution_lock(),
     ):
         result = runner._run_one_locked(
