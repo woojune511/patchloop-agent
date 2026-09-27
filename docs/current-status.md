@@ -68,11 +68,14 @@ general reliability, an environment-effect estimate or a new harness mechanism.
 The selected diagnostic removes only the current message's mutation recommendation
 at N1's first post-probe/pre-edit boundary. A preserves the saved request; B changes
 two guidance fields, retaining observations, tools, budget and native continuation.
-The offline input pair is prepared and verified. Earlier exposure and other mutation
-cues remain; no causal effect has been measured. The next implementation seam is a
-provider-free continuation runner that restores the checkpoint's state and remaining
-allowances and executes selected registered actions. Its contract is documented;
-full continuations, paid comparison and default adoption remain unrun/unapproved.
+The input pair and offline continuation are implemented. Actual N1 A/B restoration
+preserves the first request and remaining allowances without replaying the probe;
+scripted fixture branches exercise repair, checks, submission and isolated evaluation.
+These are restoration/execution tests, not fresh model solves or a causal result.
+Earlier exposure and other mutation cues remain. The next seam is a separately
+bounded live collector with fresh invocation accounting and environment admission;
+provider acceptance, Docker readiness, paid comparison and default adoption remain
+unverified or unapproved. Historical allocations remain closed.
 
 Earlier supplied-candidate A/B repairs remain a separate 2/2 acceptance per arm,
 with no observed advantage from supplied completed output. Their operator probes
@@ -96,6 +99,9 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
+- Offline continuation: [restoration and execution](history/2026-09-27-checkpoint-continuation.md);
+  [contract](../.agent/checkpoint-continuation.md);
+  packet: `C:\pt\analyses\checkpoint-continuation-20260927-v1`.
 - Current diagnostic: [mutation advice checkpoint](history/2026-09-27-mutation-advice-checkpoint.md);
   [contract](../.agent/mutation-advice-checkpoint.md);
   packet: `C:\pt\analyses\mutation-advice-checkpoint-20260927-v1`.

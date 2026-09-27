@@ -143,7 +143,8 @@ experimental context and historical plans; current source/status take precedence
 - Completion advice: [status-only diagnostic](completion-status-diagnostic.md), an
   opt-in seeded-loop projection that keeps completion gates and tool admission intact.
   [Mutation advice checkpoint](mutation-advice-checkpoint.md) prepares an offline
-  post-probe input pair; it does not execute continuations.
+  post-probe input pair; [offline continuation](checkpoint-continuation.md) restores
+  that state for scripted registered-action and evaluation tests.
 - Candidate comparison: [independent candidate](independent-candidate.md), an
   opt-in public alternative in the ordinary seeded repair loop.
 - Search context: [declaration context](declaration-context.md), opt-in bounded

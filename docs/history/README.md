@@ -9,9 +9,7 @@ only to their original checkpoint.
 Migration decision, measurements, and validation:
 [separating current guidance from history](2026-09-26-documentation-separation.md).
 
-These five files preserve pre-split bytes. The
-[manifest](2026-09-26-context-split/manifest.json) records paths, sizes, line counts
-and SHA-256 digests. Historical claims are not current guidance.
+The [manifest](2026-09-26-context-split/manifest.json) binds five immutable snapshots.
 
 | Snapshot | Useful lookup topics |
 | --- | --- |
@@ -27,6 +25,7 @@ Resolve snapshot links using the manifest or original Git revision.
 
 ## New records
 
+- [Offline continuation](2026-09-27-checkpoint-continuation.md): restored N1 inputs and scripted loop.
 - [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md): offline N1 input pair.
 - [2026-09-27: AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md):
   corrected environment, one acceptance PASS and one cost-limited NOT_RUN.
