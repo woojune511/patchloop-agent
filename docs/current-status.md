@@ -53,13 +53,13 @@ no acceptance advantage from supplying that observation and supports no new prom
 or planning rule. It does not establish general equivalence or spontaneous case
 selection; completion guidance and repair-recheck were fixed controls.
 
-A process audit narrows the interpretation: both arms already received the prior
-failure question/program, the first check was explicitly recommended, and edits
-were unavailable until source evidence arrived. The later reads did inform edits,
-but B1 attributed the failure partly to a helper that the observed path bypassed.
-It also fixed the actual runner-loop condition; passing the combined patch does
-not establish that its extra exception branch was necessary. The B observations
-remained in actual inputs; there is no demonstrated context-loss explanation here.
+A source/action audit links all 26 inputs, 34 public actions and 31 delivered source
+spans. Reads informed the four repairs, but B1's helper explanation overreached:
+the seed entered that helper and returned before its additional cancellation.
+Its runner-loop repair addressed the observed failure; the extra exception branch's
+necessity remains untested. Completed B observations, probe access and a warning
+about untested behavior were present. These records do not support missing delivery,
+probe access or warnings as explanations. Advice/action alignment does not prove causation.
 
 The public explicit-cancel case uses a plain fixture and bypasses its same-task
 assertion. A separate operator replay now closes that observation gap: the exact
@@ -69,6 +69,12 @@ task. All five executions used the same corrected dependency/profile identities,
 completed without timeout and confirmed owned-container cleanup; model calls were
 zero. This is one single-cancellation plain-fixture observation, not autonomous
 verification, all-state equivalence or proof that extra patch branches are needed.
+
+The smallest next counterfactual is deletion of B1's extra exception branch under
+the same public probe/check environment. That tests patch necessity, not harness
+ablation. A recommendation-removal comparison would need matched feedback conditions:
+the existing status-only diagnostic rejects supplemental feedback. Neither experiment
+is active, and no prompt or runtime change is supported by the current audit.
 
 The original cost-limited ON run remains NOT_RUN. It had asked a relevant probe
 question after its failed check, but obtained no observation. These new seeded
@@ -101,7 +107,9 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
-- Latest check: [AnyIO final probe scope](history/2026-09-27-anyio-final-probe-scope.md);
+- Latest audit: [AnyIO evidence/action links](history/2026-09-27-anyio-evidence-action-link.md);
+  packet: `C:\pt\analyses\anyio-evidence-action-link-20260927-v2`.
+- Replay: [AnyIO final probe scope](history/2026-09-27-anyio-final-probe-scope.md);
   packet: `C:\pt\analyses\anyio-final-probe-scope-20260927-v2`.
 - Process analysis: [AnyIO process audit](history/2026-09-27-anyio-observation-process-audit.md);
   packet: `C:\pt\analyses\anyio-observation-process-audit-20260927-v1`.

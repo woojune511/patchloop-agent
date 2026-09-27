@@ -21,12 +21,7 @@ and SHA-256 digests. Historical claims are not current guidance.
 | [Operations](2026-09-26-context-split/operations.md) | Closed pilots, old invocation examples, prior preparation procedures |
 | [Product](2026-09-26-context-split/product.md) | Earlier feature descriptions and architecture narrative |
 
-Search first, then read a bounded range around a matching heading. For example:
-
-```powershell
-rg -n '^## .*paired|^## .*value-origin' docs/history/2026-09-26-context-split/current-status.md
-Get-Content docs/history/2026-09-26-context-split/current-status.md | Select-Object -Skip <line-before-match> -First 60
-```
+Search first, then read a bounded range around a matching heading.
 
 Relative links inside byte-exact snapshots retain their original spelling and
 original base directory from the manifest. They are not maintained as current
@@ -34,6 +29,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-27: AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md):
+  delivered source, repairs, helper-path correction and verification claims.
 - [2026-09-27: AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md):
   failed-seed control and same-task cleanup observed on four saved final patches.
 - [2026-09-27: AnyIO process audit](2026-09-27-anyio-observation-process-audit.md):
