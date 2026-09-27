@@ -13,6 +13,7 @@ from decimal import Decimal
 from pathlib import Path
 from unittest.mock import patch
 
+from diagnostics import caller_information
 from diagnostics import checkpoint_continuation as continuation
 from diagnostics import mutation_advice_checkpoint as checkpoint
 from diagnostics.decision_sampler import require
@@ -32,6 +33,10 @@ IMPLEMENTATION = (
     "diagnostics/checkpoint_continuation.py",
     ".agent/checkpoint-comparison.md",
     ".agent/checkpoint-continuation.md",
+    "diagnostics/caller_information.py",
+    "diagnostics/anyio_caller_probe.py",
+    "diagnostics/probes/anyio_caller_state.py",
+    ".agent/caller-information.md",
 )
 
 
@@ -43,7 +48,8 @@ def source_state(packet_path, packet_hash):
     return packet, source, envelope
 
 
-def controls(packet_path: Path, packet_hash: str, env_file: Path, result_root: Path):
+def controls(packet_path: Path, packet_hash: str, env_file: Path, result_root: Path, *,
+             caller_evidence=None):
     packet, source, envelope = source_state(packet_path, packet_hash)
     env_file, result_root = env_file.resolve(), result_root.resolve()
     require(sha256_bytes(str(env_file).encode()) == envelope.credential_file_path_hash,
@@ -53,7 +59,7 @@ def controls(packet_path: Path, packet_hash: str, env_file: Path, result_root: P
     remaining = packet["checkpoint"]["remaining_budget"]["cost"]["remaining"]
     require(remaining > 0, "no remaining checkpoint allowance")
     pricing = pricing_for_model(envelope.model)
-    return {
+    plan = {
         "schema": "checkpoint-live-comparison-v1", "official": False,
         "packet": str(packet_path.resolve()), "packet_hash": packet_hash,
         "task": str(source.public_path.resolve()), "model": envelope.model,
@@ -77,6 +83,17 @@ def controls(packet_path: Path, packet_hash: str, env_file: Path, result_root: P
         "pricing_source": "https://developers.openai.com/api/docs/pricing",
         "sdk_retries": 0, "automatic_resume": False, "paid_execution_authorized": False,
     }
+    if caller_evidence is not None:
+        supplement, binding = caller_information.load(
+            caller_evidence, packet_hash, source, envelope)
+        original = checkpoint.load(source).request
+        plan.update(
+            intervention="caller-information-first-input-only", caller_evidence=binding,
+            first_request_hashes={"A_request_hash": sha256_json(original),
+                                  "B_request_hash": sha256_json(
+                                      caller_information.project(original, supplement))},
+        )
+    return plan
 
 
 def check_environment(packet_path: Path, packet_hash: str, env_file: Path):
@@ -121,16 +138,31 @@ def check_environment(packet_path: Path, packet_hash: str, env_file: Path):
             "provider_acceptance": "NOT_RUN", "acceptance": "NOT_RUN", "safety": "NOT_RUN"}
 
 
-def prepare(packet_path, packet_hash, env_file, result_root, output):
-    plan = controls(packet_path, packet_hash, env_file, result_root)
+def prepare(packet_path, packet_hash, env_file, result_root, output, *, caller_evidence=None):
+    plan = controls(packet_path, packet_hash, env_file, result_root,
+                    caller_evidence=caller_evidence)
     source = Source.from_record(json.loads(packet_path.read_bytes())["source"])
     disjoint(output.resolve(), (repository_root(), source.root, packet_path.parent,
                                 result_root.resolve(), source.public_path.parent))
     require(not result_root.exists(), "result root already used")
+    if caller_evidence is not None:
+        evidence_root = Path(caller_evidence["path"]).resolve().parent
+        disjoint(output.resolve(), (evidence_root,))
+        disjoint(result_root.resolve(), (evidence_root,))
     runner._require_tracked_clean_paths(repository_root(), list(IMPLEMENTATION))
     output.mkdir()
     raw = (canonical_json(plan) + "\n").encode()
     (output / "manifest.json").write_bytes(raw)
+    if caller_evidence is not None:
+        _, source, envelope = source_state(packet_path, packet_hash)
+        supplement, _ = caller_information.load(caller_evidence, packet_hash, source, envelope)
+        original = checkpoint.load(source).request
+        pair = (("A", original), ("B", caller_information.project(original, supplement)))
+        for arm, request in pair:
+            (output / f"{arm}-request.json").write_text(
+                canonical_json(request) + "\n", encoding="utf-8")
+        (output / "operator-supplement.json").write_text(
+            canonical_json(supplement) + "\n", encoding="utf-8")
     journal = DevJournal(output, "run_dev_checkpointcomparisonpreparation")
     journal.append("comparison_prepared", {"manifest_hash": sha256_bytes(raw), "plan": plan})
     preflight = check_environment(packet_path, packet_hash, env_file)
@@ -226,9 +258,16 @@ def collect(manifest_path: Path, approved_hash: str, approved_cap_usd: Decimal):
     require(usd_to_nanos(approved_cap_usd) == plan["new_cap_nanos"], "approved cap differs")
     packet_path, env_file = Path(plan["packet"]), Path(plan["env_file"])
     root = Path(plan["result_root"])
-    require(plan == controls(packet_path, plan["packet_hash"], env_file, root),
+    evidence = plan.get("caller_evidence")
+    require(plan == controls(packet_path, plan["packet_hash"], env_file, root,
+                             caller_evidence=evidence),
             "manifest controls or implementation changed")
     runner._require_tracked_clean_paths(repository_root(), list(IMPLEMENTATION))
+    supplement = None
+    if evidence is not None:
+        disjoint(root.resolve(), (Path(evidence["path"]).resolve().parent,))
+        _, source, envelope = source_state(packet_path, plan["packet_hash"])
+        supplement, _ = caller_information.load(evidence, plan["packet_hash"], source, envelope)
     # mkdir is the atomic single-use claim: never resume/retry an interrupted group.
     root.mkdir()
     journal = DevJournal(root, "run_dev_checkpointcomparison")
@@ -250,7 +289,8 @@ def collect(manifest_path: Path, approved_hash: str, approved_cap_usd: Decimal):
             branch = None
             try:
                 branch = continuation.restore(packet_path, plan["packet_hash"], root / label,
-                                              label[0], mode="live-checkpoint")
+                                              label[0], mode="live-checkpoint",
+                                              supplemental_observation=supplement)
                 branch.request = branch.request.model_copy(update={"env_file": env_file})
                 require(runner._credential_file_path_hash(branch.request)
                         == branch.envelope.credential_file_path_hash, "credential path changed")
@@ -284,14 +324,20 @@ def main():
     for name in ("packet", "env-file", "result-root", "output"):
         prep.add_argument("--" + name, type=Path, required=True)
     prep.add_argument("--packet-hash", required=True)
+    prep.add_argument("--caller-evidence", type=Path)
+    prep.add_argument("--caller-evidence-hash")
     live = sub.add_parser("collect")
     live.add_argument("--manifest", type=Path, required=True)
     live.add_argument("--approved-manifest-hash", required=True)
     live.add_argument("--approved-new-cap-usd", type=Decimal, required=True)
     args = parser.parse_args()
     if args.command == "prepare":
+        require(bool(args.caller_evidence) == bool(args.caller_evidence_hash),
+                "caller evidence path and hash must be supplied together")
         result = prepare(
-            args.packet, args.packet_hash, args.env_file, args.result_root, args.output
+            args.packet, args.packet_hash, args.env_file, args.result_root, args.output,
+            caller_evidence={"path": str(args.caller_evidence), "hash": args.caller_evidence_hash}
+            if args.caller_evidence else None,
         )
     else:
         result = collect(args.manifest, args.approved_manifest_hash, args.approved_new_cap_usd)

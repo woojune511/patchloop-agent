@@ -5,8 +5,7 @@ Old instructions and approvals apply only to their original checkpoint.
 
 ## Pre-split snapshots: 2026-09-26
 
-Migration decision, measurements, and validation:
-[separating current guidance from history](2026-09-26-documentation-separation.md).
+[Documentation split](2026-09-26-documentation-separation.md).
 
 The [manifest](2026-09-26-context-split/manifest.json) binds five immutable snapshots.
 
@@ -18,12 +17,11 @@ The [manifest](2026-09-26-context-split/manifest.json) binds five immutable snap
 | [Operations](2026-09-26-context-split/operations.md) | Closed pilots, old invocation examples, prior preparation procedures |
 | [Product](2026-09-26-context-split/product.md) | Earlier feature descriptions and architecture narrative |
 
-Search first, then read a bounded range around a matching heading.
-
-Resolve snapshot links using the manifest or original Git revision.
+Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
+- [Caller information](2026-09-27-caller-information.md): first-input comparison preparation.
 - [Caller state](2026-09-27-anyio-caller-state.md): interrupt versus explicit cancellation.
 - [Checkpoint results](2026-09-27-checkpoint-live-results.md): live A/B and public-trace audit.
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).

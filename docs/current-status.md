@@ -79,8 +79,13 @@ probe environment. This contradicts the caller-cancellation premise in this call
 reproduction; it does not cover every SIGINT or cancellation path.
 
 Next question: does giving the agent this measured caller state change the unsupported
-first repair and subsequent checks? No new model comparison or prompt policy has
-been applied. Operator observation is not autonomous diagnosis or improvement evidence.
+first repair and subsequent checks? A first-input information comparison is implemented
+and locally rehearsed, with original mutation advice fixed in both arms. B receives
+the verified later operator probe code and raw observations; A keeps the exact saved
+input. No repeated injection or default prompt policy is added. Preparation freezes
+A1/B1/B2/A2, $0.967463 new allowance per row, and $3.869852 total fresh cap; it does
+not authorize paid execution. Live comparison and improvement remain NOT_RUN.
+Operator observation is not autonomous diagnosis or improvement evidence.
 The plain-fixture explicit-cancel same-task assertion gap remains separate; this
 control cancels the waiting caller rather than the test coroutine. Historical
 allocations and outcomes remain unchanged.
@@ -107,6 +112,9 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
+- Prepared information comparison: [scope and validation](history/2026-09-27-caller-information.md);
+  [contract](../.agent/caller-information.md);
+  packet: `C:\pt\analyses\caller-information-comparison-20260927-v1`.
 - Caller-state measurement: [observation and control](history/2026-09-27-anyio-caller-state.md);
   packet: `C:\pt\analyses\anyio-caller-state-20260927-v1`.
 - Closed comparison: [checkpoint results](history/2026-09-27-checkpoint-live-results.md);

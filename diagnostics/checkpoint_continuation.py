@@ -14,6 +14,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from diagnostics import caller_information
 from diagnostics import mutation_advice_checkpoint as checkpoint
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, disjoint
@@ -65,7 +66,8 @@ def inherited_reads(branch):
 
 
 def restore(
-    packet_path: Path, packet_hash: str, output: Path, arm: str, *, mode="offline-scripted"
+    packet_path: Path, packet_hash: str, output: Path, arm: str, *, mode="offline-scripted",
+    supplemental_observation=None,
 ):
     """Materialize a fresh baseline workspace and completed prefix; never replay probes."""
     require(arm in {"A", "B"}, "unknown checkpoint arm")
@@ -129,6 +131,9 @@ def restore(
         "historical_execution_is_not_new_execution": True,
         "active_elapsed_ms": start["payload"]["active_elapsed_ms"],
         "artifact_references": references,
+        "intervention": "caller-information" if supplemental_observation else "mutation-advice",
+        "supplement_hash": sha256_json(supplemental_observation)
+        if supplemental_observation is not None else None,
     }
     journal.append("diagnostic_checkpoint_fork", fork)
     task_dir, package = runner._resolve_task_file(source.public_path)
@@ -203,6 +208,9 @@ def restore(
         "restored allowances differ from checkpoint",
     )
     selected = copy.deepcopy(loaded.request if arm == "A" else checkpoint.project(loaded.request))
+    if supplemental_observation is not None:
+        selected = (copy.deepcopy(loaded.request) if arm == "A" else
+                    caller_information.project(loaded.request, supplemental_observation))
     bundle["request"] = selected
     turn = bundle["turn"]
     turn["model_input_artifact"] = native_compaction.put_json(store, selected["input"])
@@ -211,7 +219,9 @@ def restore(
     canonical = json.loads(
         loaded.store.read_bytes(Artifact.model_validate(turn["context_artifact"]))
     )
-    if arm == "B":
+    if arm == "B" and supplemental_observation is not None:
+        canonical[caller_information.FIELD] = copy.deepcopy(supplemental_observation)
+    elif arm == "B":
         canonical["completion_guidance"].update(next_action=None, message=checkpoint.FACTUAL)
     turn["context_artifact"] = native_compaction.put_json(store, canonical)
     turn["context_hash"] = turn["context_artifact"]["content_hash"]

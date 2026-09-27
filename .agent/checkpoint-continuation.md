@@ -40,6 +40,12 @@ imported or reused. After the first decision, context construction and guidance 
 ordinary runtime behavior. The proposal removes only current-message advice, not
 prior exposure or all mutation cues.
 
+The optional `supplemental_observation` argument instead selects the separately
+validated [caller-information intervention](caller-information.md). Both arms retain
+original guidance; only B adds the observation to its first current-state record
+and matching canonical context. The fork binds the supplement hash and intervention.
+Later turns use the same ordinary construction, without reinjecting the observation.
+
 ## Rehearsal and evidence limits
 
 `rehearse(branch, ScriptedClient(steps))` is a single-use offline entry point. Each

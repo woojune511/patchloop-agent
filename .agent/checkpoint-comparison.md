@@ -7,6 +7,12 @@ only the current message's mutation advice. Prior exposure and other cues remain
 After the first decision both arms use the ordinary runtime. This is a local
 checkpoint diagnostic, not a comparison of general solver quality.
 
+The separate [caller-information intervention](caller-information.md) reuses this
+collector with `--caller-evidence` plus its hash. That mode keeps the original advice
+in both arms and supplies verified later operator observations to B's first input.
+Its manifest binds the different request hashes and evidence; old manifests do not
+authorize it. Ordinary collection without these arguments retains advice removal.
+
 ## Preparation and admission
 
 `prepare` binds the exact public dev-train task, model/settings, credential path,
