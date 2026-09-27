@@ -56,10 +56,10 @@ selection; completion guidance and repair-recheck were fixed controls.
 A source/action audit links all 26 inputs, 34 public actions and 31 delivered source
 spans. Reads informed the four repairs, but B1's helper explanation overreached:
 the seed entered that helper and returned before its additional cancellation.
-Its runner-loop repair addressed the observed failure; the extra exception branch's
-necessity remains untested. Completed B observations, probe access and a warning
-about untested behavior were present. These records do not support missing delivery,
-probe access or warnings as explanations. Advice/action alignment does not prove causation.
+Its runner-loop repair addressed the observed failure. Completed B observations,
+probe access and a warning about untested behavior were present. These records do
+not support missing delivery, probe access or warnings as explanations. Advice/action
+alignment does not prove causation.
 
 The public explicit-cancel case uses a plain fixture and bypasses its same-task
 assertion. A separate operator replay now closes that observation gap: the exact
@@ -70,11 +70,15 @@ completed without timeout and confirmed owned-container cleanup; model calls wer
 zero. This is one single-cancellation plain-fixture observation, not autonomous
 verification, all-state equivalence or proof that extra patch branches are needed.
 
-The smallest next counterfactual is deletion of B1's extra exception branch under
-the same public probe/check environment. That tests patch necessity, not harness
-ablation. A recommendation-removal comparison would need matched feedback conditions:
-the existing status-only diagnostic rejects supplemental feedback. Neither experiment
-is active, and no prompt or runtime change is supported by the current audit.
+A two-line deletion comparison now closes the B1 extra-branch question within this
+public scope: original B1 and branch-removed B1 both pass the same cleanup probe,
+seven lifecycle cases and 32 upstream tests (three deselected). Without the branch,
+the helper is called but returns before issuing another cancel. The branch is not
+needed for these measured behaviors; all-state equivalence and private acceptance
+of the deletion remain untested. This was patch necessity, not harness ablation.
+No prompt or runtime change follows. A recommendation-removal comparison still
+needs matched feedback conditions because the status-only diagnostic rejects
+supplemental feedback. No new model experiment is active.
 
 The original cost-limited ON run remains NOT_RUN. It had asked a relevant probe
 question after its failed check, but obtained no observation. These new seeded
@@ -107,7 +111,9 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
-- Latest audit: [AnyIO evidence/action links](history/2026-09-27-anyio-evidence-action-link.md);
+- Latest result: [AnyIO B1 branch deletion](history/2026-09-27-anyio-b1-branch-deletion.md);
+  packet: `C:\pt\analyses\anyio-b1-branch-deletion-20260927-v1`.
+- Audit: [AnyIO evidence/action links](history/2026-09-27-anyio-evidence-action-link.md);
   packet: `C:\pt\analyses\anyio-evidence-action-link-20260927-v2`.
 - Replay: [AnyIO final probe scope](history/2026-09-27-anyio-final-probe-scope.md);
   packet: `C:\pt\analyses\anyio-final-probe-scope-20260927-v2`.

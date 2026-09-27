@@ -23,12 +23,13 @@ and SHA-256 digests. Historical claims are not current guidance.
 
 Search first, then read a bounded range around a matching heading.
 
-Relative links inside byte-exact snapshots retain their original spelling and
-original base directory from the manifest. They are not maintained as current
-navigation; use the active docs, original path, or recorded Git revision when needed.
+Snapshot links retain their original base directory; use the manifest or original
+Git revision when resolving historical paths.
 
 ## New records
 
+- [2026-09-27: AnyIO B1 branch deletion](2026-09-27-anyio-b1-branch-deletion.md):
+  two-line removal preserves the public probe and both registered checks.
 - [2026-09-27: AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md):
   delivered source, repairs, helper-path correction and verification claims.
 - [2026-09-27: AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md):
