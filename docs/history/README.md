@@ -21,6 +21,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
+- [OpenBLAS default](2026-09-27-probe-openblas-default.md).
 - [Pilot readiness](2026-09-27-original-pilot-readiness.md).
 - [Pilot packages](2026-09-27-original-pilot-packages.md).
 - [Pilot calibration](2026-09-27-original-pilot-calibration.md).

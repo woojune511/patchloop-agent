@@ -38,6 +38,8 @@ PROBE_IMAGE = "python@" + PROBE_IMAGE_DIGEST
 PROBE_TIMEOUT_SECONDS = 30
 # One trusted supervisor, one probe main thread, at most six worker threads.
 PROBE_PIDS_LIMIT = 8
+# Keep OpenBLAS imports within the single-CPU probe's existing thread budget.
+PROBE_THREAD_ENV = {"OPENBLAS_NUM_THREADS": "1"}
 PROBE_OUTPUT_LIMIT_BYTES = 12_000
 PROBE_SOURCE_LIMIT_CHARS = 8_000
 PROBE_SOURCE_LIMIT_BYTES = 32_000
@@ -62,6 +64,7 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
         "cap_drop": "ALL",
         "no_new_privileges": True,
         "thread_policy": "same-process-pthreads-only-v1",
+        "thread_environment": dict(PROBE_THREAD_ENV),
         "pids_limit": PROBE_PIDS_LIMIT,
         "memory": "512m",
         "memory_swap": "512m",
@@ -434,6 +437,8 @@ class DockerProbeSandbox:
                     "--cpus", "1", "--memory", "512m", "--memory-swap", "512m",
                     "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=64m",
                     "--env", "PYTHONDONTWRITEBYTECODE=1", "--env", "PYTHONUNBUFFERED=1",
+                    *[arg for key, value in PROBE_THREAD_ENV.items()
+                      for arg in ("--env", f"{key}={value}")],
                     "--mount", f"type=bind,source={snapshot},target=/workspace,readonly",
                     "--mount", f"type=bind,source={trusted},target=/opt/patchloop,readonly",
                     *dependency_arguments,

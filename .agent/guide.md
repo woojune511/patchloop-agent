@@ -115,6 +115,8 @@ remaining repetitions. Reservations are not billed usage; unknown usage is not z
 Probes use isolated public snapshots and the approved clean image/profile: no network,
 read-only source/root, bounded resources, and no private files, credentials, Git data,
 symlinks, or reparse points. Their sandbox receipts are separate from task correctness.
+The probe profile binds OPENBLAS_NUM_THREADS=1 at launch to fit its single CPU and
+eight-task PID limit. This is a library default; the existing thread limit still applies.
 Finish stores the exact submitted diff and content-bound manifest before isolated
 evaluation. Do not feed evaluator output back into the coding agent. Report acceptance
 and safety separately; `EVALUATOR_PASS` means task acceptance, mock Docker safety is

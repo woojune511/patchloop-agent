@@ -134,6 +134,7 @@ def test_probe_runs_snapshot_with_fixed_policy_and_no_worktree_write(monkeypatch
         return FakeProcess()
 
     monkeypatch.setenv("SECRET_API_KEY", "never inherited")
+    monkeypatch.setenv("OPENBLAS_NUM_THREADS", "64")
     mock_launch(monkeypatch, launch)
     result = sandbox.run_probe(public_repo, "observe value", "print(2)", deadline=None,
                                execution_identity={"run_id": "run1", "action_id": "a1"})
@@ -144,7 +145,10 @@ def test_probe_runs_snapshot_with_fixed_policy_and_no_worktree_write(monkeypatch
     assert result["execution_policy"]["version"] == "docker-python-probe-v2"
     assert result["execution_policy"]["thread_policy"] == "same-process-pthreads-only-v1"
     assert result["execution_policy"]["pids_limit"] == 8
+    assert result["execution_policy"]["thread_environment"] == {"OPENBLAS_NUM_THREADS": "1"}
     command = commands[0]
+    assert "OPENBLAS_NUM_THREADS=1" in command
+    assert "OPENBLAS_NUM_THREADS=64" not in command
     for flag, value in (("--network", "none"), ("--user", "10001:10001"),
                         ("--pull", "never"), ("--pids-limit", "8"),
                         ("--cap-drop", "ALL"), ("--entrypoint", "/usr/local/bin/python")):

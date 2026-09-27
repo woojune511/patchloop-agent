@@ -42,9 +42,8 @@ The cleanup-information comparison is closed. Four checkpoint continuations comp
 saved input against one additional operator observation. Both arms retained earlier
 information exposure; exact interventions remain in the linked historical record.
 
-Both arms achieved 2/2 acceptance with seven new model calls per arm. A cost
-$0.956988 and B $0.9576855. Both repaired the failure; this selected checkpoint
-does not demonstrate an information benefit or general equivalence.
+Both arms achieved 2/2 acceptance with seven new calls each. This selected
+checkpoint demonstrates neither an information benefit nor general equivalence.
 
 Delivery and billing audits passed; owned containers are absent. New spend was
 $1.9146735 of $2.786950; unused funds are closed. No paid allocation, retry or
@@ -77,8 +76,9 @@ references. Public tests use temporary copies; toqito excludes an obsolete test 
 contradicts its feature request. Before any model run, the pilot limits were amended
 to four files/1,000 lines with API changes allowed. Setup failures remain distinct
 from wrong answers. Probe readiness now blocks paid execution: toqito requires a
-source-only dependency; darts exceeds the installed-dependency limit; MontePy
-hits the numerical-library thread limit.
+source-only dependency; darts exceeds the installed-dependency limit. MontePy
+import/Cell construction now passes with the profile-bound OpenBLAS default of one
+thread. See [fix](history/2026-09-27-probe-openblas-default.md).
 See [readiness](history/2026-09-27-original-pilot-readiness.md) for the bound draft and next step.
 [Package validation](history/2026-09-27-original-pilot-packages.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
