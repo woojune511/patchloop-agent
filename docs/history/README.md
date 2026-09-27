@@ -9,11 +9,9 @@ only to their original checkpoint.
 Migration decision, measurements, and validation:
 [separating current guidance from history](2026-09-26-documentation-separation.md).
 
-These five files preserve the exact bytes of the active documents immediately before
-current guidance and accumulated history were separated. The
-[manifest](2026-09-26-context-split/manifest.json) records original paths, sizes, line
-counts, and SHA-256 digests. They include obsolete statements alongside observations;
-no historical claim becomes current through this migration.
+These five files preserve pre-split bytes. The
+[manifest](2026-09-26-context-split/manifest.json) records paths, sizes, line counts
+and SHA-256 digests. Historical claims are not current guidance.
 
 | Snapshot | Useful lookup topics |
 | --- | --- |
@@ -36,6 +34,8 @@ navigation; use the active docs, original path, or recorded Git revision when ne
 
 ## New records
 
+- [2026-09-27: AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md):
+  failed-seed control and same-task cleanup observed on four saved final patches.
 - [2026-09-27: AnyIO process audit](2026-09-27-anyio-observation-process-audit.md):
   guided actions, causal overreach and public-check scope.
 - [2026-09-27: AnyIO observation repair comparison](2026-09-27-anyio-observation-repair-comparison.md):

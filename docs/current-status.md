@@ -62,11 +62,13 @@ not establish that its extra exception branch was necessary. The B observations
 remained in actual inputs; there is no demonstrated context-loss explanation here.
 
 The public explicit-cancel case uses a plain fixture and bypasses its same-task
-assertion. Its PASS proves other lifecycle assertions, not that specific internal
-preservation claim. No final candidate reran the original state-observing probe.
-The immediate unresolved question is whether ordinary-cancellation teardown on
-the saved final candidates stays in the original task. A separately bounded replay
-of that existing public probe could check this without new model calls; it is NOT_RUN.
+assertion. A separate operator replay now closes that observation gap: the exact
+existing probe reproduced the old seed's failed teardown, while all four saved
+final candidates kept the runner alive and completed cleanup once in the original
+task. All five executions used the same corrected dependency/profile identities,
+completed without timeout and confirmed owned-container cleanup; model calls were
+zero. This is one single-cancellation plain-fixture observation, not autonomous
+verification, all-state equivalence or proof that extra patch branches are needed.
 
 The original cost-limited ON run remains NOT_RUN. It had asked a relevant probe
 question after its failed check, but obtained no observation. These new seeded
@@ -85,11 +87,12 @@ allocation, additional sample or continuation is active.
 
 ## Implemented and measured
 
-The latest investigation used existing runtime and seeded-repair code for four live
+The closed comparison used existing runtime and seeded-repair code for four live
 model runs. All 26 actual inputs/count requests, continuation records, five journal
 chains and frozen source/dependency identities verified; owned containers are absent.
-Recovery is observed for this supplied candidate. End-to-end task-solving improvement
-and default adoption remain unestablished.
+Recovery is observed for this supplied candidate, with same-task ordinary-cancellation
+cleanup separately observed on all four saved final patches. End-to-end task-solving
+improvement and default adoption remain unestablished.
 
 The opt-in first-plan timing, declaration expansion and independent-candidate diagnostics
 remain implemented, with no default adoption established by their closed comparisons.
@@ -98,7 +101,9 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
-- Latest analysis: [AnyIO process audit](history/2026-09-27-anyio-observation-process-audit.md);
+- Latest check: [AnyIO final probe scope](history/2026-09-27-anyio-final-probe-scope.md);
+  packet: `C:\pt\analyses\anyio-final-probe-scope-20260927-v2`.
+- Process analysis: [AnyIO process audit](history/2026-09-27-anyio-observation-process-audit.md);
   packet: `C:\pt\analyses\anyio-observation-process-audit-20260927-v1`.
 - Closed result: [AnyIO observation repair comparison](history/2026-09-27-anyio-observation-repair-comparison.md).
 - Results, public decision review and closure:
