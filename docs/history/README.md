@@ -15,12 +15,11 @@ Approvals are closed.
 | [Internal guide](2026-09-26-context-split/agent-guide.md) | Earlier contracts |
 | [Evidence](2026-09-26-context-split/evidence.md) | Early evidence |
 | [Operations](2026-09-26-context-split/operations.md) | Closed operations |
-| [Product](2026-09-26-context-split/product.md) | Earlier architecture |
 
 
 ## New records
 
-- [Toqito public audit](2026-09-28-toqito-public-validation.md).
+- [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
 - [Minimum funding](2026-09-28-minimum-completion-funding.md).
 - [Pilot](2026-09-28-original-pilot-results.md); [budget audit](2026-09-28-completion-budget-audit.md).
 - [Probe capacity](2026-09-27-installed-probe-capacity.md).

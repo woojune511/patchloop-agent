@@ -43,15 +43,13 @@ The cleanup-information comparison is closed: both selected checkpoint arms pass
 Its $1.9146735 spend and closed allocation remain in
 [results](history/2026-09-27-cleanup-information-results.md).
 
-The waiting-caller diagnostic is closed. Base and all four candidates stalled on
-direct internal-caller cancellation, while normal controls passed. This was not an
-introduced regression; pinned public paths provided no support requirement for the
-synthetic intervention. Do not expand required checks or invalidate acceptance.
+The waiting-caller diagnostic is closed: the synthetic internal cancellation stall
+also occurs at base and lacks a public support requirement. Do not expand checks
+or invalidate acceptance from this observation.
 See [caller support scope](history/2026-09-27-caller-support-scope.md).
 
-The AnyIO benchmark audit distinguishes adapted-task acceptance from original scores.
-Original source/image/oracle calibration is recorded in the linked history; AnyIO
-remains development/calibration data, not held-out evidence.
+AnyIO is development/calibration data; its adapted-task acceptance is separate from
+original scores. See the linked benchmark audit.
 The [original-input pilot](../.agent/original-input-pilot.md) fixes three fresh attempts:
 toqito-1538, MontePy-933_interface and darts-3065. Deterministic selection excludes
 current task/ledger repositories; this is a development pilot, not proven held-out.
@@ -78,8 +76,12 @@ deferred (no runtime policy changed). The
 error despite 14 passing base tests: the agent reversed conditioning in a probe's
 expected value, blamed its optimizer, and generalized a CQ closed form incorrectly.
 A feasible-state witness contradicts the patch by 0.18659 bits. Original NOT_RUN is
-unchanged; this is separate public operator evidence. Next assess self-verification
-with adequate resources, keeping no-hint solving separate from supplied feedback.
+unchanged; this is separate public operator evidence. The
+[mechanism audit](history/2026-09-28-general-failure-mechanism.md) confirms that full
+outputs, expectation code and generic cautions were delivered before the wrong
+attribution. A self-authored expectation became assumed truth; frequency and a fix
+remain unproven. Next assess comparator self-checking with adequate resources,
+keeping autonomous discovery separate from supplied task-specific feedback.
 No new paid allocation is active.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
