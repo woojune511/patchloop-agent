@@ -18,7 +18,8 @@ from patchloop.util import sha256_json
 
 @contextmanager
 def inputs(branch):
-    require(branch.packet["schema"] == review.SCHEMA, "review checkpoint required")
+    require(branch.packet["schema"] in (review.SCHEMA, "post-check-extension-v1"),
+            "review checkpoint required")
     guidance_original = runner._completion_guidance
     prepare_original = native_compaction.prepared_input
     treatment = review.FIELD in json.loads(branch.selected["input"][-1]["content"])["state"]

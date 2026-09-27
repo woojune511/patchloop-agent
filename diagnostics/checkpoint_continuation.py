@@ -35,6 +35,9 @@ from patchloop.util import canonical_json, sha256_json
 
 
 def checkpoint_backend(path):
+    if json.loads(path.read_bytes())["schema"] == "post-check-extension-v1":
+        from diagnostics import post_check_extension
+        return post_check_extension
     if json.loads(path.read_bytes())["schema"] == "expectation-review-offline-v1":
         from diagnostics import expectation_review_checkpoint
         return expectation_review_checkpoint
@@ -89,7 +92,10 @@ def restore(
     backend.validate(packet_path, packet_hash)
     packet = json.loads(packet_path.read_bytes())
     budget_fork = packet["schema"] == "post-edit-budget-checkpoint-v1"
-    review_fork = packet["schema"] == "expectation-review-offline-v1"
+    extension_fork = packet["schema"] == "post-check-extension-v1"
+    review_fork = packet["schema"] == "expectation-review-offline-v1" or extension_fork
+    if extension_fork:
+        require(arm == "A", "extension has one arm")
     require(review_new_cap_nanos is None or (review_fork
             and type(review_new_cap_nanos) is int and review_new_cap_nanos > 0),
             "positive review allocation required")
@@ -113,9 +119,17 @@ def restore(
         inherited = source_events[:receipt["cutoff_sequence"]]
         mutations = [e["payload"] for e in inherited if e["event_type"] == "action_started"
                      and e["payload"]["tool"] == "replace_text"]
-        require(len(mutations) == 1, "review restoration supports one historical mutation")
+        if extension_fork:
+            accepted = {e["payload"]["action_id"] for e in inherited
+                        if e["event_type"] == "action_finished"
+                        and e["payload"]["result"]["tool"] == "replace_text"
+                        and e["payload"]["result"]["error_code"] is None}
+            mutations = [m for m in mutations if m["action_id"] in accepted]
+            require(bool(mutations), "accepted mutation required")
+        else:
+            require(len(mutations) == 1, "review restoration supports one historical mutation")
         loaded = SimpleNamespace(request=selected_request, store=ForkStore(source.root, inherited),
-                                 mutation=mutations[0])
+                                 mutation=mutations[0], mutations=mutations)
     else:
         loaded = backend.load(source)
     historical = DevJournal(source.root, source.run_id)
@@ -175,7 +189,8 @@ def restore(
         "historical_execution_is_not_new_execution": True,
         "active_elapsed_ms": start["payload"]["active_elapsed_ms"],
         "artifact_references": references,
-        "intervention": ("expectation-review" if review_fork else
+        "intervention": ("post-check-time-extension" if extension_fork else
+                         "expectation-review" if review_fork else
                          "post-edit-budget" if budget_fork else
                          "cleanup-information" if backend is not checkpoint else
                          "caller-information" if supplemental_observation else "mutation-advice"),
@@ -214,7 +229,8 @@ def restore(
     if backend is not checkpoint:
         if review_fork:
             from diagnostics.cleanup_information_checkpoint import restore_candidate
-            restore_candidate(workspace, loaded.mutation)
+            for mutation in loaded.mutations:
+                restore_candidate(workspace, mutation)
         else:
             backend.restore_candidate(workspace, loaded.mutation)
     runner._validate_resumed_workspace(workspace, journal)
@@ -297,6 +313,14 @@ def restore(
         from diagnostics.post_edit_budget_checkpoint import project as fund
         budget_baseline = fund(loaded.request, review_new_cap_nanos)
         selected = fund(selected, review_new_cap_nanos)
+    if extension_fork:
+        selected = backend.project(selected)
+        budget_baseline = copy.deepcopy(selected)
+        request = request.model_copy(update={"limits": request.limits.model_copy(update={
+            "wall_time_seconds": request.limits.wall_time_seconds + backend.EXTRA_SECONDS})})
+        journal.append("diagnostic_time_extended", {"extra_seconds": backend.EXTRA_SECONDS,
+            "source_unknown_call": packet["checkpoint"]["source_unknown_call"],
+            "source_billing_remains_unknown": True})
     bundle["request"] = selected
     turn = bundle["turn"]
     turn["model_input_artifact"] = native_compaction.put_json(store, selected["input"])
@@ -317,6 +341,9 @@ def restore(
         canonical[backend.FIELD] = backend.CUE
     elif arm == "B":
         canonical["completion_guidance"].update(next_action=None, message=checkpoint.FACTUAL)
+    if extension_fork:
+        canonical["remaining_budget"]["active_wall_time_seconds"] = json.loads(
+            selected["input"][-1]["content"])["state"]["remaining_budget"]["active_wall_time_seconds"]
     turn["context_artifact"] = native_compaction.put_json(store, canonical)
     turn["context_hash"] = turn["context_artifact"]["content_hash"]
     journal.append(
@@ -341,7 +368,8 @@ def restore(
         pricing=pricing,
         packet=packet,
         selected=selected,
-        original=budget_baseline if budget_fork or funded_review else loaded.request,
+        original=(budget_baseline if budget_fork or funded_review or extension_fork
+                  else loaded.request),
         source_request=loaded.request,
         inherited_events=len(prefix),
         initial_spent_nanos=ledger.spent_nanos,
