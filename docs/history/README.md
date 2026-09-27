@@ -21,9 +21,10 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
-- [Caller cancellation](2026-09-27-caller-cancel-preservation.md): base and four final patches.
+- [Caller support scope](2026-09-27-caller-support-scope.md).
+- [Caller cancellation](2026-09-27-caller-cancel-preservation.md).
 
-- [Cleanup information results](2026-09-27-cleanup-information-results.md): 2/2 per arm.
+- [Cleanup information results](2026-09-27-cleanup-information-results.md).
 
 - [Cleanup information preparation](2026-09-27-cleanup-information-preparation.md).
 

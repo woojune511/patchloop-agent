@@ -51,16 +51,10 @@ $0.956988 and B $0.9576855. B1 explicitly connected caller re-cancellation to st
 teardown, but A also repaired the failure without the new supplement. This selected
 checkpoint does not demonstrate an information benefit or general equivalence.
 
-All 14 counted and 14 dispatched inputs verified, including exact first requests,
-first-input-only injection, 90 inherited events and native continuation integrity.
-No new probes ran; all eight owned check containers are absent. New spend was
-$1.9146735 of $2.786950. Unused $0.8722765 is closed. No paid allocation, retry or
-continuation is active. See [results](history/2026-09-27-cleanup-information-results.md).
-
-The earlier provider-free trace and one-line rescue established B1's local cleanup
-stall mechanism: a cancelled future woke an uncancelled caller, which cancelled the
-runner again after it had returned to waiting for work outside the per-coroutine
-handler. That finding motivated this comparison; it was not supplied as a verdict.
+Delivery and billing audits passed; owned containers are absent. New spend was
+$1.9146735 of $2.786950; unused funds are closed. No paid allocation, retry or
+continuation is active. Detailed traces and receipts remain in
+[results](history/2026-09-27-cleanup-information-results.md).
 
 The provider-free waiting-caller follow-up is also complete. Ten probes compared
 base and all four accepted candidates with normal Event release versus direct
@@ -72,11 +66,19 @@ containers were removed; source snapshots and old journals remained unchanged.
 
 Because base also stalls, this is not evidence of a newly introduced regression.
 It is a distinct internal-task cancellation path, not the task's KeyboardInterrupt
-case or public check's test-coroutine cancellation. Next decision: establish whether
-this internal caller cancellation is a supported entry point before adding a new
-required contract. Do not invalidate prior acceptance, change default prompts, or
-run more information A/B comparisons on this finding. See
-[caller preservation](history/2026-09-27-caller-cancel-preservation.md).
+case or public check's test-coroutine cancellation. A bounded review of the pinned
+public docs, plugin, runner API and source found no supported entry point for
+directly cancelling that waiting caller. Close this diagnostic without expanding
+the required checks or invalidating prior acceptance. This is absence of support
+evidence in the inspected version, not proof that no external integration can do it.
+See [caller support scope](history/2026-09-27-caller-support-scope.md).
+
+Next priority: prepare an original-benchmark evaluation specification with fixed
+dataset revision, issue input, base commit, original F2P/P2P oracle and environment.
+Recent acceptance is for PatchLoop-adapted development tasks, not an original
+SWE-rebench score. Keep developer-authored checks and checkpoint continuations
+separate from fresh benchmark solves. Separate development feedback from held-out
+evaluation; no new paid run is authorized by this decision.
 
 The original caller-state observation applies to callback KeyboardInterrupt on
 the unchanged base in the pinned environment, not every SIGINT/cancellation path.
@@ -85,10 +87,9 @@ control cancels the waiting caller rather than the public check's test coroutine
 Earlier fresh N1/N2 solves and advice-removal comparison are separate closed
 evidence; their budgets, outcomes and historical artifacts remain unchanged.
 
-Earlier supplied-candidate A/B repairs remain a separate 2/2 acceptance per arm,
-with no observed advantage from supplied completed output. Their operator probes
-and B1 branch deletion establish only those saved candidates' measured behaviors.
-They are not fresh-solve controls; earlier NOT_RUN outcomes remain unchanged.
+Earlier supplied-candidate A/B repairs remain separate 2/2 acceptance per arm,
+with no observed information advantage. They are not fresh-solve controls;
+earlier NOT_RUN outcomes remain unchanged.
 Use the selected pytest dependency bundle for further AnyIO diagnostics. The
 planning OFF comparisons remain closed without automatic adoption or baseline change.
 
