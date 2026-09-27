@@ -58,12 +58,10 @@ Toqito excludes one obsolete public test contradicting the issue.
 [Package validation](history/2026-09-27-original-pilot-packages.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
-The fixed pilot is complete: MontePy and darts passed original evaluation; toqito
-made one edit but exhausted its $1.20 allowance before checks/submission (NOT_RUN).
-Resolved/submitted is 2/2; resolved/planned is 2/3. Total cost was $2.0892005 / $3.60;
-remaining funds are closed. All three passed environment preparation. The user accepts
-more budget when necessary; $1.20 is not a product constraint. Cost-policy work is
-deferred (no runtime policy changed). The
+The pilot is complete: MontePy and darts passed; toqito exhausted $1.20 after one
+edit, before checks/submission (NOT_RUN). Resolved/submitted is 2/2; resolved/planned
+2/3. Cost was $2.0892005 / $3.60; funds closed. All environments passed preparation.
+The user accepts more budget when needed; cost-policy work remains deferred. The
 [public patch audit](history/2026-09-28-toqito-public-validation.md) found a semantic
 error despite 14 passing base tests: the agent reversed conditioning in a probe's
 expected value, blamed its optimizer, and generalized a CQ closed form incorrectly.
@@ -83,9 +81,10 @@ failing patch ($0.234737). It was absent at the final decision as designed.
 decision but again produced check/finish and the same failing patch ($0.113142).
 All allocations are closed. The [closure audit](history/2026-09-28-completion-closure-audit.md)
 found question narrowing and unsupported dismissal despite delivered warnings.
-The [advice collector](history/2026-09-28-completion-advice-live-preparation.md)
-supports repair states and passed scripted controls. A one-run $3 manifest is READY,
-awaiting authorization. Live efficacy is NOT_RUN; defaults remain unchanged.
+[Advice removal](history/2026-09-28-completion-advice-results.md) produced 2 probes
+and an extra edit ($0.9856585), but benchmark FAIL and public counterexamples remain.
+Its own probes pass after repair while a same-input invariant fails. Allocation closed;
+next audit expected-value selection and independent properties. Defaults unchanged.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
