@@ -39,9 +39,8 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 AnyIO is calibration data, separate from original scores. The
 [pilot](../.agent/original-input-pilot.md) fixed fresh attempts on toqito-1538,
 MontePy-933_interface and darts-3065, excluding current task/ledger repositories.
-This is development data, not proven held-out.
-Approved image digests, isolated package/environment controls, temporary public
-checks and fixed four-file/1,000-line limits are in
+This is development data. Image digests, environment controls, public checks and
+four-file/1,000-line limits are in
 [readiness](history/2026-09-27-original-pilot-readiness.md); pinned probe bundles in
 [capacity results](history/2026-09-27-installed-probe-capacity.md).
 Toqito excludes one obsolete public test contradicting the issue.
@@ -80,8 +79,9 @@ has 8 pass / 7 fail, not a benchmark score or hidden-failure attribution. Final
 changed-path/input-range coverage was missing. The [closure audit](history/2026-09-28-verification-closure-process.md)
 shows the CQ question survived: the model weakened its probe plan and closed it at
 submission. All 17 verification lists were empty; later boundary cases were never
-constructed. Next isolate verification scope or closure judgment; policy causality
-is untested. No paid retry, task-specific hint or default adoption.
+constructed. A [policy pair](history/2026-09-28-closure-policy-pair-design.md) now
+freezes deletion of two conditional-submit sentences only. Next implement its
+response-only collector; live NOT_RUN, no paid approval or default adoption.
 
 Earlier supplied-candidate repairs are not fresh-solve controls; prior NOT_RUN
 outcomes are unchanged. Planning OFF comparisons remain closed without adoption.
