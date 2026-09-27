@@ -89,8 +89,10 @@ failure and passed benchmark/safety checks: 5 calls, $0.685091; funds closed.
 Its post-fix probe had a SyntaxError, which it left unresolved before submission
 despite available probe/time/cost. Operator replay of the valid probe passed;
 the fixed public matrix improved 8/15 to 14/15, with pure-state underflow remaining.
-Next diagnose invalid-probe closure. This selected trajectory establishes neither
-general policy improvement nor full public-requirement correctness.
+The [closure audit](history/2026-09-28-invalid-probe-closure.md) verified all five inputs:
+the model acknowledged the invalid probe, replaced its question with check eligibility,
+then cleared it. System optional-experiment advice returned after the one-input ablation.
+Next isolate that advice at submission; no default or general improvement is established.
 
 Earlier supplied-candidate repairs are not fresh-solve controls; NOT_RUN is unchanged.
 Planning OFF comparisons remain closed without adoption.
@@ -150,10 +152,8 @@ Evidence for targeted lookup:
 - Protocol, metrics, public review, environment inventory and closure:
   `C:\pt\analyses\planning-off-regression-20260927-v1`.
 - Separate prior result: [planning ON/OFF comparison](history/2026-09-26-planning-off-comparison.md).
-- Separate timing result: [first-plan timing comparison](history/2026-09-27-after-source-planning-comparison.md).
 - Current implementation: [first plan after source](history/2026-09-26-after-source-planning.md).
 - Existing contract: [brief planning](../.agent/planning-experiment.md).
-- Prior candidate result: [independent candidate comparison](history/2026-09-26-independent-candidate-comparison.md).
 - Earlier decisions and immutable records: [documentation history](history/README.md).
 
 ## Reading and updating this page
