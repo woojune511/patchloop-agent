@@ -38,15 +38,9 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The cleanup-information comparison is closed. Four checkpoint continuations compared
-saved input against one additional operator observation. Both arms retained earlier
-information exposure; exact interventions remain in the linked historical record.
-
-Both arms achieved 2/2 acceptance with seven new calls each. This selected
-checkpoint demonstrates neither an information benefit nor general equivalence.
-
-The comparison spent $1.9146735 of $2.786950; remaining funds are closed. No paid
-allocation, retry or continuation is active. Traces and receipts remain in
+The cleanup-information comparison is closed: both selected checkpoint arms passed
+2/2 with seven new calls each; this established neither benefit nor equivalence.
+Its $1.9146735 spend and closed allocation remain in
 [results](history/2026-09-27-cleanup-information-results.md).
 
 The waiting-caller diagnostic is closed. Base and all four candidates stalled on
@@ -73,14 +67,16 @@ initial timeout. See [capacity results](history/2026-09-27-installed-probe-capac
 See [readiness](history/2026-09-27-original-pilot-readiness.md) for earlier preparation evidence.
 [Package validation](history/2026-09-27-original-pilot-packages.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
-AnyIO remains development/calibration data, not held-out evidence.
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
 The fixed pilot is complete: MontePy and darts passed original evaluation; toqito
 made one edit but exhausted its $1.20 allowance before checks/submission (NOT_RUN).
 Resolved/submitted is 2/2; resolved/planned is 2/3. Total cost was $2.0892005 / $3.60;
-remaining funds are closed. All three passed environment preparation. Next investigate
-completion-cost allocation using the saved toqito trace: the post-edit output allowance
-fell to 244 tokens. No policy adoption or further paid run is authorized.
+remaining funds are closed. All three passed environment preparation. The saved-state
+[budget audit](history/2026-09-28-completion-budget-audit.md) rejects immediate adoption
+of completion-reserve-v1: it blocks second-call investigation in all three observed
+states yet reserves only 128 output tokens per future call. Next separate minimal
+completion funding from speculative recovery in a provider-free diagnostic. No policy
+adoption or further paid run is authorized.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Caller observations cover the pinned callback-interrupt path. N1/N2 solves and
