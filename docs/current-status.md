@@ -70,10 +70,20 @@ These establish execution integrity, not model uptake or general repair quality.
 This sample shows no observed benefit from removing the current recommendation;
 do not adopt it or infer that all guidance is ineffective. Each arm has one accepted
 submission and one resource-limited non-submission, not one accepted and one rejected
-patch. Next question: can a provider-free public observation directly distinguish
-caller cancellation from callback interruption before another repair or paid policy
-comparison? The plain-fixture explicit-cancel same-task assertion gap remains a
-separate public coverage limit. Historical allocations and outcomes remain unchanged.
+patch. The provider-free caller-state probe now distinguishes the disputed condition:
+at callback KeyboardInterrupt and before teardown, the waiting caller is pending,
+not cancelled, with cancelling() == 0. An explicit-cancel control registers the
+request and reaches CancelledError/cancelled state. Original lifecycle observations
+and task ownership are preserved on the unchanged base in the pinned Python 3.12
+probe environment. This contradicts the caller-cancellation premise in this callback
+reproduction; it does not cover every SIGINT or cancellation path.
+
+Next question: does giving the agent this measured caller state change the unsupported
+first repair and subsequent checks? No new model comparison or prompt policy has
+been applied. Operator observation is not autonomous diagnosis or improvement evidence.
+The plain-fixture explicit-cancel same-task assertion gap remains separate; this
+control cancels the waiting caller rather than the test coroutine. Historical
+allocations and outcomes remain unchanged.
 
 Earlier supplied-candidate A/B repairs remain a separate 2/2 acceptance per arm,
 with no observed advantage from supplied completed output. Their operator probes
@@ -97,6 +107,8 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
+- Caller-state measurement: [observation and control](history/2026-09-27-anyio-caller-state.md);
+  packet: `C:\pt\analyses\anyio-caller-state-20260927-v1`.
 - Closed comparison: [checkpoint results](history/2026-09-27-checkpoint-live-results.md);
   packet: `C:\pt\analyses\checkpoint-live-results-20260927-v1`; live: `C:\pt\mutationlive0927a`.
 - Live collector: [preparation and environment block](history/2026-09-27-checkpoint-live-preparation.md);

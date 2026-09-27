@@ -24,6 +24,7 @@ Resolve snapshot links using the manifest or original Git revision.
 
 ## New records
 
+- [Caller state](2026-09-27-anyio-caller-state.md): interrupt versus explicit cancellation.
 - [Checkpoint results](2026-09-27-checkpoint-live-results.md): live A/B and public-trace audit.
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
 - [Offline continuation](2026-09-27-checkpoint-continuation.md): restored N1 inputs and scripted loop.
