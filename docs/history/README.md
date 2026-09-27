@@ -13,13 +13,14 @@ Past approvals are closed.
 | --- | --- |
 | [Current status](2026-09-26-context-split/current-status.md) | Prior baseline and observations |
 | [Internal guide](2026-09-26-context-split/agent-guide.md) | Earlier contracts |
-| [Evidence](2026-09-26-context-split/evidence.md) | Early observations and claim boundaries |
+| [Evidence](2026-09-26-context-split/evidence.md) | Early evidence |
 | [Operations](2026-09-26-context-split/operations.md) | Closed operations |
-| [Product](2026-09-26-context-split/product.md) | Earlier feature descriptions and architecture narrative |
+| [Product](2026-09-26-context-split/product.md) | Earlier architecture |
 
 
 ## New records
 
+- [Minimum funding](2026-09-28-minimum-completion-funding.md).
 - [Pilot](2026-09-28-original-pilot-results.md); [budget audit](2026-09-28-completion-budget-audit.md).
 - [Probe capacity](2026-09-27-installed-probe-capacity.md).
 - [Wheel admission](2026-09-27-generated-wheel-admission.md).

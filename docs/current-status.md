@@ -74,9 +74,11 @@ Resolved/submitted is 2/2; resolved/planned is 2/3. Total cost was $2.0892005 / 
 remaining funds are closed. All three passed environment preparation. The saved-state
 [budget audit](history/2026-09-28-completion-budget-audit.md) rejects immediate adoption
 of completion-reserve-v1: it blocks second-call investigation in all three observed
-states yet reserves only 128 output tokens per future call. Next separate minimal
-completion funding from speculative recovery in a provider-free diagnostic. No policy
-adoption or further paid run is authorized.
+states yet reserves only 128 output tokens per future call. The
+[minimum-funding diagnostic](history/2026-09-28-minimum-completion-funding.md) preserves
+investigation and fits the two successful traces arithmetically, but cannot fund the
+recorded large toqito edit plus completion at its late state. Next audit the cost guidance
+delivered before that edit; no new policy, output floor or paid run is authorized.
 See [pilot results and process audit](history/2026-09-28-original-pilot-results.md).
 
 Caller observations cover the pinned callback-interrupt path. N1/N2 solves and
