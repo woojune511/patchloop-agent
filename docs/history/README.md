@@ -19,7 +19,7 @@ Approvals are closed.
 
 ## New records
 
-- [Scope cue](2026-09-28-verification-scope-results.md).
+- [Deferred cue](2026-09-28-deferred-scope-preparation.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
 - [Funding](2026-09-28-minimum-completion-funding.md).
 - [Pilot](2026-09-28-original-pilot-results.md); [budget audit](2026-09-28-completion-budget-audit.md).

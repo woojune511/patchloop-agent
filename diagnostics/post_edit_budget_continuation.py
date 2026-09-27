@@ -39,6 +39,7 @@ def controls(packet_path, packet_hash, env_file, result_root):
             "result_root": str(result_root.resolve()),
             "selected_request_hash": packet["selected_request_hash"],
             "verification_scope_cue": packet.get(checkpoint.SCOPE_FIELD),
+            "scope_cue_timing": packet.get("scope_cue_timing", "first-input"),
             "remaining_budget": packet["checkpoint"]["remaining_budget"],
             "sdk_retries": 0, "automatic_resume": False,
             "runtime_hash": packet["runtime_hash"],

@@ -60,3 +60,21 @@ it with a previously observed unhinted run is a sequential development compariso
 not randomized or replicated causal evidence. Assess assertion-scope inspection,
 targeted new-behavior checks, error discovery, patch correctness and submission;
 extra tools or a longer response alone do not establish improvement.
+
+## Deferred scope cue
+
+`verification_scope=True, scope_timing="ready-to-submit"` starts from the same
+post-edit checkpoint with the unhinted first request. The scoped diagnostic hook
+adds the identical cue at the first naturally reached submission-eligible decision,
+before count and dispatch. It records the uncued request and selected request hash,
+updates canonical context/input bindings, and preserves tools and other state.
+The ordinary count includes the cue. Byte-bound overflow stops before counting;
+count-driven segmentation retains the intervention until its first dispatch.
+No readiness means no delivery. After that dispatch the cue is not reinjected,
+including if the agent chooses inspection/probing rather than submission.
+
+This changes delivery timing, not the checkpoint or text. Subsequent plans and
+actions may diverge naturally, so actual later inputs need their own audit; they
+are not promised identical to earlier runs. Single sequential samples cannot
+establish timing causality or general efficacy. Ordinary runtime/defaults remain
+unchanged; this diagnostic does not force a probe or make a new submission gate.

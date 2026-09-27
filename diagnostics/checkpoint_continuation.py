@@ -159,6 +159,7 @@ def restore(
     }
     if budget_fork and packet.get(backend.SCOPE_FIELD) is not None:
         fork[backend.SCOPE_FIELD] = packet[backend.SCOPE_FIELD]
+        fork["scope_cue_timing"] = packet.get("scope_cue_timing", "first-input")
     journal.append("diagnostic_checkpoint_fork", fork)
     task_dir, package = runner._resolve_task_file(source.public_path)
     require(
@@ -253,7 +254,9 @@ def restore(
     if budget_fork:
         budget_baseline = backend.project(selected, packet["new_cap_nanos"])
         selected = backend.project(selected, packet["new_cap_nanos"],
-                                   scope_cue=packet.get(backend.SCOPE_FIELD))
+                                   scope_cue=(packet.get(backend.SCOPE_FIELD)
+                                              if packet.get("scope_cue_timing", "first-input")
+                                              == "first-input" else None))
     bundle["request"] = selected
     turn = bundle["turn"]
     turn["model_input_artifact"] = native_compaction.put_json(store, selected["input"])
@@ -265,7 +268,8 @@ def restore(
     if budget_fork:
         canonical["remaining_budget"]["cost"] = json.loads(
             selected["input"][-1]["content"])["state"]["remaining_budget"]["cost"]
-        if packet.get(backend.SCOPE_FIELD) is not None:
+        if (packet.get(backend.SCOPE_FIELD) is not None
+                and packet.get("scope_cue_timing", "first-input") == "first-input"):
             canonical[backend.SCOPE_FIELD] = packet[backend.SCOPE_FIELD]
     if arm == "B" and supplemental_observation is not None:
         canonical[caller_information.FIELD] = copy.deepcopy(supplemental_observation)
@@ -403,6 +407,9 @@ def first_input(branch):
                 normalized == branch.original, "restored first state differs beyond elapsed time"
             )
             first.append(True)
+        if branch.packet.get("scope_cue_timing") == "ready-to-submit":
+            from diagnostics.deferred_scope_cue import prepare_at_readiness
+            return prepare_at_readiness(original_prepare, branch, turn, request, transition)
         return original_prepare(journal, store, turn, request, transition)
 
     with patch.object(native_compaction, "prepared_input", prepare):

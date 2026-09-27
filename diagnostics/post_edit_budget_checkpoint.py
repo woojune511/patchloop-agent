@@ -33,6 +33,7 @@ SCOPE_CUE = (
 IMPLEMENTATION = (
     "diagnostics/post_edit_budget_checkpoint.py",
     "diagnostics/post_edit_budget_continuation.py",
+    "diagnostics/deferred_scope_cue.py",
     "diagnostics/checkpoint_continuation.py",
     "diagnostics/checkpoint_comparison.py",
     "diagnostics/cleanup_information_checkpoint.py",
@@ -138,12 +139,16 @@ def implementation_hashes():
     return {p: sha256_bytes((repository_root() / p).read_bytes()) for p in IMPLEMENTATION}
 
 
-def prepare(source, output: Path, new_cap_usd: Decimal, *, verification_scope=False):
+def prepare(source, output: Path, new_cap_usd: Decimal, *, verification_scope=False,
+            scope_timing="first-input"):
     disjoint(output.resolve(), (repository_root(), source.root, source.public_path.parent))
     loaded = load(source)
+    require(scope_timing in {"first-input", "ready-to-submit"}, "unknown scope cue timing")
+    require(verification_scope or scope_timing == "first-input", "deferred timing needs a cue")
     cap = usd_to_nanos(new_cap_usd)
     cue = SCOPE_CUE if verification_scope else None
-    selected = project(loaded.request, cap, scope_cue=cue)
+    selected = project(loaded.request, cap,
+                       scope_cue=cue if scope_timing == "first-input" else None)
     packet = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
               "source": source.record(), "checkpoint": loaded.receipt, "new_cap_nanos": cap,
               "runtime_hash": runtime_content_hash(),
@@ -152,6 +157,7 @@ def prepare(source, output: Path, new_cap_usd: Decimal, *, verification_scope=Fa
               "selected_request_hash": sha256_json(selected)}
     if cue is not None:
         packet[SCOPE_FIELD] = cue
+        packet["scope_cue_timing"] = scope_timing
     output.mkdir()
     store = ArtifactStore(output / "artifacts")
     packet["request"] = store.put_json(selected).model_dump(mode="json")
@@ -171,8 +177,12 @@ def validate(path, digest):
             and packet["implementation_hashes"] == implementation_hashes(),
             "checkpoint implementation changed")
     loaded = load(Source.from_record(packet["source"]))
+    timing = packet.get("scope_cue_timing", "first-input")
+    require(timing in {"first-input", "ready-to-submit"}, "unknown scope cue timing")
+    require(timing == "first-input" or packet.get(SCOPE_FIELD) == SCOPE_CUE,
+            "deferred timing needs the frozen cue")
     selected = project(loaded.request, packet["new_cap_nanos"],
-                       scope_cue=packet.get(SCOPE_FIELD))
+                       scope_cue=packet.get(SCOPE_FIELD) if timing == "first-input" else None)
     require(loaded.receipt == packet["checkpoint"]
             and sha256_json(loaded.request) == packet["original_request_hash"]
             and sha256_json(selected) == packet["selected_request_hash"], "checkpoint changed")
