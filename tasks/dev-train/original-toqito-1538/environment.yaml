@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.vprusso_1776_toqito-1538@sha256:4a79ab796ad10cb18c3d805895977fbf119b16db4a9bd4b815678459846a6b86
+image_digest: sha256:4a79ab796ad10cb18c3d805895977fbf119b16db4a9bd4b815678459846a6b86
+source_image_tag: swerebench/sweb.eval.x86_64.vprusso_1776_toqito-1538:latest

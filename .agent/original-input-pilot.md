@@ -49,15 +49,21 @@ to 87 without changing the selected three. This was not an outcome-based reselec
 - Keep registered tools; no unrestricted agent shell. Use existing base-repository
   tests for visible feedback, without reference-added tests or operator-authored
   semantic cases. Freeze exact public commands/source paths before any model run.
-  Those per-task bindings require source/environment preparation and remain pending.
-- Pilot edit limits: at most four changed production files and 120 diff lines,
-  no dependency/public-API changes; no test/evaluator edits. Bind concrete production
-  path allowlists during package preparation. Report these harness restrictions;
+  Commands now copy the public checkout into temporary storage before running existing
+  tests. Toqito excludes the public test asserting uparrow is unimplemented, which
+  conflicts with the original feature request; no hidden assertion was made public.
+- Amended before any paid run: at most four changed production files and 1,000 diff
+  lines, no dependency or test/evaluator edits. Public API changes are permitted:
+  the original tasks explicitly request an API extension and a property deleter.
+  The earlier 120-line/no-API proposal was incompatible with these tasks and was
+  rejected during package validation. Concrete source allowlists are now bound.
+  Report these harness restrictions;
   this is not an unrestricted benchmark agent or a comparison to historical scores.
 - Fix collector/runtime hash, original issue hash, exact task package hash, public
   check commands, image digest, credential path and approved cap in the execution
-  manifest. Original-input task packages do not yet exist; never substitute current
-  adapted packages. No paid dispatch until these bindings and calibration are complete.
+  manifest. Original-input packages now exist at `tasks/dev-train/original-toqito-1538`,
+  `original-montepy-933` and `original-darts-3065`; never substitute adapted packages.
+  No paid dispatch until the credential, allocation and execution manifest are bound.
 
 ## Evaluation and reporting
 
@@ -98,7 +104,14 @@ driver requiring `--authorized-image-acquisition`; that flag is not user permiss
 It binds the saved selection, original oracle and prior pinned parser. It never
 mounts evaluator material into an agent workspace or calls a model.
 
-Next prepare original-input public/private task packages and bind visible commands,
-source allowlists and runtime identities. No paid run is authorized; image approval
+Packages passed the actual isolated evaluator with production-only reference patches,
+including regression, original oracle, scope and safety checks. Runtime/package hashes
+are recorded in [package validation](../docs/history/2026-09-27-original-pilot-packages.md).
+Original test-patch application runs on an evaluator-only temporary copy. Explicit
+infrastructure exit code 2 becomes evaluator ERROR, not a wrong-answer verdict.
+
+Next bind the live invocation manifest, credential and approved allocation. Enabled
+optional probes retain their separate environment requirements; package validation
+does not establish dependency completeness for arbitrary probes. No paid run is authorized; image approval
 does not authorize model use, another sample or unbounded retries. All evidence is
 `official=false`; calibration is not agent performance.

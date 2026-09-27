@@ -14,6 +14,11 @@
 Makefile text eol=lf
 docker/Dockerfile.sandbox text eol=lf
 
+# These evaluator assets are bound by raw-byte inventory hashes.
+tasks/dev-train/original-toqito-1538/** -text whitespace=cr-at-eol
+tasks/dev-train/original-montepy-933/** -text whitespace=cr-at-eol
+tasks/dev-train/original-darts-3065/** -text whitespace=cr-at-eol
+
 # Preserve the exact evaluator-submitted bytes, including agent-authored blank-line spaces.
 reports/memory-development/artifacts/run_0794d94df2f24d87-submitted.patch -whitespace
 reports/live-pilot/artifacts/run_685c492e34f84fef-submitted.patch -whitespace
@@ -21,3 +26,6 @@ reports/live-pilot/artifacts/run_0814be408332479e-submitted.patch -whitespace
 reports/live-pilot/artifacts/run_6cc69fc1170c4a44-unsubmitted-final.patch -whitespace
 reports/live-pilot/artifacts/run_e2132144a8774b05-submitted.patch -whitespace
 fixtures/task-packages/self-validation-csv-quoted-newline/reference.patch -whitespace
+tasks/dev-train/original-toqito-1538/reference.patch -whitespace
+tasks/dev-train/original-montepy-933/reference.patch -whitespace
+tasks/dev-train/original-darts-3065/reference.patch -whitespace

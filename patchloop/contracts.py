@@ -50,7 +50,16 @@ class RegisteredCheck(StrictModel):
     working_directory: str = "."
     environment: dict[str, str] = Field(default_factory=dict)
     expected_exit_codes: list[int] = Field(default_factory=lambda: [0])
+    infrastructure_exit_codes: list[int] = Field(
+        default_factory=list, exclude_if=lambda value: not value,
+    )
     output_limit_bytes: int = Field(default=200_000, ge=1, le=10_000_000)
+
+    @model_validator(mode="after")
+    def disjoint_exit_codes(self) -> RegisteredCheck:
+        if set(self.expected_exit_codes) & set(self.infrastructure_exit_codes):
+            raise ValueError("success and infrastructure exit codes must be disjoint")
+        return self
 
     @field_validator("working_directory")
     @classmethod

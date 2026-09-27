@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.idaholab_1776_montepy-933_interface@sha256:d79f83f33b0f25749596dd0038adecb80e9b443300200890dca0f6d23488567c
+image_digest: sha256:d79f83f33b0f25749596dd0038adecb80e9b443300200890dca0f6d23488567c
+source_image_tag: swerebench/sweb.eval.x86_64.idaholab_1776_montepy-933_interface:latest

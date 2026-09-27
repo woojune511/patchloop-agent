@@ -38,11 +38,9 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The cleanup-information comparison is closed. Four continuations of B1 immediately
-after its first failed lifecycle check ran A1/B1/B2/A2. A retained the saved input;
-B added later raw operator cancellation-order/state observations of that exact
-candidate once. Other candidates, rescue patches and interpreted causal verdicts
-were excluded. Both arms retained previous caller-information exposure.
+The cleanup-information comparison is closed. Four checkpoint continuations compared
+saved input against one additional operator observation. Both arms retained earlier
+information exposure; exact interventions remain in the linked historical record.
 
 Both arms achieved 2/2 acceptance with seven new model calls per arm. A cost
 $0.956988 and B $0.9576855. Both repaired the failure; this selected checkpoint
@@ -74,8 +72,12 @@ current task/ledger repositories; this is a development pilot, not proven held-o
 All three images were acquired with explicit approval and their digests fixed.
 Six controls verified BASE F2P failures with preserved P2P, and REFERENCE full passes;
 all reference commands exit 0, with no missing required cases or timeouts.
-Next: prepare original-input task packages and bind visible commands/runtime before
-paid solves. See [pilot calibration](history/2026-09-27-original-pilot-calibration.md).
+Original-input packages now pass the actual isolated evaluator on all three production
+references. Public tests use temporary copies; toqito excludes an obsolete test that
+contradicts its feature request. Before any model run, the pilot limits were amended
+to four files/1,000 lines with API changes allowed. Setup failures remain distinct
+from wrong answers. Next: final live manifest, probe readiness and exact paid allocation.
+See [package validation](history/2026-09-27-original-pilot-packages.md).
 See [calibration](history/2026-09-27-original-benchmark-calibration.md).
 AnyIO remains development/calibration data, not untouched held-out evidence.
 See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).

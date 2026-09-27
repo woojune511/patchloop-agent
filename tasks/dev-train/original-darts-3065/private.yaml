@@ -1,0 +1,25 @@
+schema_version: task-private-v2
+task_id: original-darts-3065
+task_version: 1
+hidden_checks:
+- id: original-oracle
+  command:
+  - /opt/conda/envs/testbed/bin/python
+  - -B
+  - .patchloop-hidden/run_oracle.py
+  timeout_seconds: 120
+  environment:
+    PYTHONPATH: /workspace
+  infrastructure_exit_codes:
+  - 2
+hidden_artifacts:
+- path: hidden/oracle.json
+  sha256: sha256:b4ea93a271bf4a00ec9267234a28dadbb3683ec53ffe13d01e545e4be7b9d101
+- path: hidden/run_oracle.py
+  sha256: sha256:c425a7b4dbdff050b5e7345cdd97137cfdb72068d8bf2b64b0fd09d73cbefc98
+- path: hidden/scoring.py
+  sha256: sha256:e96feb00166f003c8c86612d4f2e8b496e4683af5a28e212df68faa00340afde
+reference_patch:
+  path: reference.patch
+  sha256: sha256:92ee74ea1c01f2f3f05e3e78c59e905e3a41182acdc29fca8e15bf35f707c47d
+audit: {}

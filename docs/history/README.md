@@ -21,6 +21,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
+- [Pilot packages](2026-09-27-original-pilot-packages.md).
 - [Pilot calibration](2026-09-27-original-pilot-calibration.md).
 - [Pilot selection](2026-09-27-original-input-pilot-selection.md).
 - [Oracle calibration](2026-09-27-original-benchmark-calibration.md).
@@ -45,8 +46,7 @@ Search first; resolve snapshot links through the manifest or original revision.
 - [AnyIO B1 branch deletion](2026-09-27-anyio-b1-branch-deletion.md).
 - [AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md).
 - [AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md).
-- [AnyIO process audit](2026-09-27-anyio-observation-process-audit.md):
-  guided actions, causal overreach and public-check scope.
+- [AnyIO process audit](2026-09-27-anyio-observation-process-audit.md).
 - [AnyIO observation repair comparison](2026-09-27-anyio-observation-repair-comparison.md):
   A/B 2/2 acceptance each on a supplied candidate.
 - [AnyIO failure observation](2026-09-27-anyio-failure-observation.md):

@@ -124,7 +124,11 @@ class EvaluationEngine:
                 check_type=kind,
                 check_id=check.id,
                 state=(
-                    VerdictState.ERROR if outcome.deadline_exhausted or outcome.cleanup_failed
+                    VerdictState.ERROR if (
+                        outcome.deadline_exhausted or outcome.cleanup_failed
+                        or outcome.exit_code in check.infrastructure_exit_codes
+                        or (check.infrastructure_exit_codes and outcome.timed_out)
+                    )
                     else VerdictState.PASS if passed else VerdictState.FAIL
                 ),
                 duration_ms=int((time.monotonic() - started) * 1_000),
@@ -149,6 +153,10 @@ class EvaluationEngine:
                 )
             if outcome.deadline_exhausted:
                 raise ExecutionDeadlineExceeded("active deadline exhausted during evaluation")
+            if check.infrastructure_exit_codes and (
+                outcome.exit_code in check.infrastructure_exit_codes or outcome.timed_out
+            ):
+                raise ContractError("registered evaluator check infrastructure failure")
 
     @staticmethod
     def _aggregate(results: list[VerifierResult], check_type: str) -> VerdictState:

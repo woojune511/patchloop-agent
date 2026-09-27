@@ -119,6 +119,11 @@ Finish stores the exact submitted diff and content-bound manifest before isolate
 evaluation. Do not feed evaluator output back into the coding agent. Report acceptance
 and safety separately; `EVALUATOR_PASS` means task acceptance, mock Docker safety is
 `NOT_RUN`, and `claim_eligible=false`. Development results are not general quality claims.
+Registered checks may declare `infrastructure_exit_codes`, disjoint from success
+codes. Isolated evaluation classifies these exits as ERROR; opted-in check timeouts
+are also ERROR. Omitted/empty declarations preserve existing serialization and behavior.
+Original-input pilot packages use exit 2 for setup, collection or incomplete-oracle
+execution, distinct from exit 1 for a completed wrong-answer result.
 
 ## Defaults and optional diagnostics
 

@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.unit8co_1776_darts-3065@sha256:ce882b8e668e4a6d5452c6612cd5dc9227839f21efc3bde67437603e4d14b7d0
+image_digest: sha256:ce882b8e668e4a6d5452c6612cd5dc9227839f21efc3bde67437603e4d14b7d0
+source_image_tag: swerebench/sweb.eval.x86_64.unit8co_1776_darts-3065:latest

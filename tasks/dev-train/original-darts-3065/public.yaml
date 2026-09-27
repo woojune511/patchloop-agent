@@ -1,0 +1,104 @@
+schema_version: task-public-v1
+task_id: original-darts-3065
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/unit8co/darts.git
+  base_commit: 6bfda77e4afc9c123740ab6cc52ca39a7ab92d84
+  language: python
+issue:
+  title: '[BUG] IndexError when transforming static covariates with OneHotEncoder
+    and parameter drop set'
+  description: "[BUG] IndexError when transforming static covariates with OneHotEncoder\
+    \ and parameter drop set\n**Describe the bug**\nWhen using the `StaticCovariatesTransformer`\
+    \ with sklearn's [ `OneHotEncoder`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html)\
+    \ as the `transformer_cat` and having the drop parameter specified as `\"if_binary\"\
+    ` or `\"first\"`, the `StaticCovariatesTransformer` is not aware of the dropped\
+    \ column. This results in an IndexError when calling `StaticCovariatesTransformer.transform()`.\
+    \ \n\n**To Reproduce**\n```\nimport numpy as np\nimport pandas as pd\nfrom darts\
+    \ import TimeSeries\nfrom darts.dataprocessing.transformers import StaticCovariatesTransformer\n\
+    from sklearn.preprocessing import OneHotEncoder\ncovs = [\"a\", \"c\", \"b\"]\
+    \ \ndrop = \"first\"\nstatic_covs = pd.DataFrame(data={\"cat\": covs})\nseries\
+    \ = TimeSeries.from_values(\n    values=np.random.random((10, 3)),\n    columns=[\"\
+    comp1\", \"comp2\", \"comp3\"],\n    static_covariates=static_covs,\n)\ntransformer\
+    \ = StaticCovariatesTransformer(transformer_cat=OneHotEncoder(drop=drop))\nseries_transformed\
+    \ = transformer.fit_transform(series)\n```\n\nResults in the following error:\n\
+    \n```\nTraceback (most recent call last):\n  File \"<stdin>\", line 1, in <module>\n\
+    \  File \"C:\\LocalData\\Anaconda3-2024-02\\envs\\tsf_vgl_dev\\Lib\\site-packages\\\
+    darts\\dataprocessing\\transformers\\fittable_data_transformer.py\", line 338,\
+    \ in fit_transform\n    return self.fit(\n           ^^^^^^^^^\n  File \"C:\\\
+    LocalData\\Anaconda3-2024-02\\envs\\tsf_vgl_dev\\Lib\\site-packages\\darts\\dataprocessing\\\
+    transformers\\fittable_data_transformer.py\", line 304, in transform\n    return\
+    \ super().transform(\n           ^^^^^^^^^^^^^^^^^^\n  File \"C:\\LocalData\\\
+    Anaconda3-2024-02\\envs\\tsf_vgl_dev\\Lib\\site-packages\\darts\\dataprocessing\\\
+    transformers\\base_data_transformer.py\", line 397, in transform\n    transformed_data\
+    \ = _parallel_apply(\n                       ^^^^^^^^^^^^^^^^\n  File \"C:\\LocalData\\\
+    Anaconda3-2024-02\\envs\\tsf_vgl_dev\\Lib\\site-packages\\darts\\utils\\utils.py\"\
+    , line 259, in _parallel_apply\n    returned_data = Parallel(n_jobs=n_jobs)(\n\
+    \                    ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\LocalData\\Anaconda3-2024-02\\\
+    envs\\tsf_vgl_dev\\Lib\\site-packages\\joblib\\parallel.py\", line 1986, in __call__\n\
+    \    return output if self.return_generator else list(output)\n              \
+    \                                  ^^^^^^^^^^^^\n  File \"C:\\LocalData\\Anaconda3-2024-02\\\
+    envs\\tsf_vgl_dev\\Lib\\site-packages\\joblib\\parallel.py\", line 1914, in _get_sequential_output\n\
+    \    res = func(*args, **kwargs)\n          ^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\\
+    LocalData\\Anaconda3-2024-02\\envs\\tsf_vgl_dev\\Lib\\site-packages\\darts\\dataprocessing\\\
+    transformers\\base_data_transformer.py\", line 47, in transform_wrapper\n    out\
+    \ = transformer_method(cls, series_proc, params, *args, **kwargs)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+    \  File \"C:\\LocalData\\Anaconda3-2024-02\\envs\\tsf_vgl_dev\\Lib\\site-packages\\\
+    darts\\dataprocessing\\transformers\\base_data_transformer.py\", line 232, in\
+    \ _ts_transform\n    return cls.ts_transform(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\
+    \  File \"C:\\LocalData\\Anaconda3-2024-02\\envs\\tsf_vgl_dev\\Lib\\site-packages\\\
+    darts\\dataprocessing\\transformers\\static_covariates_transformer.py\", line\
+    \ 357, in ts_transform      \n    return StaticCovariatesTransformer._transform_static_covs(\n\
+    \           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\\
+    LocalData\\Anaconda3-2024-02\\envs\\tsf_vgl_dev\\Lib\\site-packages\\darts\\dataprocessing\\\
+    transformers\\static_covariates_transformer.py\", line 412, in _transform_static_covs\n\
+    \             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\\
+    LocalData\\Anaconda3-2024-02\\envs\\tsf_vgl_dev\\Lib\\site-packages\\darts\\dataprocessing\\\
+    transformers\\static_covariates_transformer.py\", line 458, in _add_back_static_covs\n\
+    \    data[col_name] = vals_cat[:, idx_cat]\n                     ~~~~~~~~^^^^^^^^^^^^\n\
+    IndexError: index 2 is out of bounds for axis 1 with size 2\n```\n\n**Expected\
+    \ behavior**\nThe `StaticCovariatesTransformer` class should be aware of the number\
+    \ of ouptut features produced by the underlying tansformer.\n\n**System (please\
+    \ complete the following information):**\n - Python version: 3.12\n - u8darts:\
+    \ 0.37.1 \n - scikit-learn: 1.7.1"
+constraints:
+  allowed_paths:
+  - darts/**
+  forbidden_paths:
+  - tests/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/conda/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"public-tests-\") as temp:\n    checkout\
+    \ = Path(temp) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n       \
+    \            ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\", \"\
+    __pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = str(checkout)\n\
+    \    env[\"PATH\"] = str(Path(sys.executable).parent) + os.pathsep + env[\"PATH\"\
+    ]\n    result = subprocess.run([sys.executable, \"-m\", *sys.argv[1:]], cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - pytest
+  - --no-header
+  - -rA
+  - --tb=line
+  - --color=no
+  - -p
+  - no:cacheprovider
+  - darts/tests/dataprocessing/transformers/test_static_covariates_transformer.py
+  timeout_seconds: 120
+  environment:
+    PYTHONPATH: /workspace
+tags:
+- original-input-pilot
+- swe-rebench
+- development
