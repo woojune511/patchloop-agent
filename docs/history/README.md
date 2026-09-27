@@ -21,9 +21,11 @@ Search first; resolve snapshot links through the manifest or original revision.
 
 ## New records
 
-- [Cleanup information preparation](2026-09-27-cleanup-information-preparation.md): failed-check continuation and raw observations.
+- [Cleanup information results](2026-09-27-cleanup-information-results.md): 2/2 per arm.
 
-- [Cleanup cancellation](2026-09-27-anyio-cleanup-cancellation.md): traced stall and one-line rescue.
+- [Cleanup information preparation](2026-09-27-cleanup-information-preparation.md).
+
+- [Cleanup cancellation](2026-09-27-anyio-cleanup-cancellation.md).
 - [Caller information results](2026-09-27-caller-information-results.md): first repairs and bounded outcomes.
 - [Caller information](2026-09-27-caller-information.md): first-input comparison preparation.
 - [Caller state](2026-09-27-anyio-caller-state.md): interrupt versus explicit cancellation.

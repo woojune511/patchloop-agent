@@ -20,7 +20,7 @@ Simplifying an ineffective mechanism is a valid next step.
 
 - `dev-head` is the sole active mutable runtime; every run is `official=false`.
 - The chosen performance baseline is `gpt-5.4-2026-03-05`, xhigh, 25,000 output tokens.
-  The latest information comparison used collector checkpoint `dcacb0d`.
+  The latest information comparison used collector checkpoint `0cf07b81`.
   These selected settings are not a statement of CLI defaults.
 - Baseline options: segmented-v1, result-or-size-v1 boundaries, brief-v1, probes
   enabled / probe-policy none, repair-recheck, protected-v1 inspection, and
@@ -38,42 +38,36 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The caller-information comparison is closed. Four actual continuations of N1's
-first post-probe/pre-edit checkpoint ran A1/B1/B2/A2. A retained the original input;
-B received the later operator probe code and raw caller-state measurements once.
-Original mutation advice, tools, native history and remaining budgets were fixed.
-New spend was $3.025955 of $3.869852, excluding inherited usage. Unused $0.843897
-is closed. No paid allocation, retry or continuation is active.
+The cleanup-information comparison is closed. Four continuations of B1 immediately
+after its first failed lifecycle check ran A1/B1/B2/A2. A retained the saved input;
+B added later raw operator cancellation-order/state observations of that exact
+candidate once. Other candidates, rescue patches and interpreted causal verdicts
+were excluded. Both arms retained previous caller-information exposure.
 
-The closed comparison produced one accepted submission and one resource-limited
-non-submission per arm. B2 passed both checks with its first patch; B1's first patch
-stalled during cleanup. Exact delivery and known billing were audited. These are
-local information-to-action observations, not a general quality improvement.
-See the results record for first repairs, intermediate failures and budget outcomes.
+All four passed both public checks and isolated acceptance/safety after one new
+repair. A1/B1 edited first; B2 read source first and A2 searched an uncancel idiom.
+Both arms achieved 2/2 acceptance with seven new model calls per arm. A cost
+$0.956988 and B $0.9576855. B1 explicitly connected caller re-cancellation to stranded
+teardown, but A also repaired the failure without the new supplement. This selected
+checkpoint does not demonstrate an information benefit or general equivalence.
 
-The subsequent provider-free diagnostic identified B1's cleanup stall in the
-callback/ContextVar-fixture reproduction. run_test cancels the future and runner;
-the waiting caller receives CancelledError from that future with cancelling() == 0,
-then unconditionally cancels the runner again. The runner had returned to receiving
-work outside its per-coroutine exception handler; it terminates, stranding teardown.
-Both traced and untraced B1 executions stalled. Both B2 executions completed.
-Removing only B1's caller-side runner.cancel line rescued both traced and untraced
-executions: no post_interrupt, exactly one same-task fixture cleanup, normal exit.
-Six isolated probes completed with known cleanup and zero provider calls/cost.
+All 14 counted and 14 dispatched inputs verified, including exact first requests,
+first-input-only injection, 90 inherited events and native continuation integrity.
+No new probes ran; all eight owned check containers are absent. New spend was
+$1.9146735 of $2.786950. Unused $0.8722765 is closed. No paid allocation, retry or
+continuation is active. See [results](history/2026-09-27-cleanup-information-results.md).
 
-This is a measured local mechanism and one-line rescue, not a validated task repair.
-The rescued runner still had cancelling() == 1 after teardown, so a nonzero counter
-alone does not explain the stall. Cancellation origin and delivery point matter.
-The active question is whether giving the agent these raw measurements helps it
-repair B1 after its first failed check. A retains that saved input; B adds only
-traced/untraced program and raw observations of the exact first candidate. B2,
-one-line rescue and interpreted causal verdict are excluded. Actual caller.cancel()
-preservation remains a validation question; new acceptance is NOT_RUN.
-The new four-row comparison retains the original remaining resources;
-no fresh paid allocation has been authorized. See the
-[contract](../.agent/cleanup-information.md) and
-[preparation evidence](history/2026-09-27-cleanup-information-preparation.md).
-No default harness/prompt/memory policy or historical candidate has been changed.
+The earlier provider-free trace and one-line rescue established B1's local cleanup
+stall mechanism: a cancelled future woke an uncancelled caller, which cancelled the
+runner again after it had returned to waiting for work outside the per-coroutine
+handler. That finding motivated this comparison; it was not supplied as a verdict.
+
+The remaining concrete coverage question is actual waiting caller.cancel()
+preservation on the newly accepted candidates. This comparison did not execute
+that operator control. Passing registered checks and isolated acceptance does not
+answer that unmeasured path. Do not adopt a default information/prompt policy or
+spend the closed remainder; prefer a bounded provider-free preservation diagnostic
+if pursuing this question. Runtime/task/default policies remain unchanged.
 
 The original caller-state observation applies to callback KeyboardInterrupt on
 the unchanged base in the pinned environment, not every SIGINT/cancellation path.
@@ -92,7 +86,7 @@ planning OFF comparisons remain closed without automatic adoption or baseline ch
 ## Implemented and measured
 
 The checkpoint collector has live provider acceptance, exact delivery and separate
-cost-accounting evidence for both closed interventions. Accepted continuations are
+cost-accounting evidence for the closed interventions. Accepted continuations are
 not fresh solves. The earlier N1/N2 fresh solves used unmodified run_dev with corrected
 dependencies. Reliable recovery, general improvement and default adoption remain
 unestablished; earlier supplied-candidate repairs remain separate evidence.
@@ -103,6 +97,9 @@ The planning OFF comparison removes the explicit planning feature as a whole; bo
 working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
+
+- Cleanup information: [results](history/2026-09-27-cleanup-information-results.md);
+  packet: `C:\pt\analyses\cleanup-information-results-20260927-v1`.
 
 - Cleanup mechanism: [trace and one-line removal](history/2026-09-27-anyio-cleanup-cancellation.md);
   packet: `C:\pt\analyses\anyio-cleanup-analysis-20260927-v1`.
