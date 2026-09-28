@@ -49,9 +49,17 @@ path through a visible regression and successful repair. Planning, probes, and r
 recheck changed together, so none has isolated credit. Keep the selected Current
 configuration as a working baseline, not a proven default improvement.
 
-The next causal question, if separately funded, is which single mechanism changes the
-pyfakefs repair path under repeated paired runs. Do not rerun the full panel merely to
-seek a favorable score. The 12-run allocation is closed.
+The [cross-task diagnostic](history/2026-09-28-public-check-focus-results.md) checked
+three pre-edit/post-check input pairs and collected 12 independent next responses.
+Repeating already-delivered public check definitions changed no next action: all
+A/B responses submitted, with no relevant applicability discriminator in Pydantic/HF.
+Fromager's successful control also submitted without extra work. Cost $0.367024;
+funds closed. This is response sensitivity, not task acceptance or equivalence.
+Pydantic's scope error preceded checks; HF lost an initially stated distinction later.
+Do not adopt late check-definition duplication. Focus further diagnosis on how
+requirements become edit conditions, not another toqito-specific or final-cue patch.
+The basic/current panel remains closed; its three-feature bundle is not a causal
+attribution to planning, probes or recheck.
 
 Key closed evidence:
 
