@@ -36,26 +36,27 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The [cross-task audit](history/2026-09-28-cross-task-failure-analysis.md) reviewed
-five recent fresh-run groups: 27 runs, eight task families. This is an imbalanced
-retrospective inventory, not a success-rate estimate: 16 runs concern Pydantic/HF.
-Original benchmark packages and adapted public task packages remain separate.
+The [basic/current comparison](history/2026-09-28-basic-current-baseline-comparison.md)
+completed 12 fresh runs across six `dev-train` tasks. Basic passed 4/6 and Current
+passed 5/6; paired Current wins / Basic wins / ties were 1 / 0 / 5. All safety states
+passed. Current cost $3.338190 versus Basic $2.777399 (+20.2%) and used 1,431.504
+versus 1,159.543 active seconds (+23.5%). The total actual cost was $6.115589.
 
-Close the toqito-specific investigation. Repeated use of a refuted mathematical
-oracle is established on that task, not as the general dominant failure. AnyIO
-shows an unmeasured premise promoted to a confirmed cause; Pydantic/HF show repair
-applicability and verification-scope gaps. Successful Fromager, pgmpy, MontePy and
-darts paths prevent interpreting absence of custom probes as failure by itself.
-Environment readiness, failed candidate behavior and resource-limited NOT_RUN remain
-separate axes. Public observations do not identify hidden evaluator failure causes.
+This is a single-repeat three-feature bundle comparison, not a causal estimate or
+general success-rate claim. The only discordant task was pyfakefs: Basic passed both
+registered public checks but failed evaluation, while Current followed a two-mutation
+path through a visible regression and successful repair. Planning, probes, and repair
+recheck changed together, so none has isolated credit. Keep the selected Current
+configuration as a working baseline, not a proven default improvement.
 
-Do not adopt the reconciliation cue. Pause the proposed float-setup guidance change;
-its broader priority is unproven. The next evidence need is diverse fresh dev-train
-tasks under a fixed harness, assessing evidence behind repair/preservation claims.
-No new experiment or paid execution is authorized by the analysis-only audit.
+The next causal question, if separately funded, is which single mechanism changes the
+pyfakefs repair path under repeated paired runs. Do not rerun the full panel merely to
+seek a favorable score. The 12-run allocation is closed.
 
 Key closed evidence:
 
+- [Basic/current comparison](history/2026-09-28-basic-current-baseline-comparison.md):
+  12 fresh runs, 4/6 versus 5/6, 1 / 0 / 5 paired result, all safety PASS.
 - [Original pilot](history/2026-09-28-original-pilot-results.md): MontePy/darts passed;
   toqito exhausted its cap before submission. Preparation passed for all three.
 - [AnyIO fresh solves](history/2026-09-27-anyio-fresh-solve.md): one PASS, one resource
@@ -68,8 +69,9 @@ Key closed evidence:
 - [Earlier timeout](history/2026-09-28-expectation-review-results.md): billing of one
   interrupted call remains unknown, separately from later settled allocations.
 
-All prior allocations are closed. Earlier supplied-candidate repairs, operator
-replays and response-only samples remain separate from fresh solves. Planning
+All allocations, including the basic/current panel, are closed. Earlier
+supplied-candidate repairs, operator replays and response-only samples remain
+separate from fresh solves. Planning
 comparisons are closed; the selected working baseline above is unchanged.
 
 ## Implemented and measured
@@ -102,8 +104,8 @@ Evidence for targeted lookup:
 - Offline continuation: [restoration and execution](history/2026-09-27-checkpoint-continuation.md);
   [contract](../.agent/checkpoint-continuation.md);
   packet: `C:\pt\analyses\checkpoint-continuation-20260927-v1`.
-- Latest result: [AnyIO fresh solves](history/2026-09-27-anyio-fresh-solve.md);
-  packet: `C:\pt\analyses\anyio-fresh-solve-20260927-v1`; live: `C:\pt\anyiofresh0927a`.
+- Latest result: [basic/current comparison](history/2026-09-28-basic-current-baseline-comparison.md);
+  live state: `C:\pt\baseline-compare-20260928-v1`.
 - Patch diagnostic: [AnyIO B1 branch deletion](history/2026-09-27-anyio-b1-branch-deletion.md);
   packet: `C:\pt\analyses\anyio-b1-branch-deletion-20260927-v1`.
 - Audit: [AnyIO evidence/action links](history/2026-09-27-anyio-evidence-action-link.md);

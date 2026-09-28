@@ -19,6 +19,7 @@ Approvals are closed.
 
 ## New records
 
+- [Basic/current 6-task baseline](2026-09-28-basic-current-baseline-comparison.md).
 - [Probe construction](2026-09-28-probe-construction-analysis.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
 - [Funding](2026-09-28-minimum-completion-funding.md).
@@ -46,15 +47,14 @@ Approvals are closed.
 - [Caller state](2026-09-27-anyio-caller-state.md).
 - [Checkpoint results](2026-09-27-checkpoint-live-results.md).
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
-- [Offline continuation](2026-09-27-checkpoint-continuation.md): restored N1 inputs and scripted loop.
-- [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md): offline N1 input pair.
+- [Offline continuation](2026-09-27-checkpoint-continuation.md).
+- [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md).
 - [AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md).
 - [AnyIO B1 branch deletion](2026-09-27-anyio-b1-branch-deletion.md).
 - [AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md).
 - [AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md).
 - [AnyIO process audit](2026-09-27-anyio-observation-process-audit.md).
-- [AnyIO observation repair comparison](2026-09-27-anyio-observation-repair-comparison.md):
-  A/B 2/2 acceptance each on a supplied candidate.
+- [AnyIO observation repair comparison](2026-09-27-anyio-observation-repair-comparison.md).
 - [AnyIO failure observation](2026-09-27-anyio-failure-observation.md):
   exact failed-candidate probe replay and a prepared comparison of supplied observations.
 - [AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md):
