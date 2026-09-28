@@ -49,15 +49,20 @@ path through a visible regression and successful repair. Planning, probes, and r
 recheck changed together, so none has isolated credit. Keep the selected Current
 configuration as a working baseline, not a proven default improvement.
 
-The [cross-task diagnostic](history/2026-09-28-public-check-focus-results.md) checked
-three pre-edit/post-check input pairs and collected 12 independent next responses.
-Repeating already-delivered public check definitions changed no next action: all
-A/B responses submitted, with no relevant applicability discriminator in Pydantic/HF.
-Fromager's successful control also submitted without extra work. Cost $0.367024;
-funds closed. This is response sensitivity, not task acceptance or equivalence.
-Pydantic's scope error preceded checks; HF lost an initially stated distinction later.
-Do not adopt late check-definition duplication. Focus further diagnosis on how
-requirements become edit conditions, not another toqito-specific or final-cue patch.
+The [pre-edit diagnostic](history/2026-09-28-pre-edit-issue-focus-results.md) collected
+12 next responses across Pydantic, HF Hub and Fromager, repeating the original issue
+only in B. Pydantic A proposed two overbroad edits; B proposed one and one relevant
+provider-profile inspection, not a repair. HF A/B each proposed one overbroad edit
+and one call-site search without distinguishing explicit from resolved endpoints.
+Fromager's four proposals preserved scope in static review. All nine edit anchors
+matched and parsed; generated tools and benchmark evaluation were NOT_RUN.
+Cost $1.079303; unused allowance closed. Do not adopt issue repetition from this
+selected sample. The behavioral problem is requirement-to-edit-condition mapping;
+retained plans, notes and native continuation prevent model/component-only attribution.
+Inspect inherited plan assumptions before another intervention; keep the baseline
+fixed and successful controls. The prior
+[late check-definition diagnostic](history/2026-09-28-public-check-focus-results.md)
+also did not justify adoption.
 The basic/current panel remains closed; its three-feature bundle is not a causal
 attribution to planning, probes or recheck.
 
