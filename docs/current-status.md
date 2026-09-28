@@ -59,8 +59,14 @@ matched and parsed; generated tools and benchmark evaluation were NOT_RUN.
 Cost $1.079303; unused allowance closed. Do not adopt issue repetition from this
 selected sample. The behavioral problem is requirement-to-edit-condition mapping;
 retained plans, notes and native continuation prevent model/component-only attribution.
-Inspect inherited plan assumptions before another intervention; keep the baseline
-fixed and successful controls. The prior
+The [plan audit](history/2026-09-28-plan-condition-audit.md) verified 16 inputs and
+plan transitions: Pydantic's first plan already broadened the condition; HF kept
+the preservation clause while treating resolved self.endpoint as explicit context.
+Plan text was faithfully stored and delivered in these turns. Target condition
+derivation and evidence selection, not a presumed plan-delivery bug. Plan influence
+remains causal uncertainty; deleting only working_plan would leave repeated public
+history and native continuation. Keep the baseline fixed and successful controls.
+The prior
 [late check-definition diagnostic](history/2026-09-28-public-check-focus-results.md)
 also did not justify adoption.
 The basic/current panel remains closed; its three-feature bundle is not a causal
