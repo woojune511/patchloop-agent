@@ -36,73 +36,41 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-AnyIO is calibration data, separate from original scores. The
-[pilot](../.agent/original-input-pilot.md) fixed fresh attempts on toqito-1538,
-MontePy-933_interface and darts-3065, excluding current task/ledger repositories.
-This is development data. Image digests, environment controls, public checks and
-four-file/1,000-line limits are in
-[readiness](history/2026-09-27-original-pilot-readiness.md); pinned probe bundles in
-[capacity results](history/2026-09-27-installed-probe-capacity.md).
-Toqito excludes one obsolete public test contradicting the issue.
-[Package validation](history/2026-09-27-original-pilot-packages.md).
-See [calibration](history/2026-09-27-original-benchmark-calibration.md).
-See [benchmark differences](history/2026-09-27-anyio-benchmark-differences.md).
-The pilot is complete: MontePy and darts passed; toqito exhausted $1.20 before
-checks/submission (NOT_RUN). Cost $2.0892005; funds closed. Preparation passed.
-The user accepts more budget when needed; cost-policy work remains deferred. The
-[public patch audit](history/2026-09-28-toqito-public-validation.md) found a semantic
-error despite 14 passing base tests: the agent reversed conditioning in a probe's
-expected value, blamed its optimizer, and generalized a CQ closed form incorrectly.
-A feasible-state witness contradicts the patch by 0.18659 bits. Original NOT_RUN is
-unchanged; this is separate public operator evidence. The
-[mechanism audit](history/2026-09-28-general-failure-mechanism.md) confirms that full
-outputs, expectation code and generic cautions were delivered before the wrong
-attribution. A self-authored expectation became assumed truth; frequency and a fix
-remain unproven. The [unhinted continuation](history/2026-09-28-post-edit-budget-results.md),
-[scope cue](history/2026-09-28-verification-scope-results.md), and
-[deferred cue](history/2026-09-28-deferred-scope-results.md) did not fix it.
-[Advice removal](history/2026-09-28-completion-advice-results.md) prompted probes
-and an edit but still failed. The [expectation review pair](history/2026-09-28-expectation-review-results.md)
-changed B's first action to independent testing and eventually removed the wrong
-CQ shortcut. Both final patches passed 14 public regressions; A failed the benchmark
-and two operator public checks, while B passed those two checks but did not submit.
-B's final call timed out with 4.499 seconds remaining: billing unknown,
-acceptance/safety NOT_RUN. Recorded cost $2.9267315, final total unknown;
-$6 authorization is closed. A separately approved [time extension](history/2026-09-28-time-extension-results.md)
-added 60 minutes and a fresh $3 cap. One call ($0.094595) submitted the unchanged
-patch: benchmark FAIL, safety PASS. No extra probe/edit; unused fresh funds closed.
-The earlier unknown charge and B NOT_RUN remain. More time enabled submission but
-not benchmark success. The [public requirements audit](history/2026-09-28-remaining-public-requirements.md)
-reproduced pure-state underflow masked by the downarrow clamp and mixed-state
-complex-to-float exceptions in both existing environments. A selected 15-case matrix
-has 8 pass / 7 fail, not a benchmark score or hidden-failure attribution. Final
-changed-path/input-range coverage was missing. The [closure audit](history/2026-09-28-verification-closure-process.md)
-shows the CQ question survived: the model weakened its probe plan and closed it at
-submission. All 17 verification lists were empty; later boundary cases were never
-constructed. The [policy comparison](history/2026-09-28-closure-policy-results.md)
-collected four responses: A finished twice; B finished once and proposed one probe.
-Cost $0.446253; funds closed. No tools ran; quality improvement is unproven.
-The [selected probe](history/2026-09-28-selected-closure-probe.md) has a valid
-classical expectation and exposes the objective TypeError on the frozen patch.
-The [funded continuation](history/2026-09-28-probe-followup-results.md) repaired that
-failure and passed benchmark/safety checks: 5 calls, $0.685091; funds closed.
-Its post-fix probe had a SyntaxError, which it left unresolved before submission
-despite available probe/time/cost. Operator replay of the valid probe passed;
-the fixed public matrix improved 8/15 to 14/15, with pure-state underflow remaining.
-The [closure audit](history/2026-09-28-invalid-probe-closure.md) verified all five inputs:
-the model acknowledged the invalid probe, replaced its question with check eligibility,
-then cleared it. System optional-experiment advice returned after the one-input ablation.
-The [A/B result](history/2026-09-28-invalid-probe-policy-results.md) was A: finish/probe,
-B: finish/finish; $0.404483, funds closed. No improvement from advice removal was
-observed. The sole probe stopped on floating-point setup equality and used a
-refuted CQ expectation. The [construction audit](history/2026-09-28-probe-construction-analysis.md)
-confirmed exact-equality misuse and reuse of a contradicted formula despite delivered
-counterevidence. The [reconciliation result](history/2026-09-28-expectation-reconciliation-results.md)
-found supported expectations A 0/2, B 1/2; no reliable effect. Cost $0.871760; funds
-closed. Two probes stopped on float setup equality. Next: a generic tolerance
-example for setup; oracle validity remains unresolved. No default cue adoption.
+The [cross-task audit](history/2026-09-28-cross-task-failure-analysis.md) reviewed
+five recent fresh-run groups: 27 runs, eight task families. This is an imbalanced
+retrospective inventory, not a success-rate estimate: 16 runs concern Pydantic/HF.
+Original benchmark packages and adapted public task packages remain separate.
 
-Earlier supplied-candidate repairs are not fresh solves. Planning OFF remains closed.
+Close the toqito-specific investigation. Repeated use of a refuted mathematical
+oracle is established on that task, not as the general dominant failure. AnyIO
+shows an unmeasured premise promoted to a confirmed cause; Pydantic/HF show repair
+applicability and verification-scope gaps. Successful Fromager, pgmpy, MontePy and
+darts paths prevent interpreting absence of custom probes as failure by itself.
+Environment readiness, failed candidate behavior and resource-limited NOT_RUN remain
+separate axes. Public observations do not identify hidden evaluator failure causes.
+
+Do not adopt the reconciliation cue. Pause the proposed float-setup guidance change;
+its broader priority is unproven. The next evidence need is diverse fresh dev-train
+tasks under a fixed harness, assessing evidence behind repair/preservation claims.
+No new experiment or paid execution is authorized by the analysis-only audit.
+
+Key closed evidence:
+
+- [Original pilot](history/2026-09-28-original-pilot-results.md): MontePy/darts passed;
+  toqito exhausted its cap before submission. Preparation passed for all three.
+- [AnyIO fresh solves](history/2026-09-27-anyio-fresh-solve.md): one PASS, one resource
+  NOT_RUN with corrected probe dependencies; calibration, not original benchmark score.
+- [Toqito funded continuation](history/2026-09-28-probe-followup-results.md): supplied
+  patch repair passed benchmark/safety; operator matrix 14/15, underflow remains.
+  This is not an additional fresh solve.
+- [Reconciliation result](history/2026-09-28-expectation-reconciliation-results.md):
+  supported expectations A 0/2, B 1/2; no reliable effect. $0.871760, funds closed.
+- [Earlier timeout](history/2026-09-28-expectation-review-results.md): billing of one
+  interrupted call remains unknown, separately from later settled allocations.
+
+All prior allocations are closed. Earlier supplied-candidate repairs, operator
+replays and response-only samples remain separate from fresh solves. Planning
+comparisons are closed; the selected working baseline above is unchanged.
 
 ## Implemented and measured
 
