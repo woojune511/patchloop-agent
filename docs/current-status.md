@@ -97,8 +97,10 @@ B: finish/finish; $0.404483, funds closed. No improvement from advice removal wa
 observed. The sole probe stopped on floating-point setup equality and used a
 refuted CQ expectation. The [construction audit](history/2026-09-28-probe-construction-analysis.md)
 confirmed exact-equality misuse and reuse of a contradicted formula despite delivered
-counterevidence. The [reconciliation pair](history/2026-09-28-expectation-reconciliation-design.md)
-awaits paid approval; both arms force a probe. Storage loss is not established.
+counterevidence. The [reconciliation result](history/2026-09-28-expectation-reconciliation-results.md)
+found supported expectations A 0/2, B 1/2; no reliable effect. Cost $0.871760; funds
+closed. Two probes stopped on float setup equality. Next: a generic tolerance
+example for setup; oracle validity remains unresolved. No default cue adoption.
 
 Earlier supplied-candidate repairs are not fresh solves. Planning OFF remains closed.
 
@@ -117,8 +119,6 @@ working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
 
-- Cleanup mechanism: [trace and one-line removal](history/2026-09-27-anyio-cleanup-cancellation.md);
-  packet: `C:\pt\analyses\anyio-cleanup-analysis-20260927-v1`.
 - Information comparison results: [outcomes and public audit](history/2026-09-27-caller-information-results.md);
   packet: `C:\pt\analyses\caller-information-results-20260927-v1`; live: `C:\pt\callerinfo0927a`.
 - Information comparison preparation: [scope and validation](history/2026-09-27-caller-information.md);
