@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-09-28. This is a replaceable snapshot of current decisions, not an
+Updated: 2026-09-29. This is a replaceable snapshot of current decisions, not an
 append-only log. Source code owns runtime behavior; this page owns current priorities.
 Read [history](history/README.md) only for a specific evidence question.
 
@@ -49,28 +49,31 @@ path through a visible regression and successful repair. Planning, probes, and r
 recheck changed together, so none has isolated credit. Keep the selected Current
 configuration as a working baseline, not a proven default improvement.
 
-The [pre-edit diagnostic](history/2026-09-28-pre-edit-issue-focus-results.md) collected
-12 next responses across Pydantic, HF Hub and Fromager, repeating the original issue
-only in B. Pydantic A proposed two overbroad edits; B proposed one and one relevant
-provider-profile inspection, not a repair. HF A/B each proposed one overbroad edit
-and one call-site search without distinguishing explicit from resolved endpoints.
-Fromager's four proposals preserved scope in static review. All nine edit anchors
-matched and parsed; generated tools and benchmark evaluation were NOT_RUN.
-Cost $1.079303; unused allowance closed. Do not adopt issue repetition from this
-selected sample. The behavioral problem is requirement-to-edit-condition mapping;
-retained plans, notes and native continuation prevent model/component-only attribution.
-The [plan audit](history/2026-09-28-plan-condition-audit.md) verified 16 inputs and
-plan transitions: Pydantic's first plan already broadened the condition; HF kept
-the preservation clause while treating resolved self.endpoint as explicit context.
-Plan text was faithfully stored and delivered in these turns. Target condition
-derivation and evidence selection, not a presumed plan-delivery bug. Plan influence
-remains causal uncertainty; deleting only working_plan would leave repeated public
-history and native continuation. Keep the baseline fixed and successful controls.
-The prior
-[late check-definition diagnostic](history/2026-09-28-public-check-focus-results.md)
-also did not justify adoption.
-The basic/current panel remains closed; its three-feature bundle is not a causal
-attribution to planning, probes or recheck.
+The [boundary-pair procedure panel](history/2026-09-29-boundary-pair-panel-results.md)
+completed 24 fresh runs across Pydantic, HF Hub, Fromager, Loguru, PDM and pgmpy.
+Current A passed 7/12; procedure B passed 8/12, with paired B wins / A wins / ties
+1 / 0 / 11. Only PDM repetition one differed. All submitted, all safety PASS;
+NOT_RUN and infrastructure failures were zero. Both known failure tasks failed all
+four runs each. Actual cost $12.1553535; unused $35.8446465 is closed.
+B cost 26.6% more and took 24.7% more active time. Do not adopt the instruction.
+
+Arm-masked public review was frozen before outcome mapping; 197 actual model inputs
+were verified. B made selected pairs more explicit, but neither arm used run_probe.
+Every final patch passed public checks, including nine acceptance failures. Pydantic
+still used an overbroad field-mode guard. One HF B run preserved raw explicit endpoint
+context but still failed acceptance. PDM's sole discordance has a source-level candidate
+cause (active interpreter construction before the ignore guard), not a verified public
+failing-input diagnosis. Valid pair prose and selected-case PASS do not prove full scope.
+
+The active question is whether selected evidence can falsify the proposed condition.
+Use saved public traces/patches to distinguish non-discriminating examples from missing
+verification capability before another paid comparison. Keep the baseline fixed;
+no new prompt fields, gates or default behavior change is justified by this panel.
+The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
+[plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
+requirement-to-condition mapping failed despite faithful plan storage/delivery.
+The [late check-definition diagnostic](history/2026-09-28-public-check-focus-results.md)
+also did not justify adoption. All these allocations are closed.
 
 Key closed evidence:
 
@@ -123,7 +126,7 @@ Evidence for targeted lookup:
 - Offline continuation: [restoration and execution](history/2026-09-27-checkpoint-continuation.md);
   [contract](../.agent/checkpoint-continuation.md);
   packet: `C:\pt\analyses\checkpoint-continuation-20260927-v1`.
-- Latest result: [basic/current comparison](history/2026-09-28-basic-current-baseline-comparison.md);
+- Earlier baseline: [basic/current comparison](history/2026-09-28-basic-current-baseline-comparison.md);
   live state: `C:\pt\baseline-compare-20260928-v1`.
 - Patch diagnostic: [AnyIO B1 branch deletion](history/2026-09-27-anyio-b1-branch-deletion.md);
   packet: `C:\pt\analyses\anyio-b1-branch-deletion-20260927-v1`.
