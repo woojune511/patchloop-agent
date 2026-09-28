@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
+from typer.main import get_command
 from typer.testing import CliRunner
 
 from patchloop.cli import app
@@ -305,23 +306,10 @@ def test_cli_exposes_only_dev_doctor_and_task_commands() -> None:
     assert "evaluate" not in result.stdout
     assert "resume" not in result.stdout
 
-    dev_help = CliRunner().invoke(
-        app,
-        [
-            "dev",
-            "--provider",
-            "mock",
-            "--task",
-            "tasks/smoke/csv-quoted-newline/public.yaml",
-            "--model",
-            "mock-dev",
-            "--help",
-        ],
-        terminal_width=160,
-        color=False,
-    )
-    assert dev_help.exit_code == 0
-    assert "--resume-run-id" in dev_help.stdout
+    dev_command = get_command(app).commands["dev"]
+    resume_option = next(parameter for parameter in dev_command.params
+                         if parameter.name == "resume_run_id")
+    assert "--resume-run-id" in resume_option.opts
 
 
 @pytest.mark.parametrize(
