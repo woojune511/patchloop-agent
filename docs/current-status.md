@@ -79,6 +79,12 @@ selection, execution and repair. Existing checks omit these P/H distinctions; lo
 replay does not certify admission through the agent probe service. Keep the baseline
 fixed; no new prompt fields, gates or default change is justified. Broaden task families
 before generalizing; these operator examples must not become undisclosed agent hints.
+The [selection diagnostic](history/2026-09-29-discriminating-case-selection-design.md)
+is prepared: six fixed A1 candidates before their first public check, A/B twice,
+24 response-only samples. A asks for verification selection; B adds a generic
+same-guard/different-required-behavior criterion. Input delivery and source bindings
+are verified. New USD 13 cap is proposed, not authorized; live calls and generated
+tool execution are NOT_RUN. This measures selection only, with no default adoption.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
