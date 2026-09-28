@@ -95,11 +95,11 @@ then cleared it. System optional-experiment advice returned after the one-input 
 The [A/B result](history/2026-09-28-invalid-probe-policy-results.md) was A: finish/probe,
 B: finish/finish; $0.404483, funds closed. No improvement from advice removal was
 observed. The sole probe stopped on floating-point setup equality and used a
-refuted CQ expectation. Next examine expectation construction/setup validity;
-probe count alone does not establish verification quality.
+refuted CQ expectation. The [construction audit](history/2026-09-28-probe-construction-analysis.md)
+confirmed exact-equality misuse and reuse of a contradicted formula despite delivered
+counterevidence. Next test expectation reconciliation; storage loss is not established.
 
-Earlier supplied-candidate repairs are not fresh-solve controls; NOT_RUN is unchanged.
-Planning OFF comparisons remain closed without adoption.
+Earlier supplied-candidate repairs are not fresh solves. Planning OFF remains closed.
 
 ## Implemented and measured
 
@@ -152,7 +152,6 @@ Evidence for targeted lookup:
 - Preparation correction: [AnyIO probe readiness](history/2026-09-27-anyio-probe-readiness.md).
 - New bundle and public reproduction: `C:\pt\analyses\anyio-probe-readiness-20260927-v1`;
   descriptor: `selected-pytest\prepared-probe-dependencies.json` within that packet.
-- Separate prior model result: [planning OFF regression](history/2026-09-27-planning-off-regression.md).
 - Protocol, metrics, public review, environment inventory and closure:
   `C:\pt\analyses\planning-off-regression-20260927-v1`.
 - Earlier decisions and immutable records: [documentation history](history/README.md).
