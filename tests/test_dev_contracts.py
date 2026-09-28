@@ -317,6 +317,8 @@ def test_cli_exposes_only_dev_doctor_and_task_commands() -> None:
             "mock-dev",
             "--help",
         ],
+        terminal_width=160,
+        color=False,
     )
     assert dev_help.exit_code == 0
     assert "--resume-run-id" in dev_help.stdout

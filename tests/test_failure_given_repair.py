@@ -67,7 +67,7 @@ def evidence(tmp_path, monkeypatch):
     journal.append("public_panel_started", {"subject": "A2", "execution_identity": identity})
     journal.append("public_panel_finished", {"subject": "A2", "result_hash": sha256_bytes(
         files["A2-execution.json"])})
-    files[f"runs\\{journal.run_id}.jsonl"] = journal.path.read_bytes()
+    files[journal.path.relative_to(root).as_posix()] = journal.path.read_bytes()
     completion = design.wire({"files": {name: sha256_bytes(raw) for name, raw in files.items()}})
     (root / "completion.json").write_bytes(completion)
     monkeypatch.setattr(design, "COMPLETION_HASH", sha256_bytes(completion))

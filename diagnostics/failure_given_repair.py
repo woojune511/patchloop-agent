@@ -122,7 +122,7 @@ def load_report(request: dict, checkpoint: dict, root: Path) -> tuple[dict, dict
     identity = {"run_id": observer, "action_id": "panel_A2", "input_hash": sha256_json({
         "packet": sha256_bytes(packet_raw), "subject": subject})}
     require(execution["identity"] == identity, "operator execution identity mismatch")
-    sealed(f"runs\\{observer}.jsonl")
+    sealed(f"runs/{observer}.jsonl")
     events = DevJournal(root, observer).events()
     started = one([e["payload"] for e in events if e["event_type"] == "public_panel_started"],
                   "subject", "A2")
