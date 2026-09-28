@@ -61,14 +61,24 @@ Arm-masked public review was frozen before outcome mapping; 197 actual model inp
 were verified. B made selected pairs more explicit, but neither arm used run_probe.
 Every final patch passed public checks, including nine acceptance failures. Pydantic
 still used an overbroad field-mode guard. One HF B run preserved raw explicit endpoint
-context but still failed acceptance. PDM's sole discordance has a source-level candidate
-cause (active interpreter construction before the ignore guard), not a verified public
-failing-input diagnosis. Valid pair prose and selected-case PASS do not prove full scope.
+context but still failed acceptance. Valid pair prose and selected-case PASS do not
+prove full scope.
 
-The active question is whether selected evidence can falsify the proposed condition.
-Use saved public traces/patches to distinguish non-discriminating examples from missing
-verification capability before another paid comparison. Keep the baseline fixed;
-no new prompt fields, gates or default behavior change is justified by this panel.
+The [public discrimination replay](history/2026-09-29-boundary-discrimination-replay.md)
+ran 15 local containers on base plus all Pydantic/HF/PDM final patches, without model
+calls or private evaluation. Holding mode/name constant exposed overbroad behavior in
+all four Pydantic patches; testing an endpoint-free client under an ambient endpoint
+exposed three HF patches. HB2 preserves that boundary but its residual failure is open.
+PDM's early active-interpreter construction did not cause failure with missing paths:
+all four patches passed eight selection/fallback cases. That candidate cause remains
+unconfirmed; do not force the explanation with an artificial exception.
+
+The active question is whether an agent can select evidence that holds its proposed
+guard constant while varying the requirement's distinguishing condition. Separate
+selection, execution and repair. Existing checks omit these P/H distinctions; local
+replay does not certify admission through the agent probe service. Keep the baseline
+fixed; no new prompt fields, gates or default change is justified. Broaden task families
+before generalizing; these operator examples must not become undisclosed agent hints.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
