@@ -5,6 +5,17 @@
 # Repository-local test and audit scratch directories.
 /tmp*/
 /.tmp-*/
+/.t*/
+/.q[0-9]*/
+/.r[0-9]*/
+/.v[0-9]*/
+/.wr[0-9]*/
+/.z[0-9]*/
+/.row-continuation-*/
+/.p/
+/.pt/
+/.pytest_tmp/
+/haudit-tmp/
 /.pytest-tmp-*/
 /.pytest-*/
 /.p[0-9]*/

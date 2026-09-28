@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "patchloop"
 version = "0.1.0"
-description = "Mutable single-agent development and evaluation harness"
+description = "Recoverable single coding agent for bounded repository repair"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
