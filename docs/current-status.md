@@ -37,17 +37,10 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 ## Current problem and next decision
 
 The [basic/current comparison](history/2026-09-28-basic-current-baseline-comparison.md)
-completed 12 fresh runs across six `dev-train` tasks. Basic passed 4/6 and Current
-passed 5/6; paired Current wins / Basic wins / ties were 1 / 0 / 5. All safety states
-passed. Current cost $3.338190 versus Basic $2.777399 (+20.2%) and used 1,431.504
-versus 1,159.543 active seconds (+23.5%). The total actual cost was $6.115589.
-
-This is a single-repeat three-feature bundle comparison, not a causal estimate or
-general success-rate claim. The only discordant task was pyfakefs: Basic passed both
-registered public checks but failed evaluation, while Current followed a two-mutation
-path through a visible regression and successful repair. Planning, probes, and repair
-recheck changed together, so none has isolated credit. Keep the selected Current
-configuration as a working baseline, not a proven default improvement.
+passed 4/6 versus 5/6 tasks, with only pyfakefs differing. Planning, probes and repair
+recheck changed together; no feature has isolated credit. Keep Current as a working
+baseline, not a proven default improvement. Detailed cost/time and safety evidence
+remain in the closed result.
 
 The [boundary-pair procedure panel](history/2026-09-29-boundary-pair-panel-results.md)
 completed 24 fresh runs across Pydantic, HF Hub, Fromager, Loguru, PDM and pgmpy.
@@ -79,12 +72,18 @@ selection, execution and repair. Existing checks omit these P/H distinctions; lo
 replay does not certify admission through the agent probe service. Keep the baseline
 fixed; no new prompt fields, gates or default change is justified. Broaden task families
 before generalizing; these operator examples must not become undisclosed agent hints.
-The [selection diagnostic](history/2026-09-29-discriminating-case-selection-design.md)
-is prepared: six fixed A1 candidates before their first public check, A/B twice,
-24 response-only samples. A asks for verification selection; B adds a generic
-same-guard/different-required-behavior criterion. Input delivery and source bindings
-are verified. New USD 13 cap is proposed, not authorized; live calls and generated
-tool execution are NOT_RUN. This measures selection only, with no default adoption.
+The [selection diagnostic](history/2026-09-29-discriminating-case-selection-results.md)
+completed 24 response-only samples from six fixed A1 candidates before their first
+public check. Arm-masked review counted discriminating selections A 0/12, B 5/12:
+B selected H's explicit-versus-ambient endpoint boundary twice and three F/G
+control examples. P still misinterpreted provider-profile scope in both B responses.
+B proposed eight probes; A only registered checks. This is selection evidence,
+not five discovered bugs or better task acceptance. All dispatched inputs and source
+bindings verified. Cost USD 2.455532; unused USD 10.544468 is closed. Generated
+tool execution, setup, reproduction, repair and evaluation remain NOT_RUN.
+Keep the baseline unchanged. Next consider a separate registered-path execution
+of all frozen programs without operator corrections, retaining expectation and
+environment failures; no further model run is authorized by the closed allocation.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
