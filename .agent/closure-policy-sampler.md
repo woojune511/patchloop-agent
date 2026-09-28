@@ -50,3 +50,12 @@ This sampler never executes returned tools. Any later operator execution of sele
 probe programs is separate evidence, uses the identical frozen patch/environment,
 and returns no observations to these independent model responses. Pre-register its
 selection rule and distinguish syntax validity, diagnostic scope and numeric success.
+
+The optional `intervention=reconcile-expectation` is restricted to the
+post-invalid-probe source. Both arms force the registered `run_probe` function via
+named tool_choice. A otherwise preserves the dispatch; B appends exactly RECONCILE
+from the sampler to the system message. No advice is removed. This measures probe
+construction conditional on requesting a probe, not spontaneous verification or
+repair success. All other inputs and tool schemas stay equal. Missing intervention
+retains the original deletion experiment. Sanitize review artifacts to anonymous
+IDs and response content before displaying them; omit timestamps/order/arm/cost.

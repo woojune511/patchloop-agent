@@ -28,6 +28,31 @@ REMOVED = (
     "No extra review call, annotation or experiment is required.\n"
 )
 MODEL = "gpt-5.4-2026-03-05"
+RECONCILE = (
+    "\nWhen choosing an expected result for a probe, reconcile it with contrary observations "
+    "already in context. If those observations refute the proposed formula, do not reuse it "
+    "as an exact expectation without a justified applicability restriction. Separate "
+    "implementation evidence from support for the expectation.\n"
+)
+
+
+def project_requests(original, intervention):
+    baseline = copy.deepcopy(original)
+    shared.require(intervention in {"remove-closure-advice", "reconcile-expectation"},
+                   "unknown intervention")
+    if intervention == "reconcile-expectation":
+        shared.require("run_probe" in {t["name"] for t in baseline["tools"]},
+                       "probe tool unavailable")
+        baseline["tool_choice"] = {"type": "function", "name": "run_probe"}
+    treatment = copy.deepcopy(baseline)
+    system = treatment["input"][0]
+    shared.require(system["role"] == "system", "first input is not system")
+    if intervention == "remove-closure-advice":
+        shared.require(system["content"].count(REMOVED) == 1, "policy text not unique")
+        system["content"] = system["content"].replace(REMOVED, "", 1)
+    else:
+        system["content"] += RECONCILE
+    return {"A": baseline, "B": treatment}
 
 
 def implementation_hashes():
@@ -98,13 +123,12 @@ def load_pair(path, expected_hash):
                        "not the post-invalid-probe submission boundary")
     requests = {arm: json.loads(shared.read_source_artifact(path.parent, pair["requests"][arm]))
                 for arm in ("A", "B")}
-    shared.require(requests["A"] == original, "baseline differs from dispatch")
-    treatment = copy.deepcopy(original)
-    system = treatment["input"][0]
-    shared.require(system["role"] == "system" and system["content"].count(REMOVED) == 1,
-                   "policy text not unique")
-    system["content"] = system["content"].replace(REMOVED, "", 1)
-    shared.require(requests["B"] == treatment, "treatment changed other fields")
+    intervention = pair.get("intervention", "remove-closure-advice")
+    shared.require(intervention != "reconcile-expectation" or lane == "post-invalid-probe",
+                   "reconciliation requires post-invalid-probe source")
+    expected = project_requests(original, intervention)
+    shared.require(requests["A"] == expected["A"], "baseline differs from projection")
+    shared.require(requests["B"] == expected["B"], "treatment changed other fields")
     shared.require({a: sha256_json(r) for a, r in requests.items()} == pair["request_hashes"],
                    "request hash changed")
     shared.require(original["model"] == MODEL and original["reasoning"]["effort"] == "xhigh"

@@ -145,7 +145,8 @@ def test_full_reservation_fits_each_response():
     assert shared.full_reservation(60_000, profile.pricing()) <= 1_000_000_000
 
 
-def test_post_invalid_probe_lane_binds_last_dispatch_and_boundary(prepared):
+@pytest.mark.parametrize("intervention", ["remove-closure-advice", "reconcile-expectation"])
+def test_post_invalid_probe_lane_binds_last_dispatch_and_boundary(prepared, intervention):
     pair = copy.deepcopy(prepared.pair)
     original = json.loads(shared.read_source_artifact(prepared.pair_path.parent,
                                                      pair["requests"]["A"]))
@@ -162,17 +163,36 @@ def test_post_invalid_probe_lane_binds_last_dispatch_and_boundary(prepared):
     for index in range(5):
         group.append("actual_dispatch_started", {"artifact": store.put_json(
             original if index == 4 else {"not": "selected"}).model_dump(mode="json")})
-    treatment = copy.deepcopy(original)
-    treatment["input"][0]["content"] = treatment["input"][0]["content"].replace(sampler.REMOVED, "")
+    requests = sampler.project_requests(original, intervention)
+    pair["intervention"] = intervention
     pair.update(source_lane="post-invalid-probe", source_turn_sequence=turn["sequence"],
                 source_group_hash=sha256_bytes(group.path.read_bytes()),
                 source_branch_hash=sha256_bytes(branch.path.read_bytes()),
                 requests={a: ArtifactStore(prepared.pair_path.parent / "artifacts").put_json(r)
-                          .model_dump(mode="json") for a, r in [("A", original), ("B", treatment)]},
-                request_hashes={"A": sha256_json(original), "B": sha256_json(treatment)})
+                          .model_dump(mode="json") for a, r in requests.items()},
+                request_hashes={a: sha256_json(r) for a, r in requests.items()})
     prepared.pair_path.write_text(canonical_json(pair), encoding="utf-8")
     loaded = sampler.load_pair(prepared.pair_path, sha256_bytes(prepared.pair_path.read_bytes()))
-    assert loaded[3]["A"] == original
+    assert loaded[3] == requests
+    if intervention == "reconcile-expectation":
+        baseline = copy.deepcopy(requests["A"])
+        assert baseline.pop("tool_choice") == {"type": "function", "name": "run_probe"}
+        assert baseline == {k: v for k, v in original.items() if k != "tool_choice"}
+        treatment = copy.deepcopy(requests["B"])
+        assert treatment["input"][0]["content"].endswith(sampler.RECONCILE)
+        system = treatment["input"][0]
+        system["content"] = system["content"][:-len(sampler.RECONCILE)]
+        assert treatment == requests["A"]
+        assert sampler.REMOVED in treatment["input"][0]["content"]
+        receipt = sampler.prepare(prepared.pair_path, sha256_bytes(prepared.pair_path.read_bytes()),
+                                  prepared.pair_path.parent.parent / "reconcile-plan")
+        plan = sampler.load_plan(prepared.pair_path.parent.parent / "reconcile-plan/packet.json",
+                                 receipt["packet_hash"])
+        fake = client()
+        result = sampler.collect(plan, replace(prepared.grant, packet_hash=plan.packet_hash),
+                                 adapter_factory=fake.factory)
+        assert result["provider_calls"] == 4 and result["tool_executions"] == 0
+        assert all(r["tool_choice"] == requests["A"]["tool_choice"] for r in fake.created)
     group.append("actual_dispatch_started", {"artifact": store.put_json(original)
                                               .model_dump(mode="json")})
     pair["source_group_hash"] = sha256_bytes(group.path.read_bytes())

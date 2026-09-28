@@ -97,7 +97,8 @@ B: finish/finish; $0.404483, funds closed. No improvement from advice removal wa
 observed. The sole probe stopped on floating-point setup equality and used a
 refuted CQ expectation. The [construction audit](history/2026-09-28-probe-construction-analysis.md)
 confirmed exact-equality misuse and reuse of a contradicted formula despite delivered
-counterevidence. Next test expectation reconciliation; storage loss is not established.
+counterevidence. The [reconciliation pair](history/2026-09-28-expectation-reconciliation-design.md)
+awaits paid approval; both arms force a probe. Storage loss is not established.
 
 Earlier supplied-candidate repairs are not fresh solves. Planning OFF remains closed.
 
@@ -115,9 +116,6 @@ The planning OFF comparison removes the explicit planning feature as a whole; bo
 working notes, internal reasoning and registered tools remain available.
 
 Evidence for targeted lookup:
-
-- Cleanup information: [results](history/2026-09-27-cleanup-information-results.md);
-  packet: `C:\pt\analyses\cleanup-information-results-20260927-v1`.
 
 - Cleanup mechanism: [trace and one-line removal](history/2026-09-27-anyio-cleanup-cancellation.md);
   packet: `C:\pt\analyses\anyio-cleanup-analysis-20260927-v1`.
