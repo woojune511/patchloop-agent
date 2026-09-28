@@ -152,12 +152,28 @@ def filesystem_path(path: Path) -> Path:
 
 
 def directory_hash(root: Path) -> str:
+    """Hash file paths and bytes in a host-independent order.
+
+    ``Path`` ordering follows the host path flavour: Windows compares paths
+    case-insensitively while POSIX compares them case-sensitively.  Snapshot
+    identities must not change when the same checkout moves between hosts, so
+    order normalized POSIX-relative names explicitly.
+    """
+
     root = filesystem_path(root)
     digest = hashlib.sha256()
-    for path in sorted(item for item in root.rglob("*") if item.is_file()):
-        if ".git" in path.relative_to(root).parts:
+    files = []
+    for path in root.rglob("*"):
+        if not path.is_file():
             continue
-        relative = path.relative_to(root).as_posix().encode("utf-8")
+        relative = path.relative_to(root).as_posix()
+        if ".git" in PurePosixPath(relative).parts:
+            continue
+        files.append((relative, path))
+    for relative_text, path in sorted(
+        files, key=lambda item: (item[0].casefold(), item[0])
+    ):
+        relative = relative_text.encode("utf-8")
         content = path.read_bytes()
         digest.update(len(relative).to_bytes(8, "big"))
         digest.update(relative)
