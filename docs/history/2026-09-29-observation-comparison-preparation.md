@@ -43,6 +43,10 @@ Preparation packet root: `C:/pt/analyses/observation-comparison-preparation-2026
 The proposed allocation is USD 3 per row, USD 18 invocation-wide, with the existing
 `gpt-5.4-2026-03-05`, xhigh, 25,000 desired output tokens and repository `.env` path.
 Inherited time/model/action/edit limits remain unchanged. Old funds stay closed.
+N1's parent used GPT-5.4/xhigh; P1/P2 used GPT-5.4-mini/medium. Both arms use the
+selected GPT-5.4/xhigh baseline, with parent settings recorded separately. These are
+current-baseline forks, not same-model resumes. Provider compatibility with inherited
+cross-model continuation remains NOT_RUN; failure stops all remaining rows.
 At the runtime's 60K input bound, a full 25K-output call reserves at most USD 0.525
 at reviewed standard rates; USD 3 covers the primary three-call token allowance,
 but cannot guarantee completed investigations, useful outputs or successful repairs.

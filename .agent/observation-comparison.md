@@ -14,6 +14,11 @@ model/action/edit/time allowances. Each branch receives the same fresh USD cap;
 unused historical funds and unused row funds cannot be transferred. Keep the
 selected GPT-5.4 snapshot, xhigh and desired 25,000 output tokens. Actual output
 admission remains cost-bounded. No task-specific hints or probe corrections are added.
+N1 originated on GPT-5.4/xhigh; P1/P2 originated on GPT-5.4-mini/medium. Both arms
+continue under the selected GPT-5.4/xhigh baseline. Parent model/settings are explicit
+manifest provenance, not a claim of same-model resume. Inherited continuation state
+is identical within each pair; cross-model provider compatibility remains untested
+until actual execution and any continuation failure stops the comparison.
 
 ## Scoring fixed before execution
 

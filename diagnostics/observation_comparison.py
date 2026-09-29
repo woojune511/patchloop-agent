@@ -70,7 +70,7 @@ def controls(cases, env_file, result_root, row_cap_usd):
             and target["output"].get("status") == "failed",
             "target is not a failed probe",
         )
-        require(old.split == "dev-train" and old.model == MODEL, "source model/split changed")
+        require(old.split == "dev-train", "source must be dev-train")
         require(
             sha256_bytes(str(env_file.resolve()).encode()) == old.credential_file_path_hash,
             "credential path changed",
@@ -84,6 +84,8 @@ def controls(cases, env_file, result_root, row_cap_usd):
                 "cut_sequence": case["cut_sequence"],
                 "target_action_id": case["target_action_id"],
                 "task": str(source.public_path),
+                "parent_model": old.model,
+                "parent_reasoning_effort": old.reasoning_effort,
                 "new_cap_nanos": usd_to_nanos(row_cap_usd),
             }
         )
