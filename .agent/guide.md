@@ -95,6 +95,8 @@ reject conflicting reuse, reconcile admitted mutations after crashes instead of
 applying them twice. Do not rewrite journals, old envelopes, or prior native outputs.
 Resume requires repeat=1, exact envelope-bound settings/identities, and the run lock.
 Pre-envelope runs cannot resume. Preserve settled usage, counters, and active deadlines.
+The offline [observation-exposure fork](observation-exposure.md) retains parent
+provenance under a new current-runtime envelope; it does not relax ordinary resume.
 
 OpenAI uses `store=false` and encrypted continuation with exact call/output ordering;
 never log plaintext reasoning or reasoning summaries. Missing/corrupt continuation

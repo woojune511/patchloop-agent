@@ -83,8 +83,11 @@ It certifies neither bugs nor semantic resolution and adds no submission gate.
 Operator feedback stays separate; live improvement remains NOT_RUN.
 [Restoration](history/2026-09-29-optional-probe-restoration.md) confirmed tox's seeded
 regression. [Request parity](history/2026-09-29-observation-request-parity.md) passed
-for AnyIO/pyfakefs; direct resume fails runtime identity. Implement/rehearse a current
-diagnostic fork with per-turn exposure before paid comparison.
+for AnyIO/pyfakefs; direct resume fails runtime identity. The current-runtime
+[offline fork](history/2026-09-29-observation-fork-rehearsal.md) now preserves that
+guard and applies exposure every turn. Six synthetic branches passed; live behavior
+and quality effects remain NOT_RUN. No paid continuation is authorized or implemented
+by this offline entry point.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
@@ -162,12 +165,7 @@ Evidence for targeted lookup:
 
 ## Reading and updating this page
 
-At task start, read this page and the relevant implementation/operation section.
-Search history only when a named failure, decision, or evidence gap needs it; read
-the matching passage rather than whole snapshots. Historical "current", "latest",
-"next", commands, and approvals describe their original checkpoint only.
-
-Replace stale status here. Record a significant completed investigation once in
-`docs/history/`, then keep only its current implication and evidence link here.
-Do not append run-by-run results, validation totals, or superseded plans to this page.
-Documentation size limits are checked by `tests/test_documentation_layout.py`.
+Read this page and relevant implementation guidance first. Consult history only for
+a named evidence question; historical commands and approvals do not carry forward.
+Replace stale decisions here and link completed investigations in `docs/history/`.
+Keep this snapshot within the limit checked by `tests/test_documentation_layout.py`.
