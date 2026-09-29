@@ -253,7 +253,7 @@ def test_empty_updates_preserve_concerns_and_legacy_note_shape():
 
 
 def test_unused_nullable_fields_do_not_reject_annotation_or_imply_verification():
-    state, receipt = apply(empty_verification_state(), [concern(evidence="unused")])
+    state, receipt = apply(empty_verification_state(), [concern()])
     assert receipt["status"] == "applied"
     state, receipt = apply(state, [concern(
         "dismiss", "v1", evidence="unused", reason="Not necessary for this change.",

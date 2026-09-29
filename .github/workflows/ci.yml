@@ -6,18 +6,22 @@ on:
 
 jobs:
   fast-dev-head:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
-      - run: uv sync --extra dev
-      - run: uv run ruff check patchloop tests
-      - run: uv run pytest tests
-      - run: uv run patchloop task validate tasks/smoke/csv-quoted-newline
+      - run: uv sync --extra dev --locked
+      - run: uv run --locked ruff check patchloop tests
+      - run: uv run --locked pytest tests --basetemp "${{ runner.temp }}/patchloop-tests"
+      - run: uv run --locked patchloop task validate tasks/smoke/csv-quoted-newline
       - run: >-
-          uv run patchloop dev
+          uv run --locked patchloop dev
           --provider mock
           --task tasks/smoke/csv-quoted-newline/public.yaml
           --model mock-dev

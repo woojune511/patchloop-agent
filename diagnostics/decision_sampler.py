@@ -524,6 +524,7 @@ def _collect_validated(
     adapter_factory: Callable[[ModelConfig], OpenAIResponsesAdapter] | None,
     clock: Callable[[], float],
     checkpoint: Callable[[str], None],
+    report_parser: Callable[[list[dict]], dict] | None = None,
 ) -> dict:
     """Shared one-response engine. Callers must validate disk inputs and exact approval."""
     root = approval.result_root.resolve()
@@ -827,6 +828,36 @@ def _collect_validated(
                 checkpoint("usage_recorded")
                 if not billing_known:
                     return finish("PROVIDER_TIMEOUT_OR_UNKNOWN")
+                if report_parser is not None:
+                    # Response-only diagnostics have no coding-tool contract or execution.
+                    if raw_turn.error and raw_turn.error.code == "provider_continuation_error":
+                        return finish("PROVIDER_CONTINUATION_ERROR")
+                    calls = [asdict(c) for c in raw_turn.tool_calls]
+                    report = None
+                    if not raw_turn.error and raw_turn.response_status == "completed":
+                        with suppress(ContractError):
+                            report = report_parser(calls)
+                    public_ref = store.put_json({
+                        **BOUNDARIES, "anonymous_sample_id": sample_id,
+                        "case_id": cell.case_id, "tool_calls": calls,
+                        "response_status": raw_turn.response_status,
+                        "error_code": raw_turn.error.code if raw_turn.error else None,
+                        "report_status": "VALID" if report is not None else "NOT_ASSESSABLE",
+                        "report": report, "grading": "NOT_ASSESSED",
+                    })
+                    # Adapter continuation contains encrypted items/references only.
+                    # Keep the receipt for audit; never replay it into another reviewer.
+                    encrypted_ref = store.put_json({
+                        "output_order": [asdict(i) for i in raw_turn.provider_continuation]})
+                    journal.append("sample_recorded", {
+                        **common, "public_artifact": public_ref.model_dump(mode="json"),
+                        "continuation_ref": None,
+                        "report_continuation_artifact": encrypted_ref.model_dump(mode="json"),
+                    })
+                    samples.append({"anonymous_sample_id": sample_id, "case_id": cell.case_id,
+                                    "public_artifact": public_ref.model_dump(mode="json")})
+                    checkpoint("sample_recorded")
+                    continue
                 turn = _turn_from_openai(raw_turn)
                 if turn.error_code == "provider_continuation_error":
                     return finish("PROVIDER_CONTINUATION_ERROR")

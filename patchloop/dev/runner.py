@@ -3656,6 +3656,24 @@ def _run_one_locked(
         )
 
 
+def _probe_evidence(journal, artifact_store, run_id):
+    """Package executed probes; ordinary resume includes the complete same-profile run."""
+    return [
+        artifact_store.put_json({
+            **event["payload"]["result"]["output"],
+            "schema_version": "dev-probe-receipt-v1",
+            "run_id": run_id,
+            "action_id": event["payload"]["result"]["action_id"],
+            "input_hash": event["payload"]["result"]["input_hash"],
+            "workspace_diff_hash": event["payload"]["result"]["workspace_diff_hash"],
+        })
+        for event in journal.events()
+        if event["event_type"] == "action_finished"
+        and event["payload"]["result"]["tool"] == "run_probe"
+        and event["payload"]["result"]["output"].get("execution_policy") is not None
+    ]
+
+
 def _run_one_active(
     *, request: DevRunRequest, task_dir: Path, package: Any, state_root: Path,
     pricing: ModelPricing | None, cost_ledger: DevCostLedger | None,
@@ -4750,20 +4768,7 @@ def _run_one_active(
         if terminal_code == DevTerminal.TASK_FAILED:
             stop_remaining = True
 
-    probe_evidence = [
-        artifact_store.put_json({
-            **event["payload"]["result"]["output"],
-            "schema_version": "dev-probe-receipt-v1",
-            "run_id": run_id,
-            "action_id": event["payload"]["result"]["action_id"],
-            "input_hash": event["payload"]["result"]["input_hash"],
-            "workspace_diff_hash": event["payload"]["result"]["workspace_diff_hash"],
-        })
-        for event in journal.events()
-        if event["event_type"] == "action_finished"
-        and event["payload"]["result"]["tool"] == "run_probe"
-        and event["payload"]["result"]["output"].get("execution_policy") is not None
-    ]
+    probe_evidence = _probe_evidence(journal, artifact_store, run_id)
     probe_artifact_hashes = {
         f"probe_receipt_{index + 1}": artifact.content_hash
         for index, artifact in enumerate(probe_evidence)

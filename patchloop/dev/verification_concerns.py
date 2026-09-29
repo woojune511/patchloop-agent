@@ -7,6 +7,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from patchloop.dev.verification_observations import verification_observation
+
 
 class _VerificationUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -19,6 +21,10 @@ class _VerificationUpdate(BaseModel):
 
 
 _FEEDBACK = {
+    "observation_already_bound": "Keep the original observation; create a distinct concern "
+    "for a different observation.",
+    "unobserved_verification_observation": "Link a completed unsuccessful public check/probe, "
+    "or use null for a concern without an observed failure.",
     "invalid_verification_updates": "Use an array of at most three verification updates.",
     "invalid_verification_update": "This verification update does not match its public schema.",
     "unknown_concern_id": "Use an existing concern ID, or upsert with null to create one.",
@@ -61,6 +67,12 @@ def project_verification_concerns(
         item["status"] = _effective_status(item, diff_hash)
         item["model_authored"] = True
         item["interpretation_status"] = "model_authored_unverified"
+        if item.get("observation"):
+            origin_hash = item["observation"]["diff_hash"]
+            item["observation"]["currency"] = (
+                "unknown" if origin_hash is None else
+                "current" if origin_hash == diff_hash else "historical"
+            )
         decision = item.get("decision")
         if decision is not None:
             currency = "current" if decision["diff_hash"] == diff_hash else "historical"
@@ -178,6 +190,19 @@ def update_verification_concerns(
             if not update.statement or not update.statement.strip():
                 reject("statement_required")
                 continue
+            observation = None
+            created = existing is None
+            if update.evidence_action_id is not None:
+                result = prior_results.get(update.evidence_action_id)
+                if (isinstance(result, dict)
+                        and result.get("action_id") == update.evidence_action_id):
+                    observation = verification_observation(result)
+                if observation is None:
+                    reject("unobserved_verification_observation")
+                    continue
+                if existing and existing.get("observation") not in (None, observation):
+                    reject("observation_already_bound")
+                    continue
             if existing is None:
                 if len(updated["items"]) >= 3:
                     evictable = next((
@@ -196,7 +221,10 @@ def update_verification_concerns(
                 updated["next_id"] += 1
                 updated["items"].append(existing)
                 entry["concern_id"] = existing["concern_id"]
-            elif update.statement in (existing["statement"], existing.get("progress_note")):
+            new_link = observation is not None and existing.get("observation") is None
+            if not created and update.statement in (
+                existing["statement"], existing.get("progress_note"),
+            ) and not new_link:
                 entry.update(
                     status="applied", code="unchanged",
                     message=(
@@ -205,8 +233,10 @@ def update_verification_concerns(
                     ),
                 )
                 continue
-            else:
+            elif not created and update.statement != existing["statement"]:
                 existing["progress_note"] = update.statement
+            if observation is not None:
+                existing["observation"] = observation
             existing.update(updated_turn_id=turn_id, decision=None)
         else:
             if not update.reason or not update.reason.strip():
@@ -258,7 +288,10 @@ def verification_updates_schema() -> dict[str, Any]:
                         "progress about its immutable original, not a replacement question."
                     ),
                 },
-                "evidence_action_id": {"type": ["string", "null"], "maxLength": 500},
+                "evidence_action_id": {
+                    "type": ["string", "null"], "maxLength": 500,
+                    "description": "Upsert: failed check/probe ID.",
+                },
                 "reason": {
                     "type": ["string", "null"], "maxLength": 400,
                     "description": "Brief public resolution/dismissal basis, not raw reasoning.",

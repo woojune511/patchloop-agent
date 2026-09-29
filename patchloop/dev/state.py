@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import json
 import math
 import os
@@ -267,7 +268,12 @@ class DevJournal:
                 flags |= os.O_BINARY
             descriptor = os.open(self.path, flags, 0o600)
             try:
-                os.write(descriptor, encoded)
+                remaining = memoryview(encoded)
+                while remaining:
+                    written = os.write(descriptor, remaining)
+                    if written <= 0:
+                        raise OSError(errno.EIO, "development journal write made no progress")
+                    remaining = remaining[written:]
                 os.fsync(descriptor)
             finally:
                 os.close(descriptor)

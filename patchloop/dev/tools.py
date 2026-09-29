@@ -45,6 +45,7 @@ from patchloop.dev.verification_concerns import (
     project_verification_concerns,
     update_verification_concerns,
 )
+from patchloop.dev.verification_observations import project_verification_observations
 from patchloop.dev.working_notes import (
     SourceNoteEvidence,
     WorkingNotesUpdate,
@@ -244,8 +245,8 @@ def dev_tool_schemas(
                     },
                     "new_text": {"type": "string", "maxLength": 20_000},
                     "occurrence": {"type": "integer", "minimum": 1, "maximum": 100},
-                    "hypothesis": {"type": "string", "minLength": 1},
-                    "expected_behavior": {"type": "string", "minLength": 1},
+                    "hypothesis": {"type": "string", "minLength": 1, "maxLength": 1_500},
+                    "expected_behavior": {"type": "string", "minLength": 1, "maxLength": 1_500},
                     "causal_revision": {
                         "type": ["object", "null"],
                         "description": (
@@ -1892,10 +1893,16 @@ class DevToolGateway:
     def verification_concerns(self, *, diff_hash: str | None = None) -> dict[str, Any]:
         """Project advisory concerns without refreshing/expiring source observations."""
 
-        return project_verification_concerns(
+        current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
+        view = project_verification_concerns(
             self._verification_state,
-            diff_hash=diff_hash if diff_hash is not None else self.current_diff_hash,
+            diff_hash=current_hash,
         )
+        view["observations"] = project_verification_observations(
+            [e["payload"]["result"] for e in self.journal.events()
+             if e["event_type"] == "action_finished"], view["items"], diff_hash=current_hash,
+        )
+        return view
 
     def working_notes(self, *, diff_hash: str | None = None) -> dict[str, Any]:
         self._refresh_working_source_notes()

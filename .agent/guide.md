@@ -55,7 +55,8 @@ One consecutive protocol/incomplete correction is allowed; a valid tool batch re
 Reads return at most 400 inclusive lines within output bounds. Searches use literal
 queries and repository-rooted component-aware globs. Only delivered, current public
 source can authorize an edit. `replace_text` requires an exact occurrence in an
-existing tracked allowed file, a hypothesis, and expected behavior. The gateway binds
+existing tracked allowed file, a hypothesis, and expected behavior (each 1-1,500
+characters in both the public schema and internal contract). The gateway binds
 the contiguous observed anchor, creates the canonical full diff, enforces complete-diff
 scope, and restores the pre-image on rejection. Do not substitute fuzzy matching,
 unobserved source, new paths, or model-selected mutation evidence IDs.
@@ -76,6 +77,15 @@ hard tool restrictions from advisory progress signals or task-specific failure p
 
 Project only public task/source/diff/action/check information. Keep current evidence
 distinct from historical or unverified notes; do not equate delivery with model use.
+Verification observations are reconstructed from completed public check/probe actions
+under working_notes.verification.observations (latest six, with omission count).
+They preserve action/input/diff identity and execution flags, not bug verdicts. Unrelated
+PASS does not erase them; edits make prior observations historical. Upsert may link
+one using evidence_action_id; the original link is immutable, and missing/healthy
+result IDs are rejected as links. Null retains hypothesis-only concerns. External
+operator feedback remains separately labelled; it is not imported as a registered
+check/probe observation. Linked observations do not alter resolution or finish gates.
+
 Latest tool observations must reach the next request. Retained source is bounded,
 uses only observed complete lines, and never fills unseen gaps. Optional run-local
 working notes do not enable cross-run memory.
@@ -84,8 +94,14 @@ External state uses append-only, hash-chained `dev-run-v1` JSONL and immutable r
 envelopes. Mutations/checks preserve `action_id + input_hash`: replay completed results,
 reject conflicting reuse, reconcile admitted mutations after crashes instead of
 applying them twice. Do not rewrite journals, old envelopes, or prior native outputs.
+New records are returned only after all event bytes are written and fsync succeeds.
+Zero-progress writes and write/sync errors propagate; partial bytes remain untouched.
+An invalid final record still blocks replay and append; no automatic truncation or repair
+is performed, and a failed sync does not establish durable completion.
 Resume requires repeat=1, exact envelope-bound settings/identities, and the run lock.
 Pre-envelope runs cannot resume. Preserve settled usage, counters, and active deadlines.
+The offline [observation-exposure fork](observation-exposure.md) retains parent
+provenance under a new current-runtime envelope; it does not relax ordinary resume.
 
 OpenAI uses `store=false` and encrypted continuation with exact call/output ordering;
 never log plaintext reasoning or reasoning summaries. Missing/corrupt continuation
