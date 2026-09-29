@@ -72,10 +72,11 @@ state; completion guidance may steer attention, but causality is unproven. The
 completed six responses: targeted counterexample investigation A 1/3, B 1/3;
 paired wins 1/1/1. Removing the latest recommendation showed no advantage. One
 response explicitly retained the discrepancy but selected the unrelated check.
-The [cross-task audit](history/2026-09-29-cross-task-evidence-action-audit.md)
-found 11 registered-check failures across eight trajectories followed by repair and
-same-check PASS, under mandatory submission gates. HF external feedback and toqito's
-invalid final probe expose weaker retention of non-blocking verification questions.
+The [stricter audit](history/2026-09-30-retained-counterexample-audit.md) rechecked
+95 journals: HF B2 is the confirmed delivered counterexample left in the final patch.
+Tox responded with a targeted repair; 11 registered failures reached same-check PASS.
+Localize B2 to unreconciled contrary evidence at submission; interpretation versus
+evidence weighting/action priority remains unresolved. No universal memory failure.
 The [lifecycle audit](history/2026-09-29-verification-concern-lifecycle-audit.md)
 found HF/toqito questions were never registered. [Observation linking](history/2026-09-29-verification-observation-linking.md)
 now retains registered unsuccessful executions and provenance; local tests/mock passed.
@@ -136,8 +137,7 @@ Evidence for targeted lookup:
 - Information comparison results: [outcomes and public audit](history/2026-09-27-caller-information-results.md);
   packet: `C:\pt\analyses\caller-information-results-20260927-v1`; live: `C:\pt\callerinfo0927a`.
 - Information comparison preparation: [scope and validation](history/2026-09-27-caller-information.md);
-  [contract](../.agent/caller-information.md);
-  packet: `C:\pt\analyses\caller-information-comparison-20260927-v1`.
+  [contract](../.agent/caller-information.md).
 - Closed comparison: [checkpoint results](history/2026-09-27-checkpoint-live-results.md);
   packet: `C:\pt\analyses\checkpoint-live-results-20260927-v1`; live: `C:\pt\mutationlive0927a`.
 - Live collector: [preparation and environment block](history/2026-09-27-checkpoint-live-preparation.md);
