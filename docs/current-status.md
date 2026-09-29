@@ -81,10 +81,10 @@ found HF/toqito questions were never registered. [Observation linking](history/2
 now retains registered unsuccessful executions and provenance; local tests/mock passed.
 It certifies neither bugs nor semantic resolution and adds no submission gate.
 Operator feedback stays separate; live improvement remains NOT_RUN.
-The [exposure comparison design](history/2026-09-29-observation-exposure-design.md)
-verified 17 paired context cuts. Its primary multi-task trial is NO_GO: optional
-probe failures occur only on toqito; HF/pyfakefs/AnyIO failures are already gated.
-Seek independent saved optional-failure cases before paid effectiveness testing.
+The [expanded probe survey](history/2026-09-29-optional-probe-survey.md) found five
+candidate cuts across AnyIO/tox/pyfakefs beyond the initial inventory.
+Four concern experiment readiness/inspection; tox's behavioral assertion still needs
+public-path validation. Verify applicability/restoration before paid comparison.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
