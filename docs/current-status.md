@@ -81,10 +81,10 @@ found HF/toqito questions were never registered. [Observation linking](history/2
 now retains registered unsuccessful executions and provenance; local tests/mock passed.
 It certifies neither bugs nor semantic resolution and adds no submission gate.
 Operator feedback stays separate; live improvement remains NOT_RUN.
-The [restoration audit](history/2026-09-29-optional-probe-restoration.md) recovered
-AnyIO/pyfakefs gateway state. Real tox CLI confirmed a default-value regression,
-but its seeded episode is not directly resumable: mutation state mismatches.
-Finish full-request parity/admission for AnyIO/pyfakefs before paid comparison.
+[Restoration](history/2026-09-29-optional-probe-restoration.md) confirmed tox's seeded
+regression. [Request parity](history/2026-09-29-observation-request-parity.md) passed
+for AnyIO/pyfakefs; direct resume fails runtime identity. Implement/rehearse a current
+diagnostic fork with per-turn exposure before paid comparison.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
