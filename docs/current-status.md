@@ -50,12 +50,9 @@ NOT_RUN and infrastructure failures were zero. Both known failure tasks failed a
 four runs each. Actual cost $12.1553535; unused $35.8446465 is closed.
 B cost 26.6% more and took 24.7% more active time. Do not adopt the instruction.
 
-Arm-masked public review was frozen before outcome mapping; 197 actual model inputs
-were verified. B made selected pairs more explicit, but neither arm used run_probe.
-Every final patch passed public checks, including nine acceptance failures. Pydantic
-still used an overbroad field-mode guard. One HF B run preserved raw explicit endpoint
-context but still failed acceptance. Valid pair prose and selected-case PASS do not
-prove full scope.
+All 197 model inputs were verified; neither arm used run_probe. All final patches
+passed public checks, including nine acceptance failures. More explicit pair prose
+and selected-case PASS did not establish correct scope.
 
 The [public discrimination replay](history/2026-09-29-boundary-discrimination-replay.md)
 ran 15 local containers on base plus all Pydantic/HF/PDM final patches, without model
@@ -79,11 +76,16 @@ B selected H's explicit-versus-ambient endpoint boundary twice and three F/G
 control examples. P still misinterpreted provider-profile scope in both B responses.
 B proposed eight probes; A only registered checks. This is selection evidence,
 not five discovered bugs or better task acceptance. All dispatched inputs and source
-bindings verified. Cost USD 2.455532; unused USD 10.544468 is closed. Generated
-tool execution, setup, reproduction, repair and evaluation remain NOT_RUN.
-Keep the baseline unchanged. Next consider a separate registered-path execution
-of all frozen programs without operator corrections, retaining expectation and
-environment failures; no further model run is authorized by the closed allocation.
+bindings verified. Cost USD 2.455532; unused USD 10.544468 is closed.
+The [registered probe replay](history/2026-09-29-selected-probe-execution-results.md)
+executed all eight frozen programs unchanged, with no model calls. H reproduced
+the public counterexample twice; F's two controls held; L exposed a diagnostic
+scope question. P passed its unsupported expectation. G failed before behavior
+on missing pandas/numpy despite delivered environment constraints. Separate
+expectation validity, execution readiness and repair ability. No retries, source
+changes or cleanup failures occurred. Keep the baseline unchanged; agent repair,
+task acceptance and safety evaluation remain NOT_RUN. No further model run is
+authorized by the closed allocation.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
