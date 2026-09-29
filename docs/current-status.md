@@ -63,12 +63,10 @@ PDM's early active-interpreter construction did not cause failure with missing p
 all four patches passed eight selection/fallback cases. That candidate cause remains
 unconfirmed; do not force the explanation with an artificial exception.
 
-The active question is whether an agent can select evidence that holds its proposed
-guard constant while varying the requirement's distinguishing condition. Separate
-selection, execution and repair. Existing checks omit these P/H distinctions; local
-replay does not certify admission through the agent probe service. Keep the baseline
-fixed; no new prompt fields, gates or default change is justified. Broaden task families
-before generalizing; these operator examples must not become undisclosed agent hints.
+Separate evidence selection, execution readiness and repair. Existing checks omit
+the P/H distinctions; no default prompt or gate change is justified. These already
+used tasks cannot establish generalization, and operator examples must not become
+undisclosed agent hints.
 The [selection diagnostic](history/2026-09-29-discriminating-case-selection-results.md)
 completed 24 response-only samples from six fixed A1 candidates before their first
 public check. Arm-masked review counted discriminating selections A 0/12, B 5/12:
@@ -86,6 +84,11 @@ expectation validity, execution readiness and repair ability. No retries, source
 changes or cleanup failures occurred. Keep the baseline unchanged; agent repair,
 task acceptance and safety evaluation remain NOT_RUN. No further model run is
 authorized by the closed allocation.
+The [observation-to-repair comparison](history/2026-09-29-observation-repair-panel-design.md)
+is prepared: H's fixed candidate and probe in both arms, actual observation withheld
+versus supplied, A/B twice. Fresh seeded episodes permit normal repair/check/submit
+and isolated evaluation. The proposed new USD 8 cap is not yet authorized; live repair
+is NOT_RUN. Preparation passed source bindings, local Docker preflight and mock tests.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
@@ -108,10 +111,8 @@ Key closed evidence:
 - [Earlier timeout](history/2026-09-28-expectation-review-results.md): billing of one
   interrupted call remains unknown, separately from later settled allocations.
 
-All allocations, including the basic/current panel, are closed. Earlier
-supplied-candidate repairs, operator replays and response-only samples remain
-separate from fresh solves. Planning
-comparisons are closed; the selected working baseline above is unchanged.
+All earlier allocations are closed. Seeded repairs, operator replays and response-only
+samples remain separate from fresh solves. The working baseline is unchanged.
 
 ## Implemented and measured
 
