@@ -46,9 +46,7 @@ ran 15 local containers on base plus all Pydantic/HF/PDM final patches, without 
 calls or private evaluation. Holding mode/name constant exposed overbroad behavior in
 all four Pydantic patches; testing an endpoint-free client under an ambient endpoint
 exposed three HF patches. HB2 preserves that boundary but its residual failure is open.
-PDM's early active-interpreter construction did not cause failure with missing paths:
-all four patches passed eight selection/fallback cases. That candidate cause remains
-unconfirmed; do not force the explanation with an artificial exception.
+PDM's missing-path replay did not confirm the suspected interpreter-construction failure.
 
 Separate evidence selection, execution readiness and repair. Existing checks omit
 the P/H distinctions; no default prompt or gate change is justified. These already
@@ -75,9 +73,10 @@ Tox responded with a targeted repair; 11 registered failures reached same-check 
 The [judgment/action audit](history/2026-09-30-public-judgment-action-audit.md)
 localizes B2 to unsupported closure; A3 does not prove abandonment.
 The [disposition diagnostic](history/2026-09-30-evidence-disposition-results.md)
-completed 12 responses: current-counterexample joint score A 1/2, B 0/2; B also
-claimed unsupported historical resolution 2/2. Do not adopt. USD 0.689213 settled;
-allocation closed. Citations/currency alone do not establish support.
+completed 12 responses: joint A 1/2, B 0/2; B claimed unsupported resolution 2/2.
+Do not adopt; USD 0.689213 settled, allocation closed.
+[Context preparation](history/2026-09-30-evidence-context-preparation.md) freezes
+four evidence-matched reviewer pairs across HF/AnyIO/tox. Live NOT_RUN; no collector.
 The [lifecycle audit](history/2026-09-29-verification-concern-lifecycle-audit.md)
 found HF/toqito questions were never registered. [Observation linking](history/2026-09-29-verification-observation-linking.md)
 now retains registered unsuccessful executions and provenance; local tests/mock passed.
