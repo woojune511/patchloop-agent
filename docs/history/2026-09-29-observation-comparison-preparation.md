@@ -60,3 +60,43 @@ but cannot guarantee completed investigations, useful outputs or successful repa
 
 Actual input counting, provider dispatch and remote-task tool execution remain
 NOT_RUN. Preparation and synthetic collection do not authorize the proposed allocation.
+
+## Preparation result and local validation
+
+The final `plan-v2/manifest.json` is bound by
+`sha256:a34406b480fa600b165989146b53bcf0909491fc37114aa4e9c9909d0be544b1`.
+All six synthetic first requests passed pair parity; all six read-only preflights
+returned READY. `identity-recheck.json` confirmed unchanged source/control hashes.
+These are preparation results, not provider compatibility or task-solving evidence.
+The earlier `plan/` packet remains a failed-preflight record, not a live allocation.
+
+Matched remaining allowances before new execution overhead (each A/B pair):
+
+| Checkpoint | Model calls | Tool actions | Accepted edits | Active seconds |
+| --- | ---: | ---: | ---: | ---: |
+| N1 | 34 | 89 | 3 | 1484.839 |
+| P1 | 12 | 62 | 1 | 1511.744 |
+| P2 | 29 | 89 | 4 | 1690.161 |
+
+Every parent has a 1800-second total active limit; elapsed time stays spent.
+The first-input hash normalizes displayed remaining seconds to zero for parity;
+zero in the saved normalized request does not mean the run's allowance is zero.
+
+Focused validation initially passed 26 tests in 66.35s. After real-source admission
+corrections, the collector's nine tests passed in 121.80s while the full suite was
+running concurrently; this contention run exceeded the two-minute target. The final
+collector recheck passed all nine in 85.14s after concurrency decreased, meeting the
+two-minute target. Ruff passed. Mock run `run_dev_d576c828c49540a7` under
+`C:/pt/observation-comparison-mock-20260929-v1` reached EVALUATOR_PASS with
+task acceptance PASS and safety NOT_RUN, cost zero.
+
+The full suite covered 194 files across eight disjoint shards: 3,646 passed,
+16 skipped, no failures; longest shard 2222.28s (37m02s). It started before the
+real-source admission corrections; the final nine-test collector recheck above
+covers those changes, including the new executing-profile test. Documentation
+layout/link checks also passed (five tests). Full-suite logs, `pytest-results.json`
+and `pytest-summary.json` are stored beside the preparation packet.
+
+Actual model input counts and dispatches: zero. Live interpretation/action effects:
+NOT_RUN. Next executable proposal is exactly the final six-row manifest at USD 18;
+it still requires new paid authorization and a fresh per-row preflight.
