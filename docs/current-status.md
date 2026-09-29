@@ -68,27 +68,21 @@ the P/H distinctions; no default prompt or gate change is justified. These alrea
 used tasks cannot establish generalization, and operator examples must not become
 undisclosed agent hints.
 The [selection diagnostic](history/2026-09-29-discriminating-case-selection-results.md)
-completed 24 response-only samples from six fixed A1 candidates before their first
-public check. Arm-masked review counted discriminating selections A 0/12, B 5/12:
-B selected H's explicit-versus-ambient endpoint boundary twice and three F/G
-control examples. P still misinterpreted provider-profile scope in both B responses.
-B proposed eight probes; A only registered checks. This is selection evidence,
-not five discovered bugs or better task acceptance. All dispatched inputs and source
-bindings verified. Cost USD 2.455532; unused USD 10.544468 is closed.
-The [registered probe replay](history/2026-09-29-selected-probe-execution-results.md)
-executed all eight frozen programs unchanged, with no model calls. H reproduced
-the public counterexample twice; F's two controls held; L exposed a diagnostic
-scope question. P passed its unsupported expectation. G failed before behavior
-on missing pandas/numpy despite delivered environment constraints. Separate
-expectation validity, execution readiness and repair ability. No retries, source
-changes or cleanup failures occurred. Keep the baseline unchanged; agent repair,
-task acceptance and safety evaluation remain NOT_RUN. No further model run is
-authorized by the closed allocation.
-The [observation-to-repair comparison](history/2026-09-29-observation-repair-panel-design.md)
-is prepared: H's fixed candidate and probe in both arms, actual observation withheld
-versus supplied, A/B twice. Fresh seeded episodes permit normal repair/check/submit
-and isolated evaluation. The proposed new USD 8 cap is not yet authorized; live repair
-is NOT_RUN. Preparation passed source bindings, local Docker preflight and mock tests.
+found discriminating selections A 0/12, B 5/12 across six fixed candidates. Its
+[registered replay](history/2026-09-29-selected-probe-execution-results.md) executed
+all eight unchanged proposed programs: H reproduced a counterexample twice; F's
+controls held; L remained ambiguous; P passed unsupported expectations; G failed
+on missing dependencies. Separate selection validity, readiness and repair. These
+closed allocations established no task-acceptance improvement or default change.
+The [observation-to-repair comparison](history/2026-09-29-observation-repair-panel-results.md)
+completed four seeded H episodes: frozen public counterexample repaired A 0/2,
+B 1/2; benchmark acceptance 0/4, safety PASS 4/4. All 23 actual inputs retained
+correct feedback and candidate currency. B1 inspected and repaired the observed
+boundary; B2 submitted unchanged after public PASS despite receiving the same
+counterexample. Delivery alone is insufficient; next inspect how unresolved contrary
+evidence interacts with check coverage and submission decisions, including resource
+horizon signals. Residual benchmark failure is unexplained. No default change or
+further paid run; USD 2.077146 spent, unused USD 5.922854 closed.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
