@@ -36,9 +36,6 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The [basic/current comparison](history/2026-09-28-basic-current-baseline-comparison.md)
-passed 4/6 versus 5/6 tasks. Current remains a working baseline; individual feature effects are unresolved.
-
 The [boundary-pair procedure panel](history/2026-09-29-boundary-pair-panel-results.md)
 completed 24 fresh runs across Pydantic, HF Hub, Fromager, Loguru, PDM and pgmpy.
 Current A passed 7/12; procedure B passed 8/12, with paired B wins / A wins / ties
@@ -64,12 +61,9 @@ the P/H distinctions; no default prompt or gate change is justified. These alrea
 used tasks cannot establish generalization, and operator examples must not become
 undisclosed agent hints.
 The [selection diagnostic](history/2026-09-29-discriminating-case-selection-results.md)
-found discriminating selections A 0/12, B 5/12 across six fixed candidates. Its
-[registered replay](history/2026-09-29-selected-probe-execution-results.md) executed
-all eight unchanged proposed programs: H reproduced a counterexample twice; F's
-controls held; L remained ambiguous; P passed unsupported expectations; G failed
-on missing dependencies. Separate selection validity, readiness and repair. These
-closed allocations established no task-acceptance improvement or default change.
+and [registered replay](history/2026-09-29-selected-probe-execution-results.md)
+separate case selection, expectation validity and execution readiness; neither
+established task-acceptance improvement. Their allocations are closed.
 The [observation-to-repair comparison](history/2026-09-29-observation-repair-panel-results.md)
 completed four seeded H episodes: frozen public counterexample repaired A 0/2,
 B 1/2; benchmark acceptance 0/4, safety PASS 4/4. All 23 actual inputs retained
@@ -84,9 +78,14 @@ state; completion guidance may steer attention, but causality is unproven. The
 completed six responses: targeted counterexample investigation A 1/3, B 1/3;
 paired wins 1/1/1. Removing the latest recommendation showed no advantage. One
 response explicitly retained the discrepancy but selected the unrelated check.
-Next audit existing cross-task traces for evidence retention versus action choice;
-no new gate or paid run. USD 0.2693865 spent, unused USD 3.7306135 closed. Tools,
-acceptance and safety were NOT_RUN. Residual benchmark failure remains unexplained.
+The [cross-task audit](history/2026-09-29-cross-task-evidence-action-audit.md)
+found 11 registered-check failures across eight trajectories followed by repair and
+same-check PASS, under mandatory submission gates. HF external feedback and toqito's
+invalid final probe expose weaker retention of non-blocking verification questions.
+Existing concern lists were empty in those final inputs. Next inspect question
+registration/resolution semantics provider-free; do not add a hard gate or infer
+quality gains. No new paid run. The ablation spent USD 0.2693865; unused USD 3.7306135
+is closed. Residual benchmark failures remain unexplained.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
