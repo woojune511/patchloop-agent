@@ -79,10 +79,14 @@ completed four seeded H episodes: frozen public counterexample repaired A 0/2,
 B 1/2; benchmark acceptance 0/4, safety PASS 4/4. All 23 actual inputs retained
 correct feedback and candidate currency. B1 inspected and repaired the observed
 boundary; B2 submitted unchanged after public PASS despite receiving the same
-counterexample. Delivery alone is insufficient; next inspect how unresolved contrary
-evidence interacts with check coverage and submission decisions, including resource
-horizon signals. Residual benchmark failure is unexplained. No default change or
-further paid run; USD 2.077146 spent, unused USD 5.922854 closed.
+counterexample. The [decision audit](history/2026-09-29-observation-decision-audit.md)
+rules out delivery, hard budget exhaustion and tool closure for B2. Divergence
+began after the first check PASS: B1 retained the counterexample; B2 retained only
+the remaining check. External evidence does not enter the computed failure/submit
+state; completion guidance may steer attention, but causality is unproven. Next
+isolate that guidance at the fixed decision point before adding another gate.
+Residual benchmark failure is unexplained. No default change or paid run authorized;
+USD 2.077146 spent, unused USD 5.922854 closed.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
