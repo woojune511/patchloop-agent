@@ -37,10 +37,7 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 ## Current problem and next decision
 
 The [basic/current comparison](history/2026-09-28-basic-current-baseline-comparison.md)
-passed 4/6 versus 5/6 tasks, with only pyfakefs differing. Planning, probes and repair
-recheck changed together; no feature has isolated credit. Keep Current as a working
-baseline, not a proven default improvement. Detailed cost/time and safety evidence
-remain in the closed result.
+passed 4/6 versus 5/6 tasks. Current remains a working baseline; individual feature effects are unresolved.
 
 The [boundary-pair procedure panel](history/2026-09-29-boundary-pair-panel-results.md)
 completed 24 fresh runs across Pydantic, HF Hub, Fromager, Loguru, PDM and pgmpy.
@@ -50,9 +47,8 @@ NOT_RUN and infrastructure failures were zero. Both known failure tasks failed a
 four runs each. Actual cost $12.1553535; unused $35.8446465 is closed.
 B cost 26.6% more and took 24.7% more active time. Do not adopt the instruction.
 
-All 197 model inputs were verified; neither arm used run_probe. All final patches
-passed public checks, including nine acceptance failures. More explicit pair prose
-and selected-case PASS did not establish correct scope.
+All 197 inputs verified; neither arm used run_probe. Public checks passed even for
+nine acceptance failures. Pair prose and selected-case PASS did not establish scope.
 
 The [public discrimination replay](history/2026-09-29-boundary-discrimination-replay.md)
 ran 15 local containers on base plus all Pydantic/HF/PDM final patches, without model
@@ -84,10 +80,13 @@ rules out delivery, hard budget exhaustion and tool closure for B2. Divergence
 began after the first check PASS: B1 retained the counterexample; B2 retained only
 the remaining check. External evidence does not enter the computed failure/submit
 state; completion guidance may steer attention, but causality is unproven. The
-[fixed-input ablation](history/2026-09-29-completion-recommendation-ablation-design.md)
-is prepared: remove only the latest action recommendation, A/B three samples each.
-Exact new USD 4 approval is pending; live NOT_RUN. No default change. Residual
-benchmark failure is unexplained; prior unused USD 5.922854 remains closed.
+[fixed-input ablation](history/2026-09-29-completion-recommendation-ablation-results.md)
+completed six responses: targeted counterexample investigation A 1/3, B 1/3;
+paired wins 1/1/1. Removing the latest recommendation showed no advantage. One
+response explicitly retained the discrepancy but selected the unrelated check.
+Next audit existing cross-task traces for evidence retention versus action choice;
+no new gate or paid run. USD 0.2693865 spent, unused USD 3.7306135 closed. Tools,
+acceptance and safety were NOT_RUN. Residual benchmark failure remains unexplained.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
