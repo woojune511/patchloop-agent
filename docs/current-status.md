@@ -80,14 +80,15 @@ The [lifecycle audit](history/2026-09-29-verification-concern-lifecycle-audit.md
 found HF/toqito questions were never registered. [Observation linking](history/2026-09-29-verification-observation-linking.md)
 now retains registered unsuccessful executions and provenance; local tests/mock passed.
 It certifies neither bugs nor semantic resolution and adds no submission gate.
-Operator feedback stays separate; live improvement remains NOT_RUN.
+Operator feedback stays separate; live benefit remains unestablished.
 [Restoration](history/2026-09-29-optional-probe-restoration.md) confirmed tox's seeded
 regression. [Request parity](history/2026-09-29-observation-request-parity.md) passed
 for AnyIO/pyfakefs; direct resume fails runtime identity. The current-runtime
-[offline fork](history/2026-09-29-observation-fork-rehearsal.md) now preserves that
-guard and applies exposure every turn. Six synthetic branches passed. The separate
-[live comparison preparation](history/2026-09-29-observation-comparison-preparation.md)
-fixes public scoring and a six-row collector; live behavior and quality remain NOT_RUN.
+[offline fork](history/2026-09-29-observation-fork-rehearsal.md) preserves that guard.
+The [live comparison](history/2026-09-29-observation-comparison-results.md)
+ran three conditions, then stopped on a local recount guard; three remain NOT_RUN.
+The complete pair tied on target handling. Historical-profile receipts
+blocked both N1 evaluations. Fix these boundaries provider-free; allocation closed.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
