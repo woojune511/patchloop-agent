@@ -76,6 +76,15 @@ hard tool restrictions from advisory progress signals or task-specific failure p
 
 Project only public task/source/diff/action/check information. Keep current evidence
 distinct from historical or unverified notes; do not equate delivery with model use.
+Verification observations are reconstructed from completed public check/probe actions
+under working_notes.verification.observations (latest six, with omission count).
+They preserve action/input/diff identity and execution flags, not bug verdicts. Unrelated
+PASS does not erase them; edits make prior observations historical. Upsert may link
+one using evidence_action_id; the original link is immutable, and missing/healthy
+result IDs are rejected as links. Null retains hypothesis-only concerns. External
+operator feedback remains separately labelled; it is not imported as a registered
+check/probe observation. Linked observations do not alter resolution or finish gates.
+
 Latest tool observations must reach the next request. Retained source is bounded,
 uses only observed complete lines, and never fills unseen gaps. Optional run-local
 working notes do not enable cross-run memory.

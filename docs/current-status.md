@@ -80,8 +80,11 @@ The [lifecycle audit](history/2026-09-29-verification-concern-lifecycle-audit.md
 finds the target HF/toqito questions were never registered, not erased. Five of 45
 journals use concerns (five upserts/five resolves); persistence tests pass. Resolve
 checks evidence currency/success, not semantic coverage; dismissal needs only a
-reason. Next examine provenance-aware registration offline, preserving the distinction
-between candidate failures and invalid probes. No new gate or paid run is justified.
+reason. Public unsuccessful-execution observations are now derived from journals and
+can be linked to existing concerns, retaining provenance and candidate currency.
+They do not certify bugs or block submission; operator feedback stays separate.
+Local tests and mock evaluation passed after regression corrections; live effect and
+quality improvement remain NOT_RUN. See the [implementation record](history/2026-09-29-verification-observation-linking.md).
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
