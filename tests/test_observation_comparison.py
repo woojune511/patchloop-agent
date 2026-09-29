@@ -166,6 +166,46 @@ def test_changed_rubric_or_implementation_rejected(manifest, monkeypatch):
         collect(manifest)
 
 
+def test_environment_matches_executing_profile_not_parent(prepared, tmp_path, monkeypatch):
+    row = prepared["rows"][0]
+    env_file = tmp_path / "credential-path-only.env"
+    env_file.touch()
+    source = comparison.Source.from_record(row["source"])
+    old = (
+        DevJournal(source.root, source.run_id)
+        .load_envelope()
+        .model_copy(
+            update={
+                "credential_file_path_hash": sha256_bytes(str(env_file.resolve()).encode()),
+                "prepared_source_path": str(tmp_path / "prepared-source"),
+                "prepared_probe_dependencies_path": None,
+                "probe_profile_hash": "historical-profile",
+            }
+        )
+    )
+    monkeypatch.setattr(DevJournal, "load_envelope", lambda _: old)
+    monkeypatch.setattr(comparison, "clean_implementation", lambda: None)
+    for name in (
+        "_live_task_is_admitted",
+        "_live_source_preflight",
+        "load_source",
+        "_live_sandbox_preflight",
+    ):
+        monkeypatch.setattr(runner, name, lambda *a, **kw: None)
+    monkeypatch.setattr(
+        runner.DockerProbeSandbox, "preflight", lambda *a, **kw: row["executing_probe_identity"]
+    )
+    assert comparison.check_environment(row, env_file)["status"] == "READY"
+    monkeypatch.setattr(
+        runner.DockerProbeSandbox,
+        "preflight",
+        lambda *a, **kw: row["parent_probe_identity"] | {"profile_hash": "drift"},
+    )
+    rejected = comparison.check_environment(row, env_file)
+    assert rejected["status"] == "PREFLIGHT_FAILED"
+    assert "probe identity changed" in rejected["error"]
+
+
 def test_drift_between_count_and_dispatch_blocks_sdk_create(manifest, source, monkeypatch):
     client = ScriptedClient(stop_steps())
     install_sdk(monkeypatch, source, [client])

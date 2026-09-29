@@ -47,6 +47,13 @@ N1's parent used GPT-5.4/xhigh; P1/P2 used GPT-5.4-mini/medium. Both arms use th
 selected GPT-5.4/xhigh baseline, with parent settings recorded separately. These are
 current-baseline forks, not same-model resumes. Provider compatibility with inherited
 cross-model continuation remains NOT_RUN; failure stops all remaining rows.
+The first preparation stopped before provider work: an overly strict parent-model
+check rejected P1/P2. After separating provenance from the executing baseline, the
+`plan/` packet passed input parity but rejected every environment because admission
+compared the current probe profile to the historical profile. Image digests matched;
+profile hashes differed. The corrected collector binds parent and executing probe
+identities separately and checks the latter, as the new runtime envelope does.
+The earlier packet remains preserved and is not the execution manifest.
 At the runtime's 60K input bound, a full 25K-output call reserves at most USD 0.525
 at reviewed standard rates; USD 3 covers the primary three-call token allowance,
 but cannot guarantee completed investigations, useful outputs or successful repairs.

@@ -19,6 +19,9 @@ continue under the selected GPT-5.4/xhigh baseline. Parent model/settings are ex
 manifest provenance, not a claim of same-model resume. Inherited continuation state
 is identical within each pair; cross-model provider compatibility remains untested
 until actual execution and any continuation failure stops the comparison.
+The current-runtime fork likewise binds the current probe profile, retaining the
+parent profile separately. Read-only admission compares the actual environment to
+the executing identity; it does not silently treat historical settings as current.
 
 ## Scoring fixed before execution
 

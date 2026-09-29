@@ -86,6 +86,14 @@ def controls(cases, env_file, result_root, row_cap_usd):
                 "task": str(source.public_path),
                 "parent_model": old.model,
                 "parent_reasoning_effort": old.reasoning_effort,
+                "parent_probe_identity": {
+                    "image_digest": old.probe_image_digest,
+                    "profile_hash": old.probe_profile_hash,
+                },
+                "executing_probe_identity": {
+                    "image_digest": runner.PROBE_IMAGE_DIGEST,
+                    "profile_hash": runner.probe_profile_hash(old.probe_dependencies),
+                },
                 "new_cap_nanos": usd_to_nanos(row_cap_usd),
             }
         )
@@ -158,8 +166,7 @@ def check_environment(row, env_file):
         runner._live_sandbox_preflight(package, deadline=deadline)
         identity = runner.DockerProbeSandbox(dependencies=deps).preflight(deadline=deadline)
         require(
-            identity
-            == {"image_digest": old.probe_image_digest, "profile_hash": old.probe_profile_hash},
+            identity == row["executing_probe_identity"],
             "probe identity changed",
         )
         checks["source_images_dependencies"] = "PASS"
