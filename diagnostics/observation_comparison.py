@@ -273,6 +273,7 @@ def run_branch(branch, group, journal, store, label, first_hash):
 
     class RecordedAdapter(OpenAIResponsesAdapter):
         def count_input_tokens_v2(self, payload, **kwargs):
+            self._pending_count = None
             if not counted:
                 require(
                     sha256_json(normalized(payload)) == first_hash,
@@ -287,12 +288,17 @@ def run_branch(branch, group, journal, store, label, first_hash):
                 "actual_input_count_started",
                 {"row": label, "artifact": artifact.model_dump(mode="json")},
             )
-            counted.append(copy.deepcopy(payload))
-            return super().count_input_tokens_v2(payload, **kwargs)
+            snapshot = copy.deepcopy(payload)
+            counted.append(snapshot)
+            result = super().count_input_tokens_v2(payload, **kwargs)
+            self._pending_count = snapshot
+            return result
 
         def execute_request(self, payload, **kwargs):
-            require(len(counted) == len(dispatched) + 1, "dispatch lacks immediate count")
-            expected = copy.deepcopy(counted[-1])
+            expected = getattr(self, "_pending_count", None)
+            self._pending_count = None
+            require(expected is not None, "dispatch lacks fresh successful count")
+            expected = copy.deepcopy(expected)
             require(
                 0 < payload["max_output_tokens"] <= expected["max_output_tokens"],
                 "output ceiling grew after count",
@@ -309,6 +315,7 @@ def run_branch(branch, group, journal, store, label, first_hash):
 
     with (
         inherited_reads(branch),
+        exposure.current_probe_receipts(branch),
         exposure.exposure(branch.arm),
         patch.object(runner, "OpenAIResponsesAdapter", RecordedAdapter),
         patch.object(runner, "_run_one_active", current_identity),

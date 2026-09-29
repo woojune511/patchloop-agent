@@ -8,19 +8,27 @@ from pathlib import Path
 
 import pytest
 import test_mutation_advice_checkpoint as fixture_source
-from test_checkpoint_comparison import install_sdk
+from test_checkpoint_comparison import install_sdk as install_base_sdk
 from test_checkpoint_continuation import call, stop_steps
 from test_dev_probes import FakeProbe
 
 from diagnostics import observation_comparison as comparison
 from diagnostics.checkpoint_continuation import ScriptedClient
 from patchloop.agent import model
-from patchloop.contracts import TaskEnvironment
+from patchloop.artifacts import ArtifactStore
+from patchloop.contracts import Artifact, RunManifest, TaskEnvironment
 from patchloop.dev import runner
 from patchloop.dev.model import MOCK_MUTATIONS
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
+from patchloop.sandbox import probes
 from patchloop.util import canonical_json, sha256_bytes
+from patchloop.verifier.core import EvaluationEngine
+
+
+def install_sdk(monkeypatch, source, clients):
+    install_base_sdk(monkeypatch, source, clients)
+    monkeypatch.setattr(runner, "DockerProbeSandbox", lambda **_: FakeProbe(status="passed"))
 
 
 def resolver(original):
@@ -41,6 +49,7 @@ def resolver(original):
 @pytest.fixture(scope="module")
 def source(tmp_path_factory):
     with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(probes, "PROBE_THREAD_ENV", {})
         patch.setattr(fixture_source, "FakeProbe", lambda **_: FakeProbe(status="failed"))
         return fixture_source.source.__wrapped__(tmp_path_factory)
 
@@ -96,6 +105,13 @@ def test_six_rows_use_real_collector_and_isolated_fixture_evaluation(manifest, s
     }
     args.update(occurrence=1, causal_revision=None)
     repair = [
+        [
+            call(
+                "run_probe",
+                {"question": "Check current execution", "python_source": "print('x')"},
+                "verify",
+            )
+        ],
         [call("replace_text", args, "mutate")],
         [call("run_check", {"check_id": "existing-unit-tests"}, "verify")],
         [call("finish_task", {}, "finish")],
@@ -112,7 +128,32 @@ def test_six_rows_use_real_collector_and_isolated_fixture_evaluation(manifest, s
     )
     assert submitted["harness_git_commit"] == "d" * 40
     assert all(r["result"]["terminal"] == "AGENT_STOPPED" for r in result["rows"][1:])
-    assert result["new_cost_nanos"] == 8 * (100 * 2500 + 20 * 15000)
+    assert result["new_cost_nanos"] == 9 * (100 * 2500 + 20 * 15000)
+    journal = DevJournal(root / "N1A", source.run_id)
+    lineage = next(
+        e["payload"] for e in journal.events() if e["event_type"] == "probe_receipt_lineage"
+    )
+    store = ArtifactStore(root / "N1A" / "artifacts")
+    historical = json.loads(
+        store.read_bytes(Artifact.model_validate(lineage["historical_receipts"][0]))
+    )
+    current = json.loads(store.read_bytes(Artifact.model_validate(lineage["current_receipts"][0])))
+    assert historical["profile_hash"] != current["profile_hash"] == submitted["probe_profile_hash"]
+    assert submitted["probe_execution_count"] == 1
+    assert submitted["probe_evidence"] == lineage["current_receipts"]
+    assert lineage["historical_receipts_are_current_execution"] is False
+    assert (
+        sha256_bytes(DevJournal(source.root, source.run_id).path.read_bytes())
+        == source.journal_hash
+    )
+    # A new receipt with the old profile must still be rejected by the unchanged evaluator.
+    bad = store.put_json({**current, "profile_hash": historical["profile_hash"]})
+    bad_manifest = RunManifest.model_validate(submitted).model_copy(
+        update={"probe_evidence": [bad]}
+    )
+    engine = EvaluationEngine(None, None, store)
+    safety = engine._probe_policy_evidence(bad_manifest)
+    assert safety.details["integrity_errors"]
     assert all(len(c.counted) == len(c.created) for c in clients)
     for label, client in zip(comparison.ORDER, clients, strict=True):
         for request in client.created:
@@ -221,3 +262,76 @@ def test_drift_between_count_and_dispatch_blocks_sdk_create(manifest, source, mo
     assert len(client.counted) == 1 and not client.created
     assert result["stop_reason"] is not None
     assert all(r["status"] == "NOT_RUN" for r in result["rows"][1:])
+
+
+def test_size_recount_dispatches_latest_input(manifest, source, monkeypatch):
+    class RecountClient(ScriptedClient):
+        def count(self, **request):
+            self.input_tokens = 60389 if len(self.counted) == 1 else 100
+            return super().count(**request)
+
+    first = RecountClient(
+        [
+            [
+                call(
+                    "read_file",
+                    {"path": "mini_data_utils/csvlite.py", "start_line": 1, "end_line": 20},
+                    "inspect",
+                )
+            ],
+            *stop_steps(),
+        ]
+    )
+    clients = [first, *[ScriptedClient(stop_steps()) for _ in range(5)]]
+    install_sdk(monkeypatch, source, clients)
+    result = collect(manifest)
+    assert result["stop_reason"] is None, result
+    assert len(first.counted) == 3 and len(first.created) == 2
+    assert result["rows"][0]["input_counts"] == 3
+    assert first.counted[1]["input"] != first.counted[2]["input"]
+    assert first.created[1]["input"] == first.counted[2]["input"]
+    assert result["new_cost_nanos"] == 7 * (100 * 2500 + 20 * 15000)
+
+
+def test_count_ticket_is_single_use_and_failed_recount_invalidates_it(
+    manifest, source, monkeypatch
+):
+    adapters = []
+
+    def fail_count(self, payload, **kwargs):
+        adapters.append(type(self))
+        raise TimeoutError("synthetic count failure")
+
+    install_sdk(monkeypatch, source, [ScriptedClient(stop_steps())])
+    monkeypatch.setattr(comparison.OpenAIResponsesAdapter, "count_input_tokens_v2", fail_count)
+    result = collect(manifest)
+    assert result["stop_reason"] == "COUNT_TIMEOUT_OR_UNKNOWN"
+    adapter = object.__new__(adapters[0])
+    sends = []
+    monkeypatch.setattr(
+        comparison.OpenAIResponsesAdapter,
+        "execute_request",
+        lambda _, payload, **kw: sends.append(payload),
+    )
+    payload = {"input": [], "max_output_tokens": 10}
+    with pytest.raises(ContractError, match="fresh successful count"):
+        adapter.execute_request(payload)
+    monkeypatch.setattr(
+        comparison.OpenAIResponsesAdapter, "count_input_tokens_v2", lambda *a, **kw: 100
+    )
+    adapter.count_input_tokens_v2(payload)
+    adapter.execute_request({**payload, "max_output_tokens": 5})
+    with pytest.raises(ContractError, match="fresh successful count"):
+        adapter.execute_request(payload)
+    adapter.count_input_tokens_v2(payload)
+    with pytest.raises(ContractError, match="ceiling grew"):
+        adapter.execute_request({**payload, "max_output_tokens": 11})
+    with pytest.raises(ContractError, match="fresh successful count"):
+        adapter.execute_request(payload)
+    adapter.count_input_tokens_v2(payload)
+    monkeypatch.setattr(comparison.OpenAIResponsesAdapter, "count_input_tokens_v2", fail_count)
+    with pytest.raises(TimeoutError):
+        adapter.count_input_tokens_v2(payload)
+    with pytest.raises(ContractError, match="fresh successful count"):
+        adapter.execute_request(payload)
+    assert sends == [{**payload, "max_output_tokens": 5}]

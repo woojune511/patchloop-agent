@@ -20,6 +20,13 @@ lineage; the new state root identifies the diagnostic branch. Copied events are 
 new executions. Historical settled usage is retained; unused historical funds are
 closed. The positive new allowance funds synthetic accounting only.
 
+The fork marker also binds historical probe receipt artifacts to the parent prefix.
+The live collector scopes submission packaging to executions after that marker and
+records both receipt sets in a hash-chained lineage event. It validates the marker
+and historical artifacts before packaging. Copied receipts remain available for
+audit; they are not current-profile execution evidence. Ordinary same-profile resume
+still packages the complete run, and evaluator integrity checks are unchanged.
+
 `rehearse(branch, ScriptedClient(steps), probe_outcomes={action_id: status})` uses
 the ordinary loop, adapter grammar, count/cost admission and tool gateway with an
 inert provider and explicit synthetic probe receipts. No probe Python executes.

@@ -42,6 +42,22 @@ def branch_for(source, tmp_path, arm="A", cap="1"):
         )
 
 
+def test_receipt_scope_requires_bound_fork_and_preserves_ordinary_resume(source, tmp_path):
+    branch = branch_for(source, tmp_path)
+    ordinary = runner._probe_evidence
+    inherited = ordinary(branch.journal, branch.store, source.run_id)
+    assert len(inherited) == 1
+    with diagnostic.current_probe_receipts(branch):
+        assert runner._probe_evidence(branch.journal, branch.store, source.run_id) == []
+        branch.marker_hash = "changed"
+        with pytest.raises(ContractError, match="lineage boundary changed"):
+            runner._probe_evidence(branch.journal, branch.store, source.run_id)
+    assert runner._probe_evidence is ordinary
+    assert [ref.content_hash for ref in ordinary(branch.journal, branch.store, source.run_id)] == [
+        ref.content_hash for ref in inherited
+    ]
+
+
 def test_projection_only_changes_catalogs():
     catalog = {"verification": {"observations": {"items": ["failure"]}, "concerns": []}}
     original = [

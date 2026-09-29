@@ -284,6 +284,10 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file):
         ): ledger.cap_nanos - spent,
         "historical_funds_reopened": False,
         "inherited_events_are_not_new_execution": True,
+        "historical_probe_receipts": [
+            ref.model_dump(mode="json")
+            for ref in runner._probe_evidence(view, store, source.run_id)
+        ],
         "active_elapsed_ms": int(bundle["turn"]["active_elapsed_ms"]),
     }
     journal.append("observation_exposure_fork", marker)
@@ -311,6 +315,46 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file):
         canonical_json({"marker": marker, "references": references}), encoding="utf-8"
     )
     return branch
+
+
+@contextmanager
+def current_probe_receipts(branch):
+    """Keep parent receipts auditable without claiming they ran in this new environment."""
+    original = runner._probe_evidence
+
+    def package(journal, artifact_store, run_id):
+        require(journal.path == branch.journal.path, "unexpected receipt journal")
+        events = journal.events()
+        marker = events[branch.inherited_events]
+        require(
+            marker["event_type"] == "observation_exposure_fork"
+            and sha256_json(marker["payload"]) == branch.marker_hash
+            and events[branch.inherited_events - 1]["event_hash"]
+            == marker["payload"]["parent_prefix_hash"],
+            "receipt lineage boundary changed",
+        )
+        historical = marker["payload"]["historical_probe_receipts"]
+        for ref in historical:
+            artifact_store.read_bytes(Artifact.model_validate(ref))
+        current = original(
+            SimpleNamespace(events=lambda: events[branch.inherited_events + 1 :]),
+            artifact_store,
+            run_id,
+        )
+        journal.append(
+            "probe_receipt_lineage",
+            {
+                "parent": marker["payload"]["parent"],
+                "parent_prefix_hash": marker["payload"]["parent_prefix_hash"],
+                "historical_receipts": historical,
+                "current_receipts": [ref.model_dump(mode="json") for ref in current],
+                "historical_receipts_are_current_execution": False,
+            },
+        )
+        return current
+
+    with patch.object(runner, "_probe_evidence", package):
+        yield
 
 
 class SyntheticProbe:

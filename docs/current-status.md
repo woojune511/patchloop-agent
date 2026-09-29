@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-09-29. This is a replaceable snapshot of current decisions, not an
+Updated: 2026-09-30. This is a replaceable snapshot of current decisions, not an
 append-only log. Source code owns runtime behavior; this page owns current priorities.
 Read [history](history/README.md) only for a specific evidence question.
 
@@ -87,8 +87,10 @@ for AnyIO/pyfakefs; direct resume fails runtime identity. The current-runtime
 [offline fork](history/2026-09-29-observation-fork-rehearsal.md) preserves that guard.
 The [live comparison](history/2026-09-29-observation-comparison-results.md)
 ran three conditions, then stopped on a local recount guard; three remain NOT_RUN.
-The complete pair tied on target handling. Historical-profile receipts
-blocked both N1 evaluations. Fix these boundaries provider-free; allocation closed.
+The complete pair tied on target handling; historical receipts blocked N1 evaluation.
+Provider-free [boundary fixes](history/2026-09-29-observation-boundary-fixes.md)
+separate recount admission and receipt lineage. Paid validation remains NOT_RUN;
+the previous allocation is closed, and no retention benefit is established.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
@@ -141,11 +143,7 @@ Evidence for targeted lookup:
 - Live collector: [preparation and environment block](history/2026-09-27-checkpoint-live-preparation.md);
   [contract](../.agent/checkpoint-comparison.md);
   packet: `C:\pt\analyses\checkpoint-live-comparison-20260927-v1`.
-- Offline continuation: [restoration and execution](history/2026-09-27-checkpoint-continuation.md);
-  [contract](../.agent/checkpoint-continuation.md);
-  packet: `C:\pt\analyses\checkpoint-continuation-20260927-v1`.
-- Earlier baseline: [basic/current comparison](history/2026-09-28-basic-current-baseline-comparison.md);
-  live state: `C:\pt\baseline-compare-20260928-v1`.
+- Offline continuation: [restoration and execution](history/2026-09-27-checkpoint-continuation.md).
 - Patch diagnostic: [AnyIO B1 branch deletion](history/2026-09-27-anyio-b1-branch-deletion.md);
   packet: `C:\pt\analyses\anyio-b1-branch-deletion-20260927-v1`.
 - Audit: [AnyIO evidence/action links](history/2026-09-27-anyio-evidence-action-link.md);

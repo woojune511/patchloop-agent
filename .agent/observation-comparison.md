@@ -73,6 +73,11 @@ failed/interrupted attempts. No retries, automatic resume, budget/time extension
 or replacement rows. Sequential execution preserves scoped per-turn exposure.
 
 The ordinary adapter counts immediately before dispatch with zero SDK retries.
+The collector binds dispatch to the latest successful, unconsumed count, not the
+cumulative count/dispatch totals. A size-triggered segment replacement may discard
+a count and count the replacement input. Starting another count invalidates the old
+binding, including on count failure. Dispatch consumes the binding even on local
+rejection or transport uncertainty; only a lower positive output ceiling may differ.
 See [official OpenAI token counting](https://developers.openai.com/api/docs/guides/token-counting).
 The [GPT-5.4 model page](https://developers.openai.com/api/docs/models/gpt-5.4)
 was checked on 2026-09-29: per-million input/cached-input/output USD 2.50/0.25/15.00,
@@ -83,3 +88,8 @@ stops all remaining rows. Unknown billing is not reported as zero. Readiness is
 rechecked before each row; Docker is never started and images never pulled/built.
 Original prefixes remain byte-bound; a separate executing Git identity overrides
 the inherited Git label for new submission provenance. Ordinary resume guards remain.
+Parent probe receipts are bound to the fork's source/prefix provenance and retained
+as historical artifacts. Submission includes every executed probe after the fork,
+under the current envelope; a separate journal lineage event links both receipt sets.
+Historical receipts do not certify current sandbox execution or supply check credit.
+Current receipt validation remains unchanged, including rejection of profile drift.
