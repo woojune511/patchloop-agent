@@ -36,16 +36,10 @@ See [operations](operations.md) for commands and actual CLI defaults, and the
 
 ## Current problem and next decision
 
-The [boundary-pair procedure panel](history/2026-09-29-boundary-pair-panel-results.md)
-completed 24 fresh runs across Pydantic, HF Hub, Fromager, Loguru, PDM and pgmpy.
-Current A passed 7/12; procedure B passed 8/12, with paired B wins / A wins / ties
-1 / 0 / 11. Only PDM repetition one differed. All submitted, all safety PASS;
-NOT_RUN and infrastructure failures were zero. Both known failure tasks failed all
-four runs each. Actual cost $12.1553535; unused $35.8446465 is closed.
-B cost 26.6% more and took 24.7% more active time. Do not adopt the instruction.
-
-All 197 inputs verified; neither arm used run_probe. Public checks passed even for
-nine acceptance failures. Pair prose and selected-case PASS did not establish scope.
+The [boundary-pair panel](history/2026-09-29-boundary-pair-panel-results.md)
+completed 24 fresh runs on six tasks: A 7/12, B 8/12; paired wins 1/0/11. All final
+public checks passed, including nine acceptance failures. Neither arm used probes.
+Keep the baseline; no procedure adoption. Cost USD 12.1553535; remaining funds closed.
 
 The [public discrimination replay](history/2026-09-29-boundary-discrimination-replay.md)
 ran 15 local containers on base plus all Pydantic/HF/PDM final patches, without model
@@ -82,10 +76,12 @@ The [cross-task audit](history/2026-09-29-cross-task-evidence-action-audit.md)
 found 11 registered-check failures across eight trajectories followed by repair and
 same-check PASS, under mandatory submission gates. HF external feedback and toqito's
 invalid final probe expose weaker retention of non-blocking verification questions.
-Existing concern lists were empty in those final inputs. Next inspect question
-registration/resolution semantics provider-free; do not add a hard gate or infer
-quality gains. No new paid run. The ablation spent USD 0.2693865; unused USD 3.7306135
-is closed. Residual benchmark failures remain unexplained.
+The [lifecycle audit](history/2026-09-29-verification-concern-lifecycle-audit.md)
+finds the target HF/toqito questions were never registered, not erased. Five of 45
+journals use concerns (five upserts/five resolves); persistence tests pass. Resolve
+checks evidence currency/success, not semantic coverage; dismissal needs only a
+reason. Next examine provenance-aware registration offline, preserving the distinction
+between candidate failures and invalid probes. No new gate or paid run is justified.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
