@@ -75,9 +75,9 @@ localizes B2 to unsupported closure; A3 does not prove abandonment.
 The [disposition diagnostic](history/2026-09-30-evidence-disposition-results.md)
 completed 12 responses: joint A 1/2, B 0/2; B claimed unsupported resolution 2/2.
 Do not adopt; USD 0.689213 settled, allocation closed.
-[Context review](history/2026-09-30-evidence-context-collector.md) has 16 frozen
-response-only cells across HF/AnyIO/tox; offline tests/mock passed. Live NOT_RUN;
-USD 9 proposal awaits approval. Baseline unchanged.
+[Context review](history/2026-09-30-evidence-context-results.md) completed 16 responses:
+no context-removal advantage; one borderline A win, setup-target omissions in both.
+USD 1.138519 settled; allocation closed. Baseline unchanged.
 The [lifecycle audit](history/2026-09-29-verification-concern-lifecycle-audit.md)
 found HF/toqito questions were never registered. [Observation linking](history/2026-09-29-verification-observation-linking.md)
 now retains registered unsuccessful executions and provenance; local tests/mock passed.
