@@ -87,10 +87,12 @@ for AnyIO/pyfakefs; direct resume fails runtime identity. The current-runtime
 [offline fork](history/2026-09-29-observation-fork-rehearsal.md) preserves that guard.
 The [live comparison](history/2026-09-29-observation-comparison-results.md)
 ran three conditions, then stopped on a local recount guard; three remain NOT_RUN.
-The complete pair tied on target handling; historical receipts blocked N1 evaluation.
+The complete pair tied on target handling; original N1 evaluations errored.
 Provider-free [boundary fixes](history/2026-09-29-observation-boundary-fixes.md)
-separate recount admission and receipt lineage. Paid validation remains NOT_RUN;
-the previous allocation is closed, and no retention benefit is established.
+separate recount admission and receipt lineage. [Saved N1 patch evaluation](history/2026-09-30-observation-n1-saved-patch-evaluation.md)
+passed task v3 for both arms. Both repaired the competing lifecycle failure while
+leaving the target probe setup unresolved. Establish target relevance before another
+comparison; no retention benefit is established and prior allocations remain closed.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
@@ -136,8 +138,6 @@ Evidence for targeted lookup:
 - Information comparison preparation: [scope and validation](history/2026-09-27-caller-information.md);
   [contract](../.agent/caller-information.md);
   packet: `C:\pt\analyses\caller-information-comparison-20260927-v1`.
-- Caller-state measurement: [observation and control](history/2026-09-27-anyio-caller-state.md);
-  packet: `C:\pt\analyses\anyio-caller-state-20260927-v1`.
 - Closed comparison: [checkpoint results](history/2026-09-27-checkpoint-live-results.md);
   packet: `C:\pt\analyses\checkpoint-live-results-20260927-v1`; live: `C:\pt\mutationlive0927a`.
 - Live collector: [preparation and environment block](history/2026-09-27-checkpoint-live-preparation.md);
