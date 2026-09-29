@@ -2,6 +2,7 @@ name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -18,7 +19,12 @@ jobs:
           python-version: "3.12"
       - run: uv sync --extra dev --locked
       - run: uv run --locked ruff check patchloop tests
-      - run: uv run --locked pytest tests --basetemp "${{ runner.temp }}/patchloop-tests"
+      - run: >-
+          uv run --locked pytest tests
+          -n 4 --dist loadfile --max-worker-restart 0
+          --durations=20
+          --basetemp "${{ runner.temp }}/patchloop-tests"
+          --junitxml "${{ runner.temp }}/pytest.xml"
       - run: uv run --locked patchloop task validate tasks/smoke/csv-quoted-newline
       - run: >-
           uv run --locked patchloop dev
@@ -28,3 +34,9 @@ jobs:
           --repeat 1
         env:
           PATCHLOOP_STATE_ROOT: ${{ runner.temp }}/patchloop-state
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pytest-${{ matrix.os }}
+          path: ${{ runner.temp }}/pytest.xml
+          retention-days: 14

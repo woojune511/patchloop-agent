@@ -39,6 +39,13 @@ and [journal tests](../tests/test_dev_state.py) cover the boundaries and injecte
 [CI](../.github/workflows/ci.yml) is configured for locked dependencies and both Windows
 and Linux. These changes do not establish improved patch correctness.
 
+The [CI feedback investigation](history/2026-09-30-ci-feedback-speed.md) found Git
+subprocess waiting dominated a sampled slow test. CI now runs the complete suite
+with four file-grouped workers, on PRs and main pushes, with duration/JUnit reports.
+The unchanged four-test local comparison passed in 138 seconds serially versus 62
+seconds with four workers; hosted full-suite verification remains pending. No runtime
+logic, test assertions or test selection changed.
+
 The clearest repeated weakness is selecting verification that exposes an incorrect
 repair condition. The 24-run six-task panel had nine acceptance failures despite all
 final public checks passing; public replay confirms omitted distinctions on Pydantic
