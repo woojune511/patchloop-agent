@@ -83,10 +83,11 @@ counterexample. The [decision audit](history/2026-09-29-observation-decision-aud
 rules out delivery, hard budget exhaustion and tool closure for B2. Divergence
 began after the first check PASS: B1 retained the counterexample; B2 retained only
 the remaining check. External evidence does not enter the computed failure/submit
-state; completion guidance may steer attention, but causality is unproven. Next
-isolate that guidance at the fixed decision point before adding another gate.
-Residual benchmark failure is unexplained. No default change or paid run authorized;
-USD 2.077146 spent, unused USD 5.922854 closed.
+state; completion guidance may steer attention, but causality is unproven. The
+[fixed-input ablation](history/2026-09-29-completion-recommendation-ablation-design.md)
+is prepared: remove only the latest action recommendation, A/B three samples each.
+Exact new USD 4 approval is pending; live NOT_RUN. No default change. Residual
+benchmark failure is unexplained; prior unused USD 5.922854 remains closed.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.
