@@ -47,12 +47,12 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
         allowed_tools=("read_file", "search_files", "replace_text", "run_check",
                        "run_probe", "finish_task", "stop_task"),
     )
-    # Captured from v33 before editing: preserve object, tool, enum and required-field order,
-    # nullability, bounds and defaults after retiring the optional mutation annotations.
+    # Preserve object, tool, enum and required-field order, nullability and defaults.
+    # Refreshed after annotation retirement and for explicit explanation bounds.
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
-        "0d9332cbd8b4545322565428146c877898deabcc2cfc35c3973ce3f5bcdcc3ed"
+        "4cde62f052c239f79814b285611e73acf5e37de8d85f606f4e61b3235cfd2c70"
     )
     for tool in tools:
         assert tool["strict"] is True
@@ -67,16 +67,16 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     (
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "e63cc2dcce518f415d77387765ef89657d6d0078087e2dab5e5852735b668213",
+        "e5c851f7fb8dfeb585b242a68d9d01ce81618b859a16777e2124f6e4449d39ae",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "6c804f6a7ae4e31bbc14c5a2ddab87cf91517eb9d2a55d0654124e7d1420e675",
+        "d43eb6f78dcd5388b6ed4bbc0e3122dba599a8c0389d01d3a5299a7ebf6fff5b",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "818db123d5539bf679fa64c2a71399bdaf0c6d458d0519042e28e8f2a378039c",
+        "eb304557fd370a9fcbd8e5b216b60c4dad7985497b907412e4eec63430c58cd0",
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):

@@ -55,7 +55,7 @@ def test_off_wire_and_prompt_are_unchanged():
         "sha256:25f1db63f18b3f138ee8bdc8686ad320d7c9a3965d4e10acd1055fdd590555b7"
     )
     assert sha256_json(dev_tool_schemas(finish_enabled=True, check_ids=["check"])) == (
-        "sha256:596c5a2c40d5640bc265fef90ed31307c905ba6edd3f33f0c9372b3197ec8207"
+        "sha256:bf2bad4901949789ce8ab2407bcd6b7b15f2789d156faa4538f9216ca5f4e45e"
     )
     decision = PublicTurnDecision(mode="verify", basis="baseline")
     assert "plan_update" not in decision.model_dump(mode="json")

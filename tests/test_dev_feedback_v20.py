@@ -201,10 +201,10 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
             return [structure(item) for item in value]
         return value
 
-    # Optional mutation references change the wire; probe properties/limits and order stay fixed.
+    # Explanation bounds are explicit; probe properties/limits and tool order stay fixed.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "918f1c2a1aa600f1c2eef71dde64b3542d35ea9a34a08a70c494130776891710"
+        "71fc128a9a6696f48ab8ca233f60ed2069f33a19bcf4fdfd787753128cab52ea"
     )
     assert dev_tool_surface_hash() != (
         "sha256:d69d9d4f71a4ed6517e0ae077d2df1fe934f6498abcacf104eed0b9b0fc717a8"

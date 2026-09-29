@@ -26,9 +26,18 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 ## Active decision
 
 The [cross-task development review](history/2026-09-30-development-review.md) closes
-the repeated prompt/context/prior-decision ablation series. No new common runtime
-contract defect or effective default quality fix was established. Keep the baseline.
-No next experiment, new feature, memory extension or mandatory probe gate is queued.
+the repeated prompt/context/prior-decision ablation series without establishing an
+effective default quality fix. Keep the solving baseline; no new quality experiment,
+memory extension or mandatory probe gate is queued.
+
+The subsequent contract review identified two reproducible engineering defects:
+undisclosed mutation-explanation length limits and successful append returns after
+incomplete journal writes. The public schema now exposes the existing 1,500-character
+limits; journal append completes short writes and propagates zero-progress/I/O failures.
+Invalid journal tails remain preserved and block recovery. The [contract tests](../tests/test_dev_contracts.py)
+and [journal tests](../tests/test_dev_state.py) cover the boundaries and injected failures.
+[CI](../.github/workflows/ci.yml) is configured for locked dependencies and both Windows
+and Linux. These changes do not establish improved patch correctness.
 
 The clearest repeated weakness is selecting verification that exposes an incorrect
 repair condition. The 24-run six-task panel had nine acceptance failures despite all
@@ -46,7 +55,7 @@ they are not all current environment defects or product bugs. Resources censored
 original toqito attempt but not the completed panel. Full distinctions and exclusions
 are in the review, including 95 source-journal hash/chain rechecks.
 
-Development should resume on a concrete current-contract defect or an implementation
+Further development should address a concrete current-contract defect or an implementation
 with a specific predicted repair benefit. Use focused fixes/tests for reproducible
 bugs. For quality interventions, executed patch correctness, regressions and cost/time
 are decision evidence; explanation scores and tool/plan counts are auxiliary. Do not

@@ -245,8 +245,8 @@ def dev_tool_schemas(
                     },
                     "new_text": {"type": "string", "maxLength": 20_000},
                     "occurrence": {"type": "integer", "minimum": 1, "maximum": 100},
-                    "hypothesis": {"type": "string", "minLength": 1},
-                    "expected_behavior": {"type": "string", "minLength": 1},
+                    "hypothesis": {"type": "string", "minLength": 1, "maxLength": 1_500},
+                    "expected_behavior": {"type": "string", "minLength": 1, "maxLength": 1_500},
                     "causal_revision": {
                         "type": ["object", "null"],
                         "description": (

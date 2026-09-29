@@ -55,7 +55,8 @@ One consecutive protocol/incomplete correction is allowed; a valid tool batch re
 Reads return at most 400 inclusive lines within output bounds. Searches use literal
 queries and repository-rooted component-aware globs. Only delivered, current public
 source can authorize an edit. `replace_text` requires an exact occurrence in an
-existing tracked allowed file, a hypothesis, and expected behavior. The gateway binds
+existing tracked allowed file, a hypothesis, and expected behavior (each 1-1,500
+characters in both the public schema and internal contract). The gateway binds
 the contiguous observed anchor, creates the canonical full diff, enforces complete-diff
 scope, and restores the pre-image on rejection. Do not substitute fuzzy matching,
 unobserved source, new paths, or model-selected mutation evidence IDs.
@@ -93,6 +94,10 @@ External state uses append-only, hash-chained `dev-run-v1` JSONL and immutable r
 envelopes. Mutations/checks preserve `action_id + input_hash`: replay completed results,
 reject conflicting reuse, reconcile admitted mutations after crashes instead of
 applying them twice. Do not rewrite journals, old envelopes, or prior native outputs.
+New records are returned only after all event bytes are written and fsync succeeds.
+Zero-progress writes and write/sync errors propagate; partial bytes remain untouched.
+An invalid final record still blocks replay and append; no automatic truncation or repair
+is performed, and a failed sync does not establish durable completion.
 Resume requires repeat=1, exact envelope-bound settings/identities, and the run lock.
 Pre-envelope runs cannot resume. Preserve settled usage, counters, and active deadlines.
 The offline [observation-exposure fork](observation-exposure.md) retains parent

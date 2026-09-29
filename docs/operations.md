@@ -41,6 +41,10 @@ unchanged while tests run. Parallel processes need fresh, separate basetemps and
 disjoint file selections. Record commands, results, reports and unexecuted checks;
 old suite totals do not verify a current change.
 
+CI runs the suite, Ruff, task validation and mock smoke on Windows and Linux with
+Python 3.12. Dependency sync and command execution use `--locked`, so inconsistent
+project metadata and lockfile fail instead of being updated during validation.
+
 ## Mock end-to-end
 
 ```powershell

@@ -18,7 +18,7 @@ from patchloop.dev.contracts import (
     TextReplacementIntent,
 )
 from patchloop.dev.cost import DEFAULT_OUTPUT_CEILING, DevCostLedger, pricing_for_model
-from patchloop.dev.tools import validate_tool_batch
+from patchloop.dev.tools import dev_tool_schemas, validate_tool_batch
 from patchloop.errors import ContractError
 from patchloop.runtime import repository_root, runtime_content_hash, runtime_content_paths
 from patchloop.task_loader import load_task_package
@@ -176,6 +176,31 @@ def test_mutation_contract_requires_exact_replacement_and_typed_alternative() ->
         }
     )
     assert revision.causal_revision is not None
+
+
+@pytest.mark.parametrize("field", ["hypothesis", "expected_behavior"])
+def test_mutation_explanation_schema_matches_internal_length_contract(field) -> None:
+    mutation = next(
+        schema for schema in dev_tool_schemas(finish_enabled=False)
+        if schema["name"] == "replace_text"
+    )
+    public = mutation["parameters"]["properties"][field]
+    internal = TextReplacementIntent.model_json_schema()["properties"][field]
+    for keyword in ("type", "minLength", "maxLength"):
+        assert public.get(keyword) == internal[keyword]
+
+    base = {
+        "path": "src/a.py", "old_text": "old", "new_text": "new", "occurrence": 1,
+        "hypothesis": "a cause", "expected_behavior": "a result", "causal_revision": None,
+    }
+    for length in (0, 1, 1_500, 1_501):
+        value = "가" * length
+        advertised_valid = public["minLength"] <= len(value) <= public["maxLength"]
+        if advertised_valid:
+            assert getattr(TextReplacementIntent.model_validate({**base, field: value}), field)
+        else:
+            with pytest.raises(ValidationError):
+                TextReplacementIntent.model_validate({**base, field: value})
 
 
 def test_public_turn_decision_is_bounded_strict_and_mode_specific() -> None:

@@ -1,10 +1,115 @@
 from __future__ import annotations
 
+import errno
+import os
+
 import pytest
 
 from patchloop.dev.contracts import DevToolResult
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ActionConflict, RecoveryError
+from patchloop.util import canonical_json
+
+
+def test_journal_completes_short_writes_before_sync(tmp_path, monkeypatch) -> None:
+    journal = DevJournal(tmp_path, "run_dev_shortwrite")
+    first = journal.append("run_started")
+    prefix = journal.path.read_bytes()
+    write = os.write
+    fsync = os.fsync
+    write_count = 0
+    synced = []
+
+    def short_write(descriptor, data):
+        nonlocal write_count
+        write_count += 1
+        return write(descriptor, data[:7])
+
+    def sync_complete_record(descriptor):
+        synced.append(journal.events())
+        fsync(descriptor)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(os, "write", short_write)
+        patch.setattr(os, "fsync", sync_complete_record)
+        second = journal.append("observation", {"text": "한글🙂"})
+
+    assert write_count > 1
+    assert synced == [[first, second]]
+    assert journal.path.read_bytes() == prefix + (canonical_json(second) + "\n").encode("utf-8")
+    assert DevJournal(tmp_path, journal.run_id).events() == [first, second]
+
+
+@pytest.mark.parametrize("failure", ["zero", "disk_full"])
+@pytest.mark.parametrize("partial", [False, True])
+def test_journal_write_failure_preserves_bytes_and_rejects_torn_tail(
+    tmp_path, monkeypatch, failure, partial,
+) -> None:
+    journal = DevJournal(tmp_path, "run_dev_writefailure")
+    first = journal.append("run_started")
+    prefix = journal.path.read_bytes()
+    write = os.write
+    suffix = b""
+    calls = 0
+
+    def fail_write(descriptor, data):
+        nonlocal calls, suffix
+        calls += 1
+        if partial and calls == 1:
+            suffix = bytes(data[:11])
+            return write(descriptor, suffix)
+        assert calls == (2 if partial else 1), "failed writes must not be retried"
+        if failure == "zero":
+            return 0
+        raise OSError(errno.ENOSPC, "injected disk full")
+
+    def unexpected_sync(descriptor):
+        pytest.fail("an incomplete write must not reach fsync")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(os, "write", fail_write)
+        patch.setattr(os, "fsync", unexpected_sync)
+        with pytest.raises(OSError) as raised:
+            journal.append("observation", {"text": "incomplete"})
+
+    assert raised.value.errno == (errno.EIO if failure == "zero" else errno.ENOSPC)
+    assert journal.path.read_bytes() == prefix + suffix
+    reopened = DevJournal(tmp_path, journal.run_id)
+    if partial:
+        with pytest.raises(RecoveryError, match="invalid JSONL"):
+            reopened.events()
+        with pytest.raises(RecoveryError, match="invalid JSONL"):
+            reopened.append("observation", {"text": "must not discard the torn tail"})
+        assert journal.path.read_bytes() == prefix + suffix
+    else:
+        assert reopened.events() == [first]
+
+
+def test_journal_sync_failure_is_reported_without_rewriting_record(tmp_path, monkeypatch) -> None:
+    journal = DevJournal(tmp_path, "run_dev_syncfailure")
+    first = journal.append("run_started")
+    prefix = journal.path.read_bytes()
+    payload = {"call_id": "call-1", "cost_nanos": 5}
+
+    def fail_sync(descriptor):
+        raise OSError(errno.EIO, "injected fsync failure")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(os, "fsync", fail_sync)
+        with pytest.raises(OSError, match="injected fsync failure"):
+            journal.append("provider_call_finished", payload)
+
+    retained = journal.path.read_bytes()
+    assert retained.startswith(prefix)
+    # Readability in this process does not establish durability after the failed fsync.
+    reopened = DevJournal(tmp_path, journal.run_id)
+    events = reopened.events()
+    assert events[0] == first
+    assert len(events) == 2
+    assert events[1]["payload"] == payload
+    assert reopened.append("provider_call_finished", payload) == events[1]
+    assert journal.path.read_bytes() == retained
+    assert reopened.provider_usage() == [payload]
 
 
 def test_jsonl_is_append_only_hash_chained_and_action_idempotent(tmp_path) -> None:
