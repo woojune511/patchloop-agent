@@ -64,19 +64,19 @@ B 1/2; benchmark acceptance 0/4, safety PASS 4/4. All 23 actual inputs retained
 correct feedback and candidate currency. B1 inspected and repaired the observed
 boundary; B2 submitted unchanged after public PASS despite receiving the same
 counterexample. The [decision audit](history/2026-09-29-observation-decision-audit.md)
-rules out delivery, hard budget exhaustion and tool closure for B2. Divergence
-began after the first check PASS: B1 retained the counterexample; B2 retained only
-the remaining check. External evidence does not enter the computed failure/submit
-state; completion guidance may steer attention, but causality is unproven. The
+rules out delivery, hard budget exhaustion and tool closure for B2. External evidence
+does not enter computed failure/submit state; guidance causality is unproven. The
 [fixed-input ablation](history/2026-09-29-completion-recommendation-ablation-results.md)
 completed six responses: targeted counterexample investigation A 1/3, B 1/3;
-paired wins 1/1/1. Removing the latest recommendation showed no advantage. One
-response explicitly retained the discrepancy but selected the unrelated check.
+paired wins 1/1/1. Removing the latest recommendation showed no advantage.
 The [stricter audit](history/2026-09-30-retained-counterexample-audit.md) rechecked
 95 journals: HF B2 is the confirmed delivered counterexample left in the final patch.
 Tox responded with a targeted repair; 11 registered failures reached same-check PASS.
-Localize B2 to unreconciled contrary evidence at submission; interpretation versus
-evidence weighting/action priority remains unresolved. No universal memory failure.
+The [judgment/action audit](history/2026-09-30-public-judgment-action-audit.md)
+localizes B2 to unsupported closure with current contrary evidence. A3 recognizes a
+coverage gap, but does not prove complete correct judgment followed by abandonment.
+Interpretation versus evidence weighting remains unresolved. Test disposition at
+submission with applicability controls; keep the baseline. No automatic HF-only run.
 The [lifecycle audit](history/2026-09-29-verification-concern-lifecycle-audit.md)
 found HF/toqito questions were never registered. [Observation linking](history/2026-09-29-verification-observation-linking.md)
 now retains registered unsuccessful executions and provenance; local tests/mock passed.
