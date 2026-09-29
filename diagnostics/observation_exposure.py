@@ -1,7 +1,8 @@
-"""Offline-only current-runtime forks and persistent observation exposure.
+"""Current-runtime restoration and offline observation-exposure rehearsal.
 
 Synthetic SDK/probe results exercise the ordinary runner, not agent quality. No
-credential or live dispatch entry point exists. Use separate processes for branches.
+credential or live dispatch entry point exists here. The separate funded collector
+reuses the restoration primitive. Use separate processes for concurrent branches.
 """
 
 from __future__ import annotations
@@ -98,11 +99,24 @@ def exposure(arm):
 
 
 def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic_cap_usd: Decimal):
+    return _fork(
+        source,
+        cut_sequence,
+        output,
+        arm,
+        new_cap_usd=synthetic_cap_usd,
+        mode="offline-scripted-only",
+        env_file=output / "NO_CREDENTIAL_FILE",
+    )
+
+
+def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file):
     """Copy a settled prefix; bind current runtime without changing the parent."""
     require(arm in {"A", "B"}, "unknown exposure arm")
+    require(mode in {"offline-scripted-only", "funded-observation"}, "unknown fork mode")
     require(
-        synthetic_cap_usd.is_finite() and synthetic_cap_usd > 0,
-        "positive finite synthetic allowance required",
+        new_cap_usd.is_finite() and new_cap_usd > 0,
+        "positive finite new allowance required",
     )
     historical = DevJournal(source.root, source.run_id)
     for path, digest in (
@@ -213,7 +227,7 @@ def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic
     )
     pricing = pricing_for_model("gpt-5.4-2026-03-05")
     spent = budget["cost"]["settled_usage"]
-    ledger = DevCostLedger(Decimal(spent) / 10**9 + synthetic_cap_usd, pricing)
+    ledger = DevCostLedger(Decimal(spent) / 10**9 + new_cap_usd, pricing)
     ledger.restore_settled_usage(journal.provider_usage(), base_spent_nanos=old.cost_start_nanos)
     require(ledger.spent_nanos == spent, "historical billing differs")
     request = DevRunRequest(
@@ -222,7 +236,7 @@ def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic
         model="gpt-5.4-2026-03-05",
         reasoning_effort="xhigh",
         max_output_tokens=25000,
-        env_file=output / "NO_CREDENTIAL_FILE",
+        env_file=env_file,
         max_cost_usd=Decimal(ledger.cap_nanos) / 10**9,
         state_root=output,
         resume_run_id=source.run_id,
@@ -258,14 +272,16 @@ def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic
     )
     journal.write_envelope(envelope)
     marker = {
-        "mode": "offline-scripted-only",
+        "mode": mode,
         "arm": arm,
         "parent": source.record(),
         "cut_sequence": cut_sequence,
         "parent_prefix_hash": prefix[-1]["event_hash"],
         "current_runtime_hash": runtime_hash,
         "diagnostic_implementation_hash": implementation_hash(),
-        "synthetic_new_cap_nanos": ledger.cap_nanos - spent,
+        (
+            "synthetic_new_cap_nanos" if mode == "offline-scripted-only" else "new_cap_nanos"
+        ): ledger.cap_nanos - spent,
         "historical_funds_reopened": False,
         "inherited_events_are_not_new_execution": True,
         "active_elapsed_ms": int(bundle["turn"]["active_elapsed_ms"]),
@@ -287,6 +303,7 @@ def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic
         workspace=workspace,
         inherited_events=len(prefix),
         marker_hash=sha256_json(marker),
+        initial_spent_nanos=spent,
     )
     with inherited_reads(branch):
         runner._validate_recorded_continuations(journal.events(), store)
@@ -343,6 +360,7 @@ def rehearse(branch, client: ScriptedClient, *, probe_outcomes=None):
         if e["event_type"] == "observation_exposure_fork"
     )
     require(sha256_json(marker) == branch.marker_hash, "fork binding changed")
+    require(marker["mode"] == "offline-scripted-only", "funded branch is not a rehearsal")
     require(
         marker["diagnostic_implementation_hash"] == implementation_hash(),
         "diagnostic implementation changed",

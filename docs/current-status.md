@@ -85,9 +85,9 @@ Operator feedback stays separate; live improvement remains NOT_RUN.
 regression. [Request parity](history/2026-09-29-observation-request-parity.md) passed
 for AnyIO/pyfakefs; direct resume fails runtime identity. The current-runtime
 [offline fork](history/2026-09-29-observation-fork-rehearsal.md) now preserves that
-guard and applies exposure every turn. Six synthetic branches passed; live behavior
-and quality effects remain NOT_RUN. No paid continuation is authorized or implemented
-by this offline entry point.
+guard and applies exposure every turn. Six synthetic branches passed. The separate
+[live comparison preparation](history/2026-09-29-observation-comparison-preparation.md)
+fixes public scoring and a six-row collector; live behavior and quality remain NOT_RUN.
 The [pre-edit comparison](history/2026-09-28-pre-edit-issue-focus-results.md) and
 [plan audit](history/2026-09-28-plan-condition-audit.md) remain supporting evidence:
 requirement-to-condition mapping failed despite faithful plan storage/delivery.

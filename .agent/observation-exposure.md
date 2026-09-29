@@ -2,6 +2,9 @@
 
 `diagnostics/observation_exposure.py` is a synthetic runner diagnostic, not a live
 continuation entry point. Production defaults and ordinary resume guards are unchanged.
+The separately authorized [live comparison](observation-comparison.md) reuses its
+restoration primitive with an explicitly funded envelope; the synthetic entry point
+continues to forbid real dispatch and submission.
 
 `fork(Source, cut_sequence, output, arm, synthetic_cap_usd=Decimal(...))` accepts
 hash-bound dev-train OpenAI segmented checkpoints without compaction. The cut is a
