@@ -73,10 +73,11 @@ The [stricter audit](history/2026-09-30-retained-counterexample-audit.md) rechec
 95 journals: HF B2 is the confirmed delivered counterexample left in the final patch.
 Tox responded with a targeted repair; 11 registered failures reached same-check PASS.
 The [judgment/action audit](history/2026-09-30-public-judgment-action-audit.md)
-localizes B2 to unsupported closure. A3's coverage recognition does not prove abandonment.
-The [disposition diagnostic](history/2026-09-30-evidence-disposition-preparation.md)
-freezes three submission checkpoints with historical/setup controls. Live NOT_RUN;
-12 responses need new USD 8 approval. Baseline unchanged.
+localizes B2 to unsupported closure; A3 does not prove abandonment.
+The [disposition diagnostic](history/2026-09-30-evidence-disposition-results.md)
+completed 12 responses: current-counterexample joint score A 1/2, B 0/2; B also
+claimed unsupported historical resolution 2/2. Do not adopt. USD 0.689213 settled;
+allocation closed. Citations/currency alone do not establish support.
 The [lifecycle audit](history/2026-09-29-verification-concern-lifecycle-audit.md)
 found HF/toqito questions were never registered. [Observation linking](history/2026-09-29-verification-observation-linking.md)
 now retains registered unsuccessful executions and provenance; local tests/mock passed.
