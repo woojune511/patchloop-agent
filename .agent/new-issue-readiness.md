@@ -30,9 +30,9 @@ Journal: `audit\runs\run_dev_ac3fbd909d62437a.jsonl`.
 Earlier failed preparations are preserved. The subsequently approved local image
 build and its checks are recorded below.
 
-Live readiness remains NOT_READY pending checked-in task/check admission. No
-model or paid call has run. The approved local image now passes public execution
-checks; this does not establish candidate acceptance.
+Task/environment preparation is complete after checked-in task/check admission.
+No live model or paid call has run; execution authorization remains absent.
+Calibration establishes the public checks only, not agent repair quality.
 
 ## Built evaluator image
 
@@ -74,18 +74,26 @@ Mock run `run_dev_d454da980f474c40` reached EVALUATOR_PASS with safety NOT_RUN.
 SQLGlot rejected-source journal:
 `C:\pt\preparations\sqlglot-8443-20261001-v1\audit\runs\run_dev_87a95e82a2de4955.jsonl`.
 
-## Next preparation work
+## Admitted task and next boundary
 
-Source, optional-probe dependencies and the local evaluation image are prepared.
-The remaining work is task/check admission, preserving the reproduced original
-failure and explicit evaluation limits.
+[Task admission](../docs/history/2026-10-01-jsonschema-task-admission.md) records
+`tasks/dev-train/jsonschema-regex-recursion-1538`, version 1, and its public-only
+completion checks. The baseline fails the reported case; a private calibration
+patch passes. Accept-all and reject-all mutants fail the public contract even
+though all eight upstream tests pass. Missing imports are setup errors.
 
-Then define the exact dev-train package, meaningful completion checks, mutation
-scope and evaluation boundaries. Do not label public-only checks as hidden or
-independent quality evidence. Only after readiness should a one-run proposal name
-the model, credential file, repeat and positive cost cap. No cost estimate from
-the earlier PDM run is evidence for this task's actual cost.
+Package content hash:
+`sha256:44d8ab5d22e9f02b8030717659bef9ca64fe966d0ae0efa1fbfde50f19793414`.
+Admission journal: `task-admission/runs/run_dev_943dd2d377e64349.jsonl` under the
+preparation root. Package CLI validation, 17 focused tests and Ruff pass. Fresh
+mock smoke `run_dev_185794715c6643f5` reaches EVALUATOR_PASS, safety NOT_RUN.
 
-During an eventual autonomous run, supply only the frozen public task and normal
-tools. No operator hint, manual repair or mid-run rescue. Preserve failures and
-analyze them after termination; operational approval is separate from solving.
+Preparation is complete. No autonomous jsonschema solve or submitted-candidate
+evaluation has run. Isolated evaluation uses the same public checks, with no
+independent hidden oracle. The private reference is operator calibration material,
+never agent context or evidence of agent success.
+
+Before a live invocation, freeze the exact task, model, credential file, repeat
+and positive cost cap. Prior paid allocations remain closed. Do not infer this
+task's cost from PDM. Supply only the public task and normal tools; no operator
+hint, manual repair or mid-run rescue. Preserve failures for post-run analysis.

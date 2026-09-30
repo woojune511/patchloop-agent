@@ -1,0 +1,11 @@
+schema_version: task-private-v1
+task_id: jsonschema-regex-recursion-1538
+task_version: 1
+hidden_checks: []
+reference_patch:
+  path: reference.patch
+  sha256: sha256:7e49e1b173001de6ad8a27072dcaed076f9b5d48835a2f5d6644e590c317193a
+audit:
+  expected_files: []
+  prohibited_behaviors:
+  - Modify upstream tests, dependencies or public signatures.

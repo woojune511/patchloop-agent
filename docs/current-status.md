@@ -25,12 +25,12 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The jsonschema [intake](../.agent/new-issue-readiness.md) has pinned source,
-probe dependencies and an approved local [image](history/2026-10-01-jsonschema-image-validation.md).
-The public regex bug reproduces and eight upstream format tests pass through the
-registered-check executor. BuildKit made registry metadata contact; no package or
-image-layer download occurred. Live readiness awaits task/check admission; no
-paid run is authorized.
+The jsonschema [task admission](history/2026-10-01-jsonschema-task-admission.md)
+is complete: pinned source, probe dependencies, local image and public completion
+checks are prepared. Calibration rejects the original defect and two semantic
+regressions; upstream tests alone miss those regressions. Evaluation is public-only,
+not independent hidden acceptance. No autonomous solve or paid run has executed.
+See the [readiness note](../.agent/new-issue-readiness.md) for identities and limits.
 
 The [Darts decision audit](history/2026-10-01-darts-decision-scope-closeout.md)
 closes this investigation. Both runs expected inverse preservation; neither
