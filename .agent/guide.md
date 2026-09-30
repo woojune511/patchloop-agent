@@ -112,10 +112,9 @@ External state uses append-only, hash-chained `dev-run-v1` JSONL and immutable r
 envelopes. Mutations/checks preserve `action_id + input_hash`: replay completed results,
 reject conflicting reuse, reconcile admitted mutations after crashes instead of
 applying them twice. Do not rewrite journals, old envelopes, or prior native outputs.
-New records are returned only after all event bytes are written and fsync succeeds.
-Zero-progress writes and write/sync errors propagate; partial bytes remain untouched.
-An invalid final record still blocks replay and append; no automatic truncation or repair
-is performed, and a failed sync does not establish durable completion.
+Reads and appends share process/file locks; append reads under its existing lock.
+Append returns only after complete writes and fsync. Write/sync errors propagate;
+torn tails remain untouched and block replay/append. Failed sync is not durability.
 Resume requires repeat=1, exact envelope-bound settings/identities, and the run lock.
 Pre-envelope runs cannot resume. Preserve settled usage, counters, and active deadlines.
 The offline [observation-exposure fork](observation-exposure.md) retains parent

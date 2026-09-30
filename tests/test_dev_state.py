@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import errno
 import os
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -9,6 +11,54 @@ from patchloop.dev.contracts import DevToolResult
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ActionConflict, RecoveryError
 from patchloop.util import canonical_json
+
+
+@pytest.mark.parametrize("fail_write", [False, True])
+def test_reader_waits_for_append_and_still_rejects_failed_partial_write(
+    tmp_path, monkeypatch, fail_write,
+) -> None:
+    journal = DevJournal(tmp_path, "run_dev_concurrentread")
+    first = journal.append("run_started")
+    reader = DevJournal(tmp_path, journal.run_id)
+    partial_written = threading.Event()
+    release_write = threading.Event()
+    read_started = threading.Event()
+    read_finished = threading.Event()
+    write = os.write
+
+    def paused_write(descriptor, data):
+        count = write(descriptor, data[:11])
+        partial_written.set()
+        assert release_write.wait(5)
+        if fail_write:
+            raise OSError(errno.ENOSPC, "injected disk full")
+        return count
+
+    def read_events():
+        read_started.set()
+        try:
+            return reader.events()
+        finally:
+            read_finished.set()
+
+    monkeypatch.setattr(os, "write", paused_write)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        writer = pool.submit(journal.append, "observation", {"text": "한글🙂"})
+        try:
+            assert partial_written.wait(5)
+            reading = pool.submit(read_events)
+            assert read_started.wait(5)
+            assert not read_finished.wait(0.1)
+        finally:
+            release_write.set()
+        if fail_write:
+            with pytest.raises(OSError, match="injected disk full"):
+                writer.result(timeout=5)
+            with pytest.raises(RecoveryError, match="invalid JSONL"):
+                reading.result(timeout=5)
+        else:
+            second = writer.result(timeout=5)
+            assert reading.result(timeout=5) == [first, second]
 
 
 def test_journal_completes_short_writes_before_sync(tmp_path, monkeypatch) -> None:
@@ -26,7 +76,7 @@ def test_journal_completes_short_writes_before_sync(tmp_path, monkeypatch) -> No
         return write(descriptor, data[:7])
 
     def sync_complete_record(descriptor):
-        synced.append(journal.events())
+        synced.append(journal._events_unlocked())
         fsync(descriptor)
 
     with monkeypatch.context() as patch:
