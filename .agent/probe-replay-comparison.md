@@ -1,6 +1,6 @@
 # Proposed reference-free replay comparison
 
-Status: PLAN_ONLY / NOT_AUTHORIZED / NOT_RUN. This document grants no provider
+Status: IMPLEMENTED_PREREQUISITES / NOT_AUTHORIZED / NOT_RUN. This document grants no provider
 budget. Historical Darts/MontePy allocations are closed. Do not execute a paid run
 until the implementation gates below pass and this exact scope is approved.
 Reviewed feature baseline: merged PR #10, `5cc7d9043a40e1a4d1beb4d475dd6e076dade066`.
@@ -25,7 +25,7 @@ the journal fix, command diagnostics and all other runtime behavior must be shar
 
 ## Implementation gates before any paid admission
 
-The current CLI has no switch that isolates this intervention. Before execution:
+The same-runtime selector and common panel ledger are implemented. Before execution:
 
 1. Implement a bounded experimental arm selector in the same runtime. In A remove
    the reference-free registration affordance from the schema/description and reject
@@ -43,8 +43,30 @@ The current CLI has no switch that isolates this intervention. Before execution:
    zero retries and stop-all behavior. Do not launch four unrelated CLI commands
    without common accounting/stop enforcement. Then obtain separate approval.
 
-These are execution prerequisites, not changes implemented by this planning task.
-No copy-paste live command is provided before the selector/ledger gates are met.
+Implemented selector: A is `reference-cases-v1`; B is unchanged `cases-v1`.
+The control omits/rejects save_program and rejects reference-free replay, while
+retaining ordinary probes and reference registration/comparison/replay. Default
+none remains unchanged. Existing policy fields bind each effective contract in
+model/tool hashes, envelopes, manifests and exact resume checks.
+
+`patchloop.dev.panel.run_panel` accepts fixed, fresh repeat=1 requests under one
+positive invocation cap. It validates total row allocations before execution,
+uses each row's original ceiling and the shared remaining balance at every normal
+runner admission, and settles both balances immediately. Unused row allowance
+cannot enlarge another row. Counted dispatch and zero retries stay in the normal
+runner; the panel does not add a provider path. A clean row cost-cap/deadline
+outcome permits the next fixed row. Provider/count uncertainty, infrastructure,
+cleanup/state failures, an exception or an overrun stops the panel. No resume,
+replacement row or retry is provided. The root must be fresh and external; the
+ordered requests, row starts, outcomes and untouched NOT_RUN rows are recorded in
+append-only, hash-chained dev-run-v1 state alongside each row's normal journal.
+
+Provider-free tests cover control rejection, reference replay and isolated mock
+evaluation in both arms, changed-arm resume rejection, shared/row budget ceilings,
+normal cap continuation and count/transport stop-all through the real runner.
+These are implementation/contract results, not live repair quality evidence.
+Gate 3 (final clean dispatch SHA, descriptors/images and output-root freeze) and
+separate paid approval remain pending. No live command is authorized here.
 
 ## Proposed fixed panel and resources
 
@@ -70,7 +92,8 @@ Validated package identities at planning time:
 
 Model: gpt-5.4-2026-03-05, xhigh, desired output 25,000 tokens. Same segmented-v1,
 result-or-size-v1, brief-v1, repair-recheck, protected-v1 and per-call-v1 policies;
-probes enabled, cases-v1 in both arms. One fresh invocation per row; no continuation.
+probes enabled, reference-cases-v1 in A and cases-v1 in B. Each row starts fresh
+within the common panel invocation; no continuation.
 Each row: USD 3.00 maximum, 1,800 seconds, 40 model calls, 100 tools, four accepted
 edits; task mutation limits unchanged. Proposed global maximum: USD 12.00 across
 four rows, with no transfer from unused row allocations or replacement rows.

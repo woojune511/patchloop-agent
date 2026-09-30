@@ -13,6 +13,8 @@ from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 POLICY = "cases-v1"
+REFERENCE_POLICY = "reference-cases-v1"
+POLICIES = {POLICY, REFERENCE_POLICY}
 MAX_CASES = 3
 MAX_OBSERVATION_BYTES = 2_048
 DESCRIPTION = (
@@ -34,9 +36,17 @@ DESCRIPTION = (
 )
 
 
-def contract() -> dict[str, Any]:
-    return {
-        "policy": POLICY, "max_cases": MAX_CASES,
+REFERENCE_DESCRIPTION = (
+    "Optional reusable cases: for reference comparison, first run an ordinary experiment printing "
+    + "exactly " + DESCRIPTION.split("exactly ", 1)[1]
+).replace(" null and save_program false.", " null.")
+
+
+def contract(policy: str = POLICY) -> dict[str, Any]:
+    if policy not in POLICIES:
+        raise ContractError("unsupported probe case policy")
+    result = {
+        "policy": policy, "max_cases": MAX_CASES,
         "max_observation_utf8_bytes": MAX_OBSERVATION_BYTES,
         "comparison": "canonical-json-exact-types-order-independent-objects-v1",
         "reference": "prior-healthy-public-probe-model-selected-not-an-oracle-v1",
@@ -44,20 +54,24 @@ def contract() -> dict[str, Any]:
         "replay": "exact-saved-candidate-source-current-diff-existing-probe-action-v1",
         "retention": "three-most-recently-executed-cases-action-finished-v1",
         "context": "latest-bounded-catalog-mutable-no-archive-resurrection-v1",
-        "description": DESCRIPTION,
+        "description": DESCRIPTION if policy == POLICY else REFERENCE_DESCRIPTION,
     }
+    if policy == REFERENCE_POLICY:
+        del result["program_only"]
+    return result
 
 
-def extend_schema(schema: dict[str, Any]) -> None:
-    schema["description"] += " " + DESCRIPTION
+def extend_schema(schema: dict[str, Any], policy: str = POLICY) -> None:
+    schema["description"] += " " + contract(policy)["description"]
     parameters = schema["parameters"]
     for field in ("question", "python_source"):
         parameters["properties"][field]["type"] = ["string", "null"]
     for field in ("case_id", "reference_action_id"):
         parameters["properties"][field] = {"type": ["string", "null"], "maxLength": 500}
         parameters["required"].append(field)
-    parameters["properties"]["save_program"] = {"type": "boolean"}
-    parameters["required"].append("save_program")
+    if policy == POLICY:
+        parameters["properties"]["save_program"] = {"type": "boolean"}
+        parameters["required"].append("save_program")
 
 
 class ProbeCaseRequest(BaseModel):
@@ -148,8 +162,13 @@ def saved_cases(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return cases
 
 
-def prepare(arguments: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
+def prepare(
+    arguments: dict[str, Any], events: list[dict[str, Any]], policy: str = POLICY,
+) -> dict[str, Any]:
     """Resolve a prior reference or case before dispatch; never invent expectations."""
+    contract(policy)
+    if policy == REFERENCE_POLICY and "save_program" in arguments:
+        raise ContractError("reference-cases-v1 does not expose save_program")
     intent = ProbeCaseRequest.model_validate(arguments)
     if intent.save_program and (
         intent.case_id is not None or intent.reference_action_id is not None
@@ -164,6 +183,8 @@ def prepare(arguments: dict[str, Any], events: list[dict[str, Any]]) -> dict[str
         if stored is None:
             raise ContractError("unknown or no longer retained probe case_id")
         definition = stored["definition"]
+        if policy == REFERENCE_POLICY and definition["reference"] is None:
+            raise ContractError("reference-cases-v1 requires a reference for replay")
         return {"question": definition["question"], "python_source": definition["python_source"],
                 "case": definition}
     if intent.question is None or intent.python_source is None:
@@ -237,7 +258,9 @@ def compare(definition: dict[str, Any], output: dict[str, Any]) -> dict[str, Any
     }
 
 
-def project(events: list[dict[str, Any]], diff_hash: str) -> dict[str, Any]:
+def project(
+    events: list[dict[str, Any]], diff_hash: str, policy: str = POLICY,
+) -> dict[str, Any]:
     items = []
     for case_id, case in saved_cases(events).items():
         definition = case["definition"]
@@ -254,7 +277,7 @@ def project(events: list[dict[str, Any]], diff_hash: str) -> dict[str, Any]:
             "program_authorship": "model_authored_unverified",
         })
     return {
-        "policy": POLICY, "items": items,
+        "policy": policy, "items": items,
         "interpretation": "Optional exact candidate programs retained in this run. Replay with "
                           "case_id using run_probe when offered; no automatic executions. "
                           "Historical matches do not test the current diff. References and program "

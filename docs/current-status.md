@@ -36,9 +36,13 @@ PR #10 merged at `5cc7d904`; Linux and Windows CI each passed 3,749 tests with 2
 skips and mock isolated acceptance PASS (safety NOT_RUN). The
 [comparison plan](../.agent/probe-replay-comparison.md) proposes four fresh rows on
 two exposed tasks, with a USD 12 total ceiling, not an approved allocation. It
-requires a same-runtime switch isolating reference-free registration and common
-budget admission before any paid execution. Both experimental arms retain existing
-reference cases; none-versus-cases would confound the new feature. No quality gain,
+now has a same-runtime control (`reference-cases-v1`, excluding reference-free
+registration) and a common panel ledger with fixed row ceilings and stop-all
+uncertainty handling. Both arms retain existing reference cases; none-versus-cases
+would confound the new feature. Provider-free tests exercise both arms through
+mock isolated evaluation and verify counted dispatch/stop boundaries. Final clean
+runtime/environment/output-root freeze and separate paid approval remain pending.
+No quality gain,
 live comparison or default adoption is established or authorized.
 
 The [fresh Darts repair](history/2026-09-30-darts-fresh-repair.md) remains acceptance

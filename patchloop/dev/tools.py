@@ -209,7 +209,7 @@ def dev_tool_schemas(
     probe_policy: str = "none",
     probe_environment: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    if probe_policy not in {"none", probe_cases.POLICY}:
+    if probe_policy not in {"none", *probe_cases.POLICIES}:
         raise ContractError("unknown probe policy")
     check_id_schema: dict[str, Any] = {"type": "string", "minLength": 1}
     if check_ids:
@@ -414,8 +414,8 @@ def dev_tool_schemas(
                 "additionalProperties": False,
             },
         })
-        if probe_policy == probe_cases.POLICY:
-            probe_cases.extend_schema(schemas[-1])
+        if probe_policy in probe_cases.POLICIES:
+            probe_cases.extend_schema(schemas[-1], probe_policy)
     decision_modes = {
         "search_files": "inspect",
         "read_file": "inspect",
@@ -523,7 +523,7 @@ class DevToolGateway:
         self.limits = limits
         self.deadline = deadline
         self.probe_sandbox = probe_sandbox
-        if probe_policy not in {"none", probe_cases.POLICY}:
+        if probe_policy not in {"none", *probe_cases.POLICIES}:
             raise ContractError("unknown probe policy")
         self.probe_policy = probe_policy
         self._lock = threading.RLock()
@@ -2374,9 +2374,11 @@ class DevToolGateway:
                     call.arguments.get("requirement_ref"), self.public_task,
                 ) if "requirement_ref" in call.arguments else None
             )
-        if call.name == "run_probe" and self.probe_policy == probe_cases.POLICY:
+        if call.name == "run_probe" and self.probe_policy in probe_cases.POLICIES:
             try:
-                prepared_probe = probe_cases.prepare(call.arguments, self.journal.events())
+                prepared_probe = probe_cases.prepare(
+                    call.arguments, self.journal.events(), self.probe_policy
+                )
                 if pending is not None and pending.get("probe_case_request") != prepared_probe:
                     raise RecoveryError("pending probe case differs from its admitted program")
             except (PatchLoopError, ValidationError, ValueError) as exc:
@@ -2408,7 +2410,7 @@ class DevToolGateway:
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
                     **({"probe_case_request": prepared_probe}
-                       if call.name == "run_probe" and self.probe_policy == probe_cases.POLICY
+                       if call.name == "run_probe" and self.probe_policy in probe_cases.POLICIES
                        else {}),
                     "mutation_expected_worktree_diff_hash": (
                         candidate_summary.patch_hash if candidate_summary is not None else None

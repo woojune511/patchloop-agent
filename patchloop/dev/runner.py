@@ -244,7 +244,7 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "compaction_contract": native_compaction.policy_contract(request),
             **({"planning_contract": working_plan.contract(request.planning_policy)}
                if request.planning_policy != "none" else {}),
-            **({"probe_case_contract": probe_cases.contract()}
+            **({"probe_case_contract": probe_cases.contract(request.probe_policy)}
                if request.probe_policy != "none" else {}),
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
@@ -1399,7 +1399,9 @@ def _build_context(
     if gateway.probe_policy != "none":
         from patchloop.dev import probe_cases
 
-        payload["probe_cases"] = probe_cases.project(journal.events(), summary.patch_hash)
+        payload["probe_cases"] = probe_cases.project(
+            journal.events(), summary.patch_hash, gateway.probe_policy
+        )
     if repair_recheck:
         payload["repair_recheck"] = recheck_context
         last_recheck = recheck_context["last_result"]

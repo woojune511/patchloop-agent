@@ -412,6 +412,8 @@ def scripted_cases(monkeypatch, *, program_only=False):
             chosen = call("case-rerun", case_id=items[0]["case_id"])
         else:
             return original(self, context_text, tools)
+        if state["probe_cases"]["policy"] == cases.REFERENCE_POLICY:
+            chosen.arguments.pop("save_program")
         assert "run_probe" in {t["name"] for t in tools}
         return DevModelTurn(tool_calls=[chosen])
     monkeypatch.setattr(MockDevAdapter, "next_turn", next_turn)

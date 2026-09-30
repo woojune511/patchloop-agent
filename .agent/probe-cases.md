@@ -14,6 +14,15 @@ The new policy changes only run_probe's input extension and its saved case view;
 no new tool, planner call, tool mask, required test, scope allowance or budget.
 All context policies support the view. Plans and notes remain independent.
 
+For the [incremental capability comparison](probe-replay-comparison.md),
+`--probe-policy reference-cases-v1` selects control A in the same runtime.
+It retains ordinary probes and reference-based registration/comparison/replay,
+but omits `save_program` from the schema and description. Supplying that field
+(even false), or replaying a reference-free definition, fails before dispatch.
+`cases-v1` remains B with its existing contract. The effective policy/contract
+binds model/tool hashes, envelope, manifest and exact resume identity. This
+experimental control does not change the selected baseline or enable probes itself.
+
 ## Four uses of the same run_probe action
 
 With cases-v1, `question`, `python_source`, `reference_action_id`, and `case_id`
