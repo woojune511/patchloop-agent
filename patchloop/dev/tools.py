@@ -138,6 +138,54 @@ def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
     }
 
 
+def _replacement_parameters() -> dict[str, Any]:
+    """Project shared validation constraints without exposing recovery-only fields.
+
+    The provider requires every public field, including explicit null for an absent
+    causal revision. Internal defaults remain available for old journal recovery.
+    Titles/defaults are Pydantic annotations, not part of the existing tool wire.
+    """
+    schema = TextReplacementIntent.model_json_schema()
+
+    def public_field(field: dict[str, Any]) -> dict[str, Any]:
+        return {key: value for key, value in field.items() if key not in {"title", "default"}}
+
+    properties = {
+        name: public_field(schema["properties"][name])
+        for name in (
+            "path", "old_text", "new_text", "occurrence", "hypothesis", "expected_behavior",
+        )
+    }
+    properties["old_text"]["description"] = (
+        "Exact current source text to replace; it must be covered by "
+        "current evidence for this file. Prefer the smallest sufficient "
+        "unique anchor; omit unchanged signatures or docstrings when "
+        "only executable lines change. Copy the observed normalized text, "
+        "including its line breaks; do not reconstruct the text."
+    )
+    revision = schema["$defs"]["CausalRevision"]
+    revision_properties = {
+        name: public_field(revision["properties"][name])
+        for name in ("falsified_prior_hypothesis", "alternative_mechanism")
+    }
+    properties["causal_revision"] = {
+        "type": ["object", "null"],
+        "description": (
+            "Optional concise revision of the public hypothesis after "
+            "observed failure; it is never required for mutation admission."
+        ),
+        "properties": revision_properties,
+        "required": list(revision_properties),
+        "additionalProperties": revision["additionalProperties"],
+    }
+    return {
+        "type": schema["type"],
+        "properties": properties,
+        "required": list(properties),
+        "additionalProperties": schema["additionalProperties"],
+    }
+
+
 def dev_tool_schemas(
     *,
     finish_enabled: bool,
@@ -227,62 +275,7 @@ def dev_tool_schemas(
                 "for a same-file repair; there is no separate planning tool."
             ),
             "strict": True,
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "minLength": 1, "maxLength": 1_000},
-                    "old_text": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": (
-                            "Exact current source text to replace; it must be covered by "
-                            "current evidence for this file. Prefer the smallest sufficient "
-                            "unique anchor; omit unchanged signatures or docstrings when "
-                            "only executable lines change. Copy the observed normalized text, "
-                            "including its line breaks; do not reconstruct the text."
-                        ),
-                        "maxLength": 20_000,
-                    },
-                    "new_text": {"type": "string", "maxLength": 20_000},
-                    "occurrence": {"type": "integer", "minimum": 1, "maximum": 100},
-                    "hypothesis": {"type": "string", "minLength": 1, "maxLength": 1_500},
-                    "expected_behavior": {"type": "string", "minLength": 1, "maxLength": 1_500},
-                    "causal_revision": {
-                        "type": ["object", "null"],
-                        "description": (
-                            "Optional concise revision of the public hypothesis after "
-                            "observed failure; it is never required for mutation admission."
-                        ),
-                        "properties": {
-                            "falsified_prior_hypothesis": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 1_500,
-                            },
-                            "alternative_mechanism": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 1_500,
-                            },
-                        },
-                        "required": [
-                            "falsified_prior_hypothesis",
-                            "alternative_mechanism",
-                        ],
-                        "additionalProperties": False,
-                    },
-                },
-                "required": [
-                    "path",
-                    "old_text",
-                    "new_text",
-                    "occurrence",
-                    "hypothesis",
-                    "expected_behavior",
-                    "causal_revision",
-                ],
-                "additionalProperties": False,
-            },
+            "parameters": _replacement_parameters(),
         },
         {
             "type": "function",

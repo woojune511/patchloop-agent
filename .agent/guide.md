@@ -53,6 +53,14 @@ checks still reject a different runtime; do not relax them for refactors.
 The only runtime is mutable `dev-head`; every run is `official=false`.
 Public gates are `needs_mutation`, `needs_visible_checks`, and `ready_to_submit`.
 The current gate and resource horizon expose registered tools, never unrestricted shell.
+
+`replace_text` scalar constraints come from `TextReplacementIntent` and
+`CausalRevision`; the provider projection in `dev/tools.py` selects public fields
+explicitly. Keep provider-required presence and nullable revision shape separate from
+internal recovery defaults. Recovery-only annotations stay unadvertised, and their
+absent-versus-explicit serialization remains unchanged. Schema field constraints do
+not replace cross-field validators, observed-anchor checks or mutation scope admission.
+
 A response contains 1–4 parallel `read_file`/`search_files` calls, or exactly one
 `replace_text`, `run_check`, enabled `run_probe`, `finish_task`, or `stop_task`.
 A bounded public `turn_decision` accompanies each call. Optional notes/plans are
