@@ -49,8 +49,18 @@ did not discover and repair a genuine candidate defect; the predeclared correctn
 result is INCONCLUSIVE. This is insufficient evidence to adopt the added guidance,
 not proof that it is generally ineffective. Preserve the frozen cases and original
 run records. Look for recurrence on other real repair work before choosing another
-intervention; no new task, reminder, probe gate or paid row is queued. The
+intervention; no new prompt intervention or probe gate is queued. The
 [comparison note](../.agent/verification-selection-comparison.md) is closed.
+
+The next bounded step is [PDM repair preparation](../.agent/pdm-repair-preparation.md)
+on the already exposed dev-train v2 active-virtualenv selection task. Provider-free
+checks on unchanged source produced 4 PASS / 20 FAIL in its public bug contract
+and 36 PASS in the upstream regression. Existing pinned images and clean source
+were verified; optional probes retain their stdlib-only environment. A single
+restored-baseline run with a USD 3 invocation cap is proposed, not authorized or
+executed. No earlier allocation carries forward, and this is not unseen-task
+performance evidence. Inspect repair and verification behavior before selecting
+another intervention.
 
 The [four-row reference-free probe comparison](history/2026-09-30-probe-replay-comparison.md)
 is complete and its USD 12 allocation is closed. On one fixed runtime (`8f8d6331`),
