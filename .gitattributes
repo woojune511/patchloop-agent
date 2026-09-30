@@ -17,6 +17,7 @@ docker/Dockerfile.sandbox text eol=lf
 # These evaluator assets are bound by raw-byte inventory hashes.
 tasks/dev-train/original-toqito-1538/** -text whitespace=cr-at-eol
 tasks/dev-train/original-montepy-933/** -text whitespace=cr-at-eol
+tasks/dev-train/original-montepy-933-v2/** -text whitespace=cr-at-eol
 tasks/dev-train/original-darts-3065/** -text whitespace=cr-at-eol
 
 # Preserve the exact evaluator-submitted bytes, including agent-authored blank-line spaces.

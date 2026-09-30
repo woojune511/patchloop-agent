@@ -1,0 +1,89 @@
+schema_version: task-public-v1
+task_id: original-montepy-933
+task_version: 2
+split: dev-train
+repository:
+  url: https://github.com/idaholab/MontePy.git
+  base_commit: fbc03d10eb552cf82acc788ef70d120adec8130c
+  language: python
+issue:
+  title: Cannot nullify Cell.universe
+  description: "Cannot nullify Cell.universe\n## Bug Description\n\nA cell's universe attribute cannot\
+    \ be set to `None` or deleted, essentially forcing `Cell.universe` to always be set to something once\
+    \ it has been set.\n\nA new `Cell` is instantiated with a null universe attribute.\n\n\n## To Reproduce\n\
+    \n<!-- A short code snippet of what you have ran. Please change or remove any specific values or anything\
+    \ that can't be public. For example: --> \n\n``` python\n>>> import montepy\n>>> c = montepy.Cell(\"\
+    1 0 +1 imp:p=0\")\n>>> c.universe is None\nTrue\n>>> c.universe = None\nTypeError\n>>> del c.universe\n\
+    AttributeError\n```\n\n## Error Message \n\nFirst error:\n\n<details closed> \n\n``` python\n>>> c.universe\
+    \ = None\nTraceback (most recent call last):\n  File \"<python-input-2>\", line 1, in <module>\n \
+    \   c.universe = None\n    ^^^^^^^^^^\n  File \"./montepy/mcnp_object.py\", line 49, in wrapped\n\
+    \    add_line_number_to_exception(e, self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"./montepy/exceptions.py\"\
+    , line 235, in add_line_number_to_exception\n    raise error\n  File \"./montepy/mcnp_object.py\"\
+    , line 41, in wrapped\n    return func(*args, **kwargs)\n  File \"./montepy/mcnp_object.py\", line\
+    \ 150, in __setattr__\n    descriptor.__set__(self, value)\n    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^\n\
+    \  File \"./montepy/mcnp_object.py\", line 49, in wrapped\n    add_line_number_to_exception(e, self)\n\
+    \    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"./montepy/exceptions.py\", line 259, in add_line_number_to_exception\n\
+    \    raise error.with_traceback(trace)\n  File \"./montepy/mcnp_object.py\", line 41, in wrapped\n\
+    \    return func(*args, **kwargs)\n  File \"./montepy/cell.py\", line 258, in universe\n    raise\
+    \ TypeError(\"universe must be set to a Universe\")\nTypeError: universe must be set to a Universe\n\
+    \nError came from CELL: 1, mat: 0, DENS: None from an unknown file.\n```\n</details>\n\nSecond error:\n\
+    \n<details closed>\n\n``` python\n>>> del c.universe\nTraceback (most recent call last):\n  File \"\
+    <python-input-5>\", line 1, in <module>\n    del c.universe\n        ^^^^^^^^^^\nAttributeError: property\
+    \ 'universe' of 'Cell' object has no deleter\n```\n</details>\n\n## Version\n\n - Version 1.3.0\n\n\
+    ## Interface\n\nType: Function\nName: universe\nPath: montepy/cell.py\nInput: self\nOutput: Universe\
+    \ or None\nDescription: Returns the current universe assigned to this cell. Use this to access or\
+    \ reset a cell's universe; setting it to None or deleting it resets the assignment to the default\
+    \ (universe 0) if the cell is within a problem, or clears it entirely if not."
+constraints:
+  allowed_paths:
+  - montepy/**
+  forbidden_paths:
+  - tests/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/conda/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith tempfile.TemporaryDirectory(prefix=\"\
+    public-tests-\") as temp:\n    checkout = Path(temp) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n\
+    \                   ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\", \"__pycache__\"\
+    ))\n    test_path = checkout / \"tests/test_universe.py\"\n    text = test_path.read_text(encoding=\"\
+    utf-8\")\n    replacements = [\n        (\"from hypothesis import given, strategies as st\",\n   \
+    \      \"from hypothesis import given, example, strategies as st\"),\n        (\"        end = np.array(indices)\
+    \ + np.array(width)\",\n         \"        end = np.array(indices, dtype=object) + np.array(width,\
+    \ dtype=object)\"),\n        (\"    def test_fill_index_setter(self, indices, width):\",\n       \
+    \  \"    @example(indices=[0, 0, 0], width=[1, 1, 2**63 - 1])\\n\"\n         \"    @example(indices=[0,\
+    \ 0, 0], width=[1, 1, 2**63])\\n\"\n         \"    @example(indices=[0, 0, 0], width=[1, 1, 2**64])\\\
+    n\"\n         \"    @example(indices=[-2**63 - 1, 0, 0], width=[1, 1, 1])\\n\"\n         \"    @example(indices=[2**63\
+    \ - 1, 0, 0], width=[1, 1, 1])\\n\"\n         \"    def test_fill_index_setter(self, indices, width):\"\
+    ),\n    ]\n    for before, after in replacements:\n        if text.count(before) != 1:\n         \
+    \   print(\"public integer-test preparation mismatch\", file=sys.stderr)\n            raise SystemExit(2)\n\
+    \        text = text.replace(before, after, 1)\n    test_path.write_text(text, encoding=\"utf-8\"\
+    )\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = str(checkout)\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    result = subprocess.run([sys.executable, \"-m\", *sys.argv[1:]],\
+    \ cwd=checkout, env=env)\n    raise SystemExit(result.returncode)\n"
+  - pytest
+  - --no-header
+  - -ra
+  - --tb=line
+  - --color=no
+  - -p
+  - no:cacheprovider
+  - tests/test_universe.py
+  - tests/test_universe_integration.py
+  timeout_seconds: 120
+  environment:
+    PYTHONPATH: /workspace
+  infrastructure_exit_codes:
+  - 2
+tags:
+- original-input-pilot
+- swe-rebench
+- development
