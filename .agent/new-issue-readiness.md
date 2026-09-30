@@ -15,22 +15,41 @@ No jsonschema repository match was found in existing task public manifests. This
 does not establish model-training novelty. The issue's own explanation remains
 public issue content, not an operator-created repair hint.
 
-## Checks performed and blockers
+## Prepared source and probe environment
 
-1. The normal prepare_source path rejected the repository URL because it is not
-   in ALLOWED_REMOTE_REPOSITORIES. No source manifest was published. No alternate
-   clone path or temporary bypass was used.
-2. The existing digest-pinned patchloop-sandbox image runs Python 3.12.13 but lacks
-   jsonschema, attrs, referencing, rpds and pytest. This was a read-only, no-network
-   dependency inventory with confirmed container cleanup, not issue reproduction.
-3. No checked-in dev-train package, public regression execution or isolated
-   acceptance environment has been prepared. No completion/quality verdict exists.
+The [preparation record](../docs/history/2026-10-01-jsonschema-environment-preparation.md)
+records the exact source and wheel identities. The selected repository is now
+allowlisted. Source preparation and the corrected package-root probe environment
+succeeded. The public issue reproduces as RecursionError on Python 3.12.13; valid
+and ordinary-invalid controls behave as expected. Upstream test_format: 8 PASS.
 
-Existing image:
-`patchloop-sandbox@sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac`.
-Evidence journal:
-`C:\pt\preparations\jsonschema-1538-20261001-v1\audit\runs\run_dev_277dfa912daa4ab9.jsonl`.
-The failed preparation directory is retained, not reused.
+External root: `C:\pt\preparations\jsonschema-1538-20261001-v2`.
+Source: `source\prepared-source.json`.
+Dependencies: `dependencies-package-root\prepared-probe-dependencies.json`.
+Journal: `audit\runs\run_dev_ac3fbd909d62437a.jsonl`.
+Earlier failed preparations are preserved. No Docker image was acquired or built.
+
+Live readiness remains NOT_READY: no checked-in dev-train package or registered
+check/isolated evaluation environment is admitted. A working optional probe does
+not establish evaluator readiness. No model or paid call has run.
+
+An offline image recipe is ready under
+`C:\pt\preparations\jsonschema-1538-20261001-v2\evaluator-image-context`.
+It pins the already-local Python image and copies only verified site-packages;
+the context excludes credentials, source and journal files. Proposed command:
+`docker build --pull=false --network=none -t patchloop-jsonschema-1538:py312-v1 C:\pt\preparations\jsonschema-1538-20261001-v2\evaluator-image-context`.
+Build NOT_RUN pending explicit authorization under AGENTS.md hard gate 7.
+
+## PatchLoop validation
+
+Prepared-source tests: 29 PASS. Ruff and documentation checks (5) pass.
+Full suite: 3,775 PASS, 16 SKIP, one FileNotFoundError while opening a 266-character
+temporary artifact path. With the shorter basetemp `C:\pt\j1538`, all 46 tests in
+the affected test_dev_check_feedback_v32.py file pass. This is a full-suite attempt
+plus focused successful revalidation, not a clean full-suite rerun. No runtime
+workaround was added. Preserve both reports under `C:\pt\validation`:
+`jsonschema-intake-fast-20261001.xml` and `jsonschema-feedback-rerun-20261001.xml`.
+Mock run `run_dev_d454da980f474c40` reached EVALUATOR_PASS with safety NOT_RUN.
 
 ## Candidate disposition
 
@@ -49,12 +68,10 @@ SQLGlot rejected-source journal:
 
 ## Next preparation work
 
-Review and register only the exact selected repository in the normal allowlist;
-keep arbitrary remote repositories rejected. Prepare a new immutable source at
-the pinned commit and verify the issue is still present before writing a solver
-task. Prepare reviewed dependencies and a runnable pinned environment, with no
-automatic image acquisition. Verify the public reproduction and upstream format
-regressions; record Python-version differences and stop if they change the issue.
+Source and optional-probe preparation are complete. Admit a registered-check
+and isolated evaluation environment using the verified dependencies; do not
+assume optional probe mounts are present during evaluation. Image acquisition
+still requires explicit authorization. Preserve the reproducible original failure.
 
 Then define the exact dev-train package, meaningful completion checks, mutation
 scope and evaluation boundaries. Do not label public-only checks as hidden or
