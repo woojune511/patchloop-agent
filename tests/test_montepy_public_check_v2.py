@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -32,6 +33,23 @@ def test_revision_preserves_task_and_private_material():
         if p.is_file()
     )]:
         assert (Path(old.root) / relative).read_bytes() == (Path(new.root) / relative).read_bytes()
+
+
+def test_git_preserves_hash_bound_v2_bytes():
+    package = load_task_package(ROOT / "original-montepy-933-v2")
+    repo = ROOT.parents[1]
+    for artifact in package.private.hidden_artifacts:
+        path = Path(package.root) / artifact.path
+        relative = path.relative_to(repo).as_posix()
+        filtered = subprocess.run(
+            ["git", "hash-object", f"--path={relative}", str(path)],
+            cwd=repo, capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        raw = subprocess.run(
+            ["git", "hash-object", "--no-filters", str(path)],
+            cwd=repo, capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        assert filtered == raw, f"Git filters change hash-bound bytes: {relative}"
 
 
 @pytest.mark.parametrize("drift", [None, "missing", "duplicate"])
