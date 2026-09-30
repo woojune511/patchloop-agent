@@ -1,7 +1,9 @@
-# MontePy repair preparation: v2 validated, live execution not authorized
+# Closed MontePy v2 repair scope
 
-Prepared 2026-09-30 on runtime `5c788f653760fed833f017b3f8d1ddec358dd41d`.
-This is an operator preparation record and proposed scope, not live authorization.
+Prepared 2026-09-30; the user subsequently approved the exact single-run scope.
+Executed on merged head `3f29be10218f4d454aed06c0fbcd6618b70748e0` and completed
+with acceptance/safety PASS at USD 0.594456. The allocation is closed; this retained
+scope authorizes no rerun. See [result](../docs/history/2026-09-30-montepy-v2-fresh-repair.md).
 
 ## Purpose and proposed scope
 
@@ -15,7 +17,7 @@ The task was exposed in the original pilot; a new invocation is not an unseen-ta
 evaluation or evidence of general improvement. Prior solutions/traces and private
 evaluation material must not enter the coding agent's input.
 
-Proposed settings, pending package review and exact live authorization:
+Completed authorized settings:
 
 - Model `gpt-5.4-2026-03-05`, xhigh, desired output 25,000 tokens.
 - Credential file `C:\Users\geonj\Documents\PatchLoop\.env`; existence and Git
@@ -83,8 +85,7 @@ checks distinguish base FAIL from reference PASS in one operator calibration.
 The original issue remains reproducible. Private calibration workspaces must never
 be supplied to the agent; source/dependency descriptors above contain public inputs.
 
-Do not launch the paid proposal yet: package review and live authorization remain
-separate from this provider-free validation. No test was removed, random domain
-constrained, dependency pinned, or agent repair scope expanded.
-Revalidate clean tracked runtime/task inputs and descriptor/image identities before
-any subsequently authorized live invocation. No second task or paid allocation is opened.
+The authorized live invocation subsequently completed; its source/dependency/image
+identities were revalidated before dispatch. No test was removed, random domain
+constrained, dependency pinned, or agent repair scope expanded. No second task,
+continuation or paid allocation is opened by the completed result.

@@ -25,16 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The [MontePy v2 public check](history/2026-09-30-montepy-public-check-v2.md) preserves
-integer arithmetic and adds five explicit boundary examples without changing v1.
-Public regression passes all 44 tests on base and reference; one operator-only
-private calibration distinguishes base FAIL from reference PASS. The original
-Cell.universe defect remains reproducible. Review the separate v2 package before
-the [proposed repair exercise](../.agent/next-montepy-repair.md); no live invocation
-is authorized. This is task validation, not agent-performance evidence.
-The [Git byte-preservation correction](history/2026-09-30-montepy-v2-git-bytes.md)
-extends the original packages' raw-byte rule to v2 so Linux checkout preserves
-the calibrated evaluator inventory; its staged export matches the calibrated hash.
+The [fresh MontePy v2 repair](history/2026-09-30-montepy-v2-fresh-repair.md) completed:
+one edit, 44 public tests passed, isolated acceptance/safety PASS, 12 model calls,
+251.479 seconds and USD 0.594456. Its allocation is closed; no additional live
+invocation is authorized. Keep the baseline: this exposed development task supplies
+one successful execution, not a general quality gain or a new runtime-fix rationale.
+No optional probe ran and public changed-line coverage was unavailable; those
+limits remain separate from the successful private verdict.
 
 Keep journal validation and state construction unchanged. The bounded
 [mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not meet
