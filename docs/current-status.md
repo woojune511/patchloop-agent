@@ -25,11 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The next [MontePy repair preparation](../.agent/next-montepy-repair.md) is blocked
-before paid execution: the unchanged base fails a registered public Fill index
-test on a generated large-integer input. Source/dependency preparation and an
-isolated import passed; no model call or private evaluation ran. First characterize
-that exact public failure without changing the task or rerunning until green.
+The next [MontePy repair preparation](../.agent/next-montepy-repair.md) remains blocked
+before paid execution. A [deterministic diagnostic](history/2026-09-30-montepy-index-diagnostic.md)
+traced the public Fill test failure to NumPy array construction converting its
+generated integers to floats; the unchanged setter accepts the same exact integers
+when preserved. A separate development-task revision should preserve integer
+arithmetic in the test and retain boundary coverage before live admission.
+No task/runtime change, model call or private evaluation was made.
 
 Keep journal validation and state construction unchanged. The bounded
 [mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not meet

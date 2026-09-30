@@ -69,10 +69,16 @@ behavior or an existing Fill implementation defect are unresolved alternatives.
 This failure is not evidence against an agent repair: no agent ran and no patch
 was made. Its relationship to the requested universe-nullification repair is unproven.
 
-Do not launch the paid proposal yet. The next bounded action is a provider-free,
-deterministic reproduction of that exact input in the existing check environment,
-recording NumPy version, operand/result dtypes and setter behavior. Decide from
-that evidence whether the public check needs a separately reviewed task revision.
+The [deterministic follow-up](../docs/history/2026-09-30-montepy-index-diagnostic.md)
+completed in the existing check environment. NumPy 2.4.5 constructs the exact
+width list as float64 before addition; Python integer lists and explicit object
+arrays preserve those same values and the original setter accepts them. Six fixed
+cases establish this test-input conversion mechanism, not a cross-version regression.
+
+Do not launch the paid proposal yet. The next step is a separately reviewed
+development-task revision preserving integer arithmetic in the public property
+test, with deterministic boundary controls and original-package preservation.
+No such revision was implemented during this diagnostic.
 Do not remove the test, constrain random generation, pin another dependency,
 rerun until green, or expand the agent's repair scope during preparation.
 Revalidate clean tracked runtime/task inputs and descriptor/image identities before
