@@ -1,7 +1,10 @@
 # PDM repair preparation
 
-Status: provider-free preparation; paid execution NOT_RUN, not authorized.
-Every proposed run remains official=false and claim-ineligible.
+Status: COMPLETE; approved single run finished; USD 3 allocation CLOSED at
+USD 0.3550415. official=false and claim-ineligible. See the
+[result](../docs/history/2026-10-01-pdm-repair-observation.md).
+The preparation and originally proposed scope below are retained for provenance,
+not permission for another execution.
 
 ## Question and scope
 
@@ -41,7 +44,7 @@ The upstream project regression passed all 36 tests (26.18 seconds reported by
 pytest), also with confirmed cleanup. The five-event journal hash chain was
 read back successfully. Provider calls: zero; isolated evaluation: NOT_RUN.
 
-## Proposed live scope, pending approval
+## Original proposed live scope, now completed
 
 One fresh run, model `gpt-5.4-2026-03-05`, xhigh, 25,000 output tokens;
 credential file `C:\Users\geonj\Documents\PatchLoop\.env`; repeat=1;

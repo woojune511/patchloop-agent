@@ -19,6 +19,7 @@ Approvals are closed.
 
 ## New records
 
+- [PDM repair observation](2026-10-01-pdm-repair-observation.md).
 - [Guidance baseline](2026-10-01-verification-guidance-baseline.md).
 - [Verification selection](2026-10-01-verification-selection-comparison.md).
 - [Submitted patch review](2026-09-30-submitted-patch-review.md).

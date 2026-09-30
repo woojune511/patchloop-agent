@@ -52,15 +52,15 @@ run records. Look for recurrence on other real repair work before choosing anoth
 intervention; no new prompt intervention or probe gate is queued. The
 [comparison note](../.agent/verification-selection-comparison.md) is closed.
 
-The next bounded step is [PDM repair preparation](../.agent/pdm-repair-preparation.md)
-on the already exposed dev-train v2 active-virtualenv selection task. Provider-free
-checks on unchanged source produced 4 PASS / 20 FAIL in its public bug contract
-and 36 PASS in the upstream regression. Existing pinned images and clean source
-were verified; optional probes retain their stdlib-only environment. A single
-restored-baseline run with a USD 3 invocation cap is proposed, not authorized or
-executed. No earlier allocation carries forward, and this is not unseen-task
-performance evidence. Inspect repair and verification behavior before selecting
-another intervention.
+The [PDM repair observation](history/2026-10-01-pdm-repair-observation.md) completed
+one approved run on the exposed dev-train v2 task. One edit passed all 24 public
+bug cases, all 36 upstream regressions, isolated acceptance and real sandbox
+safety. Recorded usage was USD 0.3550415; the USD 3 allocation is closed.
+The agent used registered checks and no optional probes. Because the public bug
+contract failed unchanged source, this run did verify repaired behavior; zero
+probes alone is not a verification failure. Keep the restored baseline and choose
+further work from a concrete failure, rather than automatically running another
+task. No prompt effect, unseen-task success rate or complete coverage is established.
 
 The [four-row reference-free probe comparison](history/2026-09-30-probe-replay-comparison.md)
 is complete and its USD 12 allocation is closed. On one fixed runtime (`8f8d6331`),
