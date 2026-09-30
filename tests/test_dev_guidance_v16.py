@@ -77,7 +77,7 @@ def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
     assert "Resolve an answered question" in notes["properties"]["open_question"]["description"]
     for instruction in (
         "smallest sufficient unique exact anchor", "status=current only means",
-        "interpretation remains unverified", "post-image", "public input",
+        "interpretation remains unverified", "post-image", "public contract",
         "No update or three-part plan is required each turn",
         "Use concern_id=null for a distinct concern",
     ):
