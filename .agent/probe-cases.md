@@ -14,15 +14,16 @@ The new policy changes only run_probe's input extension and its saved case view;
 no new tool, planner call, tool mask, required test, scope allowance or budget.
 All context policies support the view. Plans and notes remain independent.
 
-## Three uses of the same run_probe action
+## Four uses of the same run_probe action
 
 With cases-v1, `question`, `python_source`, `reference_action_id`, and `case_id`
-are required nullable fields. All calls still carry the normal turn_decision.
+are required nullable fields. `save_program` is a required boolean, false except
+for reference-free registration. All calls still carry the normal turn_decision.
 This follows the [OpenAI strict function-calling contract](https://developers.openai.com/api/docs/guides/function-calling#strict-mode):
 required keys with nullable values, no extra object properties. OFF retains the
 old two non-null source/question fields without the extra case fields.
 
-1. Ordinary/reference observation: provide question and Python source; both IDs
+1. Ordinary/reference observation: provide question and Python source; save_program=false, both IDs
    are null. Ad-hoc probes keep their old behavior. A potential reference should
    print exactly one JSON value, including at most 2,048 UTF-8 bytes of stdout.
 2. New candidate case: provide question and new Python source, reference_action_id
@@ -34,6 +35,11 @@ old two non-null source/question fields without the extra case fields.
    Execute the exact saved candidate source on this diff. Do not rerun the reference
    or manufacture native call/output history. The explicit action has its own
    action_id/input_hash and costs one model call and one tool action as before.
+4. Reference-free program: set save_program=true, provide question and Python source,
+   and leave both IDs null. A completed execution saves the program even when an
+   assertion/exception fails or stdout is not JSON. Rerun using case_id and
+   save_program=false; the source is unchanged. Do not combine registration with
+   a reference or an existing case ID. This mode has no reference equality check.
 
 Reference eligibility requires successful action completion, healthy exit zero,
 complete/nontruncated JSON output, and consistent action/input/diff/source identity.
@@ -58,6 +64,14 @@ and observed JSON/reason. A match means equality to the model-selected observati
 It does not establish a correct reference, execution of intended code, coverage of
 the whole goal, or task acceptance. Normal probe observation remains
 `behavior_verdict=not_assessed`. Source-line entry is not a semantic attestation.
+
+Reference-free cases keep reference=null and not_compared/reason=no_reference.
+Their last result includes the program hash and execution status, exit code,
+timeout/cleanup/output flags and available environment/snapshot/policy hashes;
+the existing action result binds the candidate diff and retains bounded output.
+Neither nonzero exit nor exit zero is a task verdict. Timeout or uncertain cleanup
+does not trigger retry; normal runner stop/recovery rules still apply. Source
+changes create a new identity. Both modes share the existing three-case bound.
 
 `probe_cases.items` retains the three most recently executed cases; IDs are stable
 content-derived references, never reassigned. Rerunning refreshes a case's position;

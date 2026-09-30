@@ -208,6 +208,8 @@ def test_noninstrumented_private_or_unsupported_command_keeps_original_execution
     result = LocalSandbox().run_check(tmp_path, flagged, execution_targets=targets)
     assert result.passed and result.stdout == plain.stdout and result.command == flagged.command
     assert result.public_execution["status"] == "unknown"
+    assert result.public_execution["files"][0]["reason"] == "unsupported_python_options"
+    assert result.public_execution["files"][0]["not_observed_changed_ranges"] is None
 
 
 @pytest.mark.parametrize("executable", [
@@ -228,6 +230,19 @@ def test_python_executable_names_are_independent_of_host_and_target_path_syntax(
 ])
 def test_unrecognized_executable_or_launch_shape_stays_uninstrumented(command):
     assert not feedback.python_command_supported(command)
+
+
+@pytest.mark.parametrize("command,reason", [
+    ([], "incomplete_command"),
+    (["sh", "public.sh"], "unsupported_executable"),
+    (["python", "-m"], "incomplete_python_command"),
+    (["python", "-B", "-c", "pass"], "unsupported_python_options"),
+    (["python", "-u", "-c", "pass"], "unsupported_python_options"),
+    (["python", "-c", "pass"], None),
+])
+def test_command_explanation_matches_instrumentation_boundary(command, reason):
+    assert feedback.python_command_unsupported_reason(command) == reason
+    assert feedback.python_command_supported(command) is (reason is None)
 
 
 @pytest.mark.parametrize("alter", [

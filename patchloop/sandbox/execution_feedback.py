@@ -23,6 +23,7 @@ _REASONS = {"source_hash_mismatch", "source_unavailable_or_uncompilable", "trace
 INTERPRETATION = (
     "Python line entry in the launch thread only; not branch coverage, assertion coverage, "
     "semantic correctness or source-read evidence. Other threads/subprocesses are unmeasured. "
+    "Copied source paths are unmeasured. Unknown means unmeasured, not unexecuted. "
     "Use relevant unobserved ranges for an optional public question in existing notes/probes; "
     "this adds no required action or submission gate."
 )
@@ -247,16 +248,21 @@ def prepare_trace(directory: Path, request: dict) -> None:
 
 
 def python_command_supported(command: list[str]) -> bool:
+    return python_command_unsupported_reason(command) is None
+
+
+def python_command_unsupported_reason(command: list[str]) -> str | None:
+    """Explain the same launch boundary used by trace_launch; do not guess child behavior."""
     if len(command) < 2:
-        return False
+        return "incomplete_command"
     # Identify the registered executable by name, not by host-side path resolution.
     # Docker paths can be POSIX paths on a Windows host; keep argv[0] unchanged.
     executable = re.split(r"[/\\]", command[0])[-1]
-    return (
-        re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", executable, re.IGNORECASE) is not None
-        and (command[1] in {"-c", "-m"} and len(command) >= 3
-             or not command[1].startswith("-"))
-    )
+    if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", executable, re.IGNORECASE) is None:
+        return "unsupported_executable"
+    if command[1] in {"-c", "-m"}:
+        return None if len(command) >= 3 else "incomplete_python_command"
+    return "unsupported_python_options" if command[1].startswith("-") else None
 
 
 @contextmanager
