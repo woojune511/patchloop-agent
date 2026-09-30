@@ -25,13 +25,14 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The [fresh Darts repair](history/2026-09-30-darts-fresh-repair.md) failed isolated
-acceptance despite 8 public tests passing; safety PASS, 7 model calls, USD 0.607473.
-Its allocation is closed. A provider-free base/submitted comparison confirms that
-the patch repairs ordinary drop="first" but loses an inverse-transform column when
-input names overlap. Investigate feature ownership without name-prefix inference;
-do not infer the full private failure cause or authorize another paid run from this.
-No runtime, task, prompt or memory change follows automatically.
+The [fresh Darts repair](history/2026-09-30-darts-fresh-repair.md) remains acceptance
+FAIL despite public regression PASS; its USD 0.607473 allocation is closed.
+The [offline correction](history/2026-09-30-darts-feature-ownership.md) replaces
+name-prefix ownership with fitted feature widths and restores the original column
+schema during inverse transformation. It passes 13 selected public cases and all
+8 registered regressions. This is an operator patch, not a successful agent rerun;
+private acceptance is NOT_RUN. Preserve the runtime/task/prompt baseline and both
+failure and correction evidence. No new paid invocation or automatic adoption.
 
 The [fresh MontePy v2 repair](history/2026-09-30-montepy-v2-fresh-repair.md) completed:
 one edit, 44 public tests passed, isolated acceptance/safety PASS, 12 model calls,
