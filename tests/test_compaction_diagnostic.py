@@ -384,6 +384,8 @@ def test_compact_request_whole_body_timeout_cancels_once():
 
     adapter = client(handler)
     try:
+        # Resolve lazy SDK resources before timing streaming-body cancellation.
+        _ = adapter.client.responses.with_raw_response.compact
         with pytest.raises(transport.RequestWaitExpired):
             adapter.responses.compact(model=count_replay.shared.MODEL, input=[], timeout=0.2)
         assert len(visits) == 1 and cancelled
