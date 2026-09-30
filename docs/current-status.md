@@ -28,8 +28,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 PR #9 Linux CI exposed an unlocked journal read racing with a parallel append.
 Readers now share the append locks; a controlled partial-write test verifies that
 readers wait for completion and still reject a torn tail after a failed write.
-The focused journal/parallel-note tests and Ruff pass locally; full-suite and hosted
-validation are pending. This changes persistence synchronization, not solving policy.
+Focused journal/parallel-note tests, Ruff and mock isolated evaluation pass locally
+(mock safety NOT_RUN). This changes persistence synchronization, not solving policy.
 
 The [fresh Darts repair](history/2026-09-30-darts-fresh-repair.md) remains acceptance
 FAIL despite public regression PASS; its USD 0.607473 allocation is closed.
