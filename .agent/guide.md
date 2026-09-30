@@ -202,12 +202,15 @@ stores are not scratch. Never sweep a parent directory or relocate recorded stat
 ```powershell
 uv run pytest tests/test_documentation_layout.py -p no:cacheprovider
 uv run ruff check patchloop tests
-uv run pytest tests -p no:cacheprovider --basetemp C:\pt\tmp\<unique-name>
+uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --durations=20 --basetemp C:\pt\tmp\<unique-name>
 uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
 ```
 
-Set `PATCHLOOP_STATE_ROOT` to an external directory for mock smoke. Real-Docker tests
-are opt-in and require existing images; mock/local evidence does not prove live behavior.
+Set `PATCHLOOP_STATE_ROOT` to an external directory for mock smoke. Omit `-n 4` for
+small focused checks; full-suite workers keep each test file together and use separate temporary
+directories. Automatic worker restart is disabled so worker crashes fail validation.
+Real-Docker tests remain opt-in and require existing images; mock/local evidence
+does not prove live behavior.
 Before handoff check public/private boundaries, current links, external state, exact
 recovery identities, unrelated edits, and unchanged historical artifacts. Report what
 was implemented, locally tested, live-executed, and left `NOT_RUN` separately.

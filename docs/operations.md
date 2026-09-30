@@ -32,18 +32,26 @@ $testReport = Join-Path 'C:\pt\validation' ($testId + '.xml')
 New-Item -ItemType Directory -Force -Path 'C:\pt\tmp', 'C:\pt\validation' | Out-Null
 uv sync --extra dev --locked
 uv run ruff check patchloop tests
-uv run pytest tests -p no:cacheprovider --basetemp $testRoot --junitxml $testReport
+uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --durations=20 --basetemp $testRoot --junitxml $testReport
 # After pytest and its children exit, recycle only $testRoot.
 ```
 
-Replace `tests` with relevant files for focused validation. Keep runtime bytes
-unchanged while tests run. Parallel processes need fresh, separate basetemps and
-disjoint file selections. Record commands, results, reports and unexecuted checks;
+Replace `tests` with relevant files and omit `-n 4` for small focused checks. Keep
+runtime bytes unchanged while tests run. The full suite uses four pytest-xdist
+workers, groups each file on one worker, and disables automatic worker restarts.
+Workers receive separate basetemps beneath the invocation's fresh root. Independent
+invocations still need separate roots and disjoint selections. Record commands,
+results, reports and unexecuted checks;
 old suite totals do not verify a current change.
 
-CI runs the suite, Ruff, task validation and mock smoke on Windows and Linux with
-Python 3.12. Dependency sync and command execution use `--locked`, so inconsistent
-project metadata and lockfile fail instead of being updated during validation.
+CI runs on pull requests and pushes to `main`, avoiding a second branch-push run
+for an open PR. Both Windows and Linux use Python 3.12 and the same complete suite
+with four file-grouped workers, followed by task validation and mock smoke. Ruff
+remains a separate step. The slowest 20 test phases appear in the log; JUnit reports
+are uploaded even after a failed test step and retained for 14 days. Dependency sync
+and command execution use `--locked`, so inconsistent project metadata and lockfile
+fail instead of being updated during validation. Parallel scheduling changes neither
+test selection nor the real-Docker opt-in boundary.
 
 ## Mock end-to-end
 
