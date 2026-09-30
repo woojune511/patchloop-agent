@@ -25,11 +25,15 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-PR #9 Linux CI exposed an unlocked journal read racing with a parallel append.
-Readers now share append's process lock; a controlled partial-write test verifies that
-readers wait for completion and still reject a torn tail after a failed write.
-Focused journal/parallel-note tests, Ruff and mock isolated evaluation pass locally
-(mock safety NOT_RUN). This changes persistence synchronization, not solving policy.
+The next quality candidate is [optional reference-free probe program reuse](history/2026-09-30-probe-program-replay.md), not
+another fresh-task sampling series. `cases-v1` now offers explicit `save_program`
+registration and exact case-ID replay even after a failed/non-JSON execution.
+Program identity is separate from optional reference comparison; no new submission
+gate or automatic retry is added. The selected baseline remains probe-policy none.
+Command tracking now distinguishes unsupported executables/options from missing
+reports; copied sources and child processes remain outside its declared scope.
+Functional verification is separate from agent-quality evidence; no live comparison
+or default adoption is authorized by this implementation.
 
 The [fresh Darts repair](history/2026-09-30-darts-fresh-repair.md) remains acceptance
 FAIL despite public regression PASS; its USD 0.607473 allocation is closed.

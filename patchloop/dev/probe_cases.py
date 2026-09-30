@@ -16,13 +16,18 @@ POLICY = "cases-v1"
 MAX_CASES = 3
 MAX_OBSERVATION_BYTES = 2_048
 DESCRIPTION = (
-    "Optional reusable cases: first run an ordinary reference experiment printing exactly "
+    "Optional reusable cases: to save a program without a reference, set save_program true "
+    "and case_id/reference_action_id null. A completed failing or non-JSON execution can "
+    "still save the exact program; its result is not a patch verdict. Otherwise set "
+    "save_program false. For reference comparison, first run an ordinary experiment printing "
+    "exactly "
     "one JSON value (at most 2048 UTF-8 bytes), with case_id and reference_action_id null. "
     "Then supply that completed probe's reference_action_id, a question and new python_source "
     "that explicitly calls the current public project and prints the same observation shape; "
     "case_id is null. The harness compares JSON values and saves the candidate program. "
     "To rerun that exact candidate program on a later diff, set case_id from probe_cases and "
-    "set question, python_source and reference_action_id null. No reference rerun is needed. "
+    "set question, python_source and reference_action_id null and save_program false. "
+    "No reference rerun is needed. "
     "Native-only code does not test a candidate. A match means only equality to the chosen "
     "observation, not that the reference is correct or all task behavior passed. Existing "
     "ad-hoc probes remain available; cases never block finish or trigger automatic execution."
@@ -35,6 +40,7 @@ def contract() -> dict[str, Any]:
         "max_observation_utf8_bytes": MAX_OBSERVATION_BYTES,
         "comparison": "canonical-json-exact-types-order-independent-objects-v1",
         "reference": "prior-healthy-public-probe-model-selected-not-an-oracle-v1",
+        "program_only": "explicit-save-no-reference-no-comparison-v1",
         "replay": "exact-saved-candidate-source-current-diff-existing-probe-action-v1",
         "retention": "three-most-recently-executed-cases-action-finished-v1",
         "context": "latest-bounded-catalog-mutable-no-archive-resurrection-v1",
@@ -50,6 +56,8 @@ def extend_schema(schema: dict[str, Any]) -> None:
     for field in ("case_id", "reference_action_id"):
         parameters["properties"][field] = {"type": ["string", "null"], "maxLength": 500}
         parameters["required"].append(field)
+    parameters["properties"]["save_program"] = {"type": "boolean"}
+    parameters["required"].append("save_program")
 
 
 class ProbeCaseRequest(BaseModel):
@@ -59,6 +67,7 @@ class ProbeCaseRequest(BaseModel):
     python_source: str | None = Field(default=None, min_length=1, max_length=8_000)
     case_id: str | None = Field(default=None, min_length=1, max_length=500)
     reference_action_id: str | None = Field(default=None, min_length=1, max_length=500)
+    save_program: bool = False
 
 
 def _finite_float(value: str) -> float:
@@ -142,6 +151,10 @@ def saved_cases(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 def prepare(arguments: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
     """Resolve a prior reference or case before dispatch; never invent expectations."""
     intent = ProbeCaseRequest.model_validate(arguments)
+    if intent.save_program and (
+        intent.case_id is not None or intent.reference_action_id is not None
+    ):
+        raise ContractError("save_program requires case_id and reference_action_id null")
     if intent.case_id is not None:
         if any(value is not None for value in (
             intent.question, intent.python_source, intent.reference_action_id,
@@ -157,6 +170,11 @@ def prepare(arguments: dict[str, Any], events: list[dict[str, Any]]) -> dict[str
         raise ContractError("a new probe requires question and python_source")
     prepared = {"question": intent.question, "python_source": intent.python_source, "case": None}
     if intent.reference_action_id is None:
+        if intent.save_program:
+            definition = {"question": intent.question, "python_source": intent.python_source,
+                          "reference": None}
+            definition["case_id"] = _case_id(definition)
+            prepared["case"] = definition
         return prepared
     reference = next((
         event["payload"]["result"] for event in events
@@ -190,6 +208,20 @@ def compare(definition: dict[str, Any], output: dict[str, Any]) -> dict[str, Any
     source_hash = sha256_bytes(definition["python_source"].encode("utf-8"))
     if output.get("source_hash") != source_hash:
         raise RecoveryError("probe case executed source differs from saved program", details=output)
+    if definition["reference"] is None:
+        return {
+            "case_id": definition["case_id"], "definition_hash": _definition_hash(definition),
+            "status": "not_compared", "reason": "no_reference",
+            "candidate_source_hash": source_hash,
+            "execution": {key: output[key] for key in (
+                "status", "exit_code", "timed_out", "truncated", "cleanup_failed",
+                "deadline_exhausted", "profile_hash", "image_digest", "snapshot_hash",
+                "execution_policy_hash",
+            ) if key in output},
+            "interpretation": "Exact saved program execution, not a task verdict. "
+                              "A failed assertion or exception may reflect an invalid test.",
+            "counts_toward_completion": False,
+        }
     observed, reason = observation_json(output)
     expected = definition["reference"]["observation_json"]
     return {

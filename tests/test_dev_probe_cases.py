@@ -47,6 +47,10 @@ CANDIDATE = (
     "import json\nfrom mini_data_utils.csvlite import parse_rows\n"
     f"print(json.dumps(parse_rows({TEXT!r})))"
 )
+REPRODUCER = (
+    "from mini_data_utils.csvlite import parse_rows\n"
+    f"assert parse_rows({TEXT!r}) == [['h', 'v'], ['first\\nsecond', 'x']]"
+)
 
 
 @pytest.fixture(autouse=True)
@@ -76,13 +80,15 @@ class ExecutingProbe(FakeProbe):
                 "exit_code": output.exit_code, "stdout": output.stdout, "stderr": output.stderr}
 
 
-def call(action="case-new", *, source=CANDIDATE, reference="case-reference", case_id=None):
+def call(action="case-new", *, source=CANDIDATE, reference="case-reference", case_id=None,
+         save=False):
     replay = case_id is not None
     return RequestedTool(name="run_probe", action_id=action, arguments={
         "question": None if replay else "Does the project preserve quoted record boundaries?",
         "python_source": None if replay else source,
         "reference_action_id": None if replay else reference,
         "case_id": case_id,
+        "save_program": save,
     }, turn_decision=PublicTurnDecision(mode="verify", basis="Compare public observations."))
 
 
@@ -246,6 +252,85 @@ def test_failed_candidate_is_retained_but_never_counted_as_a_match(gateway_facto
     assert backend.calls == 2
 
 
+def test_reference_free_failing_program_replays_exactly_after_edit_and_restart(
+    gateway_factory, smoke_package,
+):
+    gateway, journal, workspace, backend = setup_gateway(gateway_factory)
+    first_call = call(source=REPRODUCER, reference=None, save=True)
+    first = gateway.execute(first_call)
+    comparison = first.output["case_comparison"]
+    case_id = comparison["case_id"]
+    assert comparison["status"] == "not_compared" and comparison["reason"] == "no_reference"
+    assert comparison["execution"]["exit_code"] == 1
+    assert "AssertionError" in first.output["stderr"]
+    assert gateway.execute(first_call).replayed and backend.calls == 1
+    assert not gateway.checks_by_diff
+    with pytest.raises(ActionConflict):
+        gateway.execute(call(source=REPRODUCER + "\n# changed", reference=None, save=True))
+    gateway.execute_batch(read_calls())
+    assert gateway.execute(mutation_call(gateway)).status == "succeeded"
+    restored = DevToolGateway(
+        workspace=workspace, journal=journal, public_task=smoke_package.public,
+        sandbox=gateway.sandbox, limits=gateway.limits,
+        probe_sandbox=backend, probe_policy=cases.POLICY,
+    )
+    item = context(restored, smoke_package)["probe_cases"]["items"][0]
+    assert item["reference"] is None
+    assert item["last_candidate_result"]["currency"] == "historical"
+    rerun = call("program-rerun", case_id=case_id)
+    second = restored.execute(rerun)
+    execution = second.output["case_comparison"]
+    assert execution["execution"]["exit_code"] == 0
+    assert execution["candidate_source_hash"] == comparison["candidate_source_hash"]
+    assert second.workspace_diff_hash != first.workspace_diff_hash
+    assert not execution["counts_toward_completion"] and not restored.checks_by_diff
+    assert execution["status"] == "not_compared"  # Exit zero is not reference equality.
+    assert backend.sources == [REPRODUCER, REPRODUCER]
+    assert restored.execute(rerun).replayed and backend.calls == 2
+    changed = restored.execute(call("different-program", source=REPRODUCER + "\n# changed",
+                                    reference=None, save=True))
+    assert changed.output["case_comparison"]["case_id"] != case_id
+
+
+@pytest.mark.parametrize("arguments", [
+    {"case_id": "pc_unknown", "save_program": True},
+    {"reference_action_id": "reference", "save_program": True},
+])
+def test_program_save_rejects_mixed_modes_before_execution(gateway_factory, arguments):
+    gateway, journal, _, backend = setup_gateway(gateway_factory)
+    request = call(reference=None)
+    request.arguments.update(arguments)
+    assert gateway.execute(request).status == "failed"
+    assert backend.calls == 0 and not cases.saved_cases(journal.events())
+
+
+@pytest.mark.parametrize("status,flags", [
+    ("timeout", {"timed_out": True}),
+    ("cleanup_failed", {"cleanup_failed": True}),
+    ("output_limit", {"truncated": True}),
+])
+def test_saved_program_retains_execution_failure_without_automatic_retry(
+    gateway_factory, status, flags,
+):
+    gateway, journal, _ = gateway_factory()
+    gateway.probe_policy = cases.POLICY
+
+    class FailedExecution(FakeProbe):
+        def run_probe(self, *args, **kwargs):
+            return {**super().run_probe(*args, **kwargs), **flags, "exit_code": None}
+
+    backend = FailedExecution(status=status)
+    gateway.probe_sandbox = backend
+    request = call(reference=None, save=True)
+    result = gateway.execute(request)
+    saved = result.output["case_comparison"]
+    assert saved["execution"]["status"] == status
+    assert all(saved["execution"][key] is value for key, value in flags.items())
+    assert saved["status"] == "not_compared" and not saved["counts_toward_completion"]
+    assert len(cases.saved_cases(journal.events())) == 1
+    assert gateway.execute(request).replayed and backend.calls == 1
+
+
 def test_native_only_match_is_not_project_behavior_or_a_new_gate(gateway_factory, smoke_package):
     gateway, journal, _, _ = setup_gateway(gateway_factory)
     before = runner._tool_policy(gateway, runner._RunCounters(), gateway.limits)
@@ -309,7 +394,7 @@ def test_current_catalog_and_handoff_do_not_resurrect_historical_matches(policy)
         assert not any("encrypted_content" in i for i in fresh)
 
 
-def scripted_cases(monkeypatch):
+def scripted_cases(monkeypatch, *, program_only=False):
     backend = ExecutingProbe()
     monkeypatch.setattr(runner, "DockerProbeSandbox", lambda: backend)
     original = MockDevAdapter.next_turn
@@ -318,7 +403,8 @@ def scripted_cases(monkeypatch):
         state = json.loads(context_text)
         items = state["probe_cases"]["items"]
         if not state.get("recent_probes"):
-            chosen = call("case-reference", source=REFERENCE, reference=None)
+            chosen = (call(source=REPRODUCER, reference=None, save=True) if program_only
+                      else call("case-reference", source=REFERENCE, reference=None))
         elif not items:
             chosen = call()
         elif state["current_diff"]["patch"] and items[0]["last_candidate_result"][
@@ -330,6 +416,35 @@ def scripted_cases(monkeypatch):
         return DevModelTurn(tool_calls=[chosen])
     monkeypatch.setattr(MockDevAdapter, "next_turn", next_turn)
     return backend
+
+
+def test_program_only_mock_smoke_recovers_durable_failure_and_rechecks_same_source(
+    tmp_path, monkeypatch,
+):
+    backend = scripted_cases(monkeypatch, program_only=True)
+    request = mock_request(tmp_path, "none").model_copy(update={
+        "enable_probes": True, "probe_policy": cases.POLICY, "context_policy": segments.POLICY,
+    })
+    _crash_journal_once(monkeypatch, event_type="action_finished",
+                        predicate=lambda p: p.get("action_id") == "case-new", when="after")
+    with pytest.raises(_SimulatedCrash):
+        runner.run_dev(request)
+    resumed = request.model_copy(update={"resume_run_id": _enveloped_run_id(tmp_path)})
+    result = runner.run_dev(resumed)["runs"][0]
+    assert result["terminal"] == "EVALUATOR_PASS", result
+    assert result["evaluator"]["safety_state"] == "NOT_RUN"
+    assert result["accepted_mutations"] == 1
+    assert backend.sources == [REPRODUCER, REPRODUCER]
+    journal = DevJournal(tmp_path, resumed.resume_run_id)
+    events = journal.events()
+    probes = [e["payload"]["result"] for e in events
+              if e["event_type"] == "action_finished"
+              and e["payload"]["result"]["tool"] == "run_probe"]
+    assert [p["output"]["exit_code"] for p in probes] == [1, 0]
+    assert len(cases.saved_cases(events)) == 1
+    before = journal.path.read_bytes()
+    assert runner.run_dev(resumed)["runs"][0] == result
+    assert journal.path.read_bytes() == before and backend.calls == 2
 
 
 @pytest.mark.parametrize("boundary", ["turn_decision_recorded", "action_started",

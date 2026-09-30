@@ -17,7 +17,11 @@ from typing import Protocol
 from patchloop.contracts import DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V2, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline
 from patchloop.sandbox.capture import SandboxCleanupError, bounded_text, capture_process
-from patchloop.sandbox.execution_feedback import public_feedback, trace_launch
+from patchloop.sandbox.execution_feedback import (
+    public_feedback,
+    python_command_unsupported_reason,
+    trace_launch,
+)
 from patchloop.util import canonical_json, ensure_within, sha256_bytes
 
 _DOCKER_IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}")
@@ -151,6 +155,8 @@ class LocalSandbox:
         if execution_targets is not None:
             feedback = public_feedback(
                 execution_targets, None if captured.timed_out else captured.report,
+                reason=(python_command_unsupported_reason(declared_command)
+                        or ("execution_timed_out" if captured.timed_out else "report_unavailable")),
             )
         return SandboxResult(
             command=declared_command,
@@ -430,6 +436,8 @@ class DockerSandbox:
             feedback = public_feedback(
                 execution_targets,
                 captured.report if not captured.timed_out and cleanup_ok else None,
+                reason=(python_command_unsupported_reason(list(check.command))
+                        or ("execution_timed_out" if captured.timed_out else "report_unavailable")),
             )
         return SandboxResult(
             command=list(check.command),
