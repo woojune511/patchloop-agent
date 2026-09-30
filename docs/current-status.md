@@ -43,7 +43,9 @@ hypothesis: the mapping defects explain the patch failures, but do not establish
 why the agent missed them or whether the new wording helps. No probe quota,
 annotation, tool or submission gate is added. Paid validation is NOT_RUN; judge
 future evidence by valid counterexamples, repaired failures and final correctness,
-not probe counts or repetition of the already exposed Darts cases.
+not probe counts or repetition of the already exposed Darts cases. A
+[two-row Darts comparison](../.agent/verification-selection-comparison.md) is
+prepared with USD 3 per invocation (USD 6 total); exact budget approval is pending.
 
 The [four-row reference-free probe comparison](history/2026-09-30-probe-replay-comparison.md)
 is complete and its USD 12 allocation is closed. On one fixed runtime (`8f8d6331`),
@@ -58,9 +60,7 @@ available but not exercised. Frozen outcomes: INCONCLUSIVE for task improvement,
 NOT_EXERCISED for the mechanism. Keep probe-policy none as the selected baseline;
 no additional paid row or probe-policy adoption follows this result. The separate
 guidance change above responds to reproduced patch gaps, not unused probe features.
-The question of benefit when an agent actually uses a valid cross-edit experiment
-remains unanswered. The [comparison note](../.agent/probe-replay-comparison.md) is
-closed, not a reusable approval.
+The [comparison note](../.agent/probe-replay-comparison.md) is closed, not approval.
 
 Optional [program replay](history/2026-09-30-probe-program-replay.md), its control
 and panel ledger remain implemented. Earlier Darts/MontePy observations and
