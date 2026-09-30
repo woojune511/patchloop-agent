@@ -1,0 +1,12 @@
+diff --git a/jsonschema/_format.py b/jsonschema/_format.py
+--- a/jsonschema/_format.py
++++ b/jsonschema/_format.py
+@@ -413,7 +413,7 @@
+         return is_datetime("1970-01-01T" + instance)
+ 
+ 
+-@_checks_drafts(name="regex", raises=re.error)
++@_checks_drafts(name="regex", raises=(re.error, RecursionError))
+ def is_regex(instance: object) -> bool:
+     if not isinstance(instance, str):
+         return True

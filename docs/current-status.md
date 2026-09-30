@@ -25,11 +25,12 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The jsonschema [live run](history/2026-10-01-jsonschema-live-result.md) completed
-at USD 0.245791: one edit, both public checks and isolated rechecks PASS, safety
-PASS. Preserved terminal EVALUATOR_FAIL arises from a package/acceptance mismatch:
-no hidden checks aggregate NOT_RUN, while acceptance requires hidden PASS. Resolve public-only admission locally before further live work; preserve hidden
-NOT_RUN and the original result. The one-run allocation is closed.
+The jsonschema [hidden-evaluation follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
+preserves mandatory hidden acceptance. Version 2 adds private behavioral checks;
+the saved patch passes hidden, public, scope and safety evaluation without new
+model calls. This is post-run verification, not a fresh solve or held-out trial.
+Version 1 and its live FAIL remain unchanged. Future readiness must include
+hidden checks and complete isolated calibration. No paid allocation remains open.
 
 The [Darts decision audit](history/2026-10-01-darts-decision-scope-closeout.md)
 closes this investigation. Both runs expected inverse preservation; neither

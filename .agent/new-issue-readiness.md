@@ -88,19 +88,24 @@ Admission journal: `task-admission/runs/run_dev_943dd2d377e64349.jsonl` under th
 preparation root. Package CLI validation, 17 focused tests and Ruff pass. Fresh
 mock smoke `run_dev_185794715c6643f5` reaches EVALUATOR_PASS, safety NOT_RUN.
 
-## Completed live scope and active blocker
+## Completed live scope and hidden-evaluation follow-up
 
-The approved one-run proposal below completed; it is not a reusable authorization.
-[Live closeout](../docs/history/2026-10-01-jsonschema-live-result.md): run
-`run_dev_c6b70ef10dfb4926`, USD 0.245791 of USD 3, six model calls, one edit,
-132.947 seconds. Public checks and isolated rechecks pass; safety PASS. The saved
-terminal remains EVALUATOR_FAIL because absent hidden checks aggregate NOT_RUN,
-and acceptance requires hidden PASS. The package admission missed that boundary.
+The approved run completed at USD 0.245791: `run_dev_c6b70ef10dfb4926`.
+Its original EVALUATOR_FAIL and version 1 package remain unchanged. The cause was
+missing hidden checks, which the existing acceptance rule correctly requires.
 
-All unused allocation is closed. No retry, resume, manual rescue or second paid
-run occurred. Next work is a provider-free acceptance/admission correction that
-keeps hidden NOT_RUN honest, followed by a separately labeled saved-patch replay
-if appropriate. Do not change this live result or infer independent correctness.
+The user confirmed hidden evaluation is mandatory. Version 2 at
+`tasks/dev-train/jsonschema-regex-recursion-1538-v2` adds six private behavioral
+tests. Baseline and three wrong repairs fail; the saved submission passes complete
+isolated hidden/public/scope/safety evaluation in
+`run_dev_jsonschema1538hiddenfinal`. No model call or new cost occurred.
+[Follow-up evidence](../docs/history/2026-10-01-jsonschema-hidden-evaluation.md)
+records the new hashes and external receipts. These are post-run checks, not a
+pre-registered held-out evaluation. No acceptance logic was weakened.
+
+Future readiness requires hidden checks and complete isolated calibration, not
+only public command tests or a different mock task. All unused paid allocation is
+closed. No further live run is authorized.
 
 The exact completed command was:
 

@@ -31,3 +31,4 @@ tasks/dev-train/original-toqito-1538/reference.patch -whitespace
 tasks/dev-train/original-montepy-933/reference.patch -whitespace
 tasks/dev-train/original-darts-3065/reference.patch -whitespace
 tasks/dev-train/jsonschema-regex-recursion-1538/reference.patch -whitespace
+tasks/dev-train/jsonschema-regex-recursion-1538-v2/reference.patch -whitespace
