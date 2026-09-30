@@ -49,13 +49,13 @@ was merged at `bb265c83`; its completed receipts supersede the local investigati
 pending-hosted status. These timings are individual runs, not a stable benchmark.
 No runtime logic, test assertions or test selection changed.
 
-The next bounded product exercise is a fresh solve of the existing
-`tox-cross-section-empty-substitution` dev-train task, with the working baseline
-unchanged. [Execution scope](../.agent/next-tox-repair.md) fixes the task, public
-success criteria, prepared inputs, limits and proposed USD 3.00 invocation cap.
-Task validation and provider-free source/dependency preparation passed; required
-images are already installed. Live execution awaits explicit approval of that exact
-scope. This exposed task is a development exercise, not held-out improvement evidence.
+The approved [fresh tox repair](history/2026-09-30-tox-fresh-repair.md) completed with
+the working baseline unchanged: one edit, 29 public regression tests passed,
+isolated acceptance PASS and safety PASS. Five model calls cost USD 0.2702935 by
+recorded usage; elapsed process time was 113.233 seconds. The one-run USD 3.00
+allocation is closed. This exposed development-task success establishes one completed
+repair path, not a quality gain, feature effect or held-out generalization. No new
+runtime defect or follow-up experiment was established; retain the working baseline.
 
 The clearest repeated weakness is selecting verification that exposes an incorrect
 repair condition. The 24-run six-task panel had nine acceptance failures despite all

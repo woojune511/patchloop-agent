@@ -1,6 +1,8 @@
-# Next bounded repair exercise: tox configuration substitution
+# Closed repair exercise scope: tox configuration substitution
 
-Prepared 2026-09-30. Proposal only: no paid invocation is authorized by this file.
+Prepared and completed 2026-09-30. The user approved exactly one invocation in the
+conversation; it completed and the allocation is closed. This retained scope and
+command authorize no rerun. See [result](../docs/history/2026-09-30-tox-fresh-repair.md).
 
 ## Purpose and evidence
 
