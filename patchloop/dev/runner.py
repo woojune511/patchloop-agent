@@ -30,6 +30,11 @@ from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import native_compaction, segments, working_plan
 from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
+from patchloop.dev.completion_budget import (
+    CompletionState,
+    completion_budget,
+    mutation_attempt_budget,
+)
 from patchloop.dev.context import SourceProjection, build_observed_source_index
 from patchloop.dev.contracts import (
     DEV_RUNTIME_ID,
@@ -196,78 +201,6 @@ class _ToolPolicy:
             + self.check_recovery_reserve_calls
             + self.current_repair_read_reserve_calls
         )
-
-
-@dataclass(frozen=True)
-class _CompletionState:
-    check_count: int
-    remaining_check_count: int
-    unused_check_count: int
-    unrun_recoverable_check: bool
-    requires_mutation: bool
-    anchor_available: bool
-    remaining_mutations: int
-    mutation_retry_available: bool
-    repair_read_credit: bool = False
-
-
-@dataclass(frozen=True)
-class _CompletionBudget:
-    minimum: int
-    protected: int
-    future_check_failures: int
-    mutation_retry_reserve: int
-    check_recovery_reserve: int
-    current_read_reserve: int
-
-
-def _completion_budget(state: _CompletionState) -> _CompletionBudget:
-    """Count a completion path and its bounded failures without assuming check order.
-
-    A protected failed check may occur last, require one inspection and one repair,
-    and invalidate every earlier PASS. Its worst-case incremental cost is N + 2.
-    IDs remain eligibility evidence; no cheap declaration-order subset is selected.
-    """
-
-    if state.requires_mutation:
-        minimum = int(not state.anchor_available) + 1 + state.check_count + 1
-        future_failures = min(
-            max(0, state.remaining_mutations - 1), state.unused_check_count
-        )
-    else:
-        minimum = state.remaining_check_count + 1
-        future_failures = (
-            min(state.remaining_mutations, state.unused_check_count)
-            if state.unrun_recoverable_check
-            else 0
-        )
-    current_read = int(
-        state.requires_mutation and state.anchor_available and state.repair_read_credit
-    )
-    mutation_retry = 2 * int(
-        state.mutation_retry_available
-        and (state.requires_mutation or future_failures > 0)
-    )
-    check_recovery = future_failures * (state.check_count + 2)
-    return _CompletionBudget(
-        minimum=minimum,
-        protected=minimum + current_read + mutation_retry + check_recovery,
-        future_check_failures=future_failures,
-        mutation_retry_reserve=mutation_retry,
-        check_recovery_reserve=check_recovery,
-        current_read_reserve=current_read,
-    )
-
-
-def _mutation_attempt_budget(state: _CompletionState) -> _CompletionBudget:
-    """Protect the offered attempt, including its first rejection, not just success.
-
-    Evidence admission remains separate. Selecting the immediate edit for this
-    forecast excludes an optional read before it, but retains the retry allowance.
-    """
-    return _completion_budget(replace(
-        state, requires_mutation=True, anchor_available=True, repair_read_credit=False,
-    ))
 
 
 class _ProviderContinuationError(RecoveryError):
@@ -687,8 +620,8 @@ def _minimum_completion_calls(
     requires_mutation = workflow_gate == "needs_mutation" or any(
         row["status"] == "FAIL" for row in visible_check_status
     )
-    return _completion_budget(
-        _CompletionState(
+    return completion_budget(
+        CompletionState(
             check_count=len(gateway.public_task.visible_checks),
             remaining_check_count=len(remaining_visible_check_ids),
             unused_check_count=0,
@@ -772,7 +705,7 @@ def _tool_policy(
         and counters.failed_check_pending
         and not counters.failed_check_repair_read_used
     )
-    completion_state = _CompletionState(
+    completion_state = CompletionState(
         check_count=len(gateway.public_task.visible_checks),
         remaining_check_count=len(remaining_check_ids),
         unused_check_count=len(unused_check_ids),
@@ -783,7 +716,7 @@ def _tool_policy(
         mutation_retry_available=not counters.mutation_recovery_used,
         repair_read_credit=repair_read_credit,
     )
-    budget = _completion_budget(completion_state)
+    budget = completion_budget(completion_state)
     completion_possible = (
         remaining_model_calls >= budget.minimum
         and remaining_tool_actions >= budget.minimum
@@ -804,7 +737,7 @@ def _tool_policy(
         anchor_available=has_current_mutation_evidence or required_inspection,
         repair_read_credit=False if repair_read_credit else completion_state.repair_read_credit,
     )
-    inspection_budget = _completion_budget(inspection_state)
+    inspection_budget = completion_budget(inspection_state)
     inspection_floor = (
         inspection_budget.minimum
         if required_inspection and not protected_completion_possible
@@ -843,7 +776,7 @@ def _tool_policy(
     # minimum successor must fit; a recovery guarantee is reported separately,
     # not required to make a viable edit executable. Optional inspection/probes
     # still preserve the complete protected baseline path above/below.
-    mutation_budget = _mutation_attempt_budget(completion_state)
+    mutation_budget = mutation_attempt_budget(completion_state)
     optional_mutation_completion_calls = mutation_budget.minimum
     optional_mutation_protected_calls = mutation_budget.protected
     mutation_allowed = (
@@ -881,7 +814,7 @@ def _tool_policy(
             check_successor_floors = {
                 check_id: max(
                     budget.protected,
-                    _completion_budget(replace(
+                    completion_budget(replace(
                         completion_state,
                         unused_check_count=(completion_state.unused_check_count
                                             - int(check_id in unused_check_ids)),

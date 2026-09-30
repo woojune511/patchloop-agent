@@ -27,6 +27,7 @@ Comparisons answer causal questions when needed; routine fixes need no new proce
 | --- | --- |
 | CLI and request/default contracts | `patchloop/cli.py`, `patchloop/dev/contracts.py` |
 | Loop, preflight, action horizon, terminal handling | `patchloop/dev/runner.py` |
+| Pure completion/mutation call-budget forecasts | `patchloop/dev/completion_budget.py` |
 | Public prompt and provider adapter | `patchloop/dev/model.py`, `patchloop/agent/model.py` |
 | Tool grammar, observed anchors, edits, checks, finish | `patchloop/dev/tools.py` |
 | Audit context and compact public view | `patchloop/dev/context.py`, `patchloop/dev/model_state.py` |
@@ -40,6 +41,12 @@ Comparisons answer causal questions when needed; routine fixes need no new proce
 
 Use public task inputs for agent work. Private task material and evaluator internals
 never enter coding-agent context, including through diagnostics or repair hints.
+
+Completion-budget forecasts take an immutable state snapshot and perform no I/O.
+The runner assembles that snapshot and owns tool admission; `dev/cost.py` owns
+provider cost admission. Keep arithmetic independent of journals, gateways and model
+calls. Source extraction changes runtime identity, so existing exact-envelope resume
+checks still reject a different runtime; do not relax them for refactors.
 
 ## Loop and mutation contract
 
