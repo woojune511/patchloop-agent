@@ -19,12 +19,13 @@ Approvals are closed.
 
 ## New records
 
-- [Zero-width ownership diagnosis](2026-10-01-zero-width-ownership-diagnosis.md).
-- [Failure priority and public trace audit](2026-10-01-failure-priority-review.md).
-- [PDM repair observation](2026-10-01-pdm-repair-observation.md).
+- [Darts close-out](2026-10-01-darts-decision-scope-closeout.md).
+- [Zero-width](2026-10-01-zero-width-ownership-diagnosis.md).
+- [Priorities](2026-10-01-failure-priority-review.md).
+- [PDM](2026-10-01-pdm-repair-observation.md).
 - [Guidance baseline](2026-10-01-verification-guidance-baseline.md).
-- [Verification selection](2026-10-01-verification-selection-comparison.md).
-- [Submitted patch review](2026-09-30-submitted-patch-review.md).
+- [Verification](2026-10-01-verification-selection-comparison.md).
+- [Patches](2026-09-30-submitted-patch-review.md).
 - [Probe replay comparison](2026-09-30-probe-replay-comparison.md).
 
 - [Basic/current 6-task baseline](2026-09-28-basic-current-baseline-comparison.md).

@@ -25,14 +25,21 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+The [Darts decision audit](history/2026-10-01-darts-decision-scope-closeout.md)
+closes this investigation. Both runs expected inverse preservation; neither
+records a considered/rejected zero-width input. B recognized the regression gap
+but submitted after ordinary drop-mode checks. This establishes incomplete
+verification, not its internal cause or an effective general intervention.
+Keep the baseline; no further Darts diagnostic, prompt change or paid run is queued.
+
 The [zero-width diagnosis](history/2026-10-01-zero-width-ownership-diagnosis.md)
 confirms that both saved Darts patches decode original values correctly, then
 misassign them while reconstructing names from surviving encoded columns. Original
 names/order remain in the forward map; the selected case does not require new
 metadata. This resolves the task-level mechanism, not why the agent omitted the
 boundary. Keep the runtime baseline; no prompt fix or paid comparison is selected.
-The [priority review](history/2026-10-01-failure-priority-review.md) separates this
-repair/verification gap from setup errors and unrelated resource failures.
+The [priority review](history/2026-10-01-failure-priority-review.md) separates
+verification, setup and resource failures.
 
 The [submitted-patch review](history/2026-09-30-submitted-patch-review.md)
 found remaining Darts grouping and zero-width inverse gaps despite public and
