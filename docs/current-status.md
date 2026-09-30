@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-09-30. Replaceable authority for current decisions. Runtime source owns
+Updated: 2026-10-01. Replaceable authority for current decisions. Runtime source owns
 behavior; historical reports are evidence, not an active work queue.
 
 ## Product and working baseline
@@ -35,17 +35,21 @@ suite also passes unchanged source, so that PASS does not establish repair cover
 Both MontePy patches passed six selected clearing cases; a flag-reset difference
 remains semantically unresolved. These operator checks used no provider calls.
 
-The active change replaces generic experiment advice with selection of a minimal
-input that could refute a repair assumption, using an expected result derived
-independently from the public contract. Available before/after observations separate
-defect reproduction from behavior preservation. This is an unproven guidance
-hypothesis: the mapping defects explain the patch failures, but do not establish
-why the agent missed them or whether the new wording helps. No probe quota,
-annotation, tool or submission gate is added. Paid validation is NOT_RUN; judge
-future evidence by valid counterexamples, repaired failures and final correctness,
-not probe counts or repetition of the already exposed Darts cases. A
-[two-row Darts comparison](../.agent/verification-selection-comparison.md) is
-prepared with USD 3 per invocation (USD 6 total); exact budget approval is pending.
+The [two-row guidance comparison](history/2026-10-01-verification-selection-comparison.md)
+is complete; its USD 6 allocation is closed at USD 1.125171 recorded usage. Both
+fresh Darts runs passed registered checks and isolated acceptance/safety. A used
+no probe; B used two, correcting its own invalid index expectation. Both patches
+still failed the same three of five frozen public cases. B cost 1.614 times A and
+took 1.902 times its active time in this single pair. These selected cases and
+one-pair ratios do not establish general success rates or efficiency effects.
+
+The new assumption-directed guidance remains implemented but unproven. Direct
+verification was observed in B, but no genuine candidate defect was discovered
+and repaired through it: the predeclared correctness result is INCONCLUSIVE.
+The open question is selection of inputs that challenge the repair assumptions,
+beyond ordinary issue examples. No added reminder, probe gate or paid row is
+queued. The [comparison note](../.agent/verification-selection-comparison.md) is
+closed; previous approval does not authorize further execution.
 
 The [four-row reference-free probe comparison](history/2026-09-30-probe-replay-comparison.md)
 is complete and its USD 12 allocation is closed. On one fixed runtime (`8f8d6331`),
@@ -99,15 +103,10 @@ and [journal tests](../tests/test_dev_state.py) cover the boundaries and injecte
 [CI](../.github/workflows/ci.yml) is configured for locked dependencies and both Windows
 and Linux. These changes do not establish improved patch correctness.
 
-The [CI feedback investigation](history/2026-09-30-ci-feedback-speed.md) found Git
-subprocess waiting dominated a sampled slow test. CI now runs the complete suite
-with four file-grouped workers, on PRs and main pushes, with duration/JUnit reports.
-Both hosted jobs passed 3,688 tests with 25 skips on the unchanged 3,713-case inventory.
-In one before/after PR comparison, Linux took 519.48 -> 280.06 seconds and Windows
-2,564.75 -> 1,340.70 seconds. [PR #2](https://github.com/woojune511/patchloop-agent/pull/2)
-was merged at `bb265c83`; its completed receipts supersede the local investigation's
-pending-hosted status. These timings are individual runs, not a stable benchmark.
-No runtime logic, test assertions or test selection changed.
+CI runs the complete suite with four file-grouped workers on PRs and main pushes,
+with duration/JUnit reports. The [completed investigation](history/2026-09-30-ci-feedback-speed.md)
+and [merged PR #2](https://github.com/woojune511/patchloop-agent/pull/2) retain the
+individual timing evidence; those timings are not a stable performance benchmark.
 
 The approved [fresh tox repair](history/2026-09-30-tox-fresh-repair.md) completed with
 the working baseline unchanged: one edit, 29 public regression tests passed,
