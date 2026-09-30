@@ -25,13 +25,15 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The compact model view now selects explicit top-level public input fields before
-copying state. This prevents new audit fields from silently becoming model input.
-Current runtime and public diagnostic fields retain their values/order and nested rules;
-source catalogs and pending rechecks are derived locally. This is an input-boundary
-maintenance change, not evidence of a past private-data leak or better repairs.
-The [projection tests](../tests/test_model_view_fields.py) cover ordered current
-inputs, unknown-field exclusion, optional producer fields and copy independence.
+Keep journal validation and state construction unchanged. The bounded
+[mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not meet
+its frozen cost threshold for reusing repeated reads. No cache or RunState is queued.
+The result covers a short smoke task and mutation-receipt recovery; large-journal
+and live-run performance remain unmeasured.
+
+The compact model view selects explicit top-level runtime/public diagnostic fields,
+preserving existing values/order and nested rules. The
+[projection tests](../tests/test_model_view_fields.py) cover this input boundary.
 
 Completion and mutation-attempt call-budget arithmetic lives in
 [completion_budget.py](../patchloop/dev/completion_budget.py). The runner constructs
