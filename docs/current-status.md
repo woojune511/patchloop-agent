@@ -35,12 +35,15 @@ suite also passes unchanged source, so that PASS does not establish repair cover
 Both MontePy patches passed six selected clearing cases; a flag-reset difference
 remains semantically unresolved. These operator checks used no provider calls.
 
-The immediate engineering question is how the agent selects checks for output
-shape and inverse feature ownership. The reproduced mapping defects explain the
-patch failures, but do not yet distinguish test selection, issue interpretation
-or runtime enforcement as causes of submitting them. Preserve these public
-counterexamples separately from the original evaluator verdicts. No new prompt,
-mandatory probe gate or paid experiment is queued.
+The active change replaces generic experiment advice with selection of a minimal
+input that could refute a repair assumption, using an expected result derived
+independently from the public contract. Available before/after observations separate
+defect reproduction from behavior preservation. This is an unproven guidance
+hypothesis: the mapping defects explain the patch failures, but do not establish
+why the agent missed them or whether the new wording helps. No probe quota,
+annotation, tool or submission gate is added. Paid validation is NOT_RUN; judge
+future evidence by valid counterexamples, repaired failures and final correctness,
+not probe counts or repetition of the already exposed Darts cases.
 
 The [four-row reference-free probe comparison](history/2026-09-30-probe-replay-comparison.md)
 is complete and its USD 12 allocation is closed. On one fixed runtime (`8f8d6331`),
@@ -53,19 +56,16 @@ All four runs made zero probe calls. The reference-free save_program schema was
 present in every B request and absent from every A request, so the feature was
 available but not exercised. Frozen outcomes: INCONCLUSIVE for task improvement,
 NOT_EXERCISED for the mechanism. Keep probe-policy none as the selected baseline;
-no prompt reminder, additional paid row or default adoption follows this result.
+no additional paid row or probe-policy adoption follows this result. The separate
+guidance change above responds to reproduced patch gaps, not unused probe features.
 The question of benefit when an agent actually uses a valid cross-edit experiment
 remains unanswered. The [comparison note](../.agent/probe-replay-comparison.md) is
 closed, not a reusable approval.
 
-Optional [program replay](history/2026-09-30-probe-program-replay.md), the
-reference-cases-v1 control and the common panel ledger remain implemented.
-The tested runtime passed both OS CI suites (3,767 tests, 25 skips each) before
-live admission. Mock safety NOT_RUN remains separate from this panel's live PASS.
-The earlier [Darts failure](history/2026-09-30-darts-fresh-repair.md), its
-[operator correction](history/2026-09-30-darts-feature-ownership.md), and the
-[earlier MontePy success](history/2026-09-30-montepy-v2-fresh-repair.md) are separate
-closed observations; none is substituted for this panel's fresh control rows.
+Optional [program replay](history/2026-09-30-probe-program-replay.md), its control
+and panel ledger remain implemented. Earlier Darts/MontePy observations and
+operator corrections are separate from this panel's fresh control rows; see the
+comparison record. Mock safety NOT_RUN remains separate from live safety PASS.
 
 Keep journal validation and state construction unchanged. The bounded
 [mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not meet
