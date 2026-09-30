@@ -40,8 +40,11 @@ memory extension or mandatory probe gate is queued.
 
 The subsequent contract review identified two reproducible engineering defects:
 undisclosed mutation-explanation length limits and successful append returns after
-incomplete journal writes. The public schema now exposes the existing 1,500-character
-limits; journal append completes short writes and propagates zero-progress/I/O failures.
+incomplete journal writes. The public schema now derives mutation field constraints
+from the internal intent models, preserving public descriptions, required/null rules
+and recovery-only serialization. [Boundary tests](../tests/test_replacement_schema.py)
+cover length, occurrence, missing/null and legacy-field behavior. Journal append
+completes short writes and propagates zero-progress/I/O failures.
 Invalid journal tails remain preserved and block recovery. The [contract tests](../tests/test_dev_contracts.py)
 and [journal tests](../tests/test_dev_state.py) cover the boundaries and injected failures.
 [CI](../.github/workflows/ci.yml) is configured for locked dependencies and both Windows
