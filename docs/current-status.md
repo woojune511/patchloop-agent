@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-09-30. Replaceable authority for current decisions. Runtime source owns
+Updated: 2026-10-01. Replaceable authority for current decisions. Runtime source owns
 behavior; historical reports are evidence, not an active work queue.
 
 ## Product and working baseline
@@ -25,6 +25,33 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+The [submitted-patch public review](history/2026-09-30-submitted-patch-review.md)
+reproduced two remaining Darts gaps in both arms: a zero-width categorical feature
+causes inverse column loss and value misassignment, and grouped categories with
+drop still cause an output-width IndexError. The original source already failed
+forward transformation on both inputs; these are incomplete repairs, not evidence
+of regressions from successful original behavior. The original eight-test public
+suite also passes unchanged source, so that PASS does not establish repair coverage.
+Both MontePy patches passed six selected clearing cases; a flag-reset difference
+remains semantically unresolved. These operator checks used no provider calls.
+
+The [two-row guidance comparison](history/2026-10-01-verification-selection-comparison.md)
+is complete; its USD 6 allocation is closed at USD 1.125171 recorded usage. Both
+fresh Darts runs passed registered checks and isolated acceptance/safety. A used
+no probe; B used two, correcting its own invalid index expectation. Both patches
+still failed the same three of five frozen public cases. B cost 1.614 times A and
+took 1.902 times its active time in this single pair. These selected cases and
+one-pair ratios do not establish general success rates or efficiency effects.
+
+The [baseline decision](history/2026-10-01-verification-guidance-baseline.md) restores
+the previous verification guidance and its contract assertions. B's direct checks
+did not discover and repair a genuine candidate defect; the predeclared correctness
+result is INCONCLUSIVE. This is insufficient evidence to adopt the added guidance,
+not proof that it is generally ineffective. Preserve the frozen cases and original
+run records. Look for recurrence on other real repair work before choosing another
+intervention; no new task, reminder, probe gate or paid row is queued. The
+[comparison note](../.agent/verification-selection-comparison.md) is closed.
+
 The [four-row reference-free probe comparison](history/2026-09-30-probe-replay-comparison.md)
 is complete and its USD 12 allocation is closed. On one fixed runtime (`8f8d6331`),
 Darts v1 A/B and MontePy v2 B/A all passed isolated acceptance, real sandbox safety
@@ -36,19 +63,14 @@ All four runs made zero probe calls. The reference-free save_program schema was
 present in every B request and absent from every A request, so the feature was
 available but not exercised. Frozen outcomes: INCONCLUSIVE for task improvement,
 NOT_EXERCISED for the mechanism. Keep probe-policy none as the selected baseline;
-no prompt reminder, additional paid row or default adoption follows this result.
-The question of benefit when an agent actually uses a valid cross-edit experiment
-remains unanswered. The [comparison note](../.agent/probe-replay-comparison.md) is
-closed, not a reusable approval.
+no additional paid row or probe-policy adoption follows this result. The separate
+guidance change above responds to reproduced patch gaps, not unused probe features.
+The [comparison note](../.agent/probe-replay-comparison.md) is closed, not approval.
 
-Optional [program replay](history/2026-09-30-probe-program-replay.md), the
-reference-cases-v1 control and the common panel ledger remain implemented.
-The tested runtime passed both OS CI suites (3,767 tests, 25 skips each) before
-live admission. Mock safety NOT_RUN remains separate from this panel's live PASS.
-The earlier [Darts failure](history/2026-09-30-darts-fresh-repair.md), its
-[operator correction](history/2026-09-30-darts-feature-ownership.md), and the
-[earlier MontePy success](history/2026-09-30-montepy-v2-fresh-repair.md) are separate
-closed observations; none is substituted for this panel's fresh control rows.
+Optional [program replay](history/2026-09-30-probe-program-replay.md), its control
+and panel ledger remain implemented. Earlier Darts/MontePy observations and
+operator corrections are separate from this panel's fresh control rows; see the
+comparison record. Mock safety NOT_RUN remains separate from live safety PASS.
 
 Keep journal validation and state construction unchanged. The bounded
 [mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not meet
@@ -82,15 +104,10 @@ and [journal tests](../tests/test_dev_state.py) cover the boundaries and injecte
 [CI](../.github/workflows/ci.yml) is configured for locked dependencies and both Windows
 and Linux. These changes do not establish improved patch correctness.
 
-The [CI feedback investigation](history/2026-09-30-ci-feedback-speed.md) found Git
-subprocess waiting dominated a sampled slow test. CI now runs the complete suite
-with four file-grouped workers, on PRs and main pushes, with duration/JUnit reports.
-Both hosted jobs passed 3,688 tests with 25 skips on the unchanged 3,713-case inventory.
-In one before/after PR comparison, Linux took 519.48 -> 280.06 seconds and Windows
-2,564.75 -> 1,340.70 seconds. [PR #2](https://github.com/woojune511/patchloop-agent/pull/2)
-was merged at `bb265c83`; its completed receipts supersede the local investigation's
-pending-hosted status. These timings are individual runs, not a stable benchmark.
-No runtime logic, test assertions or test selection changed.
+CI runs the complete suite with four file-grouped workers on PRs and main pushes,
+with duration/JUnit reports. The [completed investigation](history/2026-09-30-ci-feedback-speed.md)
+and [merged PR #2](https://github.com/woojune511/patchloop-agent/pull/2) retain the
+individual timing evidence; those timings are not a stable performance benchmark.
 
 The approved [fresh tox repair](history/2026-09-30-tox-fresh-repair.md) completed with
 the working baseline unchanged: one edit, 29 public regression tests passed,
