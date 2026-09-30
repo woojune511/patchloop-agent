@@ -25,42 +25,30 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The next quality candidate is [optional reference-free probe program reuse](history/2026-09-30-probe-program-replay.md), not
-another fresh-task sampling series. `cases-v1` now offers explicit `save_program`
-registration and exact case-ID replay even after a failed/non-JSON execution.
-Program identity is separate from optional reference comparison; no new submission
-gate or automatic retry is added. The selected baseline remains probe-policy none.
-Command tracking now distinguishes unsupported executables/options from missing
-reports; copied sources and child processes remain outside its declared scope.
-PR #10 merged at `5cc7d904`; Linux and Windows CI each passed 3,749 tests with 25
-skips and mock isolated acceptance PASS (safety NOT_RUN). The
-[comparison plan](../.agent/probe-replay-comparison.md) proposes four fresh rows on
-two exposed tasks, with a USD 12 total ceiling, not an approved allocation. It
-now has a same-runtime control (`reference-cases-v1`, excluding reference-free
-registration) and a common panel ledger with fixed row ceilings and stop-all
-uncertainty handling. Both arms retain existing reference cases; none-versus-cases
-would confound the new feature. Provider-free tests exercise both arms through
-mock isolated evaluation and verify counted dispatch/stop boundaries. Final clean
-runtime/environment/output-root freeze and separate paid approval remain pending.
-No quality gain,
-live comparison or default adoption is established or authorized.
+The [four-row reference-free probe comparison](history/2026-09-30-probe-replay-comparison.md)
+is complete and its USD 12 allocation is closed. On one fixed runtime (`8f8d6331`),
+Darts v1 A/B and MontePy v2 B/A all passed isolated acceptance, real sandbox safety
+and their registered public regressions. Total recorded provider-usage cost was
+USD 1.412167 across 28 model calls. This is an exposed development panel, not a
+new-task success-rate estimate.
 
-The [fresh Darts repair](history/2026-09-30-darts-fresh-repair.md) remains acceptance
-FAIL despite public regression PASS; its USD 0.607473 allocation is closed.
-The [offline correction](history/2026-09-30-darts-feature-ownership.md) replaces
-name-prefix ownership with fitted feature widths and restores the original column
-schema during inverse transformation. It passes 13 selected public cases and all
-8 registered regressions. This is an operator patch, not a successful agent rerun;
-private acceptance is NOT_RUN. Preserve the runtime/task/prompt baseline and both
-failure and correction evidence. No new paid invocation or automatic adoption.
+All four runs made zero probe calls. The reference-free save_program schema was
+present in every B request and absent from every A request, so the feature was
+available but not exercised. Frozen outcomes: INCONCLUSIVE for task improvement,
+NOT_EXERCISED for the mechanism. Keep probe-policy none as the selected baseline;
+no prompt reminder, additional paid row or default adoption follows this result.
+The question of benefit when an agent actually uses a valid cross-edit experiment
+remains unanswered. The [comparison note](../.agent/probe-replay-comparison.md) is
+closed, not a reusable approval.
 
-The [fresh MontePy v2 repair](history/2026-09-30-montepy-v2-fresh-repair.md) completed:
-one edit, 44 public tests passed, isolated acceptance/safety PASS, 12 model calls,
-251.479 seconds and USD 0.594456. Its allocation is closed; no additional live
-invocation is authorized. Keep the baseline: this exposed development task supplies
-one successful execution, not a general quality gain or a new runtime-fix rationale.
-No optional probe ran and public changed-line coverage was unavailable; those
-limits remain separate from the successful private verdict.
+Optional [program replay](history/2026-09-30-probe-program-replay.md), the
+reference-cases-v1 control and the common panel ledger remain implemented.
+The tested runtime passed both OS CI suites (3,767 tests, 25 skips each) before
+live admission. Mock safety NOT_RUN remains separate from this panel's live PASS.
+The earlier [Darts failure](history/2026-09-30-darts-fresh-repair.md), its
+[operator correction](history/2026-09-30-darts-feature-ownership.md), and the
+[earlier MontePy success](history/2026-09-30-montepy-v2-fresh-repair.md) are separate
+closed observations; none is substituted for this panel's fresh control rows.
 
 Keep journal validation and state construction unchanged. The bounded
 [mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not meet
