@@ -97,3 +97,39 @@ Before a live invocation, freeze the exact task, model, credential file, repeat
 and positive cost cap. Prior paid allocations remain closed. Do not infer this
 task's cost from PDM. Supply only the public task and normal tools; no operator
 hint, manual repair or mid-run rescue. Preserve failures for post-run analysis.
+
+## Concrete live proposal (not yet funded)
+
+One fresh autonomous run of `jsonschema-regex-recursion-1538` version 1, using
+`gpt-5.4-2026-03-05`, xhigh, desired output ceiling 25,000 tokens. Credential file:
+`C:\Users\geonj\Documents\PatchLoop\.env`. Repeat 1; proposed NEW invocation-wide
+cap USD 3. This is a spending limit, not a prediction of cost. Preserve selected
+policies and limits: 40 model calls, 100 actions, four accepted edits, 1,800 seconds.
+No second run, retry/resume or paid follow-up is included. Stop on input-count,
+transport, billing or cleanup uncertainty; zero SDK retries. No operator rescue.
+
+Preparation reverified the task hash above, source/dependency identities and local
+image digest. Credential existence was checked without reading its contents.
+Before dispatch, recheck clean HEAD and pricing admission; retain the frozen public
+task and use a fresh external state root. No private calibration material enters
+the agent. Judge submitted patch, public checks, isolated public-only acceptance,
+safety, cost and elapsed time separately. This cause-described issue is an
+end-to-end operational trial, not a diagnosis or general improvement benchmark.
+
+Pending exact-scope authorization, the prepared command is:
+
+```powershell
+$env:PATCHLOOP_STATE_ROOT = 'C:\pt\runs\jsonschema-1538-20261001-v1'
+.venv\Scripts\patchloop.exe dev `
+  --provider openai `
+  --task tasks/dev-train/jsonschema-regex-recursion-1538/public.yaml `
+  --model gpt-5.4-2026-03-05 --reasoning-effort xhigh --max-output-tokens 25000 `
+  --context-policy segmented-v1 --segment-boundary-policy result-or-size-v1 `
+  --planning-policy brief-v1 --enable-probes --probe-policy none `
+  --repair-recheck --repair-inspection-policy protected-v1 `
+  --completion-cost-policy per-call-v1 `
+  --prepared-source C:\pt\preparations\jsonschema-1538-20261001-v2\source\prepared-source.json `
+  --prepared-probe-dependencies C:\pt\preparations\jsonschema-1538-20261001-v2\dependencies-package-root\prepared-probe-dependencies.json `
+  --env-file C:\Users\geonj\Documents\PatchLoop\.env `
+  --max-cost-usd 3.00 --repeat 1
+```
