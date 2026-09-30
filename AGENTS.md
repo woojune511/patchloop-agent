@@ -15,10 +15,13 @@ repairs, verifies them, and submits reliably within bounded resources. Improve i
 through a fast, mutable `dev-head` loop. The agent is the product; task loading,
 recovery, sandboxing, and private evaluation are supporting layers.
 
-Start from observed agent failures and the mechanisms that cause them. Choose a
-method to address the problem, then test whether it helps. Demonstrating a memory
-effect, or validating any other preselected method, is not the project's objective.
-Memory remains one possible tool when evidence supports its use.
+Start from observed agent failures and the mechanisms that cause them. Choose
+important questions about task correctness and reliability, then use evidence to
+decide which intervention is needed and whether it helps. Understanding a failure
+and changing a design decision are useful outcomes of an investigation.
+Demonstrating a memory effect, or validating any other preselected method, is not
+the project's objective. Memory remains one possible tool when evidence supports
+its use.
 
 - Every current run is `official=false`.
 - Cross-run memory, validation/held-out tuning, and claim execution are disabled;
@@ -58,20 +61,38 @@ Memory remains one possible tool when evidence supports its use.
 
 ## Workflow
 
-1. Identify a concrete failure from current public task/source/action/check evidence.
-   Separate what happened from the suspected cause and unresolved alternatives.
-2. Choose the smallest change or diagnostic that can resolve that cause. Consider
-   removing an ineffective rule before adding prompts, state, tools, or gates.
+1. Frame the work as a known defect, an explicit requirement, or an unresolved
+   question grounded in current public task/source/action/check evidence. For
+   improvement work, explain why the problem matters: recurrence, impact on
+   correctness or reliability, or a bottleneck. Separate observations, suspected
+   explanations, proposed interventions, and expected outcomes. For significant
+   investigations, identify plausible alternatives and evidence that would weaken
+   the leading explanation or make the intervention unnecessary; do not invent
+   alternatives to fill a template.
+2. When the cause is uncertain, choose the smallest diagnostic or controlled change
+   that distinguishes the leading explanation from plausible alternatives. For a
+   known defect or requirement, make the smallest sufficient change. Consider
+   removing an ineffective rule before adding prompts, state, tools, or gates;
+   keep added complexity proportional to the demonstrated problem.
    Do not automatically continue the latest experiment or prescribe memory.
 3. Modify `dev-head` directly; update contracts and docs in the same change.
    Replace stale current status; keep only the active decision, unresolved problem,
    and evidence links there. Record significant completed investigations once in
    `docs/history/` with problem, evidence, hypothesis, change, result, and next question.
+   Include why the problem was selected, what decision the result changed or
+   preserved, and what remains unresolved within the investigated conditions.
    Do not append run narratives to current guidance; routine fixes need no new record.
 4. Run the focused test, Ruff, the fast suite, and mock smoke as relevant. Use a
    bounded comparison when a causal question needs one, not for every routine fix.
+   Before a comparison, record the question, baseline, intended intervention, task
+   selection, model, resource limits, adoption criteria, and stop conditions. Keep
+   other relevant conditions fixed or document their differences; record the
+   relevant commits and configuration in the existing evidence records.
    Judge task correctness and regressions as well as completion, cost, and time;
    note/probe counts or successful submission alone are not improvement evidence.
+   State what the evidence supports, contradicts, or leaves unresolved and where
+   the conclusion applies. A local negative result is not a universal rejection;
+   another comparison needs a new evidence-based reason, not just unused budget.
 5. Recheck public/private, cost, external-state, and historical-byte boundaries.
 6. Commit a small coherent change and report both executed and unexecuted work.
 
