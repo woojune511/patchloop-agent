@@ -19,6 +19,7 @@ Approvals are closed.
 
 ## New records
 
+- [Failure priority and public trace audit](2026-10-01-failure-priority-review.md).
 - [PDM repair observation](2026-10-01-pdm-repair-observation.md).
 - [Guidance baseline](2026-10-01-verification-guidance-baseline.md).
 - [Verification selection](2026-10-01-verification-selection-comparison.md).

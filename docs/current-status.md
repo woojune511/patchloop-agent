@@ -25,32 +25,27 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The [submitted-patch public review](history/2026-09-30-submitted-patch-review.md)
-reproduced two remaining Darts gaps in both arms: a zero-width categorical feature
-causes inverse column loss and value misassignment, and grouped categories with
-drop still cause an output-width IndexError. The original source already failed
-forward transformation on both inputs; these are incomplete repairs, not evidence
-of regressions from successful original behavior. The original eight-test public
-suite also passes unchanged source, so that PASS does not establish repair coverage.
-Both MontePy patches passed six selected clearing cases; a flag-reset difference
-remains semantically unresolved. These operator checks used no provider calls.
+The [failure-priority review](history/2026-10-01-failure-priority-review.md) selects
+Darts zero-width feature ownership as the next narrow question: public probes
+omitted this boundary despite successful mapping/inverse source reads. A separate
+index-expectation error was corrected without broadening those inputs. This is an
+observed verification gap, not a proven harness defect or a selected prompt fix.
+Next diagnostic: derive the first loss of column identity from public source and
+the existing frozen case, without paid calls or task-check changes. Keep the runtime
+baseline; no new model comparison is authorized.
 
-The [two-row guidance comparison](history/2026-10-01-verification-selection-comparison.md)
-is complete; its USD 6 allocation is closed at USD 1.125171 recorded usage. Both
-fresh Darts runs passed registered checks and isolated acceptance/safety. A used
-no probe; B used two, correcting its own invalid index expectation. Both patches
-still failed the same three of five frozen public cases. B cost 1.614 times A and
-took 1.902 times its active time in this single pair. These selected cases and
-one-pair ratios do not establish general success rates or efficiency effects.
+The [submitted-patch review](history/2026-09-30-submitted-patch-review.md)
+found remaining Darts grouping and zero-width inverse gaps despite public and
+isolated PASS. The unchanged source also passed the eight-test public suite.
+MontePy passed six selected clearing cases; its flag-reset difference is unresolved.
 
-The [baseline decision](history/2026-10-01-verification-guidance-baseline.md) restores
-the previous verification guidance and its contract assertions. B's direct checks
-did not discover and repair a genuine candidate defect; the predeclared correctness
-result is INCONCLUSIVE. This is insufficient evidence to adopt the added guidance,
-not proof that it is generally ineffective. Preserve the frozen cases and original
-run records. Look for recurrence on other real repair work before choosing another
-intervention; no new prompt intervention or probe gate is queued. The
-[comparison note](../.agent/verification-selection-comparison.md) is closed.
+The [guidance comparison](history/2026-10-01-verification-selection-comparison.md)
+closed at USD 1.125171 of USD 6. Both Darts patches retained the same frozen gaps;
+B's probes corrected a test expectation, not a candidate defect. Correctness was
+INCONCLUSIVE. The [baseline decision](history/2026-10-01-verification-guidance-baseline.md)
+restored previous guidance: no adoption evidence, not general ineffectiveness.
+Preserve original records; the [comparison note](../.agent/verification-selection-comparison.md)
+is closed and grants no further execution.
 
 The [PDM repair observation](history/2026-10-01-pdm-repair-observation.md) completed
 one approved run on the exposed dev-train v2 task. One edit passed all 24 public
@@ -62,20 +57,11 @@ probes alone is not a verification failure. Keep the restored baseline and choos
 further work from a concrete failure, rather than automatically running another
 task. No prompt effect, unseen-task success rate or complete coverage is established.
 
-The [four-row reference-free probe comparison](history/2026-09-30-probe-replay-comparison.md)
-is complete and its USD 12 allocation is closed. On one fixed runtime (`8f8d6331`),
-Darts v1 A/B and MontePy v2 B/A all passed isolated acceptance, real sandbox safety
-and their registered public regressions. Total recorded provider-usage cost was
-USD 1.412167 across 28 model calls. This is an exposed development panel, not a
-new-task success-rate estimate.
-
-All four runs made zero probe calls. The reference-free save_program schema was
-present in every B request and absent from every A request, so the feature was
-available but not exercised. Frozen outcomes: INCONCLUSIVE for task improvement,
-NOT_EXERCISED for the mechanism. Keep probe-policy none as the selected baseline;
-no additional paid row or probe-policy adoption follows this result. The separate
-guidance change above responds to reproduced patch gaps, not unused probe features.
-The [comparison note](../.agent/probe-replay-comparison.md) is closed, not approval.
+The [four-row probe comparison](history/2026-09-30-probe-replay-comparison.md)
+closed at USD 1.412167 of USD 12. All Darts/MontePy rows passed acceptance, safety
+and public checks, but none used probes: mechanism NOT_EXERCISED, improvement
+INCONCLUSIVE. This exposed panel supports no adoption or general success rate.
+Its [comparison note](../.agent/probe-replay-comparison.md) is closed.
 
 Optional [program replay](history/2026-09-30-probe-program-replay.md), its control
 and panel ledger remain implemented. Earlier Darts/MontePy observations and
