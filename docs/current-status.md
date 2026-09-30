@@ -25,6 +25,23 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+The [submitted-patch public review](history/2026-09-30-submitted-patch-review.md)
+reproduced two remaining Darts gaps in both arms: a zero-width categorical feature
+causes inverse column loss and value misassignment, and grouped categories with
+drop still cause an output-width IndexError. The original source already failed
+forward transformation on both inputs; these are incomplete repairs, not evidence
+of regressions from successful original behavior. The original eight-test public
+suite also passes unchanged source, so that PASS does not establish repair coverage.
+Both MontePy patches passed six selected clearing cases; a flag-reset difference
+remains semantically unresolved. These operator checks used no provider calls.
+
+The immediate engineering question is how the agent selects checks for output
+shape and inverse feature ownership. The reproduced mapping defects explain the
+patch failures, but do not yet distinguish test selection, issue interpretation
+or runtime enforcement as causes of submitting them. Preserve these public
+counterexamples separately from the original evaluator verdicts. No new prompt,
+mandatory probe gate or paid experiment is queued.
+
 The [four-row reference-free probe comparison](history/2026-09-30-probe-replay-comparison.md)
 is complete and its USD 12 allocation is closed. On one fixed runtime (`8f8d6331`),
 Darts v1 A/B and MontePy v2 B/A all passed isolated acceptance, real sandbox safety

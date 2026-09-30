@@ -19,6 +19,7 @@ Approvals are closed.
 
 ## New records
 
+- [Submitted patch review](2026-09-30-submitted-patch-review.md).
 - [Probe replay comparison](2026-09-30-probe-replay-comparison.md).
 
 - [Basic/current 6-task baseline](2026-09-28-basic-current-baseline-comparison.md).
@@ -57,8 +58,7 @@ Approvals are closed.
 - [AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md).
 - [AnyIO process audit](2026-09-27-anyio-observation-process-audit.md).
 - [AnyIO observation repair comparison](2026-09-27-anyio-observation-repair-comparison.md).
-- [AnyIO failure observation](2026-09-27-anyio-failure-observation.md):
-  exact failed-candidate probe replay and a prepared comparison of supplied observations.
+- [AnyIO failure observation](2026-09-27-anyio-failure-observation.md).
 - [AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md):
   missing lazy import reproduced, selected public dependency roots, and a completed lifecycle probe.
 - [planning OFF regression](2026-09-27-planning-off-regression.md):
