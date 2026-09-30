@@ -25,6 +25,12 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+The next [Darts repair proposal](../.agent/next-darts-repair.md) is prepared without
+provider calls: public regression 8 PASS, normal probe/import PASS, and the public
+drop="first" failure reproduced on the unchanged base. This is an exposed
+development task of a different repair type. The one-run USD 3.00 scope is proposed,
+not authorized; preserve the current baseline and require exact live authorization.
+
 The [fresh MontePy v2 repair](history/2026-09-30-montepy-v2-fresh-repair.md) completed:
 one edit, 44 public tests passed, isolated acceptance/safety PASS, 12 model calls,
 251.479 seconds and USD 0.594456. Its allocation is closed; no additional live
