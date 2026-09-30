@@ -27,18 +27,26 @@ External root: `C:\pt\preparations\jsonschema-1538-20261001-v2`.
 Source: `source\prepared-source.json`.
 Dependencies: `dependencies-package-root\prepared-probe-dependencies.json`.
 Journal: `audit\runs\run_dev_ac3fbd909d62437a.jsonl`.
-Earlier failed preparations are preserved. No Docker image was acquired or built.
+Earlier failed preparations are preserved. The subsequently approved local image
+build and its checks are recorded below.
 
-Live readiness remains NOT_READY: no checked-in dev-train package or registered
-check/isolated evaluation environment is admitted. A working optional probe does
-not establish evaluator readiness. No model or paid call has run.
+Live readiness remains NOT_READY pending checked-in task/check admission. No
+model or paid call has run. The approved local image now passes public execution
+checks; this does not establish candidate acceptance.
 
-An offline image recipe is ready under
-`C:\pt\preparations\jsonschema-1538-20261001-v2\evaluator-image-context`.
-It pins the already-local Python image and copies only verified site-packages;
-the context excludes credentials, source and journal files. Proposed command:
-`docker build --pull=false --network=none -t patchloop-jsonschema-1538:py312-v1 C:\pt\preparations\jsonschema-1538-20261001-v2\evaluator-image-context`.
-Build NOT_RUN pending explicit authorization under AGENTS.md hard gate 7.
+## Built evaluator image
+
+[Build and validation](../docs/history/2026-10-01-jsonschema-image-validation.md)
+completed with the existing base layer and verified dependencies. Image:
+`patchloop-jsonschema-1538@sha256:901f8eebd991b12da7dfb43a74c4c6ee51d7fcd9d37cead1f8af7dc292017ccd`.
+The public bug reproduced and eight upstream format tests passed through the
+registered-check execution path, with network disabled and cleanup confirmed.
+
+BuildKit contacted the registry for authentication/metadata despite --pull=false
+and --network=none. No package installation or image-layer download occurred;
+do not describe the build as fully offline. No image was pushed.
+Context: `C:\pt\preparations\jsonschema-1538-20261001-v2\evaluator-image-context`.
+Journal: `image-build\runs\run_dev_aca56d9ead3d40a0.jsonl` under that preparation root.
 
 ## PatchLoop validation
 
@@ -68,10 +76,9 @@ SQLGlot rejected-source journal:
 
 ## Next preparation work
 
-Source and optional-probe preparation are complete. Admit a registered-check
-and isolated evaluation environment using the verified dependencies; do not
-assume optional probe mounts are present during evaluation. Image acquisition
-still requires explicit authorization. Preserve the reproducible original failure.
+Source, optional-probe dependencies and the local evaluation image are prepared.
+The remaining work is task/check admission, preserving the reproduced original
+failure and explicit evaluation limits.
 
 Then define the exact dev-train package, meaningful completion checks, mutation
 scope and evaluation boundaries. Do not label public-only checks as hidden or

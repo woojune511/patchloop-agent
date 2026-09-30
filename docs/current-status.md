@@ -25,11 +25,12 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The jsonschema [intake](../.agent/new-issue-readiness.md) now has an allowlisted,
-pinned source and working offline probe dependencies. Its public regex bug
-reproduces on Python 3.12; 8 upstream format tests pass unchanged source. Live
-readiness remains NOT_READY pending task/check and evaluator environment admission.
-No paid run is authorized. See the [preparation evidence](history/2026-10-01-jsonschema-environment-preparation.md).
+The jsonschema [intake](../.agent/new-issue-readiness.md) has pinned source,
+probe dependencies and an approved local [image](history/2026-10-01-jsonschema-image-validation.md).
+The public regex bug reproduces and eight upstream format tests pass through the
+registered-check executor. BuildKit made registry metadata contact; no package or
+image-layer download occurred. Live readiness awaits task/check admission; no
+paid run is authorized.
 
 The [Darts decision audit](history/2026-10-01-darts-decision-scope-closeout.md)
 closes this investigation. Both runs expected inverse preservation; neither
