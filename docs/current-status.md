@@ -25,13 +25,18 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The first bounded core separation moves completion and mutation-attempt call-budget
-arithmetic into [completion_budget.py](../patchloop/dev/completion_budget.py).
-The runner still constructs the state snapshot and admits tools; monetary
-admission stays in `dev/cost.py`. The formulas and state fields are unchanged.
-Existing independent failure-path oracles and workflow tests remain the behavioral
-contract. This is a maintenance change, not a quality or speed claim; runtime identity
-changes normally and prior-run resume restrictions remain intact.
+The compact model view now selects explicit top-level public input fields before
+copying state. This prevents new audit fields from silently becoming model input.
+Current runtime and public diagnostic fields retain their values/order and nested rules;
+source catalogs and pending rechecks are derived locally. This is an input-boundary
+maintenance change, not evidence of a past private-data leak or better repairs.
+The [projection tests](../tests/test_model_view_fields.py) cover ordered current
+inputs, unknown-field exclusion, optional producer fields and copy independence.
+
+Completion and mutation-attempt call-budget arithmetic lives in
+[completion_budget.py](../patchloop/dev/completion_budget.py). The runner constructs
+the state snapshot and admits tools; monetary admission stays in `dev/cost.py`.
+Runtime identity changes normally and prior-run resume restrictions remain intact.
 
 The [cross-task development review](history/2026-09-30-development-review.md) closes
 the repeated prompt/context/prior-decision ablation series without establishing an

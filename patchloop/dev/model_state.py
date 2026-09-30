@@ -14,6 +14,27 @@ from patchloop.dev.check_review import link_check_evidence
 from patchloop.dev.native_sources import public_exchanges
 from patchloop.dev.path_policy import mutation_path_allowed
 
+# Inputs from the public context builder and native/segment delivery adapters.
+# New audit fields require an explicit projection decision before model delivery.
+# This is a top-level boundary; nested public values retain their existing rules.
+_MODEL_INPUT_FIELDS = frozenset({
+    "workflow_gate", "completion_guidance", "visible_check_status",
+    "remaining_visible_check_ids", "remaining_budget", "action_horizon",
+    "current_public_failure", "mutation_readiness", "mutation_scope_budget",
+    "observed_source_index", "evidence_ledger", "working_notes", "context_projection",
+    "commitment_signal", "available_tool_names", "last_failed_mutation",
+    "last_successful_mutation", "current_diff", "recent_checks", "public_execution_summary",
+    "latest_tool_results", "source_spans", "recent_attempt_result_next_question", "public_task",
+    "working_plan", "probe_cases", "repair_recheck", "recent_probes",
+    "latest_tool_results_delivery", "segment_handoff", "protocol_correction",
+    # Existing public diagnostic overlays also pass through this projection when
+    # constructed or replayed. Preserving them does not enable their producers.
+    "candidate_reconsideration", "operator_public_feedback", "independent_candidate",
+    "change_review_request", "paired_observation", "followup_state_contract",
+    "operator_caller_observation", "verification_scope_cue", "expectation_review",
+    "operator_current_candidate_feedback", "supplied_public_case", "public_case_status",
+})
+
 
 def _select(value: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:
     return {key: value[key] for key in keys if key in value}
@@ -118,7 +139,8 @@ def compact_model_state(
     *, archive_kind: str | None = None,
 ) -> dict[str, Any]:
     """Project an already public, source-validated state without changing authority."""
-    view = copy.deepcopy(state)
+    # Filter before copying, retaining caller order and absent-versus-null values.
+    view = copy.deepcopy({key: value for key, value in state.items() if key in _MODEL_INPUT_FIELDS})
     # Most cards repeat native history. Keep the latest candidate-bound review:
     # the tool result itself contains no comparison with mutation expectations.
     if "recent_attempt_result_next_question" in view:

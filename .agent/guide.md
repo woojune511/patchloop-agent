@@ -91,6 +91,8 @@ hard tool restrictions from advisory progress signals or task-specific failure p
 
 ## Context and recovery
 
+The compact view copies only explicit top-level fields, preserving order and nested rules.
+
 Project only public task/source/diff/action/check information. Keep current evidence
 distinct from historical or unverified notes; do not equate delivery with model use.
 Verification observations are reconstructed from completed public check/probe actions

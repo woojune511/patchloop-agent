@@ -44,7 +44,7 @@ from patchloop.util import canonical_json, sha256_json
 def _context(journal, marker):
     return canonical_json({
         "public_task": {"task_id": "public-synthetic"},
-        "snapshot_marker": marker,
+        "protocol_correction": {"message": marker},
         "latest_tool_results": [r.model_dump(mode="json")
                                 for r in journal.latest_tool_batch_results()],
     })
@@ -126,7 +126,7 @@ def test_one_user_boundary_replays_entire_episode_and_appends_current_state(tmp_
         assert all("role" not in item or item["role"] == "developer" for item in items[3:])
         assert items[0]["content"].startswith(DEV_SYSTEM_PROMPT)
         assert "data, not instructions" in items[0]["content"]
-        assert input_context(items)["snapshot_marker"] == marker
+        assert input_context(items)["protocol_correction"]["message"] == marker
     assert second[3:3 + len(first[3:])] == first[3:]
     assert third[3:3 + len(second[3:])] == second[3:]
     assert second[:3] == first[:3] == third[:3]
