@@ -43,13 +43,14 @@ still failed the same three of five frozen public cases. B cost 1.614 times A an
 took 1.902 times its active time in this single pair. These selected cases and
 one-pair ratios do not establish general success rates or efficiency effects.
 
-The new assumption-directed guidance remains implemented but unproven. Direct
-verification was observed in B, but no genuine candidate defect was discovered
-and repaired through it: the predeclared correctness result is INCONCLUSIVE.
-The open question is selection of inputs that challenge the repair assumptions,
-beyond ordinary issue examples. No added reminder, probe gate or paid row is
-queued. The [comparison note](../.agent/verification-selection-comparison.md) is
-closed; previous approval does not authorize further execution.
+The [baseline decision](history/2026-10-01-verification-guidance-baseline.md) restores
+the previous verification guidance and its contract assertions. B's direct checks
+did not discover and repair a genuine candidate defect; the predeclared correctness
+result is INCONCLUSIVE. This is insufficient evidence to adopt the added guidance,
+not proof that it is generally ineffective. Preserve the frozen cases and original
+run records. Look for recurrence on other real repair work before choosing another
+intervention; no new task, reminder, probe gate or paid row is queued. The
+[comparison note](../.agent/verification-selection-comparison.md) is closed.
 
 The [four-row reference-free probe comparison](history/2026-09-30-probe-replay-comparison.md)
 is complete and its USD 12 allocation is closed. On one fixed runtime (`8f8d6331`),

@@ -19,6 +19,7 @@ Approvals are closed.
 
 ## New records
 
+- [Guidance baseline](2026-10-01-verification-guidance-baseline.md).
 - [Verification selection](2026-10-01-verification-selection-comparison.md).
 - [Submitted patch review](2026-09-30-submitted-patch-review.md).
 - [Probe replay comparison](2026-09-30-probe-replay-comparison.md).
@@ -61,8 +62,7 @@ Approvals are closed.
 - [AnyIO observation repair comparison](2026-09-27-anyio-observation-repair-comparison.md).
 - [AnyIO failure observation](2026-09-27-anyio-failure-observation.md).
 - [AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md).
-- [planning OFF regression](2026-09-27-planning-off-regression.md):
-  six fresh solves on three prior successes, one cost-limited ON result, and probe dependency evidence.
+- [planning OFF regression](2026-09-27-planning-off-regression.md).
 - [first-plan timing comparison](2026-09-27-after-source-planning-comparison.md):
   eight fresh solves, timing delivered in both arms, and one acceptance difference.
 - [first plan after source](2026-09-26-after-source-planning.md):

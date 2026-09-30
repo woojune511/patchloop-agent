@@ -108,7 +108,7 @@ def seed(gateway):
     return result, result.output["case_comparison"]["case_id"]
 
 
-def test_off_schema_prompt_and_identity_baseline():
+def test_off_schema_prompt_and_identity_are_unchanged():
     options = {"finish_enabled": True, "allowed_tools": [
         "read_file", "search_files", "replace_text", "run_check", "run_probe",
         "finish_task", "stop_task",
@@ -121,9 +121,8 @@ def test_off_schema_prompt_and_identity_baseline():
     assert dev_tool_surface_hash() == (
         "sha256:25f1db63f18b3f138ee8bdc8686ad320d7c9a3965d4e10acd1055fdd590555b7"
     )
-    # Generic verification-selection guidance changed; tool surfaces stay unchanged.
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:8716474c6025a8119b4f857e619c932db3dc166edd783099e762478390bac98d"
+        "sha256:b7124aef4c5fc63cd2a5c8b83346a6d1e36a2fc1cb09ab289150e438f2f22781"
     )
     after = dev_tool_schemas(**options, probe_policy=cases.POLICY)
     assert [t for t in before if t["name"] != "run_probe"] == [

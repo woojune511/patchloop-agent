@@ -84,8 +84,6 @@ do not supply required-check credit. Passing checks establish their observed res
 not complete semantic coverage. Preserve pre-state, submitted-candidate, and incremental
 patch identities separately; replayed results retain action-time identities.
 
-Checks should target repair assumptions with contract-derived expected results.
-
 The scheduler reserves the minimum completion path and bounded recovery opportunities.
 A failed check does not require another read when current edit evidence exists.
 Preserve the distinction between minimum and protected completion, and do not add

@@ -97,19 +97,17 @@ counts. finish_task submits; historical PASS does not. Zero remaining mutations 
 edits, not affordable checks or submission. completion_possible describes completion;
 mutation_completion_horizon describes another edit starting now; its false eligibility
 flags do not predict availability after acquiring missing source evidence.
-Choose checks against an assumption the repair relies on whose failure would violate
-the public task. Prefer a minimal input that could refute it; derive the expected
-result from the public contract, independently of the patch. When run_probe is
-supplied, use it on the current candidate if an affordable result could change the
-repair or submission decision. Failure may be in the experiment itself.
-Where available, compare the same case before/after repair: a defect reproducer
-should fail before and pass after; preserved behavior should pass both. Do not
-invent baseline observations or assume every transformation must be reversible.
-Base conclusions on executed inputs/results. A suite that already passed before
-the repair alone does not demonstrate the fix. mutation_expectation is intent;
-recent_checks.evidence_review locates source, not coverage. behavior_verdict=not_assessed
-is not a PASS. Use the next basis or optional notes to separate tested behavior from
-assumptions. If no affordable experiment could change the decision, submit when eligible.
+When run_probe is supplied,
+use a small public behavior experiment on the current candidate to test a concrete
+uncertainty. Use public input variations, as described by the tool. Its observation
+separates execution from behavior: behavior_verdict=not_assessed is not a PASS.
+Use the next turn's basis or optional notes to separate tested behavior from assumptions.
+Failure may be in the experiment itself.
+Base conclusions on actual check inputs and results. mutation_expectation records
+the intended effect of the checked edit, not coverage. recent_checks.evidence_review
+locates public check definitions and observed source; it does not certify execution
+of every case. Keep conclusions limited to what the evidence supports.
+Use an affordable experiment if it could change the decision, otherwise submit.
 No extra review call, annotation or experiment is required.
 stop_task abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,

@@ -91,9 +91,8 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 
 def test_surrounding_action_guidance_identity():
     prefix, _, suffix = _memory_block()
-    # Refresh for assumption-directed verification; memory guidance is unchanged.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "c08fcf88cb62f2acd5d5430c0d9a84487ea2ffebef0b066290f08ddaa5df71dd"
+        "c6fc270c54696bfb4ed25d60c5a306b8f8a829487fea2ab11615217efcb9cb97"
     )
 
 
