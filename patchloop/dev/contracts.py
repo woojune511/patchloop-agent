@@ -137,9 +137,10 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
         base = sha256_json({"base_tool_surface_hash": base, "planning": contract(planning_policy)})
     if probe_policy == "none":
         return base
-    if probe_policy != probe_cases.POLICY:
+    if probe_policy not in probe_cases.POLICIES:
         raise ValueError("unknown probe policy")
-    return sha256_json({"base_tool_surface_hash": base, "probe_cases": probe_cases.contract()})
+    return sha256_json({"base_tool_surface_hash": base,
+                        "probe_cases": probe_cases.contract(probe_policy)})
 
 
 class StrictModel(BaseModel):
@@ -368,7 +369,7 @@ class DevRunRequest(StrictModel):
     prepared_source: Path | None = None
     prepared_probe_dependencies: Path | None = None
     enable_probes: bool = False
-    probe_policy: Literal["none", "cases-v1"] = "none"
+    probe_policy: Literal["none", "cases-v1", "reference-cases-v1"] = "none"
     repair_recheck: bool = False
     repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = "protected-v1"
     planning_policy: Literal[
@@ -476,7 +477,7 @@ class DevRunEnvelope(StrictModel):
     completion_cost_contract: dict[str, Any] | None = Field(
         default=None, exclude_if=lambda value: value is None,
     )
-    probe_policy: Literal["none", "cases-v1"] = "none"
+    probe_policy: Literal["none", "cases-v1", "reference-cases-v1"] = "none"
     compaction_contract: dict[str, Any] | None = None
     probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")

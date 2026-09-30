@@ -19,6 +19,8 @@ Approvals are closed.
 
 ## New records
 
+- [Probe replay comparison](2026-09-30-probe-replay-comparison.md).
+
 - [Basic/current 6-task baseline](2026-09-28-basic-current-baseline-comparison.md).
 - [Probe construction](2026-09-28-probe-construction-analysis.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
@@ -88,5 +90,4 @@ Approvals are closed.
 - [paired-reference comparison](2026-09-26-paired-reference-comparison.md):
   admitted declarations, unchanged seeded candidates, and the completion-guidance question.
 
-Record significant investigations once with evidence, result/limits and next question.
-Preserve closed records and legacy archives; correct interpretations in follow-ups.
+Record evidence, limits and next question once; preserve closed records.

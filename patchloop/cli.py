@@ -90,7 +90,7 @@ def dev(
         bool, typer.Option("--enable-probes", help="Enable bounded clean-Python diagnostics.")
     ] = False,
     probe_policy: Annotated[
-        Literal["none", "cases-v1"],
+        Literal["none", "cases-v1", "reference-cases-v1"],
         typer.Option("--probe-policy", help="Opt-in reusable reference/candidate experiments."),
     ] = "none",
     repair_recheck: Annotated[
