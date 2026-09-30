@@ -25,6 +25,12 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+The next [MontePy repair preparation](../.agent/next-montepy-repair.md) is blocked
+before paid execution: the unchanged base fails a registered public Fill index
+test on a generated large-integer input. Source/dependency preparation and an
+isolated import passed; no model call or private evaluation ran. First characterize
+that exact public failure without changing the task or rerunning until green.
+
 Keep journal validation and state construction unchanged. The bounded
 [mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not meet
 its frozen cost threshold for reusing repeated reads. No cache or RunState is queued.
