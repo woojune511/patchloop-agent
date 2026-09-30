@@ -85,6 +85,22 @@ def test_projection_keeps_absent_fields_absent_and_explicit_nulls():
     assert compact_model_state(state, []) == state
 
 
+@pytest.mark.parametrize("field", [
+    "candidate_reconsideration", "operator_public_feedback", "independent_candidate",
+    "change_review_request", "paired_observation", "followup_state_contract",
+    "operator_caller_observation", "verification_scope_cue", "expectation_review",
+    "operator_current_candidate_feedback", "supplied_public_case", "public_case_status",
+])
+def test_existing_public_diagnostic_overlay_keeps_wire_without_enabling_other_fields(field):
+    state = {"protocol_correction": None, field: {"origin": "public diagnostic", "value": []}}
+    expected = json.dumps(state)
+    state["future_diagnostic_field"] = "not automatically model-visible"
+    view = compact_model_state(state, [])
+    assert json.dumps(view) == expected
+    view[field]["value"].append("changed")
+    assert state[field]["value"] == []
+
+
 @pytest.mark.parametrize("optional", [False, True])
 def test_runner_fields_have_an_explicit_model_projection(gateway_factory, smoke_package, optional):
     from patchloop.dev.runner import _build_context, _RunCounters

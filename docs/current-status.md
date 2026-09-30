@@ -27,7 +27,7 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 The compact model view now selects explicit top-level public input fields before
 copying state. This prevents new audit fields from silently becoming model input.
-Current field values/order and nested projection rules remain the contract;
+Current runtime and public diagnostic fields retain their values/order and nested rules;
 source catalogs and pending rechecks are derived locally. This is an input-boundary
 maintenance change, not evidence of a past private-data leak or better repairs.
 The [projection tests](../tests/test_model_view_fields.py) cover ordered current

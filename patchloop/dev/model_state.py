@@ -27,6 +27,12 @@ _MODEL_INPUT_FIELDS = frozenset({
     "latest_tool_results", "source_spans", "recent_attempt_result_next_question", "public_task",
     "working_plan", "probe_cases", "repair_recheck", "recent_probes",
     "latest_tool_results_delivery", "segment_handoff", "protocol_correction",
+    # Existing public diagnostic overlays also pass through this projection when
+    # constructed or replayed. Preserving them does not enable their producers.
+    "candidate_reconsideration", "operator_public_feedback", "independent_candidate",
+    "change_review_request", "paired_observation", "followup_state_contract",
+    "operator_caller_observation", "verification_scope_cue", "expectation_review",
+    "operator_current_candidate_feedback", "supplied_public_case", "public_case_status",
 })
 
 
