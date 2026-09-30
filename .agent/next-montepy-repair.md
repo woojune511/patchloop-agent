@@ -1,11 +1,12 @@
-# MontePy repair preparation: blocked before live execution
+# MontePy repair preparation: v2 validated, live execution not authorized
 
 Prepared 2026-09-30 on runtime `5c788f653760fed833f017b3f8d1ddec358dd41d`.
 This is an operator preparation record and proposed scope, not live authorization.
 
 ## Purpose and proposed scope
 
-Exercise the unchanged coding agent on `original-montepy-933`, version 1,
+Exercise the unchanged coding agent on `original-montepy-933`, version 2,
+at `tasks/dev-train/original-montepy-933-v2/public.yaml`,
 dev-train, base `fbc03d10eb552cf82acc788ef70d120adec8130c`.
 The public requirement is to permit setting/deleting `Cell.universe` to clear it
 outside a problem, or reset it to universe zero inside a problem. Allowed changes
@@ -14,7 +15,7 @@ The task was exposed in the original pilot; a new invocation is not an unseen-ta
 evaluation or evidence of general improvement. Prior solutions/traces and private
 evaluation material must not enter the coding agent's input.
 
-Proposed, currently blocked settings:
+Proposed settings, pending package review and exact live authorization:
 
 - Model `gpt-5.4-2026-03-05`, xhigh, desired output 25,000 tokens.
 - Credential file `C:\Users\geonj\Documents\PatchLoop\.env`; existence and Git
@@ -75,11 +76,15 @@ width list as float64 before addition; Python integer lists and explicit object
 arrays preserve those same values and the original setter accepts them. Six fixed
 cases establish this test-input conversion mechanism, not a cross-version regression.
 
-Do not launch the paid proposal yet. The next step is a separately reviewed
-development-task revision preserving integer arithmetic in the public property
-test, with deterministic boundary controls and original-package preservation.
-No such revision was implemented during this diagnostic.
-Do not remove the test, constrain random generation, pin another dependency,
-rerun until green, or expand the agent's repair scope during preparation.
+The separate [v2 follow-up](../docs/history/2026-09-30-montepy-public-check-v2.md)
+now implements that public correction with five explicit boundaries, retaining v1.
+Final v2 public checks pass all 44 tests on base and reference; inherited private
+checks distinguish base FAIL from reference PASS in one operator calibration.
+The original issue remains reproducible. Private calibration workspaces must never
+be supplied to the agent; source/dependency descriptors above contain public inputs.
+
+Do not launch the paid proposal yet: package review and live authorization remain
+separate from this provider-free validation. No test was removed, random domain
+constrained, dependency pinned, or agent repair scope expanded.
 Revalidate clean tracked runtime/task inputs and descriptor/image identities before
 any subsequently authorized live invocation. No second task or paid allocation is opened.

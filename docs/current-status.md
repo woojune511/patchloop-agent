@@ -25,13 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The next [MontePy repair preparation](../.agent/next-montepy-repair.md) remains blocked
-before paid execution. A [deterministic diagnostic](history/2026-09-30-montepy-index-diagnostic.md)
-traced the public Fill test failure to NumPy array construction converting its
-generated integers to floats; the unchanged setter accepts the same exact integers
-when preserved. A separate development-task revision should preserve integer
-arithmetic in the test and retain boundary coverage before live admission.
-No task/runtime change, model call or private evaluation was made.
+The [MontePy v2 public check](history/2026-09-30-montepy-public-check-v2.md) preserves
+integer arithmetic and adds five explicit boundary examples without changing v1.
+Public regression passes all 44 tests on base and reference; one operator-only
+private calibration distinguishes base FAIL from reference PASS. The original
+Cell.universe defect remains reproducible. Review the separate v2 package before
+the [proposed repair exercise](../.agent/next-montepy-repair.md); no live invocation
+is authorized. This is task validation, not agent-performance evidence.
 
 Keep journal validation and state construction unchanged. The bounded
 [mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not meet
