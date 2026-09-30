@@ -57,7 +57,8 @@ The current gate and resource horizon expose registered tools, never unrestricte
 `replace_text` scalar constraints come from `TextReplacementIntent` and
 `CausalRevision`; the provider projection in `dev/tools.py` selects public fields
 explicitly. Keep provider-required presence and nullable revision shape separate from
-internal recovery defaults. Recovery-only annotations stay unadvertised, and their
+internal recovery defaults, and retain the existing provider keyword order.
+Recovery-only annotations stay unadvertised, and their
 absent-versus-explicit serialization remains unchanged. Schema field constraints do
 not replace cross-field validators, observed-anchor checks or mutation scope admission.
 

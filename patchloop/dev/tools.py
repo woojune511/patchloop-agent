@@ -147,8 +147,20 @@ def _replacement_parameters() -> dict[str, Any]:
     """
     schema = TextReplacementIntent.model_json_schema()
 
-    def public_field(field: dict[str, Any]) -> dict[str, Any]:
-        return {key: value for key, value in field.items() if key not in {"title", "default"}}
+    def public_field(
+        field: dict[str, Any], description: str | None = None,
+    ) -> dict[str, Any]:
+        projected = {
+            key: value for key, value in field.items() if key not in {"title", "default"}
+        }
+        if description is not None:
+            projected["description"] = description
+        # Preserve the provider wire order independently of Pydantic's keyword order.
+        ordered = {}
+        for key in ("type", "minLength", "description", "maxLength", "minimum", "maximum"):
+            if key in projected:
+                ordered[key] = projected.pop(key)
+        return ordered | projected
 
     properties = {
         name: public_field(schema["properties"][name])
@@ -156,7 +168,8 @@ def _replacement_parameters() -> dict[str, Any]:
             "path", "old_text", "new_text", "occurrence", "hypothesis", "expected_behavior",
         )
     }
-    properties["old_text"]["description"] = (
+    properties["old_text"] = public_field(
+        schema["properties"]["old_text"],
         "Exact current source text to replace; it must be covered by "
         "current evidence for this file. Prefer the smallest sufficient "
         "unique anchor; omit unchanged signatures or docstrings when "
