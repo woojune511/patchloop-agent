@@ -19,6 +19,7 @@ Approvals are closed.
 
 ## New records
 
+- [Zero-width ownership diagnosis](2026-10-01-zero-width-ownership-diagnosis.md).
 - [Failure priority and public trace audit](2026-10-01-failure-priority-review.md).
 - [PDM repair observation](2026-10-01-pdm-repair-observation.md).
 - [Guidance baseline](2026-10-01-verification-guidance-baseline.md).

@@ -25,14 +25,14 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The [failure-priority review](history/2026-10-01-failure-priority-review.md) selects
-Darts zero-width feature ownership as the next narrow question: public probes
-omitted this boundary despite successful mapping/inverse source reads. A separate
-index-expectation error was corrected without broadening those inputs. This is an
-observed verification gap, not a proven harness defect or a selected prompt fix.
-Next diagnostic: derive the first loss of column identity from public source and
-the existing frozen case, without paid calls or task-check changes. Keep the runtime
-baseline; no new model comparison is authorized.
+The [zero-width diagnosis](history/2026-10-01-zero-width-ownership-diagnosis.md)
+confirms that both saved Darts patches decode original values correctly, then
+misassign them while reconstructing names from surviving encoded columns. Original
+names/order remain in the forward map; the selected case does not require new
+metadata. This resolves the task-level mechanism, not why the agent omitted the
+boundary. Keep the runtime baseline; no prompt fix or paid comparison is selected.
+The [priority review](history/2026-10-01-failure-priority-review.md) separates this
+repair/verification gap from setup errors and unrelated resource failures.
 
 The [submitted-patch review](history/2026-09-30-submitted-patch-review.md)
 found remaining Darts grouping and zero-width inverse gaps despite public and
