@@ -30,9 +30,9 @@ Journal: `audit\runs\run_dev_ac3fbd909d62437a.jsonl`.
 Earlier failed preparations are preserved. The subsequently approved local image
 build and its checks are recorded below.
 
-Task/environment preparation is complete after checked-in task/check admission.
-No live model or paid call has run; execution authorization remains absent.
-Calibration establishes the public checks only, not agent repair quality.
+Task/environment preparation passed command calibration, but the completed live
+run exposed a final acceptance mismatch; see the closeout below. Further live
+work is not authorized. Calibration alone did not establish end-to-end readiness.
 
 ## Built evaluator image
 
@@ -88,35 +88,21 @@ Admission journal: `task-admission/runs/run_dev_943dd2d377e64349.jsonl` under th
 preparation root. Package CLI validation, 17 focused tests and Ruff pass. Fresh
 mock smoke `run_dev_185794715c6643f5` reaches EVALUATOR_PASS, safety NOT_RUN.
 
-Preparation is complete. No autonomous jsonschema solve or submitted-candidate
-evaluation has run. Isolated evaluation uses the same public checks, with no
-independent hidden oracle. The private reference is operator calibration material,
-never agent context or evidence of agent success.
+## Completed live scope and active blocker
 
-Before a live invocation, freeze the exact task, model, credential file, repeat
-and positive cost cap. Prior paid allocations remain closed. Do not infer this
-task's cost from PDM. Supply only the public task and normal tools; no operator
-hint, manual repair or mid-run rescue. Preserve failures for post-run analysis.
+The approved one-run proposal below completed; it is not a reusable authorization.
+[Live closeout](../docs/history/2026-10-01-jsonschema-live-result.md): run
+`run_dev_c6b70ef10dfb4926`, USD 0.245791 of USD 3, six model calls, one edit,
+132.947 seconds. Public checks and isolated rechecks pass; safety PASS. The saved
+terminal remains EVALUATOR_FAIL because absent hidden checks aggregate NOT_RUN,
+and acceptance requires hidden PASS. The package admission missed that boundary.
 
-## Concrete live proposal (not yet funded)
+All unused allocation is closed. No retry, resume, manual rescue or second paid
+run occurred. Next work is a provider-free acceptance/admission correction that
+keeps hidden NOT_RUN honest, followed by a separately labeled saved-patch replay
+if appropriate. Do not change this live result or infer independent correctness.
 
-One fresh autonomous run of `jsonschema-regex-recursion-1538` version 1, using
-`gpt-5.4-2026-03-05`, xhigh, desired output ceiling 25,000 tokens. Credential file:
-`C:\Users\geonj\Documents\PatchLoop\.env`. Repeat 1; proposed NEW invocation-wide
-cap USD 3. This is a spending limit, not a prediction of cost. Preserve selected
-policies and limits: 40 model calls, 100 actions, four accepted edits, 1,800 seconds.
-No second run, retry/resume or paid follow-up is included. Stop on input-count,
-transport, billing or cleanup uncertainty; zero SDK retries. No operator rescue.
-
-Preparation reverified the task hash above, source/dependency identities and local
-image digest. Credential existence was checked without reading its contents.
-Before dispatch, recheck clean HEAD and pricing admission; retain the frozen public
-task and use a fresh external state root. No private calibration material enters
-the agent. Judge submitted patch, public checks, isolated public-only acceptance,
-safety, cost and elapsed time separately. This cause-described issue is an
-end-to-end operational trial, not a diagnosis or general improvement benchmark.
-
-Pending exact-scope authorization, the prepared command is:
+The exact completed command was:
 
 ```powershell
 $env:PATCHLOOP_STATE_ROOT = 'C:\pt\runs\jsonschema-1538-20261001-v1'

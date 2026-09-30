@@ -25,12 +25,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The jsonschema [task admission](history/2026-10-01-jsonschema-task-admission.md)
-is complete: pinned source, probe dependencies, local image and public completion
-checks are prepared. Calibration rejects the original defect and two semantic
-regressions; upstream tests alone miss those regressions. Evaluation is public-only,
-not independent hidden acceptance. No autonomous solve or paid run has executed.
-See the [readiness note](../.agent/new-issue-readiness.md) for identities and limits.
+The jsonschema [live run](history/2026-10-01-jsonschema-live-result.md) completed
+at USD 0.245791: one edit, both public checks and isolated rechecks PASS, safety
+PASS. Preserved terminal EVALUATOR_FAIL arises from a package/acceptance mismatch:
+no hidden checks aggregate NOT_RUN, while acceptance requires hidden PASS. Resolve public-only admission locally before further live work; preserve hidden
+NOT_RUN and the original result. The one-run allocation is closed.
 
 The [Darts decision audit](history/2026-10-01-darts-decision-scope-closeout.md)
 closes this investigation. Both runs expected inverse preservation; neither
