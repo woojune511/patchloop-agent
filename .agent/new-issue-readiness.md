@@ -103,9 +103,15 @@ isolated hidden/public/scope/safety evaluation in
 records the new hashes and external receipts. These are post-run checks, not a
 pre-registered held-out evaluation. No acceptance logic was weakened.
 
-Future readiness requires hidden checks and complete isolated calibration, not
-only public command tests or a different mock task. All unused paid allocation is
+Live admission rejects packages without registered hidden checks before run
+execution and credential/provider setup. This prevents the v1 omission from
+starting another paid run; v1 remains loadable for historical review. Nonempty
+checks still require complete isolated calibration for meaningful coverage. All unused paid allocation is
 closed. No further live run is authorized.
+
+Admission regression validation: 3,788 tests PASS, 16 SKIP (2,900.13 seconds);
+Ruff PASS. Mock `run_dev_733e29ef06c44154` reached EVALUATOR_PASS, safety NOT_RUN.
+Full report: `C:\pt\validation\hidden-gate-full-20261001.xml`. No paid calls.
 
 The exact completed command was:
 

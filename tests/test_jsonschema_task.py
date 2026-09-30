@@ -1,9 +1,12 @@
 """Admission boundaries for the public jsonschema development task."""
 
 import shutil
+from decimal import Decimal
 
 import pytest
 
+import patchloop.dev.runner as runner
+from patchloop.dev.contracts import DevRunRequest
 from patchloop.dev.conversation import assemble_model_input
 from patchloop.errors import ContractError
 from patchloop.repository import ALLOWED_REMOTE_REPOSITORIES, WorkspaceManager
@@ -13,6 +16,26 @@ from patchloop.util import canonical_json
 
 TASK = repository_root() / "tasks/dev-train/jsonschema-regex-recursion-1538"
 V2 = TASK.with_name(TASK.name + "-v2")
+
+
+def test_live_missing_hidden_checks_stops_before_execution(tmp_path, monkeypatch):
+    def forbidden(*args, **kwargs):
+        pytest.fail("must reject before execution, credentials, or provider setup")
+
+    monkeypatch.setattr(runner, "_run_one", forbidden)
+    request = DevRunRequest(
+        provider="openai", task=TASK / "public.yaml",
+        model="gpt-5.4-mini-2026-03-17",
+        env_file=tmp_path / "never-read.env",
+        max_cost_usd=Decimal("1"), state_root=tmp_path / "state", repeat=2,
+    )
+    with pytest.raises(ContractError, match="at least one hidden check"):
+        runner.run_dev(request)
+    assert not list((tmp_path / "state").rglob("*.jsonl"))
+
+
+def test_live_v2_passes_hidden_check_admission():
+    runner._live_task_is_admitted(V2, load_task_package(V2))
 
 
 def test_v2_requires_hidden_evidence_without_changing_public_cases():

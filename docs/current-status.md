@@ -29,8 +29,9 @@ The jsonschema [hidden-evaluation follow-up](history/2026-10-01-jsonschema-hidde
 preserves mandatory hidden acceptance. Version 2 adds private behavioral checks;
 the saved patch passes hidden, public, scope and safety evaluation without new
 model calls. This is post-run verification, not a fresh solve or held-out trial.
-Version 1 and its live FAIL remain unchanged. Future readiness must include
-hidden checks and complete isolated calibration. No paid allocation remains open.
+Version 1 and its FAIL remain unchanged. Live admission rejects missing hidden
+checks; coverage still requires isolated calibration.
+No paid allocation remains open.
 
 The [Darts decision audit](history/2026-10-01-darts-decision-scope-closeout.md)
 closes this investigation. Both runs expected inverse preservation; neither

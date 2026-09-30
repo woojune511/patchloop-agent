@@ -285,6 +285,8 @@ def _live_task_is_admitted(task_dir: Path, package: Any) -> None:
         raise ContractError("live dev-head task must be checked in under tasks/dev-train")
     if package.environment is None:
         raise ContractError("live dev-head task is missing environment.yaml")
+    if not package.private.hidden_checks:
+        raise ContractError("live dev-head task requires at least one hidden check")
 
 
 def _require_tracked_clean_paths(
