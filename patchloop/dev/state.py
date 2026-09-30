@@ -160,6 +160,11 @@ class DevJournal:
         return envelope
 
     def events(self) -> list[dict[str, Any]]:
+        with _PROCESS_LOCK:
+            return self._events_unlocked()
+
+    def _events_unlocked(self) -> list[dict[str, Any]]:
+        """Read a snapshot while the caller holds the process lock."""
         if not self.path.exists():
             return []
         events: list[dict[str, Any]] = []

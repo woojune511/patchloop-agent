@@ -25,6 +25,21 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+PR #9 Linux CI exposed an unlocked journal read racing with a parallel append.
+Readers now share append's process lock; a controlled partial-write test verifies that
+readers wait for completion and still reject a torn tail after a failed write.
+Focused journal/parallel-note tests, Ruff and mock isolated evaluation pass locally
+(mock safety NOT_RUN). This changes persistence synchronization, not solving policy.
+
+The [fresh Darts repair](history/2026-09-30-darts-fresh-repair.md) remains acceptance
+FAIL despite public regression PASS; its USD 0.607473 allocation is closed.
+The [offline correction](history/2026-09-30-darts-feature-ownership.md) replaces
+name-prefix ownership with fitted feature widths and restores the original column
+schema during inverse transformation. It passes 13 selected public cases and all
+8 registered regressions. This is an operator patch, not a successful agent rerun;
+private acceptance is NOT_RUN. Preserve the runtime/task/prompt baseline and both
+failure and correction evidence. No new paid invocation or automatic adoption.
+
 The [fresh MontePy v2 repair](history/2026-09-30-montepy-v2-fresh-repair.md) completed:
 one edit, 44 public tests passed, isolated acceptance/safety PASS, 12 model calls,
 251.479 seconds and USD 0.594456. Its allocation is closed; no additional live
