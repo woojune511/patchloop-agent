@@ -1,9 +1,11 @@
-# Proposed Darts repair exercise
+# Closed Darts repair exercise
 
-Prepared 2026-09-30. Provider-free preparation is complete. This proposal does not
-authorize a live invocation; the preceding MontePy allocation remains closed.
+Prepared and executed 2026-09-30 after user approval of the exact single-run scope.
+Completed with acceptance FAIL, safety PASS, public regression 8 PASS and cost
+USD 0.607473. This allocation and the preceding MontePy allocation are closed;
+the retained command authorizes no rerun. See [result and public diagnosis](../docs/history/2026-09-30-darts-fresh-repair.md).
 
-## Purpose and exact proposed scope
+## Purpose and completed authorized scope
 
 Task: `tasks/dev-train/original-darts-3065/public.yaml`, task ID
 `original-darts-3065`, version 1, dev-train; upstream base
@@ -79,10 +81,11 @@ Evidence: `C:\pt\analyses\darts-preparation-20260930-v1`, append-only dev-run-v1
 journal `run_dev_dartspreparation`, four events binding the frozen program,
 descriptor identities and immutable receipts. Model/provider calls: zero.
 
-## Command for a subsequently authorized invocation
+## Executed command (closed allocation)
 
-Revalidate clean tracked runtime/task inputs, both descriptors and image identities
-at dispatch. Use the fresh external root below; preserve old pilot evidence.
+Clean tracked runtime/task inputs, both descriptors and image identities were
+revalidated at dispatch. The external root below now contains immutable run evidence;
+do not reuse it for another invocation.
 
 ```powershell
 $env:PATCHLOOP_STATE_ROOT = 'C:\pt\runs\darts-next-repair-20260930-v1'
