@@ -112,7 +112,7 @@ External state uses append-only, hash-chained `dev-run-v1` JSONL and immutable r
 envelopes. Mutations/checks preserve `action_id + input_hash`: replay completed results,
 reject conflicting reuse, reconcile admitted mutations after crashes instead of
 applying them twice. Do not rewrite journals, old envelopes, or prior native outputs.
-Reads and appends share process/file locks; append reads under its existing lock.
+Reads and appends share the reentrant process lock; only append takes a file lock.
 Append returns only after complete writes and fsync. Write/sync errors propagate;
 torn tails remain untouched and block replay/append. Failed sync is not durability.
 Resume requires repeat=1, exact envelope-bound settings/identities, and the run lock.

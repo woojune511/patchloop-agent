@@ -160,11 +160,11 @@ class DevJournal:
         return envelope
 
     def events(self) -> list[dict[str, Any]]:
-        with _PROCESS_LOCK, _exclusive_file_lock(self.lock_path):
+        with _PROCESS_LOCK:
             return self._events_unlocked()
 
     def _events_unlocked(self) -> list[dict[str, Any]]:
-        """Read a complete snapshot while the caller holds the journal lock."""
+        """Read a snapshot while the caller holds the process lock."""
         if not self.path.exists():
             return []
         events: list[dict[str, Any]] = []
@@ -195,7 +195,7 @@ class DevJournal:
 
     def append(self, event_type: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         with _PROCESS_LOCK, _exclusive_file_lock(self.lock_path):
-            events = self._events_unlocked()
+            events = self.events()
             normalized_payload = payload or {}
             if event_type in _UNIQUE_RUN_EVENTS:
                 recorded = [event for event in events if event["event_type"] == event_type]

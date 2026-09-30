@@ -26,7 +26,7 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 ## Active decision
 
 PR #9 Linux CI exposed an unlocked journal read racing with a parallel append.
-Readers now share the append locks; a controlled partial-write test verifies that
+Readers now share append's process lock; a controlled partial-write test verifies that
 readers wait for completion and still reject a torn tail after a failed write.
 Focused journal/parallel-note tests, Ruff and mock isolated evaluation pass locally
 (mock safety NOT_RUN). This changes persistence synchronization, not solving policy.

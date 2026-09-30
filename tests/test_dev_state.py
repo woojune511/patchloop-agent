@@ -76,7 +76,7 @@ def test_journal_completes_short_writes_before_sync(tmp_path, monkeypatch) -> No
         return write(descriptor, data[:7])
 
     def sync_complete_record(descriptor):
-        synced.append(journal._events_unlocked())
+        synced.append(journal.events())
         fsync(descriptor)
 
     with monkeypatch.context() as patch:
