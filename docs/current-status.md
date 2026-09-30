@@ -25,6 +25,12 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+New public-issue [intake](../.agent/new-issue-readiness.md) selected jsonschema
+#1538 but is NOT_READY: its repository is not allowlisted and the inspected base
+sandbox lacks dependencies. No source manifest, task package or live run exists.
+Next is bounded repository/environment onboarding and public reproduction, not
+paid execution. A SQLGlot candidate was excluded for held-out repository overlap.
+
 The [Darts decision audit](history/2026-10-01-darts-decision-scope-closeout.md)
 closes this investigation. Both runs expected inverse preservation; neither
 records a considered/rejected zero-width input. B recognized the regression gap
@@ -33,18 +39,10 @@ verification, not its internal cause or an effective general intervention.
 Keep the baseline; no further Darts diagnostic, prompt change or paid run is queued.
 
 The [zero-width diagnosis](history/2026-10-01-zero-width-ownership-diagnosis.md)
-confirms that both saved Darts patches decode original values correctly, then
-misassign them while reconstructing names from surviving encoded columns. Original
-names/order remain in the forward map; the selected case does not require new
-metadata. This resolves the task-level mechanism, not why the agent omitted the
-boundary. Keep the runtime baseline; no prompt fix or paid comparison is selected.
-The [priority review](history/2026-10-01-failure-priority-review.md) separates
-verification, setup and resource failures.
-
-The [submitted-patch review](history/2026-09-30-submitted-patch-review.md)
-found remaining Darts grouping and zero-width inverse gaps despite public and
-isolated PASS. The unchanged source also passed the eight-test public suite.
-MontePy passed six selected clearing cases; its flag-reset difference is unresolved.
+locates Darts' task-level defect in inverse column reconstruction, with sufficient
+metadata retained elsewhere. The [priority review](history/2026-10-01-failure-priority-review.md)
+and [patch review](history/2026-09-30-submitted-patch-review.md) preserve the evidence
+and separate verification gaps from environment/resource failures.
 
 The [guidance comparison](history/2026-10-01-verification-selection-comparison.md)
 closed at USD 1.125171 of USD 6. Both Darts patches retained the same frozen gaps;
