@@ -70,6 +70,7 @@ public probes provide diagnostic observations and confer no submission credit.
 | Component | Responsibility |
 | --- | --- |
 | `patchloop/dev/runner.py` | Compose the loop, current state, and resource admission. |
+| `patchloop/dev/completion_budget.py` | Forecast completion and bounded failure call counts from an immutable snapshot, without I/O. |
 | `patchloop/dev/tools.py` | Enforce registered actions and current-diff evidence. |
 | `patchloop/dev/model_state.py` | Present compact public state to the model. |
 | `patchloop/dev/state.py` | Journal events and recover action/provider state. |

@@ -25,6 +25,14 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+The first bounded core separation moves completion and mutation-attempt call-budget
+arithmetic into [completion_budget.py](../patchloop/dev/completion_budget.py).
+The runner still constructs the state snapshot and admits tools; monetary
+admission stays in `dev/cost.py`. The formulas and state fields are unchanged.
+Existing independent failure-path oracles and workflow tests remain the behavioral
+contract. This is a maintenance change, not a quality or speed claim; runtime identity
+changes normally and prior-run resume restrictions remain intact.
+
 The [cross-task development review](history/2026-09-30-development-review.md) closes
 the repeated prompt/context/prior-decision ablation series without establishing an
 effective default quality fix. Keep the solving baseline; no new quality experiment,

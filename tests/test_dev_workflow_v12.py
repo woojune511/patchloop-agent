@@ -4,6 +4,7 @@ from functools import cache
 from types import SimpleNamespace
 
 from patchloop.dev import runner
+from patchloop.dev.completion_budget import CompletionState, completion_budget
 from patchloop.dev.contracts import DevLimits, DevToolResult
 
 
@@ -77,7 +78,7 @@ def test_completion_formula_matches_all_small_failure_orders() -> None:
                         for anchor in (False, True):
                             for retry in (False, True):
                                 for credit in ((False, True) if pending else (False,)):
-                                    state = runner._CompletionState(
+                                    state = CompletionState(
                                         check_count=count,
                                         remaining_check_count=count - passed.bit_count(),
                                         unused_check_count=unused.bit_count(),
@@ -90,7 +91,7 @@ def test_completion_formula_matches_all_small_failure_orders() -> None:
                                         mutation_retry_available=retry,
                                         repair_read_credit=credit,
                                     )
-                                    budget = runner._completion_budget(state)
+                                    budget = completion_budget(state)
                                     expected = _protected_oracle(
                                         count, passed, unused, mutations,
                                         pending, anchor, credit, retry,
