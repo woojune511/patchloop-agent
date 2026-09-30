@@ -42,9 +42,20 @@ and Linux. These changes do not establish improved patch correctness.
 The [CI feedback investigation](history/2026-09-30-ci-feedback-speed.md) found Git
 subprocess waiting dominated a sampled slow test. CI now runs the complete suite
 with four file-grouped workers, on PRs and main pushes, with duration/JUnit reports.
-The unchanged four-test local comparison passed in 138 seconds serially versus 62
-seconds with four workers; hosted full-suite verification remains pending. No runtime
-logic, test assertions or test selection changed.
+Both hosted jobs passed 3,688 tests with 25 skips on the unchanged 3,713-case inventory.
+In one before/after PR comparison, Linux took 519.48 -> 280.06 seconds and Windows
+2,564.75 -> 1,340.70 seconds. [PR #2](https://github.com/woojune511/patchloop-agent/pull/2)
+was merged at `bb265c83`; its completed receipts supersede the local investigation's
+pending-hosted status. These timings are individual runs, not a stable benchmark.
+No runtime logic, test assertions or test selection changed.
+
+The next bounded product exercise is a fresh solve of the existing
+`tox-cross-section-empty-substitution` dev-train task, with the working baseline
+unchanged. [Execution scope](../.agent/next-tox-repair.md) fixes the task, public
+success criteria, prepared inputs, limits and proposed USD 3.00 invocation cap.
+Task validation and provider-free source/dependency preparation passed; required
+images are already installed. Live execution awaits explicit approval of that exact
+scope. This exposed task is a development exercise, not held-out improvement evidence.
 
 The clearest repeated weakness is selecting verification that exposes an incorrect
 repair condition. The 24-run six-task panel had nine acceptance failures despite all
