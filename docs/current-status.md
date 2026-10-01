@@ -27,8 +27,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
-The [review pilot](history/2026-10-01-review-checkpoint-feasibility.md) has four
-verified evidence boundaries; protocol is draft, restoration/accounting unbuilt.
+The [review pilot](history/2026-10-01-review-offline-preparation.md) has four
+materialized candidates and tested offline contracts; loop integration remains unbuilt.
 No live execution authorized.
 
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;

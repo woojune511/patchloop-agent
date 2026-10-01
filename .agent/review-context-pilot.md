@@ -3,6 +3,12 @@
 Status: DRAFT / NOT EXECUTABLE / NOT AUTHORIZED FOR LIVE CALLS.
 This file specifies a proposed experiment, not new baseline behavior or a work queue.
 
+Offline progress: `diagnostics/review_context_offline.py` materializes saved candidates,
+verifies recursive artifact references and builds A/B reviewer request drafts. It also
+tests a shared resource contract and candidate-bound untrusted report. This is not
+a reviewer collector or repair-loop integration. See the
+[validation record](../docs/history/2026-10-01-review-offline-preparation.md).
+
 ## Decision and hypothesis
 
 Question: does separating a review from the repair trajectory help discover a
@@ -50,8 +56,9 @@ unrestricted shell or private material. Capture executed probe receipts separate
 from report claims. Limit reports to a concrete suspected behavior, public evidence,
 executed observation if any, candidate hash and limitations; no mandatory bug claim.
 Forward reports as untrusted data. Old-candidate reports cannot certify later edits.
-The exact generic instruction, schema and factual packet builder must be frozen
-and byte-tested before any approval request; they are not implemented here.
+The generic instruction, bounded report validator and factual packet builder are
+implemented offline. Provider wire/report delivery and review-to-repair execution
+still require integration and validation before an approval request.
 
 Proposed model for every role: gpt-5.4-2026-03-05, xhigh, 25,000 output tokens.
 Credential file for future explicit approval: C:/Users/geonj/Documents/PatchLoop/.env.
@@ -71,7 +78,9 @@ No automatic retry, resume, replacement, image acquisition or allocation extensi
 This is a replenished diagnostic continuation, not exact original-budget resume:
 isort had only 281.669 seconds remaining. Preserve historical usage separately.
 Recompute tool admission consistently for every arm; do not fabricate check credits.
-New budget restoration is unimplemented and requires provider-free tests.
+An offline shared-budget contract is tested; replenished native-loop budget
+restoration is not yet integrated. Its conservative edit-attempt guard must be
+reconciled with the planned accepted-edit accounting before dispatch.
 Equal caps do not imply equal tokens spent; report actual resources and censoring.
 
 Fixed interleaved order: OpenSandbox C/A/B; isort A/B/C; pyinfra B/C/A;
@@ -114,4 +123,8 @@ another run. Generalization/held-out/claim execution remain disabled.
 4. Freeze scoring programs, source/runtime/package hashes and a twelve-row manifest;
    execute provider-free control/rehearsal checks before presenting paid approval.
 
-No step above has been represented as completed by this document.
+Candidate materialization and recursive CAS verification succeeded for all four
+cases. Conan required an explicit exact-hash, offline-only materialization mapping
+because its source runtime differs; native resume compatibility remains unproven.
+Current image/dependency admission, report execution, full three-arm scripted
+continuation and the frozen scoring manifest remain NOT_RUN/unimplemented.
