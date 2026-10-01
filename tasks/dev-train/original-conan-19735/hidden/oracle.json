@@ -1,0 +1,30 @@
+{
+  "test_patch": "diff --git a/test/unittests/util/detect_test.py b/test/unittests/util/detect_test.py\nindex 62cb4aac291..17d478ef5d2 100644\n--- a/test/unittests/util/detect_test.py\n+++ b/test/unittests/util/detect_test.py\n@@ -91,6 +91,10 @@ def test_detect_cc_versioning(detect_runner_mock, version_return, expected_versi\n     [detect_emcc_compiler,\n      \"emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 4.0.22 (0f3d2e62bccf8e14497ff19e05a1202c51eb0c65)\",\n      ('emcc', Version(\"4.0.22\"), 'emcc')],\n+    [detect_emcc_compiler,\n+     \"shared:INFO: (Emscripten: Running sanity checks)\\n\" +\n+     \"emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 4.0.22 (0f3d2e62bccf8e14497ff19e05a1202c51eb0c65)\",\n+     ('emcc', Version(\"4.0.22\"), 'emcc')],\n ])\n def test_detect_compiler(function, version_return, expected_version):\n     \"\"\"\n",
+  "test_cmd": "pytest --no-header -rA --tb=line --color=no -p no:cacheprovider test/unittests/util/detect_test.py",
+  "FAIL_TO_PASS": [
+    "test/unittests/util/detect_test.py::test_detect_compiler[detect_emcc_compiler-shared:INFO:"
+  ],
+  "PASS_TO_PASS": [
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_empty_arch",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_aix[powerpc-64-7.1.0.0-ppc64]",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_aix[powerpc-32-7.1.0.0-ppc32]",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_aix[rs6000-None-4.2.1.0-ppc32]",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_arch[arm64-armv8]",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_arch[i386-x86]",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_arch[i686-x86]",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_arch[i86pc-x86]",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_arch[amd64-x86_64]",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_arch[aarch64-armv8]",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_arch[sun4v-sparc]",
+    "test/unittests/util/detect_test.py::TestDetect::test_detect_clang_gcc_toolchain",
+    "test/unittests/util/detect_test.py::test_detect_cc_versioning[cc.exe",
+    "test/unittests/util/detect_test.py::test_detect_cc_versioning[g++",
+    "test/unittests/util/detect_test.py::test_detect_cc_versioning[gcc.exe",
+    "test/unittests/util/detect_test.py::test_detect_cc_versioning[gcc",
+    "test/unittests/util/detect_test.py::test_detect_cc_versioning[clang",
+    "test/unittests/util/detect_test.py::test_detect_cc_versioning[cc1",
+    "test/unittests/util/detect_test.py::test_detect_compiler[detect_suncc_compiler-Sun",
+    "test/unittests/util/detect_test.py::test_detect_compiler[detect_intel_compiler-Intel",
+    "test/unittests/util/detect_test.py::test_detect_compiler[detect_emcc_compiler-emcc"
+  ]
+}

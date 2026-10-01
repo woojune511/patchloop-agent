@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.conan-io_1776_conan-19735_interface@sha256:564734fbebe544567e2e47bac7362ae68a749ffdaa7401dd273903d3552277fa
+image_digest: sha256:564734fbebe544567e2e47bac7362ae68a749ffdaa7401dd273903d3552277fa
+source_image_tag: swerebench/sweb.eval.x86_64.conan-io_1776_conan-19735_interface:latest

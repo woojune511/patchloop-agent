@@ -17,6 +17,7 @@ from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.util import directory_hash, filesystem_path, safe_relative_path, sha256_bytes
 
 ALLOWED_REMOTE_REPOSITORIES = {
+    "https://github.com/conan-io/conan.git",
     "https://github.com/python-jsonschema/jsonschema.git",
     "https://github.com/vprusso/toqito.git",
     "https://github.com/idaholab/MontePy.git",

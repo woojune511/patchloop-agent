@@ -50,11 +50,24 @@ All required cases were accounted for; no timeout, setup error or extra failure.
 Separate containers ran without network or host mounts and were cleaned up.
 Journal: `runs/run_dev_conanoriginalcalibration.jsonl` under the external root.
 
-## Remaining package preparation
+## Package integration complete; optional probes unresolved
 
-Environment/original-oracle calibration is complete. No coding-agent run occurred.
-Before paid work, integrate the original public issue and evaluator-only assets
-into a checked-in task, prepare source/probe inputs, select public checks from
-unmodified upstream source, and verify full isolated package evaluation. Keep
-reference and test patches out of coding-agent context. No source allowlist or
-runtime change has been made; no model/cost allocation is authorized.
+[Package admission](../docs/history/2026-10-01-conan-package-admission.md) added
+`tasks/dev-train/original-conan-19735`, version 1. Original issue and oracle inputs
+are preserved. Full isolated evaluation rejects a behavior-preserving baseline
+control and accepts the reference; public tests pass 28/28 on both. Scope and
+safety pass. This is operator calibration, not an autonomous solve.
+
+Task hash:
+`sha256:7853e01fc73daf9d0c50fd14c252d65468de2283afa43b2a557877f1f1e5b67a`.
+Prepared source: `source/prepared-source.json` under the external root.
+Journal: `runs/run_dev_conanpackage.jsonl`. Focused tests 43 PASS, Ruff PASS;
+mock `run_dev_17ecdace4a5840bb` reaches EVALUATOR_PASS, safety NOT_RUN.
+
+Conan declares dependencies through setup.py and conans/requirements.txt, whereas
+the current optional-probe resolver reads PEP 621/735 project metadata. Probe
+preparation/execution remains NOT_RUN. Registered public/hidden checks work in the
+original Python 3.13 image. Before a live invocation, explicitly choose a scoped
+probe preparation solution or disclose probes disabled as a baseline difference.
+Do not silently enable unprepared probes or claim complete baseline readiness.
+No model/cost allocation is authorized; no paid call occurred.
