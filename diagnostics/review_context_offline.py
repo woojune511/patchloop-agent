@@ -22,12 +22,25 @@ from patchloop.contracts import Artifact
 from patchloop.dev import runner
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
 from patchloop.dev.state import DevJournal
+from patchloop.errors import ContractError
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import repository_root, runtime_content_hash
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 REVIEW_TOOLS = frozenset({"read_file", "search_files", "run_probe"})
+
+
+class ReviewStopped(ContractError):
+    """A partial reviewer episode, with independently known settled usage."""
+
+    def __init__(self, reason, settled_cost_nanos, billing_known):
+        super().__init__(reason)
+        self.reason = reason
+        self.settled_cost_nanos = settled_cost_nanos
+        self.billing_known = billing_known
+
+
 INSTRUCTION = (
     "Review the current candidate against the public issue. Investigate one concrete "
     "possible behavioral defect using registered reads, searches or probes. Distinguish "
@@ -220,12 +233,15 @@ class SharedBudget:
         if self.phase == "review":
             require(self.clock() - self.started < 180, "review time exhausted")
 
-    def admit(self, counted_tokens):
+    def require_call_available(self):
         self._ready()
-        require(self.pending is None, "unsettled dispatch")
-        require(type(counted_tokens) is int and counted_tokens >= 0, "invalid count")
         require(self.calls < 16 and (self.phase != "review" or self.review_calls < 4),
                 "call budget exhausted")
+
+    def admit(self, counted_tokens):
+        self.require_call_available()
+        require(self.pending is None, "unsettled dispatch")
+        require(type(counted_tokens) is int and counted_tokens >= 0, "invalid count")
         admission = self.ledger.admit(counted_tokens)
         require(admission is not None, "cost budget exhausted")
         self.pending = admission

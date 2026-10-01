@@ -2,6 +2,9 @@
 
 Status: IMPLEMENTED / PROVIDER-FREE REHEARSED / NOT AUTHORIZED FOR LIVE CALLS.
 This file specifies a proposed experiment, not new baseline behavior or a work queue.
+The first approved allocation is closed after a reviewer call-limit stop. This
+revised completion/accounting contract requires a new manifest and paid approval;
+the old manifest and allocation cannot be reused.
 
 Offline progress: `diagnostics/review_context_offline.py` materializes candidates
 and builds A/B review inputs. `diagnostics/review_context_rehearsal.py` connects a
@@ -83,6 +86,17 @@ separate role caps must not accidentally authorize double spending. C can use it
 whole allowance for normal work. Admission is counted immediately before dispatch,
 zero SDK retries, and any count/transport/billing/cleanup uncertainty stops the panel.
 No automatic retry, resume, replacement, image acquisition or allocation extension.
+Every reviewer request carries remaining calls, actions, time and shared cost.
+The last available review call (or exhausted action allowance) requires
+`finish_review` through tool choice; a non-report response is rejected before tool
+execution without a replacement call. A report may explicitly state that no defect
+was established. A/B use the same completion rule. Check the call limit before
+input counting so an exhausted reviewer makes no fifth count request.
+Partial reviewer stops retain already settled usage independently of whether the
+last count/dispatch was uncertain. The collector labels attempted unfinished rows
+PARTIAL and never overwrites them as NOT_RUN. Remaining rows still stop; no credit
+or report is invented. Known partial usage contributes to the panel total, while
+uncertain total cost remains null with the settled lower bound recorded separately.
 After submission, operator-only scoring has a separate 300-second deadline per row
 and makes no model calls. This includes frozen public matrices or isolated pyinfra
 v2 evaluation; original native evaluation remains separately recorded. Scoring is
@@ -153,6 +167,7 @@ and preserves encrypted continuation and call ordering. See the
 Paid admission must
 recheck the complete frozen manifest and current environment; no paid run is queued.
 See the [collector readiness record](../docs/history/2026-10-01-review-pilot-ready.md).
-The final approval manifest is stored outside the repository at
-C:/pt/analyses/review-pilot-ready-20261001-v1/manifest.json. Older preparation
-manifests bind older implementations and grant no execution authority.
+The closed allocation's manifest is stored outside the repository at
+C:/pt/analyses/review-pilot-ready-20261001-v1/manifest.json. It binds the preceding
+implementation and cannot authorize this revision. See the
+[completion follow-up](../docs/history/2026-10-01-review-completion-contract.md).

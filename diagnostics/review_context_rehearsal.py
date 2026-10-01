@@ -24,6 +24,7 @@ from patchloop.dev.conversation import history_metadata
 from patchloop.dev.cost import DevCostLedger
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
+from patchloop.errors import ContractError
 from patchloop.prepared_probe_dependencies import load_dependencies
 from patchloop.sandbox import LocalSandbox
 from patchloop.sandbox.probes import DockerProbeSandbox
@@ -100,19 +101,37 @@ def _review(loaded, arm, root, workspace, client, budget, panel, *,
         deadline=deadline,
         probe_policy=loaded.envelope.probe_policy,
     )
+    billing_known, settled_cost_nanos = True, 0
     try:
         if execute_probes:
             gateway.probe_sandbox = admitted_probe(loaded, deadline)
             journal.append("review_probe_admitted", gateway.probe_sandbox.identity)
         while True:
-            budget._ready()
+            budget.require_call_available()
+            remaining_calls = 4 - budget.review_calls
+            report_required = remaining_calls == 1 or budget.review_actions >= 12
+            request["input"].append({"role": "user", "content": canonical_json({
+                "review_budget": {
+                    "remaining_model_calls_including_this": remaining_calls,
+                    "remaining_tool_actions": 12 - budget.review_actions,
+                    "remaining_seconds": max(0, 180 - (budget.clock() - budget.started)),
+                    "remaining_shared_cost_nanos": budget.ledger.cap_nanos
+                    - budget.ledger.spent_nanos,
+                    "report_required_this_call": report_required,
+                    "instruction": "Reserve the final call for finish_review. Report limitations "
+                    "if no defect is established; no extra call is available.",
+                }})})
+            if report_required:
+                request["tool_choice"] = {"type": "function", "name": "finish_review"}
             request_hash = sha256_json(request)
             journal.append("review_count_started", {"request_hash": request_hash,
                                                      "simulated": simulated})
+            billing_known = False
             count = adapter.count_input_tokens_v2(
                 request, timeout_seconds=deadline.check())
             journal.append("review_count_finished", {"request_hash": request_hash,
                                                       "input_tokens": count})
+            billing_known = True
             admission = budget.admit(count)
             request["max_output_tokens"] = admission.output_ceiling
             dispatch_event = "review_simulated_dispatch" if simulated else "review_dispatch_started"
@@ -122,6 +141,7 @@ def _review(loaded, arm, root, workspace, client, budget, panel, *,
                 "artifact": ArtifactStore(root / "artifacts").put_json(request).model_dump(
                     mode="json"),
             })
+            billing_known = False
             turn = adapter.execute_request(request, requested_input_tokens=count,
                                            timeout_seconds=deadline.check())
             journal.append("review_response_received", {
@@ -142,6 +162,8 @@ def _review(loaded, arm, root, workspace, client, budget, panel, *,
                 "output_tokens": turn.output_tokens,
                 "total_new_cost_nanos": budget.ledger.spent_nanos, "simulated": simulated,
             })
+            settled_cost_nanos += cost
+            billing_known = True
             budget._ready()
             require(turn.error is None, turn.error.code if turn.error else "invalid response")
             require(turn.response_model == loaded.envelope.model, "review response model changed")
@@ -151,6 +173,9 @@ def _review(loaded, arm, root, workspace, client, budget, panel, *,
                                      arguments=canonical_json(c.arguments))
                      for c in turn.tool_calls]
             require(bool(calls), "review response has no calls")
+            require(not report_required or
+                    (len(calls) == 1 and calls[0].name == "finish_review"),
+                    "final review call must finish_review")
             require(len({c.call_id for c in calls}) == len(calls), "duplicate review call IDs")
             require(bool(turn.provider_continuation), "review continuation missing")
             native = []
@@ -211,8 +236,12 @@ def _review(loaded, arm, root, workspace, client, budget, panel, *,
                 )
     except Exception as exc:
         budget.fail()
-        panel.append("panel_stopped", {"phase": "review", "reason": type(exc).__name__})
-        raise
+        reason = str(exc) if isinstance(exc, ContractError) else type(exc).__name__
+        receipt = {"phase": "review", "reason": reason,
+                   "settled_cost_nanos": settled_cost_nanos, "billing_known": billing_known}
+        journal.append("review_stopped", receipt)
+        panel.append("panel_stopped", receipt)
+        raise offline.ReviewStopped(reason, settled_cost_nanos, billing_known) from exc
 
 
 @contextmanager

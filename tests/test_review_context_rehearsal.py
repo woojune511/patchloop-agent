@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 from test_checkpoint_continuation import call, stop_steps
@@ -224,7 +225,9 @@ def test_review_probe_receipts_and_abort(correct_source, tmp_path, monkeypatch, 
         result = r.rehearse(correct_source, seq, output, "B", repair, reviewer_client=review,
                             execute_reviewer_probes=True)
         assert result["result"]["terminal"] == "AGENT_STOPPED"
-        receipt = json.loads(review.created[1]["input"][-1]["output"])
+        receipt = json.loads(next(item["output"] for item in
+                                  reversed(review.created[1]["input"])
+                                  if item.get("type") == "function_call_output"))
         assert receipt["output"]["diff_hash"] == r.offline.load(
             correct_source, seq).diff["patch_hash"]
         assert receipt["output"]["passed"] == (outcome == "pass")
@@ -285,7 +288,8 @@ def test_reviewer_preserves_parallel_call_order_and_cipher(correct_source, tmp_p
     result = r.rehearse(correct_source, seq, tmp_path / "parallel", "B",
                        c.ScriptedClient(stop_steps()), reviewer_client=review)
     assert result["result"]["terminal"] == "AGENT_STOPPED"
-    tail = review.created[1]["input"][-5:]
+    assert "review_budget" in json.loads(review.created[1]["input"][-1]["content"])
+    tail = review.created[1]["input"][-6:-1]
     assert [i["type"] for i in tail] == ["reasoning", "function_call", "function_call",
                                          "function_call_output", "function_call_output"]
     assert tail[0]["encrypted_content"] == "synthetic_cipher_1"
@@ -324,3 +328,72 @@ def test_invalid_reviewer_response_stops_before_tools(correct_source, tmp_path, 
     assert not any(e["event_type"] == "action_started" for e in events)
     settled = any(e["event_type"] == "review_usage_settled" for e in events)
     assert settled == (fault != "count")  # A malformed response can still have known cost.
+
+
+@pytest.mark.parametrize("ending", ["report", "read", "count", "transport", "usage"])
+def test_final_review_call_reports_or_stops_without_extra_dispatch(
+    correct_source, tmp_path, ending,
+):
+    import copy
+
+    seq = boundary(correct_source)
+    loaded = r.offline.load(correct_source, seq)
+    review = reviewer(correct_source, seq)
+    read, report = review.steps
+    review.steps = []
+    for i in range(3):
+        step = copy.deepcopy(read)
+        step[0]["action_id"] = f"inspect_{i}"
+        review.steps.append(step)
+    review.steps.append(report if ending != "read" else read)
+    original_count = review.responses.input_tokens.count
+
+    def count(**request):
+        if len(review.counted) == 3 and ending in {"count", "transport", "usage"}:
+            review.failure = ending
+        return original_count(**request)
+
+    review.responses.input_tokens.count = count
+    materialized = r.offline.restore(correct_source, seq, tmp_path / "candidate")
+    budget = r.offline.SharedBudget()
+    panel = DevJournal(tmp_path / "panel", "run_dev_boundarypanel")
+    args = (loaded, "B", tmp_path / "review", Path(materialized["workspace"]),
+            review, budget, panel)
+    if ending == "report":
+        result = r.scripted_review(*args)
+        assert result["subject_candidate_hash"] == loaded.diff["patch_hash"]
+    else:
+        with pytest.raises(r.offline.ReviewStopped) as error:
+            r.scripted_review(*args)
+        assert error.value.billing_known == (ending == "read")
+        assert error.value.settled_cost_nanos > 0
+    assert len(review.counted) == 4
+    assert len(review.created) == (3 if ending == "count" else 4)
+    if ending != "count":
+        assert review.created[-1]["tool_choice"] == {"type": "function", "name": "finish_review"}
+    horizons = [json.loads(req["input"][-1]["content"])["review_budget"]
+                for req in review.counted]
+    assert [h["remaining_model_calls_including_this"] for h in horizons] == [4, 3, 2, 1]
+    assert [h["report_required_this_call"] for h in horizons] == [False, False, False, True]
+    path = next((tmp_path / "review/runs").glob("*.jsonl"))
+    events = DevJournal(tmp_path / "review", path.stem).events()
+    assert len([e for e in events if e["event_type"] == "action_started"]) == 3
+    settled = sum(e["payload"]["cost_nanos"] for e in events
+                  if e["event_type"] == "review_usage_settled")
+    if ending != "report":
+        assert error.value.settled_cost_nanos == settled
+        assert events[-1]["event_type"] == "review_stopped"
+
+
+def test_exhausted_review_does_not_count_again(correct_source, tmp_path):
+    seq = boundary(correct_source)
+    loaded = r.offline.load(correct_source, seq)
+    materialized = r.offline.restore(correct_source, seq, tmp_path / "candidate")
+    client = reviewer(correct_source, seq)
+    budget = r.offline.SharedBudget(review_calls=4, calls=4)
+    with pytest.raises(r.offline.ReviewStopped, match="call budget exhausted") as error:
+        r.scripted_review(loaded, "A", tmp_path / "review", Path(materialized["workspace"]),
+                          client, budget, DevJournal(tmp_path / "panel", "run_dev_exhausted"))
+    assert error.value.billing_known
+    assert error.value.settled_cost_nanos == 0
+    assert not client.counted and not client.created

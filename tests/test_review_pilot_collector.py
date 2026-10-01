@@ -59,9 +59,39 @@ def test_panel_exact_order_accounting_and_stop(tmp_path, fault):
         if fault == "score":
             assert result["new_cost_nanos"] == 300
     assert len(closes) == len(calls)
+    if fault in {"transport", "overrun"}:
+        assert result["rows"][len(calls) - 1]["status"] == "PARTIAL"
     with pytest.raises(FileExistsError):
         collector._run_panel(config, "hash", row_executor=execute, preflight=environment,
                              client_factory=lambda _: pytest.fail("retry"), scorer=score)
+
+
+@pytest.mark.parametrize("known", [True, False])
+def test_partial_review_settlements_survive_panel_stop(tmp_path, known):
+    from types import SimpleNamespace
+
+    from diagnostics.review_context_offline import ReviewStopped
+
+    calls = []
+
+    def execute(*args):
+        calls.append(1)
+        if len(calls) == 1:
+            return {"billing_known": True, "new_cost_nanos": 100,
+                    "stop_remaining": False, "result": {}}
+        raise ReviewStopped("final review call must finish_review", 250, known)
+
+    result = collector._run_panel(plan(tmp_path), "hash", row_executor=execute,
+        preflight=lambda *a: None, client_factory=lambda _: SimpleNamespace(close=lambda: None),
+        scorer=lambda *a: {"status": "NOT_RUN"})
+    assert len(calls) == 2
+    assert result["rows"][1]["status"] == "PARTIAL"
+    assert result["rows"][1]["partial_usage"] == {
+        "settled_cost_nanos": 250, "billing_known": known}
+    assert all(r["status"] == "NOT_RUN" for r in result["rows"][2:])
+    assert result["recorded_new_cost_nanos"] == 350
+    assert result["new_cost_nanos"] == (350 if known else None)
+    assert result["billing_known"] == known
 
 
 @pytest.mark.parametrize("bad_hash", [True, False])

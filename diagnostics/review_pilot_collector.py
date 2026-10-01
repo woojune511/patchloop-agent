@@ -6,7 +6,7 @@ from pathlib import Path
 
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, disjoint
-from diagnostics.review_context_offline import load
+from diagnostics.review_context_offline import ReviewStopped, load
 from diagnostics.review_context_rehearsal import _rehearse_locked, admitted_probe
 from diagnostics.review_pilot_manifest import IMPLEMENTATION, TASKS, build
 from diagnostics.review_pilot_scoring import score
@@ -99,6 +99,7 @@ def _run_panel(plan, approved_hash, *, row_executor, preflight, client_factory, 
                 label = row["task"] + "-" + row["arm"]
                 try:
                     journal.append("row_started", {"row": label})
+                    rows[i]["status"] = "STARTED"
                     client = client_factory(plan)
                     receipt = row_executor(row, plan, root, client)
                     require(receipt["billing_known"], "uncertain row billing")
@@ -122,6 +123,15 @@ def _run_panel(plan, approved_hash, *, row_executor, preflight, client_factory, 
                     stop = type(exc).__name__
                     # Known settlement survives scoring failure; earlier uncertainty does not.
                     known = rows[i]["status"] == "EXECUTED"
+                    if not known:
+                        rows[i]["status"] = "PARTIAL"
+                    if isinstance(exc, ReviewStopped):
+                        cost = exc.settled_cost_nanos
+                        total += cost
+                        known = exc.billing_known
+                        stop = "review: " + exc.reason
+                        rows[i]["partial_usage"] = {
+                            "settled_cost_nanos": cost, "billing_known": known}
                     rows[i] = {**rows[i], "failure": stop}
                     journal.append("row_failed", rows[i])
                 finally:
