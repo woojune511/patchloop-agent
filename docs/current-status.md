@@ -25,9 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Fixed batch proposal](../.agent/fixed-batch-proposal.md): three repositories selected
-deterministically before preparation, with no replacements. Baseline unchanged;
-sources clean, image digests pinned; pulls need approval. No paid execution authorized.
+[Fixed batch](../.agent/fixed-batch-proposal.md): three fixed tasks
+[calibrated](history/2026-10-01-fixed-batch-calibration.md). Packages/probe checks
+remain unprepared. Baseline unchanged; no paid execution authorized.
 
 [Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) found no
 contract conflict. The [empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md)

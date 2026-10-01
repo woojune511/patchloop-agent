@@ -1,6 +1,6 @@
 # Fixed baseline batch proposal
 
-Status: selection and image identities frozen 2026-10-01; preparation incomplete; paid execution NOT_RUN
+Status: images acquired and original oracles calibrated 2026-10-01; packages incomplete; paid execution NOT_RUN
 and not authorized. This proposal does not extend any previous allocation.
 
 ## Question and decision
@@ -39,8 +39,8 @@ exclusion-input hashes, selector/driver hashes, and content-addressed public row
 
 ## Preparation gate
 
-All three images are absent locally. Registry manifests were verified against their
-SHA256 digests, with linux/amd64 platform. Frozen acquisition targets:
+All three images were acquired with explicit user approval. Local RepoDigests
+match the frozen linux/amd64 registry manifests. Frozen acquisition targets:
 
 | Task | Image reference | Total compressed layer bytes |
 | --- | --- | ---: |
@@ -49,10 +49,9 @@ SHA256 digests, with linux/amd64 platform. Frozen acquisition targets:
 | isort | `swerebench/sweb.eval.x86_64.pycqa_1776_isort-2491@sha256:8f6c834300883cb779eb720b8d9af2bd5f5c38c67f615748eb87a2c019851e4b` | 1,247,710,060 |
 
 These sizes include shared/cached layers; they are not expected network transfer
-or extracted disk growth. No image was pulled or built; Docker was already running.
-Image acquisition requires explicit approval under AGENTS.md hard gate 7.
-Approval would cover these three digest-pinned pulls and offline calibration,
-without a build, Docker startup or paid model run.
+or extracted disk growth. Approved pulls and offline calibration completed without
+a build, Docker startup or paid model run. All three baseline/reference pairs
+passed calibration: see [results](../docs/history/2026-10-01-fixed-batch-calibration.md).
 
 All three source checkouts were fetched at the exact bases above and verified
 HEAD-exact and clean. They are operator preparation checkouts, not yet admitted
@@ -70,8 +69,9 @@ probe environment parity and isolated evaluator operation. Record scope/safety
 contracts separately. A conflicting or incomplete oracle blocks that row rather
 than silently changing its requirements or substituting another task.
 
-Runnable packages, calibration and a paid execution command remain NOT_RUN/not
-prepared. Record preparation failures against the same three selected rows.
+Runnable packages, public/probe checks, end-to-end package evaluation and a paid
+execution command remain unprepared. Original-image calibration does not establish
+those properties. Record preparation failures against the same three selected rows.
 
 ## Proposed execution scope
 
