@@ -25,11 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[HB2 diagnosis](history/2026-10-01-hb2-evaluator-contract-diagnosis.md) explains
-the residual FAIL as hidden/public contract mismatch; six public cases pass.
-Next: versioned evaluator alignment and calibration. Keep agent baseline and
-historical verdicts; no paid run queued. This follows the closed
-[milestone review](history/2026-10-01-post-conan-evidence-review.md).
+[HF v6 calibration](history/2026-10-01-hf-v6-behavior-evaluation.md) accepts saved
+HB2 and rejects baseline/four wrong controls. Hidden checks now follow public
+behavior; historical v5 FAIL is preserved. Keep agent baseline; no paid run queued.
 
 [Conan](history/2026-10-01-conan-live-result.md): F2P 1/1, P2P 21/21,
 public 28/28, safety PASS; USD 0.544468. [Probe replay](history/2026-10-01-conan-final-probe-replay.md)
