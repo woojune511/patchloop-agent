@@ -153,9 +153,12 @@ def restore(source: Source, sequence: int, output: Path, *, conan_materializatio
         "runtime_migration": loaded.migration,
     })
     env = loaded.envelope
-    require(env.prepared_source_path is not None, "prepared source required")
+    require(env.prepared_source_path is not None
+            or loaded.package.public.repository.url.startswith("snapshot://"),
+            "prepared source required")
     manager = WorkspaceManager(repository_root() / "fixtures/repositories", output / "workspaces",
-                               prepared_source=Path(env.prepared_source_path),
+                               prepared_source=(Path(env.prepared_source_path)
+                                                if env.prepared_source_path else None),
                                prepared_source_hash=env.prepared_source_hash)
     workspace = manager.create(source.run_id, loaded.package.public.repository.url,
                                loaded.package.public.repository.base_commit)
