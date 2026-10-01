@@ -1,0 +1,21 @@
+schema_version: task-private-v2
+task_id: original-pyinfra-1679
+task_version: 2
+hidden_checks:
+- id: timeout-behavior
+  command:
+  - /opt/conda/envs/testbed/bin/python
+  - -B
+  - .patchloop-hidden/test_timeout_behavior.py
+  timeout_seconds: 60
+  environment:
+    PYTHONPATH: /workspace/src
+  infrastructure_exit_codes:
+  - 2
+hidden_artifacts:
+- path: hidden/test_timeout_behavior.py
+  sha256: sha256:72daa5ea8762444fcface6fb2e808931c2521f655bbd307da65ac951687f562f
+reference_patch:
+  path: reference.patch
+  sha256: sha256:b34362d8686ee9a0798e40e55eed651ce8fdc60080f9bece13dd6f8fa129c3ed
+audit: {}

@@ -29,8 +29,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 public/scope/safety passed, original hidden verdicts FAIL. USD 4.0651735; allocation
 closed. Keep baseline.
 [OpenSandbox](history/2026-10-01-opensandbox-public-diagnosis.md): backend gap confirmed.
-[Pyinfra audit](history/2026-10-01-pyinfra-evaluator-audit.md): evaluator assumptions
-explain both failures; original FAIL retained. No agent change justified.
+[Pyinfra v2](history/2026-10-01-pyinfra-v2-behavior-evaluation.md): calibrated replay
+PASS; original FAIL retained. No agent change or paid run queued.
 
 [Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) and
 [empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md) closed;
