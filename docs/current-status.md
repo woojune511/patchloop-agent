@@ -27,8 +27,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
-The [review follow-up](history/2026-10-01-review-completion-contract.md) exposes its
-call horizon and preserves partial usage. Prior allocation closed; no paid run queued.
+The [revised review pilot](history/2026-10-02-review-pilot-ready.md) is prepared;
+four environments passed. New exact-manifest approval pending; prior allocation closed.
 
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
 public/scope/safety passed, original hidden verdicts FAIL. USD 4.0651735; allocation
