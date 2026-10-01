@@ -25,10 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The [Conan original-task run](history/2026-10-01-conan-live-result.md) passed:
-original F2P 1/1, P2P 21/21, public 28/28 and safety PASS; USD 0.544468.
-A probe exposed an intermediate defect. Keep the baseline; probe benefit is not
-causally isolated. Allocation closed.
+[Conan](history/2026-10-01-conan-live-result.md): F2P 1/1, P2P 21/21,
+public 28/28, safety PASS; USD 0.544468. [Probe replay](history/2026-10-01-conan-final-probe-replay.md)
+passes. Keep baseline; no causal probe-benefit claim. Allocation closed.
 
 The [jsonschema follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
 is closed: saved-patch hidden evaluation passed, original FAIL preserved.
