@@ -26,8 +26,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 ## Active decision
 
 The [next original benchmark task](../.agent/original-next-readiness.md) is
-Conan #19735. Original evaluator artifacts are captured. Calibration awaits
-approval to pull its missing image (1.28 GB compressed). No paid run is authorized.
+Conan #19735. Its approved image and original oracle are calibrated: baseline
+F2P 0/1, P2P 21/21; reference 22/22 PASS. Package integration remains; no paid run
+is authorized.
 
 The [jsonschema follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
 is closed: saved-patch hidden evaluation passed, original FAIL preserved.

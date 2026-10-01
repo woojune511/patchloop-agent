@@ -35,29 +35,26 @@ Hash-chained journal: `runs/run_dev_originalnextselection.jsonl`.
 Public selection and private evaluator artifacts remain separated from future
 coding-agent input. Raw reference/test bodies were stored as data, not printed.
 
-## Environment blocker and concrete next action
+## Approved image and completed calibration
 
-Docker image is absent locally. Registry manifest inspection succeeded without
-pulling layers. Immutable linux/amd64 image:
+The user approved the pinned linux/amd64 image pull, which completed:
 `swerebench/sweb.eval.x86_64.conan-io_1776_conan-19735_interface@sha256:564734fbebe544567e2e47bac7362ae68a749ffdaa7401dd273903d3552277fa`.
-Compressed layers total 1,281,108,852 bytes (about 1.28 GB); shared-layer reuse and
-uncompressed disk usage are not yet known. Host C: had about 96 GB free at inspection.
+Only the final layer was newly downloaded according to pull output; 1.28 GB was
+total compressed layer size, not measured traffic or disk growth. No build or
+Docker startup occurred.
 
-Approval is needed under AGENTS.md hard gate 7 before this exact pull:
+[Original calibration](../docs/history/2026-10-01-conan-original-calibration.md)
+confirmed exact base/clean source, Python 3.13.13 and pytest 7.4.4. Baseline:
+F2P 0/1, P2P 21/21, RESOLVED_NO. Reference: F2P 1/1, P2P 21/21, RESOLVED_FULL.
+All required cases were accounted for; no timeout, setup error or extra failure.
+Separate containers ran without network or host mounts and were cleaned up.
+Journal: `runs/run_dev_conanoriginalcalibration.jsonl` under the external root.
 
-```powershell
-docker pull swerebench/sweb.eval.x86_64.conan-io_1776_conan-19735_interface@sha256:564734fbebe544567e2e47bac7362ae68a749ffdaa7401dd273903d3552277fa
-```
+## Remaining package preparation
 
-After approval, verify local identity and original base/environment, then run the
-original tests against baseline and reference in separate network-disabled
-workspaces with bounded time/resources. Freeze the check protocol before execution;
-require complete case accounting and distinguish collection/setup errors from
-wrong answers. Validate the public/private task package through full isolated
-evaluation before proposing a paid run. Do not expose private material to the agent.
-
-Current status: selection and evaluator-material capture complete; environment
-calibration NOT_RUN; no task package admitted, no source allowlist change, no
-image pull/build or Docker startup, no provider call. The analysis-only pyarrow
-dependency ran through uv's temporary environment; project dependencies unchanged.
-No live model/cost allocation is authorized.
+Environment/original-oracle calibration is complete. No coding-agent run occurred.
+Before paid work, integrate the original public issue and evaluator-only assets
+into a checked-in task, prepare source/probe inputs, select public checks from
+unmodified upstream source, and verify full isolated package evaluation. Keep
+reference and test patches out of coding-agent context. No source allowlist or
+runtime change has been made; no model/cost allocation is authorized.
