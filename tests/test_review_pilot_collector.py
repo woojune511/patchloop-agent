@@ -124,3 +124,25 @@ def test_evaluator_verdicts_use_typed_values():
     require_completed_verdicts(verdicts.model_copy(update={"hidden_tests": VerdictState.FAIL}))
     with pytest.raises(ContractError, match="did not complete"):
         require_completed_verdicts(Verdicts())
+
+
+def test_one_row_extension_preflights_and_executes_only_selected_task(tmp_path):
+    from types import SimpleNamespace
+
+    config = plan(tmp_path)
+    config["rows"] = [config["rows"][2]]
+    config["new_cap_nanos"] = 2_000_000_000
+    visited, executed = [], []
+
+    def execute(row, *args):
+        executed.append((row["task"], row["arm"]))
+        return {"billing_known": True, "new_cost_nanos": 123,
+                "stop_remaining": False, "result": {}}
+
+    result = collector._run_panel(config, "hash", row_executor=execute,
+        preflight=lambda row, env: visited.append(row["task"]),
+        client_factory=lambda _: SimpleNamespace(close=lambda: None),
+        scorer=lambda *args: {"status": "SCORED"})
+    assert visited == [TASKS[0]] and executed == [(TASKS[0], "B")]
+    assert len(result["rows"]) == 1 and result["new_cost_nanos"] == 123
+    assert result["cap_nanos"] == 2_000_000_000

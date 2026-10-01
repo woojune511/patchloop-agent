@@ -95,7 +95,7 @@ def _review(loaded, arm, root, workspace, client, budget, panel, *,
         }
     )
     journal = DevJournal(root, "run_dev_review" + sha256_json(str(root.resolve()))[7:23])
-    deadline = ExecutionDeadline(budget.started + 180, budget.clock)
+    deadline = ExecutionDeadline(budget.started + budget.review_seconds, budget.clock)
     gateway = DevToolGateway(
         workspace=workspace,
         public_task=loaded.package.public,
@@ -118,7 +118,8 @@ def _review(loaded, arm, root, workspace, client, budget, panel, *,
                 "review_budget": {
                     "remaining_model_calls_including_this": remaining_calls,
                     "remaining_tool_actions": 12 - budget.review_actions,
-                    "remaining_seconds": max(0, 180 - (budget.clock() - budget.started)),
+                    "remaining_seconds": max(
+                        0, budget.review_seconds - (budget.clock() - budget.started)),
                     "remaining_shared_cost_nanos": budget.ledger.cap_nanos
                     - budget.ledger.spent_nanos,
                     "report_required_this_call": report_required,
@@ -295,9 +296,11 @@ def _rehearse_locked(
     execute_reviewer_probes=False,
     current_runtime_fork=False,
     real_sandboxes=False,
-    live=False, env_file=None,
+    live=False, env_file=None, review_seconds=180,
 ):
     require(arm in {"A", "B", "C"}, "unknown arm")
+    require(review_seconds == 180 or (review_seconds == 360 and arm == "B"),
+            "extended review allowance is B-only")
     if not live:
         require(type(repair_client) is continuation.ScriptedClient, "scripted repair required")
         require(reviewer_client is None or type(reviewer_client) is continuation.ScriptedClient,
@@ -330,7 +333,7 @@ def _rehearse_locked(
                                    defer_envelope=current_runtime_fork)
     journal = DevJournal(output, source.run_id)
     panel.append("episode_started", {"arm": arm, "output": str(output.resolve())})
-    budget = offline.SharedBudget()
+    budget = offline.SharedBudget(review_seconds=review_seconds)
     report = None
     if reviewer_client is not None:
         report = _review(

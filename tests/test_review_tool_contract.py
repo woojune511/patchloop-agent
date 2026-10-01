@@ -10,6 +10,7 @@ from diagnostics.checkpoint_continuation import ScriptedClient
 from patchloop.dev.contracts import DevLimits
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import dev_tool_schemas
+from patchloop.errors import ContractError
 
 
 @pytest.fixture
@@ -146,3 +147,38 @@ def test_separate_inspection_probe_and_report(context, tmp_path, arm):
     outputs = [i for i in client.created[-1]["input"] if i.get("type") == "function_call_output"]
     assert [i["call_id"] for i in outputs] == ["call_0", "call_1"]
     assert len(client.created) == len(client.counted) == 3
+
+
+@pytest.mark.parametrize("seconds", [180, 360])
+def test_review_time_allowance_controls_horizon_and_execution(context, tmp_path, seconds):
+    loaded, executed = context
+    now = [0.0]
+    budget = review.offline.SharedBudget(review_seconds=seconds, clock=lambda: now[0])
+    client = ScriptedClient([[tool("read_file", 0)], [tool("finish_review", 1)]])
+    original = client.responses.create
+
+    def delayed(**kwargs):
+        assert kwargs["timeout"] == seconds - now[0]
+        response = original(**kwargs)
+        now[0] += 200 if len(client.created) == 1 else 30
+        return response
+
+    client.responses.create = delayed
+    args = (loaded, "B", tmp_path / "review", tmp_path, client, budget,
+            DevJournal(tmp_path / "panel", "run_dev_reviewtime"))
+    if seconds == 180:
+        with pytest.raises(review.offline.ReviewStopped, match="review time exhausted"):
+            review.scripted_review(*args)
+        assert executed == [] and len(client.created) == 1
+    else:
+        report = review.scripted_review(*args)
+        assert report["subject_candidate_hash"] == "candidate"
+        assert executed == ["read_file"] and len(client.created) == 2
+        assert json.loads(client.created[-1]["input"][-1]["content"])[
+            "review_budget"]["remaining_seconds"] == 160
+    assert json.loads(client.created[0]["input"][-1]["content"])[
+        "review_budget"]["remaining_seconds"] == seconds
+    now[0] = seconds
+    with pytest.raises(ContractError, match="episode stopped" if seconds == 180
+                       else "review time exhausted"):
+        budget._ready()

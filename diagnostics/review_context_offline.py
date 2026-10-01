@@ -220,6 +220,7 @@ class SharedBudget:
     """Single-use, sequential offline accounting contract; not a live collector."""
 
     cap: Decimal = Decimal("2")
+    review_seconds: int = 180
     clock: object = monotonic
     ledger: DevCostLedger = field(init=False)
     started: float = field(init=False)
@@ -234,6 +235,7 @@ class SharedBudget:
 
     def __post_init__(self):
         require(self.cap > 0, "positive cap required")
+        require(self.review_seconds in (180, 360), "unsupported review time allowance")
         self.ledger = DevCostLedger(self.cap, pricing_for_model("gpt-5.4-2026-03-05"))
         self.started = self.clock()
 
@@ -244,7 +246,7 @@ class SharedBudget:
         require(not self.stopped, "episode stopped")
         require(self.clock() - self.started < 900, "episode time exhausted")
         if self.phase == "review":
-            require(self.clock() - self.started < 180, "review time exhausted")
+            require(self.clock() - self.started < self.review_seconds, "review time exhausted")
 
     def require_call_available(self):
         self._ready()

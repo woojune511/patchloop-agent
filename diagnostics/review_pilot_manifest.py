@@ -19,7 +19,7 @@ ORDER = ("CAB", "ABC", "BCA", "CBA")
 # Bind transitive diagnostic helpers as well as the direct entry point.
 IMPLEMENTATION = tuple(sorted(p.relative_to(repository_root()).as_posix()
                              for p in (repository_root() / "diagnostics").glob("*.py"))) + (
-    ".agent/review-context-pilot.md",)
+    ".agent/review-context-pilot.md", ".agent/review-time-extension.md")
 
 
 def score_opensandbox(observations):
@@ -58,7 +58,7 @@ def score_isort(observations):
     return scores
 
 
-def build(cases, programs, *, env_file, result_root):
+def build(cases, programs, *, env_file, result_root, review_time_extension=False):
     """Freeze identities without reading credentials or starting any execution."""
     require(tuple(cases) == TASKS, "exact ordered four-case panel required")
     require(set(programs) == set(TASKS[:2]), "both public diagnostic programs required")
@@ -91,7 +91,7 @@ def build(cases, programs, *, env_file, result_root):
         }
         for arm in order:
             rows.append({**binding, "arm": arm, "new_cap_nanos": 2_000_000_000})
-    return {
+    plan = {
         "schema": "review-pilot-execution-v1", "official": False,
         "paid_execution_authorized": False, "collector_ready": True,
         "runtime_hash": runtime_content_hash(),
@@ -114,3 +114,11 @@ def build(cases, programs, *, env_file, result_root):
         "no_submission_acceptance": "NOT_RUN", "automatic_retry": False,
         "automatic_resume": False, "sdk_retries": 0,
     }
+    if review_time_extension:
+        plan["schema"] = "review-time-extension-v1"
+        plan["rows"] = [r for r in rows if r["task"] == TASKS[0] and r["arm"] == "B"]
+        plan["new_cap_nanos"] = 2_000_000_000
+        plan["limits"]["review_seconds"] = 360
+        # Preserve the source bindings needed to reconstruct the same frozen controls.
+        plan["source_cases"] = [next(r for r in rows if r["task"] == t) for t in TASKS]
+    return plan

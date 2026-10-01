@@ -8,7 +8,7 @@ from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, disjoint
 from diagnostics.review_context_offline import ReviewStopped, load
 from diagnostics.review_context_rehearsal import _rehearse_locked, admitted_probe
-from diagnostics.review_pilot_manifest import IMPLEMENTATION, TASKS, build
+from diagnostics.review_pilot_manifest import IMPLEMENTATION, build
 from diagnostics.review_pilot_scoring import score
 from patchloop.agent.model import create_openai_client
 from patchloop.contracts import ModelConfig
@@ -28,11 +28,13 @@ def validate(path, approved_hash, approved_cap):
     require(approved_cap.is_finite() and approved_cap > 0
             and usd_to_nanos(approved_cap) == plan["new_cap_nanos"], "approved cap differs")
     cases = {}
-    for row in plan["rows"]:
+    extension = plan["schema"] == "review-time-extension-v1"
+    for row in plan["source_cases"] if extension else plan["rows"]:
         cases[row["task"]] = {"source": Source.from_record(row["source"]),
             "sequence": row["sequence"], "evaluation_path": Path(row["evaluation_path"])}
     expected = build(cases, {k: Path(v["path"]) for k, v in plan["operator_only_programs"].items()},
-                     env_file=Path(plan["env_file"]), result_root=Path(plan["result_root"]))
+                     env_file=Path(plan["env_file"]), result_root=Path(plan["result_root"]),
+                     **({"review_time_extension": True} if extension else {}))
     require(plan == expected, "approved controls or implementation changed")
     root = Path(plan["result_root"])
     disjoint(root, [repository_root(), path.parent,
@@ -71,7 +73,8 @@ def execute_row(row, plan, root, client):
             root / label, row["arm"], client,
             reviewer_client=None if row["arm"] == "C" else client,
             panel_root=panel_root, execute_reviewer_probes=True, current_runtime_fork=True,
-            real_sandboxes=True, live=True, env_file=Path(plan["env_file"]))
+            real_sandboxes=True, live=True, env_file=Path(plan["env_file"]),
+            review_seconds=plan["limits"]["review_seconds"])
     return result
 
 
@@ -87,7 +90,7 @@ def _run_panel(plan, approved_hash, *, row_executor, preflight, client_factory, 
             "manifest_hash": approved_hash, "plan": plan,
             "simulated_transport": simulated_transport})
         try:
-            for task in TASKS:
+            for task in dict.fromkeys(row["task"] for row in plan["rows"]):
                 row = next(r for r in plan["rows"] if r["task"] == task)
                 preflight(row, Path(plan["env_file"]))
                 journal.append("environment_ready", {"task": task})
