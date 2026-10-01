@@ -25,9 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md): no public/
-hidden conflict found; baseline and PA1 fail, reference passes. Empty-field-name
-coverage remains untested. Keep task and agent unchanged; no paid run queued.
+[Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) found no
+contract conflict. The [empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md)
+confirms constructor rejection on base/reference/PA1. Audit closed; no change queued.
 
 [HF v6 calibration](history/2026-10-01-hf-v6-behavior-evaluation.md) accepts saved
 HB2 and rejects baseline/four wrong controls. Hidden checks now follow public
