@@ -56,8 +56,35 @@ All roots below are external, append-only evidence; earlier failures were retain
 Focused tests cover fixed order, cap/approval rejection, failed preflight,
 uncertain dispatch, overruns, scoring failure, close-once behavior, no restart,
 unsubmitted scoring and typed verdict values, alongside existing projection,
-restoration and shared-budget tests. Final validation and manifest admission are
-recorded below when completed.
+restoration and shared-budget tests. The 54 focused tests passed. Ruff, five
+documentation tests and whitespace checks passed. The initial documentation check
+found current status 16 bytes over its 12,000-byte limit; shortening its active
+decision resolved that failure without moving or changing historical records.
+
+Mock smoke `run_dev_eaa2b909c9ca4a1a` reached EVALUATOR_PASS, task acceptance PASS,
+safety NOT_RUN and zero provider cost. Root:
+C:/pt/runs/review-collector-mock-20261001-v1.
+
+## Frozen approval proposal
+
+Implementation commit: `f3776c51`. Provider-free preparation driver:
+C:/pt/review_pilot_ready_20261001.py.
+Manifest: C:/pt/analyses/review-pilot-ready-20261001-v1/manifest.json.
+SHA: `sha256:cd2ca5a1258c588d004c8b64c4ce55e0b102bfbd7b959bad75c2c1ca86eb9ee5`.
+
+The committed implementation passed exact-manifest reconstruction and read-only
+source/evaluation admission for all four tasks. Credential loading was explicitly
+blocked during preparation. Twelve episodes are bound to
+gpt-5.4-2026-03-05 / xhigh / 25,000 output tokens, one repeat per arm, USD 2 per row
+and USD 24 total, using C:/Users/geonj/Documents/PatchLoop/.env. The future result
+root is C:/pt/runs/review-context-pilot-20261001-v1; no paid invocation has created it.
+Admission runs again before any future dispatch. Older preparation remains intact.
+
+The full repository suite completed with 3,896 passed and 16 skipped in 3,325.54
+seconds (55 minutes 25 seconds), using four workers, loadfile distribution and no
+worker restart. Basetemp: C:/pt/tmp/reviewcollectorfull01. This was a local Windows
+run, not remote cross-platform CI. Its broad duration is separate from the focused
+change tests; no skipped test is counted as a pass.
 
 ## Unresolved and next decision
 
