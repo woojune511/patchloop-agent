@@ -27,7 +27,7 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Fixed batch proposal](../.agent/fixed-batch-proposal.md): three repositories selected
 deterministically before preparation, with no replacements. Baseline unchanged;
-images absent locally, preparation incomplete, paid execution not authorized.
+sources clean, image digests pinned; pulls need approval. No paid execution authorized.
 
 [Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) found no
 contract conflict. The [empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md)
