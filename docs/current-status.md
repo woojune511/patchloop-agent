@@ -25,6 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+[Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md): no public/
+hidden conflict found; baseline and PA1 fail, reference passes. Empty-field-name
+coverage remains untested. Keep task and agent unchanged; no paid run queued.
+
 [HF v6 calibration](history/2026-10-01-hf-v6-behavior-evaluation.md) accepts saved
 HB2 and rejects baseline/four wrong controls. Hidden checks now follow public
 behavior; historical v5 FAIL is preserved. Keep agent baseline; no paid run queued.
@@ -59,11 +63,8 @@ The [PDM repair observation](history/2026-10-01-pdm-repair-observation.md) compl
 one approved run on the exposed dev-train v2 task. One edit passed all 24 public
 bug cases, all 36 upstream regressions, isolated acceptance and real sandbox
 safety. Recorded usage was USD 0.3550415; the USD 3 allocation is closed.
-The agent used registered checks and no optional probes. Because the public bug
-contract failed unchanged source, this run did verify repaired behavior; zero
-probes alone is not a verification failure. Keep the restored baseline and choose
-further work from a concrete failure, rather than automatically running another
-task. No prompt effect, unseen-task success rate or complete coverage is established.
+Registered checks discriminated the PDM bug without optional probes. Keep the
+baseline; this establishes neither prompt benefit nor general repair accuracy.
 
 The [four-row probe comparison](history/2026-09-30-probe-replay-comparison.md)
 closed at USD 1.412167 of USD 12. All Darts/MontePy rows passed acceptance, safety
