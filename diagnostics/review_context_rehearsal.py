@@ -93,16 +93,33 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
             journal.append("review_probe_admitted", gateway.probe_sandbox.identity)
         while True:
             budget._ready()
+            request_hash = sha256_json(request)
+            journal.append("review_count_started", {"request_hash": request_hash,
+                                                     "simulated": True})
             count = client.responses.input_tokens.count(**request).input_tokens
+            journal.append("review_count_finished", {"request_hash": request_hash,
+                                                      "input_tokens": count})
             admission = budget.admit(count)
             request["max_output_tokens"] = admission.output_ceiling
-            journal.append("review_simulated_dispatch", {"request_hash": sha256_json(request)})
+            journal.append("review_simulated_dispatch", {
+                "request_hash": sha256_json(request), "call": budget.calls,
+                "reserved_cost_nanos": admission.reserved_cost_nanos,
+                "artifact": ArtifactStore(root / "artifacts").put_json(request).model_dump(
+                    mode="json"),
+            })
             response = client.responses.create(**request)
             usage = response.usage
             require(usage is not None, "unknown reviewer usage")
-            budget.settle(
+            cost = budget.settle(
                 usage.input_tokens, usage.input_tokens_details.cached_tokens, usage.output_tokens
             )
+            journal.append("review_usage_settled", {
+                "call": budget.calls, "cost_nanos": cost,
+                "input_tokens": usage.input_tokens,
+                "cached_input_tokens": usage.input_tokens_details.cached_tokens,
+                "output_tokens": usage.output_tokens,
+                "total_new_cost_nanos": budget.ledger.spent_nanos, "simulated": True,
+            })
             budget._ready()
             calls = [c for c in response.output if c.type == "function_call"]
             require(bool(calls), "review response has no calls")
@@ -211,6 +228,7 @@ def repair_inputs(branch, report):
 def _rehearse_locked(
     source, sequence, output, arm, repair_client, *, reviewer_client=None, panel_root=None,
     execute_reviewer_probes=False,
+    current_runtime_fork=False,
 ):
     require(arm in {"A", "B", "C"}, "unknown arm")
     require(type(repair_client) is continuation.ScriptedClient, "scripted repair required")
@@ -232,8 +250,10 @@ def _rehearse_locked(
         ),
         "panel stopped or episode already claimed",
     )
-    loaded = offline.load(source, sequence)  # Reject incompatible native runtime, including Conan.
-    materialized = offline.restore(source, sequence, output)
+    loaded = offline.load(source, sequence, conan_materialization=current_runtime_fork)
+    materialized = offline.restore(source, sequence, output,
+                                   conan_materialization=current_runtime_fork,
+                                   defer_envelope=current_runtime_fork)
     journal = DevJournal(output, source.run_id)
     panel.append("episode_started", {"arm": arm, "output": str(output.resolve())})
     budget = offline.SharedBudget()
@@ -303,11 +323,32 @@ def _rehearse_locked(
         },
     )
     events = journal.events()
+    if current_runtime_fork:
+        envelope_request = request.model_copy(update={"provider": env.provider})
+        target = runner._run_envelope(
+            request=envelope_request, task_dir=source.public_path.parent, package=loaded.package,
+            run_id=source.run_id, runtime_hash=runner._runtime_hash(),
+            model_hash=runner._model_hash(request, ledger.pricing), cost_ledger=ledger,
+            cost_start_nanos=env.cost_start_nanos, prepared_source_hash=env.prepared_source_hash,
+            probe_dependencies=env.probe_dependencies,
+        )
+        journal.write_envelope(target)
+        journal.append("review_current_runtime_fork", {
+            "mode": "offline-scripted-only", "parent": source.record(),
+            "parent_runtime_hash": env.runtime_hash, "target_runtime_hash": target.runtime_hash,
+            "parent_prefix_hash": loaded.prefix[-1]["event_hash"],
+            "historical_cost_nanos": historical.spent_nanos,
+            "historical_funds_reopened": False,
+            "new_cap_nanos": budget.ledger.cap_nanos,
+            "inherited_events_are_not_new_execution": True,
+        })
+        env = target
     branch = SimpleNamespace(
         root=output,
         store=ArtifactStore(output / "artifacts"),
         journal=journal,
-        references=events[-2]["payload"]["artifact_references"],
+        references=next(e["payload"]["artifact_references"] for e in reversed(events)
+                        if e["event_type"] == "diagnostic_checkpoint_fork"),
         envelope=env,
         request=request,
         package=loaded.package,
@@ -348,6 +389,7 @@ def _rehearse_locked(
 def rehearse(
     source, sequence, output, arm, repair_client, *, reviewer_client=None, panel_root=None,
     execute_reviewer_probes=False,
+    current_runtime_fork=False,
 ):
     panel_root = panel_root or output.parent / "panel"
     panel = DevJournal(panel_root, "run_dev_reviewpanel")
@@ -361,4 +403,5 @@ def rehearse(
             reviewer_client=reviewer_client,
             panel_root=panel_root,
             execute_reviewer_probes=execute_reviewer_probes,
+            current_runtime_fork=current_runtime_fork,
         )

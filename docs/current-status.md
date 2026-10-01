@@ -27,8 +27,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
-The [review pilot](history/2026-10-01-review-probe-admission.md) connects real reviewer
-probes; live admission, scoring freeze and Conan native migration remain pending.
+The [review pilot](history/2026-10-01-review-fork-accounting.md) passes twelve scripted
+runtime forks; live collector and full execution admission remain pending.
 No live execution authorized.
 
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;

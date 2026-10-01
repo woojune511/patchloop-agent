@@ -125,7 +125,8 @@ def handoff_report(report, candidate_hash):
             "subject_candidate_hash": candidate_hash}
 
 
-def restore(source: Source, sequence: int, output: Path, *, conan_materialization=False):
+def restore(source: Source, sequence: int, output: Path, *, conan_materialization=False,
+            defer_envelope=False):
     loaded = load(source, sequence, conan_materialization=conan_materialization)
     output = output.resolve()
     disjoint(output, (repository_root(), source.root, source.public_path.parent))
@@ -145,12 +146,15 @@ def restore(source: Source, sequence: int, output: Path, *, conan_materializatio
     journal = DevJournal(output, source.run_id)
     with journal.path.open("x", encoding="utf-8", newline="\n") as stream:
         stream.write("".join(canonical_json(e) + "\n" for e in loaded.prefix))
-    journal.write_envelope(loaded.envelope)
+    if not defer_envelope:
+        journal.write_envelope(loaded.envelope)
     journal.append("diagnostic_checkpoint_fork", {
         "mode": "review-context-offline-only", "artifact_references": refs,
         "source_journal_hash": source.journal_hash, "prepared_sequence": sequence,
         "historical_execution_is_not_new_execution": True, "provider_calls": 0,
         "runtime_migration": loaded.migration,
+        "source_envelope": store.put_json(loaded.envelope.model_dump(mode="json")).model_dump(
+            mode="json"),
     })
     env = loaded.envelope
     require(env.prepared_source_path is not None

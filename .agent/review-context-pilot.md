@@ -11,6 +11,9 @@ and [probe admission](../docs/history/2026-10-01-review-probe-admission.md).
 Neither module provides a live collector. Scripted reviewers can explicitly enable
 real registered probes with verified existing images/dependencies; repair-stage
 probes in the local continuation adapter remain unsupported.
+An explicit current-runtime fork now writes a new branch envelope and retains the
+source envelope as an artifact; ordinary resume remains strict. See the
+[fork and accounting record](../docs/history/2026-10-01-review-fork-accounting.md).
 
 ## Decision and hypothesis
 
@@ -128,11 +131,13 @@ another run. Generalization/held-out/claim execution remain disabled.
 4. Freeze scoring programs, source/runtime/package hashes and a twelve-row manifest;
    execute provider-free control/rehearsal checks before presenting paid approval.
 
-Candidate materialization and recursive CAS verification succeeded for all four
-cases. Conan required an explicit exact-hash, offline-only materialization mapping
-because its source runtime differs; native resume compatibility remains unproven.
-Three-arm scripted continuation reaches isolated fixture evaluation, and nine
-real-source branches (excluding Conan) reach scripted stop with native history
-preserved. Reviewer probe admission is separately exercised against existing public
-images/dependencies. Full repair/evaluator environment admission, live collector,
-Conan native migration and the frozen scoring manifest remain pending.
+Candidate materialization, recursive CAS verification and current-runtime scripted
+continuation succeeded for all four cases, including Conan, in all twelve arms.
+The exact source/target runtime mapping remains explicit; this is a new diagnostic
+fork, not permission to resume an old envelope. Reviewer count/dispatch/settlement
+records are durable and its settled cost reduces the repair allowance.
+The operator-only manifest builder binds the twelve rows, public diagnostic programs,
+package hashes, scoring implementation and caps. Its output remains collector_ready=false.
+A live collector still needs provider-response continuation, durable accounting
+integration and actual repair-stage probe/evaluation rehearsal. Paid admission must
+recheck the complete frozen manifest and current environment; no paid run is queued.

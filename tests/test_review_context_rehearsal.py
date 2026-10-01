@@ -41,7 +41,20 @@ def reviewer(source, sequence, failure=None):
 
 
 @pytest.mark.parametrize("arm", ["C", "A", "B"])
-def test_review_then_native_submission(correct_source, tmp_path, arm):
+@pytest.mark.parametrize("fork", [False, True])
+def test_review_then_native_submission(correct_source, tmp_path, monkeypatch, arm, fork):
+    if fork:
+        from patchloop.contracts import TaskEnvironment
+        original_envelope = r.runner._run_envelope
+
+        def fixture_envelope(**kwargs):
+            # The source fixture injected an evaluator environment without a YAML file.
+            kwargs["package"] = kwargs["package"].model_copy(update={"environment":
+                TaskEnvironment(evaluator_image="test/image@sha256:" + "a" * 64,
+                                image_digest="sha256:" + "a" * 64)})
+            return original_envelope(**kwargs)
+
+        monkeypatch.setattr(r.runner, "_run_envelope", fixture_envelope)
     seq = boundary(correct_source)
     client = c.ScriptedClient([[call("finish_task", {}, "finish")]])
     result = r.rehearse(
@@ -51,6 +64,7 @@ def test_review_then_native_submission(correct_source, tmp_path, arm):
         arm,
         client,
         reviewer_client=None if arm == "C" else reviewer(correct_source, seq),
+        current_runtime_fork=fork,
     )
     assert result["result"]["terminal"] == "EVALUATOR_PASS", result
     assert result["live_model_calls"] == result["new_billed_cost_nanos"] == 0
@@ -59,8 +73,27 @@ def test_review_then_native_submission(correct_source, tmp_path, arm):
     assert state["remaining_budget"]["model_calls"] == (16 if arm == "C" else 14)
     assert state["remaining_budget"]["tool_actions"] == (48 if arm == "C" else 47)
     assert state["remaining_budget"]["active_wall_time_seconds"] <= 901
+    if fork:
+        journal = DevJournal(tmp_path / arm, correct_source.run_id)
+        target = journal.load_envelope()
+        assert target.runtime_hash == r.runner._runtime_hash()
+        assert target.limits.model_dump(mode="json") == next(
+            e["payload"]["limits"] for e in journal.events()
+            if e["event_type"] == "review_repair_allowance")
+        marker = next(e["payload"] for e in journal.events()
+                      if e["event_type"] == "review_current_runtime_fork")
+        assert marker["parent"]["envelope_hash"] == correct_source.envelope_hash
+        assert marker["historical_funds_reopened"] is False
     if arm != "C":
         assert state["review_handoff"]["is_execution_receipt"] is False
+        review_log = next((tmp_path / arm / "review" / "runs").glob("*.jsonl"))
+        settled = [e["payload"] for e in DevJournal(
+            tmp_path / arm / "review", review_log.stem).events()
+            if e["event_type"] == "review_usage_settled"]
+        allowance = next(e["payload"] for e in DevJournal(tmp_path / arm,
+            correct_source.run_id).events() if e["event_type"] == "review_repair_allowance")
+        assert len(settled) == 2
+        assert sum(e["cost_nanos"] for e in settled) == allowance["simulated_review_cost"]
     with pytest.raises(ContractError, match="claimed"):
         r.rehearse(
             correct_source,
@@ -82,6 +115,12 @@ def test_failure_stops_later_episodes(correct_source, tmp_path, phase, failure):
         with pytest.raises((TimeoutError, ContractError)):
             r.rehearse(correct_source, seq, tmp_path / "first", "B", client, reviewer_client=review)
         assert not client.created
+        review_log = next((tmp_path / "first/review/runs").glob("*.jsonl"))
+        events = DevJournal(tmp_path / "first/review", review_log.stem).events()
+        kinds = [e["event_type"] for e in events]
+        assert "review_count_started" in kinds
+        assert "review_usage_settled" not in kinds
+        assert ("review_simulated_dispatch" in kinds) == (failure != "count")
     else:
         result = r.rehearse(
             correct_source, seq, tmp_path / "first", "B", client, reviewer_client=review
