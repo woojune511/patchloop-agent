@@ -107,6 +107,37 @@ def test_prepare_publishes_last_and_never_overwrites(prepare_fixture):
     assert path.read_bytes() == before
 
 
+def test_nested_public_lock_binds_subproject_metadata(prepare_fixture):
+    selected = prepare_fixture["wheel_lock"]
+    repo = selected.parent / "source"
+    server = repo / "server"
+    server.mkdir()
+    metadata = b'[project]\nname = "server-project"\nversion = "1.2.3"\n'
+    (server / "pyproject.toml").write_bytes(metadata)
+    raw = (repo / "uv.lock").read_bytes() + (
+        b'\n[[package]]\nname = "server-project"\nsource = {editable = "."}\n'
+    )
+    (server / "uv.lock").write_bytes(raw)
+    data = json.loads(selected.read_bytes())
+    data.update(source_lock="server/uv.lock", source_lock_hash=sha256_bytes(raw),
+                source_roots=["server"])
+    selected.write_text(canonical_json(data))
+    path = prepared.prepare_dependencies(**prepare_fixture)
+    descriptor = json.loads(path.read_bytes())
+    assert descriptor["workspace_metadata"] == [{
+        "name": "server-project", "version": "1.2.3", "version_basis": "public_pyproject",
+        "project_path": "server", "pyproject_hash": sha256_bytes(metadata),
+    }]
+    prepared.load_dependencies(path, prepare_fixture["public"], prepared.admit(path)).verify()
+
+
+def test_nested_lock_cannot_select_parent_workspace(tmp_path):
+    with pytest.raises(ContractError):
+        prepared._workspace_metadata(tmp_path, [{"source": {"editable": "../outside"}}],
+                                     ["server"], "a" * 40, tmp_path / "target",
+                                     lock_directory="server")
+
+
 @pytest.mark.parametrize("fault", ["download", "install", "lock", "unpinned", "missing_root"])
 def test_interrupted_or_invalid_preparation_has_no_descriptor(prepare_fixture, monkeypatch, fault):
     if fault == "download":

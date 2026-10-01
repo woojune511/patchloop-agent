@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.alibaba_1776_opensandbox-816@sha256:eb2223e2f7957ad3f8bf3a69946fed4ca7b9abc309ec9c14f388786785d02ea0
+image_digest: sha256:eb2223e2f7957ad3f8bf3a69946fed4ca7b9abc309ec9c14f388786785d02ea0
+source_image_tag: swerebench/sweb.eval.x86_64.alibaba_1776_opensandbox-816:latest

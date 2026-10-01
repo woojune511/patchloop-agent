@@ -1,0 +1,25 @@
+schema_version: task-private-v2
+task_id: original-pyinfra-1679
+task_version: 1
+hidden_checks:
+- id: original-oracle
+  infrastructure_exit_codes:
+  - 2
+  command:
+  - /opt/conda/envs/testbed/bin/python
+  - -B
+  - .patchloop-hidden/run_oracle.py
+  timeout_seconds: 120
+  environment:
+    PYTHONPATH: /workspace
+hidden_artifacts:
+- path: hidden/oracle.json
+  sha256: sha256:2c4db9a43d01ad880f4ecb7299526c64b6ac8ae68cfd0550d46cefb3293bead8
+- path: hidden/run_oracle.py
+  sha256: sha256:f4e1e53187bd5244e67c2f76a1e1f83d3e109157e3acd3bcf9a65f509004af93
+- path: hidden/scoring.py
+  sha256: sha256:e96feb00166f003c8c86612d4f2e8b496e4683af5a28e212df68faa00340afde
+reference_patch:
+  path: reference.patch
+  sha256: sha256:148fdda087a2c5e49fab1d5595d308cb63db7344f179bf4ed8123275c0282218
+audit: {}

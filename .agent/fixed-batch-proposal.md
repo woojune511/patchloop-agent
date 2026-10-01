@@ -1,6 +1,6 @@
 # Fixed baseline batch proposal
 
-Status: images acquired and original oracles calibrated 2026-10-01; packages incomplete; paid execution NOT_RUN
+Status: packages and probe environments prepared 2026-10-01; CI/review pending; paid execution NOT_RUN
 and not authorized. This proposal does not extend any previous allocation.
 
 ## Question and decision
@@ -54,8 +54,7 @@ a build, Docker startup or paid model run. All three baseline/reference pairs
 passed calibration: see [results](../docs/history/2026-10-01-fixed-batch-calibration.md).
 
 All three source checkouts were fetched at the exact bases above and verified
-HEAD-exact and clean. They are operator preparation checkouts, not yet admitted
-runtime prepared-source packages. Evidence under the external root:
+HEAD-exact and clean. Initial operator preparation evidence under the external root:
 `preflight-v1/summary.json`, `preflight-v1/runs/run_dev_fixedbatchpreflight.jsonl`,
 and content-addressed command receipts. Driver: `C:\pt\fixed_batch_preflight_20261001.py`.
 
@@ -69,9 +68,40 @@ probe environment parity and isolated evaluator operation. Record scope/safety
 contracts separately. A conflicting or incomplete oracle blocks that row rather
 than silently changing its requirements or substituting another task.
 
-Runnable packages, public/probe checks, end-to-end package evaluation and a paid
-execution command remain unprepared. Original-image calibration does not establish
-those properties. Record preparation failures against the same three selected rows.
+Runtime packages, prepared-source descriptors, public/probe checks and isolated
+evaluation are now verified: [admission record](../docs/history/2026-10-01-fixed-batch-package-admission.md).
+The initial pyinfra public mock conflict and its narrow exclusion are preserved
+there. Original hidden cases are unchanged; no selected row was replaced.
+
+## Prepared identities and proposed commands
+
+All task versions are 1, under `tasks/dev-train`:
+
+| Task | SHA256 content hash |
+| --- | --- |
+| original-opensandbox-816 | 606c1512392260ce8c6aec4a490a380196695791ee94205dab1cd8b74ddd19c8 |
+| original-pyinfra-1679 | b26b9d239b0a5479d3530b0fafc16ee3e6cac12fc3dbea0f0366217af7b9f1e0 |
+| original-isort-2491 | 2e7fa4252f8af7c3317fc98cec2c98442c6ee288e12a46b0905cab8a4c190507 |
+
+After CI/review and exact paid approval, invoke once per table row in order. Set
+`$taskName` to that exact task ID; inspect each terminal/accounting result before
+starting the next. This is a command template, not an authorized batch launcher.
+Freeze the reviewed runtime commit and verify clean HEAD before first dispatch.
+
+```powershell
+$preparedRoot = 'C:\pt\preparations\fixed-batch-20261001-v1\packages-v1'
+$env:PATCHLOOP_STATE_ROOT = "C:\pt\runs\fixed-batch-20261001-v1\$taskName"
+.\.venv\Scripts\patchloop.exe dev --provider openai `
+  --task "tasks/dev-train/$taskName/public.yaml" `
+  --model gpt-5.4-2026-03-05 --reasoning-effort xhigh --max-output-tokens 25000 `
+  --env-file C:\Users\geonj\Documents\PatchLoop\.env --repeat 1 --max-cost-usd 3 `
+  --prepared-source "$preparedRoot\$taskName\source\prepared-source.json" `
+  --prepared-probe-dependencies "$preparedRoot\$taskName\probe-v1\prepared-probe-dependencies.json" `
+  --enable-probes --probe-policy none --repair-recheck `
+  --repair-inspection-policy protected-v1 --context-policy segmented-v1 `
+  --segment-boundary-policy result-or-size-v1 --completion-cost-policy per-call-v1 `
+  --planning-policy brief-v1
+```
 
 ## Proposed execution scope
 

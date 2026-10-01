@@ -26,8 +26,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 ## Active decision
 
 [Fixed batch](../.agent/fixed-batch-proposal.md): three fixed tasks
-[calibrated](history/2026-10-01-fixed-batch-calibration.md). Packages/probe checks
-remain unprepared. Baseline unchanged; no paid execution authorized.
+[prepared](history/2026-10-01-fixed-batch-package-admission.md), with isolated
+controls and probe canaries passing. CI/review pending; no paid execution authorized.
 
 [Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) found no
 contract conflict. The [empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md)
