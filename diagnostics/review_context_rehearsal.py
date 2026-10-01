@@ -14,8 +14,9 @@ from unittest.mock import patch
 from diagnostics import checkpoint_continuation as continuation
 from diagnostics import review_context_offline as offline
 from diagnostics.decision_sampler import require
+from patchloop.agent.model import EncryptedReasoningContinuationItem, OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import Artifact
+from patchloop.contracts import Artifact, ModelConfig
 from patchloop.deadline import ExecutionDeadline
 from patchloop.dev import native_compaction, runner, segments
 from patchloop.dev.contracts import DevRunRequest, RequestedTool
@@ -61,6 +62,12 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
                     execute_probes=False):
     require(type(client) is continuation.ScriptedClient, "scripted reviewer required")
     request = offline.reviewer_request(loaded, arm)
+    adapter = OpenAIResponsesAdapter(ModelConfig(
+        provider="openai", model_id=loaded.envelope.model,
+        reasoning_effort=loaded.envelope.reasoning_effort,
+        reasoning_continuation="encrypted-v1", transport_max_retries=0,
+        max_output_tokens=loaded.envelope.max_output_tokens,
+    ), api_key="offline-no-credential", client=client)
     fields = ["suspected_behavior", "evidence", "observation", "candidate_hash", "limitations"]
     request["tools"].append(
         {
@@ -96,7 +103,8 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
             request_hash = sha256_json(request)
             journal.append("review_count_started", {"request_hash": request_hash,
                                                      "simulated": True})
-            count = client.responses.input_tokens.count(**request).input_tokens
+            count = adapter.count_input_tokens_v2(
+                request, timeout_seconds=deadline.check())
             journal.append("review_count_finished", {"request_hash": request_hash,
                                                       "input_tokens": count})
             admission = budget.admit(count)
@@ -107,22 +115,52 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
                 "artifact": ArtifactStore(root / "artifacts").put_json(request).model_dump(
                     mode="json"),
             })
-            response = client.responses.create(**request)
-            usage = response.usage
-            require(usage is not None, "unknown reviewer usage")
+            turn = adapter.execute_request(request, requested_input_tokens=count,
+                                           timeout_seconds=deadline.check())
+            journal.append("review_response_received", {
+                "response_id": turn.response_id, "status": turn.response_status,
+                "usage_evidence": turn.usage_evidence,
+                "error_code": turn.error.code if turn.error else None,
+            })
+            require(turn.usage_evidence is not None
+                    and turn.usage_evidence["failure_kind"] is None,
+                    "unknown or mismatched reviewer usage")
             cost = budget.settle(
-                usage.input_tokens, usage.input_tokens_details.cached_tokens, usage.output_tokens
+                turn.input_tokens, turn.cached_input_tokens, turn.output_tokens
             )
             journal.append("review_usage_settled", {
                 "call": budget.calls, "cost_nanos": cost,
-                "input_tokens": usage.input_tokens,
-                "cached_input_tokens": usage.input_tokens_details.cached_tokens,
-                "output_tokens": usage.output_tokens,
+                "input_tokens": turn.input_tokens,
+                "cached_input_tokens": turn.cached_input_tokens,
+                "output_tokens": turn.output_tokens,
                 "total_new_cost_nanos": budget.ledger.spent_nanos, "simulated": True,
             })
             budget._ready()
-            calls = [c for c in response.output if c.type == "function_call"]
+            require(turn.error is None, turn.error.code if turn.error else "invalid response")
+            require(turn.response_model == loaded.envelope.model, "review response model changed")
+            require(set(turn.output_item_types) <= {"reasoning", "function_call"},
+                    "unsupported reviewer output item")
+            calls = [SimpleNamespace(name=c.name, call_id=c.action_id,
+                                     arguments=canonical_json(c.arguments))
+                     for c in turn.tool_calls]
             require(bool(calls), "review response has no calls")
+            require(len({c.call_id for c in calls}) == len(calls), "duplicate review call IDs")
+            require(bool(turn.provider_continuation), "review continuation missing")
+            native = []
+            by_id = {c.call_id: c for c in calls}
+            for item in turn.provider_continuation:
+                if isinstance(item, EncryptedReasoningContinuationItem):
+                    native.append({"type": "reasoning", "id": item.id,
+                                   "encrypted_content": item.encrypted_content, "summary": [],
+                                   **({"status": item.status} if item.status else {})})
+                else:
+                    call = by_id[item.action_id]
+                    native.append({"type": "function_call", "name": call.name,
+                                   "call_id": call.call_id, "arguments": call.arguments})
+            journal.append("review_continuation_saved", {
+                "artifact": ArtifactStore(root / "artifacts").put_json(native).model_dump(
+                    mode="json"), "item_count": len(native),
+            })
             if any(c.name == "finish_review" for c in calls):
                 require(len(calls) == 1, "report cannot accompany tools")
                 report = offline.handoff_report(
@@ -137,6 +175,7 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
                 ),
                 "invalid review batch",
             )
+            request["input"].extend(native)
             for call in calls:
                 budget.action(call.name)
                 require(call.name != "run_probe" or execute_probes,
@@ -156,12 +195,6 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
                 budget._ready()
                 request["input"].extend(
                     [
-                        {
-                            "type": "function_call",
-                            "name": call.name,
-                            "call_id": call.call_id,
-                            "arguments": call.arguments,
-                        },
                         {
                             "type": "function_call_output",
                             "call_id": call.call_id,
@@ -229,9 +262,11 @@ def _rehearse_locked(
     source, sequence, output, arm, repair_client, *, reviewer_client=None, panel_root=None,
     execute_reviewer_probes=False,
     current_runtime_fork=False,
+    real_sandboxes=False,
 ):
     require(arm in {"A", "B", "C"}, "unknown arm")
     require(type(repair_client) is continuation.ScriptedClient, "scripted repair required")
+    require(not real_sandboxes or current_runtime_fork, "real execution requires a current fork")
     require((arm == "C") == (reviewer_client is None), "reviewer/arm mismatch")
     panel = DevJournal(panel_root or output.parent / "panel", "run_dev_reviewpanel")
     events = panel.events()
@@ -359,6 +394,7 @@ def _rehearse_locked(
         source_request=loaded.bundle["request"],
         inherited_events=len(loaded.prefix),
         initial_spent_nanos=historical.spent_nanos,
+        parent_journal_hash=source.journal_hash,
     )
     journal.append(
         "review_repair_allowance",
@@ -373,8 +409,12 @@ def _rehearse_locked(
         },
     )
     try:
-        with patch.object(continuation, "first_input", lambda b: repair_inputs(b, report)):
-            result = continuation.rehearse(branch, repair_client)
+        if real_sandboxes:
+            from diagnostics.review_integrated_execution import repair
+            result = repair(branch, repair_client, report)
+        else:
+            with patch.object(continuation, "first_input", lambda b: repair_inputs(b, report)):
+                result = continuation.rehearse(branch, repair_client)
         if result["stop_remaining"] or not result["simulated_billing_known"]:
             panel.append("panel_stopped", {"phase": "repair", "output": str(output.resolve())})
         panel.append(
@@ -390,6 +430,7 @@ def rehearse(
     source, sequence, output, arm, repair_client, *, reviewer_client=None, panel_root=None,
     execute_reviewer_probes=False,
     current_runtime_fork=False,
+    real_sandboxes=False,
 ):
     panel_root = panel_root or output.parent / "panel"
     panel = DevJournal(panel_root, "run_dev_reviewpanel")
@@ -404,4 +445,5 @@ def rehearse(
             panel_root=panel_root,
             execute_reviewer_probes=execute_reviewer_probes,
             current_runtime_fork=current_runtime_fork,
+            real_sandboxes=real_sandboxes,
         )

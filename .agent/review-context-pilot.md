@@ -9,8 +9,9 @@ finite scripted reviewer to the native repair loop with one replenished allowanc
 See the [integration record](../docs/history/2026-10-01-review-loop-rehearsal.md)
 and [probe admission](../docs/history/2026-10-01-review-probe-admission.md).
 Neither module provides a live collector. Scripted reviewers can explicitly enable
-real registered probes with verified existing images/dependencies; repair-stage
-probes in the local continuation adapter remain unsupported.
+real registered probes with verified existing images/dependencies. The separate
+review_integrated_execution adapter exercises real repair probes and isolated Docker
+evaluation using finite model responses; the older local adapter stays unchanged.
 An explicit current-runtime fork now writes a new branch envelope and retains the
 source envelope as an artifact; ordinary resume remains strict. See the
 [fork and accounting record](../docs/history/2026-10-01-review-fork-accounting.md).
@@ -138,6 +139,9 @@ fork, not permission to resume an old envelope. Reviewer count/dispatch/settleme
 records are durable and its settled cost reduces the repair allowance.
 The operator-only manifest builder binds the twelve rows, public diagnostic programs,
 package hashes, scoring implementation and caps. Its output remains collector_ready=false.
-A live collector still needs provider-response continuation, durable accounting
-integration and actual repair-stage probe/evaluation rehearsal. Paid admission must
+A live collector still needs a manifest-bound paid entry point and the complete
+operator scoring integration. Reviewer response parsing now uses the shared adapter
+and preserves encrypted continuation and call ordering. See the
+[integration follow-up](../docs/history/2026-10-01-review-integrated-execution.md).
+Paid admission must
 recheck the complete frozen manifest and current environment; no paid run is queued.

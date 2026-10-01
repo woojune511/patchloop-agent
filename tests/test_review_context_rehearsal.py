@@ -272,3 +272,55 @@ def test_probe_preflight_matches_source_identity(monkeypatch, changed):
             r.admitted_probe(loaded, marker)
     else:
         assert isinstance(r.admitted_probe(loaded, marker), Probe)
+
+
+def test_reviewer_preserves_parallel_call_order_and_cipher(correct_source, tmp_path):
+    import copy
+
+    seq = boundary(correct_source)
+    review = reviewer(correct_source, seq)
+    second = copy.deepcopy(review.steps[0][0])
+    second["action_id"] = "second_read"
+    review.steps[0].append(second)
+    result = r.rehearse(correct_source, seq, tmp_path / "parallel", "B",
+                       c.ScriptedClient(stop_steps()), reviewer_client=review)
+    assert result["result"]["terminal"] == "AGENT_STOPPED"
+    tail = review.created[1]["input"][-5:]
+    assert [i["type"] for i in tail] == ["reasoning", "function_call", "function_call",
+                                         "function_call_output", "function_call_output"]
+    assert tail[0]["encrypted_content"] == "synthetic_cipher_1"
+    assert tail[0]["summary"] == []
+    assert [i["call_id"] for i in tail[1:3]] == [i["call_id"] for i in tail[3:]]
+    assert not ({"store", "include", "max_output_tokens"} & set(review.counted[0]))
+
+
+@pytest.mark.parametrize("fault", ["cipher", "incomplete", "duplicate", "model", "count"])
+def test_invalid_reviewer_response_stops_before_tools(correct_source, tmp_path, fault):
+    seq = boundary(correct_source)
+    review = reviewer(correct_source, seq)
+    original = review.responses.create
+
+    def corrupt(**request):
+        response = original(**request)
+        if fault == "cipher":
+            response.output[0].encrypted_content = None
+        elif fault == "incomplete":
+            response.status = "incomplete"
+        elif fault == "duplicate":
+            response.output.append(response.output[-1])
+        elif fault == "model":
+            response.model = "unexpected-model"
+        else:
+            response.usage.input_tokens += 1
+        return response
+
+    review.responses.create = corrupt
+    repair = c.ScriptedClient(stop_steps())
+    with pytest.raises(ContractError):
+        r.rehearse(correct_source, seq, tmp_path / fault, "B", repair, reviewer_client=review)
+    assert not repair.created
+    path = next((tmp_path / fault / "review/runs").glob("*.jsonl"))
+    events = DevJournal(tmp_path / fault / "review", path.stem).events()
+    assert not any(e["event_type"] == "action_started" for e in events)
+    settled = any(e["event_type"] == "review_usage_settled" for e in events)
+    assert settled == (fault != "count")  # A malformed response can still have known cost.

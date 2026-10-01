@@ -15,6 +15,7 @@ TASKS = ("original-opensandbox-816", "original-isort-2491",
 ORDER = ("CAB", "ABC", "BCA", "CBA")
 IMPLEMENTATION = ("diagnostics/review_context_offline.py",
                   "diagnostics/review_context_rehearsal.py",
+                  "diagnostics/review_integrated_execution.py",
                   "diagnostics/review_pilot_manifest.py",
                   "diagnostics/checkpoint_continuation.py",
                   ".agent/review-context-pilot.md")
