@@ -26,11 +26,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 ## Active decision
 
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
-public/scope/safety passed, target bug cases remain failing. USD 4.0651735; allocation
+public/scope/safety passed, original hidden verdicts FAIL. USD 4.0651735; allocation
 closed. Keep baseline.
 [OpenSandbox](history/2026-10-01-opensandbox-public-diagnosis.md): backend gap confirmed.
-[Pyinfra](history/2026-10-01-pyinfra-public-diagnosis.md): public timeout flow passes;
-audit failing evaluator expectations before inferring a shared mechanism.
+[Pyinfra audit](history/2026-10-01-pyinfra-evaluator-audit.md): evaluator assumptions
+explain both failures; original FAIL retained. No agent change justified.
 
 [Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) and
 [empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md) closed;
