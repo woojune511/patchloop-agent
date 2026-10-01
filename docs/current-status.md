@@ -28,7 +28,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
 The [review contract audit](history/2026-10-02-review-tool-contract-audit.md) aligns
-instructions, schemas and batch admission. Prior pilot allocation closed; no paid run queued.
+instructions, schemas and batch admission. [Fresh preparation](history/2026-10-02-review-pilot-v2-preparation.md)
+is blocked by unavailable Docker. Prior allocations closed; no paid approval or run queued.
 
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
 public/scope/safety passed, original hidden verdicts FAIL. USD 4.0651735; allocation
