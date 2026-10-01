@@ -1,5 +1,5 @@
 """Finite provider-free model responses with real registered Docker execution."""
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -40,16 +40,17 @@ def current_receipts(branch):
         yield
 
 
-def repair(branch, client, report):
+def repair(branch, client, report, *, live=False):
     from diagnostics.review_context_rehearsal import repair_inputs
 
-    require(type(client) is ScriptedClient, "finite scripted transport required")
+    if not live:
+        require(type(client) is ScriptedClient, "finite scripted transport required")
     require(branch.envelope.runtime_hash == runner._runtime_hash(), "fork runtime changed")
     require(not any(e["event_type"] == "review_integrated_started"
                     for e in branch.journal.events()[branch.inherited_events:]),
             "integrated execution cannot retry")
     branch.journal.append("review_integrated_started", {
-        "provider_calls": 0, "sandbox": "real-docker", "mode": "scripted-responses",
+        "sandbox": "real-docker", "mode": "funded-review" if live else "scripted-responses",
     })
     original_active = runner._run_one_active
     head = git_commit()
@@ -64,8 +65,9 @@ def repair(branch, client, report):
         raise ContractError("provider network forbidden in integrated rehearsal")
 
     with (inherited_reads(branch), current_receipts(branch),
-          patch("socket.socket.connect", no_network),
-          patch.object(runner, "load_exact_openai_api_key", lambda _: "offline-no-credential"),
+          nullcontext() if live else patch("socket.socket.connect", no_network),
+          nullcontext() if live else patch.object(
+              runner, "load_exact_openai_api_key", lambda _: "offline-no-credential"),
           patch.object(runner, "OpenAIResponsesAdapter", adapter),
           patch.object(runner, "_run_one_active", active),
           repair_inputs(branch, report) as first, branch.journal.execution_lock()):
@@ -88,5 +90,11 @@ def repair(branch, client, report):
         or result.public["terminal"] == "PREFLIGHT_FAILED",
         "agent_efficacy": "NOT_RUN", "historical_probe_replayed": False,
     }
+    if live:
+        receipt.update(mode="funded-review", billing_known=known,
+                       new_cost_nanos=receipt.pop("simulated_new_cost_nanos"))
+        for key in ("live_model_calls", "new_billed_cost_nanos", "simulated_billing_known",
+                    "agent_efficacy"):
+            receipt.pop(key)
     branch.journal.append("review_integrated_finished", receipt)
     return receipt

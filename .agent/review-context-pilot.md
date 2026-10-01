@@ -1,6 +1,6 @@
-# Review context pilot: design only
+# Review context pilot: bounded execution protocol
 
-Status: DRAFT / NOT EXECUTABLE / NOT AUTHORIZED FOR LIVE CALLS.
+Status: IMPLEMENTED / PROVIDER-FREE REHEARSED / NOT AUTHORIZED FOR LIVE CALLS.
 This file specifies a proposed experiment, not new baseline behavior or a work queue.
 
 Offline progress: `diagnostics/review_context_offline.py` materializes candidates
@@ -8,7 +8,8 @@ and builds A/B review inputs. `diagnostics/review_context_rehearsal.py` connects
 finite scripted reviewer to the native repair loop with one replenished allowance.
 See the [integration record](../docs/history/2026-10-01-review-loop-rehearsal.md)
 and [probe admission](../docs/history/2026-10-01-review-probe-admission.md).
-Neither module provides a live collector. Scripted reviewers can explicitly enable
+The manifest-bound `diagnostics/review_pilot_collector.py` provides the paid entry
+point; preparation never reads credential contents. Scripted reviewers can enable
 real registered probes with verified existing images/dependencies. The separate
 review_integrated_execution adapter exercises real repair probes and isolated Docker
 evaluation using finite model responses; the older local adapter stays unchanged.
@@ -82,6 +83,10 @@ separate role caps must not accidentally authorize double spending. C can use it
 whole allowance for normal work. Admission is counted immediately before dispatch,
 zero SDK retries, and any count/transport/billing/cleanup uncertainty stops the panel.
 No automatic retry, resume, replacement, image acquisition or allocation extension.
+After submission, operator-only scoring has a separate 300-second deadline per row
+and makes no model calls. This includes frozen public matrices or isolated pyinfra
+v2 evaluation; original native evaluation remains separately recorded. Scoring is
+never returned to a model and scoring failure stops the remaining panel.
 
 This is a replenished diagnostic continuation, not exact original-budget resume:
 isort had only 281.669 seconds remaining. Preserve historical usage separately.
@@ -121,16 +126,16 @@ Uncertain or censored outcomes remain inconclusive. One repeat is feasibility
 evidence only; even a promising result does not authorize baseline adoption or
 another run. Generalization/held-out/claim execution remain disabled.
 
-## Admission work remaining
+## Execution admission
 
-1. Generalize and rehearse exact post-check restoration for multiple prior edits;
-   recursively verify required CAS/source/dependency artifacts and current images.
-2. Freeze reviewer projection and identical A/B instruction/tool contract; prove
-   no private/post-checkpoint leakage and preserve actual receipt provenance.
-3. Test shared ledger/time/call/action limits and failure stops across roles, with
-   scripted clients only. Existing seeded review is not equivalent to native history.
-4. Freeze scoring programs, source/runtime/package hashes and a twelve-row manifest;
-   execute provider-free control/rehearsal checks before presenting paid approval.
+1. Require explicit approval of the exact manifest hash and USD 24 cap. Bind the
+   tasks, model, credential path, repetitions, programs, runtime and helper code.
+2. Rebuild and compare the entire manifest, require clean tracked implementation,
+   and readmit all four source/evaluation environments before reading credentials.
+3. Use a fresh external result root. Record dispatch/count/settlement and stop on
+   uncertainty. An interrupted or completed root cannot be silently reused.
+4. Preserve source records and private boundaries. Report actual correctness,
+   regressions and resources separately; do not automatically declare improvement.
 
 Candidate materialization, recursive CAS verification and current-runtime scripted
 continuation succeeded for all four cases, including Conan, in all twelve arms.
@@ -138,10 +143,16 @@ The exact source/target runtime mapping remains explicit; this is a new diagnost
 fork, not permission to resume an old envelope. Reviewer count/dispatch/settlement
 records are durable and its settled cost reduces the repair allowance.
 The operator-only manifest builder binds the twelve rows, public diagnostic programs,
-package hashes, scoring implementation and caps. Its output remains collector_ready=false.
-A live collector still needs a manifest-bound paid entry point and the complete
-operator scoring integration. Reviewer response parsing now uses the shared adapter
+package hashes, scoring implementation and caps. The execution schema reports
+collector_ready=true but paid_execution_authorized=false. Provider-free injected
+transport traversed all twelve collector rows; saved submissions exercised scoring
+for all four tasks. These checks establish routing, not model repair performance.
+Reviewer response parsing uses the shared adapter
 and preserves encrypted continuation and call ordering. See the
 [integration follow-up](../docs/history/2026-10-01-review-integrated-execution.md).
 Paid admission must
 recheck the complete frozen manifest and current environment; no paid run is queued.
+See the [collector readiness record](../docs/history/2026-10-01-review-pilot-ready.md).
+The final approval manifest is stored outside the repository at
+C:/pt/analyses/review-pilot-ready-20261001-v1/manifest.json. Older preparation
+manifests bind older implementations and grant no execution authority.

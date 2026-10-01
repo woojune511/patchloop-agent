@@ -4,8 +4,11 @@ Nothing from this module is projected into reviewer or repair inputs.
 """
 from __future__ import annotations
 
+from dataclasses import asdict
+
 from diagnostics.decision_sampler import require
 from diagnostics.review_context_offline import load
+from patchloop.dev.cost import pricing_for_model
 from patchloop.runtime import repository_root, runtime_content_hash
 from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes, sha256_json
@@ -13,12 +16,10 @@ from patchloop.util import sha256_bytes, sha256_json
 TASKS = ("original-opensandbox-816", "original-isort-2491",
          "original-pyinfra-1679", "original-conan-19735")
 ORDER = ("CAB", "ABC", "BCA", "CBA")
-IMPLEMENTATION = ("diagnostics/review_context_offline.py",
-                  "diagnostics/review_context_rehearsal.py",
-                  "diagnostics/review_integrated_execution.py",
-                  "diagnostics/review_pilot_manifest.py",
-                  "diagnostics/checkpoint_continuation.py",
-                  ".agent/review-context-pilot.md")
+# Bind transitive diagnostic helpers as well as the direct entry point.
+IMPLEMENTATION = tuple(sorted(p.relative_to(repository_root()).as_posix()
+                             for p in (repository_root() / "diagnostics").glob("*.py"))) + (
+    ".agent/review-context-pilot.md",)
 
 
 def score_opensandbox(observations):
@@ -67,7 +68,8 @@ def build(cases, programs, *, env_file, result_root):
         loaded = load(case["source"], case["sequence"], conan_materialization=True)
         require(loaded.package.public.task_id == task, "task mismatch")
         require(loaded.envelope.model == "gpt-5.4-2026-03-05"
-                and loaded.envelope.reasoning_effort == "xhigh", "model mismatch")
+                and loaded.envelope.reasoning_effort == "xhigh"
+                and loaded.envelope.max_output_tokens == 25000, "model mismatch")
         evaluation = load_task_package(case["evaluation_path"])
         public = loaded.package.public.model_dump(mode="json")
         evaluation_public = evaluation.public.model_dump(mode="json")
@@ -90,8 +92,8 @@ def build(cases, programs, *, env_file, result_root):
         for arm in order:
             rows.append({**binding, "arm": arm, "new_cap_nanos": 2_000_000_000})
     return {
-        "schema": "review-pilot-preparation-v1", "official": False,
-        "paid_execution_authorized": False, "collector_ready": False,
+        "schema": "review-pilot-execution-v1", "official": False,
+        "paid_execution_authorized": False, "collector_ready": True,
         "runtime_hash": runtime_content_hash(),
         "implementation": {p: sha256_bytes((repository_root() / p).read_bytes())
                            for p in IMPLEMENTATION},
@@ -99,6 +101,9 @@ def build(cases, programs, *, env_file, result_root):
         "max_output_tokens": 25000, "env_file": str(env_file.resolve()),
         "result_root": str(result_root.resolve()), "repeat_per_arm": 1,
         "new_cap_nanos": 24_000_000_000, "rows": rows,
+        "pricing": {k: str(v) for k, v in asdict(
+            pricing_for_model("gpt-5.4-2026-03-05")).items()},
+        "operator_scoring_seconds": 300,
         "limits": {"seconds": 900, "calls": 16, "actions": 48, "accepted_edits": 2,
                    "review_seconds": 180, "review_calls": 4, "review_actions": 12},
         "operator_only_programs": {k: {"path": str(p.resolve()),

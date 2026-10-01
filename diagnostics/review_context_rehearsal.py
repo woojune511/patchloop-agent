@@ -61,6 +61,12 @@ def admitted_probe(loaded, deadline):
 def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
                     execute_probes=False):
     require(type(client) is continuation.ScriptedClient, "scripted reviewer required")
+    return _review(loaded, arm, root, workspace, client, budget, panel,
+                   execute_probes=execute_probes, simulated=True)
+
+
+def _review(loaded, arm, root, workspace, client, budget, panel, *,
+            execute_probes, simulated):
     request = offline.reviewer_request(loaded, arm)
     adapter = OpenAIResponsesAdapter(ModelConfig(
         provider="openai", model_id=loaded.envelope.model,
@@ -102,14 +108,15 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
             budget._ready()
             request_hash = sha256_json(request)
             journal.append("review_count_started", {"request_hash": request_hash,
-                                                     "simulated": True})
+                                                     "simulated": simulated})
             count = adapter.count_input_tokens_v2(
                 request, timeout_seconds=deadline.check())
             journal.append("review_count_finished", {"request_hash": request_hash,
                                                       "input_tokens": count})
             admission = budget.admit(count)
             request["max_output_tokens"] = admission.output_ceiling
-            journal.append("review_simulated_dispatch", {
+            dispatch_event = "review_simulated_dispatch" if simulated else "review_dispatch_started"
+            journal.append(dispatch_event, {
                 "request_hash": sha256_json(request), "call": budget.calls,
                 "reserved_cost_nanos": admission.reserved_cost_nanos,
                 "artifact": ArtifactStore(root / "artifacts").put_json(request).model_dump(
@@ -133,7 +140,7 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
                 "input_tokens": turn.input_tokens,
                 "cached_input_tokens": turn.cached_input_tokens,
                 "output_tokens": turn.output_tokens,
-                "total_new_cost_nanos": budget.ledger.spent_nanos, "simulated": True,
+                "total_new_cost_nanos": budget.ledger.spent_nanos, "simulated": simulated,
             })
             budget._ready()
             require(turn.error is None, turn.error.code if turn.error else "invalid response")
@@ -166,7 +173,7 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
                 report = offline.handoff_report(
                     json.loads(calls[0].arguments), loaded.diff["patch_hash"]
                 )
-                journal.append("review_reported", {"report": report, "simulated": True})
+                journal.append("review_reported", {"report": report, "simulated": simulated})
                 return report
             require(
                 len(calls) <= 4
@@ -263,9 +270,16 @@ def _rehearse_locked(
     execute_reviewer_probes=False,
     current_runtime_fork=False,
     real_sandboxes=False,
+    live=False, env_file=None,
 ):
     require(arm in {"A", "B", "C"}, "unknown arm")
-    require(type(repair_client) is continuation.ScriptedClient, "scripted repair required")
+    if not live:
+        require(type(repair_client) is continuation.ScriptedClient, "scripted repair required")
+        require(reviewer_client is None or type(reviewer_client) is continuation.ScriptedClient,
+                "scripted reviewer required")
+    else:
+        require(real_sandboxes and current_runtime_fork and env_file is not None,
+                "live execution requires a bound current fork")
     require(not real_sandboxes or current_runtime_fork, "real execution requires a current fork")
     require((arm == "C") == (reviewer_client is None), "reviewer/arm mismatch")
     panel = DevJournal(panel_root or output.parent / "panel", "run_dev_reviewpanel")
@@ -294,7 +308,7 @@ def _rehearse_locked(
     budget = offline.SharedBudget()
     report = None
     if reviewer_client is not None:
-        report = scripted_review(
+        report = _review(
             loaded,
             arm,
             output / "review",
@@ -303,6 +317,7 @@ def _rehearse_locked(
             budget,
             panel,
             execute_probes=execute_reviewer_probes,
+            simulated=not live,
         )
     budget.repair()
     env = loaded.envelope
@@ -332,7 +347,7 @@ def _rehearse_locked(
         model=env.model,
         reasoning_effort=env.reasoning_effort,
         max_output_tokens=env.max_output_tokens,
-        env_file=output / "NO_CREDENTIAL_FILE",
+        env_file=env_file if live else output / "NO_CREDENTIAL_FILE",
         state_root=output,
         resume_run_id=source.run_id,
         max_cost_usd=Decimal(ledger.cap_nanos) / 10**9,
@@ -369,7 +384,7 @@ def _rehearse_locked(
         )
         journal.write_envelope(target)
         journal.append("review_current_runtime_fork", {
-            "mode": "offline-scripted-only", "parent": source.record(),
+            "mode": "funded-review" if live else "offline-scripted-only", "parent": source.record(),
             "parent_runtime_hash": env.runtime_hash, "target_runtime_hash": target.runtime_hash,
             "parent_prefix_hash": loaded.prefix[-1]["event_hash"],
             "historical_cost_nanos": historical.spent_nanos,
@@ -400,7 +415,7 @@ def _rehearse_locked(
         "review_repair_allowance",
         {
             "historical_cost": historical.spent_nanos,
-            "simulated_review_cost": budget.ledger.spent_nanos,
+            "review_cost_nanos" if live else "simulated_review_cost": budget.ledger.spent_nanos,
             "review_calls": budget.calls,
             "review_actions": budget.actions,
             "limits": limits.model_dump(mode="json"),
@@ -411,15 +426,17 @@ def _rehearse_locked(
     try:
         if real_sandboxes:
             from diagnostics.review_integrated_execution import repair
-            result = repair(branch, repair_client, report)
+            result = repair(branch, repair_client, report, live=live)
         else:
             with patch.object(continuation, "first_input", lambda b: repair_inputs(b, report)):
                 result = continuation.rehearse(branch, repair_client)
-        if result["stop_remaining"] or not result["simulated_billing_known"]:
+        if result["stop_remaining"] or not result.get("billing_known",
+                                                       result.get("simulated_billing_known")):
             panel.append("panel_stopped", {"phase": "repair", "output": str(output.resolve())})
         panel.append(
             "episode_finished", {"arm": arm, "output": str(output.resolve()), "receipt": result}
         )
+        result["workspace"] = materialized["workspace"]
         return result
     except Exception as exc:
         panel.append("panel_stopped", {"phase": "repair", "reason": type(exc).__name__})
