@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-01. Replaceable authority for current decisions. Runtime source owns
+Updated: 2026-10-02. Replaceable authority for current decisions. Runtime source owns
 behavior; historical reports are evidence, not an active work queue.
 
 ## Product and working baseline

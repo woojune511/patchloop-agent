@@ -43,9 +43,13 @@ provider cost at C:/pt/runs/review-horizon-mock-20261001-v1.
 
 The stopped result and reviewer-journal hashes match the separate audit record.
 The previous manifest is rejected because its bound implementation changed.
-The full repository suite is pending. No paid calls, evaluator changes or edits
-to the closed manifest/journals/results are part of this follow-up. The earlier
-reported USD 0.216319 remains historical usage, not a new allocation.
+On 2026-10-02 the full local Windows suite passed: 3,904 passed and 16 skipped in
+3,288.53 seconds (54 minutes 48 seconds), with four workers, loadfile distribution
+and no worker restart. JUnit evidence:
+C:/pt/tmp/reviewhorizonfull01-results.xml. Implementation commit: `a1ecfa6b`.
+This is local validation, not remote cross-platform CI. No paid calls, evaluator
+changes or edits to the closed manifest/journals/results are part of this follow-up.
+The earlier reported USD 0.216319 remains historical usage, not a new allocation.
 
 ## Decision
 
