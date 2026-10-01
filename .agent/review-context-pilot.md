@@ -87,6 +87,15 @@ whole allowance for normal work. Admission is counted immediately before dispatc
 zero SDK retries, and any count/transport/billing/cleanup uncertainty stops the panel.
 No automatic retry, resume, replacement, image acquisition or allocation extension.
 Every reviewer request carries remaining calls, actions, time and shared cost.
+The reviewer instruction, projected tools and executor share one batch contract:
+1-4 reads/searches, one probe, or one report, never mixed. Native batch validation
+checks the complete batch before any gateway execution; argument/path semantics
+remain the gateway's responsibility. Inspection uses inspect mode and a nonempty
+evidence goal; probes use verify mode. Unsupported note/plan updates are null in
+both the schema and admission. A probe is offered only when execution is enabled.
+Reports have no turn decision and bind candidate_hash to current_diff.patch_hash.
+Invalid review responses stop without replacement, unlike the ordinary runner's
+one protocol-correction opportunity. This pilot does not silently split a batch.
 The last available review call (or exhausted action allowance) requires
 `finish_review` through tool choice; a non-report response is rejected before tool
 execution without a replacement call. A report may explicitly state that no defect

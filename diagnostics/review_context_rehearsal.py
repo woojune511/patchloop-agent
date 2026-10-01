@@ -23,7 +23,7 @@ from patchloop.dev.contracts import DevRunRequest, RequestedTool
 from patchloop.dev.conversation import history_metadata
 from patchloop.dev.cost import DevCostLedger
 from patchloop.dev.state import DevJournal
-from patchloop.dev.tools import DevToolGateway
+from patchloop.dev.tools import DevToolGateway, validate_tool_batch
 from patchloop.errors import ContractError
 from patchloop.prepared_probe_dependencies import load_dependencies
 from patchloop.sandbox import LocalSandbox
@@ -69,6 +69,9 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
 def _review(loaded, arm, root, workspace, client, budget, panel, *,
             execute_probes, simulated):
     request = offline.reviewer_request(loaded, arm)
+    allowed_tools = offline.REVIEW_TOOLS if execute_probes else (
+        offline.REVIEW_TOOLS - {"run_probe"})
+    request["tools"] = [tool for tool in request["tools"] if tool["name"] in allowed_tools]
     adapter = OpenAIResponsesAdapter(ModelConfig(
         provider="openai", model_id=loaded.envelope.model,
         reasoning_effort=loaded.envelope.reasoning_effort,
@@ -81,7 +84,8 @@ def _review(loaded, arm, root, workspace, client, budget, panel, *,
             "type": "function",
             "name": "finish_review",
             "strict": True,
-            "description": "Return untrusted candidate-bound review advice.",
+            "description": "Call alone. Return untrusted review advice; candidate_hash must "
+                           "equal current_diff.patch_hash. No turn_decision field.",
             "parameters": {
                 "type": "object",
                 "properties": {k: {"type": "string", "maxLength": 4000} for k in fields},
@@ -200,28 +204,20 @@ def _review(loaded, arm, root, workspace, client, budget, panel, *,
                 )
                 journal.append("review_reported", {"report": report, "simulated": simulated})
                 return report
-            require(
-                len(calls) <= 4
-                and (
-                    len(calls) == 1 or all(c.name in {"read_file", "search_files"} for c in calls)
-                ),
-                "invalid review batch",
-            )
-            request["input"].extend(native)
+            requested = []
             for call in calls:
-                budget.action(call.name)
-                require(call.name != "run_probe" or execute_probes,
-                        "offline reviewer probe NOT_RUN")
                 args = json.loads(call.arguments)
-                decision = args.pop("turn_decision")
-                result = gateway.execute(
-                    RequestedTool(
-                        name=call.name,
-                        action_id=call.call_id,
-                        arguments=args,
-                        turn_decision=decision,
-                    )
-                )
+                requested.append(RequestedTool(name=call.name, action_id=call.call_id,
+                    arguments={k: v for k, v in args.items() if k != "turn_decision"},
+                    turn_decision=args.get("turn_decision")))
+            validate_tool_batch(requested, allowed_tools=allowed_tools)
+            require(all(call.turn_decision.memory_update is None
+                        and call.turn_decision.plan_update is None for call in requested),
+                    "reviewer does not manage notes or plans")
+            request["input"].extend(native)
+            for call in requested:
+                budget.action(call.name)
+                result = gateway.execute(call)
                 abort, reason = runner._batch_execution_abort([result])
                 require(abort is None, reason or "review execution uncertain")
                 budget._ready()
@@ -229,7 +225,7 @@ def _review(loaded, arm, root, workspace, client, budget, panel, *,
                     [
                         {
                             "type": "function_call_output",
-                            "call_id": call.call_id,
+                            "call_id": call.action_id,
                             "output": canonical_json(result.model_dump(mode="json")),
                         },
                     ]
