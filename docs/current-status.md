@@ -25,9 +25,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Milestone review](history/2026-10-01-post-conan-evidence-review.md): retain the
-baseline and close this work sequence. Coverage remains unresolved; no new
-contract defect or justified intervention is selected. No next experiment queued.
+[HB2 diagnosis](history/2026-10-01-hb2-evaluator-contract-diagnosis.md) explains
+the residual FAIL as hidden/public contract mismatch; six public cases pass.
+Next: versioned evaluator alignment and calibration. Keep agent baseline and
+historical verdicts; no paid run queued. This follows the closed
+[milestone review](history/2026-10-01-post-conan-evidence-review.md).
 
 [Conan](history/2026-10-01-conan-live-result.md): F2P 1/1, P2P 21/21,
 public 28/28, safety PASS; USD 0.544468. [Probe replay](history/2026-10-01-conan-final-probe-replay.md)
@@ -91,10 +93,8 @@ Completion and mutation-attempt call-budget arithmetic lives in
 the state snapshot and admits tools; monetary admission stays in `dev/cost.py`.
 Runtime identity changes normally and prior-run resume restrictions remain intact.
 
-The [cross-task development review](history/2026-09-30-development-review.md) closes
-the repeated prompt/context/prior-decision ablation series without establishing an
-effective default quality fix. Keep the solving baseline; no new quality experiment,
-memory extension or mandatory probe gate is queued.
+The [development review](history/2026-09-30-development-review.md) closes repeated
+ablations: no quality experiment, memory extension or mandatory probe gate queued.
 
 The subsequent contract review identified two reproducible engineering defects:
 undisclosed mutation-explanation length limits and successful append returns after
