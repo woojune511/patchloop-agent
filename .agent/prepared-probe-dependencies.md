@@ -36,6 +36,10 @@ can identify the package set before selecting compatible wheels; this command do
 not select the wheel set automatically. Do not include the workspace project itself:
 its source roots precede the dependency directory.
 
+For a nested lock such as `server/uv.lock`, editable project paths are resolved
+relative to that lock directory. Select the repository-relative `server` source
+root to bind its metadata; parent traversal in editable paths is rejected.
+
 ```powershell
 patchloop task prepare-probe-dependencies <task-dir> `
   --prepared-source <prepared-source.json> `

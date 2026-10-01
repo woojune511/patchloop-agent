@@ -283,11 +283,15 @@ def _download(wheel: PublicWheel, destination: Path) -> None:
 
 
 def _workspace_metadata(repo: Path, packages: list[dict], roots: list[str],
-                        commit: str, target: Path) -> list[dict]:
+                        commit: str, target: Path, *, lock_directory: str = ".") -> list[dict]:
     """Supply importlib.metadata identity without running a project's build hooks."""
     records = []
     for package in packages:
         relative = package.get("source", {}).get("editable")
+        if relative is not None and lock_directory != ".":
+            if relative != ".":
+                safe_relative_path(relative, field_name="workspace package")
+            relative = (Path(lock_directory) / relative).as_posix()
         if relative not in {".", *roots}:
             continue
         project_file = repo / relative / "pyproject.toml"
@@ -359,6 +363,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
                                   public.repository.base_commit,
                                   expected_hash=source_hash)
         roots = list(source_roots or [])
+        lock_directory = "."
         if resolve:
             ProbeDependencyIdentity.public_import_roots(roots)
             if len(roots) > 8:
@@ -368,6 +373,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
             if lock.schema_version != "public-probe-wheel-lock-v1":
                 raise ContractError("unsupported public wheel lock")
             lock_path = repo / lock.source_lock
+            lock_directory = Path(lock.source_lock).parent.as_posix()
             if not lock_path.resolve().is_relative_to(repo) or lock_path.is_symlink():
                 raise ContractError("public dependency lock leaves the prepared source")
             raw_lock = lock_path.read_bytes()
@@ -453,7 +459,8 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
             path.write_text(canonical_json({"url": wheel.url, "archive_info": {
                 "hash": wheel.hash.replace(":", "=", 1)}}), encoding="utf-8")
         workspace_metadata = _workspace_metadata(repo, packages, roots,
-                                                 source.git_commit, target)
+                                                 source.git_commit, target,
+                                                 lock_directory=lock_directory)
         generated = probe_project_files.prepare(repo, workspace_metadata, roots, output)
         if generated and _inventory(output / probe_project_files.DIRECTORY) != {
                 item["path"]: item["content_hash"] for item in generated}:

@@ -1,0 +1,66 @@
+schema_version: task-public-v1
+task_id: original-isort-2491
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/PyCQA/isort.git
+  base_commit: ae91dadf34951e316d5a81ffe7ac086952f1da65
+  language: python
+issue:
+  title: Comments moving bug when using import aliases
+  description: "Comments moving bug when using import aliases\nI'm seeing a bug(?)\
+    \ where if a `from` import has an alias, is too long for a single line, and has\
+    \ a comment after the import (for instance a `mypy` comment) then the comment\
+    \ is getting incorrectly sorted onto the wrong line. See the example below:\r\n\
+    \r\n**Input: `test.py`**\r\n```python\r\nfrom a_long_name_to_enforce.splitting_across.two_lines\
+    \ import (  # type: ignore[attr-defined]\r\n    a_random_attribute as renamed_random_attribute,\r\
+    \n)\r\n\r\n```\r\n\r\n**Expected**\r\nNo change; comment stays on line as this\
+    \ is the actual line that `mypy` complains about.\r\n\r\n**Observed**\r\n```python\r\
+    \nfrom a_long_name_to_enforce.splitting_across.two_lines import (\r\n    a_random_attribute\
+    \ as renamed_random_attribute,  # type: ignore[attr-defined]\r\n)\r\n\r\n```\r\
+    \nComment is shifted down onto the alias line instead."
+constraints:
+  allowed_paths:
+  - isort/**
+  forbidden_paths:
+  - tests/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/conda/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"public-tests-\") as temp:\n    checkout\
+    \ = Path(temp) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n       \
+    \            ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\", \"\
+    __pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = str(checkout)\n\
+    \    env[\"PATH\"] = str(Path(sys.executable).parent) + os.pathsep + env[\"PATH\"\
+    ]\n    result = subprocess.run([sys.executable, \"-m\", *sys.argv[1:]], cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - pytest
+  - --no-header
+  - -rA
+  - --tb=line
+  - --color=no
+  - -p
+  - no:cacheprovider
+  - tests/unit/test_regressions.py
+  timeout_seconds: 120
+  infrastructure_exit_codes:
+  - 2
+  - 3
+  - 4
+  - 5
+  environment:
+    PYTHONPATH: /workspace
+tags:
+- swe-rebench
+- original-input
+- development

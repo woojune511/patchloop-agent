@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.pyinfra-dev_1776_pyinfra-1679_interface@sha256:006ad338382e2b70f773394f9161c0471b0af066d40e504858c22442150c7563
+image_digest: sha256:006ad338382e2b70f773394f9161c0471b0af066d40e504858c22442150c7563
+source_image_tag: swerebench/sweb.eval.x86_64.pyinfra-dev_1776_pyinfra-1679_interface:latest

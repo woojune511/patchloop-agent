@@ -20,6 +20,12 @@ tasks/dev-train/original-montepy-933/** -text whitespace=cr-at-eol
 tasks/dev-train/original-montepy-933-v2/** -text whitespace=cr-at-eol
 tasks/dev-train/original-darts-3065/** -text whitespace=cr-at-eol
 tasks/dev-train/original-conan-19735/** -text whitespace=cr-at-eol
+tasks/dev-train/original-opensandbox-816/** -text whitespace=cr-at-eol
+tasks/dev-train/original-pyinfra-1679/** -text whitespace=cr-at-eol
+tasks/dev-train/original-isort-2491/** -text whitespace=cr-at-eol
+tasks/dev-train/original-opensandbox-816/reference.patch -whitespace
+tasks/dev-train/original-pyinfra-1679/reference.patch -whitespace
+tasks/dev-train/original-isort-2491/reference.patch -whitespace
 tasks/dev-train/hf-hub-xet-endpoint-propagation-v6/** -text whitespace=cr-at-eol
 
 # Preserve the exact evaluator-submitted bytes, including agent-authored blank-line spaces.
