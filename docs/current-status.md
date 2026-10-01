@@ -27,8 +27,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
-[B result](history/2026-10-02-review-time-extension-result.md): report completed in
-about 117s; patch unchanged, acceptance FAIL. USD 0.1576275; allocation closed.
+[B scope audit](history/2026-10-02-review-scope-diagnosis.md): backend requirement
+and clue delivered but not followed up. Helper-only probe; baseline kept, no run queued.
 
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
 public/scope/safety passed, original hidden verdicts FAIL. USD 4.0651735; allocation
