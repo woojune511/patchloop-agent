@@ -25,13 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The jsonschema [hidden-evaluation follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
-preserves mandatory hidden acceptance. Version 2 adds private behavioral checks;
-the saved patch passes hidden, public, scope and safety evaluation without new
-model calls. This is post-run verification, not a fresh solve or held-out trial.
-Version 1 and its FAIL remain unchanged. Live admission rejects missing hidden
-checks; coverage still requires isolated calibration.
-No paid allocation remains open.
+The [next original benchmark task](../.agent/original-next-readiness.md) is
+Conan #19735. Original evaluator artifacts are captured. Calibration awaits
+approval to pull its missing image (1.28 GB compressed). No paid run is authorized.
+
+The [jsonschema follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
+is closed: saved-patch hidden evaluation passed, original FAIL preserved.
+Live admission rejects missing hidden checks; coverage requires calibration.
 
 The [Darts decision audit](history/2026-10-01-darts-decision-scope-closeout.md)
 closes this investigation. Both runs expected inverse preservation; neither
