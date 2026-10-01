@@ -76,3 +76,52 @@ This verifies import readiness in Python 3.12, not complete dependency behavior 
 repair success. Public/hidden checks remain in the calibrated original Python 3.13
 image. No probe disabling, dependency-version relaxation or runtime policy change.
 No model/cost allocation is authorized; no paid call occurred.
+
+## Proposed single live invocation (awaiting user approval)
+
+Question: can the unchanged working agent baseline repair this original public
+issue and pass the calibrated original oracle in one fresh attempt? This is a
+development observation, not an intervention comparison or general success-rate
+estimate. No reference patch, added hidden tests, evaluator feedback or operator
+repair hints enter agent context. Start from the frozen clean base and empty state.
+
+Exact scope: task original-conan-19735 version 1 and hash above; model
+gpt-5.4-2026-03-05, xhigh, desired output ceiling 25,000 tokens; repository credential
+file C:\Users\geonj\Documents\PatchLoop\.env; repeat 1; proposed invocation-wide
+cap USD 3. Credential existence was checked without loading or printing its value.
+This is a new proposed allocation, not reuse of any earlier balance.
+
+Keep selected segmented-v1/result-or-size-v1/brief-v1/probes-none/repair-recheck/
+protected-v1/per-call-v1 policies, 40 model calls, 100 actions, four accepted edits,
+1,800 seconds, four changed production files and 1,000 diff lines. No test,
+dependency or public API edits. No automatic retry, resume, operator rescue,
+budget replenishment or second run. Count before dispatch, zero SDK retries;
+stop on count/transport/billing uncertainty or any exhausted limit.
+
+After approval, run from HEAD-clean tracked runtime/task inputs; record the exact
+commit/runtime and prepared descriptor identities through the normal run envelope.
+Reverify task, source, dependencies and existing images before dispatch. An input
+identity change requires review, not silent substitution. Proposed state root must
+be unused; preserve it after execution. No image pull/build or Docker startup.
+
+```powershell
+$env:PATCHLOOP_STATE_ROOT = 'C:\pt\runs\conan-original-live-20261001-v1'
+.venv\Scripts\patchloop.exe dev `
+  --provider openai `
+  --task tasks/dev-train/original-conan-19735/public.yaml `
+  --model gpt-5.4-2026-03-05 --reasoning-effort xhigh `
+  --max-output-tokens 25000 --repeat 1 --max-cost-usd 3 `
+  --env-file C:\Users\geonj\Documents\PatchLoop\.env `
+  --context-policy segmented-v1 --segment-boundary-policy result-or-size-v1 `
+  --planning-policy brief-v1 --enable-probes --probe-policy none `
+  --repair-recheck --repair-inspection-policy protected-v1 `
+  --completion-cost-policy per-call-v1 `
+  --prepared-source C:\pt\preparations\original-next-20261001-v1\source\prepared-source.json `
+  --prepared-probe-dependencies C:\pt\preparations\original-next-20261001-v1\probe-dependencies-v2\prepared-probe-dependencies.json
+```
+
+Report execution completion, exact submitted patch, public checks, original F2P/P2P
+hidden evaluation, acceptance, safety, time and settled cost separately. Success
+requires original task acceptance and passing scope/safety; public PASS or import
+readiness alone is insufficient. Preserve an unsuccessful result and diagnose it
+before proposing another run. This draft grants no paid dispatch authorization.
