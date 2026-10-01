@@ -64,10 +64,13 @@ Prepared source: `source/prepared-source.json` under the external root.
 Journal: `runs/run_dev_conanpackage.jsonl`. Focused tests 43 PASS, Ruff PASS;
 mock `run_dev_17ecdace4a5840bb` reaches EVALUATOR_PASS, safety NOT_RUN.
 
-Conan declares dependencies through setup.py and conans/requirements.txt, whereas
-the current optional-probe resolver reads PEP 621/735 project metadata. Probe
-preparation/execution remains NOT_RUN. Registered public/hidden checks work in the
-original Python 3.13 image. Before a live invocation, explicitly choose a scoped
-probe preparation solution or disclose probes disabled as a baseline difference.
+The opt-in operator adapter now accepts the reviewed public conans/requirements.txt
+without executing setup.py. [Preparation evidence](../docs/history/2026-10-01-conan-probe-preparation.md)
+shows resolution failed: patch-ng>=1.18.0,<1.19 has no usable wheel. The existing
+wheel-only boundary stopped preparation; no descriptor was published and probe
+execution remains NOT_RUN. Receipts: probe-dependencies-v1/ under the external root.
+Registered public/hidden checks work in the original Python 3.13 image. Before a
+live invocation, resolve this dependency boundary or explicitly propose probes
+disabled as a baseline difference; neither source builds nor version changes were made.
 Do not silently enable unprepared probes or claim complete baseline readiness.
 No model/cost allocation is authorized; no paid call occurred.

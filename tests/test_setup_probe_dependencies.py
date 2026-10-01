@@ -75,3 +75,41 @@ def test_snapshot_metadata_and_scoped_hook_restoration(tmp_path, monkeypatch):
     with pytest.raises(RuntimeError, match="preparation fails"):
         setup.prepare(public=None, prepared_source=repo, output=tmp_path / "out", source_roots=[])
     assert previous == (setup.resolution.project_requirements, setup.prepared._workspace_metadata)
+
+
+def test_explicit_requirements_file_binds_bytes_without_running_setup(tmp_path):
+    repo = fixture(tmp_path, SOURCE.replace("install_requires=deps", "install_requires=load()"))
+    requirements = repo / "requirements.txt"
+    requirements.write_text("# public dependencies\nrequests>=2\n\n"
+                            "colorama; sys_platform == 'win32'\n", encoding="utf-8")
+    actual = setup.metadata(repo, groups=[], extras=[], requirements_file="requirements.txt")
+    assert actual["requirements"] == ["requests>=2"]
+    assert actual["adapter"] == "operator-selected-requirements-v1"
+    assert actual["requirements_file"] == {
+        "path": "requirements.txt", "hash": sha256_bytes(requirements.read_bytes()),
+    }
+    target = repo / "installed"
+    target.mkdir()
+    records = setup.workspace_metadata(repo,
+        [{"name": "public-demo", "source": {"editable": "."}}], [], "a" * 40, target,
+        requirements_file="requirements.txt")
+    assert records[0]["requirements_file"] == actual["requirements_file"]
+    with pytest.raises(ContractError):
+        setup.metadata(repo, groups=[], extras=[])
+
+
+@pytest.mark.parametrize("line", ["-r other.txt", "--index-url https://example.test",
+                                  "pkg @ https://example.test/a.whl", "public-demo",
+                                  "./local", "requests \\", "--editable ."])
+def test_explicit_file_rejects_pip_options_and_non_index_sources(tmp_path, line):
+    repo = fixture(tmp_path)
+    (repo / "requirements.txt").write_text(line, encoding="utf-8")
+    with pytest.raises(ContractError):
+        setup.metadata(repo, groups=[], extras=[], requirements_file="requirements.txt")
+
+
+@pytest.mark.parametrize("path", ["../outside.txt", "/absolute.txt", "C:/outside.txt"])
+def test_explicit_requirements_path_must_stay_in_source(tmp_path, path):
+    repo = fixture(tmp_path)
+    with pytest.raises(ContractError):
+        setup.metadata(repo, groups=[], extras=[], requirements_file=path)

@@ -186,6 +186,14 @@ assignment). It never executes setup code. Dynamic/ambiguous/reused metadata,
 extras/groups, URL/self dependencies and PEP 621 projects are rejected. It supports
 only this public metadata shape; it is not a general setup.py interpreter.
 
+For runtime dependencies stored in a reviewed public file, the operator may add
+`--requirements-file <repository-relative-path>`. This explicitly selects the file
+instead of interpreting `install_requires`; it does not infer setup.py behavior.
+Only single-line PEP 508 index requirements and blank/comment lines are accepted.
+Pip options, includes, continuations, URL/local/self dependencies and paths outside
+the source are rejected. The selected path and byte hash are bound in resolution
+provenance and workspace metadata. Literal name/Python admission remains required.
+
 Its resolution provenance binds `setup.py`; minimal project metadata also binds
 the actual pyproject bytes and uses the explicit source-snapshot version. Existing
 wheel origins/hashes, platform limits, offline installation, publication-last

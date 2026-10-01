@@ -27,7 +27,7 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 The [next original benchmark task](../.agent/original-next-readiness.md) is
 Conan #19735: isolated original evaluation rejects baseline, accepts reference.
-Optional probes remain unprepared; no paid run is authorized.
+Probe preparation is blocked by patch-ng's missing wheel; no paid run is authorized.
 
 The [jsonschema follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
 is closed: saved-patch hidden evaluation passed, original FAIL preserved.
