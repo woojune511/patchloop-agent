@@ -16,13 +16,16 @@ from diagnostics import review_context_offline as offline
 from diagnostics.decision_sampler import require
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
+from patchloop.deadline import ExecutionDeadline
 from patchloop.dev import native_compaction, runner, segments
 from patchloop.dev.contracts import DevRunRequest, RequestedTool
 from patchloop.dev.conversation import history_metadata
 from patchloop.dev.cost import DevCostLedger
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
+from patchloop.prepared_probe_dependencies import load_dependencies
 from patchloop.sandbox import LocalSandbox
+from patchloop.sandbox.probes import DockerProbeSandbox
 from patchloop.util import canonical_json, sha256_json
 
 
@@ -38,7 +41,24 @@ class RepairLedger(DevCostLedger):
         self.spent_nanos += self.review_cost
 
 
-def scripted_review(loaded, arm, root, workspace, client, budget, panel):
+def admitted_probe(loaded, deadline):
+    """Verify existing public dependencies/image only; never acquire an image."""
+    env = loaded.envelope
+    require(env.probe_image_digest is not None, "source probes were not enabled")
+    dependencies = (
+        load_dependencies(Path(env.prepared_probe_dependencies_path), loaded.package.public,
+                          env.probe_dependencies)
+        if env.prepared_probe_dependencies_path else None
+    )
+    sandbox = DockerProbeSandbox(dependencies=dependencies)
+    require(sandbox.preflight(deadline=deadline) == {
+        "image_digest": env.probe_image_digest, "profile_hash": env.probe_profile_hash,
+    }, "review probe identity changed")
+    return sandbox
+
+
+def scripted_review(loaded, arm, root, workspace, client, budget, panel, *,
+                    execute_probes=False):
     require(type(client) is continuation.ScriptedClient, "scripted reviewer required")
     request = offline.reviewer_request(loaded, arm)
     fields = ["suspected_behavior", "evidence", "observation", "candidate_hash", "limitations"]
@@ -56,15 +76,21 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel):
             },
         }
     )
-    journal = DevJournal(root, "run_dev_scriptedreview")
+    journal = DevJournal(root, "run_dev_review" + sha256_json(str(root.resolve()))[7:23])
+    deadline = ExecutionDeadline(budget.started + 180, budget.clock)
     gateway = DevToolGateway(
         workspace=workspace,
         public_task=loaded.package.public,
         sandbox=LocalSandbox(),
         journal=journal,
         limits=loaded.envelope.limits,
+        deadline=deadline,
+        probe_policy=loaded.envelope.probe_policy,
     )
     try:
+        if execute_probes:
+            gateway.probe_sandbox = admitted_probe(loaded, deadline)
+            journal.append("review_probe_admitted", gateway.probe_sandbox.identity)
         while True:
             budget._ready()
             count = client.responses.input_tokens.count(**request).input_tokens
@@ -77,6 +103,7 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel):
             budget.settle(
                 usage.input_tokens, usage.input_tokens_details.cached_tokens, usage.output_tokens
             )
+            budget._ready()
             calls = [c for c in response.output if c.type == "function_call"]
             require(bool(calls), "review response has no calls")
             if any(c.name == "finish_review" for c in calls):
@@ -95,8 +122,8 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel):
             )
             for call in calls:
                 budget.action(call.name)
-                # Probe execution needs a real admitted probe sandbox; do not silently fake it.
-                require(call.name != "run_probe", "offline reviewer probe NOT_RUN")
+                require(call.name != "run_probe" or execute_probes,
+                        "offline reviewer probe NOT_RUN")
                 args = json.loads(call.arguments)
                 decision = args.pop("turn_decision")
                 result = gateway.execute(
@@ -107,6 +134,9 @@ def scripted_review(loaded, arm, root, workspace, client, budget, panel):
                         turn_decision=decision,
                     )
                 )
+                abort, reason = runner._batch_execution_abort([result])
+                require(abort is None, reason or "review execution uncertain")
+                budget._ready()
                 request["input"].extend(
                     [
                         {
@@ -179,7 +209,8 @@ def repair_inputs(branch, report):
 
 
 def _rehearse_locked(
-    source, sequence, output, arm, repair_client, *, reviewer_client=None, panel_root=None
+    source, sequence, output, arm, repair_client, *, reviewer_client=None, panel_root=None,
+    execute_reviewer_probes=False,
 ):
     require(arm in {"A", "B", "C"}, "unknown arm")
     require(type(repair_client) is continuation.ScriptedClient, "scripted repair required")
@@ -216,6 +247,7 @@ def _rehearse_locked(
             reviewer_client,
             budget,
             panel,
+            execute_probes=execute_reviewer_probes,
         )
     budget.repair()
     env = loaded.envelope
@@ -314,7 +346,8 @@ def _rehearse_locked(
 
 
 def rehearse(
-    source, sequence, output, arm, repair_client, *, reviewer_client=None, panel_root=None
+    source, sequence, output, arm, repair_client, *, reviewer_client=None, panel_root=None,
+    execute_reviewer_probes=False,
 ):
     panel_root = panel_root or output.parent / "panel"
     panel = DevJournal(panel_root, "run_dev_reviewpanel")
@@ -327,4 +360,5 @@ def rehearse(
             repair_client,
             reviewer_client=reviewer_client,
             panel_root=panel_root,
+            execute_reviewer_probes=execute_reviewer_probes,
         )

@@ -148,3 +148,88 @@ def test_report_does_not_replace_current_diff_check(correct_source, tmp_path):
     assert "review_handoff" in states[0]
     assert all("review_handoff" not in state for state in states[1:])
     assert states[2]["current_diff"]["patch_hash"] != states[0]["current_diff"]["patch_hash"]
+
+
+@pytest.mark.parametrize("outcome", ["pass", "counterexample", "cleanup", "recovery", "deadline"])
+def test_review_probe_receipts_and_abort(correct_source, tmp_path, monkeypatch, outcome):
+    from patchloop.errors import RecoveryError
+
+    class Probe:
+        identity = {"image_digest": "fixture", "profile_hash": "fixture"}
+
+        def run_probe(self, workspace, question, python_source, **kwargs):
+            assert kwargs["deadline"].remaining_seconds() <= 180
+            if outcome == "recovery":
+                raise RecoveryError("fixture uncertainty")
+            return {"exit_code": int(outcome == "counterexample"),
+                    "passed": outcome == "pass", "stdout": "observed fixture",
+                    "cleanup_failed": outcome == "cleanup",
+                    "deadline_exhausted": outcome == "deadline"}
+
+    monkeypatch.setattr(r, "admitted_probe", lambda *args: Probe())
+    seq = boundary(correct_source)
+    review = reviewer(correct_source, seq)
+    probe = call("run_probe", {"question": "Observe fixture", "python_source": "print(1)"},
+                 "verify")
+    review.steps[0] = [probe]
+    repair = c.ScriptedClient(stop_steps())
+    output = tmp_path / outcome
+    if outcome in {"cleanup", "recovery", "deadline"}:
+        with pytest.raises(ContractError):
+            r.rehearse(correct_source, seq, output, "B", repair, reviewer_client=review,
+                       execute_reviewer_probes=True)
+        assert not repair.created
+        assert DevJournal(tmp_path / "panel", "run_dev_reviewpanel").events()[-1][
+            "event_type"] == "panel_stopped"
+    else:
+        result = r.rehearse(correct_source, seq, output, "B", repair, reviewer_client=review,
+                            execute_reviewer_probes=True)
+        assert result["result"]["terminal"] == "AGENT_STOPPED"
+        receipt = json.loads(review.created[1]["input"][-1]["output"])
+        assert receipt["output"]["diff_hash"] == r.offline.load(
+            correct_source, seq).diff["patch_hash"]
+        assert receipt["output"]["passed"] == (outcome == "pass")
+        state = json.loads(repair.created[0]["input"][-1]["content"])["state"]
+        assert state["remaining_budget"]["tool_actions"] == 47
+        assert state["review_handoff"]["is_execution_receipt"] is False
+
+
+def test_probe_admission_mismatch_stops_before_dispatch(correct_source, tmp_path, monkeypatch):
+    def reject(*args):
+        raise ContractError("review probe identity changed")
+
+    monkeypatch.setattr(r, "admitted_probe", reject)
+    seq = boundary(correct_source)
+    review = reviewer(correct_source, seq)
+    repair = c.ScriptedClient(stop_steps())
+    with pytest.raises(ContractError, match="identity changed"):
+        r.rehearse(correct_source, seq, tmp_path / "mismatch", "A", repair,
+                   reviewer_client=review, execute_reviewer_probes=True)
+    assert not review.created and not repair.created
+
+
+@pytest.mark.parametrize("changed", [False, True])
+def test_probe_preflight_matches_source_identity(monkeypatch, changed):
+    from types import SimpleNamespace
+
+    loaded = SimpleNamespace(envelope=SimpleNamespace(
+        probe_image_digest="source-image", probe_profile_hash="source-profile",
+        prepared_probe_dependencies_path=None,
+    ))
+    marker = object()
+
+    class Probe:
+        def __init__(self, *, dependencies):
+            assert dependencies is None
+
+        def preflight(self, *, deadline):
+            assert deadline is marker
+            return {"image_digest": "source-image",
+                    "profile_hash": "changed" if changed else "source-profile"}
+
+    monkeypatch.setattr(r, "DockerProbeSandbox", Probe)
+    if changed:
+        with pytest.raises(ContractError, match="identity changed"):
+            r.admitted_probe(loaded, marker)
+    else:
+        assert isinstance(r.admitted_probe(loaded, marker), Probe)

@@ -6,9 +6,11 @@ This file specifies a proposed experiment, not new baseline behavior or a work q
 Offline progress: `diagnostics/review_context_offline.py` materializes candidates
 and builds A/B review inputs. `diagnostics/review_context_rehearsal.py` connects a
 finite scripted reviewer to the native repair loop with one replenished allowance.
-See the [integration record](../docs/history/2026-10-01-review-loop-rehearsal.md).
-Neither module provides a live collector. Reviewer probes remain unsupported in
-this rehearsal and stop explicitly rather than receiving synthetic PASS credit.
+See the [integration record](../docs/history/2026-10-01-review-loop-rehearsal.md)
+and [probe admission](../docs/history/2026-10-01-review-probe-admission.md).
+Neither module provides a live collector. Scripted reviewers can explicitly enable
+real registered probes with verified existing images/dependencies; repair-stage
+probes in the local continuation adapter remain unsupported.
 
 ## Decision and hypothesis
 
@@ -59,7 +61,8 @@ executed observation if any, candidate hash and limitations; no mandatory bug cl
 Forward reports as untrusted data. Old-candidate reports cannot certify later edits.
 The generic instruction, bounded report validator and factual packet builder are
 implemented offline. Scripted report delivery reaches the native repair loop;
-real provider acceptance and admitted reviewer probe execution remain unvalidated.
+real provider acceptance remains unvalidated. Reviewer probe execution now uses
+the original registered gateway and admitted Docker backend, with a shared deadline.
 
 Proposed model for every role: gpt-5.4-2026-03-05, xhigh, 25,000 output tokens.
 Credential file for future explicit approval: C:/Users/geonj/Documents/PatchLoop/.env.
@@ -130,5 +133,6 @@ cases. Conan required an explicit exact-hash, offline-only materialization mappi
 because its source runtime differs; native resume compatibility remains unproven.
 Three-arm scripted continuation reaches isolated fixture evaluation, and nine
 real-source branches (excluding Conan) reach scripted stop with native history
-preserved. Current image/dependency admission, real reviewer probes, live collector,
-Conan native compatibility and the frozen scoring manifest remain pending.
+preserved. Reviewer probe admission is separately exercised against existing public
+images/dependencies. Full repair/evaluator environment admission, live collector,
+Conan native migration and the frozen scoring manifest remain pending.
