@@ -27,8 +27,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
-The [review pilot](history/2026-10-01-review-pilot-ready.md) collector and scoring
-passed provider-free rehearsals. Exact-manifest paid approval remains pending.
+The [review pilot](history/2026-10-01-review-pilot-live-stop.md) stopped at its review
+call cap: 1 complete, 1 partial, 10 unstarted. Allocation closed; no benefit claim.
 
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
 public/scope/safety passed, original hidden verdicts FAIL. USD 4.0651735; allocation
