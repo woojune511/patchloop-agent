@@ -25,9 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Fixed batch](../.agent/fixed-batch-proposal.md): three fixed tasks
-[prepared](history/2026-10-01-fixed-batch-package-admission.md), with isolated
-controls and probe canaries passing. CI/review pending; no paid execution authorized.
+[Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
+public/scope/safety passed, target bug cases remain failing. USD 4.0651735; allocation
+closed. Keep baseline; next question is OpenSandbox's public repair/verification gap.
 
 [Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) found no
 contract conflict. The [empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md)

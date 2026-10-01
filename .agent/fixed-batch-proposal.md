@@ -1,7 +1,9 @@
 # Fixed baseline batch proposal
 
-Status: packages and probe environments prepared 2026-10-01; CI/review pending; paid execution NOT_RUN
-and not authorized. This proposal does not extend any previous allocation.
+Status: approved batch completed 2026-10-01; allocation CLOSED. Results:
+[0/3 accepted, USD 4.0651735](../docs/history/2026-10-01-fixed-batch-live-results.md).
+The original scope and commands below are retained for provenance, not permission
+to repeat them. No remaining budget or prior approval carries forward.
 
 ## Question and decision
 
