@@ -27,15 +27,16 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
 public/scope/safety passed, target bug cases remain failing. USD 4.0651735; allocation
-closed. Keep baseline; next question is OpenSandbox's public repair/verification gap.
+closed. Keep baseline.
+The [OpenSandbox diagnosis](history/2026-10-01-opensandbox-public-diagnosis.md) confirms
+helper repair but incomplete backend revalidation. Check recurrence before intervention.
 
-[Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) found no
-contract conflict. The [empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md)
-confirms constructor rejection on base/reference/PA1. Audit closed; no change queued.
+[Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) and
+[empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md) closed;
+no contract change needed.
 
-[HF v6 calibration](history/2026-10-01-hf-v6-behavior-evaluation.md) accepts saved
-HB2 and rejects baseline/four wrong controls. Hidden checks now follow public
-behavior; historical v5 FAIL is preserved. Keep agent baseline; no paid run queued.
+[HF v6 calibration](history/2026-10-01-hf-v6-behavior-evaluation.md) accepts HB2
+and rejects baseline/four wrong controls. Historical v5 FAIL preserved; no run queued.
 
 [Conan](history/2026-10-01-conan-live-result.md) and
 [probe replay](history/2026-10-01-conan-final-probe-replay.md) passed.
