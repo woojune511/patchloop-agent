@@ -2,9 +2,9 @@
 
 Status: IMPLEMENTED / PROVIDER-FREE REHEARSED / NOT AUTHORIZED FOR LIVE CALLS.
 This file specifies a proposed experiment, not new baseline behavior or a work queue.
-The first approved allocation is closed after a reviewer call-limit stop. This
-revised completion/accounting contract requires a new manifest and paid approval;
-the old manifest and allocation cannot be reused.
+Both approved allocations are closed: the first stopped at the reviewer call limit,
+the second on a mixed read/probe batch. The audited tool contract requires a fresh
+manifest and paid approval; neither old manifest nor allocation can be reused.
 
 Offline progress: `diagnostics/review_context_offline.py` materializes candidates
 and builds A/B review inputs. `diagnostics/review_context_rehearsal.py` connects a
