@@ -25,6 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+[Milestone review](history/2026-10-01-post-conan-evidence-review.md): retain the
+baseline and close this work sequence. Coverage remains unresolved; no new
+contract defect or justified intervention is selected. No next experiment queued.
+
 [Conan](history/2026-10-01-conan-live-result.md): F2P 1/1, P2P 21/21,
 public 28/28, safety PASS; USD 0.544468. [Probe replay](history/2026-10-01-conan-final-probe-replay.md)
 passes. Keep baseline; no causal probe-benefit claim. Allocation closed.
@@ -33,12 +37,9 @@ The [jsonschema follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
 is closed: saved-patch hidden evaluation passed, original FAIL preserved.
 Live admission rejects missing hidden checks; coverage requires calibration.
 
-The [Darts decision audit](history/2026-10-01-darts-decision-scope-closeout.md)
-closes this investigation. Both runs expected inverse preservation; neither
-records a considered/rejected zero-width input. B recognized the regression gap
-but submitted after ordinary drop-mode checks. This establishes incomplete
-verification, not its internal cause or an effective general intervention.
-Keep the baseline; no further Darts diagnostic, prompt change or paid run is queued.
+The [Darts audit](history/2026-10-01-darts-decision-scope-closeout.md) is closed:
+incomplete boundary verification is established; its internal cause and an
+effective intervention are not. No further Darts diagnostic or paid run is queued.
 
 The [zero-width diagnosis](history/2026-10-01-zero-width-ownership-diagnosis.md)
 locates Darts' task-level defect in inverse column reconstruction, with sufficient
