@@ -25,6 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+[HF v6 calibration](history/2026-10-01-hf-v6-behavior-evaluation.md) accepts saved
+HB2 and rejects baseline/four wrong controls. Hidden checks now follow public
+behavior; historical v5 FAIL is preserved. Keep agent baseline; no paid run queued.
+
 [Conan](history/2026-10-01-conan-live-result.md): F2P 1/1, P2P 21/21,
 public 28/28, safety PASS; USD 0.544468. [Probe replay](history/2026-10-01-conan-final-probe-replay.md)
 passes. Keep baseline; no causal probe-benefit claim. Allocation closed.
@@ -33,12 +37,9 @@ The [jsonschema follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
 is closed: saved-patch hidden evaluation passed, original FAIL preserved.
 Live admission rejects missing hidden checks; coverage requires calibration.
 
-The [Darts decision audit](history/2026-10-01-darts-decision-scope-closeout.md)
-closes this investigation. Both runs expected inverse preservation; neither
-records a considered/rejected zero-width input. B recognized the regression gap
-but submitted after ordinary drop-mode checks. This establishes incomplete
-verification, not its internal cause or an effective general intervention.
-Keep the baseline; no further Darts diagnostic, prompt change or paid run is queued.
+The [Darts audit](history/2026-10-01-darts-decision-scope-closeout.md) is closed:
+incomplete boundary verification is established; its internal cause and an
+effective intervention are not. No further Darts diagnostic or paid run is queued.
 
 The [zero-width diagnosis](history/2026-10-01-zero-width-ownership-diagnosis.md)
 locates Darts' task-level defect in inverse column reconstruction, with sufficient
@@ -90,10 +91,8 @@ Completion and mutation-attempt call-budget arithmetic lives in
 the state snapshot and admits tools; monetary admission stays in `dev/cost.py`.
 Runtime identity changes normally and prior-run resume restrictions remain intact.
 
-The [cross-task development review](history/2026-09-30-development-review.md) closes
-the repeated prompt/context/prior-decision ablation series without establishing an
-effective default quality fix. Keep the solving baseline; no new quality experiment,
-memory extension or mandatory probe gate is queued.
+The [development review](history/2026-09-30-development-review.md) closes repeated
+ablations: no quality experiment, memory extension or mandatory probe gate queued.
 
 The subsequent contract review identified two reproducible engineering defects:
 undisclosed mutation-explanation length limits and successful append returns after

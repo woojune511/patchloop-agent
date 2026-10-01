@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: docker.io/swerebenchv2/huggingface-huggingface-hub@sha256:c698facf4c9a9e636b8dc114aa9bda6a17ee5f89fe3efd43f39a6543540e891f
+image_digest: sha256:c698facf4c9a9e636b8dc114aa9bda6a17ee5f89fe3efd43f39a6543540e891f
+source_image_tag: docker.io/swerebenchv2/huggingface-huggingface-hub:3180-6f9b87e

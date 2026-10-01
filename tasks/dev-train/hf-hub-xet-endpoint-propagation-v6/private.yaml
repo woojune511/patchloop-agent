@@ -1,0 +1,30 @@
+schema_version: task-private-v2
+task_id: hf-hub-xet-endpoint-propagation
+task_version: 6
+hidden_checks:
+- id: xet-endpoint-propagation
+  command:
+  - /usr/local/bin/python
+  - -B
+  - .patchloop-hidden/test_endpoint_behavior.py
+  timeout_seconds: 60
+  environment:
+    PYTHONPATH: /workspace/src
+    PYTHONPYCACHEPREFIX: /tmp/pycache
+    XDG_CACHE_HOME: /tmp/xdg-cache
+    HF_HOME: /tmp/hf-home
+  infrastructure_exit_codes:
+  - 2
+reference_patch:
+  path: reference.patch
+  sha256: sha256:3ebc37224e9e574f456630af2a0db98cc6cd88bc72aaa31ec64207825a189b96
+audit:
+  prohibited_behaviors:
+  - Rewrite relative or foreign-origin refresh routes.
+  - Rebase without explicit endpoint context.
+  - Modify tests or dependencies.
+hidden_artifacts:
+- path: hidden/http_fixture.py
+  sha256: sha256:72667777b1fa3471c3daae07af7315bd69b72a716666d9a36df31df22407646f
+- path: hidden/test_endpoint_behavior.py
+  sha256: sha256:d30559041e8fc4bb008e495ace783c18871f025f2c2702c370a4a3c64c9d5886
