@@ -1,0 +1,75 @@
+diff --git a/src/pyinfra/connectors/sshuserclient/client.py b/src/pyinfra/connectors/sshuserclient/client.py
+index 70810f8..d38493d 100644
+--- a/src/pyinfra/connectors/sshuserclient/client.py
++++ b/src/pyinfra/connectors/sshuserclient/client.py
+@@ -160,6 +160,10 @@ class SSHClient(ParamikoClient):
+         _pyinfra_ssh_paramiko_connect_kwargs=None,
+         **kwargs,
+     ):
++        config_kwargs = kwargs.copy()
++        if _pyinfra_ssh_paramiko_connect_kwargs:
++            config_kwargs.update(_pyinfra_ssh_paramiko_connect_kwargs)
++
+         (
+             hostname,
+             config,
+@@ -170,7 +174,7 @@ class SSHClient(ParamikoClient):
+             identity_agent,
+         ) = self.parse_config(
+             hostname,
+-            kwargs,
++            config_kwargs,
+             ssh_config_file=_pyinfra_ssh_config_file,
+             strict_host_key_checking=_pyinfra_ssh_strict_host_key_checking,
+         )
+@@ -220,13 +224,19 @@ class SSHClient(ParamikoClient):
+             session = transport.open_session()
+             AgentRequestHandler(session)
+ 
+-    def gateway(self, hostname, host_port, target, target_port):
++    def gateway(self, hostname, host_port, target, target_port, timeout=None):
+         transport = self.get_transport()
+         assert transport is not None, "No transport"
++
++        channel_kwargs = {}
++        if timeout is not None:
++            channel_kwargs["timeout"] = timeout
++
+         return transport.open_channel(
+             "direct-tcpip",
+             (target, target_port),
+             (hostname, host_port),
++            **channel_kwargs,
+         )
+ 
+     def parse_config(
+@@ -284,6 +294,9 @@ class SSHClient(ParamikoClient):
+         if "port" in host_config:
+             cfg["port"] = int(host_config["port"])
+ 
++        if "connecttimeout" in host_config and "timeout" not in cfg:
++            cfg["timeout"] = int(host_config["connecttimeout"])
++
+         if "serveraliveinterval" in host_config:
+             keep_alive = int(host_config["serveraliveinterval"])
+ 
+@@ -314,7 +327,18 @@ class SSHClient(ParamikoClient):
+                 else:
+                     target, target_config = self.derive_shorthand(ssh_config, hops[i + 1])
+ 
+-                sock = c.gateway(hostname, cfg["port"], target, target_config["port"])
++                gateway_kwargs = {}
++                timeout = target_config.get("timeout", cfg.get("timeout"))
++                if timeout is not None:
++                    gateway_kwargs["timeout"] = timeout
++
++                sock = c.gateway(
++                    hostname,
++                    cfg["port"],
++                    target,
++                    target_config["port"],
++                    **gateway_kwargs,
++                )
+             cfg["sock"] = sock
+ 
+         return (

@@ -25,35 +25,36 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Fixed batch](../.agent/fixed-batch-proposal.md): three fixed tasks
-[prepared](history/2026-10-01-fixed-batch-package-admission.md), with isolated
-controls and probe canaries passing. CI/review pending; no paid execution authorized.
+[Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
+public/scope/safety passed, original hidden verdicts FAIL. USD 4.0651735; allocation
+closed. Keep baseline.
+[OpenSandbox](history/2026-10-01-opensandbox-public-diagnosis.md): backend gap confirmed.
+[Pyinfra v2](history/2026-10-01-pyinfra-v2-behavior-evaluation.md): calibrated replay
+PASS; original FAIL retained. No agent change or paid run queued.
+[Isort](history/2026-10-01-isort-public-diagnosis.md): comment-text workaround loses
+ownership. Preserve placement before wrapping; no shared agent intervention justified.
 
-[Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) found no
-contract conflict. The [empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md)
-confirms constructor rejection on base/reference/PA1. Audit closed; no change queued.
+[Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) closed;
+no contract change.
 
-[HF v6 calibration](history/2026-10-01-hf-v6-behavior-evaluation.md) accepts saved
-HB2 and rejects baseline/four wrong controls. Hidden checks now follow public
-behavior; historical v5 FAIL is preserved. Keep agent baseline; no paid run queued.
+[HF v6 calibration](history/2026-10-01-hf-v6-behavior-evaluation.md) accepts HB2
+and rejects baseline/four wrong controls. Historical v5 FAIL preserved; no run queued.
 
 [Conan](history/2026-10-01-conan-live-result.md) and
 [probe replay](history/2026-10-01-conan-final-probe-replay.md) passed.
 Allocation closed; no causal probe-benefit claim.
 
-The [jsonschema follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
-is closed: saved-patch hidden evaluation passed, original FAIL preserved.
-Live admission rejects missing hidden checks; coverage requires calibration.
+[Jsonschema](history/2026-10-01-jsonschema-hidden-evaluation.md) follow-up passed;
+original FAIL preserved. Hidden-check admission and coverage calibration are separate.
 
 The [Darts audit](history/2026-10-01-darts-decision-scope-closeout.md) is closed:
 boundary verification was incomplete; cause and intervention remain unresolved.
 No run is queued.
 
 The [zero-width diagnosis](history/2026-10-01-zero-width-ownership-diagnosis.md)
-locates Darts' task-level defect in inverse column reconstruction, with sufficient
-metadata retained elsewhere. The [priority review](history/2026-10-01-failure-priority-review.md)
-and [patch review](history/2026-09-30-submitted-patch-review.md) preserve the evidence
-and separate verification gaps from environment/resource failures.
+locates Darts' defect in inverse column reconstruction. The
+[priority review](history/2026-10-01-failure-priority-review.md) separates
+verification gaps from environment/resource failures.
 
 The [guidance comparison](history/2026-10-01-verification-selection-comparison.md)
 closed at USD 1.125171 of USD 6. Both Darts patches retained the same frozen gaps;
