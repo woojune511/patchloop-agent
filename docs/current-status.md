@@ -25,9 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The [next original benchmark task](../.agent/original-next-readiness.md) is
-Conan #19735: isolated original evaluation rejects baseline, accepts reference.
-Prepared probes pass the Conan import canary; no paid run is authorized.
+The [Conan original-task run](history/2026-10-01-conan-live-result.md) passed:
+original F2P 1/1, P2P 21/21, public 28/28 and safety PASS; USD 0.544468.
+A probe exposed an intermediate defect. Keep the baseline; probe benefit is not
+causally isolated. Allocation closed.
 
 The [jsonschema follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
 is closed: saved-patch hidden evaluation passed, original FAIL preserved.

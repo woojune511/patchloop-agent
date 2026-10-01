@@ -75,9 +75,14 @@ exit 0, no timeout, cleanup confirmed. Journal: runs/run_dev_conanprobecanary.js
 This verifies import readiness in Python 3.12, not complete dependency behavior or
 repair success. Public/hidden checks remain in the calibrated original Python 3.13
 image. No probe disabling, dependency-version relaxation or runtime policy change.
-No model/cost allocation is authorized; no paid call occurred.
+The approved single run is now complete; see the
+[result](../docs/history/2026-10-01-conan-live-result.md). Allocation closed.
 
-## Proposed single live invocation (awaiting user approval)
+## Approved single live invocation (completed; no reuse)
+
+The user approved the exact proposal below. Execution run_dev_ffee311ba7aa4a11
+finished EVALUATOR_PASS at USD 0.544468 of USD 3. This command is a record of the
+closed invocation, not permission to run it again. No retry/resume is authorized.
 
 Question: can the unchanged working agent baseline repair this original public
 issue and pass the calibrated original oracle in one fresh attempt? This is a
