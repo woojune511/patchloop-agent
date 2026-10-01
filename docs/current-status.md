@@ -28,8 +28,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
 public/scope/safety passed, target bug cases remain failing. USD 4.0651735; allocation
 closed. Keep baseline.
-The [OpenSandbox diagnosis](history/2026-10-01-opensandbox-public-diagnosis.md) confirms
-helper repair but incomplete backend revalidation. Check recurrence before intervention.
+[OpenSandbox](history/2026-10-01-opensandbox-public-diagnosis.md): backend gap confirmed.
+[Pyinfra](history/2026-10-01-pyinfra-public-diagnosis.md): public timeout flow passes;
+audit failing evaluator expectations before inferring a shared mechanism.
 
 [Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) and
 [empty-field check](history/2026-10-01-pydantic-empty-field-boundary.md) closed;
@@ -42,9 +43,8 @@ and rejects baseline/four wrong controls. Historical v5 FAIL preserved; no run q
 [probe replay](history/2026-10-01-conan-final-probe-replay.md) passed.
 Allocation closed; no causal probe-benefit claim.
 
-The [jsonschema follow-up](history/2026-10-01-jsonschema-hidden-evaluation.md)
-is closed: saved-patch hidden evaluation passed, original FAIL preserved.
-Live admission rejects missing hidden checks; coverage requires calibration.
+[Jsonschema](history/2026-10-01-jsonschema-hidden-evaluation.md) follow-up passed;
+original FAIL preserved. Hidden-check admission and coverage calibration are separate.
 
 The [Darts audit](history/2026-10-01-darts-decision-scope-closeout.md) is closed:
 boundary verification was incomplete; cause and intervention remain unresolved.
