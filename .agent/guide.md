@@ -135,8 +135,9 @@ confirmed owned-container cleanup; this is not an exactly-once process guarantee
 ## Live, cost, and evaluation boundary
 
 Live work requires the authorized exact checked-in `dev-train` task, model,
-credential file, repeat count, and positive invocation-wide cap. Runtime/lock inputs
-and the selected task package must be tracked and HEAD-clean. Keep credentials out
+credential file, repeat count, and positive invocation-wide cap.
+Admission rejects missing hidden checks before execution; calibrate coverage separately.
+Runtime/lock inputs and the selected task package must be tracked and HEAD-clean. Keep credentials out
 of repository/evaluator subprocess environments. Inspect existing local images;
 never start Docker Desktop or pull/build images automatically.
 

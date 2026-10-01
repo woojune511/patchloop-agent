@@ -1,0 +1,21 @@
+schema_version: task-private-v2
+task_id: jsonschema-regex-recursion-1538
+task_version: 2
+hidden_checks:
+- id: private-regex-semantics
+  command:
+  - python
+  - /workspace/.patchloop-hidden/test_regex_semantics.py
+  timeout_seconds: 60
+  infrastructure_exit_codes:
+  - 2
+reference_patch:
+  path: reference.patch
+  sha256: sha256:7e49e1b173001de6ad8a27072dcaed076f9b5d48835a2f5d6644e590c317193a
+audit:
+  expected_files: []
+  prohibited_behaviors:
+  - Modify upstream tests, dependencies or public signatures.
+hidden_artifacts:
+- path: hidden/test_regex_semantics.py
+  sha256: sha256:4ab3d296eab3d4366e9d7d329436aadd2415602eff76790b0c61d32f7c1509ee

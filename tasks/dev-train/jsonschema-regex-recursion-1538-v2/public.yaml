@@ -1,0 +1,102 @@
+schema_version: task-public-v1
+task_id: jsonschema-regex-recursion-1538
+task_version: 2
+split: dev-train
+repository:
+  url: https://github.com/python-jsonschema/jsonschema.git
+  base_commit: 51cd75e399c760e5aa3adce600dcce1385756ab0
+  language: python
+issue:
+  title: regex format checker crashes with RecursionError on deeply nested patterns
+  description: 'The `regex` format checker is registered with `raises=re.error`, but
+    `re.compile` raises `RecursionError` (not an `re.error` subclass) when the pattern
+    nesting exceeds the C stack limit. This causes an uncaught exception to propagate
+    from the validator instead of reporting the instance as invalid.
+
+
+    ### Reproduction
+
+
+    ```python
+
+    from jsonschema import Draft202012Validator, FormatChecker
+
+
+    v = Draft202012Validator({"format": "regex"}, format_checker=FormatChecker())
+
+    list(v.iter_errors("(" * 500))
+
+    # RecursionError: maximum recursion depth exceeded
+
+    ```
+
+
+    ### Expected
+
+
+    The instance should be reported as invalid (not a valid regex), not raise.
+
+
+    ### Cause
+
+
+    `re.compile("(" * 500)` raises `RecursionError`, which is not a subclass of `re.error`,
+    so `FormatChecker.check` does not convert it into a `FormatError`.
+
+
+    This is the same class of issue as the `OverflowError` case in #1526, but a distinct
+    exception type.
+
+
+    ### Versions
+
+
+    - jsonschema 4.26.0
+
+    - Python 3.13'
+constraints:
+  allowed_paths:
+  - jsonschema/**
+  forbidden_paths:
+  - jsonschema/tests/**
+  max_changed_files: 4
+  max_diff_lines: 120
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+- id: regex-format-contract
+  command:
+  - python
+  - -c
+  - "import json, sys, traceback\ntry:\n    import jsonschema\n    from jsonschema\
+    \ import Draft202012Validator, FormatChecker\n    if not jsonschema.__file__.startswith('/workspace/'):\n\
+    \        raise RuntimeError('workspace import required')\n    validator = Draft202012Validator({'format':\
+    \ 'regex'}, format_checker=FormatChecker())\nexcept Exception:\n    traceback.print_exc()\n\
+    \    sys.exit(2)\nfailed = False\nfor label, pattern, expected in [('valid', '[a-z]+',\
+    \ 0), ('invalid', '[', 1), ('reported', '(' * 500, 1), ('non-string', 42, 0)]:\n\
+    \    try:\n        errors = list(validator.iter_errors(pattern))\n        passed\
+    \ = len(errors) == expected and all(e.validator == 'format' for e in errors)\n\
+    \        print(json.dumps({'case': label, 'errors': len(errors), 'expected': expected,\
+    \ 'passed': passed}))\n    except Exception as exc:\n        passed = False\n\
+    \        print(json.dumps({'case': label, 'escaped': type(exc).__name__, 'passed':\
+    \ False}))\n    failed |= not passed\nsys.exit(1 if failed else 0)\n"
+  timeout_seconds: 60
+  infrastructure_exit_codes:
+  - 2
+- id: upstream-format-regression
+  command:
+  - python
+  - -c
+  - "import json, sys, unittest, traceback\ntry:\n    import jsonschema\n    import\
+    \ jsonschema.tests.test_format\n    if not jsonschema.__file__.startswith('/workspace/'):\n\
+    \        raise RuntimeError('workspace import required')\n    suite = unittest.defaultTestLoader.loadTestsFromModule(jsonschema.tests.test_format)\n\
+    except Exception:\n    traceback.print_exc()\n    sys.exit(2)\nresult = unittest.TextTestRunner(verbosity=1).run(suite)\n\
+    print(json.dumps({'tests_run': result.testsRun, 'failures': len(result.failures),\
+    \ 'errors': len(result.errors), 'skipped': len(result.skipped)}))\nsys.exit(0\
+    \ if result.wasSuccessful() and result.testsRun == 8 and not result.skipped else\
+    \ 1)\n"
+  timeout_seconds: 60
+  infrastructure_exit_codes:
+  - 2
+tags:
+- public-issue

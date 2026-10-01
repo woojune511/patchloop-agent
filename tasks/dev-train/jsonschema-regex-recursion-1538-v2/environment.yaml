@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: patchloop-jsonschema-1538@sha256:901f8eebd991b12da7dfb43a74c4c6ee51d7fcd9d37cead1f8af7dc292017ccd
+image_digest: sha256:901f8eebd991b12da7dfb43a74c4c6ee51d7fcd9d37cead1f8af7dc292017ccd
+source_image_tag: patchloop-jsonschema-1538:py312-v1

@@ -9,10 +9,11 @@ import argparse
 import ast
 import re
 import tomllib
+from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
-from packaging.requirements import Requirement
+from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
 
@@ -20,10 +21,11 @@ from patchloop import prepared_probe_dependencies as prepared
 from patchloop import probe_dependency_resolution as resolution
 from patchloop.errors import ContractError
 from patchloop.task_loader import load_task_package
-from patchloop.util import canonical_json, sha256_bytes
+from patchloop.util import canonical_json, safe_relative_path, sha256_bytes
 
 
-def metadata(repo: Path, *, groups: list[str], extras: list[str]) -> dict:
+def metadata(repo: Path, *, groups: list[str], extras: list[str],
+             requirements_file: str | None = None) -> dict:
     if groups or extras:
         raise ContractError("literal setup adapter supports runtime requirements only")
     pyproject = prepared._read_bytes(repo / "pyproject.toml")
@@ -71,34 +73,55 @@ def metadata(repo: Path, *, groups: list[str], extras: list[str]) -> dict:
     python = literal("python_requires", "")
     if not isinstance(python, str) or not SpecifierSet(python).contains("3.12.0"):
         raise ContractError("setup project does not support the probe Python target")
-    requirements = literal("install_requires", [])
+    file_record = None
+    if requirements_file is None:
+        requirements = literal("install_requires", [])
+    else:
+        relative = safe_relative_path(requirements_file, field_name="requirements file")
+        source = repo / relative
+        if source.is_symlink() or not source.resolve().is_relative_to(repo.resolve()):
+            raise ContractError("public requirements file leaves the prepared source")
+        content = prepared._read_bytes(source)
+        requirements = [line.strip() for line in content.decode("utf-8").splitlines()
+                        if line.strip() and not line.lstrip().startswith("#")]
+        file_record = {"path": relative, "hash": sha256_bytes(content)}
     if not isinstance(requirements, (list, tuple)) or len(requirements) > 1024:
         raise ContractError("setup runtime requirements must be a bounded literal sequence")
     selected = set()
     for text in requirements:
         if not isinstance(text, str) or any(c in text for c in "\r\n\x00"):
             raise ContractError("setup requirements must be single-line PEP 508 declarations")
-        req = Requirement(text)
+        try:
+            req = Requirement(text)
+        except InvalidRequirement as exc:
+            raise ContractError(
+                "requirements must be PEP 508 declarations, not pip options"
+            ) from exc
         if req.url or canonicalize_name(req.name) == canonicalize_name(name):
             raise ContractError("only public index dependencies are supported; no URL/self deps")
         if req.marker and not req.marker.evaluate(resolution.MARKERS):
             continue
         req.marker = None
         selected.add(str(req))
-    return {"path": "setup.py", "hash": sha256_bytes(raw), "project_name": name,
+    result = {"path": "setup.py", "hash": sha256_bytes(raw), "project_name": name,
             "requires_python": python, "requirements": sorted(selected), "groups": [],
             "extras": [], "adapter": "literal-setup-runtime-v1",
             "pyproject_hash": sha256_bytes(pyproject)}
+    if file_record is not None:
+        result.update(adapter="operator-selected-requirements-v1", requirements_file=file_record)
+    return result
 
 
-def workspace_metadata(repo, packages, roots, commit, target):
-    public = metadata(repo, groups=[], extras=[])
+def workspace_metadata(repo, packages, roots, commit, target, *, requirements_file=None):
+    public = metadata(repo, groups=[], extras=[], requirements_file=requirements_file)
     name, version = public["project_name"], f"0+patchloop.{commit}"
     if packages != [{"name": name, "source": {"editable": "."}}]:
         raise ContractError("setup workspace identity differs from public resolution")
     record = {"name": name, "version": version,
               "version_basis": "source_snapshot_not_release_version", "project_path": ".",
               "pyproject_hash": public["pyproject_hash"], "setup_hash": public["hash"]}
+    if "requirements_file" in public:
+        record["requirements_file"] = public["requirements_file"]
     directory = target / f"{re.sub(r'[-_.]+', '_', name)}-{version}.dist-info"
     directory.mkdir(exist_ok=False)
     (directory / "METADATA").write_text(
@@ -107,11 +130,20 @@ def workspace_metadata(repo, packages, roots, commit, target):
     return [record]
 
 
-def prepare(*, public, prepared_source: Path, output: Path, source_roots: list[str]):
-    with patch.object(resolution, "project_requirements", metadata), \
-            patch.object(prepared, "_workspace_metadata", workspace_metadata):
+def prepare(*, public, prepared_source: Path, output: Path, source_roots: list[str],
+            requirements_file: str | None = None,
+            generated_wheel_receipt: Path | None = None,
+            generated_wheel_receipt_hash: str | None = None):
+    reader, writer = metadata, workspace_metadata
+    if requirements_file is not None:
+        reader = partial(metadata, requirements_file=requirements_file)
+        writer = partial(workspace_metadata, requirements_file=requirements_file)
+    with patch.object(resolution, "project_requirements", reader), \
+            patch.object(prepared, "_workspace_metadata", writer):
         return prepared.prepare_dependencies(public=public, prepared_source=prepared_source,
-            output=output, source_roots=source_roots, resolve=True)
+            output=output, source_roots=source_roots, resolve=True,
+            generated_wheel_receipt=generated_wheel_receipt,
+            generated_wheel_receipt_hash=generated_wheel_receipt_hash)
 
 
 if __name__ == "__main__":
@@ -120,7 +152,12 @@ if __name__ == "__main__":
     parser.add_argument("--prepared-source", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source-root", action="append", default=[])
+    parser.add_argument("--requirements-file", help="Reviewed repository-relative PEP 508 file")
+    parser.add_argument("--generated-wheel-receipt", type=Path)
+    parser.add_argument("--generated-wheel-receipt-hash")
     args = parser.parse_args()
     print(prepare(public=load_task_package(args.task).public,
                   prepared_source=args.prepared_source, output=args.output,
-                  source_roots=args.source_root))
+                  source_roots=args.source_root, requirements_file=args.requirements_file,
+                  generated_wheel_receipt=args.generated_wheel_receipt,
+                  generated_wheel_receipt_hash=args.generated_wheel_receipt_hash))

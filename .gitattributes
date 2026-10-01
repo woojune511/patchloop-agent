@@ -19,6 +19,7 @@ tasks/dev-train/original-toqito-1538/** -text whitespace=cr-at-eol
 tasks/dev-train/original-montepy-933/** -text whitespace=cr-at-eol
 tasks/dev-train/original-montepy-933-v2/** -text whitespace=cr-at-eol
 tasks/dev-train/original-darts-3065/** -text whitespace=cr-at-eol
+tasks/dev-train/original-conan-19735/** -text whitespace=cr-at-eol
 
 # Preserve the exact evaluator-submitted bytes, including agent-authored blank-line spaces.
 reports/memory-development/artifacts/run_0794d94df2f24d87-submitted.patch -whitespace
@@ -30,3 +31,6 @@ fixtures/task-packages/self-validation-csv-quoted-newline/reference.patch -white
 tasks/dev-train/original-toqito-1538/reference.patch -whitespace
 tasks/dev-train/original-montepy-933/reference.patch -whitespace
 tasks/dev-train/original-darts-3065/reference.patch -whitespace
+tasks/dev-train/original-conan-19735/reference.patch -whitespace
+tasks/dev-train/jsonschema-regex-recursion-1538/reference.patch -whitespace
+tasks/dev-train/jsonschema-regex-recursion-1538-v2/reference.patch -whitespace
