@@ -50,7 +50,7 @@ All required cases were accounted for; no timeout, setup error or extra failure.
 Separate containers ran without network or host mounts and were cleaned up.
 Journal: `runs/run_dev_conanoriginalcalibration.jsonl` under the external root.
 
-## Package integration complete; optional probes unresolved
+## Package integration and probe preparation complete
 
 [Package admission](../docs/history/2026-10-01-conan-package-admission.md) added
 `tasks/dev-train/original-conan-19735`, version 1. Original issue and oracle inputs
@@ -64,13 +64,15 @@ Prepared source: `source/prepared-source.json` under the external root.
 Journal: `runs/run_dev_conanpackage.jsonl`. Focused tests 43 PASS, Ruff PASS;
 mock `run_dev_17ecdace4a5840bb` reaches EVALUATOR_PASS, safety NOT_RUN.
 
-The opt-in operator adapter now accepts the reviewed public conans/requirements.txt
-without executing setup.py. [Preparation evidence](../docs/history/2026-10-01-conan-probe-preparation.md)
-shows resolution failed: patch-ng>=1.18.0,<1.19 has no usable wheel. The existing
-wheel-only boundary stopped preparation; no descriptor was published and probe
-execution remains NOT_RUN. Receipts: probe-dependencies-v1/ under the external root.
-Registered public/hidden checks work in the original Python 3.13 image. Before a
-live invocation, resolve this dependency boundary or explicitly propose probes
-disabled as a baseline difference; neither source builds nor version changes were made.
-Do not silently enable unprepared probes or claim complete baseline readiness.
+The first [preparation attempt](../docs/history/2026-10-01-conan-probe-preparation.md)
+failed because patch-ng>=1.18.0,<1.19 has no usable public wheel; its receipts remain
+unchanged. The [follow-up](../docs/history/2026-10-01-conan-probe-ready.md) built the
+reviewed public patch-ng 1.18.1 sdist offline in the existing clean Python image,
+then reused explicit generated-wheel admission. Conan setup.py was not executed.
+Descriptor: probe-dependencies-v2/prepared-probe-dependencies.json under the external
+root. Real DockerProbeSandbox imports patch_ng and the Conan detection module;
+exit 0, no timeout, cleanup confirmed. Journal: runs/run_dev_conanprobecanary.jsonl.
+This verifies import readiness in Python 3.12, not complete dependency behavior or
+repair success. Public/hidden checks remain in the calibrated original Python 3.13
+image. No probe disabling, dependency-version relaxation or runtime policy change.
 No model/cost allocation is authorized; no paid call occurred.

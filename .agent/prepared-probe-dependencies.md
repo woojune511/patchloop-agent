@@ -193,6 +193,9 @@ Only single-line PEP 508 index requirements and blank/comment lines are accepted
 Pip options, includes, continuations, URL/local/self dependencies and paths outside
 the source are rejected. The selected path and byte hash are bound in resolution
 provenance and workspace metadata. Literal name/Python admission remains required.
+The adapter also forwards `--generated-wheel-receipt` and
+`--generated-wheel-receipt-hash` to the existing reviewed-wheel admission above;
+this does not enable source builds during preparation or agent execution.
 
 Its resolution provenance binds `setup.py`; minimal project metadata also binds
 the actual pyproject bytes and uses the explicit source-snapshot version. Existing

@@ -131,7 +131,9 @@ def workspace_metadata(repo, packages, roots, commit, target, *, requirements_fi
 
 
 def prepare(*, public, prepared_source: Path, output: Path, source_roots: list[str],
-            requirements_file: str | None = None):
+            requirements_file: str | None = None,
+            generated_wheel_receipt: Path | None = None,
+            generated_wheel_receipt_hash: str | None = None):
     reader, writer = metadata, workspace_metadata
     if requirements_file is not None:
         reader = partial(metadata, requirements_file=requirements_file)
@@ -139,7 +141,9 @@ def prepare(*, public, prepared_source: Path, output: Path, source_roots: list[s
     with patch.object(resolution, "project_requirements", reader), \
             patch.object(prepared, "_workspace_metadata", writer):
         return prepared.prepare_dependencies(public=public, prepared_source=prepared_source,
-            output=output, source_roots=source_roots, resolve=True)
+            output=output, source_roots=source_roots, resolve=True,
+            generated_wheel_receipt=generated_wheel_receipt,
+            generated_wheel_receipt_hash=generated_wheel_receipt_hash)
 
 
 if __name__ == "__main__":
@@ -149,7 +153,11 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source-root", action="append", default=[])
     parser.add_argument("--requirements-file", help="Reviewed repository-relative PEP 508 file")
+    parser.add_argument("--generated-wheel-receipt", type=Path)
+    parser.add_argument("--generated-wheel-receipt-hash")
     args = parser.parse_args()
     print(prepare(public=load_task_package(args.task).public,
                   prepared_source=args.prepared_source, output=args.output,
-                  source_roots=args.source_root, requirements_file=args.requirements_file))
+                  source_roots=args.source_root, requirements_file=args.requirements_file,
+                  generated_wheel_receipt=args.generated_wheel_receipt,
+                  generated_wheel_receipt_hash=args.generated_wheel_receipt_hash))

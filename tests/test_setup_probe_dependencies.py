@@ -113,3 +113,26 @@ def test_explicit_requirements_path_must_stay_in_source(tmp_path, path):
     repo = fixture(tmp_path)
     with pytest.raises(ContractError):
         setup.metadata(repo, groups=[], extras=[], requirements_file=path)
+
+
+def test_selected_file_composes_with_existing_receipt_admission(tmp_path, monkeypatch):
+    repo = fixture(tmp_path)
+    (repo / "requirements.txt").write_text("requests>=2", encoding="utf-8")
+    previous = setup.resolution.project_requirements, setup.prepared._workspace_metadata
+    receipt = tmp_path / "receipt.json"
+
+    def fail(**kwargs):
+        assert kwargs["generated_wheel_receipt"] == receipt
+        assert kwargs["generated_wheel_receipt_hash"] == "sha256:" + "a" * 64
+        assert kwargs["resolve"] is True
+        value = setup.resolution.project_requirements(repo, groups=[], extras=[])
+        assert value["requirements_file"]["path"] == "requirements.txt"
+        raise ContractError("receipt rejected")
+
+    monkeypatch.setattr(setup.prepared, "prepare_dependencies", fail)
+    with pytest.raises(ContractError, match="receipt rejected"):
+        setup.prepare(public=None, prepared_source=repo, output=tmp_path / "out",
+                      source_roots=[], requirements_file="requirements.txt",
+                      generated_wheel_receipt=receipt,
+                      generated_wheel_receipt_hash="sha256:" + "a" * 64)
+    assert previous == (setup.resolution.project_requirements, setup.prepared._workspace_metadata)
