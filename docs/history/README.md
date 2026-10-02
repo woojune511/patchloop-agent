@@ -19,6 +19,7 @@ Approvals are closed.
 
 ## New records
 
+- [Lite environments](2026-10-02-swebench-lite-environment-preparation.md).
 - [Lite dev20 calibration](2026-10-02-swebench-lite-dev20-calibration.md).
 - [Lite dev20 inventory](2026-10-02-swebench-lite-dev20-inventory.md).
 - [Lite mini results](2026-10-02-swebench-lite-mini-pilot.md).

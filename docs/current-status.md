@@ -27,9 +27,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3 resolved, USD
 0.29098320; allocation closed. Pydicom's full public suite remains incompatible.
-[Dev20 calibration](history/2026-10-02-swebench-lite-dev20-calibration.md): 20 images
-acquired; 12 reference controls pass, 8 blocked by NumPy/pytest/libGL environment
-issues. External drafts only; no new agent solves or paid batch authorized.
+[Dev20 calibration](history/2026-10-02-swebench-lite-dev20-calibration.md): 12/20 ready.
+[Environment preparation](history/2026-10-02-swebench-lite-environment-preparation.md):
+8 public checks pass with dependency corrections; offline image builds await approval.
+Corrected-image hidden calibration NOT_RUN; external drafts, no paid batch authorized.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
