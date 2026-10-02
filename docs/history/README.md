@@ -17,7 +17,7 @@ Approvals are closed.
 
 ## New records
 
-- [Provider limit diagnosis](2026-10-03-provider-rate-limit-diagnosis.md).
+- [Seeded selected-test results](2026-10-03-selected-tests-results.md).
 - [Public predicate diagnostic](2026-10-03-public-predicate-result.md).
 - [Final verification audit](2026-10-02-lite-final-verification-audit.md).
 - [SQLFluff probe results](2026-10-02-lite-sql3-probe-results.md).
