@@ -9,9 +9,10 @@ agent improvement claim or benchmark score. All runs remain official=false.
 
 On 2026-10-02 the user approved the three image downloads, integration/calibration,
 and the conditional USD 3.60 live pilot below. It never covers the 300 test tasks.
-Registered public/private calibration passes. The three calibrated packages are
-admitted under tasks/dev-train; the frozen live invocation uses the allocation below.
-This exact conditional approval is retained; no larger or replacement allocation follows.
+The approved invocation completed: 3/3 submitted, 1/3 resolved by original native
+evaluation, USD 0.29098320 spent. The allocation is closed, including unused budget.
+The frozen settings below are an execution record, not authority for another run.
+See the [results](../docs/history/2026-10-02-swebench-lite-mini-pilot.md).
 
 ## Frozen inputs
 
@@ -88,7 +89,7 @@ evidence instead of rewriting the original test oracle or choosing replacement t
 Deterministic host transport/import fixes may receive separately identified
 provider-free checks; this does not authorize retries of completed solver attempts.
 
-## Approved conditional invocation
+## Executed invocation (closed)
 
 - Exact model: gpt-5.4-mini-2026-03-17; reasoning xhigh, desired output 25,000.
 - Credential file: C:/Users/geonj/Documents/PatchLoop/.env; never put its contents
@@ -136,8 +137,10 @@ Raw-byte Git attributes preserve their original evaluator artifact hashes.
 See the [initial findings](../docs/history/2026-10-02-swebench-lite-preflight.md)
 and [public-check follow-up](../docs/history/2026-10-02-swebench-lite-public-checks.md).
 
-Model calls, submitted agent patches, native agent evaluation and all 300 test tasks
-remain NOT_RUN. Model cost is USD 0.00; the credential file was not loaded.
+Nineteen model calls produced three submitted patches. Original native evaluation
+resolved pydicom and rejected astroid/marshmallow, matching the private adapter.
+All 300 test tasks remain NOT_RUN. The USD 3.60 allocation is closed after
+USD 0.29098320 usage-based model cost; no retry or budget transfer is authorized.
 
 Reproduction of preparation only (optional pyarrow stays outside runtime deps):
 

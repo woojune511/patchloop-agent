@@ -19,9 +19,9 @@ Approvals are closed.
 
 ## New records
 
+- [Lite mini results](2026-10-02-swebench-lite-mini-pilot.md).
 - [Lite preflight](2026-10-02-swebench-lite-preflight.md).
 - [Public checks](2026-10-02-swebench-lite-public-checks.md).
-
 - [Darts close-out](2026-10-01-darts-decision-scope-closeout.md).
 - [Zero-width](2026-10-01-zero-width-ownership-diagnosis.md).
 - [Priorities](2026-10-01-failure-priority-review.md).
@@ -30,7 +30,6 @@ Approvals are closed.
 - [Verification](2026-10-01-verification-selection-comparison.md).
 - [Patches](2026-09-30-submitted-patch-review.md).
 - [Probe replay comparison](2026-09-30-probe-replay-comparison.md).
-
 - [Basic/current 6-task baseline](2026-09-28-basic-current-baseline-comparison.md).
 - [Probe construction](2026-09-28-probe-construction-analysis.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
@@ -48,11 +47,8 @@ Approvals are closed.
 - [Benchmark differences](2026-09-27-anyio-benchmark-differences.md).
 - [Caller support scope](2026-09-27-caller-support-scope.md).
 - [Caller cancellation](2026-09-27-caller-cancel-preservation.md).
-
 - [Cleanup information results](2026-09-27-cleanup-information-results.md).
-
 - [Cleanup information preparation](2026-09-27-cleanup-information-preparation.md).
-
 - [Cleanup cancellation](2026-09-27-anyio-cleanup-cancellation.md).
 - [Caller information results](2026-09-27-caller-information-results.md).
 - [Caller information](2026-09-27-caller-information.md).
@@ -71,8 +67,7 @@ Approvals are closed.
 - [AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md).
 - [planning OFF regression](2026-09-27-planning-off-regression.md).
 - [First-plan timing](2026-09-27-after-source-planning-comparison.md).
-- [first plan after source](2026-09-26-after-source-planning.md):
-  opt-in timing change preserving later planning, with local input/recovery verification.
+- [First plan after source](2026-09-26-after-source-planning.md).
 - [planning ON/OFF full-run comparison](2026-09-26-planning-off-comparison.md):
   eight fresh solves, Pydantic-only OFF acceptance advantage, and unchanged HF failures.
 - [post-search declaration comparison](2026-09-26-declaration-checkpoint-comparison.md):

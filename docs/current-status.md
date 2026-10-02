@@ -25,12 +25,12 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[SWE-bench Lite pilot](../.agent/swebench-lite-pilot.md): three fixed dev tasks and
-conditional USD 3.60 mini invocation approved. Native and registered controls each
-passed 6/6. [Public-check follow-up](history/2026-10-02-swebench-lite-public-checks.md):
-pydicom uses 31 existing JSON/Sequence regressions; its full suite remains incompatible.
-Original hidden grading is unchanged. Paid calls remain NOT_RUN (USD 0).
-Packages admitted; the 300-task test split is not authorized.
+[SWE-bench Lite mini pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 3/3
+submitted, 1/3 resolved by original native evaluation (pydicom); astroid/marshmallow
+failed. Public/scope/safety passed; all required tests ran. Cost USD 0.29098320,
+19 model calls. Allocation closed; no retry or 300-task run authorized.
+Pydicom uses 31 JSON/Sequence public regressions; its full suite remains incompatible.
+The result measures this three-task dev pilot, not general benchmark accuracy.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
@@ -170,8 +170,8 @@ start another adjacent diagnostic merely because the previous one is complete.
 
 ## Execution and claim boundaries
 
-Earlier paid allocations are closed. The approved Lite pilot above remains unspent
-and gated by preflight; it grants no other runs. An [older interrupted call](history/2026-09-28-expectation-review-results.md)
+Paid allocations, including the Lite pilot, are closed. No further run is authorized.
+An [older interrupted call](history/2026-09-28-expectation-review-results.md)
 retains unknown billing separately from later settled allocations; closed allocation
 does not mean that earlier uncertainty was resolved.
 
