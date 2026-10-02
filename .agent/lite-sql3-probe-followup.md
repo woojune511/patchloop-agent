@@ -1,6 +1,10 @@
 # Lite SQLFluff three-task probe follow-up
 
-Prepared 2026-10-02. Status: **public readiness checked; paid approval pending**.
+Prepared 2026-10-02. Status: **executed and closed**.
+The user approved execution after both exact-head CI jobs passed. Three fresh
+solves submitted; original hidden resolution was 0/3, public/safety PASS 3/3,
+settled cost USD 1.67171265. No allocation remains available. See the
+[outcome](../docs/history/2026-10-02-lite-sql3-probe-results.md).
 Operator plan only, never coding-agent context. This is a new allocation; the
 [closed dev20 batch](swebench-lite-dev20-batch.md) stays closed with its original results.
 
@@ -45,7 +49,7 @@ uncertainty/cap stops. Evidence is `canaries.json` and `controls-pass.xml` below
 These checks establish readiness, not improved repairs. The final committed-head
 receipt is generated separately before any execution approval is requested.
 
-## Proposed paid scope
+## Executed paid scope
 
 - Model `gpt-5.4-mini-2026-03-17`, `xhigh`, 25,000 desired output tokens.
 - Credential `C:/Users/geonj/Documents/PatchLoop/.env`; exact key read locally and
