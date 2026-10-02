@@ -1,0 +1,57 @@
+schema_version: task-public-v1
+task_id: swebench-lite-dev-pylint-dev-astroid-1268
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/pylint-dev/astroid.git
+  base_commit: ce5cbce5ba11cdc2f8139ade66feea1e181a7944
+  language: python
+issue:
+  title: '''AsStringVisitor'' object has no attribute ''visit_unknown'''
+  description: "'AsStringVisitor' object has no attribute 'visit_unknown'\n```python\r\
+    \n>>> import astroid\r\n>>> astroid.nodes.Unknown().as_string()\r\nTraceback (most\
+    \ recent call last):\r\n  File \"<stdin>\", line 1, in <module>\r\n  File \"/Users/tusharsadhwani/code/marvin-python/venv/lib/python3.9/site-packages/astroid/nodes/node_ng.py\"\
+    , line 609, in as_string\r\n    return AsStringVisitor()(self)\r\n  File \"/Users/tusharsadhwani/code/marvin-python/venv/lib/python3.9/site-packages/astroid/nodes/as_string.py\"\
+    , line 56, in __call__\r\n    return node.accept(self).replace(DOC_NEWLINE, \"\
+    \\n\")\r\n  File \"/Users/tusharsadhwani/code/marvin-python/venv/lib/python3.9/site-packages/astroid/nodes/node_ng.py\"\
+    , line 220, in accept\r\n    func = getattr(visitor, \"visit_\" + self.__class__.__name__.lower())\r\
+    \nAttributeError: 'AsStringVisitor' object has no attribute 'visit_unknown'\r\n\
+    >>> \r\n```\r\n### `python -c \"from astroid import __pkginfo__; print(__pkginfo__.version)\"\
+    ` output\r\n\r\n2.8.6-dev0\n"
+constraints:
+  allowed_paths:
+  - astroid/**
+  forbidden_paths:
+  - tests/**
+  - test/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
+    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
+    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
+    , \"__pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
+    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - tests
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+    SETUPTOOLS_USE_DISTUTILS: stdlib
+tags:
+- swebench-lite
+- dev
+- original-input
+- development

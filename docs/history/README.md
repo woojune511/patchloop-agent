@@ -11,18 +11,19 @@ Approvals are closed.
 
 | Snapshot | Useful lookup topics |
 | --- | --- |
-| [Current status](2026-09-26-context-split/current-status.md) | Prior baseline and observations |
-| [Internal guide](2026-09-26-context-split/agent-guide.md) | Earlier contracts |
+| [Status](2026-09-26-context-split/current-status.md) | Baseline |
+| [Guide](2026-09-26-context-split/agent-guide.md) | Contracts |
 | [Evidence](2026-09-26-context-split/evidence.md) | Early evidence |
 | [Operations](2026-09-26-context-split/operations.md) | Closed operations |
 
 
 ## New records
 
+- [Lite registration](2026-10-02-lite-dev20-registration.md).
 - [Lite public checks](2026-10-02-lite-public-regressions.md).
 - [Lite validation](2026-10-02-lite-environment-validation.md).
 - [Lite environments](2026-10-02-swebench-lite-environment-preparation.md).
-- [Lite dev20 calibration](2026-10-02-swebench-lite-dev20-calibration.md).
+- [Lite calibration](2026-10-02-swebench-lite-dev20-calibration.md).
 - [Lite dev20 inventory](2026-10-02-swebench-lite-dev20-inventory.md).
 - [Lite mini results](2026-10-02-swebench-lite-mini-pilot.md).
 - [Lite preflight](2026-10-02-swebench-lite-preflight.md).

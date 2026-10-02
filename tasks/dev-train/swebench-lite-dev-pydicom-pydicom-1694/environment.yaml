@@ -1,0 +1,3 @@
+schema_version: task-environment-v1
+evaluator_image: swebench/sweb.eval.x86_64.pydicom_1776_pydicom-1694@sha256:80521627a8f3f69682f16743158b1bc8555c9253c42164a4b59050293d84ba12
+image_digest: sha256:80521627a8f3f69682f16743158b1bc8555c9253c42164a4b59050293d84ba12

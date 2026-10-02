@@ -1,0 +1,53 @@
+schema_version: task-public-v1
+task_id: swebench-lite-dev-pvlib-pvlib-python-1707
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/pvlib/pvlib-python.git
+  base_commit: 40e9e978c170bdde4eeee1547729417665dbc34c
+  language: python
+issue:
+  title: "regression: iam.physical returns nan for aoi > 90\xB0 when n = 1"
+  description: "regression: iam.physical returns nan for aoi > 90\xB0 when n = 1\n\
+    **Describe the bug**\r\nFor pvlib==0.9.5, when n = 1 (no reflection) and aoi >\
+    \ 90\xB0, we get nan as result.\r\n\r\n**To Reproduce**\r\n```python\r\nimport\
+    \ pvlib\r\npvlib.iam.physical(aoi=100, n=1)\r\n```\r\nreturns `nan`.\r\n\r\n**Expected\
+    \ behavior**\r\nThe result should be `0`, as it was for pvlib <= 0.9.4.\r\n\r\n\
+    \r\n**Versions:**\r\n - ``pvlib.__version__``: '0.9.5'\r\n - ``pandas.__version__``:\
+    \  '1.5.3'\r\n - python: 3.10.4\r\n\n"
+constraints:
+  allowed_paths:
+  - pvlib/**
+  forbidden_paths:
+  - tests/**
+  - test/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
+    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
+    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
+    , \"__pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
+    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - pvlib/tests/test_iam.py
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+tags:
+- swebench-lite
+- dev
+- original-input
+- development

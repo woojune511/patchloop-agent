@@ -1,0 +1,85 @@
+schema_version: task-public-v1
+task_id: swebench-lite-dev-pvlib-pvlib-python-1854
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/pvlib/pvlib-python.git
+  base_commit: 27a3a07ebc84b11014d3753e4923902adf9a38c0
+  language: python
+issue:
+  title: PVSystem with single Array generates an error
+  description: "PVSystem with single Array generates an error\n**Is your feature request\
+    \ related to a problem? Please describe.**\r\n\r\nWhen a PVSystem has a single\
+    \ Array, you can't assign just the Array instance when constructing the PVSystem.\r\
+    \n\r\n```\r\nmount = pvlib.pvsystem.FixedMount(surface_tilt=35, surface_azimuth=180)\r\
+    \narray = pvlib.pvsystem.Array(mount=mount)\r\npv = pvlib.pvsystem.PVSystem(arrays=array)\r\
+    \n\r\n---------------------------------------------------------------------------\r\
+    \nTypeError                                 Traceback (most recent call last)\r\
+    \n<ipython-input-13-f5424e3db16a> in <module>\r\n      3 mount = pvlib.pvsystem.FixedMount(surface_tilt=35,\
+    \ surface_azimuth=180)\r\n      4 array = pvlib.pvsystem.Array(mount=mount)\r\n\
+    ----> 5 pv = pvlib.pvsystem.PVSystem(arrays=array)\r\n\r\n~\\anaconda3\\lib\\\
+    site-packages\\pvlib\\pvsystem.py in __init__(self, arrays, surface_tilt, surface_azimuth,\
+    \ albedo, surface_type, module, module_type, module_parameters, temperature_model_parameters,\
+    \ modules_per_string, strings_per_inverter, inverter, inverter_parameters, racking_model,\
+    \ losses_parameters, name)\r\n    251                 array_losses_parameters,\r\
+    \n    252             ),)\r\n--> 253         elif len(arrays) == 0:\r\n    254\
+    \             raise ValueError(\"PVSystem must have at least one Array. \"\r\n\
+    \    255                              \"If you want to create a PVSystem instance\
+    \ \"\r\n\r\nTypeError: object of type 'Array' has no len()\r\n\r\n```\r\n\r\n\
+    Not a bug per se, since the PVSystem docstring requests that `arrays` be iterable.\
+    \ Still, a bit inconvenient to have to do this\r\n\r\n```\r\nmount = pvlib.pvsystem.FixedMount(surface_tilt=35,\
+    \ surface_azimuth=180)\r\narray = pvlib.pvsystem.Array(mount=mount)\r\npv = pvlib.pvsystem.PVSystem(arrays=[array])\r\
+    \n```\r\n\r\n**Describe the solution you'd like**\r\nHandle `arrays=array` where\
+    \ `array` is an instance of `Array`\r\n\r\n**Describe alternatives you've considered**\r\
+    \nStatus quo - either make the single Array into a list, or use the PVSystem kwargs.\r\
+    \n\n"
+constraints:
+  allowed_paths:
+  - pvlib/**
+  forbidden_paths:
+  - tests/**
+  - test/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
+    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
+    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
+    , \"__pycache__\"))\n    import hashlib\n    projection = {'test_path': 'pvlib/tests/test_pvsystem.py',\
+    \ 'source_sha256': 'd3a9d6f28f449c70de214bf211d39aa74fd8959d8dce6a7b06cb9fd496158b60',\
+    \ 'old': '    with pytest.raises(TypeError):\\n        pvsystem.PVSystem(arrays=array_one)',\
+    \ 'new': '    # Accepting a single Array is the requested change, not a base regression.'}\n\
+    \    public_test = checkout / projection['test_path']\n    test_bytes = public_test.read_bytes()\n\
+    \    if hashlib.sha256(test_bytes).hexdigest() != projection['source_sha256']:\n\
+    \        print('public regression input drift: ' + projection['test_path'], flush=True)\n\
+    \        raise SystemExit(2)\n    test_text = test_bytes.decode('utf-8')\n   \
+    \ if test_text.count(projection['old']) != 1:\n        print('public regression\
+    \ anchor mismatch', flush=True)\n        raise SystemExit(2)\n    public_test.write_text(test_text.replace(projection['old'],\
+    \ projection['new']), encoding='utf-8')\n    print('public regression projection:\
+    \ isolate issue-conflicting expectation in ' + projection['test_path'], flush=True)\n\
+    \    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
+    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - pvlib/tests/test_pvsystem.py
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+  infrastructure_exit_codes:
+  - 2
+tags:
+- swebench-lite
+- dev
+- original-input
+- development

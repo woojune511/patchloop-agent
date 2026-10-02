@@ -1,0 +1,58 @@
+schema_version: task-public-v1
+task_id: swebench-lite-dev-pydicom-pydicom-1413
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/pydicom/pydicom.git
+  base_commit: f909c76e31f759246cec3708dadd173c5d6e84b1
+  language: python
+issue:
+  title: 'Error : a bytes-like object is required, not ''MultiValue'''
+  description: "Error : a bytes-like object is required, not 'MultiValue'\nHello,\r\
+    \n\r\nI am getting following error while updating the tag LongTrianglePointIndexList\
+    \ (0066,0040),\r\n**TypeError: a bytes-like object is required, not 'MultiValue'**\r\
+    \n\r\nI noticed that the error  gets produced only when the VR is given as \"\
+    OL\" , works fine with \"OB\", \"OF\" etc.\r\n\r\nsample code (assume 'lineSeq'\
+    \ is the dicom dataset sequence):\r\n```python\r\nimport pydicom\r\nimport array\r\
+    \ndata=list(range(1,10))\r\ndata=array.array('H', indexData).tostring()  # to\
+    \ convert to unsigned short\r\nlineSeq.add_new(0x00660040, 'OL', data)   \r\n\
+    ds.save_as(\"mydicom\")\r\n```\r\noutcome: **TypeError: a bytes-like object is\
+    \ required, not 'MultiValue'**\r\n\r\nusing version - 2.0.0.0\r\n\r\nAny help\
+    \ is appreciated.\r\n\r\nThank you\n"
+constraints:
+  allowed_paths:
+  - pydicom/**
+  forbidden_paths:
+  - tests/**
+  - test/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
+    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
+    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
+    , \"__pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
+    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - pydicom/tests/test_dataelem.py
+  - pydicom/tests/test_filewriter.py
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+tags:
+- swebench-lite
+- dev
+- original-input
+- development

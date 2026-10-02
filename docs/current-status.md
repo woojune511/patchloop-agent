@@ -30,7 +30,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 [Public regression correction](history/2026-10-02-lite-public-regressions.md): 20/20
 dev20 tasks calibrated. Two conflicting expectations are isolated in temporary
 public copies; retained-regression mutants fail and original hidden checks stay
-unchanged. External drafts await live registration; no paid batch authorized.
+unchanged. [Dev20 batch](../.agent/swebench-lite-dev20-batch.md): 20 packages registered;
+one solve each, USD 24 cap proposed. Approval pending.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.

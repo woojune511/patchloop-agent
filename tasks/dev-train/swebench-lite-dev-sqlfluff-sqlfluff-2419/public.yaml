@@ -1,0 +1,54 @@
+schema_version: task-public-v1
+task_id: swebench-lite-dev-sqlfluff-sqlfluff-2419
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/sqlfluff/sqlfluff.git
+  base_commit: f1dba0e1dd764ae72d67c3d5e1471cf14d3db030
+  language: python
+issue:
+  title: Rule L060 could give a specific error message
+  description: "Rule L060 could give a specific error message\nAt the moment rule\
+    \ L060 flags something like this:\r\n\r\n```\r\nL:  21 | P:   9 | L060 | Use 'COALESCE'\
+    \ instead of 'IFNULL' or 'NVL'.\r\n```\r\n\r\nSince we likely know the wrong word,\
+    \ it might be nice to actually flag that instead of both `IFNULL` and `NVL` -\
+    \ like most of the other rules do.\r\n\r\nThat is it should flag this:\r\n\r\n\
+    ```\r\nL:  21 | P:   9 | L060 | Use 'COALESCE' instead of 'IFNULL'.\r\n```\r\n\
+    \ Or this:\r\n\r\n```\r\nL:  21 | P:   9 | L060 | Use 'COALESCE' instead of 'NVL'.\r\
+    \n```\r\n\r\nAs appropriate.\r\n\r\nWhat do you think @jpy-git ?\r\n\n"
+constraints:
+  allowed_paths:
+  - src/sqlfluff/**
+  forbidden_paths:
+  - tests/**
+  - test/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
+    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
+    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
+    , \"__pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
+    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - test/rules
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+tags:
+- swebench-lite
+- dev
+- original-input
+- development

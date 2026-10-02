@@ -1,0 +1,87 @@
+schema_version: task-public-v1
+task_id: swebench-lite-dev-sqlfluff-sqlfluff-1517
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/sqlfluff/sqlfluff.git
+  base_commit: 304a197829f98e7425a46d872ada73176137e5ae
+  language: python
+issue:
+  title: '"Dropped elements in sequence matching" when doubled semicolon'
+  description: "\"Dropped elements in sequence matching\" when doubled semicolon\n\
+    ## Expected Behaviour\r\nFrankly, I'm not sure whether it (doubled `;`) should\
+    \ be just ignored or rather some specific rule should be triggered.\r\n## Observed\
+    \ Behaviour\r\n```console\r\n(.venv) ?master ~/prod/_inne/sqlfluff> echo \"select\
+    \ id from tbl;;\" | sqlfluff lint -\r\nTraceback (most recent call last):\r\n\
+    \  File \"/home/adam/prod/_inne/sqlfluff/.venv/bin/sqlfluff\", line 11, in <module>\r\
+    \n    load_entry_point('sqlfluff', 'console_scripts', 'sqlfluff')()\r\n  File\
+    \ \"/home/adam/prod/_inne/sqlfluff/.venv/lib/python3.9/site-packages/click/core.py\"\
+    , line 1137, in __call__\r\n    return self.main(*args, **kwargs)\r\n  File \"\
+    /home/adam/prod/_inne/sqlfluff/.venv/lib/python3.9/site-packages/click/core.py\"\
+    , line 1062, in main\r\n    rv = self.invoke(ctx)\r\n  File \"/home/adam/prod/_inne/sqlfluff/.venv/lib/python3.9/site-packages/click/core.py\"\
+    , line 1668, in invoke\r\n    return _process_result(sub_ctx.command.invoke(sub_ctx))\r\
+    \n  File \"/home/adam/prod/_inne/sqlfluff/.venv/lib/python3.9/site-packages/click/core.py\"\
+    , line 1404, in invoke\r\n    return ctx.invoke(self.callback, **ctx.params)\r\
+    \n  File \"/home/adam/prod/_inne/sqlfluff/.venv/lib/python3.9/site-packages/click/core.py\"\
+    , line 763, in invoke\r\n    return __callback(*args, **kwargs)\r\n  File \"/home/adam/prod/_inne/sqlfluff/src/sqlfluff/cli/commands.py\"\
+    , line 347, in lint\r\n    result = lnt.lint_string_wrapped(sys.stdin.read(),\
+    \ fname=\"stdin\")\r\n  File \"/home/adam/prod/_inne/sqlfluff/src/sqlfluff/core/linter/linter.py\"\
+    , line 789, in lint_string_wrapped\r\n    linted_path.add(self.lint_string(string,\
+    \ fname=fname, fix=fix))\r\n  File \"/home/adam/prod/_inne/sqlfluff/src/sqlfluff/core/linter/linter.py\"\
+    , line 668, in lint_string\r\n    parsed = self.parse_string(in_str=in_str, fname=fname,\
+    \ config=config)\r\n  File \"/home/adam/prod/_inne/sqlfluff/src/sqlfluff/core/linter/linter.py\"\
+    , line 607, in parse_string\r\n    return self.parse_rendered(rendered, recurse=recurse)\r\
+    \n  File \"/home/adam/prod/_inne/sqlfluff/src/sqlfluff/core/linter/linter.py\"\
+    , line 313, in parse_rendered\r\n    parsed, pvs = cls._parse_tokens(\r\n  File\
+    \ \"/home/adam/prod/_inne/sqlfluff/src/sqlfluff/core/linter/linter.py\", line\
+    \ 190, in _parse_tokens\r\n    parsed: Optional[BaseSegment] = parser.parse(\r\
+    \n  File \"/home/adam/prod/_inne/sqlfluff/src/sqlfluff/core/parser/parser.py\"\
+    , line 32, in parse\r\n    parsed = root_segment.parse(parse_context=ctx)\r\n\
+    \  File \"/home/adam/prod/_inne/sqlfluff/src/sqlfluff/core/parser/segments/base.py\"\
+    , line 821, in parse\r\n    check_still_complete(segments, m.matched_segments,\
+    \ m.unmatched_segments)\r\n  File \"/home/adam/prod/_inne/sqlfluff/src/sqlfluff/core/parser/helpers.py\"\
+    , line 30, in check_still_complete\r\n    raise RuntimeError(\r\nRuntimeError:\
+    \ Dropped elements in sequence matching! 'select id from tbl;;' != ';'\r\n\r\n\
+    ```\r\n## Steps to Reproduce\r\nRun \r\n```console\r\necho \"select id from tbl;;\"\
+    \ | sqlfluff lint -\r\n```\r\n## Dialect\r\ndefault (ansi)\r\n## Version\r\n```\r\
+    \nsqlfluff, version 0.6.6\r\nPython 3.9.5\r\n```\r\n## Configuration\r\nNone\r\
+    \n\n"
+constraints:
+  allowed_paths:
+  - src/sqlfluff/**
+  forbidden_paths:
+  - tests/**
+  - test/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
+    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
+    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
+    , \"__pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
+    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - test/core/parser
+  - test/core/linter_test.py
+  - -m
+  - not dbt
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+tags:
+- swebench-lite
+- dev
+- original-input
+- development

@@ -1,0 +1,73 @@
+schema_version: task-public-v1
+task_id: swebench-lite-dev-pvlib-pvlib-python-1154
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/pvlib/pvlib-python.git
+  base_commit: 0b8f24c265d76320067a5ee908a57d475cd1bb24
+  language: python
+issue:
+  title: pvlib.irradiance.reindl() model generates NaNs when GHI = 0
+  description: "pvlib.irradiance.reindl() model generates NaNs when GHI = 0\n**Describe\
+    \ the bug**\r\nThe reindl function should give zero sky diffuse when GHI is zero.\
+    \ Instead it generates NaN or Inf values due to \"term3\" having a quotient that\
+    \ divides by GHI.  \r\n\r\n**Expected behavior**\r\nThe reindl function should\
+    \ result in zero sky diffuse when GHI is zero.\r\n\r\n\npvlib.irradiance.reindl()\
+    \ model generates NaNs when GHI = 0\n**Describe the bug**\r\nThe reindl function\
+    \ should give zero sky diffuse when GHI is zero. Instead it generates NaN or Inf\
+    \ values due to \"term3\" having a quotient that divides by GHI.  \r\n\r\n**Expected\
+    \ behavior**\r\nThe reindl function should result in zero sky diffuse when GHI\
+    \ is zero.\r\n\r\n\n"
+constraints:
+  allowed_paths:
+  - pvlib/**
+  forbidden_paths:
+  - tests/**
+  - test/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
+    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
+    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
+    , \"__pycache__\"))\n    import hashlib\n    projection = {'test_path': 'pvlib/tests/test_irradiance.py',\
+    \ 'source_sha256': '7022ca01497b0f673c378af728779ca5b136067f14900ebd98d34cbd6f4f9ee3',\
+    \ 'old': '    assert_allclose(result, [np.nan, 27.9412, 104.1317, 34.1663], atol=1e-4)',\
+    \ 'new': \"    # GHI == 0 is the requested behavior change, not a base regression.\\\
+    n    unchanged = irrad_data['ghi'].to_numpy() != 0\\n    assert_allclose(np.asarray(result)[unchanged],\\\
+    n                    np.array([np.nan, 27.9412, 104.1317, 34.1663])[unchanged],\\\
+    n                    atol=1e-4)\"}\n    public_test = checkout / projection['test_path']\n\
+    \    test_bytes = public_test.read_bytes()\n    if hashlib.sha256(test_bytes).hexdigest()\
+    \ != projection['source_sha256']:\n        print('public regression input drift:\
+    \ ' + projection['test_path'], flush=True)\n        raise SystemExit(2)\n    test_text\
+    \ = test_bytes.decode('utf-8')\n    if test_text.count(projection['old']) != 1:\n\
+    \        print('public regression anchor mismatch', flush=True)\n        raise\
+    \ SystemExit(2)\n    public_test.write_text(test_text.replace(projection['old'],\
+    \ projection['new']), encoding='utf-8')\n    print('public regression projection:\
+    \ isolate issue-conflicting expectation in ' + projection['test_path'], flush=True)\n\
+    \    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
+    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - pvlib/tests/test_irradiance.py
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+  infrastructure_exit_codes:
+  - 2
+tags:
+- swebench-lite
+- dev
+- original-input
+- development

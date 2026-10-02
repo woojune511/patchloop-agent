@@ -15,12 +15,8 @@ Makefile text eol=lf
 docker/Dockerfile.sandbox text eol=lf
 
 # These evaluator assets are bound by raw-byte inventory hashes.
-tasks/dev-train/swebench-lite-dev-pylint-dev-astroid-1978/** -text whitespace=cr-at-eol
-tasks/dev-train/swebench-lite-dev-pydicom-pydicom-1256/** -text whitespace=cr-at-eol
-tasks/dev-train/swebench-lite-dev-marshmallow-code-marshmallow-1359/** -text whitespace=cr-at-eol
-tasks/dev-train/swebench-lite-dev-pylint-dev-astroid-1978/reference.patch -whitespace
-tasks/dev-train/swebench-lite-dev-pydicom-pydicom-1256/reference.patch -whitespace
-tasks/dev-train/swebench-lite-dev-marshmallow-code-marshmallow-1359/reference.patch -whitespace
+tasks/dev-train/swebench-lite-dev-*/** -text whitespace=cr-at-eol
+tasks/dev-train/swebench-lite-dev-*/reference.patch -whitespace
 tasks/dev-train/original-toqito-1538/** -text whitespace=cr-at-eol
 tasks/dev-train/original-montepy-933/** -text whitespace=cr-at-eol
 tasks/dev-train/original-montepy-933-v2/** -text whitespace=cr-at-eol

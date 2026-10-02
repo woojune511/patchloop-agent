@@ -1,0 +1,35 @@
+schema_version: task-private-v2
+task_id: swebench-lite-dev-sqlfluff-sqlfluff-2419
+task_version: 1
+hidden_checks:
+- id: original-oracle
+  command:
+  - /opt/miniconda3/bin/python
+  - -B
+  - .patchloop-hidden/run_oracle.py
+  timeout_seconds: 300
+  infrastructure_exit_codes:
+  - 2
+hidden_artifacts:
+- path: hidden/oracle.json
+  sha256: sha256:641d0c50c98301da081676afb30659f07dcb727675ae2bd86ab232a4f16c1a1e
+- path: hidden/run_oracle.py
+  sha256: sha256:19d1bac629b80eb2262bad533c86e5082089846ad352583782c76ab042cac650
+- path: hidden/SWE-bench-LICENSE
+  sha256: sha256:718402e8efbe76604e613b6aad4bd30ce94ed23449ad6117c19f09b86e617e6e
+- path: hidden/vendor/swebench/__init__.py
+  sha256: sha256:2b52deee977bbca26f0aea7ae164a07d712b2883f3b2234d0e4db2b9deeb5ba7
+- path: hidden/vendor/swebench/harness/constants/__init__.py
+  sha256: sha256:7e2cce3c8e8d4393be6733fa6630532c0edf980381121f5a031aed100a1929ee
+- path: hidden/vendor/swebench/harness/grading.py
+  sha256: sha256:e1b04d67d2befe1d8b1c2dfdbcbf42e5032dda3d0f168441de664b902fca82a3
+- path: hidden/vendor/swebench/harness/infra_failure.py
+  sha256: sha256:26d85cc0175e0e824d7e2037c0e1b707259646aac1d8773ed2c78bcdd3e86e61
+- path: hidden/vendor/swebench/harness/log_parsers/python.py
+  sha256: sha256:4267c88b29a0cd86cbb37a0761fc7dc50578bb339633b88a02ed368bbbfc7f3d
+- path: hidden/vendor/swebench/types.py
+  sha256: sha256:648bdc80715a86a572e806e0e38238135543cc414296feb4063eef11ff639d52
+reference_patch:
+  path: reference.patch
+  sha256: sha256:ead8cd4fea56ca2e085d1e4ad6f7f076f9cd806ac8016a220023e4b91845ecce
+audit: {}

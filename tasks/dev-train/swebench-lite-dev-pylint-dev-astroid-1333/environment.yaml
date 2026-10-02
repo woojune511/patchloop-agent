@@ -1,0 +1,3 @@
+schema_version: task-environment-v1
+evaluator_image: swebench/sweb.eval.x86_64.pylint-dev_1776_astroid-1333@sha256:4014d41119b96aa182d1c2b1299c3ec32a6b36ea9ef03e8e90f053b4a535b2b4
+image_digest: sha256:4014d41119b96aa182d1c2b1299c3ec32a6b36ea9ef03e8e90f053b4a535b2b4
