@@ -31,13 +31,13 @@ closed.
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
 [SQLFluff follow-up](history/2026-10-02-lite-sql3-probe-results.md): 0/3.
-[Verification audit](history/2026-10-02-lite-final-verification-audit.md): weak
-behavior oracle; runtime kept. No paid run queued.
+[Verification audit](history/2026-10-02-lite-final-verification-audit.md): weak oracle.
+[Predicate authoring](../.agent/lite-oracle-authoring.md): preparation only; approval pending.
 
-[Direction review](history/2026-10-01-development-direction-review.md): close the
-task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
+[Direction review](history/2026-10-01-development-direction-review.md): task-by-task
+diagnosis closed; no isort repair control or agent change queued.
 [Selection review](history/2026-10-02-requirement-selection-decision.md): task-first
-design already exists; no duplicate planning/prompt change. Baseline kept; no run queued.
+design exists; baseline kept, no duplicate planning/prompt change.
 
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
 public/scope/safety passed, original hidden verdicts FAIL. USD 4.0651735; allocation
