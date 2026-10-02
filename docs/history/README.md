@@ -19,6 +19,7 @@ Approvals are closed.
 
 ## New records
 
+- [Lite validation](2026-10-02-lite-environment-validation.md).
 - [Lite environments](2026-10-02-swebench-lite-environment-preparation.md).
 - [Lite dev20 calibration](2026-10-02-swebench-lite-dev20-calibration.md).
 - [Lite dev20 inventory](2026-10-02-swebench-lite-dev20-inventory.md).
@@ -80,11 +81,11 @@ Approvals are closed.
 - [first interpretation and source questions](2026-09-26-first-interpretation-audit.md):
   equal fresh inputs, different pre-edit questions, and limits of source-context explanations.
 - [independent candidate comparison](2026-09-26-independent-candidate-comparison.md):
-  offline HF imports, cost-matched generation/comparison, and repeated first-plan scope reduction.
+  HF imports, matched-cost comparison and first-plan scope reduction.
 - [diagnostic claims verification](2026-09-26-diagnostic-claims-verification.md):
   actual input audits, four public probes, profile-scope regression, and causal claim limits.
 - [completion advice comparison](2026-09-26-completion-status-comparison.md):
-  four completed runs, additional P-B reading, and unchanged acceptance after recommendation removal.
+  four runs, extra P-B reading and unchanged acceptance after advice removal.
 - [first-input completion advice diagnostic](2026-09-26-completion-status-diagnostic.md):
   opt-in recommendation removal, unchanged runtime gates, and local delivery validation.
 - [verification scope audit](2026-09-26-verification-scope-audit.md):
