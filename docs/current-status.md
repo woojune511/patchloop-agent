@@ -27,10 +27,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3 resolved, USD
 0.29098320; allocation closed. Pydicom's full public suite remains incompatible.
-[Lite dev20](history/2026-10-02-lite-dev20-results.md): 20/20 submitted, 10/20
-original-hidden resolved; registered/native verdicts agree. USD 5.01124395, 245
-model calls; allocation closed. Public regressions and safety passed all 20.
-Ten incorrect submitted repairs remain to explain; keep the baseline. No run queued.
+[Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
+allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
+mixed repair and grading causes; three tasks had unusable public probes. Investigate
+public dependency/source support first. Keep baseline and verdicts; no run queued.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.

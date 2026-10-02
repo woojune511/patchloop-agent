@@ -17,7 +17,7 @@ Approvals are closed.
 
 ## New records
 
-- [Lite dev20 results](2026-10-02-lite-dev20-results.md).
+- Lite dev20: [results](2026-10-02-lite-dev20-results.md), [diagnosis](2026-10-02-lite-dev20-failure-diagnosis.md).
 - [Lite registration](2026-10-02-lite-dev20-registration.md).
 - [Lite public checks](2026-10-02-lite-public-regressions.md).
 - [Lite validation](2026-10-02-lite-environment-validation.md).
