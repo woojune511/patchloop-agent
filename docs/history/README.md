@@ -17,6 +17,7 @@ Approvals are closed.
 
 ## New records
 
+- [Final verification audit](2026-10-02-lite-final-verification-audit.md).
 - [SQLFluff probe results](2026-10-02-lite-sql3-probe-results.md).
 - [Lite probe support](2026-10-02-lite-probe-support.md).
 - Lite dev20: [results](2026-10-02-lite-dev20-results.md), [diagnosis](2026-10-02-lite-dev20-failure-diagnosis.md).
