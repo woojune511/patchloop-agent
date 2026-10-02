@@ -107,7 +107,7 @@ def _resolution_evidence(
     result = prior_results.get(action_id) if action_id else None
     if (
         not isinstance(result, dict) or result.get("action_id") != action_id
-        or result.get("tool") not in {"run_check", "run_probe"}
+        or result.get("tool") not in {"run_check", "run_tests", "run_probe"}
         or not isinstance(result.get("input_hash"), str) or not result["input_hash"]
     ):
         return None, "unobserved_verification_result"
@@ -122,7 +122,7 @@ def _resolution_evidence(
     healthy = not any(output.get(flag, False) for flag in (
         "timed_out", "deadline_exhausted", "cleanup_failed",
     ))
-    if result["tool"] == "run_check":
+    if result["tool"] in {"run_check", "run_tests"}:
         passed = output.get("passed") is True
     else:
         passed = (
@@ -134,6 +134,8 @@ def _resolution_evidence(
     return {
         "action_id": action_id, "input_hash": result["input_hash"],
         "tool": result["tool"], "diff_hash": diff_hash,
+        **({"suite_id": output["suite_id"], "targets": output["targets"]}
+           if result["tool"] == "run_tests" else {}),
         **({"check_id": output["check_id"]}
            if result["tool"] == "run_check" and isinstance(output.get("check_id"), str)
            else {}),

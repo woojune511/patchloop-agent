@@ -37,7 +37,7 @@ visible_checks:
   - /opt/miniconda3/envs/testbed/bin/python
   - -B
   - -c
-  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+  - &public_pytest "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
     \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
     \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
     \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
@@ -47,6 +47,21 @@ visible_checks:
     \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
     \ env=env)\n    raise SystemExit(result.returncode)\n"
   - test/rules
+  - -m
+  - not dbt
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+test_suites:
+- id: public-pytest
+  runner: pytest
+  test_roots:
+  - test
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - *public_pytest
   - -m
   - not dbt
   timeout_seconds: 300

@@ -69,6 +69,31 @@ class RegisteredCheck(StrictModel):
         return safe_relative_path(value, field_name="working_directory")
 
 
+class PublicTestSuite(RegisteredCheck):
+    """Trusted pytest command prefix; the agent selects only tracked test targets."""
+
+    runner: Literal["pytest"] = "pytest"
+    test_roots: list[str] = Field(min_length=1, max_length=8)
+
+    @field_validator("test_roots")
+    @classmethod
+    def validate_test_roots(cls, values: list[str]) -> list[str]:
+        roots = [safe_relative_path(value, field_name="test root") for value in values]
+        for root in roots:
+            if (root == "." or any(part.startswith((".", "-")) or ":" in part
+                                   for part in root.split("/"))):
+                raise ValueError("test roots must name public repository directories")
+        if len(roots) != len(set(roots)):
+            raise ValueError("test roots must be unique")
+        return roots
+
+    @model_validator(mode="after")
+    def pytest_success(self) -> PublicTestSuite:
+        if self.expected_exit_codes != [0]:
+            raise ValueError("selected pytest tests succeed only with exit zero")
+        return self
+
+
 class RegisteredProbeProfile(StrictModel):
     """Parser compatibility for audited task-public-v2 packages.
 
@@ -114,6 +139,9 @@ class PublicTask(StrictModel):
     issue: IssueSpec
     constraints: TaskConstraints = Field(default_factory=TaskConstraints)
     visible_checks: list[RegisteredCheck] = Field(default_factory=list)
+    test_suites: list[PublicTestSuite] = Field(
+        default_factory=list, exclude_if=lambda value: not value,
+    )
     probe_profiles: list[RegisteredProbeProfile] = Field(
         default_factory=list,
         exclude_if=lambda value: not value,
@@ -129,6 +157,9 @@ class PublicTask(StrictModel):
         ids = [profile.id for profile in self.probe_profiles]
         if len(ids) != len(set(ids)):
             raise ValueError("probe profile IDs must be unique")
+        suite_ids = [suite.id for suite in self.test_suites]
+        if len(suite_ids) != len(set(suite_ids)):
+            raise ValueError("test suite IDs must be unique")
         return self
 
 

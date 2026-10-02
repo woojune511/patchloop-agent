@@ -40,6 +40,12 @@ from patchloop.dev.path_policy import mutation_path_allowed
 from patchloop.dev.source_glob import matches_source_glob
 from patchloop.dev.source_rebinding import SourceReplacement
 from patchloop.dev.state import DevJournal
+from patchloop.dev.test_selection import (
+    MAX_TARGET_CHARS,
+    MAX_TARGETS,
+    SelectedTests,
+    selected_check,
+)
 from patchloop.dev.verification_concerns import (
     empty_verification_state,
     project_verification_concerns,
@@ -203,6 +209,7 @@ def dev_tool_schemas(
     *,
     finish_enabled: bool,
     check_ids: Sequence[str] = (),
+    test_suite_ids: Sequence[str] = (),
     allowed_tools: Sequence[str] | None = None,
     read_paths: Sequence[str] = (),
     planning_policy: str = "none",
@@ -416,10 +423,33 @@ def dev_tool_schemas(
         })
         if probe_policy in probe_cases.POLICIES:
             probe_cases.extend_schema(schemas[-1], probe_policy)
+    if test_suite_ids:
+        schemas.append({
+            "type": "function", "name": "run_tests", "strict": True,
+            "description": (
+                "Run selected existing public tests with a registered pytest suite. "
+                "Choose repository-relative Python test files or pytest node IDs under the "
+                "suite's test_roots, e.g. test/test_api.py::test_case. "
+                "The task supplies the command, environment and limits; command flags and "
+                "directories are not targets. Results apply only to the selected tests on "
+                "this diff and never replace required run_check results."
+            ),
+            "parameters": {
+                "type": "object", "additionalProperties": False,
+                "properties": {
+                    "suite_id": {"type": "string", "enum": list(test_suite_ids)},
+                    "targets": {"type": "array", "minItems": 1, "maxItems": MAX_TARGETS,
+                                "items": {"type": "string", "minLength": 1,
+                                          "maxLength": MAX_TARGET_CHARS}},
+                },
+                "required": ["suite_id", "targets"],
+            },
+        })
     decision_modes = {
         "search_files": "inspect",
         "read_file": "inspect",
         "run_check": "verify",
+        "run_tests": "verify",
         "run_probe": "verify",
         "replace_text": "mutate",
         "finish_task": "finish",
@@ -478,6 +508,7 @@ def validate_tool_batch(
         "search_files": "inspect",
         "read_file": "inspect",
         "run_check": "verify",
+        "run_tests": "verify",
         "run_probe": "verify",
         "replace_text": "mutate",
         "finish_task": "finish",
@@ -2429,7 +2460,7 @@ class DevToolGateway:
                     ),
                     "execution_identity": (
                         {"run_id": self.journal.run_id, "action_id": call.action_id}
-                        if call.name in {"run_check", "run_probe"} else None
+                        if call.name in {"run_check", "run_tests", "run_probe"} else None
                     ),
                     "mutation_admitted": mutation_admitted,
                     **({"mutation_requirement_reference": mutation_requirement_reference}
@@ -2492,6 +2523,14 @@ class DevToolGateway:
             elif call.name == "run_check":
                 output = self._run_check(
                     call.arguments["check_id"],
+                    execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
+                )
+                evidence_cache_hit = False
+            elif call.name == "run_tests":
+                if pending is not None and pending["baseline_diff_hash"] != baseline:
+                    raise RecoveryError("pending test selection no longer matches admitted diff")
+                output = self._run_tests(
+                    call.arguments,
                     execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
                 )
                 evidence_cache_hit = False
@@ -2632,6 +2671,8 @@ class DevToolGateway:
             return self._apply_text_replacement(arguments)
         if name == "run_check":
             return self._run_check(**arguments)
+        if name == "run_tests":
+            return self._run_tests(arguments, execution_identity=None)
         if name == "finish_task":
             return self._finish_task(arguments)
         if name == "stop_task":
@@ -3246,6 +3287,32 @@ class DevToolGateway:
             check = checks[check_id]
         except KeyError as exc:
             raise ContractError(f"unknown public check: {check_id}") from exc
+        return self._execute_check(check, execution_identity=execution_identity)
+
+    def _run_tests(
+        self, arguments: dict[str, Any], *, execution_identity: dict[str, str] | None,
+    ) -> dict[str, Any]:
+        selection = SelectedTests.model_validate(arguments)
+        suites = {suite.id: suite for suite in self.public_task.test_suites}
+        if selection.suite_id not in suites:
+            raise ContractError(f"unknown public test suite: {selection.suite_id}")
+        check, targets = selected_check(
+            suites[selection.suite_id], selection, self.workspace, self._tracked_path,
+        )
+        output = self._execute_check(check, execution_identity=execution_identity)
+        error = any(output.get(key) for key in (
+            "timed_out", "deadline_exhausted", "cleanup_failed",
+        )) or output["exit_code"] not in (0, 1)
+        output.update(
+            suite_id=selection.suite_id, targets=targets, counts_toward_completion=False,
+            test_status="ERROR" if error else "PASS" if output["passed"] else "FAIL",
+        )
+        return output
+
+    def _execute_check(
+        self, check: RegisteredCheck, *, execution_identity: dict[str, str] | None,
+    ) -> dict[str, Any]:
+        check_id = check.id
         summary = self.current_diff
         diff_hash = summary.patch_hash
         targets = self._execution_targets(execution_identity, summary=summary)
@@ -3386,7 +3453,7 @@ class DevToolGateway:
             if event["event_type"] != "action_finished":
                 continue
             result = event["payload"]["result"]
-            if (result["tool"] not in {"run_check", "run_probe"}
+            if (result["tool"] not in {"run_check", "run_tests", "run_probe"}
                     or result["status"] != "succeeded"):
                 continue
             feedback = result["output"].get("public_execution")

@@ -36,7 +36,7 @@ def _gateway(tmp_path, *, newline="\n"):
         constraints=SimpleNamespace(
             allowed_paths=["src.py"], forbidden_paths=[], max_diff_lines=50, max_changed_files=1,
         ),
-        visible_checks=[],
+        visible_checks=[], test_suites=[],
     )
     return DevToolGateway(
         workspace=workspace, public_task=public, sandbox=None,

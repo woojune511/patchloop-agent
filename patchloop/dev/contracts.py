@@ -18,14 +18,15 @@ DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
 DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
 DEV_SINGLE_ACTION_TOOLS = frozenset({
-    "replace_text", "run_check", "run_probe", "finish_task", "stop_task",
+    "replace_text", "run_check", "run_tests", "run_probe", "finish_task", "stop_task",
 })
 
 
 def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = "none") -> str:
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v45",
+            "schema_version": "dev-tool-surface-v46",
+            "selected_public_tests": "registered-pytest-tracked-targets-optional-v1",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",

@@ -142,9 +142,10 @@ def project(
             continue
         result = event["payload"]["result"]
         tool = result["tool"]
-        if tool in {"replace_text", "run_check", "run_probe"}:
+        if tool in {"replace_text", "run_check", "run_tests", "run_probe"}:
             reason = ("mutation_result" if tool == "replace_text" else
-                      "check_result" if tool == "run_check" else "probe_result")
+                      "check_result" if tool == "run_check" else
+                      "test_result" if tool == "run_tests" else "probe_result")
             if reason not in reasons:
                 reasons.append(reason)
             relevant.append(result["action_id"])

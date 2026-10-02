@@ -63,7 +63,7 @@ absent-versus-explicit serialization remains unchanged. Schema field constraints
 not replace cross-field validators, observed-anchor checks or mutation scope admission.
 
 A response contains 1–4 parallel `read_file`/`search_files` calls, or exactly one
-`replace_text`, `run_check`, enabled `run_probe`, `finish_task`, or `stop_task`.
+`replace_text`, `run_check`, enabled `run_tests`/`run_probe`, `finish_task`, or `stop_task`.
 A bounded public `turn_decision` accompanies each call. Optional notes/plans are
 unverified working data, not reasoning transcripts or an extra workflow phase.
 One consecutive protocol/incomplete correction is allowed; a valid tool batch resets it.
@@ -79,7 +79,7 @@ unobserved source, new paths, or model-selected mutation evidence IDs.
 Retired requirement/case annotations remain for exact legacy recovery, not fresh requests.
 
 A repair invalidates checks for the prior diff. Submission requires a nonempty tracked
-diff and every registered required check passing on that exact diff. Optional probes
+diff and every registered required check passing on that exact diff. Optional tests/probes
 do not supply required-check credit. Passing checks establish their observed results,
 not complete semantic coverage. Preserve pre-state, submitted-candidate, and incremental
 patch identities separately; replayed results retain action-time identities.
@@ -95,7 +95,7 @@ The compact view copies only explicit top-level fields, preserving order and nes
 
 Project only public task/source/diff/action/check information. Keep current evidence
 distinct from historical or unverified notes; do not equate delivery with model use.
-Verification observations are reconstructed from completed public check/probe actions
+Verification observations are reconstructed from completed public check/test/probe actions
 under working_notes.verification.observations (latest six, with omission count).
 They preserve action/input/diff identity and execution flags, not bug verdicts. Unrelated
 PASS does not erase them; edits make prior observations historical. Upsert may link
@@ -178,6 +178,7 @@ experimental context and historical plans; current source/status take precedence
 - Context: [segmented context](plans/segmented-context.md), [native window](plans/native-context-window.md).
 - Planning and probes: [planning](planning-experiment.md), [probe cases](probe-cases.md),
   [setup](probe-setup.md), [dependencies](prepared-probe-dependencies.md), [threads](probe-threads.md).
+- Public test selection: [registered pytest suites](selected-tests.md).
 - Discovery diagnostics: [counterexamples](counterexample-discovery.md),
   [task-first discovery](task-first-discovery.md), [construction links](construction-links.md),
   [frozen expectations](frozen-probe-expectation.md), [profile scope](profile-scope-diagnostic.md).
@@ -203,19 +204,13 @@ For a provider-free saved-candidate caller-cancellation follow-up, see
 
 ## Validation checklist
 
-For the first-failed-check information comparison, see
-[cleanup-information](cleanup-information.md). Its raw operator observations,
-candidate restoration and new allocation remain separate from prior closed runs.
-For an unhinted continuation after the first accepted edit, see
-[post-edit budget continuation](post-edit-budget-continuation.md). Only the fresh
-cost allowance changes; prior solving state and resource counters remain intact.
-
 Run focused tests appropriate to the changed contract, Ruff, the fast suite, and mock
 smoke as relevant. Documentation-only changes need the documentation layout/link tests.
 Keep focused validation under two minutes; report longer or unrun groups honestly.
 Freeze runtime source during provenance checks. Use unique external basetemps under
 `C:\pt\tmp\<unique-name>`; parallel processes need separate roots. Durable run/evidence
 stores are not scratch. Never sweep a parent directory or relocate recorded state.
+Keep Windows basetemp names short; nested CAS temporary paths can exceed MAX_PATH.
 
 ```powershell
 uv run pytest tests/test_documentation_layout.py -p no:cacheprovider

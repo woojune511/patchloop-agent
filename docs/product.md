@@ -66,6 +66,9 @@ The gateway validates the anchor against observed current source and enforces th
 complete diff's scope. Read, search, mutation, check, finish, and unsuccessful-stop
 operations are constrained by the tool contract and remaining resources. Optional
 public probes provide diagnostic observations and confer no submission credit.
+Tasks can also register a pytest suite for bounded selection of existing public
+test files or node IDs. This lets the agent reuse repository regression tests;
+these optional results do not replace required checks or establish full coverage.
 
 | Component | Responsibility |
 | --- | --- |

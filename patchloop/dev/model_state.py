@@ -25,7 +25,7 @@ _MODEL_INPUT_FIELDS = frozenset({
     "commitment_signal", "available_tool_names", "last_failed_mutation",
     "last_successful_mutation", "current_diff", "recent_checks", "public_execution_summary",
     "latest_tool_results", "source_spans", "recent_attempt_result_next_question", "public_task",
-    "working_plan", "probe_cases", "repair_recheck", "recent_probes",
+    "working_plan", "probe_cases", "repair_recheck", "recent_probes", "recent_tests",
     "latest_tool_results_delivery", "segment_handoff", "protocol_correction",
     # Existing public diagnostic overlays also pass through this projection when
     # constructed or replayed. Preserving them does not enable their producers.
@@ -218,7 +218,8 @@ def compact_model_state(
                 }
                 notes.pop("last_update_diagnostics", None)
 
-    for key, tool in (("recent_checks", "run_check"), ("recent_probes", "run_probe")):
+    for key, tool in (("recent_checks", "run_check"), ("recent_probes", "run_probe"),
+                      ("recent_tests", "run_tests")):
         for record in view.get(key, []):
             result = results.get(record.get("action_id"), {})
             if (result.get("tool") != tool or not isinstance(record.get("diff_hash"), str)

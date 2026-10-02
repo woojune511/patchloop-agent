@@ -185,6 +185,13 @@ availability and local tests alone do not demonstrate an acceptance improvement.
 
 ## Submission, evidence and interpretation
 
+Public task `test_suites` can expose `run_tests` for 1–8 tracked public Python test
+files or pytest node IDs. The registration owns the command, environment and
+sandbox limits; the model cannot supply command flags. See the
+[selection contract](../.agent/selected-tests.md). Results bind the executed diff
+and remain optional: they supply no required-check credit. Missing nodes,
+collection errors and incomplete execution do not establish behavior correctness.
+
 The coding agent receives registered public tools, never unrestricted shell access.
 `finish_task` requires a non-empty current diff, every registered visible check
 passing on that exact diff and no non-ignored untracked files. Historical PASS,

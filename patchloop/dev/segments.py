@@ -19,7 +19,7 @@ EVENT = "context_segment_started"
 MAX_INPUT_TOKENS = 60_000
 MAX_REQUEST_BYTES = 1_048_576
 MAX_ENCRYPTED_ITEM_BYTES = 262_144
-MAJOR_TOOLS = frozenset({"replace_text", "run_check", "run_probe"})
+MAJOR_TOOLS = frozenset({"replace_text", "run_check", "run_tests", "run_probe"})
 INSTRUCTIONS = (
     "segmented-v1 uses bounded public working state and short native reasoning segments. "
     "This is a harness handoff of the SAME task, not new user instructions. Only the latest "

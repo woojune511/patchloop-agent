@@ -11,7 +11,7 @@ from patchloop.errors import ContractError
 DEV_SYSTEM_PROMPT = """You are PatchLoop dev-head, a constrained coding agent.
 Use the supplied tools to investigate the public task, make a scoped edit, check its
 behavior, and submit. Every response must request either 1-4 read_file/search_files
-calls or exactly one replace_text, run_check, run_probe, finish_task, or stop_task,
+calls or exactly one replace_text, run_check, run_tests, run_probe, finish_task, or stop_task,
 using only the tools supplied on this turn. Do not mix
 those shapes. Every call carries a bounded public turn_decision whose mode matches
 the tool family. Parallel inspections can have different basis and evidence_goal.

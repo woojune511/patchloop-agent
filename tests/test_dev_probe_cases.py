@@ -114,15 +114,15 @@ def test_off_schema_prompt_and_identity_are_unchanged():
         "finish_task", "stop_task",
     ]}
     before = dev_tool_schemas(**options)
-    # Refreshed for explicit replacement-explanation bounds; probe policy stays opt-in.
+    # Selected-test registration changes runtime identity; the existing schema is unchanged.
     assert sha256_json(before) == (
         "sha256:9a4c35ae0b1724c9138e881640fcd0c5c5e811a6b2f798269dd2a6d3c6574435"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:25f1db63f18b3f138ee8bdc8686ad320d7c9a3965d4e10acd1055fdd590555b7"
+        "sha256:183455d1ede934d796e13e2a446313a00b3c0c2ac6209cfaaf1cc1ff595b9a79"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:b7124aef4c5fc63cd2a5c8b83346a6d1e36a2fc1cb09ab289150e438f2f22781"
+        "sha256:babc2a164aa06be7916a788f8d85bff1be0752acae4b9fefe1c3cffad11b199a"
     )
     after = dev_tool_schemas(**options, probe_policy=cases.POLICY)
     assert [t for t in before if t["name"] != "run_probe"] == [

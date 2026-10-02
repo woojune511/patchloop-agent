@@ -17,7 +17,7 @@ Approvals are closed.
 
 ## New records
 
-- [1625 evaluation scope](2026-10-03-sqlfluff-1625-evaluation-scope.md), with A/B results.
+- [Selected public tests](2026-10-03-selected-public-tests.md), with scope diagnosis.
 - [Public predicate diagnostic](2026-10-03-public-predicate-result.md).
 - [Final verification audit](2026-10-02-lite-final-verification-audit.md).
 - [SQLFluff probe results](2026-10-02-lite-sql3-probe-results.md).

@@ -94,6 +94,7 @@ from patchloop.dev.probe_observation import probe_observation, project_probe_res
 from patchloop.dev.public_history import NATIVE
 from patchloop.dev.repair_recheck import repair_recheck_context, select_repair_recheck
 from patchloop.dev.state import DevJournal
+from patchloop.dev.test_selection import recent_tests
 from patchloop.dev.tools import (
     DevGatewayStateSnapshot,
     DevToolGateway,
@@ -841,6 +842,11 @@ def _tool_policy(
             and min(remaining_model_calls, remaining_tool_actions) - 1 >= budget.protected
         ):
             allowed.add("run_probe")
+        if (
+            getattr(gateway.public_task, "test_suites", [])
+            and min(remaining_model_calls, remaining_tool_actions) - 1 >= budget.protected
+        ):
+            allowed.add("run_tests")
 
     exploration_capacity = (
         max(0, min(inspection_model_slack, inspection_tool_slack))
@@ -920,7 +926,7 @@ def _tool_policy(
                 optional_mutation_protected_calls
                 if mutation_protected_completion_possible else optional_mutation_completion_calls
             ) - 1)
-        if "run_probe" in allowed:
+        if {"run_probe", "run_tests"} & allowed:
             successors.append(budget.protected)
         if "run_check" in allowed:
             successors.append(check_successor_reserve)
@@ -1195,6 +1201,11 @@ def _protocol_correction(
             "Use run_probe for a small public behavior experiment when useful; it is "
             "diagnostic only and never replaces required visible checks."
         )
+    if "run_tests" in allowed:
+        actions.append(
+            "Use run_tests to select public test files or node IDs from a registered suite; "
+            "selected tests do not replace required visible checks."
+        )
     if "stop_task" in allowed:
         actions.append(
             "Use stop_task to abandon without submission or evaluation when no available "
@@ -1393,6 +1404,8 @@ def _build_context(
         "recent_attempt_result_next_question": _cards(journal, correction),
         "public_task": package.public.model_dump(mode="json"),
     }
+    if gateway.public_task.test_suites:
+        payload["recent_tests"] = recent_tests(journal.events(), summary.patch_hash)
     if planning_policy != "none":
         payload["working_plan"] = working_plan.project(
             journal.events(), diff_hash=summary.patch_hash, gate=active_policy.workflow_gate,
@@ -2284,6 +2297,12 @@ def _deduplicate_native_state(
             for probe in payload.get("recent_probes", []):
                 if probe.get("action_id") == result.action_id:
                     probe.update(reference)
+        if result.tool == "run_tests":
+            for tests in payload.get("recent_tests", []):
+                if tests.get("action_id") == result.action_id:
+                    for key in ("stdout", "stderr"):
+                        tests.pop(key, None)
+                    tests.update(reference)
 
 
 def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, Any]:
@@ -2435,6 +2454,17 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             card["verification_review_scope"] = "at_check_completion"
             card["verification_review_diff_hash"] = result.output["diff_hash"]
         return card
+    if result.tool == "run_tests":
+        return {
+            "action_id": result.action_id, "attempt": "selected_tests",
+            "result": {key: result.output.get(key) for key in (
+                "suite_id", "targets", "diff_hash", "test_status", "exit_code",
+            )},
+            "next_question": (
+                "What do these selected public tests establish about this diff, and what "
+                "behavior remains untested? Setup or collection errors do not verify behavior."
+            ),
+        }
     if result.tool == "run_probe":
         return {
             "action_id": result.action_id,
@@ -4133,6 +4163,7 @@ def _run_one_active(
         schemas = dev_tool_schemas(
             finish_enabled="finish_task" in policy.allowed_tools,
             check_ids=policy.check_ids,
+            test_suite_ids=[suite.id for suite in gateway.public_task.test_suites],
             allowed_tools=policy.allowed_tools,
             read_paths=policy.targeted_read_paths,
             planning_policy=request.planning_policy,

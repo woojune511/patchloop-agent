@@ -25,7 +25,7 @@ def source_gateway(tmp_path, monkeypatch):
         constraints=SimpleNamespace(
             allowed_paths=["src.py"], forbidden_paths=[], max_diff_lines=50, max_changed_files=1,
         ),
-        visible_checks=[],
+        visible_checks=[], test_suites=[],
         model_dump=lambda **kwargs: {"task_id": "public-source-test"},
     )
     journal = DevJournal(tmp_path / "state", "run_dev_source")
