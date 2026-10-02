@@ -1,0 +1,26 @@
+{
+  "spec": {
+    "instance_id": "sqlfluff__sqlfluff-1733",
+    "image": "swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-1733@sha256:b440a9c4befe45341ce69f1d4166335b749a28ea8414fdd61dcf715b92d9375e",
+    "repo": "sqlfluff/sqlfluff",
+    "version": "0.6",
+    "FAIL_TO_PASS": [
+      "test/rules/std_L003_L036_L039_combo_test.py::test__rules__std_L003_L036_L039"
+    ],
+    "PASS_TO_PASS": [
+      "test/rules/std_L016_L36_combo_test.py::test__rules__std_L016_L036_long_line_lint",
+      "test/rules/std_L016_L36_combo_test.py::test__rules__std_L016_L036_long_line_fix",
+      "test/rules/std_L016_L36_combo_test.py::test__rules__std_L016_L036_long_line_fix2"
+    ],
+    "log_parser": "parse_log_sqlfluff",
+    "eval_type": "pass_and_fail",
+    "eval_script_list": []
+  },
+  "test_patch": "diff --git a/test/rules/std_L003_L036_L039_combo_test.py b/test/rules/std_L003_L036_L039_combo_test.py\nnew file mode 100644\n--- /dev/null\n+++ b/test/rules/std_L003_L036_L039_combo_test.py\n@@ -0,0 +1,36 @@\n+\"\"\"Tests issue #1373 doesn't reoccur.\n+\n+The combination of L003 (incorrect indentation), L036 (select targets),\n+and L039 (unnecessary white space) can result in incorrect indentation.\n+\"\"\"\n+\n+import sqlfluff\n+\n+\n+def test__rules__std_L003_L036_L039():\n+    \"\"\"Verify that double indents don't flag L039.\"\"\"\n+    sql = \"\"\"\n+    WITH example AS (\n+        SELECT my_id,\n+            other_thing,\n+            one_more\n+        FROM\n+            my_table\n+    )\n+\n+    SELECT *\n+    FROM example\\n\"\"\"\n+    fixed_sql = \"\"\"\n+    WITH example AS (\n+        SELECT\n+            my_id,\n+            other_thing,\n+            one_more\n+        FROM\n+            my_table\n+    )\n+\n+    SELECT *\n+    FROM example\\n\"\"\"\n+    result = sqlfluff.fix(sql)\n+    assert result == fixed_sql\ndiff --git a/test/rules/std_L016_L36_combo.py b/test/rules/std_L016_L36_combo_test.py\nsimilarity index 100%\nrename from test/rules/std_L016_L36_combo.py\nrename to test/rules/std_L016_L36_combo_test.py\n",
+  "test_command": [
+    "pytest",
+    "-rA",
+    "test/rules/std_L003_L036_L039_combo_test.py",
+    "test/rules/std_L016_L36_combo_test.py"
+  ]
+}

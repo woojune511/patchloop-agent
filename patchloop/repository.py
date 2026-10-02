@@ -17,6 +17,12 @@ from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.util import directory_hash, filesystem_path, safe_relative_path, sha256_bytes
 
 ALLOWED_REMOTE_REPOSITORIES = {
+    "https://github.com/pvlib/pvlib-python.git",
+    "https://github.com/pyvista/pyvista.git",
+    "https://github.com/sqlfluff/sqlfluff.git",
+    "https://github.com/pylint-dev/astroid.git",
+    "https://github.com/pydicom/pydicom.git",
+    "https://github.com/marshmallow-code/marshmallow.git",
     "https://github.com/alibaba/OpenSandbox.git",
     "https://github.com/pyinfra-dev/pyinfra.git",
     "https://github.com/PyCQA/isort.git",
@@ -188,6 +194,7 @@ class WorkspaceManager:
                     )
                 _git(staging, "config", "core.longpaths", "true", deadline=deadline)
                 _git(staging, "config", "core.autocrlf", "false", deadline=deadline)
+                _git(staging, "config", "core.eol", "lf", deadline=deadline)
                 _git(staging, "remote", "add", "origin", repository_url, deadline=deadline)
                 fetch = _git(
                     staging,

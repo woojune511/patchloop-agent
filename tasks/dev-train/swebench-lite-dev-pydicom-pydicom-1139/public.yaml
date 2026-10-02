@@ -1,0 +1,54 @@
+schema_version: task-public-v1
+task_id: swebench-lite-dev-pydicom-pydicom-1139
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/pydicom/pydicom.git
+  base_commit: b9fb05c177b685bf683f7f57b2d57374eb7d882d
+  language: python
+issue:
+  title: Make PersonName3 iterable
+  description: "Make PersonName3 iterable\n```python\r\nfrom pydicom import Dataset\r\
+    \n\r\nds = Dataset()\r\nds.PatientName = 'SomeName'\r\n\r\n'S' in ds.PatientName\r\
+    \n```\r\n```\r\nTraceback (most recent call last):\r\n  File \"<stdin>\", line\
+    \ 1, in <module>\r\nTypeError: argument of type 'PersonName3' is not iterable\r\
+    \n```\r\n\r\nI'm not really sure if this is intentional or if PN elements should\
+    \ support `str` methods. And yes I know I can `str(ds.PatientName)` but it's a\
+    \ bit silly, especially when I keep having to write exceptions to my element iterators\
+    \ just for PN elements.\n"
+constraints:
+  allowed_paths:
+  - pydicom/**
+  forbidden_paths:
+  - tests/**
+  - test/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
+    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
+    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
+    , \"__pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
+    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - pydicom/tests/test_valuerep.py
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+tags:
+- swebench-lite
+- dev
+- original-input
+- development

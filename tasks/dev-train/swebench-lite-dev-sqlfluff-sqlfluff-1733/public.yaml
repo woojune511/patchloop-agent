@@ -1,0 +1,64 @@
+schema_version: task-public-v1
+task_id: swebench-lite-dev-sqlfluff-sqlfluff-1733
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/sqlfluff/sqlfluff.git
+  base_commit: a1579a16b1d8913d9d7c7d12add374a290bcc78c
+  language: python
+issue:
+  title: Extra space when first field moved to new line in a WITH statement
+  description: "Extra space when first field moved to new line in a WITH statement\n\
+    Note, the query below uses a `WITH` statement. If I just try to fix the SQL within\
+    \ the CTE, this works fine.\r\n\r\nGiven the following SQL:\r\n\r\n```sql\r\n\
+    WITH example AS (\r\n    SELECT my_id,\r\n        other_thing,\r\n        one_more\r\
+    \n    FROM\r\n        my_table\r\n)\r\n\r\nSELECT *\r\nFROM example\r\n```\r\n\
+    \r\n## Expected Behaviour\r\n\r\nafter running `sqlfluff fix` I'd expect (`my_id`\
+    \ gets moved down and indented properly):\r\n\r\n```sql\r\nWITH example AS (\r\
+    \n    SELECT\r\n        my_id,\r\n        other_thing,\r\n        one_more\r\n\
+    \    FROM\r\n        my_table\r\n)\r\n\r\nSELECT *\r\nFROM example\r\n```\r\n\r\
+    \n## Observed Behaviour\r\n\r\nafter running `sqlfluff fix` we get (notice that\
+    \ `my_id` is indented one extra space)\r\n\r\n```sql\r\nWITH example AS (\r\n\
+    \    SELECT\r\n         my_id,\r\n        other_thing,\r\n        one_more\r\n\
+    \    FROM\r\n        my_table\r\n)\r\n\r\nSELECT *\r\nFROM example\r\n```\r\n\r\
+    \n## Steps to Reproduce\r\n\r\nNoted above. Create a file with the initial SQL\
+    \ and fun `sqfluff fix` on it.\r\n\r\n## Dialect\r\n\r\nRunning with default config.\r\
+    \n\r\n## Version\r\nInclude the output of `sqlfluff --version` along with your\
+    \ Python version\r\n\r\nsqlfluff, version 0.7.0\r\nPython 3.7.5\r\n\r\n## Configuration\r\
+    \n\r\nDefault config.\r\n\n"
+constraints:
+  allowed_paths:
+  - src/sqlfluff/**
+  forbidden_paths:
+  - tests/**
+  - test/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
+    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
+    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
+    , \"__pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
+    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - test/rules
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+tags:
+- swebench-lite
+- dev
+- original-input
+- development

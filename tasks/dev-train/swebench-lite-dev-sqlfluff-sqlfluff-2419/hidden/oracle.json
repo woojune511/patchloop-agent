@@ -1,0 +1,21 @@
+{
+  "spec": {
+    "instance_id": "sqlfluff__sqlfluff-2419",
+    "image": "swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-2419@sha256:881e3b830d8a68b52041b8ec79af813d12adf75d0c1838b17950e5a5b6238353",
+    "repo": "sqlfluff/sqlfluff",
+    "version": "0.8",
+    "FAIL_TO_PASS": [
+      "test/rules/std_L060_test.py::test__rules__std_L060_raised"
+    ],
+    "PASS_TO_PASS": [],
+    "log_parser": "parse_log_sqlfluff",
+    "eval_type": "pass_and_fail",
+    "eval_script_list": []
+  },
+  "test_patch": "diff --git a/test/rules/std_L060_test.py b/test/rules/std_L060_test.py\nnew file mode 100644\n--- /dev/null\n+++ b/test/rules/std_L060_test.py\n@@ -0,0 +1,12 @@\n+\"\"\"Tests the python routines within L060.\"\"\"\n+import sqlfluff\n+\n+\n+def test__rules__std_L060_raised() -> None:\n+    \"\"\"L060 is raised for use of ``IFNULL`` or ``NVL``.\"\"\"\n+    sql = \"SELECT\\n\\tIFNULL(NULL, 100),\\n\\tNVL(NULL,100);\"\n+    result = sqlfluff.lint(sql, rules=[\"L060\"])\n+\n+    assert len(result) == 2\n+    assert result[0][\"description\"] == \"Use 'COALESCE' instead of 'IFNULL'.\"\n+    assert result[1][\"description\"] == \"Use 'COALESCE' instead of 'NVL'.\"\n",
+  "test_command": [
+    "pytest",
+    "-rA",
+    "test/rules/std_L060_test.py"
+  ]
+}

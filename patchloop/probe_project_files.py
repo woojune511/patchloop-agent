@@ -68,6 +68,12 @@ def prepare(repo: Path, metadata: list[dict], roots: list[str], output: Path) ->
     for project in metadata:
         project_root = repo / project["project_path"]
         pyproject = project_root / "pyproject.toml"
+        if project.get("setup_hash") and project.get("pyproject_hash") is None:
+            if pyproject.exists() or pyproject.is_symlink():
+                raise ContractError("public project metadata changed during preparation")
+            if sha256_bytes((project_root / "setup.py").read_bytes()) != project["setup_hash"]:
+                raise ContractError("public setup metadata changed during preparation")
+            continue
         raw = pyproject.read_bytes()
         if sha256_bytes(raw) != project["pyproject_hash"]:
             raise ContractError("public project metadata changed during preparation")

@@ -1,7 +1,7 @@
 # Current status
 
-Updated: 2026-10-02. Replaceable authority for current decisions. Runtime source owns
-behavior; historical reports are evidence, not an active work queue.
+Updated: 2026-10-02. Current decisions; runtime source owns behavior.
+Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
 
@@ -24,6 +24,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 [product](product.md) and [evidence boundaries](evidence.md) as needed.
 
 ## Active decision
+
+[Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3 resolved, USD
+0.29098320; allocation closed. Pydicom's full public suite remains incompatible.
+[Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
+allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
+mixed repair/grading causes. [Probe support](history/2026-10-02-lite-probe-support.md)
+enables public SQLFluff diagnostics; old probe code also has API errors. No paid run queued.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
@@ -84,20 +91,11 @@ and panel ledger remain implemented. Earlier Darts/MontePy observations and
 operator corrections are separate from this panel's fresh control rows; see the
 comparison record. Mock safety NOT_RUN remains separate from live safety PASS.
 
-Keep journal validation and state construction unchanged. The bounded
-[mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not meet
-its frozen cost threshold for reusing repeated reads. No cache or RunState is queued.
-The result covers a short smoke task and mutation-receipt recovery; large-journal
-and live-run performance remain unmeasured.
-
-The compact model view selects explicit top-level runtime/public diagnostic fields,
-preserving existing values/order and nested rules. The
-[projection tests](../tests/test_model_view_fields.py) cover this input boundary.
-
-Completion and mutation-attempt call-budget arithmetic lives in
-[completion_budget.py](../patchloop/dev/completion_budget.py). The runner constructs
-the state snapshot and admits tools; monetary admission stays in `dev/cost.py`.
-Runtime identity changes normally and prior-run resume restrictions remain intact.
+The [mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not
+meet its threshold; no journal cache or RunState change is queued. Its smoke-only
+result does not establish live-run performance. [Projection tests](../tests/test_model_view_fields.py)
+cover the compact public view. Budget arithmetic lives in
+[completion_budget.py](../patchloop/dev/completion_budget.py); resume identity rules remain intact.
 
 The [development review](history/2026-09-30-development-review.md) closes repeated
 ablations: no quality experiment, memory extension or mandatory probe gate queued.
@@ -172,8 +170,8 @@ start another adjacent diagnostic merely because the previous one is complete.
 
 ## Execution and claim boundaries
 
-All previous paid allocations are closed. No live invocation is authorized by this
-snapshot. An [older interrupted call](history/2026-09-28-expectation-review-results.md)
+Paid allocations, including the Lite pilot, are closed. No further run is authorized.
+An [older interrupted call](history/2026-09-28-expectation-review-results.md)
 retains unknown billing separately from later settled allocations; closed allocation
 does not mean that earlier uncertainty was resolved.
 
