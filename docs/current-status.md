@@ -33,8 +33,9 @@ mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
 [SQLFluff follow-up](history/2026-10-02-lite-sql3-probe-results.md): 0/3.
 [Positive-result A/B](history/2026-10-03-positive-verification-results.md): A 1/4,
 B 2/4 accepted; repetition 2 tied. Keep baseline; allocation closed.
-[Selected tests](history/2026-10-03-selected-public-tests.md): run_tests implemented.
-Saved base/B1 PASS, A1 FAIL on public CLI. Optional; no live selection evidence.
+[Selected tests](history/2026-10-03-selected-public-tests.md): optional.
+[Seeded diagnostic](history/2026-10-03-selected-tests-diagnostic-preparation.md):
+A1/B1 prepared; paid approval pending.
 
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task
 diagnosis closed; no isort repair control or agent change queued.
