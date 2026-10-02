@@ -25,12 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3 resolved, USD
-0.29098320; allocation closed. Pydicom's full public suite remains incompatible.
+[Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3, USD 0.29098320;
+closed. Pydicom public-suite incompatibility remains.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed repair/grading causes. [Probe support](history/2026-10-02-lite-probe-support.md)
-enables public SQLFluff diagnostics; old probe code also has API errors. No paid run queued.
+enables diagnostics. [Three-task follow-up](../.agent/lite-sql3-probe-followup.md)
+awaits paid approval and exact-head CI for fresh solves with dependencies.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
