@@ -28,15 +28,20 @@ with tempfile.TemporaryDirectory(prefix="lite-public-") as temporary:
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join([str(checkout / "src"), str(checkout)])
     env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
-    result = subprocess.run([sys.executable, "-m", "pytest", "-q", *sys.argv[2:], sys.argv[1]],
+    env["HOME"] = temporary
+    result = subprocess.run([sys.executable, "-m", "pytest", "-q", *sys.argv[1:]],
                             cwd=checkout, env=env)
     raise SystemExit(result.returncode)
 """
 
 LAYOUTS = {
-    "pylint-dev/astroid": ("astroid", "tests"),
-    "pydicom/pydicom": ("pydicom", "pydicom/tests"),
-    "marshmallow-code/marshmallow": ("src/marshmallow", "tests"),
+    "pylint-dev/astroid": ("astroid", ("tests",)),
+    # The public issue names JSON conversion and SQ elements. These are existing
+    # public regression modules, selected without private test membership.
+    "pydicom/pydicom": (
+        "pydicom", ("pydicom/tests/test_json.py", "pydicom/tests/test_sequence.py"),
+    ),
+    "marshmallow-code/marshmallow": ("src/marshmallow", ("tests",)),
 }
 
 
@@ -123,7 +128,7 @@ def run(prepared: Path, output: Path):
             encoding="utf-8",
         )
         (target / "reference.patch").write_bytes(row["patch"].encode("utf-8"))
-        source_root, tests_root = LAYOUTS[row["repo"]]
+        source_root, tests_roots = LAYOUTS[row["repo"]]
         warning_options = (
             [
                 "-W",
@@ -164,7 +169,7 @@ def run(prepared: Path, output: Path):
                         "-B",
                         "-c",
                         PUBLIC_RUNNER,
-                        tests_root,
+                        *tests_roots,
                         *warning_options,
                     ],
                     "timeout_seconds": 300,

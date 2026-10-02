@@ -19,7 +19,8 @@ Approvals are closed.
 
 ## New records
 
-- [SWE-bench Lite preflight](2026-10-02-swebench-lite-preflight.md).
+- [Lite preflight](2026-10-02-swebench-lite-preflight.md).
+- [Public checks](2026-10-02-swebench-lite-public-checks.md).
 
 - [Darts close-out](2026-10-01-darts-decision-scope-closeout.md).
 - [Zero-width](2026-10-01-zero-width-ownership-diagnosis.md).

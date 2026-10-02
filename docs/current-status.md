@@ -26,10 +26,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 ## Active decision
 
 [SWE-bench Lite pilot](../.agent/swebench-lite-pilot.md): three fixed dev tasks and
-conditional USD 3.60 mini invocation approved. Images acquired; original native
-base/reference controls passed 6/6. Paid calls remain NOT_RUN (USD 0): pydicom's
-public full suite fails before any agent edit. [Preflight findings](history/2026-10-02-swebench-lite-preflight.md)
-separate this public-environment problem from the working original evaluator.
+conditional USD 3.60 mini invocation approved. Native and registered controls each
+passed 6/6. [Public-check follow-up](history/2026-10-02-swebench-lite-public-checks.md):
+pydicom uses 31 existing JSON/Sequence regressions; its full suite remains incompatible.
+Original hidden grading is unchanged. Paid calls remain NOT_RUN (USD 0).
 Drafts remain external; the 300-task test split is not authorized.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the

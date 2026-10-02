@@ -9,7 +9,8 @@ agent improvement claim or benchmark score. All runs remain official=false.
 
 On 2026-10-02 the user approved the three image downloads, integration/calibration,
 and the conditional USD 3.60 live pilot below. It never covers the 300 test tasks.
-The paid invocation has not started: the public-regression prerequisite is not met.
+The paid invocation has not started. Registered public/private calibration now passes;
+task admission and the frozen live invocation remain separate execution steps.
 This exact conditional approval is retained; no larger or replacement allocation follows.
 
 ## Frozen inputs
@@ -114,19 +115,25 @@ frozen scope, integration check and budget.
 ## Preparation status
 
 Implemented and executed: pinned dev-data/selection, separate public/private
-artifacts, approved image pulls, native controls (6/6 expected), and partial
-registered-check calibration. Astroid base/reference pass the expected controls;
-pydicom's untouched public full suite fails under the image's pytest 8.3.5.
-Legacy setup/teardown methods leave fixture attributes unset. The original selected
-benchmark tests run correctly. Paid admission is blocked by the public suite.
+artifacts, approved image pulls, native controls (6/6 expected), and registered
+public/private controls (6/6 expected). The latter are preserved under
+C:/pt/analyses/swebench-lite-registered-controls-20261002-v4.
+
+Pydicom's public required check is the complete existing test_json.py and
+test_sequence.py modules: 31 tests, chosen from the public issue's JSON/SQ scope.
+It is not the full repository suite. That suite requires legacy pytest behavior
+and external DICOM fixtures absent from this pinned, offline image. A diagnostic
+restoring class setup/teardown exposed these additional failures; its shim was not
+adopted. No test assertions, expected outcomes or private target lists determine
+the public check. Original hidden evaluation and the other tasks' public full
+suites are unchanged. Each public check receives a temporary writable HOME.
 
 The public astroid suite has two narrow filters for newer setuptools' pkg_resources
 deprecation warnings; assertions and original evaluation are unchanged. This
 environmental adjustment belongs only to public regression, not the oracle.
 Task drafts remain external and unadmitted; no task package is published yet.
-The unresolved decision is how to support useful public verification without
-requiring unrelated broken full suites, disclosing private targets, or weakening
-original benchmark grading. See [findings](../docs/history/2026-10-02-swebench-lite-preflight.md).
+See the [initial findings](../docs/history/2026-10-02-swebench-lite-preflight.md)
+and [public-check follow-up](../docs/history/2026-10-02-swebench-lite-public-checks.md).
 
 Model calls, submitted agent patches, native agent evaluation and all 300 test tasks
 remain NOT_RUN. Model cost is USD 0.00; the credential file was not loaded.
