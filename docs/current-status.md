@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-01. Replaceable authority for current decisions. Runtime source owns
+Updated: 2026-10-02. Replaceable authority for current decisions. Runtime source owns
 behavior; historical reports are evidence, not an active work queue.
 
 ## Product and working baseline
@@ -25,6 +25,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+[Direction review](history/2026-10-01-development-direction-review.md): close the
+task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
+[Selection review](history/2026-10-02-requirement-selection-decision.md): task-first
+design already exists; no duplicate planning/prompt change. Baseline kept; no run queued.
+
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
 public/scope/safety passed, original hidden verdicts FAIL. USD 4.0651735; allocation
 closed. Keep baseline.
@@ -32,7 +37,7 @@ closed. Keep baseline.
 [Pyinfra v2](history/2026-10-01-pyinfra-v2-behavior-evaluation.md): calibrated replay
 PASS; original FAIL retained. No agent change or paid run queued.
 [Isort](history/2026-10-01-isort-public-diagnosis.md): comment-text workaround loses
-ownership. Preserve placement before wrapping; no shared agent intervention justified.
+ownership; task-level repair remains unimplemented.
 
 [Pydantic audit](history/2026-10-01-pydantic-evaluator-contract-audit.md) closed;
 no contract change.
@@ -64,12 +69,9 @@ restored previous guidance: no adoption evidence, not general ineffectiveness.
 Preserve original records; the [comparison note](../.agent/verification-selection-comparison.md)
 is closed and grants no further execution.
 
-The [PDM repair observation](history/2026-10-01-pdm-repair-observation.md) completed
-one approved run on the exposed dev-train v2 task. One edit passed all 24 public
-bug cases, all 36 upstream regressions, isolated acceptance and real sandbox
-safety. Recorded usage was USD 0.3550415; the USD 3 allocation is closed.
-Registered checks discriminated the PDM bug without optional probes. Keep the
-baseline; this establishes neither prompt benefit nor general repair accuracy.
+The [PDM observation](history/2026-10-01-pdm-repair-observation.md) passed 24 public
+bug cases, 36 regressions, acceptance and safety in one edit. USD 0.3550415;
+allocation closed. No causal prompt/probe benefit or general accuracy claim.
 
 The [four-row probe comparison](history/2026-09-30-probe-replay-comparison.md)
 closed at USD 1.412167 of USD 12. All Darts/MontePy rows passed acceptance, safety
