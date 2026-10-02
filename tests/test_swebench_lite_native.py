@@ -2,7 +2,26 @@ import json
 
 import pytest
 
-from diagnostics.swebench_lite_native import load_predictions, restore_transport_bytes
+from diagnostics.swebench_lite_native import (
+    load_predictions,
+    restore_transport_bytes,
+    validate_rows,
+)
+
+
+@pytest.mark.parametrize("count", [1, 3, 20])
+def test_native_roster_binds_each_unique_instance_at_any_batch_size(count):
+    image = "example/image@sha256:" + "a" * 64
+    rows = [{"instance_id": str(i), "image": image} for i in range(count)]
+    assert validate_rows(rows) == {image}
+
+
+@pytest.mark.parametrize("rows", [[], [{"instance_id": "a", "image": "image:latest"}],
+    [{"instance_id": "a", "image": "image@sha256:bad"}],
+    [{"instance_id": "a", "image": "image@sha256:" + "a" * 64}] * 2])
+def test_native_roster_rejects_empty_duplicate_or_unpinned_rows(rows):
+    with pytest.raises(ValueError):
+        validate_rows(rows)
 
 
 def test_windows_transport_restores_exact_upstream_bytes(tmp_path):

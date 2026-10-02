@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 
 
@@ -31,6 +32,17 @@ def load_predictions(path: Path, allowed: set[str]):
     return predictions
 
 
+def validate_rows(rows):
+    """Bind a nonempty operator roster without imposing the first pilot's size."""
+    identities = [row["instance_id"] for row in rows]
+    if not identities or len(identities) != len(set(identities)):
+        raise ValueError("nonempty roster with unique instance IDs required")
+    if any(re.fullmatch(r"[^\s@]+@sha256:[0-9a-f]{64}", row["image"]) is None
+           for row in rows):
+        raise ValueError("digest-pinned instances required")
+    return {row["image"] for row in rows}
+
+
 def run(rows_path: Path, output: Path, predictions_path: Path | None = None):
     # Disable upstream dotenv loading only in the evaluator process.
     os.environ["PYTHON_DOTENV_DISABLED"] = "1"
@@ -45,9 +57,7 @@ def run(rows_path: Path, output: Path, predictions_path: Path | None = None):
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     rows = json.loads(rows_path.read_text(encoding="utf-8"))
-    allowed_images = {row["image"] for row in rows}
-    if len(rows) != 3 or any("@sha256:" not in image for image in allowed_images):
-        raise ValueError("three digest-pinned instances required")
+    allowed_images = validate_rows(rows)
     predictions = (
         load_predictions(predictions_path, {row["instance_id"] for row in rows})
         if predictions_path is not None else None
