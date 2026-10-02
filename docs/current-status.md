@@ -29,7 +29,7 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 closed.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
-mixed repair/grading causes. [Probe support](history/2026-10-02-lite-probe-support.md) is available.
+mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
 [SQLFluff follow-up](history/2026-10-02-lite-sql3-probe-results.md): 0/3.
 [Verification audit](history/2026-10-02-lite-final-verification-audit.md): weak
 behavior oracle; runtime kept. No paid run queued.
