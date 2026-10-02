@@ -29,8 +29,14 @@ verification distinction; autonomous selection remains untested.
 Existing `candidate_review_repair.run_seeded` runs the normal runner and isolated
 evaluator in a dedicated sequential process. There is no runtime/default change.
 The driver is `diagnostics/selected_tests_diagnostic.py`; generated evidence lives
-at `C:/pt/analyses/selected-tests-diagnostic-20261003-v2`. Fresh calibration checkouts
-use `C:/pt/stcal02`; paid runs, if separately authorized, use `C:/pt/stlive01`.
+at `C:/pt/analyses/selected-tests-diagnostic-20261003-v3`. Fresh calibration checkouts
+use `C:/pt/stcal03`; newly authorized paid runs use `C:/pt/stlive02`.
+
+The user reported resolving the API limit and separately authorized this fresh
+A1/B1 pair at the same USD 6 cap on 2026-10-03. The v2 allocation remains closed:
+A1 stopped before any tool action, billing remains unknown, and B1 was not run.
+No prior call is resumed or reconciled by this new allocation. Only external run
+paths change; model, task, seed patches, instructions and per-run limits stay fixed.
 
 ## Measurement and decision
 
