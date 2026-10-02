@@ -17,6 +17,9 @@ Approvals are closed.
 
 ## New records
 
+- [Public predicate diagnostic](2026-10-03-public-predicate-result.md).
+- [Final verification audit](2026-10-02-lite-final-verification-audit.md).
+- [SQLFluff probe results](2026-10-02-lite-sql3-probe-results.md).
 - [Lite probe support](2026-10-02-lite-probe-support.md).
 - Lite dev20: [results](2026-10-02-lite-dev20-results.md), [diagnosis](2026-10-02-lite-dev20-failure-diagnosis.md).
 - [Lite registration](2026-10-02-lite-dev20-registration.md).
@@ -88,9 +91,7 @@ Approvals are closed.
   four runs, extra P-B reading and unchanged acceptance after advice removal.
 - [first-input completion advice diagnostic](2026-09-26-completion-status-diagnostic.md):
   opt-in recommendation removal, unchanged runtime gates, and local delivery validation.
-- [verification scope audit](2026-09-26-verification-scope-audit.md):
-  first-plan narrowing, actual public check inputs, and limits of the guidance hypothesis.
-- [paired-reference comparison](2026-09-26-paired-reference-comparison.md):
-  admitted declarations, unchanged seeded candidates, and the completion-guidance question.
+- [Verification scope audit](2026-09-26-verification-scope-audit.md).
+- [Paired-reference comparison](2026-09-26-paired-reference-comparison.md).
 
 Record evidence, limits and next question once; preserve closed records.

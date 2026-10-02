@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-02. Current decisions; runtime source owns behavior.
+Updated: 2026-10-03. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -25,17 +25,19 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3 resolved, USD
-0.29098320; allocation closed. Pydicom's full public suite remains incompatible.
+[Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3, USD 0.29098320;
+closed.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
-mixed repair/grading causes. [Probe support](history/2026-10-02-lite-probe-support.md)
-enables public SQLFluff diagnostics; old probe code also has API errors. No paid run queued.
+mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
+[SQLFluff follow-up](history/2026-10-02-lite-sql3-probe-results.md): 0/3.
+[Predicate diagnostic](history/2026-10-03-public-predicate-result.md): quote invalid;
+code matches public example statically; execution NOT_RUN. Allocation closed.
 
-[Direction review](history/2026-10-01-development-direction-review.md): close the
-task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
+[Direction review](history/2026-10-01-development-direction-review.md): task-by-task
+diagnosis closed; no isort repair control or agent change queued.
 [Selection review](history/2026-10-02-requirement-selection-decision.md): task-first
-design already exists; no duplicate planning/prompt change. Baseline kept; no run queued.
+design exists; baseline kept, no duplicate planning/prompt change.
 
 [Fixed batch](history/2026-10-01-fixed-batch-live-results.md): 0/3 accepted;
 public/scope/safety passed, original hidden verdicts FAIL. USD 4.0651735; allocation
