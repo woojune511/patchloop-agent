@@ -31,8 +31,9 @@ closed.
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
 [SQLFluff follow-up](history/2026-10-02-lite-sql3-probe-results.md): 0/3.
-[Predicate diagnostic](history/2026-10-03-public-predicate-result.md): quote invalid;
-code matches public example statically; execution NOT_RUN. Allocation closed.
+[Predicate replay](history/2026-10-03-positive-verification-preparation.md): saved
+predicate 4/4 public controls; old report unchanged. [A/B scope](../.agent/positive-verification-experiment.md)
+prepared; exact paid authorization pending.
 
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task
 diagnosis closed; no isort repair control or agent change queued.
@@ -114,10 +115,9 @@ and [journal tests](../tests/test_dev_state.py) cover the boundaries and injecte
 [CI](../.github/workflows/ci.yml) is configured for locked dependencies and both Windows
 and Linux. These changes do not establish improved patch correctness.
 
-CI runs the complete suite with four file-grouped workers on PRs and main pushes,
-with duration/JUnit reports. The [completed investigation](history/2026-09-30-ci-feedback-speed.md)
-and [merged PR #2](https://github.com/woojune511/patchloop-agent/pull/2) retain the
-individual timing evidence; those timings are not a stable performance benchmark.
+CI runs the full suite with four file-grouped workers and JUnit reports. The
+[timing investigation](history/2026-09-30-ci-feedback-speed.md) is historical,
+not a stable performance benchmark.
 
 The approved [fresh tox repair](history/2026-09-30-tox-fresh-repair.md) completed with
 the working baseline unchanged: one edit, 29 public regression tests passed,
