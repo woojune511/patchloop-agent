@@ -1,5 +1,10 @@
 # One-row review time diagnosis
 
+Status: CLOSED / NO FURTHER EXECUTION AUTHORIZED.
+The approved row completed with an unchanged patch and failed acceptance; see the
+[result](../docs/history/2026-10-02-review-time-extension-result.md). The scope below
+documents that closed allocation. Its approval and unused funds cannot be reused.
+
 This separately approved diagnostic starts from the original OpenSandbox source
 checkpoint used in the closed review pilots, not from a partial B run. It asks
 whether a longer review allowance permits report and repair completion. It is
@@ -13,8 +18,8 @@ from review-context-pilot.md remain: four review calls, twelve review actions,
 900 total seconds, sixteen total calls, 48 actions, two new accepted edits,
 zero retries, unchanged report schema and public/private boundaries.
 
-The user approved this scope and additional USD 2 on 2026-10-02. Freeze and record
-the exact manifest before execution. A fresh root is required; never resume or
+The user approved this scope and additional USD 2 on 2026-10-02; that execution is closed.
+Any separately approved future execution must freeze its exact manifest. Never resume or
 replace a failed attempt. Preflight must pass before credential access. Any
 transport, billing or cleanup uncertainty stops execution; unused budget does not
 authorize another attempt. Previous uncertain charges remain separate.
