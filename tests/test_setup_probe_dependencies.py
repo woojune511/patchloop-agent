@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import json
+from importlib.metadata import distributions
 
 import pytest
+from test_prepared_probe_dependencies import prepare_fixture  # noqa: F401
+from test_probe_dependency_resolution import resolved_fixture  # noqa: F401
 
 from diagnostics import setup_probe_dependencies as setup
 from patchloop.errors import ContractError
+from patchloop.probe_project_files import prepare as prepare_project_files
 from patchloop.util import sha256_bytes
 
 SOURCE = '''from setuptools import setup
@@ -136,3 +140,53 @@ def test_selected_file_composes_with_existing_receipt_admission(tmp_path, monkey
                       generated_wheel_receipt=receipt,
                       generated_wheel_receipt_hash="sha256:" + "a" * 64)
     assert previous == (setup.resolution.project_requirements, setup.prepared._workspace_metadata)
+
+
+def test_legacy_setup_preparation_publishes_discoverable_plugins(resolved_fixture):  # noqa: F811
+    request, repo, calls = resolved_fixture
+    (repo / "pyproject.toml").unlink()
+    (repo / "setup.py").write_text(
+        'from setuptools import setup\n'
+        'raise RuntimeError("must not execute")\n'
+        'setup(name="public-demo", install_requires=["fixture>=1"], '
+        'entry_points={"public.plugins": ["Demo = demo.plugin:factory"]})\n'
+    )
+    path = setup.prepare(public=request["public"], prepared_source=request["prepared_source"],
+                         output=request["output"], source_roots=["src"],
+                         supplemental_requirements=["fixture<2"])
+    descriptor = json.loads(path.read_bytes())
+    source = descriptor["wheel_lock"]["source_metadata"]
+    assert source["pyproject_hash"] is None
+    assert source["operator_supplemental_requirements"] == ["fixture<2"]
+    assert source["requirements"] == ["fixture<2", "fixture>=1"]
+    installed = path.parent / "site-packages"
+    plugins = [ep for dist in distributions(path=[str(installed)])
+               for ep in dist.entry_points if ep.group == "public.plugins"]
+    assert [(ep.name, ep.value) for ep in plugins] == [("Demo", "demo.plugin:factory")]
+    setup.prepared.load_dependencies(path, request["public"], setup.prepared.admit(path)).verify()
+    assert len(calls) == 2  # Public resolution and offline wheel installation only.
+    metadata = descriptor["workspace_metadata"]
+    assert prepare_project_files(repo, metadata, ["src"], path.parent) == []
+    (repo / "pyproject.toml").write_text("[tool.new]\n")
+    with pytest.raises(ContractError, match="metadata changed"):
+        prepare_project_files(repo, metadata, ["src"], path.parent)
+
+
+@pytest.mark.parametrize("entry_points", [
+    'compute()', '{"plugins": ["same=a", "same=b"]}',
+    '{"plugins": ["item=module:factory [extra]"]}',
+    '{"plugins\\nother": ["item=module"]}', '{"plugins": ["item=../../private"]}',
+])
+def test_unsupported_entry_points_fail_without_evaluation(tmp_path, entry_points):
+    repo = fixture(tmp_path, 'from setuptools import setup\n'
+                   f'setup(name="demo", entry_points={entry_points})\n')
+    with pytest.raises(ContractError):
+        setup.metadata(repo, groups=[], extras=[])
+
+
+@pytest.mark.parametrize("requirement", ["demo", "pkg @ https://example.test/a.whl",
+                                          "--index-url=https://example.test", "pkg\nother"])
+def test_supplements_cannot_bypass_public_index_validation(tmp_path, requirement):
+    repo = fixture(tmp_path, 'from setuptools import setup\nsetup(name="demo")\n')
+    with pytest.raises(ContractError):
+        setup.metadata(repo, groups=[], extras=[], supplemental_requirements=[requirement])

@@ -17,6 +17,7 @@ Approvals are closed.
 
 ## New records
 
+- [Lite probe support](2026-10-02-lite-probe-support.md).
 - Lite dev20: [results](2026-10-02-lite-dev20-results.md), [diagnosis](2026-10-02-lite-dev20-failure-diagnosis.md).
 - [Lite registration](2026-10-02-lite-dev20-registration.md).
 - [Lite public checks](2026-10-02-lite-public-regressions.md).
@@ -75,10 +76,8 @@ Approvals are closed.
 - [First plan after source](2026-09-26-after-source-planning.md).
 - [Planning ON/OFF](2026-09-26-planning-off-comparison.md).
 - [Post-search declaration](2026-09-26-declaration-checkpoint-comparison.md).
-- [frozen declaration decision](2026-09-26-declaration-checkpoint-sampler.md):
-  exact post-search input restoration and optional bounded next-response collection.
-- [declaration-context diagnostic](2026-09-26-declaration-context-diagnostic.md):
-  bounded first-batch source expansion, offline search replay, and isolated mock validation.
+- [frozen declaration decision](2026-09-26-declaration-checkpoint-sampler.md).
+- [declaration-context diagnostic](2026-09-26-declaration-context-diagnostic.md).
 - [first interpretation and source questions](2026-09-26-first-interpretation-audit.md):
   equal inputs, pre-edit questions and source-context limits.
 - [independent candidate comparison](2026-09-26-independent-candidate-comparison.md):

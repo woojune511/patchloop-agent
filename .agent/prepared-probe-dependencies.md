@@ -180,7 +180,7 @@ version supports static PEP 621/735 metadata, not setup.py or arbitrary requirem
 The project itself is never downloaded or built; it receives the same minimal public
 name/version metadata described above. Empty third-party dependency sets are supported.
 
-For a checkout with tool-only `pyproject.toml` and literal `setup.py` runtime
+For a checkout with absent or tool-only `pyproject.toml` and literal `setup.py` runtime
 requirements, the separate opt-in operator adapter
 `python -B -m diagnostics.setup_probe_dependencies <task-dir> --prepared-source
 <descriptor> --source-root <root> --output <new-directory>` reuses this resolver and
@@ -189,6 +189,22 @@ literal `name`, `python_requires` and `install_requires` values (or a single lit
 assignment). It never executes setup code. Dynamic/ambiguous/reused metadata,
 extras/groups, URL/self dependencies and PEP 621 projects are rejected. It supports
 only this public metadata shape; it is not a general setup.py interpreter.
+
+The adapter preserves literal `entry_points` mappings in distribution metadata so
+in-process plugin discovery can find the public source implementation. Entries must
+be plain `name = module[:object]` strings; dynamic declarations, duplicate names,
+extras-qualified targets and invalid groups are rejected. This writes metadata only:
+it does not execute setup.py, import plugins during preparation, install the project
+or create console-script executables. Ordinary PEP 621 preparation is unchanged.
+
+For an undeclared compatibility dependency, repeat the explicit operator option
+`--supplemental-requirement <PEP-508-index-requirement>`. These requirements are
+combined with source requirements, not substituted for them. They are recorded as
+`operator_supplemental_requirements` in resolution and workspace provenance, never
+represented as upstream declarations. URL, local, self and pip-option inputs are
+rejected by the same validation. No supplement is selected automatically. For the
+old SQLFluff sources that import `pkg_resources`, the exercised preparation uses
+`--source-root src --supplemental-requirement setuptools==80.9.0`.
 
 For runtime dependencies stored in a reviewed public file, the operator may add
 `--requirements-file <repository-relative-path>`. This explicitly selects the file
@@ -202,7 +218,8 @@ The adapter also forwards `--generated-wheel-receipt` and
 this does not enable source builds during preparation or agent execution.
 
 Its resolution provenance binds `setup.py`; minimal project metadata also binds
-the actual pyproject bytes and uses the explicit source-snapshot version. Existing
+the actual pyproject bytes (or its absence) and uses the explicit source-snapshot
+version. A setup-only project does not receive generated pyproject build outputs. Existing
 wheel origins/hashes, platform limits, offline installation, publication-last
 descriptor, source isolation and sandbox controls apply unchanged. The ordinary
 CLI resolver's accepted metadata remains unchanged. A real import canary is needed

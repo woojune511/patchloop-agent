@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import configparser
 import re
 import tomllib
 from functools import partial
@@ -25,11 +26,14 @@ from patchloop.util import canonical_json, safe_relative_path, sha256_bytes
 
 
 def metadata(repo: Path, *, groups: list[str], extras: list[str],
-             requirements_file: str | None = None) -> dict:
+             requirements_file: str | None = None,
+             supplemental_requirements: list[str] | None = None) -> dict:
     if groups or extras:
         raise ContractError("literal setup adapter supports runtime requirements only")
-    pyproject = prepared._read_bytes(repo / "pyproject.toml")
-    if "project" in tomllib.loads(pyproject.decode("utf-8")):
+    project_path = repo / "pyproject.toml"
+    pyproject = (prepared._read_bytes(project_path)
+                 if project_path.exists() or project_path.is_symlink() else None)
+    if pyproject is not None and "project" in tomllib.loads(pyproject.decode("utf-8")):
         raise ContractError("use ordinary preparation for PEP 621 metadata")
     path = repo / "setup.py"
     if path.is_symlink() or not path.resolve().is_relative_to(repo.resolve()):
@@ -88,7 +92,10 @@ def metadata(repo: Path, *, groups: list[str], extras: list[str],
     if not isinstance(requirements, (list, tuple)) or len(requirements) > 1024:
         raise ContractError("setup runtime requirements must be a bounded literal sequence")
     selected = set()
-    for text in requirements:
+    supplemental = supplemental_requirements or []
+    if len(supplemental) > 32:
+        raise ContractError("supplemental requirements exceed the bound")
+    for text in [*requirements, *supplemental]:
         if not isinstance(text, str) or any(c in text for c in "\r\n\x00"):
             raise ContractError("setup requirements must be single-line PEP 508 declarations")
         try:
@@ -103,17 +110,47 @@ def metadata(repo: Path, *, groups: list[str], extras: list[str],
             continue
         req.marker = None
         selected.add(str(req))
+    entry_points = literal("entry_points", {})
+    if not isinstance(entry_points, dict) or len(entry_points) > 64:
+        raise ContractError("setup entry points must be a bounded literal mapping")
+    normalized = {}
+    for group, entries in entry_points.items():
+        if (not isinstance(group, str) or not re.fullmatch(r"[A-Za-z0-9_.]+", group)
+                or not isinstance(entries, (list, tuple)) or len(entries) > 128):
+            raise ContractError("invalid static setup entry point group")
+        values = {}
+        for entry in entries:
+            if not isinstance(entry, str):
+                raise ContractError("setup entry points must be literal strings")
+            match = re.fullmatch(
+                r"\s*([A-Za-z0-9_.-]+)\s*=\s*"
+                r"([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*(?::[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)?)\s*",
+                entry, flags=re.ASCII,
+            )
+            if match is None or match[1] in values:
+                raise ContractError("invalid or duplicate static setup entry point")
+            values[match[1]] = match[2]
+        normalized[group] = values
     result = {"path": "setup.py", "hash": sha256_bytes(raw), "project_name": name,
             "requires_python": python, "requirements": sorted(selected), "groups": [],
             "extras": [], "adapter": "literal-setup-runtime-v1",
-            "pyproject_hash": sha256_bytes(pyproject)}
+            "pyproject_hash": sha256_bytes(pyproject) if pyproject is not None else None}
+    if normalized:
+        result["entry_points"] = normalized
+    if supplemental:
+        # Operator-selected compatibility inputs, never mislabelled as source declarations.
+        result["operator_supplemental_requirements"] = supplemental
     if file_record is not None:
         result.update(adapter="operator-selected-requirements-v1", requirements_file=file_record)
     return result
 
 
-def workspace_metadata(repo, packages, roots, commit, target, *, requirements_file=None):
-    public = metadata(repo, groups=[], extras=[], requirements_file=requirements_file)
+def workspace_metadata(repo, packages, roots, commit, target, *, requirements_file=None,
+                       supplemental_requirements=None, lock_directory="."):
+    if lock_directory != ".":
+        raise ContractError("setup adapter supports root metadata only")
+    public = metadata(repo, groups=[], extras=[], requirements_file=requirements_file,
+                      supplemental_requirements=supplemental_requirements)
     name, version = public["project_name"], f"0+patchloop.{commit}"
     if packages != [{"name": name, "source": {"editable": "."}}]:
         raise ContractError("setup workspace identity differs from public resolution")
@@ -122,22 +159,34 @@ def workspace_metadata(repo, packages, roots, commit, target, *, requirements_fi
               "pyproject_hash": public["pyproject_hash"], "setup_hash": public["hash"]}
     if "requirements_file" in public:
         record["requirements_file"] = public["requirements_file"]
+    for key in ("entry_points", "operator_supplemental_requirements"):
+        if key in public:
+            record[key] = public[key]
     directory = target / f"{re.sub(r'[-_.]+', '_', name)}-{version}.dist-info"
     directory.mkdir(exist_ok=False)
     (directory / "METADATA").write_text(
         f"Metadata-Version: 2.3\nName: {name}\nVersion: {version}\n", encoding="utf-8")
     (directory / "PATCHLOOP-SOURCE.json").write_text(canonical_json(record), encoding="utf-8")
+    if public.get("entry_points"):
+        config = configparser.ConfigParser(interpolation=None)
+        config.optionxform = str
+        config.read_dict(public["entry_points"])
+        with (directory / "entry_points.txt").open("w", encoding="utf-8") as stream:
+            config.write(stream)
     return [record]
 
 
 def prepare(*, public, prepared_source: Path, output: Path, source_roots: list[str],
             requirements_file: str | None = None,
+            supplemental_requirements: list[str] | None = None,
             generated_wheel_receipt: Path | None = None,
             generated_wheel_receipt_hash: str | None = None):
     reader, writer = metadata, workspace_metadata
-    if requirements_file is not None:
-        reader = partial(metadata, requirements_file=requirements_file)
-        writer = partial(workspace_metadata, requirements_file=requirements_file)
+    if requirements_file is not None or supplemental_requirements:
+        options = {"requirements_file": requirements_file,
+                   "supplemental_requirements": supplemental_requirements}
+        reader = partial(metadata, **options)
+        writer = partial(workspace_metadata, **options)
     with patch.object(resolution, "project_requirements", reader), \
             patch.object(prepared, "_workspace_metadata", writer):
         return prepared.prepare_dependencies(public=public, prepared_source=prepared_source,
@@ -153,11 +202,14 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source-root", action="append", default=[])
     parser.add_argument("--requirements-file", help="Reviewed repository-relative PEP 508 file")
+    parser.add_argument("--supplemental-requirement", action="append", default=[],
+                        help="Explicit public-index compatibility requirement, recorded separately")
     parser.add_argument("--generated-wheel-receipt", type=Path)
     parser.add_argument("--generated-wheel-receipt-hash")
     args = parser.parse_args()
     print(prepare(public=load_task_package(args.task).public,
                   prepared_source=args.prepared_source, output=args.output,
                   source_roots=args.source_root, requirements_file=args.requirements_file,
+                  supplemental_requirements=args.supplemental_requirement,
                   generated_wheel_receipt=args.generated_wheel_receipt,
                   generated_wheel_receipt_hash=args.generated_wheel_receipt_hash))

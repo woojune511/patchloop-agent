@@ -29,8 +29,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 0.29098320; allocation closed. Pydicom's full public suite remains incompatible.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
-mixed repair and grading causes; three tasks had unusable public probes. Investigate
-public dependency/source support first. Keep baseline and verdicts; no run queued.
+mixed repair/grading causes. [Probe support](history/2026-10-02-lite-probe-support.md)
+enables public SQLFluff diagnostics; old probe code also has API errors. No paid run queued.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
