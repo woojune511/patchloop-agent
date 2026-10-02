@@ -1,7 +1,9 @@
 # Public-output predicate authoring diagnostic
 
-Status: prepared scope; new live approval and exact-head CI are required.
-This plan authorizes no provider dispatch by itself.
+Status: CLOSED after one approved response. The verbatim quote was invalid;
+report NOT_ASSESSABLE, generated-predicate evaluation NOT_RUN. See the
+[outcome](../docs/history/2026-10-03-public-predicate-result.md).
+The scope below records the frozen plan and authorizes no further dispatch.
 
 ## Question and evidence
 

@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-02. Current decisions; runtime source owns behavior.
+Updated: 2026-10-03. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -31,8 +31,8 @@ closed.
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
 [SQLFluff follow-up](history/2026-10-02-lite-sql3-probe-results.md): 0/3.
-[Verification audit](history/2026-10-02-lite-final-verification-audit.md): weak oracle.
-[Predicate authoring](../.agent/lite-oracle-authoring.md): preparation only; approval pending.
+[Predicate diagnostic](history/2026-10-03-public-predicate-result.md): quote invalid;
+code matches public example statically; execution NOT_RUN. Allocation closed.
 
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task
 diagnosis closed; no isort repair control or agent change queued.
