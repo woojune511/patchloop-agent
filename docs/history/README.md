@@ -19,6 +19,7 @@ Approvals are closed.
 
 ## New records
 
+- [Lite dev20 inventory](2026-10-02-swebench-lite-dev20-inventory.md).
 - [Lite mini results](2026-10-02-swebench-lite-mini-pilot.md).
 - [Lite preflight](2026-10-02-swebench-lite-preflight.md).
 - [Public checks](2026-10-02-swebench-lite-public-checks.md).
@@ -68,8 +69,7 @@ Approvals are closed.
 - [planning OFF regression](2026-09-27-planning-off-regression.md).
 - [First-plan timing](2026-09-27-after-source-planning-comparison.md).
 - [First plan after source](2026-09-26-after-source-planning.md).
-- [planning ON/OFF full-run comparison](2026-09-26-planning-off-comparison.md):
-  eight fresh solves, Pydantic-only OFF acceptance advantage, and unchanged HF failures.
+- [Planning ON/OFF](2026-09-26-planning-off-comparison.md).
 - [post-search declaration comparison](2026-09-26-declaration-checkpoint-comparison.md):
   four live next responses, anonymous question review, and no immediate applicability signal.
 - [frozen declaration decision](2026-09-26-declaration-checkpoint-sampler.md):

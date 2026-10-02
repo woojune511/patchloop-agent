@@ -25,12 +25,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[SWE-bench Lite mini pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 3/3
-submitted, 1/3 resolved by original native evaluation (pydicom); astroid/marshmallow
-failed. Public/scope/safety passed; all required tests ran. Cost USD 0.29098320,
-19 model calls. Allocation closed; no retry or 300-task run authorized.
-Pydicom uses 31 JSON/Sequence public regressions; its full suite remains incompatible.
-The result measures this three-task dev pilot, not general benchmark accuracy.
+[Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3 resolved, USD
+0.29098320; allocation closed. Pydicom's full public suite remains incompatible.
+[Remaining dev20](history/2026-10-02-swebench-lite-dev20-inventory.md): image/source
+metadata verified; 8.63 GiB unique compressed layers. Calibration and public checks
+NOT_RUN; integration gaps remain. No downloads or paid batch authorized.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.
