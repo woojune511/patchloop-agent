@@ -30,7 +30,7 @@ conditional USD 3.60 mini invocation approved. Native and registered controls ea
 passed 6/6. [Public-check follow-up](history/2026-10-02-swebench-lite-public-checks.md):
 pydicom uses 31 existing JSON/Sequence regressions; its full suite remains incompatible.
 Original hidden grading is unchanged. Paid calls remain NOT_RUN (USD 0).
-Drafts remain external; the 300-task test split is not authorized.
+Packages admitted; the 300-task test split is not authorized.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.

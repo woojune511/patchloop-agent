@@ -1,0 +1,34 @@
+{
+  "spec": {
+    "instance_id": "pylint-dev__astroid-1978",
+    "image": "swebench/sweb.eval.x86_64.pylint-dev_1776_astroid-1978@sha256:c8c32dfa1bb2ac5bf5b52e2c96fbd18b0a3a8a864b30e757b03f5a79a6e6a685",
+    "repo": "pylint-dev/astroid",
+    "version": "2.14",
+    "FAIL_TO_PASS": [
+      "tests/unittest_raw_building.py::test_build_module_getattr_catch_output"
+    ],
+    "PASS_TO_PASS": [
+      "tests/unittest_raw_building.py::RawBuildingTC::test_attach_dummy_node",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_build_class",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_build_from_import",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_build_function",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_build_function_args",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_build_function_deepinspect_deprecation",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_build_function_defaults",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_build_function_kwonlyargs",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_build_function_posonlyargs",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_build_module",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_io_is__io",
+      "tests/unittest_raw_building.py::RawBuildingTC::test_module_object_with_broken_getattr"
+    ],
+    "log_parser": "parse_log_astroid",
+    "eval_type": "pass_and_fail",
+    "eval_script_list": []
+  },
+  "test_patch": "diff --git a/tests/unittest_raw_building.py b/tests/unittest_raw_building.py\n--- a/tests/unittest_raw_building.py\n+++ b/tests/unittest_raw_building.py\n@@ -8,8 +8,15 @@\n # For details: https://github.com/PyCQA/astroid/blob/main/LICENSE\n # Copyright (c) https://github.com/PyCQA/astroid/blob/main/CONTRIBUTORS.txt\n \n+from __future__ import annotations\n+\n+import logging\n+import os\n+import sys\n import types\n import unittest\n+from typing import Any\n+from unittest import mock\n \n import _io\n import pytest\n@@ -117,5 +124,45 @@ def test_module_object_with_broken_getattr(self) -> None:\n         AstroidBuilder().inspect_build(fm_getattr, \"test\")\n \n \n+@pytest.mark.skipif(\n+    \"posix\" not in sys.builtin_module_names, reason=\"Platform doesn't support posix\"\n+)\n+def test_build_module_getattr_catch_output(\n+    capsys: pytest.CaptureFixture[str],\n+    caplog: pytest.LogCaptureFixture,\n+) -> None:\n+    \"\"\"Catch stdout and stderr in module __getattr__ calls when building a module.\n+\n+    Usually raised by DeprecationWarning or FutureWarning.\n+    \"\"\"\n+    caplog.set_level(logging.INFO)\n+    original_sys = sys.modules\n+    original_module = sys.modules[\"posix\"]\n+    expected_out = \"INFO (TEST): Welcome to posix!\"\n+    expected_err = \"WARNING (TEST): Monkey-patched version of posix - module getattr\"\n+\n+    class CustomGetattr:\n+        def __getattr__(self, name: str) -> Any:\n+            print(f\"{expected_out}\")\n+            print(expected_err, file=sys.stderr)\n+            return getattr(original_module, name)\n+\n+    def mocked_sys_modules_getitem(name: str) -> types.ModuleType | CustomGetattr:\n+        if name != \"posix\":\n+            return original_sys[name]\n+        return CustomGetattr()\n+\n+    with mock.patch(\"astroid.raw_building.sys.modules\") as sys_mock:\n+        sys_mock.__getitem__.side_effect = mocked_sys_modules_getitem\n+        builder = AstroidBuilder()\n+        builder.inspect_build(os)\n+\n+    out, err = capsys.readouterr()\n+    assert expected_out in caplog.text\n+    assert expected_err in caplog.text\n+    assert not out\n+    assert not err\n+\n+\n if __name__ == \"__main__\":\n     unittest.main()\n",
+  "test_command": [
+    "pytest",
+    "-rA",
+    "tests/unittest_raw_building.py"
+  ]
+}

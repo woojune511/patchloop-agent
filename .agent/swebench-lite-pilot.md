@@ -9,8 +9,8 @@ agent improvement claim or benchmark score. All runs remain official=false.
 
 On 2026-10-02 the user approved the three image downloads, integration/calibration,
 and the conditional USD 3.60 live pilot below. It never covers the 300 test tasks.
-The paid invocation has not started. Registered public/private calibration now passes;
-task admission and the frozen live invocation remain separate execution steps.
+Registered public/private calibration passes. The three calibrated packages are
+admitted under tasks/dev-train; the frozen live invocation uses the allocation below.
 This exact conditional approval is retained; no larger or replacement allocation follows.
 
 ## Frozen inputs
@@ -24,7 +24,7 @@ This exact conditional approval is retained; no larger or replacement allocation
   three distinct repositories. Seed: patchloop-swebench-lite-dev-20261002-v1.
   Selection uses neither issue/answer content nor evaluation outcomes or image availability.
 
-| Instance | Base commit | Proposed checked-in package under tasks/dev-train |
+| Instance | Base commit | Checked-in package under tasks/dev-train |
 | --- | --- | --- |
 | pylint-dev__astroid-1978 | 0c9ab0fe56703fa83c73e514a1020d398d23fa7f | swebench-lite-dev-pylint-dev-astroid-1978 |
 | pydicom__pydicom-1256 | 49a3da4a3d9c24d7e8427a25048a1c7d5c4f7724 | swebench-lite-dev-pydicom-pydicom-1256 |
@@ -131,7 +131,8 @@ suites are unchanged. Each public check receives a temporary writable HOME.
 The public astroid suite has two narrow filters for newer setuptools' pkg_resources
 deprecation warnings; assertions and original evaluation are unchanged. This
 environmental adjustment belongs only to public regression, not the oracle.
-Task drafts remain external and unadmitted; no task package is published yet.
+The three calibrated packages are copied byte-for-byte into tasks/dev-train.
+Raw-byte Git attributes preserve their original evaluator artifact hashes.
 See the [initial findings](../docs/history/2026-10-02-swebench-lite-preflight.md)
 and [public-check follow-up](../docs/history/2026-10-02-swebench-lite-public-checks.md).
 

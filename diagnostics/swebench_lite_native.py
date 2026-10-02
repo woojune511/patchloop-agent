@@ -16,7 +16,22 @@ def restore_transport_bytes(path: Path, expected: bytes):
     path.write_bytes(expected)
 
 
-def run(rows_path: Path, output: Path):
+def load_predictions(path: Path, allowed: set[str]):
+    predictions = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        item = json.loads(line)
+        identity = item["instance_id"]
+        if identity not in allowed or identity in predictions:
+            raise ValueError("unknown or duplicate prediction instance")
+        if not isinstance(item.get("model_patch"), str) or not item["model_patch"].strip():
+            raise ValueError("native evaluation requires a submitted nonempty patch")
+        predictions[identity] = item["model_patch"]
+    if not predictions:
+        raise ValueError("no submitted predictions")
+    return predictions
+
+
+def run(rows_path: Path, output: Path, predictions_path: Path | None = None):
     # Disable upstream dotenv loading only in the evaluator process.
     os.environ["PYTHON_DOTENV_DISABLED"] = "1"
     from swebench.harness import run_evaluation
@@ -33,6 +48,10 @@ def run(rows_path: Path, output: Path):
     allowed_images = {row["image"] for row in rows}
     if len(rows) != 3 or any("@sha256:" not in image for image in allowed_images):
         raise ValueError("three digest-pinned instances required")
+    predictions = (
+        load_predictions(predictions_path, {row["instance_id"] for row in rows})
+        if predictions_path is not None else None
+    )
     os.chdir(output)
     raw_client = docker.from_env(timeout=60)
     created = []
@@ -89,13 +108,18 @@ def run(rows_path: Path, output: Path):
     summaries = []
     try:
         for row in rows:
+            if predictions is not None and row["instance_id"] not in predictions:
+                continue
             spec = make_test_spec(row)
-            for mode in ("base", "reference"):
+            for mode in (("agent",) if predictions is not None else ("base", "reference")):
                 run_id = "lite-dev-controls-" + mode
                 pred = {
                     "instance_id": row["instance_id"],
                     "model_name_or_path": mode,
-                    "model_patch": "" if mode == "base" else row["patch"],
+                    "model_patch": (
+                        predictions[row["instance_id"]] if predictions is not None
+                        else "" if mode == "base" else row["patch"]
+                    ),
                 }
                 expected_files.clear()
                 expected_files.update(
@@ -128,7 +152,9 @@ def run(rows_path: Path, output: Path):
                 test_exit = parse_test_exit_code(log.read_text()) if log.is_file() else None
                 report = result[1][row["instance_id"]] if result else {}
                 complete = bool(found and not missing and test_exit in (0, 1))
-                expected = complete and report.get("resolved") is (mode == "reference")
+                expected = complete and (
+                    predictions is not None or report.get("resolved") is (mode == "reference")
+                )
                 summary = {
                     "instance_id": row["instance_id"],
                     "mode": mode,
@@ -177,5 +203,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rows", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--predictions", type=Path)
     args = parser.parse_args()
-    run(args.rows.resolve(), args.output)
+    run(args.rows.resolve(), args.output, args.predictions)
