@@ -9,16 +9,15 @@ Approvals are closed.
 
 [Snapshot manifest](2026-09-26-context-split/manifest.json).
 
-| Snapshot | Useful lookup topics |
-| --- | --- |
-| [Status](2026-09-26-context-split/current-status.md) | Baseline |
-| [Guide](2026-09-26-context-split/agent-guide.md) | Contracts |
-| [Evidence](2026-09-26-context-split/evidence.md) | Early evidence |
-| [Operations](2026-09-26-context-split/operations.md) | Closed operations |
+[Status](2026-09-26-context-split/current-status.md),
+[guide](2026-09-26-context-split/agent-guide.md),
+[evidence](2026-09-26-context-split/evidence.md),
+[operations](2026-09-26-context-split/operations.md).
 
 
 ## New records
 
+- [Lite dev20 results](2026-10-02-lite-dev20-results.md).
 - [Lite registration](2026-10-02-lite-dev20-registration.md).
 - [Lite public checks](2026-10-02-lite-public-regressions.md).
 - [Lite validation](2026-10-02-lite-environment-validation.md).

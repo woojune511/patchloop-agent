@@ -1,8 +1,11 @@
 # SWE-bench Lite dev20 baseline batch
 
-Prepared 2026-10-02. Status: **awaiting new paid-run approval**. This document is
-an operator execution plan, never solver context. The previous three-task pilot's
-allocation is closed; its unused budget does not authorize this batch.
+Prepared 2026-10-02. Status: **completed; allocation closed**. This is a closed
+operator execution plan, never solver context or permission for another run.
+The approved batch at `3077f81a` submitted 20/20 and resolved 10/20 under the original
+hidden evaluator; registered/native verdicts agree. Cost: USD 5.01124395. See the
+[outcome record](../docs/history/2026-10-02-lite-dev20-results.md). Unused budget
+does not authorize any further calls. The previous three-task pilot remains separate.
 
 ## Question and fixed design
 
@@ -41,7 +44,7 @@ Fixed execution order:
 19. sqlfluff__sqlfluff-1763
 20. sqlfluff__sqlfluff-2419
 
-## Exact proposed paid scope
+## Executed paid scope
 
 - Model: `gpt-5.4-mini-2026-03-17`; reasoning `xhigh`; output limit 25,000 tokens.
 - Credential file: `C:/Users/geonj/Documents/PatchLoop/.env`; exact
@@ -70,13 +73,13 @@ External evidence root:
 
 - `manifest.json`: all twenty task/source/native-row hashes, image identities and
   resource scope. Private evaluator inputs stay operator-only.
-- `batch.py`: default provider-free preflight; `--execute` is permitted only after
-  new user approval. The preflight receipt binds exact HEAD, runtime, manifest,
+- `batch.py`: the approved one-shot invocation is complete and must not be restarted.
+  The preflight receipt binds exact HEAD, runtime, manifest,
   driver, clean tracked task bytes, prepared source trees and existing Docker images.
 - `preflight.json`: written only after all twenty checks pass at the committed head;
   rechecked immediately before execution. A changed head requires a new review.
-- Fresh child state roots: `C:/pt/ld20live01/1` through `/20`; durable run journals
-  and artifacts remain outside the repository. No existing live state is reused.
+- Completed child state roots: `C:/pt/ld20live01/1` through `/20`; durable run journals
+  and artifacts remain outside the repository. No existing live state may be reused.
 
 Reuse calibrated prepared sources, eight already-built derivative images and the
 other twelve original images. No image pull/build, source download, extra dependency
