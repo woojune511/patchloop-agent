@@ -19,6 +19,8 @@ Approvals are closed.
 
 ## New records
 
+- [SWE-bench Lite preflight](2026-10-02-swebench-lite-preflight.md).
+
 - [Darts close-out](2026-10-01-darts-decision-scope-closeout.md).
 - [Zero-width](2026-10-01-zero-width-ownership-diagnosis.md).
 - [Priorities](2026-10-01-failure-priority-review.md).
@@ -67,8 +69,7 @@ Approvals are closed.
 - [AnyIO failure observation](2026-09-27-anyio-failure-observation.md).
 - [AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md).
 - [planning OFF regression](2026-09-27-planning-off-regression.md).
-- [first-plan timing comparison](2026-09-27-after-source-planning-comparison.md):
-  eight fresh solves, timing delivered in both arms, and one acceptance difference.
+- [First-plan timing](2026-09-27-after-source-planning-comparison.md).
 - [first plan after source](2026-09-26-after-source-planning.md):
   opt-in timing change preserving later planning, with local input/recovery verification.
 - [planning ON/OFF full-run comparison](2026-09-26-planning-off-comparison.md):
