@@ -27,10 +27,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3 resolved, USD
 0.29098320; allocation closed. Pydicom's full public suite remains incompatible.
-[Environment validation](history/2026-10-02-lite-environment-validation.md): 18/20
-dev20 tasks calibrated. All 8 corrected images pass original/hidden controls; two
-remain blocked by public tests contradicting their issues. External drafts only;
-no paid batch authorized. BuildKit networking exception is recorded in the report.
+[Public regression correction](history/2026-10-02-lite-public-regressions.md): 20/20
+dev20 tasks calibrated. Two conflicting expectations are isolated in temporary
+public copies; retained-regression mutants fail and original hidden checks stay
+unchanged. External drafts await live registration; no paid batch authorized.
 
 [Direction review](history/2026-10-01-development-direction-review.md): close the
 task-by-task diagnosis loop. No isort repair control, agent change or paid run queued.

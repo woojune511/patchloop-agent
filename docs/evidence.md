@@ -39,6 +39,24 @@ criteria. Report observed behavior separately from inferred causes.
 - Byte/line reduction in documentation is not a measured token, latency, or agent
   performance improvement. That requires observing actual use.
 
+## Preparing public regression checks
+
+A required base regression must not demand behavior that the public issue explicitly
+asks to change. Establish the conflict from the public issue and original public
+source alone; reference success or private test membership is not a selection rule.
+For a mixed test, retain its unaffected assertions rather than excluding the whole
+test or module. A task-specific operator projection may isolate only the conflicting
+expectation in the temporary check copy. Preserve original workspace/test bytes and
+record the exact projection and its public rationale in a separate package/evidence
+record. Bind the original test-file hash and unique edit anchor; input drift is an
+infrastructure error, not permission to skip a check.
+
+Keep original private tests, reference patches and scoring unchanged. Validate base
+and reference controls, and show that a deliberate regression in the retained behavior
+still fails. Removing an obsolete regression expectation does not add a public oracle
+for the new behavior: record that coverage boundary explicitly. This is reviewed task
+preparation, not a solver tool or automatic rule for disregarding failing tests.
+
 ## Where evidence lives
 
 - [Current status](current-status.md): current implications, unresolved questions,
