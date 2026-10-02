@@ -17,7 +17,7 @@ Approvals are closed.
 
 ## New records
 
-- [Positive-verification preparation](2026-10-03-positive-verification-preparation.md).
+- [Positive-verification results](2026-10-03-positive-verification-results.md).
 - [Public predicate diagnostic](2026-10-03-public-predicate-result.md).
 - [Final verification audit](2026-10-02-lite-final-verification-audit.md).
 - [SQLFluff probe results](2026-10-02-lite-sql3-probe-results.md).

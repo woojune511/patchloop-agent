@@ -31,9 +31,10 @@ closed.
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
 [SQLFluff follow-up](history/2026-10-02-lite-sql3-probe-results.md): 0/3.
-[Predicate replay](history/2026-10-03-positive-verification-preparation.md): saved
-predicate 4/4 public controls; old report unchanged. [A/B scope](../.agent/positive-verification-experiment.md)
-prepared; exact paid authorization pending.
+[Positive-result A/B](history/2026-10-03-positive-verification-results.md): A 1/4,
+B 2/4 accepted; repetition 2 tied. B cost +53.2%, time +42.8%. Keep baseline;
+allocation closed. All four 1625 patches pass public examples but fail original
+acceptance; that requirement/evaluation boundary remains unresolved.
 
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task
 diagnosis closed; no isort repair control or agent change queued.

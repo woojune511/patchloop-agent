@@ -1,8 +1,11 @@
 # Positive-behavior verification experiment
 
-Status: preparation and provider-free execution authorized by the current user
-request. The exact paid roster/model/repeat/cap below is proposed; dispatch requires
-the human's confirmation of that concrete scope. This note grants no extra runs.
+Status: CLOSED. The human approved the exact eight-run scope below, which completed
+at commit 943a41ded361d00e8cad252f7d214d6c3f5a43aa. Original acceptance was A 1/4,
+B 2/4; repetition 2 tied. B cost 53.2% more and took 42.8% longer. Preserve baseline.
+See the [result](../docs/history/2026-10-03-positive-verification-results.md).
+The frozen pre-dispatch version of this note remains available at that commit.
+This closed note and its historical authorization grant no further runs.
 
 ## Problem and causal question
 
@@ -59,7 +62,7 @@ submission reaching isolated evaluation, packet/approval mismatch rejection,
 uncertainty stopping all rows, and no restart. Run Ruff, focused tests, the fast
 suite and mock smoke. Keep reports outside the repository.
 
-## Proposed fresh-repair scope
+## Executed fresh-repair scope
 
 - Tasks: tasks/dev-train/swebench-lite-dev-sqlfluff-sqlfluff-1733/public.yaml and
   tasks/dev-train/swebench-lite-dev-sqlfluff-sqlfluff-1625/public.yaml.
@@ -126,7 +129,7 @@ use C:/pt/pv1live01. Never reuse a started row or panel root.
 --packet-hash <hash>` is provider-free. `run` with those exact arguments requires
 authorization.json binding the reviewed packet to the human's exact grant.
 
-Record completed investigation once in docs/history/, link the result from current
-status, and commit the coherent code/tests/docs. Preserve the user's AGENTS.md edit
-and all prior historical records. Current authorization does not select the later
-execution-path or adjacent-regression interventions in advance.
+The completed comparison and decision are recorded in the result linked above.
+The preparation record, original grades and prior historical bytes remain unchanged.
+Execution-path and adjacent-regression interventions remain unselected; any later
+work needs a specific unresolved public-evidence question and its own bounded scope.
