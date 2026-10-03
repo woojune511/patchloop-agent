@@ -25,8 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Probe recheck](history/2026-10-03-probe-recheck-preparation.md): opt-in implementation;
-18-run ABC preparation. Baseline kept; paid approval pending.
+[Probe recheck](history/2026-10-03-probe-recheck-results.md): 18/18 closed;
+A 4/6, B 5/6, C 4/6 accepted. C cost +79%, time +74%; baseline kept.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).

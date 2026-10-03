@@ -31,7 +31,10 @@ versus historical diff. Expectations remain model_authored_unverified and behavi
 remains not_assessed. Process success, assertion failure and import failure are not
 host-certified patch verdicts. A failed program never changes finish eligibility.
 
-## Fixed development comparison
+## Closed development comparison
+
+The [18-run comparison](../docs/history/2026-10-03-probe-recheck-results.md) is closed;
+baseline retained. The specification below grants no further execution.
 
 Driver: `diagnostics/probe_recheck_panel.py`; operator-only public programs:
 `diagnostics/probe_recheck_public.py`. Commands are prepare, controls, freeze, preflight, run,
