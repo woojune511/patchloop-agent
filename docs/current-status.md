@@ -33,9 +33,9 @@ mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
 [SQLFluff follow-up](history/2026-10-02-lite-sql3-probe-results.md): 0/3.
 [Positive-result A/B](history/2026-10-03-positive-verification-results.md): A 1/4,
 B 2/4 accepted; repetition 2 tied. Keep baseline; allocation closed.
-[SQLFluff public scope](history/2026-10-03-sqlfluff-public-scope.md):
-Full non-dbt base: four setup failures; expansion deferred.
-Optional tests unused; A1 unrepaired; allocation closed.
+[SQLFluff setup](history/2026-10-03-sqlfluff-public-setup.md): corrected.
+Full public suite rejects the reference; required scope unchanged.
+No agent gain or new paid allocation.
 
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task
 diagnosis closed; no isort repair control or agent change queued.

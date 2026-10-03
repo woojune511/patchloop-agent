@@ -36,11 +36,15 @@ before execution. Node suffixes remain literal argv, never shell text. The
 registered prefix receives `--` followed by the selected targets translated to
 its working directory. The model cannot supply commands or environment values.
 
-The existing task sandbox and resource limits execute the derived check. This
-adds no dependency installation or image acquisition. Local mock execution is
-test evidence, not Docker isolation evidence. SQLFluff 1625 registers its existing
-public pytest wrapper and environment with the generic `test` root; it carries no
-specific CLI node or evaluator hint.
+The existing task sandbox and resource limits execute the derived check. Selection
+does not choose dependencies or acquire images. Local mock execution is test
+evidence, not Docker isolation evidence. SQLFluff 1625 shares its required public
+check's wrapper: it installs the checked-out example plugin into a temporary path
+offline, without resolving dependencies, and preserves assertion detail. Both use
+the upstream `not dbt` policy; the required check retains `test/rules`, while this
+optional suite accepts selections below `test`. The full tree is not a calibrated
+mandatory gate: an existing-reference compatibility control failed it. It carries
+no specific CLI node or evaluator hint. Setup failure exits before pytest with code 2.
 
 ## Evidence and recovery
 

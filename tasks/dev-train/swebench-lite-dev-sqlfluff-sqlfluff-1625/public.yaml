@@ -37,15 +37,30 @@ visible_checks:
   - /opt/miniconda3/envs/testbed/bin/python
   - -B
   - -c
-  - &public_pytest "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
-    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
-    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
-    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
-    , \"__pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
-    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
-    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
-    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
-    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - &public_pytest |
+    import os, shutil, subprocess, sys, tempfile
+    from pathlib import Path
+    with tempfile.TemporaryDirectory(prefix="lite-public-") as temporary:
+        checkout = Path(temporary) / "repo"
+        shutil.copytree(Path.cwd(), checkout,
+                       ignore=shutil.ignore_patterns(".git", ".patchloop-hidden", "__pycache__"))
+        plugins = Path(temporary) / "plugins"
+        env = dict(os.environ)
+        env["PYTHONPATH"] = os.pathsep.join([str(checkout / "src"), str(checkout), str(plugins)])
+        env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
+        env["HOME"] = temporary
+        installation = subprocess.run([
+            sys.executable, "-m", "pip", "install", "--no-index", "--no-deps",
+            "--no-build-isolation", "--no-cache-dir", "--no-compile",
+            "--disable-pip-version-check", "--target", str(plugins),
+            str(checkout / "plugins" / "sqlfluff-plugin-example"),
+        ], cwd=checkout, env=env)
+        if installation.returncode:
+            raise SystemExit(2)
+        result = subprocess.run([
+            sys.executable, "-m", "pytest", "-q", "-o", "verbosity_assertions=2", *sys.argv[1:],
+        ], cwd=checkout, env=env)
+        raise SystemExit(result.returncode)
   - test/rules
   - -m
   - not dbt

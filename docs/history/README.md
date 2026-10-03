@@ -17,7 +17,7 @@ Approvals are closed.
 
 ## New records
 
-- [SQLFluff public scope](2026-10-03-sqlfluff-public-scope.md).
+- [SQLFluff public setup](2026-10-03-sqlfluff-public-setup.md).
 - [Public predicate diagnostic](2026-10-03-public-predicate-result.md).
 - [Final verification audit](2026-10-02-lite-final-verification-audit.md).
 - [SQLFluff probe results](2026-10-02-lite-sql3-probe-results.md).
