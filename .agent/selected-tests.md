@@ -54,6 +54,13 @@ and ERROR for other exits, timeout, deadline exhaustion or cleanup failure. Thes
 are execution categories: the output still needs interpretation, and exit one
 alone does not prove an assertion failure or its cause. Truncation is retained.
 
+Interpret expectations with their public requirement, dialect and invocation
+settings. Default CLI behavior and a test that explicitly selects a rule can
+exercise different contracts; passing one does not establish the other. An old
+output snapshot touching the requested behavior needs compatibility review.
+Keep supplied examples distinct from derived boundary cases and unresolved policy
+choices; none becomes a mandatory assertion merely because it separates two patches.
+
 Selected tests are optional. They never populate required-check credit, erase a
 required check result, or add a submission gate. A subsequent edit makes previous
 test results historical. The agent explicitly reruns a selection when needed;
