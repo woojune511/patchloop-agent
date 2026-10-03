@@ -322,6 +322,9 @@ class RunManifest(StrictModel):
         "brief-after-source-v1",
     ] = "none"
     probe_policy: Literal["none", "cases-v1", "reference-cases-v1"] = "none"
+    probe_recheck: Literal["none", "saved-program-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     run_id: str = Field(pattern=r"^run_[a-zA-Z0-9_-]+$")
     task_id: str
     task_version: int = Field(ge=1)

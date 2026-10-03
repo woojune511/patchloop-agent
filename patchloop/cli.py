@@ -93,6 +93,10 @@ def dev(
         Literal["none", "cases-v1", "reference-cases-v1"],
         typer.Option("--probe-policy", help="Opt-in reusable reference/candidate experiments."),
     ] = "none",
+    probe_recheck: Annotated[
+        Literal["none", "saved-program-v1"],
+        typer.Option("--probe-recheck", help="Rerun the last saved program after edits."),
+    ] = "none",
     repair_recheck: Annotated[
         bool, typer.Option(
             "--repair-recheck", help="After a repair, rerun its prior failed public check."
@@ -155,6 +159,7 @@ def dev(
                 enable_probes=enable_probes,
                 probe_policy=probe_policy,
                 repair_recheck=repair_recheck,
+                probe_recheck=probe_recheck,
                 repair_inspection_policy=repair_inspection_policy,
                 context_policy=context_policy,
                 segment_boundary_policy=segment_boundary_policy,

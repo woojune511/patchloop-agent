@@ -87,7 +87,7 @@ def _latest(events, kind):
 
 def cursor(events):
     kinds = {"turn_decision_recorded", "tool_batch_finished", "action_finished",
-             "repair_recheck_finished"}
+             "repair_recheck_finished", "probe_recheck_finished", "probe_recheck_skipped"}
     return next((e["event_hash"] for e in reversed(events) if e["event_type"] in kinds), None)
 
 

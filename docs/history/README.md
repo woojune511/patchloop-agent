@@ -17,18 +17,19 @@ Approvals are closed.
 
 ## New records
 
-- [SQLFluff trajectory review](2026-10-03-sqlfluff-trajectory-review.md).
-- [Public predicate diagnostic](2026-10-03-public-predicate-result.md).
-- [Final verification audit](2026-10-02-lite-final-verification-audit.md).
+- [Probe recheck](2026-10-03-probe-recheck-preparation.md).
+- [SQLFluff trace](2026-10-03-sqlfluff-trajectory-review.md).
+- [Predicate](2026-10-03-public-predicate-result.md).
+- [Verification audit](2026-10-02-lite-final-verification-audit.md).
 - [SQLFluff probe results](2026-10-02-lite-sql3-probe-results.md).
 - [Lite probe support](2026-10-02-lite-probe-support.md).
 - Lite dev20: [results](2026-10-02-lite-dev20-results.md), [diagnosis](2026-10-02-lite-dev20-failure-diagnosis.md).
 - [Lite registration](2026-10-02-lite-dev20-registration.md).
-- [Lite public checks](2026-10-02-lite-public-regressions.md).
+- [Lite checks](2026-10-02-lite-public-regressions.md).
 - [Lite validation](2026-10-02-lite-environment-validation.md).
 - [Lite environments](2026-10-02-swebench-lite-environment-preparation.md).
 - [Lite calibration](2026-10-02-swebench-lite-dev20-calibration.md).
-- [Lite dev20 inventory](2026-10-02-swebench-lite-dev20-inventory.md).
+- [Lite inventory](2026-10-02-swebench-lite-dev20-inventory.md).
 - [Lite mini results](2026-10-02-swebench-lite-mini-pilot.md).
 - [Lite preflight](2026-10-02-swebench-lite-preflight.md).
 - [Public checks](2026-10-02-swebench-lite-public-checks.md).

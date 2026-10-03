@@ -22,7 +22,18 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 })
 
 
-def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = "none") -> str:
+def dev_tool_surface_hash(
+    *, planning_policy: str = "none", probe_policy: str = "none", probe_recheck: str = "none",
+) -> str:
+    if probe_recheck != "none":
+        from patchloop.dev.probe_recheck import POLICY, contract
+        if probe_recheck != POLICY or probe_policy != "cases-v1":
+            raise ValueError("probe recheck requires saved-program-v1 and cases-v1")
+        return sha256_json({
+            "base": dev_tool_surface_hash(
+                planning_policy=planning_policy, probe_policy=probe_policy),
+            "probe_recheck": contract(),
+        })
     base = sha256_json(
         {
             "schema_version": "dev-tool-surface-v46",
@@ -371,6 +382,9 @@ class DevRunRequest(StrictModel):
     prepared_probe_dependencies: Path | None = None
     enable_probes: bool = False
     probe_policy: Literal["none", "cases-v1", "reference-cases-v1"] = "none"
+    probe_recheck: Literal["none", "saved-program-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     repair_recheck: bool = False
     repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = "protected-v1"
     planning_policy: Literal[
@@ -396,6 +410,10 @@ class DevRunRequest(StrictModel):
             raise ValueError("--prepared-probe-dependencies requires --enable-probes")
         if self.probe_policy != "none" and not self.enable_probes:
             raise ValueError("--probe-policy cases-v1 requires --enable-probes")
+        if self.probe_recheck != "none" and (
+            not self.enable_probes or self.probe_policy != "cases-v1"
+        ):
+            raise ValueError("--probe-recheck requires --enable-probes and --probe-policy cases-v1")
         if self.planning_policy != "none" and self.context_policy not in {
             "append-v1", "segmented-v1",
         }:
@@ -457,6 +475,9 @@ class DevRunEnvelope(StrictModel):
     runtime_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    probe_recheck: Literal["none", "saved-program-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     repair_recheck: bool = False
     repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = Field(
         default="protected-v1", exclude_if=lambda value: value == "protected-v1",
@@ -514,6 +535,8 @@ class DevRunEnvelope(StrictModel):
         if (self.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
                 and self.context_policy != segments.POLICY):
             raise ValueError("size-only-v1 boundary requires segmented-v1")
+        if self.probe_recheck != "none" and self.probe_policy != "cases-v1":
+            raise ValueError("probe recheck requires cases-v1")
         if self.probe_policy != "none" and self.probe_image_digest is None:
             raise ValueError("probe cases require enabled probe identities")
         if self.planning_policy != "none" and self.context_policy not in {

@@ -214,10 +214,15 @@ def dev_tool_schemas(
     read_paths: Sequence[str] = (),
     planning_policy: str = "none",
     probe_policy: str = "none",
+    probe_recheck_policy: str = "none",
     probe_environment: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     if probe_policy not in {"none", *probe_cases.POLICIES}:
         raise ContractError("unknown probe policy")
+    if probe_recheck_policy != "none":
+        from patchloop.dev.probe_recheck import POLICY, TOOL_DESCRIPTION
+        if probe_recheck_policy != POLICY or probe_policy != "cases-v1":
+            raise ContractError("probe recheck requires saved-program-v1 and cases-v1")
     check_id_schema: dict[str, Any] = {"type": "string", "minLength": 1}
     if check_ids:
         check_id_schema["enum"] = list(check_ids)
@@ -423,6 +428,10 @@ def dev_tool_schemas(
         })
         if probe_policy in probe_cases.POLICIES:
             probe_cases.extend_schema(schemas[-1], probe_policy)
+            if probe_recheck_policy != "none":
+                schemas[-1]["description"] = schemas[-1]["description"].replace(
+                    "cases never block finish or trigger automatic execution.", TOOL_DESCRIPTION,
+                )
     if test_suite_ids:
         schemas.append({
             "type": "function", "name": "run_tests", "strict": True,

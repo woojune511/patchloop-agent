@@ -45,6 +45,8 @@ def cursor(journal):
         "tool_batch_finished",
         "action_finished",
         "repair_recheck_finished",
+        "probe_recheck_finished",
+        "probe_recheck_skipped",
         "context_window_activated",
         "context_segment_started",
     }

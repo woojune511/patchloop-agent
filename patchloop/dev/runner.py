@@ -27,7 +27,7 @@ from patchloop.agent.usage_diagnostics import usage_failure_message
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import native_compaction, segments, working_plan
+from patchloop.dev import native_compaction, probe_recheck, segments, working_plan
 from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.completion_budget import (
@@ -247,6 +247,8 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
                if request.planning_policy != "none" else {}),
             **({"probe_case_contract": probe_cases.contract(request.probe_policy)}
                if request.probe_policy != "none" else {}),
+            **({"probe_recheck_contract": probe_recheck.contract()}
+               if request.probe_recheck != "none" else {}),
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
@@ -362,6 +364,7 @@ def _manifest(
         run_id=run_id,
         planning_policy=request.planning_policy,
         probe_policy=request.probe_policy,
+        probe_recheck=request.probe_recheck,
         task_id=package.public.task_id,
         task_version=package.public.task_version,
         base_commit=package.public.repository.base_commit,
@@ -372,6 +375,7 @@ def _manifest(
         model_hash=model_hash,
         tool_surface_hash=dev_tool_surface_hash(
             planning_policy=request.planning_policy, probe_policy=request.probe_policy,
+            probe_recheck=request.probe_recheck,
         ),
         sandbox_identity_hash=_sandbox_identity_hash(request, package, probe_dependencies),
         probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
@@ -1243,6 +1247,7 @@ def _build_context(
     tool_policy_transition: dict[str, Any] | None = None,
     projection: SourceProjection | None = None,
     repair_recheck: bool = False,
+    probe_recheck_policy: str = "none",
     repair_inspection_policy: str = "protected-v1",
     planning_policy: str = "none",
 ) -> str:
@@ -1424,6 +1429,8 @@ def _build_context(
             row["action_id"] == last_recheck["action_id"] for row in payload["recent_checks"]
         ):
             last_recheck["details_delivery"] = "not_retained; consult current visible_check_status"
+    if probe_recheck_policy != "none":
+        payload["probe_recheck"] = probe_recheck.context(journal, summary.patch_hash)
     if getattr(gateway, "probe_sandbox", None) is not None:
         latest_ids = {result.action_id for result in latest_tool_results}
         probes = [
@@ -2830,6 +2837,7 @@ def _run_envelope(
         model_hash=model_hash,
         sandbox_identity_hash=_sandbox_identity_hash(request, package, probe_dependencies),
         repair_recheck=request.repair_recheck,
+        probe_recheck=request.probe_recheck,
         repair_inspection_policy=request.repair_inspection_policy,
         planning_policy=request.planning_policy,
         probe_policy=request.probe_policy,
@@ -2882,7 +2890,8 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             len(event["payload"].get("tool_calls", []))
             for event in events
             if event["event_type"] == "tool_batch_started"
-        ) + sum(event["event_type"] == "repair_recheck_started" for event in events),
+        ) + sum(event["event_type"] in {"repair_recheck_started", "probe_recheck_started"}
+                for event in events),
         input_count_calls=sum(event["event_type"] == "input_count_started" for event in events),
         compaction_calls=sum(event["event_type"] == "compaction_started" for event in events),
         protocol_recoveries=consecutive_protocol_recoveries,
@@ -2892,10 +2901,12 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
         if event["event_type"] == "action_finished":
             result = DevToolResult.model_validate(event["payload"]["result"])
             action_results[result.action_id] = result
-        elif event["event_type"] in {"tool_batch_finished", "repair_recheck_finished"}:
+        elif event["event_type"] in {
+            "tool_batch_finished", "repair_recheck_finished", "probe_recheck_finished",
+        }:
             action_ids = (
                 [event["payload"]["action_id"]]
-                if event["event_type"] == "repair_recheck_finished"
+                if event["event_type"] in {"repair_recheck_finished", "probe_recheck_finished"}
                 else event["payload"].get("action_ids", [])
             )
             if not isinstance(action_ids, list) or not action_ids:
@@ -3281,6 +3292,71 @@ def _run_repair_recheck(
     return terminal, message
 
 
+def _run_probe_recheck(
+    *, journal: DevJournal, gateway: DevToolGateway, latest_results: list[DevToolResult],
+    counters: _RunCounters, active_elapsed_ms: Callable[[], int],
+    request: DevRunRequest, cost_ledger: DevCostLedger | None = None,
+) -> tuple[DevTerminal | None, str | None]:
+    selected = probe_recheck.select(journal, latest_results)
+    if selected is None:
+        return None, None
+    call = selected.call(journal.run_id)
+    identity = selected.payload(journal.run_id)
+    receipts = {
+        event["event_type"]: event["payload"] for event in journal.events()
+        if event["event_type"] in {
+            "probe_recheck_started", "probe_recheck_finished", "probe_recheck_skipped",
+        } and event["payload"].get("action_id") == call.action_id
+    }
+    for receipt in receipts.values():
+        if any(receipt.get(key) != value for key, value in identity.items()):
+            raise RecoveryError("probe recheck identity changed")
+    if "probe_recheck_skipped" in receipts:
+        if len(receipts) != 1:
+            raise RecoveryError("skipped probe recheck has execution receipts")
+        return None, None
+    replay = journal.action_result(
+        call.action_id, sha256_json({"tool": call.name, "arguments": call.arguments}),
+    )
+    if "probe_recheck_finished" in receipts and replay is None:
+        raise RecoveryError("completed probe recheck is missing its durable action result")
+    if replay is None and gateway.current_diff_hash != selected.candidate_diff_hash:
+        raise ResumeContractMismatch("probe recheck workspace differs from accepted candidate")
+    if "probe_recheck_started" not in receipts:
+        policy = _tool_policy(
+            gateway, counters, request.limits,
+            repair_inspection_policy=request.repair_inspection_policy,
+            cost_ledger=cost_ledger, completion_cost_policy=request.completion_cost_policy,
+        )
+        if "run_probe" not in policy.allowed_tools:
+            journal.append("probe_recheck_skipped", {
+                **identity, "status": "NOT_RUN", "reason": "existing_probe_budget_policy",
+                "active_elapsed_ms": active_elapsed_ms(),
+            })
+            return None, None
+        if gateway.deadline is not None:
+            gateway.deadline.check()
+        journal.append("probe_recheck_started", {
+            **identity, "active_elapsed_ms": active_elapsed_ms(),
+        })
+        counters.tool_actions += 1
+    result = replay if replay is not None else gateway.execute(call)
+    if "probe_recheck_finished" not in receipts:
+        journal.append("probe_recheck_finished", {
+            **identity, "status": result.status,
+            "observation": probe_observation(result.model_dump(mode="json")),
+            "case_comparison": result.output.get("case_comparison"),
+            "stdout": result.output.get("stdout", "")[-2_000:],
+            "stderr": result.output.get("stderr", "")[-2_000:],
+            "active_elapsed_ms": active_elapsed_ms(),
+        })
+        _update_inspection_counters(counters, [result], gateway)
+    terminal, message = _batch_execution_abort([result])
+    if terminal is None and result.status == "failed":
+        return DevTerminal.TASK_FAILED, "probe recheck gateway action failed"
+    return terminal, message
+
+
 def _record_planning_decision(
     policy: str, *, journal: DevJournal, gateway: DevToolGateway,
     calls: list[RequestedTool], turn_id: str,
@@ -3423,6 +3499,8 @@ def _run_one(
                     "task_hash": package.task_content_hash,
                     "model_hash": model_hash,
                     "repair_recheck": request.repair_recheck,
+                    **({"probe_recheck": request.probe_recheck}
+                       if request.probe_recheck != "none" else {}),
                     **({"repair_inspection_policy": request.repair_inspection_policy}
                        if request.repair_inspection_policy != "protected-v1" else {}),
                     "context_policy": request.context_policy,
@@ -4054,6 +4132,24 @@ def _run_one_active(
             if terminal_code is not None:
                 stop_remaining = terminal_code == DevTerminal.TASK_FAILED
                 break
+        if request.probe_recheck != "none":
+            try:
+                terminal_code, terminal_message = _run_probe_recheck(
+                    journal=journal, gateway=gateway, latest_results=latest_tool_results,
+                    counters=counters, active_elapsed_ms=active_elapsed_ms,
+                    request=request, cost_ledger=cost_ledger,
+                )
+            except ExecutionDeadlineExceeded:
+                terminal_code = DevTerminal.LIMIT_REACHED
+                terminal_message = "active deadline exhausted during probe recheck"
+            except GitExecutionUncertain:
+                raise
+            except Exception as exc:
+                terminal_code = DevTerminal.TASK_FAILED
+                terminal_message = f"probe recheck failed: {type(exc).__name__}"
+            if terminal_code is not None:
+                stop_remaining = terminal_code == DevTerminal.TASK_FAILED
+                break
         if remaining_active_seconds() <= 0:
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "row wall-time limit reached"
@@ -4112,6 +4208,7 @@ def _run_one_active(
                 tool_policy_transition=policy_transition,
                 projection=projection,
                 repair_recheck=request.repair_recheck,
+                probe_recheck_policy=request.probe_recheck,
                 repair_inspection_policy=request.repair_inspection_policy,
                 planning_policy=request.planning_policy,
             )
@@ -4168,6 +4265,7 @@ def _run_one_active(
             read_paths=policy.targeted_read_paths,
             planning_policy=request.planning_policy,
             probe_policy=request.probe_policy,
+            probe_recheck_policy=request.probe_recheck,
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),
         )
         turn_payload = {

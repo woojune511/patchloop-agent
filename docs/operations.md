@@ -178,7 +178,10 @@ verified local copies without network/install. Add `--enable-probes
 
 For other context, planning, cost or repair policies, read the relevant internal
 contract and CLI compatibility checks first. Reusable probe cases have a separate
-[case contract](../.agent/probe-cases.md). Compaction needs a compatible mini
+[case contract](../.agent/probe-cases.md). Optional `--probe-recheck saved-program-v1`
+requires enabled probes and `cases-v1`; it reruns the last saved program after edits
+within existing budgets and never gates submission. Defaults remain off; see the
+[recheck contract](../.agent/probe-recheck.md). Compaction needs a compatible mini
 configuration and conditional model-limit reservation acknowledgement; it is not
 part of the selected baseline. Repeat every selected option on resume. Interface
 availability and local tests alone do not demonstrate an acceptance improvement.

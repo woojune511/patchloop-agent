@@ -177,6 +177,7 @@ experimental context and historical plans; current source/status take precedence
 
 - Context: [segmented context](plans/segmented-context.md), [native window](plans/native-context-window.md).
 - Planning and probes: [planning](planning-experiment.md), [probe cases](probe-cases.md),
+  [saved-program recheck](probe-recheck.md),
   [setup](probe-setup.md), [dependencies](prepared-probe-dependencies.md), [threads](probe-threads.md).
 - Public test selection: [registered pytest suites](selected-tests.md).
 - Discovery diagnostics: [counterexamples](counterexample-discovery.md),

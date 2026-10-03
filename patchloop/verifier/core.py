@@ -481,6 +481,7 @@ class EvaluationEngine:
             "runtime_content_hash": runtime_content_hash(),
             "tool_surface_hash": dev_tool_surface_hash(
                 planning_policy=manifest.planning_policy, probe_policy=manifest.probe_policy,
+                probe_recheck=manifest.probe_recheck,
             ),
             "sandbox_backend": backend,
             "evaluator_image_digest": image_digest,

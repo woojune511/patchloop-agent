@@ -25,8 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3, USD 0.29098320;
-closed.
+[Probe recheck](history/2026-10-03-probe-recheck-preparation.md): opt-in implementation;
+18-run ABC preparation. Baseline kept; paid approval pending.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
@@ -34,8 +34,7 @@ mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
 [Positive-result A/B](history/2026-10-03-positive-verification-results.md): A 1/4,
 B 2/4 accepted; repetition 2 tied. Keep baseline; allocation closed.
 [SQLFluff trace](history/2026-10-03-sqlfluff-trajectory-review.md):
-Unsupported narrowing; A1 misstates its call budget. No admission defect shown.
-Keep baseline; audit closed.
+Unsupported narrowing; no admission defect. Audit closed.
 
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task
 diagnosis closed; no isort repair control or agent change queued.
