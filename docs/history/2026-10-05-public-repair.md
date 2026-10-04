@@ -53,3 +53,43 @@ OpenAI/Docker repair and independent acceptance of real repair candidates remain
 unexecuted; no paid calls were made. Usage and limitations are in the
 [small executable example](../../examples/repair/README.md). No follow-up experiment
 is automatically authorized.
+
+## Final full regression closeout (2026-10-05)
+
+The preceding section preserves the initial delivery record. Its outstanding
+full-suite recheck is now closed. No same-commit CI run was available, so commit
+`a47feb37a4a75a5ba86ae80e4d2a4cebe915a66c` was tested locally on Windows 11,
+Python 3.14.5, with the unchanged complete `tests` scope, four workers,
+`--dist loadfile --max-worker-restart 0`. Runtime hash remained the value above.
+
+**4,129 passed, zero failures/errors, 18 skipped; 2,572.86 seconds (42:52).**
+All three previously failing cases passed in this full run:
+
+- `tests/test_dev_completion_v27.py::test_guidance_tracks_recheck_then_submission_without_rewriting_history`
+- `tests/test_dev_probe_observation_v28.py::test_actual_native_projection_restart_and_historical_probe_keep_evidence`
+- `tests/test_dev_mutation_identity_v31.py::test_final_unchecked_edit_keeps_consistent_identity_and_available_check_or_stop`
+
+These retain coverage of recheck/submission guidance, native history/restart and
+historical probe evidence, and final-diff mutation/check identity. The original
+missing-`split` error and explicit `RepairTask` discriminator fix are described above;
+no additional runtime or test change was needed in this closeout.
+
+| Skip reason | Count |
+| --- | ---: |
+| Symlink creation unavailable | 1 |
+| Brief planning is append-only (excluded parameter combinations) | 4 |
+| Real Docker probes require explicit opt-in | 10 |
+| SDK compatibility needs an existing public dependency descriptor | 1 |
+| Local-source/real-probe explicit opt-in absent | 1 |
+| Real check/probe explicit opt-in absent | 1 |
+
+Fresh evidence is under `C:/pt/validation/` with prefix
+`repair-closeout-a47feb37-20261005`: `.log`, `.xml`, `-start.json` and `-result.json`.
+The result binds artifact hashes, all skip reasons, the three regression outcomes,
+and the unchanged runtime and user `AGENTS.md` hashes. Earlier evidence was retained.
+Linux/Python 3.12 CI, opt-in real environments, paid model calls and actual public
+repair usage were not run. Independent acceptance remains `NOT_RUN` for `repair`.
+
+Decision: implementation and final local full regression verification are complete.
+Existing dev contracts, public/private boundaries, limits and defaults are unchanged.
+No new feature, policy, paid execution or follow-up diagnostic was added or queued.
