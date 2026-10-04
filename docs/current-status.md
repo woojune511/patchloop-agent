@@ -11,7 +11,7 @@ support that product. Start improvements from observed failures, not a commitmen
 to memory, planning or another preselected technique.
 
 - dev-head is the sole mutable runtime; every run is official=false and claim-ineligible.
-- Selected working model: gpt-5.4-2026-03-05, xhigh, 25,000 output tokens.
+- General baseline model: gpt-5.4-2026-03-05, xhigh, 25,000 output tokens.
 - Selected policies: segmented-v1, result-or-size-v1, brief-v1, probes enabled with
   policy none, repair-recheck, protected-v1 inspection, per-call-v1 cost admission.
 - Working limits: 40 model calls, 100 actions, four accepted edits, 1,800 seconds.
@@ -25,8 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Mini/full](../.agent/model-cost-comparison.md): 24 fresh solves prepared, USD 72 cap;
-paid approval pending. [Preparation](history/2026-10-04-mini-full-preparation.md).
+[Mini/full](history/2026-10-04-mini-full-results.md): mini selected for this six-task panel.
+24/24 completed; USD 5.42285815. Allocation closed; CLI defaults unchanged.
 C2 and pydicom-1413 closed; runtime and baseline unchanged.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):

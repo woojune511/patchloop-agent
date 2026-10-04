@@ -17,7 +17,7 @@ Approvals are closed.
 
 ## New records
 
-- [Mini/full preparation](2026-10-04-mini-full-preparation.md).
+- [Mini/full results](2026-10-04-mini-full-results.md).
 - [SQLFluff trace](2026-10-03-sqlfluff-trajectory-review.md).
 - [Predicate](2026-10-03-public-predicate-result.md).
 - [Audit](2026-10-02-lite-final-verification-audit.md).
