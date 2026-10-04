@@ -25,8 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[C2 feedback](history/2026-10-04-c2-feedback-results.md): public repair 2/2;
-acceptance 1 PASS, 1 NOT_RUN (cost). Closed; four-edit baseline kept.
+[C2](history/2026-10-04-c2-completion-cost-audit.md): repair 2/2; acceptance 1 PASS,
+1 NOT_RUN. Cost audit consistent; closed, four-edit baseline kept.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
