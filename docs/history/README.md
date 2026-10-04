@@ -17,7 +17,7 @@ Approvals are closed.
 
 ## New records
 
-- [Recheck](2026-10-03-probe-recheck-results.md), [prep](2026-10-03-probe-recheck-preparation.md).
+- [C2](2026-10-04-sqlfluff-c2-regression.md), [ABC](2026-10-03-probe-recheck-results.md).
 - [SQLFluff trace](2026-10-03-sqlfluff-trajectory-review.md).
 - [Predicate](2026-10-03-public-predicate-result.md).
 - [Audit](2026-10-02-lite-final-verification-audit.md).
