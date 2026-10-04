@@ -25,12 +25,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-Public-only `repair --request` returns a patch and public receipts using the shared
-solver; acceptance stays `NOT_RUN`. [Final full regression](history/2026-10-05-public-repair.md):
-4,129 passed, 18 skipped on `a47feb37`; implementation closed.
-[Click repair](history/2026-10-05-click-public-repair.md): issue and 346 related
-tests passed in a separate checkout; USD 0.15930945. Allocation closed; acceptance
-`NOT_RUN`, baseline unchanged. [Usage](../examples/repair/README.md).
+Public `repair` [implementation](history/2026-10-05-public-repair.md) is closed:
+4,129 passed, 18 skipped. [Click](history/2026-10-05-click-public-repair.md) passed
+public checks. [Dotenv](history/2026-10-05-dotenv-public-repair.md) returned a valid
+model test: failure before, 219 passed after; USD 0.12695715. Allocations closed;
+acceptance `NOT_RUN`, baseline unchanged. [Usage](../examples/repair/README.md).
 
 [Mini/full](history/2026-10-04-mini-full-results.md): mini selected for this six-task panel.
 24/24 completed; USD 5.42285815. Allocation closed; CLI defaults unchanged.

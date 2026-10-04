@@ -14,6 +14,7 @@ Approvals are closed.
 
 ## New records
 
+- [Dotenv repair and model test](2026-10-05-dotenv-public-repair.md).
 - [Click public repair](2026-10-05-click-public-repair.md).
 - [Public repair](2026-10-05-public-repair.md).
 - [Mini/full results](2026-10-04-mini-full-results.md).
