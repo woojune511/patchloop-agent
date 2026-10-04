@@ -17,7 +17,7 @@ Approvals are closed.
 
 ## New records
 
-- [1413](2026-10-04-pydicom-1413-replay.md), [C2](2026-10-04-c2-completion-cost-audit.md).
+- [Mini/full preparation](2026-10-04-mini-full-preparation.md).
 - [SQLFluff trace](2026-10-03-sqlfluff-trajectory-review.md).
 - [Predicate](2026-10-03-public-predicate-result.md).
 - [Audit](2026-10-02-lite-final-verification-audit.md).

@@ -25,9 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[C2](history/2026-10-04-c2-completion-cost-audit.md) closed; baseline kept.
-[1413 replay](history/2026-10-04-pydicom-1413-replay.md): original probe inadequate;
-operator replay rejects patch. Tests added; runtime unchanged.
+[Mini/full](../.agent/model-cost-comparison.md): 24 fresh solves prepared, USD 72 cap;
+paid approval pending. [Preparation](history/2026-10-04-mini-full-preparation.md).
+C2 and pydicom-1413 closed; runtime and baseline unchanged.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).

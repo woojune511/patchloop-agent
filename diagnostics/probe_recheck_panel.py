@@ -319,11 +319,21 @@ def preflight(root, packet_hash):
 
 
 def run(root, packet_hash):
-    validate(root, packet_hash)
+    return run_fresh_rows(
+        root, packet_hash, validate_packet=validate, order=ORDER, live_root=LIVE,
+        request_for=request, instruction_scope=instructions, row_cap=ROW_CAP,
+        total_cap=CAP, journal_id='run_dev_proberecheckpanel',
+    )
+
+
+def run_fresh_rows(root, packet_hash, *, validate_packet, order, live_root, request_for,
+                   instruction_scope, row_cap, total_cap, journal_id):
+    """Shared bounded fresh-run driver; all inputs remain manifest-bound by caller."""
+    validate_packet(root, packet_hash)
     approval = json.loads((root / 'authorization.json').read_bytes())
     require(approval.get('approved') is True and bool(approval.get('human_message'))
             and approval.get('packet_hash') == packet_hash, 'exact human scope approval required')
-    journal = DevJournal(root, 'run_dev_proberecheckpanel')
+    journal = DevJournal(root, journal_id)
     with journal.execution_lock():
         events = journal.events()
         require(not any(e['event_type'] == 'panel_started' for e in events), 'no restart or resume')
@@ -332,27 +342,28 @@ def run(root, packet_hash):
                     and e['payload']['packet_hash'] == packet_hash
                     and e['payload']['receipt_hash'] == sha256_json(receipt) for e in events),
                 'preflight required')
-        require(not LIVE.exists(), 'live root exists; no replacement')
-        LIVE.mkdir(parents=True)
+        require(not live_root.exists(), 'live root exists; no replacement')
+        live_root.mkdir(parents=True)
         journal.append('panel_started', {'packet_hash': packet_hash,
                                          'authorization_hash': sha256_json(approval)})
         rows, spent = [], 0
         try:
-            for case, arm, repetition in ORDER:
-                validate(root, packet_hash)
-                require(spent + usd_to_nanos(ROW_CAP) <= usd_to_nanos(CAP), 'panel cap exhausted')
+            for case, arm, repetition in order:
+                validate_packet(root, packet_hash)
+                require(spent + usd_to_nanos(row_cap) <= usd_to_nanos(total_cap),
+                        'panel cap exhausted')
                 label = f'{case}{arm}{repetition}'
-                req = request(case, arm, LIVE / label)
+                req = request_for(case, arm, live_root / label)
                 require(not req.state_root.exists(), 'row exists; no retry')
                 journal.append('row_started', {'label': label,
                                                'request': req.model_dump(mode='json')})
                 started = monotonic()
-                with instructions(arm):
+                with instruction_scope(arm):
                     result = runner.run_dev(req)
                 cost = result['cost_nanos']
                 spent += cost
                 known = settled(result, req.state_root)
-                within_cap = 0 <= cost <= usd_to_nanos(ROW_CAP) and spent <= usd_to_nanos(CAP)
+                within_cap = 0 <= cost <= usd_to_nanos(row_cap) and spent <= usd_to_nanos(total_cap)
                 row = {'label': label, 'case': case, 'arm': arm, 'repetition': repetition,
                        'result': result, 'settled': known, 'within_cap': within_cap,
                        'elapsed_seconds': round(monotonic() - started, 3)}
@@ -366,8 +377,8 @@ def run(root, packet_hash):
             journal.append('panel_interrupted', {'error_type': type(error).__name__,
                                                  'completed': len(rows), 'resume_allowed': False})
             raise
-        outcome = {'rows': rows, 'completed': len(rows), 'planned': len(ORDER),
-                   'not_run': [f'{c}{a}{r}' for c, a, r in ORDER[len(rows):]],
+        outcome = {'rows': rows, 'completed': len(rows), 'planned': len(order),
+                   'not_run': [f'{c}{a}{r}' for c, a, r in order[len(rows):]],
                    'recorded_cost_nanos': spent, 'official': False, 'claim_eligible': False,
                    'allocation': 'CLOSED', 'resume_allowed': False}
         save(root, 'result.json', outcome)
