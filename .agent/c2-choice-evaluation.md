@@ -1,6 +1,8 @@
 # C2 fourth-edit choice evaluation
 
-Status: prepared offline; live execution requires new exact-scope approval.
+Status: closed after the two approved live continuations; no further execution.
+Both passed the issue output and failed two public regressions. New cost:
+USD 1.4763455. See the [results](../docs/history/2026-10-04-c2-choice-results.md).
 This is a checkpoint continuation of one exposed dev-train task, not a fresh solve
 or an A/B policy comparison. The selected working baseline remains unchanged.
 
@@ -23,7 +25,7 @@ edit 3 passed 506 tests. Public source/tests remain available through ordinary t
 Fresh source/CAS materialization is setup; runner preflight, counting and
 execution consume the restored active deadline. Do not replay historical actions.
 
-## Proposed new paid scope
+## Executed paid scope
 
 - Task: swebench-lite-dev-sqlfluff-sqlfluff-1733, registered dev-train.
 - Two independent continuations from the identical prefix, order 1 then 2.
@@ -71,7 +73,8 @@ External packet: C:/pt/analyses/c2-choice-prep-20261004-v1/packet.json.
 The [preparation report](../docs/history/2026-10-04-c2-choice-preparation.md) records
 source identities, offline restoration, uncertainty tests and read-only preflight.
 The external collect.py reuses the existing continuation collector and cost ledger.
-Its manifest.json binds the execution commit, script/source hashes, environment,
-packet and this scope. A new human authorization must bind that manifest before
-dispatch; authorization.json is absent until approved. Offline preparation is not
-provider acceptance or autonomous repair evidence.
+Its manifest.json bound the execution commit, script/source hashes, environment,
+packet and pre-execution scope; authorization.json records the user's exact-scope
+approval. The original scope bytes are preserved in external closeout artifacts.
+The allocation is closed; these records grant no retry or further dispatch.
+Offline preparation remains separate from the linked live choice evidence.
