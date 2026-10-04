@@ -14,13 +14,14 @@ Allocations closed.
 
 ## New records
 
+- [Review](2026-10-05-original-patch-review.md).
 - [Three uses](2026-10-05-three-public-repair-uses.md).
 - [Verification](2026-10-05-repair-verification.md).
 - [Dotenv](2026-10-05-dotenv-public-repair.md).
 - [Click](2026-10-05-click-public-repair.md).
-- [Public repair](2026-10-05-public-repair.md).
-- [Mini/full results](2026-10-04-mini-full-results.md).
-- [SQLFluff trace](2026-10-03-sqlfluff-trajectory-review.md).
+- [Repair](2026-10-05-public-repair.md).
+- [Mini/full](2026-10-04-mini-full-results.md).
+- [SQLFluff](2026-10-03-sqlfluff-trajectory-review.md).
 - [Predicate](2026-10-03-public-predicate-result.md).
 - [Audit](2026-10-02-lite-final-verification-audit.md).
 - [SQLFluff results](2026-10-02-lite-sql3-probe-results.md).

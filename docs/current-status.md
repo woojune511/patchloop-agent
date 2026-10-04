@@ -25,9 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Three uses](history/2026-10-05-three-public-repair-uses.md): 3 patches returned;
-original tests fail before/pass after; existing checks pass. USD 1.61155980;
-allocation closed. Human review pending, including Click test compatibility.
+[Three uses](history/2026-10-05-three-public-repair-uses.md): 3 automated checks passed;
+USD 1.61155980; allocation closed. [Original review](history/2026-10-05-original-patch-review.md):
+Codex recommends 1 scoped acceptance, 2 modifications; human approval unreported.
 Acceptance `NOT_RUN`; baseline unchanged. [Usage](../examples/repair/README.md).
 Earlier repair, Click, dotenv and verifier work is closed; see
 [history](history/README.md). No follow-up run or runtime change queued.
