@@ -1,8 +1,10 @@
 # C2 public-regression feedback continuation
 
-Status: provider-free preparation complete; no paid execution authorized.
+Status: approved two-row allocation completed and closed; no further work funded.
+Public repair 2/2; original acceptance 1 PASS, 1 NOT_RUN after cost exhaustion.
+New cost USD 0.9083865. See the [results](../docs/history/2026-10-04-c2-feedback-results.md).
 The [fourth-edit choice evaluation](../docs/history/2026-10-04-c2-choice-results.md)
-is closed. This is a separate, funded continuation proposal, not a reopened run.
+is closed. This was a separate funded continuation, not a reopened run.
 
 ## Question and minimal change
 
@@ -23,7 +25,7 @@ Ordinary resume still rejects a changed envelope. A fresh external diagnostic
 fork records source identity and the 4-to-5 limit change; source files/journals
 are immutable. Synthetic repair fixtures never enter the funded seed prefixes.
 
-## Proposed paid scope
+## Executed paid scope
 
 Registered dev-train task: swebench-lite-dev-sqlfluff-sqlfluff-1733.
 Model: gpt-5.4-2026-03-05, xhigh, desired output ceiling 25,000 tokens.
@@ -37,7 +39,7 @@ Order: one continuation from live1, then one from live2; no replacement repeats.
 
 Total new invocation cap: USD 1.3926595. Historical settled costs, USD 2.415079
 and USD 2.1922615 respectively, remain bookkeeping and are not billed again.
-No old allocation is reopened; these amounts require a new exact-scope approval.
+No old allocation was reopened; a new exact-scope approval authorized these amounts.
 The caps are inherited remainders, not a guarantee that all nominal calls can fit.
 Per-call cost admission and normal completion reserves remain active.
 
@@ -61,10 +63,10 @@ Otherwise acceptance is NOT_RUN. Post-run observations never return to the model
 Record solver time, operator time, all new usage and original acceptance/safety
 separately. Patch cleanup is not a success condition.
 
-Success would demonstrate correction under failure feedback plus an additional
-edit on these exposed candidates. It would not isolate feedback's causal effect,
+Success demonstrates correction under failure feedback plus an additional
+edit on these exposed candidates. It does not isolate feedback's causal effect,
 show better fourth-edit scope judgment, establish general product performance,
-or justify a conditional extension policy. Failure closes this bounded scope;
+or justify a conditional extension policy. This bounded scope is closed;
 unused resources do not authorize another experiment.
 
 ## Implementation and evidence
@@ -73,6 +75,8 @@ External preparation: C:/pt/analyses/c2-feedback-prep-20261004-v1.
 prepare.py composes existing prefix/CAS, candidate restoration and runner helpers.
 verify.py tests errors and an operator-authored fifth-edit fixture. collect.py
 reuses the existing new-usage ledger and collector, with a fresh single-use
-allocation and manifest-bound human authorization. No live authorization exists.
+allocation and manifest-bound human authorization. That authorization is consumed.
 The [preparation report](../docs/history/2026-10-04-c2-feedback-preparation.md)
-separates synthetic responses, real public checks and unexecuted autonomous repair.
+records the earlier provider-free state. The results report records actual autonomous
+repair separately. Execution commit: 89c1ff4ccb06ca30b2436fcbd8f48018b6a46528.
+Frozen pre-execution scope bytes: C:/pt/c2fb01/allocation/approved-scope.md.
