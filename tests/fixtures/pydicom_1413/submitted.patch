@@ -1,0 +1,28 @@
+diff --git a/pydicom/filewriter.py b/pydicom/filewriter.py
+index c1c06d8..7d18dd4 100644
+--- a/pydicom/filewriter.py
++++ b/pydicom/filewriter.py
+@@ -284,6 +284,23 @@ def write_OWvalue(fp: DicomIO, elem: DataElement) -> None:
+     fp.write(cast(bytes, elem.value))
+ 
+ 
++def write_OLvalue(fp: DicomIO, elem: DataElement) -> None:
++    """Write a data_element with VR of 'other long' (OL)."""
++    val = elem.value
++    if _is_multi_value(val):
++        endianChar = '><'[fp.is_little_endian]
++        format_string = endianChar + 'L'
++        try:
++            for item in cast(Iterable[Any], val):
++                fp.write(pack(format_string, item))
++        except Exception as e:
++            raise IOError(
++                f"{str(e)}\nfor data_element:\n{str(elem)}"
++            )
++    else:
++        fp.write(cast(bytes, val))
++
++
+ def write_UI(fp: DicomIO, elem: DataElement) -> None:
+     """Write a data_element with VR of 'unique identifier' (UI)."""
+     write_string(fp, elem, '\0')  # pad with 0-byte to even length

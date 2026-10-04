@@ -17,7 +17,7 @@ Approvals are closed.
 
 ## New records
 
-- [C2](2026-10-04-c2-completion-cost-audit.md), [ABC](2026-10-03-probe-recheck-results.md).
+- [1413](2026-10-04-pydicom-1413-replay.md), [C2](2026-10-04-c2-completion-cost-audit.md).
 - [SQLFluff trace](2026-10-03-sqlfluff-trajectory-review.md).
 - [Predicate](2026-10-03-public-predicate-result.md).
 - [Audit](2026-10-02-lite-final-verification-audit.md).

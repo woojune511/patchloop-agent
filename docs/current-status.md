@@ -25,12 +25,12 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[C2](history/2026-10-04-c2-completion-cost-audit.md): repair 2/2; acceptance 1 PASS,
-1 NOT_RUN. Cost audit consistent; closed, four-edit baseline kept.
+[C2](history/2026-10-04-c2-completion-cost-audit.md) closed; baseline kept.
+[1413 replay](history/2026-10-04-pydicom-1413-replay.md): original probe inadequate;
+operator replay rejects patch. Tests added; runtime unchanged.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
-[SQLFluff follow-up](history/2026-10-02-lite-sql3-probe-results.md): 0/3.
 [Positive-result A/B](history/2026-10-03-positive-verification-results.md): A 1/4,
 B 2/4 accepted; repetition 2 tied. Keep baseline; allocation closed.
 [SQLFluff trace](history/2026-10-03-sqlfluff-trajectory-review.md):
