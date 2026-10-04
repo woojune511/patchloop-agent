@@ -61,21 +61,21 @@ def repair(
                                           help="Public repair execution request JSON.")],
 ) -> None:
     """Repair a public task in an isolated checkout; return patch and public evidence."""
-    from patchloop.repair import RepairRunRequest, run_repair
+    from patchloop.repair import load_repair_request, run_repair
 
-    def execute():
-        try:
-            raw = json.loads(request.read_text(encoding="utf-8-sig"))
-            if not isinstance(raw, dict):
-                raise ValueError("request must be a JSON object")
-            for key in ("task", "source", "state_root", "env_file"):
-                if raw.get(key) is not None:
-                    raw[key] = request.resolve().parent / raw[key]
-        except (OSError, ValueError, TypeError) as exc:
-            raise ContractError(f"invalid repair request: {exc}") from exc
-        return run_repair(RepairRunRequest.model_validate(raw))
+    _guarded(lambda: run_repair(load_repair_request(request)))
 
-    _guarded(execute)
+
+@app.command("repair-verify")
+def repair_verify(
+    request: Annotated[Path, typer.Option("--request", exists=True, dir_okay=False)],
+    patch: Annotated[Path, typer.Option("--patch", exists=True, dir_okay=False)],
+    state_root: Annotated[Path | None, typer.Option("--state-root")] = None,
+) -> None:
+    """Compare added pytest cases on base and repaired code, without model calls."""
+    from patchloop.repair_verification import verify_repair
+
+    _guarded(lambda: verify_repair(request, patch, state_root=state_root))
 
 
 @app.command()

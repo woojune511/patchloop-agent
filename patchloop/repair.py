@@ -86,6 +86,20 @@ class RepairPackage(StrictModel):
     task_content_hash: str
 
 
+def load_repair_request(path: Path) -> RepairRunRequest:
+    """Resolve request paths without loading credentials or creating a provider."""
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8-sig"))
+        if not isinstance(raw, dict):
+            raise ValueError("request must be a JSON object")
+        for key in ("task", "source", "state_root", "env_file"):
+            if raw.get(key) is not None:
+                raw[key] = path.resolve().parent / raw[key]
+        return RepairRunRequest.model_validate(raw)
+    except (OSError, ValueError, TypeError) as exc:
+        raise ContractError(f"invalid repair request: {exc}") from exc
+
+
 def load_repair_task(path: Path) -> RepairPackage:
     try:
         public = RepairTask.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))

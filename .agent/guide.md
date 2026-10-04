@@ -34,6 +34,7 @@ Comparisons answer causal questions when needed; routine fixes need no new proce
 | Prices and pre-dispatch cost admission | `patchloop/dev/cost.py` |
 | Workspaces, prepared inputs, deadlines | `patchloop/repository.py`, `patchloop/prepared_source.py`, `patchloop/git_execution.py`, `patchloop/deadline.py` |
 | Registered checks and public probes | `patchloop/sandbox/`, `patchloop/dev/probe_cases.py` |
+| Patch/test comparison | `patchloop/repair_verification.py` |
 | Task/manifest contracts and isolated evaluation | `patchloop/contracts.py`, `patchloop/task_loader.py`, `patchloop/verifier/` |
 
 Use public task inputs for agent work. Private task material and evaluator internals
@@ -197,9 +198,9 @@ experimental context and historical plans; current source/status take precedence
   declaration/documentation expansion in the first tool batch; the separate
   [checkpoint sampler](declaration-checkpoint.md) retains a saved first decision prefix.
 
-Public `repair --request` shares the solver; see [contract and example](../examples/repair/README.md).
-`PATCH_READY` is public verification only, acceptance `NOT_RUN`. Live repair requires
-exact public-request/cost approval; live `dev` still requires registered dev-train.
+Public [repair and repair-verify](../examples/repair/README.md) return public evidence,
+acceptance `NOT_RUN`. Verification compares unchanged submitted tests without a model.
+Live repair requires exact public-request/cost approval; live dev requires dev-train.
 
 ## Validation checklist
 

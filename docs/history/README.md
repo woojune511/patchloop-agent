@@ -14,6 +14,7 @@ Approvals are closed.
 
 ## New records
 
+- [Patch verification](2026-10-05-repair-verification.md).
 - [Dotenv repair and model test](2026-10-05-dotenv-public-repair.md).
 - [Click public repair](2026-10-05-click-public-repair.md).
 - [Public repair](2026-10-05-public-repair.md).
@@ -95,5 +96,3 @@ Approvals are closed.
   opt-in recommendation removal, unchanged runtime gates, and local delivery validation.
 - [Verification scope audit](2026-09-26-verification-scope-audit.md).
 - [Paired-reference comparison](2026-09-26-paired-reference-comparison.md).
-
-Record evidence, limits and next question once; preserve closed records.
