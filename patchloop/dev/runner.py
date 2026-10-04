@@ -50,6 +50,8 @@ from patchloop.dev.contracts import (
     ProviderContinuationArtifact,
     ProviderContinuationRef,
     RequestedTool,
+    RunEnvelope,
+    RunRequest,
     dev_tool_surface_hash,
 )
 from patchloop.dev.conversation import (
@@ -111,6 +113,14 @@ from patchloop.errors import (
 from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.prepared_probe_dependencies import admit, load_dependencies
 from patchloop.prepared_source import admission_hash, load_source
+from patchloop.repair import (
+    RepairEnvelope,
+    RepairRunRequest,
+    RepairTask,
+    load_delivery,
+    prepared_sandbox,
+    record_delivery,
+)
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import (
     git_commit,
@@ -227,7 +237,7 @@ def _runtime_hash() -> str:
     return runtime_content_hash()
 
 
-def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
+def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
     from patchloop.dev import probe_cases
 
     return sha256_json(
@@ -346,7 +356,7 @@ def _live_sandbox_preflight(
 
 def _manifest(
     *,
-    request: DevRunRequest,
+    request: RunRequest,
     package: Any,
     run_id: str,
     sandbox_backend: str,
@@ -2498,7 +2508,9 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
         "action_id": result.action_id,
         "attempt": "finish_task",
         "result": result.output.get("patch_hash", "submitted"),
-        "next_question": "Run the isolated private evaluator.",
+        "next_question": ("Return the patch and public verification receipt."
+                          if isinstance(gateway.public_task, RepairTask)
+                          else "Run the isolated private evaluator."),
     }
 
 
@@ -2692,6 +2704,7 @@ def _terminal(
     active_elapsed_ms: int | None = None,
     run_age_seconds: int | None = None,
     completion_horizon: dict[str, Any] | None = None,
+    delivery: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     existing = journal.terminal()
     if existing is None:
@@ -2724,6 +2737,8 @@ def _terminal(
                 else run_age_seconds
             ),
         }
+        if delivery is not None:
+            payload["delivery"] = delivery
         if completion_horizon is not None:
             payload["completion_horizon"] = completion_horizon
         segment_events = [e for e in journal.events() if e["event_type"] == segments.EVENT]
@@ -2769,6 +2784,8 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
         "artifact_hashes": terminal_payload.get("artifact_hashes", {}),
         "agent_stop": terminal_payload.get("milestones", {}).get("agent_stop"),
     }
+    if "delivery" in terminal_payload:
+        result["delivery"] = terminal_payload["delivery"]
     if "completion_horizon" in terminal_payload:
         result["completion_horizon"] = terminal_payload["completion_horizon"]
     if "input_count_failure" in terminal_payload:
@@ -2781,13 +2798,15 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
     return result
 
 
-def _credential_file_path_hash(request: DevRunRequest) -> str | None:
+def _credential_file_path_hash(request: RunRequest) -> str | None:
     if request.env_file is None:
         return None
     return sha256_bytes(str(request.env_file.resolve()).encode("utf-8"))
 
 
-def _sandbox_identity_hash(request: DevRunRequest, package: Any, probe_dependencies=None) -> str:
+def _sandbox_identity_hash(request: RunRequest, package: Any, probe_dependencies=None) -> str:
+    if isinstance(request, RepairRunRequest):
+        return sha256_json(request.sandbox.model_dump(mode="json"))
     environment = package.environment if request.provider == "openai" else None
     return sha256_json(
         {
@@ -2804,7 +2823,7 @@ def _sandbox_identity_hash(request: DevRunRequest, package: Any, probe_dependenc
 
 def _run_envelope(
     *,
-    request: DevRunRequest,
+    request: RunRequest,
     task_dir: Path,
     package: Any,
     run_id: str,
@@ -2815,11 +2834,23 @@ def _run_envelope(
     created_at: Any | None = None,
     prepared_source_hash: str | None = None,
     probe_dependencies=None,
-) -> DevRunEnvelope:
-    return DevRunEnvelope(
+) -> RunEnvelope:
+    public_only = isinstance(request, RepairRunRequest)
+    envelope_type = RepairEnvelope if public_only else DevRunEnvelope
+    boundary = ({
+        "source_path": str(request.source.resolve()),
+        "sandbox_image_digest": request.sandbox.image_digest,
+    } if public_only else {
+        "private_spec_hash": package.private_spec_hash,
+        "evaluator_image_digest": (package.environment.image_digest
+                                   if package.environment else None),
+    })
+    return envelope_type(
+        **boundary,
         run_id=run_id,
         provider=request.provider,
-        task_path=str((task_dir / "public.yaml").resolve()),
+        task_path=str(request.task.resolve() if public_only
+                      else (task_dir / "public.yaml").resolve()),
         task_id=package.public.task_id,
         task_version=package.public.task_version,
         split=package.public.split,
@@ -2831,7 +2862,6 @@ def _run_envelope(
                                           if request.prepared_probe_dependencies else None),
         probe_dependencies=probe_dependencies,
         public_spec_hash=package.public_spec_hash,
-        private_spec_hash=package.private_spec_hash,
         task_content_hash=package.task_content_hash,
         runtime_hash=runtime_hash,
         model_hash=model_hash,
@@ -2861,12 +2891,11 @@ def _run_envelope(
         cost_start_nanos=cost_start_nanos,
         limits=request.limits,
         sandbox_backend="docker" if request.provider == "openai" else "local",
-        evaluator_image_digest=(package.environment.image_digest if package.environment else None),
         created_at=created_at or utc_now(),
     )
 
 
-def _validate_resume_envelope(actual: DevRunEnvelope, expected: DevRunEnvelope) -> None:
+def _validate_resume_envelope(actual: RunEnvelope, expected: RunEnvelope) -> None:
     if actual.model_dump(mode="json") != expected.model_dump(mode="json"):
         raise ResumeContractMismatch("run configuration or runtime changed")
 
@@ -3295,7 +3324,7 @@ def _run_repair_recheck(
 def _run_probe_recheck(
     *, journal: DevJournal, gateway: DevToolGateway, latest_results: list[DevToolResult],
     counters: _RunCounters, active_elapsed_ms: Callable[[], int],
-    request: DevRunRequest, cost_ledger: DevCostLedger | None = None,
+    request: RunRequest, cost_ledger: DevCostLedger | None = None,
 ) -> tuple[DevTerminal | None, str | None]:
     selected = probe_recheck.select(journal, latest_results)
     if selected is None:
@@ -3429,9 +3458,21 @@ def _finish_evaluation_metadata(
     return _OneRunResult(_public_result(journal.run_id, terminal), completion.stop_remaining)
 
 
+def _finish_repair_metadata(*, journal, delivery, counters, cost_ledger,
+                            cost_start_nanos, hashes):
+    terminal = _terminal(
+        journal=journal, terminal=DevTerminal.PATCH_READY, counters=counters,
+        cost_ledger=cost_ledger, cost_start_nanos=cost_start_nanos, hashes=hashes,
+        delivery=delivery, active_elapsed_ms=delivery["active_elapsed_ms"],
+        artifacts={"submitted_patch": delivery["patch"]["content_hash"],
+                   "public_verification": delivery["public_verification"]["content_hash"]},
+    )
+    return _OneRunResult(_public_result(journal.run_id, terminal), False)
+
+
 def _run_one(
     *,
-    request: DevRunRequest,
+    request: RunRequest,
     task_dir: Path,
     package: Any,
     state_root: Path,
@@ -3468,6 +3509,12 @@ def _run_one(
                 )
             existing_terminal = journal.terminal()
             if existing_terminal is not None:
+                if (isinstance(request, RepairRunRequest)
+                        and existing_terminal["payload"]["terminal"] == "PATCH_READY"):
+                    delivery = load_delivery(journal, ArtifactStore(state_root / "artifacts"),
+                                             envelope)
+                    if delivery != existing_terminal["payload"].get("delivery"):
+                        raise RecoveryError("terminal repair delivery differs from its receipt")
                 return _OneRunResult(
                     _public_result(run_id, existing_terminal["payload"]),
                     False,
@@ -3617,7 +3664,17 @@ def _run_one(
 
         if resuming:
             store = ArtifactStore(state_root / "artifacts")
-            completion = load_evaluation_completion(journal, store, envelope)
+            if isinstance(request, RepairRunRequest):
+                delivery = load_delivery(journal, store, envelope)
+                if delivery is not None:
+                    return _finish_repair_metadata(
+                        journal=journal, delivery=delivery, counters=counters,
+                        cost_ledger=cost_ledger, cost_start_nanos=envelope.cost_start_nanos,
+                        hashes=hashes,
+                    )
+                completion = None
+            else:
+                completion = load_evaluation_completion(journal, store, envelope)
             if completion is not None:
                 return _finish_evaluation_metadata(
                     journal=journal, store=store, completion=completion, counters=counters,
@@ -3643,7 +3700,7 @@ def _run_one(
 
 def _run_one_locked(
     *,
-    request: DevRunRequest,
+    request: RunRequest,
     task_dir: Path,
     package: Any,
     state_root: Path,
@@ -3653,7 +3710,7 @@ def _run_one_locked(
     model_hash: str,
     run_id: str,
     journal: DevJournal,
-    envelope: DevRunEnvelope,
+    envelope: RunEnvelope,
     resuming: bool,
 ) -> _OneRunResult:
     # Terminal and completed-evaluation recovery already returned before this
@@ -3720,10 +3777,10 @@ def _probe_evidence(journal, artifact_store, run_id):
 
 
 def _run_one_active(
-    *, request: DevRunRequest, task_dir: Path, package: Any, state_root: Path,
+    *, request: RunRequest, task_dir: Path, package: Any, state_root: Path,
     pricing: ModelPricing | None, cost_ledger: DevCostLedger | None,
     runtime_hash: str, model_hash: str, run_id: str, journal: DevJournal,
-    envelope: DevRunEnvelope, resuming: bool, deadline: ExecutionDeadline,
+    envelope: RunEnvelope, resuming: bool, deadline: ExecutionDeadline,
     active_base_ms: int, started: float, harness_git_commit: str,
 ) -> _OneRunResult:
     artifact_store = ArtifactStore(state_root / "artifacts")
@@ -3744,6 +3801,7 @@ def _run_one_active(
     workspace_manager = WorkspaceManager(
         repository_root() / "fixtures" / "repositories",
         state_root / "workspaces",
+        **({"local_source": request.source} if isinstance(request, RepairRunRequest) else {}),
         **({"prepared_source": request.prepared_source,
             "prepared_source_hash": envelope.prepared_source_hash}
            if request.prepared_source is not None else {}),
@@ -3751,7 +3809,11 @@ def _run_one_active(
     workspace_path = state_root / "workspaces" / run_id / "repo"
     try:
         if request.provider == "openai" and remaining_active_seconds() > 0:
-            _live_source_preflight(task_dir, package, deadline=deadline)
+            if isinstance(request, RepairRunRequest):
+                root = repository_root().resolve()
+                _require_tracked_clean_paths(root, runtime_content_paths(root), deadline=deadline)
+            else:
+                _live_source_preflight(task_dir, package, deadline=deadline)
         if resuming and not workspace_path.exists():
             raise RecoveryError("resumable development workspace is missing")
         if request.prepared_source is not None and workspace_path.exists():
@@ -3770,6 +3832,10 @@ def _run_one_active(
                 deadline=deadline,
             )
         )
+        if isinstance(request, RepairRunRequest):
+            head = run_git(workspace, "rev-parse", "HEAD", deadline=deadline).stdout.strip()
+            if head != package.public.repository.base_commit:
+                raise RecoveryError("repair workspace HEAD differs from the admitted base")
         if request.prepared_source is not None and not any(
             event["event_type"] == "prepared_source_bound" for event in journal.events()
         ):
@@ -3813,7 +3879,11 @@ def _run_one_active(
     api_key: str | None = None
     probe_sandbox = None
     try:
-        if request.provider == "openai":
+        if isinstance(request, RepairRunRequest):
+            sandbox = prepared_sandbox(request, deadline=deadline)
+            if request.provider == "openai" and remaining_active_seconds() > 0:
+                api_key = load_exact_openai_api_key(request.env_file)
+        elif request.provider == "openai":
             assert request.env_file is not None
             if remaining_active_seconds() > 0:
                 api_key = load_exact_openai_api_key(request.env_file)
@@ -4268,6 +4338,14 @@ def _run_one_active(
             probe_recheck_policy=request.probe_recheck,
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),
         )
+        if isinstance(request, RepairRunRequest):
+            for schema in schemas:
+                if schema["name"] == "finish_task":
+                    schema["description"] = (
+                        "Return the current patch and public verification records after all "
+                        "required visible checks pass on this diff. Independent acceptance "
+                        "is NOT_RUN; public checks do not establish untested behavior."
+                    )
         turn_payload = {
             "turn_id": turn_id,
             "context_artifact": context_artifact.model_dump(mode="json"),
@@ -4880,6 +4958,17 @@ def _run_one_active(
             "changed_files": finish_result.output["changed_files"],
         },
     )
+    if isinstance(request, RepairRunRequest):
+        delivery = load_delivery(journal, artifact_store, envelope)
+        if delivery is None:
+            delivery = record_delivery(
+                journal, artifact_store, envelope, submitted, finish_result.output,
+                active_elapsed_ms(),
+            )
+        return _finish_repair_metadata(
+            journal=journal, delivery=delivery, counters=counters, cost_ledger=cost_ledger,
+            cost_start_nanos=cost_start_nanos, hashes=hashes,
+        )
     manifest = _manifest(
         request=request,
         package=package,
@@ -4994,6 +5083,13 @@ def run_dev(request: DevRunRequest) -> dict[str, Any]:
         except ValidationError as exc:
             raise ContractError(str(exc)) from exc
     task_dir, package = _resolve_task_file(request.task)
+    if request.provider == "openai":
+        _live_task_is_admitted(task_dir, package)
+    return _run_invocation(request, task_dir, package)
+
+
+def _run_invocation(request: RunRequest, task_dir: Path, package: Any) -> dict[str, Any]:
+    """One shared admission, budget, journal and solver loop for both entry points."""
     state_root = request.state_root.resolve() if request.state_root else default_state_root()
     repo = repository_root().resolve()
     if state_root == repo or state_root.is_relative_to(repo):
@@ -5003,7 +5099,6 @@ def run_dev(request: DevRunRequest) -> dict[str, Any]:
     pricing: ModelPricing | None = None
     cost_ledger: DevCostLedger | None = None
     if request.provider == "openai":
-        _live_task_is_admitted(task_dir, package)
         assert request.max_cost_usd is not None
         pricing = pricing_for_model(request.model)
         cost_ledger = DevCostLedger(request.max_cost_usd, pricing)

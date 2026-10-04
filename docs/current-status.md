@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-04. Current decisions; runtime source owns behavior.
+Updated: 2026-10-05. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -25,17 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+Public-only `repair --request` returns a patch and public receipts using the shared
+solver; acceptance stays `NOT_RUN`. [Implementation/validation](history/2026-10-05-public-repair.md)
+is complete offline. No live execution or baseline change; see [usage](../examples/repair/README.md).
+
 [Mini/full](history/2026-10-04-mini-full-results.md): mini selected for this six-task panel.
 24/24 completed; USD 5.42285815. Allocation closed; CLI defaults unchanged.
 C2 and pydicom-1413 closed; runtime and baseline unchanged.
-[Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
-allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
-mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
-[Positive-result A/B](history/2026-10-03-positive-verification-results.md): A 1/4,
-B 2/4 accepted; repetition 2 tied. Keep baseline; allocation closed.
-[SQLFluff trace](history/2026-10-03-sqlfluff-trajectory-review.md):
-Unsupported narrowing; no admission defect. Audit closed.
-
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task
 diagnosis closed; no isort repair control or agent change queued.
 [Selection review](history/2026-10-02-requirement-selection-decision.md): task-first

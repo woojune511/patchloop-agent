@@ -56,6 +56,29 @@ def _parse_cost(value: str | None) -> Decimal | None:
 
 
 @app.command()
+def repair(
+    request: Annotated[Path, typer.Option("--request", exists=True, dir_okay=False,
+                                          help="Public repair execution request JSON.")],
+) -> None:
+    """Repair a public task in an isolated checkout; return patch and public evidence."""
+    from patchloop.repair import RepairRunRequest, run_repair
+
+    def execute():
+        try:
+            raw = json.loads(request.read_text(encoding="utf-8-sig"))
+            if not isinstance(raw, dict):
+                raise ValueError("request must be a JSON object")
+            for key in ("task", "source", "state_root", "env_file"):
+                if raw.get(key) is not None:
+                    raw[key] = request.resolve().parent / raw[key]
+        except (OSError, ValueError, TypeError) as exc:
+            raise ContractError(f"invalid repair request: {exc}") from exc
+        return run_repair(RepairRunRequest.model_validate(raw))
+
+    _guarded(execute)
+
+
+@app.command()
 def dev(
     provider: Annotated[Literal["mock", "openai"], typer.Option("--provider")],
     task: Annotated[Path, typer.Option("--task", exists=True, dir_okay=False)],

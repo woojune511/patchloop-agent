@@ -109,12 +109,14 @@ class WorkspaceManager:
     def __init__(
         self, fixture_root: str | Path, workspace_root: str | Path, *,
         prepared_source: Path | None = None, prepared_source_hash: str | None = None,
+        local_source: Path | None = None,
     ) -> None:
         self.fixture_root = Path(fixture_root).resolve()
         self.workspace_root = Path(workspace_root).resolve()
         self.workspace_root.mkdir(parents=True, exist_ok=True)
         self.prepared_source = prepared_source
         self.prepared_source_hash = prepared_source_hash
+        self.local_source = local_source.resolve() if local_source is not None else None
 
     def resolve_repository(self, url: str) -> Path:
         prefix = "snapshot://"
@@ -147,7 +149,29 @@ class WorkspaceManager:
         if staging.exists():
             _remove_staging(staging)
         try:
-            if self.prepared_source is not None:
+            if self.local_source is not None:
+                if not expected_revision or not re.fullmatch(r"[0-9a-f]{40}", expected_revision):
+                    raise ContractError("local public source requires an exact Git commit")
+                partial = _git(self.local_source, "config", "--get-regexp",
+                               r"^(remote\..*\.promisor|extensions\.partialclone)$",
+                               check=False, deadline=deadline)
+                if partial.returncode != 1:
+                    raise ContractError("repair needs a complete local Git source; no lazy fetch")
+                # Copy Git objects, not working-tree edits/untracked files. No hardlinks,
+                # alternates, fetch, submodule initialization, or writes to the source.
+                _git(run_root, "clone", "--quiet", "--no-local", "--no-checkout",
+                     "-c", "core.longpaths=true", "-c", "core.autocrlf=false",
+                     str(self.local_source), str(staging), deadline=deadline)
+                commit = _git(staging, "rev-parse", f"{expected_revision}^{{commit}}",
+                              deadline=deadline).stdout.strip()
+                if commit != expected_revision:
+                    raise ContractError("local public source commit mismatch")
+                entries = _git(staging, "ls-tree", "-r", commit, deadline=deadline).stdout
+                if any(line.startswith("160000 ") for line in entries.splitlines()):
+                    raise ContractError("repair does not prepare submodule dependencies")
+                _git(staging, "checkout", "--quiet", "--detach", commit, deadline=deadline)
+                _git(staging, "remote", "remove", "origin", deadline=deadline)
+            elif self.prepared_source is not None:
                 from patchloop.prepared_source import load_source, validate_checkout
 
                 source, source_repo = load_source(

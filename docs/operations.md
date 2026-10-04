@@ -68,6 +68,19 @@ Mock mode forbids credential and cost options. The smoke path covers public
 inspection, mutation, visible checking, submission and isolated evaluation.
 It remains `official=false` and is not live provider or Docker evidence.
 
+## Public-only repair
+
+`patchloop repair --request request.json` accepts a separate public task, local Git
+source and exact base commit, allowed paths, registered checks, explicit sandbox,
+model and invocation-wide cost cap. See the [small example](../examples/repair/README.md).
+OpenAI needs an existing digest-pinned image; mock uses trusted local checks.
+The shared loop preserves costs, edit limits, tool restrictions and recovery.
+`PATCH_READY` returns a patch plus public receipts, with acceptance `NOT_RUN`.
+It neither changes the original checkout nor applies/opens a PR for its patch.
+No hidden/reference material is needed; `dev` admission remains unchanged.
+Paid repair requires approval of this exact public request, credential, repeats and
+cap. No provider call was used to implement or locally validate this path.
+
 ## Explicitly approved live development
 
 A live invocation needs the exact checked-in `dev-train` task, model, credential

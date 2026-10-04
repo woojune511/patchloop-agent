@@ -160,6 +160,7 @@ class StrictModel(BaseModel):
 
 
 class DevTerminal(StrEnum):
+    PATCH_READY = "PATCH_READY"
     EVALUATOR_PASS = "EVALUATOR_PASS"
     EVALUATOR_FAIL = "EVALUATOR_FAIL"
     EVALUATOR_ERROR = "EVALUATOR_ERROR"
@@ -360,7 +361,7 @@ class DevToolResult(StrictModel):
     workspace_diff_hash: str | None = None
 
 
-class DevRunRequest(StrictModel):
+class RunRequest(StrictModel):
     provider: Literal["mock", "openai"]
     task: Path
     model: str
@@ -399,7 +400,7 @@ class DevRunRequest(StrictModel):
     limits: DevLimits = Field(default_factory=DevLimits)
 
     @model_validator(mode="after")
-    def provider_options_match(self) -> DevRunRequest:
+    def provider_options_match(self) -> RunRequest:
         if (self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY
                 and self.context_policy != segments.POLICY):
             raise ValueError("--completion-cost-policy completion-reserve-v1 requires segmented-v1")
@@ -444,8 +445,11 @@ class DevRunRequest(StrictModel):
         return self
 
 
-class DevRunEnvelope(StrictModel):
-    schema_version: Literal["dev-run-envelope-v1"] = "dev-run-envelope-v1"
+class DevRunRequest(RunRequest):
+    """An evaluated development task; private task admission remains mandatory."""
+
+
+class RunEnvelope(StrictModel):
     official: Literal[False] = False
     runtime_id: Literal["dev-head"] = "dev-head"
     run_id: str = Field(pattern=r"^run_dev_[a-zA-Z0-9_-]+$")
@@ -453,13 +457,6 @@ class DevRunEnvelope(StrictModel):
     task_path: str
     task_id: str
     task_version: int = Field(ge=1)
-    split: Literal[
-        "smoke",
-        "dev-train",
-        "dev-validation",
-        "same-repo-heldout",
-        "cross-repo-heldout",
-    ]
     base_commit: str
     prepared_source_path: str | None = None
     prepared_source_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
@@ -470,7 +467,6 @@ class DevRunEnvelope(StrictModel):
         default=None, exclude_if=lambda value: value is None,
     )
     public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     task_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     runtime_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
@@ -518,14 +514,10 @@ class DevRunEnvelope(StrictModel):
     cost_start_nanos: int = Field(ge=0)
     limits: DevLimits
     sandbox_backend: Literal["local", "docker"]
-    evaluator_image_digest: str | None = Field(
-        default=None,
-        pattern=r"^sha256:[0-9a-f]{64}$",
-    )
     created_at: datetime
 
     @model_validator(mode="after")
-    def provider_boundary_is_exact(self) -> DevRunEnvelope:
+    def provider_boundary_is_exact(self) -> RunEnvelope:
         if self.completion_cost_policy == cost.COMPLETION_RESERVE_POLICY:
             if (self.context_policy != segments.POLICY
                     or self.completion_cost_contract != cost.completion_cost_contract()):
@@ -563,7 +555,7 @@ class DevRunEnvelope(StrictModel):
                 self.credential_file_path_hash is None
                 or self.max_cost_nanos <= 0
                 or self.sandbox_backend != "docker"
-                or self.evaluator_image_digest is None
+                or self.execution_image_digest is None
             ):
                 raise ValueError("live run envelope is missing an exact execution boundary")
         elif (
@@ -571,7 +563,27 @@ class DevRunEnvelope(StrictModel):
             or self.max_cost_nanos != 0
             or self.cost_start_nanos != 0
             or self.sandbox_backend != "local"
-            or self.evaluator_image_digest is not None
+            or self.execution_image_digest is not None
         ):
             raise ValueError("mock run envelope contains a live execution boundary")
         return self
+
+
+class DevRunEnvelope(RunEnvelope):
+    schema_version: Literal["dev-run-envelope-v1"] = "dev-run-envelope-v1"
+    split: Literal[
+        "smoke",
+        "dev-train",
+        "dev-validation",
+        "same-repo-heldout",
+        "cross-repo-heldout",
+    ]
+    private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    evaluator_image_digest: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+
+    @property
+    def execution_image_digest(self) -> str | None:
+        return self.evaluator_image_digest

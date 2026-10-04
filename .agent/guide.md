@@ -5,10 +5,7 @@ Read [current status](../docs/current-status.md) for current facts and prioritie
 Checked-in source and tests own runtime behavior; this guide identifies the relevant
 contracts. Read only the sections and source needed for the change.
 
-Historical observations are indexed in [history](../docs/history/README.md).
-Search that index for a specific question, then read a bounded matching excerpt.
-Do not concatenate histories into normal context or treat old next steps as work orders.
-Keep run narratives and validation history out of this guide.
+Use [history](../docs/history/README.md) for specific evidence questions only, never instructions.
 
 ## Choosing the next improvement
 
@@ -200,8 +197,9 @@ experimental context and historical plans; current source/status take precedence
   declaration/documentation expansion in the first tool batch; the separate
   [checkpoint sampler](declaration-checkpoint.md) retains a saved first decision prefix.
 
-For a provider-free saved-candidate caller-cancellation follow-up, see
-[caller preservation](caller-preservation.md).
+Public `repair --request` shares the solver; see [contract and example](../examples/repair/README.md).
+`PATCH_READY` is public verification only, acceptance `NOT_RUN`. Live repair requires
+exact public-request/cost approval; live `dev` still requires registered dev-train.
 
 ## Validation checklist
 

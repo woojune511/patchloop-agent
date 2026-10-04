@@ -3,8 +3,8 @@
 > A recoverable single coding agent for bounded, evidence-driven repository repair.
 
 PatchLoop reads a public software task, inspects the target repository, edits code
-through constrained tools, runs registered checks, and submits a patch for isolated
-evaluation. Its reliability layer records every run in an append-only hash chain,
+through constrained tools and runs registered checks. `repair` returns a patch and
+public evidence; `dev` also submits it for isolated evaluation. Its reliability layer records every run in an append-only hash chain,
 binds mutations and checks to exact inputs, and recovers interrupted work without
 silently repeating side effects.
 
@@ -18,7 +18,8 @@ to make its repairs measurable and trustworthy.
 3. Applies exact text mutations inside the task's allowed scope.
 4. Runs public checks against the current diff; stale results cannot validate a
    later edit.
-5. Submits a content-bound manifest to a separate evaluator.
+5. Returns a patch and public receipts (`repair`), or submits a content-bound
+   manifest to a separate evaluator (`dev`).
 6. Records task acceptance, safety, cost, tokens, actions, and recovery state as
    separate evidence.
 
@@ -37,7 +38,10 @@ public task + isolated source
      verified current diff
              |
              v
- content-bound submission  ----->  isolated evaluator
+ content-bound patch  ----->  public receipts (repair)
+             |
+             v (dev)
+     isolated evaluator
              |
              v
  task acceptance + separate safety state
@@ -46,6 +50,9 @@ public task + isolated source
 The active runtime is `dev-head`. It uses a fixed tool protocol, bounded model and
 tool budgets, zero SDK retries, exact cost admission before dispatch, and
 `action_id + input_hash` idempotency for mutation/check recovery.
+
+For public-only tasks, use `patchloop repair --request request.json`; see the
+[executable example and request format](examples/repair/README.md).
 
 ## Evidence snapshot
 

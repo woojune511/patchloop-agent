@@ -9,14 +9,12 @@ Approvals are closed.
 
 [Snapshot manifest](2026-09-26-context-split/manifest.json).
 
-[Status](2026-09-26-context-split/current-status.md),
-[guide](2026-09-26-context-split/agent-guide.md),
-[evidence](2026-09-26-context-split/evidence.md),
-[operations](2026-09-26-context-split/operations.md).
+[Preserved snapshots](2026-09-26-context-split/).
 
 
 ## New records
 
+- [Public repair](2026-10-05-public-repair.md).
 - [Mini/full results](2026-10-04-mini-full-results.md).
 - [SQLFluff trace](2026-10-03-sqlfluff-trajectory-review.md).
 - [Predicate](2026-10-03-public-predicate-result.md).
