@@ -25,8 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[C2 regression](history/2026-10-04-sqlfluff-c2-regression.md): edit 4 regressed.
-L036 correction passes issue + 506 checks; operator replay. Baseline kept.
+[C2](history/2026-10-04-c2-choice-preparation.md): edit-3 state restored offline.
+[Scope](../.agent/c2-choice-evaluation.md) awaits approval; baseline kept.
 [Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
 allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
 mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
