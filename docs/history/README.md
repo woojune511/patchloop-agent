@@ -1,7 +1,7 @@
 # Documentation history
 
 [Current status](../current-status.md).
-Approvals are closed.
+Allocations closed.
 
 ## 2026-09-26 snapshots
 
@@ -14,9 +14,10 @@ Approvals are closed.
 
 ## New records
 
-- [Patch verification](2026-10-05-repair-verification.md).
-- [Dotenv repair and model test](2026-10-05-dotenv-public-repair.md).
-- [Click public repair](2026-10-05-click-public-repair.md).
+- [Three uses](2026-10-05-three-public-repair-uses.md).
+- [Verification](2026-10-05-repair-verification.md).
+- [Dotenv](2026-10-05-dotenv-public-repair.md).
+- [Click](2026-10-05-click-public-repair.md).
 - [Public repair](2026-10-05-public-repair.md).
 - [Mini/full results](2026-10-04-mini-full-results.md).
 - [SQLFluff trace](2026-10-03-sqlfluff-trajectory-review.md).

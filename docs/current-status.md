@@ -25,14 +25,12 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-Public [repair](history/2026-10-05-public-repair.md),
-[Click](history/2026-10-05-click-public-repair.md) and
-[dotenv](history/2026-10-05-dotenv-public-repair.md) are closed; allocations closed,
-acceptance `NOT_RUN`, baseline unchanged.
-`repair-verify --request --patch` compares unchanged added pytest cases on base and
-patched code plus original public checks, without models. Ambiguous separation is
-unsupported. [Record](history/2026-10-05-repair-verification.md).
-[Usage](../examples/repair/README.md).
+[Three uses](history/2026-10-05-three-public-repair-uses.md): 3 patches returned;
+original tests fail before/pass after; existing checks pass. USD 1.61155980;
+allocation closed. Human review pending, including Click test compatibility.
+Acceptance `NOT_RUN`; baseline unchanged. [Usage](../examples/repair/README.md).
+Earlier repair, Click, dotenv and verifier work is closed; see
+[history](history/README.md). No follow-up run or runtime change queued.
 
 [Mini/full](history/2026-10-04-mini-full-results.md): mini selected for this six-task panel.
 24/24 completed; USD 5.42285815. Allocation closed; CLI defaults unchanged.
