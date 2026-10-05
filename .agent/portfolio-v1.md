@@ -1,6 +1,8 @@
 # Frozen remeasurement and repository release
 
-Preparation only; no provider calls or remote publication authorized yet.
+Closed after approved execution: 9/20, below the 11/20 threshold. See
+[results](../docs/history/2026-10-06-portfolio-dev20-results.md).
+No remaining paid authorization, test300 preparation or remote publication.
 
 ## Stage 1: existing dev20
 

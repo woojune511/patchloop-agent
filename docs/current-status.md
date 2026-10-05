@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-05. Current decisions; runtime source owns behavior.
+Updated: 2026-10-06. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -25,15 +25,16 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-Portfolio v1 preparation: rerun the historical dev20 once with mini, USD 1.20/task
-and USD 24 total, preserving original inputs. No new paid call is authorized.
-[Execution plan](../.agent/portfolio-v1.md) binds the approval, stop rules and
-11/20 threshold for test300 preparation only. Public README/evidence/demo refresh
-uses existing results; runtime/defaults unchanged. Historical score is 10/20;
-the new score is pending. [Offline preparation](history/2026-10-05-portfolio-preparation.md)
-records full-suite validation and the byte-exact historical task copy.
-Freeze preflight rejected the proposed live path because it contains an older
-closed batch. The fresh replacement is `C:/pt/pv1d20live05`; old state is preserved.
+Portfolio v1 local work closed: [dev20 remeasurement](history/2026-10-06-portfolio-dev20-results.md)
+resolved **9/20**, versus historical 10/20. All twenty original submissions were
+evaluated with registered/native agreement and confirmed cleanup; no missing runs,
+unknown billing or evaluation errors. Cost USD 3.46111455; panel wall time 102m19s.
+The 11/20 threshold was not met: test300 is not prepared or authorized. No retries,
+prompt tuning or case diagnoses follow. Runtime/defaults remain unchanged.
+[Public results](../examples/portfolio-dev20/README.md), saved demo and review exports
+are local repository artifacts. Remote publication/release and Linux CI are NOT_RUN.
+[Preparation](history/2026-10-05-portfolio-preparation.md) preserves validation;
+`C:/pt/pv1dev20` and `C:/pt/pv1d20live05` are closed immutable evidence roots.
 
 [Three uses](history/2026-10-05-three-public-repair-uses.md): automatic comparisons
 3/3; [original review](history/2026-10-05-original-patch-review.md) found two patches

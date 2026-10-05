@@ -74,7 +74,7 @@ run; it is not live inference or another successful solve.
 
 | Evidence | Observed result | Boundary |
 | --- | --- | --- |
-| Lite dev20, 2026-10-02 | 10/20 resolved; USD 5.01124395 | Exposed dev tasks; historical, not Lite test score |
+| [Lite dev20 rerun](examples/portfolio-dev20/README.md), 2026-10-06 | 9/20 resolved; USD 3.46111455 (historical 10/20) | Exposed dev tasks; not Lite test score or causal comparison |
 | dotenv #715 public repair | Implementation + model test; before failure / after pass | One use, acceptance NOT_RUN |
 | Three public uses | All 3 test comparisons passed; code review: 1 candidate, 2 need changes | Automatic verification did not establish patch acceptability |
 | Two Click corrections | Both addressed supplied review feedback | Feedback-informed repair; human approval unreported |
@@ -82,8 +82,8 @@ run; it is not live inference or another successful solve.
 See [evidence and limitations](docs/evidence.md) and [current status](docs/current-status.md).
 The earlier [Basic/Current 4/6 versus 5/6 pilot](docs/history/2026-09-28-basic-current-baseline-comparison.md)
 is a dated, single-repeat development comparison, not a general improvement claim.
-All current runs are `official=false`. The new dev20 remeasurement is being prepared;
-no new benchmark score or test300 result is available.
+All current runs are `official=false`. The 11/20 threshold was not met; test300
+was not prepared or executed. Portfolio v1 measurement and local materials are closed.
 
 ## Try the local loop
 

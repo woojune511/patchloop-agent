@@ -90,16 +90,15 @@ acceptance for these public repairs remains `NOT_RUN`.
 
 ### Benchmark measurements
 
-The [historical dev20](history/2026-10-02-lite-dev20-results.md) resolved 10/20 at
-USD 5.01124395 under the mini snapshot and USD 1.20 per-task cap. Eight derivative
-environments and two public-check projections were documented. This is not the 300-task test split. The planned current rerun uses the same
-roster and settings; there is no new score yet. A score difference against history
-cannot isolate a runtime feature or establish a statistically reliable gain.
-
-Only a complete agreeing result of at least 11/20 leads to test300 **preparation**.
-Test300 generation and image acquisition need their own exact approved scope;
-neither unused dev budget nor a positive result authorizes spending. See the
-[bounded execution plan](../.agent/portfolio-v1.md).
+The [dev20 rerun](history/2026-10-06-portfolio-dev20-results.md) resolved **9/20** at
+USD 3.46111455 versus [historical](history/2026-10-02-lite-dev20-results.md) 10/20
+at USD 5.01124395. Same mini, roster and USD 1.20/task cap; current runtime.
+All twenty submitted; evaluations agreed and cleanup was confirmed.
+Transitions: nine PASS->PASS, one PASS->FAIL, ten FAIL->FAIL; no evaluation errors.
+[Public JSON](../examples/portfolio-dev20/results.json) records costs, times and
+receipt/patch hashes. Eight environment corrections and two public-check projections
+remain limitations. This exposed dev panel is not a Lite test or causal comparison.
+Below 11/20: test300 NOT_RUN. Allocation closed; no retries or case diagnoses.
 
 - [Current status](current-status.md): current implications, unresolved questions,
   and links to the latest relevant validation and experiment records.

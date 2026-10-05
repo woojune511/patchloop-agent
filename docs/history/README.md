@@ -1,20 +1,15 @@
 # History
 
 [Status](../current-status.md).
-Allocations closed.
-
-## Snapshots
 
 [Split](2026-09-26-documentation-separation.md).
-
 [Manifest](2026-09-26-context-split/manifest.json).
-
 [Files](2026-09-26-context-split/).
 
 
 ## Records
 
-- [Portfolio](2026-10-05-portfolio-preparation.md).
+- Portfolio: [prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md).
 - [Corrections](2026-10-05-click-feedback-results.md).
 - [Review](2026-10-05-original-patch-review.md).
 - [Three uses](2026-10-05-three-public-repair-uses.md).

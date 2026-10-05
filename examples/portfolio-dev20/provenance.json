@@ -1,0 +1,19 @@
+{
+  "schema": "portfolio-public-export-v1",
+  "sources": {
+    "manifest.json": "sha256:c7b0ba740d024afa1c15eb2763100d953460d814a6ab02be4cdb12fbad53dbb8",
+    "result.json": "sha256:f6e3afc3574ef39b8dc50a9549bfc99472b17dcbd5eef7f85caa504685372523",
+    "summary.json": "sha256:ae0d3b54faca8d6686f2688e0a0d007e06bd1bd8f21dd1cf4e0a5861462e6514",
+    "authorization.json": "sha256:d24ed7ce813c611e86d33c93b36e88a36ce2d7048c48b077703605db84bfbb3e",
+    "preflight.json": "sha256:89649b4bbfc35e6c2da61f893aee87258a00fbe9d4d3743333635d9e6421d55e",
+    "postrun-audit.json": "sha256:5e38b3e4c368b56fbb2a13776f115264258de28f125729b4546311126451e390"
+  },
+  "transformations": [
+    "Allowlisted result fields and public check receipt summaries; no stdout/stderr text.",
+    "Omitted host paths, credential locations, provider continuation state, call identifiers and private evaluator content.",
+    "Kept task/base/image identities and original submitted patch hashes; original patches and raw receipts remain in external immutable storage.",
+    "Computed panel wall time from journal start/close timestamps; solve/native sums are separate."
+  ],
+  "new_model_calls": 0,
+  "new_evaluations": 0
+}
