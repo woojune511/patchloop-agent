@@ -25,21 +25,22 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The [component audit](history/2026-10-06-current-agent-audit.md) found verification
-failures despite available tools. Its [priority fixes](history/2026-10-06-agent-priority-fixes.md)
-protect SQLFluff test helpers, keep confirmed evaluation deadlines task-local, reserve
-330 of the panel's existing 1,800 seconds for evaluation, and require public-operation
-canaries. All 20 operations passed; Marshmallow uses Python 3.9. Synthetic controls
-distinguish misleading PASS. Repair-quality gains remain unmeasured. A fresh 20-task
-run is authorized with two workers and the USD 24 cap; preparation is in progress.
+The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md) closed:
+20 started, 18 agreeing evaluations (11 PASS/7 FAIL), one solver deadline with
+unconfirmed Git descendant cleanup and one peer interruption. Cost USD 5.08206870;
+wall time 69m38s; two workers observed. The same 18 evaluated tasks improved from
+8 to 11 successes, but two NOT_RUN rows prevent an all-20 accuracy or speedup claim.
+No new admission followed the uncertainty stop. No retry or paid follow-up is queued.
 
-The [current-capability dev20 panel](../.agent/current-dev20.md) closed incomplete:
-18 tasks started, 16 agreeing evaluations (8 PASS/8 FAIL), one evaluation deadline,
-one peer interruption and two not started. Cost USD 5.39413050; two concurrent
-workers were observed. [Results and correction](history/2026-10-06-current-dev20-results.md)
-preserve the original outcomes. Test methods/classes are now supported after local
-checks, with no paid result. No complete success-rate or speedup conclusion follows.
-The allocation and its outcomes remain closed.
+The next concrete bottleneck is per-file Git execution during public search:
+row 18 spent 568 seconds in completed searches before its solver deadline.
+Test a single tracked-file enumeration provider-free, preserving public-path and
+deadline behavior. Verification choices remain a separate gap: tools were available,
+but several submitted repairs lacked their planned focused checks.
+
+The [priority fixes](history/2026-10-06-agent-priority-fixes.md) remain;
+all 20 fresh capability canaries passed. The [previous partial panel](history/2026-10-06-current-dev20-results.md)
+also remains closed. See the [panel contract](../.agent/current-dev20.md) for conditions.
 
 Portfolio v1 closed: [dev20 remeasurement](history/2026-10-06-portfolio-dev20-results.md)
 resolved **9/20**, versus historical 10/20, with all registered/native results
