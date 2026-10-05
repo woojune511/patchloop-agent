@@ -124,6 +124,9 @@ Durable evaluator completion can finalize from verified artifacts without re-exe
 a crash before that receipt does not establish exactly-once evaluator execution.
 
 One deadline covers preparation, counting, generation, tools, Git, and evaluation.
+Development requests may reserve evaluation time inside that total (default zero).
+A timely, bound `solver_finished` receipt permits recovery after the solver cutoff,
+with no new solver actions; see [current panel](current-dev20.md).
 After expiry permit only bounded metadata/reconciliation work. Unknown process or
 container cleanup stops execution/repetitions; preserve the original failure and typed
 cleanup evidence. Interrupted probes may rerun only on their bound snapshot after

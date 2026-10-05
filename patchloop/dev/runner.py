@@ -246,6 +246,9 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
+            **({"evaluation_reserve_seconds": request.evaluation_reserve_seconds}
+               if isinstance(request, DevRunRequest)
+               and request.evaluation_reserve_seconds else {}),
             **({"completion_cost_contract": completion_cost_contract()}
                if request.completion_cost_policy == COMPLETION_RESERVE_POLICY else {}),
             **({"repair_inspection_policy": request.repair_inspection_policy}
@@ -1261,6 +1264,7 @@ def _build_context(
     probe_recheck_policy: str = "none",
     repair_inspection_policy: str = "protected-v1",
     planning_policy: str = "none",
+    evaluation_reserve_seconds: int = 0,
 ) -> str:
     projection = projection or gateway.prepare_context_projection(
         latest_results=latest_tool_results,
@@ -1309,8 +1313,15 @@ def _build_context(
             ),
             "active_wall_time_seconds": max(
                 0,
-                int(limits.wall_time_seconds - elapsed_seconds),
+                int(limits.wall_time_seconds - evaluation_reserve_seconds - elapsed_seconds),
             ),
+            **({
+                "active_wall_time_scope": "solver",
+                "total_active_wall_time_seconds": max(
+                    0, int(limits.wall_time_seconds - elapsed_seconds),
+                ),
+                "evaluation_reserve_seconds": evaluation_reserve_seconds,
+            } if evaluation_reserve_seconds else {}),
             "consecutive_protocol_corrections": max(
                 0,
                 limits.max_protocol_recoveries - counters.protocol_recoveries,
@@ -1432,6 +1443,12 @@ def _build_context(
 
         payload["probe_cases"] = probe_cases.project(
             journal.events(), summary.patch_hash, gateway.probe_policy
+        )
+    if evaluation_reserve_seconds:
+        payload["completion_guidance"]["message"] += (
+            " active_wall_time_seconds is the remaining solver time, including finish_task. "
+            "The evaluation reserve belongs to the same total task limit and is unavailable "
+            "for additional model calls, edits or public checks."
         )
     if repair_recheck:
         payload["repair_recheck"] = recheck_context
@@ -2845,6 +2862,7 @@ def _run_envelope(
         "private_spec_hash": package.private_spec_hash,
         "evaluator_image_digest": (package.environment.image_digest
                                    if package.environment else None),
+        "evaluation_reserve_seconds": request.evaluation_reserve_seconds,
     })
     return envelope_type(
         **boundary,
@@ -3553,6 +3571,9 @@ def _run_one(
                     **({"repair_inspection_policy": request.repair_inspection_policy}
                        if request.repair_inspection_policy != "protected-v1" else {}),
                     "context_policy": request.context_policy,
+                    **({"evaluation_reserve_seconds": request.evaluation_reserve_seconds}
+                       if isinstance(request, DevRunRequest)
+                       and request.evaluation_reserve_seconds else {}),
                     **({"segment_boundary_policy": request.segment_boundary_policy}
                        if request.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
                        else {}),
@@ -3700,6 +3721,28 @@ def _run_one(
         )
 
 
+def _solver_finish_receipt(journal: DevJournal, request: DevRunRequest) -> dict | None:
+    """A durable, timely finish permits evaluation recovery after solver time expires."""
+    events = journal.events()
+    receipts = [event["payload"] for event in events if event["event_type"] == "solver_finished"]
+    if not receipts:
+        return None
+    if len(receipts) != 1:
+        raise RecoveryError("multiple solver finish receipts")
+    receipt = receipts[0]
+    result = next((event["payload"]["result"] for event in events
+                   if event["event_type"] == "action_finished"
+                   and event["payload"]["result"]["action_id"] == receipt.get("action_id")), None)
+    solve_ms = (request.limits.wall_time_seconds - request.evaluation_reserve_seconds) * 1_000
+    if (result is None or result["tool"] != "finish_task" or result["status"] != "succeeded"
+            or receipt.get("input_hash") != result["input_hash"]
+            or receipt.get("patch_hash") != result["output"].get("patch_hash")
+            or type(receipt.get("active_elapsed_ms")) is not int
+            or not 0 <= receipt["active_elapsed_ms"] < solve_ms):
+        raise RecoveryError("solver finish receipt does not bind a timely submitted candidate")
+    return receipt
+
+
 def _run_one_locked(
     *,
     request: RunRequest,
@@ -3723,13 +3766,23 @@ def _run_one_locked(
         started + max(0.0, request.limits.wall_time_seconds - active_base_ms / 1_000),
         clock=monotonic,
     )
+    reserve_seconds = (
+        request.evaluation_reserve_seconds if isinstance(request, DevRunRequest) else 0
+    )
+    # The absolute task deadline never moves. A previously completed finish is
+    # recovered using the total remainder; new solver work cannot spend its reserve.
+    solver_finished = reserve_seconds and _solver_finish_receipt(journal, request) is not None
+    execution_deadline = (
+        ExecutionDeadline(deadline.expires_at - reserve_seconds, clock=deadline.clock)
+        if reserve_seconds and not solver_finished else deadline
+    )
     try:
         identity = next((
             event["payload"] for event in journal.events()
             if event["event_type"] == "runtime_git_identity"
         ), None)
         if identity is None:
-            identity = {"harness_git_commit": git_commit(deadline=deadline)}
+            identity = {"harness_git_commit": git_commit(deadline=execution_deadline)}
             journal.append("runtime_git_identity", {
                 **identity,
                 "active_elapsed_ms": active_base_ms + int((monotonic() - started) * 1_000),
@@ -3738,8 +3791,9 @@ def _run_one_locked(
             request=request, task_dir=task_dir, package=package, state_root=state_root,
             pricing=pricing, cost_ledger=cost_ledger, runtime_hash=runtime_hash,
             model_hash=model_hash, run_id=run_id, journal=journal, envelope=envelope,
-            resuming=resuming, deadline=deadline, active_base_ms=active_base_ms,
+            resuming=resuming, deadline=execution_deadline, active_base_ms=active_base_ms,
             started=started, harness_git_commit=identity["harness_git_commit"],
+            evaluation_deadline=deadline,
         )
     except (ExecutionDeadlineExceeded, GitExecutionUncertain) as exc:
         exhausted = isinstance(exc, ExecutionDeadlineExceeded) or exc.details.get(
@@ -3784,10 +3838,15 @@ def _run_one_active(
     runtime_hash: str, model_hash: str, run_id: str, journal: DevJournal,
     envelope: RunEnvelope, resuming: bool, deadline: ExecutionDeadline,
     active_base_ms: int, started: float, harness_git_commit: str,
+    evaluation_deadline: ExecutionDeadline | None = None,
 ) -> _OneRunResult:
     artifact_store = ArtifactStore(state_root / "artifacts")
     counters = _restore_counters(journal) if resuming else _RunCounters()
     cost_start_nanos = envelope.cost_start_nanos
+    evaluation_deadline = evaluation_deadline or deadline
+    evaluation_reserve_seconds = (
+        request.evaluation_reserve_seconds if isinstance(request, DevRunRequest) else 0
+    )
     hashes = {
         "runtime_hash": runtime_hash,
         "task_hash": package.task_content_hash,
@@ -4283,6 +4342,7 @@ def _run_one_active(
                 probe_recheck_policy=request.probe_recheck,
                 repair_inspection_policy=request.repair_inspection_policy,
                 planning_policy=request.planning_policy,
+                evaluation_reserve_seconds=evaluation_reserve_seconds,
             )
             context_payload = json.loads(context)
             if request.context_policy == segments.POLICY:
@@ -4949,6 +5009,17 @@ def _run_one_active(
         return _OneRunResult(_public_result(run_id, terminal), stop_remaining)
 
     patch = finish_result.output["patch"]
+    if evaluation_reserve_seconds:
+        receipt = _solver_finish_receipt(journal, request)
+        if receipt is None:
+            deadline.check()
+            journal.append("solver_finished", {
+                "action_id": finish_result.action_id, "input_hash": finish_result.input_hash,
+                "patch_hash": finish_result.output["patch_hash"],
+                "active_elapsed_ms": active_elapsed_ms(),
+            })
+        elif receipt["action_id"] != finish_result.action_id:
+            raise RecoveryError("recovered finish differs from the reserved evaluation candidate")
     submitted = artifact_store.put_text(patch, "text/x-diff")
     if submitted.content_hash != finish_result.output["patch_hash"]:
         raise RecoveryError("submitted artifact differs from the visibly checked diff")
@@ -5004,7 +5075,7 @@ def _run_one_active(
             submitted.path,
             manifest,
             submitted_patch_artifact=submitted,
-            deadline=deadline,
+            deadline=evaluation_deadline,
         )
         evaluator_summary = _evaluator_summary(evaluation)
         terminal_code = (
@@ -5131,4 +5202,5 @@ def _run_invocation(request: RunRequest, task_dir: Path, package: Any) -> dict[s
         "cost_cap_nanos": cost_ledger.cap_nanos if cost_ledger else 0,
         "cost_nanos": cost_ledger.spent_nanos if cost_ledger else 0,
         "runs": results,
+        **({"stop_remaining": True} if one.stop_remaining else {}),
     }

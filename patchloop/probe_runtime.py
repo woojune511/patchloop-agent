@@ -2,6 +2,8 @@
 from patchloop.errors import ContractError
 
 RUNTIMES = {
+    "python39-v1": ("3.9", "python@sha256:"
+                    "dad5b29e3506c35e0fd222736f4d4ef25d21b219acdd73f7bb41d59996ca8e0d"),
     "python312-v1": ("3.12", "python@sha256:"
                      "57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de"),
     "python310-v1": ("3.10", "python@sha256:"

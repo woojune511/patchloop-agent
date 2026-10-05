@@ -44,6 +44,7 @@ class CoordinatedJournal(DevJournal):
                 return super().append(event_type, payload)
         if (
             event_type == "input_count_failed"
+            or (event_type == "evaluator_finished" and payload.get("stop_remaining") is True)
             or (
                 event_type == "provider_call_finished"
                 and payload.get("error_code")
@@ -147,12 +148,15 @@ def solve_row(serialized):
         require(req.repeat == 1 and req.resume_run_id is None, "fresh single row required")
         require(not req.state_root.exists(), "row state exists; no replacement")
         result = runner.run_dev(req)
+        if result.get("stop_remaining"):
+            stop_workers()
     except BaseException as exc:
         stop_workers()
         error = type(exc).__name__
     usage = recover_usage(req.state_root)
     ok = (
         result is not None
+        and not result.get("stop_remaining")
         and usage["billing_known"]
         and usage["counting_known"]
         and result["cost_nanos"] == usage["cost_nanos"]
@@ -246,9 +250,22 @@ def run_parallel_rows(
                     if value["ok"]:
                         try:
                             value["assessment"] = after_row(index, value, requests[index])
-                            require(
-                                value["assessment"]["ok"], "evaluation uncertainty/disagreement"
-                            )
+                            assessment = value["assessment"]
+                            if not assessment["ok"]:
+                                # A verified per-task deadline is an unavailable verdict,
+                                # not uncertainty shared by otherwise independent workers.
+                                # The assessor owns receipt/cleanup validation; all other
+                                # unsuccessful assessments still stop new admissions.
+                                require(
+                                    assessment.get("disposition") == "task_limit",
+                                    "evaluation uncertainty/disagreement",
+                                )
+                                require(
+                                    value["accounting"]["billing_known"]
+                                    and value["accounting"]["counting_known"],
+                                    "task limit has unsettled accounting",
+                                )
+                                value["ok"] = False
                             journal.append(
                                 "row_assessed", {"index": index, "assessment": value["assessment"]}
                             )

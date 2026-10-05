@@ -35,7 +35,7 @@ MARKERS = {
 
 
 def target_markers(python: str) -> dict:
-    if python not in {"3.10", "3.12"}:
+    if python not in {"3.9", "3.10", "3.12"}:
         raise ContractError("unsupported probe Python target")
     return {**MARKERS, "implementation_version": python + ".0",
             "python_full_version": python + ".0", "python_version": python}

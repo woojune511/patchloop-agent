@@ -22,7 +22,7 @@ def identity(profile):
     )
 
 
-@pytest.mark.parametrize("profile", ["python310-v1", "python312-graphics-v1"])
+@pytest.mark.parametrize("profile", ["python39-v1", "python310-v1", "python312-graphics-v1"])
 def test_profile_is_pinned_and_keeps_execution_restrictions(profile):
     current = probe_profile(identity(profile))
     default = probe_profile()
@@ -44,17 +44,20 @@ def test_profile_is_pinned_and_keeps_execution_restrictions(profile):
         DockerProbeSandbox("unreviewed:latest")
 
 
-def test_python310_markers_and_wheel_tags_are_not_host_or_python312(tmp_path):
-    (tmp_path / "pyproject.toml").write_text(PROJECT, encoding="utf-8")
-    requirements = project_requirements(tmp_path, groups=[], extras=[], python="3.10")
+@pytest.mark.parametrize("python,tag", [("3.9", "cp39"), ("3.10", "cp310")])
+def test_legacy_markers_and_wheel_tags_are_not_host_or_python312(tmp_path, python, tag):
+    (tmp_path / "pyproject.toml").write_text(
+        PROJECT.replace(">=3.10", ">=3.9"), encoding="utf-8",
+    )
+    requirements = project_requirements(tmp_path, groups=[], extras=[], python=python)
     assert "old-python" in requirements["requirements"]
     candidates = [
-        wheel(tag="cp310-cp310-manylinux_2_17_x86_64"),
+        wheel(tag=f"{tag}-{tag}-manylinux_2_17_x86_64"),
         wheel(tag="cp312-cp312-manylinux_2_17_x86_64"),
     ]
-    raw = lock_bytes([("fixture", "1.0", candidates, None)]).replace(b">=3.12", b">=3.10")
-    selected = select_wheels(raw, project_name="demo", python="3.10")
-    assert "cp310-cp310" in selected[0].url
+    raw = lock_bytes([("fixture", "1.0", candidates, None)]).replace(b">=3.12", b">=3.9")
+    selected = select_wheels(raw, project_name="demo", python=python)
+    assert f"{tag}-{tag}" in selected[0].url
     with pytest.raises(ContractError):
         probe_profile(identity("python310-v1").model_copy(update={"python": "3.12"}))
 

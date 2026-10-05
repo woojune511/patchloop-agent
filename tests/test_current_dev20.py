@@ -27,7 +27,10 @@ def test_twenty_packages_preserve_issues_and_private_bytes_and_register_tests():
         assert len(current.public.test_suites) == 1
         suite = current.public.test_suites[0]
         assert suite.test_roots == current.public.constraints.additive_test_roots
-        assert current.public.constraints.forbidden_paths == [".patchloop-hidden/**"]
+        protected = [".patchloop-hidden/**"]
+        if current.public.repository.url == "https://github.com/sqlfluff/sqlfluff.git":
+            protected.append("src/sqlfluff/testing/**")
+        assert current.public.constraints.forbidden_paths == protected
 
 
 def test_request_enables_dependencies_without_automatic_probe_replay(tmp_path):
@@ -46,6 +49,8 @@ def test_request_enables_dependencies_without_automatic_probe_replay(tmp_path):
     )
     assert req.task == repository_root() / panel.PACKAGES / "5/public.yaml"
     assert req.env_file == Path(".env").resolve()
+    assert req.evaluation_reserve_seconds == 330
+    assert req.limits.wall_time_seconds == 1800
 
 
 def test_disagreement_and_unknown_usage_are_not_success_or_zero_billing():

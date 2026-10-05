@@ -16,8 +16,11 @@ import yaml
 from diagnostics import legacy_probe_metadata, parallel_dev_batch
 from diagnostics import portfolio_dev20 as old
 from diagnostics.positive_verification_panel import require, save
+from diagnostics.probe_capabilities import operation_program, run_operation_canary
 from patchloop import prepared_probe_dependencies as deps
+from patchloop.artifacts import ArtifactStore
 from patchloop.dev import runner
+from patchloop.dev.evaluation_completion import load_evaluation_completion
 from patchloop.dev.state import DevJournal
 from patchloop.dev.test_selection import SelectedTests, selected_check
 from patchloop.git_execution import run_git
@@ -26,7 +29,7 @@ from patchloop.repository import WorkspaceManager
 from patchloop.runtime import git_commit, repository_root, runtime_content_hash
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
-from patchloop.verifier.policy import verify_test_tampering
+from patchloop.verifier.policy import verify_scope, verify_test_tampering
 
 JOURNAL = "run_dev_currentdev20"
 PACKAGES = Path("tasks/dev-train/current-dev20")
@@ -65,6 +68,8 @@ def register():
             dict.fromkeys([*constraints["allowed_paths"], tests + "/**"])
         )
         constraints["forbidden_paths"] = [".patchloop-hidden/**"]
+        if layout(entry)[2] == "sqlfluff":
+            constraints["forbidden_paths"].append("src/sqlfluff/testing/**")
         constraints["additive_test_roots"] = [tests]
         check = public["visible_checks"][0]
         command = check["command"]
@@ -124,8 +129,11 @@ def prepare_dependencies(root, index):
         supplements(entry),
         installed_limit_mib=1024 if layout(entry)[2] == "pyvista" else 256,
         runtime_profile=(
+            "python39-v1"
+            if index == 1
+            else
             "python310-v1"
-            if index in {1, 12, 13}
+            if index in {12, 13}
             else "python312-graphics-v1"
             if index == 15
             else "python312-v1"
@@ -136,10 +144,14 @@ def prepare_dependencies(root, index):
 
 def request(entry, live, root):
     req = old.request(entry, live / str(entry["index"]))
+    task = load_task_package(task_path(entry).parent).public
     return req.model_copy(
         update={
             "task": task_path(entry),
             "prepared_probe_dependencies": dependency_path(root, entry["index"]),
+            # Public check timeouts plus a fixed checkout allowance, inside the
+            # existing total. No private evaluator timing enters solver context.
+            "evaluation_reserve_seconds": sum(c.timeout_seconds for c in task.visible_checks) + 30,
         }
     )
 
@@ -150,6 +162,7 @@ def bindings():
         "diagnostics/current_dev20.py",
         "diagnostics/parallel_dev_batch.py",
         "diagnostics/legacy_probe_metadata.py",
+        "diagnostics/probe_capabilities.py",
         ".agent/current-dev20.md",
     ]
     return {n: sha256_bytes((repository_root() / n).read_bytes()) for n in names}
@@ -297,6 +310,13 @@ def preflight_row(root, entry, req):
         result.get("exit_code") == 0 and not result.get("cleanup_failed"),
         f"public import failed for task {entry['index']}",
     )
+    operation = run_operation_canary(
+        sandbox, source, layout(entry)[2],
+        execution_identity={"run_id": JOURNAL, "action_id": f"operation{entry['index']}"},
+    )
+    record["operation"] = operation
+    journal.append("operation_canary_finished", {"index": entry["index"], **operation})
+    require(operation["passed"], f"public operation failed for task {entry['index']}")
     target = canary_target(package.public, source)
     check, _ = selected_check(
         package.public.test_suites[0],
@@ -320,6 +340,8 @@ def preflight(root, digest):
     require(not Path(packet["live_root"]).exists(), "no restart")
     capability = json.loads((root / "capabilities.json").read_bytes())
     require(capability["runtime_hash"] == runtime_content_hash(), "capability runtime drift")
+    require(capability["driver_hash"] == sha256_bytes(Path(__file__).read_bytes()),
+            "capability driver drift")
     require(
         any(
             e["event_type"] == "capabilities_passed"
@@ -331,6 +353,12 @@ def preflight(root, digest):
     require(capability["inputs"] == capability_inputs(root), "capability inputs drift")
     receipts = capability["rows"]
     require([r["index"] for r in receipts] == list(range(1, 21)), "incomplete capabilities")
+    require(all(r.get("operation", {}).get("passed") is True for r in receipts),
+            "public operation canaries required")
+    for entry, receipt in zip(old.baseline()[0]["rows"], receipts, strict=True):
+        require(receipt["operation"]["program_hash"] == sha256_bytes(
+            operation_program(layout(entry)[2]).encode("utf-8")
+        ), "public operation canary changed")
     receipt = {"packet_hash": digest, "rows": receipts, "provider_calls": 0}
     save(root, "preflight.json", receipt)
     DevJournal(root, JOURNAL).append(
@@ -389,6 +417,7 @@ def assess(root, entry, value, req):
     diff = WorkspaceManager.diff_summary(workspace)
     require(diff.patch_hash == run["artifact_hashes"]["submitted_patch"], "submitted source drift")
     task = load_task_package(req.task.parent).public
+    require(verify_scope(diff, task.constraints).passed, "submitted source violates scope")
     policy = verify_test_tampering(diff, task.constraints, workspace)
     require(policy.passed, "submitted tests violate preservation contract")
     paths = policy.details["test_files"]
@@ -397,7 +426,33 @@ def assess(root, entry, value, req):
     ).stdout.encode("utf-8")
     result = old.native_assessment(root, entry, value, req, evaluation_patch=source_patch)
     result["omitted_additive_test_paths"] = paths
+    if not result["ok"] and known_evaluation_deadline(req, run, result):
+        result["disposition"] = "task_limit"
     return result
+
+
+def known_evaluation_deadline(req, run, native):
+    """Classify a bound, settled deadline without replacing ERROR with a verdict."""
+    if (
+        run.get("terminal") != "LIMIT_REACHED"
+        or (run.get("evaluator") or {}).get("failure_class") != "ACTIVE_DEADLINE_EXHAUSTED"
+        or native.get("status") not in {"PASS", "FAIL"}
+        or native.get("cleanup_confirmed") is not True
+        or native.get("error_type") is not None
+    ):
+        return False
+    journal = DevJournal(req.state_root, run["run_id"])
+    completion = load_evaluation_completion(
+        journal, ArtifactStore(req.state_root / "artifacts"), journal.load_envelope()
+    )
+    return bool(
+        completion is not None
+        and completion.terminal == "LIMIT_REACHED"
+        and completion.summary.task_acceptance == "ERROR"
+        and completion.summary.failure_class == "ACTIVE_DEADLINE_EXHAUSTED"
+        and not completion.stop_remaining
+        and completion.artifact_hashes == run["artifact_hashes"]
+    )
 
 
 def summarize(outcome, entries):

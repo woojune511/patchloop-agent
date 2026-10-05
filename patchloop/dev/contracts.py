@@ -448,6 +448,18 @@ class RunRequest(StrictModel):
 class DevRunRequest(RunRequest):
     """An evaluated development task; private task admission remains mandatory."""
 
+    evaluation_reserve_seconds: int = Field(
+        default=0, ge=0, strict=True, exclude_if=lambda value: value == 0,
+    )
+
+    @model_validator(mode="after")
+    def evaluation_reserve_fits(self) -> DevRunRequest:
+        if self.evaluation_reserve_seconds >= self.limits.wall_time_seconds:
+            raise ValueError(
+                "evaluation reserve must leave positive solver time within the total limit"
+            )
+        return self
+
 
 class RunEnvelope(StrictModel):
     official: Literal[False] = False
@@ -583,6 +595,17 @@ class DevRunEnvelope(RunEnvelope):
         default=None,
         pattern=r"^sha256:[0-9a-f]{64}$",
     )
+    evaluation_reserve_seconds: int = Field(
+        default=0, ge=0, strict=True, exclude_if=lambda value: value == 0,
+    )
+
+    @model_validator(mode="after")
+    def evaluation_reserve_fits(self) -> DevRunEnvelope:
+        if self.evaluation_reserve_seconds >= self.limits.wall_time_seconds:
+            raise ValueError(
+                "evaluation reserve must leave positive solver time within the total limit"
+            )
+        return self
 
     @property
     def execution_image_digest(self) -> str | None:

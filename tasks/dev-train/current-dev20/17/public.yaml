@@ -25,6 +25,7 @@ constraints:
   - test/**
   forbidden_paths:
   - .patchloop-hidden/**
+  - src/sqlfluff/testing/**
   max_changed_files: 4
   max_diff_lines: 1000
   dependency_changes_allowed: false

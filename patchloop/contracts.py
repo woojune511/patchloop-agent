@@ -305,8 +305,10 @@ class ModelConfig(StrictModel):
 class ProbeDependencyIdentity(StrictModel):
     manifest_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    python: Literal["3.10", "3.12"] = "3.12"
-    runtime_profile: Literal["python312-v1", "python310-v1", "python312-graphics-v1"] = Field(
+    python: Literal["3.9", "3.10", "3.12"] = "3.12"
+    runtime_profile: Literal[
+        "python312-v1", "python310-v1", "python39-v1", "python312-graphics-v1",
+    ] = Field(
         default="python312-v1", exclude_if=lambda value: value == "python312-v1",
     )
     platform: Literal["linux/amd64"] = "linux/amd64"

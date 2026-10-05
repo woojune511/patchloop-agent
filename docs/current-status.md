@@ -25,13 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The user-requested [component audit](history/2026-10-06-current-agent-audit.md)
-revalidated all 18 saved trajectories and 263 model calls. All eight agreeing
-failures submitted with edits/probes/selected tests still available. A concrete
-integrity gap let SQLFluff-1625 weaken source-located test helpers; both evaluation
-projections retain those edits. Representative probe compatibility and evaluation-time
-budgeting also have observed gaps. Prioritize these and the agent's verification
-decisions; no new prompt, memory, resource increase or paid rerun is adopted.
+The [component audit](history/2026-10-06-current-agent-audit.md) found verification
+failures despite available tools. Its [priority fixes](history/2026-10-06-agent-priority-fixes.md)
+protect SQLFluff test helpers, keep confirmed evaluation deadlines task-local, reserve
+330 of the panel's existing 1,800 seconds for evaluation, and require public-operation
+canaries. All 20 operations passed; Marshmallow now uses Python 3.9. Synthetic controls
+separate misleading PASS from useful verification. Agent judgment and repair-success
+improvement remain unmeasured; no new prompt, memory or paid rerun is adopted.
 
 The [current-capability dev20 panel](../.agent/current-dev20.md) closed incomplete:
 18 tasks started, 16 agreeing evaluations (8 PASS/8 FAIL), one evaluation deadline,
@@ -39,7 +39,7 @@ one peer interruption and two not started. Cost USD 5.39413050; two concurrent
 workers were observed. [Results and correction](history/2026-10-06-current-dev20-results.md)
 preserve the original outcomes. Test methods/classes are now supported after local
 checks, with no paid result. No complete success-rate or speedup conclusion follows.
-The allocation is closed; deadline/batch-stop handling remains unresolved.
+The allocation and its outcomes remain closed.
 
 Portfolio v1 closed: [dev20 remeasurement](history/2026-10-06-portfolio-dev20-results.md)
 resolved **9/20**, versus historical 10/20, with all registered/native results
