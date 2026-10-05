@@ -105,7 +105,7 @@ def freeze():
         "credential_file_path_hash": runner._credential_file_path_hash(requests["A"]),
         "evaluator_image": package.environment.evaluator_image,
         "evaluator_image_digest": package.environment.image_digest,
-        "probe_image_digest": runner.PROBE_IMAGE_DIGEST,
+        "probe_image_digest": runner.probe_profile()["image_digest"],
         "probe_profile_hash": runner.probe_profile_hash(),
         "sandbox_identity_hash": runner._sandbox_identity_hash(requests["A"], package),
         "requests": configs,

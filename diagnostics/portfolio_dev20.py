@@ -202,7 +202,7 @@ def preflight(root, digest):
     return receipt
 
 
-def native_assessment(root, entry, row, req):
+def native_assessment(root, entry, row, req, *, evaluation_patch=None):
     run = row['result']['runs'][0]
     patch_hash = run.get('artifact_hashes', {}).get('submitted_patch')
     if not patch_hash:
@@ -213,8 +213,11 @@ def native_assessment(root, entry, row, req):
     patch = (req.state_root / 'artifacts/objects/sha256' / digest[:2] / digest[2:]).read_bytes()
     require(sha256_bytes(patch) == patch_hash, 'submitted patch changed')
     (folder / 'submitted.patch').write_bytes(patch)
+    assessed_patch = patch if evaluation_patch is None else evaluation_patch
+    if evaluation_patch is not None:
+        (folder / 'source-only.patch').write_bytes(assessed_patch)
     prediction = {'instance_id': entry['instance_id'], 'model_name_or_path': MODEL,
-                  'model_patch': patch.decode('utf-8')}
+                  'model_patch': assessed_patch.decode('utf-8')}
     save(folder, 'prediction.jsonl', prediction)
     started = monotonic()
     error = None
@@ -244,6 +247,9 @@ def native_assessment(root, entry, row, req):
               'cleanup_confirmed': cleanup is not None and not cleanup['remaining'],
               'exit_code': code, 'error_type': error, 'patch_hash': patch_hash,
               'files': files, 'elapsed_seconds': round(monotonic() - started, 3)}
+    if evaluation_patch is not None:
+        result['evaluation_patch_hash'] = sha256_bytes(assessed_patch)
+        result['test_projection'] = 'registered-additive-test-roots-omitted'
     save(folder, 'assessment.json', result)
     artifact = ArtifactStore(root).put_json(result)
     DevJournal(root, JOURNAL).append('native_evaluated', {

@@ -73,8 +73,9 @@ from patchloop.sandbox.execution_feedback import (
 )
 from patchloop.sandbox.probes import DockerProbeSandbox
 from patchloop.sandbox.runner import Sandbox
+from patchloop.test_additions import UnsupportedTestChange
 from patchloop.util import ensure_within, safe_relative_path, sha256_bytes, sha256_json
-from patchloop.verifier.policy import verify_scope
+from patchloop.verifier.policy import _is_test_path, validate_test_addition, verify_scope
 
 READ_TOOLS = DEV_READ_TOOLS
 SINGLE_ACTION_TOOLS = DEV_SINGLE_ACTION_TOOLS
@@ -371,7 +372,7 @@ def dev_tool_schemas(
                 "read-only at /workspace; tracked symlinks are omitted, never followed. "
                 "Writable scratch is /tmp. Prepared public wheel "
                 "dependencies are available read-only at /opt/patchloop-dependencies with "
-                "Python 3.12. Source import roots precede dependencies: "
+                f"Python {probe_environment['python']}. Source import roots precede dependencies: "
                 + ", ".join(probe_environment["source_roots"]) + ". "
                 "Other source trees are unavailable when configured roots are present. "
                 "Workspace distribution metadata is minimal; dynamic versions use an explicit "
@@ -2969,6 +2970,20 @@ class DevToolGateway:
             + anchor_text[position + len(intent.old_text) :]
         )
         after_bytes = after_text.replace("\n", newline).encode("utf-8")
+        constraints = self.public_task.constraints
+        if constraints.additive_test_roots and (
+            _is_test_path(anchor_path)
+            or any(anchor_path.startswith(root + "/") for root in constraints.additive_test_roots)
+        ):
+            try:
+                validate_test_addition(self.workspace, anchor_path, after_bytes, constraints,
+                                       deadline=self.deadline)
+            except UnsupportedTestChange as exc:
+                raise ContractError(
+                    "Test additions must preserve existing tests, imports, fixtures and helpers. "
+                    "Add a new test_ function or literal parameter cases in an existing file: "
+                    + str(exc)
+                ) from exc
         generated_patch = self._generated_replacement_patch(anchor_path, anchor_text, after_text)
         current_file_hash = sha256_bytes(before_bytes)
         lines = source_lines(anchor_text)

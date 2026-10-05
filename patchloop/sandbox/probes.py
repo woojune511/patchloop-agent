@@ -21,6 +21,7 @@ from patchloop.contracts import ProbeDependencyIdentity
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
 from patchloop.prepared_probe_dependencies import MOUNT, PreparedDependencies
+from patchloop.probe_runtime import runtime
 from patchloop.sandbox import probe_setup
 from patchloop.sandbox.execution_feedback import (
     TRACE_WRAPPER,
@@ -50,10 +51,13 @@ _SETUP_WRAPPER = Path(probe_setup.__file__)
 
 
 def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[str, object]:
+    python, image = runtime(dependencies.runtime_profile if dependencies else "python312-v1")
+    if dependencies is not None and dependencies.python != python:
+        raise ContractError("probe interpreter and prepared dependencies differ")
     return {
         "version": "docker-python-probe-v2",
-        "image": PROBE_IMAGE,
-        "image_digest": PROBE_IMAGE_DIGEST,
+        "image": image,
+        "image_digest": image.rsplit("@", 1)[1],
         "wrapper_hash": sha256_bytes(_WRAPPER.read_bytes()),
         "line_trace_hash": sha256_bytes(TRACE_WRAPPER.read_bytes()),
         "setup_helper_hash": sha256_bytes(_SETUP_WRAPPER.read_bytes()),
@@ -268,12 +272,13 @@ class DockerProbeSandbox:
 
     supports_public_execution = True
 
-    def __init__(self, image: str = PROBE_IMAGE, *,
+    def __init__(self, image: str | None = None, *,
                  dependencies: PreparedDependencies | None = None) -> None:
-        if image != PROBE_IMAGE:
-            raise ContractError("probe requires the reviewed public Python image")
-        self.image = image
         self.dependencies = dependencies
+        expected = self.current_profile()["image"]
+        if image is not None and image != expected:
+            raise ContractError("probe requires the reviewed public Python image")
+        self.image = expected
         self._profile = self.current_profile()
         self._verified = False
 
@@ -286,14 +291,16 @@ class DockerProbeSandbox:
 
     @property
     def identity(self) -> dict[str, str]:
-        return {"image_digest": PROBE_IMAGE_DIGEST, "profile_hash": sha256_json(self._profile)}
+        return {"image_digest": self._profile["image_digest"],
+                "profile_hash": sha256_json(self._profile)}
 
     def preflight(self, *, deadline: ExecutionDeadline | None = None) -> dict[str, str]:
         if self.current_profile() != self._profile:
             raise ContractError("probe trusted profile changed before preflight")
         if self.dependencies is not None:
             self.dependencies.verify(deadline=deadline)
-        if DockerSandbox(self.image).image_identity(deadline=deadline) != PROBE_IMAGE_DIGEST:
+        actual = DockerSandbox(self.image).image_identity(deadline=deadline)
+        if actual != self.identity["image_digest"]:
             raise ContractError("probe public Python image is not available at its pinned digest")
         self._verified = True
         return self.identity

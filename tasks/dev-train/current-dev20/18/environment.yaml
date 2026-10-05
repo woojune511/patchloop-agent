@@ -1,0 +1,3 @@
+schema_version: task-environment-v1
+evaluator_image: swebench/sweb.eval.x86_64.sqlfluff_1776_sqlfluff-1733@sha256:b440a9c4befe45341ce69f1d4166335b749a28ea8414fdd61dcf715b92d9375e
+image_digest: sha256:b440a9c4befe45341ce69f1d4166335b749a28ea8414fdd61dcf715b92d9375e

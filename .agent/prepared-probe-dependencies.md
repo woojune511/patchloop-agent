@@ -1,5 +1,27 @@
 # Prepared public probe dependencies
 
+## Reviewed interpreter and system-library profiles
+
+The default remains `python312-v1`. The preparation API additionally accepts
+`runtime_profile="python310-v1"` for legacy public projects and
+`runtime_profile="python312-graphics-v1"` for VTK/PyVista system libraries.
+`patchloop/probe_runtime.py` pins the reviewed public images. Descriptors bind the
+profile, Python target and image; resolution markers, wheel tags and installation
+use that same target. The model's probe description reports the actual interpreter.
+Profiles preserve the existing process, network, memory, source and time limits.
+Image acquisition is never part of a run or dependency-preparation call.
+
+The graphics image contains only the public Python base and X11/OpenGL packages
+from `docker/probe-graphics.Dockerfile`. Its pinned digest, rather than a mutable
+tag or a repeat build, is execution authority. Generated-wheel receipts continue
+to support only the original default profile. Historical descriptors omit the
+profile field and retain their original identities and default behavior.
+
+The [current dev20 panel](current-dev20.md) records why these optional profiles
+were added and how import/test capability is verified before model calls.
+
+## Dependency use
+
 `--enable-probes --prepared-probe-dependencies <descriptor>` lets `run_probe`
 import public third-party dependencies and the current project implementation.
 The model still supplies only a question and bounded Python source. Required

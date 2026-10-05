@@ -115,6 +115,16 @@ class TaskConstraints(StrictModel):
     max_diff_lines: int = Field(default=120, ge=1, le=10_000)
     dependency_changes_allowed: bool = False
     public_api_changes_allowed: bool = False
+    additive_test_roots: list[str] = Field(
+        default_factory=list, exclude_if=lambda value: not value,
+    )
+
+    @field_validator("additive_test_roots")
+    @classmethod
+    def validate_additive_test_roots(cls, values: list[str]) -> list[str]:
+        if any(any(c in value for c in "*?[]") for value in values):
+            raise ValueError("additive test roots are directories, not globs")
+        return PublicTestSuite.validate_test_roots(values)
 
     @field_validator("allowed_paths", "forbidden_paths")
     @classmethod
@@ -295,7 +305,10 @@ class ModelConfig(StrictModel):
 class ProbeDependencyIdentity(StrictModel):
     manifest_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    python: Literal["3.12"] = "3.12"
+    python: Literal["3.10", "3.12"] = "3.12"
+    runtime_profile: Literal["python312-v1", "python310-v1", "python312-graphics-v1"] = Field(
+        default="python312-v1", exclude_if=lambda value: value == "python312-v1",
+    )
     platform: Literal["linux/amd64"] = "linux/amd64"
     source_roots: list[str] = Field(default_factory=list, max_length=8)
 

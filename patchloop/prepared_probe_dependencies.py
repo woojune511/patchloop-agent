@@ -216,14 +216,17 @@ def read_descriptor(path: Path) -> tuple[dict, ProbeDependencyIdentity]:
         descriptor = json.loads(raw)
         if descriptor["schema_version"] != "prepared-probe-dependencies-v1":
             raise ValueError("unsupported prepared dependencies")
-        from patchloop.sandbox.probes import PROBE_IMAGE
+        from patchloop.probe_runtime import runtime
 
-        if descriptor["image"] != PROBE_IMAGE:
+        profile = descriptor.get("runtime_profile", "python312-v1")
+        python, image = runtime(profile)
+        if descriptor["image"] != image or descriptor["python"] != python:
             raise ValueError("prepared dependencies require the clean probe image")
         identity = ProbeDependencyIdentity(
             manifest_hash=sha256_bytes(raw), content_hash=descriptor["content_hash"],
             python=descriptor["python"], platform=descriptor["platform"],
             source_roots=descriptor["source_roots"],
+            runtime_profile=profile,
         )
         if not isinstance(descriptor["files"], dict):
             raise ValueError("missing dependency file inventory")
@@ -328,10 +331,15 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
                          selected_dependencies: list[str] | None = None,
                          generated_wheel_receipt: Path | None = None,
                          generated_wheel_receipt_hash: str | None = None,
-                         installed_limit_mib: int = 256) -> Path:
+                         installed_limit_mib: int = 256,
+                         runtime_profile: str = "python312-v1") -> Path:
     from patchloop.dev.state import DevJournal
+    from patchloop.probe_runtime import runtime
     from patchloop.runtime import repository_root
-    from patchloop.sandbox.probes import PROBE_IMAGE
+
+    python, image = runtime(runtime_profile)
+    if generated_wheel_receipt is not None and runtime_profile != "python312-v1":
+        raise ContractError("generated wheel receipt targets the default probe runtime only")
 
     if type(installed_limit_mib) is not int:
         raise ContractError("installed dependency limit must be an integer MiB value")
@@ -410,6 +418,8 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
                 repo=repo, source=source, source_hash=source_hash, output=output, uv=uv,
                 groups=groups or [], extras=extras or [], source_roots=roots,
                 selected_dependencies=selected_dependencies,
+                **({"runtime_profile": runtime_profile}
+                   if runtime_profile != "python312-v1" else {}),
                 **({"generated": generated, "generated_provenance": provenance}
                    if generated is not None else {}),
             )
@@ -431,7 +441,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
         target = output / "site-packages"
         command = [uv, "pip", "install", "--offline", "--no-index", "--no-build", "--no-config",
                    "--no-cache", "--no-python-downloads", "--python", sys.executable,
-                   "--python-version", "3.12", "--python-platform", "x86_64-manylinux_2_28",
+                   "--python-version", python, "--python-platform", "x86_64-manylinux_2_28",
                    "--link-mode", "copy", "--target", str(target), "--find-links", str(wheels),
                    *paths]
         if paths:
@@ -470,8 +480,10 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
         # A package directory belongs on the snapshot, not directly on sys.path.
         imports = [root for root in roots if not (repo / root / "__init__.py").is_file()]
         descriptor = {
-            "schema_version": "prepared-probe-dependencies-v1", "python": "3.12",
-            "platform": "linux/amd64", "image": PROBE_IMAGE,
+            "schema_version": "prepared-probe-dependencies-v1", "python": python,
+            "platform": "linux/amd64", "image": image,
+            **({"runtime_profile": runtime_profile}
+               if runtime_profile != "python312-v1" else {}),
             "repository_url": public.repository.url, "base_commit": public.repository.base_commit,
             "prepared_source_content_hash": source.content_hash,
             "source_roots": roots, "wheel_lock": lock_record,

@@ -130,7 +130,7 @@ from patchloop.runtime import (
     runtime_content_paths,
 )
 from patchloop.sandbox import DockerSandbox, LocalSandbox
-from patchloop.sandbox.probes import PROBE_IMAGE_DIGEST, DockerProbeSandbox, probe_profile_hash
+from patchloop.sandbox.probes import DockerProbeSandbox, probe_profile, probe_profile_hash
 from patchloop.sandbox.runner import SandboxCleanupError
 from patchloop.task_loader import load_task_package, task_package_content_paths
 from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
@@ -388,7 +388,8 @@ def _manifest(
             probe_recheck=request.probe_recheck,
         ),
         sandbox_identity_hash=_sandbox_identity_hash(request, package, probe_dependencies),
-        probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
+        probe_image_digest=(probe_profile(probe_dependencies)["image_digest"]
+                            if request.enable_probes else None),
         probe_profile_hash=(probe_profile_hash(probe_dependencies)
                             if request.enable_probes else None),
         probe_dependencies=probe_dependencies,
@@ -2814,7 +2815,7 @@ def _sandbox_identity_hash(request: RunRequest, package: Any, probe_dependencies
             "evaluator_image": environment.evaluator_image if environment else None,
             "image_digest": environment.image_digest if environment else None,
             **({
-                "probe_image_digest": PROBE_IMAGE_DIGEST,
+                "probe_image_digest": probe_profile(probe_dependencies)["image_digest"],
                 "probe_profile_hash": probe_profile_hash(probe_dependencies),
             } if request.enable_probes else {}),
         }
@@ -2880,7 +2881,8 @@ def _run_envelope(
         segment_contract=(segments.contract(request.segment_boundary_policy)
                           if request.context_policy == segments.POLICY else None),
         compaction_contract=native_compaction.policy_contract(request),
-        probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
+        probe_image_digest=(probe_profile(probe_dependencies)["image_digest"]
+                            if request.enable_probes else None),
         probe_profile_hash=(probe_profile_hash(probe_dependencies)
                             if request.enable_probes else None),
         model=request.model,

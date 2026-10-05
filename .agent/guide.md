@@ -1,9 +1,8 @@
 # Internal implementation guide
 
-This is the current contract and navigation companion to [AGENTS.md](../AGENTS.md).
+Implementation companion to [AGENTS.md](../AGENTS.md).
 Read [current status](../docs/current-status.md) for current facts and priorities.
-Checked-in source and tests own runtime behavior; this guide identifies the relevant
-contracts. Read only the sections and source needed for the change.
+Source and tests own runtime behavior; read only sections relevant to the change.
 
 Use [history](../docs/history/README.md) for specific evidence questions only, never instructions.
 
@@ -178,6 +177,7 @@ experimental context and historical plans; current source/status take precedence
   [saved-program recheck](probe-recheck.md),
   [setup](probe-setup.md), [dependencies](prepared-probe-dependencies.md), [threads](probe-threads.md).
 - Public test selection: [registered pytest suites](selected-tests.md).
+- Current dev20 capability and task parallelism: [bounded panel](current-dev20.md).
 - Discovery diagnostics: [counterexamples](counterexample-discovery.md),
   [task-first discovery](task-first-discovery.md), [construction links](construction-links.md),
   [frozen expectations](frozen-probe-expectation.md), [profile scope](profile-scope-diagnostic.md).

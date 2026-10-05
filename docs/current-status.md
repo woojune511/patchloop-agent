@@ -25,6 +25,16 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+The user requested a fresh [current-capability dev20 panel](../.agent/current-dev20.md):
+ordinary probes with usable public dependencies, optional selected tests, additive
+test edits, automatic probe replay off, and two independent task workers.
+[Preparation evidence](history/2026-10-06-current-dev20-preparation.md) records
+20/20 public imports and 20/20 selected-test canaries passing, including the formerly
+incompatible environments using pinned Python 3.10 and clean graphics profiles.
+Focused checks and regression validation, including the documented diagnostic
+repairs and reruns, are complete. No fresh provider dispatch or improvement result
+yet. Historical inputs and CLI defaults remain unchanged.
+
 Portfolio v1 local work closed: [dev20 remeasurement](history/2026-10-06-portfolio-dev20-results.md)
 resolved **9/20**, versus historical 10/20. All twenty original submissions were
 evaluated with registered/native agreement and confirmed cleanup; no missing runs,
@@ -33,7 +43,7 @@ The 11/20 threshold was not met: test300 is not prepared or authorized. No retri
 prompt tuning or automatic case diagnoses follow. The user-requested
 [saved-evidence review](history/2026-10-06-dev20-decline-review.md) separates the
 single added failure from unchanged unresolved tasks; no intervention is adopted.
-Runtime/defaults remain unchanged.
+That closed panel did not change runtime/defaults.
 [Public results](../examples/portfolio-dev20/README.md), saved demo and review exports
 are local repository artifacts. Remote publication/release and Linux CI are NOT_RUN.
 [Preparation](history/2026-10-05-portfolio-preparation.md) preserves validation;
@@ -128,19 +138,6 @@ and Linux. These changes do not establish improved patch correctness.
 CI runs the full suite with four file-grouped workers and JUnit reports. The
 [timing investigation](history/2026-09-30-ci-feedback-speed.md) is historical,
 not a stable performance benchmark.
-
-The approved [fresh tox repair](history/2026-09-30-tox-fresh-repair.md) completed with
-the working baseline unchanged: one edit, 29 public regression tests passed,
-isolated acceptance PASS and safety PASS. Five model calls cost USD 0.2702935 by
-recorded usage; elapsed process time was 113.233 seconds. The one-run USD 3.00
-allocation is closed. This exposed development-task success establishes one completed
-repair path, not a quality gain, feature effect or held-out generalization. No new
-runtime defect or follow-up experiment was established; retain the working baseline.
-
-The [development review](history/2026-09-30-development-review.md) distinguishes
-incorrect patches that pass public checks, feedback-driven repairs, environment
-problems and resource-limited runs. Its exposed-panel counts are historical;
-closed diagnostic cases are not a queue for new experiments.
 
 Further development should address a concrete current-contract defect or an implementation
 with a specific predicted repair benefit. Use focused fixes/tests for reproducible

@@ -64,6 +64,7 @@ def search_gateway(tmp_path):
     (workspace / "untracked.py").write_text("PUBLIC_SEARCH_MARKER\n", encoding="utf-8")
     public = SimpleNamespace(
         constraints=SimpleNamespace(
+            additive_test_roots=[],
             allowed_paths=["pkg/direct.py"], forbidden_paths=[],
             max_changed_files=1, max_diff_lines=50,
         ),

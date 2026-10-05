@@ -23,6 +23,7 @@ def source_gateway(tmp_path, monkeypatch):
     raw_sources = {"src.py": b"first\nsecond\nthird\nfourth\n"}
     public = SimpleNamespace(
         constraints=SimpleNamespace(
+            additive_test_roots=[],
             allowed_paths=["src.py"], forbidden_paths=[], max_diff_lines=50, max_changed_files=1,
         ),
         visible_checks=[], test_suites=[],

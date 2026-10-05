@@ -41,6 +41,7 @@ def _gateway(
         subprocess.run(["git", *args], cwd=workspace, check=True, capture_output=True)
     public = SimpleNamespace(
         constraints=SimpleNamespace(
+            additive_test_roots=[],
             allowed_paths=["src.py"], forbidden_paths=[], max_diff_lines=50, max_changed_files=1,
         ),
         visible_checks=[],

@@ -6,6 +6,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+import yaml
 
 import patchloop.dev.runner as runner
 from patchloop.artifacts import ArtifactStore
@@ -161,6 +162,42 @@ def test_mock_task_acceptance_passes_while_safety_is_not_run(tmp_path) -> None:
     assert check_results
     assert all("execution_policy" in item.details for item in check_results)
     assert all(item.details["execution_policy"] is None for item in check_results)
+
+
+def test_added_tests_run_publicly_but_original_tests_reach_hidden_evaluation(tmp_path):
+    task_dir, _ = _copy_smoke_task(tmp_path, with_environment=False)
+    public_path = task_dir / "public.yaml"
+    public = yaml.safe_load(public_path.read_text(encoding="utf-8"))
+    public["constraints"].update(allowed_paths=["**"], forbidden_paths=[".patchloop-hidden/**"],
+                                 additive_test_roots=["tests"], max_changed_files=4,
+                                 max_diff_lines=1000)
+    public_path.write_text(yaml.safe_dump(public), encoding="utf-8")
+    package = load_task_package(task_dir)
+    manager = WorkspaceManager(repository_root() / "fixtures/repositories", tmp_path / "source")
+    workspace = manager.create("submitted", package.public.repository.url,
+                               package.public.repository.base_commit)
+    manager.apply_patch(workspace, task_dir / package.private.reference_patch.path)
+    target = next((workspace / "tests").glob("test_*.py"))
+    addition = b"\n\ndef test_added_probe():\n    assert 1 == 1\n"
+    target.write_bytes(target.read_bytes() + addition)
+    patch_bytes = manager.diff_summary(workspace).patch.encode("utf-8")
+    seen = []
+
+    class ObservingSandbox(LocalSandbox):
+        def run_check(self, path, check, **kwargs):
+            seen.append((check.id, b"def test_added_probe" in
+                         (path / "tests" / target.name).read_bytes()))
+            return super().run_check(path, check, **kwargs)
+
+    engine, store, _ = _engine(tmp_path, ObservingSandbox())
+    artifact = store.put_bytes(patch_bytes, "text/x-diff")
+    manifest = _manifest_for(package, patch_bytes, backend="local", image=None)
+    _write_manifest(store, manifest)
+    result = engine.evaluate(task_dir, artifact.path, manifest, submitted_patch_artifact=artifact)
+    assert result.scope_compliant_success
+    assert seen[0][1] is True
+    assert all(not added for _, added in seen[1:])
+    assert Path(artifact.path).read_bytes() == patch_bytes
 
 
 @pytest.mark.parametrize("mismatch", ["task", "patch", "image", "task_content"])
