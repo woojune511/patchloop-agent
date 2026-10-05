@@ -32,6 +32,8 @@ and USD 24 total, preserving original inputs. No new paid call is authorized.
 uses existing results; runtime/defaults unchanged. Historical score is 10/20;
 the new score is pending. [Offline preparation](history/2026-10-05-portfolio-preparation.md)
 records full-suite validation and the byte-exact historical task copy.
+Freeze preflight rejected the proposed live path because it contains an older
+closed batch. The fresh replacement is `C:/pt/pv1d20live05`; old state is preserved.
 
 [Three uses](history/2026-10-05-three-public-repair-uses.md): automatic comparisons
 3/3; [original review](history/2026-10-05-original-patch-review.md) found two patches
