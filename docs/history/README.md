@@ -14,6 +14,7 @@ Allocations closed.
 
 ## New records
 
+- [Corrections](2026-10-05-click-feedback-results.md).
 - [Review](2026-10-05-original-patch-review.md).
 - [Three uses](2026-10-05-three-public-repair-uses.md).
 - [Verification](2026-10-05-repair-verification.md).
@@ -86,8 +87,7 @@ Allocations closed.
 - [Post-search declaration](2026-09-26-declaration-checkpoint-comparison.md).
 - [frozen declaration decision](2026-09-26-declaration-checkpoint-sampler.md).
 - [declaration-context diagnostic](2026-09-26-declaration-context-diagnostic.md).
-- [first interpretation and source questions](2026-09-26-first-interpretation-audit.md):
-  equal inputs, pre-edit questions and source-context limits.
+- [first interpretation and source questions](2026-09-26-first-interpretation-audit.md).
 - [independent candidate comparison](2026-09-26-independent-candidate-comparison.md):
   HF imports, matched-cost comparison and first-plan scope reduction.
 - [diagnostic claims verification](2026-09-26-diagnostic-claims-verification.md):

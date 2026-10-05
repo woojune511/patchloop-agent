@@ -29,8 +29,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 USD 1.61155980; allocation closed. [Original review](history/2026-10-05-original-patch-review.md):
 Codex recommends 1 scoped acceptance, 2 modifications; human approval unreported.
 Acceptance `NOT_RUN`; baseline unchanged. [Usage](../examples/repair/README.md).
-[Click corrections](history/2026-10-05-click-feedback-preparation.md) prepared;
-exact paid approval pending. No runtime change. Earlier work remains closed.
+[Click corrections](history/2026-10-05-click-feedback-results.md): 2 scoped candidates;
+USD 0.53546505, allocation closed. `UNSUPPORTED` retained. No runtime change.
 
 [Mini/full](history/2026-10-04-mini-full-results.md): mini selected for this six-task panel.
 24/24 completed; USD 5.42285815. Allocation closed; CLI defaults unchanged.
