@@ -75,30 +75,51 @@ def _parameters(old: ast.FunctionDef, new: ast.FunctionDef) -> dict:
     return {"function": new.name, "parameter_names": list(names), "indices": added}
 
 
-def added_tests(before: bytes, after: bytes, path: str) -> list[dict]:
-    """No rewriting: return selectors or refuse the entire changed test file."""
-    try:
-        old, new = ast.parse(before), ast.parse(after)
-    except (SyntaxError, ValueError) as exc:
-        raise UnsupportedTestChange(f"test file cannot be parsed: {exc}") from exc
-    names = {node.name for node in old.body if isinstance(node, (ast.FunctionDef, ast.ClassDef))}
+def _added_statements(old, new, path, *, suite_additions):
+    names = {node.name for node in old if isinstance(node, (ast.FunctionDef, ast.ClassDef))}
     seen, cursor, additions = set(), 0, []
-    for node in new.body:
+    for node in new:
         if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
             if node.name in seen:
                 raise UnsupportedTestChange("duplicate definitions cannot be separated")
             seen.add(node.name)
-        previous = old.body[cursor] if cursor < len(old.body) else None
+        previous = old[cursor] if cursor < len(old) else None
         if previous is not None and _dump(previous) == _dump(node):
+            cursor += 1
+        elif (suite_additions and isinstance(node, ast.ClassDef)
+              and node.name.startswith("Test") and node.name not in names):
+            body = node.body
+            if (body and isinstance(body[0], ast.Expr)
+                    and isinstance(body[0].value, ast.Constant)
+                    and isinstance(body[0].value.value, str)):
+                body = body[1:]
+            methods = _added_statements([], body, path, suite_additions=True)
+            if not methods:
+                raise UnsupportedTestChange("new test class must contain tests")
+            additions.extend({**method, "function": node.name + "::" + method["function"]}
+                             for method in methods)
+        elif (
+            suite_additions
+            and isinstance(previous, ast.ClassDef)
+            and isinstance(node, ast.ClassDef)
+            and previous.name == node.name
+        ):
+            header = copy.deepcopy(node)
+            header.body = previous.body
+            if _dump(previous) != _dump(header):
+                raise UnsupportedTestChange("existing test class header changed")
+            methods = _added_statements(previous.body, node.body, path, suite_additions=True)
+            additions.extend({**method, "function": node.name + "::" + method["function"]}
+                             for method in methods)
             cursor += 1
         elif isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
             if isinstance(previous, ast.FunctionDef) and previous.name == node.name:
                 additions.append({"path": path, **_parameters(previous, node)})
                 cursor += 1
-            elif node.name not in names and all(
+            elif node.name not in names and (suite_additions or all(
                 _mark(dec) in {"parametrize", "skip", "skipif", "xfail"}
                 for dec in node.decorator_list
-            ):
+            )):
                 additions.append(
                     {"path": path, "function": node.name, "parameter_names": [], "indices": None}
                 )
@@ -108,6 +129,15 @@ def added_tests(before: bytes, after: bytes, path: str) -> list[dict]:
             raise UnsupportedTestChange(
                 "existing tests, imports, helpers, fixtures or classes changed"
             )
-    if cursor != len(old.body):
+    if cursor != len(old):
         raise UnsupportedTestChange("existing module statements removed")
     return additions
+
+
+def added_tests(before: bytes, after: bytes, path: str, *, suite_additions=False) -> list[dict]:
+    """Separate additive tests; repair-verify retains its top-level selector contract."""
+    try:
+        old, new = ast.parse(before), ast.parse(after)
+    except (SyntaxError, ValueError) as exc:
+        raise UnsupportedTestChange(f"test file cannot be parsed: {exc}") from exc
+    return _added_statements(old.body, new.body, path, suite_additions=suite_additions)

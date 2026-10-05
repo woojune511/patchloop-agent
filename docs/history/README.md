@@ -3,12 +3,11 @@
 [Status](../current-status.md).
 
 [Split](2026-09-26-documentation-separation.md).
-[Manifest](2026-09-26-context-split/manifest.json).
-[Files](2026-09-26-context-split/).
 
 
 ## Records
 
+- [Current dev20](2026-10-06-current-dev20-results.md).
 - Portfolio: [prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md).
 - [Corrections](2026-10-05-click-feedback-results.md).
 - [Review](2026-10-05-original-patch-review.md).

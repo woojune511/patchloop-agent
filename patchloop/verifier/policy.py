@@ -135,7 +135,7 @@ def validate_test_addition(
     if PurePosixPath(path).name == "conftest.py":
         raise UnsupportedTestChange("existing test fixtures cannot be changed")
     before = run_git(workspace, "show", f"HEAD:{path}", text=False, deadline=deadline).stdout
-    if not added_tests(before, after, path):
+    if not added_tests(before, after, path, suite_additions=True):
         raise UnsupportedTestChange("test edit must add a test function or literal parameter cases")
 
 

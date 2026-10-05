@@ -26,11 +26,14 @@ bound to its final manifest and human authorization before dispatch.
 ## Test integrity and evaluation
 
 Each current package declares its existing pytest root for optional `run_tests`
-and additive test edits. The gateway accepts a new top-level `test_` function or
-additional literal parameter cases in an existing tracked file. Existing tests,
-imports, fixtures, classes and helpers must remain structurally unchanged. Imports
-needed for a new test can be local to that function. New files and conftest changes
-remain unsupported. Additions consume the same edit budget as source edits.
+and additive test edits. The gateway accepts new `test_` functions and methods,
+new `Test*` classes containing tests, and additional literal parameter cases in an
+existing tracked file. New tests can use decorators such as `mock.patch`.
+Existing test bodies, imports, fixtures, class headers and helper definitions must
+remain structurally unchanged. Imports needed for a new test can be local to that
+function. New files and conftest changes remain unsupported. Additions consume the
+same edit budget as source edits. The separate `repair-verify` comparison keeps its
+existing top-level selector contract.
 
 The required public check runs on the full submitted patch. Isolated private
 evaluation restores original test files only for hidden grading, then restores

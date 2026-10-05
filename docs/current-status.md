@@ -25,15 +25,16 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-The user requested a fresh [current-capability dev20 panel](../.agent/current-dev20.md):
-ordinary probes with usable public dependencies, optional selected tests, additive
-test edits, automatic probe replay off, and two independent task workers.
-[Preparation evidence](history/2026-10-06-current-dev20-preparation.md) records
-20/20 public imports and 20/20 selected-test canaries passing, including the formerly
-incompatible environments using pinned Python 3.10 and clean graphics profiles.
-Focused checks and regression validation, including the documented diagnostic
-repairs and reruns, are complete. No fresh provider dispatch or improvement result
-yet. Historical inputs and CLI defaults remain unchanged.
+The [current-capability dev20 panel](../.agent/current-dev20.md) closed incomplete:
+18 tasks started, 16 agreeing evaluations (8 PASS/8 FAIL), one evaluation deadline,
+one peer interruption and two not started. Cost USD 5.39413050; two concurrent
+workers were observed. [Results and correction](history/2026-10-06-current-dev20-results.md)
+record the stop and a test-authoring restriction found during execution. All twenty
+probe/import and selected-test canaries passed; the run used 9 probes, 2 accepted
+test additions and no selected-test calls. Test methods/classes are now supported
+by the additive gate after local checks, but this correction has no paid result.
+No complete success-rate or speedup conclusion follows. The allocation is closed;
+task-deadline versus batch-stop handling remains unresolved before a new measurement.
 
 Portfolio v1 local work closed: [dev20 remeasurement](history/2026-10-06-portfolio-dev20-results.md)
 resolved **9/20**, versus historical 10/20. All twenty original submissions were
