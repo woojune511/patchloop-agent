@@ -29,9 +29,9 @@ The [component audit](history/2026-10-06-current-agent-audit.md) found verificat
 failures despite available tools. Its [priority fixes](history/2026-10-06-agent-priority-fixes.md)
 protect SQLFluff test helpers, keep confirmed evaluation deadlines task-local, reserve
 330 of the panel's existing 1,800 seconds for evaluation, and require public-operation
-canaries. All 20 operations passed; Marshmallow now uses Python 3.9. Synthetic controls
-separate misleading PASS from useful verification. Agent judgment and repair-success
-improvement remain unmeasured; no new prompt, memory or paid rerun is adopted.
+canaries. All 20 operations passed; Marshmallow uses Python 3.9. Synthetic controls
+distinguish misleading PASS. Repair-quality gains remain unmeasured. A fresh 20-task
+run is authorized with two workers and the USD 24 cap; preparation is in progress.
 
 The [current-capability dev20 panel](../.agent/current-dev20.md) closed incomplete:
 18 tasks started, 16 agreeing evaluations (8 PASS/8 FAIL), one evaluation deadline,

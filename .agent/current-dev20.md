@@ -69,6 +69,8 @@ completion receipt confirms the deadline without cleanup uncertainty, accounting
 settled, and native assessment completed with confirmed cleanup. That row remains
 unsuccessful with the original ERROR and native verdict; independent rows continue.
 Other disagreements, missing receipts, and operational uncertainty still stop the batch.
+Settled exhaustion of one row's fixed cost cap also stays local; the runtime's
+stop-repetitions flag must not cancel independent rows with separate allocations.
 
 ## Preparation and evidence
 

@@ -161,3 +161,61 @@ def test_worker_preserves_runtime_stop_even_for_accounted_limit(tmp_path, monkey
     result = batch.solve_row(rows(tmp_path, count=1)[0]["request"])
     assert result["accounting"]["billing_known"]
     assert not result["ok"] and batch._STOP.is_set()
+
+
+def recorded_cost_cap(req, problem=None):
+    """Settle one call, then reject the next call at row cost admission."""
+    journal = batch.CoordinatedJournal(req.state_root, "run_dev_cap")
+    journal.append("input_count_started", {"count_id": "first"})
+    journal.append("input_count_finished", {"count_id": "first"})
+    journal.append("provider_call_started", {"call_id": "first"})
+    cost = 1_000_000_000 + (problem == "over_cap")
+    journal.append("provider_call_finished", {"call_id": "first", "cost_nanos": cost})
+    journal.append("input_count_started", {"count_id": "next"})
+    if problem != "counting":
+        journal.append("input_count_finished", {"count_id": "next"})
+    if problem == "billing":
+        journal.append("provider_call_started", {"call_id": "unknown"})
+    return {
+        "cost_nanos": cost + (problem == "reconciliation"),
+        "stop_remaining": True,
+        "runs": [{"run_id": journal.run_id, "terminal": "COST_CAP_REACHED"}],
+    }
+
+
+def cost_capped_worker(req):
+    batch.runner.run_dev = recorded_cost_cap
+    return batch.solve_row(req)
+
+
+def test_settled_row_cap_allows_other_workers_and_remaining_rows(tmp_path):
+    result = batch.run_parallel_rows(
+        rows(tmp_path), total_cap=Decimal("3"), workers=2,
+        journal=DevJournal(tmp_path / "batch", "run_dev_batch"),
+        execute=cost_capped_worker,
+        after_row=lambda *_: {"ok": True, "status": "NOT_RUN", "reason": "unsubmitted"},
+    )
+    assert result["started"] == 3 and result["not_started"] == 0
+    assert not result["stopped"]
+    for row in result["rows"]:
+        assert row["ok"] and row["result"]["stop_remaining"]
+        assert row["result"]["runs"][0]["terminal"] == "COST_CAP_REACHED"
+        assert row["accounting"]["cost_nanos"] == 1_000_000_000
+        assert row["accounting"]["billing_known"] and row["accounting"]["counting_known"]
+        assert row["assessment"]["status"] == "NOT_RUN"
+
+
+@pytest.mark.parametrize("problem", ["billing", "counting", "reconciliation", "over_cap"])
+def test_row_cap_with_uncertainty_or_invalid_cost_stops_new_admissions(
+    tmp_path, monkeypatch, problem,
+):
+    ctx = multiprocessing.get_context("spawn")
+    monkeypatch.setattr(batch, "_STOP", ctx.Event())
+    monkeypatch.setattr(batch, "_ADMISSION", ctx.Lock())
+    monkeypatch.setattr(batch.runner, "run_dev", lambda req: recorded_cost_cap(req, problem))
+    result = batch.solve_row(rows(tmp_path, count=1)[0]["request"])
+    assert not result["ok"] and batch._STOP.is_set()
+    assert result["accounting"]["cost_nanos"] >= 1_000_000_000
+    peer = batch.CoordinatedJournal(tmp_path / "peer", "run_dev_peer")
+    with pytest.raises(batch.BatchStopped):
+        peer.append("provider_call_started", {"call_id": "blocked"})

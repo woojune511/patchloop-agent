@@ -142,13 +142,21 @@ def solve_row(serialized):
     req = DevRunRequest.model_validate(serialized)
     started = monotonic()
     result, error = None, None
+    row_cost_cap = False
     try:
         if _STOP.is_set():
             raise BatchStopped("parallel batch stopped before row preparation")
         require(req.repeat == 1 and req.resume_run_id is None, "fresh single row required")
         require(not req.state_root.exists(), "row state exists; no replacement")
         result = runner.run_dev(req)
-        if result.get("stop_remaining"):
+        # The invocation also stops repetitions after exhausting its own cap.
+        # Independent rows have separate allocations; accounting below must
+        # still confirm this limit before it can remain local to the row.
+        row_cost_cap = (
+            len(result["runs"]) == 1
+            and result["runs"][0]["terminal"] == "COST_CAP_REACHED"
+        )
+        if result.get("stop_remaining") and not row_cost_cap:
             stop_workers()
     except BaseException as exc:
         stop_workers()
@@ -156,7 +164,7 @@ def solve_row(serialized):
     usage = recover_usage(req.state_root)
     ok = (
         result is not None
-        and not result.get("stop_remaining")
+        and (not result.get("stop_remaining") or row_cost_cap)
         and usage["billing_known"]
         and usage["counting_known"]
         and result["cost_nanos"] == usage["cost_nanos"]
