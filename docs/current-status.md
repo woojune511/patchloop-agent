@@ -30,7 +30,10 @@ resolved **9/20**, versus historical 10/20. All twenty original submissions were
 evaluated with registered/native agreement and confirmed cleanup; no missing runs,
 unknown billing or evaluation errors. Cost USD 3.46111455; panel wall time 102m19s.
 The 11/20 threshold was not met: test300 is not prepared or authorized. No retries,
-prompt tuning or case diagnoses follow. Runtime/defaults remain unchanged.
+prompt tuning or automatic case diagnoses follow. The user-requested
+[saved-evidence review](history/2026-10-06-dev20-decline-review.md) separates the
+single added failure from unchanged unresolved tasks; no intervention is adopted.
+Runtime/defaults remain unchanged.
 [Public results](../examples/portfolio-dev20/README.md), saved demo and review exports
 are local repository artifacts. Remote publication/release and Linux CI are NOT_RUN.
 [Preparation](history/2026-10-05-portfolio-preparation.md) preserves validation;
