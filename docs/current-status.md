@@ -25,26 +25,27 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+The user-requested [component audit](history/2026-10-06-current-agent-audit.md)
+revalidated all 18 saved trajectories and 263 model calls. All eight agreeing
+failures submitted with edits/probes/selected tests still available. A concrete
+integrity gap let SQLFluff-1625 weaken source-located test helpers; both evaluation
+projections retain those edits. Representative probe compatibility and evaluation-time
+budgeting also have observed gaps. Prioritize these and the agent's verification
+decisions; no new prompt, memory, resource increase or paid rerun is adopted.
+
 The [current-capability dev20 panel](../.agent/current-dev20.md) closed incomplete:
 18 tasks started, 16 agreeing evaluations (8 PASS/8 FAIL), one evaluation deadline,
 one peer interruption and two not started. Cost USD 5.39413050; two concurrent
 workers were observed. [Results and correction](history/2026-10-06-current-dev20-results.md)
-record the stop and a test-authoring restriction found during execution. All twenty
-probe/import and selected-test canaries passed; the run used 9 probes, 2 accepted
-test additions and no selected-test calls. Test methods/classes are now supported
-by the additive gate after local checks, but this correction has no paid result.
-No complete success-rate or speedup conclusion follows. The allocation is closed;
-task-deadline versus batch-stop handling remains unresolved before a new measurement.
+preserve the original outcomes. Test methods/classes are now supported after local
+checks, with no paid result. No complete success-rate or speedup conclusion follows.
+The allocation is closed; deadline/batch-stop handling remains unresolved.
 
-Portfolio v1 local work closed: [dev20 remeasurement](history/2026-10-06-portfolio-dev20-results.md)
-resolved **9/20**, versus historical 10/20. All twenty original submissions were
-evaluated with registered/native agreement and confirmed cleanup; no missing runs,
-unknown billing or evaluation errors. Cost USD 3.46111455; panel wall time 102m19s.
-The 11/20 threshold was not met: test300 is not prepared or authorized. No retries,
-prompt tuning or automatic case diagnoses follow. The user-requested
-[saved-evidence review](history/2026-10-06-dev20-decline-review.md) separates the
-single added failure from unchanged unresolved tasks; no intervention is adopted.
-That closed panel did not change runtime/defaults.
+Portfolio v1 closed: [dev20 remeasurement](history/2026-10-06-portfolio-dev20-results.md)
+resolved **9/20**, versus historical 10/20, with all registered/native results
+agreeing. Cost USD 3.46111455; wall time 102m19s. The 11/20 threshold was not met:
+test300 remains unprepared and unauthorized. The [decline review](history/2026-10-06-dev20-decline-review.md)
+adopted no intervention; no retry, tuning or automatic follow-up is queued.
 [Public results](../examples/portfolio-dev20/README.md), saved demo and review exports
 are local repository artifacts. Remote publication/release and Linux CI are NOT_RUN.
 [Preparation](history/2026-10-05-portfolio-preparation.md) preserves validation;
