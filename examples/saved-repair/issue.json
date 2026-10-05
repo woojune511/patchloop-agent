@@ -1,0 +1,7 @@
+{
+  "html_url": "https://github.com/theskumar/python-dotenv/issues/715",
+  "title": "An empty value ignores ${name:-default}",
+  "body": "`${name:-default}` is the POSIX form that uses the default when `name` is unset or empty. An empty value is returned as itself.\n\n```python\ndotenv.dotenv_values(stream=io.StringIO(\"b=\\na=${b:-d}\"))\n# {'b': '', 'a': ''}\n```\n\n`a` should be `d`. A missing `b` already becomes `d`. `b=c` still stays `c`. `${b}` with no default stays empty.",
+  "created_at": "2026-10-01T11:12:06Z",
+  "updated_at": "2026-10-01T11:12:06Z"
+}

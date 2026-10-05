@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python",
+    "-c",
+    "import io, dotenv\nresult = dotenv.dotenv_values(stream=io.StringIO(\"b=\\na=${b:-d}\"))\nprint(result)\nassert result == {\"b\": \"\", \"a\": \"d\"}, result\n"
+  ],
+  "exit_code": 0,
+  "stdout": "OrderedDict({'b': '', 'a': 'd'})\n",
+  "stderr": "",
+  "duration_ms": 579,
+  "timed_out": false,
+  "truncated": false
+}

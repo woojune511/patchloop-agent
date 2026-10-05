@@ -1,0 +1,124 @@
+diff --git a/src/click/core.py b/src/click/core.py
+index 59ed94e..c98bdae 100644
+--- a/src/click/core.py
++++ b/src/click/core.py
+@@ -1399,6 +1399,7 @@ class Command:
+ 
+         parser = self.make_parser(ctx)
+         opts, args, param_order = parser.parse_args(args=args)
++        ctx._parameter_order = param_order
+ 
+         for param in iter_params_for_processing(param_order, self.get_params(ctx)):
+             _, args = param.handle_parse_result(ctx, opts, args)
+@@ -2994,10 +2995,20 @@ class Parameter(ABC):
+             and existing_default_explicit
+             and not self._default_explicit
+         )
++        omitted_shared_cmdline = (
++            self.callback is None
++            and same_source
++            and self not in getattr(ctx, "_parameter_order", ())
++            and source is ParameterSource.COMMANDLINE
++        )
+         is_winner = (
+             slot_empty
+             or more_explicit
+-            or (same_source and not auto_would_downgrade_explicit)
++            or (
++                same_source
++                and not auto_would_downgrade_explicit
++                and not omitted_shared_cmdline
++            )
+         )
+ 
+         if is_winner:
+diff --git a/tests/test_options.py b/tests/test_options.py
+index 3434ce6..77a537a 100644
+--- a/tests/test_options.py
++++ b/tests/test_options.py
+@@ -2003,6 +2003,85 @@ def test_default_dual_option_callback(runner, default, args, expected):
+     assert result.exit_code == 0
+ 
+ 
++def test_shared_option_callback_prefers_flag_value_when_custom_omitted(runner):
++    sentinel = "$_fetch"
++    fetch_calls = 0
++
++    def fetch():
++        nonlocal fetch_calls
++        fetch_calls += 1
++        return "foo"
++
++    def callback(ctx, param, value):
++        if value == sentinel:
++            return fetch()
++        return value
++
++    @click.command()
++    @click.option("--custom", "custom")
++    @click.option("--fetch", "custom", flag_value=sentinel, callback=callback)
++    def cli(custom):
++        click.echo(custom)
++
++    result = runner.invoke(cli, ["--custom", "bar"])
++    assert result.exit_code == 0
++    assert result.output == "bar\n"
++    assert fetch_calls == 0
++
++    result = runner.invoke(cli, ["--fetch"])
++    assert result.exit_code == 0
++    assert result.output == "foo\n"
++    assert fetch_calls == 1
++
++    result = runner.invoke(cli, ["--custom", "bar", "--fetch"])
++    assert result.exit_code == 0
++    assert result.output == "foo\n"
++    assert fetch_calls == 2
++
++
++def test_shared_option_callback_validation_for_omitted_custom_option(runner):
++    observations = []
++    for reject in (False, True):
++        seen = []
++        fetch_calls = 0
++
++        def fetch():
++            nonlocal fetch_calls
++            fetch_calls += 1
++            return "foo"
++
++        def callback(ctx, param, value):
++            seen.append(value)
++            if reject:
++                raise click.BadParameter("blocked by omitted option validation")
++            return fetch()
++
++        @click.command()
++        @click.option("--custom", "custom", callback=callback)
++        @click.option("--fetch", "custom", flag_value="blocked")
++        def cli(custom):
++            click.echo(custom)
++
++        result = runner.invoke(cli, ["--fetch"])
++        observations.append(
++            {
++                "reject": reject,
++                "callback_values": seen,
++                "exit_code": result.exit_code,
++                "output": result.output,
++                "fetch_calls": fetch_calls,
++            }
++        )
++
++    assert observations[0]["callback_values"] == ["blocked"]
++    assert observations[0]["fetch_calls"] == 1
++    assert observations[0]["exit_code"] == 0
++    assert observations[0]["output"] == "foo\n"
++    assert observations[1]["callback_values"] == ["blocked"]
++    assert observations[1]["fetch_calls"] == 0
++    assert observations[1]["exit_code"] == 2
++
++
+ @pytest.mark.parametrize(
+     ("flag_value", "envvar_value", "expected"),
+     [

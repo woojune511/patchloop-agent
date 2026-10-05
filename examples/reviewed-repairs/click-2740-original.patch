@@ -1,0 +1,112 @@
+diff --git a/src/click/exceptions.py b/src/click/exceptions.py
+index 6272c38..20f93e0 100644
+--- a/src/click/exceptions.py
++++ b/src/click/exceptions.py
+@@ -58,11 +58,12 @@ class ClickException(Exception):
+         if file is None:
+             file = get_text_stderr()
+ 
+-        echo(
+-            _("Error: {message}").format(message=self.format_message()),
+-            file=file,
+-            color=self.show_color,
+-        )
++        message = _("Error: {message}").format(message=self.format_message())
++        notes = getattr(self, "__notes__", None)
++        if notes:
++            message = "\n".join([message, *notes])
++
++        echo(message, file=file, color=self.show_color)
+ 
+ 
+ class UsageError(ClickException):
+@@ -104,11 +105,13 @@ class UsageError(ClickException):
+         if self.ctx is not None:
+             color = self.ctx.color
+             echo(f"{self.ctx.get_usage()}\n{hint}", file=file, color=color)
+-        echo(
+-            _("Error: {message}").format(message=self.format_message()),
+-            file=file,
+-            color=color,
+-        )
++
++        message = _("Error: {message}").format(message=self.format_message())
++        notes = getattr(self, "__notes__", None)
++        if notes:
++            message = "\n".join([message, *notes])
++
++        echo(message, file=file, color=color)
+ 
+ 
+ class BadParameter(UsageError):
+@@ -336,7 +339,12 @@ class NoArgsIsHelpError(UsageError):
+         super().__init__(ctx.get_help(), ctx=ctx)
+ 
+     def show(self, file: t.IO[t.Any] | None = None) -> None:
+-        echo(self.format_message(), file=file, err=True, color=self.ctx.color)
++        message = self.format_message()
++        notes = getattr(self, "__notes__", None)
++        if notes:
++            message = "\n".join([message, *notes])
++
++        echo(message, file=file, err=True, color=self.ctx.color)
+ 
+ 
+ class FileError(ClickException):
+diff --git a/tests/test_basic.py b/tests/test_basic.py
+index 9fbb624..4352cab 100644
+--- a/tests/test_basic.py
++++ b/tests/test_basic.py
+@@ -648,6 +648,52 @@ def test_choice_argument_none(runner):
+     assert result.output.startswith("Usage: cli [OPTIONS] {not-none|none}\n")
+ 
+ 
++def test_exception_notes(runner):
++    @click.command()
++    def click_exc():
++        exc = click.ClickException("foo")
++        exc.add_note("bar")
++        raise exc
++
++    result = runner.invoke(click_exc)
++    assert result.exit_code == 1
++    assert result.output == "Error: foo\nbar\n"
++
++    def fail(ctx, param, value):
++        exc = click.BadParameter("boom", param=param)
++        exc.add_note("baz")
++        raise exc
++
++    @click.command()
++    @click.option("--value", callback=fail)
++    def bad_param(value):
++        pass
++
++    result = runner.invoke(bad_param, ["--value", "x"])
++    assert result.exit_code == 2
++    assert "Error: Invalid value for '--value': boom" in result.output
++    assert "baz" in result.output
++
++    from click.exceptions import NoArgsIsHelpError
++
++    class HelpCommand(click.Command):
++        def parse_args(self, ctx, args):
++            try:
++                return super().parse_args(ctx, args)
++            except NoArgsIsHelpError as exc:
++                exc.add_note("qux")
++                raise
++
++    @click.command("cli", cls=HelpCommand, no_args_is_help=True)
++    def help_cli():
++        pass
++
++    result = runner.invoke(help_cli, [])
++    assert result.exit_code == 2
++    assert result.output.startswith("Usage: cli [OPTIONS]\n")
++    assert result.output.endswith("qux\n")
++
++
+ def test_choice_argument_optional_metavar(runner):
+     """Optional Choice arguments reuse the type's brackets instead of doubling.
+ 

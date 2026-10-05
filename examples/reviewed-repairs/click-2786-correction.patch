@@ -1,0 +1,94 @@
+diff --git a/src/click/core.py b/src/click/core.py
+index f166413..c98bdae 100644
+--- a/src/click/core.py
++++ b/src/click/core.py
+@@ -1402,13 +1402,6 @@ class Command:
+         ctx._parameter_order = param_order
+ 
+         for param in iter_params_for_processing(param_order, self.get_params(ctx)):
+-            if (
+-                param not in ctx._parameter_order
+-                and ctx.get_parameter_source(param.name)
+-                is ParameterSource.COMMANDLINE
+-            ):
+-                continue
+-
+             _, args = param.handle_parse_result(ctx, opts, args)
+ 
+         # We now have all parameters' values into `ctx.params`, but the data may contain
+@@ -3002,10 +2995,20 @@ class Parameter(ABC):
+             and existing_default_explicit
+             and not self._default_explicit
+         )
++        omitted_shared_cmdline = (
++            self.callback is None
++            and same_source
++            and self not in getattr(ctx, "_parameter_order", ())
++            and source is ParameterSource.COMMANDLINE
++        )
+         is_winner = (
+             slot_empty
+             or more_explicit
+-            or (same_source and not auto_would_downgrade_explicit)
++            or (
++                same_source
++                and not auto_would_downgrade_explicit
++                and not omitted_shared_cmdline
++            )
+         )
+ 
+         if is_winner:
+diff --git a/tests/test_options.py b/tests/test_options.py
+index abc4a8b..77a537a 100644
+--- a/tests/test_options.py
++++ b/tests/test_options.py
+@@ -2039,6 +2039,49 @@ def test_shared_option_callback_prefers_flag_value_when_custom_omitted(runner):
+     assert fetch_calls == 2
+ 
+ 
++def test_shared_option_callback_validation_for_omitted_custom_option(runner):
++    observations = []
++    for reject in (False, True):
++        seen = []
++        fetch_calls = 0
++
++        def fetch():
++            nonlocal fetch_calls
++            fetch_calls += 1
++            return "foo"
++
++        def callback(ctx, param, value):
++            seen.append(value)
++            if reject:
++                raise click.BadParameter("blocked by omitted option validation")
++            return fetch()
++
++        @click.command()
++        @click.option("--custom", "custom", callback=callback)
++        @click.option("--fetch", "custom", flag_value="blocked")
++        def cli(custom):
++            click.echo(custom)
++
++        result = runner.invoke(cli, ["--fetch"])
++        observations.append(
++            {
++                "reject": reject,
++                "callback_values": seen,
++                "exit_code": result.exit_code,
++                "output": result.output,
++                "fetch_calls": fetch_calls,
++            }
++        )
++
++    assert observations[0]["callback_values"] == ["blocked"]
++    assert observations[0]["fetch_calls"] == 1
++    assert observations[0]["exit_code"] == 0
++    assert observations[0]["output"] == "foo\n"
++    assert observations[1]["callback_values"] == ["blocked"]
++    assert observations[1]["fetch_calls"] == 0
++    assert observations[1]["exit_code"] == 2
++
++
+ @pytest.mark.parametrize(
+     ("flag_value", "envvar_value", "expected"),
+     [

@@ -1,0 +1,60 @@
+diff --git a/src/dotenv/main.py b/src/dotenv/main.py
+index 5faa7f0..bb1e62c 100644
+--- a/src/dotenv/main.py
++++ b/src/dotenv/main.py
+@@ -207,6 +207,13 @@ def rewrite(
+         except BaseException as err:
+             error = err
+ 
++        if error is None:
++            try:
++                dest.flush()
++                os.fsync(dest.fileno())
++            except BaseException as err:
++                error = err
++
+     if error is None:
+         try:
+             if original_mode is not None:
+diff --git a/tests/test_main.py b/tests/test_main.py
+index 930ab17..10d31ca 100644
+--- a/tests/test_main.py
++++ b/tests/test_main.py
+@@ -238,6 +238,37 @@ def test_rewrite_reports_original_error_when_cleanup_fails(dotenv_path, caplog):
+     ]
+ 
+ 
++@pytest.mark.parametrize(
++    "rewrite, expected_result, expected_content",
++    [
++        (lambda path: dotenv.set_key(path, "a", "y"), (True, "a", "y"), "a='y'\n"),
++        (lambda path: dotenv.unset_key(path, "a"), (True, "a"), ""),
++    ],
++    ids=["set_key", "unset_key"],
++)
++def test_rewrite_fsyncs_before_replace(tmp_path, rewrite, expected_result, expected_content):
++    dotenv_path = tmp_path / ".env"
++    dotenv_path.write_text("a=x\n")
++    events = []
++    real_replace = os.replace
++
++    def fsync(fd):
++        events.append("fsync")
++        return None
++
++    def replace(src, dst):
++        events.append("replace")
++        real_replace(src, dst)
++
++    with mock.patch("dotenv.main.os.fsync", side_effect=fsync):
++        with mock.patch("dotenv.main.os.replace", side_effect=replace):
++            result = rewrite(dotenv_path)
++
++    assert events == ["fsync", "replace"]
++    assert result == expected_result
++    assert dotenv_path.read_text() == expected_content
++
++
+ def test_set_key_missing_directory(tmp_path):
+     dotenv_path = tmp_path / "nx_dir" / ".env"
+ 

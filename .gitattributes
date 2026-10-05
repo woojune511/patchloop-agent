@@ -47,3 +47,8 @@ tasks/dev-train/jsonschema-regex-recursion-1538/reference.patch -whitespace
 tests/fixtures/pydicom_1413/submitted.patch -whitespace
 tasks/dev-train/jsonschema-regex-recursion-1538-v2/reference.patch -whitespace
 tasks/dev-train/hf-hub-xet-endpoint-propagation-v6/reference.patch -whitespace
+
+# Byte-exact historical inputs and public evidence exports (after extension rules).
+tasks/dev-train/portfolio-dev20/** -text -whitespace
+examples/saved-repair/** -text -whitespace
+examples/reviewed-repairs/** -text -whitespace

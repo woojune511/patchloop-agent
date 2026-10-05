@@ -25,16 +25,21 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Three uses](history/2026-10-05-three-public-repair-uses.md): 3 automated checks passed;
-USD 1.61155980; allocation closed. [Original review](history/2026-10-05-original-patch-review.md):
-Codex recommends 1 scoped acceptance, 2 modifications; human approval unreported.
-Acceptance `NOT_RUN`; baseline unchanged. [Usage](../examples/repair/README.md).
-[Click corrections](history/2026-10-05-click-feedback-results.md): 2 scoped candidates;
-USD 0.53546505, allocation closed. `UNSUPPORTED` retained. No runtime change.
+Portfolio v1 preparation: rerun the historical dev20 once with mini, USD 1.20/task
+and USD 24 total, preserving original inputs. No new paid call is authorized.
+[Execution plan](../.agent/portfolio-v1.md) binds the approval, stop rules and
+11/20 threshold for test300 preparation only. Public README/evidence/demo refresh
+uses existing results; runtime/defaults unchanged. Historical score is 10/20;
+the new score is pending. [Offline preparation](history/2026-10-05-portfolio-preparation.md)
+records full-suite validation and the byte-exact historical task copy.
 
-[Mini/full](history/2026-10-04-mini-full-results.md): mini selected for this six-task panel.
-24/24 completed; USD 5.42285815. Allocation closed; CLI defaults unchanged.
-C2 and pydicom-1413 closed; runtime and baseline unchanged.
+[Three uses](history/2026-10-05-three-public-repair-uses.md): automatic comparisons
+3/3; [original review](history/2026-10-05-original-patch-review.md) found two patches
+needing changes. [Click corrections](history/2026-10-05-click-feedback-results.md):
+two feedback-informed candidates, not first-attempt successes. Human approval
+unreported; acceptance NOT_RUN. Prior allocations and C2/pydicom diagnoses closed.
+[Mini/full](history/2026-10-04-mini-full-results.md): mini selected for the six-task
+panel only; 24/24 completed at USD 5.42285815. CLI defaults unchanged.
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task
 diagnosis closed; no isort repair control or agent change queued.
 [Selection review](history/2026-10-02-requirement-selection-decision.md): task-first
@@ -94,11 +99,10 @@ and panel ledger remain implemented. Earlier Darts/MontePy observations and
 operator corrections are separate from this panel's fresh control rows; see the
 comparison record. Mock safety NOT_RUN remains separate from live safety PASS.
 
-The [mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not
-meet its threshold; no journal cache or RunState change is queued. Its smoke-only
-result does not establish live-run performance. [Projection tests](../tests/test_model_view_fields.py)
-cover the compact public view. Budget arithmetic lives in
-[completion_budget.py](../patchloop/dev/completion_budget.py); resume identity rules remain intact.
+[Mock profiling](history/2026-09-30-journal-read-profile.md) did not justify a journal
+cache. [Projection tests](../tests/test_model_view_fields.py) cover the compact public
+view; [completion arithmetic](../patchloop/dev/completion_budget.py) preserves resume
+identity. These local results do not establish live performance.
 
 The [development review](history/2026-09-30-development-review.md) closes repeated
 ablations: no quality experiment, memory extension or mandatory probe gate queued.
@@ -127,21 +131,10 @@ allocation is closed. This exposed development-task success establishes one comp
 repair path, not a quality gain, feature effect or held-out generalization. No new
 runtime defect or follow-up experiment was established; retain the working baseline.
 
-The clearest repeated weakness is selecting verification that exposes an incorrect
-repair condition. The 24-run six-task panel had nine acceptance failures despite all
-final public checks passing; public replay confirms omitted distinctions on Pydantic
-and HF. This does not establish one general harness fix or explain every failure.
-
-Conversely, 11 registered failure events across three tasks reached later same-check
-PASS; tox and one HF seeded episode repaired their identified public mismatch. Only
-one reviewed seeded HF episode meets the strict unresolved-delivered-counterexample
-criterion. Do not generalize that episode into universal evidence loss or incapacity.
-
-Known environment/recount/receipt-lineage problems were separately reproduced and
-corrected. Historical probe failures include invalid setup, API use and expectations;
-they are not all current environment defects or product bugs. Resources censored the
-original toqito attempt but not the completed panel. Full distinctions and exclusions
-are in the review, including 95 source-journal hash/chain rechecks.
+The [development review](history/2026-09-30-development-review.md) distinguishes
+incorrect patches that pass public checks, feedback-driven repairs, environment
+problems and resource-limited runs. Its exposed-panel counts are historical;
+closed diagnostic cases are not a queue for new experiments.
 
 Further development should address a concrete current-contract defect or an implementation
 with a specific predicted repair benefit. Use focused fixes/tests for reproducible

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_main.py",
+    "tests/test_variables.py",
+    "tests/test_parser.py",
+    "--basetemp=/tmp/dotenv-pytest"
+  ],
+  "exit_code": 0,
+  "stdout": "........................................................................ [ 32%]\n........................................................................ [ 65%]\n........................................................................ [ 98%]\n...                                                                      [100%]\n219 passed in 0.73s\n",
+  "stderr": "",
+  "duration_ms": 1520,
+  "timed_out": false,
+  "truncated": false
+}

@@ -327,7 +327,7 @@ def run(root, packet_hash):
 
 
 def run_fresh_rows(root, packet_hash, *, validate_packet, order, live_root, request_for,
-                   instruction_scope, row_cap, total_cap, journal_id):
+                   instruction_scope, row_cap, total_cap, journal_id, after_row=None):
     """Shared bounded fresh-run driver; all inputs remain manifest-bound by caller."""
     validate_packet(root, packet_hash)
     approval = json.loads((root / 'authorization.json').read_bytes())
@@ -373,6 +373,12 @@ def run_fresh_rows(root, packet_hash, *, validate_packet, order, live_root, requ
                       flush=True)
                 if not known or not within_cap:
                     break
+                if after_row is not None:
+                    row['assessment'] = after_row(row, req)
+                    journal.append('row_assessed', {'label': label,
+                                                    'assessment': row['assessment']})
+                    if not row['assessment']['ok']:
+                        break
         except BaseException as error:
             journal.append('panel_interrupted', {'error_type': type(error).__name__,
                                                  'completed': len(rows), 'resume_allowed': False})

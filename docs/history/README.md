@@ -1,19 +1,20 @@
-# Documentation history
+# History
 
-[Current status](../current-status.md).
+[Status](../current-status.md).
 Allocations closed.
 
-## 2026-09-26 snapshots
+## Snapshots
 
 [Split](2026-09-26-documentation-separation.md).
 
-[Snapshot manifest](2026-09-26-context-split/manifest.json).
+[Manifest](2026-09-26-context-split/manifest.json).
 
-[Preserved snapshots](2026-09-26-context-split/).
+[Files](2026-09-26-context-split/).
 
 
-## New records
+## Records
 
+- [Portfolio](2026-10-05-portfolio-preparation.md).
 - [Corrections](2026-10-05-click-feedback-results.md).
 - [Review](2026-10-05-original-patch-review.md).
 - [Three uses](2026-10-05-three-public-repair-uses.md).

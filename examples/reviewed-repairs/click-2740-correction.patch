@@ -1,0 +1,67 @@
+diff --git a/tests/test_basic.py b/tests/test_basic.py
+index 4352cab..c7cebf8 100644
+--- a/tests/test_basic.py
++++ b/tests/test_basic.py
+@@ -649,19 +649,25 @@ def test_choice_argument_none(runner):
+ 
+ 
+ def test_exception_notes(runner):
++    notes_supported = hasattr(BaseException, "add_note")
++
+     @click.command()
+     def click_exc():
+         exc = click.ClickException("foo")
+-        exc.add_note("bar")
++        if notes_supported:
++            exc.add_note("bar")
+         raise exc
+ 
+     result = runner.invoke(click_exc)
+     assert result.exit_code == 1
+-    assert result.output == "Error: foo\nbar\n"
++    assert result.output == (
++        "Error: foo\nbar\n" if notes_supported else "Error: foo\n"
++    )
+ 
+     def fail(ctx, param, value):
+         exc = click.BadParameter("boom", param=param)
+-        exc.add_note("baz")
++        if notes_supported:
++            exc.add_note("baz")
+         raise exc
+ 
+     @click.command()
+@@ -672,7 +678,10 @@ def test_exception_notes(runner):
+     result = runner.invoke(bad_param, ["--value", "x"])
+     assert result.exit_code == 2
+     assert "Error: Invalid value for '--value': boom" in result.output
+-    assert "baz" in result.output
++    if notes_supported:
++        assert "baz" in result.output
++    else:
++        assert "baz" not in result.output
+ 
+     from click.exceptions import NoArgsIsHelpError
+ 
+@@ -681,7 +690,8 @@ def test_exception_notes(runner):
+             try:
+                 return super().parse_args(ctx, args)
+             except NoArgsIsHelpError as exc:
+-                exc.add_note("qux")
++                if notes_supported:
++                    exc.add_note("qux")
+                 raise
+ 
+     @click.command("cli", cls=HelpCommand, no_args_is_help=True)
+@@ -691,7 +701,10 @@ def test_exception_notes(runner):
+     result = runner.invoke(help_cli, [])
+     assert result.exit_code == 2
+     assert result.output.startswith("Usage: cli [OPTIONS]\n")
+-    assert result.output.endswith("qux\n")
++    if notes_supported:
++        assert result.output.endswith("qux\n")
++    else:
++        assert "qux" not in result.output
+ 
+ 
+ def test_choice_argument_optional_metavar(runner):

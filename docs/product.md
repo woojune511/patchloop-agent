@@ -43,12 +43,10 @@ single dev-head model/tool loop ---> external run journal
         |
         v
 submitted patch + content-bound manifest
-        |
-        v
-separate private evaluator
-        |
-        v
-task acceptance + separate safety state
+        |                       |
+        v (repair)              v (dev)
+public delivery             separate private evaluator
+acceptance NOT_RUN          acceptance + safety state
 ```
 
 The same core prompt and registered tools apply across tasks. Public issue text,
@@ -82,6 +80,22 @@ these optional results do not replace required checks or establish full coverage
 | `patchloop/repository.py` | Manage isolated workspaces and complete diffs. |
 | `patchloop/sandbox/` | Execute public checks and optional probes within their limits. |
 | `patchloop/verifier/core.py` | Evaluate the submitted artifact separately. |
+
+## Design choices and costs
+
+| Choice | Prevents or makes observable | Tradeoff and executable evidence |
+| --- | --- | --- |
+| Exact replacement of observed tracked text | Edits against unobserved or stale anchors | Restricts file creation and large changes; [mutation tests](../tests/test_dev_mutation_identity_v31.py) |
+| Checks bound to the complete diff | Reusing an earlier candidate's PASS | Rechecking consumes actions/time; [completion tests](../tests/test_dev_completion_v27.py) |
+| Conservative pre-dispatch cost admission | Sending calls without admitted budget | May shorten output before completion; [cost tests](../tests/test_dev_completion_cost.py) |
+| Durable action identity and strict recovery | Reapplying a completed mutation/check | Uncertain external state stops progress; [journal tests](../tests/test_dev_state.py) |
+| Separate public delivery and acceptance | Treating public checks as a correctness certificate | Review/evaluation remains necessary; [repair implementation](../patchloop/repair.py) |
+| Compare unchanged model tests before/after | Counting merely present test code as useful coverage | Limited to safe additive pytest edits; [verifier](../patchloop/repair_verification.py) |
+
+These are implemented contracts, not evidence of better general repair accuracy.
+`repair-verify` is a separate user command and supplies no solver submission credit.
+See the [saved public repair](../examples/saved-repair/README.md) for observed behavior
+and the [evidence map](evidence.md) for the limits of each result.
 
 ## Context, evidence, and recovery
 

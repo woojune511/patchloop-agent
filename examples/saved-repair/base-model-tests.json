@@ -1,0 +1,20 @@
+{
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_main.py",
+    "tests/test_variables.py",
+    "tests/test_parser.py",
+    "--basetemp=/tmp/dotenv-pytest"
+  ],
+  "exit_code": 1,
+  "stdout": "........................................................................ [ 32%]\n................................................................F....... [ 65%]\n........................................................................ [ 98%]\n...                                                                      [100%]\n=================================== FAILURES ===================================\n_________ test_dotenv_values_string_io[env9-a=${b:-d}-True-expected9] __________\n\nenv = {'b': ''}, string = 'a=${b:-d}', interpolate = True, expected = {'a': 'd'}\n\n    @pytest.mark.skipif(\n        sys.platform == \"win32\", reason=\"This test assumes case-sensitive variable names\"\n    )\n    @pytest.mark.parametrize(\n        \"env,string,interpolate,expected\",\n        [\n            # Defined in environment, with and without interpolation\n            ({\"b\": \"c\"}, \"a=$b\", False, {\"a\": \"$b\"}),\n            ({\"b\": \"c\"}, \"a=$b\", True, {\"a\": \"$b\"}),\n            ({\"b\": \"c\"}, \"a=${b}\", False, {\"a\": \"${b}\"}),\n            ({\"b\": \"c\"}, \"a=${b}\", True, {\"a\": \"c\"}),\n            ({\"b\": \"c\"}, \"a=${b:-d}\", False, {\"a\": \"${b:-d}\"}),\n            ({\"b\": \"c\"}, \"a=${b:-d}\", True, {\"a\": \"c\"}),\n            # Defined in file\n            ({}, \"b=c\\na=${b}\", True, {\"a\": \"c\", \"b\": \"c\"}),\n            # Undefined\n            ({}, \"a=${b}\", True, {\"a\": \"\"}),\n            ({}, \"a=${b:-d}\", True, {\"a\": \"d\"}),\n            ({\"b\": \"\"}, \"a=${b:-d}\", True, {\"a\": \"d\"}),\n            # With quotes\n            ({\"b\": \"c\"}, 'a=\"${b}\"', True, {\"a\": \"c\"}),\n            ({\"b\": \"c\"}, \"a='${b}'\", True, {\"a\": \"c\"}),\n            # With surrounding text\n            ({\"b\": \"c\"}, \"a=x${b}y\", True, {\"a\": \"xcy\"}),\n            # Self-referential\n            ({\"a\": \"b\"}, \"a=${a}\", True, {\"a\": \"b\"}),\n            ({}, \"a=${a}\", True, {\"a\": \"\"}),\n            ({\"a\": \"b\"}, \"a=${a:-c}\", True, {\"a\": \"b\"}),\n            ({}, \"a=${a:-c}\", True, {\"a\": \"c\"}),\n            # Reused\n            ({\"b\": \"c\"}, \"a=${b}${b}\", True, {\"a\": \"cc\"}),\n            # Re-defined and used in file\n            ({\"b\": \"c\"}, \"b=d\\na=${b}\", True, {\"a\": \"d\", \"b\": \"d\"}),\n            ({}, \"a=b\\na=c\\nd=${a}\", True, {\"a\": \"c\", \"d\": \"c\"}),\n            ({}, \"a=b\\nc=${a}\\nd=e\\nc=${d}\", True, {\"a\": \"b\", \"c\": \"e\", \"d\": \"e\"}),\n        ],\n    )\n    def test_dotenv_values_string_io(env, string, interpolate, expected):\n        with mock.patch.dict(os.environ, env, clear=True):\n            stream = io.StringIO(string)\n            stream.seek(0)\n    \n            result = dotenv.dotenv_values(stream=stream, interpolate=interpolate)\n    \n>           assert result == expected\nE           AssertionError: assert OrderedDict({'a': ''}) == {'a': 'd'}\nE             \nE             Differing items:\nE             {'a': ''} != {'a': 'd'}\nE             Use -v to get more diff\n\n/workspace/tests/test_main.py:923: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_main.py::test_dotenv_values_string_io[env9-a=${b:-d}-True-expected9]\n1 failed, 218 passed in 0.81s\n",
+  "stderr": "",
+  "duration_ms": 1645,
+  "timed_out": false,
+  "truncated": false
+}

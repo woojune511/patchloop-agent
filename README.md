@@ -8,9 +8,6 @@ public evidence; `dev` also submits it for isolated evaluation. Its reliability 
 binds mutations and checks to exact inputs, and recovers interrupted work without
 silently repeating side effects.
 
-The agent is the product. Sandboxing, cost control, recovery, and evaluation exist
-to make its repairs measurable and trustworthy.
-
 ## What it does
 
 1. Loads a public task and an isolated source workspace.
@@ -54,23 +51,39 @@ tool budgets, zero SDK retries, exact cost admission before dispatch, and
 For public-only tasks, use `patchloop repair --request request.json`; see the
 [executable example and request format](examples/repair/README.md).
 
+## Public repair and verification
+
+```powershell
+patchloop repair --request request.json
+# Save runs[0].delivery.patch.path as returned.patch.
+patchloop repair-verify --request request.json --patch returned.patch --state-root verify-state
+```
+
+Prepare an exact public request, local source and sandbox first; live generation
+requires explicit cost approval. Verification makes no model calls. It runs the
+same added pytest cases on the base and patched implementations and records public
+checks. Unsupported separation remains `UNSUPPORTED`; this is not acceptance or a
+judgment that model-authored expectations match the issue.
+
+See the [request and command example](examples/repair/README.md) and the
+[saved dotenv walkthrough](examples/saved-repair/README.md) with the original patch,
+portable request, sanitized result JSON and source hashes. The demo reuses a closed
+run; it is not live inference or another successful solve.
+
 ## Evidence snapshot
 
-The latest matched development pilot used six checked-in OSS repair tasks, the same
-GPT-5.4 snapshot and resource limits, and one fresh run per task and arm.
+| Evidence | Observed result | Boundary |
+| --- | --- | --- |
+| Lite dev20, 2026-10-02 | 10/20 resolved; USD 5.01124395 | Exposed dev tasks; historical, not Lite test score |
+| dotenv #715 public repair | Implementation + model test; before failure / after pass | One use, acceptance NOT_RUN |
+| Three public uses | All 3 test comparisons passed; code review: 1 candidate, 2 need changes | Automatic verification did not establish patch acceptability |
+| Two Click corrections | Both addressed supplied review feedback | Feedback-informed repair; human approval unreported |
 
-| Configuration | Accepted | Safety | Cost | Active time |
-| --- | ---: | ---: | ---: | ---: |
-| Basic agent | 4/6 | 6/6 PASS | $2.777399 | 1,159.5 s |
-| Current bundle | 5/6 | 6/6 PASS | $3.338190 | 1,431.5 s |
-
-The paired result was one Current win, zero Basic wins, and five ties. Current cost
-20.2% more and used 23.5% more active time. This is a small, single-repeat,
-three-feature comparison—not a general success-rate or causal-improvement claim.
-All current runs are development-only and `official=false`.
-
-See the [full comparison](docs/history/2026-09-28-basic-current-baseline-comparison.md),
-[current status](docs/current-status.md), and [evidence boundaries](docs/evidence.md).
+See [evidence and limitations](docs/evidence.md) and [current status](docs/current-status.md).
+The earlier [Basic/Current 4/6 versus 5/6 pilot](docs/history/2026-09-28-basic-current-baseline-comparison.md)
+is a dated, single-repeat development comparison, not a general improvement claim.
+All current runs are `official=false`. The new dev20 remeasurement is being prepared;
+no new benchmark score or test300 result is available.
 
 ## Try the local loop
 
