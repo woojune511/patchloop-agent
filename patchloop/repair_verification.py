@@ -213,10 +213,11 @@ def verify_repair(request_path: Path, patch_path: Path, *, state_root: Path | No
                 deadline=deadline,
             )
             # Only existing regular files; no renames, binary diffs, modes or new files.
-            tree = run_git(base, "ls-tree", "-r", "HEAD", deadline=deadline).stdout
+            tree = run_git(base, "ls-tree", "-r", "-z", "HEAD", text=False,
+                           deadline=deadline).stdout.decode("utf-8")
             regular = {
                 line.split("\t", 1)[1]
-                for line in tree.splitlines()
+                for line in tree.split("\0") if line
                 if line.startswith(("100644 ", "100755 "))
             }
             if any(path not in regular for path in paths) or re.search(

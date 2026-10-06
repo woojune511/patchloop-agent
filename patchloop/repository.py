@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import codecs
 import os
 import re
 import shutil
@@ -65,7 +66,32 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/tobymao/sqlglot.git",
     "https://github.com/tobymao/sqlglot",
 }
-_PATCH_PATH = re.compile(r"^diff --git a/(.+) b/(.+)$", re.MULTILINE)
+_QUOTED_GIT_PATH = re.compile(r'"(?:[^"\\]|\\(?:[abfnrtv"\\]|[0-7]{3}))*"')
+
+
+def _decode_git_path(value: str) -> str:
+    """Git quotes UTF-8 bytes using C escapes, including octal byte sequences."""
+    if value.startswith('"'):
+        if _QUOTED_GIT_PATH.fullmatch(value) is None:
+            raise ValueError("invalid quoted Git path")
+        return codecs.escape_decode(value[1:-1].encode("utf-8"))[0].decode("utf-8")
+    if '"' in value:
+        raise ValueError("invalid unquoted Git path")
+    return value
+
+
+def _parse_numstat(output: str) -> tuple[list[str], int, int]:
+    """Read Git's NUL-delimited paths without interpreting filename escapes."""
+    records = iter(output.split("\0")[:-1])
+    paths: list[str] = []
+    added = deleted = 0
+    for record in records:
+        add_text, delete_text, path = record.split("\t", 2)
+        # A rename has an empty third field followed by two separate path records.
+        paths.extend([path] if path else [next(records), next(records)])
+        added += int(add_text) if add_text.isdigit() else 0
+        deleted += int(delete_text) if delete_text.isdigit() else 0
+    return list(dict.fromkeys(paths)), added, deleted
 
 
 @dataclass(frozen=True)
@@ -409,14 +435,29 @@ class WorkspaceManager:
             text = patch.decode("utf-8")
         except UnicodeDecodeError as exc:
             raise ContractError("submitted patch is not UTF-8") from exc
-        matches = _PATCH_PATH.findall(text)
-        if not matches:
-            raise ContractError("submitted patch contains no Git diff paths")
         paths: list[str] = []
-        for before, after in matches:
-            if before != after:
+        for line in text.split("\n"):
+            if line.startswith(("rename from ", "rename to ", "copy from ", "copy to ")):
                 raise ContractError("submitted patch renames are unsupported")
-            paths.append(safe_relative_path(after, field_name="submitted patch path"))
+            if not line.startswith("diff --git "):
+                continue
+            header = line.removeprefix("diff --git ").removesuffix("\r")
+            candidates = []
+            # Spaces (even ' b/') can belong to unquoted filenames. A supported
+            # edit has equal decoded paths, which identifies the actual separator.
+            for separator in re.finditer(" ", header):
+                try:
+                    before = _decode_git_path(header[:separator.start()])
+                    after = _decode_git_path(header[separator.end():])
+                except (ValueError, UnicodeDecodeError):
+                    continue
+                if before.startswith("a/") and after.startswith("b/") and before[2:] == after[2:]:
+                    candidates.append(before[2:])
+            if len(candidates) != 1:
+                raise ContractError("submitted patch renames are unsupported or paths are invalid")
+            paths.append(safe_relative_path(candidates[0], field_name="submitted patch path"))
+        if not paths:
+            raise ContractError("submitted patch contains no Git diff paths")
         return sorted(set(paths))
 
     @staticmethod
@@ -443,7 +484,8 @@ class WorkspaceManager:
                 )
                 if completed.returncode:
                     raise ContractError("candidate Git preview failed")
-                return completed.stdout.decode("utf-8").replace("\r\n", "\n")
+                output = completed.stdout.decode("utf-8")
+                return output if "-z" in args else output.replace("\r\n", "\n")
 
             git("read-tree", "HEAD")
             git("add", "-u", "--", ".")
@@ -459,14 +501,8 @@ class WorkspaceManager:
             blob = git("hash-object", "-w", "--stdin", f"--path={normalized}", content=after_bytes)
             git("update-index", "--cacheinfo", mode, blob.strip(), normalized)
             candidate = git("diff", "--cached", "HEAD", "--no-ext-diff", "--binary")
-            numstat = git("diff", "--cached", "HEAD", "--numstat")
-            changed: list[str] = []
-            added = deleted = 0
-            for line in numstat.splitlines():
-                add_text, delete_text, changed_path = line.split("\t", 2)
-                changed.append(changed_path.replace("\\", "/"))
-                added += int(add_text) if add_text.isdigit() else 0
-                deleted += int(delete_text) if delete_text.isdigit() else 0
+            numstat = git("diff", "--cached", "HEAD", "--numstat", "-z")
+            changed, added, deleted = _parse_numstat(numstat)
             return DiffSummary(
                 changed, added, deleted, candidate,
                 WorkspaceManager.untracked_files(workspace, deadline=deadline),
@@ -519,16 +555,10 @@ class WorkspaceManager:
             "--binary",
             deadline=deadline,
         ).stdout
-        numstat = _git(workspace, "diff", "HEAD", "--numstat", deadline=deadline).stdout
-        changed_files: list[str] = []
-        added = deleted = 0
-        for line in numstat.splitlines():
-            add_text, delete_text, path = line.split("\t", 2)
-            changed_files.append(path.replace("\\", "/"))
-            if add_text.isdigit():
-                added += int(add_text)
-            if delete_text.isdigit():
-                deleted += int(delete_text)
+        numstat = run_git(
+            workspace, "diff", "HEAD", "--numstat", "-z", text=False, deadline=deadline,
+        ).stdout.decode("utf-8")
+        changed_files, added, deleted = _parse_numstat(numstat)
         return DiffSummary(
             changed_files,
             added,

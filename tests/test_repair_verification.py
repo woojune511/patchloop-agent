@@ -102,6 +102,35 @@ def make_patch(project, test_source=None, implementation=FIXED_SOURCE, extras=No
     return patch
 
 
+def test_verification_accepts_git_quoted_utf8_paths(project):
+    request, source = project
+    run_git(source, "config", "core.quotepath", "true")
+    run_git(source, "mv", "sample.py", "café.py")
+    test_path = source / "tests/test_sample.py"
+    original_tests = BASE_TEST.replace("from sample import", "from café import")
+    test_path.write_text(original_tests, encoding="utf-8")
+    run_git(source, "add", ".")
+    run_git(source, "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+            "commit", "-qm", "Unicode fixture")
+    public_path = request.parent / "public.yaml"
+    task = yaml.safe_load(public_path.read_text())
+    task["repository"]["base_commit"] = run_git(source, "rev-parse", "HEAD").stdout.strip()
+    public_path.write_text(yaml.safe_dump(task))
+    (source / "café.py").write_text(FIXED_SOURCE, encoding="utf-8")
+    test_path.write_text(original_tests.replace(
+        '({"b": "c"}, "c")', '({"b": "c"}, "c"), ({"b": ""}, "d")',
+    ), encoding="utf-8")
+    patch = request.parent / "unicode.patch"
+    patch.write_bytes(run_git(source, "diff", "--binary", text=False).stdout)
+    run_git(source, "restore", ".")
+    result = verification.verify_repair(request, patch)
+    assert result["status"] == "COMPLETE", result
+    assert result["changed_files"] == ["café.py", "tests/test_sample.py"]
+    assert result["comparison"]["status"] == "OBSERVED_FAIL_THEN_PASS"
+    assert result["model_calls"] == 0
+    assert not run_git(source, "status", "--porcelain").stdout
+
+
 @pytest.mark.parametrize("added_case", [
     '({"b": ""}, "d")',
     'pytest.param({"b": ""}, "d", id="empty-fallback")',

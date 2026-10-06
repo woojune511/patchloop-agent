@@ -178,9 +178,15 @@ class DevJournal:
         events: list[dict[str, Any]] = []
         previous_hash: str | None = None
         try:
-            lines = self.path.read_text(encoding="utf-8").splitlines()
+            text = self.path.read_bytes().decode("utf-8")
         except (OSError, UnicodeDecodeError) as exc:
             raise RecoveryError("development journal is unreadable") from exc
+        if not text:
+            return []
+        if not text.endswith("\n"):
+            raise RecoveryError("development journal contains invalid JSONL")
+        # Only LF frames records; Unicode line separators are valid JSON string data.
+        lines = text[:-1].split("\n")
         for expected_sequence, line in enumerate(lines, start=1):
             try:
                 event = json.loads(line)

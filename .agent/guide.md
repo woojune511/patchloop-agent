@@ -51,13 +51,11 @@ The only runtime is mutable `dev-head`; every run is `official=false`.
 Public gates are `needs_mutation`, `needs_visible_checks`, and `ready_to_submit`.
 The current gate and resource horizon expose registered tools, never unrestricted shell.
 
-`replace_text` scalar constraints come from `TextReplacementIntent` and
-`CausalRevision`; the provider projection in `dev/tools.py` selects public fields
-explicitly. Keep provider-required presence and nullable revision shape separate from
-internal recovery defaults, and retain the existing provider keyword order.
-Recovery-only annotations stay unadvertised, and their
-absent-versus-explicit serialization remains unchanged. Schema field constraints do
-not replace cross-field validators, observed-anchor checks or mutation scope admission.
+`replace_text` constraints derive from `TextReplacementIntent` and `CausalRevision`.
+The `dev/tools.py` projection selects public fields explicitly. Preserve provider
+required/null rules, keyword order and recovery defaults. Recovery annotations stay
+unadvertised with unchanged absent-versus-explicit serialization. Retain cross-field
+validation, observed anchors and mutation scope admission.
 
 A response contains 1–4 parallel `read_file`/`search_files` calls, or exactly one
 `replace_text`, `run_check`, enabled `run_tests`/`run_probe`, `finish_task`, or `stop_task`.
@@ -74,13 +72,14 @@ characters in both the public schema and internal contract). The gateway binds
 the contiguous observed anchor, creates the canonical full diff, enforces complete-diff
 scope, and restores the pre-image on rejection. Do not substitute fuzzy matching,
 unobserved source, new paths, or model-selected mutation evidence IDs.
+Decode Git-quoted paths and NUL-delimited inventories without changing diff bytes.
 Retired requirement/case annotations remain for exact legacy recovery, not fresh requests.
 
-A repair invalidates checks for the prior diff. Submission requires a nonempty tracked
-diff and every registered required check passing on that exact diff. Optional tests/probes
-do not supply required-check credit. Passing checks establish their observed results,
-not complete semantic coverage. Preserve pre-state, submitted-candidate, and incremental
-patch identities separately; replayed results retain action-time identities.
+Edits invalidate prior-diff checks. Submission requires a nonempty tracked diff and
+all required checks passing on that exact diff. Optional tests/probes earn no required-check
+credit. PASS is observed evidence, not complete semantic coverage. Preserve pre-state,
+submitted-candidate and incremental patch identities; replay retains action-time identities.
+Visible-check IDs must be unique at task admission.
 
 The scheduler reserves the minimum completion path and bounded recovery opportunities.
 Forecast model calls and tool actions separately: an eligible automatic required-check
@@ -116,8 +115,9 @@ envelopes. Mutations/checks preserve `action_id + input_hash`: replay completed 
 reject conflicting reuse, reconcile admitted mutations after crashes instead of
 applying them twice. Do not rewrite journals, old envelopes, or prior native outputs.
 Reads and appends share the reentrant process lock; only append takes a file lock.
-Append returns only after complete writes and fsync. Write/sync errors propagate;
-torn tails remain untouched and block replay/append. Failed sync is not durability.
+Append returns only after complete writes and fsync. Write/sync errors propagate.
+Only LF separates records. Preserve Unicode string data; torn tails, including a
+missing final LF, block replay/append without rewriting bytes. Failed sync is not durability.
 Resume requires repeat=1, exact envelope-bound settings/identities, and the run lock.
 Pre-envelope runs cannot resume. Preserve settled usage, counters, and active deadlines.
 The offline [observation-exposure fork](observation-exposure.md) retains parent

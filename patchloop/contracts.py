@@ -160,6 +160,10 @@ class PublicTask(StrictModel):
 
     @model_validator(mode="after")
     def bind_probe_profiles_to_v2(self) -> PublicTask:
+        if self.schema_version in {"task-public-v1", "task-public-v2"}:
+            check_ids = [check.id for check in self.visible_checks]
+            if len(check_ids) != len(set(check_ids)):
+                raise ValueError("visible check IDs must be unique")
         if self.schema_version == "task-public-v1" and "probe_profiles" in self.model_fields_set:
             raise ValueError("probe_profiles requires task-public-v2")
         if self.schema_version == "task-public-v2" and not self.probe_profiles:

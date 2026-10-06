@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import errno
+import json
 import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -11,6 +12,41 @@ from patchloop.dev.contracts import DevToolResult
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ActionConflict, RecoveryError
 from patchloop.util import canonical_json
+
+
+@pytest.mark.parametrize("separator", ["\u0085", "\u2028", "\u2029"])
+def test_action_result_preserves_unicode_line_separators(tmp_path, separator) -> None:
+    journal = DevJournal(tmp_path, "run_dev_unicode")
+    first = journal.append("run_started")
+    result = DevToolResult(
+        action_id="check-1",
+        input_hash="sha256:input-a",
+        tool="run_check",
+        status="succeeded",
+        output={"stdout": f"before{separator}after", "stderr": f"error{separator}detail"},
+    )
+    second = journal.append("action_finished", {
+        "action_id": result.action_id,
+        "input_hash": result.input_hash,
+        "result": result.model_dump(mode="json"),
+    })
+    retained = journal.path.read_bytes()
+    assert separator.encode("utf-8") in retained
+    reopened = DevJournal(tmp_path, journal.run_id)
+    assert reopened.events() == [first, second]
+    replay = reopened.action_result(result.action_id, result.input_hash)
+    assert replay == result.model_copy(update={"replayed": True})
+    third = reopened.append("observation", {"text": "continued"})
+    assert reopened.path.read_bytes().startswith(retained)
+    assert reopened.events() == [first, second, third]
+
+
+def test_empty_journal_can_start_a_hash_chain(tmp_path) -> None:
+    journal = DevJournal(tmp_path, "run_dev_empty")
+    journal.path.touch()
+    assert journal.events() == []
+    first = journal.append("run_started")
+    assert journal.events() == [first]
 
 
 @pytest.mark.parametrize("fail_write", [False, True])
@@ -133,6 +169,47 @@ def test_journal_write_failure_preserves_bytes_and_rejects_torn_tail(
         assert journal.path.read_bytes() == prefix + suffix
     else:
         assert reopened.events() == [first]
+
+
+@pytest.mark.parametrize("failure", ["zero", "disk_full"])
+def test_journal_rejects_complete_json_without_final_lf(tmp_path, monkeypatch, failure) -> None:
+    journal = DevJournal(tmp_path, "run_dev_missinglf")
+    journal.append("run_started")
+    prefix = journal.path.read_bytes()
+    write = os.write
+    suffix = b""
+    calls = 0
+
+    def fail_final_lf(descriptor, data):
+        nonlocal calls, suffix
+        calls += 1
+        if calls == 1:
+            suffix = bytes(data[:-1])
+            assert json.loads(suffix)["event_type"] == "observation"
+            return write(descriptor, suffix)
+        assert calls == 2 and bytes(data) == b"\n"
+        if failure == "zero":
+            return 0
+        raise OSError(errno.ENOSPC, "injected disk full")
+
+    def unexpected_sync(descriptor):
+        pytest.fail("an incomplete record must not reach fsync")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(os, "write", fail_final_lf)
+        patch.setattr(os, "fsync", unexpected_sync)
+        with pytest.raises(OSError) as raised:
+            journal.append("observation", {"text": "incomplete framing"})
+
+    assert raised.value.errno == (errno.EIO if failure == "zero" else errno.ENOSPC)
+    retained = prefix + suffix
+    assert journal.path.read_bytes() == retained
+    reopened = DevJournal(tmp_path, journal.run_id)
+    with pytest.raises(RecoveryError, match="invalid JSONL"):
+        reopened.events()
+    with pytest.raises(RecoveryError, match="invalid JSONL"):
+        reopened.append("observation", {"text": "must not concatenate records"})
+    assert journal.path.read_bytes() == retained
 
 
 def test_journal_sync_failure_is_reported_without_rewriting_record(tmp_path, monkeypatch) -> None:
