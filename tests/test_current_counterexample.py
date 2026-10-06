@@ -456,3 +456,112 @@ def test_first_request_normalization_changes_only_clock_and_segment_identity():
     value["input"][-1]["content"] = canonical_json({"state": projected})
     value["timeout"] = 12
     assert value == original == request
+
+
+@pytest.fixture
+def lifecycle_case(tmp_path, monkeypatch):
+    source_root = tmp_path / "prior"
+    task_root = tmp_path / "task"
+    calibration_root = tmp_path / "calibration"
+    for directory in (source_root, task_root, calibration_root):
+        directory.mkdir()
+    public = task_root / "public.yaml"
+    public.write_text("synthetic public task", encoding="utf-8")
+    source = Source(source_root, "run_dev_fixture", "sha256:journal", "sha256:envelope",
+                    public, sha256_bytes(public.read_bytes()))
+    env_file = tmp_path / "unused.env"
+    case = {"source": source.record(), "cut_sequence": 5, "target_action_id": "original-probe",
+            "calibration": {"path": str(calibration_root / "receipt.json"),
+                            "hash": "sha256:calibration"}}
+    old = SimpleNamespace(
+        model="gpt-5.4-mini-2026-03-17", probe_dependencies=None,
+        credential_file_path_hash=sha256_bytes(str(env_file.resolve()).encode()),
+        task_content_hash="sha256:task", public_spec_hash="sha256:public",
+        prepared_source_path=str(source_root / "prepared"),
+        prepared_probe_dependencies_path=str(source_root / "dependencies"),
+    )
+    monkeypatch.setattr(diagnostic, "load_calibration", lambda _: (calibration(), old))
+    monkeypatch.setattr(diagnostic, "local_task", lambda _: public)
+    monkeypatch.setattr(diagnostic.DevJournal, "load_envelope", lambda _: old)
+    monkeypatch.setattr(runner, "_runtime_hash", lambda: "sha256:runtime")
+    monkeypatch.setattr(diagnostic.exposure, "implementation_hash", lambda: "sha256:code")
+    monkeypatch.setattr(diagnostic, "git_commit", lambda: "a" * 40)
+    monkeypatch.setattr(runner, "_require_tracked_clean_paths", lambda *_: None)
+    return case, env_file
+
+
+def test_real_controls_admit_created_group_root_for_both_rows_and_reject_recollection(
+    tmp_path, monkeypatch, lifecycle_case,
+):
+    case, env_file = lifecycle_case
+    result_root = tmp_path / "live"
+    plan = diagnostic.controls(case, env_file, result_root)
+    packet = tmp_path / "plan"
+    packet.mkdir()
+    first_inputs = {arm: {"synthetic_first_request": arm} for arm in diagnostic.ORDER}
+    plan["first_request_hashes"] = {arm: sha256_json(value)
+                                    for arm, value in first_inputs.items()}
+    for arm, value in first_inputs.items():
+        (packet / f"{arm}-first.json").write_text(canonical_json(value), encoding="utf-8")
+    manifest = packet / "manifest.json"
+    manifest.write_text(canonical_json(plan), encoding="utf-8")
+    approved_hash = sha256_bytes(manifest.read_bytes())
+    admitted, rows = [], []
+
+    def check_environment(local_plan, selected_env):
+        assert result_root.is_dir()
+        assert local_plan["source"]["public_path"] == plan["task"]
+        assert selected_env == env_file
+        admitted.append(len(rows))
+        return {"status": "READY"}
+
+    def run_row(_, arm, row_root, *__):
+        assert row_root.parent == result_root and result_root.is_dir()
+        rows.append(arm)
+        return {"row": arm, "status": "EXECUTED", "billing_known": True,
+                "new_cost_nanos": 0, "stop_remaining": False,
+                "result": {"terminal": "AGENT_STOPPED"}}
+
+    monkeypatch.setattr(diagnostic.live, "check_environment", check_environment)
+    monkeypatch.setattr(diagnostic, "run_row", run_row)
+    monkeypatch.setattr(diagnostic, "audit_candidate", lambda *_: {"verdict": "NOT_RUN"})
+    # Keep controls, environment, validate and collect real: root creation precedes admission.
+    result = diagnostic.collect(manifest, approved_hash, Decimal("2.40"))
+    assert rows == ["A", "B"] and admitted == [0, 1], result
+    assert result["stop_reason"] is None and result["new_cost_nanos"] == 0
+    journal = DevJournal(result_root, "run_dev_currentcounterexample")
+    preserved = journal.path.read_bytes()
+    with pytest.raises(ContractError, match="fresh output|no resume"):
+        diagnostic.collect(manifest, approved_hash, Decimal("2.40"))
+    assert rows == ["A", "B"] and admitted == [0, 1]
+    assert journal.path.read_bytes() == preserved
+
+
+@pytest.mark.parametrize("protected", ["source", "task", "calibration", "repository"])
+def test_real_controls_reject_protected_path_overlap(lifecycle_case, protected):
+    case, env_file = lifecycle_case
+    targets = {
+        "source": Path(case["source"]["root"]),
+        "task": Path(case["source"]["public_path"]).parent,
+        "calibration": Path(case["calibration"]["path"]).parent,
+        "repository": diagnostic.repository_root(),
+    }
+    forbidden = targets[protected] / "forbidden-diagnostic-output"
+    assert not forbidden.exists()
+    with pytest.raises(ContractError, match="overlaps protected"):
+        diagnostic.controls(case, env_file, forbidden)
+    assert not forbidden.exists()
+
+
+def test_prepare_rejects_existing_result_root_before_preview(tmp_path, monkeypatch, lifecycle_case):
+    case, env_file = lifecycle_case
+    result_root = tmp_path / "used"
+    result_root.mkdir()
+    marker = result_root / "keep.txt"
+    marker.write_text("prior evidence", encoding="utf-8")
+    monkeypatch.setattr(diagnostic, "preview", lambda *_: pytest.fail("preview forbidden"))
+    output = tmp_path / "preparation"
+    with pytest.raises(ContractError, match="result root|fresh output"):
+        diagnostic.prepare(case, env_file, result_root, output)
+    assert marker.read_text(encoding="utf-8") == "prior evidence"
+    assert not output.exists()

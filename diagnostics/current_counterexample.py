@@ -56,6 +56,14 @@ def normalized(request_value):
     return value
 
 
+def require_disjoint_paths(root, protected):
+    """Validate immutable path boundaries, including after the run root is created."""
+    root = root.resolve()
+    require(all(not root.is_relative_to(path.resolve())
+                and not path.resolve().is_relative_to(root) for path in protected),
+            "result root overlaps protected source")
+
+
 def load_calibration(case):
     require(set(case) == {"source", "cut_sequence", "target_action_id", "calibration"},
             "unexpected case fields")
@@ -160,8 +168,8 @@ def controls(case, env_file, result_root):
     require(sha256_bytes(str(env_file.resolve()).encode()) == old.credential_file_path_hash,
             "credential path changed")
     source = Source.from_record(case["source"])
-    disjoint(result_root.resolve(), (repository_root(), source.root, source.public_path.parent,
-                                    Path(case["calibration"]["path"]).parent))
+    require_disjoint_paths(result_root, (repository_root(), source.root, source.public_path.parent,
+                                        Path(case["calibration"]["path"]).parent))
     plan = {"schema": "current-counterexample-v1", "official": False,
             "paid_execution_authorized": False, "case": case, "source": case["source"],
             "task": str(local_task(old)),
@@ -194,7 +202,12 @@ def environment(plan):
         local = {**plan, "source": {**plan["source"], "public_path": plan["task"]}}
         return live.check_environment(local, Path(plan["env_file"]))
     except Exception as exc:
-        return {"status": "PREFLIGHT_FAILED", "error_type": type(exc).__name__}
+        result = {"status": "PREFLIGHT_FAILED", "error_type": type(exc).__name__}
+        if isinstance(exc, ContractError) and str(exc) in {
+            "result root overlaps protected source", "frozen controls changed before row admission",
+        }:
+            result["error"] = str(exc)
+        return result
 
 
 def run_seeded(plan, arm, root):
@@ -237,6 +250,7 @@ def prepare(case, env_file, result_root, output):
                                Path(case["source"]["root"]),
                                Path(case["calibration"]["path"]).parent))
     require(not result_root.exists(), "result root already used")
+    require(result_root.parent.is_dir(), "result root parent must already exist")
     output.mkdir()
     journal, store = DevJournal(output, "run_dev_counterexamplepreparation"), ArtifactStore(output)
     requests = {arm: preview(plan, arm, output / arm) for arm in ORDER}
@@ -369,8 +383,8 @@ def collect(manifest_path, approved_hash, approved_cap_usd):
     require(usd_to_nanos(approved_cap_usd) == usd_to_nanos(CAP), "exact new USD 2.40 required")
     plan = validate(manifest_path, approved_hash)
     root = Path(plan["result_root"])
-    disjoint(root.resolve(), (manifest_path.parent.resolve(),))
     require(not root.exists(), "result root already used; no resume")
+    disjoint(root.resolve(), (manifest_path.parent.resolve(),))
     root.mkdir()
     journal = DevJournal(root, "run_dev_currentcounterexample")
     rows, known, spent, stop = [], True, 0, None
