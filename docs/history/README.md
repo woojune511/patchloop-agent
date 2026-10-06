@@ -7,12 +7,11 @@
 
 ## Records
 
-- [Source retention comparison](2026-10-06-source-retention-results.md).
+- Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
 - [Closure](2026-10-06-verification-closure-results.md).
 - [Dev20](2026-10-06-current-dev20-results.md).
 - Portfolio: [prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md).
-- [Corrections](2026-10-05-click-feedback-results.md).
-- [Review](2026-10-05-original-patch-review.md).
+- [Corrections](2026-10-05-click-feedback-results.md), [review](2026-10-05-original-patch-review.md).
 - [Three uses](2026-10-05-three-public-repair-uses.md).
 - [Verification](2026-10-05-repair-verification.md).
 - [Dotenv](2026-10-05-dotenv-public-repair.md).
@@ -89,8 +88,7 @@
   HF imports, matched-cost comparison and first-plan scope reduction.
 - [diagnostic claims verification](2026-09-26-diagnostic-claims-verification.md):
   input audits, four public probes and causal limits.
-- [completion advice comparison](2026-09-26-completion-status-comparison.md):
-  four runs, extra P-B reading and unchanged acceptance after advice removal.
+- [completion advice comparison](2026-09-26-completion-status-comparison.md).
 - [first-input completion advice diagnostic](2026-09-26-completion-status-diagnostic.md).
 - [Verification scope audit](2026-09-26-verification-scope-audit.md).
 - [Paired-reference comparison](2026-09-26-paired-reference-comparison.md).

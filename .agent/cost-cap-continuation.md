@@ -1,5 +1,9 @@
 # Cost-cap continuation
 
+CLOSED: both continuations submitted and failed registered/native/public checks;
+additional USD 0.21352020. See the [results](../docs/history/2026-10-06-cost-cap-continuation-results.md).
+No further paid continuation is queued.
+
 `diagnostics/cost_cap_continuation.py` prepares an unhinted continuation from the
 last unexecuted prepared request of a settled `COST_CAP_REACHED` run. Ordinary
 resume and closed experiment results remain unchanged. This is supplementary
@@ -27,12 +31,12 @@ or identity uncertainty. A settled row-local cost stop does not reopen funds.
 No automatic second continuation is allowed. Registered evaluation follows an
 actual finish; native and operator-public assessments remain separate afterward.
 
-Current proposal: the two 48k SQLFluff rows 3/5 under `C:/pt/sretlive01`, each once,
+Executed scope: the two 48k SQLFluff rows 3/5 under `C:/pt/sretlive01`, each once,
 same `tasks/dev-train/current-dev20/18/public.yaml`, gpt-5.4-mini-2026-03-17/xhigh,
-25,000 output ceiling, repository `.env`. Propose USD 1.20 additional per row,
+25,000 output ceiling, repository `.env`. Approved USD 1.20 additional per row,
 USD 2.40 total. Preserve their remaining 4/7 model calls and approximately
 430/367 solver seconds, with 330 evaluation seconds each. At the registered
 60k-input/25k-output maxima, seven mini calls reserve at most USD 1.1025;
 therefore USD 1.20 covers those calls without increasing any other limit.
-Paid execution is not authorized by preparation. Completion and correctness
-after extra budget are unresolved; neither outcome revises the original 8 rows.
+Preparation alone does not authorize paid execution. The user approved this
+allocation afterward; both failures remain separate from the original eight rows.
