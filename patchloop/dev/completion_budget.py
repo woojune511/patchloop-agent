@@ -21,6 +21,8 @@ class CompletionState:
     remaining_mutations: int
     mutation_retry_available: bool
     repair_read_credit: bool = False
+    automatic_recheck: bool = False
+    current_recheck_eligible: bool = False
 
 
 @dataclass(frozen=True)
@@ -31,13 +33,17 @@ class CompletionBudget:
     mutation_retry_reserve: int
     check_recovery_reserve: int
     current_read_reserve: int
+    minimum_tool_actions: int
+    protected_tool_actions: int
+    check_recovery_tool_actions: int
 
 
 def completion_budget(state: CompletionState) -> CompletionBudget:
     """Count a completion path and its bounded failures without assuming check order.
 
     A protected failed check may occur last, require one inspection and one repair,
-    and invalidate every earlier PASS. Its worst-case incremental cost is N + 2.
+    and invalidate every earlier PASS. Its incremental cost is N + 2 tool actions.
+    An enabled automatic recheck saves one model call, never its tool action.
     IDs remain eligibility evidence; no cheap declaration-order subset is selected.
     """
 
@@ -60,7 +66,12 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
         state.mutation_retry_available
         and (state.requires_mutation or future_failures > 0)
     )
-    check_recovery = future_failures * (state.check_count + 2)
+    minimum_tools = minimum
+    minimum -= int(
+        state.automatic_recheck and state.current_recheck_eligible and state.requires_mutation
+    )
+    check_recovery_tools = future_failures * (state.check_count + 2)
+    check_recovery = check_recovery_tools - future_failures * int(state.automatic_recheck)
     return CompletionBudget(
         minimum=minimum,
         protected=minimum + current_read + mutation_retry + check_recovery,
@@ -68,6 +79,9 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
         mutation_retry_reserve=mutation_retry,
         check_recovery_reserve=check_recovery,
         current_read_reserve=current_read,
+        minimum_tool_actions=minimum_tools,
+        protected_tool_actions=minimum_tools + current_read + mutation_retry + check_recovery_tools,
+        check_recovery_tool_actions=check_recovery_tools,
     )
 
 

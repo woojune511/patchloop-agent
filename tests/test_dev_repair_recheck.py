@@ -243,8 +243,13 @@ def test_opt_in_end_to_end_default_unchanged(tmp_path, monkeypatch, enabled):
     if enabled:
         assert contexts[-1]["repair_recheck"]["last_result"]["passed"] is True
         assert contexts[-1]["remaining_budget"]["tool_actions"] == 94
+        assert all("completion_budget_tool_actions" in row["action_horizon"] for row in contexts)
+        assert any(row["action_horizon"]["completion_budget_calls"]
+                   < row["action_horizon"]["completion_budget_tool_actions"] for row in contexts)
     else:
         assert all("repair_recheck" not in row for row in contexts)
+        assert all("completion_budget_tool_actions" not in row["action_horizon"]
+                   for row in contexts)
     before = journal.path.read_bytes()
     resumed = runner.run_dev(request.model_copy(update={"resume_run_id": result["run_id"]}))
     assert resumed["runs"][0] == result

@@ -236,7 +236,8 @@ def rebuild(loaded, output: Path):
         counters = runner._restore_counters(journal)
         projection = gateway.prepare_context_projection(latest_results=latest)
         snapshot = gateway.state_snapshot(projection=projection)
-        policy = runner._tool_policy(gateway, counters, envelope.limits, snapshot=snapshot)
+        policy = runner._tool_policy(gateway, counters, envelope.limits, snapshot=snapshot,
+                                     repair_recheck=envelope.repair_recheck)
         context = json.loads(runner._build_context(
             package=SimpleNamespace(public=loaded.public), gateway=gateway, journal=journal,
             correction=None, latest_tool_results=latest, counters=counters,

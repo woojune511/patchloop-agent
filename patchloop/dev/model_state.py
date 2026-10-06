@@ -158,6 +158,7 @@ def compact_model_state(
     if "action_horizon" in view:
         view["action_horizon"] = _select(view["action_horizon"], (
             "minimum_completion_calls", "completion_budget_calls", "completion_possible",
+            "minimum_completion_tool_actions", "completion_budget_tool_actions",
             "protected_completion_possible", "mutation_completion_horizon", "exploration_state",
             "repair_inspection",
             "model_turns_available_for_exploration", "tool_actions_available_for_exploration",

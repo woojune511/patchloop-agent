@@ -94,7 +94,11 @@ from patchloop.dev.native_sources import (
 )
 from patchloop.dev.probe_observation import probe_observation, project_probe_result
 from patchloop.dev.public_history import NATIVE
-from patchloop.dev.repair_recheck import repair_recheck_context, select_repair_recheck
+from patchloop.dev.repair_recheck import (
+    latest_repair_check,
+    repair_recheck_context,
+    select_repair_recheck,
+)
 from patchloop.dev.state import DevJournal
 from patchloop.dev.test_selection import recent_tests
 from patchloop.dev.tools import (
@@ -204,6 +208,12 @@ class _ToolPolicy:
     inspection_reserve_calls: int = 0
     inspection_released_check_recovery_calls: int = 0
     completion_cost: dict[str, Any] | None = None
+    repair_recheck: bool = False
+    minimum_completion_tool_actions: int = 0
+    completion_budget_tool_actions: int = 0
+    optional_mutation_completion_tool_actions: int = 0
+    optional_mutation_protected_tool_actions: int = 0
+    inspection_reserve_tool_actions: int = 0
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -662,6 +672,7 @@ def _tool_policy(
     *,
     snapshot: DevGatewayStateSnapshot | None = None,
     repair_inspection_policy: str = "protected-v1",
+    repair_recheck: bool = False,
     cost_ledger: DevCostLedger | None = None,
     completion_cost_policy: str = DEFAULT_COMPLETION_COST_POLICY,
     _preview_inspection: bool = True,
@@ -726,6 +737,13 @@ def _tool_policy(
         and counters.failed_check_pending
         and not counters.failed_check_repair_read_used
     )
+    current_recheck_eligible = bool(
+        repair_recheck and current_check_failed and getattr(gateway, "journal", None) is not None
+        and latest_repair_check(
+            gateway.journal.events(), baseline=summary.patch_hash,
+            registered_checks={check.id for check in gateway.public_task.visible_checks},
+        ) is not None
+    )
     completion_state = CompletionState(
         check_count=len(gateway.public_task.visible_checks),
         remaining_check_count=len(remaining_check_ids),
@@ -736,17 +754,19 @@ def _tool_policy(
         remaining_mutations=remaining_mutations,
         mutation_retry_available=not counters.mutation_recovery_used,
         repair_read_credit=repair_read_credit,
+        automatic_recheck=repair_recheck,
+        current_recheck_eligible=current_recheck_eligible,
     )
     budget = completion_budget(completion_state)
     completion_possible = (
         remaining_model_calls >= budget.minimum
-        and remaining_tool_actions >= budget.minimum
+        and remaining_tool_actions >= budget.minimum_tool_actions
         and (not requires_mutation or mutation_capacity)
     )
     protected_completion_possible = (
         completion_possible
         and remaining_model_calls >= budget.protected
-        and remaining_tool_actions >= budget.protected
+        and remaining_tool_actions >= budget.protected_tool_actions
     )
 
     # An inspection can spend its reserved repair credit, or acquire a missing
@@ -764,6 +784,11 @@ def _tool_policy(
         if required_inspection and not protected_completion_possible
         else inspection_budget.protected
     )
+    inspection_tool_floor = (
+        inspection_budget.minimum_tool_actions
+        if required_inspection and not protected_completion_possible
+        else inspection_budget.protected_tool_actions
+    )
     # On an observed current failure, the opt-in policy can spend speculative
     # future-check recovery on inspection. Keep the full forecast for all other
     # actions; a later failed check is no longer guaranteed a recovery path.
@@ -776,7 +801,8 @@ def _tool_policy(
     ):
         released_check_recovery = inspection_budget.check_recovery_reserve
         inspection_floor -= released_check_recovery
-    inspection_tool_slack = remaining_tool_actions - inspection_floor
+        inspection_tool_floor -= inspection_budget.check_recovery_tool_actions
+    inspection_tool_slack = remaining_tool_actions - inspection_tool_floor
     inspection_model_slack = remaining_model_calls - inspection_floor
     inspection_allowed = (
         completion_possible
@@ -808,14 +834,14 @@ def _tool_policy(
             requires_mutation
             or (
                 remaining_model_calls >= optional_mutation_completion_calls
-                and remaining_tool_actions >= optional_mutation_completion_calls
+                and remaining_tool_actions >= mutation_budget.minimum_tool_actions
             )
         )
     )
     mutation_protected_completion_possible = (
         mutation_allowed
         and remaining_model_calls >= optional_mutation_protected_calls
-        and remaining_tool_actions >= optional_mutation_protected_calls
+        and remaining_tool_actions >= mutation_budget.protected_tool_actions
     )
     allowed = {"stop_task"}
     available_check_ids = unrun_checks
@@ -832,37 +858,42 @@ def _tool_policy(
         # On a baseline that already requires repair, a diagnostic check is
         # optional work and must leave the whole protected repair path intact.
         if requires_mutation:
-            check_successor_floors = {
-                check_id: max(
-                    budget.protected,
-                    completion_budget(replace(
+            check_successor_budgets = {
+                check_id: completion_budget(replace(
                         completion_state,
                         unused_check_count=(completion_state.unused_check_count
                                             - int(check_id in unused_check_ids)),
                         repair_read_credit=True,
-                    )).protected,
-                )
+                        current_recheck_eligible=repair_recheck,
+                    ))
                 for check_id in unrun_checks
             }
             available_check_ids = tuple(
                 check_id
                 for check_id in unrun_checks
-                if min(remaining_model_calls, remaining_tool_actions) - 1
-                >= check_successor_floors[check_id]
+                if remaining_model_calls - 1 >= max(
+                    budget.protected, check_successor_budgets[check_id].protected,
+                ) and remaining_tool_actions - 1 >= max(
+                    budget.protected_tool_actions,
+                    check_successor_budgets[check_id].protected_tool_actions,
+                )
             )
             check_successor_reserve = max(
-                (check_successor_floors[c] for c in available_check_ids), default=0,
+                (max(budget.protected, check_successor_budgets[c].protected)
+                 for c in available_check_ids), default=0,
             )
         if available_check_ids:
             allowed.add("run_check")
         if (
             getattr(gateway, "probe_sandbox", None) is not None
-            and min(remaining_model_calls, remaining_tool_actions) - 1 >= budget.protected
+            and remaining_model_calls - 1 >= budget.protected
+            and remaining_tool_actions - 1 >= budget.protected_tool_actions
         ):
             allowed.add("run_probe")
         if (
             getattr(gateway.public_task, "test_suites", [])
-            and min(remaining_model_calls, remaining_tool_actions) - 1 >= budget.protected
+            and remaining_model_calls - 1 >= budget.protected
+            and remaining_tool_actions - 1 >= budget.protected_tool_actions
         ):
             allowed.add("run_tests")
 
@@ -934,6 +965,12 @@ def _tool_policy(
         repair_inspection_policy=repair_inspection_policy,
         inspection_reserve_calls=inspection_floor,
         inspection_released_check_recovery_calls=released_check_recovery,
+        repair_recheck=repair_recheck,
+        minimum_completion_tool_actions=budget.minimum_tool_actions,
+        completion_budget_tool_actions=budget.protected_tool_actions,
+        optional_mutation_completion_tool_actions=mutation_budget.minimum_tool_actions,
+        optional_mutation_protected_tool_actions=mutation_budget.protected_tool_actions,
+        inspection_reserve_tool_actions=inspection_tool_floor,
     )
     if funded_calls is not None:
         successors = [0]  # finish/stop have no subsequent provider call.
@@ -979,6 +1016,7 @@ def _tool_policy(
             limits,
             snapshot=snapshot,
             repair_inspection_policy=repair_inspection_policy,
+            repair_recheck=repair_recheck,
             cost_ledger=cost_ledger,
             completion_cost_policy=completion_cost_policy,
             _preview_inspection=False,
@@ -1000,11 +1038,22 @@ def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
         "policy": policy.repair_inspection_policy,
         "reserve_calls_after_inspection": policy.inspection_reserve_calls,
         "released_future_check_recovery_calls": policy.inspection_released_check_recovery_calls,
+        **({"reserve_tool_actions_after_inspection": policy.inspection_reserve_tool_actions}
+           if policy.repair_recheck else {}),
     }}
 
 
 def _completion_cost_payload(policy: _ToolPolicy) -> dict[str, Any]:
     return {"completion_cost": policy.completion_cost} if policy.completion_cost is not None else {}
+
+
+def _completion_resources_payload(policy: _ToolPolicy) -> dict[str, Any]:
+    if not policy.repair_recheck:
+        return {}
+    return {
+        "minimum_completion_tool_actions": policy.minimum_completion_tool_actions,
+        "completion_budget_tool_actions": policy.completion_budget_tool_actions,
+    }
 
 
 def _mutation_completion_horizon(policy: _ToolPolicy) -> dict[str, Any]:
@@ -1013,6 +1062,10 @@ def _mutation_completion_horizon(policy: _ToolPolicy) -> dict[str, Any]:
     return {
         "minimum_calls": policy.optional_mutation_completion_calls,
         "protected_calls": policy.optional_mutation_protected_calls,
+        **({
+            "minimum_tool_actions": policy.optional_mutation_completion_tool_actions,
+            "protected_tool_actions": policy.optional_mutation_protected_tool_actions,
+        } if policy.repair_recheck else {}),
         "minimum_possible": policy.mutation_completion_possible,
         "protected_possible": policy.mutation_protected_completion_possible,
         "recovery_warning": (
@@ -1082,7 +1135,7 @@ def _completion_horizon_payload(
         blocking_resources.append("cost")
     if remaining_model_calls < policy.minimum_completion_calls:
         blocking_resources.append("model_calls")
-    if remaining_tool_actions < policy.minimum_completion_calls:
+    if remaining_tool_actions < policy.minimum_completion_tool_actions:
         blocking_resources.append("tool_actions")
     current_diff = snapshot.diff if snapshot is not None else gateway.current_diff
     visible_status = (
@@ -1103,6 +1156,7 @@ def _completion_horizon_payload(
         "remaining_model_calls": remaining_model_calls,
         "remaining_tool_actions": remaining_tool_actions,
         "minimum_completion_calls": policy.minimum_completion_calls,
+        **_completion_resources_payload(policy),
         "blocking_resources": blocking_resources,
         **_completion_cost_payload(policy),
     }
@@ -1280,6 +1334,7 @@ def _build_context(
         limits,
         snapshot=active_snapshot,
         repair_inspection_policy=repair_inspection_policy,
+        repair_recheck=repair_recheck,
     )
     commitment_signal = _commitment_signal(
         gateway,
@@ -1329,6 +1384,7 @@ def _build_context(
         },
         "action_horizon": {
             **_repair_inspection_payload(active_policy),
+            **_completion_resources_payload(active_policy),
             "minimum_completion_calls": active_policy.minimum_completion_calls,
             "completion_budget_calls": active_policy.completion_budget_calls,
             "feedback_recovery_reserve_calls": (active_policy.feedback_recovery_reserve_calls),
@@ -3375,6 +3431,7 @@ def _run_probe_recheck(
         policy = _tool_policy(
             gateway, counters, request.limits,
             repair_inspection_policy=request.repair_inspection_policy,
+            repair_recheck=request.repair_recheck,
             cost_ledger=cost_ledger, completion_cost_policy=request.completion_cost_policy,
         )
         if "run_probe" not in policy.allowed_tools:
@@ -4128,6 +4185,7 @@ def _run_one_active(
                     next_policy = _tool_policy(
                         gateway, counters, request.limits,
                         repair_inspection_policy=request.repair_inspection_policy,
+                        repair_recheck=request.repair_recheck,
                         cost_ledger=cost_ledger,
                         completion_cost_policy=request.completion_cost_policy,
                     )
@@ -4161,6 +4219,7 @@ def _run_one_active(
                         next_policy = _tool_policy(
                             gateway, counters, request.limits,
                             repair_inspection_policy=request.repair_inspection_policy,
+                            repair_recheck=request.repair_recheck,
                             cost_ledger=cost_ledger,
                             completion_cost_policy=request.completion_cost_policy,
                         )
@@ -4294,6 +4353,7 @@ def _run_one_active(
             request.limits,
             snapshot=snapshot,
             repair_inspection_policy=request.repair_inspection_policy,
+            repair_recheck=request.repair_recheck,
             cost_ledger=cost_ledger,
             completion_cost_policy=request.completion_cost_policy,
         )
@@ -4434,6 +4494,7 @@ def _run_one_active(
             "minimum_completion_calls": policy.minimum_completion_calls,
             **_completion_cost_payload(policy),
             **_repair_inspection_payload(policy),
+            **_completion_resources_payload(policy),
             "completion_budget_calls": policy.completion_budget_calls,
             "feedback_recovery_reserve_calls": (policy.feedback_recovery_reserve_calls),
             "mutation_recovery_reserve_calls": (policy.mutation_recovery_reserve_calls),
@@ -4878,6 +4939,7 @@ def _run_one_active(
             next_policy = _tool_policy(
                 gateway, counters, request.limits,
                 repair_inspection_policy=request.repair_inspection_policy,
+                repair_recheck=request.repair_recheck,
                 cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
             )
@@ -4911,6 +4973,7 @@ def _run_one_active(
             next_policy = _tool_policy(
                 gateway, counters, request.limits,
                 repair_inspection_policy=request.repair_inspection_policy,
+                repair_recheck=request.repair_recheck,
                 cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
             )

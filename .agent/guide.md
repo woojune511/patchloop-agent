@@ -23,7 +23,7 @@ Comparisons answer causal questions when needed; routine fixes need no new proce
 | --- | --- |
 | CLI and request/default contracts | `patchloop/cli.py`, `patchloop/dev/contracts.py` |
 | Loop, preflight, action horizon, terminal handling | `patchloop/dev/runner.py` |
-| Pure completion/mutation call-budget forecasts | `patchloop/dev/completion_budget.py` |
+| Pure completion/mutation resource forecasts | `patchloop/dev/completion_budget.py` |
 | Public prompt and provider adapter | `patchloop/dev/model.py`, `patchloop/agent/model.py` |
 | Tool grammar, observed anchors, edits, checks, finish | `patchloop/dev/tools.py` |
 | Audit context and compact public view | `patchloop/dev/context.py`, `patchloop/dev/model_state.py` |
@@ -83,6 +83,10 @@ not complete semantic coverage. Preserve pre-state, submitted-candidate, and inc
 patch identities separately; replayed results retain action-time identities.
 
 The scheduler reserves the minimum completion path and bounded recovery opportunities.
+Forecast model calls and tool actions separately: an eligible automatic required-check
+recheck costs zero model calls and one tool action. Share execution's current/healthy/
+registered eligibility, retain all tool slots, and apply the split to admission,
+successor and cost forecasts. Disabled recheck preserves the common counts.
 A failed check does not require another read when current edit evidence exists.
 Preserve the distinction between minimum and protected completion, and do not add
 hard tool restrictions from advisory progress signals or task-specific failure patterns.
@@ -104,6 +108,9 @@ separately labelled, never a registered observation. Links change no resolution 
 Latest tool observations must reach the next request. Retained source is bounded,
 uses only observed complete lines, and never fills unseen gaps. Optional run-local
 working notes do not enable cross-run memory.
+The retained pool's 24,000 characters do not bound native results/history. The separate
+segmented input limit is 60,000 tokens. Result-driven handoffs can discard old history
+below it; judge source availability across the complete request.
 
 External state uses append-only, hash-chained `dev-run-v1` JSONL and immutable run
 envelopes. Mutations/checks preserve `action_id + input_hash`: replay completed results,
@@ -184,17 +191,12 @@ experimental context and historical plans; current source/status take precedence
 - Discovery diagnostics: [counterexamples](counterexample-discovery.md),
   [task-first discovery](task-first-discovery.md), [construction links](construction-links.md),
   [frozen expectations](frozen-probe-expectation.md), [profile scope](profile-scope-diagnostic.md).
-- Completion advice: [status-only diagnostic](completion-status-diagnostic.md), an
-  opt-in seeded-loop projection that keeps completion gates and tool admission intact.
-  [Mutation advice checkpoint](mutation-advice-checkpoint.md) prepares an offline
-  post-probe input pair; [offline continuation](checkpoint-continuation.md) restores
-  that state for scripted registered-action and evaluation tests. The separate
-  [live collector](checkpoint-comparison.md) binds fresh accounting and admission.
-  The [caller-state probe](caller-state-probe.md) is a separate provider-free observation.
-  [Caller information](caller-information.md) tests its first-input delivery with advice fixed.
-  [Cleanup probe](cleanup-probe.md) diagnoses saved first-patch cancellation and teardown.
-  [Closure-policy sampler](closure-policy-sampler.md) collects independent decisions only.
-  [Selected probe boundary](selected-probe-continuation.md) replays a saved response offline.
+- Completion diagnostics: [status-only](completion-status-diagnostic.md),
+  [mutation checkpoint](mutation-advice-checkpoint.md),
+  [offline continuation](checkpoint-continuation.md), [live collector](checkpoint-comparison.md),
+  [caller state](caller-state-probe.md), [caller information](caller-information.md),
+  [cleanup](cleanup-probe.md), [closure sampler](closure-policy-sampler.md),
+  [selected probe replay](selected-probe-continuation.md).
 - Candidate comparison: [independent candidate](independent-candidate.md), an
   opt-in public alternative in the ordinary seeded repair loop.
 - Search context: [declaration context](declaration-context.md), opt-in bounded

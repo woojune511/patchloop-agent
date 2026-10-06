@@ -38,9 +38,14 @@ The [trace comparison](history/2026-10-06-agent-trace-comparison.md) and
 A 1/4 versus B 0/4 successes, USD 4.48506195; saved-case mechanism NOT_EXERCISED.
 The [three-part diagnosis](history/2026-10-06-verification-context-budget-diagnosis.md)
 confirmed untested submission, source loss under recency selection, and one extra
-model call reserved for an enabled automatic required-check recheck. Resource-specific
-accounting is a concrete correction candidate; context and verification-selection
-effects remain unresolved. Runtime unchanged; no paid run queued or general gain
+model call reserved for an enabled automatic required-check recheck.
+[Resource accounting and context review](history/2026-10-06-resource-budget-context-review.md)
+separate model/tool reservations: the observed protected path now reserves seven
+model calls and eight tool actions, leaving one inspection opportunity at row08/462.
+Offline source sweeps retain the lost arithmetic at 48,000 characters, but not
+32,000. Current retention/token limits stay unchanged: source availability is
+established, model use and repair benefit are unmeasured. Active-source preservation
+across handoff is the next context question; no paid run is queued or general gain
 established. Named-case/concern-ID fixes remain separate from frozen live results.
 
 See [panel contract](../.agent/current-dev20.md) and
@@ -54,10 +59,6 @@ The 11/20 threshold failed; test300 remains unprepared and unauthorized. The
 remote publication/release and Linux CI are NOT_RUN. [Preparation](history/2026-10-05-portfolio-preparation.md)
 preserves validation and the closed immutable evidence roots.
 
-[Three uses](history/2026-10-05-three-public-repair-uses.md) and
-[Click corrections](history/2026-10-05-click-feedback-results.md) are closed.
-Feedback-informed candidates are separate from first-attempt successes;
-human approval unreported and acceptance NOT_RUN.
 [Mini/full](history/2026-10-04-mini-full-results.md): mini selected for the six-task
 panel only; 24/24 completed at USD 5.42285815. CLI defaults unchanged.
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task
@@ -138,10 +139,6 @@ Invalid journal tails remain preserved and block recovery. The [contract tests](
 and [journal tests](../tests/test_dev_state.py) cover the boundaries and injected failures.
 [CI](../.github/workflows/ci.yml) is configured for locked dependencies and both Windows
 and Linux. These changes do not establish improved patch correctness.
-
-CI runs the full suite with four file-grouped workers and JUnit reports. The
-[timing investigation](history/2026-09-30-ci-feedback-speed.md) is historical,
-not a stable performance benchmark.
 
 Further development should address a concrete current-contract defect or an implementation
 with a specific predicted repair benefit. Use focused fixes/tests for reproducible
