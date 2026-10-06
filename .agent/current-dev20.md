@@ -36,7 +36,9 @@ extends the total nor automatically submits a patch. Only a timely, durable
 Each current package declares its existing pytest root for optional `run_tests`
 and additive test edits. The gateway accepts new `test_` functions and methods,
 new `Test*` classes containing tests, and additional literal parameter cases in an
-existing tracked file. New tests can use decorators such as `mock.patch`.
+existing tracked file. Direct `pytest.param` cases may contain literal positional
+values and an optional string `id`; new marks or computed cases remain unsupported.
+See [selected tests](selected-tests.md). New tests can use decorators such as `mock.patch`.
 Existing test bodies, imports, fixtures, class headers and helper definitions must
 remain structurally unchanged. Imports needed for a new test can be local to that
 function. New files and conftest changes remain unsupported. Additions consume the

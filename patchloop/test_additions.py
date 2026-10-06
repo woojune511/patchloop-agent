@@ -28,6 +28,34 @@ def _mark(node: ast.AST) -> str | None:
     return None
 
 
+def _parameter_case(value: ast.AST) -> None:
+    """Validate a new literal case without evaluating pytest or user expressions."""
+    if not isinstance(value, ast.Call):
+        ast.literal_eval(value)
+        return
+    if not (
+        isinstance(value.func, ast.Attribute)
+        and isinstance(value.func.value, ast.Name)
+        and value.func.value.id == "pytest"
+        and value.func.attr == "param"
+        and value.args
+        and len(value.keywords) <= 1
+    ):
+        raise ValueError("new cases must be literals or pytest.param with literal arguments")
+    if value.keywords:
+        keyword = value.keywords[0]
+        if not (
+            keyword.arg == "id"
+            and isinstance(keyword.value, ast.Constant)
+            and isinstance(keyword.value.value, str)
+        ):
+            raise ValueError("new pytest.param cases allow only a literal string id; no marks")
+    for argument in value.args:
+        if any(isinstance(node, (ast.Call, ast.BinOp)) for node in ast.walk(argument)):
+            raise ValueError("new pytest.param arguments must be literal values")
+        ast.literal_eval(argument)
+
+
 def _parameters(old: ast.FunctionDef, new: ast.FunctionDef) -> dict:
     """Only an additive literal case list in one unchanged parametrization."""
     candidate = copy.deepcopy(new)
@@ -63,7 +91,7 @@ def _parameters(old: ast.FunctionDef, new: ast.FunctionDef) -> dict:
             if cursor < len(old_values) and _dump(value) == _dump(old_values[cursor]):
                 cursor += 1
             else:
-                ast.literal_eval(value)  # No new computed cases or pytest.param marks.
+                _parameter_case(value)
                 added.append(i)
         if cursor != len(old_values) or not added:
             raise ValueError("existing cases removed/reordered/changed, or no cases added")

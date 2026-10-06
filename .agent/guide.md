@@ -93,14 +93,13 @@ The compact view copies only explicit top-level fields, preserving order and nes
 
 Project only public task/source/diff/action/check information. Keep current evidence
 distinct from historical or unverified notes; do not equate delivery with model use.
-Verification observations are reconstructed from completed public check/test/probe actions
-under working_notes.verification.observations (latest six, with omission count).
-They preserve action/input/diff identity and execution flags, not bug verdicts. Unrelated
-PASS does not erase them; edits make prior observations historical. Upsert may link
-one using evidence_action_id; the original link is immutable, and missing/healthy
-result IDs are rejected as links. Null retains hypothesis-only concerns. External
-operator feedback remains separately labelled; it is not imported as a registered
-check/probe observation. Linked observations do not alter resolution or finish gates.
+Completed public checks/tests/probes reconstruct working_notes.verification.observations
+(latest six, with omission count), preserving action/input/diff identity and execution
+flags, not bug verdicts. Unrelated PASS does not erase them; edits make them historical.
+Concern upsert uses concern_id=null to create, or a returned ID to update progress.
+Its evidence_action_id links an unsuccessful observation immutably; missing/healthy
+IDs are rejected and null keeps a hypothesis-only concern. Operator feedback stays
+separately labelled, never a registered observation. Links change no resolution or finish gate.
 
 Latest tool observations must reach the next request. Retained source is bounded,
 uses only observed complete lines, and never fills unseen gaps. Optional run-local

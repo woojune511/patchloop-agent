@@ -114,9 +114,9 @@ def test_off_schema_prompt_and_identity_are_unchanged():
         "finish_task", "stop_task",
     ]}
     before = dev_tool_schemas(**options)
-    # Selected-test registration changes runtime identity; the existing schema is unchanged.
+    # Includes the explicit new-concern ID description; the off-policy shape is unchanged.
     assert sha256_json(before) == (
-        "sha256:9a4c35ae0b1724c9138e881640fcd0c5c5e811a6b2f798269dd2a6d3c6574435"
+        "sha256:13cdc2f15f6f1302564239a9c0d6cd1ba70f3ff6e40c15a75548fa96f5c30d44"
     )
     assert dev_tool_surface_hash() == (
         "sha256:183455d1ede934d796e13e2a446313a00b3c0c2ac6209cfaaf1cc1ff595b9a79"

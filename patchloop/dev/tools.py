@@ -2981,8 +2981,9 @@ class DevToolGateway:
             except UnsupportedTestChange as exc:
                 raise ContractError(
                     "Test additions must preserve existing tests, imports, fixtures and helpers. "
-                        "Add a new test_ function/method, test class, or literal parameter cases "
-                        "in an existing file: "
+                    "Add a new test_ function/method, test class, or literal parameter cases "
+                    "in an existing file. New pytest.param cases allow literal arguments and "
+                    "an optional string id, but no marks: "
                     + str(exc)
                 ) from exc
         generated_patch = self._generated_replacement_patch(anchor_path, anchor_text, after_text)

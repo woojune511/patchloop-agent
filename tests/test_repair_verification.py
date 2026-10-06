@@ -102,14 +102,21 @@ def make_patch(project, test_source=None, implementation=FIXED_SOURCE, extras=No
     return patch
 
 
-def test_cli_identical_parameter_case_fails_then_passes_and_preserves_source(project, monkeypatch):
+@pytest.mark.parametrize("added_case", [
+    '({"b": ""}, "d")',
+    'pytest.param({"b": ""}, "d", id="empty-fallback")',
+], ids=["literal", "named"])
+def test_cli_identical_parameter_case_fails_then_passes_and_preserves_source(
+    project, monkeypatch, added_case,
+):
     from patchloop.dev import runner
 
     monkeypatch.setattr(
         runner, "_run_invocation", lambda *a, **kw: pytest.fail("model loop called")
     )
     request, source = project
-    patch = make_patch(project)
+    original_case = '({"b": "c"}, "c")'
+    patch = make_patch(project, BASE_TEST.replace(original_case, original_case + ", " + added_case))
     output = CliRunner().invoke(
         app, ["repair-verify", "--request", str(request), "--patch", str(patch)]
     )
@@ -120,6 +127,11 @@ def test_cli_identical_parameter_case_fails_then_passes_and_preserves_source(pro
     assert result["acceptance"] == "NOT_RUN" and result["requirement_fit"] == "NOT_ASSESSED"
     assert result["model_calls"] == 0
     assert [row["exit_code"] for row in result["checks"]] == [0, 1, 0]
+    assert result["test_additions"][0]["indices"] == [1]
+    observed = result["checks"][1]["observation"]["tests"]
+    assert len(observed) == 1 and observed[0]["parameter_index"] == 1
+    if "pytest.param" in added_case:
+        assert observed[0]["nodeid"].endswith("[empty-fallback]")
     before, after = [Path(result["workspaces"][phase]) for phase in ("base_with_tests", "patched")]
     assert (before / "sample.py").read_text() == BASE_SOURCE
     assert (after / "sample.py").read_text() == FIXED_SOURCE

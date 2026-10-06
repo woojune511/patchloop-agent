@@ -46,6 +46,21 @@ optional suite accepts selections below `test`. The full tree is not a calibrate
 mandatory gate: an existing-reference compatibility control failed it. It carries
 no specific CLI node or evaluator hint. Setup failure exits before pytest with code 2.
 
+## Additive test cases
+
+An additive-test task can extend a single existing inline parametrization with
+literal cases or direct `pytest.param(...)` calls containing literal positional
+values and an optional literal string `id`. New cases cannot use `marks`, other
+keywords, unpacking, aliases or computed values. Existing cases, including their
+marks and IDs, must remain structurally unchanged and in their original order.
+Existing test bodies, imports, fixtures and decorators stay protected. New imports
+needed by a new test belong inside that test.
+
+Case selection uses collected parameter indices, so a descriptive `id` does not
+change which addition is compared. The repair comparison runs added cases against
+base and candidate source; original-test restoration for isolated evaluation still
+applies. Accepting an addition does not establish that its expectation is correct.
+
 ## Evidence and recovery
 
 Results preserve suite, targets, action/input identity, current diff, exit code,
