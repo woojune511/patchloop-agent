@@ -34,6 +34,8 @@ def normalized(request):
     value.pop("timeout", None)
     view = json.loads(value["input"][-1]["content"])
     view["state"]["remaining_budget"]["active_wall_time_seconds"] = 0
+    if "total_active_wall_time_seconds" in view["state"]["remaining_budget"]:
+        view["state"]["remaining_budget"]["total_active_wall_time_seconds"] = 0
     value["input"][-1]["content"] = canonical_json(view)
     return value
 

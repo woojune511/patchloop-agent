@@ -46,7 +46,9 @@ The [48k comparison](history/2026-10-06-source-retention-results.md) closed all 
 rows: A 2/4 and B 2/4 accepted, USD 4.07933340. B cost 72% more; both B SQLFluff
 runs exhausted cost before submission. Both A SQLFluff patches failed the public
 example despite regression PASS. Source loss, unread code and omitted verification
-remain distinct problems. Keep 24k; no further comparison or paid run is queued.
+remain distinct problems. Keep 24k.
+A [cost-only continuation](../.agent/cost-cap-continuation.md) is in free preparation;
+USD 2.40 proposed; paid NOT_RUN.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.
