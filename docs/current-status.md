@@ -46,9 +46,9 @@ and failed for USD 0.21352020 extra. [Public diagnosis](history/2026-10-07-publi
 found an L003/L039 fix cycle and regression PASS mistaken for bug verification,
 despite surviving unresolved notes and available probes. Keep 24k; no paid run queued.
 
-[Replay comparison](history/2026-10-07-probe-action-results.md) closed: A/B both FAIL,
-both submitted unchanged without probing; USD 0.04927320. Replay NOT_EXERCISED;
-no repair benefit established and no paid follow-up queued.
+[Counterexample A/B](history/2026-10-07-counterexample-prep.md) is prepared, not run.
+The patch fails its public reproduction. Equal fresh budgets isolate output delivery;
+USD 2.40 awaits authorization. Prior replay pair: both FAIL.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.
