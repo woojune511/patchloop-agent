@@ -130,18 +130,16 @@ identity. These local results do not establish live performance.
 The [development review](history/2026-09-30-development-review.md) closes repeated
 ablations: no quality experiment, memory extension or mandatory probe gate queued.
 
-[Journal tests](../tests/test_dev_state.py) cover short writes, I/O failures, Unicode
-data and missing final LF; torn tails block replay/append.
-[Task admission](../tests/test_visible_check_ids.py) rejects duplicate check IDs.
-[Path tests](../tests/test_repository_paths.py) cover literal lookup and Git-quoted
-UTF-8 names; [repair verification](../tests/test_repair_verification.py)
-retains them. [Line feedback](../tests/test_execution_feedback_paths.py) handles quoted/space
-paths and relative scripts. [Panel costs](../tests/test_dev_probe_panel.py) include
-compaction without double-counting. [Evaluation recovery](../tests/test_dev_evaluation_resume.py)
-verifies check/safety evidence files. [Schema tests](../tests/test_replacement_schema.py)
-cover intent-derived bounds, occurrence, missing/null and legacy fields.
+[Journal](../tests/test_dev_state.py) and [admission](../tests/test_visible_check_ids.py)
+tests cover record integrity and unique check IDs. [Paths](../tests/test_repository_paths.py),
+[repair verification](../tests/test_repair_verification.py) and
+[line feedback](../tests/test_execution_feedback_paths.py) preserve unusual filenames.
+[Panel costs](../tests/test_dev_probe_panel.py) count compaction once;
+[evaluation recovery](../tests/test_dev_evaluation_resume.py) verifies evidence files.
+[Schema tests](../tests/test_replacement_schema.py) cover intent bounds and legacy fields.
 [CI](../.github/workflows/ci.yml) uses locked dependencies on Windows/Linux.
-No patch-quality claim follows.
+[Impact review](history/2026-10-07-fix-impact.md): latest runtime fix triggers were absent
+from 24 reviewed runs. No patch-quality gain established or paid rerun queued.
 
 Further development should address a concrete current-contract defect or an implementation
 with a specific predicted repair benefit. Use focused fixes/tests for reproducible
