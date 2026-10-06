@@ -7,6 +7,7 @@
 
 ## Records
 
+- [Source retention comparison](2026-10-06-source-retention-results.md).
 - [Closure](2026-10-06-verification-closure-results.md).
 - [Dev20](2026-10-06-current-dev20-results.md).
 - Portfolio: [prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md).
@@ -90,7 +91,6 @@
   input audits, four public probes and causal limits.
 - [completion advice comparison](2026-09-26-completion-status-comparison.md):
   four runs, extra P-B reading and unchanged acceptance after advice removal.
-- [first-input completion advice diagnostic](2026-09-26-completion-status-diagnostic.md):
-  opt-in recommendation removal, unchanged runtime gates, and local delivery validation.
+- [first-input completion advice diagnostic](2026-09-26-completion-status-diagnostic.md).
 - [Verification scope audit](2026-09-26-verification-scope-audit.md).
 - [Paired-reference comparison](2026-09-26-paired-reference-comparison.md).

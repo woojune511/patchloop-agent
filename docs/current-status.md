@@ -42,12 +42,11 @@ model call reserved for an enabled automatic required-check recheck.
 [Resource accounting and context review](history/2026-10-06-resource-budget-context-review.md)
 separate model/tool reservations: the observed protected path now reserves seven
 model calls and eight tool actions, leaving one inspection opportunity at row08/462.
-The [48k option](history/2026-10-06-source-retention-option.md) keeps 24k default and
-other limits fixed. The [comparison design](../.agent/source-retention-comparison.md)
-selects SQLFluff-1733/pvlib-1072, two repetitions/arm: eight rows, USD 9.60 total,
-authorized 2026-10-06. Four waves run two distinct tasks concurrently after public
-calibration and code/driver freeze. Evidence: `C:/pt/sretp02`; no retry or resume.
-Source availability is established; repair benefit remains unmeasured.
+The [48k comparison](history/2026-10-06-source-retention-results.md) closed all eight
+rows: A 2/4 and B 2/4 accepted, USD 4.07933340. B cost 72% more; both B SQLFluff
+runs exhausted cost before submission. Both A SQLFluff patches failed the public
+example despite regression PASS. Source loss, unread code and omitted verification
+remain distinct problems. Keep 24k; no further comparison or paid run is queued.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

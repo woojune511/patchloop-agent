@@ -1,7 +1,9 @@
 # Observed-source retention comparison
 
-Authorized 2026-10-06 by the user's "실험 진행해줘" for the exact scope below.
-This is a fresh-solve comparison design, not a continuation of a closed
+CLOSED 2026-10-06: eight rows executed, A 2/4 and B 2/4 accepted; USD 4.07933340.
+The [results](../docs/history/2026-10-06-source-retention-results.md) preserve 24k.
+No remaining allocation or follow-up is active. The user authorized the scope below
+with "실험 진행해줘". This was a fresh-solve design, not a continuation of a closed
 allocation. Both arms use the same implementation including the resource accounting
 correction from e55393ed. General runtime defaults remain unchanged.
 
