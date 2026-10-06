@@ -19,6 +19,8 @@ from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import behavior_cases, probe_cases, requirement_reference
 from patchloop.dev.check_feedback import check_failure_diagnostics, output_tail
 from patchloop.dev.context import (
+    RETAINED_SOURCE_CHARS,
+    RetainedSourceChars,
     SourceProjection,
     bounded_lines,
     normalize_source_text,
@@ -556,12 +558,14 @@ class DevToolGateway:
         deadline: ExecutionDeadline | None = None,
         probe_sandbox: DockerProbeSandbox | None = None,
         probe_policy: str = "none",
+        retained_source_chars: RetainedSourceChars = RETAINED_SOURCE_CHARS,
     ) -> None:
         self.workspace = workspace.resolve()
         self.public_task = public_task
         self.sandbox = sandbox
         self.journal = journal
         self.limits = limits
+        self.retained_source_chars = retained_source_chars
         self.deadline = deadline
         self.probe_sandbox = probe_sandbox
         if probe_policy not in {"none", *probe_cases.POLICIES}:
@@ -1504,6 +1508,7 @@ class DevToolGateway:
             native_spans=native,
             priorities=self._source_projection_priorities(),
             editable_paths={span["path"] for span in valid if self._path_allowed(span["path"])},
+            max_chars=self.retained_source_chars,
         )
 
     def _restore_working_notes(self, payload: dict[str, Any]) -> None:
@@ -2015,6 +2020,7 @@ class DevToolGateway:
             editable_paths={
                 span["path"] for span in candidates if self._path_allowed(span["path"])
             },
+            max_chars=self.retained_source_chars,
         ).source_spans)
 
     def evidence_ledger(self, *, diff_hash: str | None = None) -> dict[str, Any]:

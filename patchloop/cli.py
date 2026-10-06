@@ -134,6 +134,10 @@ def dev(
         Literal["append-v1", "native-window-v1", "segmented-v1"],
         typer.Option("--context-policy", help="Opt-in snapshot window or bounded public handoffs."),
     ] = "append-v1",
+    retained_source_chars: Annotated[
+        int, typer.Option("--retained-source-chars",
+                          help="Previously observed source pool in characters: 24000 or 48000."),
+    ] = 24_000,
     segment_boundary_policy: Annotated[
         Literal["result-or-size-v1", "size-only-v1"],
         typer.Option("--segment-boundary-policy", help="Segmented-v1 transition condition."),
@@ -185,6 +189,7 @@ def dev(
                 probe_recheck=probe_recheck,
                 repair_inspection_policy=repair_inspection_policy,
                 context_policy=context_policy,
+                retained_source_chars=retained_source_chars,
                 segment_boundary_policy=segment_boundary_policy,
                 completion_cost_policy=completion_cost_policy,
                 planning_policy=planning_policy,

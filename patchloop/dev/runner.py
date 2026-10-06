@@ -256,6 +256,8 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
+            **({"retained_source_chars": request.retained_source_chars}
+               if request.retained_source_chars != 24_000 else {}),
             **({"evaluation_reserve_seconds": request.evaluation_reserve_seconds}
                if isinstance(request, DevRunRequest)
                and request.evaluation_reserve_seconds else {}),
@@ -1448,7 +1450,7 @@ def _build_context(
         "working_notes": gateway.working_notes(diff_hash=summary.patch_hash),
         "context_projection": {
             "retained_content_chars": projection.retained_content_chars,
-            "retained_content_limit": 24_000,
+            "retained_content_limit": gateway.retained_source_chars,
             "omitted_observed_line_count": projection.omitted_observed_line_count,
             "omitted_pinned_ranges": list(projection.omitted_pinned_ranges),
             "omitted_observed_ranges": list(projection.omitted_observed_ranges),
@@ -2947,6 +2949,7 @@ def _run_envelope(
         planning_policy=request.planning_policy,
         probe_policy=request.probe_policy,
         context_policy=request.context_policy,
+        retained_source_chars=request.retained_source_chars,
         completion_cost_policy=request.completion_cost_policy,
         completion_cost_contract=(completion_cost_contract()
                                   if request.completion_cost_policy == COMPLETION_RESERVE_POLICY
@@ -3628,6 +3631,8 @@ def _run_one(
                     **({"repair_inspection_policy": request.repair_inspection_policy}
                        if request.repair_inspection_policy != "protected-v1" else {}),
                     "context_policy": request.context_policy,
+                    **({"retained_source_chars": request.retained_source_chars}
+                       if request.retained_source_chars != 24_000 else {}),
                     **({"evaluation_reserve_seconds": request.evaluation_reserve_seconds}
                        if isinstance(request, DevRunRequest)
                        and request.evaluation_reserve_seconds else {}),
@@ -4060,6 +4065,7 @@ def _run_one_active(
         deadline=deadline,
         probe_sandbox=probe_sandbox,
         probe_policy=request.probe_policy,
+        retained_source_chars=request.retained_source_chars,
     )
     correction: dict[str, Any] | None = _pending_protocol_correction(journal)
     latest_tool_results = journal.latest_tool_batch_results() if resuming else []

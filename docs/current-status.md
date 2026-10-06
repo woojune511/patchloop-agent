@@ -42,11 +42,11 @@ model call reserved for an enabled automatic required-check recheck.
 [Resource accounting and context review](history/2026-10-06-resource-budget-context-review.md)
 separate model/tool reservations: the observed protected path now reserves seven
 model calls and eight tool actions, leaving one inspection opportunity at row08/462.
-Offline source sweeps retain the lost arithmetic at 48,000 characters, but not
-32,000. Current retention/token limits stay unchanged: source availability is
-established, model use and repair benefit are unmeasured. Active-source preservation
-across handoff is the next context question; no paid run is queued or general gain
-established. Named-case/concern-ID fixes remain separate from frozen live results.
+The [48k option](history/2026-10-06-source-retention-option.md) keeps 24k default and
+other limits fixed. The [comparison design](../.agent/source-retention-comparison.md)
+prepares SQLFluff-1733/pvlib-1072, two repetitions/arm, proposed USD 9.60 total.
+Source availability is established; repair benefit is unmeasured. No paid run is
+authorized or queued. Named-case/concern-ID fixes stay separate from frozen results.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

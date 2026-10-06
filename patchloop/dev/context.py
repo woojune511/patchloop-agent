@@ -9,12 +9,13 @@ import tokenize
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from patchloop.util import sha256_json
 
 SOURCE_OUTPUT_CHARS = 24_000
 RETAINED_SOURCE_CHARS = 24_000
+RetainedSourceChars = Literal[24_000, 48_000]
 OBSERVED_SOURCE_INDEX_ENTRIES = 16
 OBSERVED_SOURCE_INDEX_CHARS = 4_000
 _PYTHON_HEADER = re.compile(

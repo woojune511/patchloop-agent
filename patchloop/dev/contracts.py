@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_valid
 
 from patchloop.contracts import Artifact, ProbeDependencyIdentity
 from patchloop.dev import check_review, cost, probe_cases, segments
+from patchloop.dev.context import RETAINED_SOURCE_CHARS, RetainedSourceChars
 from patchloop.util import sha256_json
 
 DEV_RUN_SCHEMA = "dev-run-v1"
@@ -393,6 +394,10 @@ class RunRequest(StrictModel):
         "brief-after-source-v1",
     ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
+    retained_source_chars: RetainedSourceChars = Field(
+        default=RETAINED_SOURCE_CHARS,
+        exclude_if=lambda value: value == RETAINED_SOURCE_CHARS,
+    )
     segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY
     completion_cost_policy: cost.CompletionCostPolicy = cost.DEFAULT_COMPLETION_COST_POLICY
     compact_at_input_tokens: int | None = Field(default=None, gt=0, lt=272_000)
@@ -495,6 +500,10 @@ class RunEnvelope(StrictModel):
         "brief-after-source-v1",
     ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
+    retained_source_chars: RetainedSourceChars = Field(
+        default=RETAINED_SOURCE_CHARS,
+        exclude_if=lambda value: value == RETAINED_SOURCE_CHARS,
+    )
     segment_boundary_policy: segments.BoundaryPolicy = Field(
         default=segments.DEFAULT_BOUNDARY_POLICY,
         exclude_if=lambda value: value == segments.DEFAULT_BOUNDARY_POLICY,

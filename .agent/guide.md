@@ -105,12 +105,11 @@ Its evidence_action_id links an unsuccessful observation immutably; missing/heal
 IDs are rejected and null keeps a hypothesis-only concern. Operator feedback stays
 separately labelled, never a registered observation. Links change no resolution or finish gate.
 
-Latest tool observations must reach the next request. Retained source is bounded,
-uses only observed complete lines, and never fills unseen gaps. Optional run-local
-working notes do not enable cross-run memory.
-The retained pool's 24,000 characters do not bound native results/history. The separate
-segmented input limit is 60,000 tokens. Result-driven handoffs can discard old history
-below it; judge source availability across the complete request.
+Latest observations must reach the next request. `--retained-source-chars` selects
+24,000 (default) or 48,000 previously observed characters; complete lines only, no
+unseen gaps. The setting binds model/envelope identity and resume. Native history
+and the separate 60,000-token segmented limit are unchanged. Result handoffs may
+discard older history below that limit. Run-local notes are not cross-run memory.
 
 External state uses append-only, hash-chained `dev-run-v1` JSONL and immutable run
 envelopes. Mutations/checks preserve `action_id + input_hash`: replay completed results,
