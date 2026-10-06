@@ -492,7 +492,7 @@ class WorkspaceManager:
             baseline = git("diff", "--cached", "HEAD", "--no-ext-diff", "--binary")
             if sha256_bytes(baseline.encode("utf-8")) != baseline_diff_hash:
                 raise RecoveryError("workspace changed before candidate admission")
-            entry = git("ls-files", "--stage", "-z", "--", normalized)
+            entry = git("--literal-pathspecs", "ls-files", "--stage", "-z", "--", normalized)
             if not entry or len(entry.rstrip("\0").split("\0")) != 1:
                 raise ContractError("candidate target has no unique tracked entry")
             mode = entry.split(" ", 1)[0]

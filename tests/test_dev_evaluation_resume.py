@@ -8,6 +8,7 @@ import pytest
 
 import patchloop.dev.runner as runner
 from patchloop.artifacts import ArtifactStore
+from patchloop.contracts import Artifact
 from patchloop.deadline import ExecutionDeadlineExceeded
 from patchloop.dev.contracts import DevRunRequest, DevTerminal
 from patchloop.dev.evaluation_completion import EvaluationCompletion
@@ -138,6 +139,14 @@ def test_durable_evaluation_resume_finishes_without_execution(
     assert sum(e["event_type"] == "evaluator_finished" for e in journal.events()) == 1
     provenance = json.loads((run_dir / "provenance.json").read_bytes())
     assert provenance["completed_check_results"]
+    store = ArtifactStore(tmp_path / "artifacts")
+    for safety in provenance["safety_evidence"]:
+        artifacts = [Artifact.model_validate(ref)
+                     for ref in safety["details"]["evidence_artifacts"]]
+        assert [artifact.artifact_id for artifact in artifacts] == safety["evidence_artifact_ids"]
+        for artifact in artifacts:
+            assert artifact.content_hash in safety["evidence_hashes"]
+            assert store.read_bytes(artifact)
     if outcome not in {"pass", "fail"}:
         assert len(provenance["completed_check_results"]) == 1
     journal_bytes = journal.path.read_bytes()
@@ -198,6 +207,32 @@ def test_completed_check_leaf_evidence_must_survive_metadata_resume(
     monkeypatch.setattr(runner, "_run_one_locked", _forbid_execution)
     monkeypatch.setattr(runner.EvaluationEngine, "evaluate", _forbid_execution)
     with pytest.raises(RecoveryError):
+        runner.run_dev(request)
+    assert journal.path.read_bytes() == before
+    assert journal.terminal() is None
+
+
+@pytest.mark.parametrize("damage", ["missing", "tampered"])
+def test_safety_leaf_evidence_must_survive_metadata_resume(tmp_path, monkeypatch, damage):
+    request, journal, payload = _completed_run(tmp_path, monkeypatch)
+    provenance = json.loads(Path(payload["artifacts"]["evaluator_provenance"]["path"]).read_bytes())
+    safety = next(item for item in provenance["safety_evidence"]
+                  if item["control"] == "runtime_contract")
+    # The evaluator appends its own CAS identity after the source identities.
+    digest = safety["evidence_hashes"][-1].removeprefix("sha256:")
+    leaf_path = tmp_path / "artifacts/objects/sha256" / digest[:2] / digest[2:]
+    assert leaf_path.resolve().is_relative_to(tmp_path.resolve())
+    assert json.loads(leaf_path.read_bytes())["control"] == "runtime_contract"
+    if damage == "missing":
+        leaf_path.unlink()
+    else:
+        leaf_path.write_bytes(b"synthetic corrupted safety evidence")
+    before = journal.path.read_bytes()
+    monkeypatch.setattr(runner, "_run_one_locked", _forbid_execution)
+    monkeypatch.setattr(runner.EvaluationEngine, "evaluate", _forbid_execution)
+    with pytest.raises(
+        RecoveryError, match="artifact (is unavailable|failed integrity verification)",
+    ):
         runner.run_dev(request)
     assert journal.path.read_bytes() == before
     assert journal.terminal() is None

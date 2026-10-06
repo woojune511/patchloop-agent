@@ -130,18 +130,18 @@ identity. These local results do not establish live performance.
 The [development review](history/2026-09-30-development-review.md) closes repeated
 ablations: no quality experiment, memory extension or mandatory probe gate queued.
 
-Mutation schema constraints derive from intent models; journal append completes
-short writes and propagates I/O failures.
-[Journal tests](../tests/test_dev_state.py) also cover Unicode separators inside JSON
-strings and a missing final LF: incomplete tails remain untouched and block replay/append.
-[Task admission](../tests/test_visible_check_ids.py) rejects duplicate required-check IDs
-before execution. [Path regressions](../tests/test_repository_paths.py) cover Git-quoted
-UTF-8 names through editing, recovery and submission without changing patch bytes;
-[repair verification](../tests/test_repair_verification.py) retains those paths too.
-[Schema boundary tests](../tests/test_replacement_schema.py) cover length, occurrence,
-missing/null and legacy-field behavior.
-[CI](../.github/workflows/ci.yml) is configured for locked dependencies and both Windows
-and Linux. These changes do not establish improved patch correctness.
+[Journal tests](../tests/test_dev_state.py) cover short writes, I/O failures, Unicode
+data and missing final LF; torn tails block replay/append.
+[Task admission](../tests/test_visible_check_ids.py) rejects duplicate check IDs.
+[Path tests](../tests/test_repository_paths.py) cover literal lookup and Git-quoted
+UTF-8 names; [repair verification](../tests/test_repair_verification.py)
+retains them. [Line feedback](../tests/test_execution_feedback_paths.py) handles quoted/space
+paths and relative scripts. [Panel costs](../tests/test_dev_probe_panel.py) include
+compaction without double-counting. [Evaluation recovery](../tests/test_dev_evaluation_resume.py)
+verifies check/safety evidence files. [Schema tests](../tests/test_replacement_schema.py)
+cover intent-derived bounds, occurrence, missing/null and legacy fields.
+[CI](../.github/workflows/ci.yml) uses locked dependencies on Windows/Linux.
+No patch-quality claim follows.
 
 Further development should address a concrete current-contract defect or an implementation
 with a specific predicted repair benefit. Use focused fixes/tests for reproducible

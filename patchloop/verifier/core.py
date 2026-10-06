@@ -193,7 +193,7 @@ class EvaluationEngine:
             state=state,
             evidence_artifact_ids=[artifact.artifact_id],
             evidence_hashes=[*hashes, artifact.content_hash],
-            details=details,
+            details={**details, "evidence_artifacts": [artifact.model_dump(mode="json")]},
         )
 
     def _sandbox_policy_evidence(

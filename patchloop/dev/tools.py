@@ -2728,7 +2728,7 @@ class DevToolGateway:
             raise ContractError("private evaluator paths are never agent-readable")
         path = ensure_within(self.workspace, normalized)
         tracked = run_git(
-            self.workspace, "ls-files", "--error-unmatch", "--", normalized,
+            self.workspace, "--literal-pathspecs", "ls-files", "--error-unmatch", "--", normalized,
             check=False, deadline=deadline if deadline is not None else self.deadline,
         )
         if tracked.returncode != 0 or not path.is_file() or path.is_symlink():

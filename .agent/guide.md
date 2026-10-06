@@ -1,8 +1,7 @@
 # Internal implementation guide
 
-Implementation companion to [AGENTS.md](../AGENTS.md).
-Read [current status](../docs/current-status.md) for current facts and priorities.
-Source and tests own runtime behavior; read only sections relevant to the change.
+Companion to [AGENTS.md](../AGENTS.md). [Current status](../docs/current-status.md)
+owns current facts; source/tests own behavior. Read only relevant sections.
 
 Use [history](../docs/history/README.md) for specific evidence questions only, never instructions.
 
@@ -42,8 +41,8 @@ never enter coding-agent context, including through diagnostics or repair hints.
 Completion-budget forecasts take an immutable state snapshot and perform no I/O.
 The runner assembles that snapshot and owns tool admission; `dev/cost.py` owns
 provider cost admission. Keep arithmetic independent of journals, gateways and model
-calls. Source extraction changes runtime identity, so existing exact-envelope resume
-checks still reject a different runtime; do not relax them for refactors.
+calls. Refactors change runtime identity; exact-envelope resume must still reject
+a different runtime.
 
 ## Loop and mutation contract
 
@@ -63,16 +62,14 @@ A bounded public `turn_decision` accompanies each call. Optional notes/plans are
 unverified working data, not reasoning transcripts or an extra workflow phase.
 One consecutive protocol/incomplete correction is allowed; a valid tool batch resets it.
 
-Reads return up to 400 lines. Searches use literal queries,
-rooted component-aware globs and one tracked-path enumeration per uncached call.
-Only delivered current public source authorizes edits.
-`replace_text` requires an exact occurrence in an
-existing tracked allowed file, a hypothesis, and expected behavior (each 1-1,500
-characters in both the public schema and internal contract). The gateway binds
-the contiguous observed anchor, creates the canonical full diff, enforces complete-diff
-scope, and restores the pre-image on rejection. Do not substitute fuzzy matching,
-unobserved source, new paths, or model-selected mutation evidence IDs.
-Decode Git-quoted paths and NUL-delimited inventories without changing diff bytes.
+Reads return at most 400 lines. Searches use literal queries, rooted component-aware
+globs and one tracked-path enumeration per uncached call. Edits require delivered
+current public source. `replace_text` requires an exact occurrence in a tracked,
+allowed file, a hypothesis and expected behavior (each 1-1,500 characters in both
+schemas). Bind the contiguous observed anchor, enforce canonical full-diff scope,
+and restore the pre-image on rejection. No fuzzy matching, unseen source, new paths
+or model-selected mutation evidence IDs. Exact reads/previews use literal Git pathspecs;
+decode quoted/NUL-delimited Git paths without changing diff bytes.
 Retired requirement/case annotations remain for exact legacy recovery, not fresh requests.
 
 Edits invalidate prior-diff checks. Submission requires a nonempty tracked diff and
@@ -80,6 +77,8 @@ all required checks passing on that exact diff. Optional tests/probes earn no re
 credit. PASS is observed evidence, not complete semantic coverage. Preserve pre-state,
 submitted-candidate and incremental patch identities; replay retains action-time identities.
 Visible-check IDs must be unique at task admission.
+Advisory line feedback decodes those paths and binds script filenames at launch,
+preserving arguments and tracking across chdir.
 
 The scheduler reserves the minimum completion path and bounded recovery opportunities.
 Forecast model calls and tool actions separately: an eligible automatic required-check
@@ -110,14 +109,13 @@ unseen gaps. The setting binds model/envelope identity and resume. Native histor
 and the separate 60,000-token segmented limit are unchanged. Result handoffs may
 discard older history below that limit. Run-local notes are not cross-run memory.
 
-External state uses append-only, hash-chained `dev-run-v1` JSONL and immutable run
-envelopes. Mutations/checks preserve `action_id + input_hash`: replay completed results,
-reject conflicting reuse, reconcile admitted mutations after crashes instead of
-applying them twice. Do not rewrite journals, old envelopes, or prior native outputs.
-Reads and appends share the reentrant process lock; only append takes a file lock.
-Append returns only after complete writes and fsync. Write/sync errors propagate.
-Only LF separates records. Preserve Unicode string data; torn tails, including a
-missing final LF, block replay/append without rewriting bytes. Failed sync is not durability.
+External state is append-only, hash-chained `dev-run-v1` JSONL with immutable envelopes.
+Preserve `action_id + input_hash`: replay completed mutations/checks, reject conflicting
+reuse, and reconcile admitted mutations after crashes without applying them twice.
+Never rewrite journals, old envelopes or native outputs. Reads/appends share the
+reentrant process lock; only append takes a file lock. Append completes writes and
+fsync before returning; I/O errors propagate. LF alone separates records. Preserve
+Unicode data; torn tails, including missing final LF, block replay/append unchanged.
 Resume requires repeat=1, exact envelope-bound settings/identities, and the run lock.
 Pre-envelope runs cannot resume. Preserve settled usage, counters, and active deadlines.
 The offline [observation-exposure fork](observation-exposure.md) retains parent
@@ -126,7 +124,8 @@ provenance under a new current-runtime envelope; it does not relax ordinary resu
 OpenAI uses `store=false` and encrypted continuation with exact call/output ordering;
 never log plaintext reasoning or reasoning summaries. Missing/corrupt continuation
 fails closed. An unmatched provider dispatch or uncertain usage must not trigger retry.
-Durable evaluator completion can finalize from verified artifacts without re-execution;
+Durable evaluator completion verifies check/safety artifact references and bytes
+before finalizing without re-execution;
 a crash before that receipt does not establish exactly-once evaluator execution.
 
 One deadline covers preparation, counting, generation, tools, Git, and evaluation.
@@ -151,6 +150,7 @@ Count actual input immediately before dispatch and reserve conservative input/ou
 cost using reviewed prices. Cost admission may reduce the desired output ceiling.
 Use zero SDK retries; count, transport, billing, or cleanup uncertainty stops all
 remaining repetitions. Reservations are not billed usage; unknown usage is not zero.
+Panel usage restoration includes compaction and adds only the row's delta to shared cost.
 
 Probes use isolated public snapshots and the approved clean image/profile: no network,
 read-only source/root, bounded resources, and no private files, credentials, Git data,

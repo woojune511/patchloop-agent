@@ -12,13 +12,22 @@ from patchloop.git_execution import run_git
 from patchloop.repository import WorkspaceManager
 
 
-@pytest.mark.parametrize("path", ["src/café.py", "src/한글 이름.py", "src/space b/name.py"])
+@pytest.mark.parametrize("path,other_path", [
+    ("src/café.py", None),
+    ("src/한글 이름.py", None),
+    ("src/space b/name.py", None),
+    ("src/mod[x].py", "src/modx.py"),
+])
 @pytest.mark.parametrize("quote_path", ["true", "false"])
-def test_allowed_path_survives_mutation_submission_and_patch_parsing(tmp_path, path, quote_path):
+def test_allowed_path_survives_mutation_submission_and_patch_parsing(
+    tmp_path, path, other_path, quote_path,
+):
     workspace = tmp_path / "repo"
     target = workspace / path
     target.parent.mkdir(parents=True)
     target.write_bytes(b"value = 1\n")
+    if other_path is not None:
+        (workspace / other_path).write_bytes(b"value = 99\n")
     for args in [
         ("init", "-q"), ("config", "core.quotepath", quote_path),
         ("config", "core.autocrlf", "false"), ("add", "."),
@@ -29,7 +38,7 @@ def test_allowed_path_survives_mutation_submission_and_patch_parsing(tmp_path, p
         "task_id": "quoted-path", "split": "smoke",
         "repository": {"url": "snapshot://quoted-path", "base_commit": "sha256:" + "0" * 64},
         "issue": {"title": "Update value", "description": "Change the value to 2."},
-        "constraints": {"allowed_paths": [path]},
+        "constraints": {"allowed_paths": ["src/**" if other_path else path]},
     })
     gateway = DevToolGateway(
         workspace=workspace, public_task=public, sandbox=None, limits=DevLimits(),
@@ -63,6 +72,21 @@ def test_allowed_path_survives_mutation_submission_and_patch_parsing(tmp_path, p
     finished = restored.execute(RequestedTool(name="finish_task", action_id="finish", arguments={}))
     assert finished.status == "succeeded", finished.message
     assert target.read_bytes() == b"value = 2\n"
+    if other_path is not None:
+        assert (workspace / other_path).read_bytes() == b"value = 99\n"
+
+
+def test_untracked_filename_matching_a_tracked_path_is_not_readable(gateway_factory):
+    gateway, _, workspace = gateway_factory()
+    path = "mini_data_utils/[c]svlite.py"
+    assert (workspace / "mini_data_utils/csvlite.py").is_file()
+    (workspace / path).write_bytes(b"untracked = True\n")
+    read = gateway.execute(RequestedTool(
+        name="read_file", action_id="untracked-pattern",
+        arguments={"path": path, "start_line": 1, "end_line": 5},
+    ))
+    assert read.status == "failed"
+    assert "tracked public file" in read.message
 
 
 @pytest.mark.parametrize("header,expected", [
