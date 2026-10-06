@@ -52,7 +52,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
-        "4cde62f052c239f79814b285611e73acf5e37de8d85f606f4e61b3235cfd2c70"
+        "715b6352925c092ed80836dfe3ba3f44572964a6ef134029398d18225554af55"
     )
     for tool in tools:
         assert tool["strict"] is True
@@ -63,20 +63,20 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     (
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "3b4a5ff0825dec145cb350ad1edc23e7fed4c20f7177cdbc9312b772a8387703",
+        "5ea1338cf03c2fd4cb9d009c87b721f158d20765d0f057ede0001ad27fdc4bc0",
     ),
     (
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "e5c851f7fb8dfeb585b242a68d9d01ce81618b859a16777e2124f6e4449d39ae",
+        "9f1c5231c255d14d6b3239efc09351ee7d3c893d7eb13d166f02cefa60d44eb9",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "d43eb6f78dcd5388b6ed4bbc0e3122dba599a8c0389d01d3a5299a7ebf6fff5b",
+        "f07933d13990fcd005b3f94c615d10b8d2950be490083dbcd12f584af1deadbf",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "eb304557fd370a9fcbd8e5b216b60c4dad7985497b907412e4eec63430c58cd0",
+        "1c990264a43f2a254729e290f92363413a40a8a3af331a7f4c07b1d17a229fa1",
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
@@ -136,7 +136,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:183455d1ede934d796e13e2a446313a00b3c0c2ac6209cfaaf1cc1ff595b9a79"
+        "sha256:4b348a1f432b742686bbfc1c08ef29b6084ee5f647f85bbf2300e1562b6ec430"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

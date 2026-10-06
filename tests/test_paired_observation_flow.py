@@ -13,7 +13,7 @@ from diagnostics import paired_observation as paired
 from diagnostics.segmented_input_audit import reconstruct_state
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
-from patchloop.dev import runner
+from patchloop.dev import probe_replay, runner
 from patchloop.dev.contracts import DevModelTurn, PublicTurnDecision, RequestedTool
 from patchloop.dev.model import MockDevAdapter
 from patchloop.dev.state import DevJournal
@@ -134,6 +134,20 @@ def test_compare_repair_check_submit_and_actual_input_delivery(
         if index < 3:
             assert not names & {"replace_text", "finish_task"}
         for tool in tools:
+            if tool["name"] == "run_probe":
+                params = tool["parameters"]
+                assert ("replay_action_id" in params["properties"]) is (index >= 3)
+                assert ("replay_action_id" in params["required"]) is (index >= 3)
+                assert (probe_replay.DESCRIPTION in tool["description"]) is (index >= 3)
+                for field in ("question", "python_source"):
+                    assert params["properties"][field]["type"] == (
+                        "string" if index < 3 else ["string", "null"])
+                if index >= 3:
+                    ordinary = hooks["dev_tool_schemas"](
+                        finish_enabled="finish_task" in names, allowed_tools=names,
+                        planning_policy=req.planning_policy,
+                    )
+                    assert tool == next(t for t in ordinary if t["name"] == "run_probe")
             if tool["name"] in {"run_check", "run_probe"}:
                 assert ("comparison" in tool["parameters"]["required"]) is (index < 3)
                 if index < 3:

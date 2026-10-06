@@ -17,7 +17,9 @@ from diagnostics import counterexample_discovery as design
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import PublicTask
+from patchloop.dev import probe_replay
 from patchloop.dev.state import DevJournal
+from patchloop.dev.tools import dev_tool_schemas
 from patchloop.errors import ContractError
 from patchloop.prepared_probe_dependencies import MANIFEST
 from patchloop.prepared_source import prepare_source
@@ -129,6 +131,48 @@ def test_only_original_public_inputs_reach_request(offline, tmp_path):
     assert all(str(path).encode() not in raw for path in offline.paths().values())
     assert b"scope_reasoning" not in raw and b"profile-scope-contrast" not in raw
     assert packet["provider_calls"] == packet["input_count_calls"] == 0
+
+
+@pytest.mark.parametrize("guidance", design.REVIEW_GUIDANCE)
+@pytest.mark.parametrize("expectation", [None, design.probe_expectation.MODE])
+@pytest.mark.parametrize("construction", [None, design.construction_links.MODE])
+def test_fresh_discovery_projects_inline_probe_only_for_every_annotation_mode(
+    offline, guidance, expectation, construction,
+):
+    public = design.load_public_task(offline.public_task)
+    environment = {
+        "snapshot_scope": "all_tracked", "python": "3.12", "source_roots": ["/workspace"],
+    }
+    request = design.initial_request(
+        public, offline.candidate_patch.read_text(), environment,
+        review_guidance=guidance, probe_expectation_mode=expectation,
+        construction_evidence_mode=construction,
+    )
+    schema = next(tool for tool in request["tools"] if tool["name"] == "run_probe")
+    parameters = schema["parameters"]
+    assert "replay_action_id" not in parameters["properties"]
+    assert "replay_action_id" not in parameters["required"]
+    assert probe_replay.DESCRIPTION not in schema["description"]
+    assert "replay_action_id" not in schema["description"]
+    assert parameters["properties"]["question"] == {
+        "type": "string", "minLength": 1, "maxLength": 500,
+    }
+    assert parameters["properties"]["python_source"] == {
+        "type": "string", "minLength": 1, "maxLength": 8000,
+    }
+    assert set(parameters["required"]) == set(parameters["properties"])
+    assert request["input"][0]["content"] == design.review_prompt(guidance)
+    # Restrict only the diagnostic projection; the ordinary agent retains manual replay.
+    regular = dev_tool_schemas(
+        finish_enabled=False, allowed_tools=("read_file", "search_files", "run_probe"),
+        planning_policy="brief-v1", probe_policy="none", probe_environment=environment,
+    )
+    regular_probe = next(tool for tool in regular if tool["name"] == "run_probe")
+    assert "replay_action_id" in regular_probe["parameters"]["required"]
+    assert regular_probe["parameters"]["properties"]["python_source"]["type"] == ["string", "null"]
+    assert [tool for tool in request["tools"] if tool["name"] not in {
+        "run_probe", "report_discovery",
+    }] == [tool for tool in regular if tool["name"] != "run_probe"]
 
 
 @pytest.mark.parametrize("name", ["request.json", "candidate.patch", "public.yaml", "prompt.txt",

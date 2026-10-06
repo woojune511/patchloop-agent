@@ -37,7 +37,7 @@ def dev_tool_surface_hash(
         })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v46",
+            "schema_version": "dev-tool-surface-v47",
             "selected_public_tests": "registered-pytest-tracked-targets-optional-v1",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
@@ -130,6 +130,7 @@ def dev_tool_surface_hash(
             "submission_guidance": "current-check-finish-versus-unsuccessful-voluntary-stop-v2",
             "working_note_source_body_chars": 24_000,
             "public_probe": "optional-clean-python-diagnostic-protected-budget-v1",
+            "public_probe_replay": "explicit-completed-action-program-current-diff-v1",
             "public_probe_dependencies": "opt-in-public-locked-wheels-offline-snapshot-v1",
             "public_probe_discovery": "explicit-source-root-and-stdlib-reduction-limits-v2",
             "public_probe_process_guidance": "same-process-threads-no-child-process-v1",

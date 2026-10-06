@@ -32,7 +32,7 @@ Comparisons answer causal questions when needed; routine fixes need no new proce
 | Journal/recovery and evaluator completion | `patchloop/dev/state.py`, `patchloop/dev/evaluation_completion.py` |
 | Prices and pre-dispatch cost admission | `patchloop/dev/cost.py` |
 | Workspaces, prepared inputs, deadlines | `patchloop/repository.py`, `patchloop/prepared_source.py`, `patchloop/git_execution.py`, `patchloop/deadline.py` |
-| Registered checks and public probes | `patchloop/sandbox/`, `patchloop/dev/probe_cases.py` |
+| Registered checks and public probes | `patchloop/sandbox/`, `patchloop/dev/probe_replay.py`, `patchloop/dev/probe_cases.py` |
 | Patch/test comparison | `patchloop/repair_verification.py` |
 | Task/manifest contracts and isolated evaluation | `patchloop/contracts.py`, `patchloop/task_loader.py`, `patchloop/verifier/` |
 
@@ -182,7 +182,7 @@ Read optional implementation notes only when changing that feature. They contain
 experimental context and historical plans; current source/status take precedence:
 
 - Context: [segmented context](plans/segmented-context.md), [native window](plans/native-context-window.md).
-- Planning and probes: [planning](planning-experiment.md), [probe cases](probe-cases.md),
+- Planning and probes: [planning](planning-experiment.md), [probe replay/cases](probe-cases.md),
   [saved-program recheck](probe-recheck.md),
   [setup](probe-setup.md), [dependencies](prepared-probe-dependencies.md), [threads](probe-threads.md).
 - Public test selection: [registered pytest suites](selected-tests.md).

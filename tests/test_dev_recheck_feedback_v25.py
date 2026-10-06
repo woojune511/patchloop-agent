@@ -201,7 +201,7 @@ def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # Include current concern-ID guidance and mutation-explanation length bounds.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:9c7cda46dd6d3e9c9bbc0927cde44fa7d62ba542abbcb1c18578e9b84c73e705"
+    )) == "sha256:b300563b64ee5269f0594c8696cb730f959521177559526d5d197c76e48b1869"
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )

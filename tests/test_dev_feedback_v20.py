@@ -204,7 +204,7 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
     # Explanation bounds are explicit; probe properties/limits and tool order stay fixed.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "71fc128a9a6696f48ab8ca233f60ed2069f33a19bcf4fdfd787753128cab52ea"
+        "bf2adc8f1c85f2e1b3020d37cce69a92fd75137e7e7a972ca96fe8845f314cab"
     )
     assert dev_tool_surface_hash() != (
         "sha256:d69d9d4f71a4ed6517e0ae077d2df1fe934f6498abcacf104eed0b9b0fc717a8"

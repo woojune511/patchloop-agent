@@ -30,9 +30,8 @@ The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md)
 unconfirmed Git cleanup interrupted its peer. No new admission followed the stop.
 Matching 18 tasks improved from 8 to 11 successes; no all-20 accuracy claim follows.
 
-[Search fix and separate supplement](history/2026-10-06-search-once-supplement.md)
-closed: rows 18/20 both submitted and failed agreeing evaluations; USD 1.07327790,
-15m40s. All 36 searches took under 0.74s. Original NOT_RUN records stay unchanged.
+[Search fix and supplement](history/2026-10-06-search-once-supplement.md): rows 18/20
+submitted and failed; searches took under 0.74s. Original NOT_RUN stays unchanged.
 The [trace comparison](history/2026-10-06-agent-trace-comparison.md) and
 [verification follow-up](history/2026-10-06-verification-closure-results.md) closed:
 A 1/4 versus B 0/4 successes, USD 4.48506195; saved-case mechanism NOT_EXERCISED.
@@ -40,13 +39,16 @@ The [three-part diagnosis](history/2026-10-06-verification-context-budget-diagno
 confirmed untested submission, source loss under recency selection, and one extra
 model call reserved for an enabled automatic required-check recheck.
 [Resource accounting and context review](history/2026-10-06-resource-budget-context-review.md)
-separate model/tool reservations: the observed protected path now reserves seven
-model calls and eight tool actions, leaving one inspection opportunity at row08/462.
+corrected the model/tool reservation mismatch.
 The [48k comparison](history/2026-10-06-source-retention-results.md) tied at 2/4.
 Both [continuations](history/2026-10-06-cost-cap-continuation-results.md) submitted
 and failed for USD 0.21352020 extra. [Public diagnosis](history/2026-10-07-public-verification-failure-diagnosis.md)
 found an L003/L039 fix cycle and regression PASS mistaken for bug verification,
 despite surviving unresolved notes and available probes. Keep 24k; no paid run queued.
+
+[Probe replay](../.agent/probe-cases.md) now reuses a completed action's program on
+the current diff without prior saving. This is manual reuse; submission rules are
+unchanged and repair-success benefit is unmeasured.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

@@ -16,7 +16,7 @@ from pydantic import ValidationError
 
 from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import behavior_cases, probe_cases, requirement_reference
+from patchloop.dev import behavior_cases, probe_cases, probe_replay, requirement_reference
 from patchloop.dev.check_feedback import check_failure_diagnostics, output_tail
 from patchloop.dev.context import (
     RETAINED_SOURCE_CHARS,
@@ -416,16 +416,22 @@ def dev_tool_schemas(
                 "reason only from observations actually returned; later steps remain unobserved. "
                 "Compare actual input/output and relevant "
                 "line-entry ranges; missing observations are not proof of failure. "
-                "Results are diagnostics, not required visible-check verdicts."
+                "Results are diagnostics, not required visible-check verdicts. "
+                + probe_replay.DESCRIPTION
             ),
             "strict": True,
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "question": {"type": "string", "minLength": 1, "maxLength": 500},
-                    "python_source": {"type": "string", "minLength": 1, "maxLength": 8_000},
+                    "question": {"type": ["string", "null"], "minLength": 1, "maxLength": 500},
+                    "python_source": {
+                        "type": ["string", "null"], "minLength": 1, "maxLength": 8_000,
+                    },
+                    "replay_action_id": {
+                        "type": ["string", "null"], "minLength": 1, "maxLength": 500,
+                    },
                 },
-                "required": ["question", "python_source"],
+                "required": ["question", "python_source", "replay_action_id"],
                 "additionalProperties": False,
             },
         })
@@ -2407,6 +2413,12 @@ class DevToolGateway:
         mutation_anchor_evidence_span_id: str | None = None
         candidate_summary: DiffSummary | None = None
         prepared_probe: dict[str, Any] | None = None
+        probe_arguments = {key: value for key, value in call.arguments.items()
+                           if key != "replay_action_id"}
+        replay_probe = (
+            call.name == "run_probe" and call.arguments.get("replay_action_id") is not None
+        )
+        probe_binding_key = "probe_replay_request" if replay_probe else "probe_case_request"
         mutation_requirement_reference = None
         mutation_behavior_cases = None
         if call.name == "replace_text":
@@ -2421,13 +2433,19 @@ class DevToolGateway:
                     call.arguments.get("requirement_ref"), self.public_task,
                 ) if "requirement_ref" in call.arguments else None
             )
-        if call.name == "run_probe" and self.probe_policy in probe_cases.POLICIES:
+        if call.name == "run_probe" and (replay_probe or self.probe_policy in probe_cases.POLICIES):
             try:
-                prepared_probe = probe_cases.prepare(
-                    call.arguments, self.journal.events(), self.probe_policy
+                if (self.probe_policy == probe_cases.REFERENCE_POLICY
+                        and "save_program" in call.arguments):
+                    raise ContractError("reference-cases-v1 does not expose save_program")
+                prepared_probe = (
+                    probe_replay.prepare(call.arguments, self.journal.events()) if replay_probe
+                    else probe_cases.prepare(
+                        probe_arguments, self.journal.events(), self.probe_policy,
+                    )
                 )
-                if pending is not None and pending.get("probe_case_request") != prepared_probe:
-                    raise RecoveryError("pending probe case differs from its admitted program")
+                if pending is not None and pending.get(probe_binding_key) != prepared_probe:
+                    raise RecoveryError("pending probe differs from its admitted program")
             except (PatchLoopError, ValidationError, ValueError) as exc:
                 preflight_error = exc
         if pending is None:
@@ -2456,8 +2474,9 @@ class DevToolGateway:
                     "turn_decision": turn_decision,
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
-                    **({"probe_case_request": prepared_probe}
-                       if call.name == "run_probe" and self.probe_policy in probe_cases.POLICIES
+                    **({probe_binding_key: prepared_probe}
+                       if call.name == "run_probe" and (
+                           replay_probe or self.probe_policy in probe_cases.POLICIES)
                        else {}),
                     "mutation_expected_worktree_diff_hash": (
                         candidate_summary.patch_hash if candidate_summary is not None else None
@@ -2555,11 +2574,17 @@ class DevToolGateway:
                     raise RecoveryError("pending probe workspace no longer matches admitted diff")
                 output = self._run_probe(
                     **({key: prepared_probe[key] for key in ("question", "python_source")}
-                       if prepared_probe is not None else call.arguments),
+                       if prepared_probe is not None else probe_arguments),
                     execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
                 )
                 if prepared_probe is not None and prepared_probe["case"] is not None:
                     output["case_comparison"] = probe_cases.compare(prepared_probe["case"], output)
+                if replay_probe:
+                    assert prepared_probe is not None
+                    if output.get("source_hash") != prepared_probe["replayed_from"]["source_hash"]:
+                        raise RecoveryError("replayed probe source differs from its bound program",
+                                            details=output)
+                    output["replayed_from"] = prepared_probe["replayed_from"]
                 evidence_cache_hit = False
             elif call.name in READ_TOOLS:
                 if self.deadline is not None:

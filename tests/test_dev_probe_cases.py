@@ -108,18 +108,18 @@ def seed(gateway):
     return result, result.output["case_comparison"]["case_id"]
 
 
-def test_off_schema_prompt_and_identity_are_unchanged():
+def test_case_policy_extends_current_probe_schema_without_changing_prompt():
     options = {"finish_enabled": True, "allowed_tools": [
         "read_file", "search_files", "replace_text", "run_check", "run_probe",
         "finish_task", "stop_task",
     ]}
     before = dev_tool_schemas(**options)
-    # Includes the explicit new-concern ID description; the off-policy shape is unchanged.
+    # Current ordinary schema includes explicit action-ID replay in every probe policy.
     assert sha256_json(before) == (
-        "sha256:13cdc2f15f6f1302564239a9c0d6cd1ba70f3ff6e40c15a75548fa96f5c30d44"
+        "sha256:7597d481ed9f2853bad2dda2facc1900ddd8daf2986b1002323dcd041465d93c"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:183455d1ede934d796e13e2a446313a00b3c0c2ac6209cfaaf1cc1ff595b9a79"
+        "sha256:4b348a1f432b742686bbfc1c08ef29b6084ee5f647f85bbf2300e1562b6ec430"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
         "sha256:babc2a164aa06be7916a788f8d85bff1be0752acae4b9fefe1c3cffad11b199a"
