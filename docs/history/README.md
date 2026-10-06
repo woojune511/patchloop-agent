@@ -7,7 +7,7 @@
 
 ## Records
 
-- [CE](2026-10-07-counterexample-prep.md).
+- [CE](2026-10-07-counterexample-results.md).
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
 - [Diagnosis](2026-10-07-public-verification-failure-diagnosis.md).
 - [Closure](2026-10-06-verification-closure-results.md).
