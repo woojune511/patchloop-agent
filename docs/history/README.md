@@ -8,6 +8,7 @@
 ## Records
 
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
+- [Diagnosis](2026-10-07-public-verification-failure-diagnosis.md).
 - [Closure](2026-10-06-verification-closure-results.md).
 - [Dev20](2026-10-06-current-dev20-results.md).
 - Portfolio: [prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md).
@@ -84,8 +85,7 @@
 - [frozen declaration decision](2026-09-26-declaration-checkpoint-sampler.md).
 - [declaration-context diagnostic](2026-09-26-declaration-context-diagnostic.md).
 - [first interpretation and source questions](2026-09-26-first-interpretation-audit.md).
-- [independent candidate comparison](2026-09-26-independent-candidate-comparison.md):
-  HF imports, matched-cost comparison and first-plan scope reduction.
+- [independent candidate comparison](2026-09-26-independent-candidate-comparison.md).
 - [diagnostic claims verification](2026-09-26-diagnostic-claims-verification.md):
   input audits, four public probes and causal limits.
 - [completion advice comparison](2026-09-26-completion-status-comparison.md).

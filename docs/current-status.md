@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-06. Current decisions; runtime source owns behavior.
+Updated: 2026-10-07. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -42,12 +42,11 @@ model call reserved for an enabled automatic required-check recheck.
 [Resource accounting and context review](history/2026-10-06-resource-budget-context-review.md)
 separate model/tool reservations: the observed protected path now reserves seven
 model calls and eight tool actions, leaving one inspection opportunity at row08/462.
-The [48k comparison](history/2026-10-06-source-retention-results.md) closed:
-A 2/4 and B 2/4 accepted, USD 4.07933340; B cost 72% more.
-The [cost continuation](history/2026-10-06-cost-cap-continuation-results.md) enabled
-both capped SQLFluff submissions for USD 0.21352020 extra; both failed registered,
-native and public checks despite regression PASS. Neither verified its repair on
-the public example. Original outcomes stay unchanged. Keep 24k; no paid run queued.
+The [48k comparison](history/2026-10-06-source-retention-results.md) tied at 2/4.
+Both [continuations](history/2026-10-06-cost-cap-continuation-results.md) submitted
+and failed for USD 0.21352020 extra. [Public diagnosis](history/2026-10-07-public-verification-failure-diagnosis.md)
+found an L003/L039 fix cycle and regression PASS mistaken for bug verification,
+despite surviving unresolved notes and available probes. Keep 24k; no paid run queued.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.
