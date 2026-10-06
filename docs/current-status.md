@@ -36,12 +36,12 @@ closed: rows 18/20 both submitted and failed agreeing evaluations; USD 1.0732779
 The [trace comparison](history/2026-10-06-agent-trace-comparison.md) and
 [verification follow-up](history/2026-10-06-verification-closure-results.md) closed:
 A 1/4 versus B 0/4 successes, USD 4.48506195; saved-case mechanism NOT_EXERCISED.
-The [1733 patch comparison](history/2026-10-06-sqlfluff-1733-patch-comparison.md)
-confirmed the arithmetic patch fixes the public case; the trigger-reset patch does
-not. Source omission and a completion reserve coincided at its edit, but verification
-reopened before finish. Context causality and verification selection remain unresolved.
-Keep baseline; no paid run queued or general gain established. Named-case and
-concern-ID fixes are locally tested, separate from frozen live results.
+The [three-part diagnosis](history/2026-10-06-verification-context-budget-diagnosis.md)
+confirmed untested submission, source loss under recency selection, and one extra
+model call reserved for an enabled automatic required-check recheck. Resource-specific
+accounting is a concrete correction candidate; context and verification-selection
+effects remain unresolved. Runtime unchanged; no paid run queued or general gain
+established. Named-case/concern-ID fixes remain separate from frozen live results.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.
