@@ -33,29 +33,31 @@ Matching 18 tasks improved from 8 to 11 successes; no all-20 accuracy claim foll
 [Search fix and separate supplement](history/2026-10-06-search-once-supplement.md)
 closed: rows 18/20 both submitted and failed agreeing evaluations; USD 1.07327790,
 15m40s. All 36 searches took under 0.74s. Original NOT_RUN records stay unchanged.
-The [trace comparison](history/2026-10-06-agent-trace-comparison.md) finds known cases
-left unverified despite retained context and available tools. Matching-task cost
-rose 51.8%. Candidate verification is the open question; no policy change or run queued.
+The [trace comparison](history/2026-10-06-agent-trace-comparison.md) identified unverified
+cases despite retained context. The [verification follow-up](history/2026-10-06-verification-closure-results.md)
+closed: seven public replays confirmed an unresolved 1733 reproduction, but not 1517.
+Eight fresh solves gave ordinary probes A 1/4 successes versus manual-case B 0/4,
+USD 4.48506195. Seven submissions had agreeing evaluations; one A exhausted its cap
+before submission. No saved case or case replay was used: mechanism NOT_EXERCISED,
+no adoption or general gain. Keep baseline; no paid run queued. Expectation selection
+and misuse of historical observations remain unresolved. Named-case and concern-ID
+fixes are locally tested, separate from these frozen live results.
 
-The [priority fixes](history/2026-10-06-agent-priority-fixes.md) remain;
-all 20 fresh capability canaries passed. The [previous partial panel](history/2026-10-06-current-dev20-results.md)
-also remains closed. See the [panel contract](../.agent/current-dev20.md) for conditions.
+See [panel contract](../.agent/current-dev20.md) and
+[priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.
 
-Portfolio v1 closed: [dev20 remeasurement](history/2026-10-06-portfolio-dev20-results.md)
-resolved **9/20**, versus historical 10/20, with all registered/native results
-agreeing. Cost USD 3.46111455; wall time 102m19s. The 11/20 threshold was not met:
-test300 remains unprepared and unauthorized. The [decline review](history/2026-10-06-dev20-decline-review.md)
-adopted no intervention; no retry, tuning or automatic follow-up is queued.
-[Public results](../examples/portfolio-dev20/README.md), saved demo and review exports
-are local repository artifacts. Remote publication/release and Linux CI are NOT_RUN.
-[Preparation](history/2026-10-05-portfolio-preparation.md) preserves validation;
-`C:/pt/pv1dev20` and `C:/pt/pv1d20live05` are closed immutable evidence roots.
+Portfolio v1 [remeasurement](history/2026-10-06-portfolio-dev20-results.md) closed at
+9/20 versus historical 10/20, all evaluations agreeing; USD 3.46111455, 102m19s.
+The 11/20 threshold failed; test300 remains unprepared and unauthorized. The
+[decline review](history/2026-10-06-dev20-decline-review.md) adopted no intervention.
+[Public results](../examples/portfolio-dev20/README.md) and saved demos remain local;
+remote publication/release and Linux CI are NOT_RUN. [Preparation](history/2026-10-05-portfolio-preparation.md)
+preserves validation and the closed immutable evidence roots.
 
-[Three uses](history/2026-10-05-three-public-repair-uses.md): automatic comparisons
-3/3; [original review](history/2026-10-05-original-patch-review.md) found two patches
-needing changes. [Click corrections](history/2026-10-05-click-feedback-results.md):
-two feedback-informed candidates, not first-attempt successes. Human approval
-unreported; acceptance NOT_RUN. Prior allocations and C2/pydicom diagnoses closed.
+[Three uses](history/2026-10-05-three-public-repair-uses.md) and
+[Click corrections](history/2026-10-05-click-feedback-results.md) are closed.
+Feedback-informed candidates are separate from first-attempt successes;
+human approval unreported and acceptance NOT_RUN.
 [Mini/full](history/2026-10-04-mini-full-results.md): mini selected for the six-task
 panel only; 24/24 completed at USD 5.42285815. CLI defaults unchanged.
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task

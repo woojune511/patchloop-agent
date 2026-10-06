@@ -7,7 +7,8 @@
 
 ## Records
 
-- [Current dev20](2026-10-06-current-dev20-results.md).
+- [Closure](2026-10-06-verification-closure-results.md).
+- [Dev20](2026-10-06-current-dev20-results.md).
 - Portfolio: [prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md).
 - [Corrections](2026-10-05-click-feedback-results.md).
 - [Review](2026-10-05-original-patch-review.md).
@@ -23,10 +24,10 @@
 - [SQLFluff results](2026-10-02-lite-sql3-probe-results.md).
 - [Probe support](2026-10-02-lite-probe-support.md).
 - Lite dev20: [results](2026-10-02-lite-dev20-results.md), [diagnosis](2026-10-02-lite-dev20-failure-diagnosis.md).
-- [Lite registration](2026-10-02-lite-dev20-registration.md).
-- [Lite checks](2026-10-02-lite-public-regressions.md).
-- [Lite validation](2026-10-02-lite-environment-validation.md).
-- [Lite environments](2026-10-02-swebench-lite-environment-preparation.md).
+- [Registration](2026-10-02-lite-dev20-registration.md).
+- [Checks](2026-10-02-lite-public-regressions.md).
+- [Validation](2026-10-02-lite-environment-validation.md).
+- [Environments](2026-10-02-swebench-lite-environment-preparation.md).
 - [Lite calibration](2026-10-02-swebench-lite-dev20-calibration.md).
 - [Lite inventory](2026-10-02-swebench-lite-dev20-inventory.md).
 - [Lite mini results](2026-10-02-swebench-lite-mini-pilot.md).
