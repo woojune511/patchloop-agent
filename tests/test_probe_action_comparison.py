@@ -109,7 +109,9 @@ def test_collector_checks_first_input_and_stops_group_on_uncertainty(
     assert (result["new_cost_nanos"] is not None) == result["billing_known"]
 
 
-def test_nested_fork_can_be_audited_without_replaying_history(prepared, source):
+def test_nested_fork_can_be_restored_without_replaying_history(
+    prepared, source, tmp_path, monkeypatch,
+):
     plan = json.loads(Path(prepared["manifest"]).read_bytes())
     root = Path(prepared["manifest"]).parent / "B"
     journal = DevJournal(root, source.run_id)
@@ -120,6 +122,14 @@ def test_nested_fork_can_be_audited_without_replaying_history(prepared, source):
     audited = diagnostic.audit(nested, cut, plan["target_action_id"])
     assert audited["target"] == plan["audit"]["target"]
     assert audited["candidate_diff_hash"] == plan["audit"]["candidate_diff_hash"]
+    monkeypatch.setattr(runner, "_resolve_task_file", resolver(runner._resolve_task_file))
+    child_plan = {**plan, "source": nested.record(), "cut_sequence": cut, "audit": audited}
+    branch = diagnostic.fork(child_plan, plan["rows"][1], tmp_path / "child")
+    receipt = diagnostic.exposure.rehearse(branch, ScriptedClient(stop_steps()))
+    assert receipt["result"]["terminal"] == "AGENT_STOPPED", receipt
+    assert receipt["provider_calls"] == 0 and not receipt["synthetic_probe_calls"]
+    with pytest.raises(ContractError, match="cannot be retried"):
+        diagnostic.exposure.rehearse(branch, ScriptedClient(stop_steps()))
 
 
 def test_collector_reaches_isolated_fixture_evaluation(manifest, source, monkeypatch):

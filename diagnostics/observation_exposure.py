@@ -407,11 +407,9 @@ def rehearse(branch, client: ScriptedClient, *, probe_outcomes=None):
     """Single-use synthetic execution. Remote-task mutations/checks/finish are forbidden."""
     require(type(client) is ScriptedClient, "finite offline client required")
     require(branch.envelope.runtime_hash == runner._runtime_hash(), "fork runtime changed")
-    marker = next(
-        e["payload"]
-        for e in branch.journal.events()
-        if e["event_type"] == "observation_exposure_fork"
-    )
+    current = branch.journal.events()[branch.inherited_events:]
+    require(current[0]["event_type"] == "observation_exposure_fork", "fork boundary changed")
+    marker = current[0]["payload"]
     require(sha256_json(marker) == branch.marker_hash, "fork binding changed")
     require(marker["mode"] == "offline-scripted-only", "funded branch is not a rehearsal")
     require(
@@ -420,7 +418,7 @@ def rehearse(branch, client: ScriptedClient, *, probe_outcomes=None):
     )
     require(
         not any(
-            e["event_type"] == "observation_rehearsal_started" for e in branch.journal.events()
+            e["event_type"] == "observation_rehearsal_started" for e in current
         ),
         "rehearsal cannot be retried",
     )

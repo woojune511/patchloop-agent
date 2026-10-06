@@ -38,9 +38,14 @@ asserting the required indentation. Keep B1 as audit evidence, not another paid 
 - Proposed fresh allowance: USD 1.20 per row, USD 2.40 invocation-wide. Historical
   funds stay closed. Cap is a ceiling, not an estimate or a promise of completion.
 - Credential path: repository `.env`; preparation checks path/existence only.
-- Fresh roots: preparation `C:/pt/parpairprep01`, collection `C:/pt/parpairlive01`.
+- Fresh roots: preparation `C:/pt/parpairprep02`, collection `C:/pt/parpairlive01`.
   Root reuse is forbidden, including after interruption. Run serially because the
   diagnostic installs process-local hooks. No retries or automatic continuation.
+
+Preparation `C:/pt/parpairprep01` stopped before any provider/project execution:
+the shared rehearsal selected an ancestor fork marker. Its partial evidence is
+preserved. Rehearsal now checks the new branch boundary and retry markers only;
+the nested-fork regression also verifies that rerunning that same child is refused.
 
 `diagnostics/probe_action_comparison.py` reuses current-runtime restoration,
 count-before-dispatch admission and the ordinary action loop. Both arms retain all
