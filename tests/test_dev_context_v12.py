@@ -178,7 +178,8 @@ def test_search_bounds_total_complete_source_and_keeps_matches_visible(
     source = gateway.workspace / "src.py"
     source.write_text("\n".join(f"MATCH {number} " + "x" * 2_000 for number in range(40)))
     monkeypatch.setattr(
-        "patchloop.dev.tools.run_git", lambda *args, **kwargs: SimpleNamespace(returncode=0)
+        "patchloop.dev.tools.run_git",
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=b"src.py\0"),
     )
     result = gateway._search_files("MATCH", "*.py")
     assert result["truncated"] is True

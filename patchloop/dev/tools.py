@@ -2749,6 +2749,10 @@ class DevToolGateway:
         if not isinstance(query, str) or not query or len(query) > 500:
             raise ContractError("search query must contain 1-500 characters")
         pattern = safe_relative_path(path_glob, field_name="search path_glob")
+        tracked = run_git(
+            self.workspace, "ls-files", "-z", text=False, deadline=self.deadline,
+        )
+        tracked_paths = set(tracked.stdout.decode("utf-8", errors="surrogateescape").split("\0"))
         spans: list[dict[str, Any]] = []
         content_chars = 0
         searched_file_count = 0
@@ -2768,11 +2772,7 @@ class DevToolGateway:
                 relative, pattern
             ):
                 continue
-            tracked = run_git(
-                self.workspace, "ls-files", "--error-unmatch", "--", relative,
-                check=False, text=False, deadline=self.deadline,
-            )
-            if tracked.returncode != 0 or selected.stat().st_size > 1_000_000:
+            if relative not in tracked_paths or selected.stat().st_size > 1_000_000:
                 continue
             try:
                 raw = selected.read_bytes()

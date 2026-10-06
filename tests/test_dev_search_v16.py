@@ -5,10 +5,13 @@ from types import SimpleNamespace
 
 import pytest
 
+import patchloop.dev.tools as tools
+from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev.contracts import DevLimits, PublicTurnDecision, RequestedTool
 from patchloop.dev.source_glob import matches_source_glob
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway, dev_tool_schemas
+from patchloop.git_execution import GitExecutionUncertain
 
 
 @pytest.mark.parametrize(
@@ -146,3 +149,100 @@ def test_search_metadata_and_results_survive_cache_and_gateway_restart(search_ga
         tuple(s[key] for key in fields) for s in first.output["spans"]
     ]
     assert replay.output["evidence_gain"]["new_covered_line_count"] == 0
+
+
+def test_search_enumerates_tracking_once_for_many_files(search_gateway, monkeypatch):
+    gateway = search_gateway
+    for number in range(64):
+        (gateway.workspace / f"extra{number:03}.py").write_text("ordinary source\n")
+    subprocess.run(["git", "add", "--", "extra*.py"], cwd=gateway.workspace, check=True)
+    calls = []
+    original = tools.run_git
+
+    def counted(workspace, *args, **kwargs):
+        calls.append(args)
+        return original(workspace, *args, **kwargs)
+
+    monkeypatch.setattr(tools, "run_git", counted)
+    result = gateway._search_files("not present")
+    assert result["searched_file_count"] == 69
+    assert result["spans"] == []
+    assert calls == [("ls-files", "-z")]
+
+
+def test_search_refreshes_index_and_current_content_with_unusual_names(search_gateway):
+    gateway = search_gateway
+    name = "space 한글[1].py"
+    target = gateway.workspace / name
+    target.write_text("fresh marker\n", encoding="utf-8")
+    assert gateway._search_files("fresh marker")["spans"] == []
+    subprocess.run(["git", "add", "--", name], cwd=gateway.workspace, check=True)
+    first = gateway._search_files("fresh marker")["spans"]
+    assert [s["path"] for s in first] == [name]
+    target.write_text("changed marker\n", encoding="utf-8")
+    assert gateway._search_files("fresh marker")["spans"] == []
+    assert gateway._search_files("changed marker")["spans"][0]["file_hash"] != first[0]["file_hash"]
+    subprocess.run(["git", "rm", "--cached", "--force", "--", name], cwd=gateway.workspace,
+                   check=True, capture_output=True)
+    assert gateway._search_files("changed marker")["spans"] == []
+
+
+def test_search_keeps_size_and_symlink_boundaries(search_gateway):
+    gateway = search_gateway
+    (gateway.workspace / "huge.py").write_bytes(b"PUBLIC_SEARCH_MARKER" + b"x" * 1_000_001)
+    subprocess.run(["git", "add", "--", "huge.py"], cwd=gateway.workspace, check=True)
+    assert gateway._search_files("PUBLIC_SEARCH_MARKER")["searched_file_count"] == 5
+    link = gateway.workspace / "link.py"
+    try:
+        link.symlink_to(gateway.workspace / "root.py")
+    except OSError:
+        pytest.skip("host does not permit symlink creation")
+    subprocess.run(["git", "add", "--", "link.py"], cwd=gateway.workspace, check=True)
+    result = gateway._search_files("PUBLIC_SEARCH_MARKER")
+    assert result["searched_file_count"] == 5
+    assert all(s["path"] != "link.py" for s in result["spans"])
+
+
+def test_expired_search_launches_no_git(search_gateway, monkeypatch):
+    gateway = search_gateway
+    gateway.deadline = ExecutionDeadline.from_remaining(0)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("expired search cannot launch Git")
+
+    monkeypatch.setattr("patchloop.git_execution.subprocess.Popen", forbidden)
+    with pytest.raises(ExecutionDeadlineExceeded):
+        gateway._search_files("marker")
+
+
+def test_search_scan_deadline_stops_without_another_git(search_gateway, monkeypatch):
+    gateway = search_gateway
+    now = [0.0]
+    deadline = ExecutionDeadline.from_remaining(1, clock=lambda: now[0])
+    gateway.deadline = deadline
+    calls = []
+
+    def enumerated(workspace, *args, **kwargs):
+        assert kwargs["deadline"] is deadline
+        calls.append(args)
+        now[0] = 2.0
+        return SimpleNamespace(stdout=b"root.py\0")
+
+    monkeypatch.setattr(tools, "run_git", enumerated)
+    with pytest.raises(ExecutionDeadlineExceeded):
+        gateway._search_files("marker")
+    assert calls == [("ls-files", "-z")]
+
+
+def test_search_preserves_git_cleanup_uncertainty(search_gateway, monkeypatch):
+    uncertain = GitExecutionUncertain(
+        "unconfirmed cleanup", details={"descendant_cleanup": "unknown"},
+    )
+
+    def failed(*args, **kwargs):
+        raise uncertain
+
+    monkeypatch.setattr(tools, "run_git", failed)
+    with pytest.raises(GitExecutionUncertain) as captured:
+        search_gateway._search_files("marker")
+    assert captured.value is uncertain

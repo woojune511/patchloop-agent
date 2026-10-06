@@ -30,13 +30,12 @@ The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md)
 unconfirmed Git descendant cleanup and one peer interruption. Cost USD 5.08206870;
 wall time 69m38s; two workers observed. The same 18 evaluated tasks improved from
 8 to 11 successes, but two NOT_RUN rows prevent an all-20 accuracy or speedup claim.
-No new admission followed the uncertainty stop. No retry or paid follow-up is queued.
+No new admission followed the uncertainty stop. Its original allocation stays closed.
 
-The next concrete bottleneck is per-file Git execution during public search:
-row 18 spent 568 seconds in completed searches before its solver deadline.
-Test a single tracked-file enumeration provider-free, preserving public-path and
-deadline behavior. Verification choices remain a separate gap: tools were available,
-but several submitted repairs lacked their planned focused checks.
+Search now enumerates tracked paths once: identical synthetic outputs, 128-to-1 Git
+calls and 9.5-10s-to-0.067s latency. Local validation completed. Fresh rows 18/20
+are authorized at USD 1.20 each with unchanged limits, as a separate supplement.
+Verification choices remain unresolved; repairs omitted planned checks.
 
 The [priority fixes](history/2026-10-06-agent-priority-fixes.md) remain;
 all 20 fresh capability canaries passed. The [previous partial panel](history/2026-10-06-current-dev20-results.md)

@@ -65,9 +65,10 @@ A bounded public `turn_decision` accompanies each call. Optional notes/plans are
 unverified working data, not reasoning transcripts or an extra workflow phase.
 One consecutive protocol/incomplete correction is allowed; a valid tool batch resets it.
 
-Reads return at most 400 inclusive lines within output bounds. Searches use literal
-queries and repository-rooted component-aware globs. Only delivered, current public
-source can authorize an edit. `replace_text` requires an exact occurrence in an
+Reads return up to 400 lines. Searches use literal queries,
+rooted component-aware globs and one tracked-path enumeration per uncached call.
+Only delivered current public source authorizes edits.
+`replace_text` requires an exact occurrence in an
 existing tracked allowed file, a hypothesis, and expected behavior (each 1-1,500
 characters in both the public schema and internal contract). The gateway binds
 the contiguous observed anchor, creates the canonical full diff, enforces complete-diff
