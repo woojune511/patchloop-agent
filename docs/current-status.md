@@ -33,15 +33,15 @@ Matching 18 tasks improved from 8 to 11 successes; no all-20 accuracy claim foll
 [Search fix and separate supplement](history/2026-10-06-search-once-supplement.md)
 closed: rows 18/20 both submitted and failed agreeing evaluations; USD 1.07327790,
 15m40s. All 36 searches took under 0.74s. Original NOT_RUN records stay unchanged.
-The [trace comparison](history/2026-10-06-agent-trace-comparison.md) identified unverified
-cases despite retained context. The [verification follow-up](history/2026-10-06-verification-closure-results.md)
-closed: seven public replays confirmed an unresolved 1733 reproduction, but not 1517.
-Eight fresh solves gave ordinary probes A 1/4 successes versus manual-case B 0/4,
-USD 4.48506195. Seven submissions had agreeing evaluations; one A exhausted its cap
-before submission. No saved case or case replay was used: mechanism NOT_EXERCISED,
-no adoption or general gain. Keep baseline; no paid run queued. Expectation selection
-and misuse of historical observations remain unresolved. Named-case and concern-ID
-fixes are locally tested, separate from these frozen live results.
+The [trace comparison](history/2026-10-06-agent-trace-comparison.md) and
+[verification follow-up](history/2026-10-06-verification-closure-results.md) closed:
+A 1/4 versus B 0/4 successes, USD 4.48506195; saved-case mechanism NOT_EXERCISED.
+The [1733 patch comparison](history/2026-10-06-sqlfluff-1733-patch-comparison.md)
+confirmed the arithmetic patch fixes the public case; the trigger-reset patch does
+not. Source omission and a completion reserve coincided at its edit, but verification
+reopened before finish. Context causality and verification selection remain unresolved.
+Keep baseline; no paid run queued or general gain established. Named-case and
+concern-ID fixes are locally tested, separate from frozen live results.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.
