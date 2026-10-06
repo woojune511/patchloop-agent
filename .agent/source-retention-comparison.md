@@ -1,7 +1,7 @@
 # Observed-source retention comparison
 
-Prepared 2026-10-06; provider-free preparation only. No paid execution is authorized
-or queued. This is a fresh-solve comparison design, not a continuation of a closed
+Authorized 2026-10-06 by the user's "실험 진행해줘" for the exact scope below.
+This is a fresh-solve comparison design, not a continuation of a closed
 allocation. Both arms use the same implementation including the resource accounting
 correction from e55393ed. General runtime defaults remain unchanged.
 
@@ -24,7 +24,7 @@ apart from necessary fresh state paths and identities. Selection priorities,
 segment boundary policy, prompts, tools and caps are identical. Active-function
 pinning, new guidance, mandatory probes and automatic probe replay are excluded.
 
-## Exact proposed scope
+## Exact authorized scope
 
 - SQLFluff-1733: `tasks/dev-train/current-dev20/18/public.yaml`, source-loss case.
 - pvlib-1072: `tasks/dev-train/current-dev20/2/public.yaml`, regression control
@@ -40,7 +40,7 @@ pinning, new guidance, mandatory probes and automatic probe replay are excluded.
 - Two fresh repetitions per task per arm: eight requests, each `repeat=1`.
 - Each row: USD 1.20, 40 model calls, 100 tool actions, four accepted edits,
   1,800 total seconds including 330 seconds reserved for registered evaluation.
-  Total proposed invocation cap: USD 9.60; no transfers or increases.
+  Total invocation cap: USD 9.60; no transfers or increases.
 - Shared policies: segmented-v1, result-or-size-v1, brief-v1, ordinary probes
   enabled, probe_policy none, probe_recheck none, repair_recheck true,
   protected-v1 inspection and per-call-v1 cost admission. Cross-run memory stays off.
@@ -61,8 +61,10 @@ clients, state and cost ledgers. Row numbers are execution order, not dev20 indi
 The existing `diagnostics/parallel_dev_batch.py` accepts distinct tasks per call,
 so call it once per wave under one outer allocation; never submit all eight rows
 to its distinct-task interface. Carry a global stop decision across waves. Fresh
-requests and separate row roots are prepared externally; no launcher or approval
-receipt is created by this preparation.
+requests and separate row roots are prepared externally. The execution driver is
+`diagnostics/source_retention_comparison.py`; it maps each wave's local indices to
+the correct task and unique native-assessment directory, and carries a stop across
+all later waves. It rejects restart/resume and preserves all eight allocated rows.
 
 ## Assessment and decision
 
@@ -106,5 +108,8 @@ identities, with `live_execution_authorized=false`. Source and dependency descri
 are checked without model calls or Docker execution. This is not an execution-ready
 environment certificate. Before dispatch, bind the final clean code/driver commit,
 runtime, task and dependency hashes, local images, public calibration and validation
-receipts in the actual execution packet, then obtain its exact paid scope approval.
-Historical approvals and prepared proposal files do not authorize execution.
+receipts in the actual execution packet. The current explicit user authorization
+covers this exact scope; record it against that packet. Historical preparation
+files remain unchanged. Execution evidence: `C:/pt/sretp02`; fresh states:
+`C:/pt/sretlive01/1` through `8`. Calibration uses original sources and saved agent
+submissions only in the operator process, never in the fresh solver input.
