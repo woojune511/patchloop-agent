@@ -26,16 +26,16 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 ## Active decision
 
 The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md) closed:
-20 started, 18 agreeing evaluations (11 PASS/7 FAIL), one solver deadline with
-unconfirmed Git descendant cleanup and one peer interruption. Cost USD 5.08206870;
-wall time 69m38s; two workers observed. The same 18 evaluated tasks improved from
-8 to 11 successes, but two NOT_RUN rows prevent an all-20 accuracy or speedup claim.
-No new admission followed the uncertainty stop. Its original allocation stays closed.
+20 started, 11 PASS/7 FAIL/2 NOT_RUN; USD 5.08206870. A solver deadline with
+unconfirmed Git cleanup interrupted its peer. No new admission followed the stop.
+Matching 18 tasks improved from 8 to 11 successes; no all-20 accuracy claim follows.
 
 [Search fix and separate supplement](history/2026-10-06-search-once-supplement.md)
 closed: rows 18/20 both submitted and failed agreeing evaluations; USD 1.07327790,
 15m40s. All 36 searches took under 0.74s. Original NOT_RUN records stay unchanged.
-Search overhead is fixed; task-specific verification remains unresolved. No run queued.
+The [trace comparison](history/2026-10-06-agent-trace-comparison.md) finds known cases
+left unverified despite retained context and available tools. Matching-task cost
+rose 51.8%. Candidate verification is the open question; no policy change or run queued.
 
 The [priority fixes](history/2026-10-06-agent-priority-fixes.md) remain;
 all 20 fresh capability canaries passed. The [previous partial panel](history/2026-10-06-current-dev20-results.md)
