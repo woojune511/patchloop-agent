@@ -32,10 +32,10 @@ wall time 69m38s; two workers observed. The same 18 evaluated tasks improved fro
 8 to 11 successes, but two NOT_RUN rows prevent an all-20 accuracy or speedup claim.
 No new admission followed the uncertainty stop. Its original allocation stays closed.
 
-Search now enumerates tracked paths once: identical synthetic outputs, 128-to-1 Git
-calls and 9.5-10s-to-0.067s latency. Local validation completed. Fresh rows 18/20
-are authorized at USD 1.20 each with unchanged limits, as a separate supplement.
-Verification choices remain unresolved; repairs omitted planned checks.
+[Search fix and separate supplement](history/2026-10-06-search-once-supplement.md)
+closed: rows 18/20 both submitted and failed agreeing evaluations; USD 1.07327790,
+15m40s. All 36 searches took under 0.74s. Original NOT_RUN records stay unchanged.
+Search overhead is fixed; task-specific verification remains unresolved. No run queued.
 
 The [priority fixes](history/2026-10-06-agent-priority-fixes.md) remain;
 all 20 fresh capability canaries passed. The [previous partial panel](history/2026-10-06-current-dev20-results.md)
