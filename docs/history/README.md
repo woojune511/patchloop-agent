@@ -7,7 +7,7 @@
 
 ## Records
 
-- [Intermediate test](2026-10-07-intermediate-test.md).
+- [Rule ownership](2026-10-08-rule-ownership.md).
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
 - [Diagnosis](2026-10-07-public-verification-failure-diagnosis.md).
 - [Closure](2026-10-06-verification-closure-results.md).

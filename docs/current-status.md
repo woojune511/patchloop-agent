@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-07. Current decisions; runtime source owns behavior.
+Updated: 2026-10-08. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -25,11 +25,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Intermediate test](history/2026-10-07-intermediate-test.md): SQLFluff-1733's third
-edit passed all four selected tests but failed a saved required regression. The
-final candidate passed required checks but failed the task assertion with no edits
-left. Earlier revalidation would have returned PASS here. Keep current; defer the
-automatic prototype and paid follow-up. A repair must preserve both behaviors.
+[Rule ownership](history/2026-10-08-rule-ownership.md): an operator L039 patch passed
+seven selected tests and 506 public regressions, with L003/L036 unchanged. The
+failed trace had relevant source but assumed its helper fix covered full behavior.
+This public diagnostic is not agent improvement. Keep current; automatic
+revalidation and paid follow-up remain deferred.
 [Thin disclosure](history/2026-10-07-thin-followup.md) is locally validated;
 its live effect remains untested.
 
