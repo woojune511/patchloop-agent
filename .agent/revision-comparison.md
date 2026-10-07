@@ -7,8 +7,9 @@ external manifest and an exact human spending approval own the live scope.
 
 Does the accumulated current agent change task acceptance, regressions, settled
 cost, or completion time compared with the corrected-dev20 runtime, when tasks,
-model, tools and resource allocations are held fixed? This compares a bundle of
-changes; it cannot attribute a difference to one feature.
+model, configured policies and resource allocations are held fixed? Tool interface
+changes, including manual probe replay and additive-test admission, are part of
+the revision bundle; a difference cannot be attributed to one feature.
 
 The original low-diagnosis shortlist (1, 3, 9, 15) consisted entirely of previous
 successes; task 9 also had recent thin-policy runs. To retain room to observe repair
