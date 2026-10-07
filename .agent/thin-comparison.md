@@ -1,5 +1,9 @@
 # Bounded current/thin comparison
 
+Closed 2026-10-07: [results](../docs/history/2026-10-07-thin-comparison-results.md).
+All sixteen attempts ran; current remains selected. The USD 64 allocation is
+closed at USD 9.71364450. This record grants no restart, replacement or follow-up.
+
 The operator driver is `diagnostics/thin_comparison.py`. This comparison asks
 whether the thin interface preserves two known successes and improves two recent
 repair failures. It does not change the current default. The frozen design is

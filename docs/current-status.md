@@ -25,6 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+[Current/thin](history/2026-10-07-thin-comparison-results.md) closed: A 6 PASS/2 FAIL;
+B 6 PASS/1 FAIL/1 unsubmitted NOT_RUN; USD 9.71364450. All 15 graded rows agree
+registered/native/public; safety 15 PASS/1 NOT_RUN. SQLFluff-1733 remained
+unrepaired. Thin stopped once after mistaking conditional tool absence for a
+permanent limit; its availability explanation is incomplete. No replicated gain;
+quality INCONCLUSIVE. Keep current; allocation closed, no paid follow-up.
+
 The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md) closed:
 20 started, 11 PASS/7 FAIL/2 NOT_RUN; USD 5.08206870. A solver deadline with
 unconfirmed Git cleanup interrupted its peer. No new admission followed the stop.
@@ -140,13 +147,6 @@ tests cover record integrity and unique check IDs. [Paths](../tests/test_reposit
 [CI](../.github/workflows/ci.yml) uses locked dependencies on Windows/Linux.
 [Impact review](history/2026-10-07-fix-impact.md): latest runtime fix triggers were absent
 from 24 reviewed runs. No patch-quality gain established or paid rerun queued.
-
-[Thin readiness](history/2026-10-07-thin-comparison-readiness.md): the 16-row
-current/thin driver and all four current environments passed provider-free checks.
-Twelve probes and four selected tests ran; no OpenAI call. Final manifest freeze
-binds the committed implementation; USD 64 still needs exact funding authorization.
-The prior A2 public PASS is scoped, not task acceptance. Keep current default;
-1517's oracle remains incomplete. No paid run or automatic follow-up is queued.
 
 ## Evidence map
 
