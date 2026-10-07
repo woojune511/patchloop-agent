@@ -141,11 +141,11 @@ tests cover record integrity and unique check IDs. [Paths](../tests/test_reposit
 [Impact review](history/2026-10-07-fix-impact.md): latest runtime fix triggers were absent
 from 24 reviewed runs. No patch-quality gain established or paid rerun queued.
 
-[System review](history/2026-10-07-system-review.md) keeps the baseline. Proposed next
-preparation: a thin-policy parity specification and a public candidate/test matrix.
-Model/controller effects and usable verification remain unresolved; no paid run is
-queued. Judge changes by patch correctness, regressions and cost/time. More policy
-prose, larger context or a selector without useful candidates is not justified.
+[Preparation](history/2026-10-07-policy-candidate-prep.md) completed: thin-policy spec
+and saved public candidate matrix. 2419 distinguishes candidates; 1517's oracle is
+incomplete; 1733's A2 lacks a current public replay. Policy parity is unimplemented.
+Keep baseline; no paid run queued. Next implementation seam is the policy adapter;
+candidate selection needs the missing evidence, not another wording experiment.
 
 ## Evidence map
 
