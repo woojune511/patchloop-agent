@@ -25,11 +25,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Rule ownership](history/2026-10-08-rule-ownership.md): an operator L039 patch passed
-seven selected tests and 506 public regressions, with L003/L036 unchanged. The
-failed trace had relevant source but assumed its helper fix covered full behavior.
-This public diagnostic is not agent improvement. Keep current; automatic
-revalidation and paid follow-up remain deferred.
+[Navigation audit](history/2026-10-08-failure-navigation.md): only SQL1733 repeated
+the generated-ID search miss across five selected tasks; no current search/delivery
+defect was reproduced. Keep baseline; no resolver, prompt change or paid run queued.
+[Rule ownership](history/2026-10-08-rule-ownership.md) remains a public operator
+repair control, not agent improvement; automatic revalidation remains deferred.
 [Thin disclosure](history/2026-10-07-thin-followup.md) is locally validated;
 its live effect remains untested.
 
