@@ -1,5 +1,6 @@
 """Frozen historical inputs, comparison semantics and one-shot evaluation; no provider."""
 import copy
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -226,7 +227,8 @@ def test_panel_wiring_accounts_then_evaluates_before_next_solve(
 
 
 @pytest.mark.parametrize('mode', ['pass', 'fail', 'missing', 'cleanup', 'timeout'])
-def test_native_assessment_preserves_candidate(tmp_path, monkeypatch, mode):
+@pytest.mark.parametrize('model', ['gpt-5.4-mini-2026-03-17', 'gpt-5.4-2026-03-05'])
+def test_native_assessment_preserves_candidate(tmp_path, monkeypatch, mode, model):
     import subprocess
 
     entry = {'index': 1, 'instance_id': 'case', 'native_row': str(tmp_path / 'native-row.json')}
@@ -244,6 +246,9 @@ def test_native_assessment_preserves_candidate(tmp_path, monkeypatch, mode):
 
     def execute(command, **kwargs):
         assert '--predictions' in command
+        prediction = json.loads(Path(command[command.index('--predictions') + 1]).read_bytes())
+        assert prediction['model_name_or_path'] == model
+        assert prediction['model_patch'] == patch.decode('utf-8')
         assert 'OPENAI_API_KEY' not in kwargs['env']
         if mode == 'timeout':
             raise subprocess.TimeoutExpired(command, 600)
@@ -258,9 +263,10 @@ def test_native_assessment_preserves_candidate(tmp_path, monkeypatch, mode):
 
     monkeypatch.setattr(panel.subprocess, 'run', execute)
     monkeypatch.setenv('OPENAI_API_KEY', 'must-not-leak')
-    result = panel.native_assessment(tmp_path, entry, row, SimpleNamespace(state_root=state))
+    request = SimpleNamespace(state_root=state, model=model)
+    result = panel.native_assessment(tmp_path, entry, row, request)
     assert result['ok'] is (mode in ('pass', 'fail'))
     assert result['status'] == ('PASS' if mode == 'pass' else 'FAIL' if mode == 'fail' else 'ERROR')
     assert path.read_bytes() == patch
     with pytest.raises(FileExistsError):
-        panel.native_assessment(tmp_path, entry, row, SimpleNamespace(state_root=state))
+        panel.native_assessment(tmp_path, entry, row, request)

@@ -216,7 +216,7 @@ def native_assessment(root, entry, row, req, *, evaluation_patch=None):
     assessed_patch = patch if evaluation_patch is None else evaluation_patch
     if evaluation_patch is not None:
         (folder / 'source-only.patch').write_bytes(assessed_patch)
-    prediction = {'instance_id': entry['instance_id'], 'model_name_or_path': MODEL,
+    prediction = {'instance_id': entry['instance_id'], 'model_name_or_path': req.model,
                   'model_patch': assessed_patch.decode('utf-8')}
     save(folder, 'prediction.jsonl', prediction)
     started = monotonic()
