@@ -7,7 +7,7 @@
 
 ## Records
 
-- [Thin follow-up](2026-10-07-thin-followup.md).
+- [Selected-test timing](2026-10-07-selected-test-timing.md).
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
 - [Diagnosis](2026-10-07-public-verification-failure-diagnosis.md).
 - [Closure](2026-10-06-verification-closure-results.md).

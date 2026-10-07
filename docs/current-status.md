@@ -25,13 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Thin follow-up](history/2026-10-07-thin-followup.md) restores factual tool
-prerequisites without changing admission or current defaults. SQLFluff-1733's
-eleven probes all preceded edits. Its added full-behavior test passed an earlier
-patch but failed when explicitly replayed on the submitted patch; default filename
-discovery excludes that module. Final-candidate revalidation was missing while
-relevant baseline probe observations remained available. Keep current; no paid run.
-The disclosure's live effect is untested.
+[Selected-test timing](history/2026-10-07-selected-test-timing.md): thin SQLFluff-1733
+had one edit left at the earlier rerun point, but its test outcome is unknown.
+The final candidate's known failure came after all edits were consumed. Neither
+current trace selected tests. Defer automatic revalidation; keep current. The next
+discriminator is the selected file on the intermediate diff; no paid run is queued.
+[Thin disclosure](history/2026-10-07-thin-followup.md) is locally validated;
+its live effect remains untested.
 
 The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md) closed:
 20 started, 11 PASS/7 FAIL/2 NOT_RUN; USD 5.08206870. A solver deadline with
