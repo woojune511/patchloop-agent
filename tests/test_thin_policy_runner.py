@@ -25,6 +25,7 @@ from patchloop.dev import runner, segments, thin_policy
 from patchloop.dev.contracts import RequestedTool
 from patchloop.dev.inspection_projection import project_inspection_context
 from patchloop.dev.native_sources import PUBLIC_EVIDENCE_KIND, public_exchanges
+from patchloop.dev.tools import dev_tool_schemas
 from patchloop.errors import RecoveryError, ResumeContractMismatch
 from patchloop.util import canonical_json
 
@@ -194,6 +195,94 @@ def test_scheduler_has_identical_completion_and_scarcity_decisions(gateway_facto
                 for calls, actions in ((0, 0), (37, 95), (39, 99))])
         policies.append(snapshots)
     assert policies[0] == policies[1]
+
+
+@pytest.mark.parametrize("observation", ["read_file", "search_files"])
+def test_thin_discloses_staged_tools_without_restoring_advice(
+    gateway_factory, smoke_package, observation,
+):
+    gateway, journal, _ = gateway_factory(sandbox=PassingSandbox())
+    gateway.agent_policy = "thin"
+    counters = runner._RunCounters()
+    latest = []
+
+    def view():
+        state = json.loads(runner._build_context(
+            package=smoke_package, gateway=gateway, journal=journal,
+            correction=None, latest_tool_results=latest, counters=counters,
+            elapsed_seconds=0, limits=gateway.limits,
+        ))
+        projected = thin_policy.project_state(state, "thin")
+        guidance = projected["completion_guidance"]
+        assert set(guidance) == {"stage", "diff_hash", "submission_ready"}
+        for key in ("mutation_readiness", "current_diff", "visible_check_status",
+                    "remaining_budget", "available_tool_names"):
+            assert projected[key] == state[key]
+        schemas = dev_tool_schemas(
+            finish_enabled="finish_task" in projected["available_tool_names"],
+            allowed_tools=projected["available_tool_names"], agent_policy="thin",
+        )
+        assert {schema["name"] for schema in schemas} == set(projected["available_tool_names"])
+        return projected
+
+    def execute(requested):
+        result, = gateway.execute_batch([requested])
+        assert result.status == "succeeded", result.message
+        latest[:] = [result]
+        counters.model_calls += 1
+        counters.tool_actions += 1
+        return view()
+
+    prompt = " ".join(thin_policy.system_prompt("thin").split())
+    for fact in (
+        "current evidence and remaining budgets",
+        "replace_text is temporarily absent",
+        "read_file/search_files can supply that evidence",
+        "finish_task requires a nonempty scoped patch with all required checks "
+        "passing on that diff",
+        "Temporary absence does not mean a tool is unsupported",
+    ):
+        assert fact in prompt
+    assert thin_policy.system_prompt() == runner.DEV_SYSTEM_PROMPT
+
+    initial = view()
+    assert initial["completion_guidance"]["stage"] == "needs_source_evidence"
+    assert initial["mutation_readiness"]["state"] == "needs_anchor_evidence"
+    assert {"read_file", "search_files"} <= set(initial["available_tool_names"])
+    assert {"replace_text", "finish_task"}.isdisjoint(initial["available_tool_names"])
+
+    # A successful empty search supplies no editable source and cannot unlock an edit.
+    negative = execute(call("thin", "search_files", "negative", {
+        "query": "ABSENT_SOURCE_TOKEN_XYZ", "path_glob": "**/*.py",
+    }))
+    assert negative["completion_guidance"]["stage"] == "needs_source_evidence"
+    assert "replace_text" not in negative["available_tool_names"]
+    source = (call("thin") if observation == "read_file" else call(
+        "thin", "search_files", "source", {
+            "query": "rows", "path_glob": "mini_data_utils/csvlite.py",
+        },
+    ))
+    observed = execute(source)
+    assert observed["completion_guidance"]["stage"] == "needs_mutation"
+    assert observed["mutation_readiness"]["state"] == "ready_to_attempt"
+    assert "replace_text" in observed["available_tool_names"]
+    assert "finish_task" not in observed["available_tool_names"]
+    if observation == "search_files":
+        # Edit eligibility does not establish coverage of this full replacement anchor.
+        execute(call("thin", action_id="full-anchor"))
+    edited = execute(mutation("thin"))
+    assert edited["current_diff"]["patch"]
+    assert edited["completion_guidance"]["stage"] == "needs_visible_checks"
+    assert "run_check" in edited["available_tool_names"]
+    assert "finish_task" not in edited["available_tool_names"]
+    checked = execute(call("thin", "run_check", "check", {
+        "check_id": gateway.public_task.visible_checks[0].id,
+    }))
+    assert checked["completion_guidance"]["stage"] == "ready_to_submit"
+    assert checked["completion_guidance"]["submission_ready"] is True
+    assert checked["visible_check_status"][0]["status"] == "PASS"
+    assert "finish_task" in checked["available_tool_names"]
+    assert gateway.sandbox.calls == 1
 
 
 def test_thin_probe_program_replay_binds_actual_root_annotation(gateway_factory):

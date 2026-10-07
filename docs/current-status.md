@@ -25,12 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Current/thin](history/2026-10-07-thin-comparison-results.md) closed: A 6 PASS/2 FAIL;
-B 6 PASS/1 FAIL/1 unsubmitted NOT_RUN; USD 9.71364450. All 15 graded rows agree
-registered/native/public; safety 15 PASS/1 NOT_RUN. SQLFluff-1733 remained
-unrepaired. Thin stopped once after mistaking conditional tool absence for a
-permanent limit; its availability explanation is incomplete. No replicated gain;
-quality INCONCLUSIVE. Keep current; allocation closed, no paid follow-up.
+[Thin follow-up](history/2026-10-07-thin-followup.md) restores factual tool
+prerequisites without changing admission or current defaults. SQLFluff-1733's
+eleven probes all preceded edits. Its added full-behavior test passed an earlier
+patch but failed when explicitly replayed on the submitted patch; default filename
+discovery excludes that module. Final-candidate revalidation was missing while
+relevant baseline probe observations remained available. Keep current; no paid run.
+The disclosure's live effect is untested.
 
 The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md) closed:
 20 started, 11 PASS/7 FAIL/2 NOT_RUN; USD 5.08206870. A solver deadline with
