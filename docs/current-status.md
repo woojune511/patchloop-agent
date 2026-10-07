@@ -141,12 +141,12 @@ tests cover record integrity and unique check IDs. [Paths](../tests/test_reposit
 [Impact review](history/2026-10-07-fix-impact.md): latest runtime fix triggers were absent
 from 24 reviewed runs. No patch-quality gain established or paid rerun queued.
 
-[Thin preparation](history/2026-10-07-thin-comparison-preparation.md): 1733 A2 passed
-the exact public WITH output and plain SELECT control in a matched current replay;
-base failed. This closes the public replay gap, not task acceptance. Four public
-rubrics and a 16-row current/thin design are frozen; orchestration mocks passed.
-The live adapter/preflight remain NOT_READY and USD 64 is proposed, not authorized.
-Keep current default; 1517's oracle remains incomplete. No paid run is queued.
+[Thin readiness](history/2026-10-07-thin-comparison-readiness.md): the 16-row
+current/thin driver and all four current environments passed provider-free checks.
+Twelve probes and four selected tests ran; no OpenAI call. Final manifest freeze
+binds the committed implementation; USD 64 still needs exact funding authorization.
+The prior A2 public PASS is scoped, not task acceptance. Keep current default;
+1517's oracle remains incomplete. No paid run or automatic follow-up is queued.
 
 ## Evidence map
 
