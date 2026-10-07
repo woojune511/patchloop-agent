@@ -25,13 +25,13 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Navigation audit](history/2026-10-08-failure-navigation.md): only SQL1733 repeated
-the generated-ID search miss across five selected tasks; no current search/delivery
-defect was reproduced. Keep baseline; no resolver, prompt change or paid run queued.
-[Rule ownership](history/2026-10-08-rule-ownership.md) remains a public operator
-repair control, not agent improvement; automatic revalidation remains deferred.
-[Thin disclosure](history/2026-10-07-thin-followup.md) is locally validated;
-its live effect remains untested.
+[Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
+two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
+exact manifest approval. No live result or quality gain is established.
+
+[Navigation](history/2026-10-08-failure-navigation.md) found no current tool defect;
+keep baseline. [Rule ownership](history/2026-10-08-rule-ownership.md) is an operator
+control. [Thin disclosure](history/2026-10-07-thin-followup.md) remains live-untested.
 
 The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md) closed:
 20 started, 11 PASS/7 FAIL/2 NOT_RUN; USD 5.08206870. A solver deadline with
