@@ -141,11 +141,11 @@ tests cover record integrity and unique check IDs. [Paths](../tests/test_reposit
 [Impact review](history/2026-10-07-fix-impact.md): latest runtime fix triggers were absent
 from 24 reviewed runs. No patch-quality gain established or paid rerun queued.
 
-Further development should address a concrete current-contract defect or an implementation
-with a specific predicted repair benefit. Use focused fixes/tests for reproducible
-bugs. For quality interventions, executed patch correctness, regressions and cost/time
-are decision evidence; explanation scores and tool/plan counts are auxiliary. Do not
-start another adjacent diagnostic merely because the previous one is complete.
+[System review](history/2026-10-07-system-review.md) keeps the baseline. Proposed next
+preparation: a thin-policy parity specification and a public candidate/test matrix.
+Model/controller effects and usable verification remain unresolved; no paid run is
+queued. Judge changes by patch correctness, regressions and cost/time. More policy
+prose, larger context or a selector without useful candidates is not justified.
 
 ## Evidence map
 

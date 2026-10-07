@@ -7,7 +7,7 @@
 
 ## Records
 
-- [Fix impact](2026-10-07-fix-impact.md).
+- [System](2026-10-07-system-review.md).
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
 - [Diagnosis](2026-10-07-public-verification-failure-diagnosis.md).
 - [Closure](2026-10-06-verification-closure-results.md).
