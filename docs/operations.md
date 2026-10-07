@@ -68,6 +68,12 @@ Mock mode forbids credential and cost options. The smoke path covers public
 inspection, mutation, visible checking, submission and isolated evaluation.
 It remains `official=false` and is not live provider or Docker evidence.
 
+`--agent-policy thin --planning-policy none` selects the experimental
+[thin interface](../.agent/thin-policy-reference.md). The default is `current`.
+Policy choice binds the envelope, manifest and resume; it changes presentation,
+not tool availability, source retention, verification gates or resource limits.
+Local parity does not establish repair quality or authorize a paid comparison.
+
 ## Public-only repair
 
 `patchloop repair --request request.json` accepts a separate public task, local Git

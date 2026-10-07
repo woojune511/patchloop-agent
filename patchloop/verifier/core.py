@@ -481,6 +481,7 @@ class EvaluationEngine:
             "task_content_hash": package.task_content_hash,
             "runtime_content_hash": runtime_content_hash(),
             "tool_surface_hash": dev_tool_surface_hash(
+                agent_policy=manifest.agent_policy,
                 planning_policy=manifest.planning_policy, probe_policy=manifest.probe_policy,
                 probe_recheck=manifest.probe_recheck,
             ),

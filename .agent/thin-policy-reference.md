@@ -1,9 +1,10 @@
-# Thin policy reference: preparation contract
+# Thin policy reference: opt-in adapter contract
 
-Date: 2026-10-07. Status: specification only; no implementation, provider run,
-runtime/default adoption, or paid allocation. Source reviewed at `44961b84`.
-This is a preparation artifact for the
-[system review](../docs/history/2026-10-07-system-review.md), not an execution queue.
+Date: 2026-10-07. Implemented as `--agent-policy thin --planning-policy none`;
+provider-free validation is recorded in the
+[implementation report](../docs/history/2026-10-07-thin-policy.md).
+No provider run, runtime/default adoption, or paid allocation follows from this
+[system review](../docs/history/2026-10-07-system-review.md) intervention.
 Current source and [guide](guide.md) remain authoritative.
 
 ## Question and treatment
@@ -148,13 +149,11 @@ report those differences as consequences of the treatment, not hidden controls.
 
 ## Required adapter seam, not a prompt-only switch
 
-The current code does **not** implement B. `RequestedTool.turn_decision` can be
-null internally, but `validate_tool_batch`, provider transcript reconstruction and
-attempt-card creation reject its absence. Notes are currently extracted from the
-decision. Simply dropping the field in a schema, or filling it with a constant
-`basis`/`evidence_goal`, would not implement this contract.
+The adapter now implements B across parsing, annotations, execution records and
+recovery. The default remains A. Simply dropping the schema field or filling it
+with a constant `basis`/`evidence_goal` would not implement this contract.
 
-The smallest coherent future implementation needs a policy-aware boundary:
+The implementation preserves these policy-aware boundaries:
 
 1. Select instruction/projection/schema by an envelope-bound policy choice while
    leaving scheduler/gateway capability selection shared. Bind prompt, schema,
@@ -237,8 +236,8 @@ controls and improves real repairs within matched limits, simplification becomes
 a candidate design decision. If both policies repeat the same repair failures,
 stop adjacent prompt variations and investigate capability/candidate generation.
 
-Open choices are deliberately downstream: whether to implement this exact bundle;
-which fresh development tasks/repetitions and resource allocation can distinguish
+Open choices are deliberately downstream: which fresh development
+tasks/repetitions and resource allocation can distinguish
 the hypotheses; and whether a model comparison becomes justified after the result.
 No operational choice in this specification requires a new user confirmation for
-the currently authorized provider-free preparation.
+the currently authorized provider-free implementation.

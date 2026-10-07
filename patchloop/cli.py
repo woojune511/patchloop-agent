@@ -147,6 +147,11 @@ def dev(
         typer.Option("--completion-cost-policy",
                      help="Opt-in future-call cost reservation; requires segmented-v1."),
     ] = "per-call-v1",
+    agent_policy: Annotated[
+        Literal["current", "thin"],
+        typer.Option("--agent-policy",
+                     help="Agent presentation; thin requires planning-policy none."),
+    ] = "current",
     planning_policy: Annotated[
         Literal["none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
                 "brief-after-source-v1"],
@@ -193,6 +198,7 @@ def dev(
                 segment_boundary_policy=segment_boundary_policy,
                 completion_cost_policy=completion_cost_policy,
                 planning_policy=planning_policy,
+                agent_policy=agent_policy,
                 compact_at_input_tokens=compact_at_input_tokens,
                 accept_compaction_model_limit_reservation=accept_compaction_model_limit_reservation,
                 resume_run_id=resume_run_id,

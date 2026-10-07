@@ -62,6 +62,8 @@ def prepare(arguments: dict[str, Any], events: list[dict[str, Any]]) -> dict[str
     action_input = {"tool": started["tool"], "arguments": started["arguments"]}
     if started.get("turn_decision") is not None:
         action_input["turn_decision"] = started["turn_decision"]
+    if "memory_update" in started:
+        action_input["memory_update"] = started["memory_update"]
     source_hash = sha256_bytes(source.encode("utf-8"))
     if (started["input_hash"] != result["input_hash"]
             or started["input_hash"] != sha256_json(action_input)

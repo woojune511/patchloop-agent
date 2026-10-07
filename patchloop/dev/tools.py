@@ -219,7 +219,12 @@ def dev_tool_schemas(
     probe_policy: str = "none",
     probe_recheck_policy: str = "none",
     probe_environment: dict[str, Any] | None = None,
+    agent_policy: str = "current",
 ) -> list[dict[str, Any]]:
+    if agent_policy not in {"current", "thin"}:
+        raise ContractError("unknown agent policy")
+    if agent_policy == "thin" and planning_policy != "none":
+        raise ContractError("thin policy forbids planning state")
     if probe_policy not in {"none", *probe_cases.POLICIES}:
         raise ContractError("unknown probe policy")
     if probe_recheck_policy != "none":
@@ -485,6 +490,11 @@ def dev_tool_schemas(
         if name not in enabled:
             continue
         parameters = schema["parameters"]
+        if agent_policy == "thin":
+            parameters["properties"]["memory_update"] = memory_update_schema()
+            parameters["required"].append("memory_update")
+            projected.append(schema)
+            continue
         parameters["properties"]["turn_decision"] = _public_turn_decision_schema(
             decision_modes[name]
         )
@@ -507,6 +517,7 @@ def validate_tool_batch(
     max_parallel_reads: int = 4,
     allowed_tools: set[str] | frozenset[str] | None = None,
     allowed_read_paths: Sequence[str] = (),
+    agent_policy: str = "current",
 ) -> str:
     """Return ``parallel_read`` or ``single_action``; reject every mixed shape."""
 
@@ -520,8 +531,19 @@ def validate_tool_batch(
         raise ContractError("model response requested an unknown dev-head tool")
     if allowed_tools is not None and any(name not in allowed_tools for name in names):
         raise ContractError("model response requested a tool unavailable at the current gate")
-    if any(call.turn_decision is None for call in calls):
-        raise ContractError("every tool call requires one bounded public turn_decision")
+    if agent_policy not in {"current", "thin"}:
+        raise ContractError("unknown agent policy")
+    if agent_policy == "thin":
+        if any({"turn_decision", "rejected_turn_decision"} & call.model_fields_set
+               for call in calls):
+            raise ContractError("thin policy does not accept turn_decision")
+        if any("memory_update" not in call.model_fields_set for call in calls):
+            raise ContractError("thin policy requires nullable top-level memory_update")
+    else:
+        if any("memory_update" in call.model_fields_set for call in calls):
+            raise ContractError("current policy does not accept top-level memory_update")
+        if any(call.turn_decision is None for call in calls):
+            raise ContractError("every tool call requires one bounded public turn_decision")
     expected_modes = {
         "search_files": "inspect",
         "read_file": "inspect",
@@ -532,7 +554,9 @@ def validate_tool_batch(
         "finish_task": "finish",
         "stop_task": "stop",
     }
-    if any(call.turn_decision.mode != expected_modes[call.name] for call in calls):
+    if agent_policy == "current" and any(
+        call.turn_decision.mode != expected_modes[call.name] for call in calls
+    ):
         raise ContractError("turn_decision mode must match the requested tool family")
     if allowed_read_paths:
         allowed_paths = set(allowed_read_paths)
@@ -565,6 +589,7 @@ class DevToolGateway:
         probe_sandbox: DockerProbeSandbox | None = None,
         probe_policy: str = "none",
         retained_source_chars: RetainedSourceChars = RETAINED_SOURCE_CHARS,
+        agent_policy: str = "current",
     ) -> None:
         self.workspace = workspace.resolve()
         self.public_task = public_task
@@ -572,6 +597,9 @@ class DevToolGateway:
         self.journal = journal
         self.limits = limits
         self.retained_source_chars = retained_source_chars
+        if agent_policy not in {"current", "thin"}:
+            raise ContractError("unknown agent policy")
+        self.agent_policy = agent_policy
         self.deadline = deadline
         self.probe_sandbox = probe_sandbox
         if probe_policy not in {"none", *probe_cases.POLICIES}:
@@ -1639,9 +1667,9 @@ class DevToolGateway:
         if existing is not None:
             return copy.deepcopy(existing)
         updates = [
-            (call.action_id, getattr(call.turn_decision, "memory_update", None))
+            (call.action_id, call.actual_memory_update)
             for call in calls
-            if getattr(call.turn_decision, "memory_update", None) is not None
+            if call.actual_memory_update is not None
         ]
         if not updates:
             return {"status": "not_requested"}
@@ -2370,7 +2398,10 @@ class DevToolGateway:
         )
 
     def execute_batch(self, calls: list[RequestedTool]) -> list[DevToolResult]:
-        shape = validate_tool_batch(calls, max_parallel_reads=self.limits.max_parallel_reads)
+        shape = validate_tool_batch(
+            calls, max_parallel_reads=self.limits.max_parallel_reads,
+            agent_policy=self.agent_policy,
+        )
         if shape == "single_action":
             return [self.execute(calls[0])]
         with ThreadPoolExecutor(max_workers=len(calls), thread_name_prefix="dev-read") as pool:
@@ -2385,6 +2416,8 @@ class DevToolGateway:
         action_input = dict(executable_input)
         if turn_decision is not None:
             action_input["turn_decision"] = turn_decision
+        if "memory_update" in call.model_fields_set:
+            action_input["memory_update"] = call.memory_update
         input_hash = sha256_json(action_input)
         read_request_hash = sha256_json(executable_input)
         replay = self.journal.action_result(call.action_id, input_hash)
@@ -2471,7 +2504,11 @@ class DevToolGateway:
                     "input_hash": input_hash,
                     "tool": call.name,
                     "arguments": call.arguments,
-                    "turn_decision": turn_decision,
+                    **({"turn_decision": turn_decision}
+                       if "memory_update" not in call.model_fields_set
+                       or "turn_decision" in call.model_fields_set else {}),
+                    **({"memory_update": call.memory_update}
+                       if "memory_update" in call.model_fields_set else {}),
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
                     **({probe_binding_key: prepared_probe}

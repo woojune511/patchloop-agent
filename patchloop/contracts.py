@@ -336,6 +336,9 @@ class RunManifest(StrictModel):
     schema_version: Literal["dev-manifest-v1"] = "dev-manifest-v1"
     official: Literal[False] = False
     runtime_id: Literal["dev-head"] = "dev-head"
+    agent_policy: Literal["current", "thin"] = Field(
+        default="current", exclude_if=lambda value: value == "current",
+    )
     planning_policy: Literal[
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
         "brief-after-source-v1",
@@ -390,6 +393,8 @@ class RunManifest(StrictModel):
 
     @model_validator(mode="after")
     def sandbox_identity_is_complete(self) -> RunManifest:
+        if self.agent_policy == "thin" and self.planning_policy != "none":
+            raise ValueError("thin policy forbids planning state")
         if self.submitted_patch_content_hash != self.visible_check_diff_hash:
             raise ValueError("submitted patch must equal the visibly checked diff")
         if self.sandbox_backend == "docker" and self.evaluator_image_digest is None:

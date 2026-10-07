@@ -193,6 +193,11 @@ class MockDevAdapter:
                         + " for the next scripted public obligation; use results bound "
                         "to the current diff to decide whether to repair or submit."
                     )
+        if tools and "memory_update" in tools[0]["parameters"]["properties"]:
+            turn.tool_calls = [RequestedTool(
+                name=call.name, action_id=call.action_id, arguments=call.arguments,
+                memory_update=call.turn_decision.memory_update,
+            ) for call in turn.tool_calls]
         return turn
 
     def _next_action(self, context: str, tools: list[dict]) -> DevModelTurn:

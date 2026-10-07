@@ -7,6 +7,7 @@ from typing import Literal
 import httpx
 
 from patchloop.contracts import Artifact
+from patchloop.dev.thin_policy import segment_instructions
 from patchloop.errors import RecoveryError
 from patchloop.util import canonical_json, sha256_json
 
@@ -37,7 +38,7 @@ INSTRUCTIONS = (
 )
 
 
-def contract(boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY):
+def contract(boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY, *, agent_policy="current"):
     boundaries = {
         DEFAULT_BOUNDARY_POLICY: "major-result-next-valid-decision-completed-batch-or-size-v1",
         SIZE_ONLY_BOUNDARY_POLICY: "size-only-v1",
@@ -53,7 +54,7 @@ def contract(boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY):
         "handoff": "canonical-public-latest-batch-and-current-state-no-model-summary-v1",
         "native": "exact-within-segment-no-replay-across-segments-v1",
         "budgets": "run-global-no-reset-single-fresh-seed-at-boundary-v1",
-        "instructions_hash": sha256_json(INSTRUCTIONS),
+        "instructions_hash": sha256_json(segment_instructions(INSTRUCTIONS, agent_policy)),
     }
 
 
@@ -94,7 +95,8 @@ def cursor(events):
 def load_binding(binding, store):
     handoff = _read(store, binding["handoff_artifact"])
     boundary_policy = binding.get("boundary_policy", DEFAULT_BOUNDARY_POLICY)
-    if (binding["contract_hash"] != sha256_json(contract(boundary_policy))
+    if (binding["contract_hash"] != sha256_json(contract(
+            boundary_policy, agent_policy=binding.get("agent_policy", "current")))
             or binding["seed_hash"] != sha256_json(handoff["base"])
             or binding["state_hash"] != sha256_json(handoff["state"])
             or binding["segment_id"] != "segment_" + sha256_json({
@@ -112,7 +114,7 @@ def load_binding(binding, store):
     return handoff
 
 
-def active(journal, store, *, boundary_policy: BoundaryPolicy | None = None):
+def active(journal, store, *, boundary_policy: BoundaryPolicy | None = None, agent_policy=None):
     previous = None
     current = None
     for event in journal.events():
@@ -123,6 +125,10 @@ def active(journal, store, *, boundary_policy: BoundaryPolicy | None = None):
         if boundary_policy is not None and selected != boundary_policy:
             raise RecoveryError("segment boundary policy changed")
         boundary_policy = selected
+        selected_agent_policy = binding.get("agent_policy", "current")
+        if agent_policy is not None and selected_agent_policy != agent_policy:
+            raise RecoveryError("segment agent policy changed")
+        agent_policy = selected_agent_policy
         if binding["previous_segment_id"] != (previous["segment_id"] if previous else None):
             raise RecoveryError("segment chain changed")
         current = load_binding(binding, store)
@@ -157,9 +163,9 @@ def is_fresh(journal, binding):
 
 
 def start(journal, store, *, base, state, reason, parent_input_artifact,
-          boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY):
+          boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY, agent_policy="current"):
     journal.require_execution_lock()
-    previous, _ = active(journal, store, boundary_policy=boundary_policy)
+    previous, _ = active(journal, store, boundary_policy=boundary_policy, agent_policy=agent_policy)
     if is_fresh(journal, previous):
         return previous
     events = journal.events()
@@ -175,7 +181,8 @@ def start(journal, store, *, base, state, reason, parent_input_artifact,
     binding = {
         "previous_segment_id": previous["segment_id"] if previous else None,
         "reason": reason, "cursor": cursor(events),
-        "contract_hash": sha256_json(contract(boundary_policy)),
+        "contract_hash": sha256_json(contract(boundary_policy, agent_policy=agent_policy)),
+        **({"agent_policy": agent_policy} if agent_policy != "current" else {}),
         **({"boundary_policy": boundary_policy}
            if boundary_policy != DEFAULT_BOUNDARY_POLICY else {}),
         "handoff_artifact": artifact.model_dump(mode="json"),

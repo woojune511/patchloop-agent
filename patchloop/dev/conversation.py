@@ -275,11 +275,11 @@ def assemble_model_input(
     ]
 
 
-def segment_seed(system_prompt: str, public_task: dict) -> list[dict]:
+def segment_seed(system_prompt: str, public_task: dict, *, agent_policy="current") -> list[dict]:
     """An explicit independent request for the unchanged task, not fake tool feedback."""
     return [
         {"role": "system", "content": system_prompt + "\n" + CONVERSATION_INSTRUCTIONS
-         + "\n" + segments.INSTRUCTIONS},
+         + "\n" + segments.segment_instructions(segments.INSTRUCTIONS, agent_policy)},
         {"role": "developer", "content": canonical_json({"public_task": public_task})},
         dict(TASK_MESSAGE),
     ]

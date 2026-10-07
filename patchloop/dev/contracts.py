@@ -25,7 +25,23 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 
 def dev_tool_surface_hash(
     *, planning_policy: str = "none", probe_policy: str = "none", probe_recheck: str = "none",
+    agent_policy: str = "current",
 ) -> str:
+    if agent_policy not in {"current", "thin"}:
+        raise ValueError("unknown agent policy")
+    if agent_policy == "thin":
+        if planning_policy != "none":
+            raise ValueError("thin policy forbids planning state")
+        from patchloop.dev import thin_policy
+
+        return sha256_json({
+            "base_tool_surface_hash": dev_tool_surface_hash(
+                planning_policy=planning_policy, probe_policy=probe_policy,
+                probe_recheck=probe_recheck,
+            ),
+            "agent_policy": agent_policy,
+            "thin_policy": thin_policy.contract(),
+        })
     if probe_recheck != "none":
         from patchloop.dev.probe_recheck import POLICY, contract
         if probe_recheck != POLICY or probe_policy != "cases-v1":
@@ -263,6 +279,34 @@ class RequestedTool(StrictModel):
     action_id: str = Field(min_length=1, max_length=500)
     arguments: dict[str, Any] = Field(default_factory=dict)
     turn_decision: PublicTurnDecision | None = None
+    # Thin-policy annotations remain independent and nonblocking, like legacy notes.
+    memory_update: Any = None
+    # Provider B records must distinguish an absent decision from an explicitly
+    # invalid null even after durable hydration. Legacy A keeps its original dumps.
+    preserve_annotation_presence: bool = Field(
+        default=False, exclude_if=lambda value: value is False,
+    )
+    # An unadvertised B decision is rejected as received, never parsed as A data.
+    rejected_turn_decision: Any = None
+
+    @model_serializer(mode="wrap")
+    def preserve_annotation_wire(self, handler: Any) -> dict[str, Any]:
+        result = handler(self)
+        if "memory_update" not in self.model_fields_set:
+            result.pop("memory_update", None)
+        if "rejected_turn_decision" not in self.model_fields_set:
+            result.pop("rejected_turn_decision", None)
+        has_wire_presence = (self.preserve_annotation_presence
+                             or "memory_update" in self.model_fields_set)
+        if "turn_decision" not in self.model_fields_set and has_wire_presence:
+            result.pop("turn_decision", None)
+        return result
+
+    @property
+    def actual_memory_update(self) -> Any:
+        if "memory_update" in self.model_fields_set:
+            return self.memory_update
+        return self.turn_decision.memory_update if self.turn_decision is not None else None
 
 
 class EncryptedReasoningContinuationItem(StrictModel):
@@ -390,6 +434,9 @@ class RunRequest(StrictModel):
     )
     repair_recheck: bool = False
     repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = "protected-v1"
+    agent_policy: Literal["current", "thin"] = Field(
+        default="current", exclude_if=lambda value: value == "current",
+    )
     planning_policy: Literal[
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
         "brief-after-source-v1",
@@ -407,6 +454,8 @@ class RunRequest(StrictModel):
 
     @model_validator(mode="after")
     def provider_options_match(self) -> RunRequest:
+        if self.agent_policy == "thin" and self.planning_policy != "none":
+            raise ValueError("--agent-policy thin requires --planning-policy none")
         if (self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY
                 and self.context_policy != segments.POLICY):
             raise ValueError("--completion-cost-policy completion-reserve-v1 requires segmented-v1")
@@ -496,6 +545,9 @@ class RunEnvelope(StrictModel):
     repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = Field(
         default="protected-v1", exclude_if=lambda value: value == "protected-v1",
     )
+    agent_policy: Literal["current", "thin"] = Field(
+        default="current", exclude_if=lambda value: value == "current",
+    )
     planning_policy: Literal[
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
         "brief-after-source-v1",
@@ -540,6 +592,8 @@ class RunEnvelope(StrictModel):
 
     @model_validator(mode="after")
     def provider_boundary_is_exact(self) -> RunEnvelope:
+        if self.agent_policy == "thin" and self.planning_policy != "none":
+            raise ValueError("thin policy forbids planning state")
         if self.completion_cost_policy == cost.COMPLETION_RESERVE_POLICY:
             if (self.context_policy != segments.POLICY
                     or self.completion_cost_contract != cost.completion_cost_contract()):

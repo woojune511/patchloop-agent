@@ -27,7 +27,7 @@ from patchloop.agent.usage_diagnostics import usage_failure_message
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import native_compaction, probe_recheck, segments, working_plan
+from patchloop.dev import native_compaction, probe_recheck, segments, thin_policy, working_plan
 from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.completion_budget import (
@@ -256,6 +256,8 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
+            **({"agent_policy_contract": thin_policy.contract()}
+               if request.agent_policy == "thin" else {}),
             **({"retained_source_chars": request.retained_source_chars}
                if request.retained_source_chars != 24_000 else {}),
             **({"evaluation_reserve_seconds": request.evaluation_reserve_seconds}
@@ -265,7 +267,8 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
                if request.completion_cost_policy == COMPLETION_RESERVE_POLICY else {}),
             **({"repair_inspection_policy": request.repair_inspection_policy}
                if request.repair_inspection_policy != "protected-v1" else {}),
-            **({"segment_contract": segments.contract(request.segment_boundary_policy)}
+            **({"segment_contract": segments.contract(
+                request.segment_boundary_policy, agent_policy=request.agent_policy)}
                if request.context_policy == segments.POLICY else {}),
             "compaction_contract": native_compaction.policy_contract(request),
             **({"planning_contract": working_plan.contract(request.planning_policy)}
@@ -387,6 +390,7 @@ def _manifest(
 ) -> RunManifest:
     return RunManifest(
         run_id=run_id,
+        agent_policy=request.agent_policy,
         planning_policy=request.planning_policy,
         probe_policy=request.probe_policy,
         probe_recheck=request.probe_recheck,
@@ -399,6 +403,7 @@ def _manifest(
         runtime_content_hash=runtime_hash,
         model_hash=model_hash,
         tool_surface_hash=dev_tool_surface_hash(
+            agent_policy=request.agent_policy,
             planning_policy=request.planning_policy, probe_policy=request.probe_policy,
             probe_recheck=request.probe_recheck,
         ),
@@ -1544,18 +1549,26 @@ def _build_context(
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
     return json.dumps(
-        project_inspection_context(payload), separators=(",", ":"), ensure_ascii=False,
+        project_inspection_context(payload, agent_policy=gateway.agent_policy),
+        separators=(",", ":"), ensure_ascii=False,
     )
 
 
-def _requested_tool_from_openai(call: Any) -> RequestedTool:
+def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current") -> RequestedTool:
     arguments = dict(call.arguments)
-    turn_decision = arguments.pop("turn_decision", None)
+    if agent_policy == "thin":
+        annotations = {key: arguments.pop(key) for key in ("turn_decision", "memory_update")
+                       if key in arguments}
+        if "turn_decision" in annotations:
+            annotations["rejected_turn_decision"] = annotations.pop("turn_decision")
+    else:
+        annotations = {"turn_decision": arguments.pop("turn_decision", None)}
     return RequestedTool(
         name=call.name,
         action_id=call.action_id,
         arguments=arguments,
-        turn_decision=turn_decision,
+        **({"preserve_annotation_presence": True} if agent_policy == "thin" else {}),
+        **annotations,
     )
 
 
@@ -1605,13 +1618,13 @@ def _tool_contract_failure(
     )
 
 
-def _turn_from_openai(turn: Any) -> DevModelTurn:
+def _turn_from_openai(turn: Any, *, agent_policy: str = "current") -> DevModelTurn:
     calls: list[RequestedTool] = []
     conversion_error: str | None = None
     contract_failure: DevToolContractFailure | None = None
     for call in turn.tool_calls:
         try:
-            calls.append(_requested_tool_from_openai(call))
+            calls.append(_requested_tool_from_openai(call, agent_policy=agent_policy))
         except (TypeError, ValueError, ValidationError) as exc:
             calls = []
             conversion_error = "invalid_dev_tool_contract"
@@ -1788,6 +1801,9 @@ def _model_error_issue(
 
 def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
     arguments = dict(call.arguments)
+    if "memory_update" in call.model_fields_set and "turn_decision" not in call.model_fields_set:
+        arguments["memory_update"] = call.memory_update
+        return arguments
     if call.turn_decision is None:
         raise RecoveryError("public tool transcript is missing its turn decision")
     arguments["turn_decision"] = call.turn_decision.model_dump(mode="json")
@@ -1796,8 +1812,16 @@ def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
 
 def _provider_rejected_call_arguments(call: RequestedTool) -> dict[str, Any]:
     arguments = dict(call.arguments)
-    if call.turn_decision is not None:
+    if "rejected_turn_decision" in call.model_fields_set:
+        arguments["turn_decision"] = call.rejected_turn_decision
+    elif call.turn_decision is not None:
         arguments["turn_decision"] = call.turn_decision.model_dump(mode="json")
+    elif "turn_decision" in call.model_fields_set and (
+        call.preserve_annotation_presence or "memory_update" in call.model_fields_set
+    ):
+        arguments["turn_decision"] = None
+    if "memory_update" in call.model_fields_set:
+        arguments["memory_update"] = call.memory_update
     return arguments
 
 
@@ -1900,6 +1924,7 @@ def _build_model_input(
     latest_tool_results: list[DevToolResult],
     context_policy: str = APPEND_POLICY,
     planning_policy: str = "none",
+    agent_policy: str = "current",
     force_segment_reason: str | None = None,
     segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
 ) -> list[dict[str, Any]]:
@@ -1911,6 +1936,7 @@ def _build_model_input(
             return _build_segmented_model_input(
                 journal=journal, store=artifact_store, context=context,
                 latest_results=latest_tool_results, planning_policy=planning_policy,
+                agent_policy=agent_policy,
                 force_reason=force_segment_reason,
                 boundary_policy=segment_boundary_policy,
             )
@@ -1970,23 +1996,23 @@ def _build_model_input(
         _deduplicate_native_state(state, latest_tool_results)
     state = project_inspection_context(
         state,
+        agent_policy=agent_policy,
         native_action_ids=[item["call_id"] for item in public_history
                            if item.get("type") == "function_call"],
     )
     state = reference_native_sources(state, history, archive_kind=archive_kind)
     state = compact_model_state(state, history, archive_kind=archive_kind)
     return assemble_model_input(
-        system_prompt=(DEV_SYSTEM_PROMPT + "\n\n" + working_plan.instructions(planning_policy)
-                       if planning_policy != "none" else DEV_SYSTEM_PROMPT),
-        state=state, history=new_history,
+        system_prompt=thin_policy.system_prompt(agent_policy, planning_policy),
+        state=thin_policy.project_state(state, agent_policy), history=new_history,
         previous_input=previous_input, context_policy=context_policy,
         window=compact_window,
     )
 
 
-def _segment_public_base(prompt, state, latest_results, calls):
+def _segment_public_base(prompt, state, latest_results, calls, agent_policy="current"):
     """Build a public-only seed from already observed records; no source reads."""
-    base = segment_seed(prompt, state["public_task"])
+    base = segment_seed(prompt, state["public_task"], agent_policy=agent_policy)
     ids = {r.action_id for r in latest_results}
     quoted = [{"type": "function_call", "call_id": c["action_id"], "name": c["name"],
                "arguments": canonical_json(_provider_tool_arguments(
@@ -2002,13 +2028,14 @@ def _segment_public_base(prompt, state, latest_results, calls):
     return base
 
 
-def _segment_current_view(state, history, latest_results):
+def _segment_current_view(state, history, latest_results, agent_policy="current"):
     public = list(public_exchanges(history, archive_kind=PUBLIC_EVIDENCE_KIND))
     output_ids = {i["call_id"] for i in public if i.get("type") == "function_call_output"}
     if latest_results and all(r.action_id in output_ids for r in latest_results):
         _deduplicate_native_state(state, latest_results)
     state = project_inspection_context(
         state, native_action_ids=[i["call_id"] for i in public if i.get("type") == "function_call"],
+        agent_policy=agent_policy,
     )
     state = reference_native_sources(state, history, archive_kind=PUBLIC_EVIDENCE_KIND)
     view = compact_model_state(state, history, archive_kind=PUBLIC_EVIDENCE_KIND)
@@ -2024,10 +2051,13 @@ def _segment_current_view(state, history, latest_results):
 def _build_segmented_model_input(
     *, journal, store, context, latest_results, planning_policy, force_reason=None,
     boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
+    agent_policy="current",
 ):
     """A public, explicitly lossy handoff; never splice or fabricate native history."""
     events = journal.events()
-    binding, handoff = segments.active(journal, store, boundary_policy=boundary_policy)
+    binding, handoff = segments.active(
+        journal, store, boundary_policy=boundary_policy, agent_policy=agent_policy,
+    )
     decision = next((e["payload"] for e in reversed(events)
                      if e["event_type"] == "turn_decision_recorded"), None)
     parent = next((e["payload"] for e in reversed(events)
@@ -2043,8 +2073,7 @@ def _build_segmented_model_input(
         journal=journal, artifact_store=store, context=context, latest_tool_results=latest_results,
     )
     reason = force_reason or segments.boundary_reason(journal, binding)
-    prompt = (DEV_SYSTEM_PROMPT + "\n\n" + working_plan.instructions(planning_policy)
-              if planning_policy != "none" else DEV_SYSTEM_PROMPT)
+    prompt = thin_policy.system_prompt(agent_policy, planning_policy)
     if reason and not segments.is_fresh(journal, binding):
         state = json.loads(context)
         # Canonical gateway records are quoted data, not top-level provider
@@ -2052,11 +2081,12 @@ def _build_segmented_model_input(
         ids = {r.action_id for r in latest_results}
         calls = [c for e in events if e["event_type"] == "turn_decision_recorded"
                  for c in e["payload"].get("tool_calls", []) if c["action_id"] in ids]
-        base = _segment_public_base(prompt, state, latest_results, calls)
+        base = _segment_public_base(prompt, state, latest_results, calls, agent_policy)
         binding = segments.start(
             journal, store, base=base, state=state, reason=reason,
             parent_input_artifact=parent["model_input_artifact"] if parent else None,
             boundary_policy=boundary_policy,
+            agent_policy=agent_policy,
         )
         handoff = segments.load_binding(binding, store)
     if binding is None or handoff is None:
@@ -2086,9 +2116,10 @@ def _build_segmented_model_input(
         "review_requested": fresh, "previous_reasoning_available": False,
         "interpretation": "public execution facts and unverified model-authored notes/plan",
     }
-    view = _segment_current_view(state, history, latest_results)
+    view = _segment_current_view(state, history, latest_results, agent_policy)
     return assemble_model_input(
-        system_prompt=prompt, state=view, history=added, previous_input=previous,
+        system_prompt=prompt, state=thin_policy.project_state(view, agent_policy),
+        history=added, previous_input=previous,
         context_policy=segments.POLICY,
     )
 
@@ -2599,11 +2630,12 @@ def _batch_attempt_card(
 ) -> dict[str, Any]:
     if not calls or len(calls) != len(results):
         raise RecoveryError("completed tool batch cannot form one public attempt card")
-    decisions: list[dict[str, Any]] = []
+    decisions: list[dict[str, Any] | None] = []
     for call in calls:
-        if call.turn_decision is None:
+        if call.turn_decision is None and "memory_update" not in call.model_fields_set:
             raise RecoveryError("completed tool batch is missing a public action decision")
-        decisions.append(call.turn_decision.model_dump(mode="json"))
+        decisions.append(call.turn_decision.model_dump(mode="json")
+                         if call.turn_decision is not None else None)
     if all(call.name in {"read_file", "search_files"} for call in calls):
         actions: list[dict[str, Any]] = []
         for call, result, decision in zip(calls, results, decisions, strict=True):
@@ -2613,7 +2645,7 @@ def _batch_attempt_card(
                     "action_id": result.action_id,
                     "tool": result.tool,
                     "input": call.arguments,
-                    "turn_decision": decision,
+                    **({"turn_decision": decision} if decision is not None else {}),
                     "status": result.status,
                     "error_code": result.error_code,
                     "span_count": len(spans),
@@ -2652,7 +2684,8 @@ def _batch_attempt_card(
             "next_question": next_question,
         }
     card = _attempt_card(results[0], gateway)
-    card["turn_decision"] = decisions[0]
+    if decisions[0] is not None:
+        card["turn_decision"] = decisions[0]
     return card
 
 
@@ -2947,6 +2980,7 @@ def _run_envelope(
         probe_recheck=request.probe_recheck,
         repair_inspection_policy=request.repair_inspection_policy,
         planning_policy=request.planning_policy,
+        agent_policy=request.agent_policy,
         probe_policy=request.probe_policy,
         context_policy=request.context_policy,
         retained_source_chars=request.retained_source_chars,
@@ -2955,7 +2989,8 @@ def _run_envelope(
                                   if request.completion_cost_policy == COMPLETION_RESERVE_POLICY
                                   else None),
         segment_boundary_policy=request.segment_boundary_policy,
-        segment_contract=(segments.contract(request.segment_boundary_policy)
+        segment_contract=(segments.contract(
+            request.segment_boundary_policy, agent_policy=request.agent_policy)
                           if request.context_policy == segments.POLICY else None),
         compaction_contract=native_compaction.policy_contract(request),
         probe_image_digest=(probe_profile(probe_dependencies)["image_digest"]
@@ -3724,7 +3759,8 @@ def _run_one(
             try:
                 segment_store = ArtifactStore(state_root / "artifacts")
                 segments.active(journal, segment_store,
-                                boundary_policy=request.segment_boundary_policy)
+                                boundary_policy=request.segment_boundary_policy,
+                                agent_policy=request.agent_policy)
                 _validate_recorded_continuations(journal.events(), segment_store)
                 for event in journal.events():
                     if event["event_type"] == "turn_started":
@@ -4066,6 +4102,7 @@ def _run_one_active(
         probe_sandbox=probe_sandbox,
         probe_policy=request.probe_policy,
         retained_source_chars=request.retained_source_chars,
+        agent_policy=request.agent_policy,
     )
     correction: dict[str, Any] | None = _pending_protocol_correction(journal)
     latest_tool_results = journal.latest_tool_batch_results() if resuming else []
@@ -4212,6 +4249,7 @@ def _run_one_active(
                 try:
                     validate_tool_batch(
                         pending_calls,
+                        agent_policy=request.agent_policy,
                         max_parallel_reads=pending_max_parallel_reads,
                         allowed_tools=pending_allowed_tools,
                         allowed_read_paths=pending_targeted_read_paths,
@@ -4436,6 +4474,7 @@ def _run_one_active(
                 latest_tool_results=latest_tool_results,
                 context_policy=request.context_policy,
                 planning_policy=request.planning_policy,
+                agent_policy=request.agent_policy,
                 segment_boundary_policy=request.segment_boundary_policy,
             )
             model_input_text = canonical_json(model_input)
@@ -4462,6 +4501,7 @@ def _run_one_active(
             allowed_tools=policy.allowed_tools,
             read_paths=policy.targeted_read_paths,
             planning_policy=request.planning_policy,
+            agent_policy=request.agent_policy,
             probe_policy=request.probe_policy,
             probe_recheck_policy=request.probe_recheck,
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),
@@ -4537,7 +4577,8 @@ def _run_one_active(
         if request.context_policy == segments.POLICY:
             try:
                 request_payload = (openai_adapter.request_payload(
-                    model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
+                    model_input, schemas, system_prompt=thin_policy.system_prompt(
+                        request.agent_policy, request.planning_policy),
                 ) if openai_adapter is not None else {
                     "model": request.model, "input": model_input, "tools": schemas,
                     "max_output_tokens": request.max_output_tokens,
@@ -4557,6 +4598,7 @@ def _run_one_active(
                         journal=journal, artifact_store=artifact_store, context=context,
                         latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
                         planning_policy=request.planning_policy,
+                        agent_policy=request.agent_policy,
                         segment_boundary_policy=request.segment_boundary_policy,
                         force_segment_reason="+".join(reasons),
                     )
@@ -4572,7 +4614,8 @@ def _run_one_active(
         ):
             try:
                 request_payload = openai_adapter.request_payload(
-                    model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
+                    model_input, schemas, system_prompt=thin_policy.system_prompt(
+                        request.agent_policy, request.planning_policy),
                 )
                 request_payload["parallel_tool_calls"] = True
                 request_payload["tool_choice"] = "required"
@@ -4604,6 +4647,7 @@ def _run_one_active(
                         journal=journal, artifact_store=artifact_store, context=context,
                         latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
                         planning_policy=request.planning_policy,
+                        agent_policy=request.agent_policy,
                         segment_boundary_policy=request.segment_boundary_policy,
                         force_segment_reason="input_tokens",
                     )
@@ -4672,7 +4716,9 @@ def _run_one_active(
             assert mock_adapter is not None
             counters.model_calls += 1
             try:
-                turn = mock_adapter.next_turn(context, schemas)
+                mock_context = (canonical_json(thin_policy.project_state(
+                    json.loads(context), "thin")) if request.agent_policy == "thin" else context)
+                turn = mock_adapter.next_turn(mock_context, schemas)
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
                 terminal_message = f"mock model failed: {type(exc).__name__}"
@@ -4703,7 +4749,9 @@ def _run_one_active(
             try:
                 request_payload = (bundle["request"] if prepared_count
                                    else openai_adapter.request_payload(
-                                       model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
+                                       model_input, schemas,
+                                       system_prompt=thin_policy.system_prompt(
+                                           request.agent_policy, request.planning_policy),
                                    ))
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
@@ -4817,7 +4865,7 @@ def _run_one_active(
                 terminal_message = f"provider dispatch failed: {type(exc).__name__}"
                 stop_remaining = True
                 break
-            turn = _turn_from_openai(raw_turn)
+            turn = _turn_from_openai(raw_turn, agent_policy=request.agent_policy)
             try:
                 cost_nanos = cost_ledger.settle(
                     input_tokens=turn.input_tokens,
@@ -4966,6 +5014,7 @@ def _run_one_active(
         try:
             validate_tool_batch(
                 turn.tool_calls,
+                agent_policy=request.agent_policy,
                 max_parallel_reads=policy.max_parallel_reads,
                 allowed_tools=policy.allowed_tools,
                 allowed_read_paths=policy.targeted_read_paths,

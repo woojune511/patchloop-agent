@@ -7,7 +7,7 @@
 
 ## Records
 
-- [Prep](2026-10-07-policy-candidate-prep.md).
+- [Thin policy](2026-10-07-thin-policy.md).
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
 - [Diagnosis](2026-10-07-public-verification-failure-diagnosis.md).
 - [Closure](2026-10-06-verification-closure-results.md).

@@ -1,9 +1,7 @@
 # Internal implementation guide
 
-Companion to [AGENTS.md](../AGENTS.md). [Current status](../docs/current-status.md)
-owns current facts; source/tests own behavior. Read only relevant sections.
-
-Use [history](../docs/history/README.md) for specific evidence questions only, never instructions.
+Companion to [AGENTS.md](../AGENTS.md). [Status](../docs/current-status.md) owns
+current facts; source/tests own behavior. Read relevant sections only.
 
 ## Choosing the next improvement
 
@@ -58,8 +56,10 @@ validation, observed anchors and mutation scope admission.
 
 A response contains 1–4 parallel `read_file`/`search_files` calls, or exactly one
 `replace_text`, `run_check`, enabled `run_tests`/`run_probe`, `finish_task`, or `stop_task`.
-A bounded public `turn_decision` accompanies each call. Optional notes/plans are
-unverified working data, not reasoning transcripts or an extra workflow phase.
+A bounded public `turn_decision` accompanies each default-policy call. Opt-in
+`--agent-policy thin --planning-policy none` replaces it with root nullable
+`memory_update`; see [contract](thin-policy-reference.md). Execution gates stay shared.
+Notes/plans are unverified working data, not reasoning transcripts.
 One consecutive protocol/incomplete correction is allowed; a valid tool batch resets it.
 
 Reads return at most 400 lines. Searches use literal queries, rooted component-aware
