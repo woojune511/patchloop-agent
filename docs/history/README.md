@@ -7,7 +7,7 @@
 
 ## Records
 
-- [Thin policy](2026-10-07-thin-policy.md).
+- [Thin prep](2026-10-07-thin-comparison-preparation.md).
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
 - [Diagnosis](2026-10-07-public-verification-failure-diagnosis.md).
 - [Closure](2026-10-06-verification-closure-results.md).
@@ -43,7 +43,7 @@
 - [Verification](2026-10-01-verification-selection-comparison.md).
 - [Patches](2026-09-30-submitted-patch-review.md).
 - [Probe replay comparison](2026-09-30-probe-replay-comparison.md).
-- [Basic/current 6-task baseline](2026-09-28-basic-current-baseline-comparison.md).
+- [Basic/current](2026-09-28-basic-current-baseline-comparison.md).
 - [Probe construction](2026-09-28-probe-construction-analysis.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
 - [Funding](2026-09-28-minimum-completion-funding.md).

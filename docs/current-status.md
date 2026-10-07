@@ -141,11 +141,12 @@ tests cover record integrity and unique check IDs. [Paths](../tests/test_reposit
 [Impact review](history/2026-10-07-fix-impact.md): latest runtime fix triggers were absent
 from 24 reviewed runs. No patch-quality gain established or paid rerun queued.
 
-[Thin policy](history/2026-10-07-thin-policy.md) implements an opt-in interface over
-the shared execution path; default remains current. Local parity is separate from
-repair quality. The [candidate matrix](history/2026-10-07-policy-candidate-prep.md)
-distinguishes 2419; 1517's oracle is incomplete; 1733 A2 needs a current public replay.
-Keep baseline; no paid run or candidate replay is queued.
+[Thin preparation](history/2026-10-07-thin-comparison-preparation.md): 1733 A2 passed
+the exact public WITH output and plain SELECT control in a matched current replay;
+base failed. This closes the public replay gap, not task acceptance. Four public
+rubrics and a 16-row current/thin design are frozen; orchestration mocks passed.
+The live adapter/preflight remain NOT_READY and USD 64 is proposed, not authorized.
+Keep current default; 1517's oracle remains incomplete. No paid run is queued.
 
 ## Evidence map
 
