@@ -25,11 +25,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Selected-test timing](history/2026-10-07-selected-test-timing.md): thin SQLFluff-1733
-had one edit left at the earlier rerun point, but its test outcome is unknown.
-The final candidate's known failure came after all edits were consumed. Neither
-current trace selected tests. Defer automatic revalidation; keep current. The next
-discriminator is the selected file on the intermediate diff; no paid run is queued.
+[Intermediate test](history/2026-10-07-intermediate-test.md): SQLFluff-1733's third
+edit passed all four selected tests but failed a saved required regression. The
+final candidate passed required checks but failed the task assertion with no edits
+left. Earlier revalidation would have returned PASS here. Keep current; defer the
+automatic prototype and paid follow-up. A repair must preserve both behaviors.
 [Thin disclosure](history/2026-10-07-thin-followup.md) is locally validated;
 its live effect remains untested.
 
