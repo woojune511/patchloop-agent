@@ -7,6 +7,7 @@
 
 ## Records
 
+- [Pre-edit design](2026-10-15-pre-edit-diagnostic-design.md).
 - [Hypotheses](2026-10-15-hypothesis-comparison.md).
 - [Navigation](2026-10-08-failure-navigation.md).
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
@@ -84,10 +85,10 @@
 - [First plan after source](2026-09-26-after-source-planning.md).
 - [Planning ON/OFF](2026-09-26-planning-off-comparison.md).
 - [Declaration](2026-09-26-declaration-checkpoint-comparison.md).
-- [frozen declaration decision](2026-09-26-declaration-checkpoint-sampler.md).
+- [Decision](2026-09-26-declaration-checkpoint-sampler.md).
 - [declaration-context diagnostic](2026-09-26-declaration-context-diagnostic.md).
-- [first interpretation and source questions](2026-09-26-first-interpretation-audit.md).
-- [independent candidate comparison](2026-09-26-independent-candidate-comparison.md).
+- [Interpretation](2026-09-26-first-interpretation-audit.md).
+- [Candidates](2026-09-26-independent-candidate-comparison.md).
 - [Diagnostic verification](2026-09-26-diagnostic-claims-verification.md).
 - [completion advice comparison](2026-09-26-completion-status-comparison.md).
 - [first-input completion advice diagnostic](2026-09-26-completion-status-diagnostic.md).

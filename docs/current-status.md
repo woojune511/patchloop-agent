@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Hypothesis audit](history/2026-10-15-hypothesis-comparison.md): keep baseline.
-SQLFluff left its replacement premise untested; Pydicom dropped its planned test.
-Evidence survived. No runtime change or new run follows. The unresolved question
-is testing full task behavior after a hypothesis revision.
+[Pre-edit design](history/2026-10-15-pre-edit-diagnostic-design.md): A/B inputs and
+scoring frozen offline. One instruction targets counterfactual check selection.
+Runtime unchanged; no paid run authorized. [Audit](history/2026-10-15-hypothesis-comparison.md)
+retains the observed failure and evidence boundaries.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
