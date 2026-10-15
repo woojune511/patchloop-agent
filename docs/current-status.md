@@ -25,9 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Host bridge](history/2026-10-16-host-plan-bridge.md): frozen A/B, USD 11 /
-20 generations / 20 counts. Provider-free bridge/manifest ready; paid NOT_RUN.
-Keep baseline. [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
+[Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
+[I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
 frozen grades unchanged.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
