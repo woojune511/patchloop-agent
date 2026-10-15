@@ -7,6 +7,7 @@
 
 ## Records
 
+- [Probe](2026-10-15-pre-edit-probe.md).
 - [Pre-edit design](2026-10-15-pre-edit-diagnostic-design.md).
 - [Hypotheses](2026-10-15-hypothesis-comparison.md).
 - [Navigation](2026-10-08-failure-navigation.md).

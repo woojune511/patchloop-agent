@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Pre-edit design](history/2026-10-15-pre-edit-diagnostic-design.md): A/B inputs and
-scoring frozen offline. One instruction targets counterfactual check selection.
-Runtime unchanged; no paid run authorized. [Audit](history/2026-10-15-hypothesis-comparison.md)
-retains the observed failure and evidence boundaries.
+[Public probe](history/2026-10-15-pre-edit-probe.md): current CTE output has eight
+spaces; hypothetical L036 reversion has five. Existing tools distinguish this case.
+Keep runtime. [Model A/B](history/2026-10-15-pre-edit-diagnostic-design.md) remains
+prepared, unexecuted and unauthorized.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
