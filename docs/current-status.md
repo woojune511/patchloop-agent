@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[I2 audit](history/2026-10-15-isort-table-input-audit.md): revised plan survived
-handoff; raw operator facts did not. Same cases were rechecked with changed config.
-About 250s went to model waits; no edit. U/P/I NOT_RUN, USD 0.509389 known plus
-one unknown call. Allocation closed; baseline kept, no new rule or run queued.
+[I3 design](history/2026-10-15-isort-retention-design.md): retain I2's public
+diagnostic and observed diff across contexts; keep plan/advice and all caps.
+One proposed USD 3.50, 6/6-call, 281s row; require less rechecking plus accepted
+edit and U/P/I. Design only; connector/live NOT_RUN. Baseline unchanged.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
