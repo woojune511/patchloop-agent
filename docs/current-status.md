@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[isort continuation](history/2026-10-15-isort-uptake-bridge.md): connector and
-provider-free checks passed under the unchanged USD 3.50, six-call/count,
-two-edit, 281/720s design. Model uptake/repair NOT_RUN; baseline unchanged.
-The committed manifest requires separate paid approval.
+[isort continuation](history/2026-10-15-isort-uptake-result.md): approved I1 delivered
+the full diagnostic, but submitted the unchanged seed. D PASS; U/P/I FAIL;
+safety PASS. One generation/count, USD 0.242645 estimated. Baseline unchanged;
+no prompt tuning or additional execution follows this local negative result.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits

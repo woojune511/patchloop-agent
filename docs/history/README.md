@@ -9,7 +9,7 @@
 
 - [Probe](2026-10-15-pre-edit-probe.md).
 - [Uptake review](2026-10-15-uptake-grade.md).
-- [isort bridge](2026-10-15-isort-uptake-bridge.md).
+- [isort uptake](2026-10-15-isort-uptake-result.md).
 - [Hypotheses](2026-10-15-hypothesis-comparison.md).
 - [Navigation](2026-10-08-failure-navigation.md).
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
