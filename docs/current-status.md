@@ -25,9 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Uptake](history/2026-10-15-uptake-results.md) closed: B1 repair/acceptance FAIL;
-B2 PASS. U: B1 FAIL, B2 NOT_OBSERVABLE; complete chain 0/2, repair success 1/2.
-USD 1.21861750; eight generations/eight counts. Baseline kept; no follow-up queued.
+[Uptake review](history/2026-10-15-uptake-grade.md): B1 U/P/I FAIL; B2 D/U/P/I PASS.
+Complete chain and repair success: 1/2. Baseline kept; no follow-up queued.
+USD 1.21861750; eight generations/eight counts; regrading made no calls.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
