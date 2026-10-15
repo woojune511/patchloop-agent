@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-08. Current decisions; runtime source owns behavior.
+Updated: 2026-10-15. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -25,6 +25,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+[Hypothesis audit](history/2026-10-15-hypothesis-comparison.md): keep baseline.
+SQLFluff left its replacement premise untested; Pydicom dropped its planned test.
+Evidence survived. No runtime change or new run follows. The unresolved question
+is testing full task behavior after a hypothesis revision.
+
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
 exact manifest approval. No live result or quality gain is established.
@@ -34,25 +39,22 @@ keep baseline. [Rule ownership](history/2026-10-08-rule-ownership.md) is an oper
 control. [Thin disclosure](history/2026-10-07-thin-followup.md) remains live-untested.
 
 The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md) closed:
-20 started, 11 PASS/7 FAIL/2 NOT_RUN; USD 5.08206870. A solver deadline with
-unconfirmed Git cleanup interrupted its peer. No new admission followed the stop.
-Matching 18 tasks improved from 8 to 11 successes; no all-20 accuracy claim follows.
+11 PASS/7 FAIL/2 NOT_RUN; USD 5.08206870. A deadline with unconfirmed cleanup stopped
+admission. Matching 18 tasks moved from 8 to 11 successes; no all-20 accuracy claim.
 
 [Search fix and supplement](history/2026-10-06-search-once-supplement.md): rows 18/20
 submitted and failed; searches took under 0.74s. Original NOT_RUN stays unchanged.
-The [trace comparison](history/2026-10-06-agent-trace-comparison.md) and
+[Trace comparison](history/2026-10-06-agent-trace-comparison.md) and
 [verification follow-up](history/2026-10-06-verification-closure-results.md) closed:
-A 1/4 versus B 0/4 successes, USD 4.48506195; saved-case mechanism NOT_EXERCISED.
-The [three-part diagnosis](history/2026-10-06-verification-context-budget-diagnosis.md)
-confirmed untested submission, source loss under recency selection, and one extra
-model call reserved for an enabled automatic required-check recheck.
-[Resource accounting and context review](history/2026-10-06-resource-budget-context-review.md)
-corrected the model/tool reservation mismatch.
-The [48k comparison](history/2026-10-06-source-retention-results.md) tied at 2/4.
-Both [continuations](history/2026-10-06-cost-cap-continuation-results.md) submitted
-and failed for USD 0.21352020 extra. [Public diagnosis](history/2026-10-07-public-verification-failure-diagnosis.md)
-found an L003/L039 fix cycle and regression PASS mistaken for bug verification,
-despite surviving unresolved notes and available probes. Keep 24k; no paid run queued.
+A 1/4 versus B 0/4; saved-case mechanism NOT_EXERCISED.
+[Diagnosis](history/2026-10-06-verification-context-budget-diagnosis.md) found
+untested submission, recency source loss and recheck reservation;
+[accounting review](history/2026-10-06-resource-budget-context-review.md) fixed the
+model/tool mismatch. [48k](history/2026-10-06-source-retention-results.md) tied at 2/4;
+both [continuations](history/2026-10-06-cost-cap-continuation-results.md) failed.
+[Public diagnosis](history/2026-10-07-public-verification-failure-diagnosis.md) found
+an L003/L039 cycle and regression PASS mistaken for bug verification despite retained
+notes and available probes. Keep 24k; no paid run queued.
 
 [Counterexample A/B](history/2026-10-07-counterexample-results.md) closed: both FAIL,
 unchanged after regression PASS; B retained the actual current failure in both inputs.
