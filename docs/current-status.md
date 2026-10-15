@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[I3 result](history/2026-10-15-isort-retention-result.md): unchanged seed submitted
-on the first response; U/P/I FAIL, C NOT_EXERCISED, R NOT_OBSERVABLE, safety PASS.
-USD 0.2108375, 1/1 calls; no new edit or later input. Allocation closed; retention
-effect unobserved. Baseline unchanged; no tuning, retry or paid follow-up queued.
+[I2/I3 audit](history/2026-10-15-isort-first-response-audit.md): same first input
+except 2s; different evidence selection before retention exposure. Plan/advice
+influence is plausible, not isolated. I3 U/P/I FAIL; no new edit. Keep baseline;
+no runtime change, further prompt ablation or paid follow-up queued.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
