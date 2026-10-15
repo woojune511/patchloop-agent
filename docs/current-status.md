@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[isort continuation](history/2026-10-15-isort-uptake-result.md): approved I1 delivered
-the full diagnostic, but submitted the unchanged seed. D PASS; U/P/I FAIL;
-safety PASS. One generation/count, USD 0.242645 estimated. Baseline unchanged;
-no prompt tuning or additional execution follows this local negative result.
+[isort input audit](history/2026-10-15-isort-input-audit.md): I1 used the positive
+diagnostic case and regression PASS to close its old keyword-based plan. The full
+counterevidence and edit tools were present. Plan, completion advice and raw-result
+presentation effects remain unseparated; keep baseline. No additional execution.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
