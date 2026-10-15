@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Public probe](history/2026-10-15-pre-edit-probe.md): current CTE output has eight
-spaces; hypothetical L036 reversion has five. Existing tools distinguish this case.
-Keep runtime. [Model A/B](history/2026-10-15-pre-edit-diagnostic-design.md) remains
-prepared, unexecuted and unauthorized.
+[Pre-edit A/B](history/2026-10-15-pre-edit-ab.md): A 0/2, B 1/2 qualifying proposals.
+B chose counterfactual probes twice; one added assertion mixed rule scopes.
+Frozen gate failed. Keep baseline; formulation and USD 3 allocation closed.
+No further calls or wording changes authorized by this experiment.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
