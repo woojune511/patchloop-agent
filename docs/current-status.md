@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[isort I2](history/2026-10-15-isort-table-result.md): input parity passed; model
-revised its hypothesis but made no edit/submission before solver timeout.
-Four generations/counts; USD 0.509389 known, one call's usage unknown;
-maximum admitted USD 0.958059. U/P/I NOT_RUN. Allocation closed; baseline kept.
+[I2 audit](history/2026-10-15-isort-table-input-audit.md): revised plan survived
+handoff; raw operator facts did not. Same cases were rechecked with changed config.
+About 250s went to model waits; no edit. U/P/I NOT_RUN, USD 0.509389 known plus
+one unknown call. Allocation closed; baseline kept, no new rule or run queued.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
