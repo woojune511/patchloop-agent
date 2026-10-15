@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Grade correction](history/2026-10-15-pre-edit-grade.md): A 0/2, B 2/2 proposals.
-B1's ancillary assertion flaw does not invalidate its CTE diagnostic.
-Selection gate met for discussion only; repair/acceptance NOT_RUN. Keep baseline.
-USD 3 allocation closed; no further calls or wording changes authorized.
+[Uptake design](history/2026-10-15-uptake-design.md): B1/B2 once each after corrected
+selection A 0/2, B 2/2. Proposed USD 7, 12 generations/12 counts; not authorized.
+One edit per branch; observation, revision, repair and acceptance scored separately.
+Baseline unchanged. Prior USD 3 closed; executor and live execution NOT_RUN.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
