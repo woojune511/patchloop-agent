@@ -25,8 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Host plan](history/2026-10-16-host-plan-design.md): one A/B pair, USD 11 /
-20 generations / 20 counts. Design only; bridge/mock and paid approval pending.
+[Host bridge](history/2026-10-16-host-plan-bridge.md): frozen A/B, USD 11 /
+20 generations / 20 counts. Provider-free bridge/manifest ready; paid NOT_RUN.
 Keep baseline. [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
 frozen grades unchanged.
 
