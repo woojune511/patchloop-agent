@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[isort input audit](history/2026-10-15-isort-input-audit.md): I1 used the positive
-diagnostic case and regression PASS to close its old keyword-based plan. The full
-counterevidence and edit tools were present. Plan, completion advice and raw-result
-presentation effects remain unseparated; keep baseline. No additional execution.
+[isort table design](history/2026-10-15-isort-table-design.md): one proposed I2 from
+I1's pre-finish seed changes only diagnostic presentation; plan/advice stay fixed.
+USD 3.50, six generations/counts, two edits, 281/720s. Static input parity passed;
+connector/mock/live work NOT_RUN. Baseline unchanged; no paid approval or run.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
