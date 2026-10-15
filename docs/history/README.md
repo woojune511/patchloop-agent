@@ -8,7 +8,7 @@
 ## Records
 
 - [Probe](2026-10-15-pre-edit-probe.md).
-- [Pre-edit A/B](2026-10-15-pre-edit-ab.md).
+- [A/B grading correction](2026-10-15-pre-edit-grade.md).
 - [Hypotheses](2026-10-15-hypothesis-comparison.md).
 - [Navigation](2026-10-08-failure-navigation.md).
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
