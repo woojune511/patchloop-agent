@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[isort table design](history/2026-10-15-isort-table-design.md): one proposed I2 from
-I1's pre-finish seed changes only diagnostic presentation; plan/advice stay fixed.
-USD 3.50, six generations/counts, two edits, 281/720s. Static input parity passed;
-connector/mock/live work NOT_RUN. Baseline unchanged; no paid approval or run.
+[isort table bridge](history/2026-10-15-isort-table-bridge.md): I2 input parity,
+68 focused contracts and fixture smoke passed; plan/advice unchanged. Manifest:
+`C:/pt/isorttableready01/manifest.json`. USD 3.50, six generations/counts, two edits,
+281/720s. No paid approval/run or model-uptake evidence; baseline unchanged.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
