@@ -4,7 +4,7 @@
 
 ## Records
 
-- [Host closure](2026-10-16-host-closure.md).
+- [Host plan](2026-10-16-host-plan-design.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
 - [Uptake review](2026-10-15-uptake-grade.md).
 - [isort I4](2026-10-16-isort-requirement-audit.md).

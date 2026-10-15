@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[OpenSandbox](history/2026-10-16-host-closure.md): model-authored requirement narrowing
-despite retained task/source. Partial patch; no harness defect demonstrated.
-Keep baseline; no run queued. [I4](history/2026-10-16-isort-requirement-audit.md):
-type_item remains inferred; frozen grades stand without a proven uptake-error cause.
+[Host plan](history/2026-10-16-host-plan-design.md): one A/B pair, USD 11 /
+20 generations / 20 counts. Design only; bridge/mock and paid approval pending.
+Keep baseline. [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
+frozen grades unchanged.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
