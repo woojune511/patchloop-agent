@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[isort uptake design](history/2026-10-15-isort-uptake-design.md): one continuation,
-USD 3.50, six generations/counts, two edits, inherited time. Operator control is
-observed; model uptake/repair NOT_RUN. Keep baseline. Connector/mocks and exact
-manifest approval precede paid work.
+[isort continuation](history/2026-10-15-isort-uptake-bridge.md): connector and
+provider-free checks passed under the unchanged USD 3.50, six-call/count,
+two-edit, 281/720s design. Model uptake/repair NOT_RUN; baseline unchanged.
+The committed manifest requires separate paid approval.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
