@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Uptake design](history/2026-10-15-uptake-design.md): B1/B2 once each after corrected
-selection A 0/2, B 2/2. Proposed USD 7, 12 generations/12 counts; not authorized.
-One edit per branch; observation, revision, repair and acceptance scored separately.
-Baseline unchanged. Prior USD 3 closed; executor and live execution NOT_RUN.
+[Uptake bridge](history/2026-10-15-uptake-bridge.md): B1/B2 restoration and free mocks passed.
+Frozen [design](history/2026-10-15-uptake-design.md): USD 7, 12 generations/12 counts;
+18 actions and one remaining edit per row. Paid execution is not authorized.
+Baseline unchanged; actual uptake, SQLFluff repair and acceptance NOT_RUN.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits

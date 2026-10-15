@@ -8,7 +8,7 @@
 ## Records
 
 - [Probe](2026-10-15-pre-edit-probe.md).
-- [Uptake design](2026-10-15-uptake-design.md).
+- Uptake: [design](2026-10-15-uptake-design.md), [bridge](2026-10-15-uptake-bridge.md).
 - [Hypotheses](2026-10-15-hypothesis-comparison.md).
 - [Navigation](2026-10-08-failure-navigation.md).
 - Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
@@ -91,7 +91,7 @@
 - [Interpretation](2026-09-26-first-interpretation-audit.md).
 - [Candidates](2026-09-26-independent-candidate-comparison.md).
 - [Diagnostic verification](2026-09-26-diagnostic-claims-verification.md).
-- [completion advice comparison](2026-09-26-completion-status-comparison.md).
-- [first-input completion advice diagnostic](2026-09-26-completion-status-diagnostic.md).
+- [Completion](2026-09-26-completion-status-comparison.md).
+- [First input](2026-09-26-completion-status-diagnostic.md).
 - [Verification scope audit](2026-09-26-verification-scope-audit.md).
 - [Paired-reference comparison](2026-09-26-paired-reference-comparison.md).
