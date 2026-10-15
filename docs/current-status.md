@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-15. Current decisions; runtime source owns behavior.
+Updated: 2026-10-16. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[I4 design](history/2026-10-15-isort-finish-advice-design.md): remove only the latest
-ready-state finish advice; keep plan, diagnostic and I3 retention. One row,
-USD 3.50, 6 generations/counts; design only. Implementation/mock/live NOT_RUN.
-Keep baseline; no paid authorization or demonstrated gain.
+[I4 bridge](history/2026-10-15-isort-finish-advice-bridge.md): ready advice removal
+implemented; free parity/retention/edit/check/submit and limit tests pass.
+One row, USD 3.50, 6 generations/counts; fixed manifest preparation only.
+Keep baseline; live NOT_RUN, no paid authorization or demonstrated gain.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
