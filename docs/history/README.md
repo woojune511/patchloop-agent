@@ -2,11 +2,9 @@
 
 [Status](../current-status.md).
 
-[Split](2026-09-26-documentation-separation.md).
-
-
 ## Records
 
+- [Host closure](2026-10-16-host-closure.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
 - [Uptake review](2026-10-15-uptake-grade.md).
 - [isort I4](2026-10-16-isort-requirement-audit.md).

@@ -25,9 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[I4 audit](history/2026-10-16-isort-requirement-audit.md): type_item is a derived
-regression expectation; its correctness authority remains unresolved.
-Frozen U/P/I FAIL stand, without a proven uptake-error cause. Keep baseline; no run queued.
+[OpenSandbox](history/2026-10-16-host-closure.md): model-authored requirement narrowing
+despite retained task/source. Partial patch; no harness defect demonstrated.
+Keep baseline; no run queued. [I4](history/2026-10-16-isort-requirement-audit.md):
+type_item remains inferred; frozen grades stand without a proven uptake-error cause.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
