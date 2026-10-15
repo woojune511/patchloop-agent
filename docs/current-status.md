@@ -25,10 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[I4 bridge](history/2026-10-15-isort-finish-advice-bridge.md): ready advice removal
-implemented; free parity/retention/edit/check/submit and limit tests pass.
-One row, USD 3.50, 6 generations/counts; fixed manifest preparation only.
-Keep baseline; live NOT_RUN, no paid authorization or demonstrated gain.
+[I4 result](history/2026-10-16-isort-finish-advice-result.md): advice removal exposed;
+unchanged submission, U/P/I FAIL, safety PASS; C unexercised, R unobservable.
+One generation/count, USD 0.177165. No repair gain; keep baseline, allocation closed.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
