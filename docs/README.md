@@ -11,6 +11,10 @@ Current guidance and historical evidence have different reading paths.
 | Change an implementation contract | [Internal guide](../.agent/guide.md), then relevant source/tests |
 | Explain a particular past decision or failure | [History index](history/README.md), then a matching passage |
 
+For a Korean visual walkthrough, open the [interactive system map](system/index.html)
+in a browser. It is a dated source-based explanation; source and current status
+remain authoritative.
+
 Start with current status. Read other material only for the task at hand; do not
 concatenate this directory, the internal guide, and history into every task.
 Source code owns behavior. Current status owns current priorities. History records
