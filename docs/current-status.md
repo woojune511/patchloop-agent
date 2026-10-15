@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Probe audit](history/2026-10-15-probe-audit.md): three non-SQLFluff failures show
-scope overreach despite retained results; no repeated setup/expectation mismatch.
-Keep baseline; no run queued. [Uptake](history/2026-10-15-uptake-grade.md) remains
-1/2 complete chains and repairs; no causal gain established.
+[isort control](history/2026-10-15-isort-control.md): two public runs distinguish
+keyword-based relocation from preserving original comment position. No model or
+evaluator calls; USD 0. Diagnostic validated on one exposed task; model uptake and
+repair gain remain untested. Keep baseline; no paid run queued.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
