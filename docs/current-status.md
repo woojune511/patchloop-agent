@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[I2/I3 audit](history/2026-10-15-isort-first-response-audit.md): same first input
-except 2s; different evidence selection before retention exposure. Plan/advice
-influence is plausible, not isolated. I3 U/P/I FAIL; no new edit. Keep baseline;
-no runtime change, further prompt ablation or paid follow-up queued.
+[I4 design](history/2026-10-15-isort-finish-advice-design.md): remove only the latest
+ready-state finish advice; keep plan, diagnostic and I3 retention. One row,
+USD 3.50, 6 generations/counts; design only. Implementation/mock/live NOT_RUN.
+Keep baseline; no paid authorization or demonstrated gain.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
