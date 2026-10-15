@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[isort table bridge](history/2026-10-15-isort-table-bridge.md): I2 input parity,
-68 focused contracts and fixture smoke passed; plan/advice unchanged. Manifest:
-`C:/pt/isorttableready01/manifest.json`. USD 3.50, six generations/counts, two edits,
-281/720s. No paid approval/run or model-uptake evidence; baseline unchanged.
+[isort I2](history/2026-10-15-isort-table-result.md): input parity passed; model
+revised its hypothesis but made no edit/submission before solver timeout.
+Four generations/counts; USD 0.509389 known, one call's usage unknown;
+maximum admitted USD 0.958059. U/P/I NOT_RUN. Allocation closed; baseline kept.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
