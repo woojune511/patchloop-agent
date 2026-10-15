@@ -25,9 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Uptake review](history/2026-10-15-uptake-grade.md): B1 U/P/I FAIL; B2 D/U/P/I PASS.
-Complete chain and repair success: 1/2. Baseline kept; no follow-up queued.
-USD 1.21861750; eight generations/eight counts; regrading made no calls.
+[Probe audit](history/2026-10-15-probe-audit.md): three non-SQLFluff failures show
+scope overreach despite retained results; no repeated setup/expectation mismatch.
+Keep baseline; no run queued. [Uptake](history/2026-10-15-uptake-grade.md) remains
+1/2 complete chains and repairs; no causal gain established.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
