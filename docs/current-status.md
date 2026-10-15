@@ -25,10 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Uptake bridge](history/2026-10-15-uptake-bridge.md): B1/B2 restoration and free mocks passed.
-Frozen [design](history/2026-10-15-uptake-design.md): USD 7, 12 generations/12 counts;
-18 actions and one remaining edit per row. Paid execution is not authorized.
-Baseline unchanged; actual uptake, SQLFluff repair and acceptance NOT_RUN.
+[Uptake](history/2026-10-15-uptake-results.md) closed: B1 repair/acceptance FAIL;
+B2 PASS. U: B1 FAIL, B2 NOT_OBSERVABLE; complete chain 0/2, repair success 1/2.
+USD 1.21861750; eight generations/eight counts. Baseline kept; no follow-up queued.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
