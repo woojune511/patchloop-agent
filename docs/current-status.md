@@ -25,10 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[I3 bridge](history/2026-10-15-isort-retention-bridge.md): fixed retention design
-implemented; free tests cover handoff, historical data, limits and U/C/R sealing.
-One USD 3.50, 6/6-call, 281s row awaits exact manifest approval. Plan/advice and
-baseline unchanged; paid/target execution and model repair effect NOT_RUN.
+[I3 result](history/2026-10-15-isort-retention-result.md): unchanged seed submitted
+on the first response; U/P/I FAIL, C NOT_EXERCISED, R NOT_OBSERVABLE, safety PASS.
+USD 0.2108375, 1/1 calls; no new edit or later input. Allocation closed; retention
+effect unobserved. Baseline unchanged; no tuning, retry or paid follow-up queued.
 
 [Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
 two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
