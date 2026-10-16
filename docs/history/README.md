@@ -4,7 +4,8 @@
 
 - [Mini dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Mini completion](2026-10-16-mini-swe-completion-results.md).
-- [Gap comparison](2026-10-16-assessment-gap-comparison-results.md), [exit audit](2026-10-16-assessment-gap-exit-analysis.md).
+- [Gap](2026-10-16-assessment-gap-comparison-results.md), [exit audit](2026-10-16-assessment-gap-exit-analysis.md).
+- [Plan grounds](2026-10-16-plan-grounds.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
 - [Uptake review](2026-10-15-uptake-grade.md).
@@ -35,17 +36,17 @@
 - [Environments](2026-10-02-swebench-lite-environment-preparation.md).
 - [Lite calibration](2026-10-02-swebench-lite-dev20-calibration.md).
 - [Lite inventory](2026-10-02-swebench-lite-dev20-inventory.md).
-- [Lite mini results](2026-10-02-swebench-lite-mini-pilot.md).
+- [Mini](2026-10-02-swebench-lite-mini-pilot.md).
 - [Lite preflight](2026-10-02-swebench-lite-preflight.md).
 - [Public checks](2026-10-02-swebench-lite-public-checks.md).
 - [Darts close-out](2026-10-01-darts-decision-scope-closeout.md).
 - [Zero-width](2026-10-01-zero-width-ownership-diagnosis.md).
 - [Priorities](2026-10-01-failure-priority-review.md).
 - [PDM](2026-10-01-pdm-repair-observation.md).
-- [Guidance baseline](2026-10-01-verification-guidance-baseline.md).
+- [Guidance](2026-10-01-verification-guidance-baseline.md).
 - [Verification](2026-10-01-verification-selection-comparison.md).
 - [Patches](2026-09-30-submitted-patch-review.md).
-- [Probe replay comparison](2026-09-30-probe-replay-comparison.md).
+- [Replay](2026-09-30-probe-replay-comparison.md).
 - [Basic/current](2026-09-28-basic-current-baseline-comparison.md).
 - [Probe construction](2026-09-28-probe-construction-analysis.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).

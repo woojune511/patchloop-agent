@@ -32,7 +32,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 Cumulative USD 6.2666922; closed. Mixed coverage 12/20 is not uniform accuracy;
 older SQLFluff comparisons retain the environment mismatch limitation.
 
-[Plan evidence](../.agent/planning-experiment.md).
+[Plan grounds](history/2026-10-16-plan-grounds.md): C/D each 0/8; D one post-PASS
+probe, no late edits. USD 5.74993635; closed, no quality gain or follow-up.
 
 [Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
@@ -142,8 +143,7 @@ cache. [Projection tests](../tests/test_model_view_fields.py) cover the compact 
 view; [completion arithmetic](../patchloop/dev/completion_budget.py) preserves resume
 identity. These local results do not establish live performance.
 
-The [development review](history/2026-09-30-development-review.md) closes repeated
-ablations: no quality experiment, memory extension or mandatory probe gate queued.
+[Development review](history/2026-09-30-development-review.md): repeated ablations closed.
 
 [Journal](../tests/test_dev_state.py) and [admission](../tests/test_visible_check_ids.py)
 tests cover record integrity and unique check IDs. [Paths](../tests/test_repository_paths.py),
@@ -174,8 +174,7 @@ from 24 reviewed runs. No patch-quality gain established or paid rerun queued.
   locally tested engineering corrections; not agent-accuracy evidence.
 - [Observation linking](history/2026-09-29-verification-observation-linking.md):
   implemented provenance retention; no semantic verdict or new submission gate.
-- [History index](history/README.md): targeted lookup only. Closed reports and
-  generated evidence remain immutable; changed interpretations get new follow-ups.
+- [History](history/README.md): closed evidence is immutable; interpretations get follow-ups.
 
 ## Execution and claim boundaries
 
