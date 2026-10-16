@@ -4,6 +4,7 @@
 
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
+- [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
 - [Gap](2026-10-16-assessment-gap-comparison-results.md), [exit audit](2026-10-16-assessment-gap-exit-analysis.md).
 - [Plan grounds](2026-10-16-plan-grounds.md).
 - [Astroid](2026-10-16-astroid-plan-closure.md).
@@ -63,26 +64,26 @@
 - [Oracle calibration](2026-09-27-original-benchmark-calibration.md).
 - [Benchmark](2026-09-27-original-benchmark-preparation.md).
 - [Differences](2026-09-27-anyio-benchmark-differences.md).
-- [Caller support scope](2026-09-27-caller-support-scope.md).
-- [Caller cancellation](2026-09-27-caller-cancel-preservation.md).
+- [Caller scope](2026-09-27-caller-support-scope.md).
+- [Caller cancel](2026-09-27-caller-cancel-preservation.md).
 - [Cleanup results](2026-09-27-cleanup-information-results.md).
-- [Cleanup preparation](2026-09-27-cleanup-information-preparation.md).
+- [Cleanup prep](2026-09-27-cleanup-information-preparation.md).
 - [Cancellation](2026-09-27-anyio-cleanup-cancellation.md).
 - [Caller results](2026-09-27-caller-information-results.md).
 - [Caller information](2026-09-27-caller-information.md).
 - [Caller state](2026-09-27-anyio-caller-state.md).
 - [Checkpoint results](2026-09-27-checkpoint-live-results.md).
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
-- [Offline continuation](2026-09-27-checkpoint-continuation.md).
+- [Continuation](2026-09-27-checkpoint-continuation.md).
 - [Mutation checkpoint](2026-09-27-mutation-advice-checkpoint.md).
 - [AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md).
 - [B1 deletion](2026-09-27-anyio-b1-branch-deletion.md).
 - [AnyIO links](2026-09-27-anyio-evidence-action-link.md).
-- [AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md).
-- [AnyIO process audit](2026-09-27-anyio-observation-process-audit.md).
-- [AnyIO repair comparison](2026-09-27-anyio-observation-repair-comparison.md).
-- [AnyIO failure observation](2026-09-27-anyio-failure-observation.md).
-- [AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md).
+- [Final probe scope](2026-09-27-anyio-final-probe-scope.md).
+- [Process audit](2026-09-27-anyio-observation-process-audit.md).
+- [Repair comparison](2026-09-27-anyio-observation-repair-comparison.md).
+- [Failure observation](2026-09-27-anyio-failure-observation.md).
+- [Probe readiness](2026-09-27-anyio-probe-readiness.md).
 - [Planning OFF](2026-09-27-planning-off-regression.md).
 - [First-plan timing](2026-09-27-after-source-planning-comparison.md).
 - [After source](2026-09-26-after-source-planning.md).

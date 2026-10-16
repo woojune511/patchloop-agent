@@ -1,5 +1,9 @@
 # Current PatchLoop versus the mini-SWE dev20 baseline
 
+Status: CLOSED. See the [result](../docs/history/2026-10-16-patchloop-mini-dev20-results.md):
+8 PASS / 10 FAIL / 2 cost-limited NOT_RUN; USD 7.01172285 new, USD 13.27841505
+cumulative. No paid continuation is queued. Frozen preparation terms follow.
+
 Date: 2026-10-16. The user requested a fresh measurement of PatchLoop on the same
 problems and selected all twenty development-exposed tasks. This continues that
 request within the conversation's cumulative USD 24 ceiling; no extra allowance

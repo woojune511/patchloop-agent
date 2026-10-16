@@ -25,12 +25,12 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Mini dev20](history/2026-10-16-mini-swe-dev20-results.md): closed; 10 PASS,
-5 FAIL, 5 unsubmitted at 40 calls; USD 3.2171004 including prior cost; historical only.
-[Completion](history/2026-10-16-mini-swe-completion-results.md): all five graded;
-2 PASS/3 FAIL after correcting missing public metadata and rerunning row 18.
-Cumulative USD 6.2666922; closed. Mixed coverage 12/20 is not uniform accuracy;
-older SQLFluff comparisons retain the environment mismatch limitation.
+[PatchLoop dev20](history/2026-10-16-patchloop-mini-dev20-results.md): 8 PASS/10 FAIL/
+2 NOT_RUN at row cost caps; USD 7.01172285, cumulative USD 13.27841505.
+[Mini](history/2026-10-16-mini-swe-dev20-results.md): 10 PASS/5 FAIL/5 NOT_RUN.
+[Completion](history/2026-10-16-mini-swe-completion-results.md): 2 PASS/3 FAIL;
+mixed 12/20 is not uniform accuracy. Mini's SQL metadata mismatch limits comparison.
+Allocations closed; no paid follow-up or quality gain established.
 
 [C/D](history/2026-10-16-plan-grounds.md): closed, 0/8 each; USD 5.74993635.
 [Purpose comparison](../.agent/verification-purpose-comparison.md): D vs 5fbce0c;
