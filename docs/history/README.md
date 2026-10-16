@@ -1,13 +1,11 @@
 # History
 
-[Status](../current-status.md).
-
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
 - [Gap](2026-10-16-assessment-gap-comparison-results.md), [exit audit](2026-10-16-assessment-gap-exit-analysis.md).
 - [Plan grounds](2026-10-16-plan-grounds.md).
-- [Astroid](2026-10-16-astroid-plan-closure.md).
+- [Astroid](2026-10-16-astroid-plan-closure.md), [D/E](2026-10-16-purpose-stop.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
 - [Uptake](2026-10-15-uptake-grade.md).
