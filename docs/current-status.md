@@ -26,7 +26,11 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 ## Active decision
 
 [Mini dev20](history/2026-10-16-mini-swe-dev20-results.md): closed; 10 PASS,
-5 FAIL, 5 unsubmitted at 40 calls; USD 3.2171004 including prior cost. Keep baseline.
+5 FAIL, 5 unsubmitted at 40 calls; USD 3.2171004 including prior cost; historical only.
+[Completion](history/2026-10-16-mini-swe-completion-results.md): all five graded;
+2 PASS/3 FAIL after correcting missing public metadata and rerunning row 18.
+Cumulative USD 6.2666922; closed. Mixed coverage 12/20 is not uniform accuracy;
+older SQLFluff comparisons retain the environment mismatch limitation.
 
 [Gap comparison](history/2026-10-16-assessment-gap-comparison-results.md): B 0/8, C 0/8;
 post-PASS verification 0/8 versus 1/8, no edits; USD 4.346523, closed.

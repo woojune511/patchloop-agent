@@ -3,6 +3,7 @@
 [Status](../current-status.md).
 
 - [Mini dev20](2026-10-16-mini-swe-dev20-results.md).
+- [Mini completion and metadata correction](2026-10-16-mini-swe-completion-results.md).
 - [Gap comparison](2026-10-16-assessment-gap-comparison-results.md), [exit audit](2026-10-16-assessment-gap-exit-analysis.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).

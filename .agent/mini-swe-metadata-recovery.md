@@ -1,5 +1,10 @@
 # Mini SQLFluff-1733: public metadata correction
 
+Closed: the [corrected attempt](../docs/history/2026-10-16-mini-swe-completion-results.md)
+submitted after 52 calls and passed native grading at USD 0.4397661. Across both
+row-18 attempts: 150 calls/USD 1.54609845. All five target tasks now have grades;
+cumulative experiment spend is USD 6.2666922. No paid follow-up is queued.
+
 The requested five-task completion run submitted all five patches. Rows 8/13/16/17
 received native PASS/FAIL/FAIL/FAIL. Row 18 submitted after 98 calls, but native
 collection failed before tests. Preserve that run, its NOT_RUN/ERROR evidence and

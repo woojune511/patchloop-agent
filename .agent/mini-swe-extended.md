@@ -1,5 +1,11 @@
 # Mini dev20: requested completion of five unsubmitted tasks
 
+Closed: the [completion record](../docs/history/2026-10-16-mini-swe-completion-results.md)
+preserves five normal submissions with initial 1 PASS/3 FAIL/1 evaluation ERROR.
+An observed public metadata defect required a separate bounded row-18 correction;
+final task coverage is 2 PASS/3 FAIL. No further live invocation is authorized by
+this closed contract. Exact original five-task packet/source bytes remain frozen.
+
 The closed 40-call panel left rows 8, 13, 16, 17 and 18 unsubmitted. All five
 stopped on a known call limit, with settled accounting and confirmed cleanup.
 The user subsequently asked: "미채점 문제들 끝까지 실행되게 할 수 있을까?"
