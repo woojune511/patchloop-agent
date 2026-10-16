@@ -8,6 +8,7 @@ import json
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
+from decimal import Decimal
 from pathlib import Path
 from time import monotonic
 
@@ -143,17 +144,42 @@ def prepare_dependencies(root, index):
 
 
 def request(entry, live, root):
+    config = settings(root)
     req = old.request(entry, live / str(entry["index"]))
     task = load_task_package(task_path(entry).parent).public
     return req.model_copy(
         update={
             "task": task_path(entry),
-            "prepared_probe_dependencies": dependency_path(root, entry["index"]),
+            "prepared_probe_dependencies": dependency_path(
+                Path(config["dependency_root"]), entry["index"]
+            ),
+            "env_file": Path(config["env_file"]),
+            "max_cost_usd": Decimal(config["row_cap_usd"]),
             # Public check timeouts plus a fixed checkout allowance, inside the
             # existing total. No private evaluator timing enters solver context.
             "evaluation_reserve_seconds": sum(c.timeout_seconds for c in task.visible_checks) + 30,
         }
     )
+
+
+def settings(root):
+    """Resolve an external panel allocation before freezing any requests."""
+    path = root / "panel-settings.json"
+    values = json.loads(path.read_bytes()) if path.exists() else {}
+    require(set(values) <= {"row_cap_usd", "dependency_root", "env_file"},
+            "unsupported panel setting")
+    cap = Decimal(values.get("row_cap_usd", str(old.ROW_CAP)))
+    require(cap.is_finite() and cap > 0, "positive finite row cap required")
+    return {
+        "row_cap_usd": str(cap),
+        "dependency_root": str(Path(values.get("dependency_root", root)).resolve()),
+        "env_file": str(Path(values.get("env_file", repository_root() / ".env")).resolve()),
+    }
+
+
+def allocation(root):
+    cap = Decimal(settings(root)["row_cap_usd"])
+    return {"row_cap_usd": str(cap), "total_cap_usd": str(cap * 20)}
 
 
 def bindings():
@@ -208,8 +234,8 @@ def freeze(root, live):
         "live_root": str(live),
         "workers": 2,
         "model": old.MODEL,
-        "row_cap_usd": str(old.ROW_CAP),
-        "total_cap_usd": str(old.CAP),
+        **allocation(root),
+        "settings": settings(root),
         "pricing": old.price(),
         "native_identity": old.native_identity(),
         "validation_hash": sha256_json(validation),
@@ -244,6 +270,9 @@ def validate(root, digest):
         "validation changed",
     )
     require(len(packet["rows"]) == 20, "exact roster required")
+    require(all(packet[key] == value for key, value in allocation(root).items()),
+            "allocation drift")
+    require(packet.get("settings", settings(root)) == settings(root), "settings drift")
     for entry, row in zip(old.baseline()[0]["rows"], packet["rows"], strict=True):
         req = request(entry, Path(packet["live_root"]), root)
         require(
@@ -373,7 +402,9 @@ def capability_inputs(root):
             "index": entry["index"],
             "task_hash": load_task_package(task_path(entry).parent).task_content_hash,
             "source_hash": admission_hash(Path(entry["prepared_source"])),
-            "dependencies": deps.admit(dependency_path(root, entry["index"])).model_dump(
+            "dependencies": deps.admit(dependency_path(
+                Path(settings(root)["dependency_root"]), entry["index"]
+            )).model_dump(
                 mode="json"
             ),
         }
@@ -509,7 +540,7 @@ def run(root, digest):
         started = monotonic()
         outcome = parallel_dev_batch.run_parallel_rows(
             packet["rows"],
-            total_cap=old.CAP,
+            total_cap=Decimal(packet["total_cap_usd"]),
             workers=packet["workers"],
             journal=journal,
             after_row=lambda i, v, req: assess(root, entries[i], v, req),

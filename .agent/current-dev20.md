@@ -93,6 +93,12 @@ the existing registered task image. These environments are not interchangeable.
 Use fresh external paths, for example `C:/pt/cd20p06b` for preparation and a
 separate live directory. Failed preparation remains evidence and is not overwritten.
 Freeze after focused/full/Ruff/mock validation and a clean tracked implementation.
+For a new allocation, an optional external `panel-settings.json` may set
+`row_cap_usd`, `env_file`, and `dependency_root`. Defaults preserve USD 1.20 per
+task and the usual local paths. Freeze binds the resolved settings, all requests
+and exactly twenty row caps; run uses that frozen total. Existing prepared public
+dependencies may be reused read-only, after fresh capability checks. Changing
+settings invalidates the packet and never changes an old allocation.
 `capabilities --root <external>` records public imports, ordinary library operations,
 and selected tests with two provider-free workers.
 `freeze --root <external> --live-root <separate-external>`
