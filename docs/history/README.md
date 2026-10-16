@@ -2,8 +2,7 @@
 
 [Status](../current-status.md).
 
-## Records
-
+- [Mini baseline](2026-10-16-mini-swe-baseline-preparation.md).
 - [Assessment](2026-10-16-submission-assessment-results.md), [exits](2026-10-16-assessment-exit-analysis.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
@@ -59,14 +58,14 @@
 - [Pilot calibration](2026-09-27-original-pilot-calibration.md).
 - [Pilot selection](2026-09-27-original-input-pilot-selection.md).
 - [Oracle calibration](2026-09-27-original-benchmark-calibration.md).
-- [Benchmark preparation](2026-09-27-original-benchmark-preparation.md).
-- [Benchmark differences](2026-09-27-anyio-benchmark-differences.md).
+- [Benchmark](2026-09-27-original-benchmark-preparation.md).
+- [Differences](2026-09-27-anyio-benchmark-differences.md).
 - [Caller support scope](2026-09-27-caller-support-scope.md).
 - [Caller cancellation](2026-09-27-caller-cancel-preservation.md).
-- [Cleanup information results](2026-09-27-cleanup-information-results.md).
-- [Cleanup information preparation](2026-09-27-cleanup-information-preparation.md).
-- [Cleanup cancellation](2026-09-27-anyio-cleanup-cancellation.md).
-- [Caller information results](2026-09-27-caller-information-results.md).
+- [Cleanup results](2026-09-27-cleanup-information-results.md).
+- [Cleanup preparation](2026-09-27-cleanup-information-preparation.md).
+- [Cancellation](2026-09-27-anyio-cleanup-cancellation.md).
+- [Caller results](2026-09-27-caller-information-results.md).
 - [Caller information](2026-09-27-caller-information.md).
 - [Caller state](2026-09-27-anyio-caller-state.md).
 - [Checkpoint results](2026-09-27-checkpoint-live-results.md).

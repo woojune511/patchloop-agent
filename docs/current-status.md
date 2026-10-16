@@ -25,6 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+[Mini baseline](../.agent/mini-swe-baseline.md): prepared; live/bash approval pending.
+
 [Assessment](history/2026-10-16-submission-assessment-results.md): A 0/8, B 0/8;
 USD 4.29112755; closed. [Exit audit](history/2026-10-16-assessment-exit-analysis.md)
 led to guidance on evidence for requirements and unfinished verification.
@@ -188,6 +190,3 @@ cases; submission eligibility is not semantic correctness. Mock safety is NOT_RU
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
 uncertainty. Runtime/default adoption and general improvement remain unestablished.
-
-Replace this page's active decision when real work changes it. Keep completed
-investigations in linked history, not in a growing sequence of suggested experiments.
