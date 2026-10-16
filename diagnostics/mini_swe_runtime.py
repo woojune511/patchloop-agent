@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 import subprocess
 import sys
 import time
@@ -262,6 +263,16 @@ class PublicContainer:
                 "git commit -qm base"
             )
             self.operator_command(setup, timeout=60)
+            # Some native images have editable metadata inside their original /testbed.
+            # Recreate only missing metadata from public setup.py after masking that tree.
+            metadata_setup = (
+                "import importlib.metadata as m, subprocess, sys\n"
+                "try:\n"
+                f"    m.distribution({row['public_module']!r})\n"
+                "except m.PackageNotFoundError:\n"
+                "    subprocess.run([sys.executable, 'setup.py', 'egg_info'], check=True)\n"
+            )
+            self.operator_command("python -c " + shlex.quote(metadata_setup), timeout=60)
             self.journal.append("external_container_ready", {"name": self.name})
         except BaseException:
             self.cleanup()

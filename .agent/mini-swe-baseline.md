@@ -51,7 +51,10 @@ Use only existing digest-pinned local images, with `--pull=never`, network disab
 read-only root, dropped capabilities, no new privileges, CPU/memory/PID bounds, and
 no host mounts. Mask `/testbed` with a fresh tmpfs populated solely by a verified
 base-commit source archive. Create a synthetic one-commit Git repository without
-remotes. The agent sees no host credential file, PatchLoop task package, historical
+remotes. If masking the original checkout removes editable package metadata,
+regenerate that metadata with public `setup.py egg_info`, without installing
+dependencies or changing tracked source. The agent sees no host credential file,
+PatchLoop task package, historical
 run, private specification, or evaluator payload. Destroy its container before
 private grading. Record actions and accounting in external hash-chained dev-run-v1
 journals with content-addressed artifacts; no automatic action recovery/reexecution.
@@ -95,8 +98,8 @@ Preparation binds the actual source/dependency bytes, config, tasks, archives,
 images, native harness and runtime into one manifest.
 
 ```powershell
-.venv/Scripts/python.exe -m diagnostics.mini_swe_dev20 prepare --root C:/pt/mini20prep01 --live-root C:/pt/mini20live01
-.venv/Scripts/python.exe -m diagnostics.mini_swe_dev20 preflight --root C:/pt/mini20prep01 --packet-hash <hash>
+.venv/Scripts/python.exe -m diagnostics.mini_swe_dev20 prepare --root C:/pt/mini20prep02 --live-root C:/pt/mini20live01 --env-file C:/Users/geonj/Documents/PatchLoop/.env
+.venv/Scripts/python.exe -m diagnostics.mini_swe_dev20 preflight --root C:/pt/mini20prep02 --packet-hash <hash>
 # Only after exact human approval, including the isolated bash exception:
-.venv/Scripts/python.exe -m diagnostics.mini_swe_dev20 run --root C:/pt/mini20prep01 --packet-hash <hash>
+.venv/Scripts/python.exe -m diagnostics.mini_swe_dev20 run --root C:/pt/mini20prep02 --packet-hash <hash>
 ```

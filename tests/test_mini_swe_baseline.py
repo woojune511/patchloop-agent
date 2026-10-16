@@ -196,7 +196,11 @@ def test_container_has_no_host_mount_and_cleans_exact_identity(monkeypatch, tmp_
 
     monkeypatch.setattr(runtime, "command", fake)
     env = runtime.PublicContainer(
-        {"image": "image@sha256:" + "a" * 64, "source_archive": str(archive)},
+        {
+            "image": "image@sha256:" + "a" * 64,
+            "source_archive": str(archive),
+            "public_module": "example",
+        },
         tmp_path,
         ExecutionDeadline.from_remaining(60),
     )
@@ -227,7 +231,7 @@ def test_cleanup_uncertainty_is_not_success(monkeypatch, tmp_path):
     archive.write_bytes(b"public archive")
     monkeypatch.setattr(runtime, "command", Mock(return_value=SimpleNamespace(stdout=b"")))
     env = runtime.PublicContainer(
-        {"image": "image", "source_archive": str(archive)},
+        {"image": "image", "source_archive": str(archive), "public_module": "example"},
         tmp_path,
         ExecutionDeadline.from_remaining(60),
     )
@@ -242,7 +246,7 @@ def test_shell_timeout_cannot_continue(mini_protocol, monkeypatch, tmp_path):
     archive.write_bytes(b"public archive")
     monkeypatch.setattr(runtime, "command", Mock(return_value=SimpleNamespace(stdout=b"")))
     env = runtime.PublicContainer(
-        {"image": "image", "source_archive": str(archive)},
+        {"image": "image", "source_archive": str(archive), "public_module": "example"},
         tmp_path,
         ExecutionDeadline.from_remaining(60),
     )

@@ -78,9 +78,11 @@ def task_text(public):
     )
 
 
-def prepare(root: Path, live: Path):
+def prepare(root: Path, live: Path, env_file: Path | None = None):
     require(not (root / "manifest.json").exists() and not live.exists(), "fresh roots required")
     repo = repository_root().resolve()
+    credential_file = (env_file or repo / ".env").resolve()
+    load_exact_openai_api_key(credential_file)  # validate locally; never export/copy the value
     require(
         not root.is_relative_to(repo)
         and not live.is_relative_to(repo)
@@ -162,7 +164,7 @@ def prepare(root: Path, live: Path):
         "model": MODEL,
         "reasoning_effort": "xhigh",
         "max_output_tokens": 25000,
-        "credential_file": str(repo / ".env"),
+        "credential_file": str(credential_file),
         "repeat": 1,
         "workers": 1,
         "row_cap_usd": str(ROW_CAP),
@@ -459,12 +461,13 @@ def main():
     parser.add_argument("command", choices=("prepare", "preflight", "run"))
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--live-root", type=Path)
+    parser.add_argument("--env-file", type=Path)
     parser.add_argument("--packet-hash")
     args = parser.parse_args()
     root = args.root.resolve()
     if args.command == "prepare":
         require(args.live_root is not None, "--live-root required")
-        result = prepare(root, args.live_root.resolve())
+        result = prepare(root, args.live_root.resolve(), args.env_file)
     else:
         require(args.packet_hash is not None, "--packet-hash required")
         result = globals()[args.command](root, args.packet_hash)
