@@ -516,13 +516,14 @@ def dev_tool_schemas(
             decision_modes[name]
         )
         if planning_policy != "none":
-            from patchloop.dev.working_plan import POLICIES, update_schema
+            from patchloop.dev.working_plan import POLICIES, reason_schema, update_schema
 
             if planning_policy not in POLICIES:
                 raise ContractError("unknown planning policy")
             decision = parameters["properties"]["turn_decision"]
             decision["properties"]["plan_update"] = update_schema()
-            decision["required"].append("plan_update")
+            decision["properties"]["plan_update_reason"] = reason_schema()
+            decision["required"].extend(["plan_update", "plan_update_reason"])
         parameters["required"].append("turn_decision")
         projected.append(schema)
     return projected
@@ -3616,8 +3617,12 @@ class DevToolGateway:
             )
         if not self.visible_checks_pass(diff_hash=summary.patch_hash):
             raise ContractError("all visible checks must pass against the current diff")
+        from patchloop.dev.working_plan import submission_review
+
+        plan_review = submission_review(self.journal.events(), summary.patch_hash)
         return {
             "assessment": intent.assessment,
+            **({"plan_review": plan_review} if plan_review is not None else {}),
             "patch": summary.patch,
             "patch_hash": summary.patch_hash,
             "changed_files": summary.changed_files,

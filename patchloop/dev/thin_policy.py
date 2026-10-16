@@ -29,6 +29,10 @@ from historical results, environment/setup failures from behavior failures, and
 observed results from assumptions. Required-check PASS makes submission eligible;
 it does not establish untested task behavior. Use the available public checks,
 selected tests or probes when their result can inform the repair.
+Check evidence_review links definitions and observed source, not verified requirements.
+A test added or read is not evidence it ran. Claim a reported failure no longer
+reproduces only with its executed input and observed current-diff result; otherwise
+label the conclusion as a source inference. Unknown coverage remains unknown.
 
 memory_update is optional working data; null leaves it unchanged. Only the first
 non-null update in a batch is processed before the actions. Cite already observed

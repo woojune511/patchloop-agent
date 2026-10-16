@@ -54,7 +54,7 @@ def dev_tool_surface_hash(
     base = sha256_json(
         {
             "schema_version": "dev-tool-surface-v48",
-            "submission_assessment": "required-nonblank-public-conclusion-current-diff-v1",
+            "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
             "selected_public_tests": "registered-pytest-tracked-targets-optional-v1",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
@@ -137,7 +137,7 @@ def dev_tool_surface_hash(
             "working_note_guidance": "compact-reusable-facts-and-lifecycle-guidance-v2",
             "verification_concerns": "original-question-progress-note-exact-noop-v2",
             "check_evidence_identity": "retained-action-check-diff-explicit-completion-currency-v2",
-            "check_definition_review": "registered-literal-targets-current-source-navigation-v1",
+            "check_definition_review": "registered-selection-requirement-scope-unassessed-v2",
             "check_definition_review_bounds": [
                 check_review.MAX_TARGETS, check_review.MAX_RANGES,
                 check_review.MAX_TARGET_CHARS, check_review.MAX_REVIEW_CHARS,
@@ -270,12 +270,14 @@ class PublicTurnDecision(StrictModel):
     memory_update: Any = None
     # Independent annotation parsing must not turn a bad plan into a tool failure.
     plan_update: Any = None
+    plan_update_reason: Any = None
 
     @model_serializer(mode="wrap")
     def preserve_optional_plan_wire(self, handler: Any) -> dict[str, Any]:
         result = handler(self)
-        if "plan_update" not in self.model_fields_set:
-            result.pop("plan_update", None)
+        for field in ("plan_update", "plan_update_reason"):
+            if field not in self.model_fields_set:
+                result.pop(field, None)
         return result
 
     @model_validator(mode="after")

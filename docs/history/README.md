@@ -3,7 +3,7 @@
 [Status](../current-status.md).
 
 - [Mini dev20](2026-10-16-mini-swe-dev20-results.md).
-- [Mini completion and metadata correction](2026-10-16-mini-swe-completion-results.md).
+- [Mini completion](2026-10-16-mini-swe-completion-results.md).
 - [Gap comparison](2026-10-16-assessment-gap-comparison-results.md), [exit audit](2026-10-16-assessment-gap-exit-analysis.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
@@ -74,8 +74,8 @@
 - [Offline continuation](2026-09-27-checkpoint-continuation.md).
 - [Mutation checkpoint](2026-09-27-mutation-advice-checkpoint.md).
 - [AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md).
-- [AnyIO B1 branch deletion](2026-09-27-anyio-b1-branch-deletion.md).
-- [AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md).
+- [B1 deletion](2026-09-27-anyio-b1-branch-deletion.md).
+- [AnyIO links](2026-09-27-anyio-evidence-action-link.md).
 - [AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md).
 - [AnyIO process audit](2026-09-27-anyio-observation-process-audit.md).
 - [AnyIO repair comparison](2026-09-27-anyio-observation-repair-comparison.md).
@@ -83,7 +83,7 @@
 - [AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md).
 - [Planning OFF](2026-09-27-planning-off-regression.md).
 - [First-plan timing](2026-09-27-after-source-planning-comparison.md).
-- [First plan after source](2026-09-26-after-source-planning.md).
+- [After source](2026-09-26-after-source-planning.md).
 - [Planning ON/OFF](2026-09-26-planning-off-comparison.md).
 - [Declaration](2026-09-26-declaration-checkpoint-comparison.md).
 - [Decision](2026-09-26-declaration-checkpoint-sampler.md).
@@ -93,5 +93,5 @@
 - [Diagnostic](2026-09-26-diagnostic-claims-verification.md).
 - [Completion](2026-09-26-completion-status-comparison.md).
 - [First input](2026-09-26-completion-status-diagnostic.md).
-- [Verification scope audit](2026-09-26-verification-scope-audit.md).
+- [Scope](2026-09-26-verification-scope-audit.md).
 - [Paired reference](2026-09-26-paired-reference-comparison.md).

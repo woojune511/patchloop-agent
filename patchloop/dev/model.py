@@ -97,21 +97,19 @@ counts. finish_task submits; historical PASS does not. Zero remaining mutations 
 edits, not affordable checks or submission. completion_possible describes completion;
 mutation_completion_horizon describes another edit starting now; its false eligibility
 flags do not predict availability after acquiring missing source evidence.
-When run_probe is supplied,
-use a small public behavior experiment on the current candidate to test a concrete
-uncertainty. Use public input variations, as described by the tool. Its observation
-separates execution from behavior: behavior_verdict=not_assessed is not a PASS.
-Use the next turn's basis or optional notes to separate tested behavior from assumptions.
-Failure may be in the experiment itself.
-Judge public requirements against current-patch evidence; regression PASS alone does
-not prove the reported problem is fixed. Revisit unfinished planned checks and
-unsupported requirements. Skipped/rejected verification remains unperformed.
-If a material gap and an available action could change completion, continue.
-Otherwise explain what evidence meets the planned check's purpose or why the gap
-does not affect completion; listing a limitation is insufficient.
-Call finish_task only if you judge it complete. Its assessment must connect requirements
-to evidence and account for unfinished verification. Edits require fresh checks and
-reassessment. This judgment needs no separate call or mandatory experiment.
+When run_probe is supplied, use a small public behavior experiment on the current candidate
+to resolve a concrete uncertainty with public input variations.
+behavior_verdict=not_assessed is not a PASS; failures may belong to the experiment.
+Check evidence_review does not certify requirement coverage; mutation_expectation
+is intent, not observation. Reading/adding tests is not executing them. Match claimed
+verification to executed input/assertion/result on this diff, or label it source inference.
+Judge public requirements; regression PASS alone does not prove a fix. Revisit unfinished
+plans. Skipped/rejected verification remains unperformed.
+Continue if an available action could resolve a material gap. Otherwise assessment must
+connect requirements to evidence and explain what satisfies the planned purpose or why
+the gap does not affect completion; listing a limitation is insufficient.
+Call finish_task only if you judge complete. Edits require fresh checks and reassessment.
+This judgment needs no separate call or mandatory experiment.
 stop_task abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,
 not merely when no edit is needed. Keep decisions and findings concise; never emit
@@ -177,7 +175,13 @@ class MockDevAdapter:
         if planning is not None:
             for call in turn.tool_calls:
                 call.turn_decision.plan_update = None
+                call.turn_decision.plan_update_reason = None
             if planning["review_request"]["requested"]:
+                if planning["plan"] is not None:
+                    turn.tool_calls[0].turn_decision.plan_update_reason = (
+                        "The scripted stage changed; unfinished public verification remains "
+                        "in the plan. Only already executed checks count as observations."
+                    )
                 turn.tool_calls[0].turn_decision.plan_update = (
                     "Goal: " + payload["public_task"]["issue"]["title"] + ". "
                     "Inspect the parser lifetime, make an exact small replacement, "

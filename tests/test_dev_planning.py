@@ -32,12 +32,14 @@ def request(root, policy="brief-v1"):
     )
 
 
-def call(update=None, *, action="read", tool="read_file"):
+def call(update=None, *, action="read", tool="read_file",
+         reason="Refine the next action; unfinished verification remains in scope."):
     inspect = tool == "read_file"
     return RequestedTool(
         name=tool, action_id=action, arguments={}, turn_decision=PublicTurnDecision(
             mode="inspect" if inspect else "verify", basis="public evidence",
             evidence_goal="public question" if inspect else None, plan_update=update,
+            plan_update_reason=reason,
         ),
     )
 
@@ -52,13 +54,14 @@ def view(journal, diff="d1", gate="needs_mutation"):
 
 def test_off_wire_and_prompt_are_unchanged():
     assert dev_tool_surface_hash() == (
-        "sha256:0aa0a3d072bdb62fa4ceeeee50c3a3421eb1dc215f512b2fd121bc30ca947559"
+        "sha256:c1dddeac2c94f30a29543fc9e3e5a2c0cef913203906cace717a552a55815383"
     )
     assert sha256_json(dev_tool_schemas(finish_enabled=True, check_ids=["check"])) == (
         "sha256:d4de20598838a1fa2a891a8d9d9e098a7fdb8373422aad3fabe0147ece32fbaf"
     )
     decision = PublicTurnDecision(mode="verify", basis="baseline")
     assert "plan_update" not in decision.model_dump(mode="json")
+    assert "plan_update_reason" not in decision.model_dump(mode="json")
     restored = PublicTurnDecision.model_validate(decision.model_dump(mode="json"))
     assert restored.model_dump() == decision.model_dump()
     assert "Brief planning is enabled" not in DEV_SYSTEM_PROMPT
@@ -72,6 +75,8 @@ def test_enabled_schema_only_adds_annotation():
     for tool in after:
         decision = tool["parameters"]["properties"]["turn_decision"]
         assert decision["properties"].pop("plan_update") == plans.update_schema()
+        assert decision["properties"].pop("plan_update_reason") == plans.reason_schema()
+        assert decision["required"].pop() == "plan_update_reason"
         assert decision["required"].pop() == "plan_update"
     assert after == before
     assert dev_tool_surface_hash(planning_policy=plans.POLICY) != dev_tool_surface_hash()

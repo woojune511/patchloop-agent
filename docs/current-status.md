@@ -32,10 +32,7 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 Cumulative USD 6.2666922; closed. Mixed coverage 12/20 is not uniform accuracy;
 older SQLFluff comparisons retain the environment mismatch limitation.
 
-[Gap comparison](history/2026-10-16-assessment-gap-comparison-results.md): B 0/8, C 0/8;
-post-PASS verification 0/8 versus 1/8, no edits; USD 4.346523, closed.
-[C exit audit](history/2026-10-16-assessment-gap-exit-analysis.md): two scoped plans
-fulfilled; five checks dropped or dismissed. No quality gain or paid follow-up.
+[Plan evidence](../.agent/planning-experiment.md).
 
 [Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;

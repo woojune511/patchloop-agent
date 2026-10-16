@@ -247,6 +247,11 @@ def fixture_script(edits=2, stop=False):
     for batch in steps:
         for c in batch:
             args = c["arguments"]
+            decision = args["turn_decision"]
+            if decision.get("plan_update") is not None:
+                decision["plan_update_reason"] = (
+                    "Refine the fixture repair; its unfinished public verification remains open."
+                )
             if "path" in args:
                 args["path"] = PATH
             if c["name"] == "read_file":

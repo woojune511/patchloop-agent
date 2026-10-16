@@ -12,7 +12,7 @@ missing internal planning caused the behavior; this is a new intervention.
 `--planning-policy` accepts `none`, `brief-v1`, `brief-evidence-v1`,
 `brief-assumption-v1`, and `brief-after-source-v1`; it defaults OFF. All brief
 variants support append-v1 and segmented-v1, not native-window-v1.
-Only ON adds nullable `plan_update` to existing `turn_decision` schemas and adds
+Only ON adds nullable `plan_update` and `plan_update_reason` to `turn_decision` and adds
 brief instructions. There is no planning tool, separate response, API call or
 planner model. OFF keeps the old system prompt, tool schema/order and absent
 decision-field serialization. The planning contract binds its instruction hash
@@ -42,6 +42,37 @@ Null is allowed even when review is requested and is not proof of reconsideratio
 Only a valid decision consumes an event-based request, never `turn_started` alone.
 `working_plan_updated` records one idempotent receipt per valid turn before tools,
 including null/unchanged/rejected outcomes. Recovery uses those durable records.
+
+### Revision and submission evidence
+
+The [C exit audit](../docs/history/2026-10-16-assessment-gap-exit-analysis.md) found
+test commitments disappearing in whole-plan replacements, plus unsupported claims
+that regression PASS established a specific reproduction. The shared brief-plan
+contract now requires a nonblank `plan_update_reason` of at most 800 characters
+when replacing an existing, different plan. Initial/identical/null updates need no
+reason. A missing or malformed reason rejects only the annotation and preserves
+the prior plan; the tool action proceeds without a correction call.
+
+The reason should identify any removed verification purpose and its observed
+support, or why it no longer affects completion. Source inference must be labelled
+as such. The latest plan carries `last_change.previous_plan` and `last_change.reason`
+across null updates, handoffs and recovery. Only one predecessor is projected,
+without recursively nesting changes; every revision remains in the immutable journal.
+This is a bounded audit of revisions, not automatic extraction of every free-text
+obligation or validation that a stated reason is sufficient.
+
+Successful finish retains `plan_review` next to `assessment`, bound to the submitted
+diff. It marks interpretation unverified and does not mark the plan's checks done.
+No extra probe/test/call or plan rewrite is required to submit. Existing fresh-diff
+required-PASS rules still apply after any edit. Check `evidence_review` now explicitly
+labels requirement verification `not_assessed`; execution, test-source presence and
+mutation expectations cannot themselves certify a particular public requirement.
+The model must connect an executed input/assertion/result to such a claim, or label
+it as inference. Unknown coverage does not mean unexecuted coverage.
+
+This shared implementation changes current identities; it does not migrate older
+records or show improved model behavior. Local validation is recorded outside the
+repository in `C:/pt/planclose01/`; no paid execution is authorized by this change.
 
 Native calls/results and encrypted reasoning remain in their existing order.
 The native owner result carries the bounded annotation receipt; the latest plan

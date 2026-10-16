@@ -72,11 +72,11 @@ decode quoted/NUL-delimited Git paths without changing diff bytes.
 Retired requirement/case annotations remain for exact legacy recovery, not fresh requests.
 
 Submit a nonempty tracked diff only after all required checks pass on it.
-`finish_task.assessment` (1-1,500 nonblank characters) links requirements to evidence
-and accounts for unfinished verification. Regression PASS alone does not prove a fix.
-Explain evidence meeting a planned check's purpose or why its gap does not affect
-completion; otherwise continue useful work. This unverified judgment binds to the
-patch hash. No extra call. Edits need fresh checks and reassessment.
+`finish_task.assessment` and `plan_review` bind judgment and plan to the submitted diff.
+Plan replacements need `plan_update_reason`; invalid reasons preserve the prior plan.
+Latest predecessor/reason stays visible; see [planning](planning-experiment.md).
+Check PASS alone certifies no requirement coverage. Label source inference.
+No extra action/check required. After edits, require fresh PASS.
 Optional tests/probes give no required-check credit. Preserve pre-state,
 submitted-candidate and incremental patch identities; replay retains action-time identities.
 Visible-check IDs must be unique at task admission.
