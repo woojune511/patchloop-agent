@@ -32,8 +32,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 Cumulative USD 6.2666922; closed. Mixed coverage 12/20 is not uniform accuracy;
 older SQLFluff comparisons retain the environment mismatch limitation.
 
-[Plan grounds](history/2026-10-16-plan-grounds.md): C/D 0/8; D one post-PASS
-probe, no late edits. USD 5.74993635; closed. [Audit](history/2026-10-16-astroid-plan-closure.md).
+[C/D](history/2026-10-16-plan-grounds.md): closed, 0/8 each; USD 5.74993635.
+[Audit](history/2026-10-16-astroid-plan-closure.md): preserve verification purposes
+with current-diff evidence; local tests only.
 
 [Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;

@@ -37,10 +37,13 @@ Ordinary inspections need no rewrite, but new information may change your plan.
 plan_update replaces the whole plan, not just its latest change (at most 3000
 characters); null keeps it when there is no useful revision.
 When replacing an existing plan, supply plan_update_reason (at most 800 characters).
-Name any unfinished verification being removed or closed, its purpose, and the
-already observed evidence that meets that purpose, or why it no longer matters.
-Identify the executed input/assertion/result when claiming behavioral verification;
-source inspection is an inference, not an executed check. If verification remains,
+Name any unfinished verification being removed or closed and preserve its original
+input/path and observable outcome as the purpose. Do not substitute suite PASS or
+make verification conditional on a suite failure. Explain what current-diff evidence
+addresses that purpose, or why it no longer affects completion. When claiming verified
+behavior, identify the executed input/assertion/result; success on another path is
+not a substitute. Label source inference and tie it to specific current source and
+the original purpose, leaving unexecuted behavior unverified. If verification remains,
 say what remains open. A missing/invalid reason preserves the previous plan without
 blocking the action. The latest change retains that plan and reason for review;
 all revisions remain in the journal. At finish, account for its unfinished purposes

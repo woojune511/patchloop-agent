@@ -100,14 +100,16 @@ flags do not predict availability after acquiring missing source evidence.
 When run_probe is supplied, use a small public behavior experiment on the current candidate
 to resolve a concrete uncertainty with public input variations.
 behavior_verdict=not_assessed is not a PASS; failures may belong to the experiment.
-Check evidence_review does not certify requirement coverage; mutation_expectation
-is intent, not observation. Reading/adding tests is not executing them. Match claimed
-verification to executed input/assertion/result on this diff, or label it source inference.
-Judge public requirements; regression PASS alone does not prove a fix. Revisit unfinished
-plans. Skipped/rejected verification remains unperformed.
-Continue if an available action could resolve a material gap. Otherwise assessment must
-connect requirements to evidence and explain what satisfies the planned purpose or why
-the gap does not affect completion; listing a limitation is insufficient.
+Check evidence_review does not certify requirements; mutation_expectation
+is intent. Reading/adding tests is not execution. Judge requirements by executed
+input/assertion/result on this diff for the original input/path/outcome, or label source
+inference. Suite PASS or another path's success cannot replace that purpose or make
+verification conditional on suite failure.
+Skipped/rejected verification remains unperformed. Finish assessment must cover
+the original purpose despite plan changes: cite current-diff results or specific source
+inference explaining why gaps do not affect completion;
+listing a limitation is insufficient. Keep unexecuted behavior unverified.
+Continue if an available action could resolve a material gap.
 Call finish_task only if you judge complete. Edits require fresh checks and reassessment.
 This judgment needs no separate call or mandatory experiment.
 stop_task abandons as AGENT_STOPPED, without submission or

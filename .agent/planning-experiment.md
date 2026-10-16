@@ -61,6 +61,19 @@ without recursively nesting changes; every revision remains in the immutable jou
 This is a bounded audit of revisions, not automatic extraction of every free-text
 obligation or validation that a stated reason is sufficient.
 
+The [D closure audit](../docs/history/2026-10-16-astroid-plan-closure.md) found the
+original purpose being replaced with suite PASS or made conditional on suite failure,
+despite delivery of the prior plan and reason. Current guidance preserves the original
+input/path and observable outcome when revising or finishing. A suite verdict or a
+successful different path cannot substitute for that purpose. Closure should connect
+current-diff input/assertion/result to it, or cite specific current-source inference
+and explain why the remaining gap does not affect completion. Unexecuted behavior
+stays unverified. This permits a reasoned finish without another test/probe; it adds
+no semantic validator, call, field or gate. A material gap resolvable by an available
+action should instead guide continued work. The actual-input mock tests exercise
+both a rejected unexplained rewrite and a retained source-inference reason with a
+null finish update, not whether a live model will obey or repair more tasks.
+
 Successful finish retains `plan_review` next to `assessment`, bound to the submitted
 diff. It marks interpretation unverified and does not mark the plan's checks done.
 No extra probe/test/call or plan rewrite is required to submit. Existing fresh-diff
@@ -70,9 +83,10 @@ mutation expectations cannot themselves certify a particular public requirement.
 The model must connect an executed input/assertion/result to such a claim, or label
 it as inference. Unknown coverage does not mean unexecuted coverage.
 
-This shared implementation changes current identities; it does not migrate older
-records or show improved model behavior. Local validation is recorded outside the
-repository in `C:/pt/planclose01/`; no paid execution is authorized by this change.
+These changes bind new prompt/planning identities without migrating older records
+or establishing better model behavior. Revision-retention validation remains in
+`C:/pt/planclose01/`; purpose-preserving guidance is locally validated separately in
+`C:/pt/purpose01/`. Neither change authorizes paid execution.
 
 Native calls/results and encrypted reasoning remain in their existing order.
 The native owner result carries the bounded annotation receipt; the latest plan

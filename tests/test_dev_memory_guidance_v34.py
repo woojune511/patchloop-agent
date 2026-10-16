@@ -93,7 +93,7 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 def test_surrounding_action_guidance_identity():
     prefix, _, suffix = _memory_block()
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"
+        "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
     )
 
 

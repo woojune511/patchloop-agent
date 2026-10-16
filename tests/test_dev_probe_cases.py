@@ -122,7 +122,7 @@ def test_case_policy_extends_current_probe_schema_without_changing_prompt():
         "sha256:c1dddeac2c94f30a29543fc9e3e5a2c0cef913203906cace717a552a55815383"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:3993d847598d5ab82bef11b19c945824935c764720b19db34e083bfea8d9a391"
+        "sha256:32cc00da2be705be71a550f85a7ccfde99676b06b71ac18df9bd3022677620ae"
     )
     after = dev_tool_schemas(**options, probe_policy=cases.POLICY)
     assert [t for t in before if t["name"] != "run_probe"] == [

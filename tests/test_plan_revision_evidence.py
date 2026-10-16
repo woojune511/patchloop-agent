@@ -8,7 +8,9 @@ import httpx
 import pytest
 from test_dev_planning import call, put, request, view
 
+from patchloop.artifacts import ArtifactStore
 from patchloop.dev import runner
+from patchloop.dev.conversation import reconstruct_state
 from patchloop.dev.model import MockDevAdapter
 from patchloop.dev.model_state import compact_model_state
 from patchloop.dev.state import DevJournal
@@ -78,8 +80,9 @@ def test_revision_chain_is_bounded_in_context_but_all_reasons_remain_in_journal(
 
 
 @pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
-def test_unexplained_deletion_needs_no_extra_call_and_finish_binds_plan_assessment(
-    tmp_path, monkeypatch, context_policy,
+@pytest.mark.parametrize("close_by_inference", [False, True])
+def test_original_purpose_reaches_finish_without_forcing_another_check(
+    tmp_path, monkeypatch, context_policy, close_by_inference,
 ):
     def forbidden(*args, **kwargs):
         pytest.fail("local plan evidence tests must not dispatch a provider request")
@@ -88,6 +91,19 @@ def test_unexplained_deletion_needs_no_extra_call_and_finish_binds_plan_assessme
     monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", forbidden)
     original = MockDevAdapter.next_turn
     seen = []
+    reason = (
+        "Original purpose: preserve a newline inside one quoted field. The current diff uses "
+        "one csv.reader over io.StringIO instead of iterating physical lines. This is source "
+        "inference, not an executed multiline reproduction; removing the per-line parser "
+        "reset makes that separate reproduction nonblocking."
+    )
+    assessment = (
+        "The current diff replaces per-line parsing with one reader over io.StringIO, so "
+        "parser state spans embedded newlines. This is source inference for the original "
+        "multiline purpose, not an executed reproduction. That reproduction remains "
+        "unperformed but nonblocking for this scoped parser-lifetime repair. Required "
+        "checks passed on this diff; that PASS does not establish multiline behavior."
+    )
 
     def decide(self, context, tools):
         turn = original(self, context, tools)
@@ -95,13 +111,12 @@ def test_unexplained_deletion_needs_no_extra_call_and_finish_binds_plan_assessme
         seen.append(state)
         decision = turn.tool_calls[0].turn_decision
         decision.plan_update_reason = None
-        decision.plan_update = OPEN if state["working_plan"]["plan"] is None else DONE
+        decision.plan_update = OPEN if state["working_plan"]["plan"] is None else None
+        if turn.tool_calls[0].name == "run_check":
+            decision.plan_update = DONE
+            decision.plan_update_reason = reason if close_by_inference else None
         if turn.tool_calls[0].name == "finish_task":
-            decision.plan_update = None
-            turn.tool_calls[0].arguments["assessment"] = (
-                "The registered CSV assertions passed. The optional broader variation remains "
-                "untested and is outside the public requirement; ready on that limited evidence."
-            )
+            turn.tool_calls[0].arguments["assessment"] = assessment
         return turn
 
     monkeypatch.setattr(MockDevAdapter, "next_turn", decide)
@@ -110,18 +125,43 @@ def test_unexplained_deletion_needs_no_extra_call_and_finish_binds_plan_assessme
     assert run["terminal"] == "EVALUATOR_PASS"
     assert run["call_counts"] == {"model": 4, "tool": 5, "input_count": 0}
     assert run["cost_nanos"] == 0
-    assert all(s["working_plan"]["plan"]["text"] == OPEN for s in seen[1:])
+    assert all(s["working_plan"]["plan"]["text"] == OPEN for s in seen[1:-1])
     events = DevJournal(tmp_path, run["run_id"]).events()
+    final_turn = next(e["payload"] for e in reversed(events) if e["event_type"] == "turn_started")
+    items = runner._load_active_model_input(
+        final_turn, ArtifactStore(tmp_path / "artifacts"), context_policy=context_policy,
+    )
+    delivered = reconstruct_state(items, context_policy=context_policy)
+    plan = delivered["working_plan"]["plan"]
+    assert plan == seen[-1]["working_plan"]["plan"]
+    assert plan["text"] == (DONE if close_by_inference else OPEN)
+    if close_by_inference:
+        assert plan["last_change"]["previous_plan"]["text"] == OPEN
+        assert plan["last_change"]["reason"] == reason
+        assert plan["last_change"]["interpretation_status"] == "model_authored_unverified"
+    # Assert delivery at the actual finish boundary, not just the prompt constant.
+    system = " ".join(items[0]["content"].split())
+    assert "Suite PASS or another path's success cannot replace that purpose" in system
+    assert "make verification conditional on a suite failure" in system
+    assert "the original purpose despite plan changes: cite current-diff results" in system
+    assert "Label source inference and tie it to specific current source" in system
+    assert "leaving unexecuted behavior unverified" in system
+    assert "No additional check is mandatory" in system
+    assert delivered["current_diff"]["patch"] and "finish_task" in delivered["available_tool_names"]
     assert not any(e["event_type"] == "protocol_correction" for e in events)
+    actions = [e["payload"]["result"]["tool"] for e in events
+               if e["event_type"] == "action_finished"]
+    assert set(actions[:2]) == {"search_files", "read_file"}
+    assert actions[2:] == ["replace_text", "run_check", "finish_task"]
     finish = next(e["payload"]["result"] for e in events
                   if e["event_type"] == "action_finished"
                   and e["payload"]["result"]["tool"] == "finish_task")
     assert finish["status"] == "succeeded"
     review = finish["output"]["plan_review"]
-    assert review["plan"]["text"] == OPEN
+    assert review["plan"] == plan
     assert review["assessment_ref"] == "assessment"
     assert review["verification_status"] == "not_inferred_from_submission"
-    assert "untested" in finish["output"][review["assessment_ref"]]
+    assert finish["output"][review["assessment_ref"]] == assessment
     before = DevJournal(tmp_path, run["run_id"]).path.read_bytes()
     assert runner.run_dev(req.model_copy(update={"resume_run_id": run["run_id"]}))["runs"][0] == run
     assert DevJournal(tmp_path, run["run_id"]).path.read_bytes() == before
