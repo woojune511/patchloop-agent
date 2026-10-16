@@ -63,14 +63,26 @@ def load_upstream(preparation: Path):
 
 
 def flatten_messages(messages):
-    """Same stateless linear-history projection as upstream LitellmResponseModel."""
+    """Replay upstream linear history without null SDK-only optional fields."""
     return [
-        {k: v for k, v in item.items() if k != "extra"}
+        # SDK output permits null status/namespace; the corresponding input types
+        # permit omission, but not null. Keep the raw response unchanged in CAS.
+        {k: v for k, v in item.items() if k != "extra" and v is not None}
         for message in messages
         for item in (
             message.get("output", []) if message.get("object") == "response" else [message]
         )
     ]
+
+
+def provider_error_metadata(exc):
+    """Retain error location without copying bodies, headers or request contents."""
+    result = {"error_type": type(exc).__name__}
+    for name in ("status_code", "code", "param"):
+        value = getattr(exc, name, None)
+        if type(value) in (int, str):
+            result[name] = value
+    return result
 
 
 def metadata_setup(public_module):
@@ -158,7 +170,7 @@ class CountedModel:
                 raise ValueError("invalid input count")
         except Exception as exc:
             self.uncertain = True
-            self.journal.append("external_count_failed", {"error_type": type(exc).__name__})
+            self.journal.append("external_count_failed", provider_error_metadata(exc))
             raise OperationalStop("input counting failed; no retry") from exc
         admitted = self.ledger.admit(count, desired_output_ceiling=25000)
         self.journal.append("external_count_finished", {"input_tokens": count})
@@ -184,7 +196,7 @@ class CountedModel:
             )
         except Exception as exc:
             self.uncertain = True
-            self.journal.append("external_dispatch_uncertain", {"error_type": type(exc).__name__})
+            self.journal.append("external_dispatch_uncertain", provider_error_metadata(exc))
             raise OperationalStop("provider transport failed; billing unknown; no retry") from exc
         raw = response.model_dump(mode="json")
         response_hash = self.store.put_json(raw).content_hash

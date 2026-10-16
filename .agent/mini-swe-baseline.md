@@ -21,7 +21,7 @@ Direct OpenAI transport replaces LiteLLM retry/post-spend accounting with existi
 exact input counting, pre-dispatch reservation, zero retries and usage settlement.
 All response items are replayed in linear history, including encrypted reasoning.
 
-## Proposed exact scope
+## Closed approved scope
 
 - Same immutable 20-instance roster as `portfolio_dev20.baseline()`, using the
   public issues and current packages under `tasks/dev-train/current-dev20/1..20`.
@@ -45,7 +45,7 @@ All response items are replayed in linear history, including encrypted reasoning
   report its container isolation receipts separately, without claiming equivalent
   PatchLoop tool-admission safety. Base tests are never replaced by model tests.
 
-## Public environment and pending permission
+## Public environment and authorization
 
 Use only existing digest-pinned local images, with `--pull=never`, network disabled,
 read-only root, dropped capabilities, no new privileges, CPU/memory/PID bounds, and
@@ -61,15 +61,22 @@ journals with content-addressed artifacts; no automatic action recovery/reexecut
 
 The repository AGENTS.md hard gate 2 says: "Expose only registered reads, searches,
 mutations, visible checks, and finish; never provide unrestricted shell access to
-the coding agent." Native mini needs bash inside its isolated container. **That
-benchmark-only exception remains pending explicit human approval**, together with
-the exact manifest/cost scope required by hard gate 5. Preparation, operator-only
-environment canaries, and tests do not authorize model execution. Do not adapt mini
-to PatchLoop tools to silently evade this difference or silently waive the rule.
+the coding agent." Native mini needs bash inside its isolated container. The user
+explicitly approved this benchmark-only exception and the USD 24 packet on
+2026-10-16; `C:/pt/mini20prep04/authorization.json` records that approval. The
+[attempt stopped](../docs/history/2026-10-16-mini-swe-count-stop.md) on its second
+input-count request after one settled generation. All 20 native verdicts are
+NOT_RUN. Preserve the closed packet and live evidence; do not resume or reuse the
+allocation automatically. Fresh execution needs a new exact packet and approval.
 
 Before live execution, save the human approval against the exact packet hash with
 `live_authorized=true` and `isolated_bash_exception=true`. A JSON authorization
 file records human approval; it is never a substitute for receiving it.
+
+The corrected operator adapter omits null optional SDK item fields when replaying
+history, while retaining raw responses and every non-null item field. Saved-request
+schema replay and an upstream/SDK mock passed. Provider acceptance of the correction
+and a usable mini performance baseline remain NOT_RUN.
 
 ## Reporting and stop rules
 

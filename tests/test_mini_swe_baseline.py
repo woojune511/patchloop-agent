@@ -11,6 +11,10 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+from openai.types.responses.response_function_tool_call_param import ResponseFunctionToolCallParam
+from openai.types.responses.response_output_message_param import ResponseOutputMessageParam
+from openai.types.responses.response_reasoning_item_param import ResponseReasoningItemParam
+from pydantic import TypeAdapter, ValidationError
 
 from diagnostics import mini_swe_dev20 as panel
 from diagnostics import mini_swe_runtime as runtime
@@ -175,6 +179,81 @@ def test_replay_keeps_reasoning_and_tool_outputs():
             observation,
         ]
     ) == [encrypted, {"type": "function_call", "call_id": "one"}, observation]
+
+
+def test_sdk_response_replay_matches_input_types_on_second_turn(mini_protocol, tmp_path):
+    # Same shapes as the live SDK response: optional output fields become null.
+    items = [
+        {
+            "type": "reasoning", "id": "rs_1", "summary": [], "content": [],
+            "encrypted_content": "opaque", "status": None,
+        },
+        {
+            "type": "message", "id": "msg_1", "role": "assistant", "status": "completed",
+            "phase": "commentary",
+            "content": [{"type": "output_text", "text": "Inspect files.",
+                         "annotations": [], "logprobs": []}],
+        },
+        {
+            "type": "function_call", "id": "fc_1", "call_id": "call_1", "name": "bash",
+            "arguments": '{"command":"true","optional":null}', "status": "completed",
+            "namespace": None, "caller": None,
+        },
+    ]
+    specs = [ResponseReasoningItemParam, ResponseOutputMessageParam, ResponseFunctionToolCallParam]
+    for index, field in ((0, "status"), (2, "namespace")):
+        with pytest.raises(ValidationError) as caught:
+            TypeAdapter(specs[index]).validate_python(items[index])
+        assert caught.value.errors()[0]["loc"] == (field,)
+
+    adapter = model(tmp_path)
+    fields = response().model_dump()
+    fields["output"] = items
+    adapter.client.responses.create.return_value = SimpleNamespace(
+        **fields, model_dump=lambda **kw: copy.deepcopy(fields)
+    )
+    user = {"role": "user", "content": "public task"}
+    first = adapter.query([user])
+    observation = {"type": "function_call_output", "call_id": "call_1", "output": ""}
+    original = copy.deepcopy(first)
+
+    def validate_replay(**request):
+        for spec, item in zip(specs, request["input"][1:4], strict=True):
+            TypeAdapter(spec).validate_python(item)
+        return SimpleNamespace(input_tokens=100)
+
+    adapter.client.responses.input_tokens.count.side_effect = validate_replay
+    adapter.query([user, first, observation])
+    counted = adapter.client.responses.input_tokens.count.call_args.kwargs["input"]
+    generated = adapter.client.responses.create.call_args.kwargs["input"]
+    assert counted == generated
+    assert counted[1]["encrypted_content"] == "opaque" and counted[1]["summary"] == []
+    assert counted[2] == items[1]  # Preserve assistant phase, text and annotations.
+    assert counted[3]["arguments"] == items[2]["arguments"]  # Nested JSON null is data.
+    assert counted[4] == observation  # Empty output is still an observation.
+    assert first == original and first["output"][0]["status"] is None
+    assert adapter.calls == 2 and not adapter.uncertain
+
+
+def test_provider_error_records_location_without_sensitive_body(mini_protocol, tmp_path):
+    import httpx
+    from openai import BadRequestError
+
+    adapter = model(tmp_path)
+    adapter.client.responses.input_tokens.count.side_effect = BadRequestError(
+        "SENSITIVE_SENTINEL",
+        response=httpx.Response(400, request=httpx.Request("POST", "https://example.invalid")),
+        body={"code": "invalid_type", "param": "input[2].status", "message": "SENSITIVE_SENTINEL"},
+    )
+    with pytest.raises(runtime.OperationalStop):
+        adapter.query([])
+    payload = adapter.journal.events()[-1]["payload"]
+    assert payload == {
+        "error_type": "BadRequestError", "status_code": 400,
+        "code": "invalid_type", "param": "input[2].status",
+    }
+    assert "SENSITIVE_SENTINEL" not in json.dumps(adapter.journal.events())
+    assert adapter.uncertain and adapter.calls == 0
 
 
 def test_public_projection_contains_issue_and_scope_only():

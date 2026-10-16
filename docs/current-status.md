@@ -25,7 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Mini baseline](../.agent/mini-swe-baseline.md): prepared; live/bash approval pending.
+[Mini baseline](history/2026-10-16-mini-swe-count-stop.md): count failure after one
+generation; USD 0.002403 recorded, 20 NOT_RUN. Replay fix tested offline; no rerun.
 
 [Assessment](history/2026-10-16-submission-assessment-results.md): A 0/8, B 0/8;
 USD 4.29112755; closed. [Exit audit](history/2026-10-16-assessment-exit-analysis.md)
