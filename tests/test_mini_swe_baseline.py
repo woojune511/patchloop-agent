@@ -185,6 +185,31 @@ def test_public_projection_contains_issue_and_scope_only():
         assert forbidden not in text
 
 
+@pytest.mark.parametrize("missing", [False, True])
+def test_metadata_setup_supports_older_image_python(monkeypatch, missing):
+    class DistributionNotFound(Exception):
+        pass
+
+    def distribution(name):
+        assert name == "pydicom"
+        if missing:
+            raise DistributionNotFound()
+
+    monkeypatch.setitem(sys.modules, "importlib.metadata", None)
+    monkeypatch.setitem(
+        sys.modules,
+        "pkg_resources",
+        SimpleNamespace(get_distribution=distribution, DistributionNotFound=DistributionNotFound),
+    )
+    run = Mock()
+    monkeypatch.setattr(subprocess, "run", run)
+    exec(runtime.metadata_setup("pydicom"), {})
+    if missing:
+        run.assert_called_once_with([sys.executable, "setup.py", "egg_info"], check=True)
+    else:
+        run.assert_not_called()
+
+
 def test_container_has_no_host_mount_and_cleans_exact_identity(monkeypatch, tmp_path):
     calls = []
     archive = tmp_path / "source.tar"

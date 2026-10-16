@@ -97,9 +97,14 @@ platformdirs 4.9.4. PatchLoop's locked Python environment supplies other depende
 Preparation binds the actual source/dependency bytes, config, tasks, archives,
 images, native harness and runtime into one manifest.
 
+Use the attached `mini-swe-dev20` checkout so concurrent dev-head edits cannot change
+the frozen runtime. The interpreter comes from the existing project environment.
+
 ```powershell
-.venv/Scripts/python.exe -m diagnostics.mini_swe_dev20 prepare --root C:/pt/mini20prep02 --live-root C:/pt/mini20live01 --env-file C:/Users/geonj/Documents/PatchLoop/.env
-.venv/Scripts/python.exe -m diagnostics.mini_swe_dev20 preflight --root C:/pt/mini20prep02 --packet-hash <hash>
+Set-Location C:/Users/geonj/.codex/worktrees/mini-swe-dev20/PatchLoop
+$miniPython = 'C:/Users/geonj/Documents/PatchLoop/.venv/Scripts/python.exe'
+& $miniPython -m diagnostics.mini_swe_dev20 prepare --root C:/pt/mini20prep03 --live-root C:/pt/mini20live01 --env-file C:/Users/geonj/Documents/PatchLoop/.env
+& $miniPython -m diagnostics.mini_swe_dev20 preflight --root C:/pt/mini20prep03 --packet-hash <hash>
 # Only after exact human approval, including the isolated bash exception:
-.venv/Scripts/python.exe -m diagnostics.mini_swe_dev20 run --root C:/pt/mini20prep02 --packet-hash <hash>
+& $miniPython -m diagnostics.mini_swe_dev20 run --root C:/pt/mini20prep03 --packet-hash <hash>
 ```

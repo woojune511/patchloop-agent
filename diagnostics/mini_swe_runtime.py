@@ -73,6 +73,22 @@ def flatten_messages(messages):
     ]
 
 
+def metadata_setup(public_module):
+    """Use the image's existing metadata API, including its Python 3.7 fallback."""
+    return (
+        "import subprocess, sys\n"
+        "try:\n"
+        "    from importlib.metadata import distribution, PackageNotFoundError\n"
+        "except ImportError:\n"
+        "    from pkg_resources import get_distribution as distribution\n"
+        "    from pkg_resources import DistributionNotFound as PackageNotFoundError\n"
+        "try:\n"
+        f"    distribution({public_module!r})\n"
+        "except PackageNotFoundError:\n"
+        "    subprocess.run([sys.executable, 'setup.py', 'egg_info'], check=True)\n"
+    )
+
+
 class CountedModel:
     """Direct Responses transport; upstream prompt, action parser and observations."""
 
@@ -265,14 +281,9 @@ class PublicContainer:
             self.operator_command(setup, timeout=60)
             # Some native images have editable metadata inside their original /testbed.
             # Recreate only missing metadata from public setup.py after masking that tree.
-            metadata_setup = (
-                "import importlib.metadata as m, subprocess, sys\n"
-                "try:\n"
-                f"    m.distribution({row['public_module']!r})\n"
-                "except m.PackageNotFoundError:\n"
-                "    subprocess.run([sys.executable, 'setup.py', 'egg_info'], check=True)\n"
+            self.operator_command(
+                "python -c " + shlex.quote(metadata_setup(row["public_module"])), timeout=60
             )
-            self.operator_command("python -c " + shlex.quote(metadata_setup), timeout=60)
             self.journal.append("external_container_ready", {"name": self.name})
         except BaseException:
             self.cleanup()
