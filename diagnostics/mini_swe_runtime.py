@@ -104,11 +104,19 @@ def metadata_setup(public_module):
 class CountedModel:
     """Direct Responses transport; upstream prompt, action parser and observations."""
 
-    def __init__(self, client, config, root: Path, deadline: ExecutionDeadline):
+    def __init__(
+        self, client, config, root: Path, deadline: ExecutionDeadline, *,
+        cap_usd=ROW_CAP, max_calls=40, max_input_tokens=400000,
+    ):
         if client.max_retries != 0:
             raise ValueError("zero SDK retries required")
+        if type(max_calls) is not int or max_calls <= 0:
+            raise ValueError("positive model call limit required")
+        if type(max_input_tokens) is not int or max_input_tokens <= 0:
+            raise ValueError("positive input token limit required")
         self.client, self.config, self.deadline = client, config, deadline
-        self.ledger = DevCostLedger(ROW_CAP, pricing_for_model(MODEL))
+        self.max_calls, self.max_input_tokens = max_calls, max_input_tokens
+        self.ledger = DevCostLedger(cap_usd, pricing_for_model(MODEL))
         self.journal = DevJournal(root, "run_dev_minimodel")
         self.store = ArtifactStore(root / "artifacts")
         self.calls = 0
@@ -147,7 +155,7 @@ class CountedModel:
 
         if self.uncertain:
             raise OperationalStop("provider accounting is uncertain")
-        if self.calls >= 40:
+        if self.calls >= self.max_calls:
             raise LimitsExceeded({"role": "exit", "extra": {"exit_status": "CallLimit"}})
         self.deadline.check()
         request = {
@@ -176,7 +184,10 @@ class CountedModel:
             raise OperationalStop("input counting failed; no retry") from exc
         admitted = self.ledger.admit(count, desired_output_ceiling=25000)
         self.journal.append("external_count_finished", {"input_tokens": count})
-        if admitted is None or count + admitted.output_ceiling > 400000:
+        if (
+            admitted is None or count > self.max_input_tokens
+            or count + admitted.output_ceiling > 400000
+        ):
             raise LimitsExceeded({"role": "exit", "extra": {"exit_status": "CostOrContextLimit"}})
         request["max_output_tokens"] = admitted.output_ceiling
         self.deadline.check()
@@ -237,8 +248,16 @@ class CountedModel:
 class PublicContainer:
     """Bash only in an offline, read-only-root container with no host mounts."""
 
-    def __init__(self, row, root: Path, deadline: ExecutionDeadline):
+    def __init__(
+        self, row, root: Path, deadline: ExecutionDeadline, *,
+        max_actions=100, lifetime_seconds=1800,
+    ):
+        if type(max_actions) is not int or max_actions <= 0:
+            raise ValueError("positive action limit required")
+        if type(lifetime_seconds) is not int or lifetime_seconds <= 0:
+            raise ValueError("positive container lifetime required")
         self.row, self.root, self.deadline = row, root, deadline
+        self.max_actions = max_actions
         self.name = "pl-mini-" + uuid.uuid4().hex[:12]
         self.journal = DevJournal(root, "run_dev_minienvironment")
         self.store = ArtifactStore(root / "artifacts")
@@ -275,7 +294,7 @@ class PublicContainer:
             "--workdir=/testbed",
             "--entrypoint=sleep",
             row["image"],
-            "1800",
+            str(lifetime_seconds),
         ]
         self.journal.append("external_container_requested", {"name": self.name, "args": args})
         try:
@@ -313,7 +332,7 @@ class PublicContainer:
     def execute(self, action, cwd=""):
         from minisweagent.exceptions import LimitsExceeded, Submitted
 
-        if self.actions >= 100:
+        if self.actions >= self.max_actions:
             raise LimitsExceeded({"role": "exit", "extra": {"exit_status": "ActionLimit"}})
         self.deadline.check()
         self.actions += 1

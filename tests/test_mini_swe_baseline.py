@@ -73,7 +73,7 @@ def response(*, count=100, usage=True, output=True):
     return SimpleNamespace(**fields, model_dump=lambda **kw: copy.deepcopy(fields))
 
 
-def model(tmp_path, reply=None):
+def model(tmp_path, reply=None, **limits):
     client = SimpleNamespace(
         max_retries=0,
         responses=SimpleNamespace(
@@ -88,6 +88,7 @@ def model(tmp_path, reply=None):
         {"format_error_template": "{{ error }}"},
         tmp_path,
         ExecutionDeadline.from_remaining(60),
+        **limits,
     )
 
 
@@ -182,6 +183,29 @@ def test_call_limit_stops_before_counting(mini_protocol, tmp_path):
     with pytest.raises(Flow):
         adapter.query([])
     adapter.client.responses.input_tokens.count.assert_not_called()
+
+
+def test_extended_calls_still_stop_before_counting_at_the_new_limit(mini_protocol, tmp_path):
+    from decimal import Decimal
+
+    adapter = model(tmp_path, cap_usd=Decimal("3"), max_calls=250)
+    assert adapter.ledger.cap_nanos == 3_000_000_000
+    adapter.calls = 40
+    adapter.query([])
+    assert adapter.calls == 41
+    adapter.calls = 250
+    with pytest.raises(Flow):
+        adapter.query([])
+    assert adapter.client.responses.input_tokens.count.call_count == 1
+    assert adapter.client.responses.create.call_count == 1
+
+
+def test_extended_context_limit_counts_but_never_dispatches(mini_protocol, tmp_path):
+    adapter = model(tmp_path, max_input_tokens=99)
+    with pytest.raises(Flow):
+        adapter.query([])
+    adapter.client.responses.create.assert_not_called()
+    assert not adapter.uncertain and adapter.ledger.spent_nanos == 0
 
 
 def test_replay_keeps_reasoning_and_tool_outputs():
@@ -309,7 +333,11 @@ def test_metadata_setup_preserves_other_import_failures(monkeypatch):
     run.assert_not_called()
 
 
-def test_container_has_no_host_mount_and_cleans_exact_identity(monkeypatch, tmp_path):
+@pytest.mark.parametrize("limits, lifetime", [({}, "1800"),
+                                             ({"max_actions": 1000, "lifetime_seconds": 3930},
+                                              "3930")])
+def test_container_has_no_host_mount_and_cleans_exact_identity(monkeypatch, tmp_path,
+                                                              limits, lifetime):
     calls = []
     archive = tmp_path / "source.tar"
     archive.write_bytes(b"public archive")
@@ -327,8 +355,11 @@ def test_container_has_no_host_mount_and_cleans_exact_identity(monkeypatch, tmp_
         },
         tmp_path,
         ExecutionDeadline.from_remaining(60),
+        **limits,
     )
     launch = calls[0]
+    assert launch[-1] == lifetime
+    assert env.max_actions == limits.get("max_actions", 100)
     assert "--pull=never" in launch and "--network=none" in launch
     assert "--read-only" in launch and "--cap-drop=ALL" in launch
     assert "--volume" not in launch and "--mount" not in launch
