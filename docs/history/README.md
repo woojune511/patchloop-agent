@@ -3,7 +3,7 @@
 [Status](../current-status.md).
 
 - [Mini count stop](2026-10-16-mini-swe-count-stop.md).
-- [Assessment](2026-10-16-submission-assessment-results.md), [exits](2026-10-16-assessment-exit-analysis.md).
+- [Assessment](2026-10-16-submission-assessment-results.md), [gap comparison](2026-10-16-assessment-gap-comparison-results.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
 - [Uptake review](2026-10-15-uptake-grade.md).
